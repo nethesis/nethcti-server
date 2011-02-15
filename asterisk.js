@@ -1,6 +1,8 @@
+var asterisk_version = "1.6";
 var inherits = require('sys').inherits;
 var EventEmitter = require('events').EventEmitter;
 var net = require('net');
+var sys = require('sys');
 
 var CRLF = "\r\n";
 var END = "\r\n\r\n";
@@ -109,34 +111,59 @@ exports.AsteriskManager = function (newconfig) {
 			req.callback(headers);
 		delete actions[id];
 	};
-	
+
+    if (asterisk_version == '1.4')
+    {}
+    else if (asterisk_version == '1.6')	
+    {
 	this.OnEvent = function(headers) {
 		switch (headers.event) {
 			case "Newchannel": // new participant
-				self.participants[headers.uniqueid] = {name: headers.calleridname, number: headers.calleridnum};
+		        sys.debug("ASTERISK: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
+                var tmp = headers.channel.split('-');
+                var channel = tmp[0];
+                var extension = tmp[0].split('/');
+                extension = extension[1];
+                sys.debug("calleridnum=*"+headers.calleridnum+"* channel="+channel+" extension="+extension);
+				self.participants[headers.uniqueid] = {name: headers.calleridname != "device" ? headers.calleridname : channel , number: headers.calleridnum != "" ? headers.calleridnum : extension};
 			break;
 			case "Newcallerid": // potentially more useful information on an existing participant
+		        sys.debug("ASTERISK: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
 				if (typeof self.participants[headers.uniqueid]['number'] == 'undefined')
-					self.participants[headers.uniqueid]['number'] = headers.callerid;
-				if (headers.calleridname[0] != "<")
+					self.participants[headers.uniqueid]['number'] = headers.calleridnum;
+				if (headers.calleridname[0] != "")
 					self.participants[headers.uniqueid]['name'] = headers.calleridname;
 			break;
 			case "Dial": // source participant is dialing a destination participant
-				self.participants[headers.srcuniqueid]['with'] = headers.destuniqueid;
-				self.participants[headers.destuniqueid]['with'] = headers.srcuniqueid;
-				self.emit('dialing', self.participants[headers.srcuniqueid], self.participants[headers.destuniqueid]);
+		        sys.debug("ASTERISK: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
+                switch(headers.dialstatus)
+                {
+                    case "CANCEL":
+                        //self.emit('hangup', self.participants[headers.uniqueid], 'End', headers.dialstatus);
+                    break;
+
+                    case "ANSWER":
+                        self.emit('call', self.participants[headers.uniqueid]);
+                    break;
+
+                    default:
+				        self.participants[headers.uniqueid]['with'] = headers.uniqueid;
+                        if( headers.destuniqueid)
+				            self.participants[headers.destuniqueid]['with'] = headers.destuniqueid;
+				        self.emit('dialing', self.participants[headers.uniqueid], self.participants[headers.destuniqueid]);
+                }
 			break;
-			case "Link": // the participants have been connected and voice is now available
-				self.emit('callconnected', self.participants[headers.uniqueid1], self.participants[headers.uniqueid2]);
-			break;
-			case "Unlink": // call has ended and the participants are disconnected from each other
-				self.emit('calldisconnected', self.participants[headers.uniqueid1], self.participants[headers.uniqueid2]);
+			case "Bridge": // the participants have been connected and voice is now available
+                if (headers.bridgestate == "Link")
+				    self.emit('callconnected', self.participants[headers.uniqueid1], self.participants[headers.uniqueid2]);
+                else if (headers.bridgestate == "Unlink")
+				    self.emit('calldisconnected', self.participants[headers.uniqueid1], self.participants[headers.uniqueid2]);
 			break;
 			case "Hold": // someone put someone else on hold
-				self.emit('hold', self.participants[headers.uniqueid]);
-			break;
-			case "Unhold": // someone took someone else off of hold
-				self.emit('unhold', self.participants[headers.uniqueid]);
+                if (headers.status == "On")
+				    self.emit('hold', self.participants[headers.uniqueid]);
+                else
+				    self.emit('unhold', self.participants[headers.uniqueid]);
 			break;
 			case "Hangup": // fires for each participant and contains the cause for the participant's hangup
 				self.emit('hangup', self.participants[headers.uniqueid], headers.cause, headers.causetxt);
@@ -166,6 +193,7 @@ exports.AsteriskManager = function (newconfig) {
 				//sys.debug("ASTERISK: Got unknown event '" + headers.event + "' with data: " + sys.inspect(headers));
 		}
 	};
+    }
 
 	this.connect = function() {
 		if (!self.conn || self.conn.readyState == 'closed') {
