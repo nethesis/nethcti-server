@@ -116,26 +116,25 @@ exports.AsteriskManager = function (newconfig) {
     {}
     else if (asterisk_version == '1.6')	
     {
-	this.OnEvent = function(headers) {
+	  this.OnEvent = function(headers) {
 		switch (headers.event) {
 			case "Newchannel": // new participant
-		        sys.debug("ASTERISK: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
+		        //sys.debug("ASTERISK: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
                 var tmp = headers.channel.split('-');
                 var channel = tmp[0];
                 var extension = tmp[0].split('/');
                 extension = extension[1];
-                sys.debug("calleridnum=*"+headers.calleridnum+"* channel="+channel+" extension="+extension);
 				self.participants[headers.uniqueid] = {name: headers.calleridname != "device" ? headers.calleridname : channel , number: headers.calleridnum != "" ? headers.calleridnum : extension};
 			break;
 			case "Newcallerid": // potentially more useful information on an existing participant
-		        sys.debug("ASTERISK: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
+		        //sys.debug("ASTERISK: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
 				if (typeof self.participants[headers.uniqueid]['number'] == 'undefined')
 					self.participants[headers.uniqueid]['number'] = headers.calleridnum;
 				if (headers.calleridname[0] != "")
 					self.participants[headers.uniqueid]['name'] = headers.calleridname;
 			break;
 			case "Dial": // source participant is dialing a destination participant
-		        sys.debug("ASTERISK: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
+		        //sys.debug("ASTERISK: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
                 switch(headers.dialstatus)
                 {
                     case "CANCEL":
@@ -192,7 +191,7 @@ exports.AsteriskManager = function (newconfig) {
 			default:
 				//sys.debug("ASTERISK: Got unknown event '" + headers.event + "' with data: " + sys.inspect(headers));
 		}
-	};
+	  };
     }
 
 	this.connect = function() {
