@@ -109,9 +109,7 @@ server = net.createServer(function (stream) {
 
   stream.addListener("end", function() {
     clients.remove(client);
-
-    sys.debug(client.name + " has left.\n");
-
+    sys.debug(client.extension + " has left.\n");
     stream.end();
   });
 
