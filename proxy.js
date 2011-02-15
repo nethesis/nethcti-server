@@ -2,6 +2,10 @@ var sys = require('sys'),
     ast = require('./asterisk'),
     net = require('net');
 
+var server;
+var clients = [];
+var am;
+
 am = new ast.AsteriskManager({user: 'vtiger', password: 'vtiger', host: 'nethservice.nethesis.it'});
 
 am.addListener('serverconnect', function() {
@@ -19,7 +23,8 @@ am.addListener('servererror', function(err) {
 });
 
 am.addListener('dialing', function(from, to) {
-	//sys.puts("CLIENT: Dialing from " + from.number + " (" + from.name + ") to " + to.number + " (" + to.name + ")");
+	sys.debug("Dial: " + sys.inspect(from) + " -> "+ sys.inspect(to));
+    server.notify(to.number,from.number);
 });
 
 am.addListener('callconnected', function(from, to) {
@@ -63,9 +68,8 @@ function Client(stream) {
   this.stream = stream;
 }
 
-var clients = [];
 
-var server = net.createServer(function (stream) {
+server = net.createServer(function (stream) {
   var client = new Client(stream);
   clients.push(client);
 
@@ -77,9 +81,9 @@ var server = net.createServer(function (stream) {
   });
 
   stream.addListener("data", function (data) {
-    if (client.name == null) {
-      client.name = data.match(/\S+/);
-      sys.debug("Extension "+client.name+" registerd");
+    if (client.extension == null) {
+      client.extension = data.match(/\S+/);
+      sys.debug("Extension "+client.extension+" registerd");
       return;
     }
 
@@ -110,6 +114,16 @@ var server = net.createServer(function (stream) {
 
     stream.end();
   });
+
+    this.notify = function(ext,caller) {
+        sys.debug("Requested notify for "+ext+" from "+caller);
+        clients.forEach(function(c) {
+            if (ext == c.extension) {
+                c.stream.write("Call from: " + caller);
+            }
+        });
+    };
+
 });
 
 server.listen(8124, "0.0.0.0");
