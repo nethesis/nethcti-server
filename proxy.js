@@ -5,8 +5,12 @@ var sys = require('sys'),
 var server;
 var clients = [];
 var am;
+var asterisk_user = 'vtiger';
+var asterisk_pass = 'vtiger';
+var asterisk_host = 'amaduzzi.nethesis.it';
 
-am = new ast.AsteriskManager({user: 'vtiger', password: 'vtiger', host: 'nethservice.nethesis.it'});
+
+am = new ast.AsteriskManager({user: asterisk_user, password: asterisk_pass, host: asterisk_host});
 
 am.addListener('serverconnect', function() {
 	am.login(function () {
