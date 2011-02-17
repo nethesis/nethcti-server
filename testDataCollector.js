@@ -23,20 +23,12 @@ console.log("\nTEST getUserSQLProfile");
 var userSQLProfiles = dataCollector.getUserSQLProfile(exten);
 console.log(userSQLProfiles);
 console.log("\n");
-<<<<<<< HEAD
-*/
-=======
 
->>>>>>> 79d89b6a96916780af20abe99c1dda58b9b63983
 //
 console.log("\nTEST executeQueriesForUser " + exten);
 var resultArray = dataCollector.executeSQLQueriesForUser(exten);
 console.log("RES = ");
 console.log(resultArray);
 console.log("\n");
-<<<<<<< HEAD
-
-=======
 */
->>>>>>> 79d89b6a96916780af20abe99c1dda58b9b63983
 

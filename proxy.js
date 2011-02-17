@@ -1,19 +1,13 @@
-//var sys = require('sys'), 
-var ast = require('./asterisk'),
+var sys = require('sys'), 
+    ast = require('./asterisk'),
     net = require('net');
 
-var http = require('http')
-  , url = require('url')
-  , fs = require('fs')
-  , io = require('./lib/socket.io')
-  , sys = require(process.binding('natives').util ? 'util' : 'sys')
-  , server;
-
+var server;
 var clients = [];
 var am;
 var asterisk_user = 'vtiger';
 var asterisk_pass = 'vtiger';
-var asterisk_host = 'nethservice.nethesis.it';
+var asterisk_host = 'amaduzzi.nethesis.it';
 
 
 am = new ast.AsteriskManager({user: asterisk_user, password: asterisk_pass, host: asterisk_host});
@@ -33,22 +27,8 @@ am.addListener('servererror', function(err) {
 });
 
 am.addListener('dialing', function(from, to) {
-    buffer = [];
 	sys.debug("Dial: " + sys.inspect(from) + " -> "+ sys.inspect(to));
-    //server.notify(to.number,from.number);
-    clients.forEach(function(c) {
-        sys.debug(to.number+" vs "+c.extension);
-        if(c.extension == to.number)
-        {
-            var message = "Call from "+to.number+" to "+from.number;
-            var msg = { message: [c.sessionId, message] };
-            buffer.push(msg);
-            if (buffer.length > 15) buffer.shift();
-            sys.debug("Dial: notify "+c.sessionId);
-            c.broadcast(msg);
-        }
-   });
-
+    server.notify(to.number,from.number);
 });
 
 am.addListener('callconnected', function(from, to) {
@@ -80,71 +60,75 @@ am.addListener('callreport', function(report) {
 
 
 
-
-server = http.createServer(function(req, res){
-  var path = url.parse(req.url).pathname;
-  sys.debug(path);
-  switch (path){
-    case '/json.js':
-    case '/lib/socket.io-client/socket.io.js':
-      fs.readFile(__dirname + path, function(err, data){
-        sys.debug(data.extension);
-        if (err) return send404(res);
-        res.writeHead(200, {'Content-Type': 'text/javascript'})
-        res.write(data, 'utf8');
-        res.end();
-      });
-     break;
-
-    case '/index.html':
-    case '/':
-      path = "/index.html";
-      fs.readFile(__dirname + path, function(err, data){
-        if (err) return send404(res);
-        res.writeHead(200, {'Content-Type': 'text/html'});
-        res.write(data, 'utf8');
-        res.end();
-      });
-    break;
-   
-
-
-
-    default: send404(res);
+// ========== Server implementation =========
+Array.prototype.remove = function(e) {
+  for (var i = 0; i < this.length; i++) {
+    if (e == this[i]) { return this.splice(i, 1); }
   }
-}),
-
-send404 = function(res){
-  res.writeHead(404);
-  res.write('404');
-  res.end();
 };
 
-server.listen(8080);
+function Client(stream) {
+  this.extension = null;
+  this.stream = stream;
+}
 
-sys.debug("Listening on port 8080");
 
-var io = io.listen(server)
-  , buffer = [];
-
-io.on('connection', function(client){
+server = net.createServer(function (stream) {
+  var client = new Client(stream);
   clients.push(client);
-  //client.send({ buffer: buffer });
-  //client.broadcast({ announcement: client.sessionId + ' connected' });
 
-  client.on('message', function(message){
-    var msg = { message: [client.sessionId, message] };
-    buffer.push(msg);
-    if (buffer.length > 15) buffer.shift();
-    sys.debug(msg.message[1]);
-    client.extension = msg.message[1];
-    client.broadcast(msg);
+  stream.setTimeout(0);
+  stream.setEncoding("utf8");
+
+  stream.addListener("connect", function () {
+    stream.write("Extension: ");
   });
 
-  client.on('disconnect', function(){
-    client.broadcast({ announcement: client.sessionId + ' disconnected' });
+  stream.addListener("data", function (data) {
+    if (client.extension == null) {
+      client.extension = data.match(/\S+/);
+      sys.debug("Extension "+client.extension+" registerd");
+      return;
+    }
+
+    //var command = data.match(/^\/(.*)/);
+    //if (command) {
+    //  if (command[1] == 'users') {
+    //    clients.forEach(function(c) {
+    //      stream.write("- " + c.name + "\n");
+    //    });
+    //  }
+    //  else if (command[1] == 'quit') {
+    //    stream.end();
+    //  }
+    //  return;
+    //}
+
+    //clients.forEach(function(c) {
+    //  if (c != client) {
+    //    c.stream.write(client.name + ": " + data);
+    //  }
+    //});
   });
+
+  stream.addListener("end", function() {
+    clients.remove(client);
+    sys.debug(client.extension + " has left.\n");
+    stream.end();
+  });
+
+    this.notify = function(ext,caller) {
+        sys.debug("Requested notify for "+ext+" from "+caller);
+        clients.forEach(function(c) {
+            if (ext == c.extension) {
+                c.stream.write("Call from: " + caller);
+            }
+        });
+    };
+
 });
 
+server.listen(8124, "0.0.0.0");
+sys.debug("Listening on port 8124");
 
 am.connect();
