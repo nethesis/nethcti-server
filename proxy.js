@@ -1,13 +1,37 @@
-var sys = require('sys'), 
-    ast = require('./asterisk'),
+//var sys = require('sys'), 
+var ast = require('./asterisk'),
     net = require('net');
 
-var server;
+var http = require('http')
+  , url = require('url')
+  , fs = require('fs')
+  , io = require('./lib/socket.io')
+  , sys = require(process.binding('natives').util ? 'util' : 'sys')
+  , server;
+
 var clients = [];
 var am;
 var asterisk_user = 'vtiger';
 var asterisk_pass = 'vtiger';
-var asterisk_host = 'amaduzzi.nethesis.it';
+var asterisk_host = 'amaduzzi';
+
+
+////////////////////////////////////////////////////////////////////////////
+// Added by Alessandro Polidori ////////////////////////////////////////////
+
+var dataReq = require("./dataCollector.js");
+var proReq = require("./profiler.js");
+
+var profiler = new proReq.Profiler();
+console.log("Profiler object created");
+console.log(profiler.getUserProfile("501"));
+
+var dataCollector = new dataReq.DataCollector();
+console.log("DataCollector object created");
+
+////////////////////////////////////////////////////////////////////////////
+
+
 
 
 am = new ast.AsteriskManager({user: asterisk_user, password: asterisk_pass, host: asterisk_host});
@@ -27,8 +51,40 @@ am.addListener('servererror', function(err) {
 });
 
 am.addListener('dialing', function(from, to) {
+    buffer = [];
+	
 	sys.debug("Dial: " + sys.inspect(from) + " -> "+ sys.inspect(to));
-    server.notify(to.number,from.number);
+	/* from=
+	{ name: 'SIP/501',
+  number: '501',
+  with: '1298027889.93' }
+  
+  to = { name: '', number: '500', with: '1298027890.94' }
+  */
+  
+  	// check if the user has the permit of make call
+	if(profiler.testPermitActionUser(from.number, "call_out")){
+	
+		console.log("The user " + from.number + " is enabled to dial out");
+		
+		//server.notify(to.number,from.number);
+    	clients.forEach(function(c) {
+        	sys.debug(to.number+" vs "+c.extension);
+        	if(c.extension == to.number)
+        	{
+            	var message = "Call from "+to.number+" to "+from.number;
+            	var msg = { message: [c.sessionId, message] };
+            	buffer.push(msg);
+            	if (buffer.length > 15) buffer.shift();
+            	console.log("Dial: notify "+c.sessionId);
+            	sys.debug("Dial: notify "+c.sessionId);
+            	c.broadcast(msg);
+        	}
+   		});
+	}
+	else{
+		console.log("The user " + from.number + " isn't enabled to dial out");
+	}
 });
 
 am.addListener('callconnected', function(from, to) {
@@ -60,75 +116,74 @@ am.addListener('callreport', function(report) {
 
 
 
-// ========== Server implementation =========
-Array.prototype.remove = function(e) {
-  for (var i = 0; i < this.length; i++) {
-    if (e == this[i]) { return this.splice(i, 1); }
+
+server = http.createServer(function(req, res){
+  
+  var path = url.parse(req.url).pathname;
+  console.log("http.createServer function + path = " + path);
+  sys.debug(path);
+  
+  switch (path){
+    case '/json.js':
+    case '/lib/socket.io-client/socket.io.js':
+      fs.readFile(__dirname + path, function(err, data){
+      	console.log("data.extension = " + data.extension);
+        sys.debug(data.extension);
+        console.log("data.extension = " + data.extension);
+        if (err) return send404(res);
+        res.writeHead(200, {'Content-Type': 'text/javascript'})
+        res.write(data, 'utf8');
+        res.end();
+      });
+     break;
+
+    case '/index.html':
+    case '/':
+      path = "/index.html";
+      fs.readFile(__dirname + path, function(err, data){
+        if (err) return send404(res);
+        res.writeHead(200, {'Content-Type': 'text/html'});
+        res.write(data, 'utf8');
+        res.end();
+      });
+    break;
+   
+    default: send404(res);
   }
+}),
+
+send404 = function(res){
+  res.writeHead(404);
+  res.write('404');
+  res.end();
 };
 
-function Client(stream) {
-  this.extension = null;
-  this.stream = stream;
-}
+server.listen(8080);
 
+sys.debug("Listening on port 8080");
 
-server = net.createServer(function (stream) {
-  var client = new Client(stream);
+var io = io.listen(server)
+  , buffer = [];
+
+io.on('connection', function(client){
   clients.push(client);
+  //client.send({ buffer: buffer });
+  //client.broadcast({ announcement: client.sessionId + ' connected' });
 
-  stream.setTimeout(0);
-  stream.setEncoding("utf8");
-
-  stream.addListener("connect", function () {
-    stream.write("Extension: ");
+  client.on('message', function(message){
+    var msg = { message: [client.sessionId, message] };
+    buffer.push(msg);
+    if (buffer.length > 15) buffer.shift();
+    sys.debug(msg.message[1]);
+    console.log("msg.message[1] = " + msg.message[1]);
+    client.extension = msg.message[1];
+    client.broadcast(msg);
   });
 
-  stream.addListener("data", function (data) {
-    if (client.extension == null) {
-      client.extension = data.match(/\S+/);
-      sys.debug("Extension "+client.extension+" registerd");
-      return;
-    }
-
-    //var command = data.match(/^\/(.*)/);
-    //if (command) {
-    //  if (command[1] == 'users') {
-    //    clients.forEach(function(c) {
-    //      stream.write("- " + c.name + "\n");
-    //    });
-    //  }
-    //  else if (command[1] == 'quit') {
-    //    stream.end();
-    //  }
-    //  return;
-    //}
-
-    //clients.forEach(function(c) {
-    //  if (c != client) {
-    //    c.stream.write(client.name + ": " + data);
-    //  }
-    //});
+  client.on('disconnect', function(){
+    client.broadcast({ announcement: client.sessionId + ' disconnected' });
   });
-
-  stream.addListener("end", function() {
-    clients.remove(client);
-    sys.debug(client.extension + " has left.\n");
-    stream.end();
-  });
-
-    this.notify = function(ext,caller) {
-        sys.debug("Requested notify for "+ext+" from "+caller);
-        clients.forEach(function(c) {
-            if (ext == c.extension) {
-                c.stream.write("Call from: " + caller);
-            }
-        });
-    };
-
 });
 
-server.listen(8124, "0.0.0.0");
-sys.debug("Listening on port 8124");
 
 am.connect();

@@ -1,3 +1,3 @@
-var ar = new Array();
-ar.push(new Object());
-console.log(ar);
+console.log(typeof(function () {
+		sys.debug("Logged in to Asterisk Manager.");
+	}));

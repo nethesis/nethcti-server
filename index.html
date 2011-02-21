@@ -1,0 +1,116 @@
+<!doctype html>
+<html>
+  <head>
+    <title>socket.io client test</title>
+        
+    <script src="/json.js"></script> <!-- for ie -->
+    <script src="/lib/socket.io-client/socket.io.js"></script>
+  </head>
+  <body>
+    
+    <script>
+      function message(obj){
+        var el = document.createElement('p');
+        el.innerHTML = '<b>' + esc(obj.message[0]) + ':</b> ' + esc(obj.message[1]);
+    
+        if (window.webkitNotifications) { //enable notification if supported
+            notification = window.webkitNotifications.createNotification("",esc(obj.message[0]),esc(obj.message[1]));
+            notification.ondisplay = function() { console.log("Display notification"); };
+            notification.onclose = function() { console.log("Close notification"); };
+            notification.show(); // note the show()
+        }
+        document.getElementById('chat').appendChild(el);
+        document.getElementById('chat').scrollTop = 1000000;
+
+
+      }
+      
+      function send(val){
+        var val = document.getElementById('text').value;
+        socket.send(val);
+        message({ message: ['you', val] });
+        document.getElementById('text').value = '';
+      }
+      
+
+      function esc(msg){
+        return msg.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      };
+  
+    
+      var socket = new io.Socket(null, {port: 8080, rememberTransport: false});
+      socket.connect();
+      socket.on('message', function(obj){
+        console.debug("Received msg ");
+        alert("Received msg " + obj.message[0]);
+        message(obj);
+      });
+
+///notifications
+function createNotificationInstance(options) {
+  if (options.notificationType == 'simple') {
+    return window.webkitNotifications.createNotification(options.icon, options.title, options.text);
+  } else if (options.notificationType == 'html') {
+    return window.webkitNotifications.createHTMLNotification(options.url);
+  }
+}
+
+if (window.webkitNotifications) {
+  console.log("Notifications are supported!");
+  alert("11 Notifications are supported!");
+}
+else {
+  console.log("Notifications are not supported for this Browser/OS version yet.");
+  alert("11 Notifications are not supported for this Browser/OS version yet.");
+}
+    </script>
+    
+    <h2>Sample Asterisk call notification</h2>
+    <div style='font-size: 80%; margin: 20px; '>
+      <p>Click on "Enable notifications" only the first time you access this page.</p>
+      <input type='button' id='enable' value='Enable notifications'/>    
+    </div>
+    <div id="chat"><p>Click "Connect" to start.</p></div>
+    <form id="form" onsubmit="send(); return false">
+      <input type="text" autocomplete="off" id="text"><input type="submit" value="Send">
+    </form>
+    <br/> 
+    <label for='ext' >Extension to monitor:</label><input type='text' name='ext' id='ext' value='203'/>   
+    <input type='button' id='connect' value='Connect'/>   
+    <style>
+      #chat { height: 300px; overflow: auto; width: 800px; border: 1px solid #eee; font: 13px Helvetica, Arial; }
+      #chat p { padding: 8px; margin: 0; }
+      #chat p:nth-child(odd) { background: #F6F6F6; }
+      #form { width: 782px; background: #333; padding: 5px 10px; display: none; }
+      #form input[type=text] { width: 700px; padding: 5px; background: #fff; border: 1px solid #fff; }
+      #form input[type=submit] { cursor: pointer; background: #999; border: none; padding: 6px 8px; -moz-border-radius: 8px; -webkit-border-radius: 8px; margin-left: 5px; text-shadow: 0 1px 0 #fff; }
+      #form input[type=submit]:hover { background: #A2A2A2; }
+      #form input[type=submit]:active { position: relative; top: 2px; }
+    </style>
+   
+   <script>
+document.querySelector('#enable').addEventListener('click', function() {
+ if (window.webkitNotifications.checkPermission() == 0) { // 0 is PERMISSION_ALLOWED
+    // function defined in step 2
+    console.log("Notification allowed");
+    alert("Notification allowed");
+  } else {
+    console.log("Notification NOT allowed");
+    alert("Notification NOT allowed");
+    window.webkitNotifications.requestPermission();
+  }
+},false);
+
+document.querySelector('#connect').addEventListener('click', function() {
+          document.getElementById('form').style.display='block';
+          document.getElementById('chat').innerHTML = '';
+      var ext=  document.querySelector('#ext').value;
+      console.log(ext);
+      alert(ext);
+      socket.send(ext);
+},false);
+
+
+    </script> 
+  </body>
+</html>

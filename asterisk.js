@@ -35,6 +35,10 @@ exports.AsteriskManager = function (newconfig) {
 	};
 
 	this.send = function(req, cb) {
+		console.log("\n\n\nreq");
+		console.log(req);
+		console.log("\ncb");
+		console.log(cb);
 		var id = (new Date()).getTime();
 		actions[id] = {request: req, callback: cb};
 		var msg = "";
@@ -107,8 +111,9 @@ exports.AsteriskManager = function (newconfig) {
 		var id = headers.actionid, req = actions[id];
 		if (id == loginId && headers.response == "Success")
 			loggedIn_ = true;
-		if (typeof req.callback == 'function')
+		if (typeof req.callback == 'function'){
 			req.callback(headers);
+		}
 		delete actions[id];
 	};
       
@@ -277,6 +282,8 @@ exports.AsteriskManager = function (newconfig) {
 			}, cb);
 		}
 	};
+	
+	
 	
 	this.disconnect = function() {
 		if (self.conn.readyState == 'open')

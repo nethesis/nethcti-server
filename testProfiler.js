@@ -6,6 +6,7 @@ console.log("TEST with exten = " + exten);
 var profiler = new proReq.Profiler();
 console.log("Profiler object created");
 
+/*
 // print all user profiles
 console.log("\nALL USER PROFILES ARE:");
 profiler.printUserProfiles();
@@ -27,5 +28,7 @@ console.log("getUserDenyActions: " + userDenyActions);
 // print user category name
 var categoryName = profiler.getUserCategory(exten);
 console.log("getUserCategory: " + categoryName);
+*/
 
-
+console.log("TEST testPermitActionUser");
+console.log(profiler.testPermitActionUser("501", "call_out"));

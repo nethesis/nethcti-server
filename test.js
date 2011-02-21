@@ -1,5 +1,5 @@
 var sys = require('sys'), ast = require('./asterisk');
-// first comment to try
+
 am = new ast.AsteriskManager({user: 'foo', password: 'bar'});
 
 am.addListener('serverconnect', function() {
