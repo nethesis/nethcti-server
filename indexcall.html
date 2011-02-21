@@ -9,20 +9,20 @@
   <body>
     
     <script>
+	
       function message(obj){
+        
         var el = document.createElement('p');
-        el.innerHTML = '<b>' + esc(obj.message[0]) + ':</b> ' + esc(obj.message[1]);
+        el.innerHTML = '<b>' + esc(obj.clientSessionId) + ':</b> ' + esc(obj.respMessage);
     
         if (window.webkitNotifications) { //enable notification if supported
-            notification = window.webkitNotifications.createNotification("",esc(obj.message[0]),esc(obj.message[1]));
+            notification = window.webkitNotifications.createNotification("",esc(obj.clientSessionId),esc(obj.respMessage));
             notification.ondisplay = function() { console.log("Display notification"); };
             notification.onclose = function() { console.log("Close notification"); };
             notification.show(); // note the show()
         }
         document.getElementById('chat').appendChild(el);
         document.getElementById('chat').scrollTop = 1000000;
-
-
       }
       
       function send(val){
@@ -41,7 +41,8 @@
       var socket = new io.Socket(null, {port: 8080, rememberTransport: false});
       socket.connect();
       socket.on('message', function(obj){
-      	console.debug("Received msg ");
+      	console.debug("Received msg: ");
+      	console.log(obj);
       	message(obj);
       });
 
@@ -72,11 +73,12 @@ else {
       <input type="text" autocomplete="off" id="text"><input type="submit" value="Send">
     </form>
     <br/> 
-    <label for='ext' >Extension to monitor:</label><input type='text' name='ext' id='ext' value='500'/>   
+    <label for='ext' >Extension:</label><input type='text' name='ext' id='ext' value='500'/>
+    <label for='secret' >Secret:</label><input type='text' name='secret' id='secret' value='500'/>      
     <input type='button' id='login' value='Login'/>   
     <br/> 
-    <label for='extFrom' >Ext id from:</label><input type='text' name='extFrom' id='extFrom' value='500'/>
-    <label for='extToCall' >Extension to call:</label><input type='text' name='extToCall' id='extToCall' value='501'/>      
+    <label for='extFrom' >Call from:</label><input type='text' name='extFrom' id='extFrom' value='500'/>
+    <label for='extToCall' >to:</label><input type='text' name='extToCall' id='extToCall' value='501'/>      
     <input type='button' id='call' value='Call'/>
     <style>
       #chat { height: 300px; overflow: auto; width: 800px; border: 1px solid #eee; font: 13px Helvetica, Arial; }
@@ -94,10 +96,8 @@ document.querySelector('#enable').addEventListener('click', function() {
  if (window.webkitNotifications.checkPermission() == 0) { // 0 is PERMISSION_ALLOWED
     // function defined in step 2
     console.log("Notification allowed");
-    alert("Notification allowed");
   } else {
     console.log("Notification NOT allowed");
-    alert("Notification NOT allowed");
     window.webkitNotifications.requestPermission();
   }
 },false);
@@ -109,22 +109,23 @@ document.querySelector('#login').addEventListener('click', function() {
     document.getElementById('form').style.display='block';
     document.getElementById('chat').innerHTML = '';
     var extFrom =  document.querySelector('#ext').value;
-//  socket.send(ext);
-	socket.send({ extFrom: extFrom, action: "login" });
+    var secret =  document.querySelector('#secret').value;
+    
+	socket.send({ extFrom: extFrom, secret: secret, action: "login" });
 	console.log("sended login request from: " + extFrom);
 
 },false);
 
 document.querySelector('#call').addEventListener('click', function() {
 
+	// una tantum
 	document.getElementById('form').style.display='block';
     document.getElementById('chat').innerHTML = '';
     var extFrom =  document.querySelector('#extFrom').value;
     var extToCall =  document.querySelector('#extToCall').value;
-    console.log(extToCall);
-//  socket.send(extToCall);
+    
     socket.send({ extToCall: extToCall, extFrom: extFrom, action: "call_out_from_client" });
-    alert("sended extToCall From " + extFrom + " -> to " + extToCall);
+    console.log("sended call request from " + extFrom + " -> to " + extToCall);
       
 },false);
 

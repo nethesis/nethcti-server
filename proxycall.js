@@ -16,16 +16,23 @@ var asterisk_pass = 'vtiger';
 var asterisk_host = 'amaduzzi';
 
 
+var ResponseMessage = function(clientSessionId, respMessage){
+	this.clientSessionId = clientSessionId;
+	this.respMessage = respMessage;
+}
 
 var dataReq = require("./dataCollector.js");
 var proReq = require("./profiler.js");
+var authReq = require("./authenticator.js");
 
 var profiler = new proReq.Profiler();
 console.log("Profiler object created");
-console.log(profiler.getUserProfile("501"));
 
 var dataCollector = new dataReq.DataCollector();
 console.log("DataCollector object created");
+
+var authenticator = new authReq.Authenticator();
+console.log("Authenticator object created");
 
 
 
@@ -47,9 +54,15 @@ am.addListener('servererror', function(err) {
 });
 
 am.addListener('dialing', function(from, to) {
-    
+
     buffer = [];
-	
+	console.log("\n\n");
+	console.log("from");
+	console.log(from);
+	console.log("\n\n");
+	console.log("to");
+	console.log(to);
+	console.log("\n\n");
 	sys.debug("Dial: " + sys.inspect(from) + " -> "+ sys.inspect(to));
 	/* from=
 	{ 	name: 'SIP/501',
@@ -61,24 +74,22 @@ am.addListener('dialing', function(from, to) {
   	}
   */
   
-  	console.log(clients);
+  	//console.log(clients);
 	//server.notify(to.number,from.number);
-    clients.forEach(function(c) {
-    	console.log("\n");
-    	console.log(c.extension);
-    	console.log("\n");
-        sys.debug(to.number + " vs " + c.extension);
-        if(c.extension == to.number)
-        {
-            var message = "Call from "+to.number+" to "+from.number;
-            var msg = { message: [c.sessionId, message] };
-            buffer.push(msg);
-            if (buffer.length > 15) buffer.shift();
-            sys.debug("Dial: notify "+c.sessionId);
-            //c.broadcast(msg);
-            c.send(msg);
-        }
-   	});
+	if(to!=undefined){
+	    clients.forEach(function(c) {
+	    	console.log("\n");
+	    	console.log(c.extension);
+	    	console.log("\n");
+	        sys.debug(to.number + " vs " + c.extension);
+	        if(c.extension == to.number)
+	        {
+	            var msg = "Call from " + from.number + " to " + to.number;
+	            c.send(new ResponseMessage(c.sessionId, msg));
+	            console.log("Notify of calling has been sent to " + to.number);
+	        }
+	   	});
+	}
 });
 
 am.addListener('callconnected', function(from, to) {
@@ -100,8 +111,16 @@ am.addListener('unhold', function(participant) {
 });
 
 am.addListener('hangup', function(participant, code, text) {
-	//var other = am.getParticipant(participant['with']);
-	//sys.puts("CLIENT: " + participant.number + " (" + participant.name + ") has hung up. Reason: " + code + " (" + text + ")");
+	var other = am.getParticipant(participant['with']);
+	sys.puts("CLIENT: " + participant.number + " (" + participant.name + ") has hung up. Reason: " + code + " (" + text + ")");
+
+	console.log("participant");
+	console.log(participant);
+	console.log("code");
+	console.log(code);
+	console.log("text");
+	console.log(text);
+	
 });
 
 am.addListener('callreport', function(report) {
@@ -158,6 +177,11 @@ var io = io.listen(server)
 
 io.on('connection', function(client){
 
+	// send acknowledgment of established connection 
+	client.send(new ResponseMessage(client.sessionId, "connected"));
+	console.log("aknowledgment to connection has been sent");
+
+	//
 	client.on('message', function(message){
 
   		var extFrom = message.extFrom;
@@ -166,74 +190,67 @@ io.on('connection', function(client){
   		// manage call_out_from_client
   		if(action=="call_out_from_client"){
   			
-  			console.log("generated request for call_out_from_client: " + extFrom + " -> " + extToCall);		
+  			var extToCall = message.extToCall;
+  			console.log("received request for call_out_from_client: " + extFrom + " -> " + extToCall);		
   			
   			// check if the user has permit of dial out
   			if(profiler.testPermitActionUser(extFrom, "call_out")){
   			
-  				console.log(extFrom + " enabled to calling out: execute calling...");
+  				console.log("[" + extFrom + "] enabled to calling out: execute calling...");
   				
-  				var extToCall = message.extToCall;
-  				
+  				// create call action for asterisk server
   				var actionCall = {
 					action: 'originate',
-					channel: 'SIP/' + extToCall,
-					exten: extFrom,
+					channel: 'SIP/' + extFrom,
+					exten: extToCall,
 					context: 'from-internal',
 					priority: 1,
-					callerid: 'CRM' + extFrom,
-					account: extFrom,
+					callerid: 'CTI' + extToCall,
+					account: extToCall,
 					timeout: 30000
 				};
+				// send action to asterisk
 				am.send(actionCall, function () {
-					// something to execute
-					console.log("FATTO");
+					console.log("call action has been sent to asterisk: " + extFrom + " -> " + extToCall);
 				});
-				
   			}
   			else{
 	  			console.log("ATTENTION: " + extFrom + " is not enabled to calling out !");
+	  			client.send(new ResponseMessage(client.sessionId, "Sorry: you don't have permission to call !"));
   			}
   		}
   		// manage request of new client connection
   		else if(action=="login"){
   		
+  			console.log("received login request from exten [" + extFrom + "] with secret [" + message.secret + "]");
+  	
   			
-  			console.log("received login request from " + extFrom);
+  			if(authenticator.authenticateUser(extFrom, message.secret)){
   			
-  			// check if the user is already logged in
-  			if(!testAlreadyLoggedUser(extFrom)){
+  				// check if the user is already logged in
+	  			if(!testAlreadyLoggedUser(extFrom)){
+	  			
+	  				clients.push(client);
+		  			console.log("client [" + extFrom + "] logged in");
+		  			console.log("clients length  = " + clients.length);
+	  			
+	  				client.extension = extFrom;
+	  				client.send(new ResponseMessage(client.sessionId, "login succesfully"));
+	  				console.log("Acknowledgment to login action has been sent to [" + extFrom + "]");
+			    }
+			    else{
+			    	console.log("Client [" + extFrom + "] already logged in !");
+			    	console.log("clients length = " + clients.length);
+			    	client.send(new ResponseMessage(client.sessionId, "Sorry, but client [" + extFrom + "] is 	already logged in"));
+		    	}
+  			}
+  			else{
+  				console.log("Authentication failed: [" + extFrom + "] with secret [" + message.secret + "]");
+  				client.send(new ResponseMessage(client.sessionId, "Sorry, authentication failed !"));
+  			}
+
   			
-  				clients.push(client);
-	  			console.log("logged new client: clients.length = " + clients.length);
   			
-	  			var msg = { message: [client.sessionId, message] };
-	  			console.log(msg.message);
-		    	buffer.push(msg);
-		    	if (buffer.length > 15) 
-		    		buffer.shift();
-		    
-			    
-			    /*
-			    { message: [ '6159797539003193', { extFrom: '500', action: 'login' } ] }
-     			*/
-			    console.log("msg.message[0] = " + msg.message[0]);
-			    console.log("msg.message[1] = " + msg.message[1]);
-			    console.log(typeof(msg));
-			    console.log(msg);
-			    console.log(msg.message);
-			    console.log(typeof(msg.message));
-			    
-			    
-			    client.extension = msg.message[1].extFrom;
-			    msg.message[1]
-			    client.broadcast(msg);
-			    console.log("the response '" + msg + "' to connection request has been sent");
-			    console.log(msg.message);
-		    }
-		    else{
-		    	console.log(extFrom + " already logged in !");
-		    }
   		}
   		
 		
@@ -242,12 +259,29 @@ io.on('connection', function(client){
   	});
 
   	client.on('disconnect', function(){
-    	client.broadcast({ announcement: client.sessionId + ' disconnected' });
+  		removeClient(client.sessionId);
+  		console.log("Client " + client.sessionId + " disconnected");
+  		console.log("clients length = " + clients.length);
   	});
+  	
+  
 });
 
 am.connect();
 
+
+/*
+ * Remove client with specified sessionId
+ */ 
+removeClient = function(sessionId){
+	for(i=0; i<clients.length; i++){
+		if(clients[i].sessionId==sessionId){
+			console.log("Removed client " + sessionId + " from registered client list");
+			clients.splice(i, 1);
+			return;
+		}
+	}
+}
 
 
 testAlreadyLoggedUser = function(exten){
