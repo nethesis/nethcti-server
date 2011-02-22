@@ -1,0 +1,32 @@
+<html>
+	<head>
+		<title>CustomerCard</title>
+	</head>
+	<body>
+		
+		<input type="button" id="customerCard" value="View customer card"/>
+		<script>
+			
+			var riferimento = localStorage.getItem('riferimento');
+			//document.write("refToRecover = " + refToRecover);
+			
+			
+			var obj = JSON.parse(riferimento);
+			document.write(obj);
+			
+			// Retrieve the object from storage
+			//var socket = JSON.parse(localStorage.getItem('socket'));
+			//var socket = dojox.json.ref.fromJson(localStorage.getItem('socket'));
+			
+			
+			
+			//document.write('retrievedObject: ', typeof(socket));
+			
+		</script>
+		
+	</body>
+</html>
+
+
+
+

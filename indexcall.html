@@ -5,10 +5,18 @@
         
     <script src="/json.js"></script> <!-- for ie -->
     <script src="/lib/socket.io-client/socket.io.js"></script>
+    <script src="/lib/dojo-release-1.5.0/dojo/dojo.js"></script>
+    <script src="/lib/dojo-release-1.5.0/dojox/json/ref.js"></script>
+    <script src="/lib/dojo-release-1.5.0/dojo/date/stamp.js"></script>
   </head>
   <body>
     
     <script>
+
+		function Utente(nome){
+				this.nome = nome;
+			}
+		
 	
       function message(obj){
         
@@ -24,6 +32,43 @@
         document.getElementById('chat').appendChild(el);
         document.getElementById('chat').scrollTop = 1000000;
       }
+      
+      
+      function messageHTML(socket){
+        
+    	
+        if (window.webkitNotifications) { //enable notification if supported
+
+			var obj = {'one': '1', 'two':'2'};
+			obj.m = obj;
+			var ref = dojox.json.ref.toJson(socket);
+			localStorage.setItem('riferimento', ref);
+			
+			
+			
+			/*
+			var obj = {one: "1", two: "2"};
+			obj.me = obj;
+
+			var myJsonString = dojox.json.ref.toJson(obj);
+			//localStorage.setItem('socket', JSON.stringify(obj));
+			localStorage.setItem('socket', myJsonString);
+			*/
+			/*
+			console.log("\n\nsocket = ");
+			console.log(typeof(socket));
+			console.log(socket);
+			var socketStr = dojox.json.ref.toJson(socket);
+			localStorage.setItem('socket', socketStr);
+			*/
+            notification = window.webkitNotifications.createHTMLNotification("./notificationCustomerCard.html");
+            notification.ondisplay = function() { console.log("Display notification"); };
+            notification.onclose = function() { console.log("Close notification"); };
+            notification.show(); // note the show()
+        }
+      }
+      
+	messageHTML("ciao");
       
       function send(val){
         var val = document.getElementById('text').value;
@@ -43,8 +88,16 @@
       socket.on('message', function(obj){
       	console.debug("Received msg: ");
       	console.log(obj);
-      	message(obj);
+      	if(obj.typeMessage=="dialing"){
+      		console.log("dialing: HTML notification");
+      		messageHTML(socket);
+      	}
+      	else{
+	      	console.log("normal notification");
+	      	message(obj);
+	    }
       });
+
 
 ///notifications
 function createNotificationInstance(options) {
@@ -61,6 +114,10 @@ if (window.webkitNotifications) {
 else {
   console.log("Notifications are not supported for this Browser/OS version yet.");
 }
+
+
+
+
     </script>
     
     <h2>Sample Asterisk call notification</h2>
@@ -80,6 +137,10 @@ else {
     <label for='extFrom' >Call from:</label><input type='text' name='extFrom' id='extFrom' value='500'/>
     <label for='extToCall' >to:</label><input type='text' name='extToCall' id='extToCall' value='501'/>      
     <input type='button' id='call' value='Call'/>
+    <br/>
+    <button onclick="ShowNotification()">Notify me!</button>
+<button onclick="ShowHTMLNotification()">Notify me! (HTML)</button>
+<br/>
     <style>
       #chat { height: 300px; overflow: auto; width: 800px; border: 1px solid #eee; font: 13px Helvetica, Arial; }
       #chat p { padding: 8px; margin: 0; }
@@ -128,7 +189,6 @@ document.querySelector('#call').addEventListener('click', function() {
     console.log("sended call request from " + extFrom + " -> to " + extToCall);
       
 },false);
-
 
     </script> 
   </body>

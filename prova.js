@@ -1,7 +1,9 @@
-userAuth = {501: "pwd1", 502:"pwd2"};
-var u = "502";
-console.log(userAuth);
+var testObject = { 'one': 1, 'two': 2, 'three': 3 };
 
-userAuth[503] = "pwd3";
-console.log(userAuth);
+// Put the object into storage
+localStorage.setItem('testObject', JSON.stringify(testObject));
 
+// Retrieve the object from storage
+var retrievedObject = localStorage.getItem('testObject');
+
+console.log('retrievedObject: ', JSON.parse(retrievedObject));

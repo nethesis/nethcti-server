@@ -16,8 +16,9 @@ var asterisk_pass = 'vtiger';
 var asterisk_host = 'amaduzzi';
 
 
-var ResponseMessage = function(clientSessionId, respMessage){
+var ResponseMessage = function(clientSessionId, typeMessage, respMessage){
 	this.clientSessionId = clientSessionId;
+	this.typeMessage = typeMessage;
 	this.respMessage = respMessage;
 }
 
@@ -56,13 +57,6 @@ am.addListener('servererror', function(err) {
 am.addListener('dialing', function(from, to) {
 
     buffer = [];
-	console.log("\n\n");
-	console.log("from");
-	console.log(from);
-	console.log("\n\n");
-	console.log("to");
-	console.log(to);
-	console.log("\n\n");
 	sys.debug("Dial: " + sys.inspect(from) + " -> "+ sys.inspect(to));
 	/* from=
 	{ 	name: 'SIP/501',
@@ -74,18 +68,19 @@ am.addListener('dialing', function(from, to) {
   	}
   */
   
-  	//console.log(clients);
-	//server.notify(to.number,from.number);
 	if(to!=undefined){
 	    clients.forEach(function(c) {
-	    	console.log("\n");
-	    	console.log(c.extension);
-	    	console.log("\n");
 	        sys.debug(to.number + " vs " + c.extension);
 	        if(c.extension == to.number)
 	        {
-	            var msg = "Call from " + from.number + " to " + to.number;
-	            c.send(new ResponseMessage(c.sessionId, msg));
+	        
+	        	var nameFrom = dataCollector.getCustomerData(from.number);
+	        	
+	        	
+	            var msg = "Call from " + from.number + " to " + to.number + "\n\r" +
+            		"This is an example of customer card:\n\r" +
+            		"the name is: " + nameFrom;
+	            c.send(new ResponseMessage(c.sessionId, "dialing", msg));
 	            console.log("Notify of calling has been sent to " + to.number);
 	        }
 	   	});
@@ -113,13 +108,6 @@ am.addListener('unhold', function(participant) {
 am.addListener('hangup', function(participant, code, text) {
 	var other = am.getParticipant(participant['with']);
 	sys.puts("CLIENT: " + participant.number + " (" + participant.name + ") has hung up. Reason: " + code + " (" + text + ")");
-
-	console.log("participant");
-	console.log(participant);
-	console.log("code");
-	console.log(code);
-	console.log("text");
-	console.log(text);
 	
 });
 
@@ -136,6 +124,9 @@ server = http.createServer(function(req, res){
   sys.debug(path);
   
   switch (path){
+  	case '/lib/dojo-release-1.5.0/dojo/date/stamp.js':
+	case '/lib/dojo-release-1.5.0/dojox/json/ref.js':
+  	case '/lib/dojo-release-1.5.0/dojo/dojo.js':
     case '/json.js':
     case '/lib/socket.io-client/socket.io.js':
       fs.readFile(__dirname + path, function(err, data){
@@ -146,7 +137,6 @@ server = http.createServer(function(req, res){
         res.end();
       });
      break;
-
     case '/indexcall.html':
     case '/':
       path = "/indexcall.html";
@@ -157,6 +147,17 @@ server = http.createServer(function(req, res){
         res.end();
       });
     break;
+    case '/notificationCustomerCard.html':
+    	path = "/notificationCustomerCard.html";
+      	fs.readFile(__dirname + path, function(err, data){
+        	if (err) return send404(res);
+	        res.writeHead(200, {'Content-Type': 'text/html'});
+	        res.write(data, 'utf8');
+	        res.end();
+	    });
+    break;
+    
+    
    
     default: send404(res);
   }
@@ -178,7 +179,7 @@ var io = io.listen(server)
 io.on('connection', function(client){
 
 	// send acknowledgment of established connection 
-	client.send(new ResponseMessage(client.sessionId, "connected"));
+	client.send(new ResponseMessage(client.sessionId, "connection", "connected"));
 	console.log("aknowledgment to connection has been sent");
 
 	//
@@ -187,8 +188,11 @@ io.on('connection', function(client){
   		var extFrom = message.extFrom;
   		var action = message.action;
   		
+  		var actionLogin = "login";
+  		var actionCall = "call_out_from_client";
+  		
   		// manage call_out_from_client
-  		if(action=="call_out_from_client"){
+  		if(action==actionCall){
   			
   			var extToCall = message.extToCall;
   			console.log("received request for call_out_from_client: " + extFrom + " -> " + extToCall);		
@@ -216,11 +220,11 @@ io.on('connection', function(client){
   			}
   			else{
 	  			console.log("ATTENTION: " + extFrom + " is not enabled to calling out !");
-	  			client.send(new ResponseMessage(client.sessionId, "Sorry: you don't have permission to call !"));
+	  			client.send(new ResponseMessage(client.sessionId, actionCall, "Sorry: you don't have permission to call !"));
   			}
   		}
   		// manage request of new client connection
-  		else if(action=="login"){
+  		else if(action==actionLogin){
   		
   			console.log("received login request from exten [" + extFrom + "] with secret [" + message.secret + "]");
   	
@@ -235,18 +239,18 @@ io.on('connection', function(client){
 		  			console.log("clients length  = " + clients.length);
 	  			
 	  				client.extension = extFrom;
-	  				client.send(new ResponseMessage(client.sessionId, "login succesfully"));
+	  				client.send(new ResponseMessage(client.sessionId, actionLogin, "login succesfully"));
 	  				console.log("Acknowledgment to login action has been sent to [" + extFrom + "]");
 			    }
 			    else{
 			    	console.log("Client [" + extFrom + "] already logged in !");
 			    	console.log("clients length = " + clients.length);
-			    	client.send(new ResponseMessage(client.sessionId, "Sorry, but client [" + extFrom + "] is 	already logged in"));
+			    	client.send(new ResponseMessage(client.sessionId, actionLogin, "Sorry, but client [" + extFrom + "] is 	already logged in"));
 		    	}
   			}
   			else{
   				console.log("Authentication failed: [" + extFrom + "] with secret [" + message.secret + "]");
-  				client.send(new ResponseMessage(client.sessionId, "Sorry, authentication failed !"));
+  				client.send(new ResponseMessage(client.sessionId, actionLogin, "Sorry, authentication failed !"));
   			}
 
   			

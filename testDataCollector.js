@@ -1,5 +1,5 @@
 var dataReq = require("./dataCollector.js");
-var exten = "700";
+var exten = "500";
 
 console.log("TEST with exten = " + exten);
 
@@ -31,4 +31,11 @@ console.log("RES = ");
 console.log(resultArray);
 console.log("\n");
 */
+
+
+console.log("\nTEST getCustomerData " + exten);
+var res = dataCollector.getCustomerData(exten);
+console.log("RES = ");
+console.log(res);
+console.log("\n");
 

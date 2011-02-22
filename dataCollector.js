@@ -43,8 +43,17 @@ exports.DataCollector = function(){
 	this.getAllUserSQLProfiles = function(){ return listUserSQLProfiles; }
 	this.getUserSQLProfile = function(exten){	return getUserSQLProfile(exten); }
 	this.executeSQLQueriesForUser = function(exten) { return executeSQLQueriesForUser(exten); }
+	this.getCustomerData = function(exten) { return getCustomerData(exten); }
 }
 
+
+
+getCustomerData = function(exten){
+
+	var query = "select name from cti.clients where exten='" + exten + "';";
+	var query = new SQLQuery("cat", "localhost", "3306", "mysql", "root", "Amaduzzi,1234", "clients", query);
+	return executeSQLQuery(query)[0].name;
+}
 
 /*
  * 
@@ -145,27 +154,7 @@ executeSQLQuery = function(currentSQLQueryObj){
 	// execute query to microsoft sql server
 	else if(currentSQLQueryObj.dbType=="mssql"){
 	
-	/*
-		var connection = new ActiveXObject("ADODB.Connection") ;
-
-		var connectionstring="Data Source=&lt;server&gt;;Initial Catalog=&lt;catalog&gt;;User ID=&lt;user&gt;;Password=&lt;password&gt;;Provider=SQLOLEDB";
-
-		connection.Open(connectionstring);
-		var rs = new ActiveXObject("ADODB.Recordset");
-
-		rs.Open("SELECT * FROM table", connection);
-		rs.MoveFirst
-		while(!rs.eof)
-		{
-		   document.write(rs.fields(1));
-		   rs.movenext;
-		}
-
-		rs.close;
-		connection.close;
-
-	*/
-		console.log("connection to mssql TO IMPLEMENT");		
+		console.log("connection to mssql TO IMPLEMENT !!!!!!!");		
 	}
 	
 }
@@ -286,18 +275,6 @@ function initSQLProfiles(){
 				listUsersArray = listUsersArray[1].split(",");
 			}
 		}
-		/*
-		console.log(categoryName);
-		console.log(dbHost);
-		console.log(dbPort);
-		console.log(dbType);
-		console.log(dbUsername);
-		console.log(dbPassword);
-		console.log(dbName);
-		console.log(dbQuerySQLStr);
-		console.log(listUsersArray);
-		console.log("\n");
-		*/
 		// initialize categories in memory if they aren't already present
 		initUserSQLProfilesInMemory(categoryName, dbHost, dbPort, dbType, dbUsername, dbPassword, dbName, dbQuerySQLStr, listUsersArray);
 	}
