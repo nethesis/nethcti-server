@@ -1,19 +1,36 @@
 <html>
-<head></head>
+<head>
+</head>
 <body>
 <script>
-var testObject = { 'one': 1, 'two': 2, 'three': 3 };
 
-// Put the object into storage
-localStorage.setItem('testObject', JSON.stringify(testObject));
+xmlHttp = new XMLHttpRequest();
+xmlHttp.onreadystatechange = ProcessRequest;
+xmlHttp.open( "GET", "json.js", true );
+xmlHttp.send( null );
+	
+function ProcessRequest() 
+{
+    if ( xmlHttp.readyState == 4 && xmlHttp.status == 200 ) 
+    {
+        if ( xmlHttp.responseText == "Not found" ) 
+        {
+            document.getElementById( "TextBoxCustomerName"    ).value = "Not found";
+            document.getElementById( "TextBoxCustomerAddress" ).value = "";
+        }
+        else
+        {
+            var info = eval ( "(" + xmlHttp.responseText + ")" );
 
-// Retrieve the object from storage
-var retrievedObject = localStorage.getItem('testObject');
-retrievedObject = JSON.parse(retrievedObject);
+            // No parsing necessary with JSON!        
+            document.getElementById( "TextBoxCustomerName"    ).value = info.jsonData[ 0 ].cmname;
+            document.getElementById( "TextBoxCustomerAddress" ).value = info.jsonData[ 0 ].cmaddr1;
+        }                    
+    }
+}
 
-//console.log('retrievedObject: ', JSON.parse(retrievedObject));
-//console.log("pppppp = " + JSON.parse(retrievedObject)["one"]);
-console.log("two = " + retrievedObject["two"]);
 </script>
 </body>
 </html>
+
+

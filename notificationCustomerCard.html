@@ -3,29 +3,43 @@
 		<title>CustomerCard</title>
 	</head>
 	<body>
-		
-		<input type="button" id="customerCard" value="View customer card"/>
+		<a href="customerCard.html?exten=500" target="_blank" rel="noreferrer">Open in new tab and new process</a>
+		<input type="button" value="cliccami" onClick="esempio1()">
 		<script>
 			
-			var riferimento = localStorage.getItem('riferimento');
-			//document.write("refToRecover = " + refToRecover);
+			var url = window.location.search.substring(1);
+			urlArr = url.split("&");
+			var server = urlArr[0]; 
+			var port = urlArr[1];
+			var user = urlArr[2];
 			
+			function CreateXmlHttpReq(handler) {
+				var xmlhttp = null;
+				xmlhttp = new XMLHttpRequest();
+				xmlhttp.onreadystatechange = handler;
+				return xmlhttp;
+			}
 			
-			var obj = JSON.parse(riferimento);
-			document.write(obj);
+			function esempio1(){
+				var myRequest = CreateXmlHttpReq(myHandler);
+				myRequest.open("GET","customerCard.html?exten=500",true);
+				myRequest.send(null);
+			}
 			
-			// Retrieve the object from storage
-			//var socket = JSON.parse(localStorage.getItem('socket'));
-			//var socket = dojox.json.ref.fromJson(localStorage.getItem('socket'));
+			function myHandler() {
+				if (myRequest.readyState == 4 && myRequest.status == 200) {
+					document.write(myRequest.responseText);
+					alert(myRequest.responseText);
+				}
+			}
 			
-			
-			
-			//document.write('retrievedObject: ', typeof(socket));
-			
+			//
+			document.write("fine");
 		</script>
 		
 	</body>
 </html>
+
 
 
 

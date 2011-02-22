@@ -44,9 +44,25 @@ exports.DataCollector = function(){
 	this.getUserSQLProfile = function(exten){	return getUserSQLProfile(exten); }
 	this.executeSQLQueriesForUser = function(exten) { return executeSQLQueriesForUser(exten); }
 	this.getCustomerData = function(exten) { return getCustomerData(exten); }
+	this.getCustomerCard = function(exten) { return getCustomerCard(exten); }
 }
 
 
+
+getCustomerCard = function(exten){
+
+	var user = getUserSQLProfile(exten);
+	var listSQLQueriesArray = user.listSQLQueriesArray;
+	for(i=0; i<listSQLQueriesArray.length; i++){
+		var tempSQLQuery = listSQLQueriesArray[i];
+		if(tempSQLQuery.category=="customer_card"){
+			tempSQLQuery.sqlQueryStr = tempSQLQuery.sqlQueryStr.replace("$EXTEN", exten);
+			return executeSQLQuery(tempSQLQuery);
+		}
+	}
+	
+	return undefined;
+}
 
 getCustomerData = function(exten){
 
@@ -266,7 +282,7 @@ function initSQLProfiles(){
 			// initialize dbQuerySQL
 			else if(tempCategoryArray[token].indexOf("query") != -1){
 				var dbQuerySQLLineStr = tempCategoryArray[token];
-				dbQuerySQLStr = dbQuerySQLLineStr.split("=")[1];
+				dbQuerySQLStr = dbQuerySQLLineStr.split('"')[1];
 			}
 			// array with users
 			else if(tempCategoryArray[token].indexOf("users") != -1){

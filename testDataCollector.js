@@ -6,12 +6,12 @@ console.log("TEST with exten = " + exten);
 var dataCollector = new dataReq.DataCollector();
 console.log("DataCollector object created");
 
-/*
+
 //
 console.log("\nTEST printUserSQLProfiles:");
 dataCollector.printUserSQLProfiles();
 console.log("\n");
-
+/*
 //
 console.log("\nTEST getAllUserSQLProfiles");
 var allUserSQLProfiles = dataCollector.getAllUserSQLProfiles();
@@ -30,7 +30,7 @@ var resultArray = dataCollector.executeSQLQueriesForUser(exten);
 console.log("RES = ");
 console.log(resultArray);
 console.log("\n");
-*/
+
 
 
 console.log("\nTEST getCustomerData " + exten);
@@ -38,4 +38,12 @@ var res = dataCollector.getCustomerData(exten);
 console.log("RES = ");
 console.log(res);
 console.log("\n");
+*/
+
+console.log("\nTEST getCustomerCard " + exten);
+var res = dataCollector.getCustomerCard(exten);
+console.log("RES = ");
+console.log(res);
+console.log("\n");
+
 

@@ -35,10 +35,6 @@ exports.AsteriskManager = function (newconfig) {
 	};
 
 	this.send = function(req, cb) {
-		console.log("\n\n\nreq");
-		console.log(req);
-		console.log("\ncb");
-		console.log(cb);
 		var id = (new Date()).getTime();
 		actions[id] = {request: req, callback: cb};
 		var msg = "";

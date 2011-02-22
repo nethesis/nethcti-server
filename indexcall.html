@@ -5,9 +5,6 @@
         
     <script src="/json.js"></script> <!-- for ie -->
     <script src="/lib/socket.io-client/socket.io.js"></script>
-    <script src="/lib/dojo-release-1.5.0/dojo/dojo.js"></script>
-    <script src="/lib/dojo-release-1.5.0/dojox/json/ref.js"></script>
-    <script src="/lib/dojo-release-1.5.0/dojo/date/stamp.js"></script>
   </head>
   <body>
     
@@ -36,39 +33,23 @@
       
       function messageHTML(socket){
         
+        console.log("socket");
+        console.log(socket);
+        console.log(socket.host);
+        console.log(socket.options["port"]);
     	
         if (window.webkitNotifications) { //enable notification if supported
 
-			var obj = {'one': '1', 'two':'2'};
-			obj.m = obj;
-			var ref = dojox.json.ref.toJson(socket);
-			localStorage.setItem('riferimento', ref);
 			
 			
-			
-			/*
-			var obj = {one: "1", two: "2"};
-			obj.me = obj;
-
-			var myJsonString = dojox.json.ref.toJson(obj);
-			//localStorage.setItem('socket', JSON.stringify(obj));
-			localStorage.setItem('socket', myJsonString);
-			*/
-			/*
-			console.log("\n\nsocket = ");
-			console.log(typeof(socket));
-			console.log(socket);
-			var socketStr = dojox.json.ref.toJson(socket);
-			localStorage.setItem('socket', socketStr);
-			*/
-            notification = window.webkitNotifications.createHTMLNotification("./notificationCustomerCard.html");
+            notification = window.webkitNotifications.createHTMLNotification("./notificationCustomerCard.html?server=localhost&port=3306&user=501");
             notification.ondisplay = function() { console.log("Display notification"); };
             notification.onclose = function() { console.log("Close notification"); };
             notification.show(); // note the show()
         }
       }
       
-	messageHTML("ciao");
+
       
       function send(val){
         var val = document.getElementById('text').value;
