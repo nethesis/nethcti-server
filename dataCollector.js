@@ -43,20 +43,57 @@ exports.DataCollector = function(){
 	this.getAllUserSQLProfiles = function(){ return listUserSQLProfiles; }
 	this.getUserSQLProfile = function(exten){	return getUserSQLProfile(exten); }
 	this.executeSQLQueriesForUser = function(exten) { return executeSQLQueriesForUser(exten); }
-	this.getCustomerData = function(exten) { return getCustomerData(exten); }
-	this.getCustomerCard = function(exten) { return getCustomerCard(exten); }
+	this.getCustomerCard = function(extenApplicant, extenCustomerCard) { return getCustomerCard(extenApplicant, extenCustomerCard); }
+	this.testUserPermitCustomerCard = function(exten) { return testUserPermitCustomerCard(exten); }
 }
 
 
-
-getCustomerCard = function(exten){
+/*
+ * Test if the user exten has the authorization to view customer card. Therefore
+ * it check if the user has a query of category "customer_card".
+ */
+testUserPermitCustomerCard = function(exten){
 
 	var user = getUserSQLProfile(exten);
 	var listSQLQueriesArray = user.listSQLQueriesArray;
+	
 	for(i=0; i<listSQLQueriesArray.length; i++){
 		var tempSQLQuery = listSQLQueriesArray[i];
 		if(tempSQLQuery.category=="customer_card"){
 			tempSQLQuery.sqlQueryStr = tempSQLQuery.sqlQueryStr.replace("$EXTEN", exten);
+			return true;
+		}
+	}
+	
+	return false;
+}
+
+
+/*
+ * Return the customer card of client exten. If the user hasn't query to get 
+ * customer card, means that he doesn't has the right of access to custormer card.
+ * So, in this case, the function return an undefined.
+ */
+getCustomerCard = function(extenApplicant, extenCustomerCard){
+
+
+	console.log("\n\n");
+	console.log("extenApplicant = " + extenApplicant);
+	console.log("extenCustomerCard = " + extenCustomerCard);
+
+
+	var user = getUserSQLProfile(extenApplicant);
+	var listSQLQueriesArray = user.listSQLQueriesArray;
+	
+	console.log("listSQLQueriesArray of applicant " + extenApplicant + " = ");
+	console.log(listSQLQueriesArray);
+	
+	for(i=0; i<listSQLQueriesArray.length; i++){
+		var tempSQLQuery = listSQLQueriesArray[i];
+		if(tempSQLQuery.category=="customer_card"){
+			tempSQLQuery.sqlQueryStr = tempSQLQuery.sqlQueryStr.replace("$EXTEN", extenCustomerCard);
+			console.log("tempSQLQuery.sqlQueryStr = " + tempSQLQuery.sqlQueryStr);
+			
 			return executeSQLQuery(tempSQLQuery);
 		}
 	}
@@ -64,12 +101,6 @@ getCustomerCard = function(exten){
 	return undefined;
 }
 
-getCustomerData = function(exten){
-
-	var query = "select name from cti.clients where exten='" + exten + "';";
-	var query = new SQLQuery("cat", "localhost", "3306", "mysql", "root", "Amaduzzi,1234", "clients", query);
-	return executeSQLQuery(query)[0].name;
-}
 
 /*
  * 

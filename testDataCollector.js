@@ -1,17 +1,17 @@
 var dataReq = require("./dataCollector.js");
-var exten = "500";
+var exten = "501";
 
 console.log("TEST with exten = " + exten);
 
 var dataCollector = new dataReq.DataCollector();
 console.log("DataCollector object created");
 
-
+/*
 //
 console.log("\nTEST printUserSQLProfiles:");
 dataCollector.printUserSQLProfiles();
 console.log("\n");
-/*
+
 //
 console.log("\nTEST getAllUserSQLProfiles");
 var allUserSQLProfiles = dataCollector.getAllUserSQLProfiles();
@@ -31,19 +31,24 @@ console.log("RES = ");
 console.log(resultArray);
 console.log("\n");
 
-
-
-console.log("\nTEST getCustomerData " + exten);
-var res = dataCollector.getCustomerData(exten);
+//
+console.log("\nTEST testUserPermitCustomerCard " + exten);
+var res = dataCollector.testUserPermitCustomerCard(exten);
 console.log("RES = ");
 console.log(res);
 console.log("\n");
+
 */
 
-console.log("\nTEST getCustomerCard " + exten);
-var res = dataCollector.getCustomerCard(exten);
+
+//
+console.log("\nTEST getCustomerCard from applicant 500 for customer 501");
+var res = dataCollector.getCustomerCard("500", "501");
 console.log("RES = ");
 console.log(res);
 console.log("\n");
+
+
+
 
 

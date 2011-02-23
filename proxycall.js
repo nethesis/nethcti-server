@@ -1,6 +1,8 @@
 //var sys = require('sys'), 
 var ast = require('./asterisk'),
     net = require('net');
+var normal = require("./lib/normal-template/lib/normal-template");
+
 
 var http = require('http')
   , url = require('url')
@@ -14,7 +16,7 @@ var am;
 var asterisk_user = 'vtiger';
 var asterisk_pass = 'vtiger';
 var asterisk_host = 'amaduzzi';
-
+var pathOfCustomerCardHTML = "customerCard.html";
 
 var ResponseMessage = function(clientSessionId, typeMessage, respMessage){
 	this.clientSessionId = clientSessionId;
@@ -72,15 +74,15 @@ am.addListener('dialing', function(from, to) {
 	    clients.forEach(function(c) {
 	        sys.debug(to.number + " vs " + c.extension);
 	        if(c.extension == to.number)
-	        {
-	        
-	        	var nameFrom = dataCollector.getCustomerData(from.number);
-	        	
-	        	
-	            var msg = "Call from " + from.number + " to " + to.number + "\n\r" +
-            		"This is an example of customer card:\n\r" +
-            		"the name is: " + nameFrom;
-	            c.send(new ResponseMessage(c.sessionId, "dialing", msg));
+	        {	
+	            var msg = "Call from " + from.number + " to " + to.number;
+            	
+            	/* in this response the html is not passed, because the chrome desktop 
+            	 * notification of the client accept only one absolute or relative url. */
+            	var response = new ResponseMessage(c.sessionId, "dialing", msg);
+            	response.from = from.number;
+            	response.to = to.number;
+	            c.send(response);
 	            console.log("Notify of calling has been sent to " + to.number);
 	        }
 	   	});
@@ -143,19 +145,27 @@ server = http.createServer(function(req, res){
   
   switch (path){
   	
-  	case '/customerCard.html':
-  		path = "/customerCard.html";
-      	
-      	console.log("received customer card request for exten [" + params.exten + "]");
-  		aaa = dataCollector.getCustomerData(params.exten);
-  		console.log("YYYYYYYYY = " + aaa);
-      	
-      	fs.readFile(__dirname + path, function(err, data){
-	        if (err) return send404(res);
-	        res.writeHead(200, {'Content-Type': 'text/html'});
-	        res.write(data, 'utf8');
-	        res.end();
-	    });
+  	case '/getCustomerCard.html':
+      	console.log("received from [" + params.extenApplicant + "] customer card request for exten [" + params.extenCustomerCard + "]");
+  		var customerCard = dataCollector.getCustomerCard(params.extenApplicant, params.extenCustomerCard);
+  		customerCard[0].exten = params.extenCustomerCard;
+  		console.log("YYYYYYYYY = ");
+  		console.log(customerCard);
+  		
+  		
+  		/* customerCard is undefined if the user that has do the request
+  		 * hasn't the permission */
+		if(customerCard!=undefined){
+			var htmlPage = createCustomerCardHTMLPage(customerCard);
+			console.log("HTML PAGE IS ");
+			console.log(htmlPage);
+      		res.writeHead(200, {'Contet-Type': 'text/html'});
+	      	res.write(htmlPage, 'utf8');
+	      	res.end();
+		}
+		else{
+			send404(res);
+		}
   		break;
     case '/json.js':
     case '/lib/socket.io-client/socket.io.js':
@@ -177,23 +187,68 @@ server = http.createServer(function(req, res){
         res.end();
       });
     break;
-    case '/notificationCustomerCard.html':
-    	path = "/notificationCustomerCard.html";
-      	fs.readFile(__dirname + path, function(err, data){
-        	if (err) return send404(res);
-	        res.writeHead(200, {'Content-Type': 'text/html'});
-	        res.write(data, 'utf8');
-	        res.end();
-	    });
+    case '/getNotificationCalling.html':
+
+    	/* The notification of the calling is personalized: if the user has
+    	 * the authorization of view customer card, then he will receive the 
+    	 * notification with the possibility of view customer card (for example
+    	 * through a button or a link), otherwise he will receive only a simple
+    	 * notification of the calling.
+    	 */
+    	var from = params.from;
+    	var to = params.to;
+    	
+    	if(dataCollector.testUserPermitCustomerCard(to)){
+    		// the user has the authorization of view customer card
+    		console.log("The user " + to + " has the permit of view customer card");
+    		
+    		path = "/templateNotificationCallingWithCustomerCard.html";
+    		
+	      	fs.readFile(__dirname + path, function(err, data){
+	        	if (err) return send404(res);
+		        res.writeHead(200, {'Content-Type': 'text/html'});
+		        res.write(data, 'utf8');
+		        res.end();
+		    });
+    	}
+    	else{
+	    	// the user hasn't the authorization of view customer card
+	    	console.log("The user " + to + " hasn't the permit of view customer card");
+	    	path = "/templateNotificationCalling.html";
+	      	fs.readFile(__dirname + path, function(err, data){
+	        	if (err) return send404(res);
+		        res.writeHead(200, {'Content-Type': 'text/html'});
+		        res.write(data, 'utf8');
+		        res.end();
+		    });
+    	}
+    
+    	
 	    
 	    console.log(req.socket.remoteAddress+ " - ["+new Date().toString()+"] - \""+req.method+" "+req.url+" HTTP/"+req.httpVersion+"\" - \""+req.headers["user-agent"]+"\""); 
     break;
     
-    
-   
     default: send404(res);
   }
 }),
+
+
+createCustomerCardHTMLPage = function(customerCard){
+	
+	var content = fs.readFileSync(pathOfCustomerCardHTML, 'utf8');
+	console.log(content);
+	
+	template = normal.compile(content);
+	
+	var data = {
+		exten: customerCard[0].exten,
+		name: customerCard[0].name
+	};
+	
+	var html = template(data);
+	console.log(html);
+	return html;
+}
 
 send404 = function(res){
   res.writeHead(404);

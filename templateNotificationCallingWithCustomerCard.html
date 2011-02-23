@@ -1,0 +1,28 @@
+<html>
+	<head>
+		<title>Notification calling</title>
+	</head>
+	<body>
+	
+		<script>
+		
+			var url = window.location.search.substring(1);
+			urlArray = url.split("&");
+			var resp = urlArray[4].split("=")[1];
+			while(resp.indexOf('%20')!=-1)
+				resp = resp.replace(/%20/, ' ');
+			
+			document.write(resp);
+			
+		</script>
+	
+		<input type="button" value="Show customer card" onClick="window.open('getCustomerCard.html?extenApplicant=500&extenCustomerCard=501');" target="_blank">
+
+		
+	</body>
+</html>
+
+
+
+
+

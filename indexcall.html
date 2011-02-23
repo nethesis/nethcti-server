@@ -31,18 +31,24 @@
       }
       
       
-      function messageHTML(socket){
+      function messageHTML(socket, respMessage){
         
         console.log("socket");
         console.log(socket);
         console.log(socket.host);
         console.log(socket.options["port"]);
     	
+    	var host = socket.host;
+    	var port = socket.options["port"];
+    	console.log("port = " + port);
+    	console.log(typeof(port));
+    	
         if (window.webkitNotifications) { //enable notification if supported
-
 			
-			
-            notification = window.webkitNotifications.createHTMLNotification("./notificationCustomerCard.html?server=localhost&port=3306&user=501");
+			var reqUrl = "./getNotificationCalling.html?server=" + host + "&port=" + port + "&from=" + respMessage.from + "&to=" + respMessage.to + "&respMessage=" + respMessage.respMessage;
+			console.log("reqUrl = " + reqUrl);
+			console.log(typeof(reqUrl));
+            notification = window.webkitNotifications.createHTMLNotification(reqUrl);
             notification.ondisplay = function() { console.log("Display notification"); };
             notification.onclose = function() { console.log("Close notification"); };
             notification.show(); // note the show()
@@ -69,9 +75,10 @@
       socket.on('message', function(obj){
       	console.debug("Received msg: ");
       	console.log(obj);
+      	
       	if(obj.typeMessage=="dialing"){
       		console.log("dialing: HTML notification");
-      		messageHTML(socket);
+      		messageHTML(socket, obj);
       	}
       	else{
 	      	console.log("normal notification");
