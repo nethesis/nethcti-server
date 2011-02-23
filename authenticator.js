@@ -2,28 +2,24 @@ var fs = require("fs");
 var sys = require("sys");
 var configFilename = "sip_additional.conf";
 
-userAuth = {};
+// list of user with thier password. The user is the key and the password is the value
+userAuthProfiles = {};
+
+
 
 /*
  * Constructor
  */
 exports.Authenticator = function(){
-	initUserAuth();
+	inituserAuthProfiles();
 	this.authenticateUser = function(user, secret){ return authenticateUser(user, secret); }
-	/*
-	this.getUserProfiles = function(){ return listUserProfiles; }
-	this.getUserProfile = function(exten){	return getUserProfile(exten); }
-	this.getUserCategory = function(exten){	return getUserCategory(exten); }
-	this.getUserPermitActions = function(exten){	return getUserPermitActions(exten); }
-	this.getUserDenyActions = function(exten){	return getUserDenyActions(exten); }
-	this.printUserProfiles = function(){ printListUserProfiles(); }
-	this.testPermitActionUser = function(exten, permit){ return testPermitActionUser(exten, permit); }
-	*/
 }
 
 
-
-function initUserAuth(){
+/*
+ * Initialized all information about user authentication
+ */
+function inituserAuthProfiles(){
 
 	// read file
 	var users = fs.readFileSync(configFilename, "UTF-8", function(err, data) {
@@ -61,17 +57,19 @@ function initUserAuth(){
 			}
 		}
 		
-		userAuth[username] = secret;
+		userAuthProfiles[username] = secret;
 	}
 }
 
-
+/*
+ * Return true if the specified user and secret corresponding to 
+ * initialized user authentication profile.
+ */
 authenticateUser = function(user, secret){
 
-	if(userAuth[user]==secret)
+	if(userAuthProfiles[user]==secret)
 		return true;
 	return false;
-	
 }
 
 

@@ -1,1 +1,30 @@
-1) Ordine qualsiasi di definizione
+SINTASSI:
+
+1) Il file è composto da categorie, espresse tra parentesi quadre.
+
+2) Ogni categoria deve riportare la lista delle azioni negate (deny), la lista delle azioni permesse (permit) e la lista degli utenti che vi appartengono (users).
+
+3) L'ordine con cui vengono specificate non è importante, però i dati relativi ad una gategoria devono essere specificati subito dopo essa.
+
+
+
+
+ASSUNZIONI:
+
+1) Un utente può appartenere ad una sola categoria.
+Se si vuole che un utente appartenga a più categorie, bisgona stabilire in che modo trattare
+i permessi. Infatti un utente presente in due categorie potrebbe avere lo stesso diritto
+permesso in una categoria e negato nell'altra.
+
+2) Un diritto ad un'azione può comparire solamente o nella lista delle azioni permesse o in quella delle azioni negate.
+
+3) Nella lista delle azioni permesse è possibile inserire il permesso "all". In questo caso l'utente è abilitato all'esecuzione di qualsiasi azione. Attenzione ad un caso particolare: se "all" compare tra i permessi concessi ad un utente, ma nella lista delle azioni negate compare una o più azioni, allora quest'ultime saranno negate. Questo espediente consente di esprimere rapidamente il concetto di permettere qualsiasi tipo di azione tranne quelle specificate.
+
+
+
+
+SVILUPPI FUTURI:
+ 
+1) Trattare più approfonditamente i permessi espressi:
+	a) trattare il caso in cui venga espresso "all" tra i permessi negati e solo alcuni permessi tra quelli concessi.
+	b) emettere delle eccezioni nel caso in cui le regole siano specificate male: ad esempio quando compare "all" sia tra i permessi concessi sia tra quelli negati.

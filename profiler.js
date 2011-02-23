@@ -2,7 +2,9 @@ var fs = require("fs");
 var sys = require("sys");
 var configFilename = "profiles.conf";
 
-//listUserProfiles = [];
+/* It's the list of user profiles expressed as hash table of key and value.
+ * The key is the exten of the user and its value is the object UserProfile.
+ */
 listUserProfiles = {};
 
 // Object that represents the profile of the user.

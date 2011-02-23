@@ -1,5 +1,5 @@
 var proReq = require("./profiler.js");
-var exten = "700";
+var exten = "500";
 
 console.log("TEST with exten = " + exten);
 
@@ -8,27 +8,40 @@ console.log("Profiler object created");
 
 /*
 // print all user profiles
-console.log("\nALL USER PROFILES ARE:");
+console.log("\nTEST printUserProfiles");
 profiler.printUserProfiles();
 console.log("\n");
 
-console.log("TEST with exten = " + exten);
-// print one user profile
+//
+console.log("\nTEST getUserProfile");
 var userProfile = profiler.getUserProfile(exten);
-console.log("getUserProfile: " + userProfile);
-
-// print user permit actions
-var userPermitActions = profiler.getUserPermitActions(exten)
-console.log("getUserPermitActions: " + userPermitActions);
-
-// print user deny actions
-var userDenyActions = profiler.getUserDenyActions(exten) 
-console.log("getUserDenyActions: " + userDenyActions);
+console.log("RES:");
+console.log(userProfile);
+console.log("\n");
 
 // print user category name
+console.log("\nTEST getUserCategory");
 var categoryName = profiler.getUserCategory(exten);
-console.log("getUserCategory: " + categoryName);
+console.log("RES:");
+console.log(categoryName);
+console.log("\n");
+
+// print user permit actions
+console.log("\nTEST getUserPermitActions");
+var userPermitActions = profiler.getUserPermitActions(exten)
+console.log("RES:");
+console.log(userPermitActions);
+console.log("\n");
+
+// print user deny actions
+console.log("\nTEST getUserDenyActions");
+var userDenyActions = profiler.getUserDenyActions(exten) 
+console.log("RES:");
+console.log(userDenyActions);
+console.log("\n");
 */
 
+//
 console.log("TEST testPermitActionUser");
-console.log(profiler.testPermitActionUser("501", "call_out"));
+console.log(profiler.testPermitActionUser(exten, "call_out"));
+

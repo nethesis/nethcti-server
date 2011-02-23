@@ -4,12 +4,17 @@ var sys = require("sys");
 var mysql = require('./lib/node-mysql-libmysqlclient');
 var configFilename = "dataProfiles.conf";
 
-// array of UserSQLProfile object
-listUserSQLProfiles = [];
+
+
+
+/* It's the list of sql user profiles expressed as hash table of key and value.
+ * The key is the exten of the user and its value is the object UserSQLProfile.
+ */
+listUserSQLProfiles = {};
 
 
 /*
- * An sql query
+ * SQL query object.
  */
 SQLQuery = function(cat, host, port, type, user, pwd, dbname, sqlQuery){
 	this.category = cat;
@@ -23,13 +28,17 @@ SQLQuery = function(cat, host, port, type, user, pwd, dbname, sqlQuery){
 	this.sqlQueryStr = sqlQuery;
 }
 
+
+
 /*
- * Sql user profile  object
+ * SQL user profile object.
  */
-UserSQLProfile = function(ext, sqlQuery){
+UserSQLProfile = function(ext){
 	this.exten = ext;
-	// listSQLQueriesArray is an array of SQLQuery object 
-	this.listSQLQueriesArray = sqlQuery;
+	/* it is an hash table. The key is the category of sql query and the value
+	 * is SQLQuery object with all parameters needed to execute query.
+	 */
+	this.listSQLQueries = {};
 }
 
 
@@ -39,7 +48,6 @@ UserSQLProfile = function(ext, sqlQuery){
 exports.DataCollector = function(){
 	initSQLProfiles();
 	this.printUserSQLProfiles = function() { printListUserSQLProfiles(); }
-	this.executeQueriesForUser = function(exten) { executeQueriesForUser(exten); }
 	this.getAllUserSQLProfiles = function(){ return listUserSQLProfiles; }
 	this.getUserSQLProfile = function(exten){	return getUserSQLProfile(exten); }
 	this.executeSQLQueriesForUser = function(exten) { return executeSQLQueriesForUser(exten); }
@@ -54,18 +62,10 @@ exports.DataCollector = function(){
  */
 testUserPermitCustomerCard = function(exten){
 
-	var user = getUserSQLProfile(exten);
-	var listSQLQueriesArray = user.listSQLQueriesArray;
-	
-	for(i=0; i<listSQLQueriesArray.length; i++){
-		var tempSQLQuery = listSQLQueriesArray[i];
-		if(tempSQLQuery.category=="customer_card"){
-			tempSQLQuery.sqlQueryStr = tempSQLQuery.sqlQueryStr.replace("$EXTEN", exten);
-			return true;
-		}
-	}
-	
+	if(this.listUserSQLProfiles[exten].listSQLQueries["customer_card"]!=undefined)
+		return true;
 	return false;
+
 }
 
 
@@ -76,26 +76,13 @@ testUserPermitCustomerCard = function(exten){
  */
 getCustomerCard = function(extenApplicant, extenCustomerCard){
 
-
-	console.log("\n\n");
-	console.log("extenApplicant = " + extenApplicant);
-	console.log("extenCustomerCard = " + extenCustomerCard);
-
-
-	var user = getUserSQLProfile(extenApplicant);
-	var listSQLQueriesArray = user.listSQLQueriesArray;
+	var currentUserSQLProfileObj = getUserSQLProfile(extenApplicant);
+	var currentSQLQueryObj = currentUserSQLProfileObj.listSQLQueries["customer_card"];
+	if(currentSQLQueryObj!=undefined){
+		currentSQLQueryObj.sqlQueryStr = currentSQLQueryObj.sqlQueryStr.replace("$EXTEN", extenCustomerCard);
 	
-	console.log("listSQLQueriesArray of applicant " + extenApplicant + " = ");
-	console.log(listSQLQueriesArray);
-	
-	for(i=0; i<listSQLQueriesArray.length; i++){
-		var tempSQLQuery = listSQLQueriesArray[i];
-		if(tempSQLQuery.category=="customer_card"){
-			tempSQLQuery.sqlQueryStr = tempSQLQuery.sqlQueryStr.replace("$EXTEN", extenCustomerCard);
-			console.log("tempSQLQuery.sqlQueryStr = " + tempSQLQuery.sqlQueryStr);
-			
-			return executeSQLQuery(tempSQLQuery);
-		}
+		// execute current sql query
+		return executeSQLQuery(currentSQLQueryObj);
 	}
 	
 	return undefined;
@@ -103,48 +90,34 @@ getCustomerCard = function(extenApplicant, extenCustomerCard){
 
 
 /*
- * 
+ * Return the sql user profile.
  */
 getUserSQLProfile = function(exten){
 
-	for(i=0; i<this.listUserSQLProfiles.length; i++){
-		
-		currentUserSQLProfile = this.listUserSQLProfiles[i];
-		
-		if(currentUserSQLProfile.exten==exten){
-			return currentUserSQLProfile;
-		}
-	}
+	return this.listUserSQLProfiles[exten];
 }
 
 
 /*
  * Execute all queries for the exten user. 
  * Return an array of result. Each element of the 
- * returned array is another array contains objects.
+ * returned array is another array containing objects.
  */
 executeSQLQueriesForUser = function(exten){
 	
-	// user sql profile
 	var queriesResultArray = new Array();
+	
 	var currentUserSQLProfileObj = getUserSQLProfile(exten);
-	console.log(currentUserSQLProfileObj);
-	
-	// user sql queries
-	var currentUserSQLQueriesArray = currentUserSQLProfile.listSQLQueriesArray;
-	
-	// execute all queries for the user
-	for(i=0; i<currentUserSQLQueriesArray.length; i++){
-	
-		var currentSQLQueryObj = currentUserSQLQueriesArray[i];
+	for(currSQLQuery in currentUserSQLProfileObj.listSQLQueries){
+		var currentSQLQueryObj = currentUserSQLProfileObj.listSQLQueries[currSQLQuery];
+		console.log("Eseguo query di : ");
+		console.log(currentSQLQueryObj);
 		
 		// execute current sql query
 		var result = executeSQLQuery(currentSQLQueryObj);
 		queriesResultArray.push(result);
 	}
-	
-	return queriesResultArray.slice(1, queriesResultArray.length);
-//	return queriesResultArray;
+	return queriesResultArray;
 }
 
 
@@ -172,11 +145,10 @@ executeSQLQuery = function(currentSQLQueryObj){
 		console.log('execute query: "' + currentSQLQueryObj.sqlQueryStr + '"');
 		result = dbConnection.querySync(currentSQLQueryObj.sqlQueryStr + ";");
 		rows = result.fetchAllSync();
-//		sys.puts(sys.inspect(rows) + "\n");
 		dbConnection.closeSync();
 		return rows;
 		
-		// asynchronous query
+		// this is the asynchronous query
 		/* 
 		dbConnection.query("SELECT * FROM camere;", function (err, res) {
   			if (err) {
@@ -208,43 +180,18 @@ executeSQLQuery = function(currentSQLQueryObj){
 
 
 /*
- * 
+ * Print all sql query profile of the users.
  */
 printListUserSQLProfiles = function(){
 
-	console.log("Current initialized sql profiles of users:");
-	
-	for(i=0; i<this.listUserSQLProfiles.length; i++){
-			
-		console.log("[" + (i+1) + "] User name: " + this.listUserSQLProfiles[i].exten);
-
-		var currentSQLQueryArray = this.listUserSQLProfiles[i].listSQLQueriesArray;		
-		
-		for(x=0; x<currentSQLQueryArray.length; x++){
-		
-			var currentSQLQuery = currentSQLQueryArray[x];
-			
-			console.log("\tQuery [" + (x+1) + "]");
-			console.log("\t\tcategory: " + currentSQLQuery.category);
-			console.log("\t\tdbHost: " + currentSQLQuery.dbHost);
-			console.log("\t\tdbPort: " + currentSQLQuery.dbPort);
-			console.log("\t\tdbType: " + currentSQLQuery.dbType);
-			console.log("\t\tdbUsername: " + currentSQLQuery.dbUsername);
-			console.log("\t\tdbPassword: " + currentSQLQuery.dbPassword);
-			console.log("\t\tdbName: " + currentSQLQuery.dbName);
-			console.log("\t\t\tquery: " + currentSQLQuery.sqlQueryStr);
-		}
-		console.log();
-	}
-	
-	console.log("Total current sql user profiles is " + this.listUserSQLProfiles.length);
-	
+	console.log("Current initialized sql profiles of users are:");
+	console.log(this.listUserSQLProfiles);
 }
 
 
 
 /*
- * 
+ * Initialize all sql profiles of the users.
  */
 function initSQLProfiles(){
 
@@ -330,32 +277,35 @@ function initSQLProfiles(){
 
 
 /*
- * 
+ * Initialize one sql user profile.
  */
 function initUserSQLProfilesInMemory(categoryName, dbHost, dbPort, dbType, dbUsername, dbPassword, dbName, dbQuerySQLStr, listUsersArray){
+
 
 	for(m=0; m<listUsersArray.length; m++){
 	
 		var user = listUsersArray[m];
 		
-		// the value of user exten is not set
+		// the value of user exten is not set in config file
 		if(user==''){
-//			console.log("user [" + user + "] not defined: continue");
 			continue;
 		}
 		
 		// create new SQLQuery object
-			var newSqlQueryObj = new SQLQuery(categoryName, dbHost, dbPort, dbType, dbUsername, dbPassword, dbName, dbQuerySQLStr);
+		var newSqlQueryObj = new SQLQuery(categoryName, dbHost, dbPort, dbType, dbUsername, dbPassword, dbName, dbQuerySQLStr);
 			
 		// if the user is not present, it create new UserSQLProfile object
 		if(!testUserSQLProfilePresence(user) && user!=''){
 			
 			// create new UserSQLProfile
-			var newUserSQLProfile = new UserSQLProfile(user, new Array(newSqlQueryObj));
-			this.listUserSQLProfiles.push(newUserSQLProfile);
-//			console.log("added new user [" + user + "]");
+			var newUserSQLProfile = new UserSQLProfile(user);
+			newUserSQLProfile.listSQLQueries[categoryName] = newSqlQueryObj;
+			
+			// add new sql user profile
+			this.listUserSQLProfiles[user] = newUserSQLProfile;
+			//console.log("added new user [" + user + "]\n");
 		}
-		// it add sql query to user already present
+		// add sql query to user already present
 		else{
 			addSQLQueryToUser(user, newSqlQueryObj);
 		}
@@ -364,31 +314,22 @@ function initUserSQLProfilesInMemory(categoryName, dbHost, dbPort, dbType, dbUse
 
 
 /*
- * 
+ * Add new sql query to already created user.
  */
 function addSQLQueryToUser(exten, sqlQueryObj){
 
-	for(i=0; i<this.listUserSQLProfiles.length; i++){
-	
-		if(this.listUserSQLProfiles[i].exten==exten){
-			this.listUserSQLProfiles[i].listSQLQueriesArray.push(sqlQueryObj);
-			return;
-		}
-	}
-
+	var categoryName = sqlQueryObj.category;
+	this.listUserSQLProfiles[exten].listSQLQueries[categoryName] = sqlQueryObj;
 }
 
 
 /*
- * 
+ * Test if the user exten is already created.
  */
 function testUserSQLProfilePresence(exten){
 
-	for(i=0; i<this.listUserSQLProfiles.length; i++){
-		if(listUserSQLProfiles[i].exten==exten){
-			return true;
-		}
-	}
+	if(this.listUserSQLProfiles[exten]!=undefined)
+		return true;
 	return false;
 }
 
