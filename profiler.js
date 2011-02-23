@@ -2,14 +2,18 @@ var fs = require("fs");
 var sys = require("sys");
 var configFilename = "profiles.conf";
 
-listUserProfiles = [];
+//listUserProfiles = [];
+listUserProfiles = {};
 
+// Object that represents the profile of the user.
 UserProfile = function(ext, cat, actionPermitArray, actionDenyArray){
 	this.exten = ext;
 	this.category = cat;
 	this.permitActions = actionPermitArray;
 	this.denyActions = actionDenyArray;
 }
+
+
 
 /*
  * Constructor
@@ -25,17 +29,32 @@ exports.Profiler = function(){
 	this.testPermitActionUser = function(exten, permit){ return testPermitActionUser(exten, permit); }
 }
 
+
+
 /*
  * Test if the user exten has specified permit.
  * Return true if the specified permit is present or "all" permit 
- * has been specified in config file.
+ * has been specified in config file. If permit actions of the user include all
+ * actions, but the specified permit is present in deny action list of the user,
+ * than false is returned.
  */ 
 testPermitActionUser = function(exten, permit){
 
 	var userPermitAction = getUserPermitActions(exten);
+	var userDenyAction = getUserDenyActions(exten);
+	
+	// check if the permit is present in permit action of the profile of user
 	for(i=0; i<userPermitAction.length; i++){
-		if(userPermitAction[i]==permit || userPermitAction[i]=="all")
+		if(userPermitAction[i]==permit || userPermitAction[i]=="all"){
+			
+			// check if the permit is present in deny action of the profile of user
+			for(x=0; x<userDenyAction.length; x++){	
+				if(userDenyAction[x]==permit)
+					return false;
+			}
+			
 			return true;
+		}
 	}
 	
 	return false;
@@ -43,89 +62,57 @@ testPermitActionUser = function(exten, permit){
 
 
 /*
- * Return the user category
+ * Return the user category.
  */
 getUserCategory = function(exten){
 
-	for(i=0; i<this.listUserProfiles.length; i++){
-		
-		currentUserProfile = this.listUserProfiles[i];
-		
-		if(currentUserProfile.exten==exten){
-			return currentUserProfile.category;
-		}
-	}
+	return listUserProfiles[exten].category;
 }
 
 /*
- * Return deny actions for the user
+ * Return deny actions for the user exten.
  */
 getUserDenyActions = function(exten){
 
-	for(i=0; i<this.listUserProfiles.length; i++){
-		
-		currentUserProfile = this.listUserProfiles[i];
-		
-		if(currentUserProfile.exten==exten){
-			return currentUserProfile.denyActions;
-		}
-	}
+	return listUserProfiles[exten].denyActions;
 }
 
 /*
- * Return permite actions for the user
+ * Return permite actions for the user exten.
  */
 getUserPermitActions = function(exten){
-
-	for(i=0; i<this.listUserProfiles.length; i++){
-		
-		currentUserProfile = this.listUserProfiles[i];
-		
-		if(currentUserProfile.exten==exten){
-			return currentUserProfile.permitActions;
-		}
-	}
+	
+	return listUserProfiles[exten].permitActions;
 }
 
 
 
 /*
- * Return the user profile
+ * Return the profile of user exten.
  */
 getUserProfile = function(exten){
 
-	for(i=0; i<this.listUserProfiles.length; i++){
-		
-		currentUserProfile = this.listUserProfiles[i];
-		
-		if(currentUserProfile.exten==exten){
-			return currentUserProfile;
-		}
-	}
+	return listUserProfiles[exten];
 }
 
 
 
 /* 
- * Print all created users
+ * Print all initialized users.
  */
 printListUserProfiles = function(){
 
-	console.log("Current initialized users:");
+	console.log("Current initialized users are:");
 	
-	for(i=0; i<this.listUserProfiles.length; i++){
-		console.log("[" + (i+1) + "] User name: " + this.listUserProfiles[i].exten);
-		console.log("\tCategory name: " + this.listUserProfiles[i].category);
-		console.log("\tPermit actions: " + this.listUserProfiles[i].permitActions);
-		console.log("\tDeny actions: " + this.listUserProfiles[i].denyActions);
+	for(user in listUserProfiles){
+		console.log(user + " : ");
+		console.log(sys.inspect(listUserProfiles[user]));
+		console.log("\n");
 	}
-	
-	console.log("Total current users is " + this.listUserProfiles.length);
-	
 }
 
 /*
- * Initialize the profiles of all users by means the reading of config file
+ * Initialize the profiles of all users by means the reading of the config file.
  */
 function initProfiles(){
 
@@ -184,7 +171,7 @@ function initProfiles(){
 
 
 /*
- * Initialize user object and put it in "listUserProfiles" array
+ * Initialize one user object and put it in memory.
  */
 function initUserProfilesInMemory(categoryName, listActionPermitArray, listActionDenyArray, listUsersArray){
 
@@ -194,32 +181,26 @@ function initUserProfilesInMemory(categoryName, listActionPermitArray, listActio
 		
 		// the value of user exten is not set
 		if(user==''){
-//			console.log("user [" + user + "] not defined: continue");
 			continue;
 		}
 		
 		// if the user is not present, it create new user object
 		if(!testUserPresence(user) && user!=''){
 			var newUser = new UserProfile(user, categoryName, listActionPermitArray, listActionDenyArray);
-			this.listUserProfiles.push(newUser);
-//			console.log("added new user [" + user + "]");
-		}
-		else{
-//			console.log("user [" + user + "] already present");
+			this.listUserProfiles[user] = newUser;
+			//console.log("added new user [" + user + "]");
 		}
 	}
 }
 
 
 /*
- * Test if the user passed with exten is alreday present
+ * Test if the user passed with exten is alreday present.
  */
 function testUserPresence(exten){
-	for(i=0; i<this.listUserProfiles.length; i++){
-		if(listUserProfiles[i].exten==exten){
-			return true;
-		}
-	}
+
+	if(listUserProfiles.exten!=undefined)
+		return true;
 	return false;
 }
 
