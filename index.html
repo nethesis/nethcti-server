@@ -10,12 +10,7 @@
     
     <script>
 
-		function Utente(nome){
-				this.nome = nome;
-			}
-		
-	
-      function message(obj){
+      function normalDesktopNotification(obj){
         
         var el = document.createElement('p');
         el.innerHTML = '<b>' + esc(obj.clientSessionId) + ':</b> ' + esc(obj.respMessage);
@@ -31,23 +26,14 @@
       }
       
       
-      function messageHTML(socket, respMessage){
-        
-        console.log("socket");
-        console.log(socket);
-        console.log(socket.host);
-        console.log(socket.options["port"]);
-    	
+      function htmlDesktopNotification(socket, respMessage){
+            	
     	var host = socket.host;
     	var port = socket.options["port"];
-    	console.log("port = " + port);
-    	console.log(typeof(port));
     	
         if (window.webkitNotifications) { //enable notification if supported
 			
 			var reqUrl = "./getNotificationCalling.html?server=" + host + "&port=" + port + "&from=" + respMessage.from + "&to=" + respMessage.to + "&respMessage=" + respMessage.respMessage;
-			console.log("reqUrl = " + reqUrl);
-			console.log(typeof(reqUrl));
             notification = window.webkitNotifications.createHTMLNotification(reqUrl);
             notification.ondisplay = function() { console.log("Display notification"); };
             notification.onclose = function() { console.log("Close notification"); };
@@ -56,11 +42,10 @@
       }
       
 
-      
       function send(val){
         var val = document.getElementById('text').value;
         socket.send(val);
-        message({ message: ['you', val] });
+        normalDesktopNotification({ message: ['you', val] });
         document.getElementById('text').value = '';
       }
       
@@ -78,11 +63,11 @@
       	
       	if(obj.typeMessage=="dialing"){
       		console.log("dialing: HTML notification");
-      		messageHTML(socket, obj);
+      		htmlDesktopNotification(socket, obj);
       	}
       	else{
 	      	console.log("normal notification");
-	      	message(obj);
+	      	normalDesktopNotification(obj);
 	    }
       });
 
@@ -159,23 +144,18 @@ document.querySelector('#login').addEventListener('click', function() {
     document.getElementById('chat').innerHTML = '';
     var extFrom =  document.querySelector('#ext').value;
     var secret =  document.querySelector('#secret').value;
-    
 	socket.send({ extFrom: extFrom, secret: secret, action: "login" });
 	console.log("sended login request from: " + extFrom);
-
 },false);
 
 document.querySelector('#call').addEventListener('click', function() {
 
-	// una tantum
 	document.getElementById('form').style.display='block';
     document.getElementById('chat').innerHTML = '';
     var extFrom =  document.querySelector('#extFrom').value;
     var extToCall =  document.querySelector('#extToCall').value;
-    
     socket.send({ extToCall: extToCall, extFrom: extFrom, action: "call_out_from_client" });
     console.log("sended call request from " + extFrom + " -> to " + extToCall);
-      
 },false);
 
     </script> 
