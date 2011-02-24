@@ -140,21 +140,23 @@ server = http.createServer(function(req, res){
   	case '/getCustomerCard.html':
       	console.log("received from [" + params.extenApplicant + "] customer card request for exten [" + params.extenCustomerCard + "]");
   		
-  		var customerCard = dataCollector.getCustomerCard(params.extenApplicant, params.extenCustomerCard);
-  		customerCard[0].exten = params.extenCustomerCard;
-  		// customerCard = [ { name: 'giacomo', exten: '501' } ]
   		
-  		/* customerCard is undefined if the user that has do the request
-  		 * hasn't the relative permission */
-		if(customerCard!=undefined){
-			var htmlPage = createCustomerCardHTMLPage(customerCard);
-      		res.writeHead(200, {'Contet-Type': 'text/html'});
-	      	res.write(htmlPage, 'utf8');
-	      	res.end();
-		}
-		else{
-			send404(res);
-		}
+  		dataCollector.getCustomerCard(params.extenApplicant, params.extenCustomerCard, function(customerCard){
+  	
+	  		/* customerCard is undefined if the user that has do the request
+  		 	 * hasn't the relative permission */
+			if(customerCard!=undefined){
+				customerCard[0].exten = params.extenCustomerCard;
+		  		// customerCard = [ { name: 'giacomo', exten: '501' } ]
+				var htmlPage = createCustomerCardHTMLPage(customerCard);
+	      		res.writeHead(200, {'Contet-Type': 'text/html'});
+		      	res.write(htmlPage, 'utf8');
+		      	res.end();
+			}
+			else{
+				send404(res);
+			}
+  		});
   		break;
     case '/json.js':
     case '/lib/socket.io-client/socket.io.js':

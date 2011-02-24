@@ -16,7 +16,19 @@ This page offers the ability to display the customer card.
 				resp = resp.replace(/%20/, ' ');
 			document.write(resp);
 		</script>
-		<input type="button" value="Show customer card" onClick="window.open('getCustomerCard.html?extenApplicant=500&extenCustomerCard=501');" target="_blank">
+		<input type="button" value="Show customer card" onClick="openCustomerCard();" target="_blank">
+		
+		
+		
+		<script>
+		
+			function openCustomerCard(){
+				window.open('getCustomerCard.html?extenApplicant=500&extenCustomerCard=501');
+			}
+		</script>
+		
+		<input type=button value="Hide" onClick="self.close();" name="button">
+		
 	</body>
 </html>
 

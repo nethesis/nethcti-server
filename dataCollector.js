@@ -1,9 +1,7 @@
 var fs = require("fs");
 var sys = require("sys");
-// require mysql-devel: yum install mysql-devel
-var mysql = require('./lib/node-mysql-libmysqlclient');
+var mysql = require('./lib/node-mysql');
 var configFilename = "dataProfiles.conf";
-
 
 
 
@@ -50,9 +48,8 @@ exports.DataCollector = function(){
 	this.printUserSQLProfiles = function() { printListUserSQLProfiles(); }
 	this.getAllUserSQLProfiles = function(){ return listUserSQLProfiles; }
 	this.getUserSQLProfile = function(exten){	return getUserSQLProfile(exten); }
-	this.executeSQLQueriesForUser = function(exten) { return executeSQLQueriesForUser(exten); }
-	this.getCustomerCard = function(extenApplicant, extenCustomerCard) { return getCustomerCard(extenApplicant, extenCustomerCard); }
 	this.testUserPermitCustomerCard = function(exten) { return testUserPermitCustomerCard(exten); }
+	this.getCustomerCard = function(extenApplicant, extenCustomerCard, cb) { return getCustomerCard(extenApplicant, extenCustomerCard, cb); }
 }
 
 
@@ -74,15 +71,17 @@ testUserPermitCustomerCard = function(exten){
  * customer card, means that he doesn't has the right of access to custormer card.
  * So, in this case, the function return an undefined.
  */
-getCustomerCard = function(extenApplicant, extenCustomerCard){
-
+getCustomerCard = function(extenApplicant, extenCustomerCard, cb){
+	console.log("SONO IN CUSTOMER CARD");
 	var currentUserSQLProfileObj = getUserSQLProfile(extenApplicant);
 	var currentSQLQueryObj = currentUserSQLProfileObj.listSQLQueries["customer_card"];
+		
 	if(currentSQLQueryObj!=undefined){
 		currentSQLQueryObj.sqlQueryStr = currentSQLQueryObj.sqlQueryStr.replace("$EXTEN", extenCustomerCard);
-	
 		// execute current sql query
-		return executeSQLQuery(currentSQLQueryObj);
+		executeSQLQuery(currentSQLQueryObj, function(results){
+			cb(results);
+		});
 	}
 	
 	return undefined;
@@ -98,77 +97,43 @@ getUserSQLProfile = function(exten){
 }
 
 
-/*
- * Execute all queries for the exten user. 
- * Return an array of result. Each element of the 
- * returned array is another array containing objects.
- */
-executeSQLQueriesForUser = function(exten){
-	
-	var queriesResultArray = new Array();
-	
-	var currentUserSQLProfileObj = getUserSQLProfile(exten);
-	for(currSQLQuery in currentUserSQLProfileObj.listSQLQueries){
-		var currentSQLQueryObj = currentUserSQLProfileObj.listSQLQueries[currSQLQuery];
-		console.log("Eseguo query di : ");
-		console.log(currentSQLQueryObj);
-		
-		// execute current sql query
-		var result = executeSQLQuery(currentSQLQueryObj);
-		queriesResultArray.push(result);
-	}
-	return queriesResultArray;
-}
-
 
 /*
- * Execute one sql query and return an array of object.
+ * Execute one sql query and return an array of object. This function must have 
+ * a callback function as second parameter because the asynchronous nature of
+ * mysql query function. Otherwise it is possibile that the function return before
+ * the completion of sql query operation.
  */
-executeSQLQuery = function(currentSQLQueryObj){
-	
+executeSQLQuery = function(currentSQLQueryObj, cb){
+
+	console.log("SONO IN executeSQLQuery");
 	
 	// execute query to mysql server
 	if(currentSQLQueryObj.dbType=="mysql"){
 	
-		var dbConnection = mysql.createConnectionSync();
-		dbConnection.connectSync(currentSQLQueryObj.dbHost, currentSQLQueryObj.dbUsername, currentSQLQueryObj.dbPassword, "hotel");
+		var client = new mysql.Client();
+		client.host = currentSQLQueryObj.dbHost;
+		client.port = currentSQLQueryObj.dbPort;
+		client.user = currentSQLQueryObj.dbUsername;
+		client.password = currentSQLQueryObj.dbPassword;
 
-		if (!dbConnection.connectedSync()) {
-		  	sys.puts("Connection error " + dbConnection.connectErrno + ": " + dbConnection.connectError);
-			process.exit(1);
-		}
-		else{
-			console.log("Connected to database '" + currentSQLQueryObj.dbName + "'");
-		}
+		console.log(client.host);
+		console.log(client.port);
+		console.log(client.user);
+		console.log(client.password);
+
+		client.connect();
+		var query = currentSQLQueryObj.sqlQueryStr + ";";
 		
-		// synchronous query
-		console.log('execute query: "' + currentSQLQueryObj.sqlQueryStr + '"');
-		result = dbConnection.querySync(currentSQLQueryObj.sqlQueryStr + ";");
-		rows = result.fetchAllSync();
-		dbConnection.closeSync();
-		return rows;
-		
-		// this is the asynchronous query
-		/* 
-		dbConnection.query("SELECT * FROM camere;", function (err, res) {
-  			if (err) {
-   			throw err;
-  			}
-  
-  			res.fetchAll(function (err, rows) {
-    			if (err) {
+		client.query(query, function selectCb(err, results, fields) {
+		    if (err) {
       			throw err;
-    			}
-    
-    			sys.puts("Rows in table hotel.camere:");
-    			sys.puts(sys.inspect(rows));
-  			});
+		    }
+
+		    client.end();
+		    cb(results);
 		});
-		
-	   process.on('exit', function () {
-  			dbConnection.closeSync();
-		});
-		*/
+	
 	}
 	// execute query to microsoft sql server
 	else if(currentSQLQueryObj.dbType=="mssql"){
@@ -332,7 +297,3 @@ function testUserSQLProfilePresence(exten){
 		return true;
 	return false;
 }
-
-
-
-

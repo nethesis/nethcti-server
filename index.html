@@ -7,8 +7,13 @@
     <script src="/lib/socket.io-client/socket.io.js"></script>
   </head>
   <body>
-    
+
     <script>
+
+
+
+console.log("window open");
+		var notificationTimeout = 5000;
 
       function normalDesktopNotification(obj){
         
@@ -19,14 +24,24 @@
             notification = window.webkitNotifications.createNotification("",esc(obj.clientSessionId),esc(obj.respMessage));
             notification.ondisplay = function() { console.log("Display notification"); };
             notification.onclose = function() { console.log("Close notification"); };
-            notification.show(); // note the show()
+            notification.onclick = function() { 
+            	window.focus(); 
+            	this.cancel(); 
+            };
+            notification.show();
+            setTimeout(function(){
+				notification.cancel();
+			}, notificationTimeout);
         }
         document.getElementById('chat').appendChild(el);
         document.getElementById('chat').scrollTop = 1000000;
+        
       }
       
       
       function htmlDesktopNotification(socket, respMessage){
+            	
+            	
             	
     	var host = socket.host;
     	var port = socket.options["port"];
@@ -38,6 +53,9 @@
             notification.ondisplay = function() { console.log("Display notification"); };
             notification.onclose = function() { console.log("Close notification"); };
             notification.show(); // note the show()
+            setTimeout(function(){
+				notification.cancel();
+			}, notificationTimeout);
         }
       }
       
@@ -71,15 +89,6 @@
 	    }
       });
 
-
-///notifications
-function createNotificationInstance(options) {
-  if (options.notificationType == 'simple') {
-    return window.webkitNotifications.createNotification(options.icon, options.title, options.text);
-  } else if (options.notificationType == 'html') {
-    return window.webkitNotifications.createHTMLNotification(options.url);
-  }
-}
 
 if (window.webkitNotifications) {
   console.log("Notifications are supported!");
