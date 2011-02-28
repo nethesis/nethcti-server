@@ -269,7 +269,8 @@ io.on('connection', function(client){
   				console.log("Security ERROR: attempt to fake the sender: session " + client.sessionId + " attempt to call with the fake exten " + extFrom + " !");
   				return;
   			}
-  			// this try catch is for profiler.testPermitActionUser
+  			/* this try catch is for profiler.testPermitActionUser
+  			 * If the user isn't present in configuration file, an exception is thrown */
   			try{
   				// check if the user has the permit of dial out
   				if(profiler.testPermitActionUser(extFrom, "call_out")){
