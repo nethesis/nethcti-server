@@ -72,18 +72,17 @@ testUserPermitCustomerCard = function(exten){
  * So, in this case, the function return an undefined.
  */
 getCustomerCard = function(extenApplicant, extenCustomerCard, cb){
-	console.log("SONO IN CUSTOMER CARD");
 	var currentUserSQLProfileObj = getUserSQLProfile(extenApplicant);
 	var currentSQLQueryObj = currentUserSQLProfileObj.listSQLQueries["customer_card"];
 		
 	if(currentSQLQueryObj!=undefined){
+		
 		currentSQLQueryObj.sqlQueryStr = currentSQLQueryObj.sqlQueryStr.replace("$EXTEN", extenCustomerCard);
 		// execute current sql query
 		executeSQLQuery(currentSQLQueryObj, function(results){
 			cb(results);
 		});
 	}
-	
 	return undefined;
 }
 
@@ -105,26 +104,21 @@ getUserSQLProfile = function(exten){
  * the completion of sql query operation.
  */
 executeSQLQuery = function(currentSQLQueryObj, cb){
-
-	console.log("SONO IN executeSQLQuery");
 	
 	// execute query to mysql server
 	if(currentSQLQueryObj.dbType=="mysql"){
-	
+		
 		var client = new mysql.Client();
 		client.host = currentSQLQueryObj.dbHost;
 		client.port = currentSQLQueryObj.dbPort;
 		client.user = currentSQLQueryObj.dbUsername;
 		client.password = currentSQLQueryObj.dbPassword;
-
-		console.log(client.host);
-		console.log(client.port);
-		console.log(client.user);
-		console.log(client.password);
-
+		
 		client.connect();
+
 		var query = currentSQLQueryObj.sqlQueryStr + ";";
 		
+
 		client.query(query, function selectCb(err, results, fields) {
 		    if (err) {
       			throw err;
@@ -133,11 +127,9 @@ executeSQLQuery = function(currentSQLQueryObj, cb){
 		    client.end();
 		    cb(results);
 		});
-	
 	}
 	// execute query to microsoft sql server
 	else if(currentSQLQueryObj.dbType=="mssql"){
-	
 		console.log("connection to mssql TO IMPLEMENT !!!!!!!");		
 	}
 	

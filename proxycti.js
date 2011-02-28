@@ -13,7 +13,7 @@ var http = require('http')
 
 
 /* The list of the logged clients. The key is the exten and the value is the 
- * object realtive to client. When the client logs off, the corresponding key 
+ * object relative to the client. When the client logs off, the corresponding key 
  * and value are removed.
  */
 var clients = {};
@@ -73,7 +73,7 @@ am.addListener('dialing', function(from, to) {
 	/* ex. 	from = {name: 'SIP/501', number: '501', with: '1298027889.93'}
   			to = { name: '', number: '500', with: '1298027890.94' } */
 
-	if(to!=undefined){
+	if(clients[to.number]!=undefined){
 		
 		var msg = "Call from " + from.number + " to " + to.number;
 		var c = clients[to.number];
@@ -140,7 +140,7 @@ server = http.createServer(function(req, res){
   	case '/getCustomerCard.html':
       	console.log("received from [" + params.extenApplicant + "] customer card request for exten [" + params.extenCustomerCard + "]");
   		
-  		
+
   		dataCollector.getCustomerCard(params.extenApplicant, params.extenCustomerCard, function(customerCard){
   	
 	  		/* customerCard is undefined if the user that has do the request
@@ -250,40 +250,55 @@ io.on('connection', function(client){
   		var action = message.action;
   		
   		var actionLogin = "login";
-  		var actionCall = "call_out_from_client";
+  		var actionCallOut = "call_out_from_client";
   		
   		// manage request of calling
-  		if(action==actionCall){
+  		if(action==actionCallOut){
   			
   			// in this case the message has also the information about the exten to call
   			var extToCall = message.extToCall;
   			console.log("received request for call_out_from_client: " + extFrom + " -> " + extToCall);		
   			
-  			// check if the user has permit of dial out
-  			if(profiler.testPermitActionUser(extFrom, "call_out")){
+  			// check if the client is logged in
+  			if(clients[extFrom]==undefined){
+  				sys.debug("ERROR: client " + extFrom + " not logged in");
+  				return;
+  			}
+  			// security check of real authenticity of the user who originated the call
+  			else if(client.sessionId != clients[extFrom].sessionId){
+  				console.log("Security ERROR: attempt to fake the sender: session " + client.sessionId + " attempt to call with the fake exten " + extFrom + " !");
+  				return;
+  			}
+  			// this try catch is for profiler.testPermitActionUser
+  			try{
+  				// check if the user has the permit of dial out
+  				if(profiler.testPermitActionUser(extFrom, "call_out")){
   			
-  				console.log("[" + extFrom + "] enabled to calling out: execute calling...");
+  					console.log("[" + extFrom + "] enabled to calling out: execute calling...");
   				
-  				// create call action for asterisk server
-  				var actionCall = {
-					action: 'originate',
-					channel: 'SIP/' + extFrom,
-					exten: extToCall,
-					context: 'from-internal',
-					priority: 1,
-					callerid: 'CTI' + extToCall,
-					account: extToCall,
-					timeout: 30000
-				};
-				// send action to asterisk
-				am.send(actionCall, function () {
-					console.log("call action has been sent to asterisk: " + extFrom + " -> " + extToCall);
-				});
-  			}
-  			else{
-	  			console.log("ATTENTION: " + extFrom + " is not enabled to calling out !");
-	  			client.send(new ResponseMessage(client.sessionId, actionCall, "Sorry: you don't have permission to call !"));
-  			}
+	  				// create call action for asterisk server
+	  				var actionCall = {
+						Action: 'Originate',
+						Channel: 'SIP/' + extFrom,
+						Exten: extToCall,
+						Context: 'from-internal',
+						Priority: 1,
+						Callerid: 'CTI' + extToCall,
+						Account: extToCall,
+						Timeout: 30000
+					};
+					// send action to asterisk
+					am.send(actionCall, function () {
+						console.log("call action has been sent to asterisk: " + extFrom + " -> " + extToCall);
+					});
+	  			}
+  				else{
+		  			console.log("ATTENTION: " + extFrom + " is not enabled to calling out !");
+		  			client.send(new ResponseMessage(client.sessionId, actionCallOut, "Sorry: you don't have 	permission to call !"));
+  				}
+	  		} catch(error){
+	  			console.log(error);
+	  		}
   		}
   		// manage request of login
   		else if(action==actionLogin){
@@ -365,3 +380,13 @@ createCustomerCardHTMLPage = function(customerCard){
 	var html = template(data);
 	return html;
 }
+
+
+process.on('uncaughtException', function(err){
+	console.log('*********************************************');
+	console.log('Caught not provided exception: ' + err);
+	console.log('*********************************************');
+});
+
+
+

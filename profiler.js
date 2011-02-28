@@ -84,6 +84,9 @@ getUserDenyActions = function(exten){
  */
 getUserPermitActions = function(exten){
 	
+	if(listUserProfiles[exten]==undefined) 
+		throw "Error: user not present in configuration file.";
+
 	return listUserProfiles[exten].permitActions;
 }
 
