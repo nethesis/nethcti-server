@@ -10,7 +10,7 @@ var http = require('http')
   , io = require('./lib/socket.io')
   , sys = require(process.binding('natives').util ? 'util' : 'sys')
   , server;
-
+var pathreq = require('path');
 
 /* The list of the logged clients. The key is the exten and the value is the 
  * object relative to the client. When the client logs off, the corresponding key 
@@ -21,7 +21,7 @@ var am;
 var asterisk_user = 'vtiger';
 var asterisk_pass = 'vtiger';
 var asterisk_host = 'amaduzzi';
-var pathOfCustomerCardHTML = "customerCard.html";
+var pathOfPhonebookHTML = "phonebook.html";
 
 
 // The response that this server pass to the clients.
@@ -73,7 +73,7 @@ am.addListener('dialing', function(from, to) {
 	/* ex. 	from = {name: 'SIP/501', number: '501', with: '1298027889.93'}
   			to = { name: '', number: '500', with: '1298027890.94' } */
 
-	if(clients[to.number]!=undefined){
+	if(to!=undefined && clients[to.number]!=undefined){
 		
 		var msg = "Call from " + from.number + " to " + to.number;
 		var c = clients[to.number];
@@ -88,10 +88,12 @@ am.addListener('dialing', function(from, to) {
 });
 
 am.addListener('callconnected', function(from, to) {
-	//sys.puts("CLIENT: Connected call between " + from.number + " (" + from.name + ") and " + to.number + " (" + to.name + ")");
+	sys.puts("CLIENT: Connected call between " + from.number + " (" + from.name + ") and " + to.number + " (" + to.name + ")");
+	
 });
 
 am.addListener('calldisconnected', function(from, to) {
+	
 	//sys.puts("CLIENT: Disconnected call between " + from.number + " (" + from.name + ") and " + to.number + " (" + to.name + ")");
 });
 
@@ -112,7 +114,7 @@ am.addListener('hangup', function(participant, code, text) {
 });
 
 am.addListener('callreport', function(report) {
-	//sys.puts("CLIENT: Call report: " + sys.inspect(report));
+	sys.puts("CLIENT: Call report: " + sys.inspect(report));
 });
 
 
@@ -125,7 +127,9 @@ am.addListener('callreport', function(report) {
 
 
 
-
+/*******************************************************************************
+ * HTTP REQUEST
+ *******************************************************************************/
 
 //
 server = http.createServer(function(req, res){
@@ -137,18 +141,22 @@ server = http.createServer(function(req, res){
 	
   switch (path){
   	
-  	case '/getCustomerCard.html':
-      	console.log("received from [" + params.extenApplicant + "] customer card request for exten [" + params.extenCustomerCard + "]");
-  		
+  	case '/getPhonebook.html':
 
-  		dataCollector.getCustomerCard(params.extenApplicant, params.extenCustomerCard, function(customerCard){
+  		console.log("received from [" + params.extenApplicant + "] phonebook request for exten [" + params.extenPhonebook + "]");
+      
+  		dataCollector.getPhonebook(params.extenApplicant, params.extenPhonebook, function(phonebook){
   	
-	  		/* customerCard is undefined if the user that has do the request
+  			console.log(",,,,,,,,,,,,,,,,,,;;");
+  			console.log(phonebook);
+  			console.log(",,,,,,,,,,,,,,,,,,;;");
+  	
+	  		/* result is undefined if the user that has do the request
   		 	 * hasn't the relative permission */
-			if(customerCard!=undefined){
-				customerCard[0].exten = params.extenCustomerCard;
-		  		// customerCard = [ { name: 'giacomo', exten: '501' } ]
-				var htmlPage = createCustomerCardHTMLPage(customerCard);
+			if(phonebook!=undefined){
+				phonebook[0].exten = params.extenPhonebook;
+		  		// phonebook = [ { name: 'giacomo', exten: '501' } ]
+				var htmlPage = createPhonebookHTMLPage(phonebook);
 	      		res.writeHead(200, {'Contet-Type': 'text/html'});
 		      	res.write(htmlPage, 'utf8');
 		      	res.end();
@@ -188,11 +196,11 @@ server = http.createServer(function(req, res){
     	var from = params.from;
     	var to = params.to;
     	
-    	if(dataCollector.testUserPermitCustomerCard(to)){
+    	if(dataCollector.testUserPermitPhonebook(to)){
     		// the user has the authorization of view customer card
     		console.log("The user " + to + " has the permit of view customer card");
     		
-    		path = "/templateNotificationCallingWithCustomerCard.html";
+    		path = "/templateNotificationCallingPhonebook.html";
     		
 	      	fs.readFile(__dirname + path, function(err, data){
 	        	if (err) return send404(res);
@@ -217,7 +225,33 @@ server = http.createServer(function(req, res){
 	break;
     
     default: 
-    	send404(res);
+    	// check if the requested file exists
+    	var tempPath = __dirname + path;
+    	pathreq.exists(tempPath, function(exists){
+    		
+    		if(exists){
+    			
+    			// check the extension of the file
+
+    			var fileExt = pathreq.extname(tempPath);
+    			var type;
+    			if(fileExt=='.js') type = 'text/javascript';
+    			else if(fileExt=='.html' || fileExt=='htm') type = 'text/html';
+    			else if(fileExt=='.css') type = 'text/css';
+    			
+    		
+    			fs.readFile(tempPath, function(err, data){
+			        if (err) return send404(res);
+			        res.writeHead(200, {'Content-Type': type});
+			        res.write(data, 'utf8');
+			        res.end();
+			    });
+    		}
+    		else{
+	    		send404(res);
+    		}
+    	});
+    	
   }
 });
 
@@ -236,6 +270,10 @@ sys.debug("Listening on port 8080");
 var io = io.listen(server)
   , buffer = [];
 
+
+/*******************************************************************************
+ * MESSAGES
+ *******************************************************************************/
 io.on('connection', function(client){
 
 	// send acknowledgment of established connection 
@@ -251,6 +289,7 @@ io.on('connection', function(client){
   		
   		var actionLogin = "login";
   		var actionCallOut = "call_out_from_client";
+  		var actionLogout = "logout";
   		
   		// manage request of calling
   		if(action==actionCallOut){
@@ -308,26 +347,39 @@ io.on('connection', function(client){
   	
   			if(authenticator.authenticateUser(extFrom, message.secret)){
   			
-  				// check if the user is already logged in
-	  			if(!testAlreadyLoggedUser(extFrom)){
-	  			
+  				// check if the user sessionId is already logged in
+  				if(testAlreadyLoggedSessionId(client.sessionId)){
+  					console.log("client with sessionId = " + client.sessionId + " is already logged in");
+  					console.log("clients length = " + Object.keys(clients).length);
+			    	client.send(new ResponseMessage(client.sessionId, "error_login", "Sorry, but you are already logged in !"));
+  					return;
+  				}
+  				// check if the user extFrom is already logged in
+  				if(testAlreadyLoggedExten(extFrom)){
+  					console.log("Client [" + extFrom + "] already logged in !");
+			    	console.log("clients length = " + Object.keys(clients).length);
+			    	client.send(new ResponseMessage(client.sessionId, "error_login", "Sorry, but the client [" + extFrom + "] is already logged in"));
+  				}
+  				// authenticate the user
+  				else{
 	  				client.extension = extFrom;
 	  				clients[extFrom] = client;  
 		  			console.log("client [" + extFrom + "] logged in");
 		  			console.log("clients length  = " + Object.keys(clients).length);
-	  				client.send(new ResponseMessage(client.sessionId, actionLogin, "login succesfully"));
+	  				client.send(new ResponseMessage(client.sessionId, "ack_login", "login succesfully"));
 	  				console.log("Acknowledgment to login action has been sent to [" + extFrom + "]");
-			    }
-			    else{
-			    	console.log("Client [" + extFrom + "] already logged in !");
-			    	console.log("clients length = " + Object.keys(clients).length);
-			    	client.send(new ResponseMessage(client.sessionId, actionLogin, "Sorry, but client [" + extFrom + "] is already logged in"));
-		    	}
+  				}
   			}
   			else{
   				console.log("Authentication failed: [" + extFrom + "] with secret [" + message.secret + "]");
-  				client.send(new ResponseMessage(client.sessionId, actionLogin, "Sorry, authentication failed !"));
+  				client.send(new ResponseMessage(client.sessionId, "error_login", "Sorry, authentication failed !"));
   			}
+  		}
+  		// manage disconnection from the user
+  		else if(action==actionLogout){
+  			removeClient(client.sessionId);
+	  		console.log("Client " + client.sessionId + " disconnected");
+	  		console.log("clients length = " + Object.keys(clients).length);
   		}
   	});
 
@@ -355,39 +407,62 @@ removeClient = function(sessionId){
 /*
  * Check if the user exten already present in memory.
  */ 
-testAlreadyLoggedUser = function(exten){
+testAlreadyLoggedExten = function(exten){
 
 	if(clients[exten]!=undefined)
 		return true;
 	return false;
 }
 
+/*
+ * Check if the user sessionId already present in memory.
+ */
+testAlreadyLoggedSessionId = function(sessionId){
 
+	for(client in clients){
+		if(clients[client].sessionId==sessionId)
+			return true;
+	}
+	
+	return false;
+}
 
 /*
  * Create the HTML page of customer card. This is created from template.
  * The parameter represents the response query executed in database.
  */
-createCustomerCardHTMLPage = function(customerCard){
+createPhonebookHTMLPage = function(phonebook){
 	
-	var content = fs.readFileSync(pathOfCustomerCardHTML, 'utf8');
+	var content = fs.readFileSync(pathOfPhonebookHTML, 'utf8');
 	template = normal.compile(content);
+
+
+	var dynamicHtml = '';
+	var other = '';
+	for(var key in phonebook[0]){
+		dynamicHtml += key + ': <a href="">' + phonebook[0][key] + '</a><br/>';
+		other += key + ':  ' + phonebook[0][key] + '\n';
+	}
+	
+
 	
 	var data = {
-		exten: customerCard[0].exten,
-		name: customerCard[0].name
+		exten: phonebook[0].exten,
+		name: phonebook[0].name,
+		generateData: dynamicHtml,
+		otherTest: other
 	};
 	
 	var html = template(data);
 	return html;
 }
 
-
+/*
 process.on('uncaughtException', function(err){
 	console.log('*********************************************');
 	console.log('Caught not provided exception: ' + err);
 	console.log('*********************************************');
 });
-
+*/
 
 

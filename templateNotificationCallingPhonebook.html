@@ -9,6 +9,8 @@ This page offers the ability to display the customer card.
 	</head>
 	<body>
 		<script>
+		
+		
 			var url = window.location.search.substring(1);
 			urlArray = url.split("&");
 			var resp = urlArray[4].split("=")[1];
@@ -16,14 +18,23 @@ This page offers the ability to display the customer card.
 				resp = resp.replace(/%20/, ' ');
 			document.write(resp);
 		</script>
-		<input type="button" value="Show customer card" onClick="openCustomerCard();" target="_blank">
+		<input type="button" value="Phonebook" onClick="getPhonebook();" target="_blank">
+		<input type='button' value='Hangup' onClick='hangup();'>
 		
 		
 		
 		<script>
 		
-			function openCustomerCard(){
-				window.open('getCustomerCard.html?extenApplicant=500&extenCustomerCard=501');
+			function hangup(){
+				console.log('Request hangup');
+			}
+			
+			function getPhonebook(){
+				var extenApplicant = urlArray[3].split('=')[1];
+				var extenPhonebook = urlArray[2].split('=')[1];
+				document.write("extenApplicant = " + extenApplicant);
+				document.write("extenPhonebook = " + extenPhonebook);
+				window.open('getPhonebook.html?extenApplicant=' + extenApplicant + '&extenPhonebook=' + extenPhonebook);
 			}
 		</script>
 		

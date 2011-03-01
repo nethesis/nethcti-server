@@ -2,7 +2,9 @@ var fs = require("fs");
 var sys = require("sys");
 var mysql = require('./lib/node-mysql');
 var configFilename = "dataProfiles.conf";
+var sectionNamePhonebook = "phonebook";
 
+//var sectionNamePhonebook = "customer_card";// for development
 
 
 /* It's the list of sql user profiles expressed as hash table of key and value.
@@ -48,18 +50,18 @@ exports.DataCollector = function(){
 	this.printUserSQLProfiles = function() { printListUserSQLProfiles(); }
 	this.getAllUserSQLProfiles = function(){ return listUserSQLProfiles; }
 	this.getUserSQLProfile = function(exten){	return getUserSQLProfile(exten); }
-	this.testUserPermitCustomerCard = function(exten) { return testUserPermitCustomerCard(exten); }
-	this.getCustomerCard = function(extenApplicant, extenCustomerCard, cb) { return getCustomerCard(extenApplicant, extenCustomerCard, cb); }
+	this.testUserPermitPhonebook = function(exten) { return testUserPermitPhonebook(exten); }
+	this.getPhonebook = function(extenApplicant, extenPhonebook, cb) { return getPhonebook(extenApplicant, extenPhonebook, cb); }
 }
 
 
 /*
  * Test if the user exten has the authorization to view customer card. Therefore
- * it check if the user has a query of category "customer_card".
+ * it check if the user has a query of category "sectionNamePhonebook".
  */
-testUserPermitCustomerCard = function(exten){
+testUserPermitPhonebook = function(exten){
 
-	if(this.listUserSQLProfiles[exten].listSQLQueries["customer_card"]!=undefined)
+	if(this.listUserSQLProfiles[exten].listSQLQueries[sectionNamePhonebook]!=undefined)
 		return true;
 	return false;
 
@@ -71,13 +73,17 @@ testUserPermitCustomerCard = function(exten){
  * customer card, means that he doesn't has the right of access to custormer card.
  * So, in this case, the function return an undefined.
  */
-getCustomerCard = function(extenApplicant, extenCustomerCard, cb){
+getPhonebook = function(extenApplicant, extenPhonebook, cb){
+
 	var currentUserSQLProfileObj = getUserSQLProfile(extenApplicant);
-	var currentSQLQueryObj = currentUserSQLProfileObj.listSQLQueries["customer_card"];
+	var currentSQLQueryObj = currentUserSQLProfileObj.listSQLQueries[sectionNamePhonebook];
 		
 	if(currentSQLQueryObj!=undefined){
+	
+		while(currentSQLQueryObj.sqlQueryStr.indexOf("$EXTEN")!=-1){
+			currentSQLQueryObj.sqlQueryStr = currentSQLQueryObj.sqlQueryStr.replace("$EXTEN", extenPhonebook);
+		}
 		
-		currentSQLQueryObj.sqlQueryStr = currentSQLQueryObj.sqlQueryStr.replace("$EXTEN", extenCustomerCard);
 		// execute current sql query
 		executeSQLQuery(currentSQLQueryObj, function(results){
 			cb(results);
@@ -115,10 +121,16 @@ executeSQLQuery = function(currentSQLQueryObj, cb){
 		client.password = currentSQLQueryObj.dbPassword;
 		
 		client.connect();
-
-		var query = currentSQLQueryObj.sqlQueryStr + ";";
+		// set the database to use
+		var query = "USE " + currentSQLQueryObj.dbName + ";";
+		client.query(query, function selectCb(err, results, fields) {
+		    if (err) {
+      			throw err;
+		    }
+		});
 		
-
+		// execute query
+		query = currentSQLQueryObj.sqlQueryStr + ";";
 		client.query(query, function selectCb(err, results, fields) {
 		    if (err) {
       			throw err;

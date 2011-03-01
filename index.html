@@ -3,6 +3,8 @@
   <head>
     <title>socket.io client test</title>
         
+       
+        
     <script src="/json.js"></script> <!-- for ie -->
     <script src="/lib/socket.io-client/socket.io.js"></script>
   </head>
@@ -10,15 +12,13 @@
 
     <script>
 
-
-
-console.log("window open");
+ 
 		var notificationTimeout = 5000;
 
       function normalDesktopNotification(obj){
         
-        var el = document.createElement('p');
-        el.innerHTML = '<b>' + esc(obj.clientSessionId) + ':</b> ' + esc(obj.respMessage);
+        //var el = document.createElement('p');
+        //el.innerHTML = '<b>' + esc(obj.clientSessionId) + ':</b> ' + esc(obj.respMessage);
     
         if (window.webkitNotifications) { //enable notification if supported
             notification = window.webkitNotifications.createNotification("",esc(obj.clientSessionId),esc(obj.respMessage));
@@ -29,19 +29,18 @@ console.log("window open");
             	this.cancel(); 
             };
             notification.show();
+            
+            /*
             setTimeout(function(){
 				notification.cancel();
 			}, notificationTimeout);
+			*/
         }
-        document.getElementById('chat').appendChild(el);
-        document.getElementById('chat').scrollTop = 1000000;
-        
       }
       
       
+      
       function htmlDesktopNotification(socket, respMessage){
-            	
-            	
             	
     	var host = socket.host;
     	var port = socket.options["port"];
@@ -53,9 +52,13 @@ console.log("window open");
             notification.ondisplay = function() { console.log("Display notification"); };
             notification.onclose = function() { console.log("Close notification"); };
             notification.show(); // note the show()
+            
+            /*
             setTimeout(function(){
 				notification.cancel();
 			}, notificationTimeout);
+			*/
+			
         }
       }
       
@@ -71,6 +74,7 @@ console.log("window open");
       function esc(msg){
         return msg.replace(/</g, '&lt;').replace(/>/g, '&gt;');
       };
+      
   
     
       var socket = new io.Socket(null, {port: 8080, rememberTransport: false});
@@ -83,30 +87,46 @@ console.log("window open");
       		console.log("dialing: HTML notification");
       		htmlDesktopNotification(socket, obj);
       	}
-      	else{
+      	else {
 	      	console.log("normal notification");
 	      	normalDesktopNotification(obj);
 	    }
+	    
+	    if(obj.typeMessage=='ack_login'){
+	    	var extFrom =  document.querySelector('#ext').value;
+		    var secret =  document.querySelector('#secret').value;
+		    if(localStorage.getItem('user')==null){
+			    localStorage.setItem('user', extFrom);
+			    localStorage.setItem('password', secret);
+			}
+		    console.log('user = ' + localStorage.getItem('user'));
+		    console.log('password = ' + localStorage.getItem('password'));
+	    }
       });
+      
+   
 
 
-if (window.webkitNotifications) {
-  console.log("Notifications are supported!");
-}
-else {
-  console.log("Notifications are not supported for this Browser/OS version yet.");
-}
-
-
-
+	if (window.webkitNotifications) {
+		console.log("Notifications are supported!");
+	}
+	else {
+		console.log("Notifications are not supported for this Browser/OS version yet.");
+	}
 
     </script>
     
-    <h2>Sample Asterisk call notification</h2>
+    <h2>CTI Interface</h2>
     <div style='font-size: 80%; margin: 20px; '>
       <p>Click on "Enable notifications" only the first time you access this page.</p>
       <input type='button' id='enable' value='Enable notifications'/>    
     </div>
+    <!--
+    <div id="chat"><p>Click "Login" to start.</p></div>
+    <form id="form" onsubmit="send(); return false">
+      <input type="text" autocomplete="off" id="text"><input type="submit" value="Send">
+    </form>
+    -->
     <br/> 
     <label for='ext' >Extension:</label><input type='text' name='ext' id='ext' value='500'/>
     <label for='secret' >Secret:</label><input type='text' name='secret' id='secret' value='500'/>      
@@ -116,9 +136,12 @@ else {
     <label for='extToCall' >to:</label><input type='text' name='extToCall' id='extToCall' value='501'/>      
     <input type='button' id='call' value='Call'/>
     <br/>
+    <input type='button' id='logout' value='Logout'/>
+    <!--
     <button onclick="ShowNotification()">Notify me!</button>
 <button onclick="ShowHTMLNotification()">Notify me! (HTML)</button>
 <br/>
+-->
     <style>
       #chat { height: 300px; overflow: auto; width: 800px; border: 1px solid #eee; font: 13px Helvetica, Arial; }
       #chat p { padding: 8px; margin: 0; }
@@ -144,10 +167,11 @@ document.querySelector('#enable').addEventListener('click', function() {
 
 
 document.querySelector('#login').addEventListener('click', function() {
-  
-    document.getElementById('form').style.display='block';
-    document.getElementById('chat').innerHTML = '';
-    var extFrom =  document.querySelector('#ext').value;
+  	if(localStorage.getItem('user')!=null){
+  		alert('Sorry, but you are already logged in !');
+  		return;
+  	}
+	var extFrom =  document.querySelector('#ext').value;
     var secret =  document.querySelector('#secret').value;
 	socket.send({ extFrom: extFrom, secret: secret, action: "login" });
 	console.log("sended login request from: " + extFrom);
@@ -155,14 +179,32 @@ document.querySelector('#login').addEventListener('click', function() {
 
 document.querySelector('#call').addEventListener('click', function() {
 
-	document.getElementById('form').style.display='block';
-    document.getElementById('chat').innerHTML = '';
     var extFrom =  document.querySelector('#extFrom').value;
     var extToCall =  document.querySelector('#extToCall').value;
     socket.send({ extToCall: extToCall, extFrom: extFrom, action: "call_out_from_client" });
     console.log("sended call request from " + extFrom + " -> to " + extToCall);
 },false);
 
+document.querySelector('#logout').addEventListener('click', function() {
+	localStorage.removeItem('user');
+	localStorage.removeItem('password');
+	var extFrom =  document.querySelector('#extFrom').value;
+    socket.send({ extFrom: extFrom, action: "logout" });
+    console.log("sended disconnection request for " + extFrom);
+    console.log('user = ' + localStorage.getItem('user'));
+	console.log('password = ' + localStorage.getItem('password'));
+	alert("Logged off");
+},false);
+
+// if the user and password are set, then it do the login action
+if(localStorage.getItem('user')!=null){
+	console.log("sono qui a fare il login dalla storage");
+	var extFrom = localStorage.getItem('user');
+	console.log('extFrom = ' + extFrom);
+    var secret = localStorage.getItem('password');
+	socket.send({ extFrom: extFrom, secret: secret, action: "login" });
+	console.log("sended login request from: " + extFrom);
+}
     </script> 
   </body>
 </html>
