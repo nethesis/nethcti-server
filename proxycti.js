@@ -146,10 +146,11 @@ server = http.createServer(function(req, res){
   		console.log("received from [" + params.extenApplicant + "] phonebook request for exten [" + params.extenPhonebook + "]");
       
   		dataCollector.getPhonebook(params.extenApplicant, params.extenPhonebook, function(phonebook){
-  	
+  	/*
   			console.log(",,,,,,,,,,,,,,,,,,;;");
   			console.log(phonebook);
   			console.log(",,,,,,,,,,,,,,,,,,;;");
+  			*/
   	
 	  		/* result is undefined if the user that has do the request
   		 	 * hasn't the relative permission */

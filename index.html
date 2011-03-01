@@ -1,122 +1,125 @@
 <!doctype html>
 <html>
   <head>
-    <title>socket.io client test</title>
-        
-       
-        
+    <title>CTI Nethesis</title>
     <script src="/json.js"></script> <!-- for ie -->
     <script src="/lib/socket.io-client/socket.io.js"></script>
   </head>
   <body>
 
     <script>
+    	var notificationTimeout = 5000;
 
- 
-		var notificationTimeout = 5000;
-
-      function normalDesktopNotification(obj){
-        
-        //var el = document.createElement('p');
-        //el.innerHTML = '<b>' + esc(obj.clientSessionId) + ':</b> ' + esc(obj.respMessage);
+	    function normalDesktopNotification(obj){
+	        
+        	//var el = document.createElement('p');
+	        //el.innerHTML = '<b>' + esc(obj.clientSessionId) + ':</b> ' + esc(obj.respMessage);
     
-        if (window.webkitNotifications) { //enable notification if supported
-            notification = window.webkitNotifications.createNotification("",esc(obj.clientSessionId),esc(obj.respMessage));
-            notification.ondisplay = function() { console.log("Display notification"); };
-            notification.onclose = function() { console.log("Close notification"); };
-            notification.onclick = function() { 
-            	window.focus(); 
-            	this.cancel(); 
-            };
-            notification.show();
-            
-            /*
-            setTimeout(function(){
-				notification.cancel();
-			}, notificationTimeout);
-			*/
-        }
-      }
+    	    if (window.webkitNotifications) { //enable notification if supported
+	            notification = window.webkitNotifications.createNotification("",esc(obj.clientSessionId),esc(obj.respMessage));
+	            notification.ondisplay = function() { console.log("Display notification"); };
+	            notification.onclose = function() { console.log("Close notification"); };
+	            notification.onclick = function() { 
+	            	window.focus(); 
+	            	this.cancel(); 
+	            };
+	            notification.show();
+    	        
+	            /*
+	            setTimeout(function(){
+					notification.cancel();
+				}, notificationTimeout);
+				*/
+	      	}
+	    }
       
       
-      
-      function htmlDesktopNotification(socket, respMessage){
+      	
+      	function htmlDesktopNotification(socket, respMessage){
             	
-    	var host = socket.host;
-    	var port = socket.options["port"];
+    		var host = socket.host;
+    		var port = socket.options["port"];
     	
-        if (window.webkitNotifications) { //enable notification if supported
+        	if (window.webkitNotifications) { //enable notification if supported
 			
-			var reqUrl = "./getNotificationCalling.html?server=" + host + "&port=" + port + "&from=" + respMessage.from + "&to=" + respMessage.to + "&respMessage=" + respMessage.respMessage;
-            notification = window.webkitNotifications.createHTMLNotification(reqUrl);
-            notification.ondisplay = function() { console.log("Display notification"); };
-            notification.onclose = function() { console.log("Close notification"); };
-            notification.show(); // note the show()
+				var reqUrl = "./getNotificationCalling.html?server=" + host + "&port=" + port + "&from=" + respMessage.from + "&to=" + respMessage.to + "&respMessage=" + respMessage.respMessage;
+            	notification = window.webkitNotifications.createHTMLNotification(reqUrl);
+	            notification.ondisplay = function() { console.log("Display notification"); };
+	            notification.onclose = function() { console.log("Close notification"); };
+	            notification.show(); // note the show()
             
-            /*
-            setTimeout(function(){
-				notification.cancel();
-			}, notificationTimeout);
-			*/
-			
-        }
-      }
+	            /*
+            	setTimeout(function(){
+					notification.cancel();
+				}, notificationTimeout);
+				*/
+        	}
+      	}
       
 
-      function send(val){
-        var val = document.getElementById('text').value;
-        socket.send(val);
-        normalDesktopNotification({ message: ['you', val] });
-        document.getElementById('text').value = '';
-      }
+      	function send(val){
+        	var val = document.getElementById('text').value;
+	        socket.send(val);
+	        normalDesktopNotification({ message: ['you', val] });
+	        document.getElementById('text').value = '';
+	    }
       
 
-      function esc(msg){
-        return msg.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-      };
+      	function esc(msg){
+        	return msg.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      	};
       
   
     
-      var socket = new io.Socket(null, {port: 8080, rememberTransport: false});
-      socket.connect();
-      socket.on('message', function(obj){
-      	console.debug("Received msg: ");
-      	console.log(obj);
+      	var socket = new io.Socket(null, {port: 8080, rememberTransport: false});
+      	socket.connect();
+      	socket.on('message', function(obj){
+      		console.debug("Received msg: ");
+	      	console.log(obj);
       	
-      	if(obj.typeMessage=="dialing"){
-      		console.log("dialing: HTML notification");
-      		htmlDesktopNotification(socket, obj);
-      	}
-      	else {
-	      	console.log("normal notification");
-	      	normalDesktopNotification(obj);
-	    }
+      		if(obj.typeMessage=="dialing"){
+	      		console.log("dialing: HTML notification");
+	      		htmlDesktopNotification(socket, obj);
+	      		document.getElementById('dialin_div').style.display = 'block';
+	      		document.getElementById('info_dialin_from').innerHTML = 'Call from <b>' + obj.from + '</b>';
+	      	}
+      		else {
+		      	console.log("normal notification");
+		      	normalDesktopNotification(obj);
+		    }
 	    
-	    if(obj.typeMessage=='ack_login'){
-	    	var extFrom =  document.querySelector('#ext').value;
-		    var secret =  document.querySelector('#secret').value;
-		    if(localStorage.getItem('user')==null){
-			    localStorage.setItem('user', extFrom);
-			    localStorage.setItem('password', secret);
-			}
-		    console.log('user = ' + localStorage.getItem('user'));
-		    console.log('password = ' + localStorage.getItem('password'));
-	    }
-      });
+	    	if(obj.typeMessage=='ack_login'){
+		    	var extFrom =  document.querySelector('#ext').value;
+			    var secret =  document.querySelector('#secret').value;
+			    if(localStorage.getItem('user')==null){
+				    localStorage.setItem('user', extFrom);
+				    localStorage.setItem('password', secret);
+				}
+			    console.log('user = ' + localStorage.getItem('user'));
+			    console.log('password = ' + localStorage.getItem('password'));
+			    
+			   	document.getElementById('login_div').style.display = 'none';
+			   	document.getElementById('logged_in_div').style.display = 'block';
+			   	document.getElementById('str_logged_in').innerHTML = 'Logged in as ' + localStorage.getItem('user');
+			   	document.getElementById('logout').style.display = 'block';
+			   	document.getElementById('dialout_div').style.display = 'block';
+			    
+		    }
+	   });
       
    
 
 
-	if (window.webkitNotifications) {
-		console.log("Notifications are supported!");
-	}
-	else {
-		console.log("Notifications are not supported for this Browser/OS version yet.");
-	}
+		if (window.webkitNotifications) {
+			console.log("Notifications are supported!");
+		}
+		else {
+			console.log("Notifications are not supported for this Browser/OS version yet.");
+		}
 
     </script>
     
-    <h2>CTI Interface</h2>
+    <h2>CTI Nethesis</h2>
     <div style='font-size: 80%; margin: 20px; '>
       <p>Click on "Enable notifications" only the first time you access this page.</p>
       <input type='button' id='enable' value='Enable notifications'/>    
@@ -127,21 +130,55 @@
       <input type="text" autocomplete="off" id="text"><input type="submit" value="Send">
     </form>
     -->
-    <br/> 
-    <label for='ext' >Extension:</label><input type='text' name='ext' id='ext' value='500'/>
-    <label for='secret' >Secret:</label><input type='text' name='secret' id='secret' value='500'/>      
-    <input type='button' id='login' value='Login'/>   
-    <br/> 
-    <label for='extFrom' >Call from:</label><input type='text' name='extFrom' id='extFrom' value='500'/>
-    <label for='extToCall' >to:</label><input type='text' name='extToCall' id='extToCall' value='501'/>      
-    <input type='button' id='call' value='Call'/>
+    <hr/>
+    <div id='logged_in_div'>
+    	<h5 id='str_logged_in'>Not logged in</h5>
+    	<input type='button' id='logout' value='Logout' style='display:none'/>
+    </div>
+    <div id='login_div'>
+    	<hr/>
+	    <h3>Login:</h3>
+    	<label for='ext' >Extension:</label><input type='text' name='ext' id='ext' value='500'/>
+	    <label for='secret' >Secret:</label><input type='text' name='secret' id='secret' value='500'/>      
+	    <input type='button' id='login' value='Login'/>   
+	</div>
     <br/>
-    <input type='button' id='logout' value='Logout'/>
-    <!--
-    <button onclick="ShowNotification()">Notify me!</button>
-<button onclick="ShowHTMLNotification()">Notify me! (HTML)</button>
-<br/>
--->
+    
+    <div id='dialout_div' style='display:none'>
+		<hr/><br/>
+		<h3>Dial out panel</h3>
+		<label for='extToCall' >Call to:    </label><input type='text' name='extToCall' id='extToCall' value='501'/>      
+		<input type='button' id='call' value='Call'/>
+		<label id='info_calling'></label>
+		<br/>
+	</div>
+	<br/>
+	
+	
+	<div id='dialin_div' style='display:none'>
+		<hr/><br/>
+		<h3>Dial in panel</h3>
+		<label id='info_dialin_from'></label>
+		<input type='button' id='hangup' value='Hangup'/>
+		<br/>
+	</div>
+	
+    
+    <script>
+    
+    	// if the user and password are set, then it do the login action
+		if(localStorage.getItem('user')!=null){
+			var extFrom = localStorage.getItem('user');
+	    	var secret = localStorage.getItem('password');
+			socket.send({ extFrom: extFrom, secret: secret, action: "login" });
+			console.log("sended login request from: " + extFrom);
+		}
+    	
+    </script>
+    
+    
+    
+   <!--
     <style>
       #chat { height: 300px; overflow: auto; width: 800px; border: 1px solid #eee; font: 13px Helvetica, Arial; }
       #chat p { padding: 8px; margin: 0; }
@@ -152,59 +189,87 @@
       #form input[type=submit]:hover { background: #A2A2A2; }
       #form input[type=submit]:active { position: relative; top: 2px; }
     </style>
+   -->
    
-   <script>
-document.querySelector('#enable').addEventListener('click', function() {
- if (window.webkitNotifications.checkPermission() == 0) { // 0 is PERMISSION_ALLOWED
-    // function defined in step 2
-    console.log("Notification allowed");
-  } else {
-    console.log("Notification NOT allowed");
-    window.webkitNotifications.requestPermission();
-  }
-},false);
+   
+   	<script>
+   
+		document.querySelector('#enable').addEventListener('click', function() {
+			if (window.webkitNotifications.checkPermission() == 0) { // 0 is PERMISSION_ALLOWED
+		    	// function defined in step 2
+			    console.log("Notification allowed");
+			} else {
+			    console.log("Notification NOT allowed");
+			    window.webkitNotifications.requestPermission();
+			}
+		},false);
 
 
 
-document.querySelector('#login').addEventListener('click', function() {
-  	if(localStorage.getItem('user')!=null){
-  		alert('Sorry, but you are already logged in !');
-  		return;
-  	}
-	var extFrom =  document.querySelector('#ext').value;
-    var secret =  document.querySelector('#secret').value;
-	socket.send({ extFrom: extFrom, secret: secret, action: "login" });
-	console.log("sended login request from: " + extFrom);
-},false);
+		document.querySelector('#login').addEventListener('click', function() {
+  			if(localStorage.getItem('user')!=null){
+				console.log('Sorry, but you are already logged in !');
+  				return;
+		  	}
+			var extFrom =  document.querySelector('#ext').value;
+		    var secret =  document.querySelector('#secret').value;
+			socket.send({ extFrom: extFrom, secret: secret, action: "login" });
+			console.log("sended login request from: " + extFrom);
+		},false);
 
-document.querySelector('#call').addEventListener('click', function() {
+		document.querySelector('#call').addEventListener('click', function() {
 
-    var extFrom =  document.querySelector('#extFrom').value;
-    var extToCall =  document.querySelector('#extToCall').value;
-    socket.send({ extToCall: extToCall, extFrom: extFrom, action: "call_out_from_client" });
-    console.log("sended call request from " + extFrom + " -> to " + extToCall);
-},false);
+		    var extFrom = localStorage.getItem('user');
+    		var extToCall =  document.querySelector('#extToCall').value;
+    		if(extFrom==extToCall){
+    			document.getElementById('info_calling').style.display = 'yes';
+    			document.getElementById('info_calling').innerHTML = 'Attention: you trying to call yourself !';
+    			return;
+    		}
+		    socket.send({ extToCall: extToCall, extFrom: extFrom, action: "call_out_from_client" });
+		    console.log("sended call request from " + extFrom + " -> to " + extToCall);
+		    document.getElementById('info_calling').style.display = 'none';
+		    document.getElementById('call').value = 'Calling...';
+		    document.getElementById('call').disabled = 'true';
+		},false);
 
-document.querySelector('#logout').addEventListener('click', function() {
-	localStorage.removeItem('user');
-	localStorage.removeItem('password');
-	var extFrom =  document.querySelector('#extFrom').value;
-    socket.send({ extFrom: extFrom, action: "logout" });
-    console.log("sended disconnection request for " + extFrom);
-    console.log('user = ' + localStorage.getItem('user'));
-	console.log('password = ' + localStorage.getItem('password'));
-	alert("Logged off");
-},false);
+		document.querySelector('#logout').addEventListener('click', function() {
+			
+			var extFrom =  localStorage.getItem('user');
+		    socket.send({ extFrom: extFrom, action: "logout" });
+		    localStorage.removeItem('user');
+			localStorage.removeItem('password');
+		    console.log("sended disconnection request for " + extFrom);
+		    console.log('user = ' + localStorage.getItem('user'));
+			console.log('password = ' + localStorage.getItem('password'));
+			
+			document.getElementById('str_logged_in').innerHTML = 'Logged off';
+			document.getElementById('login_div').style.display = 'block';
+			document.getElementById('logout').style.display = 'none';
+			document.getElementById('dialout_div').style.display = 'none';
+			
+		},false);
+		
+		
+		document.querySelector('#hangup').addEventListener('click', function() {
+			
+			var extFrom =  localStorage.getItem('user');
+		    socket.send({ extFrom: extFrom, action: "logout" });
+		    localStorage.removeItem('user');
+			localStorage.removeItem('password');
+		    console.log("sended disconnection request for " + extFrom);
+		    console.log('user = ' + localStorage.getItem('user'));
+			console.log('password = ' + localStorage.getItem('password'));
+			
+			document.getElementById('str_logged_in').innerHTML = 'Logged off';
+			document.getElementById('login_div').style.display = 'block';
+			document.getElementById('logout').style.display = 'none';
+			document.getElementById('dialout_div').style.display = 'none';
+			
+		},false);
 
-// if the user and password are set, then it do the login action
-if(localStorage.getItem('user')!=null){
-	console.log("sono qui a fare il login dalla storage");
-	var extFrom = localStorage.getItem('user');
-	console.log('extFrom = ' + extFrom);
-    var secret = localStorage.getItem('password');
-	socket.send({ extFrom: extFrom, secret: secret, action: "login" });
-	console.log("sended login request from: " + extFrom);
-}
     </script> 
+    
+    
   </body>
 </html>
