@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>CTI Nethesis</title>
+    <title>CTI Nethesis 0.1</title>
     <script src="/json.js"></script> <!-- for ie -->
     <script src="/lib/socket.io-client/socket.io.js"></script>
   </head>
@@ -84,7 +84,7 @@
 	      		
       			document.getElementById('call_out_div').style.display = 'none';
       			document.getElementById('buttoncall').style.display = 'block';
-	      		document.getElementById('info_calling').innerText = 'Call from ' + obj.from;
+	      		document.getElementById('info_calling').innerText = 'Call incoming from ' + obj.from;
 	      		
 	      	}
       		else {
@@ -96,6 +96,8 @@
 	    	if(obj.typeMessage=="callconnected"){
 	      		console.log(obj.respMessage);
 	      		document.getElementById('info_calling').innerText = obj.respMessage;
+	      		document.getElementById('call').value = 'Calling...';
+			    document.getElementById('call').disabled = 'true';
 	      	}
 	      	if(obj.typeMessage=="hangup"){
 	      		console.log(obj.respMessage);

@@ -119,17 +119,17 @@ am.addListener('callconnected', function(from, to) {
 
 am.addListener('calldisconnected', function(from, to) {
 	
-	//sys.puts("CLIENT: Disconnected call between " + from.number + " (" + from.name + ") and " + to.number + " (" + to.name + ")");
+	sys.puts("CLIENT: Disconnected call between " + from.number + " (" + from.name + ") and " + to.number + " (" + to.name + ")");
 });
 
 am.addListener('hold', function(participant) {
-	//var other = am.getParticipant(participant['with']);
-	//sys.puts("CLIENT: " + participant.number + " (" + participant.name + ") has put " + other.number + " (" + other.name + ") on hold");
+	var other = am.getParticipant(participant['with']);
+	sys.puts("CLIENT: " + participant.number + " (" + participant.name + ") has put " + other.number + " (" + other.name + ") on hold");
 });
 
 am.addListener('unhold', function(participant) {
-	//var other = am.getParticipant(participant['with']);
-	//sys.puts("CLIENT: " + participant.number + " (" + participant.name + ") has taken " + other.number + " (" + other.name + ") off hold");
+	var other = am.getParticipant(participant['with']);
+	sys.puts("CLIENT: " + participant.number + " (" + participant.name + ") has taken " + other.number + " (" + other.name + ") off hold");
 });
 
 am.addListener('hangup', function(participant, code, text) {
@@ -145,6 +145,10 @@ am.addListener('hangup', function(participant, code, text) {
 		console.log("Notify of hangup has been sent to " + ext);
 	}
 	
+	
+	
+	// it is needed for manage hangup
+	delete am.participants[participant['with']];
 });
 
 am.addListener('callreport', function(report) {
@@ -426,6 +430,7 @@ io.on('connection', function(client){
   			{ '1299146283.135': { name: '', number: '500', with: '1299146283.135' },
   '1299146287.136': { name: '', number: '501', with: '1299146287.136' } }
   			*/
+  			// retrieve the id of the client who has request the hangup
   			var id;
   			for(key in am.participants){
   				if(am.participants[key].number==extFrom){
@@ -434,7 +439,8 @@ io.on('connection', function(client){
   				}
   			}
   			
-  			// create call action for asterisk server
+  			
+  			// create hangup action for asterisk server
 	  		var actionCall = {
 				Action: 'Hangup',
 				Channel: id
@@ -521,12 +527,12 @@ createPhonebookHTMLPage = function(phonebook){
 	return html;
 }
 
-/*
+
 process.on('uncaughtException', function(err){
 	console.log('*********************************************');
 	console.log('Caught not provided exception: ' + err);
 	console.log('*********************************************');
 });
-*/
+
 
 
