@@ -1,17 +1,27 @@
 <html>
 <title></title>
 <head>
-
+<!--
+	<script type='text/javascript' src='jquery-1.5.1.js'></script>
+-->
+	<script language="javascript" type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
 </head>
 
 <body>
-<script language="JavaScript">
-var str = '<p>';
-str += 'ale';
-str += '</p>';
-console.log(str);
+	<a id='miolink' href='http://www.google.it'>link</a>	
 
-</script>
+	<script>
+		
+		var elem = $("#miolink");
+		$("<div></div>");
+		var blocco = $("<div><p>Ciao</p></div>");
+		blocco.addClass("nuovaClasse");
+		blocco.appendTo("#miolink");
+		$(function(){
+			alert("dom caricato");
+		});
+	</script>
+	
 </body>
 </html>
 

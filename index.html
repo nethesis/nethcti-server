@@ -9,6 +9,7 @@
 
     <script>
     	var notificationTimeout = 5000;
+    	var outcall = false;
 
 	    function normalDesktopNotification(obj){
 	        
@@ -80,13 +81,32 @@
       		if(obj.typeMessage=="dialing"){
 	      		console.log("dialing: HTML notification");
 	      		htmlDesktopNotification(socket, obj);
-	      		document.getElementById('dialin_div').style.display = 'block';
-	      		document.getElementById('info_dialin_from').innerHTML = 'Call from <b>' + obj.from + '</b>';
+	      		
+      			document.getElementById('call_out_div').style.display = 'none';
+      			document.getElementById('buttoncall').style.display = 'block';
+	      		document.getElementById('info_calling').innerText = 'Call from ' + obj.from;
+	      		
 	      	}
       		else {
 		      	console.log("normal notification");
 		      	normalDesktopNotification(obj);
 		    }
+	    
+	    	//new--------------------------------------------------
+	    	if(obj.typeMessage=="callconnected"){
+	      		console.log(obj.respMessage);
+	      		document.getElementById('info_calling').innerText = obj.respMessage;
+	      	}
+	      	if(obj.typeMessage=="hangup"){
+	      		console.log(obj.respMessage);
+	      		document.getElementById('info_calling').innerText = obj.respMessage;
+	      		
+	      		document.getElementById('call_out_div').style.display = 'block';
+	      		document.getElementById('buttoncall').style.display = 'none';
+	      		document.getElementById('call').value = 'Call';
+	      		document.getElementById('call').disabled = false;
+	      	}
+	    	//new--------------------------------------------------
 	    
 	    	if(obj.typeMessage=='ack_login'){
 		    	var extFrom =  document.querySelector('#ext').value;
@@ -144,25 +164,37 @@
 	</div>
     <br/>
     
-    <div id='dialout_div' style='display:none'>
+    <div id='dialout_div' style='display:block'>
 		<hr/><br/>
-		<h3>Dial out panel</h3>
-		<label for='extToCall' >Call to:    </label><input type='text' name='extToCall' id='extToCall' value='501'/>      
-		<input type='button' id='call' value='Call'/>
+		<h3>Dial panel</h3>
+		<div id='call_out_div'>
+			<label for='extToCall' >Call to:    </label><input type='text' name='extToCall' id='extToCall' value='501'/>      
+		
+			<input type='button' id='call' value='Call'/>
+		</div>
+		<br/>
 		<label id='info_calling'></label>
+		<br/><br/>
+		<div id='buttoncall' style='display:none'>
+			<input type='button' id='hangup' value='Hangup'/>
+			<input type='button' id='transfer' value='Transfer' disabled='true'/>
+			<input type='button' id='waiting' value='Waiting' disabled='true'/>
+		</div>
 		<br/>
 	</div>
 	<br/>
 	
-	
-	<div id='dialin_div' style='display:none'>
+	<!--
+	<div id='dialin_div' style='display:block'>
 		<hr/><br/>
 		<h3>Dial in panel</h3>
 		<label id='info_dialin_from'></label>
-		<input type='button' id='hangup' value='Hangup'/>
+		<input type='button' id='hangup_in' value='Hangup'/>
+		<input type='button' id='transfer_in' value='Transfer'/>
+		<input type='button' id='waiting_in' value='Waiting'/>
 		<br/>
 	</div>
-	
+	-->
     
     <script>
     
@@ -193,6 +225,8 @@
    
    
    	<script>
+   	
+   		
    
 		document.querySelector('#enable').addEventListener('click', function() {
 			if (window.webkitNotifications.checkPermission() == 0) { // 0 is PERMISSION_ALLOWED
@@ -228,9 +262,11 @@
     		}
 		    socket.send({ extToCall: extToCall, extFrom: extFrom, action: "call_out_from_client" });
 		    console.log("sended call request from " + extFrom + " -> to " + extToCall);
-		    document.getElementById('info_calling').style.display = 'none';
+		    document.getElementById('info_calling').style.display = 'block';
+		    document.getElementById('info_calling').innerText = 'Calling...';
 		    document.getElementById('call').value = 'Calling...';
 		    document.getElementById('call').disabled = 'true';
+		    document.getElementById('buttoncall').style.display = 'block';
 		},false);
 
 		document.querySelector('#logout').addEventListener('click', function() {
@@ -253,20 +289,21 @@
 		
 		document.querySelector('#hangup').addEventListener('click', function() {
 			
-			var extFrom =  localStorage.getItem('user');
-		    socket.send({ extFrom: extFrom, action: "logout" });
-		    localStorage.removeItem('user');
-			localStorage.removeItem('password');
-		    console.log("sended disconnection request for " + extFrom);
-		    console.log('user = ' + localStorage.getItem('user'));
-			console.log('password = ' + localStorage.getItem('password'));
-			
-			document.getElementById('str_logged_in').innerHTML = 'Logged off';
-			document.getElementById('login_div').style.display = 'block';
-			document.getElementById('logout').style.display = 'none';
-			document.getElementById('dialout_div').style.display = 'none';
-			
+			var extFrom = localStorage.getItem('user');
+			socket.send({ extFrom: extFrom, action: "hangup" });
+			console.log("Hangup request has been sent to server");
 		},false);
+		
+		document.querySelector('#waiting').addEventListener('click', function() {
+			console.log("to implement");
+		},false);
+		
+		
+		document.querySelector('#transfer').addEventListener('click', function() {
+			console.log("to implement");
+		},false);
+		
+		
 
     </script> 
     

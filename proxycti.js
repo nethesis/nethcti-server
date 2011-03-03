@@ -90,6 +90,31 @@ am.addListener('dialing', function(from, to) {
 am.addListener('callconnected', function(from, to) {
 	sys.puts("CLIENT: Connected call between " + from.number + " (" + from.name + ") and " + to.number + " (" + to.name + ")");
 	
+	
+	//new
+	
+	if(clients[from.number]!=undefined){
+		var c = clients[from.number];
+		var msg = "Call from " + from.number + " to " + to.number + " CONNECTED";
+		var response = new ResponseMessage(c.sessionId, "callconnected", msg);
+		response.from = from.number;
+		response.to = to.number;
+		c.send(response);
+		console.log("Notify of connected calling has been sent to " + from.number);
+	}
+	if(clients[to.number]!=undefined){
+		var c = clients[to.number];
+		var msg = "Call from " + from.number + " to " + to.number + " CONNECTED";
+		var response = new ResponseMessage(c.sessionId, "callconnected", msg);
+		response.from = from.number;
+		response.to = to.number;
+		c.send(response);
+		console.log("Notify of connected calling has been sent to " + to.number);
+	}
+	
+	
+	//new
+	
 });
 
 am.addListener('calldisconnected', function(from, to) {
@@ -109,7 +134,16 @@ am.addListener('unhold', function(participant) {
 
 am.addListener('hangup', function(participant, code, text) {
 	var other = am.getParticipant(participant['with']);
-	sys.puts("CLIENT: " + participant.number + " (" + participant.name + ") has hung up. Reason: " + code + " (" + text + ")");
+	sys.puts("CLIENT: " + participant.number + " (" + participant.name + ") has hung up. Reason: " + code + "  ( Code: " + text + ")");
+	
+	var ext = participant.number;
+	if(clients[ext]!=undefined){
+		var c = clients[ext];
+		var msg = "Call has hung up. Reason: " + text + "  (Code: " + code + ")";
+		var response = new ResponseMessage(c.sessionId, "hangup", msg);
+		c.send(response);
+		console.log("Notify of hangup has been sent to " + ext);
+	}
 	
 });
 
@@ -291,6 +325,7 @@ io.on('connection', function(client){
   		var actionLogin = "login";
   		var actionCallOut = "call_out_from_client";
   		var actionLogout = "logout";
+  		var actionHangup = "hangup";
   		
   		// manage request of calling
   		if(action==actionCallOut){
@@ -381,6 +416,34 @@ io.on('connection', function(client){
   			removeClient(client.sessionId);
 	  		console.log("Client " + client.sessionId + " disconnected");
 	  		console.log("clients length = " + Object.keys(clients).length);
+  		}
+  		// manage request of hangup
+  		else if(action==actionHangup){
+  			console.log("received hangup request from exten [" + extFrom + "]");
+  			
+  			
+  			/*
+  			{ '1299146283.135': { name: '', number: '500', with: '1299146283.135' },
+  '1299146287.136': { name: '', number: '501', with: '1299146287.136' } }
+  			*/
+  			var id;
+  			for(key in am.participants){
+  				if(am.participants[key].number==extFrom){
+  					id = key;
+  					break;
+  				}
+  			}
+  			
+  			// create call action for asterisk server
+	  		var actionCall = {
+				Action: 'Hangup',
+				Channel: id
+			};
+			// send action to asterisk
+			am.send(actionCall, function () {
+				console.log("hangup action from " + extFrom + " [" + id + "] has been sent to asterisk: ");
+			});
+  			
   		}
   	});
 
