@@ -2,9 +2,10 @@ var fs = require("fs");
 var sys = require("sys");
 var mysql = require('./lib/node-mysql');
 var configFilename = "dataProfiles.conf";
-var sectionNamePhonebook = "phonebook";
+var SECTION_NAME_PHONEBOOK = "phonebook";
+var SECTION_SEARCH_ADDRESSES = "search_addresses";
 
-//var sectionNamePhonebook = "customer_card";// for development
+//var SECTION_NAME_PHONEBOOK = "customer_card";// for development
 
 
 /* It's the list of sql user profiles expressed as hash table of key and value.
@@ -52,16 +53,72 @@ exports.DataCollector = function(){
 	this.getUserSQLProfile = function(exten){	return getUserSQLProfile(exten); }
 	this.testUserPermitPhonebook = function(exten) { return testUserPermitPhonebook(exten); }
 	this.getPhonebook = function(extenApplicant, extenPhonebook, cb) { return getPhonebook(extenApplicant, extenPhonebook, cb); }
+	this.testPermitUserSearchAddressPhonebook = function(extFrom){ return testPermitUserSearchAddressPhonebook(extFrom); }
+	this.searchContactsPhonebook = function(extFrom, namex, cb){ return searchContactsPhonebook(extFrom, namex, cb); }
 }
+
+
+
+/*
+ * Search in database all phonebook contacts that match given namex
+ */
+searchContactsPhonebook = function(extFrom, namex, cb){
+
+	var currentUserSQLProfileObj = getUserSQLProfile(extFrom);
+	var currentSQLQueryObj = currentUserSQLProfileObj.listSQLQueries[SECTION_SEARCH_ADDRESSES];
+		
+	console.log("ure");
+	console.log(currentSQLQueryObj);
+		
+	var temp = currentSQLQueryObj.sqlQueryStr;
+		
+	if(currentSQLQueryObj!=undefined){
+	
+		// substitute query template
+		while(currentSQLQueryObj.sqlQueryStr.indexOf("$NAME_TO_REPLACE")!=-1){
+		
+			
+			console.log(currentSQLQueryObj.sqlQueryStr);
+		
+			currentSQLQueryObj.sqlQueryStr = currentSQLQueryObj.sqlQueryStr.replace("$NAME_TO_REPLACE", namex);
+			
+			console.log(currentSQLQueryObj.sqlQueryStr);
+		}
+		
+		// execute current sql query
+		executeSQLQuery(currentSQLQueryObj, function(results){
+			cb(results);
+		});
+		
+		// reconstruct oroginal query for future asking
+		currentSQLQueryObj.sqlQueryStr = temp;
+	}
+	return undefined;
+
+}
+
+
+
+/*
+ * Test if the user exten has the authorization to search contact in phonebook. 
+ */
+testPermitUserSearchAddressPhonebook = function(exten){
+
+	if(this.listUserSQLProfiles[exten].listSQLQueries[SECTION_SEARCH_ADDRESSES]!=undefined)
+		return true;
+	return false;
+
+}
+
 
 
 /*
  * Test if the user exten has the authorization to view customer card. Therefore
- * it check if the user has a query of category "sectionNamePhonebook".
+ * it check if the user has a query of category "SECTION_NAME_PHONEBOOK".
  */
 testUserPermitPhonebook = function(exten){
 
-	if(this.listUserSQLProfiles[exten].listSQLQueries[sectionNamePhonebook]!=undefined)
+	if(this.listUserSQLProfiles[exten].listSQLQueries[SECTION_NAME_PHONEBOOK]!=undefined)
 		return true;
 	return false;
 
@@ -76,7 +133,7 @@ testUserPermitPhonebook = function(exten){
 getPhonebook = function(extenApplicant, extenPhonebook, cb){
 
 	var currentUserSQLProfileObj = getUserSQLProfile(extenApplicant);
-	var currentSQLQueryObj = currentUserSQLProfileObj.listSQLQueries[sectionNamePhonebook];
+	var currentSQLQueryObj = currentUserSQLProfileObj.listSQLQueries[SECTION_NAME_PHONEBOOK];
 		
 	if(currentSQLQueryObj!=undefined){
 	
@@ -92,6 +149,30 @@ getPhonebook = function(extenApplicant, extenPhonebook, cb){
 	return undefined;
 }
 
+
+/*
+ * Return the addresses (phonebook). 
+ */
+ /*
+getAddresses = function(extenApplicant){
+
+	var currentUserSQLProfileObj = getUserSQLProfile(extenApplicant);
+	var currentSQLQueryObj = currentUserSQLProfileObj.listSQLQueries[SECTION_NAME_PHONEBOOK];
+		
+	if(currentSQLQueryObj!=undefined){
+	
+		while(currentSQLQueryObj.sqlQueryStr.indexOf("$EXTEN")!=-1){
+			currentSQLQueryObj.sqlQueryStr = currentSQLQueryObj.sqlQueryStr.replace("$EXTEN", extenPhonebook);
+		}
+		
+		// execute current sql query
+		executeSQLQuery(currentSQLQueryObj, function(results){
+			cb(results);
+		});
+	}
+	return undefined;
+}
+*/
 
 /*
  * Return the sql user profile.

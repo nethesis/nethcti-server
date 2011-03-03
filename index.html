@@ -4,6 +4,8 @@
     <title>CTI Nethesis 0.1</title>
     <script src="/json.js"></script> <!-- for ie -->
     <script src="/lib/socket.io-client/socket.io.js"></script>
+    <script src="jquery-1.5.1.js"></script>
+
   </head>
   <body>
 
@@ -108,6 +110,30 @@
 	      		document.getElementById('call').value = 'Call';
 	      		document.getElementById('call').disabled = false;
 	      	}
+	      	if(obj.typeMessage=="search_contacts_results"){
+	      		var results = obj.results;
+	      		console.log(obj.respMessage + " and the results are:");
+	      		console.log(results);
+	      		
+	      		console.log("uuuuuuu = " + $('#searchContactsResults'));
+	      		if($('#searchContactsResults')!=undefined){
+	      			$('#searchContactsResults').remove();
+	      		}
+	      		
+	      		var htmlResults = "<div id='searchContactsResults'>";
+
+	      		for(var i=0; i<results.length; i++){
+	      			var el = results[i];
+	      			for(key in el){
+		      			htmlResults += key + ':  <b>' + el[key] + '</b><br/>'
+		      		}
+		      		htmlResults += '<br/>'
+	      		}
+	      		htmlResults += '<div/>';
+	      		
+	      		$('#searchContacts').append(htmlResults);
+	      	}
+	      	
 	    	//new--------------------------------------------------
 	    
 	    	if(obj.typeMessage=='ack_login'){
@@ -184,19 +210,29 @@
 		</div>
 		<br/>
 	</div>
-	<br/>
 	
 	<!--
-	<div id='dialin_div' style='display:block'>
-		<hr/><br/>
-		<h3>Dial in panel</h3>
-		<label id='info_dialin_from'></label>
-		<input type='button' id='hangup_in' value='Hangup'/>
-		<input type='button' id='transfer_in' value='Transfer'/>
-		<input type='button' id='waiting_in' value='Waiting'/>
-		<br/>
+	<div id='addressbook'>
+		<br/><hr/>
+		<h3>Address book</h3>
+		<input type="button" id="button_addressbook" value="Show"/>
+		<div id='addresses' style='display:none'>
+			
+		</div>
 	</div>
+	<br/>
 	-->
+	
+	<div id="form">
+		<br/><hr/>
+		<h3>Address book</h3>	
+		<label>Search:  </label><input type="text" id="searchbox" name="searchbox" value='alessandro'/>
+		<div id="searchContacts">
+			<a class="button" id="submitbutton" href="#"><span id="buttontext">Search</span></a>
+		</div> 
+	</div>
+	<div id="resultsContainer"></div>
+	
     
     <script>
     
@@ -289,6 +325,34 @@
 		},false);
 		
 		
+		/*
+		document.querySelector('#button_addressbook').addEventListener('click', function(){
+
+			if(document.getElementById('addresses').style.display=='none'){
+				document.getElementById('button_addressbook').value = 'Hide';
+				document.getElementById('addresses').style.display = 'block';
+				
+				// request addresses to server
+				var extFrom = localStorage.getItem('user');
+				socket.send({ extFrom: extFrom, action: "addresses" });
+				console.log("request for addresses has been sent to server");
+				
+				// check if the answer isn't undefined
+				
+				
+				// set the element of the html page to answer recevied from the server
+
+
+			}
+			else{
+				document.getElementById('button_addressbook').value = 'Show';
+				document.getElementById('addresses').style.display = 'none';
+			}
+			
+		}, false);
+		*/
+		
+		
 		document.querySelector('#hangup').addEventListener('click', function() {
 			
 			var extFrom = localStorage.getItem('user');
@@ -306,6 +370,62 @@
 		},false);
 		
 		
+		
+		$(document).ready(function() {
+			
+			console.log("document ready");
+			
+			$("#searchbox").keyup(function(){
+				
+				console.log("keyup");				
+
+				var extFrom = localStorage.getItem('user');
+				var namex = $("#searchbox").val();
+				console.log("LENGHTTTUU");
+				if(namex.length>=2 && (namex.length%2)==0){
+					console.log('namex = ' + namex);
+					socket.send({extFrom: extFrom, namex: namex, action: 'search_contact_phonebook'});
+					console.log('request to search contact in phonebook has been sent to server');
+				}
+ 
+ 				/*
+				$.get("search.php",{query: $("#searchbox").val(), type: "count"}, function(data){
+ 
+					$("#buttontext").html(data + " Results Available");
+ 
+				});
+				*/
+				
+				
+			});
+ /*
+			$("#searchbox").keyup(function(event){
+ 
+				if(event.keyCode == "13")
+				{
+					getResults();
+				}
+	 
+			});
+ 
+			$("#submitbutton").click(function(){
+ 
+				getResults();
+ 
+			});
+ 
+			function getResults()
+			{
+		 
+				$.get("search.php",{query: $("#searchbox").val(), type: "results"}, function(data){
+ 
+					$("#resultsContainer").html(data);
+					$("#resultsContainer").show("blind");
+				});
+			
+			}
+ 			*/
+		});
 
     </script> 
     
