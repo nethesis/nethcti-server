@@ -87,7 +87,8 @@
       			document.getElementById('call_out_div').style.display = 'none';
       			document.getElementById('buttoncall').style.display = 'block';
 	      		document.getElementById('info_calling').innerText = 'Call incoming from ' + obj.from;
-	      		
+	      		document.getElementById('logged_in_div').style.display = 'none';
+	      		document.getElementById('address').style.display = 'none';
 	      	}
       		else {
 		      	console.log("normal notification");
@@ -109,6 +110,8 @@
 	      		document.getElementById('buttoncall').style.display = 'none';
 	      		document.getElementById('call').value = 'Call';
 	      		document.getElementById('call').disabled = false;
+	      		document.getElementById('logged_in_div').style.display = 'block';
+      			document.getElementById('address').style.display = 'block';
 	      	}
 	      	if(obj.typeMessage=="search_contacts_results"){
 	      		var results = obj.results;
@@ -147,11 +150,14 @@
 			    console.log('password = ' + localStorage.getItem('password'));
 			    
 			   	document.getElementById('login_div').style.display = 'none';
+			   	document.getElementById('info_notification').style.display = 'none';
 			   	document.getElementById('logged_in_div').style.display = 'block';
-			   	document.getElementById('str_logged_in').innerHTML = 'Logged in as ' + localStorage.getItem('user');
+//			   	document.getElementById('str_logged_in').innerHTML = 'Logged in as ' + localStorage.getItem('user');
 			   	document.getElementById('logout').style.display = 'block';
+			   	document.getElementById('logout').value = 'Logout ' + extFrom;
 			   	document.getElementById('dialout_div').style.display = 'block';
-			    
+			    document.getElementById('address').style.display = 'block';
+			    document.getElementById('dialout_div').style.display = 'block';
 		    }
 	   });
       
@@ -167,40 +173,45 @@
 
     </script>
     
-    <h2>CTI Nethesis</h2>
-    <div style='font-size: 80%; margin: 20px; '>
-      <p>Click on "Enable notifications" only the first time you access this page.</p>
-      <input type='button' id='enable' value='Enable notifications'/>    
+    
+    
+	<div id='info_notification' style='font-size: 80%; margin: 20px; '>
+   		<h2>CTI Nethesis</h2>
+      	<p>Click on "Enable notifications" only the first time you access this page.</p>
+      	<input type='button' id='enable' value='Enable notifications'/>    
     </div>
+    
     <!--
     <div id="chat"><p>Click "Login" to start.</p></div>
     <form id="form" onsubmit="send(); return false">
       <input type="text" autocomplete="off" id="text"><input type="submit" value="Send">
     </form>
     -->
-    <hr/>
+    
+    
     <div id='logged_in_div'>
-    	<h5 id='str_logged_in'>Not logged in</h5>
+    	<!--<h5 id='str_logged_in'>Not logged in</h5>-->
     	<input type='button' id='logout' value='Logout' style='display:none'/>
     </div>
+    
     <div id='login_div'>
-    	<hr/>
 	    <h3>Login:</h3>
     	<label for='ext' >Extension:</label><input type='text' name='ext' id='ext' value='500'/>
 	    <label for='secret' >Secret:</label><input type='text' name='secret' id='secret' value='500'/>      
 	    <input type='button' id='login' value='Login'/>   
+	    <br/>
 	</div>
-    <br/>
     
-    <div id='dialout_div' style='display:block'>
+    
+    <div id='dialout_div' style='display:none'>
 		<hr/><br/>
 		<h3>Dial panel</h3>
 		<div id='call_out_div'>
 			<label for='extToCall' >Call to:    </label><input type='text' name='extToCall' id='extToCall' value='501'/>      
 		
 			<input type='button' id='call' value='Call'/>
+			<br/>
 		</div>
-		<br/>
 		<label id='info_calling'></label>
 		<br/><br/>
 		<div id='buttoncall' style='display:none'>
@@ -223,12 +234,12 @@
 	<br/>
 	-->
 	
-	<div id="form">
+	<div id="address" style='display:none'>
 		<br/><hr/>
 		<h3>Address book</h3>	
 		<label>Search:  </label><input type="text" id="searchbox" name="searchbox" value='alessandro'/>
+		<br/><br/>
 		<div id="searchContacts">
-			<a class="button" id="submitbutton" href="#"><span id="buttontext">Search</span></a>
 		</div> 
 	</div>
 	<div id="resultsContainer"></div>
@@ -305,6 +316,8 @@
 		    document.getElementById('call').value = 'Calling...';
 		    document.getElementById('call').disabled = 'true';
 		    document.getElementById('buttoncall').style.display = 'block';
+		    document.getElementById('logged_in_div').style.display = 'none';
+      		document.getElementById('address').style.display = 'none';
 		},false);
 
 		document.querySelector('#logout').addEventListener('click', function() {
@@ -317,10 +330,11 @@
 		    console.log('user = ' + localStorage.getItem('user'));
 			console.log('password = ' + localStorage.getItem('password'));
 			
-			document.getElementById('str_logged_in').innerHTML = 'Logged off';
+//			document.getElementById('str_logged_in').innerHTML = 'Logged off';
 			document.getElementById('login_div').style.display = 'block';
 			document.getElementById('logout').style.display = 'none';
 			document.getElementById('dialout_div').style.display = 'none';
+			document.getElementById('address').style.display = 'none';
 			
 		},false);
 		
@@ -382,7 +396,7 @@
 				var extFrom = localStorage.getItem('user');
 				var namex = $("#searchbox").val();
 				console.log("LENGHTTTUU");
-				if(namex.length>=2 && (namex.length%2)==0){
+				if(namex.length>=2){
 					console.log('namex = ' + namex);
 					socket.send({extFrom: extFrom, namex: namex, action: 'search_contact_phonebook'});
 					console.log('request to search contact in phonebook has been sent to server');
