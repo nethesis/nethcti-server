@@ -331,6 +331,7 @@ io.on('connection', function(client){
   		var ACTION_LOGOUT = "logout";
   		var ACTION_HANGUP = "hangup";
   		var ACTION_SEARCH_CONTACT_PHONEBOOK = "search_contact_phonebook";
+  		var ACTION_REDIRECT = "redirect";
   		
   		// manage request
   		switch(action){
@@ -473,6 +474,45 @@ io.on('connection', function(client){
 	  			else{
 	  				console.log("ATTENTION: " + extFrom + " is not enabled to search contacts in phonebook !");
   					client.send(new ResponseMessage(client.sessionId, "error_search_contacts", "[DEBUG] Sorry: you don't have permission to search contacts in phonebook !"));
+	  			}
+	  			
+	  		break;
+	  		case ACTION_REDIRECT:
+	  			
+	  			console.log("received redirect action from " + message.redirectFrom + " to " + message.redirectTo);
+	  			
+	  			// check if the user has the permit of dial out
+	  			if(profiler.testPermitActionUser(extFrom, "redirect")){
+	  			
+	  				console.log("[" + extFrom + "] enabled to redirect: execute redirecting...");
+	  				
+	  				
+	  				console.log("kkkkkkkkkkkkkkkkkkkkK");
+	  				console.log(am.participants);
+	  				var channel = '';
+	  				for(key in am.participants){
+	  					if(am.participants[key].number==message.redirectFrom){
+	  						channel = key;
+	  					}
+	  				}
+	  				console.log('channel = ' + channel);
+	  				
+		  			// create redirect action for asterisk server
+		  			var actionRedirect = {
+						Action: 'Redirect',
+						Channel: channel,
+						Context: 'from-internal',
+						Exten: message.redirectTo,
+						Priority: 1
+					};
+					// send action to asterisk
+					am.send(actionRedirect, function () {
+						console.log("redirect action from " + message.redirectFrom + " to " + message.redirectTo + " has been sent to asterisk");
+					});
+		  		}
+	  			else{
+			  		console.log("ATTENTION: " + extFrom + " is not enabled to redirect !");
+			  		client.send(new ResponseMessage(client.sessionId, "redirectstatus", "[DEBUG] Sorry: you don't have permission to redirect !"));
 	  			}
 	  			
 	  		break;
