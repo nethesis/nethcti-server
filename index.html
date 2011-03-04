@@ -11,12 +11,10 @@
 
     <script>
     	var notificationTimeout = 5000;
+    	var slideDelay = 800;
     	var outcall = false;
 
 	    function normalDesktopNotification(obj){
-	        
-        	//var el = document.createElement('p');
-	        //el.innerHTML = '<b>' + esc(obj.clientSessionId) + ':</b> ' + esc(obj.respMessage);
     
     	    if (window.webkitNotifications) { //enable notification if supported
 	            notification = window.webkitNotifications.createNotification("",esc(obj.clientSessionId),esc(obj.respMessage));
@@ -84,18 +82,18 @@
 	      		console.log("dialing: HTML notification");
 	      		htmlDesktopNotification(socket, obj);
 	      		
-      			document.getElementById('call_out_div').style.display = 'none';
-      			document.getElementById('buttoncall').style.display = 'block';
+				$('#call_out_div').slideUp(slideDelay);
+				$('#buttoncall').slideDown(slideDelay);
+				$('#logged_in_div').slideUp(slideDelay);
+				$('#address').slideUp(slideDelay);
 	      		document.getElementById('info_calling').innerText = 'Call incoming from ' + obj.from;
-	      		document.getElementById('logged_in_div').style.display = 'none';
-	      		document.getElementById('address').style.display = 'none';
 	      	}
-      		else {
+      		else if(obj.typeMessage!="search_contacts_results"){
 		      	console.log("normal notification");
 		      	normalDesktopNotification(obj);
 		    }
 	    
-	    	//new--------------------------------------------------
+
 	    	if(obj.typeMessage=="callconnected"){
 	      		console.log(obj.respMessage);
 	      		document.getElementById('info_calling').innerText = obj.respMessage;
@@ -106,19 +104,16 @@
 	      		console.log(obj.respMessage);
 	      		document.getElementById('info_calling').innerText = obj.respMessage;
 	      		
-	      		document.getElementById('call_out_div').style.display = 'block';
-	      		document.getElementById('buttoncall').style.display = 'none';
+	      		
+	      		$('#call_out_div').slideDown(slideDelay);
+	      		$('#buttoncall').slideUp(slideDelay);
+	      		$('#logged_in_div').slideDown(slideDelay);
+	      		$('#address').slideDown(slideDelay);
 	      		document.getElementById('call').value = 'Call';
 	      		document.getElementById('call').disabled = false;
-	      		document.getElementById('logged_in_div').style.display = 'block';
-      			document.getElementById('address').style.display = 'block';
 	      	}
 	      	if(obj.typeMessage=="search_contacts_results"){
 	      		var results = obj.results;
-	      		console.log(obj.respMessage + " and the results are:");
-	      		console.log(results);
-	      		
-	      		console.log("uuuuuuu = " + $('#searchContactsResults'));
 	      		if($('#searchContactsResults')!=undefined){
 	      			$('#searchContactsResults').remove();
 	      		}
@@ -128,18 +123,26 @@
 	      		for(var i=0; i<results.length; i++){
 	      			var el = results[i];
 	      			for(key in el){
-		      			htmlResults += key + ':  <b>' + el[key] + '</b><br/>'
+	      			
+	      				if(key=='workphone'){
+	      					console.log("uguale workphone");
+	      					var call = "callExt(" + el[key] + ");";
+	      					htmlResults += key + ':  <b>' + el[key] + '  </b><input type="button" onclick=' + call + ' value="Call"/><br/>';
+	      				}
+	      				else{      				
+			      			htmlResults += key + ':  <b>' + el[key] + '</b><br/>';
+			      		}
 		      		}
-		      		htmlResults += '<br/>'
+		      		htmlResults += '<br/>';
 	      		}
 	      		htmlResults += '<div/>';
 	      		
 	      		$('#searchContacts').append(htmlResults);
 	      	}
 	      	
-	    	//new--------------------------------------------------
 	    
 	    	if(obj.typeMessage=='ack_login'){
+	    	
 		    	var extFrom =  document.querySelector('#ext').value;
 			    var secret =  document.querySelector('#secret').value;
 			    if(localStorage.getItem('user')==null){
@@ -149,15 +152,14 @@
 			    console.log('user = ' + localStorage.getItem('user'));
 			    console.log('password = ' + localStorage.getItem('password'));
 			    
-			   	document.getElementById('login_div').style.display = 'none';
-			   	document.getElementById('info_notification').style.display = 'none';
-			   	document.getElementById('logged_in_div').style.display = 'block';
-//			   	document.getElementById('str_logged_in').innerHTML = 'Logged in as ' + localStorage.getItem('user');
-			   	document.getElementById('logout').style.display = 'block';
-			   	document.getElementById('logout').value = 'Logout ' + extFrom;
-			   	document.getElementById('dialout_div').style.display = 'block';
-			    document.getElementById('address').style.display = 'block';
-			    document.getElementById('dialout_div').style.display = 'block';
+			    $('#login_div').slideUp(0);
+			    $('#info_notification').slideUp(0);
+			    $('#logged_in_div').slideDown(slideDelay);
+			    $('#logout').slideDown(slideDelay);
+			    document.getElementById('logout').value = 'Logout ' + extFrom;
+			    $('#dialout_div').slideDown(slideDelay);
+			    $('#address').slideDown(slideDelay);
+			    $('#dialout_div').slideDown(slideDelay);
 		    }
 	   });
       
@@ -180,14 +182,6 @@
       	<p>Click on "Enable notifications" only the first time you access this page.</p>
       	<input type='button' id='enable' value='Enable notifications'/>    
     </div>
-    
-    <!--
-    <div id="chat"><p>Click "Login" to start.</p></div>
-    <form id="form" onsubmit="send(); return false">
-      <input type="text" autocomplete="off" id="text"><input type="submit" value="Send">
-    </form>
-    -->
-    
     
     <div id='logged_in_div'>
     	<!--<h5 id='str_logged_in'>Not logged in</h5>-->
@@ -222,29 +216,17 @@
 		<br/>
 	</div>
 	
-	<!--
-	<div id='addressbook'>
-		<br/><hr/>
-		<h3>Address book</h3>
-		<input type="button" id="button_addressbook" value="Show"/>
-		<div id='addresses' style='display:none'>
-			
-		</div>
-	</div>
-	<br/>
-	-->
 	
 	<div id="address" style='display:none'>
 		<br/><hr/>
 		<h3>Address book</h3>	
-		<label>Search:  </label><input type="text" id="searchbox" name="searchbox" value='alessandro'/>
+		<label>Search:  </label><input type="text" id="searchbox" name="searchbox"/>
 		<br/><br/>
 		<div id="searchContacts">
 		</div> 
 	</div>
 	<div id="resultsContainer"></div>
 	
-    
     <script>
     
     	// if the user and password are set, then it do the login action
@@ -255,26 +237,6 @@
 			console.log("sended login request from: " + extFrom);
 		}
     	
-    </script>
-    
-    
-    
-   <!--
-    <style>
-      #chat { height: 300px; overflow: auto; width: 800px; border: 1px solid #eee; font: 13px Helvetica, Arial; }
-      #chat p { padding: 8px; margin: 0; }
-      #chat p:nth-child(odd) { background: #F6F6F6; }
-      #form { width: 782px; background: #333; padding: 5px 10px; display: none; }
-      #form input[type=text] { width: 700px; padding: 5px; background: #fff; border: 1px solid #fff; }
-      #form input[type=submit] { cursor: pointer; background: #999; border: none; padding: 6px 8px; -moz-border-radius: 8px; -webkit-border-radius: 8px; margin-left: 5px; text-shadow: 0 1px 0 #fff; }
-      #form input[type=submit]:hover { background: #A2A2A2; }
-      #form input[type=submit]:active { position: relative; top: 2px; }
-    </style>
-   -->
-   
-   
-   	<script>
-   	
    		
    
 		document.querySelector('#enable').addEventListener('click', function() {
@@ -305,19 +267,21 @@
 		    var extFrom = localStorage.getItem('user');
     		var extToCall =  document.querySelector('#extToCall').value;
     		if(extFrom==extToCall){
-    			document.getElementById('info_calling').style.display = 'yes';
+    		
+    			$('#info_calling').slideDown(slideDelay);
     			document.getElementById('info_calling').innerHTML = 'Attention: you trying to call yourself !';
     			return;
     		}
 		    socket.send({ extToCall: extToCall, extFrom: extFrom, action: "call_out_from_client" });
 		    console.log("sended call request from " + extFrom + " -> to " + extToCall);
-		    document.getElementById('info_calling').style.display = 'block';
+
+			$('#info_calling').slideDown(slideDelay);
 		    document.getElementById('info_calling').innerText = 'Calling...';
 		    document.getElementById('call').value = 'Calling...';
 		    document.getElementById('call').disabled = 'true';
-		    document.getElementById('buttoncall').style.display = 'block';
-		    document.getElementById('logged_in_div').style.display = 'none';
-      		document.getElementById('address').style.display = 'none';
+		    $('#buttoncall').slideDown(slideDelay);
+		    $('#logged_in_div').slideUp(slideDelay);
+		    $('#address').slideUp(slideDelay);
 		},false);
 
 		document.querySelector('#logout').addEventListener('click', function() {
@@ -330,41 +294,13 @@
 		    console.log('user = ' + localStorage.getItem('user'));
 			console.log('password = ' + localStorage.getItem('password'));
 			
-//			document.getElementById('str_logged_in').innerHTML = 'Logged off';
-			document.getElementById('login_div').style.display = 'block';
-			document.getElementById('logout').style.display = 'none';
-			document.getElementById('dialout_div').style.display = 'none';
-			document.getElementById('address').style.display = 'none';
-			
+			$('#login_div').slideDown(slideDelay);
+			$('#logout').slideUp(slideDelay);
+			$('#dialout_div').slideUp(slideDelay);
+			$('#address').slideUp(slideDelay);
 		},false);
 		
 		
-		/*
-		document.querySelector('#button_addressbook').addEventListener('click', function(){
-
-			if(document.getElementById('addresses').style.display=='none'){
-				document.getElementById('button_addressbook').value = 'Hide';
-				document.getElementById('addresses').style.display = 'block';
-				
-				// request addresses to server
-				var extFrom = localStorage.getItem('user');
-				socket.send({ extFrom: extFrom, action: "addresses" });
-				console.log("request for addresses has been sent to server");
-				
-				// check if the answer isn't undefined
-				
-				
-				// set the element of the html page to answer recevied from the server
-
-
-			}
-			else{
-				document.getElementById('button_addressbook').value = 'Show';
-				document.getElementById('addresses').style.display = 'none';
-			}
-			
-		}, false);
-		*/
 		
 		
 		document.querySelector('#hangup').addEventListener('click', function() {
@@ -384,64 +320,46 @@
 		},false);
 		
 		
-		
+		// live search of phonebook contacts
 		$(document).ready(function() {
-			
-			console.log("document ready");
-			
 			$("#searchbox").keyup(function(){
-				
-				console.log("keyup");				
-
 				var extFrom = localStorage.getItem('user');
 				var namex = $("#searchbox").val();
-				console.log("LENGHTTTUU");
 				if(namex.length>=2){
-					console.log('namex = ' + namex);
 					socket.send({extFrom: extFrom, namex: namex, action: 'search_contact_phonebook'});
 					console.log('request to search contact in phonebook has been sent to server');
 				}
- 
- 				/*
-				$.get("search.php",{query: $("#searchbox").val(), type: "count"}, function(data){
- 
-					$("#buttontext").html(data + " Results Available");
- 
-				});
-				*/
-				
-				
 			});
- /*
-			$("#searchbox").keyup(function(event){
- 
-				if(event.keyCode == "13")
-				{
-					getResults();
-				}
-	 
-			});
- 
-			$("#submitbutton").click(function(){
- 
-				getResults();
- 
-			});
- 
-			function getResults()
-			{
-		 
-				$.get("search.php",{query: $("#searchbox").val(), type: "results"}, function(data){
- 
-					$("#resultsContainer").html(data);
-					$("#resultsContainer").show("blind");
-				});
-			
-			}
- 			*/
 		});
 
+		callExt = function(extToCall){
+		
+			var extFrom = localStorage.getItem('user');
+			
+    		if(extFrom==extToCall){
+	    		$('#info_calling').slideDown(slideDelay);
+    			document.getElementById('info_calling').innerHTML = 'Attention: you trying to call yourself !';
+    			return;
+    		}
+		    socket.send({ extToCall: extToCall, extFrom: extFrom, action: "call_out_from_client" });
+		    console.log("sended call request from " + extFrom + " -> to " + extToCall);
+		    document.getElementById('info_calling').innerText = 'Calling...';
+		    document.getElementById('call').value = 'Calling...';
+		    document.getElementById('call').disabled = 'true';
+		    $('#info_calling').slideDown(slideDelay);
+		    $('#buttoncall').slideDown(slideDelay);
+		    $('#logged_in_div').slideUp(slideDelay);
+			$('#address').slideUp(slideDelay, function(){
+				$('#searchContacts').empty();
+	      		$('#searchbox').val('');
+			});
+
+      		
+		}
+
+
     </script> 
+    
     
     
   </body>

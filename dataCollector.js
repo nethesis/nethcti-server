@@ -67,9 +67,6 @@ searchContactsPhonebook = function(extFrom, namex, cb){
 	var currentUserSQLProfileObj = getUserSQLProfile(extFrom);
 	var currentSQLQueryObj = currentUserSQLProfileObj.listSQLQueries[SECTION_SEARCH_ADDRESSES];
 		
-	console.log("ure");
-	console.log(currentSQLQueryObj);
-		
 	var temp = currentSQLQueryObj.sqlQueryStr;
 		
 	if(currentSQLQueryObj!=undefined){
@@ -77,12 +74,7 @@ searchContactsPhonebook = function(extFrom, namex, cb){
 		// substitute query template
 		while(currentSQLQueryObj.sqlQueryStr.indexOf("$NAME_TO_REPLACE")!=-1){
 		
-			
-			console.log(currentSQLQueryObj.sqlQueryStr);
-		
 			currentSQLQueryObj.sqlQueryStr = currentSQLQueryObj.sqlQueryStr.replace("$NAME_TO_REPLACE", namex);
-			
-			console.log(currentSQLQueryObj.sqlQueryStr);
 		}
 		
 		// execute current sql query

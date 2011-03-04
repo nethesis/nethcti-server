@@ -467,8 +467,7 @@ io.on('connection', function(client){
 	  					var mess = new ResponseMessage(client.sessionId, "search_contacts_results", "[DEBUG] received phonebook contacts", results);
 	  					mess.results = results;
 	  					client.send(mess);
-	  					console.log("Results of searching contacts in phonebook has been sent to client and are: ");
-	  					console.log(results);
+	  					console.log("Results of searching contacts in phonebook has been sent to client");
 	  				});
 	  			}
 	  			else{
