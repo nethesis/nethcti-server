@@ -8,7 +8,7 @@
     <script src='https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.10/jquery-ui.js'></script>
 
   </head>
-  <body>
+  <body onload='window.webkitNotifications.requestPermission();'>
 
 	<script>
 		callFromExt = '';
@@ -18,7 +18,7 @@
     <script>
     	var notificationTimeout = 5000;
     	var slideDelay = 200;
-    	var outcall = false;
+
 
 	    function normalDesktopNotification(obj){
     
@@ -74,45 +74,88 @@
       	socket.connect();
       	socket.on('message', function(obj){
       	
-      		console.debug("Received msg: ");
+      		console.debug("Received message: ");
 	      	console.log(obj);
       	
       		if(obj.typeMessage=="dialing"){
-	      		console.log("dialing: HTML notification");
-	      		htmlDesktopNotification(socket, obj);
 	      		
-				$('#call_out_div').slideUp(slideDelay);
-				$('#buttoncall').slideDown(slideDelay);
-				$('#logged_in_div').slideUp(slideDelay);
-				$('#address').slideUp(slideDelay);
-	      		document.getElementById('info_calling').innerText = 'Call incoming from ' + obj.from;
-	      		callFromExt = obj.from;
-	      		callToExt = localStorage.getItem('user');
 	      	}
-      		else if(obj.typeMessage!="search_contacts_results" && obj.typeMessage!="ack_login"){
+      		else if(obj.typeMessage!="search_contacts_results" && obj.typeMessage!="ack_login" && obj.typeMessage!="connected"){
 		      	console.log("normal notification");
 		      	normalDesktopNotification(obj);
 		    }
 	    
 	    	switch(obj.typeMessage){
+				case 'error_login':
+					$('info_login').text(obj.respMessage);
+				break;
+				case 'ack_login':
+	    			var extFrom =  document.querySelector('#ext').value;
+				    var secret =  document.querySelector('#secret').value;
+				    if(localStorage.getItem('user')==null){
+					    localStorage.setItem('user', extFrom);
+					    localStorage.setItem('password', secret);
+					}
+					console.log('sono in ack login');
+				    $('#login_div').slideUp(slideDelay);
+				    $('#info_notification').slideUp(0);
+				    console.log('B');
+				    $('#logout_div').slideDown(slideDelay);
+				    console.log('C');
+				    document.getElementById('logout').value = 'Logout ' + extFrom;
+				    $('#dialout_div').slideDown(slideDelay);
+				    $('#address').slideDown(slideDelay);
+				    console.log('D');
+				    callFromExt = '';
+	      			callToExt = '';
+	    		break;
+	    		case 'error_call':
+	    			console.log(obj.respMessage);
+		      		document.getElementById('info_calling').innerText = obj.respMessage;
+		      		$('#record').attr('disabled',false);
+	    		break;
+	    		case 'dialing':
+		      		htmlDesktopNotification(socket, obj);
+					$('#call_out_div').slideUp(slideDelay);
+					$('#buttoncall').slideDown(slideDelay);
+					$('#login_div').slideUp(slideDelay);
+					$('#address').slideUp(slideDelay);
+		      		document.getElementById('info_calling').innerText = 'Call incoming from ' + obj.from;
+		      		callFromExt = obj.from;
+		      		callToExt = localStorage.getItem('user');
+	    		break;
 	    		case 'callconnected':
 	    			console.log(obj.respMessage);
 		      		document.getElementById('info_calling').innerText = obj.respMessage;
 		      		document.getElementById('call').value = 'Calling...';
 				    document.getElementById('call').disabled = 'true';
 				    document.getElementById('redirect').disabled = false;
+				    $('#record').attr('disabled',false);
 	    		break;
 	    		case 'hangup':
 	    			console.log(obj.respMessage);
 		      		document.getElementById('info_calling').innerText = obj.respMessage;      		
 		      		$('#call_out_div').slideDown(slideDelay);
 		      		$('#buttoncall').slideUp(slideDelay);
-		      		$('#logged_in_div').slideDown(slideDelay);
+		      		$('#login_div').slideDown(slideDelay);
 		      		$('#address').slideDown(slideDelay);
+		      		$('#record').attr('disabled', true);
 		      		document.getElementById('call').value = 'Call';
 		      		document.getElementById('call').disabled = false;
 		      		callFromExt = '';
 	      			callToExt = '';
+	    		break;
+	    		case 'error_redirect':
+	    			console.log(obj.respMessage);
+		      		document.getElementById('info_calling').innerText = obj.respMessage;
+	    		break;
+	    		case 'ack_redirect':
+	    			console.log(obj.respMessage);
+		      		document.getElementById('info_calling').innerText = obj.respMessage;
+	    		break;
+	    		case 'error_search_contacts':
+		    		console.log(obj.respMessage);
+	    			$('#searchContacts').append(obj.respMessage);
 	    		break;
 	    		case 'search_contacts_results':
 	    			var results = obj.results;
@@ -138,29 +181,19 @@
 			      		htmlResults += '<br/>';
 		      		}
 		      		htmlResults += '<div/>';
-		      		
 		      		$('#searchContacts').append(htmlResults);
 	    		break;
-	    		case 'ack_login':
-	    			var extFrom =  document.querySelector('#ext').value;
-				    var secret =  document.querySelector('#secret').value;
-				    if(localStorage.getItem('user')==null){
-					    localStorage.setItem('user', extFrom);
-					    localStorage.setItem('password', secret);
-					}
-				    console.log('user = ' + localStorage.getItem('user'));
-				    console.log('password = ' + localStorage.getItem('password'));
-				    
-				    $('#login_div').slideUp(0);
-				    $('#info_notification').slideUp(0);
-				    $('#logged_in_div').slideDown(slideDelay);
-				    $('#logout').slideDown(slideDelay);
-				    document.getElementById('logout').value = 'Logout ' + extFrom;
-				    $('#dialout_div').slideDown(slideDelay);
-				    $('#address').slideDown(slideDelay);
-				    $('#dialout_div').slideDown(slideDelay);
-				    callFromExt = '';
-	      			callToExt = '';
+	    		case 'error_record':
+	    			console.log(obj.respMessage);
+		      		document.getElementById('info_calling').innerText = obj.respMessage;
+	    		break;
+	    		case 'ack_record':
+	    			$('#record').val('Stop recording...');
+	    			console.log(obj.respMessage);
+	    		break;
+	    		case 'ack_stoprecord':
+	    			$('#record').val('Record');
+	    			console.log(obj.respMessage);
 	    		break;
 	    		default:
 	    			console.log("default operation");
@@ -169,28 +202,22 @@
 	   });
       
    
+		
+	
+		
 
-
-		if (window.webkitNotifications) {
-			console.log("Notifications are supported!");
-		}
-		else {
-			console.log("Notifications are not supported for this Browser/OS version yet.");
-		}
 
     </script>
     
     
     
-	<div id='info_notification' style='font-size: 80%; margin: 20px; '>
-   		<h2>CTI Nethesis</h2>
+	<div id='info_notification' style='display:none'>
       	<p>Click on "Enable notifications" only the first time you access this page.</p>
       	<input type='button' id='enable' value='Enable notifications'/>    
     </div>
     
-    <div id='logged_in_div'>
-    	<!--<h5 id='str_logged_in'>Not logged in</h5>-->
-    	<input type='button' id='logout' value='Logout' style='display:none'/>
+    <div id='logout_div' style='display:none'>
+    	<input type='button' id='logout' value='Logout'/>
     </div>
     
     <div id='login_div'>
@@ -198,11 +225,12 @@
     	<label for='ext' >Extension:</label><input type='text' name='ext' id='ext' value='500'/>
 	    <label for='secret' >Secret:</label><input type='text' name='secret' id='secret' value='500'/>      
 	    <input type='button' id='login' value='Login'/>   
+	    <label id='info_login'></label>
 	    <br/>
 	</div>
     
     
-    <div id='dialout_div' style='display:block'>
+    <div id='dialout_div' style='display:none'>
 		<hr/><br/>
 		<h3>Dial panel</h3>
 		<div id='call_out_div'>
@@ -213,9 +241,10 @@
 		</div>
 		<label id='info_calling'></label>
 		<br/><br/>
-		<div id='buttoncall' style='display:block'>
+		<div id='buttoncall' style='display:none'>
 			<input type='button' id='hangup' value='Hangup'/>
-			<input type='button' id='waiting' value='Waiting' disabled='true'/><br/>
+			<input type='button' id='waiting' value='Waiting' disabled='true'/>
+			<input type='button' id='record' value='Record' disabled='true'/><br/>
 			<label>Redirect to: </label><input type='text' id='redirect_to'/><input type='button' id='redirect' value='Redirect' disabled='true'/>
 			
 		</div>
@@ -226,52 +255,69 @@
 	<div id="address" style='display:none'>
 		<br/><hr/>
 		<h3>Address book</h3>	
-		<label>Search:  </label><input type="text" id="searchbox" name="searchbox"/>
+		<label>Search:  </label><input type="text" id="searchcontact" name="searchcontact"/>
 		<br/><br/>
 		<div id="searchContacts">
 		</div> 
-		
-		<label>Search:  </label><input id="tags"/>
 	</div>
 	<div id="resultsContainer"></div>
 	
     <script>
     
-    
-    	// if the user and password are set, then it do the login action
-		if(localStorage.getItem('user')!=null){
-			var extFrom = localStorage.getItem('user');
-	    	var secret = localStorage.getItem('password');
-			socket.send({ extFrom: extFrom, secret: secret, action: "login" });
-			console.log("sended login request from: " + extFrom);
-		}
+		//OK
+    	$(function(){
     	
-   		
-   
-		document.querySelector('#enable').addEventListener('click', function() {
-			if (window.webkitNotifications.checkPermission() == 0) { // 0 is PERMISSION_ALLOWED
+    		if (window.webkitNotifications) {
+				console.log("Notifications are supported!");
+			}
+			else {
+				var msg = "Notifications are not supported for this Browser/OS version yet.";
+				console.log(msg);
+				return;
+			}
+    	
+    	
+    		if (window.webkitNotifications.checkPermission() == 0) { // 0 is PERMISSION_ALLOWED
 		    	// function defined in step 2
 			    console.log("Notification allowed");
 			} else {
-			    console.log("Notification NOT allowed");
-			    window.webkitNotifications.requestPermission();
+				console.log("Notification NOT allowed");
+				$('#info_notification').slideDown(slideDelay);
 			}
-		},false);
+			
+			
+			// if the user and password are set, then it do the login action
+			if(localStorage.getItem('user')!=null){
+				var extFrom = localStorage.getItem('user');
+		    	var secret = localStorage.getItem('password');
+				socket.send({ extFrom: extFrom, secret: secret, action: "login" });
+				console.log("sended login request from: " + extFrom);
+			}
+		});
+    
+    	//OK
+		$('#enable').click(function() {
+			window.webkitNotifications.requestPermission(function(){
+				$('#info_notification').slideUp(slideDelay);
+			});	
+		});
 
 
-
-		document.querySelector('#login').addEventListener('click', function() {
-  			if(localStorage.getItem('user')!=null){
+		//OK
+		$('#login').click(function(){
+			if(localStorage.getItem('user')!=null){
 				console.log('Sorry, but you are already logged in !');
   				return;
 		  	}
 			var extFrom =  document.querySelector('#ext').value;
 		    var secret =  document.querySelector('#secret').value;
 			socket.send({ extFrom: extFrom, secret: secret, action: "login" });
-			console.log("sended login request from: " + extFrom);
-		},false);
+			console.log("sended login request for [" + extFrom + "]");
+		});
 
-		document.querySelector('#call').addEventListener('click', function() {
+		
+		//OK
+		$('#call').click(function(){
 
 		    var extFrom = localStorage.getItem('user');
     		var extToCall =  document.querySelector('#extToCall').value;
@@ -295,11 +341,20 @@
 		    document.getElementById('call').value = 'Calling...';
 		    document.getElementById('call').disabled = 'true';
 		    $('#buttoncall').slideDown(slideDelay);
-		    $('#logged_in_div').slideUp(slideDelay);
+		    $('#login_div').slideUp(slideDelay);
 		    $('#address').slideUp(slideDelay);
-		},false);
-
-		document.querySelector('#logout').addEventListener('click', function() {
+		});
+		
+		//OK
+		$('#hangup').click(function(){
+			
+			var extFrom = localStorage.getItem('user');
+			socket.send({ extFrom: extFrom, action: "hangup" });
+			console.log("Hangup request has been sent to server");
+		});
+		
+		//OK
+		$('#logout').click(function(){
 			
 			var extFrom =  localStorage.getItem('user');
 		    socket.send({ extFrom: extFrom, action: "logout" });
@@ -310,28 +365,18 @@
 			console.log('password = ' + localStorage.getItem('password'));
 			
 			$('#login_div').slideDown(slideDelay);
-			$('#logout').slideUp(slideDelay);
+			$('#logout_div').slideUp(slideDelay);
 			$('#dialout_div').slideUp(slideDelay);
 			$('#address').slideUp(slideDelay);
 			
-		},false);
-		
-		
-		
-		
-		document.querySelector('#hangup').addEventListener('click', function() {
-			
-			var extFrom = localStorage.getItem('user');
-			socket.send({ extFrom: extFrom, action: "hangup" });
-			console.log("Hangup request has been sent to server");
-		},false);
-		
-		document.querySelector('#waiting').addEventListener('click', function() {
+		});
+		//OK
+		$('#waiting').click(function(){
 			console.log("to implement");
 		},false);
 		
-		
-		document.querySelector('#redirect').addEventListener('click', function() {
+		//OK
+		$('#redirect').click(function(){
 	
 			var extFrom = localStorage.getItem('user');
 			
@@ -356,17 +401,32 @@
    			
 		},false);
 		
-		
+		//OK
 		// live search of phonebook contacts
 		$(document).ready(function() {
-			$("#searchbox").keyup(function(){
+			$("#searchcontact").keyup(function(){
 				var extFrom = localStorage.getItem('user');
-				var namex = $("#searchbox").val();
+				var namex = $("#searchcontact").val();
 				if(namex.length>=2){
 					socket.send({extFrom: extFrom, namex: namex, action: 'search_contact_phonebook'});
 					console.log('request to search contact in phonebook has been sent to server');
 				}
 			});
+		});
+		//OK
+		$('#record').click(function(){
+		
+			var buttonValue = $('#record').val();
+			var extFrom = localStorage.getItem('user');
+			
+			if(buttonValue == 'Record'){
+			    socket.send({ extFrom: extFrom, callFromExt: callFromExt, callToExt: callToExt, action: 'record' });
+			    console.log("sended record request for me [" + extFrom + "]");
+			}
+			else{ // stop recording
+				socket.send({ extFrom: extFrom, action: 'stoprecord' });
+			    console.log("sended stop record request for me [" + extFrom + "]");
+			}	
 		});
 
 
@@ -387,18 +447,14 @@
 		    document.getElementById('call').disabled = 'true';
 		    $('#info_calling').slideDown(slideDelay);
 		    $('#buttoncall').slideDown(slideDelay);
-		    $('#logged_in_div').slideUp(slideDelay);
+		    $('#login_div').slideUp(slideDelay);
 			$('#address').slideUp(slideDelay, function(){
 				$('#searchContacts').empty();
-	      		$('#searchbox').val('');
+	      		$('#searchcontact').val('');
 			});	
 		}
 
-		$(function(){
-			var nome = ["alessandro", "andrea", "giacomo"];
-			$('#tags').autocomplete({source: nome});
-		});
-
+		
     </script> 
     
     

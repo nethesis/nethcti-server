@@ -70,9 +70,6 @@ am.addListener('dialing', function(from, to) {
     buffer = [];
 	sys.debug("Dial: " + sys.inspect(from) + " -> "+ sys.inspect(to));
 	
-	/* ex. 	from = {name: 'SIP/501', number: '501', with: '1298027889.93'}
-  			to = { name: '', number: '500', with: '1298027890.94' } */
-
 	if(to!=undefined && clients[to.number]!=undefined){
 		
 		var msg = "Call from " + from.number + " to " + to.number;
@@ -83,19 +80,16 @@ am.addListener('dialing', function(from, to) {
 		response.from = from.number;
 		response.to = to.number;
 		c.send(response);
-		console.log("Notify of calling has been sent to " + to.number);
+		console.log("Notify of calling has been sent to client " + to.number);
 	}
 });
 
 am.addListener('callconnected', function(from, to) {
 	sys.puts("CLIENT: Connected call between " + from.number + " (" + from.name + ") and " + to.number + " (" + to.name + ")");
 	
-	
-	//new
-	
 	if(clients[from.number]!=undefined){
 		var c = clients[from.number];
-		var msg = "[DEBUG] Call from " + from.number + " to " + to.number + " CONNECTED";
+		var msg = "Call from " + from.number + " to " + to.number + " CONNECTED";
 		var response = new ResponseMessage(c.sessionId, "callconnected", msg);
 		response.from = from.number;
 		response.to = to.number;
@@ -111,10 +105,6 @@ am.addListener('callconnected', function(from, to) {
 		c.send(response);
 		console.log("Notify of connected calling has been sent to " + to.number);
 	}
-	
-	
-	//new
-	
 });
 
 am.addListener('calldisconnected', function(from, to) {
@@ -139,7 +129,7 @@ am.addListener('hangup', function(participant, code, text) {
 	var ext = participant.number;
 	if(clients[ext]!=undefined){
 		var c = clients[ext];
-		var msg = "DEBUG] Call has hung up. Reason: " + text + "  (Code: " + code + ")";
+		var msg = "Call has hung up. Reason: " + text + "  (Code: " + code + ")";
 		var response = new ResponseMessage(c.sessionId, "hangup", msg);
 		c.send(response);
 		console.log("Notify of hangup has been sent to " + ext);
@@ -172,51 +162,12 @@ am.addListener('callreport', function(report) {
 //
 server = http.createServer(function(req, res){
   
-//	var path = url.parse(req.url).pathname;
   	var parsed_url = url.parse(req.url,true);
 	var path = parsed_url.pathname;
 	var params = parsed_url.query;
 	
-  switch (path){
-  	
-  	case '/getPhonebook.html':
-
-  		console.log("received from [" + params.extenApplicant + "] phonebook request for exten [" + params.extenPhonebook + "]");
-      
-  		dataCollector.getPhonebook(params.extenApplicant, params.extenPhonebook, function(phonebook){
-  	/*
-  			console.log(",,,,,,,,,,,,,,,,,,;;");
-  			console.log(phonebook);
-  			console.log(",,,,,,,,,,,,,,,,,,;;");
-  			*/
-  	
-	  		/* result is undefined if the user that has do the request
-  		 	 * hasn't the relative permission */
-			if(phonebook!=undefined){
-				phonebook[0].exten = params.extenPhonebook;
-		  		// phonebook = [ { name: 'giacomo', exten: '501' } ]
-				var htmlPage = createPhonebookHTMLPage(phonebook);
-	      		res.writeHead(200, {'Contet-Type': 'text/html'});
-		      	res.write(htmlPage, 'utf8');
-		      	res.end();
-			}
-			else{
-				send404(res);
-			}
-  		});
-  		break;
-    case '/json.js':
-    case '/lib/socket.io-client/socket.io.js':
-      fs.readFile(__dirname + path, function(err, data){
-        sys.debug(data.extension);
-        if (err) return send404(res);
-        res.writeHead(200, {'Content-Type': 'text/javascript'})
-        res.write(data, 'utf8');
-        res.end();
-      });
-     break;
-    case '/index.html':
-    case '/':
+	switch (path){
+	case '/':
       path = "/index.html";
       fs.readFile(__dirname + path, function(err, data){
         if (err) return send404(res);
@@ -225,7 +176,7 @@ server = http.createServer(function(req, res){
         res.end();
       });
     break;
-    case '/getNotificationCalling.html':
+	case '/getNotificationCalling.html':
     	/* The notification of the calling is personalized: if the user has
     	 * the authorization of view customer card, then he will receive the 
     	 * notification with the possibility of view customer card (for example
@@ -259,9 +210,41 @@ server = http.createServer(function(req, res){
 		        res.end();
 		    });
     	}
-    
-	    //console.log(req.socket.remoteAddress+ " - ["+new Date().toString()+"] - \""+req.method+" "+req.url+" HTTP/"+req.httpVersion+"\" - \""+req.headers["user-agent"]+"\""); 
 	break;
+  	case '/getPhonebook.html':
+
+  		console.log("received from [" + params.extenApplicant + "] phonebook request for exten [" + params.extenPhonebook + "]");
+      
+  		dataCollector.getPhonebook(params.extenApplicant, params.extenPhonebook, function(phonebook){
+  	
+	  		/* result is undefined if the user that has do the request
+  		 	 * hasn't the relative permission */
+			if(phonebook!=undefined){
+				phonebook[0].exten = params.extenPhonebook;
+		  		// phonebook = [ { name: 'giacomo', exten: '501' } ]
+				var htmlPage = createPhonebookHTMLPage(phonebook);
+	      		res.writeHead(200, {'Contet-Type': 'text/html'});
+		      	res.write(htmlPage, 'utf8');
+		      	res.end();
+			}
+			else{
+				send404(res);
+			}
+  		});
+  		break;
+  		/*
+    case '/json.js':
+    case '/lib/socket.io-client/socket.io.js':
+      fs.readFile(__dirname + path, function(err, data){
+        sys.debug(data.extension);
+        if (err) return send404(res);
+        res.writeHead(200, {'Content-Type': 'text/javascript'})
+        res.write(data, 'utf8');
+        res.end();
+      });
+     break;
+    case '/index.html':
+    */
     
     default: 
     	// check if the requested file exists
@@ -271,14 +254,11 @@ server = http.createServer(function(req, res){
     		if(exists){
     			
     			// check the extension of the file
-
     			var fileExt = pathreq.extname(tempPath);
     			var type;
     			if(fileExt=='.js') type = 'text/javascript';
     			else if(fileExt=='.html' || fileExt=='htm') type = 'text/html';
     			else if(fileExt=='.css') type = 'text/css';
-    			
-    		
     			fs.readFile(tempPath, function(err, data){
 			        if (err) return send404(res);
 			        res.writeHead(200, {'Content-Type': type});
@@ -290,7 +270,6 @@ server = http.createServer(function(req, res){
 	    		send404(res);
     		}
     	});
-    	
   }
 });
 
@@ -316,8 +295,8 @@ var io = io.listen(server)
 io.on('connection', function(client){
 
 	// send acknowledgment of established connection 
-	client.send(new ResponseMessage(client.sessionId, "connection", "[DEBUG] connected"));
-	console.log("aknowledgment to connection has been sent");
+	client.send(new ResponseMessage(client.sessionId, "connected", "[DEBUG] connected"));
+	console.log("aknowledgment to connection has been sent to the client");
 
 
 	client.on('message', function(message){
@@ -332,9 +311,46 @@ io.on('connection', function(client){
   		var ACTION_HANGUP = "hangup";
   		var ACTION_SEARCH_CONTACT_PHONEBOOK = "search_contact_phonebook";
   		var ACTION_REDIRECT = "redirect";
+  		var ACTION_RECORD = "record";
+  		var ACTION_STOP_RECORD = "stoprecord";
   		
   		// manage request
   		switch(action){
+  			case ACTION_LOGIN:
+	  		
+	  			console.log("received login request from exten [" + extFrom + "] with secret [" + message.secret + "]");
+  	
+	  			if(authenticator.authenticateUser(extFrom, message.secret)){
+  				
+  					// check if the user sessionId is already logged in
+  					if(testAlreadyLoggedSessionId(client.sessionId)){
+  						console.log("client with sessionId = " + client.sessionId + " is already logged in");
+  						console.log("clients length = " + Object.keys(clients).length);
+				    	client.send(new ResponseMessage(client.sessionId, "error_login", "Sorry, but you are already logged in !"));
+  						return;
+  					}
+  					// check if the user extFrom is already logged in
+  					if(testAlreadyLoggedExten(extFrom)){
+  						console.log("Client [" + extFrom + "] already logged in !");
+				    	console.log("clients length = " + Object.keys(clients).length);
+				    	client.send(new ResponseMessage(client.sessionId, "error_login", "Sorry, but the client [" + extFrom + "] is already logged in"));
+  					}
+  					// authenticate the user
+  					else{
+		  				client.extension = extFrom;
+		  				clients[extFrom] = client;  
+			  			console.log("client [" + extFrom + "] logged in");
+			  			console.log("clients length  = " + Object.keys(clients).length);
+		  				client.send(new ResponseMessage(client.sessionId, "ack_login", "Login succesfully"));
+		  				console.log("Acknowledgment to login action has been sent to [" + extFrom + "]");
+  					}
+  				}
+  				else{
+  					console.log("Authentication failed: [" + extFrom + "] with secret [" + message.secret + "]");
+  					client.send(new ResponseMessage(client.sessionId, "error_login", "Sorry, authentication failed !"));
+  				}
+	  			
+	  		break;
 	  		case ACTION_CALLOUT:
 	  			
 	  			// in this case the message has also the information about the exten to call
@@ -344,11 +360,13 @@ io.on('connection', function(client){
   				// check if the client is logged in
 	  			if(clients[extFrom]==undefined){
 	  				sys.debug("ERROR: client " + extFrom + " not logged in");
+	  				client.send(new ResponseMessage(client.sessionId, 'error_call', 'Error in calling: client not logged in'));
 	  				return;
   				}
 	  			// security check of real authenticity of the user who originated the call
 	  			else if(client.sessionId != clients[extFrom].sessionId){
 	  				console.log("Security ERROR: attempt to fake the sender: session " + client.sessionId + " attempt to call with the fake exten " + extFrom + " !");
+	  				client.send(new ResponseMessage(client.sessionId, 'error_call', 'Error in calling: attempt to call with the fake exten ' + extFrom));
 	  				return;
 	  			}
 	  			/* this try catch is for profiler.testPermitActionUser
@@ -377,64 +395,16 @@ io.on('connection', function(client){
 		  			}
 	  				else{
 			  			console.log("ATTENTION: " + extFrom + " is not enabled to calling out !");
-			  			client.send(new ResponseMessage(client.sessionId, ACTION_CALLOUT, "[DEBUG] Sorry: you don't have permission to call !"));
+			  			client.send(new ResponseMessage(client.sessionId, 'error_call', "Sorry, but you don't have permission to call !"));
 	  				}
 		  		} catch(error){
 		  			console.log(error);
 		  		}
-		  			
 		  	break;
-	  		case ACTION_LOGIN:
-	  		
-	  			console.log("received login request from exten [" + extFrom + "] with secret [" + message.secret + "]");
-  	
-	  			if(authenticator.authenticateUser(extFrom, message.secret)){
-  				
-  					// check if the user sessionId is already logged in
-  					if(testAlreadyLoggedSessionId(client.sessionId)){
-  						console.log("client with sessionId = " + client.sessionId + " is already logged in");
-  						console.log("clients length = " + Object.keys(clients).length);
-				    	client.send(new ResponseMessage(client.sessionId, "error_login", "[DEBUG] Sorry, but you are already logged in !"));
-  						return;
-  					}
-  					// check if the user extFrom is already logged in
-  					if(testAlreadyLoggedExten(extFrom)){
-  						console.log("Client [" + extFrom + "] already logged in !");
-				    	console.log("clients length = " + Object.keys(clients).length);
-				    	client.send(new ResponseMessage(client.sessionId, "error_login", "[DEBUG] Sorry, but the client [" + extFrom + "] is already logged in"));
-  					}
-  					// authenticate the user
-  					else{
-		  				client.extension = extFrom;
-		  				clients[extFrom] = client;  
-			  			console.log("client [" + extFrom + "] logged in");
-			  			console.log("clients length  = " + Object.keys(clients).length);
-		  				client.send(new ResponseMessage(client.sessionId, "ack_login", "[DEBUG] login succesfully"));
-		  				console.log("Acknowledgment to login action has been sent to [" + extFrom + "]");
-  					}
-  				}
-  				else{
-  					console.log("Authentication failed: [" + extFrom + "] with secret [" + message.secret + "]");
-  					client.send(new ResponseMessage(client.sessionId, "error_login", "[DEBUG] Sorry, authentication failed !"));
-  				}
-	  			
-	  		break;
-	  		case ACTION_LOGOUT:
-	  		
-	  			removeClient(client.sessionId);
-		  		console.log("Client " + client.sessionId + " disconnected");
-		  		console.log("clients length = " + Object.keys(clients).length);
-	  		
-	  		break;
-	  		case ACTION_HANGUP:
+		  	case ACTION_HANGUP:
 	  		
 	  			console.log("received hangup request from exten [" + extFrom + "]");
-  			
-  			
-	  			/*
-	  			{ '1299146283.135': { name: '', number: '500', with: '1299146283.135' },
-	  '1299146287.136': { name: '', number: '501', with: '1299146287.136' } }
-	  			*/
+	  			
 	  			// retrieve the id of the client who has request the hangup
 	  			var id;
 	  			for(key in am.participants){
@@ -443,7 +413,6 @@ io.on('connection', function(client){
 	  					break;
 	  				}
 	  			}
-	  			
 	  			
 	  			// create hangup action for asterisk server
 		  		var actionCall = {
@@ -454,28 +423,13 @@ io.on('connection', function(client){
 				am.send(actionCall, function () {
 					console.log("hangup action from " + extFrom + " [" + id + "] has been sent to asterisk: ");
 				});
-	  		
 	  		break;
-	  		case ACTION_SEARCH_CONTACT_PHONEBOOK:
-	  			
-	  			// check if the user has the permit to search contact in phonebook
-	  			var res = dataCollector.testPermitUserSearchAddressPhonebook(extFrom);
-	  			if(res){
-	  				// execute query to search contact in phonebook
-	  				var namex = message.namex;
-	  				dataCollector.searchContactsPhonebook(extFrom, namex, function(results){
-	  					
-	  					var mess = new ResponseMessage(client.sessionId, "search_contacts_results", "[DEBUG] received phonebook contacts", results);
-	  					mess.results = results;
-	  					client.send(mess);
-	  					console.log("Results of searching contacts in phonebook has been sent to client");
-	  				});
-	  			}
-	  			else{
-	  				console.log("ATTENTION: " + extFrom + " is not enabled to search contacts in phonebook !");
-  					client.send(new ResponseMessage(client.sessionId, "error_search_contacts", "[DEBUG] Sorry: you don't have permission to search contacts in phonebook !"));
-	  			}
-	  			
+	  		case ACTION_LOGOUT:
+	  		
+	  			removeClient(client.sessionId);
+		  		console.log("Client " + client.sessionId + " disconnected");
+		  		console.log("clients length = " + Object.keys(clients).length);
+	  		
 	  		break;
 	  		case ACTION_REDIRECT:
 	  			
@@ -486,18 +440,15 @@ io.on('connection', function(client){
 	  			
 	  				console.log("[" + extFrom + "] enabled to redirect: execute redirecting...");
 	  				
-	  				
-	  				console.log("kkkkkkkkkkkkkkkkkkkkK");
-	  				console.log(am.participants);
+	  				// get the channel
 	  				var channel = '';
 	  				for(key in am.participants){
 	  					if(am.participants[key].number==message.redirectFrom){
 	  						channel = key;
 	  					}
 	  				}
-	  				console.log('channel = ' + channel);
 	  				
-		  			// create redirect action for asterisk server
+		  			// create redirect action for the asterisk server
 		  			var actionRedirect = {
 						Action: 'Redirect',
 						Channel: channel,
@@ -508,13 +459,95 @@ io.on('connection', function(client){
 					// send action to asterisk
 					am.send(actionRedirect, function () {
 						console.log("redirect action from " + message.redirectFrom + " to " + message.redirectTo + " has been sent to asterisk");
+						client.send(new ResponseMessage(client.sessionId, 'ack_redirect'), 'Redirection has been taken');
 					});
 		  		}
 	  			else{
 			  		console.log("ATTENTION: " + extFrom + " is not enabled to redirect !");
-			  		client.send(new ResponseMessage(client.sessionId, "redirectstatus", "[DEBUG] Sorry: you don't have permission to redirect !"));
+			  		client.send(new ResponseMessage(client.sessionId, "error_redirect", "Sorry: you don't have permission to redirect !"));
 	  			}
+	  		break;
+	  		case ACTION_SEARCH_CONTACT_PHONEBOOK:
 	  			
+	  			// check if the user has the permit to search contact in phonebook
+	  			var res = dataCollector.testPermitUserSearchAddressPhonebook(extFrom);
+	  			if(res){
+	  				// execute query to search contact in phonebook
+	  				var namex = message.namex;
+	  				dataCollector.searchContactsPhonebook(extFrom, namex, function(results){
+	  					
+	  					var mess = new ResponseMessage(client.sessionId, "search_contacts_results", "received phonebook contacts");
+	  					mess.results = results;
+	  					client.send(mess);
+	  					console.log("Results of searching contacts in phonebook has been sent to client");
+	  				});
+	  			}
+	  			else{
+	  				console.log("ATTENTION: " + extFrom + " is not enabled to search contacts in phonebook !");
+  					client.send(new ResponseMessage(client.sessionId, "error_search_contacts", "Sorry: you don't have permission to search contacts in phonebook !"));
+	  			}
+	  		break;
+	  		case ACTION_RECORD:
+	  			
+	  			console.log("received record request from " + extFrom);
+	  			
+	  			// check if the user has the permit of dial out
+	  			if(profiler.testPermitActionUser(extFrom, "record")){
+	  			
+	  				var channel = '';
+	  				for(key in am.participants){
+	  					if(am.participants[key].number==extFrom){
+	  						channel = key;
+	  					}
+	  				}
+	  				
+	  				var d = new Date();
+	  				var filename = 'from' + message.callFromExt + 'to' + message.callToExt + d; 
+
+	  			
+	  				// create record action for asterisk server
+			  		var actionRecord = {
+						Action: 'Monitor',
+						Channel: channel,
+						File: filename,
+						Mix: 1
+					};
+					// send action to asterisk
+					am.send(actionRecord, function () {
+						console.log("record action from " + extFrom + " has been sent to asterisk");
+						var msgstr = 'Recording of call ' + filename + ' started...';
+						client.send(new ResponseMessage(client.sessionId, 'ack_record', msgstr));
+						console.log(msgstr);
+					});
+				}
+				else{
+			  		console.log("ATTENTION: " + extFrom + " is not enabled to record !");
+			  		client.send(new ResponseMessage(client.sessionId, "error_record", "Sorry: you don't have permission to record call !"));
+	  			}	
+	  		break;
+	  		case ACTION_STOP_RECORD:
+	  		
+	  			console.log("received stop record request from " + extFrom);
+  			
+  				var channel = '';
+  				for(key in am.participants){
+  					if(am.participants[key].number==extFrom){
+  						channel = key;
+  					}
+  				}
+	  		
+	  			// create stop record action for asterisk server
+			  	var actionStopRecord = {
+					Action: 'StopMonitor',
+					Channel: channel
+				};
+				// send action to asterisk
+				am.send(actionStopRecord, function () {
+					console.log("stop record action from " + extFrom + " has been sent to asterisk");
+					var msgstr = 'Recording for ' + extFrom + ' stopped';
+					client.send(new ResponseMessage(client.sessionId, 'ack_stoprecord', msgstr));
+					console.log(msgstr);
+				});
 	  		break;
 	  		default:
 	  			console.log("ATTENTION: action '" + action + "'not provided");
