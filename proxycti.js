@@ -341,7 +341,10 @@ io.on('connection', function(client){
 		  				clients[extFrom] = client;  
 			  			console.log("client [" + extFrom + "] logged in");
 			  			console.log("clients length  = " + Object.keys(clients).length);
-		  				client.send(new ResponseMessage(client.sessionId, "ack_login", "Login succesfully"));
+			  			var respMsg = new ResponseMessage(client.sessionId, "ack_login", "Login succesfully");
+			  			respMsg.ext = extFrom;
+			  			respMsg.secret = message.secret;
+		  				client.send(respMsg);
 		  				console.log("Acknowledgment to login action has been sent to [" + extFrom + "]");
   					}
   				}

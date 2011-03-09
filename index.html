@@ -11,12 +11,28 @@
   <body onload='window.webkitNotifications.requestPermission();'>
 
 	<script>
-		callFromExt = '';
-		callToExt = '';
+		bg = '';
+	</script>
+
+	<script>
+	
+		console.log(window.chrome);
+		console.log(window.chrome.app);
+		console.log(window.chrome.app.isInstalled);
+		
+		// if(window.chrome && window.chrome.app && window.chrome.app.isInstalled){
+		if(window.chrome && window.chrome.app){
+			bg = window.open("background.html#0", "bg");
+			console.log("background opened");
+			if(!bg){
+				console.log("ERROR in opening background window !");
+			}
+		}
+		
 	</script>
 
     <script>
-    	var notificationTimeout = 5000;
+    	
     	var slideDelay = 200;
 
 
@@ -42,26 +58,7 @@
       
       
       	
-      	function htmlDesktopNotification(socket, respMessage){
-            	
-    		var host = socket.host;
-    		var port = socket.options["port"];
-    	
-        	if (window.webkitNotifications) { //enable notification if supported
-			
-				var reqUrl = "./getNotificationCalling.html?server=" + host + "&port=" + port + "&from=" + respMessage.from + "&to=" + respMessage.to + "&respMessage=" + respMessage.respMessage;
-            	notification = window.webkitNotifications.createHTMLNotification(reqUrl);
-	            notification.ondisplay = function() { console.log("Display notification"); };
-	            notification.onclose = function() { console.log("Close notification"); };
-	            notification.show(); // note the show()
-            
-	            /*
-            	setTimeout(function(){
-					notification.cancel();
-				}, notificationTimeout);
-				*/
-        	}
-      	}
+      	
       
 
       	function esc(msg){
@@ -69,144 +66,7 @@
       	};
       
   
-    
-      	var socket = new io.Socket(null, {port: 8080, rememberTransport: false});
-      	socket.connect();
-      	socket.on('message', function(obj){
-      	
-      		console.debug("Received message: ");
-	      	console.log(obj);
-      	
-      		if(obj.typeMessage=="dialing"){
-	      		
-	      	}
-      		else if(obj.typeMessage!="search_contacts_results" && obj.typeMessage!="ack_login" && obj.typeMessage!="connected"){
-		      	console.log("normal notification");
-		      	normalDesktopNotification(obj);
-		    }
-	    
-	    	switch(obj.typeMessage){
-				case 'error_login':
-					$('info_login').text(obj.respMessage);
-				break;
-				case 'ack_login':
-	    			var extFrom =  document.querySelector('#ext').value;
-				    var secret =  document.querySelector('#secret').value;
-				    if(localStorage.getItem('user')==null){
-					    localStorage.setItem('user', extFrom);
-					    localStorage.setItem('password', secret);
-					}
-					console.log('sono in ack login');
-				    $('#login_div').slideUp(slideDelay);
-				    $('#info_notification').slideUp(0);
-				    console.log('B');
-				    $('#logout_div').slideDown(slideDelay);
-				    console.log('C');
-				    document.getElementById('logout').value = 'Logout ' + extFrom;
-				    $('#dialout_div').slideDown(slideDelay);
-				    $('#address').slideDown(slideDelay);
-				    console.log('D');
-				    callFromExt = '';
-	      			callToExt = '';
-	    		break;
-	    		case 'error_call':
-	    			console.log(obj.respMessage);
-		      		document.getElementById('info_calling').innerText = obj.respMessage;
-		      		$('#record').attr('disabled',false);
-	    		break;
-	    		case 'dialing':
-		      		htmlDesktopNotification(socket, obj);
-					$('#call_out_div').slideUp(slideDelay);
-					$('#buttoncall').slideDown(slideDelay);
-					$('#login_div').slideUp(slideDelay);
-					$('#address').slideUp(slideDelay);
-		      		document.getElementById('info_calling').innerText = 'Call incoming from ' + obj.from;
-		      		callFromExt = obj.from;
-		      		callToExt = localStorage.getItem('user');
-	    		break;
-	    		case 'callconnected':
-	    			console.log(obj.respMessage);
-		      		document.getElementById('info_calling').innerText = obj.respMessage;
-		      		document.getElementById('call').value = 'Calling...';
-				    document.getElementById('call').disabled = 'true';
-				    document.getElementById('redirect').disabled = false;
-				    $('#record').attr('disabled',false);
-	    		break;
-	    		case 'hangup':
-	    			console.log(obj.respMessage);
-		      		document.getElementById('info_calling').innerText = obj.respMessage;      		
-		      		$('#call_out_div').slideDown(slideDelay);
-		      		$('#buttoncall').slideUp(slideDelay);
-		      		$('#login_div').slideDown(slideDelay);
-		      		$('#address').slideDown(slideDelay);
-		      		$('#record').attr('disabled', true);
-		      		document.getElementById('call').value = 'Call';
-		      		document.getElementById('call').disabled = false;
-		      		callFromExt = '';
-	      			callToExt = '';
-	    		break;
-	    		case 'error_redirect':
-	    			console.log(obj.respMessage);
-		      		document.getElementById('info_calling').innerText = obj.respMessage;
-	    		break;
-	    		case 'ack_redirect':
-	    			console.log(obj.respMessage);
-		      		document.getElementById('info_calling').innerText = obj.respMessage;
-	    		break;
-	    		case 'error_search_contacts':
-		    		console.log(obj.respMessage);
-	    			$('#searchContacts').append(obj.respMessage);
-	    		break;
-	    		case 'search_contacts_results':
-	    			var results = obj.results;
-	      			if($('#searchContactsResults')!=undefined){
-		      			$('#searchContactsResults').remove();
-		      		}
-	      		
-		      		var htmlResults = "<div id='searchContactsResults'>";
-
-		      		for(var i=0; i<results.length; i++){
-		      			var el = results[i];
-		      			for(key in el){
-		      			
-		      				if(key=='workphone'){
-		      					console.log("uguale workphone");
-		      					var call = "callExt(" + el[key] + ");";
-		      					htmlResults += key + ':  <b>' + el[key] + '  </b><input type="button" onclick=' + call + ' value="Call"/><br/>';
-		      				}
-		      				else{      				
-				      			htmlResults += key + ':  <b>' + el[key] + '</b><br/>';
-				      		}
-			      		}
-			      		htmlResults += '<br/>';
-		      		}
-		      		htmlResults += '<div/>';
-		      		$('#searchContacts').append(htmlResults);
-	    		break;
-	    		case 'error_record':
-	    			console.log(obj.respMessage);
-		      		document.getElementById('info_calling').innerText = obj.respMessage;
-	    		break;
-	    		case 'ack_record':
-	    			$('#record').val('Stop recording...');
-	    			console.log(obj.respMessage);
-	    		break;
-	    		case 'ack_stoprecord':
-	    			$('#record').val('Record');
-	    			console.log(obj.respMessage);
-	    		break;
-	    		default:
-	    			console.log("default operation");
-	    		break;    		
-	    	}
-	   });
-      
-   
-		
-	
-		
-
-
+    	
     </script>
     
     
@@ -284,16 +144,8 @@
 				console.log("Notification NOT allowed");
 				$('#info_notification').slideDown(slideDelay);
 			}
-			
-			
-			// if the user and password are set, then it do the login action
-			if(localStorage.getItem('user')!=null){
-				var extFrom = localStorage.getItem('user');
-		    	var secret = localStorage.getItem('password');
-				socket.send({ extFrom: extFrom, secret: secret, action: "login" });
-				console.log("sended login request from: " + extFrom);
-			}
 		});
+		
     
     	//OK
 		$('#enable').click(function() {
@@ -302,25 +154,115 @@
 			});	
 		});
 
+/**
+	localStorage.removeItem('user');
+		localStorage.removeItem('password');
+		*/
+		
+		function updateAckLoginGui(){
+			$('#login_div').slideUp(slideDelay);
+			$('#info_notification').slideUp(0);
+		    $('#logout_div').slideDown(slideDelay);
+		    $('#logout').val("Logout " + localStorage.getItem('user'));
+		    $('#dialout_div').slideDown(slideDelay);
+		    $('#address').slideDown(slideDelay);
+		}
+		function updateInfoLogin(obj){
+			$('#info_login').text(obj.respMessage);
+		}
+		function updateInfoCalling(obj){
+			$('#info_calling').text(obj.respMessage);
+		}
+		function updateErrorCalling(obj){
+			updateInfoCalling(obj);
+			$('#record').attr('disabled',false);
+		}
+		function updateCallingGui(obj){
+			$('#call_out_div').slideUp(slideDelay);
+			$('#buttoncall').slideDown(slideDelay);
+			$('#login_div').slideUp(slideDelay);
+			$('#address').slideUp(slideDelay);
+			$('#info_calling').text('Call incoming from ' + obj.from);
+		}
+		function updateCallConnectedGui(obj){
+			$('#info_calling').text(obj.respMessage);
+		    document.getElementById('call').value = 'Calling...';
+			$('#call').attr('disabled',true);
+			$('#redirect').attr('disabled',false);
+			$('#record').attr('disabled',false);
+		}
+		function updateHangupGui(obj){
+			$('#info_calling').text(obj.respMessage);      		
+      		$('#call_out_div').slideDown(slideDelay);
+     		$('#buttoncall').slideUp(slideDelay);
+     		$('#address').slideDown(slideDelay);
+     		$('#record').attr('disabled', true);
+     		document.getElementById('call').value = 'Call';
+     		$('#call').attr('disabled',false);
+		}
+		function updateErrorRedirectGui(obj){
+			updateInfoCalling(obj);
+		}
+		function updateAckRedirectGui(obj){
+			updateInfoCalling(obj);
+		}
+		function updateSearchContactsGui(obj){
+			$('#searchContacts').append(obj.respMessage);
+		}
+		function updateSearchContactsResultsGui(obj){
+			var results = obj.results;
+	      	if($('#searchContactsResults')!=undefined){
+		    	$('#searchContactsResults').remove();
+		    }
+	      		
+		    var htmlResults = "<div id='searchContactsResults'>";
 
-		//OK
+		    for(var i=0; i<results.length; i++){
+		    	var el = results[i];
+		    	for(key in el){
+		    		if(key=='workphone'){
+		    			console.log("uguale workphone");
+		    			var call = "callExt(" + el[key] + ");";
+		    			htmlResults += key + ':  <b>' + el[key] + '  </b><input type="button" onclick=' + call + ' value="Call"/><br/>';
+		    		}
+		    		else{      				
+						htmlResults += key + ':  <b>' + el[key] + '</b><br/>';
+			   		}
+				}
+				htmlResults += '<br/>';
+		    }
+		    htmlResults += '<div/>';
+		    $('#searchContacts').append(htmlResults);
+		}
+	</script>
+	<script>
+		function updateErrorRecordGui(obj){
+			updateInfoCalling(obj);
+		}
+		function updateAckRecordGui(obj){
+			$('#record').val('Stop recording...');
+		}
+		function updateAckStopRecordGui(obj){
+			$('#record').val('Record');
+		}
+		
+
 		$('#login').click(function(){
-			if(localStorage.getItem('user')!=null){
+			var user = localStorage.getItem('user');
+			console.log(user);
+			if(user!=null && user!='undefined'){
 				console.log('Sorry, but you are already logged in !');
   				return;
 		  	}
-			var extFrom =  document.querySelector('#ext').value;
+			var extFrom = document.querySelector('#ext').value;
 		    var secret =  document.querySelector('#secret').value;
-			socket.send({ extFrom: extFrom, secret: secret, action: "login" });
-			console.log("sended login request for [" + extFrom + "]");
+		    bg.doLogin({ extFrom: extFrom, secret: secret, action: "login" });
 		});
 
-		
-		//OK
 		$('#call').click(function(){
 
 		    var extFrom = localStorage.getItem('user');
-    		var extToCall =  document.querySelector('#extToCall').value;
+    		var extToCall =  $('#extToCall').val();
     		
 			callFromExt = extFrom;
 			callToExt = extToCall;
@@ -330,52 +272,40 @@
     		if(extFrom==extToCall){
     		
     			$('#info_calling').slideDown(slideDelay);
-    			document.getElementById('info_calling').innerHTML = 'Attention: you trying to call yourself !';
+    			$('#info_calling').text('Attention: you trying to call yourself !');
     			return;
     		}
-		    socket.send({ extToCall: extToCall, extFrom: extFrom, action: "call_out_from_client" });
-		    console.log("sended call request from " + extFrom + " -> to " + extToCall);
-
+    		bg.doCall({ extToCall: extToCall, extFrom: extFrom, action: "call_out_from_client" });
+    		
 			$('#info_calling').slideDown(slideDelay);
-		    document.getElementById('info_calling').innerText = 'Calling...';
+		    $('#info_calling').text('Calling...');
 		    document.getElementById('call').value = 'Calling...';
-		    document.getElementById('call').disabled = 'true';
+		    $('#call').attr('disabled', true);
 		    $('#buttoncall').slideDown(slideDelay);
 		    $('#login_div').slideUp(slideDelay);
 		    $('#address').slideUp(slideDelay);
 		});
 		
-		//OK
 		$('#hangup').click(function(){
-			
 			var extFrom = localStorage.getItem('user');
-			socket.send({ extFrom: extFrom, action: "hangup" });
-			console.log("Hangup request has been sent to server");
+			bg.doHangup({ extFrom: extFrom, action: "hangup" });
 		});
 		
-		//OK
 		$('#logout').click(function(){
 			
 			var extFrom =  localStorage.getItem('user');
-		    socket.send({ extFrom: extFrom, action: "logout" });
-		    localStorage.removeItem('user');
-			localStorage.removeItem('password');
-		    console.log("sended disconnection request for " + extFrom);
-		    console.log('user = ' + localStorage.getItem('user'));
-			console.log('password = ' + localStorage.getItem('password'));
+			bg.doLogout({ extFrom: extFrom, action: "logout" });
 			
 			$('#login_div').slideDown(slideDelay);
 			$('#logout_div').slideUp(slideDelay);
 			$('#dialout_div').slideUp(slideDelay);
 			$('#address').slideUp(slideDelay);
-			
 		});
-		//OK
+		
 		$('#waiting').click(function(){
 			console.log("to implement");
 		},false);
 		
-		//OK
 		$('#redirect').click(function(){
 	
 			var extFrom = localStorage.getItem('user');
@@ -391,41 +321,32 @@
 			else{
 				redirectFrom = callFromExt;
 			}
-			socket.send({extFrom: extFrom, redirectFrom: redirectFrom, redirectTo: redirectTo, action: 'redirect'});
-			console.log("Redirect request from " + redirectFrom + " to " + redirectTo + " has been sent to server");
+			bg.doRedirect({extFrom: extFrom, redirectFrom: redirectFrom, redirectTo: redirectTo, action: 'redirect'});
 			
-			callFromExt = '';
-   			callToExt = '';
-   			
    			$('#redirect').attr('enabled',false);
-   			
 		},false);
 		
-		//OK
 		// live search of phonebook contacts
 		$(document).ready(function() {
 			$("#searchcontact").keyup(function(){
 				var extFrom = localStorage.getItem('user');
 				var namex = $("#searchcontact").val();
 				if(namex.length>=2){
-					socket.send({extFrom: extFrom, namex: namex, action: 'search_contact_phonebook'});
-					console.log('request to search contact in phonebook has been sent to server');
+					bg.doSearchContact({extFrom: extFrom, namex: namex, action: 'search_contact_phonebook'});
 				}
 			});
 		});
-		//OK
+		
 		$('#record').click(function(){
 		
 			var buttonValue = $('#record').val();
 			var extFrom = localStorage.getItem('user');
 			
 			if(buttonValue == 'Record'){
-			    socket.send({ extFrom: extFrom, callFromExt: callFromExt, callToExt: callToExt, action: 'record' });
-			    console.log("sended record request for me [" + extFrom + "]");
+				bg.doStartRecord({ extFrom: extFrom, action: 'record' });
 			}
 			else{ // stop recording
-				socket.send({ extFrom: extFrom, action: 'stoprecord' });
-			    console.log("sended stop record request for me [" + extFrom + "]");
+				bg.doStopRecord({ extFrom: extFrom, action: 'stoprecord' });
 			}	
 		});
 
@@ -440,11 +361,12 @@
     			document.getElementById('info_calling').innerHTML = 'Attention: you trying to call yourself !';
     			return;
     		}
-		    socket.send({ extToCall: extToCall, extFrom: extFrom, action: "call_out_from_client" });
-		    console.log("sended call request from " + extFrom + " -> to " + extToCall);
-		    document.getElementById('info_calling').innerText = 'Calling...';
+    		
+    		bg.doCall({ extToCall: extToCall, extFrom: extFrom, action: "call_out_from_client" });
+    		
+		    $('#info_calling').text('Calling...');
 		    document.getElementById('call').value = 'Calling...';
-		    document.getElementById('call').disabled = 'true';
+		    $('#call').attr('disabled', true);
 		    $('#info_calling').slideDown(slideDelay);
 		    $('#buttoncall').slideDown(slideDelay);
 		    $('#login_div').slideUp(slideDelay);
