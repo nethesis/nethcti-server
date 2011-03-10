@@ -1,0 +1,26 @@
+{
+	"name": "CTI",
+	"version": "0.1",
+	"description": "Computer telephony interface",
+	"icons": { "128": "icon128.png", "48": "icon48.png" },
+	"background_page": "background.html",
+	"permissions": [
+		"background",
+		"notifications",
+		"unlimitedStorage", 
+		"tabs",
+		"http://*/*", 
+		"https://*/*"
+	],
+	"content_scripts": [
+		{
+			"matches": ["http://amaduzzi/*"],
+			"js": ["prova.js", "jquery-1.5.1.js"],
+			"run_at": "document_end"
+		}
+	],
+	"browser_action":{
+		"default_title": "CTI",
+		"default_icon": "icon48.png"
+	} 
+}

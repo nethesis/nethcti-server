@@ -1,0 +1,236 @@
+<html>
+<head>
+	<script src="/json.js"></script> 
+    <script src="/lib/socket.io-client/socket.io.js"></script>
+    <script src="jquery-1.5.1.js"></script>
+</head>
+<body>
+	
+	<script>
+		callFromExt = '';
+		callToExt = '';
+		parent = '';
+		notificationTimeout = 5000;
+		terzo = 'terzo';
+	</script>
+	
+	<script>
+	
+		function isCtiUrl(url){
+			return url.indexOf('amaduzzi') != -1 ? true : false;
+		}
+	
+	
+	
+		function init(){
+			
+			alert("sono background in init");
+			
+			
+			socket = new io.Socket("amaduzzi", {port: 8080, rememberTransport: false});
+	      	socket.connect();
+	      	socket.on('message', function(obj){
+      	
+    	  		console.debug("Received message: ");
+		      	console.log(obj);
+        
+		    	switch(obj.typeMessage){
+		    		case 'connected': //OK
+		    			chrome.extension.sendRequest(obj);
+		    		break;
+					case 'error_login': //OK
+						//opener.updateInfoLogin(obj);
+						chrome.extension.sendRequest(obj);
+					break;
+					case 'ack_login': //OK
+					    if(localStorage.getItem('user')==null || localStorage.getItem('user')=='undefined'){
+						    localStorage.setItem('user', obj.ext);
+						    localStorage.setItem('password', obj.secret);
+						}
+						//opener.updateAckLoginGui();
+						callFromExt = '';
+		      			callToExt = '';
+						chrome.extension.sendRequest(obj);
+		    		break;
+		    		case 'error_call': //OK
+//		    			opener.updateErrorCalling(obj);
+		    			chrome.extension.sendRequest(obj);
+		    		break;
+		    		case 'dialing': //OK
+			    		htmlDesktopNotification(socket, obj);
+			    		chrome.extension.sendRequest(obj);
+			      		callFromExt = obj.from;
+			      		callToExt = localStorage.getItem('user');
+//			      		opener.updateCallingGui(obj);
+		    		break;
+		    		case 'callconnected': //OK
+			    		chrome.extension.sendRequest(obj);
+//		    			opener.updateCallConnectedGui(obj);
+		    		break;
+		    		case 'hangup': //OK
+			    		chrome.extension.sendRequest(obj);
+		    			callFromExt = '';
+		      			callToExt = '';
+//		    			opener.updateHangupGui(obj);
+		    		break;
+		    		case 'error_redirect': //OK
+			    		chrome.extension.sendRequest(obj);
+//		    			opener.updateErrorRedirectGui(obj);
+		    		break;
+		    		case 'ack_redirect': //OK
+		    			chrome.extension.sendRequest(obj);
+//		    			opener.updateAckRedirectGui(obj);
+		    		break;
+		    		case 'error_search_contacts': //OK
+		    			chrome.extension.sendRequest(obj);
+//			    		opener.updateSearchContactsGui(obj);
+		    		break;
+		    		case 'search_contacts_results': //OK
+		    			chrome.extension.sendRequest(obj);
+//		    			opener.updateSearchContactsResultsGui(obj);
+		    		break;
+		    		case 'error_record': //OK
+		    			chrome.extension.sendRequest(obj);
+//		    			opener.updateErrorRecordGui(obj);
+		    		break;
+		    		case 'ack_record': //OK
+		    			chrome.extension.sendRequest(obj);
+//		    			opener.updateAckRecordGui(obj);
+		    		break;
+		    		case 'ack_stoprecord':
+		    			chrome.extension.sendRequest(obj);
+//		    			opener.updateAckStopRecordGui(obj);
+		    		break;
+		    		case 'ack_logout': //OK
+		    			localStorage.removeItem('user');
+						localStorage.removeItem('password');
+		    			chrome.extension.sendRequest(obj);
+//		    			opener.updateLogoutGui(obj);
+		    		break;
+		    		default:
+		    			console.log("default operation");
+		    		break;    		
+		    	}
+		   	});
+    	
+    		// if the user and password are set, then it do the login action
+    		var user = localStorage.getItem('user');
+			if(user!=null && user!='undefined'){
+				var extFrom = localStorage.getItem('user');
+			   	var secret = localStorage.getItem('password');
+				socket.send({ extFrom: extFrom, secret: secret, action: "login" });
+				console.log("sended login request from: " + extFrom);
+			}
+				
+			
+			
+			
+			
+			
+			
+			
+			chrome.browserAction.onClicked.addListener(function(tab){
+				chrome.tabs.getAllInWindow(null, function(tabs){
+					for(var i=0, tab; tab=tabs[i]; i++){
+						if(tab.url && isCtiUrl(tab.url)){
+							chrome.tabs.update(tab.id, {selected: true});
+							return;
+						}
+					}
+					chrome.tabs.create({url: "index.html"});
+				});
+			});
+		}
+		
+	
+		window.addEventListener("load", init, false);
+		
+		
+		
+	
+		
+		
+	
+		function htmlDesktopNotification(socket, respMessage){
+            	
+    		var host = socket.host;
+    		var port = socket.options["port"];
+    	
+        	if (window.webkitNotifications) { //enable notification if supported
+			
+				var reqUrl = "./getNotificationCalling.html?server=" + host + "&port=" + port + "&from=" + respMessage.from + "&to=" + respMessage.to + "&respMessage=" + respMessage.respMessage;
+            	notification = window.webkitNotifications.createHTMLNotification(reqUrl);
+	            notification.ondisplay = function() { console.log("Display notification"); };
+	            notification.onclose = function() { console.log("Close notification"); };
+	            notification.show(); // note the show()
+            
+	            /*
+            	setTimeout(function(){
+					notification.cancel();
+				}, notificationTimeout);
+				*/
+        	}
+      	}
+		
+		
+		function doLogin(objLogin){
+			console.log(objLogin);
+			socket.send(objLogin);
+			console.log("sended login request for [" + objLogin.extFrom + "]");
+		}
+		function doCall(objCall){
+			
+			callFromExt = objCall.extFrom;
+			callToExt = objCall.extToCall;
+			
+			console.log(objCall);
+			socket.send(objCall);
+			console.log("sended call request from " + objCall.extFrom + " -> to " + objCall.extToCall);
+		}
+		function doHangup(objHangup){
+			socket.send(objHangup);
+			console.log("Hangup request has been sent to server");
+		}
+		function doLogout(objLogout){
+			socket.send(objLogout);
+		    console.log("sended disconnection request for " + objLogout.extFrom);
+		}
+		function doRedirect(objRedirect){
+		
+			var redirectFrom = '';
+			
+			// check if the current call has been originated from me
+			if(callFromExt==localStorage.getItem('user')){
+				redirectFrom = callToExt;
+			}
+			// in this case the call is in input
+			else{
+				redirectFrom = callFromExt;
+			}
+			
+			objRedirect.redirectFrom = redirectFrom;
+			socket.send(objRedirect);
+			console.log("Redirect request from " + objRedirect.redirectFrom + " to " + objRedirect.redirectTo + " has been sent to server");
+			
+			callFromExt = '';
+   			callToExt = '';
+		}
+		function doSearchContact(objSearchContact){
+			socket.send(objSearchContact);
+			console.log('request to search contact in phonebook has been sent to server');
+		}
+		function doStartRecord(objStartRecord){
+			objStartRecord.callFromExt = callFromExt;
+			objStartRecord.callToExt = callToExt;
+			socket.send(objStartRecord);
+			console.log("sended record request for me [" + objStartRecord.extFrom + "]");
+		}
+		function doStopRecord(objStopRecord){
+			socket.send(objStopRecord);
+			console.log("sended stop record request for me [" + objStopRecord.extFrom + "]");
+		}
+		
+		
+	</script>
+</body>
+</html>
