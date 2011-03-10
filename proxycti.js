@@ -98,7 +98,7 @@ am.addListener('callconnected', function(from, to) {
 	}
 	if(clients[to.number]!=undefined){
 		var c = clients[to.number];
-		var msg = "DEBUG] Call from " + from.number + " to " + to.number + " CONNECTED";
+		var msg = "Call from " + from.number + " to " + to.number + " CONNECTED";
 		var response = new ResponseMessage(c.sessionId, "callconnected", msg);
 		response.from = from.number;
 		response.to = to.number;
@@ -219,7 +219,7 @@ server = http.createServer(function(req, res){
   	
 	  		/* result is undefined if the user that has do the request
   		 	 * hasn't the relative permission */
-			if(phonebook!=undefined){
+			if(phonebook!=undefined && phonebook.length>0){
 				phonebook[0].exten = params.extenPhonebook;
 		  		// phonebook = [ { name: 'giacomo', exten: '501' } ]
 				var htmlPage = createPhonebookHTMLPage(phonebook);
@@ -428,11 +428,11 @@ io.on('connection', function(client){
 				});
 	  		break;
 	  		case ACTION_LOGOUT:
-	  		
 	  			removeClient(client.sessionId);
-		  		console.log("Client " + client.sessionId + " disconnected");
+		  		console.log("Client " + client.sessionId + " logged out");
 		  		console.log("clients length = " + Object.keys(clients).length);
-	  		
+		  		client.send(new ResponseMessage(client.sessionId, "ack_logout", "logout has been succesfully"));
+		  		console.log("acknowlwdge of logout has been sent to the client");
 	  		break;
 	  		case ACTION_REDIRECT:
 	  			
@@ -471,7 +471,7 @@ io.on('connection', function(client){
 	  			}
 	  		break;
 	  		case ACTION_SEARCH_CONTACT_PHONEBOOK:
-	  			
+		
 	  			// check if the user has the permit to search contact in phonebook
 	  			var res = dataCollector.testPermitUserSearchAddressPhonebook(extFrom);
 	  			if(res){
