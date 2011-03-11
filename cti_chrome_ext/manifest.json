@@ -15,7 +15,7 @@
 	"content_scripts": [
 		{
 			"matches": ["http://amaduzzi/*"],
-			"js": ["prova.js", "jquery-1.5.1.js"],
+			"js": ["content_script.js", "jquery-1.5.1.js"],
 			"run_at": "document_end"
 		}
 	],

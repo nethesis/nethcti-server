@@ -165,113 +165,99 @@ server = http.createServer(function(req, res){
   	var parsed_url = url.parse(req.url,true);
 	var path = parsed_url.pathname;
 	var params = parsed_url.query;
-	
-	switch (path){
-	case '/':
-      path = "/index.html";
-      fs.readFile(__dirname + path, function(err, data){
-        if (err) return send404(res);
-        res.writeHead(200, {'Content-Type': 'text/html'});
-        res.write(data, 'utf8');
-        res.end();
-      });
-    break;
-	case '/getNotificationCalling.html':
-    	/* The notification of the calling is personalized: if the user has
-    	 * the authorization of view customer card, then he will receive the 
-    	 * notification with the possibility of view customer card (for example
-    	 * through a button or a link), otherwise he will receive only a simple
-    	 * notification of the calling.
-    	 */
-    	var from = params.from;
-    	var to = params.to;
-    	
-    	if(dataCollector.testUserPermitPhonebook(to)){
-    		// the user has the authorization of view customer card
-    		console.log("The user " + to + " has the permit of view customer card");
-    		
-    		path = "/templateNotificationCallingPhonebook.html";
-    		
-	      	fs.readFile(__dirname + path, function(err, data){
-	        	if (err) return send404(res);
-		        res.writeHead(200, {'Content-Type': 'text/html'});
-		        res.write(data, 'utf8');
-		        res.end();
-		    });
-    	}
-    	else{
-	    	// the user hasn't the authorization of view customer card
-	    	console.log("The user " + to + " hasn't the permit of view customer card");
-	    	path = "/templateNotificationCalling.html";
-	      	fs.readFile(__dirname + path, function(err, data){
-	        	if (err) return send404(res);
-		        res.writeHead(200, {'Content-Type': 'text/html'});
-		        res.write(data, 'utf8');
-		        res.end();
-		    });
-    	}
-	break;
-  	case '/getPhonebook.html':
 
-  		console.log("received from [" + params.extenApplicant + "] phonebook request for exten [" + params.extenPhonebook + "]");
-      
-  		dataCollector.getPhonebook(params.extenApplicant, params.extenPhonebook, function(phonebook){
-  	
-	  		/* result is undefined if the user that has do the request
-  		 	 * hasn't the relative permission */
-			if(phonebook!=undefined && phonebook.length>0){
-				phonebook[0].exten = params.extenPhonebook;
-		  		// phonebook = [ { name: 'giacomo', exten: '501' } ]
-				var htmlPage = createPhonebookHTMLPage(phonebook);
-	      		res.writeHead(200, {'Contet-Type': 'text/html'});
-		      	res.write(htmlPage, 'utf8');
-		      	res.end();
-			}
-			else{
-				send404(res);
-			}
-  		});
-  		break;
-  		/*
-    case '/json.js':
-    case '/lib/socket.io-client/socket.io.js':
-      fs.readFile(__dirname + path, function(err, data){
-        sys.debug(data.extension);
-        if (err) return send404(res);
-        res.writeHead(200, {'Content-Type': 'text/javascript'})
-        res.write(data, 'utf8');
-        res.end();
-      });
-     break;
-    case '/index.html':
-    */
-    
-    default: 
-    	// check if the requested file exists
-    	var tempPath = __dirname + path;
-    	pathreq.exists(tempPath, function(exists){
+	switch (path){
+		case '/':
+    		path = "/index.html";
+		    fs.readFile(__dirname + path, function(err, data){
+    	    	if (err) return send404(res);
+		        res.writeHead(200, {'Content-Type': 'text/html'});
+    		    res.write(data, 'utf8');
+    		    res.end();
+    	  	});
+	    break;
+		case '/getNotificationCalling.html':
+    		/* The notification of the calling is personalized: if the user has
+    		 * the authorization of view customer card, then he will receive the 
+    		 * notification with the possibility of view customer card (for example
+    		 * through a button or a link), otherwise he will receive only a simple
+    		 * notification of the calling.
+    		 */
+    		var from = params.from;
+    		var to = params.to;
     		
-    		if(exists){
+    		if(dataCollector.testUserPermitPhonebook(to)){
+    			// the user has the authorization of view customer card	
+    			console.log("The user " + to + " has the permit of view customer card");
     			
-    			// check the extension of the file
-    			var fileExt = pathreq.extname(tempPath);
-    			var type;
-    			if(fileExt=='.js') type = 'text/javascript';
-    			else if(fileExt=='.html' || fileExt=='htm') type = 'text/html';
-    			else if(fileExt=='.css') type = 'text/css';
-    			fs.readFile(tempPath, function(err, data){
-			        if (err) return send404(res);
-			        res.writeHead(200, {'Content-Type': type});
+    			path = "/templateNotificationCallingPhonebook.html";
+    			
+		      	fs.readFile(__dirname + path, function(err, data){
+		        	if (err) return send404(res);
+			        res.writeHead(200, {'Content-Type': 'text/html'});
 			        res.write(data, 'utf8');
 			        res.end();
 			    });
     		}
     		else{
-	    		send404(res);
+		    	// the user hasn't the authorization of view customer card
+		    	console.log("The user " + to + " hasn't the permit of view customer card");
+		    	path = "/templateNotificationCalling.html";
+		      	fs.readFile(__dirname + path, function(err, data){
+		        	if (err) return send404(res);
+			        res.writeHead(200, {'Content-Type': 'text/html'});
+			        res.write(data, 'utf8');
+			        res.end();
+			    });
     		}
-    	});
-  }
-});
+		break;
+  		case '/getPhonebook.html':
+
+  			console.log("received from [" + params.extenApplicant + "] phonebook request for exten [" + params.extenPhonebook + "]");
+      
+  			dataCollector.getPhonebook(params.extenApplicant, params.extenPhonebook, function(phonebook){
+  	
+	  			/* result is undefined if the user that has do the request
+  			 	 * hasn't the relative permission */
+				if(phonebook!=undefined && phonebook.length>0){
+					phonebook[0].exten = params.extenPhonebook;
+			  		// phonebook = [ { name: 'giacomo', exten: '501' } ]
+					var htmlPage = createPhonebookHTMLPage(phonebook);
+	    	  		res.writeHead(200, {'Contet-Type': 'text/html'});
+			      	res.write(htmlPage, 'utf8');
+			      	res.end();
+				}
+				else{
+					send404(res);
+				}
+  			});
+		break;
+	    default: 
+    		// check if the requested file exists
+    		var tempPath = __dirname + path;
+    		pathreq.exists(tempPath, function(exists){
+    			
+    			if(exists){
+    				
+    				// check the extension of the file
+    				var fileExt = pathreq.extname(tempPath);
+    				var type;
+    				if(fileExt=='.js') type = 'text/javascript';
+    				else if(fileExt=='.html' || fileExt=='htm') type = 'text/html';
+    				else if(fileExt=='.css') type = 'text/css';
+    				fs.readFile(tempPath, function(err, data){
+				        if (err) return send404(res);
+				        res.writeHead(200, {'Content-Type': type});
+				        res.write(data, 'utf8');
+				        res.end();
+				    });
+    			}
+    			else{
+		    		send404(res);
+    			}
+    		});
+  	}	//switch
+});	
 
 
 

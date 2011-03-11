@@ -8,7 +8,8 @@
     <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
 -->
     <script src="jquery-1.5.1.js"></script>
-    <script src="prova.js"></script>
+    <script src="content_script.js"></script>
+	<script src="updategui.js"></script>
     <script src='https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.10/jquery-ui.js'></script>
 
   </head>
@@ -16,37 +17,7 @@
 
 	<script>
 		bg = '';
-    	
-    	var slideDelay = 200;
-
-
-	    function normalDesktopNotification(obj){
-    
-    	    if (window.webkitNotifications) { //enable notification if supported
-	            notification = window.webkitNotifications.createNotification("",esc(obj.clientSessionId),esc(obj.respMessage));
-	            notification.ondisplay = function() { console.log("Display notification"); };
-	            notification.onclose = function() { console.log("Close notification"); };
-	            notification.onclick = function() { 
-	            	window.focus(); 
-	            	this.cancel(); 
-	            };
-	            notification.show();
-    	        
-	            /*
-	            setTimeout(function(){
-					notification.cancel();
-				}, notificationTimeout);
-				*/
-	      	}
-	    }
-      
-      
-      	function esc(msg){
-        	return msg.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-      	};
-
-  
-    	
+    	var slideDelay = 200;	
     </script>
     
     
@@ -102,6 +73,11 @@
 	</div>
 	<div id="resultsContainer"></div>
 	
+
+
+
+
+
     <script>
     
     	$(function(){
@@ -124,26 +100,9 @@
 				$('#info_notification').slideDown(slideDelay);
 			}
 			
-			
-			console.log(chrome.extension);
-			// if(window.chrome && window.chrome.app && window.chrome.app.isInstalled){
-			//if(window.chrome && window.chrome.app){
-				/*chrome.extension.getBackgroundPage();
-				//bg = window.open("background.html#0", "bg", "background");
-				console.log("background opened");
-				if(!bg){
-					console.log("ERROR in opening background window !");
-				}
-				*/
-			//}
-			
-
 			if(localStorage.getItem('user')!=null && localStorage.getItem('user')!=undefined){
 				updateAckLoginGui();
 			}
-			
-			
-			
 			
 			bg = chrome.extension.getBackgroundPage();
 			if(bg){
@@ -162,7 +121,6 @@
 		});
 
 
-		//OK
 		$('#login').click(function(){
 			console.log("click login");
 			
@@ -181,9 +139,6 @@
 
 		});
 
-
-
-		//OK
 		$('#call').click(function(){
 
 		    var extFrom = localStorage.getItem('user');
@@ -206,25 +161,21 @@
 		    $('#address').slideUp(slideDelay);
 		});
 		
-		//OK
 		$('#hangup').click(function(){
 			var extFrom = localStorage.getItem('user');
 			bg.doHangup({ extFrom: extFrom, action: "hangup" });
 		});
 		
-		//OK
 		$('#logout').click(function(){
 			var extFrom =  localStorage.getItem('user');
 			bg.doLogout({ extFrom: extFrom, action: "logout" });
 		});
 		
-		//OK
 		$('#waiting').click(function(){
 			console.log("to implement");
 		},false);
 		
 		
-		//OK
 		$('#redirect').click(function(){
 	
 			var extFrom = localStorage.getItem('user');
@@ -234,7 +185,6 @@
    			$('#redirect').attr('enabled',false);
 		},false);
 		
-		//OK
 		// live search of phonebook contacts
 		$(document).ready(function() {
 			$("#searchcontact").keyup(function(){
@@ -246,7 +196,6 @@
 			});
 		});
 		
-		//OK
 		$('#record').click(function(){
 		
 			var buttonValue = $('#record').val();

@@ -10,12 +10,13 @@ This page offers the ability to display the customer card.
 	<body>
 		<script>
 		
-		
 			var url = window.location.search.substring(1);
 			urlArray = url.split("&");
 			var resp = urlArray[4].split("=")[1];
-			while(resp.indexOf('%20')!=-1)
+			while(resp.indexOf('%20')!=-1){
 				resp = resp.replace(/%20/, ' ');
+			}
+
 			document.write(resp);
 		</script>
 
