@@ -31,7 +31,17 @@ This page offers the ability to display the customer card.
 			function getPhonebook(){
 				var extenApplicant = urlArray[3].split('=')[1];
 				var extenPhonebook = urlArray[2].split('=')[1];
-				window.open('getPhonebook.html?extenApplicant=' + extenApplicant + '&extenPhonebook=' + extenPhonebook);
+				var urlReq = 'getPhonebook.html?extenApplicant=' + extenApplicant + '&extenPhonebook=' + extenPhonebook; 
+//				window.open(urlReq);
+				//window.open("http://www.libero.it");
+				
+				$.ajax({
+					url: "http://amaduzzi:8080/getPhonebook.html",
+					success: function(){
+						window.open("http://www.repubblica.it");
+					}
+				});
+				
 			}
 		</script>
 		

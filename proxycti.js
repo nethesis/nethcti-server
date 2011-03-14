@@ -21,7 +21,7 @@ var am;
 var asterisk_user = 'vtiger';
 var asterisk_pass = 'vtiger';
 var asterisk_host = 'amaduzzi';
-var pathOfPhonebookHTML = "phonebook.html";
+
 
 
 // The response that this server pass to the clients.
@@ -70,8 +70,9 @@ am.addListener('dialing', function(from, to) {
     buffer = [];
 	sys.debug("Dial: " + sys.inspect(from) + " -> "+ sys.inspect(to));
 	
+	
 	if(to!=undefined && clients[to.number]!=undefined){
-		
+	
 		var msg = "Call from " + from.number + " to " + to.number;
 		var c = clients[to.number];
 		/* in this response the html is not passed, because the chrome desktop 
@@ -79,8 +80,70 @@ am.addListener('dialing', function(from, to) {
 		var response = new ResponseMessage(c.sessionId, "dialing", msg);
 		response.from = from.number;
 		response.to = to.number;
-		c.send(response);
-		console.log("Notify of calling has been sent to client " + to.number);
+		
+	
+	
+		if(dataCollector.testUserPermitPhonebook(to.number)){
+    		// the user has the authorization of view customer card	
+    		console.log("The user " + to.number + " has the permit of view customer card");
+    			
+//    		path = "/templateNotificationCallingPhonebook.html";
+    		response.notificationURL = "templateNotificationCallingPhonebook.html";
+    		
+    		dataCollector.getPhonebook(to.number, from.number, function(phonebook){
+  	
+	  			/* result is undefined if the user that has do the request
+  			 	 * hasn't the relative permission */
+				if(phonebook!=undefined && phonebook.length>0){
+//					phonebook[0].exten = params.extenPhonebook;
+			  		// phonebook = [ { name: 'giacomo', exten: '501' } ]
+			  		console.log("phonebook = ======");
+			  		console.log(phonebook);
+			  		response.customerCard = phonebook;
+			  		c.send(response);
+					console.log("Notify of calling has been sent to client " + to.number);
+					return;
+	//				var htmlPage = createPhonebookHTMLPage(phonebook);
+					
+	    	  		//res.writeHead(200, {'Contet-Type': 'text/html'});
+			      	//res.write(htmlPage, 'utf8');
+			      	//res.end();
+				}
+				else{
+					response.customerCard = undefined;
+				   	c.send(response);
+					console.log("Notify of calling has been sent to client " + to.number);
+				}
+  			});
+    		
+    		
+    		
+    			/*
+		    fs.readFile(__dirname + path, function(err, data){
+		      	if (err) return send404(res);
+			    res.writeHead(200, {'Content-Type': 'text/html'});
+			    res.write(data, 'utf8');
+			    res.end();
+			});
+			*/
+    	}
+    	else{
+		   	// the user hasn't the authorization of view customer card
+		   	console.log("The user " + to + " hasn't the permit of view customer card");
+		   	response.notificationURL = "templateNotificationCalling.html";
+		   	response.customerCard = undefined;
+		   	c.send(response);
+			console.log("Notify of calling has been sent to client " + to.number);
+		   	/*
+		   	path = "/templateNotificationCalling.html";
+		  	fs.readFile(__dirname + path, function(err, data){
+		      	if (err) return send404(res);
+		        res.writeHead(200, {'Content-Type': 'text/html'});
+		        res.write(data, 'utf8');
+		        res.end();
+		    });
+		    */
+    	}
 	}
 });
 
@@ -153,18 +216,21 @@ am.addListener('callreport', function(report) {
 
 
 
-
-
 /*******************************************************************************
  * HTTP REQUEST
  *******************************************************************************/
 
 //
 server = http.createServer(function(req, res){
-  
+  	
+  	
+  	
   	var parsed_url = url.parse(req.url,true);
 	var path = parsed_url.pathname;
 	var params = parsed_url.query;
+	
+	console.log("OOOOOOOOOOOOOOOOOOOHHHHHHHHHHHHHHHHHHH");
+	console.log(path);
 
 	switch (path){
 		case '/':
@@ -176,13 +242,15 @@ server = http.createServer(function(req, res){
     		    res.end();
     	  	});
 	    break;
-		case '/getNotificationCalling.html':
+	    
+		//case '/getNotificationCalling.html':
     		/* The notification of the calling is personalized: if the user has
     		 * the authorization of view customer card, then he will receive the 
     		 * notification with the possibility of view customer card (for example
     		 * through a button or a link), otherwise he will receive only a simple
     		 * notification of the calling.
     		 */
+    		 /*
     		var from = params.from;
     		var to = params.to;
     		
@@ -211,6 +279,8 @@ server = http.createServer(function(req, res){
 			    });
     		}
 		break;
+		*/
+		/*
   		case '/getPhonebook.html':
 
   			console.log("received from [" + params.extenApplicant + "] phonebook request for exten [" + params.extenPhonebook + "]");
@@ -219,10 +289,15 @@ server = http.createServer(function(req, res){
   	
 	  			/* result is undefined if the user that has do the request
   			 	 * hasn't the relative permission */
+  			 	 /*
 				if(phonebook!=undefined && phonebook.length>0){
 					phonebook[0].exten = params.extenPhonebook;
 			  		// phonebook = [ { name: 'giacomo', exten: '501' } ]
+			  		console.log("phonebook = ======");
+			  		console.log(phonebook);
+			  		
 					var htmlPage = createPhonebookHTMLPage(phonebook);
+					
 	    	  		res.writeHead(200, {'Contet-Type': 'text/html'});
 			      	res.write(htmlPage, 'utf8');
 			      	res.end();
@@ -232,6 +307,7 @@ server = http.createServer(function(req, res){
 				}
   			});
 		break;
+		*/
 	    default: 
     		// check if the requested file exists
     		var tempPath = __dirname + path;
@@ -593,6 +669,7 @@ testAlreadyLoggedSessionId = function(sessionId){
  * Create the HTML page of customer card. This is created from template.
  * The parameter represents the response query executed in database.
  */
+ /*
 createPhonebookHTMLPage = function(phonebook){
 	
 	var content = fs.readFileSync(pathOfPhonebookHTML, 'utf8');
@@ -618,7 +695,7 @@ createPhonebookHTMLPage = function(phonebook){
 	var html = template(data);
 	return html;
 }
-
+*/
 /*
 process.on('uncaughtException', function(err){
 	console.log('*********************************************');

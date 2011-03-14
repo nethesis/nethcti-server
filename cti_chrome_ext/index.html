@@ -1,87 +1,256 @@
-<!doctype html>
-<html>
-  <head>
-    <title>CTI Nethesis 0.1</title>
-    <script src="/json.js"></script> <!-- for ie -->
-    <script src="/lib/socket.io-client/socket.io.js"></script>
-<!-- distribution version: more efficient and smaller
-    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
--->
-    <script src="jquery-1.5.1.js"></script>
-    <script src="content_script.js"></script>
-	<script src="updategui.js"></script>
-    <script src='https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.10/jquery-ui.js'></script>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+	<title>CTI Nethesis 0.1</title>
 
-  </head>
-  <body onload='window.webkitNotifications.requestPermission();'>
+	<link type="text/css" href="jquery.jixedbar-0.0.5-branch/themes/default/jx.stylesheet.css" rel="stylesheet"/>
+	<link rel="stylesheet" type="text/css" href="css/style.css" media="all" />  
+	<link rel="stylesheet" type="text/css" href="css/jquery-ui-1.8.10.custom.css" media="all" />  
+
+	<script type="text/javascript" src="jquery.jixedbar-0.0.5-branch/jquery-1.4.2.min.js"></script>
+	<script type="text/javascript" src="jquery.jixedbar-0.0.5-branch/src/jquery.jixedbar.min.js"></script>
+	<script type="text/javascript" src="js/jquery-ui-1.8.10.custom.min.js"></script>
+	<script type="text/javascript" src="js/jquery-jvert-tabs-1.1.4.js"></script>
+
+	<script src="/json.js"></script> <!-- for ie -->
+   <script src="/lib/socket.io-client/socket.io.js"></script>
+   <script src="content_script.js"></script>
+	<script src="updategui.js"></script>
+
+	<style type="text/css"> 
+		/* Vertical Tabs
+		----------------------------------*/
+		.ui-tabs-vertical { width: 55em; }
+		.ui-tabs-vertical .ui-tabs-nav { padding: 0em .8em .2em .2em; float: left; width: 12em; }
+		.ui-tabs-vertical .ui-tabs-nav li { padding-right: .8em; clear: left; width: 100%; border-bottom-width: 1px !important; border-right-width: 0 !important; margin: 0 -1px .2em 0; }
+		.ui-tabs-vertical .ui-tabs-nav li a { display:block; }
+		.ui-tabs-vertical .ui-tabs-nav li.ui-tabs-selected { padding-bottom: 0; padding-right: .9em;  border-right-width: 1px; border-	right-width: 1px; }
+		.ui-tabs-vertical .ui-tabs-panel {  padding: 1em; float: right; width: 40em;}
+	</style> 
+	
+	
+
+</head>
+
+<body onload='window.webkitNotifications.requestPermission();'>
 
 	<script>
 		bg = '';
     	var slideDelay = 200;	
-    </script>
-    
-    
-    
-	<div id='info_notification' style='display:none'>
-      	<p>Click on "Enable notifications" only the first time you access this page.</p>
-      	<input type='button' id='enable' value='Enable notifications'/>    
-    </div>
-    
-    <div id='logout_div' style='display:none'>
-    	<input type='button' id='logout' value='Logout'/>
-    </div>
-    
-    <div id='login_div'>
-	    <h3>Login:</h3>
-    	<label for='ext' >Extension:</label><input type='text' name='ext' id='ext' value='500'/>
-	    <label for='secret' >Secret:</label><input type='text' name='secret' id='secret' value='500'/>      
-	    <input type='button' id='login' value='Login'/>   
-	    <label id='info_login'></label>
-	    <br/>
+   </script>
+	
+	
+	<!--
+	<div id="sample-bar">
+		<ul>
+			<li title="Home"><a href="http://your.domain.tld/"><img src="img/home.png" alt="" /></a></li>
+	   </ul>
+
+   	<span class="jx-separator-left"></span>
+   
+   	<ul>        
+      	<li title="Around The Web"><a href="#"><img src="img/web.png" alt="Get Social" /></a>
+	   		<ul>
+      	  		<li><a href="http://www.facebook.com/account-name"><img src="img/facebook.png" title="Facebook" />Facebook</a></li>
+		        	<li><a href="http://twitter.com/account-name"><img src="img/twitter.png" title="Twitter" />Twitter</a></li>
+		        	<li><a href="http://www.flickr.com/photos/account-name/"><img src="img/flickr.png" title="Flickr" />Flickr</a></li>
+		     	</ul>
+      	</li>
+	   </ul>
+   
+		<span class="jx-separator-left"></span>
+   
+   	<div>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</div>
+   
+	   <ul class="jx-bar-button-right">
+   	   <li title="Feeds"><a href="#"><img src="img/feed.png" alt="" /></a>
+   	      <ul>
+   	         <li><a href="http://your.domain.tld/feed/"><img src="img/feed.png" title="Content Feeds" />Content Feed</a></li>
+   	         <li><a href="http://your.domain.tld/comments/"><img src="img/comment.png" title="Comment Feeds" />Comment Feed</a></li>
+   	      </ul>
+   	   </li>
+   	</ul>
+   
+	   <span class="jx-separator-right"></span>
+   
 	</div>
-    
-    
-    <div id='dialout_div' style='display:none'>
-		<hr/><br/>
-		<h3>Dial panel</h3>
-		<div id='call_out_div'>
-			<label for='extToCall' >Call to:    </label><input type='text' name='extToCall' id='extToCall' value='501'/>      
-		
-			<input type='button' id='call' value='Call'/>
-			<br/>
-		</div>
-		<label id='info_calling'></label>
-		<br/><br/>
-		<div id='buttoncall' style='display:none'>
-			<input type='button' id='hangup' value='Hangup'/>
-			<input type='button' id='waiting' value='Waiting' disabled='true'/>
-			<input type='button' id='record' value='Record' disabled='true'/><br/>
-			<label>Redirect to: </label><input type='text' id='redirect_to'/><input type='button' id='redirect' value='Redirect' disabled='true'/>
+
+-->
+
+
+
+	<div id="container">
+	
+		<div id="header">
 			
+			<img src='../images/logo_nethesis.png' id='logo'/>
+			<a href="#" id="logout" style='display:none'>Logout</a><br/>
+			<div id='buttoncall' style='display:none'>
+					<label id='info_calling'></label>
+					<input type='button' id='hangup' value='Hangup'/>
+					<input type='button' id='waiting' value='Waiting' disabled='true'/>
+					<input type='button' id='record' value='Record' disabled='true'/><br/>
+					<label>Redirect to: </label><input type='text' id='redirect_to'/><input type='button' id='redirect' value='Redirect' disabled='true'/>
+			</div>
+			<br/><br/><br/><br/>
+			
+			
+<!--
+			<div id='logout_div' style='display:none'>
+    			<input type='button' id='logout' value='Logout (debug)'/>
+    		</div>
+
+
+			<div id='dialout_div' style='display:none'>
+				<div id='call_out_div'>
+					<label for='extToCall' disabled="true">Call to:    </label><input type='text' name='extToCall' id='extToCall' value='501' disabled maxlength="20" size="8"/>      
+			
+					<input type='button' id='call' value='Call' disabled/>
+					<br/>
+				</div>
+				<label id='info_calling'></label>
+				<br/><br/>
+				<div id='buttoncall' style='display:none'>
+					<input type='button' id='hangup' value='Hangup'/>
+					<input type='button' id='waiting' value='Waiting' disabled='true'/>
+					<input type='button' id='record' value='Record' disabled='true'/><br/>
+					<label>Redirect to: </label><input type='text' id='redirect_to'/><input type='button' id='redirect' value='Redirect' disabled='true'/>
+				</div>
+			</div>
+-->
+			
+    		
 		</div>
-		<br/>
-	</div>
+		
+      <div id="tabs">
+      		<ul id='tab_list'>	
+				<li><a href="#tabs-0" class='tab_login'>Login</a></li>
+				<li><a href="#tabs-1" class='tab_phonebook'>Phonebook</a></li>
+				<li><a href="#tabs-2" class='tab_history'>History</a></li>
+			</ul>
+			
+			<div id="tabs-0" class='tab_login'>
+			   	<div id='login_div'>
+				  	<label for='ext' >Extension:</label><input type='text' name='ext' id='ext' value='500'/>
+	    			<label for='secret' >Secret:</label><input type='text' name='secret' id='secret' value='500'/>      
+				   <input type='button' id='login' value='Login'/>   
+				   <label id='info_login'></label>
+				   <br/>
+				</div>
+	      </div>
+			
+		   <div id="tabs-1" class='tab_phonebook'>
+		   	<div id="content-wrapper">
+		   	   <div id="content">
+		            
+		         	<div id="address" style='display:block'>
+							<label class='ui-widget'>Search:   </label><input type="text" id="searchcontact" name="searchcontact"/>
+							<br/><br/>
+							<div id="searchContacts">
+							</div> 
+						</div>
+						<div id="resultsContainer"></div>
+	
+	<!--
+		            	<h3 class="post-title"><a href="#">Post Title</a></h3><span class="date">10.07.08</span>
+        			    	<p>Lorem <a href="#">ipsum dolor</a> sit amet, com pretium ligula.</p>
+		               <h3>A quote</h3>
+        		        	<blockquote><p>Vestibula....</p></blockquote>
+		               <h3>An Unordered List</h3>
+        		        	<ul>
+        	            	<li>This is a list</li>
+	                     <li>This is a list</li> 
+		               </ul>
+		               <h3>An Ordered List</h3>
+        		        	<ol>
+			                <li>Dance</li>
+        	                <li>Live</li>
+        	                <li>Breathe</li>
+        		        	</ol>
+	        		      <h2>This is another really big header</h2>
+        		        	<h3>This one isn't ridiculously big</h3>
+        		        	<h4>Details are important</h4>
+        		        	<div class="commentbox">Posted by A. Bloggar | 10 July 2008 | Comments</div>
+        		        		<div id="comments">
+	    			       		<h4>3 Responses to &#8220;Post Title&#8221;</h4>
+	
+					        			<div class="comment">
+								<cite>Commenter:</cite>
+								<br />
+								<p>I really like to test comments</p>			
+								<small><a href="#comment-22" title="">June 16th, 2008 at 9:15 pm</a></small>
+							</div>
+		
+		
+	
+					        <div class="comment">
+								<cite>Another Commenter:</cite>
+								<br />
+								<p>I really like to test comments</p>			
+								<small><a href="#comment-22" title="">June 16th, 2008 at 9:15 pm</a></small>
+							</div>
 	
 	
-	<div id="address" style='display:none'>
-		<br/><hr/>
-		<h3>Address book</h3>	
-		<label>Search:  </label><input type="text" id="searchcontact" name="searchcontact"/>
-		<br/><br/>
-		<div id="searchContacts">
-		</div> 
-	</div>
-	<div id="resultsContainer"></div>
+		        <div class="comment">
+					<cite>Yet another commenter:</cite>
+					<br />
+					<p>I really like to test comments</p>			
+					<small><a href="#comment-22" title="">June 16th, 2008 at 9:15 pm</a></small>
+					</div>
 	
+	-->
+        </div>
+
+		</div>   
+		</div>
+		<div id="tabs-2" class='tab_history'>
+		   	<div id="content-wrapper">
+		   	   <div id="content">
+		      	<p>History</p>      
+		       </div>
+		    </dv>
+		</div>
+        <!--
+        <div id="sidebar-wrapper">
+          <div id="sidebar">
+           <h3>Categories</h3>
+           <ul id="sidenotes">
+                <li><a href="#">Academics</a></li>
+                <li><a href="#">Life</a></li>
+           </ul>
+          </div> 
+        </div>
+        -->
+      </div> 
+      
+                <!--                                                        </div>
+        <div id="footer">By <a href="http://kismet.blogsite.org">Kismet</a>. Original design <a href="http://www.nikhedonia.com/showcase/entry/one-penny/">here</a> by SimplyGold.</div>
+        -->
 
 
-
-
-
+        
+      
+   </div>
+   
+   
+   
+   
+   
     <script>
     
     	$(function(){
-    	
+    
+	        $( "#tabs" ).tabs().addClass('ui-tabs-vertical ui-helper-clearfix');;
+	        $("#tabs li").removeClass('ui-corner-top').addClass('ui-corner-left');
+	        $("#sample-bar").jixedbar();
+	
+			$('#tabs').tabs("select", 0);	
+	        $('.tab_phonebook').hide();
+	        $('.tab_history').hide();
+	        
+	
+		
     		if (window.webkitNotifications) {
 				console.log("Notifications are supported!");
 			}
@@ -111,6 +280,15 @@
 				console.log("Error: background is null");
 			}
 			
+			
+			// live search of phonebook contacts
+			$("#searchcontact").keyup(function(){
+				var extFrom = localStorage.getItem('user');
+				var namex = $("#searchcontact").val();
+				if(namex.length>=2){
+					bg.doSearchContact({extFrom: extFrom, namex: namex, action: 'search_contact_phonebook'});
+				}
+			});			
 		});
 		
 		
@@ -185,16 +363,7 @@
    			$('#redirect').attr('enabled',false);
 		},false);
 		
-		// live search of phonebook contacts
-		$(document).ready(function() {
-			$("#searchcontact").keyup(function(){
-				var extFrom = localStorage.getItem('user');
-				var namex = $("#searchcontact").val();
-				if(namex.length>=2){
-					bg.doSearchContact({extFrom: extFrom, namex: namex, action: 'search_contact_phonebook'});
-				}
-			});
-		});
+		
 		
 		$('#record').click(function(){
 		
@@ -237,8 +406,13 @@
 
 		
     </script> 
-    
-    
-    
-  </body>
+   
+   
+   
+   
+   
+   
+</body>
+
 </html>
+

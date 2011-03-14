@@ -21,6 +21,9 @@ chrome.extension.onRequest.addListener(function(obj){
 	    case 'dialing':
 
 	    	updateCallingGui(obj);
+	    	if(obj.notificationURL=='templateNotificationCallingPhonebook.html'){
+		    	addTabDialing(obj);
+		    }
 	    break;
 	    case 'callconnected':
 
