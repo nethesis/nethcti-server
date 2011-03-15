@@ -75,6 +75,7 @@ function updateHangupGui(obj){
 }
 
 function updateCallConnectedGui(obj){
+	$('#buttoncall').show();
 	document.getElementById('info_calling').innerText = obj.respMessage;
 	//document.getElementById('call').value = 'Calling...';
 	//document.getElementById('call').disabled = true;
@@ -83,8 +84,6 @@ function updateCallConnectedGui(obj){
 }
 
 function updateCallingGui(obj){
-	//document.getElementById('login_div').style.display = 'none';
-	//document.getElementById('address').style.display = 'none';
 	document.getElementById('buttoncall').style.display = 'block';
 	document.getElementById('info_calling').innerText = 'Call incoming from ' + obj.from;
 }
@@ -122,10 +121,20 @@ function updateAckLoginGui(){
 }
 function addTabDialing(obj){
 	
+	$("#tabs").tabs("remove", 3);
 	$("#tabs").tabs("add", "#tabs-3", "Customer card");
 	$('#tabs').tabs('select', 3);
 	
-	var content = createPhonebookHTMLPage(obj.customerCard[0]);
+	var content = '';
+	if(obj.customerCard!=undefined && obj.customerCard!=null){
+		content = createPhonebookHTMLPage(obj.customerCard[0]);
+	}
+	else{
+		content = '<h3>No data</h3>';
+	}
+	localStorage.removeItem('lastCustomerCard');
+	localStorage.setItem('lastCustomerCard', content);
+	
 	$('#tabs-3').append(content);
 }
 
@@ -148,8 +157,6 @@ createPhonebookHTMLPage = function(phonebook){
 			dynamicHtml += key + ': <a href="">' + phonebook[key] + '</a><br/>';
 		}
 	}
-	console.log("dynamicHtml = ");
-	console.log(dynamicHtml);
 	return dynamicHtml;
 }
 

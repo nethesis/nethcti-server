@@ -17,6 +17,10 @@
 	
 	<script>
 	
+		
+		
+		
+	
 		function isCtiUrl(url){
 			return url.indexOf(proxy_address) != -1 ? true : false;
 		}
@@ -51,8 +55,8 @@
 		    		break;
 		    		case 'dialing':
 		    			
-			    		htmlDesktopNotification(socket, obj);
-			    		
+			    		htmlDesktopNotification(obj);
+			    		console.log(obj);
 			      		callFromExt = obj.from;
 			      		callToExt = localStorage.getItem('user');
 
@@ -108,7 +112,7 @@
 				socket.send({ extFrom: extFrom, secret: secret, action: "login" });
 				console.log("sended login request from: " + extFrom);
 			}
-				
+			
 			
 			
 			chrome.browserAction.onClicked.addListener(function(tab){
@@ -126,10 +130,6 @@
 		
 	
 		window.addEventListener("load", init, false);
-		
-		
-	
-		
 		
 		
 	</script>

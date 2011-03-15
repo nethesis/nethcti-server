@@ -12,37 +12,34 @@ This page offers the ability to display the customer card.
 		
 			var url = window.location.search.substring(1);
 			urlArray = url.split("&");
-			var resp = urlArray[4].split("=")[1];
+			var resp = urlArray[2].split("=")[1];
 			while(resp.indexOf('%20')!=-1){
 				resp = resp.replace(/%20/, ' ');
 			}
 
 			document.write(resp);
+			console.log("ciao");
 		</script>
 
-		<input type="button" value="Phonebook" onClick="getPhonebook();" target="_blank">
+		<input type="button" value="Phonebook">
 
 		<script>
-		
-			function hangup(){
-				console.log('Request hangup');
+	
+			function focus(){
+				console.log("sono template");
+				//var bg = chrome.extension.getBackgroundPage();
+				//console.log(bg);
 			}
 			
+			// old
+			/*
 			function getPhonebook(){
 				var extenApplicant = urlArray[3].split('=')[1];
 				var extenPhonebook = urlArray[2].split('=')[1];
 				var urlReq = 'getPhonebook.html?extenApplicant=' + extenApplicant + '&extenPhonebook=' + extenPhonebook; 
-//				window.open(urlReq);
-				//window.open("http://www.libero.it");
-				
-				$.ajax({
-					url: "http://amaduzzi:8080/getPhonebook.html",
-					success: function(){
-						window.open("http://www.repubblica.it");
-					}
-				});
-				
+				window.open(urlReq);
 			}
+			*/
 		</script>
 		
 		

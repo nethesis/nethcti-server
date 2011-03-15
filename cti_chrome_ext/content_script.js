@@ -4,7 +4,7 @@ chrome.extension.onRequest.addListener(function(obj){
 
 	switch(obj.typeMessage){
 		case 'connected':
-
+			updateCallConnectedGui(obj);
 	    break;
 		case 'error_login':
 
@@ -19,7 +19,6 @@ chrome.extension.onRequest.addListener(function(obj){
 	    	updateErrorCalling(obj);
 	    break;
 	    case 'dialing':
-
 	    	updateCallingGui(obj);
 	    	if(obj.notificationURL=='templateNotificationCallingPhonebook.html'){
 		    	addTabDialing(obj);
@@ -71,7 +70,6 @@ chrome.extension.onRequest.addListener(function(obj){
 	}
 	
 });
-
 
 
 

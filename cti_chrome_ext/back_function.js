@@ -1,14 +1,16 @@
-function htmlDesktopNotification(socket, obj){
-            	
-	var host = socket.host;
-	var port = socket.options["port"];
-    	
+function htmlDesktopNotification(obj){
+          
    	if (window.webkitNotifications) { //enable notification if supported
-			
-		var reqUrl = "http://" + proxy_address + ":" + proxy_port + "/" + obj.notificationURL + "?server=" + host + "&port=" + port + "&from=" + obj.from + "&to=" + obj.to + "&respMessage=" + obj.respMessage;
+		
+		var reqUrl = "./" + obj.notificationURL + "?from=" + obj.from + "&to=" + obj.to + "&respMessage=" + obj.respMessage;
    		notification = window.webkitNotifications.createHTMLNotification(reqUrl);
 		notification.ondisplay = function() { console.log("Display notification"); };
 		notification.onclose = function() { console.log("Close notification"); };
+		notification.onclick = function() {
+			window.open("index.html");
+			notification.cancel();
+		};
+		
 		notification.show(); 
             
         /*
@@ -76,5 +78,6 @@ function doStopRecord(objStopRecord){
 	socket.send(objStopRecord);
 	console.log("sended stop record request for me [" + objStopRecord.extFrom + "]");
 }
+
 
 

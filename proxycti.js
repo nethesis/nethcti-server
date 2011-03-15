@@ -87,7 +87,6 @@ am.addListener('dialing', function(from, to) {
     		// the user has the authorization of view customer card	
     		console.log("The user " + to.number + " has the permit of view customer card");
     			
-//    		path = "/templateNotificationCallingPhonebook.html";
     		response.notificationURL = "templateNotificationCallingPhonebook.html";
     		
     		dataCollector.getPhonebook(to.number, from.number, function(phonebook){
@@ -95,19 +94,12 @@ am.addListener('dialing', function(from, to) {
 	  			/* result is undefined if the user that has do the request
   			 	 * hasn't the relative permission */
 				if(phonebook!=undefined && phonebook.length>0){
-//					phonebook[0].exten = params.extenPhonebook;
-			  		// phonebook = [ { name: 'giacomo', exten: '501' } ]
 			  		console.log("phonebook = ======");
 			  		console.log(phonebook);
 			  		response.customerCard = phonebook;
 			  		c.send(response);
 					console.log("Notify of calling has been sent to client " + to.number);
 					return;
-	//				var htmlPage = createPhonebookHTMLPage(phonebook);
-					
-	    	  		//res.writeHead(200, {'Contet-Type': 'text/html'});
-			      	//res.write(htmlPage, 'utf8');
-			      	//res.end();
 				}
 				else{
 					response.customerCard = undefined;
