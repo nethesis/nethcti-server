@@ -10,7 +10,6 @@ function htmlDesktopNotification(obj){
 			chrome.windows.getCurrent(function (win) {
             	if (typeof win == 'undefined'){
                 	window.open(INDEX_NAME);
-                	console.log("HO FATTO LA window.open in back_function");
                 }
 	            else
 	            {

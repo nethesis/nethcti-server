@@ -22,19 +22,7 @@
 
 			var update = true;
 			chrome.windows.getAll({"populate": true}, function(arwins){
-				/*
-				for(var i=0; i<arwins.length; i++){
-					var win = arwins[i];
-					console.log("win.id = " + win.id);
-					var artabs = win.tabs;
-					for(var x=0; x<artabs.length; x++){
-						var tab = artabs[x];
-						console.log("tab.url = " + tab.url);
-						if(isCtiUrl(tab.url)){
-							update = false;
-						}
-					}
-				}*/
+				
 				if(arwins.length>1)
 					update=false;
 				console.log("UPDATE = " + update);
@@ -47,12 +35,8 @@
 								chrome.tabs.remove(tab.id);
 							}
 						}
-						//console.log("3 sono entrato");
-						//console.log("[[[[[[[ tab create");
-		            	//chrome.tabs.create({url:INDEX_NAME}); 
 	            	});
-	            }
-				
+	            }				
 			});   
         });	
                 
@@ -163,12 +147,10 @@
 				chrome.tabs.getAllInWindow(null, function(tabs){
 					for(var i=0, tab; tab=tabs[i]; i++){
 						if(tab.url && isCtiUrl(tab.url)){
-							console.log("YYYYYYY hai clicczato per UPDATE tab.url = " + tab.url);
 							chrome.tabs.update(tab.id, {selected: true});
 							return;
 						}
 					}
-					console.log("YYYYYYY hai clicczato per CREATE url = " + INDEX_NAME);
 					chrome.tabs.create({url: INDEX_NAME});
 				});
 			});
