@@ -7,15 +7,25 @@ function htmlDesktopNotification(obj){
 		notification.ondisplay = function() { console.log("Display notification"); };
 		notification.onclose = function() { console.log("Close notification"); };
 		notification.onclick = function() {
-			
-			window.open(INDEX_NAME);
-			
-			//chrome.tabs.create({url: INDEX_NAME});
-			// ERROR: Error during tabs.create: No current window 
-			//chrome/ExtensionProcessBindings:87
-			
-			
-			notification.cancel();
+			chrome.windows.getCurrent(function (win) {
+            	if (typeof win == 'undefined'){
+                	window.open(INDEX_NAME);
+                	console.log("HO FATTO LA window.open in back_function");
+                }
+	            else
+	            {
+	            	chrome.tabs.getAllInWindow(win.id, function(tabs){
+		            	for(var i=0, tab; tab=tabs[i]; i++){
+		                	if(tab.url && isCtiUrl(tab.url)){
+		                    	chrome.tabs.update(tab.id, {selected: true});
+		                        return;
+		                    }
+		                }
+		                chrome.tabs.create({url: INDEX_NAME});
+		            });
+	            }
+           });
+           notification.cancel();
 		};
 		
 		notification.show(); 
