@@ -19,19 +19,16 @@
 	<script>
 
 		chrome.windows.onCreated.addListener(function(win) {
-
+					
 			var update = true;
 			chrome.windows.getAll({"populate": true}, function(arwins){
-				
+			
 				if(arwins.length>1)
 					update=false;
-				console.log("UPDATE = " + update);
 				if(update){
 					chrome.tabs.getAllInWindow(win.id, function(tabs){
 						for(var i=0, tab; tab=tabs[i]; i++){
-							console.log("[" + i + "]: tab.url = " + tab.url);
 							if(tab.url && isCtiUrl(tab.url) && ((i+1) <tabs.length ) ){
-								console.log("[[[[[[[ remove tab.url = " + tab.url + " " + tab.id);
 								chrome.tabs.remove(tab.id);
 							}
 						}
@@ -44,10 +41,6 @@
 		window.addEventListener("load", init, false);
 		
 		
-		
-		
-	
-	
 	
 		function init(){
 			
@@ -81,7 +74,6 @@
 		    		case 'dialing':
 		    			
 			    		htmlDesktopNotification(obj);
-			    		console.log(obj);
 			      		callFromExt = obj.from;
 			      		callToExt = localStorage.getItem('user');
 
@@ -137,24 +129,24 @@
 				socket.send({ extFrom: extFrom, secret: secret, action: "login" });
 				console.log("sended login request from: " + extFrom);
 			}
-			
-			
-			
-			
-			
-			chrome.browserAction.onClicked.addListener(function(tab){
-
-				chrome.tabs.getAllInWindow(null, function(tabs){
-					for(var i=0, tab; tab=tabs[i]; i++){
-						if(tab.url && isCtiUrl(tab.url)){
-							chrome.tabs.update(tab.id, {selected: true});
-							return;
-						}
-					}
-					chrome.tabs.create({url: INDEX_NAME});
-				});
-			});
 		}
+		
+		
+		
+		chrome.browserAction.onClicked.addListener(function(tab){
+			
+			chrome.tabs.getAllInWindow(null, function(tabs){
+			
+				for(var i=0, tab; tab=tabs[i]; i++){
+					if(tab.url && isCtiUrl(tab.url)){
+						chrome.tabs.update(tab.id, {selected: true});
+						return;
+					}
+				}
+				chrome.tabs.create({url: INDEX_NAME});
+				return;
+			});
+		});
 		
 		function isCtiUrl(url){
 			var one = url.indexOf(INDEX_NAME) != -1 ? true : false;

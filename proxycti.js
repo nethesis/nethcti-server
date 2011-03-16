@@ -85,7 +85,7 @@ am.addListener('dialing', function(from, to) {
 	
 		if(dataCollector.testUserPermitPhonebook(to.number)){
     		// the user has the authorization of view customer card	
-    		console.log("The user " + to.number + " has the permit of view customer card");
+    		console.log("The user " + to.number + " has the permit of view customer card of " + from.number);
     			
     		response.notificationURL = "templateNotificationCallingPhonebook.html";
     		

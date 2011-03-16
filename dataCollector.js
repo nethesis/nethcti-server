@@ -137,34 +137,16 @@ getPhonebook = function(extenApplicant, extenPhonebook, cb){
 		executeSQLQuery(currentSQLQueryObj, function(results){
 			cb(results);
 		});
-	}
-	return undefined;
-}
-
-
-/*
- * Return the addresses (phonebook). 
- */
- /*
-getAddresses = function(extenApplicant){
-
-	var currentUserSQLProfileObj = getUserSQLProfile(extenApplicant);
-	var currentSQLQueryObj = currentUserSQLProfileObj.listSQLQueries[SECTION_NAME_PHONEBOOK];
 		
-	if(currentSQLQueryObj!=undefined){
-	
-		while(currentSQLQueryObj.sqlQueryStr.indexOf("$EXTEN")!=-1){
-			currentSQLQueryObj.sqlQueryStr = currentSQLQueryObj.sqlQueryStr.replace("$EXTEN", extenPhonebook);
+		
+		while(currentSQLQueryObj.sqlQueryStr.indexOf(extenPhonebook)!=-1){
+			currentSQLQueryObj.sqlQueryStr = currentSQLQueryObj.sqlQueryStr.replace(extenPhonebook, "$EXTEN");
 		}
-		
-		// execute current sql query
-		executeSQLQuery(currentSQLQueryObj, function(results){
-			cb(results);
-		});
 	}
 	return undefined;
 }
-*/
+
+
 
 /*
  * Return the sql user profile.

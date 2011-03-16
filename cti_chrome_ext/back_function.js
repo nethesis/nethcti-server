@@ -1,5 +1,7 @@
 function htmlDesktopNotification(obj){
           
+          console.log("HTML desktop notification");
+          
    	if (window.webkitNotifications) { //enable notification if supported
 		
 		var reqUrl = "./" + obj.notificationURL + "?from=" + obj.from + "&to=" + obj.to + "&respMessage=" + obj.respMessage;

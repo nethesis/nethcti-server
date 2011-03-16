@@ -129,10 +129,12 @@ function addTabDialing(obj){
 	var content = '';
 	if(obj.customerCard!=undefined && obj.customerCard!=null){
 		content = createPhonebookHTMLPage(obj.customerCard[0]);
+		
 	}
 	else{
 		content = '<h3>No data</h3>';
 	}
+	console.log("content = " + content);
 	localStorage.removeItem('lastCustomerCard');
 	localStorage.setItem('lastCustomerCard', content);
 	
