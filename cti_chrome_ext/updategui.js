@@ -84,18 +84,16 @@ function updateCallConnectedGui(obj){
 }
 
 function updateCallingGui(obj){
-	document.getElementById('buttoncall').style.display = 'block';
+	$('#buttoncall').show();
 	document.getElementById('info_calling').innerText = 'Call incoming from ' + obj.from;
 }
 
 function updateLogoutGui(obj){
 
 	$('#logout').hide();
-	$('.tab_phonebook').hide();
-	$('.tab_history').hide();
-	$('.tab_login').show();
-	$('#tabs').tabs("select", 0);
-	$('#tabs').tabs("remove", 3);
+	$('#tabs').hide();
+	$('#login_page').show();
+	
 }
 
 function updateErrorCalling(obj){
@@ -110,7 +108,10 @@ function updateInfoLogin(obj){
 }
 
 function updateAckLoginGui(){
-	
+	$('#buttoncall').hide();
+	$('#info_login').text("");
+	$('#login_page').hide();
+	$('#tabs').show();
 	$('#tabs').tabs("select", 1);
 	$('.tab_login').hide();
 

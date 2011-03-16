@@ -13,22 +13,26 @@
 		notificationTimeout = 5000;
 		proxy_address = "amaduzzi";
 		proxy_port = 8080;
+		INDEX_NAME = "indexcti.html";
 	</script>
 	
 	<script>
 	
+		window.addEventListener("load", init, false);
 		
 		
+		function isCtiUrl(url){
+			return url.indexOf(INDEX_NAME) != -1 ? true : false;
+		}
 		
 	
-		function isCtiUrl(url){
-			return url.indexOf(proxy_address) != -1 ? true : false;
-		}
+	
 	
 		function init(){
-
+			
 			socket = new io.Socket(proxy_address, {port: 8080, rememberTransport: false});
 	      	socket.connect();
+	      	
 	      	socket.on('message', function(obj){
       	
     	  		console.debug("Received message: ");
@@ -115,6 +119,8 @@
 			
 			
 			
+			
+			
 			chrome.browserAction.onClicked.addListener(function(tab){
 				chrome.tabs.getAllInWindow(null, function(tabs){
 					for(var i=0, tab; tab=tabs[i]; i++){
@@ -123,13 +129,13 @@
 							return;
 						}
 					}
-					chrome.tabs.create({url: "index.html"});
+					chrome.tabs.create({url: INDEX_NAME});
 				});
 			});
 		}
 		
 	
-		window.addEventListener("load", init, false);
+		
 		
 		
 	</script>

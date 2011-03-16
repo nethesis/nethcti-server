@@ -7,7 +7,14 @@ function htmlDesktopNotification(obj){
 		notification.ondisplay = function() { console.log("Display notification"); };
 		notification.onclose = function() { console.log("Close notification"); };
 		notification.onclick = function() {
-			window.open("index.html");
+			
+			window.open(INDEX_NAME);
+			
+			//chrome.tabs.create({url: INDEX_NAME});
+			// ERROR: Error during tabs.create: No current window 
+			//chrome/ExtensionProcessBindings:87
+			
+			
 			notification.cancel();
 		};
 		
@@ -23,6 +30,7 @@ function htmlDesktopNotification(obj){
 		
 		
 function doLogin(objLogin){
+	init();
 	console.log(objLogin);
 	socket.send(objLogin);
 	console.log("sended login request for [" + objLogin.extFrom + "]");
