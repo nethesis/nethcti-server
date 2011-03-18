@@ -283,8 +283,8 @@ var io = io.listen(server)
 io.on('connection', function(client){
 
 	// send acknowledgment of established connection 
-	client.send(new ResponseMessage(client.sessionId, "connected", "[DEBUG] connected"));
-	console.log("aknowledgment to connection has been sent to the client");
+	client.send(new ResponseMessage(client.sessionId, "connected", "[DEBUG] client " + client.sessionId + " connected"));
+	console.log("aknowledgment to connection has been sent to the client: " + client.sessiondId);
 
 
 	client.on('message', function(message){
