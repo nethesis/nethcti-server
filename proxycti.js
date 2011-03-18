@@ -321,7 +321,7 @@ io.on('connection', function(client){
   					if(testAlreadyLoggedExten(extFrom)){
   						console.log("Client [" + extFrom + "] already logged in !");
 				    	console.log("clients length = " + Object.keys(clients).length);
-				    	client.send(new ResponseMessage(client.sessionId, "error_login", "Sorry, but the client [" + extFrom + "] is already logged in"));
+				    	client.send(new ResponseMessage(client.sessionId, "already_logged_in", "The client [" + extFrom + "] is already logged in"));
   					}
   					// authenticate the user
   					else{
