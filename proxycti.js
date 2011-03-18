@@ -316,7 +316,7 @@ io.on('connection', function(client){
   					if(testAlreadyLoggedSessionId(client.sessionId)){
   						console.log("client with sessionId = " + client.sessionId + " is already logged in");
   						console.log("clients length = " + Object.keys(clients).length);
-				    	client.send(new ResponseMessage(client.sessionId, "error_login", "Sorry, but you are already logged in !"));
+				    	client.send(new ResponseMessage(client.sessionId, "already_logged_in", "Sorry, but you are already logged in !"));
   						return;
   					}
   					// check if the user extFrom is already logged in
