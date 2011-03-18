@@ -590,37 +590,6 @@ testAlreadyLoggedSessionId = function(sessionId){
 }
 
 /*
- * Create the HTML page of customer card. This is created from template.
- * The parameter represents the response query executed in database.
- */
- /*
-createPhonebookHTMLPage = function(phonebook){
-	
-	var content = fs.readFileSync(pathOfPhonebookHTML, 'utf8');
-	template = normal.compile(content);
-
-
-	var dynamicHtml = '';
-	var other = '';
-	for(var key in phonebook[0]){
-		dynamicHtml += key + ': <a href="">' + phonebook[0][key] + '</a><br/>';
-		other += key + ':  ' + phonebook[0][key] + '\n';
-	}
-	
-
-	
-	var data = {
-		exten: phonebook[0].exten,
-		name: phonebook[0].name,
-		generateData: dynamicHtml,
-		otherTest: other
-	};
-	
-	var html = template(data);
-	return html;
-}
-*/
-/*
 process.on('uncaughtException', function(err){
 	console.log('*********************************************');
 	console.log('Caught not provided exception: ' + err);
