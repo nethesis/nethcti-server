@@ -310,6 +310,8 @@ io.on('connection', function(client){
   	
 	  			if(authenticator.authenticateUser(extFrom, message.secret)){
   				
+  					if()
+  				
   					// check if the user sessionId is already logged in
   					if(testAlreadyLoggedSessionId(client.sessionId)){
   						console.log("client with sessionId = " + client.sessionId + " is already logged in");
@@ -321,7 +323,7 @@ io.on('connection', function(client){
   					if(testAlreadyLoggedExten(extFrom)){
   						console.log("Client [" + extFrom + "] already logged in !");
 				    	console.log("clients length = " + Object.keys(clients).length);
-				    	client.send(new ResponseMessage(client.sessionId, "already_logged_in", "The client [" + extFrom + "] is already logged in"));
+				    	client.send(new ResponseMessage(client.sessionId, "error_login", "Sorry, but the client [" + extFrom + "] is already logged in"));
   					}
   					// authenticate the user
   					else{
@@ -333,7 +335,7 @@ io.on('connection', function(client){
 			  			respMsg.ext = extFrom;
 			  			respMsg.secret = message.secret;
 		  				client.send(respMsg);
-		  				console.log("Acknowledgment to login action has been sent to [" + extFrom + "]");
+		  				console.log("Acknowledgment to login action has been sent to [" + extFrom + "] with: " + client.sessionId);
   					}
   				}
   				else{
@@ -577,6 +579,10 @@ testAlreadyLoggedExten = function(exten){
 		return true;
 	return false;
 }
+
+
+
+
 
 /*
  * Check if the user sessionId already present in memory.
