@@ -310,13 +310,19 @@ io.on('connection', function(client){
   	
 	  			if(authenticator.authenticateUser(extFrom, message.secret)){
   				
-
+					// check if the user sessionId is already logged in
+  					if(testAlreadyLoggedUser(client.sessionId, extFrom)){
+  						console.log("client with sessionId = " + client.sessionId + " is already logged in as " + extFrom);
+  						console.log("clients length = " + Object.keys(clients).length);
+				    	client.send(new ResponseMessage(client.sessionId, "already_logged_in", "You are already logged in !"));
+  						return;
+  					}
   				
   					// check if the user sessionId is already logged in
   					if(testAlreadyLoggedSessionId(client.sessionId)){
   						console.log("client with sessionId = " + client.sessionId + " is already logged in");
   						console.log("clients length = " + Object.keys(clients).length);
-				    	client.send(new ResponseMessage(client.sessionId, "already_logged_in", "Sorry, but you are already logged in !"));
+				    	client.send(new ResponseMessage(client.sessionId, "error_login", "Sorry, but you are already logged in !"));
   						return;
   					}
   					// check if the user extFrom is already logged in
@@ -576,6 +582,17 @@ removeClient = function(sessionId){
 testAlreadyLoggedExten = function(exten){
 
 	if(clients[exten]!=undefined)
+		return true;
+	return false;
+}
+
+
+/*
+ * Check if the user exten already present in memory and its sessionId correspond.
+ */ 
+testAlreadyLoggedUser = function(sessionId, ext){
+
+	if(clients[exten]!=undefined && clients[exten].sessionId==sessionId)
 		return true;
 	return false;
 }
