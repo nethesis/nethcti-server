@@ -221,8 +221,6 @@ server = http.createServer(function(req, res){
 	var path = parsed_url.pathname;
 	var params = parsed_url.query;
 	
-	console.log("OOOOOOOOOOOOOOOOOOOHHHHHHHHHHHHHHHHHHH");
-	console.log(path);
 
 	switch (path){
 		case '/':
@@ -234,72 +232,6 @@ server = http.createServer(function(req, res){
     		    res.end();
     	  	});
 	    break;
-	    
-		//case '/getNotificationCalling.html':
-    		/* The notification of the calling is personalized: if the user has
-    		 * the authorization of view customer card, then he will receive the 
-    		 * notification with the possibility of view customer card (for example
-    		 * through a button or a link), otherwise he will receive only a simple
-    		 * notification of the calling.
-    		 */
-    		 /*
-    		var from = params.from;
-    		var to = params.to;
-    		
-    		if(dataCollector.testUserPermitPhonebook(to)){
-    			// the user has the authorization of view customer card	
-    			console.log("The user " + to + " has the permit of view customer card");
-    			
-    			path = "/templateNotificationCallingPhonebook.html";
-    			
-		      	fs.readFile(__dirname + path, function(err, data){
-		        	if (err) return send404(res);
-			        res.writeHead(200, {'Content-Type': 'text/html'});
-			        res.write(data, 'utf8');
-			        res.end();
-			    });
-    		}
-    		else{
-		    	// the user hasn't the authorization of view customer card
-		    	console.log("The user " + to + " hasn't the permit of view customer card");
-		    	path = "/templateNotificationCalling.html";
-		      	fs.readFile(__dirname + path, function(err, data){
-		        	if (err) return send404(res);
-			        res.writeHead(200, {'Content-Type': 'text/html'});
-			        res.write(data, 'utf8');
-			        res.end();
-			    });
-    		}
-		break;
-		*/
-		/*
-  		case '/getPhonebook.html':
-
-  			console.log("received from [" + params.extenApplicant + "] phonebook request for exten [" + params.extenPhonebook + "]");
-      
-  			dataCollector.getPhonebook(params.extenApplicant, params.extenPhonebook, function(phonebook){
-  	
-	  			/* result is undefined if the user that has do the request
-  			 	 * hasn't the relative permission */
-  			 	 /*
-				if(phonebook!=undefined && phonebook.length>0){
-					phonebook[0].exten = params.extenPhonebook;
-			  		// phonebook = [ { name: 'giacomo', exten: '501' } ]
-			  		console.log("phonebook = ======");
-			  		console.log(phonebook);
-			  		
-					var htmlPage = createPhonebookHTMLPage(phonebook);
-					
-	    	  		res.writeHead(200, {'Contet-Type': 'text/html'});
-			      	res.write(htmlPage, 'utf8');
-			      	res.end();
-				}
-				else{
-					send404(res);
-				}
-  			});
-		break;
-		*/
 	    default: 
     		// check if the requested file exists
     		var tempPath = __dirname + path;
