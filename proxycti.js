@@ -278,6 +278,10 @@ var io = io.listen(server)
 /*******************************************************************************
  * MESSAGES
  *******************************************************************************/
+io.on('disconnect') function(){
+	console.log("Disconnection not implemented");
+});
+ 
 io.on('connection', function(client){
 
 	// send acknowledgment of established connection 
