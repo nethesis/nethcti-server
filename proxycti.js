@@ -310,7 +310,7 @@ io.on('connection', function(client){
   	
 	  			if(authenticator.authenticateUser(extFrom, message.secret)){
   				
-  					if()
+
   				
   					// check if the user sessionId is already logged in
   					if(testAlreadyLoggedSessionId(client.sessionId)){
