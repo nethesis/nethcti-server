@@ -73,7 +73,7 @@ am.addListener('dialing', function(from, to) {
 	
 	if(to!=undefined && clients[to.number]!=undefined){
 	
-		var msg = "Call from " + from.number + " to " + to.number;
+		var msg = "Call incoming from " + from.number + " to " + to.number;
 		var c = clients[to.number];
 		/* in this response the html is not passed, because the chrome desktop 
          * notification of the client accept only one absolute or relative url. */
@@ -94,8 +94,6 @@ am.addListener('dialing', function(from, to) {
 	  			/* result is undefined if the user that has do the request
   			 	 * hasn't the relative permission */
 				if(phonebook!=undefined && phonebook.length>0){
-			  		console.log("phonebook = ======");
-			  		console.log(phonebook);
 			  		response.customerCard = phonebook;
 			  		c.send(response);
 					console.log("Notify of calling has been sent to client " + to.number);
@@ -107,17 +105,6 @@ am.addListener('dialing', function(from, to) {
 					console.log("Notify of calling has been sent to client " + to.number);
 				}
   			});
-    		
-    		
-    		
-    			/*
-		    fs.readFile(__dirname + path, function(err, data){
-		      	if (err) return send404(res);
-			    res.writeHead(200, {'Content-Type': 'text/html'});
-			    res.write(data, 'utf8');
-			    res.end();
-			});
-			*/
     	}
     	else{
 		   	// the user hasn't the authorization of view customer card
@@ -126,15 +113,6 @@ am.addListener('dialing', function(from, to) {
 		   	response.customerCard = undefined;
 		   	c.send(response);
 			console.log("Notify of calling has been sent to client " + to.number);
-		   	/*
-		   	path = "/templateNotificationCalling.html";
-		  	fs.readFile(__dirname + path, function(err, data){
-		      	if (err) return send404(res);
-		        res.writeHead(200, {'Content-Type': 'text/html'});
-		        res.write(data, 'utf8');
-		        res.end();
-		    });
-		    */
     	}
 	}
 });
