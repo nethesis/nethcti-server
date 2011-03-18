@@ -590,7 +590,7 @@ testAlreadyLoggedExten = function(exten){
 /*
  * Check if the user exten already present in memory and its sessionId correspond.
  */ 
-testAlreadyLoggedUser = function(sessionId, ext){
+testAlreadyLoggedUser = function(sessionId, exten){
 
 	if(clients[exten]!=undefined && clients[exten].sessionId==sessionId)
 		return true;
