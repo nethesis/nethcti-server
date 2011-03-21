@@ -22,7 +22,8 @@ var asterisk_user = 'vtiger';
 var asterisk_pass = 'vtiger';
 var asterisk_host = 'amaduzzi';
 
-
+var NOTIFICATION_URL_PHONEBOOK = "templateNotificationCallingPhonebook.html";
+var NOTIFICATION_URL_NORMAL = "templateNotificationCalling.html";
 
 // The response that this server pass to the clients.
 var ResponseMessage = function(clientSessionId, typeMessage, respMessage){
@@ -65,11 +66,61 @@ am.addListener('servererror', function(err) {
 	sys.puts("CLIENT: Error: " + err);
 });
 
-am.addListener('agentcalled', function(fromid, fromname, queue) {
-	console.log("adesso ci sono");
+am.addListener('agentcalled', function(fromid, fromname, queue, destchannel) {
+	sys.debug("AgentCalled: from [" + fromid + " : " + fromname + "] to queue " + queue + " and to -> " + destchannel);
+	var start = destchannel.indexOf("/")+1;
+	var end = destchannel.indexOf("@");
+	var to = destchannel.substring(start, end);
+	if(to!=undefined && clients[to]!=undefined){
+
+                var msg = "Call incoming from [" + fromid + " : " + fromname + "] to queue " + queue + " and to " + to;	
+		//var msg = "Call incoming from " + fromname;
+		var c = clients[to];
+		var response = new ResponseMessage(c.sessionId, "dialing", msg);
+		response.from = fromid;
+                response.to = to;
+		if(dataCollector.testUserPermitPhonebook(to)){
+	                // the user has the authorization of view customer card 
+	                console.log("The user " + to + " has the permit of view customer card of [" + fromid + " : " + fromname + "]");
+			response.notificationURL = NOTIFICATION_URL_PHONEBOOK;
+	                dataCollector.getPhonebook(to, fromid, function(phonebook){
+				/* result is undefined if the user that has do the request
+                                 * hasn't the relative permission */
+                                if(phonebook!=undefined && phonebook.length>0){
+                                        response.customerCard = phonebook;
+                                        c.send(response);
+                                        console.log("Notify of calling has been sent to client " + to);
+                                        return;
+                                }
+                                else{
+                                        response.customerCard = undefined;
+                                        c.send(response);
+                                        console.log("Notify of calling has been sent to client " + to);
+                                }
+                        });
+		}
+	        else{
+                        // the user hasn't the authorization of view customer card
+                        console.log("The user " + to + " hasn't the permit of view customer card");
+                        response.notificationURL = NOTIFICATION_URL_NORMAL;
+                        response.customerCard = undefined;
+                        c.send(response);
+                        console.log("Notify of calling has been sent to client " + to);
+        	}
+	}
 });
 
 am.addListener('dialing', function(from, to) {
+
+	/* check if the call come from queue: in this case, in this event, from and to are equal.
+	 * So, the queue call is managed by 'agentcalled' event
+	 */
+	var inde = from.number.indexOf("@");
+	if(inde!=-1){
+		var tempFrom = from.number.substring(0,inde);
+		if(tempFrom==to.number)
+			return;
+	}
 
 	sys.debug("Dial: " + sys.inspect(from) + " -> "+ sys.inspect(to));
 	
@@ -83,14 +134,12 @@ am.addListener('dialing', function(from, to) {
 		var response = new ResponseMessage(c.sessionId, "dialing", msg);
 		response.from = from.number;
 		response.to = to.number;
-		
-	
-	
+			
 		if(dataCollector.testUserPermitPhonebook(to.number)){
     		// the user has the authorization of view customer card	
     		console.log("The user " + to.number + " has the permit of view customer card of " + from.number);
     			
-    		response.notificationURL = "templateNotificationCallingPhonebook.html";
+    		response.notificationURL = NOTIFICATION_URL_PHONEBOOK;
     		
     		dataCollector.getPhonebook(to.number, from.number, function(phonebook){
   	
@@ -112,7 +161,7 @@ am.addListener('dialing', function(from, to) {
     	else{
 		   	// the user hasn't the authorization of view customer card
 		   	console.log("The user " + to + " hasn't the permit of view customer card");
-		   	response.notificationURL = "templateNotificationCalling.html";
+		   	response.notificationURL = NOTIFICATION_URL_NORMAL;
 		   	response.customerCard = undefined;
 		   	c.send(response);
 			console.log("Notify of calling has been sent to client " + to.number);

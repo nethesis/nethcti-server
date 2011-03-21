@@ -174,25 +174,14 @@ exports.AsteriskManager = function (newconfig) {
         else if (config.version == '1.6')
         {
              switch (headers.event) {
-	           	case "Newchannel": // new participant
-		                //sys.debug("ASTERISK NEWCHANNEL: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
+		           case "Newchannel": // new participant
+		                //sys.debug("ASTERISK: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
                         var tmp = headers.channel.split('-');
                         var channel = tmp[0];
                         var extension = tmp[0].split('/');
                         extension = extension[1];
 				        self.participants[headers.uniqueid] = {name: headers.calleridname != "device" ? headers.calleridname : channel , number: headers.calleridnum != "" ? headers.calleridnum : extension};
 			        break;
-//porcheria di cristian
-			        case "Join": // evento ingresso in coda
-		                sys.debug("ASTERISK JOIN: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
-			        break;
-			        case "AgentCalled": // evento agente chiamato
-		                	sys.debug("ASTERISK AGENTCALLED: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
-					// Alessandro
-					self.emit('agentcalled', headers.calleridnum, headers.calleridname, headers.queue, headers.destinationchannel);
-					// End Alessandro
-			        break;
-// fine porcheria di cristian
 			        case "Newcallerid": // potentially more useful information on an existing participant
 		                //sys.debug("ASTERISK: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
 				        if (typeof self.participants[headers.uniqueid]['number'] == 'undefined')
@@ -201,7 +190,7 @@ exports.AsteriskManager = function (newconfig) {
 					        self.participants[headers.uniqueid]['name'] = headers.calleridname;
 			        break;
 			        case "Dial": // source participant is dialing a destination participant
-		                //sys.debug("ASTERISK DIAL: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
+		                //sys.debug("ASTERISK: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
                         switch(headers.dialstatus)
                         {
                             case "CANCEL":
