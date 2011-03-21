@@ -1,27 +1,25 @@
-var ast = require('./asterisk'),
-    net = require('net');
+var ast = require('./asterisk');
+var net = require('net');
 var normal = require("./lib/normal-template/lib/normal-template");
 var dataReq = require("./dataCollector.js");
 var proReq = require("./profiler.js");
 var authReq = require("./authenticator.js");
-var http = require('http')
-  , url = require('url')
-  , fs = require('fs')
-  , io = require('./lib/socket.io')
-  , sys = require(process.binding('natives').util ? 'util' : 'sys')
-  , server;
+var http = require('http');
+var url = require('url');
+var fs = require('fs');
+var io = require('./lib/socket.io');
+var sys = require(process.binding('natives').util ? 'util' : 'sys');
+var server;
 var pathreq = require('path');
-
 /* The list of the logged clients. The key is the exten and the value is the 
  * object relative to the client. When the client logs off, the corresponding key 
  * and value are removed.
  */
 var clients = {};
 var am;
-var asterisk_user = 'vtiger';
-var asterisk_pass = 'vtiger';
-var asterisk_host = 'amaduzzi';
-
+var ASTERISK_USER = 'vtiger';
+var ASTERISK_PASS = 'vtiger';
+var ASTERISK_HOST = 'amaduzzi';
 var NOTIFICATION_URL_PHONEBOOK = "templateNotificationCallingPhonebook.html";
 var NOTIFICATION_URL_NORMAL = "templateNotificationCalling.html";
 
@@ -50,7 +48,7 @@ console.log("Authenticator object created");
 /******************************************************
  * This is the section relative to asterisk interaction    
  */
-am = new ast.AsteriskManager({user: asterisk_user, password: asterisk_pass, host: asterisk_host});
+am = new ast.AsteriskManager({user: ASTERISK_USER, password: ASTERISK_PASS, host: ASTERISK_HOST});
 
 am.addListener('serverconnect', function() {
 	am.login(function () {
@@ -644,12 +642,12 @@ testAlreadyLoggedSessionId = function(sessionId){
 	return false;
 }
 
-/*
+
 process.on('uncaughtException', function(err){
 	console.log('*********************************************');
 	console.log('Caught not provided exception: ' + err);
 	console.log('*********************************************');
 });
-*/
+
 
 

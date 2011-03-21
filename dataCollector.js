@@ -1,7 +1,7 @@
 var fs = require("fs");
 var sys = require("sys");
 var mysql = require('./lib/node-mysql');
-var configFilename = "dataProfiles.conf";
+var DATACOLLECTOR_CONFIG_FILENAME = "dataProfiles.conf";
 var SECTION_NAME_PHONEBOOK = "phonebook";
 var SECTION_SEARCH_ADDRESSES = "search_addresses";
 
@@ -220,7 +220,7 @@ printListUserSQLProfiles = function(){
 function initSQLProfiles(){
 
 	// read file
-	var profiles = fs.readFileSync(configFilename, "UTF-8", function(err, data) {
+	var profiles = fs.readFileSync(DATACOLLECTOR_CONFIG_FILENAME, "UTF-8", function(err, data) {
 		if(err){
 			sys.puts("error in reading file");
 			sys.puts(err);

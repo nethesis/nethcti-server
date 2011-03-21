@@ -1,6 +1,6 @@
 var fs = require("fs");
 var sys = require("sys");
-var configFilename = "profiles.conf";
+var PROFILER_CONFIG_FILENAME = "profiles.conf";
 
 /* It's the list of user profiles expressed as hash table of key and value.
  * The key is the exten of the user and its value is the object UserProfile.
@@ -122,7 +122,7 @@ printListUserProfiles = function(){
 function initProfiles(){
 
 	// read file
-	var profiles = fs.readFileSync(configFilename, "UTF-8", function(err, data) {
+	var profiles = fs.readFileSync(PROFILER_CONFIG_FILENAME, "UTF-8", function(err, data) {
 		if(err){
 			sys.puts("error in reading file");
 			sys.puts(err);
