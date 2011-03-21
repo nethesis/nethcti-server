@@ -65,9 +65,12 @@ am.addListener('servererror', function(err) {
 	sys.puts("CLIENT: Error: " + err);
 });
 
+am.addListener('agentcalled', function(fromid, fromname, queue) {
+	console.log("adesso ci sono");
+});
+
 am.addListener('dialing', function(from, to) {
 
-    buffer = [];
 	sys.debug("Dial: " + sys.inspect(from) + " -> "+ sys.inspect(to));
 	
 	
@@ -249,8 +252,7 @@ server.listen(8080);
 sys.debug("Listening on port 8080");
 
 
-var io = io.listen(server)
-  , buffer = [];
+var io = io.listen(server);
 
 
 /*******************************************************************************
