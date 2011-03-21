@@ -117,8 +117,9 @@ am.addListener('dialing', function(from, to) {
 	 */
 	var inde = from.number.indexOf("@");
 	if(inde!=-1){
-		var tempFrom = from.number.substring(0,inde);
-		if(tempFrom==to.number)
+		// deeper inspection
+//		var tempFrom = from.number.substring(0,inde);
+//		if(tempFrom==to.number)
 			return;
 	}
 
