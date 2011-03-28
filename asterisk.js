@@ -220,7 +220,7 @@ exports.AsteriskManager = function (newconfig) {
 				                self.emit('dialing', self.participants[headers.uniqueid], self.participants[headers.destuniqueid]);
 				                // added by alessandro
 				                console.log("self.participants[headers.uniqueid] = " + self.participants[headers.uniqueid]);
-				                console.log(" self.participants[headers.destuniqueid]) = " +  self.participants[headers.destuniqueid]));
+				                console.log(" self.participants[headers.destuniqueid]) = " +  self.participants[headers.destuniqueid]);
                         }
 			        break;
 			        case "Bridge": // the participants have been connected and voice is now available
