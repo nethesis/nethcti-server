@@ -201,7 +201,7 @@ exports.AsteriskManager = function (newconfig) {
 					        self.participants[headers.uniqueid]['name'] = headers.calleridname;
 			        break;
 			        case "Dial": // source participant is dialing a destination participant
-		                //sys.debug("ASTERISK DIAL: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
+		                sys.debug("ASTERISK DIAL: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
                         switch(headers.dialstatus)
                         {
                             case "CANCEL":
