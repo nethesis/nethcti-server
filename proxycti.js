@@ -116,6 +116,12 @@ am.addListener('dialing', function(from, to) {
 	/* check if the call come from queue: in this case, in this event, from and to are equal.
 	 * So, the queue call is managed by 'agentcalled' event
 	 */
+	 
+	 console.log("I'm in dialing event: from = ");
+	 console.log(from);
+	 console.log(" to = ");
+	 console.log(to);
+	 
 	var inde = from.number.indexOf("@");
 	if(inde!=-1){
 		// deeper inspection
