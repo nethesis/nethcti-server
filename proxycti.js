@@ -118,9 +118,9 @@ am.addListener('dialing', function(from, to) {
 	 */
 	 
 	 console.log("I'm in dialing event: from = ");
-	 console.log(from);
+	 console.log(sys.inspect(from));
 	 console.log(" to = ");
-	 console.log(to);
+	 console.log(sys.inspect(to));
 	 
 	var inde = from.number.indexOf("@");
 	if(inde!=-1){
