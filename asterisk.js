@@ -201,7 +201,8 @@ exports.AsteriskManager = function (newconfig) {
 					        self.participants[headers.uniqueid]['name'] = headers.calleridname;
 			        break;
 			        case "Dial": // source participant is dialing a destination participant
-		                sys.debug("ASTERISK DIAL: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
+			        
+		                sys.debug("ASTERISK DIAL: Got event '" + headers.event + "' with data: " + sys.inspect(headers)); // uncommented by alessandro
                         switch(headers.dialstatus)
                         {
                             case "CANCEL":
@@ -217,6 +218,9 @@ exports.AsteriskManager = function (newconfig) {
                                 if( headers.destuniqueid)
 				                    self.participants[headers.destuniqueid]['with'] = headers.destuniqueid;
 				                self.emit('dialing', self.participants[headers.uniqueid], self.participants[headers.destuniqueid]);
+				                // added by alessandro
+				                console.log("self.participants[headers.uniqueid] = " + self.participants[headers.uniqueid]);
+				                console.log(" self.participants[headers.destuniqueid]) = " +  self.participants[headers.destuniqueid]));
                         }
 			        break;
 			        case "Bridge": // the participants have been connected and voice is now available
