@@ -1,6 +1,5 @@
 var ast = require('./asterisk');
 var net = require('net');
-var normal = require("./lib/normal-template/lib/normal-template");
 var dataReq = require("./dataCollector.js");
 var proReq = require("./profiler.js");
 var authReq = require("./authenticator.js");
