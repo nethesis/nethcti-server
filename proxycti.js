@@ -537,9 +537,10 @@ io.on('connection', function(client){
 	  				// execute query to search contact in phonebook
 	  				var namex = message.namex;
 	  				dataCollector.searchContactsPhonebook(extFrom, namex, function(results){
-	  					
+	  				
+	  					var resultHTML = createResultSearchContactsPhonebook(results);
 	  					var mess = new ResponseMessage(client.sessionId, "search_contacts_results", "received phonebook contacts");
-	  					mess.results = results;
+	  					mess.resultHTML = resultHTML;
 	  					client.send(mess);
 	  					if(DEBUG) console.log("Results of searching contacts in phonebook has been sent to client");
 	  				});
@@ -720,6 +721,33 @@ createCustomerCardHTML = function(customerCard, from){
 
 	
 	return dynamicHtml;
+}
+
+function createResultSearchContactsPhonebook(results){
+	      		
+    var htmlResults = '<div>';
+
+    for(var i=0; i<results.length; i++){
+    	var el = results[i];
+    	for(key in el){
+    	
+    		if(el[key]!=null && el[key]!='undefined' && el[key]!=''){
+    	
+	    		if(key=='workphone' || key=='homephone' || key=='cellphone'){
+	    			// callExt is a function of the client chrome extension
+	    			var call = "callExt(" + el[key] + ");";
+	    			htmlResults += key + ':  <b><a href="#" onclick=' + call + '>' + el[key] + '</a></b><br/>';
+	    		}
+	    		else{      				
+					htmlResults += key + ':  <b>' + el[key] + '</b><br/>';
+		   		}
+		   	}
+		}
+		htmlResults += '<br/>';
+    }
+    htmlResults += '</div>';
+    
+    return htmlResults;
 }
 
 
