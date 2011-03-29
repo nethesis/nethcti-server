@@ -115,9 +115,11 @@ am.addListener('servererror', function(err) {
 
 am.addListener('agentcalled', function(fromid, fromname, queue, destchannel) {
 	if(DEBUG) sys.debug("AgentCalled: from [" + fromid + " : " + fromname + "] to queue " + queue + " and to -> " + destchannel);
+	
 	var start = destchannel.indexOf("/")+1;
 	var end = destchannel.indexOf("@");
 	var to = destchannel.substring(start, end);
+	
 	if(to!=undefined && clients[to]!=undefined){
 
         var msg = "Call incoming from [" + fromid + " : " + fromname + "] to queue " + queue + " and to " + to;	
@@ -128,21 +130,15 @@ am.addListener('agentcalled', function(fromid, fromname, queue, destchannel) {
 		if(dataCollector.testUserPermitPhonebook(to)){
 	    	// the user has the authorization of view customer card 
 	    	if(DEBUG) console.log("The user " + to + " has the permit of view customer card of [" + fromid + " : " + fromname + "]");
+	    	
 			response.notificationURL = NOTIFICATION_URL_PHONEBOOK;
+			
 	        dataCollector.getCustomerCard(to, fromid, function(phonebook){
-				/* result is undefined if the user that has do the request
-                 * hasn't the relative permission */
-                if(phonebook!=undefined && phonebook.length>0){
-                	response.customerCard = phonebook;
-                    c.send(response);
-                    if(DEBUG) console.log("Notify of calling has been sent to client " + to);
-                    return;
-                }
-                else{
-                	response.customerCard = undefined;
-                    c.send(response);
-                    if(DEBUG) console.log("Notify of calling has been sent to client " + to);
-                }
+	        
+	        	var custCardHTML = createCustomerCardHTML(customerCard[0], from.number);
+  				response.customerCard = custCardHTML;
+  				c.send(response);
+				if(DEBUG) console.log("Notify of calling has been sent to client " + to.number);
             });
 		}
 	    else{
