@@ -9,7 +9,7 @@ var fs = require('fs');
 var io = require('./lib/socket.io');
 var sys = require(process.binding('natives').util ? 'util' : 'sys');
 var pathreq = require('path');
-var minimal = require("minimal");
+var minimal = require("./lib/minimal.js/minimal-node");
 //
 var am;
 var server;
@@ -724,6 +724,8 @@ createCustomerCardHTML = function(customerCard, from){
 }
 
 function createResultSearchContactsPhonebook(results){
+	      		
+	
 	      		
     var htmlResults = '<div>';
 
