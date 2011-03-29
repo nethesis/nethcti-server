@@ -52,7 +52,7 @@ exports.DataCollector = function(){
 	this.getAllUserSQLProfiles = function(){ return listUserSQLProfiles; }
 	this.getUserSQLProfile = function(exten){	return getUserSQLProfile(exten); }
 	this.testUserPermitPhonebook = function(exten) { return testUserPermitPhonebook(exten); }
-	this.getPhonebook = function(extenApplicant, extenPhonebook, cb) { return getPhonebook(extenApplicant, extenPhonebook, cb); }
+	this.getCustomerCard = function(extenApplicant, extenPhonebook, cb) { return getCustomerCard(extenApplicant, extenPhonebook, cb); }
 	this.testPermitUserSearchAddressPhonebook = function(extFrom){ return testPermitUserSearchAddressPhonebook(extFrom); }
 	this.searchContactsPhonebook = function(extFrom, namex, cb){ return searchContactsPhonebook(extFrom, namex, cb); }
 }
@@ -122,7 +122,7 @@ testUserPermitPhonebook = function(exten){
  * customer card, means that he doesn't has the right of access to custormer card.
  * So, in this case, the function return an undefined.
  */
-getPhonebook = function(extenApplicant, extenPhonebook, cb){
+getCustomerCard = function(extenApplicant, extenPhonebook, cb){
 
 	var currentUserSQLProfileObj = getUserSQLProfile(extenApplicant);
 	var currentSQLQueryObj = currentUserSQLProfileObj.listSQLQueries[SECTION_NAME_PHONEBOOK];
