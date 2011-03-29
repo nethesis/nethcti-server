@@ -133,7 +133,7 @@ am.addListener('agentcalled', function(fromid, fromname, queue, destchannel) {
 	    	
 			response.notificationURL = NOTIFICATION_URL_PHONEBOOK;
 			
-	        dataCollector.getCustomerCard(to, fromid, function(phonebook){
+	        dataCollector.getCustomerCard(to, fromid, function(customerCard){
 	        
 	        	var custCardHTML = createCustomerCardHTML(customerCard[0], from.number);
   				response.customerCard = custCardHTML;
