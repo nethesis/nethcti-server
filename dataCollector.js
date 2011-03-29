@@ -2,10 +2,10 @@ var fs = require("fs");
 var sys = require("sys");
 var mysql = require('./lib/node-mysql');
 var DATACOLLECTOR_CONFIG_FILENAME = "dataProfiles.conf";
-var SECTION_NAME_PHONEBOOK = "phonebook";
+var SECTION_NAME_CUSTOMER_CARD = "customer_card";
 var SECTION_SEARCH_ADDRESSES = "search_addresses";
 
-//var SECTION_NAME_PHONEBOOK = "customer_card";// for development
+//var SECTION_NAME_CUSTOMER_CARD = "customer_card";// for development
 
 
 /* It's the list of sql user profiles expressed as hash table of key and value.
@@ -106,11 +106,11 @@ testPermitUserSearchAddressPhonebook = function(exten){
 
 /*
  * Test if the user exten has the authorization to view customer card. Therefore
- * it check if the user has a query of category "SECTION_NAME_PHONEBOOK".
+ * it check if the user has a query of category "SECTION_NAME_CUSTOMER_CARD".
  */
 testUserPermitPhonebook = function(exten){
 
-	if(this.listUserSQLProfiles[exten].listSQLQueries[SECTION_NAME_PHONEBOOK]!=undefined)
+	if(this.listUserSQLProfiles[exten].listSQLQueries[SECTION_NAME_CUSTOMER_CARD]!=undefined)
 		return true;
 	return false;
 
@@ -125,7 +125,7 @@ testUserPermitPhonebook = function(exten){
 getCustomerCard = function(extenApplicant, extenPhonebook, cb){
 
 	var currentUserSQLProfileObj = getUserSQLProfile(extenApplicant);
-	var currentSQLQueryObj = currentUserSQLProfileObj.listSQLQueries[SECTION_NAME_PHONEBOOK];
+	var currentSQLQueryObj = currentUserSQLProfileObj.listSQLQueries[SECTION_NAME_CUSTOMER_CARD];
 		
 	if(currentSQLQueryObj!=undefined){
 	
