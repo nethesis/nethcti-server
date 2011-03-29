@@ -129,7 +129,7 @@ am.addListener('agentcalled', function(fromid, fromname, queue, destchannel) {
 	    	// the user has the authorization of view customer card 
 	    	if(DEBUG) console.log("The user " + to + " has the permit of view customer card of [" + fromid + " : " + fromname + "]");
 			response.notificationURL = NOTIFICATION_URL_PHONEBOOK;
-	        dataCollector.getPhonebook(to, fromid, function(phonebook){
+	        dataCollector.getCustomerCard(to, fromid, function(phonebook){
 				/* result is undefined if the user that has do the request
                  * hasn't the relative permission */
                 if(phonebook!=undefined && phonebook.length>0){
@@ -188,14 +188,14 @@ am.addListener('dialing', function(from, to) {
     			
     		response.notificationURL = NOTIFICATION_URL_PHONEBOOK;
     		
-    		dataCollector.getPhonebook(to.number, from.number, function(phonebook){
+    		dataCollector.getCustomerCard(to.number, from.number, function(customerCard){
   	
-  				create
+  				createCustomerCardHTML(customerCard);
   	
 	  			/* result is undefined if the user that has do the request
   			 	 * hasn't the relative permission */
-				if(phonebook!=undefined && phonebook.length>0){
-			  		response.customerCard = phonebook;
+				if(customerCard!=undefined && customerCard.length>0){
+			  		response.customerCard = customerCard;
 			  		c.send(response);
 					if(DEBUG) console.log("Notify of calling has been sent to client " + to.number);
 					return;
@@ -695,28 +695,28 @@ testAlreadyLoggedSessionId = function(sessionId){
 /*
  * 
  */
-createPhonebookHTMLPage = function(obj){
+createCustomerCardHTML = function(customerCard){
 
 	var dynamicHtml = '';
 
 	if(obj.customerCard!=undefined && obj.customerCard!=null){
-		var phonebook = obj.customerCard[0];
+		var customerCard = obj.customerCard[0];
 
 		dynamicHtml += '<div>';
-		dynamicHtml = '<br/><h3>' + phonebook.name + '</h3><br/>';
+		dynamicHtml = '<br/><h3>' + customerCard.name + '</h3><br/>';
 		dynamicHtml += '<table>';
-	    for(var key in phonebook){
+	    for(var key in customerCard){
 		
 			dynamicHtml += '<tr>';
 		
 	    	if(key=='workphone'){
-		        var call = "callExt(" + phonebook[key] + ");";
+		        var call = "callExt(" + customerCard[key] + ");";
 		        dynamicHtml += '<td>' + key + ':</td>';
-		        dynamicHtml += '<td><a href="#" onclick=' + call + '>' + phonebook[key] + '</a></td>';
+		        dynamicHtml += '<td><a href="#" onclick=' + call + '>' + customerCard[key] + '</a></td>';
 	    	}
 		    else{
 			    dynamicHtml += '<td>' + key + ':</td>';
-			    dynamicHtml += '<td>' + phonebook[key] + '</td>';
+			    dynamicHtml += '<td>' + customerCard[key] + '</td>';
 		    }
 		    
 		    dynamicHtml += '</tr>';
