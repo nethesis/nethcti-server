@@ -190,6 +190,8 @@ am.addListener('dialing', function(from, to) {
     		
     		dataCollector.getPhonebook(to.number, from.number, function(phonebook){
   	
+  				create
+  	
 	  			/* result is undefined if the user that has do the request
   			 	 * hasn't the relative permission */
 				if(phonebook!=undefined && phonebook.length>0){
@@ -688,6 +690,50 @@ testAlreadyLoggedSessionId = function(sessionId){
 	}
 	
 	return false;
+}
+
+/*
+ * 
+ */
+createPhonebookHTMLPage = function(obj){
+
+	var dynamicHtml = '';
+
+	if(obj.customerCard!=undefined && obj.customerCard!=null){
+		var phonebook = obj.customerCard[0];
+
+		dynamicHtml += '<div>';
+		dynamicHtml = '<br/><h3>' + phonebook.name + '</h3><br/>';
+		dynamicHtml += '<table>';
+	    for(var key in phonebook){
+		
+			dynamicHtml += '<tr>';
+		
+	    	if(key=='workphone'){
+		        var call = "callExt(" + phonebook[key] + ");";
+		        dynamicHtml += '<td>' + key + ':</td>';
+		        dynamicHtml += '<td><a href="#" onclick=' + call + '>' + phonebook[key] + '</a></td>';
+	    	}
+		    else{
+			    dynamicHtml += '<td>' + key + ':</td>';
+			    dynamicHtml += '<td>' + phonebook[key] + '</td>';
+		    }
+		    
+		    dynamicHtml += '</tr>';
+		}
+	
+		dynamicHtml += '</table>';
+		dynamicHtml += '</div>';
+    }
+    else{
+    	dynamicHtml += '<div>';
+		dynamicHtml += '<br/><h3>' + obj.from + '</h3><br/>';
+		dynamicHtml += '<p>Sorry, no data in the database</p>';
+		dynamicHtml += '</div>';
+    }
+
+	
+	return dynamicHtml;
 }
 
 
