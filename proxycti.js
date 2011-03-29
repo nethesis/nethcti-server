@@ -189,8 +189,8 @@ am.addListener('dialing', function(from, to) {
     		response.notificationURL = NOTIFICATION_URL_PHONEBOOK;
     		
     		dataCollector.getCustomerCard(to.number, from.number, function(customerCard){
-  	
-  				var custCardHTML = createCustomerCardHTML(customerCard);
+
+  				var custCardHTML = createCustomerCardHTML(customerCard[0], from.number);
   				response.customerCard = custCardHTML;
   				c.send(response);
 				if(DEBUG) console.log("Notify of calling has been sent to client " + to.number);
@@ -684,13 +684,13 @@ testAlreadyLoggedSessionId = function(sessionId){
 /*
  * 
  */
-createCustomerCardHTML = function(customerCard){
+createCustomerCardHTML = function(customerCard, from){
 
 	var dynamicHtml = '';
 
 	/* customerCard is undefined if the user that has do the request
   	 * hasn't the relative permission */
-	if(customerCard!=undefined && customerCard.length>0){
+	if(customerCard!=undefined){
 
 		dynamicHtml += '<div>';
 		dynamicHtml = '<br/><h3>' + customerCard.name + '</h3><br/>';
@@ -717,7 +717,7 @@ createCustomerCardHTML = function(customerCard){
 	}
 	else{
 		dynamicHtml += '<div>';
-		dynamicHtml += '<br/><h3>' + obj.from + '</h3><br/>';
+		dynamicHtml += '<br/><h3>' + from + '</h3><br/>';
 		dynamicHtml += '<p>Sorry, no data in the database</p>';
 		dynamicHtml += '</div>';
 	}
