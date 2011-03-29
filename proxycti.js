@@ -190,21 +190,10 @@ am.addListener('dialing', function(from, to) {
     		
     		dataCollector.getCustomerCard(to.number, from.number, function(customerCard){
   	
-  				createCustomerCardHTML(customerCard);
-  	
-	  			/* result is undefined if the user that has do the request
-  			 	 * hasn't the relative permission */
-				if(customerCard!=undefined && customerCard.length>0){
-			  		response.customerCard = customerCard;
-			  		c.send(response);
-					if(DEBUG) console.log("Notify of calling has been sent to client " + to.number);
-					return;
-				}
-				else{
-					response.customerCard = undefined;
-				   	c.send(response);
-					if(DEBUG) console.log("Notify of calling has been sent to client " + to.number);
-				}
+  				var custCardHTML = createCustomerCardHTML(customerCard);
+  				response.customerCard = custCardHTML;
+  				c.send(response);
+				if(DEBUG) console.log("Notify of calling has been sent to client " + to.number);
   			});
     	}
     	else{
@@ -699,8 +688,9 @@ createCustomerCardHTML = function(customerCard){
 
 	var dynamicHtml = '';
 
-	if(obj.customerCard!=undefined && obj.customerCard!=null){
-		var customerCard = obj.customerCard[0];
+	/* customerCard is undefined if the user that has do the request
+  	 * hasn't the relative permission */
+	if(customerCard!=undefined && customerCard.length>0){
 
 		dynamicHtml += '<div>';
 		dynamicHtml = '<br/><h3>' + customerCard.name + '</h3><br/>';
@@ -724,13 +714,13 @@ createCustomerCardHTML = function(customerCard){
 	
 		dynamicHtml += '</table>';
 		dynamicHtml += '</div>';
-    }
-    else{
-    	dynamicHtml += '<div>';
+	}
+	else{
+		dynamicHtml += '<div>';
 		dynamicHtml += '<br/><h3>' + obj.from + '</h3><br/>';
 		dynamicHtml += '<p>Sorry, no data in the database</p>';
 		dynamicHtml += '</div>';
-    }
+	}
 
 	
 	return dynamicHtml;
