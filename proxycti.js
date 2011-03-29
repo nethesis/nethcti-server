@@ -134,54 +134,47 @@ am.addListener('agentcalled', function(fromid, fromname, queue, destchannel) {
 	var to = destchannel.substring(start, end);
 	if(to!=undefined && clients[to]!=undefined){
 
-                var msg = "Call incoming from [" + fromid + " : " + fromname + "] to queue " + queue + " and to " + to;	
-		//var msg = "Call incoming from " + fromname;
+        var msg = "Call incoming from [" + fromid + " : " + fromname + "] to queue " + queue + " and to " + to;	
 		var c = clients[to];
 		var response = new ResponseMessage(c.sessionId, "dialing", msg);
 		response.from = fromid;
-                response.to = to;
+       	response.to = to;
 		if(dataCollector.testUserPermitPhonebook(to)){
-	                // the user has the authorization of view customer card 
-	                if(DEBUG) console.log("The user " + to + " has the permit of view customer card of [" + fromid + " : " + fromname + "]");
+	    	// the user has the authorization of view customer card 
+	    	if(DEBUG) console.log("The user " + to + " has the permit of view customer card of [" + fromid + " : " + fromname + "]");
 			response.notificationURL = NOTIFICATION_URL_PHONEBOOK;
-	                dataCollector.getPhonebook(to, fromid, function(phonebook){
+	        dataCollector.getPhonebook(to, fromid, function(phonebook){
 				/* result is undefined if the user that has do the request
-                                 * hasn't the relative permission */
-                                if(phonebook!=undefined && phonebook.length>0){
-                                        response.customerCard = phonebook;
-                                        c.send(response);
-                                        if(DEBUG) console.log("Notify of calling has been sent to client " + to);
-                                        return;
-                                }
-                                else{
-                                        response.customerCard = undefined;
-                                        c.send(response);
-                                        if(DEBUG) console.log("Notify of calling has been sent to client " + to);
-                                }
-                        });
+                 * hasn't the relative permission */
+                if(phonebook!=undefined && phonebook.length>0){
+                	response.customerCard = phonebook;
+                    c.send(response);
+                    if(DEBUG) console.log("Notify of calling has been sent to client " + to);
+                    return;
+                }
+                else{
+                	response.customerCard = undefined;
+                    c.send(response);
+                    if(DEBUG) console.log("Notify of calling has been sent to client " + to);
+                }
+            });
 		}
-	        else{
-                        // the user hasn't the authorization of view customer card
-                        if(DEBUG) console.log("The user " + to + " hasn't the permit of view customer card");
-                        response.notificationURL = NOTIFICATION_URL_NORMAL;
-                        response.customerCard = undefined;
-                        c.send(response);
-                        if(DEBUG) console.log("Notify of calling has been sent to client " + to);
-        	}
+	    else{
+        	// the user hasn't the authorization of view customer card
+        	if(DEBUG) console.log("The user " + to + " hasn't the permit of view customer card");
+          	response.notificationURL = NOTIFICATION_URL_NORMAL;
+            response.customerCard = undefined;
+            c.send(response);
+            if(DEBUG) console.log("Notify of calling has been sent to client " + to);
+       	}
 	}
 });
 
 am.addListener('dialing', function(from, to) {
 
-	/* check if the call come from queue: in this case, in this event, from and to are equal.
-	 * So, the queue call is managed by 'agentcalled' event
+	/* check if the call come from queue: in this case, from and to are equal.
+	 * So, the queue call is managed by 'agentcalled' event.
 	 */
-	 
-	 console.log("I'm in dialing event: from = ");
-	 console.log(sys.inspect(from));
-	 console.log(" to = ");
-	 console.log(sys.inspect(to));
-	 
 	var inde = from.number.indexOf("@");
 	if(inde!=-1){
 		// deeper inspection
