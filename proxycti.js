@@ -9,6 +9,7 @@ var fs = require('fs');
 var io = require('./lib/socket.io');
 var sys = require(process.binding('natives').util ? 'util' : 'sys');
 var pathreq = require('path');
+var minimal = require("minimal");
 //
 var am;
 var server;
@@ -126,7 +127,7 @@ am.addListener('agentcalled', function(fromid, fromname, queue, destchannel) {
 		var response = new ResponseMessage(c.sessionId, "dialing", msg);
 		response.from = fromid;
        	response.to = to;
-		if(dataCollector.testUserPermitPhonebook(to)){
+		if(dataCollector.testUserPermitCustomerCard(to)){
 	    	// the user has the authorization of view customer card 
 	    	if(DEBUG) console.log("The user " + to + " has the permit of view customer card of [" + fromid + " : " + fromname + "]");
 	    	
@@ -177,7 +178,7 @@ am.addListener('dialing', function(from, to) {
 		response.from = from.number;
 		response.to = to.number;
 			
-		if(dataCollector.testUserPermitPhonebook(to.number)){
+		if(dataCollector.testUserPermitCustomerCard(to.number)){
     		// the user has the authorization of view customer card	
     		if(DEBUG) console.log("The user " + to.number + " has the permit of view customer card of " + from.number);
     			
