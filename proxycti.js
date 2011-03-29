@@ -9,7 +9,8 @@ var fs = require('fs');
 var io = require('./lib/socket.io');
 var sys = require(process.binding('natives').util ? 'util' : 'sys');
 var pathreq = require('path');
-var minimal = require("./lib/minimal.js/minimal-node");
+var minimal = require("./lib/minimal/0.1.2/package/minimal");
+
 //
 var am;
 var server;
@@ -22,6 +23,7 @@ var DEBUG = true;
 var PROXY_CONFIG_FILENAME = "proxycti.conf";
 var NOTIFICATION_URL_PHONEBOOK = "templateNotificationCallingPhonebook.html";
 var NOTIFICATION_URL_NORMAL = "templateNotificationCalling.html";
+var TEMPLATE_DECORATOR_VCARD_FILENAME = "./template/decorator_vcard.html";
 
 // The response that this server pass to the clients.
 var ResponseMessage = function(clientSessionId, typeMessage, respMessage){
@@ -725,8 +727,22 @@ createCustomerCardHTML = function(customerCard, from){
 
 function createResultSearchContactsPhonebook(results){
 	      		
+	// read file
+	var template = fs.readFileSync(TEMPLATE_DECORATOR_VCARD_FILENAME, "UTF-8", function(err, data) {
+		if(err){
+			sys.puts("error in reading file");
+			sys.puts(err);
+			return;
+		}
+		return data;
+	});
 	
-	      		
+	
+	console.log("sssssssssssssss");
+	console.log(template);
+	
+	
+	/*		
     var htmlResults = '<div>';
 
     for(var i=0; i<results.length; i++){
@@ -750,6 +766,7 @@ function createResultSearchContactsPhonebook(results){
     htmlResults += '</div>';
     
     return htmlResults;
+    */
 }
 
 
