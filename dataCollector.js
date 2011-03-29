@@ -52,7 +52,7 @@ exports.DataCollector = function(){
 	this.getAllUserSQLProfiles = function(){ return listUserSQLProfiles; }
 	this.getUserSQLProfile = function(exten){	return getUserSQLProfile(exten); }
 	this.testUserPermitCustomerCard = function(exten) { return testUserPermitCustomerCard(exten); }
-	this.getCustomerCard = function(extenApplicant, extenPhonebook, cb) { return getCustomerCard(extenApplicant, extenPhonebook, cb); }
+	this.getCustomerCard = function(extenApplicant, extenCustomerCard, cb) { return getCustomerCard(extenApplicant, extenCustomerCard, cb); }
 	this.testPermitUserSearchAddressPhonebook = function(extFrom){ return testPermitUserSearchAddressPhonebook(extFrom); }
 	this.searchContactsPhonebook = function(extFrom, namex, cb){ return searchContactsPhonebook(extFrom, namex, cb); }
 }
@@ -122,7 +122,7 @@ testUserPermitCustomerCard = function(exten){
  * customer card, means that he doesn't has the right of access to custormer card.
  * So, in this case, the function return an undefined.
  */
-getCustomerCard = function(extenApplicant, extenPhonebook, cb){
+getCustomerCard = function(extenApplicant, extenCustomerCard, cb){
 
 	var currentUserSQLProfileObj = getUserSQLProfile(extenApplicant);
 	var currentSQLQueryObj = currentUserSQLProfileObj.listSQLQueries[SECTION_NAME_CUSTOMER_CARD];
@@ -130,7 +130,7 @@ getCustomerCard = function(extenApplicant, extenPhonebook, cb){
 	if(currentSQLQueryObj!=undefined){
 	
 		while(currentSQLQueryObj.sqlQueryStr.indexOf("$EXTEN")!=-1){
-			currentSQLQueryObj.sqlQueryStr = currentSQLQueryObj.sqlQueryStr.replace("$EXTEN", extenPhonebook);
+			currentSQLQueryObj.sqlQueryStr = currentSQLQueryObj.sqlQueryStr.replace("$EXTEN", extenCustomerCard);
 		}
 		
 		// execute current sql query
@@ -139,8 +139,8 @@ getCustomerCard = function(extenApplicant, extenPhonebook, cb){
 		});
 		
 		
-		while(currentSQLQueryObj.sqlQueryStr.indexOf(extenPhonebook)!=-1){
-			currentSQLQueryObj.sqlQueryStr = currentSQLQueryObj.sqlQueryStr.replace(extenPhonebook, "$EXTEN");
+		while(currentSQLQueryObj.sqlQueryStr.indexOf(extenCustomerCard)!=-1){
+			currentSQLQueryObj.sqlQueryStr = currentSQLQueryObj.sqlQueryStr.replace(extenCustomerCard, "$EXTEN");
 		}
 	}
 	return undefined;
