@@ -19,9 +19,7 @@ var server;
  */
 var clients = {};
 var DEBUG = true;
-var ASTERISK_USER = 'vtiger';
-var ASTERISK_PASS = 'vtiger';
-var ASTERISK_HOST = 'amaduzzi';
+var PROXY_CONFIG_FILENAME = "proxycti.conf";
 var NOTIFICATION_URL_PHONEBOOK = "templateNotificationCallingPhonebook.html";
 var NOTIFICATION_URL_NORMAL = "templateNotificationCalling.html";
 
@@ -33,7 +31,69 @@ var ResponseMessage = function(clientSessionId, typeMessage, respMessage){
 }
 
 
+function initAsteriskParameters(){
+	// read file
+	var conf = fs.readFileSync(PROXY_CONFIG_FILENAME, "UTF-8", function(err, data) {
+		if(err){
+			sys.puts("error in reading file");
+			sys.puts(err);
+			return;
+		}
+		return data;
+	});
+	
+	// each array element has information of one category as string
+	var categoriesArray = conf.split("[");
+	categoriesArray = categoriesArray.slice(1,categoriesArray.length);
+	
 
+	// 
+	for(var i=0; i<categoriesArray.length; i++){
+	
+		var tempCategoryStr = categoriesArray[i];
+		
+		
+		// current array contains only one category
+		var tempCategoryArray = tempCategoryStr.split("\n");
+		
+		var categoryName = tempCategoryArray[0].slice(0, tempCategoryArray[0].length-1);
+		
+		
+		if(categoryName=='ASTERISK'){
+		
+			
+			var user;
+			var secret;
+			var asterisk_server_address;
+			
+			for(token=1; token<tempCategoryArray.length; token++){
+		
+				// array with permit actions
+				if(tempCategoryArray[token].indexOf("user") != -1){
+					var userStr = tempCategoryArray[token];
+					asterisk_user = userStr.split("=")[1];
+					console.log("asterisk_user = " + asterisk_user);
+				}
+				// array with deny actions
+				else if(tempCategoryArray[token].indexOf("pass") != -1){
+					var astPassStr = tempCategoryArray[token];
+					asterisk_pass = astPassStr.split("=")[1];
+					console.log("asterisk_pass = " + asterisk_pass );
+				}
+				// array with users
+				else if(tempCategoryArray[token].indexOf("host") != -1){
+					var astAddrStr = tempCategoryArray[token];
+					asterisk_host = astAddrStr.split("=")[1];
+					console.log("asterisk_host = " + asterisk_host );
+				}
+				
+			}
+		
+		}
+	}
+	
+}
+initAsteriskParameters();
 
 // Profiler object
 var profiler = new proReq.Profiler();
@@ -51,7 +111,7 @@ if(DEBUG) console.log("Authenticator object created");
 /******************************************************
  * This is the section relative to asterisk interaction    
  */
-am = new ast.AsteriskManager({user: ASTERISK_USER, password: ASTERISK_PASS, host: ASTERISK_HOST});
+am = new ast.AsteriskManager({user: asterisk_user, password: asterisk_pass, host: asterisk_host});
 
 am.addListener('serverconnect', function() {
 	am.login(function () {
