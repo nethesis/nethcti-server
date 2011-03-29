@@ -41,27 +41,17 @@ function initAsteriskParameters(){
 		}
 		return data;
 	});
-	
-	// each array element has information of one category as string
+
 	var categoriesArray = conf.split("[");
 	categoriesArray = categoriesArray.slice(1,categoriesArray.length);
 	
-
-	// 
 	for(var i=0; i<categoriesArray.length; i++){
 	
-		var tempCategoryStr = categoriesArray[i];
-		
-		
-		// current array contains only one category
+		var tempCategoryStr = categoriesArray[i];	
 		var tempCategoryArray = tempCategoryStr.split("\n");
-		
 		var categoryName = tempCategoryArray[0].slice(0, tempCategoryArray[0].length-1);
-		
-		
-		if(categoryName=='ASTERISK'){
-		
-			
+
+		if(categoryName=='ASTERISK'){			
 			var user;
 			var secret;
 			var asterisk_server_address;
@@ -72,27 +62,23 @@ function initAsteriskParameters(){
 				if(tempCategoryArray[token].indexOf("user") != -1){
 					var userStr = tempCategoryArray[token];
 					asterisk_user = userStr.split("=")[1];
-					console.log("asterisk_user = " + asterisk_user);
 				}
 				// array with deny actions
 				else if(tempCategoryArray[token].indexOf("pass") != -1){
 					var astPassStr = tempCategoryArray[token];
 					asterisk_pass = astPassStr.split("=")[1];
-					console.log("asterisk_pass = " + asterisk_pass );
 				}
 				// array with users
 				else if(tempCategoryArray[token].indexOf("host") != -1){
 					var astAddrStr = tempCategoryArray[token];
 					asterisk_host = astAddrStr.split("=")[1];
-					console.log("asterisk_host = " + asterisk_host );
 				}
-				
 			}
-		
 		}
 	}
-	
 }
+
+// initialize parameters for connection with asterisk server
 initAsteriskParameters();
 
 // Profiler object
