@@ -51,7 +51,7 @@ exports.DataCollector = function(){
 	this.printUserSQLProfiles = function() { printListUserSQLProfiles(); }
 	this.getAllUserSQLProfiles = function(){ return listUserSQLProfiles; }
 	this.getUserSQLProfile = function(exten){	return getUserSQLProfile(exten); }
-	this.testUserPermitPhonebook = function(exten) { return testUserPermitPhonebook(exten); }
+	this.testUserPermitCustomerCard = function(exten) { return testUserPermitCustomerCard(exten); }
 	this.getCustomerCard = function(extenApplicant, extenPhonebook, cb) { return getCustomerCard(extenApplicant, extenPhonebook, cb); }
 	this.testPermitUserSearchAddressPhonebook = function(extFrom){ return testPermitUserSearchAddressPhonebook(extFrom); }
 	this.searchContactsPhonebook = function(extFrom, namex, cb){ return searchContactsPhonebook(extFrom, namex, cb); }
@@ -108,7 +108,7 @@ testPermitUserSearchAddressPhonebook = function(exten){
  * Test if the user exten has the authorization to view customer card. Therefore
  * it check if the user has a query of category "SECTION_NAME_CUSTOMER_CARD".
  */
-testUserPermitPhonebook = function(exten){
+testUserPermitCustomerCard = function(exten){
 
 	if(this.listUserSQLProfiles[exten].listSQLQueries[SECTION_NAME_CUSTOMER_CARD]!=undefined)
 		return true;
