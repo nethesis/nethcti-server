@@ -147,7 +147,7 @@ am.addListener('agentcalled', function(fromid, fromname, queue, destchannel) {
         	// the user hasn't the authorization of view customer card
         	if(DEBUG) console.log("The user " + to.number + " hasn't the permit of view customer card");
           	response.canViewCustomerCard = false;
-          	response.customerCard = "<p>" + to + "hasn't the permit of view customer card !</p>";
+          	response.customerCard = "<p>" + to.number + "hasn't the permit of view customer card !</p>";
             c.send(response);
             if(DEBUG) console.log("Notify of calling has been sent to client " + to);
        	}
@@ -198,7 +198,7 @@ am.addListener('dialing', function(from, to) {
 		   	// the user hasn't the authorization of view customer card
 		   	if(DEBUG) console.log("The user " + to.number + " hasn't the permit of view customer card");
 		   	response.canViewCustomerCard = false;
-		   	response.customerCard = "<p>" + to + "hasn't the permit of view customer card !</p>";
+		   	response.customerCard = "Sorry, but you don't have permission of view customer card !";
 		   	c.send(response);
 			if(DEBUG) console.log("Notify of calling has been sent to client " + to.number);
     	}
