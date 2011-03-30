@@ -1,6 +1,6 @@
 var fs = require("fs");
 var sys = require("sys");
-var AUTHENTICATOR_CONFIG_FILENAME = "sip_additional.conf";
+var AUTHENTICATOR_CONFIG_FILENAME = "/etc/asterisk/sip_additional.conf";
 
 // list of user with thier password. The user is the key and the password is the value
 userAuthProfiles = {};
