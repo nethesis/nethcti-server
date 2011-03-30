@@ -9,7 +9,8 @@ var fs = require('fs');
 var io = require('./lib/socket.io');
 var sys = require(process.binding('natives').util ? 'util' : 'sys');
 var pathreq = require('path');
-var minimal = require("./lib/minimal/0.1.2/package/minimal");
+var normal = require("./lib/normal-template/lib/normal-template");
+
 
 //
 var am;
@@ -727,8 +728,11 @@ createCustomerCardHTML = function(customerCard, from){
 
 function createResultSearchContactsPhonebook(results){
 	      		
+	console.log(results);
+	var HTMLresult = '';
+	      		
 	// read file
-	var template = fs.readFileSync(TEMPLATE_DECORATOR_VCARD_FILENAME, "UTF-8", function(err, data) {
+	var htmlTemplate = fs.readFileSync(TEMPLATE_DECORATOR_VCARD_FILENAME, "UTF-8", function(err, data) {
 		if(err){
 			sys.puts("error in reading file");
 			sys.puts(err);
@@ -737,36 +741,47 @@ function createResultSearchContactsPhonebook(results){
 		return data;
 	});
 	
+	var dataSub = { // the data dictionary in JSON format
+	    name: "",
+	    workphoneNotNull: true,
+	    workphone: "",
+  	    homephoneNotNull: true,
+	    homephone: "",
+		cellphoneNotNull: true,
+	    cellphone: "",
+	    faxNotNull: true,
+	    fax: "",
+	    companyNotNull: true,
+   	    company: ""
+	}
 	
-	console.log("sssssssssssssss");
-	console.log(template);
+	// repeat htmlTemplate for number of results
+	var currentUser = '';
+	var temp = '';
+	for(var i=0; i<results.length; i++){
 	
-	
-	/*		
-    var htmlResults = '<div>';
-
-    for(var i=0; i<results.length; i++){
-    	var el = results[i];
-    	for(key in el){
-    	
-    		if(el[key]!=null && el[key]!='undefined' && el[key]!=''){
-    	
-	    		if(key=='workphone' || key=='homephone' || key=='cellphone'){
-	    			// callExt is a function of the client chrome extension
-	    			var call = "callExt(" + el[key] + ");";
-	    			htmlResults += key + ':  <b><a href="#" onclick=' + call + '>' + el[key] + '</a></b><br/>';
-	    		}
-	    		else{      				
-					htmlResults += key + ':  <b>' + el[key] + '</b><br/>';
-		   		}
-		   	}
+		var currentUser = results[i];
+		
+		// single user data
+		for(key in currentUser){			
+			
+			// check if the value is null. In this case it is not printed
+			if(currentUser[key]==''){
+				var k = key + "NotNull";
+				dataSub[k] = false;
+				continue;
+			}
+			
+			dataSub[key] = currentUser[key];
 		}
-		htmlResults += '<br/>';
-    }
-    htmlResults += '</div>';
-    
-    return htmlResults;
-    */
+	
+		var template = normal.compile(htmlTemplate);
+		var toAdd = template(dataSub);
+		HTMLresult += toAdd;
+	}
+	
+	console.log(HTMLresult);
+	return HTMLresult;
 }
 
 
