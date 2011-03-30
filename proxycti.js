@@ -692,9 +692,8 @@ createCustomerCardHTML = function(customerCard, from){
   	 * hasn't the relative permission */
 	if(customerCard!=undefined){
 
-		dynamicHtml += '<div>';
-		dynamicHtml = '<br/><h3>' + customerCard.name + '</h3><br/>';
-		dynamicHtml += '<table>';
+		dynamicHtml = '<table width="50%" cellpadding="5" style="border: 1px solid gray">';
+		dynamicHtml += '<tr><td colspan="2"><h3>' + customerCard.name + '</h3></td></tr>';
 	    for(var key in customerCard){
 		
 			dynamicHtml += '<tr>';
@@ -713,13 +712,13 @@ createCustomerCardHTML = function(customerCard, from){
 		}
 	
 		dynamicHtml += '</table>';
-		dynamicHtml += '</div>';
 	}
 	else{
-		dynamicHtml += '<div>';
-		dynamicHtml += '<br/><h3>' + from + '</h3><br/>';
-		dynamicHtml += '<p>Sorry, no data in the database</p>';
-		dynamicHtml += '</div>';
+		
+		dynamicHtml = '<table width="100%" cellpadding="5" style="border: 1px solid gray">';
+		dynamicHtml += '<tr><td><h3>' + from + '</h3></td></tr>';
+		dynamicHtml += '<tr><td>Sorry, no data in the database</td></tr>';
+		dynamicHtml += '</table>';
 	}
 
 	
