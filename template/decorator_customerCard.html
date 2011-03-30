@@ -1,3 +1,13 @@
+{:if customerNotInDB}
+<table width="50%" cellpadding="5" style="border: 1px solid gray">
+	<tr>
+		<td><h3>{=from}</h3></td>
+	</tr>
+	<tr>
+		<td>Sorry, no data in the database.</td>
+	</tr>
+</table>
+{:else}
 <table width="50%" cellpadding="5" style="border: 1px solid gray">
 	<tr>
 		<td colspan="2"><h3>{=name}</h3></td>
@@ -107,6 +117,7 @@
 		<td>{=url}</td>
 	</tr>
 </table>
+{/:if}
 
 	
 
