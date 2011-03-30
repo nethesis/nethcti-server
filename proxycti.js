@@ -198,7 +198,7 @@ am.addListener('dialing', function(from, to) {
     	}
     	else{
 		   	// the user hasn't the authorization of view customer card
-		   	if(DEBUG) console.log("The user " + to + " hasn't the permit of view customer card");
+		   	if(DEBUG) console.log("The user " + to.number + " hasn't the permit of view customer card");
 		   	response.notificationURL = NOTIFICATION_URL_NORMAL;
 		   	response.customerCard = "<p>" + to + "hasn't the permit of view customer card !</p>";
 		   	c.send(response);
@@ -710,7 +710,6 @@ createCustomerCardHTML = function(customerCard, from){
 	var toAdd = template(customerCard);
 	var HTMLresult = toAdd;
 		
-	if(DEBUG) console.log(HTMLresult);
 	return HTMLresult;
 }
 
@@ -743,7 +742,6 @@ function createResultSearchContactsPhonebook(results){
 		HTMLresult += toAdd;
 	}
 	
-	if(DEBUG) console.log(HTMLresult);
 	return HTMLresult;
 }
 
