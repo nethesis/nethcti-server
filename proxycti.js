@@ -469,6 +469,9 @@ io.on('connection', function(client){
 	  		
 	  			if(DEBUG) console.log("received hangup request from exten [" + extFrom + "]");
 	  			
+	  			console.log("am.participants =");
+	  			console.log(am.participants);
+	  			
 	  			// retrieve the id of the client who has request the hangup
 	  			var id;
 	  			for(key in am.participants){
