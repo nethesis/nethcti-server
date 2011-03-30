@@ -778,46 +778,14 @@ function createResultSearchContactsPhonebook(results){
 		return data;
 	});
 	
-	
-	
 	// repeat htmlTemplate for number of results
 	var currentUser = '';
 	var temp = '';
 	for(var i=0; i<results.length; i++){
 	
-		var dataSub = { // the data dictionary in JSON format
-		    name: "",
-		    workphoneNotNull: true,
-		    workphone: "",
-	  	    homephoneNotNull: true,
-		    homephone: "",
-			cellphoneNotNull: true,
-		    cellphone: "",
-		    faxNotNull: true,
-		    fax: "",
-		    companyNotNull: true,
-	   	    company: ""
-		}
-	
-	
 		var currentUser = results[i];
-		
-		// single user data
-		for(key in currentUser){			
-			
-			// check if the value is null. In this case it is not printed
-			console.log("currentUser[" + key + "] = " + currentUser[key]);
-			if(currentUser[key]==''){
-				var k = key + "NotNull";
-				dataSub[k] = false;
-				continue;
-			}
-			
-			dataSub[key] = currentUser[key];
-		}
-	
 		var template = normal.compile(htmlTemplate);
-		var toAdd = template(dataSub);
+		var toAdd = template(currentUser);
 		HTMLresult += toAdd;
 	}
 	
