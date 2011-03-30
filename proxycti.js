@@ -25,6 +25,7 @@ var PROXY_CONFIG_FILENAME = "proxycti.conf";
 var NOTIFICATION_URL_PHONEBOOK = "templateNotificationCallingPhonebook.html";
 var NOTIFICATION_URL_NORMAL = "templateNotificationCalling.html";
 var TEMPLATE_DECORATOR_VCARD_FILENAME = "./template/decorator_vcard.html";
+var TEMPLATE_DECORATOR_CUSTOMERCARD_FILENAME = "./template/decorator_customerCard.html";
 
 // The response that this server pass to the clients.
 var ResponseMessage = function(clientSessionId, typeMessage, respMessage){
@@ -692,26 +693,60 @@ createCustomerCardHTML = function(customerCard, from){
   	 * hasn't the relative permission */
 	if(customerCard!=undefined){
 
-		dynamicHtml = '<table width="50%" cellpadding="5" style="border: 1px solid gray">';
-		dynamicHtml += '<tr><td colspan="2"><h3>' + customerCard.name + '</h3></td></tr>';
-	    for(var key in customerCard){
+		var HTMLresult = '';
+	      		
+		// read file
+		var htmlTemplate = fs.readFileSync(TEMPLATE_DECORATOR_CUSTOMERCARD_FILENAME, "UTF-8", function(err, data) {
+			if(err){
+				sys.puts("error in reading file");
+				sys.puts(err);
+				return;
+			}
+			return data;
+		});
 		
-			dynamicHtml += '<tr>';
 		
-	    	if(key=='workphone'){
-		        var call = "callExt(" + customerCard[key] + ");";
-		        dynamicHtml += '<td>' + key + ':</td>';
-		        dynamicHtml += '<td><a href="#" onclick=' + call + '>' + customerCard[key] + '</a></td>';
-	    	}
-		    else{
-			    dynamicHtml += '<td>' + key + ':</td>';
-			    dynamicHtml += '<td>' + customerCard[key] + '</td>';
-		    }
-		    
-		    dynamicHtml += '</tr>';
+		var dataSub = { // the data dictionary in JSON format
+		    name: "",
+		    id: "",
+		    owner_id: "",
+	  	    type: "",
+		    homeemail: "",
+			workemail: "",
+		    homephone: "",
+		    workphone: "",
+		    cellphone: "",
+		    fax: "",
+		    title: "",
+	   	    company: "",
+	   	    notes: "",
+	   	    name: "",
+	   	    homestreet: "",
+	   	    homepob: "",
+	   	    homecity: "",
+	   	    homeprovince: "",
+	   	    homepostalcode: "",
+	   	    homecountry: "",
+	   	    workstreet: "",
+	   	    workpob: "",
+	   	    workcity: "",
+	   	    workprovince: "",
+	   	    workpostalcode: "",
+	   	    workcountry: "",
+	   	    url: ""
+		}
+		
+		
+		for(key in customerCard){	
+			dataSub[key] = customerCard[key];
 		}
 	
-		dynamicHtml += '</table>';
+		var template = normal.compile(htmlTemplate);
+		var toAdd = template(dataSub);
+		HTMLresult += toAdd;
+		
+		if(DEBUG) console.log(HTMLresult);
+		return HTMLresult;
 	}
 	else{
 		
@@ -725,6 +760,9 @@ createCustomerCardHTML = function(customerCard, from){
 	return dynamicHtml;
 }
 
+/* Create the html code for viewing result of searching contacts in phonebook.
+ * It read template html file and personalize it with the parameter results.
+ */
 function createResultSearchContactsPhonebook(results){
 	      		
 	console.log(results);
@@ -783,7 +821,7 @@ function createResultSearchContactsPhonebook(results){
 		HTMLresult += toAdd;
 	}
 	
-	console.log(HTMLresult);
+	if(DEBUG) console.log(HTMLresult);
 	return HTMLresult;
 }
 
