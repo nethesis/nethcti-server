@@ -1,4 +1,4 @@
-<table width='30%' cellpadding='5' style='border: 1px solid gray'>
+<table class='click2call' width='30%' cellpadding='5' style='border: 1px solid gray'>
 		
 	<tr>
 		<th colspan='2'><h3>{=name}</h3></th>
@@ -7,21 +7,21 @@
 	{:if workphone}
 	<tr>
 		<td width='40%'>Workphone:</td>
-		<td>{=workphone}</td>
+		<td><a href='#'>{=workphone}</a></td>
 	</tr>
 	{/:if}
 		
 	{:if homephone}
 	<tr>
 		<td>Homephone:</td>
-		<td>{=homephone}</td>
+		<td><a href='#'>{=homephone}</a></td>
 	</tr>
 	{/:if}
 		
 	{:if cellphone}
 	<tr>
 		<td>Cellphone:</td>
-		<td>{=cellphone}</td>
+		<td><a href='#'>{=cellphone}</a></td>
 	</tr>
 	{/:if}
 	
