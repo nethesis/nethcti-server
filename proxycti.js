@@ -683,81 +683,35 @@ testAlreadyLoggedSessionId = function(sessionId){
 }
 
 /*
- * 
+ * Create html code to return to the client after when he receive calling. This code is 
+ * the customer card of the calling user
  */
 createCustomerCardHTML = function(customerCard, from){
-
-	var dynamicHtml = '';
+	      		
+	// read file
+	var htmlTemplate = fs.readFileSync(TEMPLATE_DECORATOR_CUSTOMERCARD_FILENAME, "UTF-8", function(err, data) {
+		if(err){
+			sys.puts("error in reading file");
+			sys.puts(err);
+			return;
+		}
+		return data;
+	});
 
 	/* customerCard is undefined if the user that has do the request
-  	 * hasn't the relative permission */
-	if(customerCard!=undefined){
-
-		var HTMLresult = '';
-	      		
-		// read file
-		var htmlTemplate = fs.readFileSync(TEMPLATE_DECORATOR_CUSTOMERCARD_FILENAME, "UTF-8", function(err, data) {
-			if(err){
-				sys.puts("error in reading file");
-				sys.puts(err);
-				return;
-			}
-			return data;
-		});
-		
-		
-		var dataSub = { // the data dictionary in JSON format
-		    name: "",
-		    id: "",
-		    owner_id: "",
-	  	    type: "",
-		    homeemail: "",
-			workemail: "",
-		    homephone: "",
-		    workphone: "",
-		    cellphone: "",
-		    fax: "",
-		    title: "",
-	   	    company: "",
-	   	    notes: "",
-	   	    name: "",
-	   	    homestreet: "",
-	   	    homepob: "",
-	   	    homecity: "",
-	   	    homeprovince: "",
-	   	    homepostalcode: "",
-	   	    homecountry: "",
-	   	    workstreet: "",
-	   	    workpob: "",
-	   	    workcity: "",
-	   	    workprovince: "",
-	   	    workpostalcode: "",
-	   	    workcountry: "",
-	   	    url: ""
-		}
-		
-		
-		for(key in customerCard){	
-			dataSub[key] = customerCard[key];
-		}
-	
-		var template = normal.compile(htmlTemplate);
-		var toAdd = template(dataSub);
-		HTMLresult += toAdd;
-		
-		if(DEBUG) console.log(HTMLresult);
-		return HTMLresult;
-	}
-	else{
-		
-		dynamicHtml = '<table width="100%" cellpadding="5" style="border: 1px solid gray">';
-		dynamicHtml += '<tr><td><h3>' + from + '</h3></td></tr>';
-		dynamicHtml += '<tr><td>Sorry, no data in the database</td></tr>';
-		dynamicHtml += '</table>';
+  	 * hasn't the relative permission or the calling user is not in db*/
+	if(customerCard==undefined){
+		customerCard = {};
+		customerCard.customerNotInDB = "true";
+		customerCard.from = from;
 	}
 
-	
-	return dynamicHtml;
+	var template = normal.compile(htmlTemplate);
+	var toAdd = template(customerCard);
+	var HTMLresult = toAdd;
+		
+	if(DEBUG) console.log(HTMLresult);
+	return HTMLresult;
 }
 
 /* Create the html code for viewing result of searching contacts in phonebook.
