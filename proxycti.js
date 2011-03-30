@@ -22,8 +22,6 @@ var server;
 var clients = {};
 var DEBUG = true;
 var PROXY_CONFIG_FILENAME = "proxycti.conf";
-var NOTIFICATION_URL_PHONEBOOK = "templateNotificationCallingPhonebook.html";
-var NOTIFICATION_URL_NORMAL = "templateNotificationCalling.html";
 var TEMPLATE_DECORATOR_VCARD_FILENAME = "./template/decorator_vcard.html";
 var TEMPLATE_DECORATOR_CUSTOMERCARD_FILENAME = "./template/decorator_customerCard.html";
 
@@ -135,7 +133,7 @@ am.addListener('agentcalled', function(fromid, fromname, queue, destchannel) {
 	    	// the user has the authorization of view customer card 
 	    	if(DEBUG) console.log("The user " + to + " has the permit of view customer card of [" + fromid + " : " + fromname + "]");
 	    	
-			response.notificationURL = NOTIFICATION_URL_PHONEBOOK;
+			response.canViewCustomerCard = true;
 			
 	        dataCollector.getCustomerCard(to, fromid, function(customerCard){
 	        
@@ -147,8 +145,8 @@ am.addListener('agentcalled', function(fromid, fromname, queue, destchannel) {
 		}
 	    else{
         	// the user hasn't the authorization of view customer card
-        	if(DEBUG) console.log("The user " + to + " hasn't the permit of view customer card");
-          	response.notificationURL = NOTIFICATION_URL_NORMAL;
+        	if(DEBUG) console.log("The user " + to.number + " hasn't the permit of view customer card");
+          	response.canViewCustomerCard = false;
           	response.customerCard = "<p>" + to + "hasn't the permit of view customer card !</p>";
             c.send(response);
             if(DEBUG) console.log("Notify of calling has been sent to client " + to);
@@ -186,7 +184,7 @@ am.addListener('dialing', function(from, to) {
     		// the user has the authorization of view customer card	
     		if(DEBUG) console.log("The user " + to.number + " has the permit of view customer card of " + from.number);
     			
-    		response.notificationURL = NOTIFICATION_URL_PHONEBOOK;
+    		response.canViewCustomerCard = true;
     		
     		dataCollector.getCustomerCard(to.number, from.number, function(customerCard){
 
@@ -199,7 +197,7 @@ am.addListener('dialing', function(from, to) {
     	else{
 		   	// the user hasn't the authorization of view customer card
 		   	if(DEBUG) console.log("The user " + to.number + " hasn't the permit of view customer card");
-		   	response.notificationURL = NOTIFICATION_URL_NORMAL;
+		   	response.canViewCustomerCard = false;
 		   	response.customerCard = "<p>" + to + "hasn't the permit of view customer card !</p>";
 		   	c.send(response);
 			if(DEBUG) console.log("Notify of calling has been sent to client " + to.number);
