@@ -777,7 +777,8 @@ function createResultSearchContactsPhonebook(results){
 
 process.on('uncaughtException', function(err){
 	log('*********************************************');
-	log('Caught not provided exception: ' + err);
+	log('Caught not provided exception: ');
+	log(err);
 	log('*********************************************');
 });
 
