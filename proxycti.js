@@ -656,6 +656,8 @@ io.on('connection', function(client){
   	});
 });
 
+
+log("asterisk manager connection");
 am.connect();
 
 
