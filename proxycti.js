@@ -34,7 +34,7 @@ var ResponseMessage = function(clientSessionId, typeMessage, respMessage){
 
 var date = new Date();
 function log(msg){
-	if (DEBUG) console.log(date.getTime() + " - " + date.toUTCString() + ": " + msg);
+	if (DEBUG) console.log(date.toUTCString() + ": " + msg);
 }
 
 
@@ -378,10 +378,11 @@ io.on('connection', function(client){
   	
 	  			if(authenticator.authenticateUser(extFrom, message.secret)){  // the user is authenticated
   				
-					// check if the user sessionId is already logged in
+					// check if the user sessionId with extFrom is already logged in
   					if(testAlreadyLoggedUser(client.sessionId, extFrom)){
   						log("client with sessionId = " + client.sessionId + " is already logged in as " + extFrom);
   						log("clients length = " + Object.keys(clients).length);
+  						printLoggedClients();
 				    	client.send(new ResponseMessage(client.sessionId, "already_logged_in", "You are already logged in !"));
 				    	log("already_logged_in has been sent to [" + extFrom + "] with: " + client.sessionId);
   						return;
@@ -391,6 +392,7 @@ io.on('connection', function(client){
   					if(testAlreadyLoggedSessionId(client.sessionId)){
   						log("client with sessionId = " + client.sessionId + " is already logged in");
   						log("clients length = " + Object.keys(clients).length);
+  						printLoggedClients();
 				    	client.send(new ResponseMessage(client.sessionId, "error_login", "Sorry, but you are already logged in !"));
 				    	log("error_login has been sent to [" + extFrom + "] with: " + client.sessionId);
   						return;
@@ -399,6 +401,7 @@ io.on('connection', function(client){
   					if(testAlreadyLoggedExten(extFrom)){
   						log("Client [" + extFrom + "] already logged in !");
 				    	log("clients length = " + Object.keys(clients).length);
+				    	printLoggedClients();
 				    	client.send(new ResponseMessage(client.sessionId, "error_login", "Sorry, but the client [" + extFrom + "] is already logged in"));
 				    	log("error_login has been sent to [" + extFrom + "] with: " + client.sessionId);
 				    	return;
@@ -407,8 +410,10 @@ io.on('connection', function(client){
   					else{
 		  				client.extension = extFrom;
 		  				clients[extFrom] = client;  
-			  			log("client [" + extFrom + "] logged in");
+		  				var ipAddrClient = client.connection.remoteAddress;
+			  			log("client [" + extFrom + "] with IP = [" + ipAddrClient + "] and sessionId = [" + client.sessionId + "] logged in");
 			  			log("clients length  = " + Object.keys(clients).length);
+			  			printLoggedClients();
 			  			var respMsg = new ResponseMessage(client.sessionId, "ack_login", "Login succesfully");
 			  			respMsg.ext = extFrom;
 			  			respMsg.secret = message.secret;
@@ -683,7 +688,6 @@ testAlreadyLoggedExten = function(exten){
 	return false;
 }
 
-
 /*
  * Check if the user exten already present in memory and its sessionId correspond.
  */ 
@@ -693,10 +697,6 @@ testAlreadyLoggedUser = function(sessionId, exten){
 		return true;
 	return false;
 }
-
-
-
-
 
 /*
  * Check if the user sessionId already present in memory.
@@ -772,6 +772,12 @@ function createResultSearchContactsPhonebook(results){
 	}
 	
 	return HTMLresult;
+}
+
+//
+function printLoggedClients(){
+	log("the list of logged clients is:");
+	log(clients);
 }
 
 
