@@ -777,7 +777,7 @@ function createResultSearchContactsPhonebook(results){
 //
 function printLoggedClients(){
 	log("the list of logged clients is:");
-	log(clients);
+	console.log(clients);
 }
 
 
