@@ -504,7 +504,7 @@ io.on('connection', function(client){
 	  			log("received " + ACTION_LOGOUT + " request from exten [" + extFrom + "]");
 	  		
 	  			removeClient(client.sessionId);
-	  			if(testAlreadyLoggedSessionId(client.sessionId)){
+	  			if(!testAlreadyLoggedSessionId(client.sessionId)){
 			  		log("Client " + client.sessionId + " logged out");
 			  		client.send(new ResponseMessage(client.sessionId, "ack_logout", "logout has been succesfully"));
 			  		log("acknowlwdge of logout has been sent to the client");
@@ -649,7 +649,7 @@ io.on('connection', function(client){
   	client.on('disconnect', function(){
   		log("Client " + client.sessionId + " disconnected");
   		removeClient(client.sessionId);
-  		if(testAlreadyLoggedSessionId(client.sessionId)){
+  		if(!testAlreadyLoggedSessionId(client.sessionId)){
   			log("removed client with sessionId=[" + client.sessionId + "]");
 	  	}
 	  	log("clients length = " + Object.keys(clients).length);
