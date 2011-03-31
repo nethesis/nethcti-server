@@ -777,7 +777,9 @@ function createResultSearchContactsPhonebook(results){
 //
 function printLoggedClients(){
 	log("the list of logged clients is:");
-	console.log(clients);
+	for(keyClient in clients){
+		console.log("\t[" + keyClient + "] - IP = [" + clients[keyClient].connection.remoteAddress + "] - sessionId = [" + clients[keyClient].sessiondId + "]");
+	}
 }
 
 
