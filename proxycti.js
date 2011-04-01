@@ -729,7 +729,7 @@ function createResultSearchContactsPhonebook(results){
 	
 		currentUser = results[i];
 		template = normal.compile(htmlTemplate);
-		currentUser.server_address = "http://" + sa + ":" + asd;
+		currentUser.server_address = "http://" + hostname + ":" + port;
 		temp = template(currentUser);
 		
 		HTMLresult += temp;
