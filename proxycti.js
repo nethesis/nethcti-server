@@ -697,6 +697,7 @@ createCustomerCardHTML = function(customerCard, from){
 	}
 
 	var template = normal.compile(htmlTemplate);
+	customerCard.server_address = "http://" + hostname + ":" + port;
 	var toAdd = template(customerCard);
 	var HTMLresult = toAdd;
 		

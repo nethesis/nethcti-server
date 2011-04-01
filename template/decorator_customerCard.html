@@ -8,9 +8,9 @@
 	</tr>
 </table>
 {:else}
-<table class='click2call' width="50%" cellpadding="5" style="border: 1px solid gray">
+<table class='contactsVCard' width="50%" cellpadding="5" style="border: 1px solid gray">
 	<tr>
-		<td colspan="2"><h3>{=name}</h3></td>
+		<td colspan="4"><h3>{=name}</h3></td>
 	</tr>
 	<tr>
 		<td width='40%'>Id:</td>
@@ -35,14 +35,18 @@
 	<tr>
 		<td>Home phone:</td>
 		<td><a href='#'>{=homephone}</a></td>
+		<td><img class='click2call' src='{=server_address}/template/images/call-start.png'/></td>
 	</tr>
 	<tr>
 		<td>Work phone:</td>
 		<td><a href='#'>{=workphone}</a></td>
+		<td><img class='click2call' src='{=server_address}/template/images/call-start.png'/></td>
 	</tr>
 	<tr>
 		<td>Cell phone:</td>
 		<td><a href='#'>{=cellphone}</a></td>
+		<td><img class='click2call' src='{=server_address}/template/images/call-start.png'/></td>
+		<td><img class='click2sms' src='{=server_address}/template/images/sms-text.png'/></td>
 	</tr>
 	<tr>
 		<td>Fax:</td>
