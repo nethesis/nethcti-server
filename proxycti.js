@@ -20,6 +20,13 @@ var server;
  * and value are removed.
  */
 var clients = {};
+/*
+var hostname = '',
+	port = '',
+	asterisk_pass = '',
+	asterisk_user = '',
+	asterisk_host = '';
+	*/
 const DEBUG = true;
 const PROXY_CONFIG_FILENAME = "proxycti.conf";
 const TEMPLATE_DECORATOR_VCARD_FILENAME = "./template/decorator_vcard.html";
@@ -38,55 +45,9 @@ function log(msg){
 }
 
 
-function initAsteriskParameters(){
-	// read file
-	var conf = fs.readFileSync(PROXY_CONFIG_FILENAME, "UTF-8", function(err, data) {
-		if(err){
-			sys.puts("error in reading file");
-			sys.puts(err);
-			return;
-		}
-		return data;
-	});
 
-	var categoriesArray = conf.split("[");
-	categoriesArray = categoriesArray.slice(1,categoriesArray.length);
-	
-	for(var i=0; i<categoriesArray.length; i++){
-	
-		var tempCategoryStr = categoriesArray[i];	
-		var tempCategoryArray = tempCategoryStr.split("\n");
-		var categoryName = tempCategoryArray[0].slice(0, tempCategoryArray[0].length-1);
-
-		if(categoryName=='ASTERISK'){			
-			var user;
-			var secret;
-			var asterisk_server_address;
-			
-			for(token=1; token<tempCategoryArray.length; token++){
-		
-				// array with permit actions
-				if(tempCategoryArray[token].indexOf("user") != -1){
-					var userStr = tempCategoryArray[token];
-					asterisk_user = userStr.split("=")[1];
-				}
-				// array with deny actions
-				else if(tempCategoryArray[token].indexOf("pass") != -1){
-					var astPassStr = tempCategoryArray[token];
-					asterisk_pass = astPassStr.split("=")[1];
-				}
-				// array with users
-				else if(tempCategoryArray[token].indexOf("host") != -1){
-					var astAddrStr = tempCategoryArray[token];
-					asterisk_host = astAddrStr.split("=")[1];
-				}
-			}
-		}
-	}
-}
-
-// initialize parameters for connection with asterisk server
-initAsteriskParameters();
+// initialize parameters for this server and for asterisk server
+var a = initServerAndAsteriskParameters();
 
 // Profiler object
 var profiler = new proReq.Profiler();
@@ -336,8 +297,10 @@ send404 = function(res){
   res.end();
 };
 
-server.listen(8080);
-log("Listening on port 8080");
+console.log("port = " + port);
+server.listen(port);
+log("Listening on port: " + port);
+
 
 
 var io = io.listen(server);
@@ -661,10 +624,8 @@ io.on('connection', function(client){
   	});
 });
 
-
 log("asterisk manager connection");
 am.connect();
-
 
 
 /*
@@ -763,12 +724,15 @@ function createResultSearchContactsPhonebook(results){
 	// repeat htmlTemplate for number of results
 	var currentUser = '';
 	var temp = '';
+	var template = '';
 	for(var i=0; i<results.length; i++){
 	
-		var currentUser = results[i];
-		var template = normal.compile(htmlTemplate);
-		var toAdd = template(currentUser);
-		HTMLresult += toAdd;
+		currentUser = results[i];
+		template = normal.compile(htmlTemplate);
+		currentUser.server_address = "http://" + sa + ":" + asd;
+		temp = template(currentUser);
+		
+		HTMLresult += temp;
 	}
 	
 	return HTMLresult;
@@ -781,6 +745,71 @@ function printLoggedClients(){
 		console.log("\t[" + keyClient + "] - IP = [" + clients[keyClient].connection.remoteAddress + "] - sessionId = [" + clients[keyClient].sessionId + "]");
 	}
 }
+
+//
+function initServerAndAsteriskParameters(){
+	// read file
+	var conf = fs.readFileSync(PROXY_CONFIG_FILENAME, "UTF-8", function(err, data) {
+		if(err){
+			sys.puts("error in reading file");
+			sys.puts(err);
+			return;
+		}
+		return data;
+	});
+
+	var categoriesArray = conf.split("[");
+	categoriesArray = categoriesArray.slice(1,categoriesArray.length);
+	
+	for(var i=0; i<categoriesArray.length; i++){
+	
+		var tempCategoryStr = categoriesArray[i];	
+		var tempCategoryArray = tempCategoryStr.split("\n");
+		var categoryName = tempCategoryArray[0].slice(0, tempCategoryArray[0].length-1);
+		
+		if(categoryName=='ASTERISK'){			
+			
+			for(token=1; token<tempCategoryArray.length; token++){
+		
+				// array with permit actions
+				if(tempCategoryArray[token].indexOf("user") != -1){
+					var userStr = tempCategoryArray[token];
+					asterisk_user = userStr.split("=")[1];
+				}
+				// array with deny actions
+				else if(tempCategoryArray[token].indexOf("pass") != -1){
+					var astPassStr = tempCategoryArray[token];
+					asterisk_pass = astPassStr.split("=")[1];
+				}
+				// array with users
+				else if(tempCategoryArray[token].indexOf("host") != -1){
+					var astAddrStr = tempCategoryArray[token];
+					asterisk_host = astAddrStr.split("=")[1];
+				}
+			}
+		}
+		else if(categoryName=='SERVER_PROXY'){			
+			
+			for(token=1; token<tempCategoryArray.length; token++){
+		
+				// array with permit actions
+				if(tempCategoryArray[token].indexOf("hostname") != -1){
+					var hostStr = tempCategoryArray[token];
+					hostname = hostStr.split("=")[1];
+				}
+				// array with deny actions
+				else if(tempCategoryArray[token].indexOf("port") != -1){
+					var portStr = tempCategoryArray[token];
+					port = portStr.split("=")[1];
+				}
+			}
+		}
+	}
+}
+
+
+
+
 
 
 process.on('uncaughtException', function(err){
