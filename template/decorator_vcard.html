@@ -1,28 +1,31 @@
 <table class='contactsVCard' width='30%' cellpadding='5' style='border: 1px solid gray'>
 		
 	<tr>
-		<th colspan='2'><h3>{=name}</h3></th>
+		<th colspan='3'><h3>{=name}</h3></th>
 	</tr>
 		
 	{:if workphone}
 	<tr>
 		
-		<td width='40%'><img src='template/images/call-start.png'/>Workphone:</td>
-		<td><a href='#click2call'>{=workphone}</a></td>
+		<td width='40%'>Workphone:</td>
+		<td><a class='click2call' href='#'>{=workphone}</a></td>
+		<td><img class='click2call' src='{=server_address}/template/images/call-start.png'/></td>
 	</tr>
 	{/:if}
-		
+	
 	{:if homephone}
 	<tr>
 		<td>Homephone:</td>
-		<td><a href='#click2call'>{=homephone}</a></td>
+		<td><a class='click2call' href='#'>{=homephone}</a></td>
+		<td><img class='click2call' src='{=server_address}/template/images/call-start.png'/></td>
 	</tr>
 	{/:if}
 		
 	{:if cellphone}
 	<tr>
 		<td>Cellphone:</td>
-		<td><a href='#click2call'>{=cellphone}</a></td>
+		<td><a class='click2call' href='#'>{=cellphone}</a></td>
+		<td><img class='click2call' src='{=server_address}/template/images/call-start.png'/></td>
 	</tr>
 	{/:if}
 	
