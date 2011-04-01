@@ -1,7 +1,7 @@
 <table class='contactsVCard' width='30%' cellpadding='5' style='border: 1px solid gray'>
 		
 	<tr>
-		<th colspan='3'><h3>{=name}</h3></th>
+		<th colspan='4'><h3>{=name}</h3></th>
 	</tr>
 		
 	{:if workphone}
@@ -26,6 +26,7 @@
 		<td>Cellphone:</td>
 		<td><a class='click2call' href='#'>{=cellphone}</a></td>
 		<td><img class='click2call' src='{=server_address}/template/images/call-start.png'/></td>
+		<td><img class='click2sms' src='{=server_address}/template/images/sms-text.png'/></td>
 	</tr>
 	{/:if}
 	
