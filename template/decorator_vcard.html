@@ -1,4 +1,4 @@
-<table class='click2call' width='30%' cellpadding='5' style='border: 1px solid gray'>
+<table class='contactsVCard' width='30%' cellpadding='5' style='border: 1px solid gray'>
 		
 	<tr>
 		<th colspan='2'><h3>{=name}</h3></th>
@@ -6,8 +6,9 @@
 		
 	{:if workphone}
 	<tr>
-		<td width='40%'>Workphone:</td>
-		<td><a href='#'>{=workphone}</a></td>
+		
+		<td width='40%'><img src='template/images/call-start.png'/>Workphone:</td>
+		<td><a href='#click2call'>{=workphone}</a></td>
 	</tr>
 	{/:if}
 		
