@@ -8,7 +8,7 @@
   margin-top: 3px;
 }
 
-.vcard {
+.contactsVCard {
   float: left;
   margin: 10px;
   border: 1px solid #ccc;
@@ -18,19 +18,19 @@
   max-width: 400px;
 }
 
-.vcard a:visited {
+.contactsVCard a:visited {
   text-decoration: none;
   color: black;
   font-weight: normal;
 }
 
-.vcard a:link {
+.contactsVCard a:link {
   text-decoration: none;
   color: black;
   font-weight: normal;
 }
 
-.vcard a:hover {
+.contactsVCard a:hover {
   text-decoration: underline;
   color: black;
   font-weight: normal;
