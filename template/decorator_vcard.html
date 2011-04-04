@@ -1,51 +1,57 @@
-<table class='contactsVCard' width='30%' cellpadding='5' style='border: 1px solid gray'>
-		
+<div class="vcard">
+<div class='logo'><img src="http://upload.wikimedia.org/wikipedia/commons/thumb/1/12/User_icon_2.svg/120px-User_icon_2.svg.png"/></div>
+<div style="float: left">
+	{:if name}
+	  <div class='name'>{=name}
+	  {:if title}	<div class='title'>{=title} {=type}</div>  {/:if}
+          </div>
+	{/:if}
+
+	{:if company}
+	 <div class='name'> {=company}	</div>
+	{/:if}
+
+	{:if workstreet}
 	<tr>
-		<th colspan='4'><h3>{=name}</h3></th>
-	</tr>
-		
-	{:if workphone}
-	<tr>
-		
-		<td width='40%'>Workphone:</td>
-		<td><a class='click2call' href='#'>{=workphone}</a></td>
-		<td><img class='click2call' src='{=server_address}/template/images/call-start.png'/></td>
 	</tr>
 	{/:if}
 	
-	{:if homephone}
-	<tr>
-		<td>Homephone:</td>
-		<td><a class='click2call' href='#'>{=homephone}</a></td>
-		<td><img class='click2call' src='{=server_address}/template/images/call-start.png'/></td>
-	</tr>
+        <div class='numbers'>	
+	{:if workphone}
+	<div class='label'><span class='value'>Tel:</span> <a href='#'>{=workphone}</a> <a href='#'><img class='click2call' src='{=server_address}/template/images/call-start.png'/></a></div>
 	{/:if}
 		
 	{:if cellphone}
-	<tr>
-		<td>Cellphone:</td>
-		<td><a class='click2call' href='#'>{=cellphone}</a></td>
-		<td><img class='click2call' src='{=server_address}/template/images/call-start.png'/></td>
-		<td><img class='click2sms' src='{=server_address}/template/images/sms-text.png'/></td>
-	</tr>
+     <div class='label'><span class='value'>Cell:</span> <a href='#'>{=cellphone}</a> <a href='#'><img class='click2call' src='{=server_address}/template/images/sms-text.png'/></a></div>
 	{/:if}
+
+	{:if homephone}
+       <div class='label'><span class='value'>TelCasa:</span> <a href='#'>{=homehone}</a> <a href='#'><img class='click2call' src='{=server_address}/template/images/call-start.png'/></a></div>
+	{/:if}
+		
 	
 	{:if fax}
-	<tr>
-		<td>Fax:</td>
-		<td>{=fax}</td>
-	</tr>
+       <div class='label'><span class='value'>Fax:</span> <a href='#'>{=fax}</a> <a href='#'><img class='click2call' src='{=server_address}/template/images/call-start.png'/></a></div>
 	{/:if}
-		
-	{:if company}
-	<tr>
-		<td>Company:</td>
-		<td>{=company}</td>
-	</tr>
-	{/:if}
-		
-</table>
-<br/><br/>
+        </div>		
+  
+        {:if workemail} 
+        <div class='numbers'> 
+        <div class='label'><span class='value'>Mail:</span> <a href='mailto:{=workemail}'>{=workemail}</a><img class='click2call' src='http://www.bcservices.org/images/e-mail_icon.jpg'/></a></div>  
+        </div>
+        {/:if}
 
-	
+        <div class='numbers'>
+        {:if homestreet } <div class='address'> {=homecity}, {=homestreet} ({=homeprovince}) </div> {/:if}
+	{:if workstreet } <div class='address'> {=workcity}, {=workstreet} ({=workprovince}) - {=workpostalcode}</div> {/:if}
+        </div>       
 
+       {:if url }
+       <div class='numbers'>
+          <span class=''>Sito:</span> <a href='{=url}'>{=url}</a>
+       </div>
+       {/:if}
+
+        </div>
+</div>
+</div>
