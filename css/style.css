@@ -14,7 +14,27 @@
   border: 1px solid #ccc;
   border-radius: 15px;
   box-shadow: 3px 3px #888;
+  min-width: 350px;
 }
+
+.vcard a:visited {
+  text-decoration: none;
+  color: black;
+  font-weight: normal;
+}
+
+.vcard a:link {
+  text-decoration: none;
+  color: black;
+  font-weight: normal;
+}
+
+.vcard a:hover {
+  text-decoration: underline;
+  color: black;
+  font-weight: normal;
+}
+
 
 .name {
   background: #eef;
@@ -49,4 +69,15 @@
    padding: 5px;
    font-style: italic;
 }
+
+.tr {
+   display: table-row;
+}
+
+.td {
+   display: table-cell;
+   padding-right: 5px;
+   padding-left: 5px;
+}
+
 

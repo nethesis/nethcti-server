@@ -18,20 +18,20 @@
 	
         <div class='numbers'>	
 	{:if workphone}
-	<div class='label'><span class='value'>Tel:</span> <a href='#'>{=workphone}</a> <a href='#'><img class='click2call' src='{=server_address}/template/images/call-start.png'/></a></div>
+	<div class='label tr'><span class='value td'>Tel:</span> <span class='td'><a href='#'>{=workphone}</a> <a href='#'><img class='click2call' src='{=server_address}/template/images/call-start.png'/></a></span></div>
 	{/:if}
 		
 	{:if cellphone}
-     <div class='label'><span class='value'>Cell:</span> <a href='#'>{=cellphone}</a> <a href='#'><img class='click2call' src='{=server_address}/template/images/sms-text.png'/></a></div>
+     <div class='label tr'><span class='value td'>Cell:</span> <span class='td'><a href='#'>{=cellphone}</a> <a href='#'><img class='click2call' src='{=server_address}/template/images/sms-text.png'/></a></span></div>
 	{/:if}
 
 	{:if homephone}
-       <div class='label'><span class='value'>TelCasa:</span> <a href='#'>{=homehone}</a> <a href='#'><img class='click2call' src='{=server_address}/template/images/call-start.png'/></a></div>
+       <div class='label tr'><span class='value td'>TelCasa:</span> <span class='td'><a href='#'>{=homehone}</a> <a href='#'><img class='click2call' src='{=server_address}/template/images/call-start.png'/></a></span></div>
 	{/:if}
 		
 	
 	{:if fax}
-       <div class='label'><span class='value'>Fax:</span> <a href='#'>{=fax}</a> <a href='#'><img class='click2call' src='{=server_address}/template/images/call-start.png'/></a></div>
+       <div class='label tr'><span class='value td'>Fax:</span> <span class='td'><a href='#'>{=fax}</a> <a href='#'><img class='click2call' src='{=server_address}/template/images/call-start.png'/></a></span></div>
 	{/:if}
         </div>		
   
