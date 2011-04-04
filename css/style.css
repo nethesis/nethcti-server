@@ -1,0 +1,52 @@
+.logo {
+  color: red;
+  float: left;
+  border: none;
+  margin-left: 10px;
+  margin-right: 20px;
+  margin-bottom: 20px;
+  margin-top: 5px;
+}
+
+.vcard {
+  float: left;
+  margin: 20px;
+  border: 1px solid #ccc;
+  border-radius: 15px;
+  box-shadow: 3px 3px #888;
+}
+
+.name {
+  background: #eef;
+  border-bottom: 1px solid #ccc;
+  font-size: 130%;
+  font-weight: bold;
+  padding: 10px;
+  margin: 10px;
+  border-radius: 10px;
+
+}
+
+.title {
+  font-size: 80%;
+}
+
+.label {
+   margin-right: 5px;
+   font-weight: bold;
+}
+
+.value {
+}
+
+.numbers {
+   margin: 5px;
+   padding: 5px;
+}
+
+.address {
+   margin: 5px;
+   padding: 5px;
+   font-style: italic;
+}
+
