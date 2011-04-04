@@ -1,5 +1,11 @@
 <div class="vcard">
-<div class='logo'><img src="http://upload.wikimedia.org/wikipedia/commons/thumb/1/12/User_icon_2.svg/120px-User_icon_2.svg.png"/></div>
+<div class='logo'>
+{:if name}
+<img src="{=server_address}/template/images/contact.png"/>
+{:else}
+<img src="{=server_address}/template/images/company.png"/>
+{/:if}
+</div>
 <div style="float: left">
 	{:if name}
 	  <div class='name'>{=name}
