@@ -1,0 +1,98 @@
+.logo {
+  color: red;
+  float: left;
+  border: none;
+  margin-left: 5px;
+  margin-right: 2px;
+  margin-bottom: 5px;
+  margin-top: 3px;
+}
+
+.vcard {
+  float: left;
+  margin: 10px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  box-shadow: 3px 3px #888;
+  font-size: small;
+  max-width: 400px;
+}
+
+.vcard a:visited {
+  text-decoration: none;
+  color: black;
+  font-weight: normal;
+}
+
+.vcard a:link {
+  text-decoration: none;
+  color: black;
+  font-weight: normal;
+}
+
+.vcard a:hover {
+  text-decoration: underline;
+  color: black;
+  font-weight: normal;
+}
+
+
+.name {
+  background: #eef;
+  border-bottom: 1px solid #ccc;
+  font-size: 120%;
+  font-weight: bold;
+  padding: 5px;
+  margin: 5px;
+  border-radius: 5px;
+}
+
+.company {
+  background: #eef;
+  border-bottom: 1px solid #ccc;
+  font-size: 90%;
+  font-weight: bold;
+  padding: 3px;
+  padding-right: 10px;
+  margin: 5px;
+  border-radius: 5px;
+  text-align: right;
+}
+
+.title {
+  font-size: 90%;
+}
+
+.label {
+   margin-right: 3px;
+   font-weight: bold;
+}
+
+.value {
+}
+
+.numbers {
+   margin: 3px;
+   padding: 3px;
+}
+
+.address {
+   margin: 3px;
+   padding: 3px;
+   overflow: auto;
+}
+
+.tr {
+   display: table-row;
+}
+
+.td {
+   display: table-cell;
+   padding-right: 3px;
+   padding-left: 3px;
+   vertical-align: middle;
+}
+
+.smaller {
+   font-size: 80%;
+}
