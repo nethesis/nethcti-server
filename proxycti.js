@@ -332,6 +332,8 @@ io.on('connection', function(client){
   		const ACTION_REDIRECT = "redirect";
   		const ACTION_RECORD = "record";
   		const ACTION_STOP_RECORD = "stoprecord";
+  		const ACTION_DND_ON = "dnd_on";
+  		const ACTION_DND_OFF = "dnd_off";
   		
   		// manage request
   		switch(action){
@@ -606,6 +608,48 @@ io.on('connection', function(client){
 					log("ack_stoprecord has been sent to [" + extFrom + "] with: " + client.sessionId);
 					log(msgstr);
 				});
+	  		break;
+	  		case ACTION_DND_ON:
+	  		
+	  			log("received " + ACTION_DND_ON + " request from exten [" + extFrom + "]");
+	  			
+	  			// create action for asterisk server
+	  			var cmd = "database put DND " + extFrom + " 1";
+			  	var actionDNDon = {
+					Action: 'command',
+					Command: cmd
+				};
+				
+				// send action to asterisk
+				am.send(actionDNDon, function () {
+					log("DND on action from " + extFrom + " has been sent to asterisk");
+					var msgstr = "Don't disturb  of [" + extFrom + "] is ON";
+					client.send(new ResponseMessage(client.sessionId, 'ack_dnd_on', msgstr));
+					log("ack_dnd_on has been sent to [" + extFrom + "] with: " + client.sessionId);
+					log(msgstr);
+				});
+				
+	  		break;
+	  		case ACTION_DND_OFF:
+	  		
+		  		log("received " + ACTION_DND_OFF + " request from exten [" + extFrom + "]");
+		  		
+		  		// create action for asterisk server
+	  			var cmd = "database del DND " + extFrom;
+			  	var actionDNDoff = {
+					Action: 'command',
+					Command: cmd
+				};
+
+				// send action to asterisk
+				am.send(actionDNDoff, function () {
+					log("DND off action from " + extFrom + " has been sent to asterisk");
+					var msgstr = "Don't disturb  of [" + extFrom + "] is OFF";
+					client.send(new ResponseMessage(client.sessionId, 'ack_dnd_off', msgstr));
+					log("ack_dnd_off has been sent to [" + extFrom + "] with: " + client.sessionId);
+					log(msgstr);
+				});
+	  			
 	  		break;
 	  		default:
 	  			log("ATTENTION: action '" + action + "'not provided");
