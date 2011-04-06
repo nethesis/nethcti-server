@@ -814,7 +814,8 @@ io.on('connection', function(client){
 				// send action to asterisk
 				am.send(actionCheckCFStatus, function (resp) {
 					log("check CF status action from " + extFrom + " has been sent to asterisk");
-					
+					console.log("RESP = ");
+					console.log(resp);
 					if(resp.value==undefined){
 						var msgstr = "Call forwarding  status of [" + extFrom + "] is OFF";
 						client.send(new ResponseMessage(client.sessionId, 'cf_status_off', msgstr));
@@ -1037,13 +1038,15 @@ function initServerAndAsteriskParameters(){
 
 
 
-
+/*
 process.on('uncaughtException', function(err){
 	log('*********************************************');
 	log('Caught not provided exception: ');
 	log(err);
 	log('*********************************************');
 });
+
+*/
 
 
 

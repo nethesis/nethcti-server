@@ -104,6 +104,11 @@ exports.AsteriskManager = function (newconfig) {
 	};
 
 	this.OnResponse = function(headers) {
+		// added by ale
+		//console.log("----");
+		//console.log(headers);
+		//console.log("----");
+		// end by ale
 		var id = headers.actionid, req = actions[id];
 		if (id == loginId && headers.response == "Success")
 			loggedIn_ = true;
