@@ -334,7 +334,11 @@ io.on('connection', function(client){
   		const ACTION_STOP_RECORD = "stoprecord";
   		const ACTION_DND_ON = "dnd_on";
   		const ACTION_DND_OFF = "dnd_off";
+  		const ACTION_CW_ON = "cw_on";
+  		const ACTION_CW_OFF = "cw_off";
   		const ACTION_CHECK_DND_STATUS = "check_dnd_status";
+  		const ACTION_CHECK_CW_STATUS = "check_cw_status";
+  		
   		
   		// manage request
   		switch(action){
@@ -657,13 +661,13 @@ io.on('connection', function(client){
 	  			
 	  			// create action for asterisk server
 	  			var cmd = "database get DND " + extFrom;
-			  	var actionChechDNDStatus = {
+			  	var actionCheckDNDStatus = {
 					Action: 'command',
 					Command: cmd
 				};
 				
 				// send action to asterisk
-				am.send(actionChechDNDStatus, function (resp) {
+				am.send(actionCheckDNDStatus, function (resp) {
 					log("check DND status action from " + extFrom + " has been sent to asterisk");
 					
 					if(resp.value==undefined){
@@ -680,6 +684,76 @@ io.on('connection', function(client){
 					}
 				});
 	  			
+	  		break;
+	  		case ACTION_CW_ON:
+	  		
+	  			log("received " + ACTION_CW_ON + " request from exten [" + extFrom + "]");
+	  			
+	  			// create action for asterisk server
+	  			var cmd = "database put CW " + extFrom + " 1";
+			  	var actionCWon = {
+					Action: 'command',
+					Command: cmd
+				};
+				
+				// send action to asterisk
+				am.send(actionCWon, function () {
+					log("CW on action from " + extFrom + " has been sent to asterisk");
+					var msgstr = "Call waiting  of [" + extFrom + "] is ON";
+					client.send(new ResponseMessage(client.sessionId, 'ack_cw_on', msgstr));
+					log("ack_cw_on has been sent to [" + extFrom + "] with: " + client.sessionId);
+					log(msgstr);
+				});
+				
+	  		break;
+	  		case ACTION_CW_OFF:
+	  		
+		  		log("received " + ACTION_CW_OFF + " request from exten [" + extFrom + "]");
+		  		
+		  		// create action for asterisk server
+	  			var cmd = "database del CW " + extFrom;
+			  	var actionCWoff = {
+					Action: 'command',
+					Command: cmd
+				};
+
+				// send action to asterisk
+				am.send(actionCWoff, function () {
+					log("CW off action from " + extFrom + " has been sent to asterisk");
+					var msgstr = "Call waiting  of [" + extFrom + "] is OFF";
+					client.send(new ResponseMessage(client.sessionId, 'ack_cw_off', msgstr));
+					log("ack_cw_off has been sent to [" + extFrom + "] with: " + client.sessionId);
+					log(msgstr);
+				});
+	  			
+	  		break;
+	  		case ACTION_CHECK_CW_STATUS:
+	  			log("received " + ACTION_CHECK_CW_STATUS + " request from exten [" + extFrom + "]");
+	  			
+	  			// create action for asterisk server
+	  			var cmd = "database get CW " + extFrom;
+			  	var actionCheckCWStatus = {
+					Action: 'command',
+					Command: cmd
+				};
+				
+				// send action to asterisk
+				am.send(actionCheckCWStatus, function (resp) {
+					log("check CW status action from " + extFrom + " has been sent to asterisk");
+					
+					if(resp.value==undefined){
+						var msgstr = "Call waiting  status of [" + extFrom + "] is OFF";
+						client.send(new ResponseMessage(client.sessionId, 'cw_status_off', msgstr));
+						log("cw_status_off has been sent to [" + extFrom + "] with: " + client.sessionId);
+						log(msgstr);
+					}
+					else{
+						var msgstr = "Call waiting  status of [" + extFrom + "] is ON";
+						client.send(new ResponseMessage(client.sessionId, 'cw_status_on', msgstr));
+						log("cw_status_on has been sent to [" + extFrom + "] with: " + client.sessionId);
+						log(msgstr);
+					}
+				});
 	  		break;
 	  		default:
 	  			log("ATTENTION: action '" + action + "'not provided");
