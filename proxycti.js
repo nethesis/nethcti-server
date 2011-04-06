@@ -338,6 +338,9 @@ io.on('connection', function(client){
   		const ACTION_CW_OFF = "cw_off";
   		const ACTION_CHECK_DND_STATUS = "check_dnd_status";
   		const ACTION_CHECK_CW_STATUS = "check_cw_status";
+  		const ACTION_CF_ON = "cf_on";
+  		const ACTION_CF_OFF = "cf_off";
+  		const ACTION_CHECK_CF_STATUS = "check_cf_status";
   		
   		
   		// manage request
@@ -751,6 +754,80 @@ io.on('connection', function(client){
 						var msgstr = "Call waiting  status of [" + extFrom + "] is ON";
 						client.send(new ResponseMessage(client.sessionId, 'cw_status_on', msgstr));
 						log("cw_status_on has been sent to [" + extFrom + "] with: " + client.sessionId);
+						log(msgstr);
+					}
+				});
+	  		break;
+	  		case ACTION_CF_ON:
+	  		
+	  			var extTo = message.extTo;
+	  			log("received " + ACTION_CF_ON + " request from exten [" + extFrom + "] to [" +extTo + "]");
+	  			
+	  			// create action for asterisk server
+	  			var cmd = "database put CF " + extFrom + " " + extTo;
+			  	var actionCFon = {
+					Action: 'command',
+					Command: cmd
+				};
+				
+				// send action to asterisk
+				am.send(actionCFon, function () {
+					log("CF on action from " + extFrom + " to " + extTo + " has been sent to asterisk");
+					var msgstr = "Call forwarding  of [" + extFrom + "] is ON to " + extTo;
+					client.send(new ResponseMessage(client.sessionId, 'ack_cf_on', msgstr));
+					log("ack_cf_on has been sent to [" + extFrom + "] with: " + client.sessionId);
+					log(msgstr);
+				});
+				
+	  		break;
+	  		case ACTION_CF_OFF:
+	  		
+		  		log("received " + ACTION_CF_OFF + " request from exten [" + extFrom + "]");
+		  		
+		  		// create action for asterisk server
+	  			var cmd = "database del CF " + extFrom;
+			  	var actionCFoff = {
+					Action: 'command',
+					Command: cmd
+				};
+
+				// send action to asterisk
+				am.send(actionCFoff, function () {
+					log("CF off action from " + extFrom + " has been sent to asterisk");
+					var msgstr = "Call forwarding  of [" + extFrom + "] is OFF";
+					client.send(new ResponseMessage(client.sessionId, 'ack_cf_off', msgstr));
+					log("ack_cf_off has been sent to [" + extFrom + "] with: " + client.sessionId);
+					log(msgstr);
+				});
+	  			
+	  		break;
+	  		case ACTION_CHECK_CF_STATUS:
+	  			log("received " + ACTION_CHECK_CF_STATUS + " request from exten [" + extFrom + "]");
+	  			
+	  			// create action for asterisk server
+	  			var cmd = "database get CF " + extFrom;
+			  	var actionCheckCFStatus = {
+					Action: 'command',
+					Command: cmd
+				};
+				
+				// send action to asterisk
+				am.send(actionCheckCFStatus, function (resp) {
+					log("check CF status action from " + extFrom + " has been sent to asterisk");
+					
+					if(resp.value==undefined){
+						var msgstr = "Call forwarding  status of [" + extFrom + "] is OFF";
+						client.send(new ResponseMessage(client.sessionId, 'cf_status_off', msgstr));
+						log("cf_status_off has been sent to [" + extFrom + "] with: " + client.sessionId);
+						log(msgstr);
+					}
+					else{
+						var extTo = resp.value.split('\n')[0];
+						var msgstr = "Call forwarding  status of [" + extFrom + "] is ON to " + extTo;
+						var respMessage = new ResponseMessage(client.sessionId, 'cf_status_on', msgstr);
+						respMessage.extTo = extTo;
+						client.send(respMessage);
+						log("cf_status_on has been sent to [" + extFrom + "] with: " + client.sessionId);
 						log(msgstr);
 					}
 				});
