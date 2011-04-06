@@ -334,6 +334,7 @@ io.on('connection', function(client){
   		const ACTION_STOP_RECORD = "stoprecord";
   		const ACTION_DND_ON = "dnd_on";
   		const ACTION_DND_OFF = "dnd_off";
+  		const ACTION_CHECK_DND_STATUS = "check_dnd_status";
   		
   		// manage request
   		switch(action){
@@ -648,6 +649,35 @@ io.on('connection', function(client){
 					client.send(new ResponseMessage(client.sessionId, 'ack_dnd_off', msgstr));
 					log("ack_dnd_off has been sent to [" + extFrom + "] with: " + client.sessionId);
 					log(msgstr);
+				});
+	  			
+	  		break;
+	  		case ACTION_CHECK_DND_STATUS:
+	  			log("received " + ACTION_CHECK_DND_STATUS + " request from exten [" + extFrom + "]");
+	  			
+	  			// create action for asterisk server
+	  			var cmd = "database get DND " + extFrom;
+			  	var actionChechDNDStatus = {
+					Action: 'command',
+					Command: cmd
+				};
+				
+				// send action to asterisk
+				am.send(actionChechDNDStatus, function (resp) {
+					log("check DND status action from " + extFrom + " has been sent to asterisk");
+					
+					if(resp.value==undefined){
+						var msgstr = "Don't disturb  status of [" + extFrom + "] is OFF";
+						client.send(new ResponseMessage(client.sessionId, 'dnd_status_off', msgstr));
+						log("dnd_status_off has been sent to [" + extFrom + "] with: " + client.sessionId);
+						log(msgstr);
+					}
+					else{
+						var msgstr = "Don't disturb  status of [" + extFrom + "] is ON";
+						client.send(new ResponseMessage(client.sessionId, 'dnd_status_on', msgstr));
+						log("dnd_status_on has been sent to [" + extFrom + "] with: " + client.sessionId);
+						log(msgstr);
+					}
 				});
 	  			
 	  		break;
