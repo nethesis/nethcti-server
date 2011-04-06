@@ -36,6 +36,15 @@ exports.AsteriskManager = function (newconfig) {
 
 	this.send = function(req, cb) {
 		var id = (new Date()).getTime();
+
+		/* Added by Alessandro Polidori to correct a bug.		
+		 * In some case id of different operation can be the same.
+		 */
+		while(actions[id]!=undefined){	
+			id += Math.random()*100000;
+		}
+		// End of bug fix
+
 		actions[id] = {request: req, callback: cb};
 		var msg = "";
 		for (var key in req)
@@ -44,6 +53,7 @@ exports.AsteriskManager = function (newconfig) {
 		if (req.action == 'login')
 			loginId = id;
 		self.conn.write(msg);
+		console.log("send: " + sys.inspect(msg));
 	};
 	
 	this.getParticipant = function(id) {
