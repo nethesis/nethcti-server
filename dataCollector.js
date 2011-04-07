@@ -122,11 +122,11 @@ testUserPermitCustomerCard = function(exten){
 
 /*
  * Test if the user exten has the authorization to view his history of calling. Therefore
- * it check if the user has a query of category "SECTION_NAME_HISTORY_CALL".
+ * it check if the user has a query of category "SECTION__HISTORY_CALL".
  */
 testUserPermitHistoryCall = function(exten){
 
-        if(this.listUserSQLProfiles[exten].listSQLQueries[SECTION_NAME_HISTORY_CALL]!=undefined)
+        if(this.listUserSQLProfiles[exten].listSQLQueries[SECTION_HISTORY_CALL]!=undefined)
                 return true;
         return false;
 
