@@ -57,7 +57,7 @@ exports.DataCollector = function(){
 	this.testPermitUserSearchAddressPhonebook = function(extFrom){ return testPermitUserSearchAddressPhonebook(extFrom); }
 	this.searchContactsPhonebook = function(extFrom, namex, cb){ return searchContactsPhonebook(extFrom, namex, cb); }
 	this.getHistoryCall = function(exten, cb) { return getHistoryCall(exten, cb); }
-	this.testUserPermitHistoryCalling = function(exten) { return testUserPermitHistoryCalling(exten); }
+	this.testUserPermitHistoryCall = function(exten) { return testUserPermitHistoryCall(exten); }
 }
 
 
