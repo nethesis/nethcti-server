@@ -466,6 +466,8 @@ io.on('connection', function(client){
 	  					break;
 	  				}
 	  			}
+				console.log("am.participants = ");
+				console.log(am.participants);
 	  			
 	  			// create hangup action for asterisk server
 		  		var actionCall = {
