@@ -26,7 +26,7 @@ var res = dataCollector.testUserPermitPhonebook(exten);
 console.log("RES = ");
 console.log(res);
 console.log("\n");
-*/
+
 //
 console.log("\nTEST getCustomerCard from applicant 500 for customer 501");
 dataCollector.getPhonebook("500", "501", function(result){
@@ -34,5 +34,11 @@ dataCollector.getPhonebook("500", "501", function(result){
 	console.log(result);
 	console.log("\n");
 });
+*/
 
-
+console.log("\nTEST getHistoryCall for ext 500");
+dataCollector.getHistoryCall("500", function(result){
+        console.log("RES = ");
+        console.log(result);
+        console.log("\n");
+});
