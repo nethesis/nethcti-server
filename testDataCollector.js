@@ -34,7 +34,7 @@ dataCollector.getPhonebook("500", "501", function(result){
 	console.log(result);
 	console.log("\n");
 });
-*/
+
 
 console.log("\nTEST getHistoryCall for ext 500");
 dataCollector.getHistoryCall("500", function(result){
@@ -42,3 +42,11 @@ dataCollector.getHistoryCall("500", function(result){
         console.log(result);
         console.log("\n");
 });
+*/
+
+//
+console.log("\nTEST testUserPermitHistoryCall " + exten);
+var res = dataCollector.testUserPermitHistoryCall(exten);
+console.log("RES = ");
+console.log(res);
+console.log("\n");
