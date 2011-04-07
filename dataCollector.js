@@ -56,7 +56,8 @@ exports.DataCollector = function(){
 	this.getCustomerCard = function(extenApplicant, extenCustomerCard, cb) { return getCustomerCard(extenApplicant, extenCustomerCard, cb); }
 	this.testPermitUserSearchAddressPhonebook = function(extFrom){ return testPermitUserSearchAddressPhonebook(extFrom); }
 	this.searchContactsPhonebook = function(extFrom, namex, cb){ return searchContactsPhonebook(extFrom, namex, cb); }
-	this.getHistoryCall = function(ext, cb) { return getHistoryCall(ext, cb); }
+	this.getHistoryCall = function(exten, cb) { return getHistoryCall(exten, cb); }
+	this.testUserPermitHistoryCalling = function(exten) { return testUserPermitHistoryCalling(exten); }
 }
 
 
@@ -117,6 +118,22 @@ testUserPermitCustomerCard = function(exten){
 	return false;
 
 }
+
+
+/*
+ * Test if the user exten has the authorization to view his history of calling. Therefore
+ * it check if the user has a query of category "SECTION_NAME_HISTORY_CALL".
+ */
+testUserPermitHistoryCall = function(exten){
+
+        if(this.listUserSQLProfiles[exten].listSQLQueries[SECTION_NAME_HISTORY_CALL]!=undefined)
+                return true;
+        return false;
+
+}
+
+
+
 
 /* 
  * Return the full history of calling.
