@@ -863,8 +863,12 @@ io.on('connection', function(client){
                                 // check if the user has the permit to get history of calling
                                 var res = dataCollector.testUserPermitHistoryCall(extFrom);
                                 if(res){
+					// format date for query sql
+					var dateFormat = formatDate(message.date);					
+					console.log("dateFormat for query = " + dateFormat);
+
                                         // execute query to search contact in phonebook
-                                        dataCollector.getDayHistoryCall(extFrom, message.date, function(results){
+                                        dataCollector.getDayHistoryCall(extFrom, dateFormat, function(results){
                                                 var mess = new ResponseMessage(client.sessionId, "day_history_call", "received day history call");
                                                 mess.results = results;
                                                 client.send(mess);
@@ -897,6 +901,16 @@ io.on('connection', function(client){
 log("asterisk manager connection");
 am.connect();
 
+
+
+// Format date from gg/mm/yyyy to yyyy-mm-dd
+function formatDate(date){
+	var ar = date.split('/');	
+	var result = ar[2] + "-";
+	result += ar[1] + "-";
+	result += ar[0];
+	return result;
+}
 
 /*
  * Remove client with specified sessionId
@@ -975,66 +989,6 @@ createCustomerCardHTML = function(customerCard, from){
 }
 
 
-/*
- * Create html code to return to the client for view his history call.
- */
-/*
-createResultHistoryCall = function(results){
-
-	var HTMLresult = '';
-
-        // read file
-        var htmlTemplate = fs.readFileSync(TEMPLATE_DECORATOR_HISTORY_CALL_FILENAME, "UTF-8", function(err, data) {
-                if(err){
-                        sys.puts("error in reading file");
-                        sys.puts(err);
-                        return;
-                }
-                return data;
-        });
-
-	// repeat htmlTemplate for number of results
-        var currentCall = '';
-        var temp = '';
-        var template = '';
-	var once = true;
-
-	/* check if there is one part ot html template that must be present only once.
-	 * If the template has the {:if once} then this if create a header, else
-	 * simply don't create nothing.
- 	 */
-/*
-	if(once){
-		currentCall = {};
-                currentCall.once = 'true';
-        	once = false;
-
-		template = normal.compile(htmlTemplate);
-		temp = template(currentCall);
-		HTMLresult += temp;
-        }
-
-        for(var i=0; i<results.length; i++){
-
-                currentCall = results[i];
-                template = normal.compile(htmlTemplate);
-
-                temp = template(currentCall);
-
-                HTMLresult += temp;
-        }
-	
-	if(results.length==0){
-		results = {};
-		results.emptyHistoryCall = 'true';
-		template = normal.compile(htmlTemplate);
-                temp = template(results);
-
-                HTMLresult += temp;
-	}
-        return HTMLresult;
-}
-*/
 
 /* Create the html code for viewing result of searching contacts in phonebook.
  * It read template html file and personalize it with the parameter results.
