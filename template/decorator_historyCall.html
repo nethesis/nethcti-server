@@ -1,0 +1,77 @@
+{:if emptyHistoryCall}
+<table width="50%" cellpadding="5" style="border: 1px solid gray">
+	<tr>
+		<td>Sorry, but the history call is empty.</td>
+	</tr>
+</table>
+{:else}
+<table class='contactsVCard' width="50%" cellpadding="5" style="border: 1px solid gray">
+	<tr>
+		<td width='40%'>Call date:</td>
+		<td>{=calldate}</td>
+	</tr>
+	<tr>
+		<td>User:</td>
+		<td>{=clid}</td>
+	</tr>
+	<tr>
+		<td>Source:</td>
+		<td>{=src}</td>
+	</tr>
+	<tr>
+		<td>Destination:</td>
+		<td>{=dst}</td>
+	</tr>
+	<tr>
+		<td>dcontext</td>
+		<td>{=dcontext}</td>
+	</tr>
+	<tr>
+		<td>Channel:</td>
+		<td>{=channel}</td>
+	</tr>
+	<tr>
+		<td>dstchannel</td>
+		<td>{=dstchannel}</td>
+	</tr>
+	<tr>
+		<td>lastapp:</td>
+		<td>{=lastapp}</td>
+	</tr>
+	<tr>
+		<td>lastdata:</td>
+		<td>{=lastdata}</td>
+	</tr>
+	<tr>
+		<td>Duration:</td>
+		<td>{=duration}</td>
+	</tr>
+	<tr>
+		<td>Bill sec:</td>
+		<td>{=billsec}</td>
+	</tr>
+	<tr>
+		<td>disposition:</td>
+		<td>{=disposition}</td>
+	</tr>
+	<tr>
+		<td>amaflags:</td>
+		<td>{=amaflags}</td>
+	</tr>
+	<tr>
+		<td>accountcode:</td>
+		<td>{=accountcode}</td>
+	</tr>
+	<tr>
+		<td>uniqueid:</td>
+		<td>{=uniqueid}</td>
+	</tr>
+	<tr>
+		<td>userfield:</td>
+		<td>{=userfield}</td>
+	</tr>
+</table>
+{/:if}
+
+	
+
