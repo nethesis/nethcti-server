@@ -136,7 +136,7 @@ testUserPermitHistoryCall = function(exten){
 
 
 /* 
- * Return the full history of calling.
+ * Return the history of calling of one day.
  */
 getDayHistoryCall = function(ext, date, cb){
 
@@ -158,7 +158,6 @@ getDayHistoryCall = function(ext, date, cb){
 		while(currentSQLQueryObj.sqlQueryStr.indexOf("$DATE")!=-1){
                         currentSQLQueryObj.sqlQueryStr = currentSQLQueryObj.sqlQueryStr.replace("$DATE", date);
                 }
-
 
                 // execute current sql query
                 executeSQLQuery(currentSQLQueryObj, function(results){
