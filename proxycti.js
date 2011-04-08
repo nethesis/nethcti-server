@@ -977,10 +977,27 @@ createResultHistoryCall = function(results){
         var currentCall = '';
         var temp = '';
         var template = '';
+	var once = true;
+
+	/* check if there is one part ot html template that must be present only once.
+	 * If the template has the {:if once} then this if create a header, else
+	 * simply don't create nothing.
+ 	 */
+	if(once){
+		currentCall = {};
+                currentCall.once = 'true';
+        	once = false;
+
+		template = normal.compile(htmlTemplate);
+		temp = template(currentCall);
+		HTMLresult += temp;
+        }
+
         for(var i=0; i<results.length; i++){
 
                 currentCall = results[i];
                 template = normal.compile(htmlTemplate);
+
                 temp = template(currentCall);
 
                 HTMLresult += temp;
