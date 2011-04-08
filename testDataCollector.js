@@ -42,7 +42,6 @@ dataCollector.getHistoryCall("500", function(result){
         console.log(result);
         console.log("\n");
 });
-*/
 
 //
 console.log("\nTEST testUserPermitHistoryCall " + exten);
@@ -50,3 +49,11 @@ var res = dataCollector.testUserPermitHistoryCall(exten);
 console.log("RES = ");
 console.log(res);
 console.log("\n");
+*/
+
+console.log("\nTEST getDayHistoryCall for ext 500");
+dataCollector.getDayHistoryCall("500", "2011-04-08", function(result){
+        console.log("RES = ");
+        console.log(result);
+        console.log("\n");
+});
