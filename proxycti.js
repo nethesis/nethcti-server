@@ -343,6 +343,7 @@ io.on('connection', function(client){
   		const ACTION_CF_OFF = "cf_off";
   		const ACTION_CHECK_CF_STATUS = "check_cf_status";
   		const ACTION_GET_HISTORY_CALL = "get_history_call";
+  		const ACTION_GET_DAY_HISTORY_CALL = "get_day_history_call";
 		
   		
   		
@@ -844,10 +845,8 @@ io.on('connection', function(client){
                                 if(res){
                                         // execute query to search contact in phonebook
                                         dataCollector.getHistoryCall(extFrom, function(results){
-
-                                                var resultHTML = createResultHistoryCall(results);
                                                 var mess = new ResponseMessage(client.sessionId, "history_call", "received history call");
-                                                mess.resultHTML = resultHTML;
+                                                mess.results = results;
                                                 client.send(mess);
                                                 log("History call of [" + extFrom + "] has been sent to the client");
                                         });
@@ -856,6 +855,26 @@ io.on('connection', function(client){
                                         log("ATTENTION: " + extFrom + " is not enabled to view history call !");
                                         client.send(new ResponseMessage(client.sessionId, "error_history_call", "Sorry: you don't have permission to view history call !"));
                                         log("error_history_call has been sent to [" + extFrom + "] with: " + client.sessionId);
+                                }
+                        break;
+			case ACTION_GET_DAY_HISTORY_CALL:
+                                log("received " + ACTION_GET_DAY_HISTORY_CALL + " request from exten [" + extFrom + "]");
+
+                                // check if the user has the permit to get history of calling
+                                var res = dataCollector.testUserPermitHistoryCall(extFrom);
+                                if(res){
+                                        // execute query to search contact in phonebook
+                                        dataCollector.getDayHistoryCall(extFrom, message.date, function(results){
+                                                var mess = new ResponseMessage(client.sessionId, "day_history_call", "received day history call");
+                                                mess.results = results;
+                                                client.send(mess);
+                                                log("Day history call of [" + extFrom + "] has been sent to the client");
+                                        });
+                                }
+                                else{
+                                        log("ATTENTION: " + extFrom + " is not enabled to view day history call !");
+                                        client.send(new ResponseMessage(client.sessionId, "error_day_history_call", "Sorry: you don't have permission to view day history call !"));
+                                        log("error_day_history_call has been sent to [" + extFrom + "] with: " + client.sessionId);
                                 }
                         break;
 	  		default:
@@ -959,6 +978,7 @@ createCustomerCardHTML = function(customerCard, from){
 /*
  * Create html code to return to the client for view his history call.
  */
+/*
 createResultHistoryCall = function(results){
 
 	var HTMLresult = '';
@@ -983,6 +1003,7 @@ createResultHistoryCall = function(results){
 	 * If the template has the {:if once} then this if create a header, else
 	 * simply don't create nothing.
  	 */
+/*
 	if(once){
 		currentCall = {};
                 currentCall.once = 'true';
@@ -1013,7 +1034,7 @@ createResultHistoryCall = function(results){
 	}
         return HTMLresult;
 }
-
+*/
 
 /* Create the html code for viewing result of searching contacts in phonebook.
  * It read template html file and personalize it with the parameter results.
