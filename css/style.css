@@ -96,22 +96,3 @@
 .smaller {
    font-size: 80%;
 }
-
-.historyCall {
-   width: 2000px; 
-}
-
-.historyCall .td {
-	text-align: center;
-}
-
-.headerHistoryCall {
-	border: 2px solid gray;
-	background: #ccc;
-	height: 40px;	
-}
-
-.historyCallRecord {
-	border: 1px solid #eef;
-	height: 30px;
-}
