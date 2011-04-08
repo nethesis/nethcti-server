@@ -31,6 +31,7 @@ const DEBUG = true;
 const PROXY_CONFIG_FILENAME = "proxycti.conf";
 const TEMPLATE_DECORATOR_VCARD_FILENAME = "./template/decorator_vcard.html";
 const TEMPLATE_DECORATOR_CUSTOMERCARD_FILENAME = "./template/decorator_customerCard.html";
+const TEMPLATE_DECORATOR_HISTORY_CALL_FILENAME = "./template/decorator_historyCall.html";
 
 // The response that this server pass to the clients.
 var ResponseMessage = function(clientSessionId, typeMessage, respMessage){
@@ -341,6 +342,8 @@ io.on('connection', function(client){
   		const ACTION_CF_ON = "cf_on";
   		const ACTION_CF_OFF = "cf_off";
   		const ACTION_CHECK_CF_STATUS = "check_cf_status";
+  		const ACTION_GET_HISTORY_CALL = "get_history_call";
+		
   		
   		
   		// manage request
@@ -833,6 +836,28 @@ io.on('connection', function(client){
 					}
 				});
 	  		break;
+			case ACTION_GET_HISTORY_CALL:
+                                log("received " + ACTION_GET_HISTORY_CALL + " request from exten [" + extFrom + "]");
+				
+				// check if the user has the permit to get history of calling
+                                var res = dataCollector.testUserPermitHistoryCall(extFrom);
+                                if(res){
+                                        // execute query to search contact in phonebook
+                                        dataCollector.getHistoryCall(extFrom, function(results){
+
+                                                var resultHTML = createResultHistoryCall(results);
+                                                var mess = new ResponseMessage(client.sessionId, "history_call", "received history call");
+                                                mess.resultHTML = resultHTML;
+                                                client.send(mess);
+                                                log("History call of [" + extFrom + "] has been sent to the client");
+                                        });
+                                }
+                                else{
+                                        log("ATTENTION: " + extFrom + " is not enabled to view history call !");
+                                        client.send(new ResponseMessage(client.sessionId, "error_history_call", "Sorry: you don't have permission to view history call !"));
+                                        log("error_history_call has been sent to [" + extFrom + "] with: " + client.sessionId);
+                                }
+                        break;
 	  		default:
 	  			log("ATTENTION: action '" + action + "'not provided");
 	  		break;
@@ -929,6 +954,49 @@ createCustomerCardHTML = function(customerCard, from){
 		
 	return HTMLresult;
 }
+
+
+/*
+ * Create html code to return to the client for view his history call.
+ */
+createResultHistoryCall = function(results){
+
+	var HTMLresult = '';
+
+        // read file
+        var htmlTemplate = fs.readFileSync(TEMPLATE_DECORATOR_HISTORY_CALL_FILENAME, "UTF-8", function(err, data) {
+                if(err){
+                        sys.puts("error in reading file");
+                        sys.puts(err);
+                        return;
+                }
+                return data;
+        });
+
+	// repeat htmlTemplate for number of results
+        var currentCall = '';
+        var temp = '';
+        var template = '';
+        for(var i=0; i<results.length; i++){
+
+                currentCall = results[i];
+                template = normal.compile(htmlTemplate);
+                temp = template(currentCall);
+
+                HTMLresult += temp;
+        }
+	
+	if(results.length==0){
+		results = {};
+		results.emptyHistoryCall = 'true';
+		template = normal.compile(htmlTemplate);
+                temp = template(results);
+
+                HTMLresult += temp;
+	}
+        return HTMLresult;
+}
+
 
 /* Create the html code for viewing result of searching contacts in phonebook.
  * It read template html file and personalize it with the parameter results.
