@@ -5,6 +5,7 @@ var DATACOLLECTOR_CONFIG_FILENAME = "dataProfiles.conf";
 var SECTION_NAME_CUSTOMER_CARD = "customer_card";
 var SECTION_SEARCH_ADDRESSES = "search_addresses";
 var SECTION_HISTORY_CALL = "history_call";
+var SECTION_DAY_HISTORY_CALL = "day_history_call";
 
 //var SECTION_NAME_CUSTOMER_CARD = "customer_card";// for development
 
@@ -57,6 +58,7 @@ exports.DataCollector = function(){
 	this.testPermitUserSearchAddressPhonebook = function(extFrom){ return testPermitUserSearchAddressPhonebook(extFrom); }
 	this.searchContactsPhonebook = function(extFrom, namex, cb){ return searchContactsPhonebook(extFrom, namex, cb); }
 	this.getHistoryCall = function(exten, cb) { return getHistoryCall(exten, cb); }
+	this.getDayHistoryCall = function(exten, date, cb) { return getDayHistoryCall(exten, date, cb); }
 	this.testUserPermitHistoryCall = function(exten) { return testUserPermitHistoryCall(exten); }
 }
 
@@ -133,6 +135,49 @@ testUserPermitHistoryCall = function(exten){
 }
 
 
+/* 
+ * Return the full history of calling.
+ */
+getDayHistoryCall = function(ext, date, cb){
+
+        var currentUserSQLProfileObj = getUserSQLProfile(ext);
+        var currentSQLQueryObj = currentUserSQLProfileObj.listSQLQueries[SECTION_DAY_HISTORY_CALL];
+
+        console.log("currentSQLQueryObj =");
+        console.log(currentSQLQueryObj);
+        console.log(currentSQLQueryObj.sqlQueryStr);
+
+        if(currentSQLQueryObj!=undefined){
+
+		// substitue $EXTEN
+                while(currentSQLQueryObj.sqlQueryStr.indexOf("$EXTEN")!=-1){
+                        currentSQLQueryObj.sqlQueryStr = currentSQLQueryObj.sqlQueryStr.replace("$EXTEN", ext);
+                }
+
+		// substitute $DATE
+		while(currentSQLQueryObj.sqlQueryStr.indexOf("$DATE")!=-1){
+                        currentSQLQueryObj.sqlQueryStr = currentSQLQueryObj.sqlQueryStr.replace("$DATE", date);
+                }
+
+
+                // execute current sql query
+                executeSQLQuery(currentSQLQueryObj, function(results){
+                        cb(results);
+                });
+
+
+		while(currentSQLQueryObj.sqlQueryStr.indexOf(ext)!=-1){
+                        currentSQLQueryObj.sqlQueryStr = currentSQLQueryObj.sqlQueryStr.replace(ext, "$EXTEN");
+                }
+
+                while(currentSQLQueryObj.sqlQueryStr.indexOf(date)!=-1){
+                        currentSQLQueryObj.sqlQueryStr = currentSQLQueryObj.sqlQueryStr.replace(date, "$DATE");
+                }
+
+        }
+        return undefined;
+}
+
 
 
 /* 
@@ -143,12 +188,7 @@ getHistoryCall = function(ext, cb){
 	var currentUserSQLProfileObj = getUserSQLProfile(ext);
         var currentSQLQueryObj = currentUserSQLProfileObj.listSQLQueries[SECTION_HISTORY_CALL];
 
-	console.log("currentSQLQueryObj =");
-	console.log(currentSQLQueryObj);
-	console.log(currentSQLQueryObj.sqlQueryStr);
-	
 	if(currentSQLQueryObj!=undefined){
-
 	
                 while(currentSQLQueryObj.sqlQueryStr.indexOf("$EXTEN")!=-1){
                         currentSQLQueryObj.sqlQueryStr = currentSQLQueryObj.sqlQueryStr.replace("$EXTEN", ext);
@@ -159,15 +199,11 @@ getHistoryCall = function(ext, cb){
                         cb(results);
                 });
 
-
                 while(currentSQLQueryObj.sqlQueryStr.indexOf(ext)!=-1){
                         currentSQLQueryObj.sqlQueryStr = currentSQLQueryObj.sqlQueryStr.replace(ext, "$EXTEN");
                 }
-
         }
         return undefined;
-
-	
 }
 
 /*
