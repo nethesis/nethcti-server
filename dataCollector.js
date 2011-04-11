@@ -294,6 +294,7 @@ executeSQLQuery = function(currentSQLQueryObj, cb){
 		query = currentSQLQueryObj.sqlQueryStr + ";";
 		client.query(query, function selectCb(err, results, fields) {
 		    if (err) {
+			client.end();
       			throw err;
 		    }
 
