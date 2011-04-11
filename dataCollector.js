@@ -82,7 +82,6 @@ searchContactsPhonebook = function(extFrom, namex, cb){
 		
 			currentSQLQueryObj.sqlQueryStr = currentSQLQueryObj.sqlQueryStr.replace("$NAME_TO_REPLACE", namex);
 		}
-		
 		// execute current sql query
 		executeSQLQuery(currentSQLQueryObj, function(results){
 			cb(results);
@@ -297,10 +296,11 @@ executeSQLQuery = function(currentSQLQueryObj, cb){
 			client.end();
       			throw err;
 		    }
-
 		    client.end();
 		    cb(results);
 		});
+
+
 	}
 	// execute query to microsoft sql server
 	else if(currentSQLQueryObj.dbType=="mssql"){

@@ -57,7 +57,7 @@ dataCollector.getDayHistoryCall("500", "2011-04-08", function(result){
         console.log(result);
         console.log("\n");
 });
-*/
+
 
 
 //
@@ -66,3 +66,12 @@ var res = dataCollector.testUserPermitDayHistoryCall(exten);
 console.log("RES = ");
 console.log(res);
 console.log("\n");
+*/
+
+
+console.log("\nTEST testSearchContactsPhonebook " + exten);
+	var res = dataCollector.searchContactsPhonebook("500", "ale", function(res){
+		console.log("RES = ");
+		console.log(res);
+		console.log("\n");
+	});
