@@ -858,7 +858,7 @@ io.on('connection', function(client){
                                 }
                         break;
 			case ACTION_GET_DAY_HISTORY_CALL:
-                                log("received " + ACTION_GET_DAY_HISTORY_CALL + " request from exten [" + extFrom + "]");
+                                log("received " + ACTION_GET_DAY_HISTORY_CALL + " request from exten [" + extFrom + "] for date = " + message.date);
 
                                 // check if the user has the permit to get history of calling
                                 var res = dataCollector.testUserPermitHistoryCall(extFrom);
