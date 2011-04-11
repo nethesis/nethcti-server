@@ -60,6 +60,7 @@ exports.DataCollector = function(){
 	this.getHistoryCall = function(exten, cb) { return getHistoryCall(exten, cb); }
 	this.getDayHistoryCall = function(exten, date, cb) { return getDayHistoryCall(exten, date, cb); }
 	this.testUserPermitHistoryCall = function(exten) { return testUserPermitHistoryCall(exten); }
+	this.testUserPermitDayHistoryCall = function(exten) { return testUserPermitDayHistoryCall(exten); }
 }
 
 
@@ -133,6 +134,23 @@ testUserPermitHistoryCall = function(exten){
         return false;
 
 }
+
+
+
+/*
+ * Test if the user exten has the authorization to view his day history of calling. Therefore
+ * it check if the user has a query of category "SECTION_DAY_HISTORY_CALL".
+ */
+testUserPermitDayHistoryCall = function(exten){
+
+        if(this.listUserSQLProfiles[exten].listSQLQueries[SECTION_DAY_HISTORY_CALL]!=undefined)
+                return true;
+        return false;
+
+}
+
+
+
 
 
 /* 
