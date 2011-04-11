@@ -861,7 +861,8 @@ io.on('connection', function(client){
                                 log("received " + ACTION_GET_DAY_HISTORY_CALL + " request from exten [" + extFrom + "] for date = " + message.date);
 
                                 // check if the user has the permit to get history of calling
-                                var res = dataCollector.testUserPermitHistoryCall(extFrom);
+                                var res = dataCollector.testUserPermitDayHistoryCall(extFrom);
+console.log("The res is: " + res);
                                 if(res){
 					// format date for query sql
 					var dateFormat = formatDate(message.date);					
