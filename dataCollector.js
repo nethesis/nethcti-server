@@ -100,7 +100,7 @@ searchContactsPhonebook = function(extFrom, namex, cb){
  * Test if the user exten has the authorization to search contact in phonebook. 
  */
 testPermitUserSearchAddressPhonebook = function(exten){
-
+	
 	if(this.listUserSQLProfiles[exten].listSQLQueries[SECTION_SEARCH_ADDRESSES]!=undefined)
 		return true;
 	return false;
@@ -304,7 +304,21 @@ executeSQLQuery = function(currentSQLQueryObj, cb){
 	}
 	// execute query to microsoft sql server
 	else if(currentSQLQueryObj.dbType=="mssql"){
-		console.log("connection to mssql TO IMPLEMENT !!!!!!!");		
+		var odbc = require("./lib/node-odbc/odbc");
+
+		var db = new odbc.Database();
+		var connect_str = "DRIVER={FreeTDS};SERVER="+currentSQLQueryObj.dbHost+";UID="+currentSQLQueryObj.dbUsername+";PWD="+currentSQLQueryObj.dbPassword+";DATABASE="+currentSQLQueryObj.dbName;
+		query = currentSQLQueryObj.sqlQueryStr + ";";
+
+		db.open(connect_str, function(err)
+		{
+    			db.query(query, function(err, rows, moreResultSets)
+    			{
+				cb(rows);
+        			db.close(function(){});
+    			});
+		});
+
 	}
 	
 }
