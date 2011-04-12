@@ -571,7 +571,7 @@ io.on('connection', function(client){
 	  			
 	  				// create filename	
 	  				var timestamp = new Date().getTime();
-	  				var filename = 'from_' + message.callFromExt + '_to_' + message.callToExt + "_" + timestamp; 
+	  				var filename = 'auto-' + timestamp + "-" + message.callFromExt + '-' + message.callToExt; 
 
 	  				// create record action for asterisk server
 			  		var actionRecord = {
