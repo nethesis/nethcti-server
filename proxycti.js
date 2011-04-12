@@ -40,9 +40,8 @@ var ResponseMessage = function(clientSessionId, typeMessage, respMessage){
 	this.respMessage = respMessage;
 }
 
-var date = new Date();
 function log(msg){
-	if (DEBUG) console.log(date.toUTCString() + ": " + msg);
+	if (DEBUG) console.log(new Date().toUTCString() + ": " + msg);
 }
 
 
