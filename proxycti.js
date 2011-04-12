@@ -211,7 +211,7 @@ am.addListener('unhold', function(participant) {
 });
 
 am.addListener('hangup', function(participant, code, text) {
-	var other = am.getParticipant(participant['with']);
+
 	if(DEBUG) sys.puts("CLIENT: " + participant.number + " (" + participant.name + ") has hung up. Reason: " + code + "  ( Code: " + text + ")");
 	
 	var ext = participant.number;
@@ -223,10 +223,18 @@ am.addListener('hangup', function(participant, code, text) {
 		log("Notify of hangup has been sent to " + ext);
 	}
 	
-	
-	
-	// it is needed for manage hangup
-	delete am.participants[participant['with']];
+	/* bug fix of asterisk.js in the wrong management of am.participants.
+	 * If this code is commented, am.participants grow with more entry of the same extension,
+	 * so it refer wrong with number in follow hangup request.
+ 	 */
+	for(key in am.participants){
+		if(am.participants[key].number==participant.number){
+			delete am.participants[key];
+			console.log("deleted from am.participants the entry relative to " + participant.number);
+			console.log("Then the am.participants is = ");
+			console.log(am.participants);
+		}
+	}
 });
 
 am.addListener('callreport', function(report) {
@@ -351,6 +359,9 @@ io.on('connection', function(client){
   		// manage request
   		switch(action){
   			case ACTION_LOGIN:
+
+		console.log("am.participants in action_login = ");
+		console.log(am.participants);
 	  		
 	  			if(authenticator.authenticateUser(extFrom, message.secret)){  // the user is authenticated
   				
