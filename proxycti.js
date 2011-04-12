@@ -345,14 +345,13 @@ io.on('connection', function(client){
   		const ACTION_GET_HISTORY_CALL = "get_history_call";
   		const ACTION_GET_DAY_HISTORY_CALL = "get_day_history_call";
 		
-  		
+  		log("received " + action + " request from exten [" + extFrom + "] with sessiondId = " + client.sessionId + " with message = ");	
+		console.log(message);
   		
   		// manage request
   		switch(action){
   			case ACTION_LOGIN:
 	  		
-	  			log("received " + ACTION_LOGIN + " request from exten [" + extFrom + "] with secret [" + message.secret + "]");
-  	
 	  			if(authenticator.authenticateUser(extFrom, message.secret)){  // the user is authenticated
   				
 					// check if the user sessionId with extFrom is already logged in
@@ -409,7 +408,6 @@ io.on('connection', function(client){
 	  			
 	  			// in this case the message has also the information about the exten to call
   				var extToCall = message.extToCall;
-	  			log("received " + ACTION_CALLOUT + " request from: " + extFrom + " -> " + extToCall);		
   				
   				// check if the client is logged in
 	  			if(clients[extFrom]==undefined){
@@ -460,8 +458,6 @@ io.on('connection', function(client){
 		  	break;
 		  	case ACTION_HANGUP:
 	  		
-	  			log("received " + ACTION_HANGUP + " request from exten [" + extFrom + "]");
-	  			
 	  			// retrieve the id of the client who has request the hangup
 	  			var id;
 	  			for(key in am.participants){
@@ -485,8 +481,6 @@ io.on('connection', function(client){
 	  		break;
 	  		case ACTION_LOGOUT:
 	  		
-	  			log("received " + ACTION_LOGOUT + " request from exten [" + extFrom + "]");
-	  		
 	  			removeClient(client.sessionId);
 	  			if(!testAlreadyLoggedSessionId(client.sessionId)){
 			  		log("Client " + client.sessionId + " logged out");
@@ -496,8 +490,6 @@ io.on('connection', function(client){
 		  		log("clients length = " + Object.keys(clients).length);
 	  		break;
 	  		case ACTION_REDIRECT:
-	  			
-	  			log("received " + ACTION_REDIRECT + " from " + message.redirectFrom + " to " + message.redirectTo);
 	  			
 	  			// check if the user has the permit of dial out
 	  			if(profiler.testPermitActionUser(extFrom, "redirect")){
@@ -535,8 +527,6 @@ io.on('connection', function(client){
 	  		break;
 	  		case ACTION_SEARCH_CONTACT_PHONEBOOK:
 	  		
-	  			log("received " + ACTION_SEARCH_CONTACT_PHONEBOOK + " request from exten [" + extFrom + "] for name: " + message.namex);
-		
 	  			// check if the user has the permit to search contact in phonebook
 	  			var res = dataCollector.testPermitUserSearchAddressPhonebook(extFrom);
 	  			if(res){
@@ -558,8 +548,6 @@ io.on('connection', function(client){
 	  			}
 	  		break;
 	  		case ACTION_RECORD:
-	  			
-	  			log("received " + ACTION_RECORD + " request from exten [" + extFrom + "]");
 	  			
 	  			// check if the user has the permit of dial out
 	  			if(profiler.testPermitActionUser(extFrom, "record")){
@@ -599,8 +587,6 @@ io.on('connection', function(client){
 	  		break;
 	  		case ACTION_STOP_RECORD:
 	  		
-	  			log("received " + ACTION_STOP_RECORD + " request from exten [" + extFrom + "]");
-  			
   				// get channel
   				var channel = '';
   				for(key in am.participants){
@@ -625,8 +611,6 @@ io.on('connection', function(client){
 	  		break;
 	  		case ACTION_DND_ON:
 	  		
-	  			log("received " + ACTION_DND_ON + " request from exten [" + extFrom + "]");
-	  			
 	  			// create action for asterisk server
 	  			var cmd = "database put DND " + extFrom + " 1";
 			  	var actionDNDon = {
@@ -646,8 +630,6 @@ io.on('connection', function(client){
 	  		break;
 	  		case ACTION_DND_OFF:
 	  		
-		  		log("received " + ACTION_DND_OFF + " request from exten [" + extFrom + "]");
-		  		
 		  		// create action for asterisk server
 	  			var cmd = "database del DND " + extFrom;
 			  	var actionDNDoff = {
@@ -666,7 +648,6 @@ io.on('connection', function(client){
 	  			
 	  		break;
 	  		case ACTION_CHECK_DND_STATUS:
-	  			log("received " + ACTION_CHECK_DND_STATUS + " request from exten [" + extFrom + "]");
 	  			
 	  			// create action for asterisk server
 	  			var cmd = "database get DND " + extFrom;
@@ -696,8 +677,6 @@ io.on('connection', function(client){
 	  		break;
 	  		case ACTION_CW_ON:
 	  		
-	  			log("received " + ACTION_CW_ON + " request from exten [" + extFrom + "]");
-	  			
 	  			// create action for asterisk server
 	  			var cmd = "database put CW " + extFrom + " 1";
 			  	var actionCWon = {
@@ -717,8 +696,6 @@ io.on('connection', function(client){
 	  		break;
 	  		case ACTION_CW_OFF:
 	  		
-		  		log("received " + ACTION_CW_OFF + " request from exten [" + extFrom + "]");
-		  		
 		  		// create action for asterisk server
 	  			var cmd = "database del CW " + extFrom;
 			  	var actionCWoff = {
@@ -737,7 +714,6 @@ io.on('connection', function(client){
 	  			
 	  		break;
 	  		case ACTION_CHECK_CW_STATUS:
-	  			log("received " + ACTION_CHECK_CW_STATUS + " request from exten [" + extFrom + "]");
 	  			
 	  			// create action for asterisk server
 	  			var cmd = "database get CW " + extFrom;
@@ -767,7 +743,6 @@ io.on('connection', function(client){
 	  		case ACTION_CF_ON:
 	  		
 	  			var extTo = message.extTo;
-	  			log("received " + ACTION_CF_ON + " request from exten [" + extFrom + "] to [" +extTo + "]");
 	  			
 	  			// create action for asterisk server
 	  			var cmd = "database put CF " + extFrom + " " + extTo;
@@ -788,8 +763,6 @@ io.on('connection', function(client){
 	  		break;
 	  		case ACTION_CF_OFF:
 	  		
-		  		log("received " + ACTION_CF_OFF + " request from exten [" + extFrom + "]");
-		  		
 		  		// create action for asterisk server
 	  			var cmd = "database del CF " + extFrom;
 			  	var actionCFoff = {
@@ -808,7 +781,6 @@ io.on('connection', function(client){
 	  			
 	  		break;
 	  		case ACTION_CHECK_CF_STATUS:
-	  			log("received " + ACTION_CHECK_CF_STATUS + " request from exten [" + extFrom + "]");
 	  			
 	  			// create action for asterisk server
 	  			var cmd = "database get CF " + extFrom;
@@ -838,7 +810,6 @@ io.on('connection', function(client){
 				});
 	  		break;
 			case ACTION_GET_HISTORY_CALL:
-                                log("received " + ACTION_GET_HISTORY_CALL + " request from exten [" + extFrom + "]");
 				
 				// check if the user has the permit to get history of calling
                                 var res = dataCollector.testUserPermitHistoryCall(extFrom);
@@ -858,7 +829,6 @@ io.on('connection', function(client){
                                 }
                         break;
 			case ACTION_GET_DAY_HISTORY_CALL:
-                                log("received " + ACTION_GET_DAY_HISTORY_CALL + " request from exten [" + extFrom + "] for date = " + message.date);
 
                                 // check if the user has the permit to get history of calling
                                 var res = dataCollector.testUserPermitDayHistoryCall(extFrom);
