@@ -90,33 +90,33 @@ am.addListener('agentcalled', function(fromid, fromname, queue, destchannel) {
 	
 	if(to!=undefined && clients[to]!=undefined){
 
-        var msg = "Call incoming from [" + fromid + " : " + fromname + "] to queue " + queue + " and to " + to;	
+	        var msg = "Call incoming from [" + fromid + " : " + fromname + "] to queue " + queue + " and to " + to;	
 		var c = clients[to];
 		var response = new ResponseMessage(c.sessionId, "dialing", msg);
 		response.from = fromid;
-       	response.to = to;
+		response.to = to;
 		if(dataCollector.testUserPermitCustomerCard(to)){
-	    	// the user has the authorization of view customer card 
-	    	log("The user " + to + " has the permit of view customer card of [" + fromid + " : " + fromname + "]");
+			// the user has the authorization of view customer card 
+		    	log("The user " + to + " has the permit of view customer card of [" + fromid + " : " + fromname + "]");
 	    	
 			response.canViewCustomerCard = true;
 			
-	        dataCollector.getCustomerCard(to, fromid, function(customerCard){
+		       	dataCollector.getCustomerCard(to, fromid, function(customerCard){
 	        
-	        	var custCardHTML = createCustomerCardHTML(customerCard[0], from.number);
-  				response.customerCard = custCardHTML;
-  				c.send(response);
+	       			var custCardHTML = createCustomerCardHTML(customerCard[0], from.number);
+				response.customerCard = custCardHTML;
+				c.send(response);
 				log("Notify of calling has been sent to client " + to.number);
-            });
+		       	});
 		}
-	    else{
-        	// the user hasn't the authorization of view customer card
-        	log("The user " + to.number + " hasn't the permit of view customer card");
-          	response.canViewCustomerCard = false;
-          	response.customerCard = "<p>" + to.number + "hasn't the permit of view customer card !</p>";
-            c.send(response);
-            log("Notify of calling has been sent to client " + to);
-       	}
+		else{
+	        	// the user hasn't the authorization of view customer card
+		        log("The user " + to.number + " hasn't the permit of view customer card");
+		        response.canViewCustomerCard = false;
+		        response.customerCard = "<p>" + to.number + "hasn't the permit of view customer card !</p>";
+		        c.send(response);
+		        log("Notify of calling has been sent to client " + to);
+	       	}
 	}
 });
 
@@ -134,7 +134,6 @@ am.addListener('dialing', function(from, to) {
 	}
 
 	log("Dial: " + sys.inspect(from) + " -> "+ sys.inspect(to));
-	
 	
 	if(to!=undefined && clients[to.number]!=undefined){
 	
@@ -353,6 +352,7 @@ io.on('connection', function(client){
   		const ACTION_GET_DAY_HISTORY_CALL = "get_day_history_call";
   		const ACTION_GET_CURRENT_WEEK_HISTORY_CALL = "get_current_week_history_call";
   		const ACTION_GET_CURRENT_MONTH_HISTORY_CALL = "get_current_month_history_call";
+  		const ACTION_CHECK_CALL_AUDIO_FILE = "check_call_audio_file";
 		
   		log("received " + action + " request from exten [" + extFrom + "] with sessiondId = " + client.sessionId + " with message = ");	
 		console.log(message);
@@ -565,17 +565,32 @@ io.on('connection', function(client){
 	  			if(profiler.testPermitActionUser(extFrom, "record")){
 	  			
 	  				var channel = '';
+					var uniqueid = '';
 	  				for(key in am.participants){
+						console.log("QUI am.participants[" + key + "] = " + sys.inspect(am.participants[key]));
 	  					if(am.participants[key].number==extFrom){
 	  						channel = key;
+							uniqueid = am.participants[key].with;
+							console.log("ci dovrei essere: uniqueid = " + uniqueid);
 	  					}
 	  				}
-	  			
+		  	
+					console.log("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE")					
+					console.log("am.participants = ");					
+					console.log(am.participants);					
+					console.log("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE")					
+		
 	  				// create filename	
 					var d = new Date();
-	  				var timestamp = d.getTime();
-			var utc  = d.toUTCString();
-	  				var filename = 'auto-' + timestamp + "-" + utc + "-" + message.callFromExt + '-' + message.callToExt; 
+					var yyyy = d.getFullYear();
+					var mm = (d.getUTCMonth()+1); if(mm<10) mm = '0' + mm;
+					var dd = d.getUTCDate();      if(dd<10) dd = '0' + dd;
+					var yyyyMMdd = yyyy + "" + mm + "" + dd;
+					var hh = d.getHours(); if(hh<10) hh = '0' + hh; 
+					var mm = d.getMinutes(); if(mm<10) mm = '0' + mm;
+					var ss = d.getSeconds(); if(ss<10) ss = '0' + ss;
+					var hhmmss = hh + "" + mm + "" + ss;
+	  				var filename = 'auto-' + message.callFromExt + "-" + message.callToExt + "-" + yyyyMMdd + "-" + hhmmss + "-" + uniqueid; 
 
 	  				// create record action for asterisk server
 			  		var actionRecord = {
@@ -905,6 +920,36 @@ console.log("The res is: " + res);
                                         client.send(new ResponseMessage(client.sessionId, "error_current_month_history_call", "Sorry: you don't have permission to view current month history call !"));
                                         log("error_current_month_history_call has been sent to [" + extFrom + "] with: " + client.sessionId);
                                 }
+                        break;
+			case ACTION_CHECK_CALL_AUDIO_FILE:
+
+				// check if there are some audio file with particular uniqueid
+				var uniqueid = message.uniqueid;
+				console.log("uniqueid = " + uniqueid);	
+			
+				fs.readdir('/var/spool/asterisk/monitor', function(err, files){
+					console.log("files = ");
+					console.log(files);
+				});	
+
+				process.execPath("find -name \*-*.???");
+				
+
+/*
+                                        // execute query to search contact in phonebook
+                                        dataCollector.getCurrentMonthHistoryCall(extFrom, function(results){
+                                                var mess = new ResponseMessage(client.sessionId, "current_month_history_call", "received current month history call");
+                                                mess.results = results;
+                                                client.send(mess);
+                                                log("Current month history call of [" + extFrom + "] has been sent to the client");
+                                        });
+                                }
+                                else{
+                                        log("ATTENTION: " + extFrom + " is not enabled to view current month history call !");
+                                        client.send(new ResponseMessage(client.sessionId, "error_current_month_history_call", "Sorry: you don't have permission to view current month history call !"));
+                                        log("error_current_month_history_call has been sent to [" + extFrom + "] with: " + client.sessionId);
+                                }
+*/
                         break;
 	  		default:
 	  			log("ATTENTION: action '" + action + "'not provided");
