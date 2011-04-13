@@ -352,6 +352,7 @@ io.on('connection', function(client){
   		const ACTION_GET_HISTORY_CALL = "get_history_call";
   		const ACTION_GET_DAY_HISTORY_CALL = "get_day_history_call";
   		const ACTION_GET_CURRENT_WEEK_HISTORY_CALL = "get_current_week_history_call";
+  		const ACTION_GET_CURRENT_MONTH_HISTORY_CALL = "get_current_month_history_call";
 		
   		log("received " + action + " request from exten [" + extFrom + "] with sessiondId = " + client.sessionId + " with message = ");	
 		console.log(message);
@@ -881,6 +882,26 @@ console.log("The res is: " + res);
                                         log("ATTENTION: " + extFrom + " is not enabled to view current week history call !");
                                         client.send(new ResponseMessage(client.sessionId, "error_current_week_history_call", "Sorry: you don't have permission to view current week history call !"));
                                         log("error_current_week_history_call has been sent to [" + extFrom + "] with: " + client.sessionId);
+                                }
+                        break;
+			case ACTION_GET_CURRENT_MONTH_HISTORY_CALL:
+
+                                // check if the user has the permit to get history of calling
+                                var res = dataCollector.checkUserPermitCurrentMonthHistoryCall(extFrom);
+console.log("The res is: " + res);
+                                if(res){
+                                        // execute query to search contact in phonebook
+                                        dataCollector.getCurrentMonthHistoryCall(extFrom, function(results){
+                                                var mess = new ResponseMessage(client.sessionId, "current_month_history_call", "received current month history call");
+                                                mess.results = results;
+                                                client.send(mess);
+                                                log("Current month history call of [" + extFrom + "] has been sent to the client");
+                                        });
+                                }
+                                else{
+                                        log("ATTENTION: " + extFrom + " is not enabled to view current month history call !");
+                                        client.send(new ResponseMessage(client.sessionId, "error_current_month_history_call", "Sorry: you don't have permission to view current month history call !"));
+                                        log("error_current_month_history_call has been sent to [" + extFrom + "] with: " + client.sessionId);
                                 }
                         break;
 	  		default:
