@@ -921,28 +921,24 @@ console.log("The res is: " + res);
 				console.log("uniqueid = " + uniqueid);	
 			
 				fs.readdir('/var/spool/asterisk/monitor', function(err, files){
+					
+					if(err){
+						console.log(err);
+						return;
+					}
+					
+					for(i=0; i<files.length; i++){
+						if( (files[i].indexOf(uniqueid))!=-1 )	{
+							console.log("ok c'Ã : filename = " + files[i]);
+						}
+						else{
+							console.log("non c'Ã¨ : filename = " + files[i]);
+						}
+					}	
+
 					console.log("files = ");
 					console.log(files);
 				});	
-
-				process.execPath("find -name \*-*.???");
-				
-
-/*
-                                        // execute query to search contact in phonebook
-                                        dataCollector.getCurrentMonthHistoryCall(extFrom, function(results){
-                                                var mess = new ResponseMessage(client.sessionId, "current_month_history_call", "received current month history call");
-                                                mess.results = results;
-                                                client.send(mess);
-                                                log("Current month history call of [" + extFrom + "] has been sent to the client");
-                                        });
-                                }
-                                else{
-                                        log("ATTENTION: " + extFrom + " is not enabled to view current month history call !");
-                                        client.send(new ResponseMessage(client.sessionId, "error_current_month_history_call", "Sorry: you don't have permission to view current month history call !"));
-                                        log("error_current_month_history_call has been sent to [" + extFrom + "] with: " + client.sessionId);
-                                }
-*/
                         break;
 	  		default:
 	  			log("ATTENTION: action '" + action + "'not provided");
