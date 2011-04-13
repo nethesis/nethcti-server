@@ -30,6 +30,11 @@ switch ( args["-t"] )
 		dataCollector.getCurrentMonthHistoryCall(exten, printResult);
 		break;
 
+	case "dayHistoryCall":
+		console.log("\nTesting getDayHistoryCall: extent "+exten+" is searching '"+search+"'");
+		dataCollector.getDayHistoryCall(exten, search, printResult);
+		break;
+
 	default:
 		help();
 }
@@ -37,7 +42,7 @@ switch ( args["-t"] )
 
 function help()
 {
-	console.log("Usage: node testDataCollector.js -t <customercard|phonebook|currentMonthHistoryCall> -e <exten> [-s <search>] ");
+	console.log("Usage: node testDataCollector.js -t <customercard|phonebook|dayHistoryCall|currentMonthHistoryCall> -e <exten> [-s <search>] ");
 	process.exit(1);
 }
 
