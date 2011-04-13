@@ -41,5 +41,5 @@ function printResult(result)
 	console.log("Result=\n");
 	console.log(result);
 	console.log("\n");
-});
+};
 
