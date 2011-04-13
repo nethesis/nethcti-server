@@ -1,93 +1,45 @@
+var args = require('./lib/argparser.js').parse()
 var dataReq = require("./dataCollector.js");
-var exten = "500";
 
-//console.log("TEST with exten = " + exten);
+var l = Object.keys(args).length;
+
+if(l < 3)
+ help();
+
+var exten = args["-e"];
+var search = args["-s"];
+if(search == undefined)
+	search = "";
 
 var dataCollector = new dataReq.DataCollector();
-console.log("DataCollector object created");
+
+switch ( args["-t"] )
+{
+	case "customercard":
+		console.log("\nTesting getCustomerCard: extent "+exten+" is searching '"+search+"'");
+		dataCollector.getCustomerCard(exten, search, printResult);
+		break;
+	
+	case "phonebook":
+		console.log("\nTesting searchContactsPhonebook: extent "+exten+" is searching '"+search+"'");
+ 		dataCollector.searchContactsPhonebook(exten, search, printResult);
+		break;
+
+	default:
+		help();
+}
 
 
-//
-/*
-console.log("\nTEST printUserSQLProfiles:");
-dataCollector.printUserSQLProfiles();
-console.log("\n");
+function help()
+{
+	console.log("Usage: node testDataCollector.js -t <customercard|phonebook> -e <exten> [-s <search>] ");
+	process.exit(1);
+}
 
-
-//
-console.log("\nTEST getUserSQLProfile");
-var userSQLProfiles = dataCollector.getUserSQLProfile(exten);
-console.log(userSQLProfiles);
-console.log("\n");
-
-//
-console.log("\nTEST testUserPermitPhonebook " + exten);
-var res = dataCollector.testUserPermitPhonebook(exten);
-console.log("RES = ");
-console.log(res);
-console.log("\n");
-
-//
-console.log("\nTEST getCustomerCard from applicant 500 for customer 501");
-dataCollector.getPhonebook("500", "501", function(result){
-	console.log("RES = ");
+function printResult(result)
+{
+	console.log("Result=\n");
 	console.log(result);
-	console.log("\n");
-});
-
-
-console.log("\nTEST getHistoryCall for ext 500");
-dataCollector.getHistoryCall("500", function(result){
-        console.log("RES = ");
-        console.log(result);
-        console.log("\n");
-});
-
-//
-console.log("\nTEST testUserPermitHistoryCall " + exten);
-var res = dataCollector.testUserPermitHistoryCall(exten);
-console.log("RES = ");
-console.log(res);
-console.log("\n");
-
-
-console.log("\nTEST getDayHistoryCall for ext 500");
-dataCollector.getDayHistoryCall("500", "2011-04-08", function(result){
-        console.log("RES = ");
-        console.log(result);
-        console.log("\n");
-});
-
-
-
-//
-console.log("\nTEST testUserPermitDayHistoryCall " + exten);
-var res = dataCollector.testUserPermitDayHistoryCall(exten);
-console.log("RES = ");
-console.log(res);
-console.log("\n");
-
-
-
-console.log("\nTEST testSearchContactsPhonebook " + exten);
-var res = dataCollector.searchContactsPhonebook("500", "ale", function(res){
-	console.log("RES = ");
-	console.log(res);
-	console.log("\n");
-});
-
-
-console.log("\nTEST testCheckUserPermitCurrentWeekHistoryCall " + exten);
-var res = dataCollector.checkUserPermitCurrentWeekHistoryCall("500");
-console.log("RES = ");
-console.log(res);
-console.log("\n");
-*/
-
-console.log("\nTEST testGetCurrentWeekHistoryCall " + exten);
-var res = dataCollector.getCurrentWeekHistoryCall("500", function(res){
-	console.log("RES = ");
-        console.log(res);
 	console.log("\n");
 });
 
