@@ -78,25 +78,15 @@ searchContactsPhonebook = function(extFrom, namex, cb){
 	var currentUserSQLProfileObj = getUserSQLProfile(extFrom);
 	var currentSQLQueryObj = currentUserSQLProfileObj.listSQLQueries[SECTION_SEARCH_ADDRESSES];
 		
-	var temp = currentSQLQueryObj.sqlQueryStr;
-		
 	if(currentSQLQueryObj!=undefined){
-	
-		// substitute query template
-		while(currentSQLQueryObj.sqlQueryStr.indexOf("$NAME_TO_REPLACE")!=-1){
-		
-			currentSQLQueryObj.sqlQueryStr = currentSQLQueryObj.sqlQueryStr.replace("$NAME_TO_REPLACE", namex);
-		}
+		// copy object
+                var copyCurrentSQLQueryObj = Object.create(currentSQLQueryObj);
 		// execute current sql query
-		executeSQLQuery(currentSQLQueryObj, function(results){
+		executeSQLQuery(copyCurrentSQLQueryObj, function(results){
 			cb(results);
 		});
-		
-		// reconstruct oroginal query for future asking
-		currentSQLQueryObj.sqlQueryStr = temp;
 	}
 	return undefined;
-
 }
 
 
@@ -188,21 +178,12 @@ getCurrentMonthHistoryCall = function(ext, cb){
         var currentSQLQueryObj = currentUserSQLProfileObj.listSQLQueries[SECTION_CURRENT_MONTH_HISTORY_CALL];
 
         if(currentSQLQueryObj!=undefined){
-
-                // substitue $EXTEN
-                while(currentSQLQueryObj.sqlQueryStr.indexOf("$EXTEN")!=-1){
-                        currentSQLQueryObj.sqlQueryStr = currentSQLQueryObj.sqlQueryStr.replace("$EXTEN", ext);
-                }
-
+		// copy object
+                var copyCurrentSQLQueryObj = Object.create(currentSQLQueryObj);
                 // execute current sql query
-                executeSQLQuery(currentSQLQueryObj, function(results){
+                executeSQLQuery(copyCurrentSQLQueryObj, function(results){
                         cb(results);
                 });
-
-
-                while(currentSQLQueryObj.sqlQueryStr.indexOf(ext)!=-1){
-                        currentSQLQueryObj.sqlQueryStr = currentSQLQueryObj.sqlQueryStr.replace(ext, "$EXTEN");
-                }
         }
         return undefined;
 }
@@ -218,21 +199,12 @@ getCurrentWeekHistoryCall = function(ext, cb){
         var currentSQLQueryObj = currentUserSQLProfileObj.listSQLQueries[SECTION_CURRENT_WEEK_HISTORY_CALL];
 
         if(currentSQLQueryObj!=undefined){
-
-                // substitue $EXTEN
-                while(currentSQLQueryObj.sqlQueryStr.indexOf("$EXTEN")!=-1){
-                        currentSQLQueryObj.sqlQueryStr = currentSQLQueryObj.sqlQueryStr.replace("$EXTEN", ext);
-                }
-
+		// copy object
+                var copyCurrentSQLQueryObj = Object.create(currentSQLQueryObj);
                 // execute current sql query
-                executeSQLQuery(currentSQLQueryObj, function(results){
+                executeSQLQuery(copyCurrentSQLQueryObj, function(results){
                         cb(results);
                 });
-
-
-                while(currentSQLQueryObj.sqlQueryStr.indexOf(ext)!=-1){
-                        currentSQLQueryObj.sqlQueryStr = currentSQLQueryObj.sqlQueryStr.replace(ext, "$EXTEN");
-                }
         }
         return undefined;
 }
@@ -247,31 +219,16 @@ getDayHistoryCall = function(ext, date, cb){
         var currentSQLQueryObj = currentUserSQLProfileObj.listSQLQueries[SECTION_DAY_HISTORY_CALL];
 
         if(currentSQLQueryObj!=undefined){
-
-		// substitue $EXTEN
-                while(currentSQLQueryObj.sqlQueryStr.indexOf("$EXTEN")!=-1){
-                        currentSQLQueryObj.sqlQueryStr = currentSQLQueryObj.sqlQueryStr.replace("$EXTEN", ext);
-                }
-
-		// substitute $DATE
-		while(currentSQLQueryObj.sqlQueryStr.indexOf("$DATE")!=-1){
-                        currentSQLQueryObj.sqlQueryStr = currentSQLQueryObj.sqlQueryStr.replace("$DATE", date);
-                }
+		// copy object
+		var copyCurrentSQLQueryObj = Object.create(currentSQLQueryObj);
+		// substitue template field in query
+		copyCurrentSQLQueryObj.sqlQueryStr = copyCurrentSQLQueryObj.sqlQueryStr.replace(/\$EXTEN/g, ext);		
+		copyCurrentSQLQueryObj.sqlQueryStr = copyCurrentSQLQueryObj.sqlQueryStr.replace(/\$DATE/g, date);		
 
                 // execute current sql query
-                executeSQLQuery(currentSQLQueryObj, function(results){
+                executeSQLQuery(copyCurrentSQLQueryObj, function(results){
                         cb(results);
                 });
-
-
-		while(currentSQLQueryObj.sqlQueryStr.indexOf(ext)!=-1){
-                        currentSQLQueryObj.sqlQueryStr = currentSQLQueryObj.sqlQueryStr.replace(ext, "$EXTEN");
-                }
-
-                while(currentSQLQueryObj.sqlQueryStr.indexOf(date)!=-1){
-                        currentSQLQueryObj.sqlQueryStr = currentSQLQueryObj.sqlQueryStr.replace(date, "$DATE");
-                }
-
         }
         return undefined;
 }
@@ -287,19 +244,13 @@ getHistoryCall = function(ext, cb){
         var currentSQLQueryObj = currentUserSQLProfileObj.listSQLQueries[SECTION_HISTORY_CALL];
 
 	if(currentSQLQueryObj!=undefined){
-	
-                while(currentSQLQueryObj.sqlQueryStr.indexOf("$EXTEN")!=-1){
-                        currentSQLQueryObj.sqlQueryStr = currentSQLQueryObj.sqlQueryStr.replace("$EXTEN", ext);
-                }
+		// copy object
+                var copyCurrentSQLQueryObj = Object.create(currentSQLQueryObj);
 
                 // execute current sql query
-                executeSQLQuery(currentSQLQueryObj, function(results){
+                executeSQLQuery(copyCurrentSQLQueryObj, function(results){
                         cb(results);
                 });
-
-                while(currentSQLQueryObj.sqlQueryStr.indexOf(ext)!=-1){
-                        currentSQLQueryObj.sqlQueryStr = currentSQLQueryObj.sqlQueryStr.replace(ext, "$EXTEN");
-                }
         }
         return undefined;
 }
@@ -315,20 +266,12 @@ getCustomerCard = function(extenApplicant, extenCustomerCard, cb){
 	var currentSQLQueryObj = currentUserSQLProfileObj.listSQLQueries[SECTION_NAME_CUSTOMER_CARD];
 		
 	if(currentSQLQueryObj!=undefined){
-	
-		while(currentSQLQueryObj.sqlQueryStr.indexOf("$EXTEN")!=-1){
-			currentSQLQueryObj.sqlQueryStr = currentSQLQueryObj.sqlQueryStr.replace("$EXTEN", extenCustomerCard);
-		}
-		
+		// copy object
+                var copyCurrentSQLQueryObj = Object.create(currentSQLQueryObj);
 		// execute current sql query
-		executeSQLQuery(currentSQLQueryObj, function(results){
+		executeSQLQuery(copyCurrentSQLQueryObj, function(results){
 			cb(results);
 		});
-		
-		
-		while(currentSQLQueryObj.sqlQueryStr.indexOf(extenCustomerCard)!=-1){
-			currentSQLQueryObj.sqlQueryStr = currentSQLQueryObj.sqlQueryStr.replace(extenCustomerCard, "$EXTEN");
-		}
 	}
 	return undefined;
 }
