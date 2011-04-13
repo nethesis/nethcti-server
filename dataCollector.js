@@ -277,7 +277,7 @@ getCustomerCard = function(extenApplicant, extenCustomerCard, cb){
 		// copy object
                 var copyCurrentSQLQueryObj = Object.create(currentSQLQueryObj);
 		// substitue template field in query
-                copyCurrentSQLQueryObj.sqlQueryStr = copyCurrentSQLQueryObj.sqlQueryStr.replace(/\$EXTEN/g, ext);
+                copyCurrentSQLQueryObj.sqlQueryStr = copyCurrentSQLQueryObj.sqlQueryStr.replace(/\$EXTEN/g, extenCustomerCard);
 		// execute current sql query
 		executeSQLQuery(copyCurrentSQLQueryObj, function(results){
 			cb(results);
