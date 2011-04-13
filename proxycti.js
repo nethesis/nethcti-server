@@ -567,19 +567,12 @@ io.on('connection', function(client){
 	  				var channel = '';
 					var uniqueid = '';
 	  				for(key in am.participants){
-						console.log("QUI am.participants[" + key + "] = " + sys.inspect(am.participants[key]));
 	  					if(am.participants[key].number==extFrom){
 	  						channel = key;
 							uniqueid = am.participants[key].with;
-							console.log("ci dovrei essere: uniqueid = " + uniqueid);
 	  					}
 	  				}
 		  	
-					console.log("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE")					
-					console.log("am.participants = ");					
-					console.log(am.participants);					
-					console.log("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE")					
-		
 	  				// create filename	
 					var d = new Date();
 					var yyyy = d.getFullYear();
