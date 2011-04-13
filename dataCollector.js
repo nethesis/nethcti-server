@@ -73,9 +73,9 @@ exports.DataCollector = function(){
 /*
  * Search in database all phonebook contacts that match given namex
  */
-searchContactsPhonebook = function(extFrom, namex, cb){
+searchContactsPhonebook = function(ext, namex, cb){
 
-	var currentUserSQLProfileObj = getUserSQLProfile(extFrom);
+	var currentUserSQLProfileObj = getUserSQLProfile(ext);
 	var currentSQLQueryObj = currentUserSQLProfileObj.listSQLQueries[SECTION_SEARCH_ADDRESSES];
 		
 	if(currentSQLQueryObj!=undefined){
