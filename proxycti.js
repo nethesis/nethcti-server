@@ -450,7 +450,7 @@ io.on('connection', function(client){
 							Exten: extToCall,
 							Context: 'from-internal',
 							Priority: 1,
-							Callerid: 'CTI' + extToCall,
+							Callerid: 'CTI' + extFrom,
 							Account: extToCall,
 							Timeout: 30000
 						};
@@ -572,8 +572,10 @@ io.on('connection', function(client){
 	  				}
 	  			
 	  				// create filename	
-	  				var timestamp = new Date().getTime();
-	  				var filename = 'auto-' + timestamp + "-" + message.callFromExt + '-' + message.callToExt; 
+					var d = new Date();
+	  				var timestamp = d.getTime();
+			var utc  = d.toUTCString();
+	  				var filename = 'auto-' + timestamp + "-" + utc + "-" + message.callFromExt + '-' + message.callToExt; 
 
 	  				// create record action for asterisk server
 			  		var actionRecord = {
