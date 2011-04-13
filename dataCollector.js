@@ -6,8 +6,8 @@ var SECTION_NAME_CUSTOMER_CARD = "customer_card";
 var SECTION_SEARCH_ADDRESSES = "search_addresses";
 var SECTION_HISTORY_CALL = "history_call";
 var SECTION_DAY_HISTORY_CALL = "day_history_call";
+var SECTION_CURRENT_WEEK_HISTORY_CALL = "current_week_history_call";
 
-//var SECTION_NAME_CUSTOMER_CARD = "customer_card";// for development
 
 
 /* It's the list of sql user profiles expressed as hash table of key and value.
@@ -61,6 +61,8 @@ exports.DataCollector = function(){
 	this.getDayHistoryCall = function(exten, date, cb) { return getDayHistoryCall(exten, date, cb); }
 	this.testUserPermitHistoryCall = function(exten) { return testUserPermitHistoryCall(exten); }
 	this.testUserPermitDayHistoryCall = function(exten) { return testUserPermitDayHistoryCall(exten); }
+	this.checkUserPermitCurrentWeekHistoryCall = function(exten) { return checkUserPermitCurrentWeekHistoryCall(exten); }
+	this.getCurrentWeekHistoryCall = function(exten, cb) { return getCurrentWeekHistoryCall(exten, cb); }
 }
 
 
@@ -137,6 +139,19 @@ testUserPermitHistoryCall = function(exten){
 
 
 /*
+ * Test if the user exten has the authorization to view his current week history of calling. Therefore
+ * it check if the user has a query of category "SECTION_CURRENT_WEEK_HISTORY_CALL".
+ */
+checkUserPermitCurrentWeekHistoryCall = function(exten){
+
+        if(this.listUserSQLProfiles[exten].listSQLQueries[SECTION_CURRENT_WEEK_HISTORY_CALL]!=undefined)
+                return true;
+        return false;
+
+}
+
+
+/*
  * Test if the user exten has the authorization to view his day history of calling. Therefore
  * it check if the user has a query of category "SECTION_DAY_HISTORY_CALL".
  */
@@ -153,16 +168,41 @@ testUserPermitDayHistoryCall = function(exten){
 
 
 /* 
+ * Return the history of calling of the current week.
+ */
+getCurrentWeekHistoryCall = function(ext, cb){
+
+        var currentUserSQLProfileObj = getUserSQLProfile(ext);
+        var currentSQLQueryObj = currentUserSQLProfileObj.listSQLQueries[SECTION_CURRENT_WEEK_HISTORY_CALL];
+
+        if(currentSQLQueryObj!=undefined){
+
+                // substitue $EXTEN
+                while(currentSQLQueryObj.sqlQueryStr.indexOf("$EXTEN")!=-1){
+                        currentSQLQueryObj.sqlQueryStr = currentSQLQueryObj.sqlQueryStr.replace("$EXTEN", ext);
+                }
+
+                // execute current sql query
+                executeSQLQuery(currentSQLQueryObj, function(results){
+                        cb(results);
+                });
+
+
+                while(currentSQLQueryObj.sqlQueryStr.indexOf(ext)!=-1){
+                        currentSQLQueryObj.sqlQueryStr = currentSQLQueryObj.sqlQueryStr.replace(ext, "$EXTEN");
+                }
+        }
+        return undefined;
+}
+
+
+/* 
  * Return the history of calling of one day.
  */
 getDayHistoryCall = function(ext, date, cb){
 
         var currentUserSQLProfileObj = getUserSQLProfile(ext);
         var currentSQLQueryObj = currentUserSQLProfileObj.listSQLQueries[SECTION_DAY_HISTORY_CALL];
-
-        console.log("currentSQLQueryObj =");
-        console.log(currentSQLQueryObj);
-        console.log(currentSQLQueryObj.sqlQueryStr);
 
         if(currentSQLQueryObj!=undefined){
 

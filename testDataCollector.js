@@ -66,12 +66,28 @@ var res = dataCollector.testUserPermitDayHistoryCall(exten);
 console.log("RES = ");
 console.log(res);
 console.log("\n");
-*/
+
 
 
 console.log("\nTEST testSearchContactsPhonebook " + exten);
-	var res = dataCollector.searchContactsPhonebook("500", "ale", function(res){
-		console.log("RES = ");
-		console.log(res);
-		console.log("\n");
-	});
+var res = dataCollector.searchContactsPhonebook("500", "ale", function(res){
+	console.log("RES = ");
+	console.log(res);
+	console.log("\n");
+});
+
+
+console.log("\nTEST testCheckUserPermitCurrentWeekHistoryCall " + exten);
+var res = dataCollector.checkUserPermitCurrentWeekHistoryCall("500");
+console.log("RES = ");
+console.log(res);
+console.log("\n");
+*/
+
+console.log("\nTEST testGetCurrentWeekHistoryCall " + exten);
+var res = dataCollector.getCurrentWeekHistoryCall("500", function(res){
+	console.log("RES = ");
+        console.log(res);
+	console.log("\n");
+});
+
