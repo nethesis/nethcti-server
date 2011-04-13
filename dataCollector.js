@@ -81,6 +81,9 @@ searchContactsPhonebook = function(extFrom, namex, cb){
 	if(currentSQLQueryObj!=undefined){
 		// copy object
                 var copyCurrentSQLQueryObj = Object.create(currentSQLQueryObj);
+		// substitue template field in query
+                copyCurrentSQLQueryObj.sqlQueryStr = copyCurrentSQLQueryObj.sqlQueryStr.replace(/\$NAME_TO_REPLACE/g, ext);
+
 		// execute current sql query
 		executeSQLQuery(copyCurrentSQLQueryObj, function(results){
 			cb(results);
@@ -180,6 +183,8 @@ getCurrentMonthHistoryCall = function(ext, cb){
         if(currentSQLQueryObj!=undefined){
 		// copy object
                 var copyCurrentSQLQueryObj = Object.create(currentSQLQueryObj);
+		// substitue template field in query
+                copyCurrentSQLQueryObj.sqlQueryStr = copyCurrentSQLQueryObj.sqlQueryStr.replace(/\$EXTEN/g, ext);
                 // execute current sql query
                 executeSQLQuery(copyCurrentSQLQueryObj, function(results){
                         cb(results);
@@ -201,6 +206,8 @@ getCurrentWeekHistoryCall = function(ext, cb){
         if(currentSQLQueryObj!=undefined){
 		// copy object
                 var copyCurrentSQLQueryObj = Object.create(currentSQLQueryObj);
+		// substitue template field in query
+                copyCurrentSQLQueryObj.sqlQueryStr = copyCurrentSQLQueryObj.sqlQueryStr.replace(/\$EXTEN/g, ext);
                 // execute current sql query
                 executeSQLQuery(copyCurrentSQLQueryObj, function(results){
                         cb(results);
@@ -246,7 +253,8 @@ getHistoryCall = function(ext, cb){
 	if(currentSQLQueryObj!=undefined){
 		// copy object
                 var copyCurrentSQLQueryObj = Object.create(currentSQLQueryObj);
-
+		// substitue template field in query
+                copyCurrentSQLQueryObj.sqlQueryStr = copyCurrentSQLQueryObj.sqlQueryStr.replace(/\$EXTEN/g, ext);
                 // execute current sql query
                 executeSQLQuery(copyCurrentSQLQueryObj, function(results){
                         cb(results);
@@ -268,6 +276,8 @@ getCustomerCard = function(extenApplicant, extenCustomerCard, cb){
 	if(currentSQLQueryObj!=undefined){
 		// copy object
                 var copyCurrentSQLQueryObj = Object.create(currentSQLQueryObj);
+		// substitue template field in query
+                copyCurrentSQLQueryObj.sqlQueryStr = copyCurrentSQLQueryObj.sqlQueryStr.replace(/\$EXTEN/g, ext);
 		// execute current sql query
 		executeSQLQuery(copyCurrentSQLQueryObj, function(results){
 			cb(results);
