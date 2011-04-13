@@ -7,6 +7,7 @@ var SECTION_SEARCH_ADDRESSES = "search_addresses";
 var SECTION_HISTORY_CALL = "history_call";
 var SECTION_DAY_HISTORY_CALL = "day_history_call";
 var SECTION_CURRENT_WEEK_HISTORY_CALL = "current_week_history_call";
+var SECTION_CURRENT_MONTH_HISTORY_CALL = "current_month_history_call";
 
 
 
@@ -63,6 +64,8 @@ exports.DataCollector = function(){
 	this.testUserPermitDayHistoryCall = function(exten) { return testUserPermitDayHistoryCall(exten); }
 	this.checkUserPermitCurrentWeekHistoryCall = function(exten) { return checkUserPermitCurrentWeekHistoryCall(exten); }
 	this.getCurrentWeekHistoryCall = function(exten, cb) { return getCurrentWeekHistoryCall(exten, cb); }
+	this.checkUserPermitCurrentMonthHistoryCall = function(exten) { return checkUserPermitCurrentMonthHistoryCall(exten); }
+	this.getCurrentMonthHistoryCall = function(exten, cb) { return getCurrentMonthHistoryCall(exten, cb); }
 }
 
 
@@ -139,6 +142,17 @@ testUserPermitHistoryCall = function(exten){
 
 
 /*
+ * Test if the user exten has the authorization to view his current month history of calling. Therefore
+ * it check if the user has a query of category "SECTION_CURRENT_MONTH_HISTORY_CALL".
+ */
+checkUserPermitCurrentMonthHistoryCall = function(exten){
+        if(this.listUserSQLProfiles[exten].listSQLQueries[SECTION_CURRENT_MONTH_HISTORY_CALL]!=undefined)
+                return true;
+        return false;
+}
+
+
+/*
  * Test if the user exten has the authorization to view his current week history of calling. Therefore
  * it check if the user has a query of category "SECTION_CURRENT_WEEK_HISTORY_CALL".
  */
@@ -164,6 +178,34 @@ testUserPermitDayHistoryCall = function(exten){
 }
 
 
+
+/* 
+ * Return the history of calling of the current month.
+ */
+getCurrentMonthHistoryCall = function(ext, cb){
+
+        var currentUserSQLProfileObj = getUserSQLProfile(ext);
+        var currentSQLQueryObj = currentUserSQLProfileObj.listSQLQueries[SECTION_CURRENT_MONTH_HISTORY_CALL];
+
+        if(currentSQLQueryObj!=undefined){
+
+                // substitue $EXTEN
+                while(currentSQLQueryObj.sqlQueryStr.indexOf("$EXTEN")!=-1){
+                        currentSQLQueryObj.sqlQueryStr = currentSQLQueryObj.sqlQueryStr.replace("$EXTEN", ext);
+                }
+
+                // execute current sql query
+                executeSQLQuery(currentSQLQueryObj, function(results){
+                        cb(results);
+                });
+
+
+                while(currentSQLQueryObj.sqlQueryStr.indexOf(ext)!=-1){
+                        currentSQLQueryObj.sqlQueryStr = currentSQLQueryObj.sqlQueryStr.replace(ext, "$EXTEN");
+                }
+        }
+        return undefined;
+}
 
 
 
