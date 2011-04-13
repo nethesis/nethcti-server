@@ -351,6 +351,7 @@ io.on('connection', function(client){
   		const ACTION_CHECK_CF_STATUS = "check_cf_status";
   		const ACTION_GET_HISTORY_CALL = "get_history_call";
   		const ACTION_GET_DAY_HISTORY_CALL = "get_day_history_call";
+  		const ACTION_GET_CURRENT_WEEK_HISTORY_CALL = "get_current_week_history_call";
 		
   		log("received " + action + " request from exten [" + extFrom + "] with sessiondId = " + client.sessionId + " with message = ");	
 		console.log(message);
@@ -860,6 +861,26 @@ console.log("The res is: " + res);
                                         log("ATTENTION: " + extFrom + " is not enabled to view day history call !");
                                         client.send(new ResponseMessage(client.sessionId, "error_day_history_call", "Sorry: you don't have permission to view day history call !"));
                                         log("error_day_history_call has been sent to [" + extFrom + "] with: " + client.sessionId);
+                                }
+                        break;
+			case ACTION_GET_CURRENT_WEEK_HISTORY_CALL:
+
+                                // check if the user has the permit to get history of calling
+                                var res = dataCollector.checkUserPermitCurrentWeekHistoryCall(extFrom);
+console.log("The res is: " + res);
+                                if(res){
+                                        // execute query to search contact in phonebook
+                                        dataCollector.getCurrentWeekHistoryCall(extFrom, function(results){
+                                                var mess = new ResponseMessage(client.sessionId, "current_week_history_call", "received current week history call");
+                                                mess.results = results;
+                                                client.send(mess);
+                                                log("Current week history call of [" + extFrom + "] has been sent to the client");
+                                        });
+                                }
+                                else{
+                                        log("ATTENTION: " + extFrom + " is not enabled to view current week history call !");
+                                        client.send(new ResponseMessage(client.sessionId, "error_current_week_history_call", "Sorry: you don't have permission to view current week history call !"));
+                                        log("error_current_week_history_call has been sent to [" + extFrom + "] with: " + client.sessionId);
                                 }
                         break;
 	  		default:
