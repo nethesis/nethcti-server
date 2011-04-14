@@ -1157,6 +1157,8 @@ process.on('uncaughtException', function(err){
 	log('*********************************************');
 	log('Caught not provided exception: ');
 	log(err);
+	log("\nSTACK:");
+	log(err.stack);
 	log('*********************************************');
 });
 
