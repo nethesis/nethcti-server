@@ -82,8 +82,7 @@ searchContactsPhonebook = function(ext, namex, cb){
 		// copy object
                 var copyCurrentSQLQueryObj = Object.create(currentSQLQueryObj);
 		// substitue template field in query
-                copyCurrentSQLQueryObj.sqlQueryStr = copyCurrentSQLQueryObj.sqlQueryStr.replace(/\$NAME_TO_REPLACE/g, ext);
-
+                copyCurrentSQLQueryObj.sqlQueryStr = copyCurrentSQLQueryObj.sqlQueryStr.replace(/\$NAME_TO_REPLACE/g, namex);
 		// execute current sql query
 		executeSQLQuery(copyCurrentSQLQueryObj, function(results){
 			cb(results);
