@@ -1,18 +1,19 @@
 var fs = require("fs");
 var sys = require("sys");
-var PROFILER_CONFIG_FILENAME = "profiles.conf";
+var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
+var PROFILER_CONFIG_FILENAME = "profiles.ini";
 
 /* It's the list of user profiles expressed as hash table of key and value.
  * The key is the exten of the user and its value is the object UserProfile.
  */
 listUserProfiles = {};
 
+
+
 // Object that represents the profile of the user.
 UserProfile = function(ext, cat, actionPermitArray, actionDenyArray){
 	this.exten = ext;
-	this.category = cat;
-	this.permitActions = actionPermitArray;
-	this.denyActions = actionDenyArray;
+	this.action = { };
 }
 
 
@@ -120,6 +121,23 @@ printListUserProfiles = function(){
  * Initialize the profiles of all users by means the reading of the config file.
  */
 function initProfiles(){
+
+
+	iniparser.parse(PROFILER_CONFIG_FILENAME, function(err, data){
+		if(err){
+			console.log(err);
+			console.log(err.stack);
+			return;
+		}
+		console.log(data);
+	});
+
+
+
+
+
+
+
 
 	// read file
 	var profiles = fs.readFileSync(PROFILER_CONFIG_FILENAME, "UTF-8", function(err, data) {
