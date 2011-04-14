@@ -32,6 +32,7 @@ const PROXY_CONFIG_FILENAME = "proxycti.conf";
 const TEMPLATE_DECORATOR_VCARD_FILENAME = "./template/decorator_vcard.html";
 const TEMPLATE_DECORATOR_CUSTOMERCARD_FILENAME = "./template/decorator_customerCard.html";
 const TEMPLATE_DECORATOR_HISTORY_CALL_FILENAME = "./template/decorator_historyCall.html";
+const AST_CALL_AUDIO_DIR = "/var/spool/asterisk/monitor";
 
 // The response that this server pass to the clients.
 var ResponseMessage = function(clientSessionId, typeMessage, respMessage){
@@ -915,29 +916,23 @@ console.log("The res is: " + res);
                                 }
                         break;
 			case ACTION_CHECK_CALL_AUDIO_FILE:
-
 				// check if there are some audio file with particular uniqueid
 				var uniqueid = message.uniqueid;
-				console.log("uniqueid = " + uniqueid);	
-			
-				fs.readdir('/var/spool/asterisk/monitor', function(err, files){
-					
+				var audioFileList = [];
+				fs.readdir(AST_CALL_AUDIO_DIR, function(err, files){					
 					if(err){
 						console.log(err);
 						return;
 					}
-					
 					for(i=0; i<files.length; i++){
 						if( (files[i].indexOf(uniqueid))!=-1 )	{
-							console.log("ok c'Ã : filename = " + files[i]);
-						}
-						else{
-							console.log("non c'Ã¨ : filename = " + files[i]);
+							audioFileList.push(files[i]);
 						}
 					}	
-
-					console.log("files = ");
-					console.log(files);
+					var mess = new ResponseMessage(client.sessionId, "audio_file_call_list", "received list of audio file of call");
+	                                mess.results = audioFileList;
+	                                client.send(mess);
+	                                log("Audio file list of call has been sent to the client [" + extFrom + "] and it is = " + sys.inspect(audioFileList));
 				});	
                         break;
 	  		default:
