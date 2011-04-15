@@ -7,6 +7,7 @@ const CALL_IN = "CALL_IN";
 const PHONEBOOK = "PHONEBOOK";
 const REDIRECT = "REDIRECT";
 const RECORD = "RECORD";
+const HISTORY_CALL = "HISTORY_CALL";
 const ALL = "all";
 
 
@@ -41,6 +42,7 @@ exports.Profiler = function(){
 	this.checkActionPhonebookPermit = function(exten){ return checkActionPermit(exten, PHONEBOOK) }
 	this.checkActionRedirectPermit = function(exten){ return checkActionPermit(exten, REDIRECT) }
 	this.checkActionRecordPermit = function(exten){ return checkActionPermit(exten, RECORD) }
+	this.checkActionHistoryCallPermit = function(exten){ return checkActionPermit(exten, HISTORY_CALL) }
 }
 
 /*
