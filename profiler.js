@@ -6,6 +6,7 @@ const CALL_OUT = "CALL_OUT";
 const CALL_IN = "CALL_IN";
 const PHONEBOOK = "PHONEBOOK";
 const REDIRECT = "REDIRECT";
+const RECORD = "RECORD";
 const ALL = "all";
 
 
@@ -39,6 +40,7 @@ exports.Profiler = function(){
 	this.checkActionCallInPermit = function(exten){ return checkActionPermit(exten, CALL_IN) }
 	this.checkActionPhonebookPermit = function(exten){ return checkActionPermit(exten, PHONEBOOK) }
 	this.checkActionRedirectPermit = function(exten){ return checkActionPermit(exten, REDIRECT) }
+	this.checkActionRecordPermit = function(exten){ return checkActionPermit(exten, RECORD) }
 }
 
 /*
