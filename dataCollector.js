@@ -6,12 +6,8 @@ const DATACOLLECTOR_CONFIG_FILENAME = "dataProfiles.ini";
 const PHONEBOOK = "phonebook";
 const CUSTOMER_CARD = "customer_card";
 const DAY_HISTORY_CALL = "day_history_call";
+const CURRENT_WEEK_HISTORY_CALL = "current_week_history_call";
 
-var SECTION_NAME_CUSTOMER_CARD = "customer_card";
-var SECTION_HISTORY_CALL = "history_call";
-var SECTION_DAY_HISTORY_CALL = "day_history_call";
-var SECTION_CURRENT_WEEK_HISTORY_CALL = "current_week_history_call";
-var SECTION_CURRENT_MONTH_HISTORY_CALL = "current_month_history_call";
 
 /* this is the list of the queries expressed in the config file: the key is the section name
  * and the value is the all parameter to execute the query.
@@ -38,11 +34,11 @@ exports.DataCollector = function(){
 	this.getContactsPhonebook = function(name, cb){ return getContactsPhonebook(name, cb); }
 	this.getCustomerCard = function(ext, type, cb) { return getCustomerCard(ext, type, cb); }
 	this.getDayHistoryCall = function(ext, date, cb) { return getDayHistoryCall(ext, date, cb); }
+	this.getCurrentWeekHistoryCall = function(ext, cb) { return getCurrentWeekHistoryCall(ext, cb); }
 
 	this.searchContactsPhonebook = function(extFrom, namex, cb){ return searchContactsPhonebook(extFrom, namex, cb); }
 	this.getHistoryCall = function(exten, cb) { return getHistoryCall(exten, cb); }
 	this.checkUserPermitCurrentWeekHistoryCall = function(exten) { return checkUserPermitCurrentWeekHistoryCall(exten); }
-	this.getCurrentWeekHistoryCall = function(exten, cb) { return getCurrentWeekHistoryCall(exten, cb); }
 	this.checkUserPermitCurrentMonthHistoryCall = function(exten) { return checkUserPermitCurrentMonthHistoryCall(exten); }
 	this.getCurrentMonthHistoryCall = function(exten, cb) { return getCurrentMonthHistoryCall(exten, cb); }
 }
@@ -52,6 +48,24 @@ exports.DataCollector = function(){
  */
 function initQueries(){
         this.queries = iniparser.parseSync(DATACOLLECTOR_CONFIG_FILENAME);
+}
+
+/* 
+ * Return the history of calling of the current week.
+ */
+getCurrentWeekHistoryCall = function(ext, cb){
+	var objQuery = queries[CURRENT_WEEK_HISTORY_CALL];
+        if(objQuery!=undefined){
+                // copy object
+                var copyObjQuery = new Object(objQuery);
+                // substitue template field in query
+                copyObjQuery.query = copyObjQuery.query.replace(/\$EXTEN/g, ext);
+                // execute current sql query
+                executeSQLQuery(copyObjQuery, function(results){
+                        cb(results);
+                });
+        }
+        return undefined;
 }
 
 /* 
@@ -125,52 +139,6 @@ getCurrentMonthHistoryCall = function(ext, cb){
         var currentSQLQueryObj = currentUserSQLProfileObj.listSQLQueries[SECTION_CURRENT_MONTH_HISTORY_CALL];
 
         if(currentSQLQueryObj!=undefined){
-		// copy object
-                var copyCurrentSQLQueryObj = Object.create(currentSQLQueryObj);
-		// substitue template field in query
-                copyCurrentSQLQueryObj.sqlQueryStr = copyCurrentSQLQueryObj.sqlQueryStr.replace(/\$EXTEN/g, ext);
-                // execute current sql query
-                executeSQLQuery(copyCurrentSQLQueryObj, function(results){
-                        cb(results);
-                });
-        }
-        return undefined;
-}
-
-
-
-/* 
- * Return the history of calling of the current week.
- */
-getCurrentWeekHistoryCall = function(ext, cb){
-
-        var currentUserSQLProfileObj = getUserSQLProfile(ext);
-        var currentSQLQueryObj = currentUserSQLProfileObj.listSQLQueries[SECTION_CURRENT_WEEK_HISTORY_CALL];
-
-        if(currentSQLQueryObj!=undefined){
-		// copy object
-                var copyCurrentSQLQueryObj = Object.create(currentSQLQueryObj);
-		// substitue template field in query
-                copyCurrentSQLQueryObj.sqlQueryStr = copyCurrentSQLQueryObj.sqlQueryStr.replace(/\$EXTEN/g, ext);
-                // execute current sql query
-                executeSQLQuery(copyCurrentSQLQueryObj, function(results){
-                        cb(results);
-                });
-        }
-        return undefined;
-}
-
-
-
-/* 
- * Return the full history of calling.
- */
-getHistoryCall = function(ext, cb){
-
-	var currentUserSQLProfileObj = getUserSQLProfile(ext);
-        var currentSQLQueryObj = currentUserSQLProfileObj.listSQLQueries[SECTION_HISTORY_CALL];
-
-	if(currentSQLQueryObj!=undefined){
 		// copy object
                 var copyCurrentSQLQueryObj = Object.create(currentSQLQueryObj);
 		// substitue template field in query

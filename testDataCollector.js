@@ -43,6 +43,25 @@ switch ( args["-t"] )
                 });
 		break;
 
+	case "getCurrentWeekHistoryCall":
+		console.log("\nTesting getCurrentWeekHistoryCall(ext, cb): ext " + exten);
+                dataCollector.getCurrentWeekHistoryCall(exten, function(results){
+                        console.log("results = ");
+                        console.log(results);
+                });
+		break;
+
+
+
+
+
+
+
+
+
+
+
+
 
 	
 	case "phonebook":
@@ -67,7 +86,7 @@ switch ( args["-t"] )
 
 function help()
 {
-	console.log("Usage: node testDataCollector.js -t <initQueries|getContactsPhonebook|getCustomerCard|getDayHistoryCall  phonebook|dayHistoryCall|currentMonthHistoryCall> -e <exten> [-s <search>] ");
+	console.log("Usage: node testDataCollector.js -t <initQueries|getContactsPhonebook|getCustomerCard|getDayHistoryCall|getCurrentWeekHistoryCall  phonebook|dayHistoryCall|currentMonthHistoryCall> -e <exten> [-s <search>] ");
 	process.exit(1);
 }
 
