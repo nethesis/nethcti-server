@@ -48,7 +48,7 @@ exports.Profiler = function(){
 }
 
 /* 
- * Return the type of customer card for which the user is enable
+ * Return an array containing the types of customer card for which the user is enable
  */
 function getTypesCustomerCardPermit(exten){
 	var typePermit = [];
