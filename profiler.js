@@ -8,6 +8,7 @@ const PHONEBOOK = "PHONEBOOK";
 const REDIRECT = "REDIRECT";
 const RECORD = "RECORD";
 const HISTORY_CALL = "HISTORY_CALL";
+const CUSTOMER_CARD = "CUSTOMER_CARD";
 const ALL = "all";
 
 
@@ -43,6 +44,21 @@ exports.Profiler = function(){
 	this.checkActionRedirectPermit = function(exten){ return checkActionPermit(exten, REDIRECT) }
 	this.checkActionRecordPermit = function(exten){ return checkActionPermit(exten, RECORD) }
 	this.checkActionHistoryCallPermit = function(exten){ return checkActionPermit(exten, HISTORY_CALL) }
+	this.getTypesCustomerCardPermit = function(exten){ return getTypesCustomerCardPermit(exten) }
+}
+
+/* 
+ * Return the type of customer card for which the user is enable
+ */
+function getTypesCustomerCardPermit(exten){
+	var typePermit = [];
+	var pattExt = new RegExp("\\b" + exten + "\\b");
+        var pattAll = new RegExp("\\b" + ALL + "\\b", "i");
+	for(type in actions[CUSTOMER_CARD]){
+		if( pattExt.test(actions[CUSTOMER_CARD][type]) || pattAll.test(actions[CUSTOMER_CARD][type]) )
+			typePermit.push(type);
+	}
+	return typePermit;
 }
 
 /*
