@@ -21,63 +21,28 @@ switch ( args["-t"] )
 
 	case "getContactsPhonebook":
                 console.log("\nTesting getContactsPhonebook(name, cb): name " + exten);
-                dataCollector.getContactsPhonebook(exten, function(results){
-			console.log("results = ");
-			console.log(results);
-		});
+                dataCollector.getContactsPhonebook(exten, printResult);
                 break;
 
 	case "getCustomerCard":
 		console.log("\nTesting getCustomerCard(ext, type, cb): ext " + exten + " type " + search);
-                dataCollector.getCustomerCard(exten, search, function(results){
-                        console.log("results = ");
-                        console.log(results);
-                });
+                dataCollector.getCustomerCard(exten, search, printResult);
 		break;
 
 	case "getDayHistoryCall":
 		console.log("\nTesting getDayHistoryCall(ext, date, cb): ext " + exten + " date " + search);
-                dataCollector.getDayHistoryCall(exten, search, function(results){
-                        console.log("results = ");
-                        console.log(results);
-                });
+                dataCollector.getDayHistoryCall(exten, search, printResult);
 		break;
 
 	case "getCurrentWeekHistoryCall":
 		console.log("\nTesting getCurrentWeekHistoryCall(ext, cb): ext " + exten);
-                dataCollector.getCurrentWeekHistoryCall(exten, function(results){
-                        console.log("results = ");
-                        console.log(results);
-                });
+                dataCollector.getCurrentWeekHistoryCall(exten, printResult);
 		break;
 
-
-
-
-
-
-
-
-
-
-
-
-
-	
-	case "phonebook":
-		console.log("\nTesting searchContactsPhonebook: extent "+exten+" is searching '"+search+"'");
- 		dataCollector.searchContactsPhonebook(exten, search, printResult);
-		break;
-
-	case "currentMonthHistoryCall":
-		console.log("\nTesting getCurrentMonthHistoryCall: extent "+exten+" is searching '"+search+"'");
-		dataCollector.getCurrentMonthHistoryCall(exten, printResult);
-		break;
-
-	case "dayHistoryCall":
-		console.log("\nTesting getDayHistoryCall: extent "+exten+" is searching '"+search+"'");
-		dataCollector.getDayHistoryCall(exten, search, printResult);
-		break;
+	case "getCurrentMonthHistoryCall":
+                console.log("\nTesting getCurrentMonthHistoryCall(ext, cb): ext " + exten);
+                dataCollector.getCurrentMonthHistoryCall(exten, printResult);
+                break;
 
 	default:
 		help();
@@ -86,7 +51,7 @@ switch ( args["-t"] )
 
 function help()
 {
-	console.log("Usage: node testDataCollector.js -t <initQueries|getContactsPhonebook|getCustomerCard|getDayHistoryCall|getCurrentWeekHistoryCall  phonebook|dayHistoryCall|currentMonthHistoryCall> -e <exten> [-s <search>] ");
+	console.log("Usage: node testDataCollector.js -t <initQueries|getContactsPhonebook|getCustomerCard|getDayHistoryCall|getCurrentWeekHistoryCall|getCurrentMonthHistoryCall> -e <exten> [-s <search>] ");
 	process.exit(1);
 }
 

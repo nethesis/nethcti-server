@@ -7,6 +7,7 @@ const PHONEBOOK = "phonebook";
 const CUSTOMER_CARD = "customer_card";
 const DAY_HISTORY_CALL = "day_history_call";
 const CURRENT_WEEK_HISTORY_CALL = "current_week_history_call";
+const CURRENT_MONTH_HISTORY_CALL = "current_month_history_call";
 
 
 /* this is the list of the queries expressed in the config file: the key is the section name
@@ -35,12 +36,7 @@ exports.DataCollector = function(){
 	this.getCustomerCard = function(ext, type, cb) { return getCustomerCard(ext, type, cb); }
 	this.getDayHistoryCall = function(ext, date, cb) { return getDayHistoryCall(ext, date, cb); }
 	this.getCurrentWeekHistoryCall = function(ext, cb) { return getCurrentWeekHistoryCall(ext, cb); }
-
-	this.searchContactsPhonebook = function(extFrom, namex, cb){ return searchContactsPhonebook(extFrom, namex, cb); }
-	this.getHistoryCall = function(exten, cb) { return getHistoryCall(exten, cb); }
-	this.checkUserPermitCurrentWeekHistoryCall = function(exten) { return checkUserPermitCurrentWeekHistoryCall(exten); }
-	this.checkUserPermitCurrentMonthHistoryCall = function(exten) { return checkUserPermitCurrentMonthHistoryCall(exten); }
-	this.getCurrentMonthHistoryCall = function(exten, cb) { return getCurrentMonthHistoryCall(exten, cb); }
+	this.getCurrentMonthHistoryCall = function(ext, cb) { return getCurrentMonthHistoryCall(ext, cb); }
 }
 
 /*
@@ -48,6 +44,25 @@ exports.DataCollector = function(){
  */
 function initQueries(){
         this.queries = iniparser.parseSync(DATACOLLECTOR_CONFIG_FILENAME);
+}
+
+/* 
+ * Return the history of calling of the current month.
+ */
+getCurrentMonthHistoryCall = function(ext, cb){
+
+	var objQuery = queries[CURRENT_MONTH_HISTORY_CALL];
+        if(objQuery!=undefined){
+                // copy object
+                var copyObjQuery = new Object(objQuery);
+                // substitue template field in query
+                copyObjQuery.query = copyObjQuery.query.replace(/\$EXTEN/g, ext);
+                // execute current sql query
+                executeSQLQuery(copyObjQuery, function(results){
+                        cb(results);
+                });
+        }
+        return undefined;
 }
 
 /* 
@@ -128,33 +143,6 @@ function getContactsPhonebook(name, cb){
 	return undefined;
 }
 
-
-
-/* 
- * Return the history of calling of the current month.
- */
-getCurrentMonthHistoryCall = function(ext, cb){
-
-        var currentUserSQLProfileObj = getUserSQLProfile(ext);
-        var currentSQLQueryObj = currentUserSQLProfileObj.listSQLQueries[SECTION_CURRENT_MONTH_HISTORY_CALL];
-
-        if(currentSQLQueryObj!=undefined){
-		// copy object
-                var copyCurrentSQLQueryObj = Object.create(currentSQLQueryObj);
-		// substitue template field in query
-                copyCurrentSQLQueryObj.sqlQueryStr = copyCurrentSQLQueryObj.sqlQueryStr.replace(/\$EXTEN/g, ext);
-                // execute current sql query
-                executeSQLQuery(copyCurrentSQLQueryObj, function(results){
-                        cb(results);
-                });
-        }
-        return undefined;
-}
-
-
-
-
-
 /*
  * Execute one sql query and return an array of object. This function must have 
  * a callback function as second parameter because the asynchronous nature of
@@ -206,6 +194,3 @@ function executeSQLQuery(objQuery, cb){
 		});
 	}
 }
-
-
-
