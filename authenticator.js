@@ -1,8 +1,34 @@
 var fs = require("fs");
 var sys = require("sys");
-var AUTHENTICATOR_CONFIG_FILENAME = "/etc/asterisk/sip_additional.conf";
+var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
+const AUTHENTICATOR_CONFIG_FILENAME = "/etc/asterisk/sip_additional.conf";
 
-// list of user with thier password. The user is the key and the password is the value
+/* this is the authentication profile created by parsing the config file.
+ * The key is the section of the file: the exten. The value is the content of the section,
+ * where can be found the secret of the extension.
+ */
+/* An example:
+userAuthProfiles = 
+{ '500': 
+   { deny: '0.0.0.0/0.0.0.0',
+     type: 'friend',
+     secret: '500',
+     qualify: 'yes',
+     port: '5060',
+     pickupgroup: '',
+     permit: '0.0.0.0/0.0.0.0',
+     nat: 'yes',
+     mailbox: '500@device',
+     host: 'dynamic',
+     dtmfmode: 'rfc2833',
+     dial: 'SIP/500',
+     context: 'from-internal',
+     canreinvite: 'no',
+     callgroup: '',
+     callerid: 'device <500>',
+     accountcode: '',
+     'call-limit': '50' } }
+*/
 userAuthProfiles = {};
 
 
@@ -11,63 +37,25 @@ userAuthProfiles = {};
  * Constructor
  */
 exports.Authenticator = function(){
-	inituserAuthProfiles();
-	this.authenticateUser = function(user, secret){ return authenticateUser(user, secret); }
+	initProfiles();
+	this.authenticateUser = function(ext, secret){ return authenticateUser(ext, secret); }
 }
 
 
 /*
- * Initialized all information about user authentication
+ * Initialize the profiles of all users by means the reading of the config file.
  */
-function inituserAuthProfiles(){
-
-	// read file
-	var users = fs.readFileSync(AUTHENTICATOR_CONFIG_FILENAME, "UTF-8", function(err, data) {
-		if(err){
-			sys.puts("error in reading file");
-			sys.puts(err);
-			return;
-		}
-		return data;
-	});
-	
-	// each array element has information of one user as string
-	var usersArray = users.split("[");
-	usersArray = usersArray.slice(1,usersArray.length);
-
-	// 
-	for(var i=0; i<usersArray.length; i++){
-	
-		var tempUserStr = usersArray[i];
-		
-
-		// current array contains only one user
-		var tempUserArray = tempUserStr.split("\n");
-		var username = tempUserArray[0].slice(0, tempUserArray[0].length-1);
-		
-		var secret;
-		
-		for(token=1; token<tempUserArray.length; token++){
-		
-			// array with permit actions
-			if(tempUserArray[token].indexOf("secret") != -1){
-				var secretStr = tempUserArray[token];
-				secretArray = secretStr.split("=");
-				secret = secretArray[1];
-			}
-		}
-		
-		userAuthProfiles[username] = secret;
-	}
+function initProfiles(){
+        this.userAuthProfiles = iniparser.parseSync(AUTHENTICATOR_CONFIG_FILENAME);
 }
 
 /*
  * Return true if the specified user and secret corresponding to 
  * initialized user authentication profile.
  */
-authenticateUser = function(user, secret){
-
-	if(userAuthProfiles[user]==secret)
+authenticateUser = function(ext, secret){
+	console.log(userAuthProfiles[ext].secret);
+	if(userAuthProfiles[ext].secret==secret)
 		return true;
 	return false;
 }
