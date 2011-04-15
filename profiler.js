@@ -5,6 +5,7 @@ const PROFILER_CONFIG_FILENAME = "profiles.ini";
 const CALL_OUT = "CALL_OUT";
 const CALL_IN = "CALL_IN";
 const PHONEBOOK = "PHONEBOOK";
+const REDIRECT = "REDIRECT";
 const ALL = "all";
 
 
@@ -37,6 +38,7 @@ exports.Profiler = function(){
 	this.checkActionCallOutPermit = function(exten){ return checkActionPermit(exten, CALL_OUT) }
 	this.checkActionCallInPermit = function(exten){ return checkActionPermit(exten, CALL_IN) }
 	this.checkActionPhonebookPermit = function(exten){ return checkActionPermit(exten, PHONEBOOK) }
+	this.checkActionRedirectPermit = function(exten){ return checkActionPermit(exten, REDIRECT) }
 }
 
 /*
