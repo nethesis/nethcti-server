@@ -4,6 +4,7 @@ var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
 var mysql = require('./lib/node-mysql');
 const DATACOLLECTOR_CONFIG_FILENAME = "dataProfiles.ini";
 const PHONEBOOK = "phonebook";
+const CUSTOMER_CARD = "customer_card";
 
 var SECTION_NAME_CUSTOMER_CARD = "customer_card";
 var SECTION_HISTORY_CALL = "history_call";
@@ -45,8 +46,6 @@ exports.DataCollector = function(){
 	this.getCurrentMonthHistoryCall = function(exten, cb) { return getCurrentMonthHistoryCall(exten, cb); }
 }
 
-
-
 /*
  * Initialize all the queries that can be executed
  */
@@ -54,15 +53,12 @@ function initQueries(){
         this.queries = iniparser.parseSync(DATACOLLECTOR_CONFIG_FILENAME);
 }
 
-
-
-
 /*
  * Return the customer card of the client extCC in type format.
  * The type is specified in section [CUSTOMER_CARD] of profiles.ini file.
  */
 getCustomerCard = function(ext, type, cb){
-	var section = "customer_card_" + type;
+	var section = CUSTOMER_CARD + "_" + type;
 	var objQuery = queries[section];
         if(objQuery!=undefined){
 		// copy object
