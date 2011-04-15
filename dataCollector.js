@@ -132,7 +132,7 @@ function getContactsPhonebook(name, cb){
 	var objQuery = queries[PHONEBOOK];
 	if(objQuery!=undefined){
 		// copy object
-                var copyObjQuery = new Object(objQuery);
+                var copyObjQuery = Object.create(objQuery);
 		// substitue template field in query
                 copyObjQuery.query = copyObjQuery.query.replace(/\$NAME_TO_REPLACE/g, name);
 		// execute current sql query
