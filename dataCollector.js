@@ -34,8 +34,8 @@ queries = {};
 exports.DataCollector = function(){
 	initQueries();
 	this.getContactsPhonebook = function(name, cb){ return getContactsPhonebook(name, cb); }
+	this.getCustomerCard = function(ext, type, cb) { return getCustomerCard(ext, type, cb); }
 
-	this.getCustomerCard = function(extenApplicant, extenCustomerCard, cb) { return getCustomerCard(extenApplicant, extenCustomerCard, cb); }
 	this.searchContactsPhonebook = function(extFrom, namex, cb){ return searchContactsPhonebook(extFrom, namex, cb); }
 	this.getHistoryCall = function(exten, cb) { return getHistoryCall(exten, cb); }
 	this.getDayHistoryCall = function(exten, date, cb) { return getDayHistoryCall(exten, date, cb); }
@@ -57,6 +57,25 @@ function initQueries(){
 
 
 
+/*
+ * Return the customer card of the client extCC in type format.
+ * The type is specified in section [CUSTOMER_CARD] of profiles.ini file.
+ */
+getCustomerCard = function(ext, type, cb){
+	var section = "customer_card_" + type;
+	var objQuery = queries[section];
+        if(objQuery!=undefined){
+		// copy object
+                var copyObjQuery = new Object(objQuery);
+                // substitue template field in query
+                copyObjQuery.query = copyObjQuery.query.replace(/\$EXTEN/g, ext);
+                // execute current sql query
+                executeSQLQuery(copyObjQuery, function(results){
+                        cb(results);
+                });
+        }
+        return undefined;
+}
 
 
 
@@ -65,7 +84,7 @@ function initQueries(){
  * Search in the database all phonebook contacts that match the given name
  */
 function getContactsPhonebook(name, cb){
-	objQuery = queries[PHONEBOOK];
+	var objQuery = queries[PHONEBOOK];
 	if(objQuery!=undefined){
 		// copy object
                 var copyObjQuery = new Object(objQuery);
@@ -77,84 +96,6 @@ function getContactsPhonebook(name, cb){
 		});
 	}
 	return undefined;
-}
-
-
-
-/*
- * Test if the user exten has the authorization to search contact in phonebook. 
- */
-testPermitUserSearchAddressPhonebook = function(exten){
-	
-	if(this.listUserSQLProfiles[exten].listSQLQueries[SECTION_SEARCH_ADDRESSES]!=undefined)
-		return true;
-	return false;
-
-}
-
-
-
-/*
- * Test if the user exten has the authorization to view customer card. Therefore
- * it check if the user has a query of category "SECTION_NAME_CUSTOMER_CARD".
- */
-testUserPermitCustomerCard = function(exten){
-
-	if(this.listUserSQLProfiles[exten].listSQLQueries[SECTION_NAME_CUSTOMER_CARD]!=undefined)
-		return true;
-	return false;
-
-}
-
-
-/*
- * Test if the user exten has the authorization to view his history of calling. Therefore
- * it check if the user has a query of category "SECTION__HISTORY_CALL".
- */
-testUserPermitHistoryCall = function(exten){
-
-        if(this.listUserSQLProfiles[exten].listSQLQueries[SECTION_HISTORY_CALL]!=undefined)
-                return true;
-        return false;
-
-}
-
-
-
-/*
- * Test if the user exten has the authorization to view his current month history of calling. Therefore
- * it check if the user has a query of category "SECTION_CURRENT_MONTH_HISTORY_CALL".
- */
-checkUserPermitCurrentMonthHistoryCall = function(exten){
-        if(this.listUserSQLProfiles[exten].listSQLQueries[SECTION_CURRENT_MONTH_HISTORY_CALL]!=undefined)
-                return true;
-        return false;
-}
-
-
-/*
- * Test if the user exten has the authorization to view his current week history of calling. Therefore
- * it check if the user has a query of category "SECTION_CURRENT_WEEK_HISTORY_CALL".
- */
-checkUserPermitCurrentWeekHistoryCall = function(exten){
-
-        if(this.listUserSQLProfiles[exten].listSQLQueries[SECTION_CURRENT_WEEK_HISTORY_CALL]!=undefined)
-                return true;
-        return false;
-
-}
-
-
-/*
- * Test if the user exten has the authorization to view his day history of calling. Therefore
- * it check if the user has a query of category "SECTION_DAY_HISTORY_CALL".
- */
-testUserPermitDayHistoryCall = function(exten){
-
-        if(this.listUserSQLProfiles[exten].listSQLQueries[SECTION_DAY_HISTORY_CALL]!=undefined)
-                return true;
-        return false;
-
 }
 
 
@@ -250,28 +191,6 @@ getHistoryCall = function(ext, cb){
         return undefined;
 }
 
-/*
- * Return the customer card of client exten. If the user hasn't query to get 
- * customer card, means that he doesn't has the right of access to custormer card.
- * So, in this case, the function return an undefined.
- */
-getCustomerCard = function(extenApplicant, extenCustomerCard, cb){
-
-	var currentUserSQLProfileObj = getUserSQLProfile(extenApplicant);
-	var currentSQLQueryObj = currentUserSQLProfileObj.listSQLQueries[SECTION_NAME_CUSTOMER_CARD];
-		
-	if(currentSQLQueryObj!=undefined){
-		// copy object
-                var copyCurrentSQLQueryObj = Object.create(currentSQLQueryObj);
-		// substitue template field in query
-                copyCurrentSQLQueryObj.sqlQueryStr = copyCurrentSQLQueryObj.sqlQueryStr.replace(/\$EXTEN/g, extenCustomerCard);
-		// execute current sql query
-		executeSQLQuery(copyCurrentSQLQueryObj, function(results){
-			cb(results);
-		});
-	}
-	return undefined;
-}
 
 
 

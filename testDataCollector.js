@@ -27,10 +27,15 @@ switch ( args["-t"] )
 		});
                 break;
 
-	case "customercard":
-		console.log("\nTesting getCustomerCard: extent "+exten+" is searching '"+search+"'");
-		dataCollector.getCustomerCard(exten, search, printResult);
+	case "getCustomerCard":
+		console.log("\nTesting getCustomerCard(ext, type, cb): ext " + exten + " type " + search);
+                dataCollector.getCustomerCard(exten, search, function(results){
+                        console.log("results = ");
+                        console.log(results);
+                });
 		break;
+
+
 	
 	case "phonebook":
 		console.log("\nTesting searchContactsPhonebook: extent "+exten+" is searching '"+search+"'");
@@ -54,7 +59,7 @@ switch ( args["-t"] )
 
 function help()
 {
-	console.log("Usage: node testDataCollector.js -t <initQueries|getContactsPhonebook|phonebook|dayHistoryCall|currentMonthHistoryCall> -e <exten> [-s <search>] ");
+	console.log("Usage: node testDataCollector.js -t <initQueries|getContactsPhonebook|getCustomerCard|phonebook|dayHistoryCall|currentMonthHistoryCall> -e <exten> [-s <search>] ");
 	process.exit(1);
 }
 
