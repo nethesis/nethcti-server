@@ -121,9 +121,10 @@ am.addListener('agentcalled', function(fromid, fromname, queue, destchannel) {
 	}
 });
 
+
 am.addListener('dialing', function(from, to) {
 
-	/* check if the call come from queue: in this case, from and to are equal.
+	/* check if the call come from queue: in this case, "from" and "to" are equal.
 	 * So, the queue call is managed by 'agentcalled' event.
 	 */
 	var inde = from.number.indexOf("@");
@@ -136,38 +137,48 @@ am.addListener('dialing', function(from, to) {
 
 	log("Dial: " + sys.inspect(from) + " -> "+ sys.inspect(to));
 	
+	// check if the user is logged in
 	if(to!=undefined && clients[to.number]!=undefined){
+
+		// check the permit of the user to receive the call
+		if(!profiler.checkActionCallInPermit(to.number)){
+			log("The user [" + to.number + "] hasn't the permit of receiving call !");
+			return;
+		}
 	
+		// create the response for the client
 		var msg = "Call incoming from " + from.number + " to " + to.number;
 		var c = clients[to.number];
 		/* in this response the html is not passed, because the chrome desktop 
-         * notification of the client accept only one absolute or relative url. */
+        	 * notification of the client accept only one absolute or relative url. */
 		var response = new ResponseMessage(c.sessionId, "dialing", msg);
 		response.from = from.number;
 		response.to = to.number;
 			
-		if(dataCollector.testUserPermitCustomerCard(to.number)){
-    		// the user has the authorization of view customer card	
-    		log("The user " + to.number + " has the permit of view customer card of " + from.number);
-    			
-    		response.canViewCustomerCard = true;
-    		
-    		dataCollector.getCustomerCard(to.number, from.number, function(customerCard){
+		var typesCC = profiler.getTypesCustomerCardPermit(to.number);
+		log("The user [" + to.number + "] has the permit of view following types of customer card");
+		console.log(typesCC);
 
-  				var custCardHTML = createCustomerCardHTML(customerCard[0], from.number);
-  				response.customerCard = custCardHTML;
-  				c.send(response);
-				log("Notify of calling has been sent to client " + to.number);
-  			});
-    	}
-    	else{
-		   	// the user hasn't the authorization of view customer card
-		   	log("The user " + to.number + " hasn't the permit of view customer card");
-		   	response.canViewCustomerCard = false;
-		   	response.customerCard = "Sorry, but you don't have permission of view customer card !";
-		   	c.send(response);
-			log("Notify of calling has been sent to client " + to.number);
-    	}
+		if(typesCC.length==0){
+			// the user hasn't the authorization of view customer card, then the length is 0
+                        log("The user " + to.number + " hasn't the permit of view customer card");
+                        response.customerCard = ["Sorry, but you don't have permission of view customer card !"];
+                        c.send(response)
+                        log("Notify of calling has been sent to client " + to.number);
+			return;
+		}		
+		var customerCardResult = [];
+		for(i=0; i<typesCC.length; i++){
+			dataCollector.getCustomerCard(from.number, typesCC[i], function(cc){
+				var custCardHTML = createCustomerCardHTML(cc[0], from.number);
+				customerCardResult.push(custCardHTML);
+				if(customerCardResult.length==typesCC.length){	
+					response.customerCard = customerCardResult;
+			                c.send(response);
+			                log("Notify of calling has been sent to client " + to.number + " with relative customer card");
+				}
+			});
+		}
 	}
 });
 
@@ -539,14 +550,12 @@ io.on('connection', function(client){
 	  			}
 	  		break;
 	  		case ACTION_SEARCH_CONTACT_PHONEBOOK:
-	  		
 	  			// check if the user has the permit to search contact in phonebook
-	  			var res = dataCollector.testPermitUserSearchAddressPhonebook(extFrom);
+				var res = profiler.checkActionPhonebookPermit(extFrom);
 	  			if(res){
 	  				// execute query to search contact in phonebook
 	  				var namex = message.namex;
-	  				dataCollector.searchContactsPhonebook(extFrom, namex, function(results){
-	  				
+					dataCollector.getContactsPhonebook(namex, function(results){
 	  					var resultHTML = createResultSearchContactsPhonebook(results);
 	  					var mess = new ResponseMessage(client.sessionId, "search_contacts_results", "received phonebook contacts");
 	  					mess.resultHTML = resultHTML;
