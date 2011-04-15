@@ -54,6 +54,12 @@ switch ( args["-t"] )
                 var res = profiler.checkActionHistoryCallPermit(exten);
                 console.log(res);
                 break;
+	
+	case "getTypesCustomerCardPermit":
+                console.log("\nTesting getTypesCustomerCardPermit(exten): extent " + exten);
+                var res = profiler.getTypesCustomerCardPermit(exten);
+                console.log(res);
+                break;
 
 
 	default:
@@ -63,7 +69,7 @@ switch ( args["-t"] )
 
 function help()
 {
-	console.log("Usage: node testProfiler.js -t <initProfiles|checkActionCallOutPermit|checkActionPhonebookPermit|checkActionCallInPermit|checkActionRedirectPermit|checkActionRecordPermit|checkActionHistoryCallPermit> -e <exten> [-s <search>] ");
+	console.log("Usage: node testProfiler.js -t <initProfiles|checkActionCallOutPermit|checkActionPhonebookPermit|checkActionCallInPermit|checkActionRedirectPermit|checkActionRecordPermit|checkActionHistoryCallPermit|getTypesCustomerCardPermit> -e <exten> [-s <search>] ");
 	process.exit(1);
 }
 
