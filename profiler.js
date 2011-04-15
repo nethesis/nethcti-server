@@ -18,7 +18,7 @@ const ALL = "all";
  * particulare customer card (ex. default or insoluti) and the value is the list of the
  * user. The name of the key are those that has been write in .ini file.
  */
-/* An example of acions: note that it is equal to the file .ini
+/* An example of actions: note that it is equal to the file .ini
 actions = 
 { PHONEBOOK: { users: '500,501' },
   CALL_IN: { users: '500,501' },
