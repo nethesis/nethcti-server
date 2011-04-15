@@ -15,6 +15,18 @@ var dataCollector = new dataReq.DataCollector();
 
 switch ( args["-t"] )
 {
+	case "initQueries":
+                console.log("\nTesting initQueries");
+                break;
+
+	case "getContactsPhonebook":
+                console.log("\nTesting getContactsPhonebook(name, cb): name " + exten);
+                dataCollector.getContactsPhonebook(exten, function(results){
+			console.log("results = ");
+			console.log(results);
+		});
+                break;
+
 	case "customercard":
 		console.log("\nTesting getCustomerCard: extent "+exten+" is searching '"+search+"'");
 		dataCollector.getCustomerCard(exten, search, printResult);
@@ -42,7 +54,7 @@ switch ( args["-t"] )
 
 function help()
 {
-	console.log("Usage: node testDataCollector.js -t <customercard|phonebook|dayHistoryCall|currentMonthHistoryCall> -e <exten> [-s <search>] ");
+	console.log("Usage: node testDataCollector.js -t <initQueries|getContactsPhonebook|phonebook|dayHistoryCall|currentMonthHistoryCall> -e <exten> [-s <search>] ");
 	process.exit(1);
 }
 
