@@ -1,67 +1,44 @@
 var fs = require("fs");
 var sys = require("sys");
+var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
 var mysql = require('./lib/node-mysql');
-var DATACOLLECTOR_CONFIG_FILENAME = "dataProfiles.conf";
+const DATACOLLECTOR_CONFIG_FILENAME = "dataProfiles.ini";
+const PHONEBOOK = "phonebook";
+
 var SECTION_NAME_CUSTOMER_CARD = "customer_card";
-var SECTION_SEARCH_ADDRESSES = "search_addresses";
 var SECTION_HISTORY_CALL = "history_call";
 var SECTION_DAY_HISTORY_CALL = "day_history_call";
 var SECTION_CURRENT_WEEK_HISTORY_CALL = "current_week_history_call";
 var SECTION_CURRENT_MONTH_HISTORY_CALL = "current_month_history_call";
 
-
-
-/* It's the list of sql user profiles expressed as hash table of key and value.
- * The key is the exten of the user and its value is the object UserSQLProfile.
+/* this is the list of the queries expressed in the config file: the key is the section name
+ * and the value is the all parameter to execute the query.
  */
-listUserSQLProfiles = {};
-
-
-/*
- * SQL query object.
- */
-SQLQuery = function(cat, host, port, type, user, pwd, dbname, sqlQuery){
-	this.category = cat;
-	this.dbHost = host;
-	this.dbPort = port;
-	this.dbType = type;
-	this.dbUsername = user;
-	this.dbPassword = pwd;
-	this.dbName = dbname;
-	// sqlQueryStr is an sql query as a string
-	this.sqlQueryStr = sqlQuery;
+/* An example:
+{ customer_card_default: 
+   { dbhost: 'localhost',
+     dbport: '3306',
+     dbtype: 'mysql',
+     dbuser: 'pbookuser',
+     dbpassword: 'pbookpass',
+     dbname: 'phonebook',
+     query: '"select * from phonebook where homephone like \'%$EXTEN\' or workphone like \'%$EXTEN\' or cellphone like \'%$EXTEN\' or fax like \'%$EXTEN\'"' 
+   } 
 }
-
-
-
-/*
- * SQL user profile object.
- */
-UserSQLProfile = function(ext){
-	this.exten = ext;
-	/* it is an hash table. The key is the category of sql query and the value
-	 * is SQLQuery object with all parameters needed to execute query.
-	 */
-	this.listSQLQueries = {};
-}
-
+*/
+queries = {};
 
 /*
  * Constructor
  */
 exports.DataCollector = function(){
-	initSQLProfiles();
-	this.printUserSQLProfiles = function() { printListUserSQLProfiles(); }
-	this.getAllUserSQLProfiles = function(){ return listUserSQLProfiles; }
-	this.getUserSQLProfile = function(exten){	return getUserSQLProfile(exten); }
-	this.testUserPermitCustomerCard = function(exten) { return testUserPermitCustomerCard(exten); }
+	initQueries();
+	this.getContactsPhonebook = function(name, cb){ return getContactsPhonebook(name, cb); }
+
 	this.getCustomerCard = function(extenApplicant, extenCustomerCard, cb) { return getCustomerCard(extenApplicant, extenCustomerCard, cb); }
-	this.testPermitUserSearchAddressPhonebook = function(extFrom){ return testPermitUserSearchAddressPhonebook(extFrom); }
 	this.searchContactsPhonebook = function(extFrom, namex, cb){ return searchContactsPhonebook(extFrom, namex, cb); }
 	this.getHistoryCall = function(exten, cb) { return getHistoryCall(exten, cb); }
 	this.getDayHistoryCall = function(exten, date, cb) { return getDayHistoryCall(exten, date, cb); }
-	this.testUserPermitHistoryCall = function(exten) { return testUserPermitHistoryCall(exten); }
-	this.testUserPermitDayHistoryCall = function(exten) { return testUserPermitDayHistoryCall(exten); }
 	this.checkUserPermitCurrentWeekHistoryCall = function(exten) { return checkUserPermitCurrentWeekHistoryCall(exten); }
 	this.getCurrentWeekHistoryCall = function(exten, cb) { return getCurrentWeekHistoryCall(exten, cb); }
 	this.checkUserPermitCurrentMonthHistoryCall = function(exten) { return checkUserPermitCurrentMonthHistoryCall(exten); }
@@ -71,20 +48,31 @@ exports.DataCollector = function(){
 
 
 /*
- * Search in database all phonebook contacts that match given namex
+ * Initialize all the queries that can be executed
  */
-searchContactsPhonebook = function(ext, namex, cb){
+function initQueries(){
+        this.queries = iniparser.parseSync(DATACOLLECTOR_CONFIG_FILENAME);
+}
 
-	var currentUserSQLProfileObj = getUserSQLProfile(ext);
-	var currentSQLQueryObj = currentUserSQLProfileObj.listSQLQueries[SECTION_SEARCH_ADDRESSES];
-		
-	if(currentSQLQueryObj!=undefined){
+
+
+
+
+
+
+
+/*
+ * Search in the database all phonebook contacts that match the given name
+ */
+function getContactsPhonebook(name, cb){
+	objQuery = queries[PHONEBOOK];
+	if(objQuery!=undefined){
 		// copy object
-                var copyCurrentSQLQueryObj = Object.create(currentSQLQueryObj);
+                var copyObjQuery = new Object(objQuery);
 		// substitue template field in query
-                copyCurrentSQLQueryObj.sqlQueryStr = copyCurrentSQLQueryObj.sqlQueryStr.replace(/\$NAME_TO_REPLACE/g, namex);
+                copyObjQuery.query = copyObjQuery.query.replace(/\$NAME_TO_REPLACE/g, name);
 		// execute current sql query
-		executeSQLQuery(copyCurrentSQLQueryObj, function(results){
+		executeSQLQuery(copyObjQuery, function(results){
 			cb(results);
 		});
 	}
@@ -303,28 +291,24 @@ getUserSQLProfile = function(exten){
  * mysql query function. Otherwise it is possibile that the function return before
  * the completion of sql query operation.
  */
-executeSQLQuery = function(currentSQLQueryObj, cb){
-	
+function executeSQLQuery(objQuery, cb){
 	// execute query to mysql server
-	if(currentSQLQueryObj.dbType=="mysql"){
-		
+	if(objQuery.dbtype=="mysql"){
 		var client = new mysql.Client();
-		client.host = currentSQLQueryObj.dbHost;
-		client.port = currentSQLQueryObj.dbPort;
-		client.user = currentSQLQueryObj.dbUsername;
-		client.password = currentSQLQueryObj.dbPassword;
-		
+		client.host = objQuery.dbhost;
+		client.port = objQuery.dbport;
+		client.user = objQuery.dbuser;
+		client.password = objQuery.dbpassword;
 		client.connect();
 		// set the database to use
-		var query = "USE " + currentSQLQueryObj.dbName + ";";
+		var query = "USE " + objQuery.dbname + ";";
 		client.query(query, function selectCb(err, results, fields) {
 		    if (err) {
       			throw err;
 		    }
 		});
-		
 		// execute query
-		query = currentSQLQueryObj.sqlQueryStr + ";";
+		query = objQuery.query + ";";
 		client.query(query, function selectCb(err, results, fields) {
 		    if (err) {
 			client.end();
@@ -333,16 +317,14 @@ executeSQLQuery = function(currentSQLQueryObj, cb){
 		    client.end();
 		    cb(results);
 		});
-
-
 	}
 	// execute query to microsoft sql server
-	else if(currentSQLQueryObj.dbType=="mssql"){
+	else if(objQuery.dbtype=="mssql"){
 		var odbc = require("./lib/node-odbc/odbc");
 
 		var db = new odbc.Database();
-		var connect_str = "DRIVER={FreeTDS};SERVER="+currentSQLQueryObj.dbHost+";UID="+currentSQLQueryObj.dbUsername+";PWD="+currentSQLQueryObj.dbPassword+";DATABASE="+currentSQLQueryObj.dbName;
-		query = currentSQLQueryObj.sqlQueryStr + ";";
+		var connect_str = "DRIVER={FreeTDS};SERVER=" + objQuery.dbhost + ";UID=" + objQuery.dbuser + ";PWD=" + objQuery.dbpassword + ";DATABASE=" + objQuery.dbname;
+		query = objQuery.query + ";";
 
 		db.open(connect_str, function(err)
 		{
@@ -352,9 +334,7 @@ executeSQLQuery = function(currentSQLQueryObj, cb){
         			db.close(function(){});
     			});
 		});
-
 	}
-	
 }
 
 
