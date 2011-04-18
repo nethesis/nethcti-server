@@ -866,7 +866,6 @@ io.on('connection', function(client){
 
                                 // check if the user has the permit to get history of calling
 				var res = profiler.checkActionHistoryCallPermit(extFrom);
-console.log("The res is: " + res);
                                 if(res){
                                         // execute query to search contact in phonebook
                                         dataCollector.getCurrentWeekHistoryCall(extFrom, function(results){
@@ -885,8 +884,7 @@ console.log("The res is: " + res);
 			case ACTION_GET_CURRENT_MONTH_HISTORY_CALL:
 
                                 // check if the user has the permit to get history of calling
-                                var res = dataCollector.checkUserPermitCurrentMonthHistoryCall(extFrom);
-console.log("The res is: " + res);
+				var res = profiler.checkActionHistoryCallPermit(extFrom);
                                 if(res){
                                         // execute query to search contact in phonebook
                                         dataCollector.getCurrentMonthHistoryCall(extFrom, function(results){
