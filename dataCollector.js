@@ -54,7 +54,7 @@ getCurrentMonthHistoryCall = function(ext, cb){
 	var objQuery = queries[CURRENT_MONTH_HISTORY_CALL];
         if(objQuery!=undefined){
                 // copy object
-                var copyObjQuery = new Object(objQuery);
+                var copyObjQuery = Object.create(objQuery);
                 // substitue template field in query
                 copyObjQuery.query = copyObjQuery.query.replace(/\$EXTEN/g, ext);
                 // execute current sql query
@@ -72,7 +72,7 @@ getCurrentWeekHistoryCall = function(ext, cb){
 	var objQuery = queries[CURRENT_WEEK_HISTORY_CALL];
         if(objQuery!=undefined){
                 // copy object
-                var copyObjQuery = new Object(objQuery);
+                var copyObjQuery = Object.create(objQuery);
                 // substitue template field in query
                 copyObjQuery.query = copyObjQuery.query.replace(/\$EXTEN/g, ext);
                 // execute current sql query
@@ -87,10 +87,11 @@ getCurrentWeekHistoryCall = function(ext, cb){
  * Return the history of calling of one day.
  */
 getDayHistoryCall = function(ext, date, cb){
+
 	var objQuery = queries[DAY_HISTORY_CALL];
         if(objQuery!=undefined){
                 // copy object
-                var copyObjQuery = new Object(objQuery);
+                var copyObjQuery = Object.create(objQuery);
                 // substitue template field in query
                 copyObjQuery.query = copyObjQuery.query.replace(/\$EXTEN/g, ext);
                 copyObjQuery.query = copyObjQuery.query.replace(/\$DATE/g, date);
@@ -111,7 +112,7 @@ getCustomerCard = function(ext, type, cb){
 	var objQuery = queries[section];
         if(objQuery!=undefined){
 		// copy object
-                var copyObjQuery = new Object(objQuery);
+                var copyObjQuery = Object.create(objQuery);
                 // substitue template field in query
                 copyObjQuery.query = copyObjQuery.query.replace(/\$EXTEN/g, ext);
                 // execute current sql query
