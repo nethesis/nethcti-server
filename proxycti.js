@@ -91,33 +91,45 @@ am.addListener('agentcalled', function(fromid, fromname, queue, destchannel) {
 	
 	if(to!=undefined && clients[to]!=undefined){
 
+		// check the permit of the user to receive the call
+                if(!profiler.checkActionCallInPermit(to)){
+                        log("The user [" + to + "] hasn't the permit of receiving call !");
+                        return;
+                }
+
+		// create the response for the client
 	        var msg = "Call incoming from [" + fromid + " : " + fromname + "] to queue " + queue + " and to " + to;	
 		var c = clients[to];
+		/* in this response the html is not passed, because the chrome desktop 
+                 * notification of the client accept only one absolute or relative url. */
 		var response = new ResponseMessage(c.sessionId, "dialing", msg);
 		response.from = fromid;
 		response.to = to;
-		if(dataCollector.testUserPermitCustomerCard(to)){
-			// the user has the authorization of view customer card 
-		    	log("The user " + to + " has the permit of view customer card of [" + fromid + " : " + fromname + "]");
-	    	
-			response.canViewCustomerCard = true;
-			
-		       	dataCollector.getCustomerCard(to, fromid, function(customerCard){
-	        
-	       			var custCardHTML = createCustomerCardHTML(customerCard[0], from.number);
-				response.customerCard = custCardHTML;
-				c.send(response);
-				log("Notify of calling has been sent to client " + to.number);
-		       	});
-		}
-		else{
-	        	// the user hasn't the authorization of view customer card
-		        log("The user " + to.number + " hasn't the permit of view customer card");
-		        response.canViewCustomerCard = false;
-		        response.customerCard = "<p>" + to.number + "hasn't the permit of view customer card !</p>";
-		        c.send(response);
-		        log("Notify of calling has been sent to client " + to);
-	       	}
+
+		var typesCC = profiler.getTypesCustomerCardPermit(to);
+                log("The user [" + to + "] has the permit of view following types of customer card");
+                console.log(typesCC);
+
+		if(typesCC.length==0){
+                        // the user hasn't the authorization of view customer card: the length is 0
+                        log("The user " + to + " hasn't the permit of view customer card");
+                        response.customerCard = ["Sorry, but you don't have permission of view customer card !"];
+                        c.send(response)
+                        log("Notify of calling has been sent to client " + to);
+                        return;
+                }
+		var customerCardResult = [];
+                for(i=0; i<typesCC.length; i++){
+                        dataCollector.getCustomerCard(fromid, typesCC[i], function(cc){
+                                var custCardHTML = createCustomerCardHTML(cc[0], fromid);
+                                customerCardResult.push(custCardHTML);
+                                if(customerCardResult.length==typesCC.length){
+                                        response.customerCard = customerCardResult;
+                                        c.send(response);
+                                        log("Notify of calling has been sent to client " + to + " with relative customer card");
+                                }
+                        });
+                }
 	}
 });
 
