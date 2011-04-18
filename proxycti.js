@@ -281,10 +281,9 @@ server = http.createServer(function(req, res){
   	var parsed_url = url.parse(req.url,true);
 	var path = parsed_url.pathname;
 	var params = parsed_url.query;
-	
 
 	switch (path){
-		case '/':
+	    case '/':
     		path = "/index.html";
 		    fs.readFile(__dirname + path, function(err, data){
     	    	if (err) return send404(res);
@@ -292,6 +291,33 @@ server = http.createServer(function(req, res){
     		    res.write(data, 'utf8');
     		    res.end();
     	  	});
+	    break;
+	    case '/getCallAudioFile':
+		var filename = params.file;
+		var extFrom = params.extFrom;
+		// check if the requested file exists
+                var tempPath = AST_CALL_AUDIO_DIR + "/" + filename;
+                pathreq.exists(tempPath, function(exists){
+                        if(exists){
+                                // check the extension of the file
+                                var fileExt = pathreq.extname(tempPath);
+                                var type;
+				if(params.down==0) type='application/octect-stream'; // this is to force download of audio file
+                                else if(fileExt.toLowerCase()=='.wav') type = 'audio/x-wav';
+                                else if(fileExt=='.mp3') type = 'audio/mpeg';
+                                else if(fileExt=='.ogg') type = 'application/ogg';
+                                fs.readFile(tempPath, function(err, data){
+                                        if (err) return send404(res);
+                                        res.writeHead(200, {'Content-Type': type});
+                                        res.write(data, 'utf8');
+                                        res.end();
+                                });
+                        }
+                        else{
+				log("file not found: " + filename);
+                                send404(res);
+                        }
+                });
 	    break;
 	    default: 
     		// check if the requested file exists
