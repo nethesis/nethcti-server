@@ -360,7 +360,6 @@ io.on('connection', function(client){
   		const ACTION_CF_ON = "cf_on";
   		const ACTION_CF_OFF = "cf_off";
   		const ACTION_CHECK_CF_STATUS = "check_cf_status";
-  		const ACTION_GET_HISTORY_CALL = "get_history_call";
   		const ACTION_GET_DAY_HISTORY_CALL = "get_day_history_call";
   		const ACTION_GET_CURRENT_WEEK_HISTORY_CALL = "get_current_week_history_call";
   		const ACTION_GET_CURRENT_MONTH_HISTORY_CALL = "get_current_month_history_call";
@@ -841,35 +840,14 @@ io.on('connection', function(client){
 					}
 				});
 	  		break;
-			case ACTION_GET_HISTORY_CALL:
-				
-				// check if the user has the permit to get history of calling
-                                var res = dataCollector.testUserPermitHistoryCall(extFrom);
-                                if(res){
-                                        // execute query to search contact in phonebook
-                                        dataCollector.getHistoryCall(extFrom, function(results){
-                                                var mess = new ResponseMessage(client.sessionId, "history_call", "received history call");
-                                                mess.results = results;
-                                                client.send(mess);
-                                                log("History call of [" + extFrom + "] has been sent to the client");
-                                        });
-                                }
-                                else{
-                                        log("ATTENTION: " + extFrom + " is not enabled to view history call !");
-                                        client.send(new ResponseMessage(client.sessionId, "error_history_call", "Sorry: you don't have permission to view history call !"));
-                                        log("error_history_call has been sent to [" + extFrom + "] with: " + client.sessionId);
-                                }
-                        break;
 			case ACTION_GET_DAY_HISTORY_CALL:
 
-                                // check if the user has the permit to get history of calling
-                                var res = dataCollector.testUserPermitDayHistoryCall(extFrom);
-console.log("The res is: " + res);
+				// check if the user has the permit to get the history of calling
+				var res = profiler.checkActionHistoryCallPermit(extFrom);
                                 if(res){
 					// format date for query sql
 					var dateFormat = formatDate(message.date);					
 					console.log("dateFormat for query = " + dateFormat);
-
                                         // execute query to search contact in phonebook
                                         dataCollector.getDayHistoryCall(extFrom, dateFormat, function(results){
                                                 var mess = new ResponseMessage(client.sessionId, "day_history_call", "received day history call");
