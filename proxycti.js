@@ -234,27 +234,27 @@ am.addListener('unhold', function(participant) {
 
 am.addListener('hangup', function(participant, code, text) {
 
-	if(DEBUG) sys.puts("CLIENT: " + participant.number + " (" + participant.name + ") has hung up. Reason: " + code + "  ( Code: " + text + ")");
-	
-	var ext = participant.number;
-	if(clients[ext]!=undefined){
-		var c = clients[ext];
-		var msg = "Call has hung up. Reason: " + text + "  (Code: " + code + ")";
-		var response = new ResponseMessage(c.sessionId, "hangup", msg);
-		c.send(response);
-		log("Notify of hangup has been sent to " + ext);
-	}
-	
-	/* bug fix of asterisk.js in the wrong management of am.participants.
-	 * If this code is commented, am.participants grow with more entry of the same extension,
-	 * so it refer wrong with number in follow hangup request.
- 	 */
-	for(key in am.participants){
-		if(am.participants[key].number==participant.number){
-			delete am.participants[key];
-			console.log("deleted from am.participants the entry relative to " + participant.number);
-			console.log("Then the am.participants is = ");
-			console.log(am.participants);
+	if(participant!=undefined){
+		if(DEBUG) log("CLIENT: " + participant.number + " (" + participant.name + ") has hung up. Reason: " + code + "  ( Code: " + text + ")");
+		var ext = participant.number;
+		if(clients[ext]!=undefined){
+			var c = clients[ext];
+			var msg = "Call has hung up. Reason: " + text + "  (Code: " + code + ")";
+			var response = new ResponseMessage(c.sessionId, "hangup", msg);
+			c.send(response);
+			log("Notify of hangup has been sent to " + ext);
+		}
+		/* bug fix of asterisk.js in the wrong management of am.participants.
+		 * If this code is commented, am.participants grow with more entry of the same extension,
+		 * so it refer wrong with number in follow hangup request.
+	 	 */
+		for(key in am.participants){
+			if(am.participants[key].number==participant.number){
+				delete am.participants[key];
+				log("deleted from am.participants the entry relative to " + participant.number);
+				log("Then the am.participants is = ");
+				console.log(am.participants);
+			}
 		}
 	}
 });
@@ -384,8 +384,8 @@ io.on('connection', function(client){
   		switch(action){
   			case ACTION_LOGIN:
 
-		console.log("am.participants in action_login = ");
-		console.log(am.participants);
+				console.log("am.participants in action_login = ");
+				console.log(am.participants);
 	  		
 	  			if(authenticator.authenticateUser(extFrom, message.secret)){  // the user is authenticated
   				
