@@ -458,38 +458,31 @@ io.on('connection', function(client){
 	  				log("error_call has been sent to [" + extFrom + "] with: " + client.sessionId);
 	  				return;
 	  			}
-	  			/* this try catch is for profiler.testPermitActionUser
-	  			 * If the user isn't present in configuration file, an exception is thrown */
-	  			try{
-	  				// check if the user has the permit of dial out
-	  				if(profiler.testPermitActionUser(extFrom, "call_out")){
-	  			
-	  					log("[" + extFrom + "] enabled to calling out: execute calling...");
-	  				
-		  				// create call action for asterisk server
-		  				var actionCall = {
-							Action: 'Originate',
-							Channel: 'SIP/' + extFrom,
-							Exten: extToCall,
-							Context: 'from-internal',
-							Priority: 1,
-							Callerid: 'CTI' + extFrom,
-							Account: extToCall,
-							Timeout: 30000
-						};
-						// send action to asterisk
-						am.send(actionCall, function () {
-							log("call action has been sent to asterisk: " + extFrom + " -> " + extToCall);
-						});
-		  			}
-	  				else{
-			  			log("ATTENTION: " + extFrom + " is not enabled to calling out !");
-			  			client.send(new ResponseMessage(client.sessionId, 'error_call', "Sorry, but you don't have permission to call !"));
-			  			log("error_call has been sent to [" + extFrom + "] with: " + client.sessionId);
-	  				}
-		  		} catch(error){
-		  			log(error);
-		  		}
+
+  				// check if the user has the permit of dial out
+  				if(profiler.checkActionCallOutPermit(extFrom)){
+  					log("[" + extFrom + "] enabled to calling out: execute calling...");
+	  				// create call action for asterisk server
+	  				var actionCall = {
+						Action: 'Originate',
+						Channel: 'SIP/' + extFrom,
+						Exten: extToCall,
+						Context: 'from-internal',
+						Priority: 1,
+						Callerid: 'CTI' + extFrom,
+						Account: extToCall,
+						Timeout: 30000
+					};
+					// send action to asterisk
+					am.send(actionCall, function () {
+						log("call action has been sent to asterisk: " + extFrom + " -> " + extToCall);
+					});
+	  			}
+  				else{
+		  			log("ATTENTION: " + extFrom + " is not enabled to calling out !");
+		  			client.send(new ResponseMessage(client.sessionId, 'error_call', "Sorry, but you don't have permission to call !"));
+		  			log("error_call has been sent to [" + extFrom + "] with: " + client.sessionId);
+  				}
 		  	break;
 		  	case ACTION_HANGUP:
 	  		
