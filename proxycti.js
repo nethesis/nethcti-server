@@ -520,7 +520,7 @@ io.on('connection', function(client){
 	  		case ACTION_REDIRECT:
 	  			
 	  			// check if the user has the permit of dial out
-	  			if(profiler.testPermitActionUser(extFrom, "redirect")){
+				if(profiler.checkActionRedirectPermit(extFrom)){
 	  			
 	  				log("[" + extFrom + "] enabled to redirect call: execute redirecting...");
 	  				
