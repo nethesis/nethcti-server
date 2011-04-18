@@ -853,7 +853,7 @@ io.on('connection', function(client){
                                                 var mess = new ResponseMessage(client.sessionId, "day_history_call", "received day history call");
                                                 mess.results = results;
                                                 client.send(mess);
-                                                log("Day history call of [" + extFrom + "] has been sent to the client");
+                                                log("Day history call of [" + extFrom + "] has been sent to the client: the number of entry is: " + results.length);
                                         });
                                 }
                                 else{
