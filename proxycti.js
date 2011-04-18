@@ -576,8 +576,7 @@ io.on('connection', function(client){
 	  		case ACTION_RECORD:
 	  			
 	  			// check if the user has the permit of dial out
-	  			if(profiler.testPermitActionUser(extFrom, "record")){
-	  			
+				if(profiler.checkActionRecordPermit(extFrom)){
 	  				var channel = '';
 					var uniqueid = '';
 	  				for(key in am.participants){
@@ -586,7 +585,6 @@ io.on('connection', function(client){
 							uniqueid = am.participants[key].with;
 	  					}
 	  				}
-		  	
 	  				// create filename	
 					var d = new Date();
 					var yyyy = d.getFullYear();
@@ -598,7 +596,6 @@ io.on('connection', function(client){
 					var ss = d.getSeconds(); if(ss<10) ss = '0' + ss;
 					var hhmmss = hh + "" + mm + "" + ss;
 	  				var filename = 'auto-' + message.callFromExt + "-" + message.callToExt + "-" + yyyyMMdd + "-" + hhmmss + "-" + uniqueid; 
-
 	  				// create record action for asterisk server
 			  		var actionRecord = {
 						Action: 'Monitor',
@@ -622,7 +619,6 @@ io.on('connection', function(client){
 	  			}	
 	  		break;
 	  		case ACTION_STOP_RECORD:
-	  		
   				// get channel
   				var channel = '';
   				for(key in am.participants){
@@ -630,7 +626,6 @@ io.on('connection', function(client){
   						channel = key;
   					}
   				}
-	  		
 	  			// create stop record action for asterisk server
 			  	var actionStopRecord = {
 					Action: 'StopMonitor',
@@ -646,14 +641,12 @@ io.on('connection', function(client){
 				});
 	  		break;
 	  		case ACTION_DND_ON:
-	  		
 	  			// create action for asterisk server
 	  			var cmd = "database put DND " + extFrom + " 1";
 			  	var actionDNDon = {
 					Action: 'command',
 					Command: cmd
 				};
-				
 				// send action to asterisk
 				am.send(actionDNDon, function () {
 					log("DND on action from " + extFrom + " has been sent to asterisk");
@@ -662,17 +655,14 @@ io.on('connection', function(client){
 					log("ack_dnd_on has been sent to [" + extFrom + "] with: " + client.sessionId);
 					log(msgstr);
 				});
-				
 	  		break;
 	  		case ACTION_DND_OFF:
-	  		
 		  		// create action for asterisk server
 	  			var cmd = "database del DND " + extFrom;
 			  	var actionDNDoff = {
 					Action: 'command',
 					Command: cmd
 				};
-
 				// send action to asterisk
 				am.send(actionDNDoff, function () {
 					log("DND off action from " + extFrom + " has been sent to asterisk");
@@ -681,17 +671,14 @@ io.on('connection', function(client){
 					log("ack_dnd_off has been sent to [" + extFrom + "] with: " + client.sessionId);
 					log(msgstr);
 				});
-	  			
 	  		break;
 	  		case ACTION_CHECK_DND_STATUS:
-	  			
 	  			// create action for asterisk server
 	  			var cmd = "database get DND " + extFrom;
 			  	var actionCheckDNDStatus = {
 					Action: 'command',
 					Command: cmd
 				};
-				
 				// send action to asterisk
 				am.send(actionCheckDNDStatus, function (resp) {
 					log("check DND status action from " + extFrom + " has been sent to asterisk");
@@ -709,17 +696,14 @@ io.on('connection', function(client){
 						log(msgstr);
 					}
 				});
-	  			
 	  		break;
 	  		case ACTION_CW_ON:
-	  		
 	  			// create action for asterisk server
 	  			var cmd = "database put CW " + extFrom + " 1";
 			  	var actionCWon = {
 					Action: 'command',
 					Command: cmd
 				};
-				
 				// send action to asterisk
 				am.send(actionCWon, function () {
 					log("CW on action from " + extFrom + " has been sent to asterisk");
@@ -728,17 +712,14 @@ io.on('connection', function(client){
 					log("ack_cw_on has been sent to [" + extFrom + "] with: " + client.sessionId);
 					log(msgstr);
 				});
-				
 	  		break;
 	  		case ACTION_CW_OFF:
-	  		
 		  		// create action for asterisk server
 	  			var cmd = "database del CW " + extFrom;
 			  	var actionCWoff = {
 					Action: 'command',
 					Command: cmd
 				};
-
 				// send action to asterisk
 				am.send(actionCWoff, function () {
 					log("CW off action from " + extFrom + " has been sent to asterisk");
@@ -747,17 +728,14 @@ io.on('connection', function(client){
 					log("ack_cw_off has been sent to [" + extFrom + "] with: " + client.sessionId);
 					log(msgstr);
 				});
-	  			
 	  		break;
 	  		case ACTION_CHECK_CW_STATUS:
-	  			
 	  			// create action for asterisk server
 	  			var cmd = "database get CW " + extFrom;
 			  	var actionCheckCWStatus = {
 					Action: 'command',
 					Command: cmd
 				};
-				
 				// send action to asterisk
 				am.send(actionCheckCWStatus, function (resp) {
 					log("check CW status action from " + extFrom + " has been sent to asterisk");
@@ -777,16 +755,13 @@ io.on('connection', function(client){
 				});
 	  		break;
 	  		case ACTION_CF_ON:
-	  		
 	  			var extTo = message.extTo;
-	  			
 	  			// create action for asterisk server
 	  			var cmd = "database put CF " + extFrom + " " + extTo;
 			  	var actionCFon = {
 					Action: 'command',
 					Command: cmd
 				};
-				
 				// send action to asterisk
 				am.send(actionCFon, function () {
 					log("CF on action from " + extFrom + " to " + extTo + " has been sent to asterisk");
@@ -795,17 +770,14 @@ io.on('connection', function(client){
 					log("ack_cf_on has been sent to [" + extFrom + "] with: " + client.sessionId);
 					log(msgstr);
 				});
-				
 	  		break;
 	  		case ACTION_CF_OFF:
-	  		
 		  		// create action for asterisk server
 	  			var cmd = "database del CF " + extFrom;
 			  	var actionCFoff = {
 					Action: 'command',
 					Command: cmd
 				};
-
 				// send action to asterisk
 				am.send(actionCFoff, function () {
 					log("CF off action from " + extFrom + " has been sent to asterisk");
@@ -814,17 +786,14 @@ io.on('connection', function(client){
 					log("ack_cf_off has been sent to [" + extFrom + "] with: " + client.sessionId);
 					log(msgstr);
 				});
-	  			
 	  		break;
 	  		case ACTION_CHECK_CF_STATUS:
-	  			
 	  			// create action for asterisk server
 	  			var cmd = "database get CF " + extFrom;
 			  	var actionCheckCFStatus = {
 					Action: 'command',
 					Command: cmd
 				};
-				
 				// send action to asterisk
 				am.send(actionCheckCFStatus, function (resp) {
 					log("check CF status action from " + extFrom + " has been sent to asterisk");
