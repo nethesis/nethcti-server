@@ -188,7 +188,7 @@ exports.AsteriskManager = function (newconfig) {
 		// ------------------ added by Alessandro -----------------");
 		case "PeerStatus":
 			sys.debug("ASTERISK PeerStatus: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
-			self.emit('peerstatus', headers.channeltype, headers.peer, headers.peerstatus);
+			self.emit('peerstatus', headers);
 		break;
 		case "PeerEntry":
 			sys.debug("ASTERISK PeerEntry: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
