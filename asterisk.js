@@ -114,11 +114,6 @@ exports.AsteriskManager = function (newconfig) {
 	};
 
 	this.OnResponse = function(headers) {
-		// added by ale
-		//console.log("----");
-		//console.log(headers);
-		//console.log("----");
-		// end by ale
 		var id = headers.actionid, req = actions[id];
 		if (id == loginId && headers.response == "Success")
 			loggedIn_ = true;
@@ -189,6 +184,22 @@ exports.AsteriskManager = function (newconfig) {
         else if (config.version == '1.6')
         {
              switch (headers.event) {
+
+		// ------------------ added by Alessandro -----------------");
+		case "PeerStatus":
+			sys.debug("ASTERISK PeerStatus: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
+			self.emit('peerstatus', headers.channeltype, headers.peer, headers.peerstatus);
+		break;
+		case "PeerEntry":
+			sys.debug("ASTERISK PeerEntry: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
+			self.emit('peerentry', headers);
+		break;
+		case "PeerlistComplete":
+			sys.debug("ASTERISK PeerlistComplete: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
+			self.emit('peerlistcomplete', headers.actionid);
+		break;
+		//------------ end added by Alessandro --------------------");
+
 	           	case "Newchannel": // new participant
 		                //sys.debug("ASTERISK NEWCHANNEL: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
                         var tmp = headers.channel.split('-');
@@ -197,17 +208,17 @@ exports.AsteriskManager = function (newconfig) {
                         extension = extension[1];
 				        self.participants[headers.uniqueid] = {name: headers.calleridname != "device" ? headers.calleridname : channel , number: headers.calleridnum != "" ? headers.calleridnum : extension};
 			        break;
-//porcheria di cristian
+// added by cristian
 			        case "Join": // evento ingresso in coda
 		                sys.debug("ASTERISK JOIN: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
 			        break;
 			        case "AgentCalled": // evento agente chiamato
 		                	sys.debug("ASTERISK AGENTCALLED: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
-					// Alessandro
+					// added by Alessandro 
 					self.emit('agentcalled', headers.calleridnum, headers.calleridname, headers.queue, headers.destinationchannel);
-					// End Alessandro
+					// End added by Alessandro
 			        break;
-// fine porcheria di cristian
+// end added by cristian
 			        case "Newcallerid": // potentially more useful information on an existing participant
 		                //sys.debug("ASTERISK: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
 				        if (typeof self.participants[headers.uniqueid]['number'] == 'undefined')
