@@ -20,6 +20,7 @@ var server;
  * and value are removed.
  */
 var clients = {};
+var extStatusForOp = {};
 /*
 var hostname = '',
 	port = '',
@@ -263,6 +264,43 @@ am.addListener('callreport', function(report) {
 	if(DEBUG) sys.puts("CLIENT: Call report: " + sys.inspect(report));
 });
 
+am.addListener('peerstatus', function(chanType, peer, peerStatus) {
+        if(DEBUG) sys.puts("CLIENT: PeerStatus: chanType = " + chanType + " peer = " + peer + " peerStatus = " + peerStatus);
+});
+
+/* 
+{ event: 'PeerEntry',
+  actionid: 'autosip',
+  channeltype: 'SIP',
+  objectname: '501',
+  chanobjecttype: 'peer',
+  ipaddress: '192.168.5.187',
+  ipport: '46894',
+  dynamic: 'yes',
+  natsupport: 'yes',
+  videosupport: 'no',
+  textsupport: 'no',
+  acl: 'yes',
+  status: 'OK (1 ms)',
+  realtimedevice: 'no' }
+*/
+am.addListener('peerentry', function(headers) {
+//        if(DEBUG) sys.puts("CLIENT: Peer entry: ");
+	extStatusForOp[headers.objectname] = headers;
+});
+
+am.addListener('peerlistcomplete', function(actionid){
+	
+	if(clients[actionid]!=undefined){
+                var c = clients[actionid];
+                var msg = "peerlistcomplete received: update operator panel";
+                var response = new ResponseMessage(c.sessionId, "update_op_peerlistcomplete", msg);
+                response.peerlistcomplete = extStatusForOp;
+                c.send(response);
+                log("Notify of peerlistcomplete has been sent to " + actionid);
+        }
+});
+
 
 
 /*
@@ -402,6 +440,7 @@ io.on('connection', function(client){
   		const ACTION_GET_CURRENT_WEEK_HISTORY_CALL = "get_current_week_history_call";
   		const ACTION_GET_CURRENT_MONTH_HISTORY_CALL = "get_current_month_history_call";
   		const ACTION_CHECK_CALL_AUDIO_FILE = "check_call_audio_file";
+  		const ACTION_UPDATE_OP = "update_op";
 		
   		log("received " + action + " request from exten [" + extFrom + "] with sessiondId = " + client.sessionId + " with message = ");	
 		console.log(message);
@@ -919,6 +958,21 @@ io.on('connection', function(client){
 	                                client.send(mess);
 	                                log("Audio file list of call has been sent to the client [" + extFrom + "] and it is = " + sys.inspect(audioFileList));
 				});	
+                        break;
+			case ACTION_UPDATE_OP:
+                                // create action for asterisk server
+                                var actionUpdateOP = {
+                                        Action: 'SIPPeers',
+					ActionID: extFrom
+                                };
+                                // send action to asterisk
+                                am.send(actionUpdateOP, function () {
+                                        log("update OP action from " + extFrom + " has been sent to asterisk");
+                                        var msgstr = "Action for receive sip peer status for Operator Panel has been sent asterisk server";
+                                        client.send(new ResponseMessage(client.sessionId, 'ack_update_op', msgstr));
+                                        log("ack_update_op has been sent to [" + extFrom + "] with: " + client.sessionId);
+                                        log(msgstr);
+                                });
                         break;
 	  		default:
 	  			log("ATTENTION: action '" + action + "'not provided");
