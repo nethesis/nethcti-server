@@ -440,7 +440,7 @@ io.on('connection', function(client){
   		const ACTION_GET_CURRENT_WEEK_HISTORY_CALL = "get_current_week_history_call";
   		const ACTION_GET_CURRENT_MONTH_HISTORY_CALL = "get_current_month_history_call";
   		const ACTION_CHECK_CALL_AUDIO_FILE = "check_call_audio_file";
-  		const ACTION_UPDATE_OP = "update_op";
+  		const ACTION_CREATE_OP = "create_op";
 		
   		log("received " + action + " request from exten [" + extFrom + "] with sessiondId = " + client.sessionId + " with message = ");	
 		console.log(message);
@@ -959,7 +959,7 @@ io.on('connection', function(client){
 	                                log("Audio file list of call has been sent to the client [" + extFrom + "] and it is = " + sys.inspect(audioFileList));
 				});	
                         break;
-			case ACTION_UPDATE_OP:
+			case ACTION_CREATE_OP:
                                 // create action for asterisk server
                                 var actionUpdateOP = {
                                         Action: 'SIPPeers',
@@ -967,10 +967,10 @@ io.on('connection', function(client){
                                 };
                                 // send action to asterisk
                                 am.send(actionUpdateOP, function () {
-                                        log("update OP action from " + extFrom + " has been sent to asterisk");
+                                        log("create OP action from " + extFrom + " has been sent to asterisk");
                                         var msgstr = "Action for receive sip peer status for Operator Panel has been sent asterisk server";
-                                        client.send(new ResponseMessage(client.sessionId, 'ack_update_op', msgstr));
-                                        log("ack_update_op has been sent to [" + extFrom + "] with: " + client.sessionId);
+                                        client.send(new ResponseMessage(client.sessionId, 'ack_create_op', msgstr));
+                                        log("ack_create_op has been sent to [" + extFrom + "] with: " + client.sessionId);
                                         log(msgstr);
                                 });
                         break;
