@@ -264,8 +264,15 @@ am.addListener('callreport', function(report) {
 	if(DEBUG) sys.puts("CLIENT: Call report: " + sys.inspect(report));
 });
 
-am.addListener('peerstatus', function(chanType, peer, peerStatus) {
-        if(DEBUG) sys.puts("CLIENT: PeerStatus: chanType = " + chanType + " peer = " + peer + " peerStatus = " + peerStatus);
+/*
+{ event: 'PeerStatus',
+  privilege: 'system,all',
+  channeltype: 'SIP',
+  peer: 'SIP/504',
+  peerstatus: 'Registered' }
+*/
+am.addListener('peerstatus', function(headers) {
+        if(DEBUG) sys.puts("CLIENT: PeerStatus: headers = " + sys.inspect(headers));
 });
 
 /* 
