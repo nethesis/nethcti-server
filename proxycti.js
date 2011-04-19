@@ -293,8 +293,8 @@ am.addListener('peerlistcomplete', function(actionid){
 	
 	if(clients[actionid]!=undefined){
                 var c = clients[actionid];
-                var msg = "peerlistcomplete received: update operator panel";
-                var response = new ResponseMessage(c.sessionId, "update_op_peerlistcomplete", msg);
+                var msg = "peerlistcomplete received: create operator panel";
+                var response = new ResponseMessage(c.sessionId, "create_op_peerlistcomplete", msg);
                 response.peerlistcomplete = extStatusForOp;
                 c.send(response);
                 log("Notify of peerlistcomplete has been sent to " + actionid);
