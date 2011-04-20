@@ -183,20 +183,23 @@ exports.AsteriskManager = function (newconfig) {
         }
         else if (config.version == '1.6')
         {
+//console.log("------------- ALE ------------__");
+//console.log(headers);
+//console.log("_-----------------------_---");
              switch (headers.event) {
 
 		// ------------------ added by Alessandro -----------------");
 		case "PeerStatus":
-			sys.debug("ASTERISK PeerStatus: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
+//			sys.debug("ASTERISK PeerStatus: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
 			self.emit('peerstatus', headers);
 		break;
 		case "PeerEntry":
-			sys.debug("ASTERISK PeerEntry: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
+//			sys.debug("ASTERISK PeerEntry: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
 			self.emit('peerentry', headers);
 		break;
 		case "PeerlistComplete":
-			sys.debug("ASTERISK PeerlistComplete: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
-			self.emit('peerlistcomplete', headers.actionid);
+//			sys.debug("ASTERISK PeerlistComplete: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
+			self.emit('peerlistcomplete');
 		break;
 		//------------ end added by Alessandro --------------------");
 
@@ -278,6 +281,10 @@ exports.AsteriskManager = function (newconfig) {
 				        delete self.participants[idCallee];
 			        break;
 			        case "Newstate":
+					// added by Alessandro
+					self.emit('newstate', headers);
+					// end added by Alessandro
+				break;
 			        case "Registry":
 			        case "Newexten":
 				        // ignore theseas they aren't generally useful for ordinary tasks
