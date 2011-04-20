@@ -275,6 +275,29 @@ am.addListener('peerstatus', function(headers) {
         if(DEBUG) sys.puts("CLIENT: PeerStatus: headers = " + sys.inspect(headers));
 });
 
+
+/*
+{ event: 'Newstate',
+  privilege: 'call,all',
+  channel: 'SIP/500-0000000b',
+  channelstate: '5',
+  channelstatedesc: 'Ringing',
+  calleridnum: '500',
+  calleridname: '',
+  uniqueid: '1303228098.13' }
+*/
+am.addListener('newstate', function(headers){
+        if(DEBUG) sys.puts("CLIENT: newstate event: headers = " + sys.inspect(headers));
+	for(key in clients){
+		var c = clients[key];
+		var msg = "state of " + headers.calleridnum + " has changed: update ext new state";
+                var response = new ResponseMessage(c.sessionId, "update_ext_new_state", msg);
+		response.extNewState = headers;
+                c.send(response);
+                log("Notify of new ext state has been sent to client " + c.sessionid);
+	}	
+});
+
 /* 
 { event: 'PeerEntry',
   actionid: 'autosip',
@@ -292,12 +315,13 @@ am.addListener('peerstatus', function(headers) {
   realtimedevice: 'no' }
 */
 am.addListener('peerentry', function(headers) {
-//        if(DEBUG) sys.puts("CLIENT: Peer entry: ");
+        if(DEBUG) sys.puts("CLIENT: Peer entry: ");
 	extStatusForOp[headers.objectname] = headers;
 });
 
 am.addListener('peerlistcomplete', function(actionid){
 	
+        if(DEBUG) sys.puts("CLIENT: peerlistcomplete: ");
 	if(clients[actionid]!=undefined){
                 var c = clients[actionid];
                 var msg = "peerlistcomplete received: create operator panel";
@@ -969,8 +993,7 @@ io.on('connection', function(client){
 			case ACTION_CREATE_OP:
                                 // create action for asterisk server
                                 var actionUpdateOP = {
-                                        Action: 'SIPPeers',
-					ActionID: extFrom
+                                        Action: 'SIPPeers'
                                 };
                                 // send action to asterisk
                                 am.send(actionUpdateOP, function () {
