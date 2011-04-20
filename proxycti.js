@@ -20,7 +20,13 @@ var server;
  * and value are removed.
  */
 var clients = {};
+
+/* this is for update client on the status of all extension registered in the asterisk server.
+ * The scope for the client is to create operator panel with all infor about the extensions.
+ * It is created by the server at the start and it is update by the server at runtime.
+ */
 var extStatusForOp = {};
+
 /*
 var hostname = '',
 	port = '',
@@ -72,6 +78,10 @@ am = new ast.AsteriskManager({user: asterisk_user, password: asterisk_pass, host
 am.addListener('serverconnect', function() {
 	am.login(function () {
 		log("Logged in to Asterisk Manager.");
+		/* initialize the status of all extensions in the asterisk server (extStatusForOp).
+		 * Its scope is to put the right info to the clients to construct operator panel.
+		 */
+		initExtStatusForOp();		
 	});
 });
 
@@ -236,8 +246,8 @@ am.addListener('unhold', function(participant) {
 am.addListener('hangup', function(participant, code, text) {
 
 	if(participant!=undefined){
-		if(DEBUG) log("CLIENT: " + participant.number + " (" + participant.name + ") has hung up. Reason: " + code + "  ( Code: " + text + ")");
 		var ext = participant.number;
+		if(DEBUG) log("CLIENT: " + ext + " (" + participant.name + ") has hung up. Reason: " + code + "  ( Code: " + text + ")");
 		if(clients[ext]!=undefined){
 			var c = clients[ext];
 			var msg = "Call has hung up. Reason: " + text + "  (Code: " + code + ")";
@@ -257,8 +267,20 @@ am.addListener('hangup', function(participant, code, text) {
 				console.log(am.participants);
 			}
 		}
+		
+		// update ext status for op
+		updateExtStatusForOp(ext, 'hangup');
+		// update all clients with the new state of extension, for update operator panel
+		var headers = { channelstatedesc: 'hangup', calleridnum: ext };
+	        updateAllClientsForOp(headers);
 	}
 });
+
+function updateExtStatusForOp(ext, status){
+	// update extSatusForOP for future request from the clients
+        extStatusForOp[ext].status = status;
+        log("updated extStatusForOp to new status = " + extStatusForOp[ext].status + " for [" + ext + "]");
+}
 
 am.addListener('callreport', function(report) {
 	if(DEBUG) sys.puts("CLIENT: Call report: " + sys.inspect(report));
@@ -288,15 +310,27 @@ am.addListener('peerstatus', function(headers) {
 */
 am.addListener('newstate', function(headers){
         if(DEBUG) sys.puts("CLIENT: newstate event: headers = " + sys.inspect(headers));
-	for(key in clients){
-		var c = clients[key];
-		var msg = "state of " + headers.calleridnum + " has changed: update ext new state";
-                var response = new ResponseMessage(c.sessionId, "update_ext_new_state", msg);
-		response.extNewState = headers;
+	// update ext status for op
+	updateExtStatusForOp(headers.calleridnum, headers.channelstatedesc);
+
+	// update all clients with the new state of extension, for update operator panel
+	updateAllClientsForOp(headers);	
+});
+
+/* This function update all clients with the new state of extension. This sent is used by the clients
+ * to update operator panel.
+ */
+function updateAllClientsForOp(headers){
+	// send update to all clients with the new state of the ext for op (operator panel)
+        for(key in clients){
+                var c = clients[key];
+                var msg = "state of " + headers.calleridnum + " has changed: update ext new state";
+                var response = new ResponseMessage(c.sessionId, "update_ext_new_state_op", msg);
+                response.extNewState = headers;
                 c.send(response);
                 log("Notify of new ext state has been sent to client " + c.sessionid);
-	}	
-});
+        }
+}
 
 /* 
 { event: 'PeerEntry',
@@ -315,21 +349,12 @@ am.addListener('newstate', function(headers){
   realtimedevice: 'no' }
 */
 am.addListener('peerentry', function(headers) {
-        if(DEBUG) sys.puts("CLIENT: Peer entry: ");
+	if(DEBUG) sys.puts("CLIENT: PeerEntry: headers = " + sys.inspect(headers));
 	extStatusForOp[headers.objectname] = headers;
 });
 
-am.addListener('peerlistcomplete', function(actionid){
-	
-        if(DEBUG) sys.puts("CLIENT: peerlistcomplete: ");
-	if(clients[actionid]!=undefined){
-                var c = clients[actionid];
-                var msg = "peerlistcomplete received: create operator panel";
-                var response = new ResponseMessage(c.sessionId, "create_op_peerlistcomplete", msg);
-                response.peerlistcomplete = extStatusForOp;
-                c.send(response);
-                log("Notify of peerlistcomplete has been sent to " + actionid);
-        }
+am.addListener('peerlistcomplete', function(){
+	if(DEBUG) sys.puts("CLIENT: PeerListComplete");
 });
 
 
@@ -471,7 +496,7 @@ io.on('connection', function(client){
   		const ACTION_GET_CURRENT_WEEK_HISTORY_CALL = "get_current_week_history_call";
   		const ACTION_GET_CURRENT_MONTH_HISTORY_CALL = "get_current_month_history_call";
   		const ACTION_CHECK_CALL_AUDIO_FILE = "check_call_audio_file";
-  		const ACTION_CREATE_OP = "create_op";
+  		const ACTION_GET_PEER_LIST_COMPLETE_OP = "get_peer_list_complete_op";
 		
   		log("received " + action + " request from exten [" + extFrom + "] with sessiondId = " + client.sessionId + " with message = ");	
 		console.log(message);
@@ -952,7 +977,6 @@ io.on('connection', function(client){
                                 }
                         break;
 			case ACTION_GET_CURRENT_MONTH_HISTORY_CALL:
-
                                 // check if the user has the permit to get history of calling
 				var res = profiler.checkActionHistoryCallPermit(extFrom);
                                 if(res){
@@ -990,19 +1014,12 @@ io.on('connection', function(client){
 	                                log("Audio file list of call has been sent to the client [" + extFrom + "] and it is = " + sys.inspect(audioFileList));
 				});	
                         break;
-			case ACTION_CREATE_OP:
-                                // create action for asterisk server
-                                var actionUpdateOP = {
-                                        Action: 'SIPPeers'
-                                };
-                                // send action to asterisk
-                                am.send(actionUpdateOP, function () {
-                                        log("create OP action from " + extFrom + " has been sent to asterisk");
-                                        var msgstr = "Action for receive sip peer status for Operator Panel has been sent asterisk server";
-                                        client.send(new ResponseMessage(client.sessionId, 'ack_create_op', msgstr));
-                                        log("ack_create_op has been sent to [" + extFrom + "] with: " + client.sessionId);
-                                        log(msgstr);
-                                });
+			case ACTION_GET_PEER_LIST_COMPLETE_OP:
+        			var msgstr = "received extStatusForOp to create operator panel";                        
+				var mess = new ResponseMessage(client.sessionId, "ack_get_peer_list_complete_op", msgstr);
+				mess.extStatusForOp = extStatusForOp;
+				client.send(mess);
+                                log("ack_get_peer_list_complete_op has been sent to [" + extFrom + "] with: " + client.sessionId)
                         break;
 	  		default:
 	  			log("ATTENTION: action '" + action + "'not provided");
@@ -1023,6 +1040,32 @@ io.on('connection', function(client){
 
 log("asterisk manager connection");
 am.connect();
+
+
+
+
+
+/************************************************************************************************
+ *                             Functions							*
+ ***********************************************************************************************/
+
+/* Initialize extStatusForOp. For this it send the right action to the asterisk server.
+ * Then it receive more PeerEntry event from the asterisk server and at the end it receive
+ * PeerListComplete event.
+ * The number of PeerEntry is equal to number of extensions present in the asterisk server.
+ */
+function initExtStatusForOp(){
+	log("initialize status of all extension for future request by clients for operator panel");
+	// create action for asterisk server
+       	var actionUpdateOP = {
+        	Action: 'SIPPeers'
+       	};
+        // send action to asterisk
+        am.send(actionUpdateOP, function () {
+        	log("'SIPPeers' action has been sent to the asterisk server");
+    	});
+}
+
 
 
 
