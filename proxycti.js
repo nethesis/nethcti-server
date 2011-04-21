@@ -300,7 +300,6 @@ am.addListener('peerstatus', function(headers) {
 		ext = headers.peer.split('/')[1];
 	}
         updateExtStatusForOp(ext, headers.peerstatus.toLowerCase());
-	log("updated extStatusForOp of " + ext + " with new status: " + headers.peerstatus);
 	// update all clients with the new state of extension, for update operator panel
         updateAllClientsForOp({ ext: ext, status: headers.peerstatus.toLowerCase() });
 });
