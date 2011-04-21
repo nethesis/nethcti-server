@@ -271,8 +271,7 @@ am.addListener('hangup', function(participant, code, text) {
 		// update ext status for op
 		updateExtStatusForOp(ext, 'hangup');
 		// update all clients with the new state of extension, for update operator panel
-		var headers = { channelstatedesc: 'hangup', calleridnum: ext };
-	        updateAllClientsForOp(headers);
+		updateAllClientsForOp({ ext: ext, status: 'hangup' });
 	}
 });
 
@@ -295,6 +294,15 @@ am.addListener('callreport', function(report) {
 */
 am.addListener('peerstatus', function(headers) {
         if(DEBUG) sys.puts("CLIENT: PeerStatus: headers = " + sys.inspect(headers));
+	// update ext status for op
+	var ext = '';
+	if(headers.peer.indexOf('SIP')!=-1){
+		ext = headers.peer.split('/')[1];
+	}
+        updateExtStatusForOp(ext, headers.peerstatus.toLowerCase());
+	log("updated extStatusForOp of " + ext + " with new status: " + headers.peerstatus);
+	// update all clients with the new state of extension, for update operator panel
+        updateAllClientsForOp({ ext: ext, status: headers.peerstatus.toLowerCase() });
 });
 
 
@@ -314,19 +322,19 @@ am.addListener('newstate', function(headers){
 	updateExtStatusForOp(headers.calleridnum, headers.channelstatedesc);
 
 	// update all clients with the new state of extension, for update operator panel
-	updateAllClientsForOp(headers);	
+	updateAllClientsForOp({ext: headers.calleridnum, status: headers.channelstatedesc.toLowerCase()});
 });
 
 /* This function update all clients with the new state of extension. This sent is used by the clients
  * to update operator panel.
  */
-function updateAllClientsForOp(headers){
+function updateAllClientsForOp(newState){
 	// send update to all clients with the new state of the ext for op (operator panel)
         for(key in clients){
                 var c = clients[key];
-                var msg = "state of " + headers.calleridnum + " has changed: update ext new state";
+                var msg = "state of " + newState.ext + " has changed: update ext new state";
                 var response = new ResponseMessage(c.sessionId, "update_ext_new_state_op", msg);
-                response.extNewState = headers;
+                response.extNewState = newState;
                 c.send(response);
                 log("Notify of new ext state has been sent to client " + c.sessionid);
         }
