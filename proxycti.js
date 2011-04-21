@@ -10,6 +10,7 @@ var io = require('./lib/socket.io');
 var sys = require(process.binding('natives').util ? 'util' : 'sys');
 var pathreq = require('path');
 var normal = require("./lib/normal-template/lib/normal-template");
+var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
 
 
 //
@@ -27,15 +28,9 @@ var clients = {};
  */
 var extStatusForOp = {};
 
-/*
-var hostname = '',
-	port = '',
-	asterisk_pass = '',
-	asterisk_user = '',
-	asterisk_host = '';
-	*/
+
 const DEBUG = true;
-const PROXY_CONFIG_FILENAME = "proxycti.conf";
+const PROXY_CONFIG_FILENAME = "proxycti.ini";
 const TEMPLATE_DECORATOR_VCARD_FILENAME = "./template/decorator_vcard.html";
 const TEMPLATE_DECORATOR_CUSTOMERCARD_FILENAME = "./template/decorator_customerCard.html";
 const TEMPLATE_DECORATOR_HISTORY_CALL_FILENAME = "./template/decorator_historyCall.html";
@@ -293,7 +288,7 @@ am.addListener('callreport', function(report) {
   peerstatus: 'Registered' }
 */
 am.addListener('peerstatus', function(headers) {
-        if(DEBUG) sys.puts("CLIENT: PeerStatus: headers = " + sys.inspect(headers));
+        if(DEBUG) sys.puts("CLIENT: PeerStatus");
 	// update ext status for op
 	var ext = '';
 	if(headers.peer.indexOf('SIP')!=-1){
@@ -316,7 +311,7 @@ am.addListener('peerstatus', function(headers) {
   uniqueid: '1303228098.13' }
 */
 am.addListener('newstate', function(headers){
-        if(DEBUG) sys.puts("CLIENT: newstate event: headers = " + sys.inspect(headers));
+        if(DEBUG) sys.puts("CLIENT: newstate event");
 	// update ext status for op
 	updateExtStatusForOp(headers.calleridnum, headers.channelstatedesc);
 
@@ -356,12 +351,12 @@ function updateAllClientsForOp(newState){
   realtimedevice: 'no' }
 */
 am.addListener('peerentry', function(headers) {
-	if(DEBUG) sys.puts("CLIENT: PeerEntry: headers = " + sys.inspect(headers));
+	if(DEBUG) sys.puts("CLIENT: PeerEntry event");
 	extStatusForOp[headers.objectname] = headers;
 });
 
 am.addListener('peerlistcomplete', function(){
-	if(DEBUG) sys.puts("CLIENT: PeerListComplete");
+	if(DEBUG) sys.puts("CLIENT: PeerListComplete event");
 });
 
 
@@ -1206,65 +1201,18 @@ function printLoggedClients(){
 	}
 }
 
-//
+/* Initialize some configuration parameters
+server_conf = 
+{ ASTERISK: { user: 'vtiger', pass: 'vtiger', host: 'localhost' },
+  SERVER_PROXY: { hostname: 'amaduzzi', port: '8080' } }
+*/
 function initServerAndAsteriskParameters(){
-	// read file
-	var conf = fs.readFileSync(PROXY_CONFIG_FILENAME, "UTF-8", function(err, data) {
-		if(err){
-			sys.puts("error in reading file");
-			sys.puts(err);
-			return;
-		}
-		return data;
-	});
-
-	var categoriesArray = conf.split("[");
-	categoriesArray = categoriesArray.slice(1,categoriesArray.length);
-	
-	for(var i=0; i<categoriesArray.length; i++){
-	
-		var tempCategoryStr = categoriesArray[i];	
-		var tempCategoryArray = tempCategoryStr.split("\n");
-		var categoryName = tempCategoryArray[0].slice(0, tempCategoryArray[0].length-1);
-		
-		if(categoryName=='ASTERISK'){			
-			
-			for(token=1; token<tempCategoryArray.length; token++){
-		
-				// array with permit actions
-				if(tempCategoryArray[token].indexOf("user") != -1){
-					var userStr = tempCategoryArray[token];
-					asterisk_user = userStr.split("=")[1];
-				}
-				// array with deny actions
-				else if(tempCategoryArray[token].indexOf("pass") != -1){
-					var astPassStr = tempCategoryArray[token];
-					asterisk_pass = astPassStr.split("=")[1];
-				}
-				// array with users
-				else if(tempCategoryArray[token].indexOf("host") != -1){
-					var astAddrStr = tempCategoryArray[token];
-					asterisk_host = astAddrStr.split("=")[1];
-				}
-			}
-		}
-		else if(categoryName=='SERVER_PROXY'){			
-			
-			for(token=1; token<tempCategoryArray.length; token++){
-		
-				// array with permit actions
-				if(tempCategoryArray[token].indexOf("hostname") != -1){
-					var hostStr = tempCategoryArray[token];
-					hostname = hostStr.split("=")[1];
-				}
-				// array with deny actions
-				else if(tempCategoryArray[token].indexOf("port") != -1){
-					var portStr = tempCategoryArray[token];
-					port = portStr.split("=")[1];
-				}
-			}
-		}
-	}
+	var server_conf = iniparser.parseSync(PROXY_CONFIG_FILENAME);
+	asterisk_user = server_conf.ASTERISK.user;
+	asterisk_pass = server_conf.ASTERISK.pass;
+	asterisk_host = server_conf.ASTERISK.host;
+	hostname = server_conf.SERVER_PROXY.hostname;
+	port = server_conf.SERVER_PROXY.port;
 }
 
 
