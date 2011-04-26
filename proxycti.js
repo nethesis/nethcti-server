@@ -3,6 +3,7 @@ var net = require('net');
 var dataReq = require("./dataCollector.js");
 var proReq = require("./profiler.js");
 var authReq = require("./authenticator.js");
+var contrReq = require("./controller.js");
 var http = require('http');
 var url = require('url');
 var fs = require('fs');
@@ -27,6 +28,9 @@ var clients = {};
  * It is created by the server at the start and it is update by the server at runtime.
  */
 var extStatusForOp = {};
+
+// Audio file list of recorded call
+var audioFileList = [];
 
 
 const DEBUG = true;
@@ -64,6 +68,26 @@ log("DataCollector object created");
 var authenticator = new authReq.Authenticator();
 log("Authenticator object created");
 
+// create the list of audio files of recorded call
+createAudioFileList();
+
+// Controller object to check changing in audio directory
+var controller = new contrReq.Controller();
+log("Controller object created");
+controller.addDir(AST_CALL_AUDIO_DIR);
+controller.addListener("change_dir", function(dir){
+	if(dir==AST_CALL_AUDIO_DIR){
+		log("update audio file list");
+		createAudioFileList();
+	}
+});
+
+function createAudioFileList(){
+	audioFileList = []
+	audioFileList = fs.readdirSync(AST_CALL_AUDIO_DIR);
+	log("audio file list LENGHT = " + audioFileList.length);
+	
+}
 
 /******************************************************
  * This is the section relative to asterisk interaction    
