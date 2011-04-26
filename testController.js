@@ -35,6 +35,9 @@ switch ( args["-t"] )
 	case "addDir":
 		console.log("\nTesting addDir(dir): dir " + arg1);
 		controller.addDir(arg1);
+		controller.addListener("change_dir", function(dir){
+			console.log("changed dir: " + dir);
+		});
 		break;
 
 	default:
