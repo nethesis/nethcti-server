@@ -1121,7 +1121,6 @@ am.connect();
  */
 function createHistoryCallResponse(results){
 	var res = [];
-	var temp = {};
 /*
  * An example of result obtained by the database of history call
 [ { calldate: Tue, 26 Apr 2011 11:38:12 GMT,
@@ -1142,18 +1141,22 @@ function createHistoryCallResponse(results){
     userfield: '' },
     ...]
 */
-	var currRes = '';
 	for(i=0; i<results.length; i++){		
-		currRes = results[i];
+		var currRes = results[i];
+		var temp = {};
 		temp.calldate = currRes.calldate;
 		temp.clid = currRes.clid;
 		temp.dst = currRes.dst;
 		temp.duration = currRes.duration;
 		temp.disposition = currRes.disposition;
 		temp.uniqueid = currRes.uniqueid;
-		temp.recording = audioFileList[currRes.uniqueid];
+		if(audioFileList[currRes.uniqueid]!=undefined)
+			temp.recording = true;
+		else
+			temp.recording = false;
+		res.push(temp);
 	}
-	console.log(results);
+	return res;
 }
 
 
