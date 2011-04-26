@@ -1,6 +1,8 @@
 var fs = require("fs");
 var sys = require("sys");
 var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
+var contrReq = require("./controller.js");
+
 const PROFILER_CONFIG_FILENAME = "profiles.ini";
 const CALL_OUT = "CALL_OUT";
 const CALL_IN = "CALL_IN";
@@ -47,6 +49,28 @@ exports.Profiler = function(){
 	this.getTypesCustomerCardPermit = function(exten){ return getTypesCustomerCardPermit(exten) }
 }
 
+
+
+
+// Controller object to check changing in configuration file
+var controller = new contrReq.Controller();
+console.log("Controller object created for profiler");
+controller.addFile(PROFILER_CONFIG_FILENAME);
+controller.addListener("change_file", function(filename){
+        if(filename==PROFILER_CONFIG_FILENAME){
+                console.log("update configuration file " + PROFILER_CONFIG_FILENAME);
+                updateConfiguration();
+        }
+});
+
+/* this function update profiles in memory after changing of confiuration
+ * file.
+ */
+function updateConfiguration(){
+	initProfiles();
+}
+
+
 /* 
  * Return an array containing the types of customer card for which the user is enable
  */
@@ -78,6 +102,7 @@ function checkActionPermit(exten, action){
  * Initialize the profiles of all users by means the reading of the config file.
  */
 function initProfiles(){
+	this.actions = {};
 	this.actions = iniparser.parseSync(PROFILER_CONFIG_FILENAME); 
 }
 
