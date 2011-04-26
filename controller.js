@@ -2,6 +2,9 @@ var fs = require("fs");
 var inherits = require("sys").inherits;
 var EventEmitter = require("events").EventEmitter;
 
+const INTERVAL_POLLING = 0;
+
+
 fileToControl = {};
 dirToControl = {};
 
@@ -9,7 +12,6 @@ exports.Controller = function(){
 	EventEmitter.call(this);
 	self = this;
 	this.addFile = function(filename) { addFile(filename) };
-	this.removeFile = function(filename) { removeFile(filename) };
 	this.addDir = function(dir) { addDir(dir) };
 } 
 
@@ -18,7 +20,7 @@ function addDir(dir){
 		var stat = fs.lstatSync(dir);
 		if(stat.isDirectory){
 	                dirToControl[dir] = true;
-			fs.watchFile(dir, { persistent: true, interval: 0 }, function(curr, prev){
+			fs.watchFile(dir, { persistent: true, interval: INTERVAL_POLLING }, function(curr, prev){
 				if(curr.mtime.getTime()!=prev.mtime.getTime()){
 					self.emit("change_dir", dir);
 				}
@@ -33,16 +35,23 @@ function addDir(dir){
 }
 
 function addFile(filename){
-		fileToControl[filename] = true;
-		fs.watchFile(filename, function(curr, prev){
-			self.emit("change", filename);
-			console.log(curr);
-			console.log(prev);
-		});	
+
+	try{
+                var stat = fs.lstatSync(filename);
+                if(stat.isFile()){
+                        fileToControl[filename] = true;
+                        fs.watchFile(filename, { persistent: true, interval: INTERVAL_POLLING }, function(curr, prev){
+                                if(curr.mtime.getTime()!=prev.mtime.getTime()){
+                                        self.emit("change_file", filename);
+                                }
+                        });
+                }
+        }
+        catch(err){
+                console.log("Error: " + filename + " is not file");
+                console.log(err);
+                return;
+        }
 }
 
-function removeFile(filename){
-	fileToControl[filename] = false;
-	fs.unwatchFile(filename);
-}
 inherits(exports.Controller, EventEmitter);
