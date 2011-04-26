@@ -27,7 +27,7 @@ switch ( args["-t"] )
 	case "addFile":
                 console.log("\nTesting addFile(filename): filename " + arg1);
                 controller.addFile(arg1);
-		controller.addListener("change", function(filename){
+		controller.addListener("change_file", function(filename){
 			console.log("change event emetted, filename = " + filename);
 		});
                 break;
