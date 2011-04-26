@@ -297,8 +297,6 @@ am.addListener('hangup', function(participant, code, text) {
 
 function updateExtStatusForOp(ext, status){
 	// update extSatusForOP for future request from the clients
-	console.log("\next = " + ext);
-	console.log("status = " + status + "\n");
         extStatusForOp[ext].status = status;
         log("updated extStatusForOp to new status = " + extStatusForOp[ext].status + " for [" + ext + "]");
 }
@@ -343,6 +341,12 @@ am.addListener('newstate', function(headers){
 	var ext = headers.calleridnum;
 
 	if(ext==''){
+		/*
+		...
+		calleridnum: '',
+		calleridname: 'CALL_PREFIX500',
+		...
+		*/
 		ext = headers.calleridname.split(CALL_PREFIX)[1];
 	}
 
@@ -983,6 +987,7 @@ io.on('connection', function(client){
                                         dataCollector.getDayHistoryCall(extFrom, dateFormat, function(results){
                                                 var mess = new ResponseMessage(client.sessionId, "day_history_call", "received day history call");
                                                 mess.results = results;
+						mess.audioFiles = audioFileList;
                                                 client.send(mess);
                                                 log("Day history call of [" + extFrom + "] has been sent to the client: the number of entry is: " + results.length);
                                         });
@@ -1002,6 +1007,7 @@ io.on('connection', function(client){
                                         dataCollector.getCurrentWeekHistoryCall(extFrom, function(results){
                                                 var mess = new ResponseMessage(client.sessionId, "current_week_history_call", "received current week history call");
                                                 mess.results = results;
+						mess.audioFiles = audioFileList;
                                                 client.send(mess);
                                                 log("Current week history call of [" + extFrom + "] has been sent to the client");
                                         });
@@ -1020,6 +1026,7 @@ io.on('connection', function(client){
                                         dataCollector.getCurrentMonthHistoryCall(extFrom, function(results){
                                                 var mess = new ResponseMessage(client.sessionId, "current_month_history_call", "received current month history call");
                                                 mess.results = results;
+						mess.audioFiles = audioFileList;
                                                 client.send(mess);
                                                 log("Current month history call of [" + extFrom + "] has been sent to the client");
                                         });
@@ -1033,7 +1040,7 @@ io.on('connection', function(client){
 			case ACTION_CHECK_CALL_AUDIO_FILE:
 				// check if there are some audio file with particular uniqueid
 				var uniqueid = message.uniqueid;
-				var audioFileList = [];
+				var audioFiles = [];
 				fs.readdir(AST_CALL_AUDIO_DIR, function(err, files){					
 					if(err){
 						console.log(err);
@@ -1041,13 +1048,13 @@ io.on('connection', function(client){
 					}
 					for(i=0; i<files.length; i++){
 						if( (files[i].indexOf(uniqueid))!=-1 )	{
-							audioFileList.push(files[i]);
+							audioFiles.push(files[i]);
 						}
 					}	
 					var mess = new ResponseMessage(client.sessionId, "audio_file_call_list", "received list of audio file of call");
-	                                mess.results = audioFileList;
+	                                mess.results = audioFiles;
 	                                client.send(mess);
-	                                log("Audio file list of call has been sent to the client [" + extFrom + "] and it is = " + sys.inspect(audioFileList));
+	                                log("Audio file list of call has been sent to the client [" + extFrom + "] and it is = " + sys.inspect(audioFiles));
 				});	
                         break;
 			case ACTION_GET_PEER_LIST_COMPLETE_OP:
