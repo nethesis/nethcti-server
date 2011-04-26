@@ -30,7 +30,7 @@ var clients = {};
 var extStatusForOp = {};
 
 /* Audio file list of recorded call. This is an hash table that has the unique id of the file
- * as the key and '' as value, because the value is unused.
+ * as the key and the filename as value.
  * (view createAudioFileList function).
  */
 var audioFileList = {};
@@ -88,16 +88,15 @@ controller.addListener("change_dir", function(dir){
 });
 
 /* This function create hash table of audio file. The key is the unique id of the file, 
- * and the value is set to '' because is unused.
+ * and the value is set to filename.
  */
 function createAudioFileList(){
 	var temp = fs.readdirSync(AST_CALL_AUDIO_DIR);
 	for(i=0; i<temp.length; i++){
 		var u = getUniqueIdFromFilename(temp[i]);
-		audioFileList[u] = '';
+		audioFileList[u] = temp[i];
 	}
 	log("audio file list = " + sys.inspect(audioFileList));
-	
 }
 
 /* This function return the unique id of the filename. The uniqueid field is different for
