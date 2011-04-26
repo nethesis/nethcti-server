@@ -39,6 +39,7 @@ const TEMPLATE_DECORATOR_VCARD_FILENAME = "./template/decorator_vcard.html";
 const TEMPLATE_DECORATOR_CUSTOMERCARD_FILENAME = "./template/decorator_customerCard.html";
 const TEMPLATE_DECORATOR_HISTORY_CALL_FILENAME = "./template/decorator_historyCall.html";
 const AST_CALL_AUDIO_DIR = "/var/spool/asterisk/monitor";
+const CALL_PREFIX = "CTI-";
 
 // The response that this server pass to the clients.
 var ResponseMessage = function(clientSessionId, typeMessage, respMessage){
@@ -296,6 +297,8 @@ am.addListener('hangup', function(participant, code, text) {
 
 function updateExtStatusForOp(ext, status){
 	// update extSatusForOP for future request from the clients
+	console.log("\next = " + ext);
+	console.log("status = " + status + "\n");
         extStatusForOp[ext].status = status;
         log("updated extStatusForOp to new status = " + extStatusForOp[ext].status + " for [" + ext + "]");
 }
@@ -336,11 +339,18 @@ am.addListener('peerstatus', function(headers) {
 */
 am.addListener('newstate', function(headers){
         if(DEBUG) sys.puts("CLIENT: newstate event");
+
+	var ext = headers.calleridnum;
+
+	if(ext==''){
+		ext = headers.calleridname.split(CALL_PREFIX)[1];
+	}
+
 	// update ext status for op
-	updateExtStatusForOp(headers.calleridnum, headers.channelstatedesc);
+	updateExtStatusForOp(ext, headers.channelstatedesc);
 
 	// update all clients with the new state of extension, for update operator panel
-	updateAllClientsForOp({ext: headers.calleridnum, status: headers.channelstatedesc.toLowerCase()});
+	updateAllClientsForOp({ext: ext, status: headers.channelstatedesc.toLowerCase()});
 });
 
 /* This function update all clients with the new state of extension. This sent is used by the clients
@@ -616,7 +626,7 @@ io.on('connection', function(client){
 						Exten: extToCall,
 						Context: 'from-internal',
 						Priority: 1,
-						Callerid: 'CTI' + extFrom,
+						Callerid: CALL_PREFIX + extFrom,
 						Account: extToCall,
 						Timeout: 30000
 					};
