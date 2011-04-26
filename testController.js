@@ -27,11 +27,15 @@ switch ( args["-t"] )
 	case "addFile":
                 console.log("\nTesting addFile(filename): filename " + arg1);
                 controller.addFile(arg1);
-		controller.addListener("change", function(curr, prev){
-			console.log("change event emetted");
+		controller.addListener("change", function(filename){
+			console.log("change event emetted, filename = " + filename);
 		});
                 break;
 
+	case "addDir":
+		console.log("\nTesting addDir(dir): dir " + arg1);
+		controller.addDir(arg1);
+		break;
 
 	default:
 		help();
@@ -40,7 +44,7 @@ switch ( args["-t"] )
 
 function help()
 {
-	console.log("Usage: node testController.js -t <creation|addFile> -e <exten> [-s <search>] ");
+	console.log("Usage: node testController.js -t <creation|addFile|addDir> -e <exten> [-s <search>] ");
 	process.exit(1);
 }
 
