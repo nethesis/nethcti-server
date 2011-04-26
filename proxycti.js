@@ -1116,10 +1116,14 @@ am.connect();
  *                             Functions							*
  ***********************************************************************************************/
 
+/* This function create the response for the client with the history call
+ * that the client has been requested.
+ */
 function createHistoryCallResponse(results){
 	var res = [];
 	var temp = {};
 /*
+ * An example of result obtained by the database of history call
 [ { calldate: Tue, 26 Apr 2011 11:38:12 GMT,
     clid: 'CTI500',
     src: '',
@@ -1138,13 +1142,16 @@ function createHistoryCallResponse(results){
     userfield: '' },
     ...]
 */
+	var currRes = '';
 	for(i=0; i<results.length; i++){		
-		temp.calldate = results[i].calldate;
-		temp.clid = results[i].clid;
-		temp.dst = results[i].dst;
-		temp.duration = results[i].duration;
-		temp.disposition = results[i].disposition;
-		temp.uniqueid = results[i].uniqueid;
+		currRes = results[i];
+		temp.calldate = currRes.calldate;
+		temp.clid = currRes.clid;
+		temp.dst = currRes.dst;
+		temp.duration = currRes.duration;
+		temp.disposition = currRes.disposition;
+		temp.uniqueid = currRes.uniqueid;
+		temp.recording = audioFileList[currRes.uniqueid];
 	}
 	console.log(results);
 }
