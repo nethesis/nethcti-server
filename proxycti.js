@@ -29,8 +29,11 @@ var clients = {};
  */
 var extStatusForOp = {};
 
-// Audio file list of recorded call
-var audioFileList = [];
+/* Audio file list of recorded call. This is an hash table that has the unique id of the file
+ * as the key and '' as value, because the value is unused.
+ * (view createAudioFileList function).
+ */
+var audioFileList = {};
 
 
 const DEBUG = true;
@@ -40,6 +43,7 @@ const TEMPLATE_DECORATOR_CUSTOMERCARD_FILENAME = "./template/decorator_customerC
 const TEMPLATE_DECORATOR_HISTORY_CALL_FILENAME = "./template/decorator_historyCall.html";
 const AST_CALL_AUDIO_DIR = "/var/spool/asterisk/monitor";
 const CALL_PREFIX = "CTI-";
+const START_TAG_FILENAME = "auto-";
 
 // The response that this server pass to the clients.
 var ResponseMessage = function(clientSessionId, typeMessage, respMessage){
@@ -83,11 +87,34 @@ controller.addListener("change_dir", function(dir){
 	}
 });
 
+/* This function create hash table of audio file. The key is the unique id of the file, 
+ * and the value is set to '' because is unused.
+ */
 function createAudioFileList(){
-	audioFileList = []
-	audioFileList = fs.readdirSync(AST_CALL_AUDIO_DIR);
-	log("audio file list LENGHT = " + audioFileList.length);
+	var temp = fs.readdirSync(AST_CALL_AUDIO_DIR);
+	for(i=0; i<temp.length; i++){
+		var u = getUniqueIdFromFilename(temp[i]);
+		audioFileList[u] = '';
+	}
+	log("audio file list = " + sys.inspect(audioFileList));
 	
+}
+
+/* This function return the unique id of the filename. The uniqueid field is different for
+ * those files that has been recorded from cti. 
+ * ex. of file name recorded by cti: auto-500-501-20110426-113833-1303810692.18-in.wav
+ * ex. of file name recorded by asterisk: OUT202-20110405-173946-1302017986.4016.wav
+ * The unique id field is the last field of filename before extension and before "in" indication
+ * in the case of cti recorded call.
+ */
+function getUniqueIdFromFilename(filename){
+	if(filename.indexOf(START_TAG_FILENAME)!=-1){
+		return filename.split("-")[5];
+	}
+	else{
+		var x = filename.split("-")[3];
+		return x.split(".")[0] + "." + x.split(".")[1];
+	}
 }
 
 /******************************************************
@@ -756,7 +783,7 @@ io.on('connection', function(client){
 					var mm = d.getMinutes(); if(mm<10) mm = '0' + mm;
 					var ss = d.getSeconds(); if(ss<10) ss = '0' + ss;
 					var hhmmss = hh + "" + mm + "" + ss;
-	  				var filename = 'auto-' + message.callFromExt + "-" + message.callToExt + "-" + yyyyMMdd + "-" + hhmmss + "-" + uniqueid; 
+	  				var filename = START_TAG_FILENAME + message.callFromExt + "-" + message.callToExt + "-" + yyyyMMdd + "-" + hhmmss + "-" + uniqueid; 
 	  				// create record action for asterisk server
 			  		var actionRecord = {
 						Action: 'Monitor',
@@ -986,8 +1013,7 @@ io.on('connection', function(client){
                                         // execute query to search contact in phonebook
                                         dataCollector.getDayHistoryCall(extFrom, dateFormat, function(results){
                                                 var mess = new ResponseMessage(client.sessionId, "day_history_call", "received day history call");
-                                                mess.results = results;
-						mess.audioFiles = audioFileList;
+                                                mess.results = createHistoryCallResponse(results);
                                                 client.send(mess);
                                                 log("Day history call of [" + extFrom + "] has been sent to the client: the number of entry is: " + results.length);
                                         });
@@ -1007,7 +1033,6 @@ io.on('connection', function(client){
                                         dataCollector.getCurrentWeekHistoryCall(extFrom, function(results){
                                                 var mess = new ResponseMessage(client.sessionId, "current_week_history_call", "received current week history call");
                                                 mess.results = results;
-						mess.audioFiles = audioFileList;
                                                 client.send(mess);
                                                 log("Current week history call of [" + extFrom + "] has been sent to the client");
                                         });
@@ -1026,7 +1051,6 @@ io.on('connection', function(client){
                                         dataCollector.getCurrentMonthHistoryCall(extFrom, function(results){
                                                 var mess = new ResponseMessage(client.sessionId, "current_month_history_call", "received current month history call");
                                                 mess.results = results;
-						mess.audioFiles = audioFileList;
                                                 client.send(mess);
                                                 log("Current month history call of [" + extFrom + "] has been sent to the client");
                                         });
@@ -1091,6 +1115,43 @@ am.connect();
 /************************************************************************************************
  *                             Functions							*
  ***********************************************************************************************/
+
+function createHistoryCallResponse(results){
+	var res = [];
+	var temp = {};
+/*
+[ { calldate: Tue, 26 Apr 2011 11:38:12 GMT,
+    clid: 'CTI500',
+    src: '',
+    dst: '501',
+    dcontext: 'from-internal',
+    channel: 'SIP/500-00000012',
+    dstchannel: 'SIP/501-00000013',
+    lastapp: 'Dial',
+    lastdata: 'SIP/501,"",tr',
+    duration: 35,
+    billsec: 16,
+    disposition: 'ANSWERED',
+    amaflags: 3,
+    accountcode: '501',
+    uniqueid: '1303810692.18',
+    userfield: '' },
+    ...]
+*/
+	for(i=0; i<results.length; i++){		
+		temp.calldate = results[i].calldate;
+		temp.clid = results[i].clid;
+		temp.dst = results[i].dst;
+		temp.duration = results[i].duration;
+		temp.disposition = results[i].disposition;
+		temp.uniqueid = results[i].uniqueid;
+	}
+	console.log(results);
+}
+
+
+
+
 
 /* Initialize extStatusForOp. For this it send the right action to the asterisk server.
  * Then it receive more PeerEntry event from the asterisk server and at the end it receive
