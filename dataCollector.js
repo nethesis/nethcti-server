@@ -71,48 +71,59 @@ function addController(contr){
  * If one section is added, a new connection is made and new entry is added to dbConnections.
  */
 function updateConfiguration(){
-	console.log("SONO IN updateConfiguration");
-
 	// read modified configuration file
-	var newQueries = iniparser.parseSync(DATACOLLECTOR_CONFIG_FILENAME);
-
-	for(key in newQueries){
-
+	var reloadQueries = iniparser.parseSync(DATACOLLECTOR_CONFIG_FILENAME);
+	for(key in reloadQueries){
+		var modified = false;
 		if(queries[key]==undefined) {  // a new section is added to configuration file
-			console.log("new section " + key + " has been added");
-			queries[key] = newQueries[key];
-			console.log(queries);
+			log("new section '" + key + "' into " + DATACOLLECTOR_CONFIG_FILENAME + " has been added");
+			queries[key] = reloadQueries[key];
 		}
-
-
-		var currNewObj = newQueries[key];  // value of the current key
+		else{
+			var currReloadObj = reloadQueries[key];  // value of the current key
+			var oldObj = queries[key];
 		
-		/*
-		{ dbhost: 'localhost',
-      		  dbport: '3306',
-		  dbtype: 'mysql',
-		  dbuser: 'pbookuser',
-		  dbpassword: 'pbookpass',
-		  dbname: 'phonebook',
-		  query: '"select * from phonebook where homephone like \'%$EXTEN\' or workphone like \'%$EXTEN\' or cellphone like \'%$EXTEN\' or fax like \'%$EXTEN\'"' 
+			/* An example of oldObj
+			{ dbhost: 'localhost',
+	      		  dbport: '3306',
+			  dbtype: 'mysql',
+			  dbuser: 'pbookuser',
+			  dbpassword: 'pbookpass',
+			  dbname: 'phonebook',
+			  query: '"select * from phonebook where homephone like \'%$EXTEN\' or workphone like \'%$EXTEN\' or cellphone like \'%$EXTEN\' or fax like \'%$EXTEN\'"' 
+			}
+			*/
+			for(valKey in oldObj){
+				if(oldObj[valKey]!=currReloadObj[valKey]){	// modified value of valKey
+					modified = true;
+					// update modified value in queries
+                                        oldObj[valKey] = currReloadObj[valKey];
+				}
+			}
 		}
-		*/
-		for(valKey in currNewObj){
-			
+		if(modified){ // a section has been modified
+			log("section '" + key + "' has been modified in " + DATACOLLECTOR_CONFIG_FILENAME);
+			if(queries[key].dbtype=="mysql"){ 
+				// close mysql connection
+				log("close mysql connection of key = " + key);
+				dbConnections[key].end();
+			}
+			else if(queries[key].dbtype=="mssql"){ // close mssql connection
+				log("close mssql connection");
+				dbConnections[key].close(function(){});
+			}
+			// new connection of modified section
+                        log("made new db connection of key = " + key + " " + sys.inspect(queries[key]));
+                        initConn(queries[key]);
 		}
-
-
 	}
-
 	// manage eventually removed section in modified configuration file
 	for (key in queries){
-		if(newQueries[key]==undefined){
-			console.log("section " + key + " has been removed");
+		if(reloadQueries[key]==undefined){
+			log("section '" + key + "' has been removed from " + DATACOLLECTOR_CONFIG_FILENAME);
 			delete queries[key];
-			console.log(queries);
 		}
 	}
-	
 }
 
 /* This function open new connection for each section of configuration file dataProfiles.ini and
@@ -121,27 +132,32 @@ function updateConfiguration(){
 function initDBConnections(){
 	for(key in queries){
 		var objQuery = queries[key];
-		if(objQuery.dbtype=="mysql"){
-			var client = new mysql.Client();
-	                client.host = objQuery.dbhost;
-	                client.port = objQuery.dbport;
-	                client.user = objQuery.dbuser;
-	                client.password = objQuery.dbpassword;
-			client.database = objQuery.dbname;
-		        client.connect();
-			dbConnections[key] = client;
-		}
-	        else if(objQuery.dbtype=="mssql"){
-                	var db = new odbc.Database();
-	                var connect_str = "DRIVER={FreeTDS};SERVER=" + objQuery.dbhost + ";UID=" + objQuery.dbuser + ";PWD=" + objQuery.dbpassword + ";DATABASE=" + objQuery.dbname;
-	                db.open(connect_str, function(err) {
-				log("ERROR in connect to DB mssql");
-				console.log(err);
-	                });
-			dbConnections[key] = db;
-	        }
+		initConn(objQuery);
 	}
 	console.log(dbConnections);
+}
+
+// This function initialize one connection
+function initConn(objQuery){
+	if(objQuery.dbtype=="mysql"){
+		var client = new mysql.Client();
+                client.host = objQuery.dbhost;
+                client.port = objQuery.dbport;
+                client.user = objQuery.dbuser;
+                client.password = objQuery.dbpassword;
+		client.database = objQuery.dbname;
+	        client.connect();
+		dbConnections[key] = client;
+	}
+        else if(objQuery.dbtype=="mssql"){
+               	var db = new odbc.Database();
+                var connect_str = "DRIVER={FreeTDS};SERVER=" + objQuery.dbhost + ";UID=" + objQuery.dbuser + ";PWD=" + objQuery.dbpassword + ";DATABASE=" + objQuery.dbname;
+                db.open(connect_str, function(err) {
+			log("ERROR in connect to DB mssql");
+			console.log(err);
+                });
+		dbConnections[key] = db;
+        }
 }
 
 /*
