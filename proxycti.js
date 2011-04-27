@@ -53,7 +53,7 @@ var ResponseMessage = function(clientSessionId, typeMessage, respMessage){
 }
 
 function log(msg){
-	if (DEBUG) console.log(new Date().toUTCString() + ": " + msg);
+	if (DEBUG) console.log(new Date().toUTCString() + "[ProxyCTI]: " + msg);
 }
 
 
