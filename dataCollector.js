@@ -78,6 +78,9 @@ function updateConfiguration(){
 		if(queries[key]==undefined) {  // a new section is added to configuration file
 			log("new section '" + key + "' into " + DATACOLLECTOR_CONFIG_FILENAME + " has been added");
 			queries[key] = reloadQueries[key];
+			// new connection of added section
+                        log("made new db connection of key = " + key + " " + sys.inspect(queries[key]));
+                        initConn(queries[key], key);
 		}
 		else{
 			var currReloadObj = reloadQueries[key];  // value of the current key
@@ -114,7 +117,7 @@ function updateConfiguration(){
 			}
 			// new connection of modified section
                         log("made new db connection of key = " + key + " " + sys.inspect(queries[key]));
-                        initConn(queries[key]);
+                        initConn(queries[key], key);
 		}
 	}
 	// manage eventually removed section in modified configuration file
@@ -132,13 +135,12 @@ function updateConfiguration(){
 function initDBConnections(){
 	for(key in queries){
 		var objQuery = queries[key];
-		initConn(objQuery);
+		initConn(objQuery, key);
 	}
-	console.log(dbConnections);
 }
 
 // This function initialize one connection
-function initConn(objQuery){
+function initConn(objQuery, key){
 	if(objQuery.dbtype=="mysql"){
 		var client = new mysql.Client();
                 client.host = objQuery.dbhost;
@@ -274,7 +276,6 @@ function executeSQLQuery(type, objQuery, cb){
 	// get already opened connection
 	var conn = dbConnections[type];
         var query = objQuery.query + ";";
-	
 	conn.query(query, function (err, results, fields) {
         	if (err) {
         		log("ERROR in execute " + objQuery.dbtype + " query");
