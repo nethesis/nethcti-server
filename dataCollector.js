@@ -2,6 +2,8 @@ var fs = require("fs");
 var sys = require("sys");
 var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
 var mysql = require('./lib/node-mysql');
+var contrReq = require("./controller.js");
+
 const DATACOLLECTOR_CONFIG_FILENAME = "dataProfiles.ini";
 const PHONEBOOK = "phonebook";
 const CUSTOMER_CARD = "customer_card";
@@ -38,6 +40,31 @@ exports.DataCollector = function(){
 	this.getCurrentWeekHistoryCall = function(ext, cb) { return getCurrentWeekHistoryCall(ext, cb); }
 	this.getCurrentMonthHistoryCall = function(ext, cb) { return getCurrentMonthHistoryCall(ext, cb); }
 }
+
+// Controller object to check changing in configuration file
+var controller = new contrReq.Controller();
+log("Controller object created for dataCollector");
+controller.addFile(DATACOLLECTOR_CONFIG_FILENAME);
+controller.addListener("change_file", function(filename){
+        if(filename==DATACOLLECTOR_CONFIG_FILENAME){
+                log("update configuration file " + DATACOLLECTOR_CONFIG_FILENAME);
+                updateConfiguration();
+        }
+});
+
+/* this function update queries in memory after changing of configuration
+ * file.
+ */
+function updateConfiguration(){
+	console.log("------------- VERIFY --------------");
+	console.log(queries);
+        initQueries();
+	console.log("\nDOPO");
+	console.log(queries);
+	console.log("--------------- STOP --------------");
+}
+
+
 
 /*
  * Initialize all the queries that can be executed
@@ -194,4 +221,8 @@ function executeSQLQuery(objQuery, cb){
     			});
 		});
 	}
+}
+
+function log(msg){
+	console.log(new Date().toUTCString() + " - [DataCollector]: " + msg);
 }
