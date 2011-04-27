@@ -403,7 +403,7 @@ function updateAllClientsForOp(newState){
                 var response = new ResponseMessage(c.sessionId, "update_ext_new_state_op", msg);
                 response.extNewState = newState;
                 c.send(response);
-                log("Notify of new ext state has been sent to client " + c.sessionid);
+                log("Notify of new ext state has been sent to client " + c.sessionId);
         }
 }
 
