@@ -83,15 +83,8 @@ function initDBConnections(){
 	                client.port = objQuery.dbport;
 	                client.user = objQuery.dbuser;
 	                client.password = objQuery.dbpassword;
-	                client.connect();
-			// set the database to use
-	                var query = "USE " + objQuery.dbname + ";";
-	                client.query(query, function selectCb(err, results, fields) {
-	                    if (err) {
-	                        log("ERROR in query 'USE DB'");
-				console.log(err);
-	                    }
-        	        });
+			client.database = objQuery.dbname;
+		        client.connect();
 			dbConnections[key] = client;
 		}
 	        else if(objQuery.dbtype=="mssql"){
@@ -103,8 +96,8 @@ function initDBConnections(){
 	                });
 			dbConnections[key] = db;
 	        }
-
 	}
+	console.log(dbConnections);
 }
 
 /*
