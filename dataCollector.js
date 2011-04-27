@@ -2,6 +2,7 @@ var fs = require("fs");
 var sys = require("sys");
 var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
 var mysql = require('./lib/node-mysql');
+var odbc = require("./lib/node-odbc/odbc");
 
 const DATACOLLECTOR_CONFIG_FILENAME = "dataProfiles.ini";
 const PHONEBOOK = "phonebook";
@@ -31,6 +32,12 @@ queries = {};
 // this is the controller to manage changing in the configuration file of profiles
 controller = null;
 
+
+/* this is a JSON object that has section name of dataProfiles.ini as key and connection objects 
+ * to database as the value.
+ */
+dbConnections = {};
+
 /*
  * Constructor
  */
@@ -44,6 +51,7 @@ exports.DataCollector = function(){
 	this.addController = function(contr) { addController(contr) }
 }
 
+// add controller to manage changin in configuration file
 function addController(contr){
         controller = contr;
         log("added controller");
@@ -63,13 +71,48 @@ function updateConfiguration(){
         initQueries();
 }
 
+/* This function open new connection for each section of configuration file dataProfiles.ini and
+ * memorize it in dbConnections object. The key is the section name and the value is the connection.
+ */
+function initDBConnections(){
+	for(key in queries){
+		var objQuery = queries[key];
+		if(objQuery.dbtype=="mysql"){
+			var client = new mysql.Client();
+	                client.host = objQuery.dbhost;
+	                client.port = objQuery.dbport;
+	                client.user = objQuery.dbuser;
+	                client.password = objQuery.dbpassword;
+	                client.connect();
+			// set the database to use
+	                var query = "USE " + objQuery.dbname + ";";
+	                client.query(query, function selectCb(err, results, fields) {
+	                    if (err) {
+	                        log("ERROR in query 'USE DB'");
+				console.log(err);
+	                    }
+        	        });
+			dbConnections[key] = client;
+		}
+	        else if(objQuery.dbtype=="mssql"){
+                	var db = new odbc.Database();
+	                var connect_str = "DRIVER={FreeTDS};SERVER=" + objQuery.dbhost + ";UID=" + objQuery.dbuser + ";PWD=" + objQuery.dbpassword + ";DATABASE=" + objQuery.dbname;
+	                db.open(connect_str, function(err) {
+				log("ERROR in connect to DB mssql");
+				console.log(err);
+	                });
+			dbConnections[key] = db;
+	        }
 
+	}
+}
 
 /*
- * Initialize all the queries that can be executed
+ * Initialize all the queries that can be executed and relative connection to database
  */
 function initQueries(){
         this.queries = iniparser.parseSync(DATACOLLECTOR_CONFIG_FILENAME);
+	initDBConnections();
 }
 
 /* 
@@ -84,7 +127,7 @@ getCurrentMonthHistoryCall = function(ext, cb){
                 // substitue template field in query
                 copyObjQuery.query = copyObjQuery.query.replace(/\$EXTEN/g, ext);
                 // execute current sql query
-                executeSQLQuery(copyObjQuery, function(results){
+                executeSQLQuery(CURRENT_MONTH_HISTORY_CALL, copyObjQuery, function(results){
                         cb(results);
                 });
         }
@@ -102,7 +145,7 @@ getCurrentWeekHistoryCall = function(ext, cb){
                 // substitue template field in query
                 copyObjQuery.query = copyObjQuery.query.replace(/\$EXTEN/g, ext);
                 // execute current sql query
-                executeSQLQuery(copyObjQuery, function(results){
+                executeSQLQuery(CURRENT_WEEK_HISTORY_CALL, copyObjQuery, function(results){
                         cb(results);
                 });
         }
@@ -122,7 +165,7 @@ getDayHistoryCall = function(ext, date, cb){
                 copyObjQuery.query = copyObjQuery.query.replace(/\$EXTEN/g, ext);
                 copyObjQuery.query = copyObjQuery.query.replace(/\$DATE/g, date);
                 // execute current sql query
-                executeSQLQuery(copyObjQuery, function(results){
+                executeSQLQuery(DAY_HISTORY_CALL, copyObjQuery, function(results){
                         cb(results);
                 });
         }
@@ -142,20 +185,18 @@ getCustomerCard = function(ext, type, cb){
                 // substitue template field in query
                 copyObjQuery.query = copyObjQuery.query.replace(/\$EXTEN/g, ext);
                 // execute current sql query
-                executeSQLQuery(copyObjQuery, function(results){
+                executeSQLQuery(section, copyObjQuery, function(results){
                         cb(results);
                 });
         }
         return undefined;
 }
 
-
-
-
 /*
  * Search in the database all phonebook contacts that match the given name
  */
 function getContactsPhonebook(name, cb){
+
 	var objQuery = queries[PHONEBOOK];
 	if(objQuery!=undefined){
 		// copy object
@@ -163,7 +204,7 @@ function getContactsPhonebook(name, cb){
 		// substitue template field in query
                 copyObjQuery.query = copyObjQuery.query.replace(/\$NAME_TO_REPLACE/g, name);
 		// execute current sql query
-		executeSQLQuery(copyObjQuery, function(results){
+		executeSQLQuery(PHONEBOOK, copyObjQuery, function(results){
 			cb(results);
 		});
 	}
@@ -171,57 +212,39 @@ function getContactsPhonebook(name, cb){
 }
 
 /*
- * Execute one sql query and return an array of object. This function must have 
+ * Execute one sql query. This function must have 
  * a callback function as second parameter because the asynchronous nature of
- * mysql query function. Otherwise it is possibile that the function return before
+ * mysql query function.Otherwise it is possibile that the function return before
  * the completion of sql query operation.
  */
-function executeSQLQuery(objQuery, cb){
-	// execute query to mysql server
-	if(objQuery.dbtype=="mysql"){
-		var client = new mysql.Client();
-		client.host = objQuery.dbhost;
-		client.port = objQuery.dbport;
-		client.user = objQuery.dbuser;
-		client.password = objQuery.dbpassword;
-		client.connect();
-		// set the database to use
-		var query = "USE " + objQuery.dbname + ";";
-		client.query(query, function selectCb(err, results, fields) {
-		    if (err) {
-      			throw err;
-		    }
-		});
-		// execute query
-		query = objQuery.query + ";";
-		client.query(query, function selectCb(err, results, fields) {
-		    if (err) {
-			client.end();
-      			throw err;
-		    }
-		    client.end();
-		    cb(results);
-		});
+function executeSQLQuery(type, objQuery, cb){
+	// get already opened connection
+	var conn = dbConnections[type];
+        var query = objQuery.query + ";";
+	if(objQuery.dbtype=="mysql"){  // execute mysql query
+	       	conn.query(query, function selectCb(err, results, fields) {
+	        	if (err) {
+	                	log("ERROR in execute mysql query");
+				console.log(err);
+	                        throw err;
+	                }
+	                cb(results);
+	        });	
 	}
-	// execute query to microsoft sql server
-	else if(objQuery.dbtype=="mssql"){
-		var odbc = require("./lib/node-odbc/odbc");
-
-		var db = new odbc.Database();
-		var connect_str = "DRIVER={FreeTDS};SERVER=" + objQuery.dbhost + ";UID=" + objQuery.dbuser + ";PWD=" + objQuery.dbpassword + ";DATABASE=" + objQuery.dbname;
-		query = objQuery.query + ";";
-
-		db.open(connect_str, function(err)
-		{
-    			db.query(query, function(err, rows, moreResultSets)
-    			{
-				cb(rows);
-        			db.close(function(){});
-    			});
-		});
+	else if(objQuery.dbtype=="mssql"){ // execute mssql query
+		db.query(query, function(err, rows, moreResultSets)
+                {
+			if (err) {
+                                log("ERROR in execute mssql query");
+                                console.log(err);
+                                throw err;
+                        }
+	                cb(rows);
+                });
 	}
 }
 
+// custom log function to output debug info
 function log(msg){
 	console.log(new Date().toUTCString() + " - [DataCollector]: " + msg);
 }
