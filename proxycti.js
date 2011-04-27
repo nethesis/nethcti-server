@@ -175,7 +175,6 @@ am.addListener('agentcalled', function(fromid, fromname, queue, destchannel) {
 		var typesCC = profiler.getTypesCustomerCardPermit(to);
                 log("The user [" + to + "] has the permit of view following types of customer card");
                 console.log(typesCC);
-
 		if(typesCC.length==0){
                         // the user hasn't the authorization of view customer card: the length is 0
                         log("The user " + to + " hasn't the permit of view customer card");
@@ -1040,7 +1039,7 @@ io.on('connection', function(client){
                                         // execute query to search contact in phonebook
                                         dataCollector.getCurrentWeekHistoryCall(extFrom, function(results){
                                                 var mess = new ResponseMessage(client.sessionId, "current_week_history_call", "received current week history call");
-                                                mess.results = results;
+						mess.results = createHistoryCallResponse(results);
                                                 client.send(mess);
                                                 log("Current week history call of [" + extFrom + "] has been sent to the client");
                                         });
@@ -1058,7 +1057,7 @@ io.on('connection', function(client){
                                         // execute query to search contact in phonebook
                                         dataCollector.getCurrentMonthHistoryCall(extFrom, function(results){
                                                 var mess = new ResponseMessage(client.sessionId, "current_month_history_call", "received current month history call");
-                                                mess.results = results;
+						mess.results = createHistoryCallResponse(results);
                                                 client.send(mess);
                                                 log("Current month history call of [" + extFrom + "] has been sent to the client");
                                         });
