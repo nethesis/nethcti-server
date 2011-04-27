@@ -54,11 +54,11 @@ exports.Profiler = function(){
 
 // Controller object to check changing in configuration file
 var controller = new contrReq.Controller();
-console.log("Controller object created for profiler");
+log("Controller object created for profiler");
 controller.addFile(PROFILER_CONFIG_FILENAME);
 controller.addListener("change_file", function(filename){
         if(filename==PROFILER_CONFIG_FILENAME){
-                console.log("update configuration file " + PROFILER_CONFIG_FILENAME);
+                log("update configuration file " + PROFILER_CONFIG_FILENAME);
                 updateConfiguration();
         }
 });
@@ -67,7 +67,11 @@ controller.addListener("change_file", function(filename){
  * file.
  */
 function updateConfiguration(){
+console.log("_----------UPDATE profiles -___________");
+	console.log(actions);
 	initProfiles();
+	console.log("\nDOPO");
+	console.log(actions);
 }
 
 
@@ -106,3 +110,6 @@ function initProfiles(){
 	this.actions = iniparser.parseSync(PROFILER_CONFIG_FILENAME); 
 }
 
+function log(msg){
+	console.log(new Date().toUTCString() + " - [Profiler]: " + msg);
+}
