@@ -65,10 +65,54 @@ function addController(contr){
 }
 
 /* this function update queries in memory after changing of configuration
- * file.
+ * file. It checks modified sections and restablish connections only for modified section.
+ * If one section is deleted, the relative connection is closed and entry is removed from
+ * dbConnections. 
+ * If one section is added, a new connection is made and new entry is added to dbConnections.
  */
 function updateConfiguration(){
-        initQueries();
+	console.log("SONO IN updateConfiguration");
+
+	// read modified configuration file
+	var newQueries = iniparser.parseSync(DATACOLLECTOR_CONFIG_FILENAME);
+
+	for(key in newQueries){
+
+		if(queries[key]==undefined) {  // a new section is added to configuration file
+			console.log("new section " + key + " has been added");
+			queries[key] = newQueries[key];
+			console.log(queries);
+		}
+
+
+		var currNewObj = newQueries[key];  // value of the current key
+		
+		/*
+		{ dbhost: 'localhost',
+      		  dbport: '3306',
+		  dbtype: 'mysql',
+		  dbuser: 'pbookuser',
+		  dbpassword: 'pbookpass',
+		  dbname: 'phonebook',
+		  query: '"select * from phonebook where homephone like \'%$EXTEN\' or workphone like \'%$EXTEN\' or cellphone like \'%$EXTEN\' or fax like \'%$EXTEN\'"' 
+		}
+		*/
+		for(valKey in currNewObj){
+			
+		}
+
+
+	}
+
+	// manage eventually removed section in modified configuration file
+	for (key in queries){
+		if(newQueries[key]==undefined){
+			console.log("section " + key + " has been removed");
+			delete queries[key];
+			console.log(queries);
+		}
+	}
+	
 }
 
 /* This function open new connection for each section of configuration file dataProfiles.ini and
