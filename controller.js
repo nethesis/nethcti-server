@@ -4,10 +4,12 @@ var EventEmitter = require("events").EventEmitter;
 
 const INTERVAL_POLLING = 0;
 
-
+// list of files to control
 fileToControl = {};
+// list of directories to control
 dirToControl = {};
 
+// Constructor
 exports.Controller = function(){
 	EventEmitter.call(this);
 	self = this;
@@ -15,6 +17,7 @@ exports.Controller = function(){
 	this.addDir = function(dir) { addDir(dir) };
 } 
 
+// add directory to control and emit event when modified time changes
 function addDir(dir){
 	try{
 		var stat = fs.lstatSync(dir);
@@ -34,8 +37,8 @@ function addDir(dir){
 	}
 }
 
+// add file to control and emit event when modified time changes
 function addFile(filename){
-
 	try{
                 var stat = fs.lstatSync(filename);
                 if(stat.isFile()){
