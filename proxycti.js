@@ -87,6 +87,15 @@ controller.addListener("change_dir", function(dir){
 	}
 });
 
+
+/* add controller to profiler and to dataCollector. They use it to 
+ * manage changing in its configuration file.
+ */
+profiler.addController(controller);
+dataCollector.addController(controller);
+
+
+
 /* This function create hash table of audio file. The key is the unique id of the file, 
  * and the value is set to filename.
  */

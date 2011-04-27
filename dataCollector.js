@@ -2,7 +2,6 @@ var fs = require("fs");
 var sys = require("sys");
 var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
 var mysql = require('./lib/node-mysql');
-var contrReq = require("./controller.js");
 
 const DATACOLLECTOR_CONFIG_FILENAME = "dataProfiles.ini";
 const PHONEBOOK = "phonebook";
@@ -29,6 +28,9 @@ const CURRENT_MONTH_HISTORY_CALL = "current_month_history_call";
 */
 queries = {};
 
+// this is the controller to manage changing in the configuration file of profiles
+controller = null;
+
 /*
  * Constructor
  */
@@ -39,29 +41,26 @@ exports.DataCollector = function(){
 	this.getDayHistoryCall = function(ext, date, cb) { return getDayHistoryCall(ext, date, cb); }
 	this.getCurrentWeekHistoryCall = function(ext, cb) { return getCurrentWeekHistoryCall(ext, cb); }
 	this.getCurrentMonthHistoryCall = function(ext, cb) { return getCurrentMonthHistoryCall(ext, cb); }
+	this.addController = function(contr) { addController(contr) }
 }
 
-// Controller object to check changing in configuration file
-var controller = new contrReq.Controller();
-log("Controller object created for dataCollector");
-controller.addFile(DATACOLLECTOR_CONFIG_FILENAME);
-controller.addListener("change_file", function(filename){
-        if(filename==DATACOLLECTOR_CONFIG_FILENAME){
-                log("update configuration file " + DATACOLLECTOR_CONFIG_FILENAME);
-                updateConfiguration();
-        }
-});
+function addController(contr){
+        controller = contr;
+        log("added controller");
+        controller.addFile(DATACOLLECTOR_CONFIG_FILENAME);
+        controller.addListener("change_file", function(filename){
+               if(filename==DATACOLLECTOR_CONFIG_FILENAME){
+                        log("update configuration file " + DATACOLLECTOR_CONFIG_FILENAME);
+                        updateConfiguration();
+                }
+        });
+}
 
 /* this function update queries in memory after changing of configuration
  * file.
  */
 function updateConfiguration(){
-	console.log("------------- VERIFY --------------");
-	console.log(queries);
         initQueries();
-	console.log("\nDOPO");
-	console.log(queries);
-	console.log("--------------- STOP --------------");
 }
 
 

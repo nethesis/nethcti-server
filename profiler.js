@@ -1,7 +1,6 @@
 var fs = require("fs");
 var sys = require("sys");
 var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
-var contrReq = require("./controller.js");
 
 const PROFILER_CONFIG_FILENAME = "profiles.ini";
 const CALL_OUT = "CALL_OUT";
@@ -35,6 +34,9 @@ actions =
 */
 actions = {};
 
+// this is the controller to manage changing in the configuration file of profiles
+controller = null;
+
 /*
  * Constructor
  */
@@ -47,31 +49,27 @@ exports.Profiler = function(){
 	this.checkActionRecordPermit = function(exten){ return checkActionPermit(exten, RECORD) }
 	this.checkActionHistoryCallPermit = function(exten){ return checkActionPermit(exten, HISTORY_CALL) }
 	this.getTypesCustomerCardPermit = function(exten){ return getTypesCustomerCardPermit(exten) }
+	this.addController = function(contr) { addController(contr) }
 }
 
+function addController(contr){
+	controller = contr;
+	log("added controller");
+	controller.addFile(PROFILER_CONFIG_FILENAME);
+	controller.addListener("change_file", function(filename){
+ 	       if(filename==PROFILER_CONFIG_FILENAME){
+	                log("update configuration file " + PROFILER_CONFIG_FILENAME);
+	                updateConfiguration();
+	        }
+	});
+}
 
-
-
-// Controller object to check changing in configuration file
-var controller = new contrReq.Controller();
-log("Controller object created for profiler");
-controller.addFile(PROFILER_CONFIG_FILENAME);
-controller.addListener("change_file", function(filename){
-        if(filename==PROFILER_CONFIG_FILENAME){
-                log("update configuration file " + PROFILER_CONFIG_FILENAME);
-                updateConfiguration();
-        }
-});
 
 /* this function update profiles in memory after changing of confiuration
  * file.
  */
 function updateConfiguration(){
-console.log("_----------UPDATE profiles -___________");
-	console.log(actions);
 	initProfiles();
-	console.log("\nDOPO");
-	console.log(actions);
 }
 
 
