@@ -214,27 +214,14 @@ function executeSQLQuery(type, objQuery, cb){
 	// get already opened connection
 	var conn = dbConnections[type];
         var query = objQuery.query + ";";
-	if(objQuery.dbtype=="mysql"){  // execute mysql query
-	       	conn.query(query, function selectCb(err, results, fields) {
-	        	if (err) {
-	                	log("ERROR in execute mysql query");
-				console.log(err);
-	                        throw err;
-	                }
-	                cb(results);
-	        });	
-	}
-	else if(objQuery.dbtype=="mssql"){ // execute mssql query
-		db.query(query, function(err, rows, moreResultSets)
-                {
-			if (err) {
-                                log("ERROR in execute mssql query");
-                                console.log(err);
-                                throw err;
-                        }
-	                cb(rows);
-                });
-	}
+	
+	conn.query(query, function (err, results, fields) {
+        	if (err) {
+        		log("ERROR in execute " + objQuery.dbtype + " query");
+	                console.log(err);
+	        }
+	        cb(results);
+        });
 }
 
 // custom log function to output debug info
