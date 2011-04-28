@@ -431,6 +431,52 @@ am.addListener('peerlistcomplete', function(){
 	if(DEBUG) sys.puts("CLIENT: PeerListComplete event");
 });
 
+/* This event is generated only by the phone of the user.
+ * An example of UserEvent event:
+{ event: 'UserEvent',
+  privilege: 'user,all',
+  serevent: 'ASTDB',
+  channel: 'SIP/503-0000000d^Family',
+  extra: 'Family: DND^Value: Attivo^' }
+ */
+am.addListener('userevent', function(headers){
+	if(DEBUG) sys.puts("CLIENT: UserEvent event");
+	// get ext, family and value
+	var ext = headers.channel.split("/")[1]; // 503-0000000d^Family
+	ext = ext.split("-")[0]; // 503
+	var family = headers.extra.split("^")[0]; // Family: DND
+	family = family.split(":")[1]; // DND
+	var value = headers.extra.split("^")[1]; // Value: Attivo
+	value = value.split(":")[1]; // Attivo or ' '
+	// remove whitespace from 'family' and 'value'
+	family = family.split(' ').join('');
+	value = value.split(' ').join('');
+
+	if(family=='DND'){
+		/* in this case the client who has modified its DND value is connected to cti
+ 		 * and has modified its DND through his telephone. So he'll be advise of changing
+		 * to update its cti.
+		 */
+		if(clients[ext]!=undefined){	
+			var c = clients[ext];
+			if(value==""){ // DND is disabled by the phone user
+				log("[" + ext + "] disable its " + family);
+				var msg = ext + " has disabled its " + family;
+        		        var response = new ResponseMessage(c.sessionId, "dnd_status_off", msg);
+		                c.send(response);
+		                log("Notify of " + family + " off of ext [" + ext + "] has been sent to the client " + c.sessionId);
+			}	
+			else if(value=="Attivo"){ // DND is enable dy the phone user
+				log("[" + ext + "] enable its " + family);
+				var msg = ext + " has enabled its " + family;
+                                var response = new ResponseMessage(c.sessionId, "dnd_status_on", msg);
+                                c.send(response);
+                                log("Notify of " + family + " on of ext [" + ext + "] has been sent to the client " + c.sessionId);
+			}
+		}
+	}
+});
+
 
 
 /*
