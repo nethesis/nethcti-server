@@ -96,8 +96,6 @@ exports.AsteriskManager = function (newconfig) {
 			for (var i=0,len=info.length; i<len; i++) {
 				if (info[i].indexOf(": ") == -1)
 					continue;
-
-
 				kv = info[i].split(": ", 2);
 				kv[0] = kv[0].toLowerCase().replace("-", "");
 				if (i==0)
@@ -220,7 +218,11 @@ exports.AsteriskManager = function (newconfig) {
 //console.log("_-----------------------_---");
              switch (headers.event) {
 
-		// ------------------ added by Alessandro -----------------");
+		// ------------------ added by Alessandro Polidori -----------------");
+		case "UserEvent":
+//			sys.debug("ASTERISK UserEvent: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
+			self.emit('userevent', headers);
+		break;
 		case "PeerStatus":
 //			sys.debug("ASTERISK PeerStatus: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
 			self.emit('peerstatus', headers);
@@ -233,7 +235,7 @@ exports.AsteriskManager = function (newconfig) {
 //			sys.debug("ASTERISK PeerlistComplete: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
 			self.emit('peerlistcomplete');
 		break;
-		//------------ end added by Alessandro --------------------");
+		//------------ end added by Alessandro Polidori --------------------");
 
 	           	case "Newchannel": // new participant
 		                //sys.debug("ASTERISK NEWCHANNEL: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
