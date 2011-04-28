@@ -96,11 +96,43 @@ exports.AsteriskManager = function (newconfig) {
 			for (var i=0,len=info.length; i<len; i++) {
 				if (info[i].indexOf(": ") == -1)
 					continue;
+
+
 				kv = info[i].split(": ", 2);
 				kv[0] = kv[0].toLowerCase().replace("-", "");
 				if (i==0)
 					type = kv[0];
 				headers[kv[0]] = kv[1];
+
+				/* Added by Alessandro Polidori
+				 * This piece of code is to manage UserEvent event emitted by asterisk when DND is activated
+				 * and disactivated. It add the key "extra" to headers returned byt the event that contains
+				 * " extra: 'Family: DND^Value: Attivo^' " or " extra: 'Family: DND^Value: ^^'  ".
+				 *
+				 * An example of headers when the DND is activated by means of phone is:
+				 * { event: 'UserEvent',
+				 *  privilege: 'user,all',
+				 *  userevent: 'ASTDB',
+				 *  channel: 'SIP/503-0000000d^Family',
+				 *  extra: 'Family: DND^Value: Attivo^' }
+				 *
+				 * An example of headers when the DND is disabled by means of phone is:
+				 * { event: 'UserEvent',
+				 *  privilege: 'user,all',
+				 *  userevent: 'ASTDB',
+				 *  channel: 'SIP/503-0000000d^Family',
+				 *  extra: 'Family: DND^Value: ^^' }
+ 				 */
+                                if(info[i].indexOf("^")!=-1){
+                                        var temp = info[i].split("^");
+                                        var extra = '';
+                                        for(i=1; i<temp.length; i++){
+                                                extra += temp[i] + "^";
+                                        }
+                                        headers.extra = extra;
+                                }
+                                // end added by Alessandro
+
 			}
 			switch (type) {
 				case "response":
@@ -184,7 +216,7 @@ exports.AsteriskManager = function (newconfig) {
         else if (config.version == '1.6')
         {
 //console.log("------------- ALE ------------__");
-//console.log(headers);
+//console.log(sys.inspect(headers));
 //console.log("_-----------------------_---");
              switch (headers.event) {
 
