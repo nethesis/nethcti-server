@@ -451,13 +451,15 @@ am.addListener('userevent', function(headers){
 	// remove whitespace from 'family' and 'value'
 	family = family.split(' ').join('');
 	value = value.split(' ').join('');
+	family = family.toLowerCase();
+	value = value.toLowerCase();
 
 	console.log("ext = " + ext);
 	console.log("family = " + family);
 	console.log("value = " + value);
 
 
-	if(family=='DND'){
+	if(family=='dnd'){
 		log("[" + ext + "] has set its " + family + " to value '" + value + "'");
 		/* in this case the client who has modified its DND value is connected to cti
  		 * and has modified its DND through his telephone. So he'll be advise of changing
@@ -472,7 +474,7 @@ am.addListener('userevent', function(headers){
 		                c.send(response);
 		                log("Notify of " + family + " off of ext [" + ext + "] has been sent to the client " + c.sessionId);
 			}	
-			else if(value=="Attivo"){ // DND is enable by the phone user
+			else if(value=="attivo"){ // DND is enable by the phone user
 				log("[" + ext + "] enable its " + family);
 				var msg = ext + " has enabled its " + family;
                                 var response = new ResponseMessage(c.sessionId, "dnd_status_on", msg);
@@ -480,8 +482,18 @@ am.addListener('userevent', function(headers){
                                 log("Notify of " + family + " on of ext [" + ext + "] has been sent to the client " + c.sessionId);
 			}
 		}
+		/* now advise all clients of cti of this chaning, to enable them to update their OP (operator panel)
+                 * update ext status for op.
+		 * In this case the status of extension is DND-Attivo or DND-
+		 * This is because the extStatusForOp has string as values.
+		 */
+		var stat = family + "-" + value;
+                updateExtStatusForOp(ext, family);
+
+                // update all clients with the new state of extension, for update operator panel
+                updateAllClientsForOp({ext: ext, status: stat});
 	}
-	else if(family=='CF'){
+	else if(family=='cf'){
 		log("[" + ext + "] has set its " + family + " to value '" + value + "'");
 		/* in this case the client who has modified its CF value is connected to cti
                  * and has modified its CF through his telephone. So he'll be advise of changing
@@ -505,6 +517,17 @@ am.addListener('userevent', function(headers){
                                 log("Notify of " + family + " on for ext [" + ext + "] to [" + value + "] has been sent to the client " + c.sessionId);
                         }
                 }
+		
+		/* now advise all clients of cti of this chaning, to enable them to update their OP (operator panel)
+                 * update ext status for op.
+                 * In this case the status of extension is CF-203 or CF-
+                 * This is because the extStatusForOp has string as values.
+                 */
+		var stat = family + "-" + value;
+	        updateExtStatusForOp(ext, stat);
+
+	        // update all clients with the new state of extension, for update operator panel
+        	updateAllClientsForOp({ext: ext, status: stat});
 	}
 });
 
