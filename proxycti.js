@@ -452,7 +452,13 @@ am.addListener('userevent', function(headers){
 	family = family.split(' ').join('');
 	value = value.split(' ').join('');
 
+	console.log("ext = " + ext);
+	console.log("family = " + family);
+	console.log("value = " + value);
+
+
 	if(family=='DND'){
+		log("[" + ext + "] has set its " + family + " to value '" + value + "'");
 		/* in this case the client who has modified its DND value is connected to cti
  		 * and has modified its DND through his telephone. So he'll be advise of changing
 		 * to update its cti.
@@ -466,7 +472,7 @@ am.addListener('userevent', function(headers){
 		                c.send(response);
 		                log("Notify of " + family + " off of ext [" + ext + "] has been sent to the client " + c.sessionId);
 			}	
-			else if(value=="Attivo"){ // DND is enable dy the phone user
+			else if(value=="Attivo"){ // DND is enable by the phone user
 				log("[" + ext + "] enable its " + family);
 				var msg = ext + " has enabled its " + family;
                                 var response = new ResponseMessage(c.sessionId, "dnd_status_on", msg);
@@ -474,6 +480,31 @@ am.addListener('userevent', function(headers){
                                 log("Notify of " + family + " on of ext [" + ext + "] has been sent to the client " + c.sessionId);
 			}
 		}
+	}
+	else if(family=='CF'){
+		log("[" + ext + "] has set its " + family + " to value '" + value + "'");
+		/* in this case the client who has modified its CF value is connected to cti
+                 * and has modified its CF through his telephone. So he'll be advise of changing
+                 * to update its cti.
+                 */
+                if(clients[ext]!=undefined){
+                        var c = clients[ext];
+                        if(value==""){ // CF is disabled by the phone user
+                                log("[" + ext + "] disable its " + family);
+                                var msg = ext + " has disabled its " + family;
+                                var response = new ResponseMessage(c.sessionId, "cf_status_off", msg);
+                                c.send(response);
+                                log("Notify of " + family + " off of ext [" + ext + "] has been sent to the client " + c.sessionId);
+                        }
+                        else { // CF is enable by the phone user
+                                log("[" + ext + "] enable its " + family + " to [" + value + "]");
+                                var msg = ext + " has enabled its " + family + " to " + value;
+                                var response = new ResponseMessage(c.sessionId, "cf_status_on", msg);
+				response.extTo = value;
+                                c.send(response);
+                                log("Notify of " + family + " on for ext [" + ext + "] to [" + value + "] has been sent to the client " + c.sessionId);
+                        }
+                }
 	}
 });
 
