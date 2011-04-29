@@ -23,9 +23,10 @@ var server;
  */
 var clients = {};
 
-/* this is for update client on the status of all extension registered in the asterisk server.
- * The scope for the client is to create operator panel with all infor about the extensions.
+/* This is for update client on the status of all extension registered in the asterisk server.
+ * The scope for the client is to create operator panel with all informations about the extensions.
  * It is created by the server at the start and it is update by the server at runtime.
+ * The key is the 'ext' and the status is an object.
  */
 var extStatusForOp = {};
 
@@ -44,6 +45,7 @@ const TEMPLATE_DECORATOR_HISTORY_CALL_FILENAME = "./template/decorator_historyCa
 const AST_CALL_AUDIO_DIR = "/var/spool/asterisk/monitor";
 const CALL_PREFIX = "CTI-";
 const START_TAG_FILENAME = "auto-";
+const FILE_EXT_LIST = "/etc/asterisk/nethcti.ini";
 
 // The response that this server pass to the clients.
 var ResponseMessage = function(clientSessionId, typeMessage, respMessage){
@@ -329,12 +331,6 @@ am.addListener('hangup', function(participant, code, text) {
 	}
 });
 
-function updateExtStatusForOp(ext, status){
-	// update extSatusForOP for future request from the clients
-        extStatusForOp[ext].status = status;
-        log("updated extStatusForOp to new status = " + extStatusForOp[ext].status + " for [" + ext + "]");
-}
-
 am.addListener('callreport', function(report) {
 	if(DEBUG) sys.puts("CLIENT: Call report: " + sys.inspect(report));
 });
@@ -355,7 +351,7 @@ am.addListener('peerstatus', function(headers) {
 	}
         updateExtStatusForOp(ext, headers.peerstatus.toLowerCase());
 	// update all clients with the new state of extension, for update operator panel
-        updateAllClientsForOp({ ext: ext, status: headers.peerstatus.toLowerCase() });
+	updateAllClientsForOp(extStatusForOp[ext]);
 });
 
 
@@ -373,23 +369,27 @@ am.addListener('newstate', function(headers){
         if(DEBUG) sys.puts("CLIENT: newstate event");
 
 	var ext = headers.calleridnum;
-
 	if(ext==''){
 		/*
 		...
 		calleridnum: '',
-		calleridname: 'CALL_PREFIX500',
+		calleridname: '<CALL_PREFIX>500',
 		...
 		*/
 		ext = headers.calleridname.split(CALL_PREFIX)[1];
 	}
-
 	// update ext status for op
 	updateExtStatusForOp(ext, headers.channelstatedesc);
 
 	// update all clients with the new state of extension, for update operator panel
-	updateAllClientsForOp({ext: ext, status: headers.channelstatedesc.toLowerCase()});
+	updateAllClientsForOp(extStatusForOp[ext]);
 });
+
+function updateExtStatusForOp(ext, status){
+        // update extSatusForOP for future request from the clients
+        extStatusForOp[ext].status = status;
+        log("updated extStatusForOp to new status = " + extStatusForOp[ext].status + " for [" + ext + "]");
+}
 
 /* This function update all clients with the new state of extension. This sent is used by the clients
  * to update operator panel.
@@ -406,7 +406,16 @@ function updateAllClientsForOp(newState){
         }
 }
 
-/* 
+/* This event is generated for each registered user when server start.
+ * This event is trigger after SIPPeers action is executed ito then asterisk server.
+ * This action is made by initExtStatusForOp function.
+ * This event permit to add status information about extension, to extStatusForOp.
+ * The status informations are dndStatus, cfStatus and status. In the case cfStatus is 'on',
+ * then it report also cfStatusExtTo information, to know the extension setted for call
+ * forwarding.
+ *
+ * An example of PeerEntry event is: 
+ *
 { event: 'PeerEntry',
   actionid: 'autosip',
   channeltype: 'SIP',
@@ -424,12 +433,84 @@ function updateAllClientsForOp(newState){
 */
 am.addListener('peerentry', function(headers) {
 	if(DEBUG) sys.puts("CLIENT: PeerEntry event");
-	extStatusForOp[headers.objectname] = headers;
+
+	var ext = headers.objectname;
+	var typeext = headers.channeltype + "/" + ext;
+	var status = headers.status;
+	var dndStatus = '';
+	var cfStatus = '';
+	var cfStatusToExt = '';
+
+	extStatusForOp[typeext].status = status;
+
+	/* check for the dnd and cf status of current ext.
+	 * This is made beacuse PeerEntry event don't report the dnd and cf status, and so
+ 	 * it can be possibile to correctly update extStatusForOp.
+ 	 */
+	// create action DND for asterisk server
+        var cmd = "database get DND " + ext;
+        var actionCheckDNDStatus = {
+        	Action: 'command',
+                Command: cmd
+        };
+        // send action to asterisk
+        am.send(actionCheckDNDStatus, function (resp) {
+        	log("check DND status action for " + ext + " has been sent to asterisk");
+                if(resp.value==undefined){
+			log("to create extStatusForOp: dnd status for ext[" + ext + "] is off");
+			dndStatus = 'off';
+	        }
+                else{
+			log("to create extStatusForOp: dnd status for ext[" + ext + "] is on");
+			dndStatus = 'on';
+                }
+		// set the status informations to ext of extStatusForOp
+		extStatusForOp[typeext].dndStatus = dndStatus;
+        });
+
+	// create action CF for asterisk server
+      	var cmd = "database get CF " + ext;
+        var actionCheckCFStatus = {
+        	Action: 'command',
+                Command: cmd
+        };
+        // send action to asterisk
+        am.send(actionCheckCFStatus, function (resp) {
+        	log("check CF status action for " + ext + " has been sent to asterisk");
+                if(resp.value==undefined){
+			log("to create extStatusForOp: cf status for ext[" + ext + "] is off");
+                        cfStatus = 'off';
+                }
+                else{
+			log("to create extStatusForOp: cf status for ext[" + ext + "] is on");
+                        cfStatus = 'on';
+                	cfStatusToExt = resp.value.split('\n')[0];
+               	}
+		// set the status informations to ext of extStatusForOp
+		extStatusForOp[typeext].cfStatus = cfStatus;
+		extStatusForOp[typeext].cfStatusToExt = cfStatusToExt;
+        });
 });
 
+/* This event is triggered when PeerEntry event is emitted for each user registered in asterisk.
+ * So, the initialization of extStatusForOp can be completed. 
+ */
 am.addListener('peerlistcomplete', function(){
 	if(DEBUG) sys.puts("CLIENT: PeerListComplete event");
 });
+
+function updateExtDNDStatusForOp(ext, statVal){
+	extStatusForOp[ext].dndStatus = statVal;
+}
+function updateExtCFStatusForOp(ext, statVal, extTo){
+	extStatusForOp[ext].cfStatus = statVal;
+	if(statVal=='on'){
+		extStatusForOp[ext].cfStatusToExt = extTo;
+	}
+	else{
+		extStatusForOp[ext].cfStatusToExt = '';
+	}
+}
 
 /* This event is generated only by the phone of the user.
  * An example of UserEvent event:
@@ -482,16 +563,15 @@ am.addListener('userevent', function(headers){
                                 log("Notify of " + family + " on of ext [" + ext + "] has been sent to the client " + c.sessionId);
 			}
 		}
-		/* now advise all clients of cti of this chaning, to enable them to update their OP (operator panel)
-                 * update ext status for op.
-		 * In this case the status of extension is DND-Attivo or DND-
-		 * This is because the extStatusForOp has string as values.
-		 */
-		var stat = family + "-" + value;
-                updateExtStatusForOp(ext, family);
+		// update extStatusForOp with the changing in dnd status
+		if(value==""){
+			updateExtDNDStatusForOp(ext, "off");
+		}else if(value=="attivo"){
+			updateExtDNDStatusForOp(ext, "on");
+		}
 
                 // update all clients with the new state of extension, for update operator panel
-                updateAllClientsForOp({ext: ext, status: stat});
+                updateAllClientsForOp(extStatusForOp[ext]);
 	}
 	else if(family=='cf'){
 		log("[" + ext + "] has set its " + family + " to value '" + value + "'");
@@ -517,17 +597,16 @@ am.addListener('userevent', function(headers){
                                 log("Notify of " + family + " on for ext [" + ext + "] to [" + value + "] has been sent to the client " + c.sessionId);
                         }
                 }
-		
-		/* now advise all clients of cti of this chaning, to enable them to update their OP (operator panel)
-                 * update ext status for op.
-                 * In this case the status of extension is CF-203 or CF-
-                 * This is because the extStatusForOp has string as values.
-                 */
-		var stat = family + "-" + value;
-	        updateExtStatusForOp(ext, stat);
 
-	        // update all clients with the new state of extension, for update operator panel
-        	updateAllClientsForOp({ext: ext, status: stat});
+		// update extStatusForOp with the changing in dnd status
+                if(value==""){
+                        updateExtCFStatusForOp(ext, "off");
+                }else {
+                        updateExtCFStatusForOp(ext, "on", value);
+                }
+
+                // update all clients with the new state of extension, for update operator panel
+                updateAllClientsForOp(extStatusForOp[ext]);
 	}
 });
 
@@ -1270,14 +1349,23 @@ function createHistoryCallResponse(results){
 
 
 
-/* Initialize extStatusForOp. For this it send the right action to the asterisk server.
- * Then it receive more PeerEntry event from the asterisk server and at the end it receive
+/* Initialize extStatusForOp. Initially it read a configuration file that contains list of
+ * all extensions. After that it send the SIPPeers action to the asterisk server. So, it
+ * successively receives more PeerEntry events from the asterisk server and at the end it receive
  * PeerListComplete event.
  * The number of PeerEntry is equal to number of extensions present in the asterisk server.
+ * The receive of one PeerEntry event, allow to add status information of the extension to extStatusForOp.
  */
 function initExtStatusForOp(){
 	log("initialize status of all extension for future request by clients for operator panel");
-	// create action for asterisk server
+
+	// read file where are the list of all extensions
+	extStatusForOp = iniparser.parseSync(FILE_EXT_LIST); 
+	console.log(extStatusForOp);
+
+	/* create action for asterisk server that generate series of PeerEntry events
+ 	 * to add status informations to extStatusForOp
+	 */
        	var actionUpdateOP = {
         	Action: 'SIPPeers'
        	};
