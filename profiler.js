@@ -13,7 +13,7 @@ const CUSTOMER_CARD = "CUSTOMER_CARD";
 const ALL = "all";
 
 
-/* this is the list of actions with its relative list of users: the key is the action,
+/* this is the list of actions with its relative list of extensions: the key is the action,
  * (ex. "CALL_IN") and the value is the list of the user split by ',' (ex. 500,501,all)
  * If the action is CUSTOMER_CARD then the value is another object, with the key as
  * particulare customer card (ex. default or insoluti) and the value is the list of the
@@ -21,12 +21,12 @@ const ALL = "all";
  */
 /* An example of actions: note that it is equal to the file .ini
 actions = 
-{ PHONEBOOK: { users: '500,501' },
-  CALL_IN: { users: '500,501' },
-  CALL_OUT: { users: '500,501,all' },
-  REDIRECT: { users: '500,501' },
-  RECORD: { users: '500,501' },
-  HISTORY_CALL: { users: '500,501' },
+{ PHONEBOOK: { extensions: '500,501' },
+  CALL_IN: { extensions: '500,501' },
+  CALL_OUT: { extensions: '500,501,all' },
+  REDIRECT: { extensions: '500,501' },
+  RECORD: { extensions: '500,501' },
+  HISTORY_CALL: { extensions: '500,501' },
   CUSTOMER_CARD: 
    { default: '500,501',
      insoluti: '500,501',
@@ -93,7 +93,7 @@ function getTypesCustomerCardPermit(exten){
 function checkActionPermit(exten, action){
 	var pattExt = new RegExp("\\b" + exten + "\\b");
         var pattAll = new RegExp("\\b" + ALL + "\\b", "i");
-        if( pattExt.test(actions[action].users) || pattAll.test(actions[action].users)  )
+        if( pattExt.test(actions[action].extensions) || pattAll.test(actions[action].extensions)  )
                 return true;
         else
                 return false;
@@ -101,7 +101,7 @@ function checkActionPermit(exten, action){
 
 
 /*
- * Initialize the profiles of all users by means the reading of the config file.
+ * Initialize the profiles of all extensions by means the reading of the config file.
  */
 function initProfiles(){
 	this.actions = {};
