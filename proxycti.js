@@ -345,13 +345,9 @@ am.addListener('callreport', function(report) {
 am.addListener('peerstatus', function(headers) {
         if(DEBUG) sys.puts("CLIENT: PeerStatus");
 	// update ext status for op
-	var ext = '';
-	if(headers.peer.indexOf('SIP')!=-1){
-		ext = headers.peer.split('/')[1];
-	}
-        updateExtStatusForOp(ext, headers.peerstatus.toLowerCase());
+        updateExtStatusForOp(headers.peer, headers.peerstatus.toLowerCase());
 	// update all clients with the new state of extension, for update operator panel
-	updateAllClientsForOp(extStatusForOp[ext]);
+	updateAllClientsForOp(extStatusForOp[headers.peer]);
 });
 
 
@@ -398,7 +394,7 @@ function updateAllClientsForOp(newState){
 	// send update to all clients with the new state of the ext for op (operator panel)
         for(key in clients){
                 var c = clients[key];
-                var msg = "state of " + newState.ext + " has changed: update ext new state";
+                var msg = "state of " + newState.Label + " has changed: update ext new state";
                 var response = new ResponseMessage(c.sessionId, "update_ext_new_state_op", msg);
                 response.extNewState = newState;
                 c.send(response);
