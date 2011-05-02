@@ -48,11 +48,11 @@ exports.Modop = function(){
 	this.addAsteriskManager = function(amanager) { addAsteriskManager(amanager); }
 	this.getExtStatusForOp = function() { return extStatusForOp; }
 	this.updateExtStatusForOpWithTypeExt = function(typeext, status) { updateExtStatusForOpWithTypeExt(typeext, status);  }  // example of typeext is SIP/500
-	this.getExtStatus = function(typeext) { return getExtStatus(typeext); }
+	this.getExtStatusWithTypeExt = function(typeext) { return getExtStatusWithTypeExt(typeext); }
 }
 
 // return the object of status associated with typeext key in extStatusForOp
-function getExtStatus(typeext){
+function getExtStatusWithTypeExt(typeext){
 	return extStatusForOp[typeext];
 }
 
