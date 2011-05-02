@@ -4,6 +4,7 @@ var dataReq = require("./dataCollector.js");
 var proReq = require("./profiler.js");
 var authReq = require("./authenticator.js");
 var contrReq = require("./controller.js");
+var modopReq = require("./modop.js");
 var http = require('http');
 var url = require('url');
 var fs = require('fs');
@@ -23,12 +24,6 @@ var server;
  */
 var clients = {};
 
-/* This is for update client on the status of all extension registered in the asterisk server.
- * The scope for the client is to create operator panel with all informations about the extensions.
- * It is created by the server at the start and it is update by the server at runtime.
- * The key is the 'ext' and the status is an object.
- */
-var extStatusForOp = {};
 
 /* Audio file list of recorded call. This is an hash table that has the unique id of the file
  * as the key and the filename as value.
@@ -45,7 +40,6 @@ const TEMPLATE_DECORATOR_HISTORY_CALL_FILENAME = "./template/decorator_historyCa
 const AST_CALL_AUDIO_DIR = "/var/spool/asterisk/monitor";
 const CALL_PREFIX = "CTI-";
 const START_TAG_FILENAME = "auto-";
-const FILE_EXT_LIST = "/etc/asterisk/nethcti.ini";
 
 // The response that this server pass to the clients.
 var ResponseMessage = function(clientSessionId, typeMessage, respMessage){
@@ -61,7 +55,8 @@ function log(msg){
 
 
 // initialize parameters for this server and for asterisk server
-var a = initServerAndAsteriskParameters();
+initServerAndAsteriskParameters();
+
 
 // Profiler object
 var profiler = new proReq.Profiler();
@@ -74,6 +69,10 @@ log("DataCollector object created");
 // Authenticator object
 var authenticator = new authReq.Authenticator();
 log("Authenticator object created");
+
+// Modop object. (Module Operator Panel)
+var modop = new modopReq.Modop();
+log("Modop object created");
 
 // create the list of audio files of recorded call
 createAudioFileList();
@@ -89,14 +88,11 @@ controller.addListener("change_dir", function(dir){
 	}
 });
 
-
 /* add controller to profiler and to dataCollector. They use it to 
  * manage changing in its configuration file.
  */
 profiler.addController(controller);
 dataCollector.addController(controller);
-
-
 
 /* This function create hash table of audio file. The key is the unique id of the file, 
  * and the value is set to filename.
@@ -107,7 +103,7 @@ function createAudioFileList(){
 		var u = getUniqueIdFromFilename(temp[i]);
 		audioFileList[u] = temp[i];
 	}
-	log("audio file list = " + sys.inspect(audioFileList));
+	log("audio file list created");
 }
 
 /* This function return the unique id of the filename. The uniqueid field is different for
@@ -127,6 +123,7 @@ function getUniqueIdFromFilename(filename){
 	}
 }
 
+
 /******************************************************
  * This is the section relative to asterisk interaction    
  */
@@ -135,10 +132,10 @@ am = new ast.AsteriskManager({user: asterisk_user, password: asterisk_pass, host
 am.addListener('serverconnect', function() {
 	am.login(function () {
 		log("Logged in to Asterisk Manager.");
-		/* initialize the status of all extensions in the asterisk server (extStatusForOp).
-		 * Its scope is to put the right info to the clients to construct operator panel.
-		 */
-		initExtStatusForOp();		
+
+		// Add asterisk manager to modop
+		log("add asterisk manager 'am' to modop");
+		modop.addAsteriskManager(am);
 	});
 });
 
@@ -402,98 +399,10 @@ function updateAllClientsForOp(newState){
         }
 }
 
-/* This event is generated for each registered user when server start.
- * This event is triggered after SIPPeers action is executed into the asterisk server.
- * This action is made by initExtStatusForOp function.
- * This event permit to add status information about extension, to extStatusForOp.
- * The status informations are 'dndStatus', 'cfStatus' and 'status'. In the case cfStatus is 'on',
- * then it report also 'cfStatusExtTo' information, to know the extension setted for call
- * forwarding.
- *
- * An example of PeerEntry event is: 
- *
-{ event: 'PeerEntry',
-  actionid: 'autosip',
-  channeltype: 'SIP',
-  objectname: '501',
-  chanobjecttype: 'peer',
-  ipaddress: '192.168.5.187',
-  ipport: '46894',
-  dynamic: 'yes',
-  natsupport: 'yes',
-  videosupport: 'no',
-  textsupport: 'no',
-  acl: 'yes',
-  status: 'OK (1 ms)',
-  realtimedevice: 'no' }
-*/
 am.addListener('peerentry', function(headers) {
-	if(DEBUG) sys.puts("CLIENT: PeerEntry event");
-
-	var ext = headers.objectname;
-	var typeext = headers.channeltype + "/" + ext;
-	var status = headers.status;
-	var dndStatus = '';
-	var cfStatus = '';
-	var cfStatusToExt = '';
-
-	extStatusForOp[typeext].status = status;
-
-	/* check for the dnd and cf status of current ext.
-	 * This is made beacuse PeerEntry event don't report the dnd and cf status, and so
- 	 * it can be possibile to correctly update extStatusForOp.
- 	 */
-	// create action DND for asterisk server
-        var cmd = "database get DND " + ext;
-        var actionCheckDNDStatus = {
-        	Action: 'command',
-                Command: cmd
-        };
-        // send action to asterisk
-        am.send(actionCheckDNDStatus, function (resp) {
-        	log("check DND status action for " + ext + " has been sent to asterisk");
-                if(resp.value==undefined){
-			log("to create extStatusForOp: dnd status for ext[" + ext + "] is off");
-			dndStatus = 'off';
-	        }
-                else{
-			log("to create extStatusForOp: dnd status for ext[" + ext + "] is on");
-			dndStatus = 'on';
-                }
-		// set the status informations to ext of extStatusForOp
-		extStatusForOp[typeext].dndStatus = dndStatus;
-        });
-
-	// create action CF for asterisk server
-      	var cmd = "database get CF " + ext;
-        var actionCheckCFStatus = {
-        	Action: 'command',
-                Command: cmd
-        };
-        // send action to asterisk
-        am.send(actionCheckCFStatus, function (resp) {
-        	log("check CF status action for " + ext + " has been sent to asterisk");
-                if(resp.value==undefined){
-			log("to create extStatusForOp: cf status for ext[" + ext + "] is off");
-                        cfStatus = 'off';
-                }
-                else{
-			log("to create extStatusForOp: cf status for ext[" + ext + "] is on");
-                        cfStatus = 'on';
-                	cfStatusToExt = resp.value.split('\n')[0];
-               	}
-		// set the status informations to ext of extStatusForOp
-		extStatusForOp[typeext].cfStatus = cfStatus;
-		extStatusForOp[typeext].cfStatusToExt = cfStatusToExt;
-        });
+	if(DEBUG) log("CLIENT: PeerEntry event");
 });
 
-/* This event is triggered when PeerEntry event is emitted for each user registered in asterisk.
- * So, the initialization of extStatusForOp can be completed. 
- */
-am.addListener('peerlistcomplete', function(){
-	if(DEBUG) sys.puts("CLIENT: PeerListComplete event");
-});
 
 function updateExtDNDStatusForOp(ext, statVal){
 	extStatusForOp[ext].dndStatus = statVal;
@@ -1264,6 +1173,14 @@ io.on('connection', function(client){
 				});	
                         break;
 			case ACTION_GET_PEER_LIST_COMPLETE_OP:
+
+				/* check if the user has the permit to view operator panel.
+				 * First check if the user has the "OP_PLUS" permit. If he hasn't the permit, then
+ 				 * it check if he has the "OP_BASE" permit. 
+				 */
+                                var res = profiler.checkActionHistoryCallPermit(extFrom);
+                        //        if(res){
+
         			var msgstr = "received extStatusForOp to create operator panel";                        
 				var mess = new ResponseMessage(client.sessionId, "ack_get_peer_list_complete_op", msgstr);
 				mess.extStatusForOp = extStatusForOp;
@@ -1503,7 +1420,8 @@ function printLoggedClients(){
 	}
 }
 
-/* Initialize some configuration parameters
+/* Initialize some configuration parameters.
+ *
 server_conf = 
 { ASTERISK: { user: 'vtiger', pass: 'vtiger', host: 'localhost' },
   SERVER_PROXY: { hostname: 'amaduzzi', port: '8080' } }
