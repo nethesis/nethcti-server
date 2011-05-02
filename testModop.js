@@ -19,8 +19,8 @@ switch ( args["-t"] )
 		console.log("\nTesting initProfiles()");
 		break;
 	
-	case "checkActionCallOutPermit":
-                console.log("\nTesting checkActionCallOutPermit(exten): extent " + exten);
+	case "addAsteriskManager":
+                console.log("\nTesting addAsteriskManager(am): am " + exten);
                 var res = profiler.checkActionCallOutPermit(exten);
                 console.log(res);
                 break;
