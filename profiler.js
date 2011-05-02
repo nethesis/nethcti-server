@@ -10,6 +10,8 @@ const REDIRECT = "REDIRECT";
 const RECORD = "RECORD";
 const HISTORY_CALL = "HISTORY_CALL";
 const CUSTOMER_CARD = "CUSTOMER_CARD";
+const OP_PLUS = "OP_PLUS";
+const OP_BASE = "OP_BASE";
 const ALL = "all";
 
 
@@ -21,16 +23,18 @@ const ALL = "all";
  */
 /* An example of actions: note that it is equal to the file .ini
 actions = 
-{ PHONEBOOK: { extensions: '500,501' },
-  CALL_IN: { extensions: '500,501' },
+{ PHONEBOOK: { extensions: '500,501,all' },
+  CALL_IN: { extensions: '501,500,ALL' },
   CALL_OUT: { extensions: '500,501,all' },
-  REDIRECT: { extensions: '500,501' },
-  RECORD: { extensions: '500,501' },
-  HISTORY_CALL: { extensions: '500,501' },
+  REDIRECT: { extensions: '500,501,502,all' },
+  RECORD: { extensions: '500,501,ALL' },
+  HISTORY_CALL: { extensions: '500,ALL' },
   CUSTOMER_CARD: 
-   { default: '500,501',
-     insoluti: '500,501',
-     ticket: '500,501' } }
+   { default: '500,501,all',
+     insoluti: '501,502,all',
+     ticket: '501,500,all' },
+  OP_PLUS: { extensions: 'all' },
+  OP_BASE: { extensions: 'all' } }
 */
 actions = {};
 
@@ -50,6 +54,8 @@ exports.Profiler = function(){
 	this.checkActionHistoryCallPermit = function(exten){ return checkActionPermit(exten, HISTORY_CALL) }
 	this.getTypesCustomerCardPermit = function(exten){ return getTypesCustomerCardPermit(exten) }
 	this.addController = function(contr) { addController(contr) }
+	this.checkActionOpPlusPermit = function(exten) { return checkActionPermit(exten, OP_PLUS) }
+	this.checkActionOpBasePermit = function(exten) { return checkActionPermit(exten, OP_BASE) }
 }
 
 function addController(contr){
