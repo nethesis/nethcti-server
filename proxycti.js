@@ -359,24 +359,15 @@ am.addListener('peerstatus', function(headers) {
   uniqueid: '1303228098.13' }
 */
 am.addListener('newstate', function(headers){
+console.log("\n\n\n\n#################");
         if(DEBUG) sys.puts("CLIENT: newstate event");
-
-	var ext = headers.calleridnum;
-	if(ext==''){
-		/*
-		...
-		calleridnum: '',
-		calleridname: '<CALL_PREFIX>500',
-		...
-		*/
-		ext = headers.calleridname.split(CALL_PREFIX)[1];
-	}
+	var typeext = headers.channel.split("-")[0];
 	// update ext status for op
-	modop.updateExtStatusForOp(ext, headers.channelstatedesc);
-
+	modop.updateExtStatusForOp(typeext, headers.channelstatedesc.toLowerCase());
 	// update all clients with the new state of extension, for update operator panel
-	updateAllClientsForOp(extStatusForOp[ext]);
-});
+	updateAllClientsForOp(typeext);
+console.log("################\n\n");
+})
 
 
 /* This function update all clients with the new state of extension. 
