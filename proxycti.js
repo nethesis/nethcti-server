@@ -321,9 +321,9 @@ am.addListener('hangup', function(participant, code, text) {
 		}
 		
 		// update ext status for op
-		modop.updateExtStatusForOp(ext, 'hangup');
+		modop.updateExtStatusForOpWithExt(ext, 'hangup');
 		// update all clients with the new state of extension, for update operator panel
-		updateAllClientsForOp({ ext: ext, status: 'hangup' });
+		updateAllClientsForOpWithExt(ext);
 	}
 });
 
@@ -366,8 +366,26 @@ am.addListener('newstate', function(headers){
 	updateAllClientsForOpWithTypeExt(typeext);
 })
 
+/* This function update all clients with the new state of extension, givin ext. 
+ * This sent is used by the clients to update operator panel.
+ * example of ext is 500
+ */
 
-/* This function update all clients with the new state of extension. 
+function updateAllClientsForOpWithExt(ext){	
+	// get new state of the extension ext
+        var newState = modop.getExtStatusWithExt(ext);
+        // send update to all clients with the new state of the typeext for op (operator panel)
+        for(key in clients){
+                var c = clients[key];
+                var msg = "state of " + newState.Label + " has changed: update ext new state";
+                var response = new ResponseMessage(c.sessionId, "update_ext_new_state_op", msg);
+                response.extNewState = newState;
+                c.send(response);
+                log("Notify of new ext state has been sent to client " + c.sessionId);
+        }	
+}
+
+/* This function update all clients with the new state of extension, givin typeext. 
  * This sent is used by the clients to update operator panel.
  * example of typeext is SIP/500
  */
