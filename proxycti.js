@@ -373,7 +373,7 @@ am.addListener('newstate', function(headers){
  */
 function updateAllClientsForOpWithTypeExt(typeext){
 	// get new state of the extension typeext
-	var newState = modop.getExtStatus(typeext);	
+	var newState = modop.getExtStatusWithTypeExt(typeext);	
 	// send update to all clients with the new state of the typeext for op (operator panel)
         for(key in clients){
                 var c = clients[key];
