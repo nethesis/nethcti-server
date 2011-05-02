@@ -1178,6 +1178,7 @@ io.on('connection', function(client){
 	                                var msgstr = "received extStatusForOp to create operator panel";
 	                                var mess = new ResponseMessage(client.sessionId, "ack_get_peer_list_complete_op", msgstr);
 	                                mess.extStatusForOp = modop.getExtStatusForOp();
+					mess.tabOp = modop.getTabOp();
 	                                client.send(mess);
 	                                log("ack_get_peer_list_complete_op has been sent to [" + extFrom + "] with: " + client.sessionId)
 				}
