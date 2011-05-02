@@ -12,7 +12,20 @@ const FILE_EXT_LIST = "/etc/asterisk/nethcti.ini";
  * The scope for the client is to create operator panel with all informations about the extensions.
  * It is created by the server at the start and it is update by the server at runtime.
  * The key is the 'ext' and the status is an object.
- */ 
+ * 
+'SIP/500': 
+   { Label: '"500 : alessandro"',
+     Extension: '500',
+     Context: 'from-internal',
+     Voicemail_Context: 'device',
+     VoiceMailExt: '*500@from-internal',
+     tab: 'interno',
+     astdbkey: '500',
+     status: 'OK (1 ms)',
+     dndStatus: 'on',
+     cfStatus: 'off',
+     cfStatusToExt: '' },
+*/
 var extStatusForOp = {};
 
 /* This is the list of tab to view or not in the operator panel of the clients.
@@ -33,6 +46,15 @@ exports.Modop = function(){
 	 */
 	initTabOp();
 	this.addAsteriskManager = function(amanager) { addAsteriskManager(amanager); }
+	this.getExtStatusForOp = function() { return extStatusForOp; }
+	this.updateExtStatusForOp = function(typeext, status) { updateExtStatusForOp(typeext, status);  }
+}
+
+// Update the status of the ext
+function updateExtStatusForOp(ext, status){
+        // update extSatusForOP for future request from the clients
+        extStatusForOp[ext].status = status;
+        log("updated extStatusForOp to new status = " + extStatusForOp[ext].status + " for [" + ext + "]");
 }
 
 /* This function add asterisk manager to local variable. Then addListener to it and
