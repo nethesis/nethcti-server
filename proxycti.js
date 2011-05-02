@@ -297,7 +297,6 @@ am.addListener('unhold', function(participant) {
 });
 
 am.addListener('hangup', function(participant, code, text) {
-
 	if(participant!=undefined){
 		var ext = participant.number;
 		if(DEBUG) log("CLIENT: " + ext + " (" + participant.name + ") has hung up. Reason: " + code + "  ( Code: " + text + ")");
@@ -322,7 +321,7 @@ am.addListener('hangup', function(participant, code, text) {
 		}
 		
 		// update ext status for op
-		updateExtStatusForOp(ext, 'hangup');
+		modop.updateExtStatusForOp(ext, 'hangup');
 		// update all clients with the new state of extension, for update operator panel
 		updateAllClientsForOp({ ext: ext, status: 'hangup' });
 	}
@@ -342,9 +341,9 @@ am.addListener('callreport', function(report) {
 am.addListener('peerstatus', function(headers) {
         if(DEBUG) sys.puts("CLIENT: PeerStatus");
 	// update ext status for op
-	modop.updateExtStatusForOp(headers.peer, headers.peerstatus.toLowerCase());
+	modop.updateExtStatusForOpWithTypeExt(headers.peer, headers.peerstatus.toLowerCase());
 	// update all clients with the new state of extension, for update operator panel
-	updateAllClientsForOp(headers.peer);
+	updateAllClientsForOpWithTypeExt(headers.peer);
 });
 
 
@@ -359,14 +358,12 @@ am.addListener('peerstatus', function(headers) {
   uniqueid: '1303228098.13' }
 */
 am.addListener('newstate', function(headers){
-console.log("\n\n\n\n#################");
         if(DEBUG) sys.puts("CLIENT: newstate event");
 	var typeext = headers.channel.split("-")[0];
 	// update ext status for op
-	modop.updateExtStatusForOp(typeext, headers.channelstatedesc.toLowerCase());
+	modop.updateExtStatusForOpWithTypeExt(typeext, headers.channelstatedesc.toLowerCase());
 	// update all clients with the new state of extension, for update operator panel
-	updateAllClientsForOp(typeext);
-console.log("################\n\n");
+	updateAllClientsForOpWithTypeExt(typeext);
 })
 
 
@@ -374,7 +371,7 @@ console.log("################\n\n");
  * This sent is used by the clients to update operator panel.
  * example of typeext is SIP/500
  */
-function updateAllClientsForOp(typeext){
+function updateAllClientsForOpWithTypeExt(typeext){
 	// get new state of the extension typeext
 	var newState = modop.getExtStatus(typeext);	
 	// send update to all clients with the new state of the typeext for op (operator panel)
