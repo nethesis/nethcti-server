@@ -403,11 +403,11 @@ function updateAllClientsForOp(newState){
 }
 
 /* This event is generated for each registered user when server start.
- * This event is trigger after SIPPeers action is executed ito then asterisk server.
+ * This event is triggered after SIPPeers action is executed into the asterisk server.
  * This action is made by initExtStatusForOp function.
  * This event permit to add status information about extension, to extStatusForOp.
- * The status informations are dndStatus, cfStatus and status. In the case cfStatus is 'on',
- * then it report also cfStatusExtTo information, to know the extension setted for call
+ * The status informations are 'dndStatus', 'cfStatus' and 'status'. In the case cfStatus is 'on',
+ * then it report also 'cfStatusExtTo' information, to know the extension setted for call
  * forwarding.
  *
  * An example of PeerEntry event is: 
@@ -1357,7 +1357,6 @@ function initExtStatusForOp(){
 
 	// read file where are the list of all extensions
 	extStatusForOp = iniparser.parseSync(FILE_EXT_LIST); 
-	console.log(extStatusForOp);
 
 	/* create action for asterisk server that generate series of PeerEntry events
  	 * to add status informations to extStatusForOp
