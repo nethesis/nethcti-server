@@ -47,7 +47,7 @@ exports.Modop = function(){
 	initTabOp();
 	this.addAsteriskManager = function(amanager) { addAsteriskManager(amanager); }
 	this.getExtStatusForOp = function() { return extStatusForOp; }
-	this.updateExtStatusForOp = function(typeext, status) { updateExtStatusForOp(typeext, status);  }  // example of typeext is SIP/500
+	this.updateExtStatusForOpWithTypeExt = function(typeext, status) { updateExtStatusForOpWithTypeExt(typeext, status);  }  // example of typeext is SIP/500
 	this.getExtStatus = function(typeext) { return getExtStatus(typeext); }
 }
 
@@ -56,8 +56,8 @@ function getExtStatus(typeext){
 	return extStatusForOp[typeext];
 }
 
-// Update the status of the ext
-function updateExtStatusForOp(typeext, status){
+// Update the status of the ext givin typeext (ex. SIP/500)
+function updateExtStatusForOpWithTypeExt(typeext, status){
 	// check if the typeext exists in extStatusForOp
 	if(extStatusForOp[typeext]!=undefined){
 	        // update extSatusForOP for future request from the clients
