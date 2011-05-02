@@ -342,9 +342,9 @@ am.addListener('callreport', function(report) {
 am.addListener('peerstatus', function(headers) {
         if(DEBUG) sys.puts("CLIENT: PeerStatus");
 	// update ext status for op
-        updateExtStatusForOp(headers.peer, headers.peerstatus.toLowerCase());
+	modop.updateExtStatusForOp(headers.peer, headers.peerstatus.toLowerCase());
 	// update all clients with the new state of extension, for update operator panel
-	updateAllClientsForOp(extStatusForOp[headers.peer]);
+	updateAllClientsForOp(headers.peer);
 });
 
 
@@ -372,23 +372,21 @@ am.addListener('newstate', function(headers){
 		ext = headers.calleridname.split(CALL_PREFIX)[1];
 	}
 	// update ext status for op
-	updateExtStatusForOp(ext, headers.channelstatedesc);
+	modop.updateExtStatusForOp(ext, headers.channelstatedesc);
 
 	// update all clients with the new state of extension, for update operator panel
 	updateAllClientsForOp(extStatusForOp[ext]);
 });
 
-function updateExtStatusForOp(ext, status){
-        // update extSatusForOP for future request from the clients
-        extStatusForOp[ext].status = status;
-        log("updated extStatusForOp to new status = " + extStatusForOp[ext].status + " for [" + ext + "]");
-}
 
-/* This function update all clients with the new state of extension. This sent is used by the clients
- * to update operator panel.
+/* This function update all clients with the new state of extension. 
+ * This sent is used by the clients to update operator panel.
+ * example of typeext is SIP/500
  */
-function updateAllClientsForOp(newState){
-	// send update to all clients with the new state of the ext for op (operator panel)
+function updateAllClientsForOp(typeext){
+	// get new state of the extension typeext
+	var newState = modop.getExtStatus(typeext);	
+	// send update to all clients with the new state of the typeext for op (operator panel)
         for(key in clients){
                 var c = clients[key];
                 var msg = "state of " + newState.Label + " has changed: update ext new state";
@@ -1173,19 +1171,24 @@ io.on('connection', function(client){
 				});	
                         break;
 			case ACTION_GET_PEER_LIST_COMPLETE_OP:
-
 				/* check if the user has the permit to view operator panel.
 				 * First check if the user has the "OP_PLUS" permit. If he hasn't the permit, then
  				 * it check if he has the "OP_BASE" permit. 
 				 */
-                                var res = profiler.checkActionHistoryCallPermit(extFrom);
-                        //        if(res){
-
-        			var msgstr = "received extStatusForOp to create operator panel";                        
-				var mess = new ResponseMessage(client.sessionId, "ack_get_peer_list_complete_op", msgstr);
-				mess.extStatusForOp = extStatusForOp;
-				client.send(mess);
-                                log("ack_get_peer_list_complete_op has been sent to [" + extFrom + "] with: " + client.sessionId)
+                                if(profiler.checkActionOpPlusPermit(extFrom)){
+					// create message
+	                                var msgstr = "received extStatusForOp to create operator panel";
+	                                var mess = new ResponseMessage(client.sessionId, "ack_get_peer_list_complete_op", msgstr);
+	                                mess.extStatusForOp = modop.getExtStatusForOp();
+	                                client.send(mess);
+	                                log("ack_get_peer_list_complete_op has been sent to [" + extFrom + "] with: " + client.sessionId)
+				}
+				else if(profiler.checkActionOpBasePermit(extFrom)) {
+								
+				}
+				else{
+					
+				}
                         break;
 	  		default:
 	  			log("ATTENTION: action '" + action + "'not provided");
