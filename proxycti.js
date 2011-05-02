@@ -38,7 +38,7 @@ var audioFileList = {};
 
 
 const DEBUG = true;
-const PROXY_CONFIG_FILENAME = "proxycti.ini";
+const PROXY_CONFIG_FILENAME = "config/proxycti.ini";
 const TEMPLATE_DECORATOR_VCARD_FILENAME = "./template/decorator_vcard.html";
 const TEMPLATE_DECORATOR_CUSTOMERCARD_FILENAME = "./template/decorator_customerCard.html";
 const TEMPLATE_DECORATOR_HISTORY_CALL_FILENAME = "./template/decorator_historyCall.html";
