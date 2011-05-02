@@ -57,10 +57,13 @@ function getExtStatus(typeext){
 }
 
 // Update the status of the ext
-function updateExtStatusForOp(ext, status){
-        // update extSatusForOP for future request from the clients
-        extStatusForOp[ext].status = status;
-        log("updated extStatusForOp to new status = " + extStatusForOp[ext].status + " for [" + ext + "]");
+function updateExtStatusForOp(typeext, status){
+	// check if the typeext exists in extStatusForOp
+	if(extStatusForOp[typeext]!=undefined){
+	        // update extSatusForOP for future request from the clients
+	        extStatusForOp[typeext].status = status;
+	        log("updated extStatusForOp to new status = " + extStatusForOp[typeext].status + " for [" + typeext + "]");
+	}
 }
 
 /* This function add asterisk manager to local variable. Then addListener to it and
