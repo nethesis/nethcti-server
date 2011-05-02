@@ -4,7 +4,7 @@ var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
 var mysql = require('./lib/node-mysql');
 var odbc = require("./lib/node-odbc/odbc");
 
-const DATACOLLECTOR_CONFIG_FILENAME = "dataProfiles.ini";
+const DATACOLLECTOR_CONFIG_FILENAME = "config/dataProfiles.ini";
 const PHONEBOOK = "phonebook";
 const CUSTOMER_CARD = "customer_card";
 const DAY_HISTORY_CALL = "day_history_call";
