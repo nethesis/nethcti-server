@@ -49,6 +49,17 @@ exports.Modop = function(){
 	this.getExtStatusForOp = function() { return extStatusForOp; }
 	this.updateExtStatusForOpWithTypeExt = function(typeext, status) { updateExtStatusForOpWithTypeExt(typeext, status);  }  // example of typeext is SIP/500
 	this.getExtStatusWithTypeExt = function(typeext) { return getExtStatusWithTypeExt(typeext); }
+	this.updateExtStatusForOpWithExt = function(ext, status) { updateExtStatusForOpWithExt(ext, status); } // example of ext is 500
+	
+}
+
+// Update the status of the ext givin ext (ex. 500)
+function updateExtStatusForOpWithExt(ext, status){
+	for(key in extStatusForOp){
+		if(key.indexOf(ext)!=-1){	
+			extStatusForOp[key].status = status;
+		}
+	}
 }
 
 // return the object of status associated with typeext key in extStatusForOp
