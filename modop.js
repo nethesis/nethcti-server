@@ -53,6 +53,7 @@ exports.Modop = function(){
 	this.getExtStatusWithExt = function(ext) { return getExtStatusWithExt(ext); }
 	this.updateExtDNDStatusWithExt = function(ext, value) { updateExtDNDStatusWithExt(ext, value); }
 	this.updateExtCFStatusWithExt = function(ext, value, extTo) { updateExtCFStatusWithExt(ext, value, extTo); }
+	this.getTabOp = function() { return tabOp; }
 }
 
 /* update the cf status of extension ext and in the case of 'on' cfStatus
@@ -225,7 +226,7 @@ function addListenerToAm(){
 	 * So, the initialization of extStatusForOp can be completed. 
 	 */
 	am.addListener('peerlistcomplete', function(){
-	        if(DEBUG) sys.puts("CLIENT: PeerListComplete event");
+	        log("CLIENT: PeerListComplete event");
 	});
 }
 
@@ -257,11 +258,17 @@ function initExtStatusForOp(){
 
 /* This function initialize all tab to be view in the operator panel, by reading 
  * the configuration file optab.ini.
+ *
+{ interni_commerciali: { extensions: '500,501' },
+  fasci: { show: 'yes' },
+  code: { show: 'yes' },
+  parcheggio: { show: 'si' } }
  */
 function initTabOp(){
         log("initialize tabOp for tabs to view in the operator panel");
-        tabOp = iniparser.parseSync(FILE_TAB_OP);
+	tabOp = iniparser.parseSync(FILE_TAB_OP);
 }
+
 
 function log(msg){
         console.log(new Date().toUTCString() + " - [Modop]: " + msg);
