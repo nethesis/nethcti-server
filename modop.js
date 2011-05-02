@@ -52,6 +52,24 @@ exports.Modop = function(){
 	this.updateExtStatusForOpWithExt = function(ext, status) { updateExtStatusForOpWithExt(ext, status); } // example of ext is 500
 	this.getExtStatusWithExt = function(ext) { return getExtStatusWithExt(ext); }
 	this.updateExtDNDStatusWithExt = function(ext, value) { updateExtDNDStatusWithExt(ext, value); }
+	this.updateExtCFStatusWithExt = function(ext, value, extTo) { updateExtCFStatusWithExt(ext, value, extTo); }
+}
+
+/* update the cf status of extension ext and in the case of 'on' cfStatus
+ * it set also cfStatusToExt
+ */
+function updateExtCFStatusWithExt(ext, value, extTo){
+	for(key in extStatusForOp){
+                if(key.indexOf(ext)!=-1){
+			if(value=='off'){
+	                        extStatusForOp[ext].cfStatus = value;
+			}
+			else if(value=='on'){
+				extStatusForOp[ext].cfStatus = value;
+				extStatusForOp[ext].cfStatusToExt = extTo;
+			}
+                }
+        }
 }
 
 // update the dnd status of extension ext
