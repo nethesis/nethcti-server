@@ -51,6 +51,16 @@ exports.Modop = function(){
 	this.getExtStatusWithTypeExt = function(typeext) { return getExtStatusWithTypeExt(typeext); }
 	this.updateExtStatusForOpWithExt = function(ext, status) { updateExtStatusForOpWithExt(ext, status); } // example of ext is 500
 	this.getExtStatusWithExt = function(ext) { return getExtStatusWithExt(ext); }
+	this.updateExtDNDStatusWithExt = function(ext, value) { updateExtDNDStatusWithExt(ext, value); }
+}
+
+// update the dnd status of extension ext
+function updateExtDNDStatusWithExt(ext, value){
+	for(key in extStatusForOp){
+		if(key.indexOf(ext)!=-1){
+			extStatusForOp[ext].dndStatus = value;
+		}
+	}
 }
 
 // return the object of status associated with ext key in extStatusForOp
