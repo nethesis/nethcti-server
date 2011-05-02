@@ -444,11 +444,6 @@ am.addListener('userevent', function(headers){
 	family = family.toLowerCase();
 	value = value.toLowerCase();
 
-	console.log("ext = " + ext);
-	console.log("family = " + family);
-	console.log("value = " + value);
-
-
 	if(family=='dnd'){
 		log("[" + ext + "] has set its " + family + " to value '" + value + "'");
 		/* in this case the client who has modified its DND value is connected to cti
@@ -474,13 +469,12 @@ am.addListener('userevent', function(headers){
 		}
 		// update extStatusForOp with the changing in dnd status
 		if(value==""){
-			updateExtDNDStatusForOp(ext, "off");
+			modop.updateExtDNDStatusiWithExt(ext, "off");
 		}else if(value=="attivo"){
-			updateExtDNDStatusForOp(ext, "on");
+			modop.updateExtDNDStatusWithExt(ext, "on");
 		}
-
                 // update all clients with the new state of extension, for update operator panel
-                updateAllClientsForOp(extStatusForOp[ext]);
+                updateAllClientsForOpWithExt(ext);
 	}
 	else if(family=='cf'){
 		log("[" + ext + "] has set its " + family + " to value '" + value + "'");
@@ -506,16 +500,14 @@ am.addListener('userevent', function(headers){
                                 log("Notify of " + family + " on for ext [" + ext + "] to [" + value + "] has been sent to the client " + c.sessionId);
                         }
                 }
-
 		// update extStatusForOp with the changing in dnd status
                 if(value==""){
-                        updateExtCFStatusForOp(ext, "off");
+                        modop.updateExtCFStatusWithExt(ext, "off");
                 }else {
-                        updateExtCFStatusForOp(ext, "on", value);
+                        modop.updateExtCFStatusWithExt(ext, "on", value);
                 }
-
                 // update all clients with the new state of extension, for update operator panel
-                updateAllClientsForOp(extStatusForOp[ext]);
+                updateAllClientsForOpWithext(ext);
 	}
 });
 
