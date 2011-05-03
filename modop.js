@@ -54,6 +54,35 @@ exports.Modop = function(){
 	this.updateExtDNDStatusWithExt = function(ext, value) { updateExtDNDStatusWithExt(ext, value); }
 	this.updateExtCFStatusWithExt = function(ext, value, extTo) { updateExtCFStatusWithExt(ext, value, extTo); }
 	this.getTabOp = function() { return tabOp; }
+	this.updateExtStatusOpDialFrom = function(ext, extTo) { updateExtStatusOpDialFrom(ext, extTo); }
+	this.updateExtStatusOpDialTo = function(ext, extFrom) { updateExtStatusOpDialTo(ext, extFrom); }
+}
+
+
+/* This function update the status of ext that receive a call. Set his status to 
+ * 'dialTo' and add 'dialFromExt' key to its state with the value extFrom.
+ */
+function updateExtStatusOpDialTo(ext, extFrom){
+        for(key in extStatusForOp){
+                if(key.indexOf(ext)!=-1){
+                        extStatusForOp[key].status = 'dial_to';
+                        extStatusForOp[key].dialFromExt = extFrom;
+                }
+        }
+}
+
+
+
+/* This function update the status of ext that start call. Set his status to 
+ * 'dialFrom' and add 'dialToExt' key to its state with the value extTo.
+ */
+function updateExtStatusOpDialFrom(ext, extTo){
+	for(key in extStatusForOp){
+		if(key.indexOf(ext)!=-1){
+			extStatusForOp[key].status = 'dial_from';
+			extStatusForOp[key].dialToExt = extTo;
+		}
+	}
 }
 
 /* update the cf status of extension ext and in the case of 'on' cfStatus
