@@ -929,6 +929,10 @@ io.on('connection', function(client){
 					client.send(new ResponseMessage(client.sessionId, 'ack_dnd_on', msgstr));
 					log("ack_dnd_on has been sent to [" + extFrom + "] with: " + client.sessionId);
 					log(msgstr);
+					// update ext DND status
+					modop.updateExtDNDStatusWithExt(extFrom, 'on');
+					// update all clients for op
+					updateAllClientsForOpWithExt(extFrom);
 				});
 	  		break;
 	  		case ACTION_DND_OFF:
@@ -945,6 +949,10 @@ io.on('connection', function(client){
 					client.send(new ResponseMessage(client.sessionId, 'ack_dnd_off', msgstr));
 					log("ack_dnd_off has been sent to [" + extFrom + "] with: " + client.sessionId);
 					log(msgstr);
+					// update ext DND status
+                                        modop.updateExtDNDStatusWithExt(extFrom, 'off');
+					// update all clients for op
+                                        updateAllClientsForOpWithExt(extFrom);
 				});
 	  		break;
 	  		case ACTION_CHECK_DND_STATUS:
@@ -1044,6 +1052,10 @@ io.on('connection', function(client){
 					client.send(new ResponseMessage(client.sessionId, 'ack_cf_on', msgstr));
 					log("ack_cf_on has been sent to [" + extFrom + "] with: " + client.sessionId);
 					log(msgstr);
+					// update ext CF status
+                                        modop.updateExtCFStatusWithExt(extFrom, 'on', extTo);
+                                        // update all clients for op
+                                        updateAllClientsForOpWithExt(extFrom);
 				});
 	  		break;
 	  		case ACTION_CF_OFF:
@@ -1060,6 +1072,10 @@ io.on('connection', function(client){
 					client.send(new ResponseMessage(client.sessionId, 'ack_cf_off', msgstr));
 					log("ack_cf_off has been sent to [" + extFrom + "] with: " + client.sessionId);
 					log(msgstr);
+					// update ext CF status
+                                        modop.updateExtCFStatusWithExt(extFrom, 'off');
+                                        // update all clients for op
+                                        updateAllClientsForOpWithExt(extFrom);
 				});
 	  		break;
 	  		case ACTION_CHECK_CF_STATUS:
