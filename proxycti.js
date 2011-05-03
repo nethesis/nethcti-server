@@ -507,7 +507,7 @@ am.addListener('userevent', function(headers){
                         modop.updateExtCFStatusWithExt(ext, "on", value);
                 }
                 // update all clients with the new state of extension, for update operator panel
-                updateAllClientsForOpWithext(ext);
+                updateAllClientsForOpWithExt(ext);
 	}
 });
 
