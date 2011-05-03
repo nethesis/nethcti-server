@@ -87,7 +87,7 @@ function updateExtDNDStatusWithExt(ext, value){
 function getExtStatusWithExt(ext){
 	for(key in extStatusForOp){	
 		if(key.indexOf(ext)!=-1){
-			return extStatusForOp[ext];
+			return extStatusForOp[key];
 		}
 	}
 }
