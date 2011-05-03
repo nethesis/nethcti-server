@@ -63,11 +63,11 @@ function updateExtCFStatusWithExt(ext, value, extTo){
 	for(key in extStatusForOp){
                 if(key.indexOf(ext)!=-1){
 			if(value=='off'){
-	                        extStatusForOp[ext].cfStatus = value;
+	                        extStatusForOp[key].cfStatus = value;
 			}
 			else if(value=='on'){
-				extStatusForOp[ext].cfStatus = value;
-				extStatusForOp[ext].cfStatusToExt = extTo;
+				extStatusForOp[key].cfStatus = value;
+				extStatusForOp[key].cfStatusToExt = extTo;
 			}
                 }
         }
