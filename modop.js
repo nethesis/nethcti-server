@@ -78,7 +78,7 @@ function updateExtDNDStatusWithExt(ext, value){
 	for(key in extStatusForOp){
 		if(key.indexOf(ext)!=-1){
 			if(value=='on' || value=='off')
-				extStatusForOp[ext].dndStatus = value;
+				extStatusForOp[key].dndStatus = value;
 		}
 	}
 }
