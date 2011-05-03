@@ -469,7 +469,7 @@ am.addListener('userevent', function(headers){
 		}
 		// update extStatusForOp with the changing in dnd status
 		if(value==""){
-			modop.updateExtDNDStatusiWithExt(ext, "off");
+			modop.updateExtDNDStatusWithExt(ext, "off");
 		}else if(value=="attivo"){
 			modop.updateExtDNDStatusWithExt(ext, "on");
 		}
