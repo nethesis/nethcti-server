@@ -256,6 +256,14 @@ am.addListener('dialing', function(from, to) {
 			});
 		}
 	}
+	// update ext status of extension that start the call
+	modop.updateExtStatusOpDialFrom(from.number, to.number);	
+	// update all clients for op
+	updateAllClientsForOpWithExt(from.number);
+	// update ext status of extension that receive the call
+	modop.updateExtStatusOpDialTo(to.number, from.number);
+	// update all clients for op
+        updateAllClientsForOpWithExt(to.number);
 });
 
 am.addListener('callconnected', function(from, to) {
