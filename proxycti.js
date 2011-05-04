@@ -256,14 +256,18 @@ am.addListener('dialing', function(from, to) {
 			});
 		}
 	}
-	// update ext status of extension that start the call
-	modop.updateExtStatusOpDialFrom(from.number, to.number);	
-	// update all clients for op
-	updateAllClientsForOpWithExt(from.number);
-	// update ext status of extension that receive the call
-	modop.updateExtStatusOpDialTo(to.number, from.number);
-	// update all clients for op
-        updateAllClientsForOpWithExt(to.number);
+	if(to!=undefined){
+		// update ext status of extension that start the call
+		modop.updateExtStatusOpDialFrom(from.number, to.number);	
+		// update all clients for op
+		updateAllClientsForOpWithExt(from.number);
+		// update ext status of extension that receive the call
+		modop.updateExtStatusOpDialTo(to.number, from.number);
+		// update all clients for op
+	        updateAllClientsForOpWithExt(to.number);
+		log("update dial from info for op");
+		log("update dial to info for op");
+	}
 });
 
 am.addListener('callconnected', function(from, to) {
