@@ -380,10 +380,11 @@ am.addListener('peerstatus', function(headers) {
   uniqueid: '1303228098.13' }
 */
 am.addListener('newstate', function(headers){
-        if(DEBUG) sys.puts("CLIENT: newstate event");
+        if(DEBUG) sys.puts("CLIENT: newstate event " + headers.channelstatedesc + " for " + headers.calleridnum);
 	var typeext = headers.channel.split("-")[0];
+	var statusEvent = headers.channelstatedesc.toLowerCase();
 	// update ext status for op
-	modop.updateExtStatusForOpWithTypeExt(typeext, headers.channelstatedesc.toLowerCase());
+	modop.updateExtStatusForOpWithTypeExt(typeext, statusEvent);
 	// update all clients with the new state of extension, for update operator panel
 	updateAllClientsForOpWithTypeExt(typeext);
 })
@@ -876,8 +877,9 @@ io.on('connection', function(client){
 				if(profiler.checkActionRecordPermit(extFrom)){
 	  				var channel = '';
 					var uniqueid = '';
+					var callFromExt = message.callFromExt;
 	  				for(key in am.participants){
-	  					if(am.participants[key].number==extFrom){
+	  					if(am.participants[key].number==callFromExt){
 	  						channel = key;
 							uniqueid = am.participants[key].with;
 	  					}
