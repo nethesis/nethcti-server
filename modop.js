@@ -65,7 +65,7 @@ exports.Modop = function(){
 function updateExtStatusOpDialTo(ext, extFrom){
         for(key in extStatusForOp){
                 if(key.indexOf(ext)!=-1){
-                        extStatusForOp[key].status = 'dial_to';
+                        extStatusForOp[key].status = 'dialto';
                         extStatusForOp[key].dialFromExt = extFrom;
                 }
         }
@@ -79,7 +79,7 @@ function updateExtStatusOpDialTo(ext, extFrom){
 function updateExtStatusOpDialFrom(ext, extTo){
 	for(key in extStatusForOp){
 		if(key.indexOf(ext)!=-1){
-			extStatusForOp[key].status = 'dial_from';
+			extStatusForOp[key].status = 'dialfrom';
 			extStatusForOp[key].dialToExt = extTo;
 		}
 	}
