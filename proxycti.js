@@ -351,7 +351,17 @@ am.addListener('callreport', function(report) {
   peerstatus: 'Registered' }
 */
 am.addListener('peerstatus', function(headers) {
-        if(DEBUG) sys.puts("CLIENT: PeerStatus");
+        if(DEBUG) sys.puts("CLIENT: PeerStatus with peerstatus = " + headers.peerstatus + " for peer: " + headers.peer);
+	var statusEvent = headers.peerstatus.toLowerCase();
+	var currStatus = modop.getExtStatusWithTypeExt(headers.peer).status;
+	/* if status of the event is 'registered' and current status of peer is different 
+ 	 * from unregistered, then the event is ignored. In this way, when the calling is in progress, the arrive of
+	 * this event with status 'registered' don't change the status of the extension.
+	 */
+	if(statusEvent=='registered' && currStatus!='unregistered'){
+		log("ignore event peerstatus '" + headers.peerstatus + "' because status of peer " + headers.peer + " is already different from 'unregistered'");
+		return;
+	}
 	// update ext status for op
 	modop.updateExtStatusForOpWithTypeExt(headers.peer, headers.peerstatus.toLowerCase());
 	// update all clients with the new state of extension, for update operator panel
