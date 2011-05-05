@@ -7,6 +7,8 @@ var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
 
 const FILE_TAB_OP = "config/optab.ini";
 const FILE_EXT_LIST = "/etc/asterisk/nethcti.ini";
+const DIAL_FROM = 1;
+const DIAL_TO = 0;
 
 /* This is for update client on the status of all extension registered in the asterisk server.
  * The scope for the client is to create operator panel with all informations about the extensions.
@@ -65,8 +67,7 @@ exports.Modop = function(){
 function updateExtStatusOpDialTo(ext, extFrom){
         for(key in extStatusForOp){
                 if(key.indexOf(ext)!=-1){
-                        extStatusForOp[key].dialto = true;
-			extStatusForOp[key].dialfrom = false;
+			extStatusForOp[key].dialDirection = DIAL_TO;
                         extStatusForOp[key].dialExt = extFrom;
                 }
         }
@@ -80,8 +81,7 @@ function updateExtStatusOpDialTo(ext, extFrom){
 function updateExtStatusOpDialFrom(ext, extTo){
 	for(key in extStatusForOp){
 		if(key.indexOf(ext)!=-1){
-			extStatusForOp[key].dialfrom = true;
-			extStatusForOp[key].dialto = false;
+			extStatusForOp[key].dialDirection = DIAL_FROM;
 			extStatusForOp[key].dialExt = extTo;
 		}
 	}
