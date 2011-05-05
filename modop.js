@@ -202,7 +202,7 @@ function addListenerToAm(){
 		// set status	
 	        extStatusForOp[typeext].status = status;
 
-		/* check for the dnd and cf status of current ext.
+		/* Check for the dnd and cf status of current ext.
 	         * This is made beacuse PeerEntry event don't report the dnd and cf status, and so
 	         * it can be possibile to correctly update extStatusForOp.
 	         */
@@ -214,13 +214,13 @@ function addListenerToAm(){
 	        };
         	// send action to asterisk
 	        am.send(actionCheckDNDStatus, function (resp) {
-	                log("check DND status action for " + ext + " has been sent to asterisk");
+	                //log("check DND status action for " + ext + " has been sent to asterisk");
 	                if(resp.value==undefined){
-	                        log("to create extStatusForOp: dnd status for ext[" + ext + "] is off");
+	                        //log("to create extStatusForOp: dnd status for ext[" + ext + "] is off");
 	                        dndStatus = 'off';
 	                }
 	                else{
-	                        log("to create extStatusForOp: dnd status for ext[" + ext + "] is on");
+	                        //log("to create extStatusForOp: dnd status for ext[" + ext + "] is on");
 	                        dndStatus = 'on';
 	                }
 	                // set the status informations to ext of extStatusForOp
@@ -236,13 +236,13 @@ function addListenerToAm(){
 	
 		// send action to asterisk
 	        am.send(actionCheckCFStatus, function (resp) {
-	                log("check CF status action for " + ext + " has been sent to asterisk");
+	                //log("check CF status action for " + ext + " has been sent to asterisk");
 	                if(resp.value==undefined){
-	                        log("to create extStatusForOp: cf status for ext[" + ext + "] is off");
+	                        //log("to create extStatusForOp: cf status for ext[" + ext + "] is off");
 	                        cfStatus = 'off';
 	                }
 	                else{
-	                        log("to create extStatusForOp: cf status for ext[" + ext + "] is on");
+	                        //log("to create extStatusForOp: cf status for ext[" + ext + "] is on");
 	                        cfStatus = 'on';
 	                        cfStatusToExt = resp.value.split('\n')[0];
 	                }
@@ -250,6 +250,24 @@ function addListenerToAm(){
 	                extStatusForOp[typeext].cfStatus = cfStatus;
 	                extStatusForOp[typeext].cfStatusToExt = cfStatusToExt;
 	        });
+
+		/* Check for the presence of voicemail.
+                 * This is made beacuse PeerEntry event don't report this information, and so
+                 * it can be possibile to correctly update extStatusForOp.
+		 * This piece of code can be optimized obtaining the only mailbox status for
+		 * that extension obtained with command 'voicemail show users'
+                 */
+		// create action for asterisk server
+                var cmd = "database get CF " + ext;
+                var actionMailboxCount = {
+                        Action: 'MailboxCount',
+                        Mailbox: ext
+                };
+		// send action to asterisk
+                am.send(actionMailboxCount, function (resp) {
+			var newMsgCount = resp.newmessages;
+			extStatusForOp[typeext].voicemailCount = newMsgCount;
+                });
 	});	
 
 
