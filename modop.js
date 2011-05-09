@@ -190,7 +190,8 @@ function addListenerToAm(){
 	  realtimedevice: 'no' }
 	*/
 	am.addListener('peerentry', function(headers) {
-	        log("CLIENT: PeerEntry event");
+	        log("CLIENT: PeerEntry event: headers = ");
+		console.log(headers);
 	
 	        var ext = headers.objectname;
 	        var typeext = headers.channeltype + "/" + ext;
