@@ -53,6 +53,9 @@ function log(msg){
 }
 
 
+// START
+console.log("\n\n\n---------------------------------------------");
+console.log("------------------- START -------------------");
 
 // initialize parameters for this server and for asterisk server
 initServerAndAsteriskParameters();
@@ -431,19 +434,6 @@ am.addListener('peerentry', function(headers) {
 });
 
 
-function updateExtDNDStatusForOp(ext, statVal){
-	extStatusForOp[ext].dndStatus = statVal;
-}
-function updateExtCFStatusForOp(ext, statVal, extTo){
-	extStatusForOp[ext].cfStatus = statVal;
-	if(statVal=='on'){
-		extStatusForOp[ext].cfStatusToExt = extTo;
-	}
-	else{
-		extStatusForOp[ext].cfStatusToExt = '';
-	}
-}
-
 /* This event is generated only by the phone of the user.
  * An example of UserEvent event:
 { event: 'UserEvent',
@@ -618,18 +608,14 @@ server = http.createServer(function(req, res){
 });	
 
 
-
 send404 = function(res){
   res.writeHead(404);
   res.write('404');
   res.end();
 };
 
-console.log("port = " + port);
 server.listen(port);
 log("Listening on port: " + port);
-
-
 
 var io = io.listen(server);
 
@@ -1299,37 +1285,6 @@ function createHistoryCallResponse(results){
 	}
 	return res;
 }
-
-
-
-
-
-/* Initialize extStatusForOp. Initially it read a configuration file that contains list of
- * all extensions. After that it send the SIPPeers action to the asterisk server. So, it
- * successively receives more PeerEntry events from the asterisk server and at the end it receive
- * PeerListComplete event.
- * The number of PeerEntry is equal to number of extensions present in the asterisk server.
- * The receive of one PeerEntry event, allow to add status information of the extension to extStatusForOp.
- */
-function initExtStatusForOp(){
-	log("initialize status of all extension for future request by clients for operator panel");
-
-	// read file where are the list of all extensions
-	extStatusForOp = iniparser.parseSync(FILE_EXT_LIST); 
-
-	/* create action for asterisk server that generate series of PeerEntry events
- 	 * to add status informations to extStatusForOp
-	 */
-       	var actionUpdateOP = {
-        	Action: 'SIPPeers'
-       	};
-        // send action to asterisk
-        am.send(actionUpdateOP, function () {
-        	log("'SIPPeers' action has been sent to the asterisk server");
-    	});
-}
-
-
 
 
 // Format date from gg/mm/yyyy to yyyy-mm-dd
