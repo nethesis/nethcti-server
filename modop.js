@@ -296,12 +296,24 @@ function initExtStatusForOp(){
         /* create action for asterisk server that generate series of PeerEntry events
          * to add status informations to extStatusForOp
          */
-        var actionUpdateOP = {
+        var actionSIPPeersOP = {
                 Action: 'SIPPeers'
         };
         // send action to asterisk
-        am.send(actionUpdateOP, function () {
+        am.send(actionSIPPeersOP, function () {
                 log("'SIPPeers' action has been sent to the asterisk server");
+        });
+
+
+	/* create action for asterisk server that generate series of PeerEntry events
+         * to add status informations to extStatusForOp for each IAXPeer
+         */
+        var actionIAXPeersOP = {
+                Action: 'IAXPeers'
+        };
+        // send action to asterisk
+        am.send(actionIAXPeersOP, function () {
+                log("'IAXPeers' action has been sent to the asterisk server");
         });
 }
 
