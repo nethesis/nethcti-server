@@ -1206,11 +1206,19 @@ io.on('connection', function(client){
 	                                var mess = new ResponseMessage(client.sessionId, "ack_get_peer_list_complete_op", msgstr);
 	                                mess.extStatusForOp = modop.getExtStatusForOp();
 					mess.tabOp = modop.getTabOp();
+					mess.opPermit = 'plus';
 	                                client.send(mess);
-	                                log("ack_get_peer_list_complete_op has been sent to [" + extFrom + "] with: " + client.sessionId)
+	                                log("ack_get_peer_list_complete_op has been sent to [" + extFrom + "] with: " + client.sessionId);
 				}
 				else if(profiler.checkActionOpBasePermit(extFrom)) {
-								
+					// create message
+                                        var msgstr = "received extStatusForOp to create operator panel";
+                                        var mess = new ResponseMessage(client.sessionId, "ack_get_peer_list_complete_op", msgstr);
+                                        mess.extStatusForOp = modop.getExtStatusForOp();
+                                        mess.tabOp = modop.getTabOp();
+                                        mess.opPermit = 'base';
+                                        client.send(mess);
+                                        log("ack_get_peer_list_complete_op has been sent to [" + extFrom + "] with: " + client.sessionId);
 				}
 				else{
 					

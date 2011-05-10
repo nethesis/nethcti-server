@@ -191,8 +191,14 @@ function addListenerToAm(){
 	*/
 	am.addListener('peerentry', function(headers) {
 	        log("CLIENT: PeerEntry event: headers = ");
+/*
 		console.log(headers);
-	
+if(headers.channeltype=='IAX2'){
+
+headers.objectname = 'ranocchilab/from-neth';
+headers.channeltype = 'IAX2';
+}
+*/	
 	        var ext = headers.objectname;
 	        var typeext = headers.channeltype + "/" + ext;
 	        var status = headers.status;
