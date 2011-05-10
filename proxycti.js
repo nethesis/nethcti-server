@@ -1221,7 +1221,11 @@ io.on('connection', function(client){
                                         log("ack_get_peer_list_complete_op has been sent to [" + extFrom + "] with: " + client.sessionId);
 				}
 				else{
-					
+					// create message
+                                        var msgstr = "Sorry but you haven't the permit of view the operator panel";
+                                        var mess = new ResponseMessage(client.sessionId, "error_get_peer_list_complete_op", msgstr);
+                                        client.send(mess);
+                                        log("error_get_peer_list_complete_op has been sent to [" + extFrom + "] with: " + client.sessionId);	
 				}
                         break;
 			case ACTION_PARK:
