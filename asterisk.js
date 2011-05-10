@@ -237,7 +237,7 @@ console.log("_-----------------------_---");
 		break;
 		case "QueueMember":
 //			sys.debug("ASTERISK QueueMember: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
-			self.emit('queuemember');
+			self.emit('queuemember', headers);
 		break;
 		//------------ end added by Alessandro Polidori --------------------");
 
