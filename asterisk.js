@@ -213,9 +213,9 @@ exports.AsteriskManager = function (newconfig) {
         }
         else if (config.version == '1.6')
         {
-//console.log("------------- ALE ------------__");
-//console.log(sys.inspect(headers));
-//console.log("_-----------------------_---");
+console.log("------------- ALE ------------__");
+console.log(sys.inspect(headers));
+console.log("_-----------------------_---");
              switch (headers.event) {
 
 		// ------------------ added by Alessandro Polidori -----------------");
@@ -234,6 +234,10 @@ exports.AsteriskManager = function (newconfig) {
 		case "PeerlistComplete":
 //			sys.debug("ASTERISK PeerlistComplete: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
 			self.emit('peerlistcomplete');
+		break;
+		case "QueueMember":
+//			sys.debug("ASTERISK QueueMember: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
+			self.emit('queuemember');
 		break;
 		//------------ end added by Alessandro Polidori --------------------");
 
