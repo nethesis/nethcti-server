@@ -191,8 +191,10 @@ function addListenerToAm(){
 	*/
 	am.addListener('peerentry', function(headers) {
 	        log("CLIENT: PeerEntry event: headers = ");
-/*
+
 		console.log(headers);
+		console.log(extStatusForOp);
+/**
 if(headers.channeltype=='IAX2'){
 
 headers.objectname = 'ranocchilab/from-neth';
@@ -284,6 +286,35 @@ headers.channeltype = 'IAX2';
 	am.addListener('peerlistcomplete', function(){
 	        log("CLIENT: PeerListComplete event");
 	});
+
+
+	/* This event is necessary to add information of queue member to extension status
+	 * Example of QueueMember event headers
+	 * 
+	{ event: 'QueueMember',
+	  queue: '901',
+	  name: 'Local/501@from-internal/n',
+	  location: 'Local/501@from-internal/n',
+	  membership: 'static',
+	  penalty: '0',
+	  callstaken: '0',
+	  lastcall: '0',
+	  status: '1',
+	  paused: '0',
+	  actionid: '1305039851763' }
+	*/
+	am.addListener('queuemember', function(headers){
+		log("CLIENT: QueueMember event");
+		var ext = headers.name.split("/")[1];
+		var queue = headers.queue;
+		ext = ext.split("@")[0];
+		for(key in extStatusForOp){
+			var tempExt = extStatusForOp[key].Extension;
+			if(tempExt==ext){
+				extStatusForOp[key].queue = queue;
+			}
+		}		
+	});	
 }
 
 
@@ -321,6 +352,17 @@ function initExtStatusForOp(){
         // send action to asterisk
         am.send(actionIAXPeersOP, function () {
                 log("'IAXPeers' action has been sent to the asterisk server");
+        });
+
+	/* create action for asterisk server that generate series of QueueMember events
+         * to add information if the extension is present in some queue
+         */
+        var actionQueueStatus = {
+                Action: 'QueueStatus'
+        };
+        // send action to asterisk
+        am.send(actionQueueStatus, function () {
+                log("'QueueStatus' action has been sent to the asterisk server");
         });
 }
 
