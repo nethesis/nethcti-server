@@ -660,6 +660,7 @@ io.on('connection', function(client){
   		const ACTION_GET_CURRENT_MONTH_HISTORY_CALL = "get_current_month_history_call";
   		const ACTION_CHECK_CALL_AUDIO_FILE = "check_call_audio_file";
   		const ACTION_GET_PEER_LIST_COMPLETE_OP = "get_peer_list_complete_op";
+  		const ACTION_PARK = "park";
 		
   		log("received " + action + " request from exten [" + extFrom + "] with sessiondId = " + client.sessionId + " with message = ");	
 		console.log(message);
@@ -1215,6 +1216,34 @@ io.on('connection', function(client){
 					
 				}
                         break;
+			case ACTION_PARK:
+				var callToPark = message.callToPark;
+				// get channel1 and channel2
+                                var channel1_toPark = ''; // the extension to be parked
+				var channel2 = '';  // the extension that has been request the park
+                                for(key in am.participants){
+                                        if(am.participants[key].number==callToPark){
+                                                channel1_toPark = key;
+                                        }
+					else if(am.participants[key].number==extFrom){
+						channel2 = key;
+					}
+                                }
+				// create action for asterisk server
+                                var actionPark = {
+                                        Action: 'Park',
+					Channel: channel1_toPark,
+					Channel2: channel2
+                                };
+                                // send action to asterisk
+                                am.send(actionPark, function (resp) {
+                                        log("Park action: callToPark [" + callToPark + "] request by extFrom ["  + extFrom + "] has been sent to asterisk");
+					// create message
+	                                var msgstr = "received acknowledgment for parking the call";
+	                                var mess = new ResponseMessage(client.sessionId, "ack_park", msgstr);
+	                                client.send(mess);
+	                                log("ack_park has been sent to [" + extFrom + "] with: " + client.sessionId)
+                                });
 	  		default:
 	  			log("ATTENTION: action '" + action + "'not provided");
 	  		break;
