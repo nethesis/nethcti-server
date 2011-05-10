@@ -213,9 +213,9 @@ exports.AsteriskManager = function (newconfig) {
         }
         else if (config.version == '1.6')
         {
-console.log("------------- ALE ------------__");
-console.log(sys.inspect(headers));
-console.log("_-----------------------_---");
+//console.log("------------- ALE ------------__");
+//console.log(sys.inspect(headers));
+//console.log("_-----------------------_---");
              switch (headers.event) {
 
 		// ------------------ added by Alessandro Polidori -----------------");
