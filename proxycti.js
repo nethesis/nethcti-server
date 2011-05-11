@@ -520,10 +520,36 @@ am.addListener('userevent', function(headers){
                         modop.updateExtCFStatusWithExt(ext, "on", value);
                 }
                 // update all clients with the new state of extension, for update operator panel
-                updateAllClientsForOpWithExt(ext);
+                updateAllClientsForOpWithTypeExt(ext);
 	}
 });
 
+
+/* This event is necessary to add information to parked members of what extension is parked on it.
+ * Example of ParkedCall event headers
+ * 
+ { Event: ParkedCall
+   Privilege: call,all
+   Exten: 71
+   Channel: SIP/500-0000013c
+   From: SIP/502-0000013b
+   Timeout: 15
+   CallerIDNum: 500
+   CallerIDName: <unknown>
+   Uniqueid: 1305117424.486 }
+ */
+am.addListener('parkedcall', function(headers){
+	log("CLIENT: ParkedCall event");
+	var parking = 'PARK' + headers.exten;
+	var extParked = headers.channel.split("/")[1];
+	extParked = extParked.split("-")[0];
+	var parkFrom = headers.from.split("/")[1];
+	parkFrom = parkFrom.split("-")[0];
+	// update status of park ext
+	modop.updateParkExtStatus(parking, extParked, parkFrom);
+	// update all clients with the new state of extension, for update operator panel
+        updateAllClientsForOpWithExt(parking);
+});
 
 
 /*
