@@ -59,6 +59,13 @@ exports.Modop = function(){
 	this.updateExtStatusOpDialFrom = function(ext, extTo) { updateExtStatusOpDialFrom(ext, extTo); }
 	this.updateExtStatusOpDialTo = function(ext, extFrom) { updateExtStatusOpDialTo(ext, extFrom); }
 	this.updateParkExtStatus = function(parking, extParked, parkFrom) { updateParkExtStatus(parking, extParked, parkFrom); }
+	this.updateEndParkExtStatus = function(parking) { updateEndParkExtStatus(parking); }
+}
+
+// Delete old information of the parked call
+function updateEndParkExtStatus(parking){
+	delete extStatusForOp[parking].parkedCall;
+	delete extStatusForOp[parking].parkFrom;
 }
 
 /* Update the status of the on Park extension.
