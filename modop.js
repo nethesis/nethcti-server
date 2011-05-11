@@ -32,7 +32,7 @@ var extStatusForOp = {};
 
 /* This is the list of tab to view or not in the operator panel of the clients.
  * It has the same structure as the configuration file optab.ini, with key equal
- * to section names, and the value the object the report keywords of section.
+ * to section names, and the value the object that reports keywords of the section.
  */
 var tabOp = {};
 
@@ -58,6 +58,15 @@ exports.Modop = function(){
 	this.getTabOp = function() { return tabOp; }
 	this.updateExtStatusOpDialFrom = function(ext, extTo) { updateExtStatusOpDialFrom(ext, extTo); }
 	this.updateExtStatusOpDialTo = function(ext, extFrom) { updateExtStatusOpDialTo(ext, extFrom); }
+	this.updateParkExtStatus = function(parking, extParked, parkFrom) { updateParkExtStatus(parking, extParked, parkFrom); }
+}
+
+/* Update the status of the on Park extension.
+ *
+ */
+function updateParkExtStatus(parking, extParked, parkFrom){
+        extStatusForOp[parking].parkedCall = extParked;
+        extStatusForOp[parking].parkFrom = parkFrom;
 }
 
 
@@ -191,9 +200,6 @@ function addListenerToAm(){
 	*/
 	am.addListener('peerentry', function(headers) {
 	        log("CLIENT: PeerEntry event: headers = ");
-
-		console.log(headers);
-		console.log(extStatusForOp);
 /**
 if(headers.channeltype=='IAX2'){
 
