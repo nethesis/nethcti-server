@@ -239,6 +239,10 @@ exports.AsteriskManager = function (newconfig) {
 //			sys.debug("ASTERISK QueueMember: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
 			self.emit('queuemember', headers);
 		break;
+		case "ParkedCall":
+//			sys.debug("ASTERISK ParkedCall: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
+			self.emit('parkedcall', headers);
+		break;
 		//------------ end added by Alessandro Polidori --------------------");
 
 	           	case "Newchannel": // new participant
