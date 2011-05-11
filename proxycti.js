@@ -552,6 +552,26 @@ am.addListener('parkedcall', function(headers){
 });
 
 
+/* This event is necessary to update the end of parked call to status of park extensions.
+ * Example of ParkeCallTimeOut event headers
+ * 
+ { Event: ParkedCallTimeOut
+   Privilege: call,all
+   Exten: 71
+   Channel: SIP/502-00000171
+   CallerIDNum: 502
+   CallerIDName: giovanni }
+ */
+am.addListener('parkedcalltimeout', function(headers){
+        log("CLIENT: ParkedCallTimeOut event");
+        var parking = 'PARK' + headers.exten;
+        // update status of park ext
+        modop.updateEndParkExtStatus(parking);
+        // update all clients with the new state of extension, for update operator panel
+        updateAllClientsForOpWithExt(parking);
+});
+
+
 /*
  * End of section relative to asterisk interaction
  *************************************************/
