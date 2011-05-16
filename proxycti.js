@@ -39,6 +39,7 @@ const TEMPLATE_DECORATOR_CUSTOMERCARD_FILENAME = "./template/decorator_customerC
 const TEMPLATE_DECORATOR_HISTORY_CALL_FILENAME = "./template/decorator_historyCall.html";
 const AST_CALL_AUDIO_DIR = "/var/spool/asterisk/monitor";
 const CALL_PREFIX = "CTI-";
+const SPY_PREFIX = "SPY-";
 const START_TAG_FILENAME = "auto-";
 
 // The response that this server pass to the clients.
@@ -326,6 +327,7 @@ am.addListener('hangup', function(participant, code, text) {
 		 * If this code is commented, am.participants grow with more entry of the same extension,
 		 * so it refer wrong with number in follow hangup request.
 	 	 */
+/*
 		for(key in am.participants){
 			if(am.participants[key].number==participant.number){
 				delete am.participants[key];
@@ -334,7 +336,7 @@ am.addListener('hangup', function(participant, code, text) {
 				console.log(am.participants);
 			}
 		}
-		
+*/		
 		// update ext status for op
 		modop.updateExtStatusForOpWithExt(ext, 'hangup');
 		// update all clients with the new state of extension, for update operator panel
@@ -707,6 +709,7 @@ io.on('connection', function(client){
   		const ACTION_CHECK_CALL_AUDIO_FILE = "check_call_audio_file";
   		const ACTION_GET_PEER_LIST_COMPLETE_OP = "get_peer_list_complete_op";
   		const ACTION_PARK = "park";
+  		const ACTION_SPY_LISTEN = "spy_listen";
 		
   		log("received " + action + " request from exten [" + extFrom + "] with sessiondId = " + client.sessionId + " with message = ");	
 		console.log(message);
@@ -1302,8 +1305,24 @@ io.on('connection', function(client){
 	                                client.send(mess);
 	                                log("ack_park has been sent to [" + extFrom + "] with: " + client.sessionId)
                                 });
+			break;
+			case ACTION_SPY_LISTEN:
+				var extToSpy = message.extToSpy;
+				// create action to spy channel
+				var actionSpyListen = {
+					Action: 'Originate',
+					Channel: 'SIP/' + extFrom,
+					Application: 'ChanSpy',
+					Data: extToSpy,
+					Callerid: SPY_PREFIX + extToSpy
+				};
+				// send spy action to the asterisk server
+				am.send(actionSpyListen, function(){
+					log('spy_listen action from [' + extFrom + '] to spy [' + extToSpy +'] has been sent to the asterisk');
+				});
+			break;
 	  		default:
-	  			log("ATTENTION: action '" + action + "'not provided");
+	  			log("ATTENTION: action '" + action + "' not provided");
 	  		break;
 	  		
 	  	}
