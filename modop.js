@@ -207,19 +207,25 @@ function addListenerToAm(){
 	*/
 	am.addListener('peerentry', function(headers) {
 	        log("CLIENT: PeerEntry event: headers = ");
-/**
-if(headers.channeltype=='IAX2'){
-
-headers.objectname = 'ranocchilab/from-neth';
-headers.channeltype = 'IAX2';
-}
-*/	
+		
 	        var ext = headers.objectname;
 	        var typeext = headers.channeltype + "/" + ext;
 	        var status = headers.status;
 	        var dndStatus = '';
 	        var cfStatus = '';
 	        var cfStatusToExt = '';
+
+		/* ATTENTION:
+		 * This check is for an error that is generated only in nethservice and not in development environment.
+		 * In nethservice machine arrive PeerEntry event that has entries as: 'objectname: ranocchilab/from-neth'.
+		 * The typeext generated below to access extStatusForOp is constructed with this objectname, but in extStatusForOp
+		 * there aren't any key with 'IAX2/something/something', because extStatusForOp is initially created considering 
+		 * 'nethcti.ini' file generated from perl script and in this file there are more IAX2 entries as 'IAX2/something' and not
+		 * 'IAX2/something/something'. So this line of code consider only first part: 'IAX2/something'.
+		 */
+		if(headers.channeltype=='IAX2'){
+		        var ext = headers.objectname.split("/")[0];
+	        }
 
 		// set status	
 	        extStatusForOp[typeext].status = status;
