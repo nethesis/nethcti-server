@@ -710,6 +710,7 @@ io.on('connection', function(client){
   		const ACTION_GET_PEER_LIST_COMPLETE_OP = "get_peer_list_complete_op";
   		const ACTION_PARK = "park";
   		const ACTION_SPY_LISTEN = "spy_listen";
+  		const ACTION_PICKUP = "pickup";
 		
   		log("received " + action + " request from exten [" + extFrom + "] with sessiondId = " + client.sessionId + " with message = ");	
 		console.log(message);
@@ -1321,10 +1322,31 @@ io.on('connection', function(client){
 					log('spy_listen action from [' + extFrom + '] to spy [' + extToSpy +'] has been sent to the asterisk');
 				});
 			break;
+			case ACTION_PICKUP:
+                                var callerExt = message.callerExt;
+				// get channel
+                                var channel = '';
+                                for(key in am.participants){
+                                        if(am.participants[key].number==callerExt){
+                                                channel = key;
+                                        }
+                                }
+                                // create action to pickup the call. It is realized with redirect action 
+                                var actionPickup = {
+                                        Action: 'Redirect',
+                                        Channel: channel,
+					Context: 'from-internal',
+					Exten: extFrom,
+					Priority: 1
+                                };
+                                // send the action to the asterisk server
+                                am.send(actionPickup, function(){
+                                        log('pickup action for [' + callerExt + '] to [' + extFrom +'] has been sent to the asterisk');
+                                });
+                        break;
 	  		default:
 	  			log("ATTENTION: action '" + action + "' not provided");
 	  		break;
-	  		
 	  	}
   	});
 
