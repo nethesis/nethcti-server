@@ -711,6 +711,7 @@ io.on('connection', function(client){
   		const ACTION_PARK = "park";
   		const ACTION_SPY_LISTEN = "spy_listen";
   		const ACTION_PICKUP = "pickup";
+  		const ACTION_SPY_LISTEN_SPEAK = "spy_listen_speak";
 		
   		log("received " + action + " request from exten [" + extFrom + "] with sessiondId = " + client.sessionId + " with message = ");	
 		console.log(message);
@@ -1342,6 +1343,21 @@ io.on('connection', function(client){
                                 // send the action to the asterisk server
                                 am.send(actionPickup, function(){
                                         log('pickup action for [' + callerExt + '] to [' + extFrom +'] has been sent to the asterisk');
+                                });
+                        break;
+			case ACTION_SPY_LISTEN_SPEAK:
+                                var extToSpy = message.extToSpy;
+                                // create action to spy channel
+                                var actionSpyListenSpeak = {
+                                        Action: 'Originate',
+                                        Channel: 'SIP/' + extFrom,
+                                        Application: 'ChanSpy',
+                                        Data: extToSpy + ',w',
+                                        Callerid: SPY_PREFIX + extToSpy
+                                };
+                                // send spy action to the asterisk server
+                                am.send(actionSpyListenSpeak, function(){
+                                        log('spy_listen_speak action from [' + extFrom + '] to spy [' + extToSpy +'] has been sent to the asterisk');
                                 });
                         break;
 	  		default:
