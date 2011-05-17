@@ -592,7 +592,7 @@ am.addListener('parkedcallscomplete', function(){
                 clientToReturnExtStatusForOp.send(mess);
                	log("ack_get_peer_list_complete_op has been sent to [" + extToReturnExtStatusForOp + "] with: " + clientToReturnExtStatusForOp.sessionId);
         }
-        else if(profiler.checkActionOpBasePermit(extFrom)) {
+        else if(profiler.checkActionOpBasePermit(extToReturnExtStatusForOp)) {
         	// create message
                 var msgstr = "received extStatusForOp to create operator panel";
                 var mess = new ResponseMessage(clientToReturnExtStatusForOp.sessionId, "ack_get_peer_list_complete_op", msgstr);
