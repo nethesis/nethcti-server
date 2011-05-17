@@ -1313,7 +1313,7 @@ io.on('connection', function(client){
                                         if(am.participants[key].number==callToPark){
                                                 channel1_toPark = key;
                                         }
-					else if(am.participants[key].number==extFrom){
+					else if(am.participants[key].number==message.callFrom){
 						channel2 = key;
 					}
                                 }
@@ -1330,7 +1330,7 @@ io.on('connection', function(client){
 	                                var msgstr = "received acknowledgment for parking the call";
 	                                var mess = new ResponseMessage(client.sessionId, "ack_park", msgstr);
 	                                client.send(mess);
-	                                log("ack_park has been sent to [" + extFrom + "] with: " + client.sessionId)
+	                                log("ack_park has been sent to [" + extFrom + "] with: " + client.sessionId);
                                 });
 			break;
 			case ACTION_SPY_LISTEN:
