@@ -327,7 +327,7 @@ am.addListener('hangup', function(participant, code, text) {
 		 * If this code is commented, am.participants grow with more entry of the same extension,
 		 * so it refer wrong with number in follow hangup request.
 	 	 */
-/*
+
 		for(key in am.participants){
 			if(am.participants[key].number==participant.number){
 				delete am.participants[key];
@@ -336,7 +336,7 @@ am.addListener('hangup', function(participant, code, text) {
 				console.log(am.participants);
 			}
 		}
-*/		
+		
 		// update ext status for op
 		modop.updateExtStatusForOpWithExt(ext, 'hangup');
 		// update all clients with the new state of extension, for update operator panel
@@ -1351,20 +1351,20 @@ io.on('connection', function(client){
 			case ACTION_PICKUP:
                                 var callerExt = message.callerExt;
 				// get channel
-                                var channel = '';
+                        	var channel = '';
                                 for(key in am.participants){
                                         if(am.participants[key].number==callerExt){
                                                 channel = key;
                                         }
-                                }
+                                };
                                 // create action to pickup the call. It is realized with redirect action 
                                 var actionPickup = {
-                                        Action: 'Redirect',
-                                        Channel: channel,
-					Context: 'from-internal',
-					Exten: extFrom,
-					Priority: 1
-                                };
+                                       Action: 'Redirect',
+                                       Channel: channel,
+                                       Context: 'from-internal',
+                                       Exten: extFrom,
+                                       Priority: 1
+				};
                                 // send the action to the asterisk server
                                 am.send(actionPickup, function(){
                                         log('pickup action for [' + callerExt + '] to [' + extFrom +'] has been sent to the asterisk');
