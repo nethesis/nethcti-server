@@ -58,7 +58,7 @@ exports.Modop = function(){
 	this.getTabOp = function() { return tabOp; }
 	this.updateExtStatusOpDialFrom = function(ext, extTo) { updateExtStatusOpDialFrom(ext, extTo); }
 	this.updateExtStatusOpDialTo = function(ext, extFrom) { updateExtStatusOpDialTo(ext, extFrom); }
-	this.updateParkExtStatus = function(parking, extParked, parkFrom) { updateParkExtStatus(parking, extParked, parkFrom); }
+	this.updateParkExtStatus = function(parking, extParked, parkFrom, timeout) { updateParkExtStatus(parking, extParked, parkFrom, timeout); }
 	this.updateEndParkExtStatus = function(parking) { updateEndParkExtStatus(parking); }
 }
 
@@ -71,9 +71,10 @@ function updateEndParkExtStatus(parking){
 /* Update the status of the on Park extension.
  *
  */
-function updateParkExtStatus(parking, extParked, parkFrom){
+function updateParkExtStatus(parking, extParked, parkFrom, timeout){
         extStatusForOp[parking].parkedCall = extParked;
         extStatusForOp[parking].parkFrom = parkFrom;
+	extStatusForOp[parking].timeout = timeout;
 }
 
 

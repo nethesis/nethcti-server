@@ -548,7 +548,7 @@ am.addListener('parkedcall', function(headers){
 	var parkFrom = headers.from.split("/")[1];
 	parkFrom = parkFrom.split("-")[0];
 	// update status of park ext
-	modop.updateParkExtStatus(parking, extParked, parkFrom);
+	modop.updateParkExtStatus(parking, extParked, parkFrom, headers.timeout);
 	// update all clients with the new state of extension, for update operator panel
         updateAllClientsForOpWithExt(parking);
 });
