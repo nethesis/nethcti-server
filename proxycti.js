@@ -574,6 +574,44 @@ am.addListener('parkedcalltimeout', function(headers){
 });
 
 
+extToReturnExtStatusForOp = '';
+clientToReturnExtStatusForOp = '';
+am.addListener('parkedcallscomplete', function(){
+
+	/* check if the user has the permit to view operator panel.
+         * First check if the user has the "OP_PLUS" permit. If he hasn't the permit, then
+         * it check if he has the "OP_BASE" permit. 
+         */
+        if(profiler.checkActionOpPlusPermit(extToReturnExtStatusForOp)){
+        	// create message
+                var msgstr = "received extStatusForOp to create operator panel";
+                var mess = new ResponseMessage(clientToReturnExtStatusForOp.sessionId, "ack_get_peer_list_complete_op", msgstr);
+                mess.extStatusForOp = modop.getExtStatusForOp();
+                mess.tabOp = modop.getTabOp();
+                mess.opPermit = 'plus';
+                clientToReturnExtStatusForOp.send(mess);
+               	log("ack_get_peer_list_complete_op has been sent to [" + extToReturnExtStatusForOp + "] with: " + clientToReturnExtStatusForOp.sessionId);
+        }
+        else if(profiler.checkActionOpBasePermit(extFrom)) {
+        	// create message
+                var msgstr = "received extStatusForOp to create operator panel";
+                var mess = new ResponseMessage(clientToReturnExtStatusForOp.sessionId, "ack_get_peer_list_complete_op", msgstr);
+                mess.extStatusForOp = modop.getExtStatusForOp();
+                mess.tabOp = modop.getTabOp();
+                mess.opPermit = 'base';
+                clientToReturnExtStatusForOp.send(mess);
+                log("ack_get_peer_list_complete_op has been sent to [" + extToReturnExtStatusForOp + "] with: " + clientToReturnExtStatusForOp.sessionId);
+        }
+        else{
+        	// create message
+                var msgstr = "Sorry but you haven't the permit of view the operator panel";
+                var mess = new ResponseMessage(clientToReturnExtStatusForOp.sessionId, "error_get_peer_list_complete_op", msgstr);
+                clientToReturnExtStatusForOp.send(mess);
+                log("error_get_peer_list_complete_op has been sent to [" + extToReturnExtStatusForOp + "] with: " + clientToReturnExtStatusForOp.sessionId);
+       	}
+});
+
+
 /*
  * End of section relative to asterisk interaction
  *************************************************/
@@ -1247,37 +1285,24 @@ io.on('connection', function(client){
 				});	
                         break;
 			case ACTION_GET_PEER_LIST_COMPLETE_OP:
-				/* check if the user has the permit to view operator panel.
-				 * First check if the user has the "OP_PLUS" permit. If he hasn't the permit, then
- 				 * it check if he has the "OP_BASE" permit. 
+				
+				/* Set the global variable 'extToReturnExtStatusForOp' and 'clientToReturnExtStatusForOp' because 
+				 * extStatusForOp is returned to the client when the event 'parkedcallscomplete' is emitted.
 				 */
-                                if(profiler.checkActionOpPlusPermit(extFrom)){
-					// create message
-	                                var msgstr = "received extStatusForOp to create operator panel";
-	                                var mess = new ResponseMessage(client.sessionId, "ack_get_peer_list_complete_op", msgstr);
-	                                mess.extStatusForOp = modop.getExtStatusForOp();
-					mess.tabOp = modop.getTabOp();
-					mess.opPermit = 'plus';
-	                                client.send(mess);
-	                                log("ack_get_peer_list_complete_op has been sent to [" + extFrom + "] with: " + client.sessionId);
-				}
-				else if(profiler.checkActionOpBasePermit(extFrom)) {
-					// create message
-                                        var msgstr = "received extStatusForOp to create operator panel";
-                                        var mess = new ResponseMessage(client.sessionId, "ack_get_peer_list_complete_op", msgstr);
-                                        mess.extStatusForOp = modop.getExtStatusForOp();
-                                        mess.tabOp = modop.getTabOp();
-                                        mess.opPermit = 'base';
-                                        client.send(mess);
-                                        log("ack_get_peer_list_complete_op has been sent to [" + extFrom + "] with: " + client.sessionId);
-				}
-				else{
-					// create message
-                                        var msgstr = "Sorry but you haven't the permit of view the operator panel";
-                                        var mess = new ResponseMessage(client.sessionId, "error_get_peer_list_complete_op", msgstr);
-                                        client.send(mess);
-                                        log("error_get_peer_list_complete_op has been sent to [" + extFrom + "] with: " + client.sessionId);	
-				}
+				extToReturnExtStatusForOp = extFrom;
+				clientToReturnExtStatusForOp = client;
+
+				/* Send ParkedCalls action to asterisk to update timeout information of parked calls in extStatusForOp.
+				 * When ParkedCallsComplete event is emitted, the server return extStatusForOp to the client.
+				 */
+				// create action for asterisk server
+                                var actionParkedCalls = {
+                                        Action: 'ParkedCalls'
+                                };
+                                // send action to asterisk
+                                am.send(actionParkedCalls, function (resp) {
+                                        log("ParkedCalls action for update timeout of the parked calls has been sent to asterisk");
+                                });
                         break;
 			case ACTION_PARK:
 				var callToPark = message.callToPark;
