@@ -247,6 +247,10 @@ exports.AsteriskManager = function (newconfig) {
 //			sys.debug("ASTERISK ParkedCallTimeOut: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
 			self.emit('parkedcalltimeout', headers);
 		break;
+		case "ParkedCallsComplete":
+//			sys.debug("ASTERISK ParkedCallsComplete: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
+			self.emit('parkedcallscomplete', headers);
+		break;
 		//------------ end added by Alessandro Polidori --------------------");
 
 	           	case "Newchannel": // new participant
