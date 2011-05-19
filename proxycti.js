@@ -160,9 +160,9 @@ am.addListener('agentcalled', function(fromid, fromname, queue, destchannel) {
 	
 	if(to!=undefined && clients[to]!=undefined){
 
-		// check the permit of the user to receive the call
+		// check the permission of the user to receive the call
                 if(!profiler.checkActionCallInPermit(to)){
-                        log("The user [" + to + "] hasn't the permit of receiving call !");
+                        log("The user [" + to + "] hasn't the permission of receiving call !");
                         return;
                 }
 
@@ -176,11 +176,11 @@ am.addListener('agentcalled', function(fromid, fromname, queue, destchannel) {
 		response.to = to;
 
 		var typesCC = profiler.getTypesCustomerCardPermit(to);
-                log("The user [" + to + "] has the permit of view following types of customer card");
+                log("The user [" + to + "] has the permission of view following types of customer card");
                 console.log(typesCC);
 		if(typesCC.length==0){
                         // the user hasn't the authorization of view customer card: the length is 0
-                        log("The user " + to + " hasn't the permit of view customer card");
+                        log("The user " + to + " hasn't the permission of view customer card");
                         response.customerCard = ["Sorry, but you don't have permission of view customer card !"];
                         c.send(response)
                         log("Notify of calling has been sent to client " + to);
@@ -220,9 +220,9 @@ am.addListener('dialing', function(from, to) {
 	// check if the user is logged in
 	if(to!=undefined && clients[to.number]!=undefined){
 
-		// check the permit of the user to receive the call
+		// check the permission of the user to receive the call
 		if(!profiler.checkActionCallInPermit(to.number)){
-			log("The user [" + to.number + "] hasn't the permit of receiving call !");
+			log("The user [" + to.number + "] hasn't the permission of receiving call !");
 			return;
 		}
 	
@@ -236,12 +236,12 @@ am.addListener('dialing', function(from, to) {
 		response.to = to.number;
 			
 		var typesCC = profiler.getTypesCustomerCardPermit(to.number);
-		log("The user [" + to.number + "] has the permit of view following types of customer card");
+		log("The user [" + to.number + "] has the permission of view following types of customer card");
 		console.log(typesCC);
 
 		if(typesCC.length==0){
 			// the user hasn't the authorization of view customer card, then the length is 0
-                        log("The user " + to.number + " hasn't the permit of view customer card");
+                        log("The user " + to.number + " hasn't the permission of view customer card");
                         response.customerCard = ["Sorry, but you don't have permission of view customer card !"];
                         c.send(response)
                         log("Notify of calling has been sent to client " + to.number);
@@ -578,9 +578,9 @@ extToReturnExtStatusForOp = '';
 clientToReturnExtStatusForOp = '';
 am.addListener('parkedcallscomplete', function(){
 
-	/* check if the user has the permit to view operator panel.
-         * First check if the user has the "OP_PLUS" permit. If he hasn't the permit, then
-         * it check if he has the "OP_BASE" permit. 
+	/* check if the user has the permission to view operator panel.
+         * First check if the user has the "OP_PLUS" permission. If he hasn't the permission, then
+         * it check if he has the "OP_BASE" permission. 
          */
         if(profiler.checkActionOpPlusPermit(extToReturnExtStatusForOp)){
         	// create message
@@ -604,7 +604,7 @@ am.addListener('parkedcallscomplete', function(){
         }
         else{
         	// create message
-                var msgstr = "Sorry but you haven't the permit of view the operator panel";
+                var msgstr = "Sorry but you haven't the permission of view the operator panel";
                 var mess = new ResponseMessage(clientToReturnExtStatusForOp.sessionId, "error_get_peer_list_complete_op", msgstr);
                 clientToReturnExtStatusForOp.send(mess);
                 log("error_get_peer_list_complete_op has been sent to [" + extToReturnExtStatusForOp + "] with: " + clientToReturnExtStatusForOp.sessionId);
@@ -833,7 +833,7 @@ io.on('connection', function(client){
 	  				return;
 	  			}
 
-  				// check if the user has the permit of dial out
+  				// check if the user has the permission of dial out
   				if(profiler.checkActionCallOutPermit(extFrom)){
   					log("[" + extFrom + "] enabled to calling out: execute calling...");
 	  				// create call action for asterisk server
@@ -893,7 +893,7 @@ io.on('connection', function(client){
 	  		break;
 	  		case ACTION_REDIRECT:
 	  			
-	  			// check if the user has the permit of dial out
+	  			// check if the user has the permission of dial out
 				if(profiler.checkActionRedirectPermit(extFrom)){
 	  			
 	  				log("[" + extFrom + "] enabled to redirect call: execute redirecting...");
@@ -928,7 +928,7 @@ io.on('connection', function(client){
 	  			}
 	  		break;
 	  		case ACTION_SEARCH_CONTACT_PHONEBOOK:
-	  			// check if the user has the permit to search contact in phonebook
+	  			// check if the user has the permission to search contact in phonebook
 				var res = profiler.checkActionPhonebookPermit(extFrom);
 	  			if(res){
 	  				// execute query to search contact in phonebook
@@ -949,11 +949,12 @@ io.on('connection', function(client){
 	  		break;
 	  		case ACTION_RECORD:
 	  			
-	  			// check if the user has the permit of dial out
+	  			// check if the user has the permission of dial out
 				if(profiler.checkActionRecordPermit(extFrom)){
 	  				var channel = '';
 					var uniqueid = '';
 					var callFromExt = message.callFromExt;
+					// get channel to record. It is always the caller (callFromExt)
 	  				for(key in am.participants){
 	  					if(am.participants[key].number==callFromExt){
 	  						channel = key;
@@ -982,7 +983,9 @@ io.on('connection', function(client){
 					am.send(actionRecord, function () {
 						log("record action from " + extFrom + " has been sent to asterisk");
 						var msgstr = 'Recording of call ' + filename + ' started...';
-						client.send(new ResponseMessage(client.sessionId, 'ack_record', msgstr));
+						var msg = new ResponseMessage(client.sessionId, 'ack_record', msgstr);
+						msg.extRecord = callFromExt;
+						client.send(msg);
 						log("ack_record has been sent to [" + extFrom + "] with: " + client.sessionId);
 						log(msgstr);
 					});
@@ -1207,7 +1210,7 @@ io.on('connection', function(client){
 	  		break;
 			case ACTION_GET_DAY_HISTORY_CALL:
 
-				// check if the user has the permit to get the history of calling
+				// check if the user has the permission to get the history of calling
 				var res = profiler.checkActionHistoryCallPermit(extFrom);
                                 if(res){
 					// format date for query sql
@@ -1229,7 +1232,7 @@ io.on('connection', function(client){
                         break;
 			case ACTION_GET_CURRENT_WEEK_HISTORY_CALL:
 
-                                // check if the user has the permit to get history of calling
+                                // check if the user has the permission to get history of calling
 				var res = profiler.checkActionHistoryCallPermit(extFrom);
                                 if(res){
                                         // execute query to search contact in phonebook
@@ -1247,7 +1250,7 @@ io.on('connection', function(client){
                                 }
                         break;
 			case ACTION_GET_CURRENT_MONTH_HISTORY_CALL:
-                                // check if the user has the permit to get history of calling
+                                // check if the user has the permission to get history of calling
 				var res = profiler.checkActionHistoryCallPermit(extFrom);
                                 if(res){
                                         // execute query to search contact in phonebook
