@@ -4,7 +4,7 @@
   border: none;
   margin-left: 5px;
   margin-right: 2px;
-  margin-bottom: 5px;
+  margin-bottom: 1px;
   margin-top: 3px;
 }
 
@@ -13,9 +13,11 @@
   margin: 10px;
   border: 1px solid #ccc;
   border-radius: 10px;
-  box-shadow: 3px 3px #888;
+  box-shadow: 3px 3px 2px #888;
   font-size: small;
-  max-width: 400px;
+  width: 30%;
+  overflow: auto;
+  height: 200px;
 }
 
 .contactsVCard a:visited {
@@ -45,6 +47,8 @@
   padding: 5px;
   margin: 5px;
   border-radius: 5px;
+  width: 80%;
+  float: left;
 }
 
 .company {
@@ -57,6 +61,7 @@
   margin: 5px;
   border-radius: 5px;
   text-align: right;
+  clear: both;
 }
 
 .title {
@@ -74,12 +79,14 @@
 .numbers {
    margin: 3px;
    padding: 3px;
+   clear: both;
 }
 
 .address {
    margin: 3px;
    padding: 3px;
    overflow: auto;
+   font-size: 0.9em;
 }
 
 .tr {
