@@ -1,12 +1,11 @@
 <div class="contactsVCard">
-	<div class='logo'>
+	<div class='logo' style='float: left'>
 		{:if name}
 		<img src="{=server_address}/template/images/contact.png"/>
 		{:else}
 		<img src="{=server_address}/template/images/company.png"/>
 		{/:if}
 	</div>
-	<div style="float: left">
 		{:if name}
 	  	<div class='name'>{=name}
 	  		{:if title}	<div class='title'>{=title} {=type}</div>  {/:if}
@@ -19,11 +18,6 @@
 		        {:else}
 		        <div class='name'> {=company}</div>
 		        {/:if}
-		{/:if}
-
-		{:if workstreet}
-		<tr>
-		</tr>
 		{/:if}
 	
         	<div class='numbers'>	
@@ -63,5 +57,4 @@
 	        {/:if}
 
         
-	</div>
 </div>
