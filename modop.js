@@ -9,6 +9,8 @@ const FILE_TAB_OP = "config/optab.ini";
 const FILE_EXT_LIST = "/etc/asterisk/nethcti.ini";
 const DIAL_FROM = 1;
 const DIAL_TO = 0;
+const START_RECORD = 1;
+const STOP_RECORD = 0;
 
 /* This is for update client on the status of all extension registered in the asterisk server.
  * The scope for the client is to create operator panel with all informations about the extensions.
@@ -60,6 +62,27 @@ exports.Modop = function(){
 	this.updateExtStatusOpDialTo = function(ext, extFrom) { updateExtStatusOpDialTo(ext, extFrom); }
 	this.updateParkExtStatus = function(parking, extParked, parkFrom, timeout) { updateParkExtStatus(parking, extParked, parkFrom, timeout); }
 	this.updateEndParkExtStatus = function(parking) { updateEndParkExtStatus(parking); }
+	this.updateStartRecordExtStatusForOpWithExt = function(ext) { updateStartRecordExtStatusForOpWithExt(ext); }
+	this.updateStopRecordExtStatusForOpWithExt = function(ext) { updateStopRecordExtStatusForOpWithExt(ext); }
+}
+
+// update status of ext with the info of stop recording
+function updateStopRecordExtStatusForOpWithExt(ext){
+        for(key in extStatusForOp){
+                if(key.indexOf(ext)!=-1){
+                        extStatusForOp[key].record = STOP_RECORD;
+                }
+        }
+}
+
+
+// update status of ext with the info of start recording
+function updateStartRecordExtStatusForOpWithExt(ext){
+	for(key in extStatusForOp){
+                if(key.indexOf(ext)!=-1){
+			extStatusForOp[key].record = START_RECORD;
+                }
+        }	
 }
 
 // Delete old information of the parked call
