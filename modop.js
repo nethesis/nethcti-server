@@ -247,7 +247,7 @@ function addListenerToAm(){
 		 * 'IAX2/something/something'. So this line of code consider only first part: 'IAX2/something'.
 		 */
 		if(headers.channeltype=='IAX2'){
-		        var ext = headers.objectname.split("/")[0];
+		        ext = headers.objectname.split("/")[0];
 	        }
 
 	        var typeext = headers.channeltype + "/" + ext;
