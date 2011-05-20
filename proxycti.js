@@ -339,6 +339,7 @@ am.addListener('hangup', function(participant, code, text) {
 		
 		// update ext status for op
 		modop.updateExtStatusForOpWithExt(ext, 'hangup');
+		modop.updateStopRecordExtStatusForOpWithExt(ext);
 		// update all clients with the new state of extension, for update operator panel
 		updateAllClientsForOpWithExt(ext);
 	}
@@ -993,9 +994,11 @@ io.on('connection', function(client){
 						log("ack_record has been sent to [" + extFrom + "] with: " + client.sessionId);
 						log(msgstr);
 						// update status information for operator panel
-						modop.updateStartRecordExtStatusForOpWithExt(extFrom);
+						modop.updateStartRecordExtStatusForOpWithExt(message.callFromExt);
+						modop.updateStartRecordExtStatusForOpWithExt(message.callToExt);
 						// update all clients for op
-	                                        updateAllClientsForOpWithExt(extFrom);
+	                                        updateAllClientsForOpWithExt(message.callFromExt);
+	                                        updateAllClientsForOpWithExt(message.callToExt);
 					});
 				}
 				else{
@@ -1026,8 +1029,10 @@ io.on('connection', function(client){
 					log(msgstr);
 					// update status information for operator panel
                                         modop.updateStopRecordExtStatusForOpWithExt(extFrom);
+                                        modop.updateStopRecordExtStatusForOpWithExt(message.extTo);
                                         // update all clients for op
                                         updateAllClientsForOpWithExt(extFrom);
+                                        updateAllClientsForOpWithExt(message.extTo);
 				});
 	  		break;
 	  		case ACTION_DND_ON:
