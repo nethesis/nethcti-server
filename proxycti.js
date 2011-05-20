@@ -849,7 +849,11 @@ io.on('connection', function(client){
 					};
 					// send action to asterisk
 					am.send(actionCall, function () {
-						log("call action has been sent to asterisk: " + extFrom + " -> " + extToCall);
+						var msgTxt = "call action has been sent to asterisk: " + extFrom + " -> " + extToCall;
+						log(msgTxt);
+						var respMsg = new ResponseMessage(client.sessionId, "ack_callout", msgTxt);
+                                                client.send(respMsg);
+                                                log("Acknowledgment to callout action has been sent to [" + extFrom + "] with: " + client.sessionId);
 					});
 	  			}
   				else{
