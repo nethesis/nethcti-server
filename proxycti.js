@@ -723,7 +723,7 @@ io.on('connection', function(client){
 		// all received message have the information of exten from and the information about the action
   		var extFrom = message.extFrom;
   		var action = message.action;
-  		
+  		//
   		const ACTION_LOGIN = "login";
   		const ACTION_CALLOUT = "call_out_from_client";
   		const ACTION_LOGOUT = "logout";
@@ -988,6 +988,10 @@ io.on('connection', function(client){
 						client.send(msg);
 						log("ack_record has been sent to [" + extFrom + "] with: " + client.sessionId);
 						log(msgstr);
+						// update status information for operator panel
+						modop.updateStartRecordExtStatusForOpWithExt(extFrom);
+						// update all clients for op
+	                                        updateAllClientsForOpWithExt(extFrom);
 					});
 				}
 				else{
@@ -1016,6 +1020,10 @@ io.on('connection', function(client){
 					client.send(new ResponseMessage(client.sessionId, 'ack_stoprecord', msgstr));
 					log("ack_stoprecord has been sent to [" + extFrom + "] with: " + client.sessionId);
 					log(msgstr);
+					// update status information for operator panel
+                                        modop.updateStopRecordExtStatusForOpWithExt(extFrom);
+                                        // update all clients for op
+                                        updateAllClientsForOpWithExt(extFrom);
 				});
 	  		break;
 	  		case ACTION_DND_ON:
