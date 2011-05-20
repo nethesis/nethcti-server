@@ -339,6 +339,7 @@ am.addListener('hangup', function(participant, code, text) {
 		
 		// update ext status for op
 		modop.updateExtStatusForOpWithExt(ext, 'hangup');
+		modop.updateStopRecordExtStatusForOpWithExt(ext);
 		// update all clients with the new state of extension, for update operator panel
 		updateAllClientsForOpWithExt(ext);
 	}
