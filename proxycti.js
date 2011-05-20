@@ -167,7 +167,7 @@ am.addListener('agentcalled', function(fromid, fromname, queue, destchannel) {
                 }
 
 		// create the response for the client
-	        var msg = "Call incoming from [" + fromid + " : " + fromname + "] to queue " + queue + " and to " + to;	
+	        var msg = fromname;	
 		var c = clients[to];
 		/* in this response the html is not passed, because the chrome desktop 
                  * notification of the client accept only one absolute or relative url. */
@@ -227,7 +227,7 @@ am.addListener('dialing', function(from, to) {
 		}
 	
 		// create the response for the client
-		var msg = "Call incoming from " + from.number + " to " + to.number;
+		var msg = from.name;
 		var c = clients[to.number];
 		/* in this response the html is not passed, because the chrome desktop 
         	 * notification of the client accept only one absolute or relative url. */
