@@ -2,6 +2,7 @@ var fs = require("fs");
 var sys = require("sys");
 var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
 
+const DEBUG = false;
 const PROFILER_CONFIG_FILENAME = "config/profiles.ini";
 const CALL_OUT = "CALL_OUT";
 const CALL_IN = "CALL_IN";
@@ -115,5 +116,5 @@ function initProfiles(){
 }
 
 function log(msg){
-	console.log(new Date().toUTCString() + " - [Profiler]: " + msg);
+	if(DEBUG) console.log(new Date().toUTCString() + " - [Profiler]: " + msg);
 }

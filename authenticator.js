@@ -54,10 +54,13 @@ function initProfiles(){
  * initialized user authentication profile.
  */
 authenticateUser = function(ext, secret){
-	console.log(userAuthProfiles[ext].secret);
+	log(userAuthProfiles[ext].secret);
 	if(userAuthProfiles[ext].secret==secret)
 		return true;
 	return false;
 }
 
-
+// custom log function to output debug info
+function log(msg){
+	if(DEBUG) console.log(new Date().toUTCString() + " - [authenticator]: " + msg);
+}

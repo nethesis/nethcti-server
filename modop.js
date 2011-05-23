@@ -5,6 +5,7 @@
  */
 var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
 
+const DEBUG = false;
 const FILE_TAB_OP = "config/optab.ini";
 const FILE_EXT_LIST = "/etc/asterisk/nethcti.ini";
 const DIAL_FROM = 1;
@@ -424,5 +425,5 @@ function initTabOp(){
 
 
 function log(msg){
-        console.log(new Date().toUTCString() + " - [Modop]: " + msg);
+        if(DEBUG) console.log(new Date().toUTCString() + " - [Modop]: " + msg);
 }
