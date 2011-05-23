@@ -32,7 +32,7 @@ var clients = {};
 var audioFileList = {};
 
 
-const DEBUG = false;
+const DEBUG = true;
 const PROXY_CONFIG_FILENAME = "config/proxycti.ini";
 const TEMPLATE_DECORATOR_VCARD_FILENAME = "./template/decorator_vcard.html";
 const TEMPLATE_DECORATOR_CUSTOMERCARD_FILENAME = "./template/decorator_customerCard.html";
@@ -40,6 +40,7 @@ const TEMPLATE_DECORATOR_HISTORY_CALL_FILENAME = "./template/decorator_historyCa
 const AST_CALL_AUDIO_DIR = "/var/spool/asterisk/monitor";
 const CALL_PREFIX = "CTI-";
 const SPY_PREFIX = "SPY-";
+const REDIRECT_VM_PREFIX = "REDIR_VM-";
 const START_TAG_FILENAME = "auto-";
 
 // The response that this server pass to the clients.
@@ -53,12 +54,12 @@ function log(msg){
 	if (DEBUG) console.log(new Date().toUTCString() + " - [ProxyCTI]: " + msg);
 }
 
-// START
-console.log("\n\n\n---------------------------------------------");
-console.log("------------------- START -------------------");
-
 // initialize parameters for this server and for asterisk server
 initServerAndAsteriskParameters();
+
+// START
+console.log("\n\n\n-----------------------------------------------------------");
+console.log("------------------- START Server v. " + version + " -------------------");
 
 
 // Profiler object
@@ -750,6 +751,7 @@ io.on('connection', function(client){
   		const ACTION_SPY_LISTEN = "spy_listen";
   		const ACTION_PICKUP = "pickup";
   		const ACTION_SPY_LISTEN_SPEAK = "spy_listen_speak";
+  		const ACTION_REDIRECT_VOICEMAIL = "redirect_voicemail";
   		log("received " + action + " request from exten [" + extFrom + "] with sessiondId = " + client.sessionId + " with message = ");	
 		log(sys.inspect(message));
   		// manage request
@@ -1393,6 +1395,21 @@ io.on('connection', function(client){
                                         log('spy_listen_speak action from [' + extFrom + '] to spy [' + extToSpy +'] has been sent to the asterisk');
                                 });
                         break;
+			case ACTION_REDIRECT_VOICEMAIL:
+                                var extTo = message.extTo;
+                                // create action to spy channel
+                                var actionRedirectVoicemail = {
+                                        Action: 'Originate',
+                                        Channel: 'SIP/501',
+                                        Application: 'Voicemail',
+                                        Data: extTo,
+                                        Callerid: REDIRECT_VM_PREFIX + extTo
+                                };
+                                // send spy action to the asterisk server
+                                am.send(actionRedirectVoicemail, function(){
+                                        log('redirect_to_voicemail action from [' + extFrom + '] to voicemail [' + extTo +'] has been sent to the asterisk');
+                                });
+                        break;
 	  		default:
 	  			log("ATTENTION: action '" + action + "' not provided");
 	  		break;
@@ -1600,6 +1617,7 @@ function initServerAndAsteriskParameters(){
 	asterisk_host = server_conf.ASTERISK.host;
 	hostname = server_conf.SERVER_PROXY.hostname;
 	port = server_conf.SERVER_PROXY.port;
+	version = server_conf.SERVER_PROXY.version;
 }
 
 
