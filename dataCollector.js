@@ -4,6 +4,7 @@ var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
 var mysql = require('./lib/node-mysql');
 var odbc = require("./lib/node-odbc/odbc");
 
+const DEBUG = false;
 const DATACOLLECTOR_CONFIG_FILENAME = "config/dataProfiles.ini";
 const PHONEBOOK = "phonebook";
 const CUSTOMER_CARD = "customer_card";
@@ -156,7 +157,7 @@ function initConn(objQuery, key){
                 var connect_str = "DRIVER={FreeTDS};SERVER=" + objQuery.dbhost + ";UID=" + objQuery.dbuser + ";PWD=" + objQuery.dbpassword + ";DATABASE=" + objQuery.dbname;
                 db.open(connect_str, function(err) {
 			log("ERROR in connect to DB mssql");
-			console.log(err);
+			log(sys.inspect(err));
                 });
 		dbConnections[key] = db;
         }
@@ -279,7 +280,7 @@ function executeSQLQuery(type, objQuery, cb){
 	conn.query(query, function (err, results, fields) {
         	if (err) {
         		log("ERROR in execute " + objQuery.dbtype + " query");
-	                console.log(err);
+	                log(sys.inspect(err));
 	        }
 	        cb(results);
         });
@@ -287,5 +288,5 @@ function executeSQLQuery(type, objQuery, cb){
 
 // custom log function to output debug info
 function log(msg){
-	console.log(new Date().toUTCString() + " - [DataCollector]: " + msg);
+	if(DEBUG) console.log(new Date().toUTCString() + " - [DataCollector]: " + msg);
 }

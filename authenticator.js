@@ -1,6 +1,7 @@
 var fs = require("fs");
 var sys = require("sys");
 var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
+const DEBUG = false;
 const AUTHENTICATOR_CONFIG_FILENAME = "/etc/asterisk/sip_additional.conf";
 
 /* this is the authentication profile created by parsing the config file.
@@ -54,10 +55,13 @@ function initProfiles(){
  * initialized user authentication profile.
  */
 authenticateUser = function(ext, secret){
-	console.log(userAuthProfiles[ext].secret);
+	log(userAuthProfiles[ext].secret);
 	if(userAuthProfiles[ext].secret==secret)
 		return true;
 	return false;
 }
 
-
+// custom log function to output debug info
+function log(msg){
+	if(DEBUG) console.log(new Date().toUTCString() + " - [authenticator]: " + msg);
+}
