@@ -15,7 +15,7 @@ exports.AsteriskManager = function (newconfig) {
 		port: 5038,
 		events: 'on',
 		connect_timeout: 0, // the time to wait for a connection to the Asterisk server (in milliseconds)
-        version: '1.6'
+	        version: '1.6' //accepted versions: 1.4 - 1.6
 	};
 	var config;
 	var tmoConn = null;
@@ -37,7 +37,7 @@ exports.AsteriskManager = function (newconfig) {
 	this.send = function(req, cb) {
 		var id = (new Date()).getTime();
 
-		/* Added by Alessandro Polidori to correct a bug.		
+		/* 		
 		 * In some case id of different operation can be the same.
 		 */
 		while(actions[id]!=undefined){	
@@ -102,7 +102,7 @@ exports.AsteriskManager = function (newconfig) {
 					type = kv[0];
 				headers[kv[0]] = kv[1];
 
-				/* Added by Alessandro Polidori
+				/* 
 				 * This piece of code is to manage UserEvent event emitted by asterisk when DND is activated
 				 * and disactivated. It add the key "extra" to headers returned byt the event that contains
 				 * " extra: 'Family: DND^Value: Attivo^' " or " extra: 'Family: DND^Value: ^^'  ".
@@ -129,7 +129,7 @@ exports.AsteriskManager = function (newconfig) {
                                         }
                                         headers.extra = extra;
                                 }
-                                // end added by Alessandro
+                                // end of UserEvent code
 
 			}
 			switch (type) {
@@ -213,75 +213,58 @@ exports.AsteriskManager = function (newconfig) {
         }
         else if (config.version == '1.6')
         {
-//console.log("------------- ALE ------------__");
-//console.log(sys.inspect(headers));
-//console.log("_-----------------------_---");
              switch (headers.event) {
 
-		// ------------------ added by Alessandro Polidori -----------------");
 		case "UserEvent":
-//			sys.debug("ASTERISK UserEvent: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
 			self.emit('userevent', headers);
 		break;
 		case "PeerStatus":
-//			sys.debug("ASTERISK PeerStatus: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
 			self.emit('peerstatus', headers);
 		break;
 		case "PeerEntry":
-//			sys.debug("ASTERISK PeerEntry: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
 			self.emit('peerentry', headers);
 		break;
 		case "PeerlistComplete":
-//			sys.debug("ASTERISK PeerlistComplete: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
 			self.emit('peerlistcomplete');
 		break;
 		case "QueueMember":
-//			sys.debug("ASTERISK QueueMember: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
 			self.emit('queuemember', headers);
 		break;
 		case "ParkedCall":
-//			sys.debug("ASTERISK ParkedCall: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
 			self.emit('parkedcall', headers);
 		break;
 		case "ParkedCallTimeOut":
-//			sys.debug("ASTERISK ParkedCallTimeOut: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
 			self.emit('parkedcalltimeout', headers);
 		break;
 		case "ParkedCallsComplete":
-//			sys.debug("ASTERISK ParkedCallsComplete: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
 			self.emit('parkedcallscomplete', headers);
 		break;
-		//------------ end added by Alessandro Polidori --------------------");
 
-	           	case "Newchannel": // new participant
-		                //sys.debug("ASTERISK NEWCHANNEL: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
+	        case "Newchannel": // new participant
                         var tmp = headers.channel.split('-');
                         var channel = tmp[0];
                         var extension = tmp[0].split('/');
                         extension = extension[1];
-				        self.participants[headers.uniqueid] = {name: headers.calleridname != "device" ? headers.calleridname : channel , number: headers.calleridnum != "" ? headers.calleridnum : extension};
-			        break;
-// added by cristian
-			        case "Join": // evento ingresso in coda
-		                sys.debug("ASTERISK JOIN: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
-			        break;
-			        case "AgentCalled": // evento agente chiamato
-		                	sys.debug("ASTERISK AGENTCALLED: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
-					// added by Alessandro 
-					self.emit('agentcalled', headers.calleridnum, headers.calleridname, headers.queue, headers.destinationchannel);
-					// End added by Alessandro
-			        break;
-// end added by cristian
-			        case "Newcallerid": // potentially more useful information on an existing participant
-		                //sys.debug("ASTERISK: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
-				        if (typeof self.participants[headers.uniqueid]['number'] == 'undefined')
-					        self.participants[headers.uniqueid]['number'] = headers.calleridnum;
-				        if (headers.calleridname[0] != "")
-					        self.participants[headers.uniqueid]['name'] = headers.calleridname;
-			        break;
-			        case "Dial": // source participant is dialing a destination participant
-			        
-		                sys.debug("ASTERISK DIAL: Got event '" + headers.event + "' with data: " + sys.inspect(headers)); // uncommented by alessandro
+			self.participants[headers.uniqueid] = {name: headers.calleridname != "device" ? headers.calleridname : channel , number: headers.calleridnum != "" ? headers.calleridnum : extension};
+	        break;
+	
+	        case "Join": // Agent joined queue event
+                	//sys.debug("ASTERISK JOIN: Got event '" + headers.event + "' with data: " + sys.inspect(headers));
+	        break;
+
+	        case "AgentCalled": // Agent on queue called
+			self.emit('agentcalled', headers.calleridnum, headers.calleridname, headers.queue, headers.destinationchannel);
+	        break;
+
+	        case "Newcallerid": // potentially more useful information on an existing participant
+		        if (typeof self.participants[headers.uniqueid]['number'] == 'undefined')
+				        self.participants[headers.uniqueid]['number'] = headers.calleridnum;
+		        if (headers.calleridname[0] != "")
+			        self.participants[headers.uniqueid]['name'] = headers.calleridname;
+	        break;
+
+	        case "Dial": // source participant is dialing a destination participant
+		        
                         switch(headers.dialstatus)
                         {
                             case "CANCEL":
@@ -293,56 +276,61 @@ exports.AsteriskManager = function (newconfig) {
                             break;
 
                             default:
-				                self.participants[headers.uniqueid]['with'] = headers.uniqueid;
+		                self.participants[headers.uniqueid]['with'] = headers.uniqueid;
                                 if( headers.destuniqueid)
-				                    self.participants[headers.destuniqueid]['with'] = headers.destuniqueid;
-				                self.emit('dialing', self.participants[headers.uniqueid], self.participants[headers.destuniqueid]);
+		                    self.participants[headers.destuniqueid]['with'] = headers.destuniqueid;
+		                self.emit('dialing', self.participants[headers.uniqueid], self.participants[headers.destuniqueid]);
                         }
-			        break;
-			        case "Bridge": // the participants have been connected and voice is now available
+		break;
+	
+		case "Bridge": // the participants have been connected and voice is now available
                         if (headers.bridgestate == "Link")
-				            self.emit('callconnected', self.participants[headers.uniqueid1], self.participants[headers.uniqueid2]);
+		            self.emit('callconnected', self.participants[headers.uniqueid1], self.participants[headers.uniqueid2]);
                         else if (headers.bridgestate == "Unlink")
-				            self.emit('calldisconnected', self.participants[headers.uniqueid1], self.participants[headers.uniqueid2]);
-			        break;
-			        case "Hold": // someone put someone else on hold
+		            self.emit('calldisconnected', self.participants[headers.uniqueid1], self.participants[headers.uniqueid2]);
+	        break;
+	
+	        case "Hold": // someone put someone else on hold
                         if (headers.status == "On")
-				            self.emit('hold', self.participants[headers.uniqueid]);
+		            self.emit('hold', self.participants[headers.uniqueid]);
                         else
-				            self.emit('unhold', self.participants[headers.uniqueid]);
-			        break;
-			        case "Hangup": // fires for each participant and contains the cause for the participant's hangup
-				        self.emit('hangup', self.participants[headers.uniqueid], headers.cause, headers.causetxt);
-			        break;
-			        case "Cdr": // call data record. contains a ton of useful info about the call (whether it was successful or not) that recently ended
-				        var idCaller = headers.uniqueid, idCallee = self.participants[idCaller]['with'], status = headers.disposition.toLowerCase();
-				        // use 'callreport' instead of 'callrecord' so as not to potentially confuse 'record' as in recording the voice(s) call, ala monitoring
-				        self.emit('callreport', {
-					        caller: self.participants[idCaller],
-					        callee: self.participants[idCallee],
-					        startTime: headers.starttime,
-					        answerTime: headers.answertime,
-					        endTime: headers.endtime,
-					        totalDuration: headers.duration, // in seconds
-					        talkDuration: headers.billableseconds, // in seconds
-					        finalStatus: status
-				        });
-				        delete self.participants[idCaller];
-				        delete self.participants[idCallee];
-			        break;
-			        case "Newstate":
-					// added by Alessandro
-					self.emit('newstate', headers);
-					// end added by Alessandro
-				break;
-			        case "Registry":
-			        case "Newexten":
-				        // ignore theseas they aren't generally useful for ordinary tasks
-			        break;
-			        default:
-				        //sys.debug("ASTERISK: Got unknown event '" + headers.event + "' with data: " + sys.inspect(headers));
-		    }
-         }
+		            self.emit('unhold', self.participants[headers.uniqueid]);
+	        break;
+	
+	        case "Hangup": // fires for each participant and contains the cause for the participant's hangup
+		        self.emit('hangup', self.participants[headers.uniqueid], headers.cause, headers.causetxt);
+	        break;
+
+	        case "Cdr": // call data record. contains a ton of useful info about the call (whether it was successful or not) that recently ended
+		        var idCaller = headers.uniqueid, idCallee = self.participants[idCaller]['with'], status = headers.disposition.toLowerCase();
+		        // use 'callreport' instead of 'callrecord' so as not to potentially confuse 'record' as in recording the voice(s) call, ala monitoring
+		        self.emit('callreport', {
+			        caller: self.participants[idCaller],
+			        callee: self.participants[idCallee],
+			        startTime: headers.starttime,
+			        answerTime: headers.answertime,
+			        endTime: headers.endtime,
+			        totalDuration: headers.duration, // in seconds
+			        talkDuration: headers.billableseconds, // in seconds
+			        finalStatus: status
+		        });
+		        delete self.participants[idCaller];
+		        delete self.participants[idCallee];
+	        break;
+
+	        case "Newstate": //look for a peer status change
+			self.emit('newstate', headers);
+		break;
+
+		case "Registry":
+		case "Newexten":
+		        // ignore theseas they aren't generally useful for ordinary tasks
+		break;
+		
+	        default:
+		        //sys.debug("ASTERISK: Got unknown event '" + headers.event + "' with data: " + sys.inspect(headers));
+	     }
+	}
     };
     
 
