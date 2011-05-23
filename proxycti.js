@@ -32,7 +32,7 @@ var clients = {};
 var audioFileList = {};
 
 
-const DEBUG = true;
+const DEBUG = false;
 const PROXY_CONFIG_FILENAME = "config/proxycti.ini";
 const TEMPLATE_DECORATOR_VCARD_FILENAME = "./template/decorator_vcard.html";
 const TEMPLATE_DECORATOR_CUSTOMERCARD_FILENAME = "./template/decorator_customerCard.html";
@@ -52,7 +52,6 @@ var ResponseMessage = function(clientSessionId, typeMessage, respMessage){
 function log(msg){
 	if (DEBUG) console.log(new Date().toUTCString() + " - [ProxyCTI]: " + msg);
 }
-
 
 // START
 console.log("\n\n\n---------------------------------------------");
@@ -177,7 +176,7 @@ am.addListener('agentcalled', function(fromid, fromname, queue, destchannel) {
 
 		var typesCC = profiler.getTypesCustomerCardPermit(to);
                 log("The user [" + to + "] has the permission of view following types of customer card");
-                console.log(typesCC);
+                log(sys.inspect(typesCC));
 		if(typesCC.length==0){
                         // the user hasn't the authorization of view customer card: the length is 0
                         log("The user " + to + " hasn't the permission of view customer card");
@@ -237,7 +236,7 @@ am.addListener('dialing', function(from, to) {
 			
 		var typesCC = profiler.getTypesCustomerCardPermit(to.number);
 		log("The user [" + to.number + "] has the permission of view following types of customer card");
-		console.log(typesCC);
+		log(sys.inspect(typesCC));
 
 		if(typesCC.length==0){
 			// the user hasn't the authorization of view customer card, then the length is 0
@@ -333,7 +332,7 @@ am.addListener('hangup', function(participant, code, text) {
 				delete am.participants[key];
 				log("deleted from am.participants the entry relative to " + participant.number);
 				log("Then the am.participants is = ");
-				console.log(am.participants);
+				log(sys.inspect(am.participants));
 			}
 		}
 		
@@ -751,19 +750,12 @@ io.on('connection', function(client){
   		const ACTION_SPY_LISTEN = "spy_listen";
   		const ACTION_PICKUP = "pickup";
   		const ACTION_SPY_LISTEN_SPEAK = "spy_listen_speak";
-		
   		log("received " + action + " request from exten [" + extFrom + "] with sessiondId = " + client.sessionId + " with message = ");	
-		console.log(message);
-  		
+		log(sys.inspect(message));
   		// manage request
   		switch(action){
   			case ACTION_LOGIN:
-
-				console.log("am.participants in action_login = ");
-				console.log(am.participants);
-	  		
 	  			if(authenticator.authenticateUser(extFrom, message.secret)){  // the user is authenticated
-  				
 					// check if the user sessionId with extFrom is already logged in
   					if(testAlreadyLoggedUser(client.sessionId, extFrom)){
   						log("client with sessionId = " + client.sessionId + " is already logged in as " + extFrom);
@@ -873,9 +865,6 @@ io.on('connection', function(client){
 	  					break;
 	  				}
 	  			}
-				console.log("am.participants = ");
-				console.log(am.participants);
-	  			
 	  			// create hangup action for asterisk server
 		  		var actionCall = {
 					Action: 'Hangup',
@@ -1232,7 +1221,6 @@ io.on('connection', function(client){
                                 if(res){
 					// format date for query sql
 					var dateFormat = formatDate(message.date);					
-					console.log("dateFormat for query = " + dateFormat);
                                         // execute query to search contact in phonebook
                                         dataCollector.getDayHistoryCall(extFrom, dateFormat, function(results){
                                                 var mess = new ResponseMessage(client.sessionId, "day_history_call", "received day history call");
@@ -1290,7 +1278,7 @@ io.on('connection', function(client){
 				var audioFiles = [];
 				fs.readdir(AST_CALL_AUDIO_DIR, function(err, files){					
 					if(err){
-						console.log(err);
+						log(err);
 						return;
 					}
 					for(i=0; i<files.length; i++){
@@ -1567,10 +1555,7 @@ createCustomerCardHTML = function(customerCard, from){
  * It read template html file and personalize it with the parameter results.
  */
 function createResultSearchContactsPhonebook(results){
-	      		
-	console.log(results);
 	var HTMLresult = '';
-	      		
 	// read file
 	var htmlTemplate = fs.readFileSync(TEMPLATE_DECORATOR_VCARD_FILENAME, "UTF-8", function(err, data) {
 		if(err){
@@ -1580,21 +1565,17 @@ function createResultSearchContactsPhonebook(results){
 		}
 		return data;
 	});
-	
 	// repeat htmlTemplate for number of results
 	var currentUser = '';
 	var temp = '';
 	var template = '';
 	for(var i=0; i<results.length; i++){
-	
 		currentUser = results[i];
 		template = normal.compile(htmlTemplate);
 		currentUser.server_address = "http://" + hostname + ":" + port;
 		temp = template(currentUser);
-		
 		HTMLresult += temp;
 	}
-	
 	return HTMLresult;
 }
 
@@ -1602,7 +1583,7 @@ function createResultSearchContactsPhonebook(results){
 function printLoggedClients(){
 	log("the list of logged clients is:");
 	for(keyClient in clients){
-		console.log("\t[" + keyClient + "] - IP = [" + clients[keyClient].connection.remoteAddress + "] - sessionId = [" + clients[keyClient].sessionId + "]");
+		log("\t[" + keyClient + "] - IP = [" + clients[keyClient].connection.remoteAddress + "] - sessionId = [" + clients[keyClient].sessionId + "]");
 	}
 }
 
