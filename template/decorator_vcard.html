@@ -45,9 +45,9 @@
 		</div>
 	        {/:if}
 
-		{:if workstreet } <div class='numbers'> <div class='label'>Ufficio <a href='http://maps.google.it/maps?q={=workcity}, {=workstreet} ({=workprovince}) - {=workpostalcode}' target='_blank'><img src='{=server_address}/template/images/map.png' title='Cerca su Google Maps'/></a></div> <div class='address'> {=workcity}, {=workstreet} ({=workprovince}) - {=workpostalcode}</div> </div>
+		{:if workstreet } <div class='numbers'> <div class='label' style="margin-top: 5px">Ufficio <a href='http://maps.google.it/maps?q={=workcity}, {=workstreet} ({=workprovince}) - {=workpostalcode}' target='_blank'><img src='{=server_address}/template/images/map.png' title='Cerca su Google Maps'/></a></div> <div class='address'> {=workcity}, {=workstreet} ({=workprovince}) - {=workpostalcode}</div> </div>
 		{/:if}
-	        {:if homestreet }  <div class='numbers'> <div class='label'>Casa <a href='http://maps.google.it/maps?q={=homecity}, {=homestreet} ({=homeprovince})' target='_blank'><img src='{=server_address}/template/images/map.png' title='Cerca su Google Maps'/></a></div> <div class='address'> {=homecity}, {=homestreet} ({=homeprovince}) </div> </div>
+	        {:if homestreet }  <div class='numbers'> <div class='label' style="margin-top: 5px">Casa <a href='http://maps.google.it/maps?q={=homecity}, {=homestreet} ({=homeprovince})' target='_blank'><img src='{=server_address}/template/images/map.png' title='Cerca su Google Maps'/></a></div> <div class='address'> {=homecity}, {=homestreet} ({=homeprovince}) </div> </div>
 		{/:if}
 
 	        {:if url }
