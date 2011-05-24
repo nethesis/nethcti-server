@@ -1397,14 +1397,23 @@ io.on('connection', function(client){
                         break;
 			case ACTION_REDIRECT_VOICEMAIL:
                                 var extTo = message.extTo;
+				var callFromExt = message.callFromExt;
+				// get the channel
+                                var channel = '';
+                                for(key in am.participants){
+	                                if(am.participants[key].number==callFromExt){
+        	        	        	channel = key;
+                	                }
+                                }
+
                                 // create action to spy channel
-                                var actionRedirectVoicemail = {
-                                        Action: 'Originate',
-                                        Channel: 'SIP/501',
-                                        Application: 'Voicemail',
-                                        Data: extTo,
-                                        Callerid: REDIRECT_VM_PREFIX + extTo
-                                };
+				var actionRedirectVoicemail = {
+					Action: 'Redirect',
+					Channel: channel,
+					Context: 'ext-local',
+					Exten: 'vmu' + extTo,
+					Priority: 1
+				}
                                 // send spy action to the asterisk server
                                 am.send(actionRedirectVoicemail, function(){
                                         log('redirect_to_voicemail action from [' + extFrom + '] to voicemail [' + extTo +'] has been sent to the asterisk');
@@ -1469,6 +1478,7 @@ function createHistoryCallResponse(results){
 		temp.clid = currRes.clid;
 		temp.dst = currRes.dst;
 		temp.duration = currRes.duration;
+		temp.billsec = currRes.billsec;
 		temp.disposition = currRes.disposition;
 		temp.uniqueid = currRes.uniqueid;
 		if(audioFileList[currRes.uniqueid]!=undefined)
