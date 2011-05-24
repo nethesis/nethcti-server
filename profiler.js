@@ -2,7 +2,7 @@ var fs = require("fs");
 var sys = require("sys");
 var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
 
-const DEBUG = false;
+const DEBUG = true;
 const PROFILER_CONFIG_FILENAME = "config/profiles.ini";
 const CALL_OUT = "CALL_OUT";
 const CALL_IN = "CALL_IN";

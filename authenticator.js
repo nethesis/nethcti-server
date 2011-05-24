@@ -1,7 +1,7 @@
 var fs = require("fs");
 var sys = require("sys");
 var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
-const DEBUG = false;
+const DEBUG = true;
 const AUTHENTICATOR_CONFIG_FILENAME = "/etc/asterisk/sip_additional.conf";
 
 /* this is the authentication profile created by parsing the config file.

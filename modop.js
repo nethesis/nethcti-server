@@ -5,7 +5,7 @@
  */
 var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
 
-const DEBUG = false;
+const DEBUG = true;
 const FILE_TAB_OP = "config/optab.ini";
 const FILE_EXT_LIST = "/etc/asterisk/nethcti.ini";
 const DIAL_FROM = 1;
