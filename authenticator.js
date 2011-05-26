@@ -63,5 +63,5 @@ authenticateUser = function(ext, secret){
 
 // custom log function to output debug info
 function log(msg){
-	if(DEBUG) console.log(new Date().toUTCString() + " - [authenticator]: " + msg);
+	if(DEBUG) console.log(new Date().toString() + " - [authenticator]: " + msg);
 }

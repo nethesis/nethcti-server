@@ -16,7 +16,7 @@ exports.Controller = function(){
 	this.addDir = function(dir) { addDir(dir) };
 } 
 function log(msg){
-	if(DEBUG) console.log(new Date().toUTCString() + " - [controller.js]: " + msg);
+	if(DEBUG) console.log(new Date().toString() + " - [controller.js]: " + msg);
 }
 // add directory to control and emit event when modified time changes
 function addDir(dir){

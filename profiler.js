@@ -116,5 +116,5 @@ function initProfiles(){
 }
 
 function log(msg){
-	if(DEBUG) console.log(new Date().toUTCString() + " - [Profiler]: " + msg);
+	if(DEBUG) console.log(new Date().toString() + " - [Profiler]: " + msg);
 }

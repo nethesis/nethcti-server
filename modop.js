@@ -425,5 +425,5 @@ function initTabOp(){
 
 
 function log(msg){
-        if(DEBUG) console.log(new Date().toUTCString() + " - [Modop]: " + msg);
+        if(DEBUG) console.log(new Date().toString() + " - [Modop]: " + msg);
 }

@@ -288,5 +288,5 @@ function executeSQLQuery(type, objQuery, cb){
 
 // custom log function to output debug info
 function log(msg){
-	if(DEBUG) console.log(new Date().toUTCString() + " - [DataCollector]: " + msg);
+	if(DEBUG) console.log(new Date().toString() + " - [DataCollector]: " + msg);
 }

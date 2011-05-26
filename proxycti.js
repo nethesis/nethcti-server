@@ -51,7 +51,7 @@ var ResponseMessage = function(clientSessionId, typeMessage, respMessage){
 }
 
 function log(msg){
-	if (DEBUG) console.log(new Date().toUTCString() + " - [ProxyCTI]: " + msg);
+	if (DEBUG) console.log(new Date().toString() + " - [ProxyCTI]: " + msg);
 }
 
 // initialize parameters for this server and for asterisk server
