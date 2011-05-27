@@ -389,10 +389,13 @@ am.addListener('newstate', function(headers){
         if(DEBUG) sys.puts("CLIENT: newstate event " + headers.channelstatedesc + " for " + headers.calleridnum);
 	var typeext = headers.channel.split("-")[0];
 	var statusEvent = headers.channelstatedesc.toLowerCase();
-	// update ext status for op
-	modop.updateExtStatusForOpWithTypeExt(typeext, statusEvent);
-	// update all clients with the new state of extension, for update operator panel
-	updateAllClientsForOpWithTypeExt(typeext);
+	// if the call is a spy call, doesn't warn anyone
+	if(headers.calleridname.indexOf(SPY_PREFIX)==-1){
+		// update ext status for op
+		modop.updateExtStatusForOpWithTypeExt(typeext, statusEvent);
+		// update all clients with the new state of extension, for update operator panel
+		updateAllClientsForOpWithTypeExt(typeext);
+	}
 })
 
 /* This function update all clients with the new state of extension, givin ext. 
