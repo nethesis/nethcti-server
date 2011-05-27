@@ -1345,12 +1345,19 @@ io.on('connection', function(client){
 			break;
 			case ACTION_SPY_LISTEN:
 				var extToSpy = message.extToSpy;
+				// get channel to spy
+                                var channelToSpy = '';
+                                for(key in am.participants){
+                                        if(am.participants[key].number==extToSpy){
+                                                channelToSpy = am.participants[key].channel;
+                                        }
+                                }
 				// create action to spy channel
 				var actionSpyListen = {
 					Action: 'Originate',
 					Channel: 'SIP/' + extFrom,
 					Application: 'ChanSpy',
-					Data: extToSpy,
+					Data: channelToSpy,
 					Callerid: SPY_PREFIX + extToSpy
 				};
 				// send spy action to the asterisk server
@@ -1382,12 +1389,19 @@ io.on('connection', function(client){
                         break;
 			case ACTION_SPY_LISTEN_SPEAK:
                                 var extToSpy = message.extToSpy;
+				// get channel to spy
+                                var channelToSpy = '';
+                                for(key in am.participants){
+                                        if(am.participants[key].number==extToSpy){
+                                                channelToSpy = am.participants[key].channel;
+                                        }
+                                }
                                 // create action to spy channel
                                 var actionSpyListenSpeak = {
                                         Action: 'Originate',
                                         Channel: 'SIP/' + extFrom,
                                         Application: 'ChanSpy',
-                                        Data: extToSpy + ',w',
+                                        Data: channelToSpy + ',w',
                                         Callerid: SPY_PREFIX + extToSpy
                                 };
                                 // send spy action to the asterisk server
