@@ -245,7 +245,15 @@ exports.AsteriskManager = function (newconfig) {
                         var channel = tmp[0];
                         var extension = tmp[0].split('/');
                         extension = extension[1];
+
+			// change by Alessandro ***************************************************************
+			self.participants[headers.uniqueid] = {name: headers.calleridname != "device" ? headers.calleridname : channel , number: headers.calleridnum != "" ? headers.calleridnum : extension, channel: headers.channel};
+			/* the original was
 			self.participants[headers.uniqueid] = {name: headers.calleridname != "device" ? headers.calleridname : channel , number: headers.calleridnum != "" ? headers.calleridnum : extension};
+			 * 
+			 */
+			// end of change **********************************************************************
+
 	        break;
 	
 	        case "Join": // Agent joined queue event
