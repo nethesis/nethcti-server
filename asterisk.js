@@ -250,9 +250,8 @@ exports.AsteriskManager = function (newconfig) {
 			self.participants[headers.uniqueid] = {name: headers.calleridname != "device" ? headers.calleridname : channel , number: headers.calleridnum != "" ? headers.calleridnum : extension, channel: headers.channel};
 			/* the original was
 			self.participants[headers.uniqueid] = {name: headers.calleridname != "device" ? headers.calleridname : channel , number: headers.calleridnum != "" ? headers.calleridnum : extension};
-			 * 
-			 */
-			// end of change **********************************************************************
+			 *
+			 * end of change **********************************************************************/
 
 	        break;
 	
@@ -272,7 +271,6 @@ exports.AsteriskManager = function (newconfig) {
 	        break;
 
 	        case "Dial": // source participant is dialing a destination participant
-		        
                         switch(headers.dialstatus)
                         {
                             case "CANCEL":
@@ -306,7 +304,14 @@ exports.AsteriskManager = function (newconfig) {
 	        break;
 	
 	        case "Hangup": // fires for each participant and contains the cause for the participant's hangup
-		        self.emit('hangup', self.participants[headers.uniqueid], headers.cause, headers.causetxt);
+			// Change by Alessandro
+			/* emit also headers.channel, because in redirect action it report 'ZOMBIE' name:
+			 * for example: (channel: 'AsyncGoto/SIP/501-0000079a<ZOMBIE>'). It is used by the client when redirect a call,
+			 * for no sign free extension in the operator panel.
+			 */
+		        self.emit('hangup', self.participants[headers.uniqueid], headers.cause, headers.causetxt, headers.channel);
+		        // original: self.emit('hangup', self.participants[headers.uniqueid], headers.cause, headers.causetxt);
+			// End of change
 	        break;
 
 	        case "Cdr": // call data record. contains a ton of useful info about the call (whether it was successful or not) that recently ended
