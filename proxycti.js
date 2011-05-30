@@ -203,7 +203,6 @@ am.addListener('agentcalled', function(fromid, fromname, queue, destchannel) {
 
 
 am.addListener('dialing', function(from, to) {
-
 	/* check if the call come from queue: in this case, "from" and "to" are equal.
 	 * So, the queue call is managed by 'agentcalled' event.
 	 */
@@ -214,18 +213,22 @@ am.addListener('dialing', function(from, to) {
 //		if(tempFrom==to.number)
 			return;
 	}
+	/* check if the dialing is coming from redirect action. In this case the channel is for example
+	 * (channel: 'AsyncGoto/SIP/501-000007e0'), and the from.number is 'SIP' (wrong).
+	 * So this piece of code correct it.
+	 */
+	if(from.channel.indexOf('AsyncGoto')!=-1)
+		from.number = from.channel.split('/')[2].split('-')[0];
 
 	log("Dial: " + sys.inspect(from) + " -> "+ sys.inspect(to));
 	
 	// check if the user is logged in
 	if(to!=undefined && clients[to.number]!=undefined){
-
 		// check the permission of the user to receive the call
 		if(!profiler.checkActionCallInPermit(to.number)){
 			log("The user [" + to.number + "] hasn't the permission of receiving call !");
 			return;
 		}
-	
 		// create the response for the client
 		var msg = from.name;
 		var c = clients[to.number];
@@ -312,37 +315,40 @@ am.addListener('unhold', function(participant) {
 	if(DEBUG) sys.puts("CLIENT: " + participant.number + " (" + participant.name + ") has taken " + other.number + " (" + other.name + ") off hold");
 });
 
-am.addListener('hangup', function(participant, code, text) {
-	if(participant!=undefined){
-		var ext = participant.number;
-		if(DEBUG) log("CLIENT: " + ext + " (" + participant.name + ") has hung up. Reason: " + code + "  ( Code: " + text + ")");
-		if(clients[ext]!=undefined){
-			var c = clients[ext];
-			var msg = "Call has hung up. Reason: " + text + "  (Code: " + code + ")";
-			var response = new ResponseMessage(c.sessionId, "hangup", msg);
-			c.send(response);
-			log("Notify of hangup has been sent to " + ext);
-		}
-		/* bug fix of asterisk.js in the wrong management of am.participants.
-		 * If this code is commented, am.participants grow with more entry of the same extension,
-		 * so it refer wrong with number in follow hangup request.
-	 	 */
-
-		for(key in am.participants){
-			if(am.participants[key].number==participant.number){
-				delete am.participants[key];
-				log("deleted from am.participants the entry relative to " + participant.number);
-				log("Then the am.participants is = ");
-				log(sys.inspect(am.participants));
+am.addListener('hangup', function(participant, code, text, headersChannel) {
+	/* check if the channel contains the string 'ZOMBIE'. In this case the hangup call is relative
+ 	 * to a call that has been redirected. So it don't advise any clients, because the call remains active.
+	 */
+	if(headersChannel.indexOf('ZOMBIE')==-1){
+		if(participant!=undefined){
+			var ext = participant.number;
+			if(DEBUG) log("CLIENT: " + ext + " (" + participant.name + ") has hung up. Reason: " + code + "  ( Code: " + text + ")");
+			if(clients[ext]!=undefined){
+				var c = clients[ext];
+				var msg = "Call has hung up. Reason: " + text + "  (Code: " + code + ")";
+				var response = new ResponseMessage(c.sessionId, "hangup", msg);
+				c.send(response);
+				log("Notify of hangup has been sent to " + ext);
 			}
+			/* bug fix of asterisk.js in the wrong management of am.participants.
+			 * If this code is commented, am.participants grow with more entry of the same extension,
+			 * so it refer wrong with number in follow hangup request.
+		 	 */
+			for(key in am.participants){
+				if(am.participants[key].number==participant.number){
+					delete am.participants[key];
+					log("deleted from am.participants the entry relative to " + participant.number);
+					log("Then the am.participants is = ");
+					log(sys.inspect(am.participants));
+				}
+			}
+			// update ext status for op
+			modop.updateExtStatusForOpWithExt(ext, 'hangup');
+			modop.updateStopRecordExtStatusForOpWithExt(ext);
+			// update all clients with the new state of extension, for update operator panel
+			updateAllClientsForOpWithExt(ext);
 		}
-		
-		// update ext status for op
-		modop.updateExtStatusForOpWithExt(ext, 'hangup');
-		modop.updateStopRecordExtStatusForOpWithExt(ext);
-		// update all clients with the new state of extension, for update operator panel
-		updateAllClientsForOpWithExt(ext);
-	}
+	} 
 });
 
 am.addListener('callreport', function(report) {
@@ -891,20 +897,16 @@ io.on('connection', function(client){
 		  		log("clients length = " + Object.keys(clients).length);
 	  		break;
 	  		case ACTION_REDIRECT:
-	  			
 	  			// check if the user has the permission of dial out
 				if(profiler.checkActionRedirectPermit(extFrom)){
-	  			
 	  				log("[" + extFrom + "] enabled to redirect call: execute redirecting...");
-	  				
 	  				// get the channel
 	  				var channel = '';
 	  				for(key in am.participants){
 	  					if(am.participants[key].number==message.redirectFrom){
-	  						channel = key;
+	  						channel = am.participants[key].channel;
 	  					}
 	  				}
-	  				
 		  			// create redirect action for the asterisk server
 		  			var actionRedirect = {
 						Action: 'Redirect',
