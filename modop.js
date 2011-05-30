@@ -168,6 +168,7 @@ function getExtStatusWithExt(ext){
 function updateExtStatusForOpWithExt(ext, status){
 	for(key in extStatusForOp){
 		if(key.indexOf(ext)!=-1){	
+			extStatusForOp[key].lastStatus = status;
 			extStatusForOp[key].status = status;
 		}
 	}
@@ -183,6 +184,7 @@ function updateExtStatusForOpWithTypeExt(typeext, status){
 	// check if the typeext exists in extStatusForOp
 	if(extStatusForOp[typeext]!=undefined){
 	        // update extSatusForOP for future request from the clients
+	        extStatusForOp[typeext].lastStatus = status;
 	        extStatusForOp[typeext].status = status;
 	        log("updated extStatusForOp to new status = " + extStatusForOp[typeext].status + " for [" + typeext + "]");
 	}
@@ -253,7 +255,7 @@ function addListenerToAm(){
 
 	        var typeext = headers.channeltype + "/" + ext;
 		// set status	
-	        extStatusForOp[typeext].status = status;
+		updateExtStatusForOpWithTypeExt(typeext, status);
 
 		/* Check for the dnd and cf status of current ext.
 	         * This is made beacuse PeerEntry event don't report the dnd and cf status, and so
