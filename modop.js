@@ -168,7 +168,7 @@ function getExtStatusWithExt(ext){
 function updateExtStatusForOpWithExt(ext, status){
 	for(key in extStatusForOp){
 		if(key.indexOf(ext)!=-1){	
-			extStatusForOp[key].lastStatus = status;
+			extStatusForOp[key].lastStatus = extStatusForOp[key].status;
 			extStatusForOp[key].status = status;
 		}
 	}
@@ -184,7 +184,7 @@ function updateExtStatusForOpWithTypeExt(typeext, status){
 	// check if the typeext exists in extStatusForOp
 	if(extStatusForOp[typeext]!=undefined){
 	        // update extSatusForOP for future request from the clients
-	        extStatusForOp[typeext].lastStatus = status;
+	        extStatusForOp[typeext].lastStatus = extStatusForOp[typeext].status;
 	        extStatusForOp[typeext].status = status;
 	        log("updated extStatusForOp to new status = " + extStatusForOp[typeext].status + " for [" + typeext + "]");
 	}
