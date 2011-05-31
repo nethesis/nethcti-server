@@ -376,7 +376,7 @@ am.addListener('peerstatus', function(headers) {
   uniqueid: '1303228098.13' }
 */
 am.addListener('newstate', function(headers){
-        log("NewState event " + headers.channelstatedesc + " for " + headers.calleridnum);
+        log("NewState event '" + headers.channelstatedesc + "' for [" + headers.calleridnum + "]");
 	var typeext = headers.channel.split("-")[0];
 	var statusEvent = headers.channelstatedesc.toLowerCase();
 	// if the call is a spy call, doesn't warn anyone
@@ -395,11 +395,12 @@ am.addListener('newstate', function(headers){
 
 function updateAllClientsForOpWithExt(ext){	
 	// get new state of the extension ext
-	log('\nMETHOD updateAllClientsForOpWithExt: modop.getExtStatusWithExt(ext) with ext = ' + ext);
+	console.log("\n");
+	log('METHOD updateAllClientsForOpWithExt: modop.getExtStatusWithExt(ext) with ext = ' + ext);
         var newState = modop.getExtStatusWithExt(ext);
 	log('obtained newState: ' + sys.inspect(newState));
         // send update to all clients with the new state of the typeext for op (operator panel)
-	log('Update all clients (with ext):');
+	log('Update all clients (with ext)...');
         for(key in clients){
                 var c = clients[key];
                 var msg = "state of " + newState.Label + " has changed: update ext new state";
@@ -408,7 +409,7 @@ function updateAllClientsForOpWithExt(ext){
                 c.send(response);
                 log("Notify of new ext state has been sent to client " + key);
         }	
-	log('\n');
+	console.log('\n');
 }
 
 /* This function update all clients with the new state of extension, givin typeext. 
@@ -417,11 +418,12 @@ function updateAllClientsForOpWithExt(ext){
  */
 function updateAllClientsForOpWithTypeExt(typeext){
 	// get new state of the extension typeext
-	log('\nMETHOD updateAllClientsForOpWithTypeExt: modop.getExtStatusWithTypeExt(typeext) with typeext = ' + typeext);
+	console.log("\n");
+	log('METHOD updateAllClientsForOpWithTypeExt: modop.getExtStatusWithTypeExt(typeext) with typeext = ' + typeext);
 	var newState = modop.getExtStatusWithTypeExt(typeext);	
 	log('obtained newState: ' + sys.inspect(newState));
 	// send update to all clients with the new state of the typeext for op (operator panel)
-	log('Update all clients (with typeext):');
+	log('Update all clients (with typeext)...');
         for(key in clients){
                 var c = clients[key];
                 var msg = "state of " + newState.Label + " has changed: update ext new state";
@@ -430,11 +432,10 @@ function updateAllClientsForOpWithTypeExt(typeext){
                 c.send(response);
                 log("Notify of new ext state has been sent to client " + key);
         }
-	log('\n');
+	console.log('\n');
 }
 
 am.addListener('peerentry', function(headers) {
-	log("PeerEntry event");
 });
 
 
@@ -1666,12 +1667,14 @@ function initServerAndAsteriskParameters(){
 
 
 process.on('uncaughtException', function(err){
-	log('\n*********************************************');
+	console.log("\n");
+	log('*********************************************');
 	log('Caught not provided exception: ');
 	log(err);
-	log("\nSTACK:");
+	log("STACK:");
 	log(err.stack);
-	log('*********************************************\n');
+	log('*********************************************');
+	console.log("\n");
 });
 
 

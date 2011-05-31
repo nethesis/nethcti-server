@@ -196,7 +196,7 @@ function updateExtStatusForOpWithTypeExt(typeext, status){
 	        // update extSatusForOP for future request from the clients
 	        extStatusForOp[typeext].lastStatus = extStatusForOp[typeext].status;
 	        extStatusForOp[typeext].status = status;
-	        log("updated extStatusForOp to new status = " + extStatusForOp[typeext].status + " for [" + typeext + "]");
+	        log("updated new status '" + extStatusForOp[typeext].status + "' for typeext [" + typeext + "]");
 	}
 }
 
@@ -242,9 +242,10 @@ function addListenerToAm(){
 	  realtimedevice: 'no' }
 	*/
 	am.addListener('peerentry', function(headers) {
-	        log("PeerEntry event");
 	        var ext = headers.objectname;
 	        var status = headers.status;
+		console.log("\n");
+	        log("PeerEntry event: ext [" + ext + "], status '" + status + "'");
 	        var dndStatus = '';
 	        var cfStatus = '';
 	        var cfStatusToExt = '';
