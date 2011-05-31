@@ -55,7 +55,6 @@ function initProfiles(){
  * initialized user authentication profile.
  */
 authenticateUser = function(ext, secret){
-	log(userAuthProfiles[ext].secret);
 	if(userAuthProfiles[ext].secret==secret)
 		return true;
 	return false;
