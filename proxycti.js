@@ -347,7 +347,6 @@ am.addListener('callreport', function(report) {
   peerstatus: 'Registered' }
 */
 am.addListener('peerstatus', function(headers) {
-        log("PeerStatus event: " + sys.inspect(headers));
 	var statusEvent = headers.peerstatus.toLowerCase();
 	var currStatus = modop.getExtStatusWithTypeExt(headers.peer).status;
 	/* if status of the event is 'registered' and current status of peer is different 
@@ -358,6 +357,7 @@ am.addListener('peerstatus', function(headers) {
 		log("ignore event: status of peer " + headers.peer + " is already different from 'unregistered'");
 		return;
 	}
+        log("PeerStatus event: " + sys.inspect(headers));
 	// update ext status for op
 	modop.updateExtStatusForOpWithTypeExt(headers.peer, headers.peerstatus.toLowerCase());
 	// update all clients with the new state of extension, for update operator panel
