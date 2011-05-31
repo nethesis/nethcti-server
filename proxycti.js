@@ -413,7 +413,7 @@ function updateAllClientsForOpWithExt(ext){
 	// get new state of the extension ext
         var newState = modop.getExtStatusWithExt(ext);
         // send update to all clients with the new state of the typeext for op (operator panel)
-	log('Update all clients:');
+	log('Update all clients (with ext):');
         for(key in clients){
                 var c = clients[key];
                 var msg = "state of " + newState.Label + " has changed: update ext new state";
@@ -433,14 +433,16 @@ function updateAllClientsForOpWithTypeExt(typeext){
 	// get new state of the extension typeext
 	var newState = modop.getExtStatusWithTypeExt(typeext);	
 	// send update to all clients with the new state of the typeext for op (operator panel)
+	log('Update all clients (with typeext):');
         for(key in clients){
                 var c = clients[key];
                 var msg = "state of " + newState.Label + " has changed: update ext new state";
                 var response = new ResponseMessage(c.sessionId, "update_ext_new_state_op", msg);
                 response.extNewState = newState;
                 c.send(response);
-                log("Notify of new ext state has been sent to client " + c.sessionId);
+                log("Notify of new ext state has been sent to client " + key);
         }
+	log('\n');
 }
 
 am.addListener('peerentry', function(headers) {
