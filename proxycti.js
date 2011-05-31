@@ -134,6 +134,7 @@ function getUniqueIdFromFilename(filename){
 am = new ast.AsteriskManager({user: asterisk_user, password: asterisk_pass, host: asterisk_host});
 
 am.addListener('serverconnect', function() {
+	log("ServerConnect event");
 	am.login(function () {
 		log("Logged in to Asterisk Manager.");
 
@@ -144,16 +145,15 @@ am.addListener('serverconnect', function() {
 });
 
 am.addListener('serverdisconnect', function(had_error) {
-	if(DEBUG) sys.puts("CLIENT: Disconnected! had_error == " + (had_error ? "true" : "false"));
+	log("ServerDisconnected event! had_error == " + (had_error ? "true" : "false"));
 });
 
 am.addListener('servererror', function(err) {
-	if(DEBUG) sys.puts("CLIENT: Error: " + err);
+	log("ServerError event: error: " + err);
 });
 
 am.addListener('agentcalled', function(fromid, fromname, queue, destchannel) {
-	log("AgentCalled: from [" + fromid + " : " + fromname + "] to queue " + queue + " and to -> " + destchannel);
-	
+	log("AgentCalled event: from [" + fromid + " : " + fromname + "] to queue " + queue + " and to -> " + destchannel);
 	var start = destchannel.indexOf("/")+1;
 	var end = destchannel.indexOf("@");
 	var to = destchannel.substring(start, end);
@@ -203,6 +203,7 @@ am.addListener('agentcalled', function(fromid, fromname, queue, destchannel) {
 
 
 am.addListener('dialing', function(from, to) {
+	log("Dialing event");
 	/* check if the call come from queue: in this case, "from" and "to" are equal.
 	 * So, the queue call is managed by 'agentcalled' event.
 	 */
@@ -278,8 +279,7 @@ am.addListener('dialing', function(from, to) {
 });
 
 am.addListener('callconnected', function(from, to) {
-	if(DEBUG) sys.puts("CLIENT: Connected call between " + from.number + " (" + from.name + ") and " + to.number + " (" + to.name + ")");
-	
+	log("CallConnected event between " + from.number + " (" + from.name + ") and " + to.number + " (" + to.name + ")");
 	if(clients[from.number]!=undefined){
 		var c = clients[from.number];
 		var msg = "Call from " + from.number + " to " + to.number + " CONNECTED";
@@ -301,21 +301,21 @@ am.addListener('callconnected', function(from, to) {
 });
 
 am.addListener('calldisconnected', function(from, to) {
-	
-	if(DEBUG) sys.puts("CLIENT: Disconnected call between " + from.number + " (" + from.name + ") and " + to.number + " (" + to.name + ")");
+	log("CallDisconnected event: call between " + from.number + " (" + from.name + ") and " + to.number + " (" + to.name + ")");
 });
 
 am.addListener('hold', function(participant) {
 	var other = am.getParticipant(participant['with']);
-	if(DEBUG) sys.puts("CLIENT: " + participant.number + " (" + participant.name + ") has put " + other.number + " (" + other.name + ") on hold");
+	log("Hold event: " + participant.number + " (" + participant.name + ") has put " + other.number + " (" + other.name + ") on hold");
 });
 
 am.addListener('unhold', function(participant) {
 	var other = am.getParticipant(participant['with']);
-	if(DEBUG) sys.puts("CLIENT: " + participant.number + " (" + participant.name + ") has taken " + other.number + " (" + other.name + ") off hold");
+	log("Unhold event: " + participant.number + " (" + participant.name + ") has taken " + other.number + " (" + other.name + ") off hold");
 });
 
 am.addListener('hangup', function(participant, code, text, headersChannel) {
+	log("Hangup event: participant [" + participant + "] code = " + code + ", text = " +  text + " and headersChannel = " + headersChannel);
 	/* check if the channel contains the string 'ZOMBIE'. In this case the hangup call is relative
  	 * to a call that has been redirected. So it don't advise any clients, because the call remains active.
 	 */
@@ -352,7 +352,7 @@ am.addListener('hangup', function(participant, code, text, headersChannel) {
 });
 
 am.addListener('callreport', function(report) {
-	if(DEBUG) sys.puts("CLIENT: Call report: " + sys.inspect(report));
+	log("CallReport: " + sys.inspect(report));
 });
 
 /*
@@ -363,7 +363,7 @@ am.addListener('callreport', function(report) {
   peerstatus: 'Registered' }
 */
 am.addListener('peerstatus', function(headers) {
-        if(DEBUG) sys.puts("CLIENT: PeerStatus with peerstatus = " + headers.peerstatus + " for peer: " + headers.peer);
+        log("PeerStatus with peerstatus = " + headers.peerstatus + " for peer: " + headers.peer);
 	var statusEvent = headers.peerstatus.toLowerCase();
 	var currStatus = modop.getExtStatusWithTypeExt(headers.peer).status;
 	/* if status of the event is 'registered' and current status of peer is different 
@@ -392,7 +392,7 @@ am.addListener('peerstatus', function(headers) {
   uniqueid: '1303228098.13' }
 */
 am.addListener('newstate', function(headers){
-        if(DEBUG) sys.puts("CLIENT: newstate event " + headers.channelstatedesc + " for " + headers.calleridnum);
+        log("NewState event " + headers.channelstatedesc + " for " + headers.calleridnum);
 	var typeext = headers.channel.split("-")[0];
 	var statusEvent = headers.channelstatedesc.toLowerCase();
 	// if the call is a spy call, doesn't warn anyone
@@ -442,7 +442,7 @@ function updateAllClientsForOpWithTypeExt(typeext){
 }
 
 am.addListener('peerentry', function(headers) {
-	if(DEBUG) log("CLIENT: PeerEntry event");
+	log("PeerEntry event");
 });
 
 
@@ -455,7 +455,7 @@ am.addListener('peerentry', function(headers) {
   extra: 'Family: DND^Value: Attivo^' }
  */
 am.addListener('userevent', function(headers){
-	if(DEBUG) sys.puts("CLIENT: UserEvent event");
+	log("UserEvent event");
 	// get ext, family and value
 	var ext = headers.channel.split("/")[1]; // 503-0000000d^Family
 	ext = ext.split("-")[0]; // 503
@@ -551,7 +551,7 @@ am.addListener('userevent', function(headers){
    Uniqueid: 1305117424.486 }
  */
 am.addListener('parkedcall', function(headers){
-	log("CLIENT: ParkedCall event");
+	log("ParkedCall event");
 	var parking = 'PARK' + headers.exten;
 	var extParked = headers.channel.split("/")[1];
 	extParked = extParked.split("-")[0];
@@ -575,7 +575,7 @@ am.addListener('parkedcall', function(headers){
    CallerIDName: giovanni }
  */
 am.addListener('parkedcalltimeout', function(headers){
-        log("CLIENT: ParkedCallTimeOut event");
+        log("ParkedCallTimeOut event");
         var parking = 'PARK' + headers.exten;
         // update status of park ext
         modop.updateEndParkExtStatus(parking);
@@ -587,7 +587,7 @@ am.addListener('parkedcalltimeout', function(headers){
 extToReturnExtStatusForOp = '';
 clientToReturnExtStatusForOp = '';
 am.addListener('parkedcallscomplete', function(){
-
+	log("ParkedCallsCmoplete event");
 	/* check if the user has the permission to view operator panel.
          * First check if the user has the "OP_PLUS" permission. If he hasn't the permission, then
          * it check if he has the "OP_BASE" permission. 
@@ -621,6 +621,25 @@ am.addListener('parkedcallscomplete', function(){
        	}
 });
 
+/* This event is emitted by asterisk.js when a new voicemail is added
+ * An example:
+ *
+{ event: 'MessageWaiting',
+  privilege: 'call,all',
+  mailbox: '500@default',
+  waiting: '1',
+  new: '1',
+  old: '0' }
+ *
+ */
+am.addListener('messagewaiting', function(headers){
+	log("MessageWaiting event: new voicemail for [" + headers.mailbox + "]: number is: " + headers.new);
+	var ext = headers.mailbox.split('@')[0];
+	// update voicemail count of the extension
+	modop.updateVMCountWithExt(ext,headers.new);
+	// update all clients with the new state of extension, for update operator panel
+	updateAllClientsForOpWithExt(ext);
+});
 
 /*
  * End of section relative to asterisk interaction
