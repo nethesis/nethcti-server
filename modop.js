@@ -216,12 +216,11 @@ function addAsteriskManager(amanager){
 
 // This function add listeners to asterisk manager.
 function addListenerToAm(){
-	
 	/* This event is generated for each registered user.
-	 * This event is triggered after SIPPeers action is executed into the asterisk server.
-	 * This action is made by initExtStatusForOp function.
+	 * This event is triggered after 'SIPPeers' action is executed into the asterisk server.
+	 * This action is made by 'initExtStatusForOp' function.
 	 * This event permit to add status information about extension, to extStatusForOp.
-	 * The status informations are 'dndStatus', 'cfStatus' and 'status'. In the case cfStatus is 'on',
+	 * The status informations are 'dndStatus', 'cfStatus' and 'status'. In the case 'cfStatus' is 'on',
 	 * then it report also 'cfStatusExtTo' information, to know the extension setted for call
 	 * forwarding.
 	 *
@@ -243,30 +242,26 @@ function addListenerToAm(){
 	  realtimedevice: 'no' }
 	*/
 	am.addListener('peerentry', function(headers) {
-	        log("CLIENT: PeerEntry event");
-		
+	        log("PeerEntry event");
 	        var ext = headers.objectname;
 	        var status = headers.status;
 	        var dndStatus = '';
 	        var cfStatus = '';
 	        var cfStatusToExt = '';
-
 		/* ATTENTION:
 		 * This check is for an error that is generated only in nethservice and not in development environment.
-		 * In nethservice machine arrive PeerEntry event that has entries as: 'objectname: ranocchilab/from-neth'.
-		 * The typeext generated below to access extStatusForOp is constructed with this objectname, but in extStatusForOp
-		 * there aren't any key with 'IAX2/something/something', because extStatusForOp is initially created considering 
+		 * In nethservice machine arrive 'PeerEntry' event that has entries as: 'objectname: ranocchilab/from-neth'.
+		 * The 'typeext' generated below to access 'extStatusForOp' is constructed with this 'objectname', but in 'extStatusForOp'
+		 * there aren't any key with 'IAX2/something/something', because 'extStatusForOp' is initially created considering 
 		 * 'nethcti.ini' file generated from perl script and in this file there are more IAX2 entries as 'IAX2/something' and not
-		 * 'IAX2/something/something'. So this line of code consider only first part: 'IAX2/something'.
+		 * 'IAX2/something/something'. So this line of code consider only the first part: 'IAX2/something'.
 		 */
 		if(headers.channeltype=='IAX2'){
 		        ext = headers.objectname.split("/")[0];
 	        }
-
 	        var typeext = headers.channeltype + "/" + ext;
 		// set status	
 		updateExtStatusForOpWithTypeExt(typeext, status);
-
 		/* Check for the dnd and cf status of current ext.
 	         * This is made beacuse PeerEntry event don't report the dnd and cf status, and so
 	         * it can be possibile to correctly update extStatusForOp.
@@ -279,35 +274,24 @@ function addListenerToAm(){
 	        };
         	// send action to asterisk
 	        am.send(actionCheckDNDStatus, function (resp) {
-	                //log("check DND status action for " + ext + " has been sent to asterisk");
-	                if(resp.value==undefined){
-	                        //log("to create extStatusForOp: dnd status for ext[" + ext + "] is off");
+	                if(resp.value==undefined)
 	                        dndStatus = 'off';
-	                }
-	                else{
-	                        //log("to create extStatusForOp: dnd status for ext[" + ext + "] is on");
+	                else
 	                        dndStatus = 'on';
-	                }
 	                // set the status informations to ext of extStatusForOp
 	                extStatusForOp[typeext].dndStatus = dndStatus;
 	        });
-	
 	        // create action CF for asterisk server
 	        var cmd = "database get CF " + ext;
 	        var actionCheckCFStatus = {
 	                Action: 'command',
 	                Command: cmd
 	        };
-	
 		// send action to asterisk
 	        am.send(actionCheckCFStatus, function (resp) {
-	                //log("check CF status action for " + ext + " has been sent to asterisk");
-	                if(resp.value==undefined){
-	                        //log("to create extStatusForOp: cf status for ext[" + ext + "] is off");
+	                if(resp.value==undefined)
 	                        cfStatus = 'off';
-	                }
 	                else{
-	                        //log("to create extStatusForOp: cf status for ext[" + ext + "] is on");
 	                        cfStatus = 'on';
 	                        cfStatusToExt = resp.value.split('\n')[0];
 	                }
@@ -315,7 +299,6 @@ function addListenerToAm(){
 	                extStatusForOp[typeext].cfStatus = cfStatus;
 	                extStatusForOp[typeext].cfStatusToExt = cfStatusToExt;
 	        });
-
 		/* Check for the presence of voicemail.
                  * This is made beacuse PeerEntry event don't report this information, and so
                  * it can be possibile to correctly update extStatusForOp.
@@ -335,14 +318,12 @@ function addListenerToAm(){
                 });
 	});	
 
-
 	/* This event is triggered when PeerEntry event is emitted for each user registered in asterisk.
 	 * So, the initialization of extStatusForOp can be completed. 
 	 */
 	am.addListener('peerlistcomplete', function(){
-	        log("CLIENT: PeerListComplete event");
+	        log("PeerListComplete event");
 	});
-
 
 	/* This event is necessary to add information of queue member to extension status
 	 * Example of QueueMember event headers
@@ -360,7 +341,7 @@ function addListenerToAm(){
 	  actionid: '1305039851763' }
 	*/
 	am.addListener('queuemember', function(headers){
-		log("CLIENT: QueueMember event");
+		log("QueueMember event");
 		var ext = headers.name.split("/")[1];
 		var queue = headers.queue;
 		ext = ext.split("@")[0];
@@ -382,11 +363,9 @@ function addListenerToAm(){
  * The receive of one PeerEntry event, allow to add status information of the extension to extStatusForOp.
  */
 function initExtStatusForOp(){
-        log("initialize status of all extension for future request by clients for operator panel");
-
+        log("initialize status of all extensions");
         // read file where are the list of all extensions
         extStatusForOp = iniparser.parseSync(FILE_EXT_LIST);
-
         /* create action for asterisk server that generate series of PeerEntry events
          * to add status informations to extStatusForOp
          */
@@ -397,8 +376,6 @@ function initExtStatusForOp(){
         am.send(actionSIPPeersOP, function () {
                 log("'SIPPeers' action has been sent to the asterisk server");
         });
-
-
 	/* create action for asterisk server that generate series of PeerEntry events
          * to add status informations to extStatusForOp for each IAXPeer
          */
@@ -409,7 +386,6 @@ function initExtStatusForOp(){
         am.send(actionIAXPeersOP, function () {
                 log("'IAXPeers' action has been sent to the asterisk server");
         });
-
 	/* create action for asterisk server that generate series of QueueMember events
          * to add information if the extension is present in some queue
          */

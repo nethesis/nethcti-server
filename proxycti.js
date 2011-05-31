@@ -13,8 +13,6 @@ var sys = require(process.binding('natives').util ? 'util' : 'sys');
 var pathreq = require('path');
 var normal = require("./lib/normal-template/lib/normal-template");
 var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
-
-
 //
 var am;
 var server;
@@ -24,14 +22,12 @@ var server;
  */
 var clients = {};
 
-
 /* Audio file list of recorded call. This is an hash table that has the unique id of the file
  * as the key and the filename as value.
  * (view createAudioFileList function).
  */
 var audioFileList = {};
-
-
+//
 const DEBUG = true;
 const PROXY_CONFIG_FILENAME = "config/proxycti.ini";
 const TEMPLATE_DECORATOR_VCARD_FILENAME = "./template/decorator_vcard.html";
@@ -61,22 +57,12 @@ initServerAndAsteriskParameters();
 console.log("\n\n\n-----------------------------------------------------------");
 console.log("------------------- START Server v. " + version + " -------------------");
 
-
-// Profiler object
+// Add object modules
 var profiler = new proReq.Profiler();
-log("Profiler object created");
-
-// Data collector object for execute queries
 var dataCollector = new dataReq.DataCollector();
-log("DataCollector object created");
-
-// Authenticator object
 var authenticator = new authReq.Authenticator();
-log("Authenticator object created");
-
-// Modop object. (Module Operator Panel)
 var modop = new modopReq.Modop();
-log("Modop object created");
+log('Added object modules: Profiler, DataCollector, Authenticator and Modop')
 
 // create the list of audio files of recorded call
 createAudioFileList();
@@ -137,9 +123,7 @@ am.addListener('serverconnect', function() {
 	log("ServerConnect event");
 	am.login(function () {
 		log("Logged in to Asterisk Manager.");
-
 		// Add asterisk manager to modop
-		log("add asterisk manager 'am' to modop");
 		modop.addAsteriskManager(am);
 	});
 });
@@ -212,6 +196,7 @@ am.addListener('dialing', function(from, to) {
 		// deeper inspection
 //		var tempFrom = from.number.substring(0,inde);
 //		if(tempFrom==to.number)
+			log('call come from queue: return\n');
 			return;
 	}
 	/* check if the dialing is coming from redirect action. In this case the channel is for example
@@ -221,7 +206,7 @@ am.addListener('dialing', function(from, to) {
 	if(from.channel.indexOf('AsyncGoto')!=-1)
 		from.number = from.channel.split('/')[2].split('-')[0];
 
-	log("Dial: " + sys.inspect(from) + " -> "+ sys.inspect(to));
+	log("Dial FROM '" + sys.inspect(from) + "'  -->  TO '" + sys.inspect(to) + "'");
 	
 	// check if the user is logged in
 	if(to!=undefined && clients[to.number]!=undefined){
@@ -315,14 +300,14 @@ am.addListener('unhold', function(participant) {
 });
 
 am.addListener('hangup', function(participant, code, text, headersChannel) {
-	log("Hangup event: participant [" + participant + "] code = " + code + ", text = " +  text + " and headersChannel = " + headersChannel);
+	var ext = participant.number;
+	log("Hangup event: [" + ext + "] has hung up. Reason: " + code + "  ( Code: " + text + ") and headersChannel = " + headersChannel);
 	/* check if the channel contains the string 'ZOMBIE'. In this case the hangup call is relative
  	 * to a call that has been redirected. So it don't advise any clients, because the call remains active.
 	 */
 	if(headersChannel.indexOf('ZOMBIE')==-1){
 		if(participant!=undefined){
 			var ext = participant.number;
-			if(DEBUG) log("CLIENT: " + ext + " (" + participant.name + ") has hung up. Reason: " + code + "  ( Code: " + text + ")");
 			if(clients[ext]!=undefined){
 				var c = clients[ext];
 				var msg = "Call has hung up. Reason: " + text + "  (Code: " + code + ")";
@@ -332,14 +317,13 @@ am.addListener('hangup', function(participant, code, text, headersChannel) {
 			}
 			/* bug fix of asterisk.js in the wrong management of am.participants.
 			 * If this code is commented, am.participants grow with more entry of the same extension,
-			 * so it refer wrong with number in follow hangup request.
+			 * so it refer wrong 'with' number in follow hangup request.
 		 	 */
 			for(key in am.participants){
-				if(am.participants[key].number==participant.number){
+				if(am.participants[key].number==ext){
 					delete am.participants[key];
-					log("deleted from am.participants the entry relative to " + participant.number);
-					log("Then the am.participants is = ");
-					log(sys.inspect(am.participants));
+					log("deleted entry [" + ext + "] from 'am.participants. The am.participants is:");
+					log(sys.inspect(am.participants) + "\n");
 				}
 			}
 			// update ext status for op
@@ -363,7 +347,7 @@ am.addListener('callreport', function(report) {
   peerstatus: 'Registered' }
 */
 am.addListener('peerstatus', function(headers) {
-        log("PeerStatus with peerstatus = " + headers.peerstatus + " for peer: " + headers.peer);
+        log("PeerStatus event: " + sys.inspect(headers));
 	var statusEvent = headers.peerstatus.toLowerCase();
 	var currStatus = modop.getExtStatusWithTypeExt(headers.peer).status;
 	/* if status of the event is 'registered' and current status of peer is different 
@@ -371,7 +355,7 @@ am.addListener('peerstatus', function(headers) {
 	 * this event with status 'registered' don't change the status of the extension.
 	 */
 	if(statusEvent=='registered' && currStatus!='unregistered'){
-		log("ignore event peerstatus '" + headers.peerstatus + "' because status of peer " + headers.peer + " is already different from 'unregistered'");
+		log("ignore event: status of peer " + headers.peer + " is already different from 'unregistered'");
 		return;
 	}
 	// update ext status for op
@@ -411,7 +395,9 @@ am.addListener('newstate', function(headers){
 
 function updateAllClientsForOpWithExt(ext){	
 	// get new state of the extension ext
+	log('\nMETHOD updateAllClientsForOpWithExt: modop.getExtStatusWithExt(ext) with ext = ' + ext);
         var newState = modop.getExtStatusWithExt(ext);
+	log('obtained newState: ' + sys.inspect(newState));
         // send update to all clients with the new state of the typeext for op (operator panel)
 	log('Update all clients (with ext):');
         for(key in clients){
@@ -431,7 +417,9 @@ function updateAllClientsForOpWithExt(ext){
  */
 function updateAllClientsForOpWithTypeExt(typeext){
 	// get new state of the extension typeext
+	log('\nMETHOD updateAllClientsForOpWithTypeExt: modop.getExtStatusWithTypeExt(typeext) with typeext = ' + typeext);
 	var newState = modop.getExtStatusWithTypeExt(typeext);	
+	log('obtained newState: ' + sys.inspect(newState));
 	// send update to all clients with the new state of the typeext for op (operator panel)
 	log('Update all clients (with typeext):');
         for(key in clients){
@@ -474,7 +462,7 @@ am.addListener('userevent', function(headers){
 	value = value.toLowerCase();
 
 	if(family=='dnd'){
-		log("[" + ext + "] has set its " + family + " to value '" + value + "'");
+		log("[" + ext + "] has set its '" + family + "' to value '" + value + "'");
 		/* in this case the client who has modified its DND value is connected to cti
  		 * and has modified its DND through his telephone. So he'll be advise of changing
 		 * to update its cti.
@@ -482,18 +470,18 @@ am.addListener('userevent', function(headers){
 		if(clients[ext]!=undefined){	
 			var c = clients[ext];
 			if(value==""){ // DND is disabled by the phone user
-				log("[" + ext + "] disable its " + family);
+				log("[" + ext + "] disable its '" + family + "'");
 				var msg = ext + " has disabled its " + family;
         		        var response = new ResponseMessage(c.sessionId, "dnd_status_off", msg);
 		                c.send(response);
-		                log("Notify of " + family + " off of ext [" + ext + "] has been sent to the client " + c.sessionId);
+		                log("Notify of '" + family + " OFF' of ext [" + ext + "] has been sent to the client " + ext);
 			}	
 			else if(value=="attivo"){ // DND is enable by the phone user
-				log("[" + ext + "] enable its " + family);
+				log("[" + ext + "] enable its '" + family + "'");
 				var msg = ext + " has enabled its " + family;
                                 var response = new ResponseMessage(c.sessionId, "dnd_status_on", msg);
                                 c.send(response);
-                                log("Notify of " + family + " on of ext [" + ext + "] has been sent to the client " + c.sessionId);
+                                log("Notify of '" + family + " ON' of ext [" + ext + "] has been sent to the client " + ext);
 			}
 		}
 		// update extStatusForOp with the changing in dnd status
@@ -506,7 +494,7 @@ am.addListener('userevent', function(headers){
                 updateAllClientsForOpWithExt(ext);
 	}
 	else if(family=='cf'){
-		log("[" + ext + "] has set its " + family + " to value '" + value + "'");
+		log("[" + ext + "] has set its '" + family + "' to value '" + value + "'");
 		/* in this case the client who has modified its CF value is connected to cti
                  * and has modified its CF through his telephone. So he'll be advise of changing
                  * to update its cti.
@@ -514,19 +502,19 @@ am.addListener('userevent', function(headers){
                 if(clients[ext]!=undefined){
                         var c = clients[ext];
                         if(value==""){ // CF is disabled by the phone user
-                                log("[" + ext + "] disable its " + family);
+                                log("[" + ext + "] disable its '" + family + "'");
                                 var msg = ext + " has disabled its " + family;
                                 var response = new ResponseMessage(c.sessionId, "cf_status_off", msg);
                                 c.send(response);
-                                log("Notify of " + family + " off of ext [" + ext + "] has been sent to the client " + c.sessionId);
+                                log("Notify of '" + family + " OFF' of ext [" + ext + "] has been sent to the client " + ext);
                         }
                         else { // CF is enable by the phone user
-                                log("[" + ext + "] enable its " + family + " to [" + value + "]");
+                                log("[" + ext + "] enable its '" + family + "' to [" + value + "]");
                                 var msg = ext + " has enabled its " + family + " to " + value;
                                 var response = new ResponseMessage(c.sessionId, "cf_status_on", msg);
 				response.extTo = value;
                                 c.send(response);
-                                log("Notify of " + family + " on for ext [" + ext + "] to [" + value + "] has been sent to the client " + c.sessionId);
+                                log("Notify of '" + family + " ON' for ext [" + ext + "] to [" + value + "] has been sent to the client " + ext);
                         }
                 }
 		// update extStatusForOp with the changing in dnd status
@@ -1477,7 +1465,7 @@ io.on('connection', function(client){
   	});
 });
 
-log("asterisk manager connection");
+log("try connection to asterisk server");
 am.connect();
 
 
@@ -1678,12 +1666,12 @@ function initServerAndAsteriskParameters(){
 
 
 process.on('uncaughtException', function(err){
-	log('*********************************************');
+	log('\n*********************************************');
 	log('Caught not provided exception: ');
 	log(err);
 	log("\nSTACK:");
 	log(err.stack);
-	log('*********************************************');
+	log('*********************************************\n');
 });
 
 
