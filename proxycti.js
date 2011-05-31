@@ -419,7 +419,7 @@ function updateAllClientsForOpWithExt(ext){
                 var response = new ResponseMessage(c.sessionId, "update_ext_new_state_op", msg);
                 response.extNewState = newState;
                 c.send(response);
-                log("Notify of new ext state has been sent to client " + c.sessionId);
+                log("Notify of new ext state has been sent to client " + key);
         }	
 }
 
