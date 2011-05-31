@@ -65,6 +65,16 @@ exports.Modop = function(){
 	this.updateEndParkExtStatus = function(parking) { updateEndParkExtStatus(parking); }
 	this.updateStartRecordExtStatusForOpWithExt = function(ext) { updateStartRecordExtStatusForOpWithExt(ext); }
 	this.updateStopRecordExtStatusForOpWithExt = function(ext) { updateStopRecordExtStatusForOpWithExt(ext); }
+	this.updateVMCountWithExt = function(ext, count) { updateVMCountWithExt(ext,count) }
+}
+
+// update voicemail count of the extension 
+function updateVMCountWithExt(ext,count){
+	for(key in extStatusForOp){
+        	if(key.indexOf(ext)!=-1){
+			extStatusForOp[key].voicemailCount = count;
+		}
+	}
 }
 
 // update status of ext with the info of stop recording
