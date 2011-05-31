@@ -215,6 +215,12 @@ exports.AsteriskManager = function (newconfig) {
         {
              switch (headers.event) {
 
+		// Added by Alessandro
+		case "MessageWaiting":
+			self.emit('messagewaiting', headers);
+		break;
+		// end added
+
 		case "UserEvent":
 			self.emit('userevent', headers);
 		break;
