@@ -1045,16 +1045,16 @@ io.on('connection', function(client){
 	  			}
 	  		break;
 	  		case actions.ACTION_RECORD:
-	  			
 	  			// check if the user has the permission of dial out
 				if(profiler.checkActionRecordPermit(extFrom)){
+					logger.info("check 'record' permission for [" + extFrom + "] OK: record...");
 	  				var channel = '';
 					var uniqueid = '';
 					var callFromExt = message.callFromExt;
 					// get channel to record. It is always the caller (callFromExt)
 	  				for(key in am.participants){
 	  					if(am.participants[key].number==callFromExt){
-	  						channel = key;
+	  						channel = am.participants[key].channel;
 							uniqueid = am.participants[key].with;
 	  					}
 	  				}
@@ -1078,13 +1078,13 @@ io.on('connection', function(client){
 					};
 					// send action to asterisk
 					am.send(actionRecord, function () {
-						log("record action from " + extFrom + " has been sent to asterisk");
+						logger.info("'actionRecord' " + sys.inspect(actionRecord) + " has been sent to AST");
 						var msgstr = 'Recording of call ' + filename + ' started...';
 						var msg = new ResponseMessage(client.sessionId, 'ack_record', msgstr);
 						msg.extRecord = callFromExt;
 						client.send(msg);
-						log("ack_record has been sent to [" + extFrom + "] with: " + client.sessionId);
-						log(msgstr);
+						logger.info("RESP 'ack_record' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+						logger.info(msgstr);
 						// update status information for operator panel
 						modop.updateStartRecordExtStatusForOpWithExt(message.callFromExt);
 						modop.updateStartRecordExtStatusForOpWithExt(message.callToExt);
@@ -1094,9 +1094,9 @@ io.on('connection', function(client){
 					});
 				}
 				else{
-			  		log("ATTENTION: " + extFrom + " is not enabled to record !");
+					logger.info("check 'record' permission for [" + extFrom + "] FAILED !");
 			  		client.send(new ResponseMessage(client.sessionId, "error_record", "Sorry: you don't have permission to record call !"));
-			  		log("error_record has been sent to [" + extFrom + "] with: " + client.sessionId);
+			  		log("RESP 'error_record' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 	  			}	
 	  		break;
 	  		case actions.ACTION_STOP_RECORD:
