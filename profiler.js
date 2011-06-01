@@ -117,9 +117,7 @@ function checkActionPermit(exten, action){
 }
 
 
-/*
- * Initialize the profiles of all extensions by means the reading of the config file.
- */
+// Initialize the profiles of all extensions by means the reading of the config file.
 function initProfiles(){
 	this.actions = {};
 	this.actions = iniparser.parseSync(PROFILER_CONFIG_FILENAME); 
