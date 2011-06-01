@@ -226,77 +226,76 @@ am.addListener('agentcalled', function(fromid, fromname, queue, destchannel) {
 am.addListener('dialing', function(from, to) {
 	logger.info("EVENT 'Dialing'");
 	/* check if the call come from queue: in this case, "from" and "to" are equal.
-	 * So, the queue call is managed by 'agentcalled' event.
+	 * So, the queue call is managed by 'AgentCalled' event.
 	 */
-	var inde = from.number.indexOf("@");
+	var fromExt = from.number;
+	var inde = fromExt.indexOf("@");
 	if(inde!=-1){
 		// deeper inspection
 //		var tempFrom = from.number.substring(0,inde);
 //		if(tempFrom==to.number)
-			log('call come from queue: return\n');
+			logger.info('\'dialing\' come from queue: return');
 			return;
 	}
-	/* check if the dialing is coming from redirect action. In this case the channel is for example
-	 * (channel: 'AsyncGoto/SIP/501-000007e0'), and the from.number is 'SIP' (wrong).
+	/* check if the dialing is coming from redirect action. In this case the 'channel' key is for example
+	 * (channel: 'AsyncGoto/SIP/501-000007e0'), and the 'from.number' is 'SIP' (wrong).
 	 * So this piece of code correct it.
 	 */
 	if(from.channel.indexOf('AsyncGoto')!=-1)
-		from.number = from.channel.split('/')[2].split('-')[0];
+		fromExt = from.channel.split('/')[2].split('-')[0];
 
 	logger.info("Dial FROM '" + sys.inspect(from) + "'  -->  TO '" + sys.inspect(to) + "'");
 	
 	// check if the user is logged in
-	if(to!=undefined && clients[to.number]!=undefined){
+	var toExt = to.number;
+	if(to!=undefined && clients[toExt]!=undefined){
 		// check the permission of the user to receive the call
-		if(!profiler.checkActionCallInPermit(to.number)){
-			log("The user [" + to.number + "] hasn't the permission of receiving call !");
+		if(!profiler.checkActionCallInPermit(toExt)){
+			logger.info("check 'callIn' permission for [" + toExt + "] FAILED !");
 			return;
 		}
 		// create the response for the client
 		var msg = from.name;
-		var c = clients[to.number];
+		var c = clients[toExt];
 		/* in this response the html is not passed, because the chrome desktop 
-        	 * notification of the client accept only one absolute or relative url. */
+        	 * notification of the client accept only one absolute or relative url */
 		var response = new ResponseMessage(c.sessionId, "dialing", msg);
-		response.from = from.number;
-		response.to = to.number;
-			
-		var typesCC = profiler.getTypesCustomerCardPermit(to.number);
-		log("The user [" + to.number + "] has the permission of view following types of customer card");
-		log(sys.inspect(typesCC));
+		response.from = fromExt;
+		response.to = toExt;
+		
+		var typesCC = profiler.getTypesCustomerCardPermit(toExt);
+		logger.info("[" + toExt + "] is able to view customer card of types: " + sys.inspect(typesCC));
 
 		if(typesCC.length==0){
 			// the user hasn't the authorization of view customer card, then the length is 0
-                        log("The user " + to.number + " hasn't the permission of view customer card");
+			logger.info("check permission to view Customer Card for [" + toExt + "] FAILED !");
                         response.customerCard = ["Sorry, but you don't have permission of view customer card !"];
                         c.send(response)
-                        log("Notify of calling has been sent to client " + to.number);
+                        logger.info("RESP 'dialing' has been sent to [" + toExt + "] sessionId '" + c.sessionId + "'");
 			return;
 		}		
 		var customerCardResult = [];
 		for(i=0; i<typesCC.length; i++){
-			dataCollector.getCustomerCard(from.number, typesCC[i], function(cc){
-				var custCardHTML = createCustomerCardHTML(cc[0], from.number);
+			dataCollector.getCustomerCard(fromExt, typesCC[i], function(cc){
+				var custCardHTML = createCustomerCardHTML(cc[0], fromExt);
 				customerCardResult.push(custCardHTML);
 				if(customerCardResult.length==typesCC.length){	
 					response.customerCard = customerCardResult;
 			                c.send(response);
-			                log("Notify of calling has been sent to client " + to.number + " with relative customer card");
+			                logger.info("RESP 'dialing' has been sent to [" + toExt + "] sessionId '" + c.sessionId + "' with relative customer card");
 				}
 			});
 		}
 	}
 	if(to!=undefined){
 		// update ext status of extension that start the call
-		modop.updateExtStatusOpDialFrom(from.number, to.number);	
+		modop.updateExtStatusOpDialFrom(fromExt, toExt);	
 		// update all clients for op
-		updateAllClientsForOpWithExt(from.number);
+		updateAllClientsForOpWithExt(fromExt);
 		// update ext status of extension that receive the call
-		modop.updateExtStatusOpDialTo(to.number, from.number);
+		modop.updateExtStatusOpDialTo(toExt, fromExt);
 		// update all clients for op
-	        updateAllClientsForOpWithExt(to.number);
-		log("update dial from info for op");
-		log("update dial to info for op");
+	        updateAllClientsForOpWithExt(toExt);
 	}
 });
 
