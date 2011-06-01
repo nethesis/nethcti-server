@@ -1403,12 +1403,10 @@ io.on('connection', function(client){
                         break;
 			case actions.ACTION_SPY_LISTEN_SPEAK:
                                 var extToSpy = message.extToSpy;
-				// get channel to spy
                                 var channelToSpy = '';
                                 for(key in am.participants){
-                                        if(am.participants[key].number==extToSpy){
+                                        if(am.participants[key].number==extToSpy)
                                                 channelToSpy = am.participants[key].channel;
-                                        }
                                 }
                                 // create action to spy channel
                                 var actionSpyListenSpeak = {
@@ -1420,7 +1418,7 @@ io.on('connection', function(client){
                                 };
                                 // send spy action to the asterisk server
                                 am.send(actionSpyListenSpeak, function(){
-                                        log('spy_listen_speak action from [' + extFrom + '] to spy [' + extToSpy +'] has been sent to the asterisk');
+					logger.info("'actionSpyListenSpeak' " + sys.inspect(actionSpyListenSpeak) + " has been sent to AST");
                                 });
                         break;
 			case actions.ACTION_REDIRECT_VOICEMAIL:
