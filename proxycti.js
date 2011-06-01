@@ -985,11 +985,11 @@ io.on('connection', function(client){
 	  		case actions.ACTION_LOGOUT:
 	  			removeClient(client.sessionId);
 	  			if(!testAlreadyLoggedSessionId(client.sessionId)){
-			  		log("Client " + client.sessionId + " logged out");
+			  		logger.info("logged OUT [" + extFrom + "] sessiondId '" + client.sessionId + "'");
 			  		client.send(new ResponseMessage(client.sessionId, "ack_logout", "logout has been succesfully"));
-			  		log("acknowlwdge of logout has been sent to the client");
+			  		logger.info("RESP 'ack_logout' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 			  	}
-		  		log("clients length = " + Object.keys(clients).length);
+		  		logger.info(Object.keys(clients).length + " logged in clients");
 	  		break;
 	  		case actions.ACTION_REDIRECT:
 	  			// check if the user has the permission of dial out
