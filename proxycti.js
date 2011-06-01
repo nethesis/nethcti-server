@@ -1365,9 +1365,8 @@ io.on('connection', function(client){
 				var extToSpy = message.extToSpy;
                                 var channelToSpy = '';
                                 for(key in am.participants){
-                                        if(am.participants[key].number==extToSpy){
+                                        if(am.participants[key].number==extToSpy)
                                                 channelToSpy = am.participants[key].channel;
-                                        }
                                 }
 				// create action to spy channel
 				var actionSpyListen = {
@@ -1384,12 +1383,10 @@ io.on('connection', function(client){
 			break;
 			case actions.ACTION_PICKUP:
                                 var callerExt = message.callerExt;
-				// get channel
                         	var channel = '';
                                 for(key in am.participants){
-                                        if(am.participants[key].number==callerExt){
-                                                channel = key;
-                                        }
+                                        if(am.participants[key].number==callerExt)
+                                                channel = am.participants[key].channel;
                                 };
                                 // create action to pickup the call. It is realized with redirect action 
                                 var actionPickup = {
@@ -1401,7 +1398,7 @@ io.on('connection', function(client){
 				};
                                 // send the action to the asterisk server
                                 am.send(actionPickup, function(){
-                                        log('pickup action for [' + callerExt + '] to [' + extFrom +'] has been sent to the asterisk');
+					logger.info("'actionPickup' " + sys.inspect(actionPickup) + " has been sent to AST");
                                 });
                         break;
 			case actions.ACTION_SPY_LISTEN_SPEAK:
