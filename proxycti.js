@@ -1265,7 +1265,7 @@ io.on('connection', function(client){
                                 // check if the user has the permission to get history of calling
 				var res = profiler.checkActionHistoryCallPermit(extFrom);
                                 if(res){
-					logger.info("check 'currentWeekHistoryCall' permission for [" + extFrom + "] OK: get day history call...");
+					logger.info("check 'currentWeekHistoryCall' permission for [" + extFrom + "] OK: get current week history call...");
                                         // execute query to search contact in phonebook
                                         dataCollector.getCurrentWeekHistoryCall(extFrom, function(results){
                                                 var mess = new ResponseMessage(client.sessionId, "current_week_history_call", "received current week history call");
@@ -1284,18 +1284,19 @@ io.on('connection', function(client){
                                 // check if the user has the permission to get history of calling
 				var res = profiler.checkActionHistoryCallPermit(extFrom);
                                 if(res){
+					logger.info("check 'currentMonthHistoryCall' permission for [" + extFrom + "] OK: get current month history call...");
                                         // execute query to search contact in phonebook
                                         dataCollector.getCurrentMonthHistoryCall(extFrom, function(results){
                                                 var mess = new ResponseMessage(client.sessionId, "current_month_history_call", "received current month history call");
 						mess.results = createHistoryCallResponse(results);
                                                 client.send(mess);
-                                                log("Current month history call of [" + extFrom + "] has been sent to the client");
+                                                logger.info("RESP 'current_month_history_call' (" + results.length + " entries) has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
                                         });
                                 }
                                 else{
-                                        log("ATTENTION: " + extFrom + " is not enabled to view current month history call !");
+					logger.info("check 'currentMonthHistoryCall' permission for [" + extFrom + "] FAILED !");
                                         client.send(new ResponseMessage(client.sessionId, "error_current_month_history_call", "Sorry: you don't have permission to view current month history call !"));
-                                        log("error_current_month_history_call has been sent to [" + extFrom + "] with: " + client.sessionId);
+                                        logger.info("RESP 'error_current_month_history_call' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
                                 }
                         break;
 			case actions.ACTION_CHECK_CALL_AUDIO_FILE:
