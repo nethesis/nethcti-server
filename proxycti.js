@@ -222,7 +222,16 @@ am.addListener('agentcalled', function(fromid, fromname, queue, destchannel) {
 	}
 });
 
-
+/* An example of 'from' and 'to'
+ *
+Dial FROM '{ name: '',
+  number: '270',
+  channel: 'SIP/270-000008a9',
+  with: '1306940613.3224' }'  -->  TO '{ name: '',
+  number: '271',
+  channel: 'SIP/271-000008aa',
+  with: '1306940616.3225' }'
+ */
 am.addListener('dialing', function(from, to) {
 	logger.info("EVENT 'Dialing'");
 	/* check if the call come from queue: in this case, "from" and "to" are equal.
@@ -424,15 +433,15 @@ am.addListener('newstate', function(headers){
 	}
 })
 
-/* This function update all clients with the new state of extension, givin ext. 
- * This sent is used by the clients to update operator panel.
- * example of ext is 500 */
+/* This function update all clients with the new state of 'ext'. 
+ * So the clients can update their operator panel.
+ * 'ext' must be in the form: '500' */
 function updateAllClientsForOpWithExt(ext){	
 	// get new state of the extension ext
-	logger.info('FUNCTION \'updateAllClientsForOpWithExt(ext)\': \'modop.getExtStatusWithExt(ext)\' with ext = ' + ext);
+	logger.info('FUNCTION \'updateAllClientsForOpWithExt(ext)\': \'modop.getExtStatusWithExt(ext)\' with ext = \'' + ext + '\'');
         var newState = modop.getExtStatusWithExt(ext);
 	logger.info('obtained newState: ' + sys.inspect(newState));
-        // send update to all clients with the new state of the typeext for op (operator panel)
+        // send update to all clients with the new state
 	logger.info('update all clients (with ext)...');
         for(key in clients){
                 var c = clients[key];
@@ -440,7 +449,7 @@ function updateAllClientsForOpWithExt(ext){
                 var response = new ResponseMessage(c.sessionId, "update_ext_new_state_op", msg);
                 response.extNewState = newState;
                 c.send(response);
-                logger.info("new ext state has been sent to client [" + key + "]");
+                logger.info("RESP 'update_ext_new_state_op' has been sent to [" + key + "] sessionId '" + c.sessionId + "'");
         }	
 }
 
