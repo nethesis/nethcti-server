@@ -1363,7 +1363,6 @@ io.on('connection', function(client){
 			break;
 			case actions.ACTION_SPY_LISTEN:
 				var extToSpy = message.extToSpy;
-				// get channel to spy
                                 var channelToSpy = '';
                                 for(key in am.participants){
                                         if(am.participants[key].number==extToSpy){
@@ -1380,7 +1379,7 @@ io.on('connection', function(client){
 				};
 				// send spy action to the asterisk server
 				am.send(actionSpyListen, function(){
-					log('spy_listen action from [' + extFrom + '] to spy [' + extToSpy +'] has been sent to the asterisk');
+					logger.info("'actionSpyListen' " + sys.inspect(actionSpyListen) + " has been sent to AST");
 				});
 			break;
 			case actions.ACTION_PICKUP:
