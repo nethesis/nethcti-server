@@ -1104,7 +1104,7 @@ io.on('connection', function(client){
   				var channel = '';
   				for(key in am.participants){
   					if(am.participants[key].number==extFrom){
-  						channel = key;
+  						channel = am.participants[key].channel;
   					}
   				}
 	  			// create stop record action for asterisk server
@@ -1114,11 +1114,11 @@ io.on('connection', function(client){
 				};
 				// send action to asterisk
 				am.send(actionStopRecord, function () {
-					log("stop record action from " + extFrom + " has been sent to asterisk");
+					logger.info("'actionStopRecord' " + sys.inspect(actionStopRecord) + " has been sent to AST");
 					var msgstr = 'Recording for ' + extFrom + ' stopped';
 					client.send(new ResponseMessage(client.sessionId, 'ack_stoprecord', msgstr));
-					log("ack_stoprecord has been sent to [" + extFrom + "] with: " + client.sessionId);
-					log(msgstr);
+					logger.info("RESP 'ack_stoprecord' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+					logger.info(msgstr);
 					// update status information for operator panel
                                         modop.updateStopRecordExtStatusForOpWithExt(extFrom);
                                         modop.updateStopRecordExtStatusForOpWithExt(message.extTo);
