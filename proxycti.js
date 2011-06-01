@@ -1176,11 +1176,11 @@ io.on('connection', function(client){
 				};
 				// send action to asterisk
 				am.send(actionCWon, function () {
-					log("CW on action from " + extFrom + " has been sent to asterisk");
-					var msgstr = "Call waiting  of [" + extFrom + "] is ON";
+					logger.info("'actionCWon' " + sys.inspect(actionCWon) + " has been sent to AST");
+					var msgstr = "[" + extFrom + "] CW ON";
 					client.send(new ResponseMessage(client.sessionId, 'ack_cw_on', msgstr));
-					log("ack_cw_on has been sent to [" + extFrom + "] with: " + client.sessionId);
-					log(msgstr);
+					logger.info("RESP 'ack_cw_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+					logger.info(msgstr);
 				});
 	  		break;
 	  		case actions.ACTION_CW_OFF:
@@ -1192,11 +1192,11 @@ io.on('connection', function(client){
 				};
 				// send action to asterisk
 				am.send(actionCWoff, function () {
-					log("CW off action from " + extFrom + " has been sent to asterisk");
-					var msgstr = "Call waiting  of [" + extFrom + "] is OFF";
+					logger.info("'actionCWoff' " + sys.inspect(actionCWoff) + " has been sent to AST");
+					var msgstr = "[" + extFrom + "] CW OFF";
 					client.send(new ResponseMessage(client.sessionId, 'ack_cw_off', msgstr));
-					log("ack_cw_off has been sent to [" + extFrom + "] with: " + client.sessionId);
-					log(msgstr);
+					logger.info("RESP 'ack_cw_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+					logger.info(msgstr);
 				});
 	  		break;
 	  		case actions.ACTION_CF_ON:
