@@ -1424,14 +1424,11 @@ io.on('connection', function(client){
 			case actions.ACTION_REDIRECT_VOICEMAIL:
                                 var extTo = message.extTo;
 				var callFromExt = message.callFromExt;
-				// get the channel
                                 var channel = '';
                                 for(key in am.participants){
-	                                if(am.participants[key].number==callFromExt){
-        	        	        	channel = key;
-                	                }
+	                                if(am.participants[key].number==callFromExt)
+        	        	        	channel = am.participants[key].channel;
                                 }
-
                                 // create action to spy channel
 				var actionRedirectVoicemail = {
 					Action: 'Redirect',
@@ -1442,7 +1439,7 @@ io.on('connection', function(client){
 				}
                                 // send spy action to the asterisk server
                                 am.send(actionRedirectVoicemail, function(){
-                                        log('redirect_to_voicemail action from [' + extFrom + '] to voicemail [' + extTo +'] has been sent to the asterisk');
+					logger.info("'actionRedirectVoicemail' " + sys.inspect(actionRedirectVoicemail) + " has been sent to AST");
                                 });
                         break;
 	  		default:
@@ -1521,7 +1518,6 @@ function createHistoryCallResponse(results){
 	return res;
 }
 
-
 // Format date from gg/mm/yyyy to yyyy-mm-dd
 function formatDate(date){
 	var ar = date.split('/');	
@@ -1531,94 +1527,68 @@ function formatDate(date){
 	return result;
 }
 
-/*
- * Remove client with specified sessionId
- */ 
+// Remove client with specified sessionId
 removeClient = function(sessionId){
 	for(client in clients){
-		if( (clients[client].sessionId)==sessionId ){
+		if( (clients[client].sessionId)==sessionId )
 			delete clients[client];
-		}
 	}
 }
 
-/*
- * Check if the user exten already present in memory.
- */ 
+// Check if the user exten already present in memory. 
 testAlreadyLoggedExten = function(exten){
-
-	if(clients[exten]!=undefined)
-		return true;
+	if(clients[exten]!=undefined) return true;
 	return false;
 }
 
-/*
- * Check if the user exten already present in memory and its sessionId correspond.
- */ 
+// Check if the user exten already present in memory and its sessionId correspond.
 testAlreadyLoggedUser = function(sessionId, exten){
-
-	if(clients[exten]!=undefined && clients[exten].sessionId==sessionId)
-		return true;
+	if(clients[exten]!=undefined && clients[exten].sessionId==sessionId) return true;
 	return false;
 }
 
-/*
- * Check if the user sessionId already present in memory.
- */
+// Check if the user sessionId already present in memory.
 testAlreadyLoggedSessionId = function(sessionId){
-
 	for(client in clients){
 		if(clients[client].sessionId==sessionId)
 			return true;
 	}
-	
 	return false;
 }
 
-/*
- * Create html code to return to the client after when he receive calling. This code is 
- * the customer card of the calling user
- */
+/* Create html code to return to the client after when he receive calling. This code is 
+ * the customer card of the calling user */
 createCustomerCardHTML = function(customerCard, from){
-	      		
 	// read file
 	var htmlTemplate = fs.readFileSync(TEMPLATE_DECORATOR_CUSTOMERCARD_FILENAME, "UTF-8", function(err, data) {
 		if(err){
-			sys.puts("error in reading file");
-			sys.puts(err);
+			logger.error("ERROR in reading '" + TEMPLATE_DECORATOR_CUSTOMERCARD_FILENAME + "' (function 'createCustomerCardHTML'): " + sys.inspect(err));
 			return;
 		}
 		return data;
 	});
-
 	/* customerCard is undefined if the user that has do the request
-  	 * hasn't the relative permission or the calling user is not in db*/
+  	 * hasn't the relative permission or the calling user is not in the db */
 	if(customerCard==undefined){
 		customerCard = {};
 		customerCard.customerNotInDB = "true";
 		customerCard.from = from;
 	}
-
 	var template = normal.compile(htmlTemplate);
 	customerCard.server_address = "http://" + hostname + ":" + port;
 	var toAdd = template(customerCard);
-	var HTMLresult = toAdd;
-		
+	var HTMLresult = toAdd;		
 	return HTMLresult;
 }
 
-
-
 /* Create the html code for viewing result of searching contacts in phonebook.
- * It read template html file and personalize it with the parameter results.
- */
+ * It read template html file and personalize it with the parameter results. */
 function createResultSearchContactsPhonebook(results){
 	var HTMLresult = '';
 	// read file
 	var htmlTemplate = fs.readFileSync(TEMPLATE_DECORATOR_VCARD_FILENAME, "UTF-8", function(err, data) {
 		if(err){
-			sys.puts("error in reading file");
-			sys.puts(err);
+			logger.error("ERROR in reading '" + TEMPLATE_DECORATOR_VCARD_FILENAME + "' (function 'createResultSearchContactsPhonebook'): " + sys.inspect(err));
 			return;
 		}
 		return data;
