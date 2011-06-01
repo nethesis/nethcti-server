@@ -1209,11 +1209,11 @@ io.on('connection', function(client){
 				};
 				// send action to asterisk
 				am.send(actionCFon, function () {
-					log("CF on action from " + extFrom + " to " + extTo + " has been sent to asterisk");
-					var msgstr = "Call forwarding  of [" + extFrom + "] is ON to " + extTo;
+					logger.info("'actionCFon' " + sys.inspect(actionCFon) + " has been sent to AST");
+					var msgstr = "[" + extFrom + "] CF ON to [" + extTo + "]";
 					client.send(new ResponseMessage(client.sessionId, 'ack_cf_on', msgstr));
-					log("ack_cf_on has been sent to [" + extFrom + "] with: " + client.sessionId);
-					log(msgstr);
+					logger.info("RESP 'ack_cf_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+					logger.info(msgstr);
 					// update ext CF status
                                         modop.updateExtCFStatusWithExt(extFrom, 'on', extTo);
                                         // update all clients for op
@@ -1229,11 +1229,11 @@ io.on('connection', function(client){
 				};
 				// send action to asterisk
 				am.send(actionCFoff, function () {
-					log("CF off action from " + extFrom + " has been sent to asterisk");
-					var msgstr = "Call forwarding  of [" + extFrom + "] is OFF";
+					logger.info("'actionCFoff' " + sys.inspect(actionCFoff) + " has been sent to AST");
+					var msgstr = "[" + extFrom + "] CF OFF";
 					client.send(new ResponseMessage(client.sessionId, 'ack_cf_off', msgstr));
-					log("ack_cf_off has been sent to [" + extFrom + "] with: " + client.sessionId);
-					log(msgstr);
+					logger.info("RESP 'ack_cf_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+					logger.info(msgstr);
 					// update ext CF status
                                         modop.updateExtCFStatusWithExt(extFrom, 'off');
                                         // update all clients for op
