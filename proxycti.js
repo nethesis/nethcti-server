@@ -1337,16 +1337,13 @@ io.on('connection', function(client){
                         break;
 			case actions.ACTION_PARK:
 				var callToPark = message.callToPark;
-				// get channel1 and channel2
                                 var channel1_toPark = ''; // the extension to be parked
-				var channel2 = '';  // the extension that has been request the park
+				var channel2 = '';  	  // the extension that has been request the park
                                 for(key in am.participants){
-                                        if(am.participants[key].number==callToPark){
-                                                channel1_toPark = key;
-                                        }
-					else if(am.participants[key].number==message.callFrom){
-						channel2 = key;
-					}
+                                        if(am.participants[key].number==callToPark)
+                                                channel1_toPark = am.participants[key].channel;
+					else if(am.participants[key].number==message.callFrom)
+						channel2 = am.participants[key].channel;
                                 }
 				// create action for asterisk server
                                 var actionPark = {
@@ -1356,12 +1353,12 @@ io.on('connection', function(client){
                                 };
                                 // send action to asterisk
                                 am.send(actionPark, function (resp) {
-                                        log("Park action: callToPark [" + callToPark + "] request by extFrom ["  + extFrom + "] has been sent to asterisk");
+					logger.info("'actionPark' " + sys.inspect(actionPark) + " has been sent to AST");
 					// create message
 	                                var msgstr = "received acknowledgment for parking the call";
 	                                var mess = new ResponseMessage(client.sessionId, "ack_park", msgstr);
 	                                client.send(mess);
-	                                log("ack_park has been sent to [" + extFrom + "] with: " + client.sessionId);
+	                                logger.info("RESP 'ack_park' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
                                 });
 			break;
 			case actions.ACTION_SPY_LISTEN:
