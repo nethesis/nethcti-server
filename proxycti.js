@@ -13,22 +13,8 @@ var sys = require(process.binding('natives').util ? 'util' : 'sys');
 var pathreq = require('path');
 var normal = require("./lib/normal-template/lib/normal-template");
 var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
+var log4js = require('./lib/log4js-node/lib/log4js')();
 //
-var am;
-var server;
-/* The list of the logged clients. The key is the exten and the value is the 
- * object relative to the client. When the client logs off, the corresponding key 
- * and value are removed.
- */
-var clients = {};
-
-/* Audio file list of recorded call. This is an hash table that has the unique id of the file
- * as the key and the filename as value.
- * (view createAudioFileList function).
- */
-var audioFileList = {};
-//
-const DEBUG = true;
 const PROXY_CONFIG_FILENAME = "config/proxycti.ini";
 const TEMPLATE_DECORATOR_VCARD_FILENAME = "./template/decorator_vcard.html";
 const TEMPLATE_DECORATOR_CUSTOMERCARD_FILENAME = "./template/decorator_customerCard.html";
@@ -38,7 +24,21 @@ const CALL_PREFIX = "CTI-";
 const SPY_PREFIX = "SPY-";
 const REDIRECT_VM_PREFIX = "REDIR_VM-";
 const START_TAG_FILENAME = "auto-";
-
+const LOGFILE = './log/proxy.log';
+// asterisk manager
+var am;
+// the server
+var server;
+/* The list of the logged clients. The key is the exten and the value is the 
+ * object relative to the client. When the client logs off, the corresponding key 
+ * and value are removed.
+ */ 
+var clients = {};
+/* Audio file list of recorded call. This is an hash table that has the unique id of the file
+ * as the key and the filename as value.
+ * (view createAudioFileList function).
+ */
+var audioFileList = {};
 // The response that this server pass to the clients.
 var ResponseMessage = function(clientSessionId, typeMessage, respMessage){
 	this.clientSessionId = clientSessionId;
@@ -46,12 +46,19 @@ var ResponseMessage = function(clientSessionId, typeMessage, respMessage){
 	this.respMessage = respMessage;
 }
 
-function log(msg){
-	if (DEBUG) console.log(new Date().toString() + " - [ProxyCTI]: " + msg);
-}
-
 // initialize parameters for this server and for asterisk server
 initServerAndAsteriskParameters();
+
+/* logger that write in output console and file
+ * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF)
+ */
+log4js.addAppender(log4js.fileAppender(LOGFILE), '[ProxyCTI]');
+var logger = log4js.getLogger('[ProxyCTI]');
+logger.setLevel('ALL');
+
+function log(msg){
+	logger.info(msg);
+}
 
 // START
 console.log("\n\n\n-----------------------------------------------------------");
@@ -1653,12 +1660,12 @@ server_conf =
 */
 function initServerAndAsteriskParameters(){
 	var server_conf = iniparser.parseSync(PROXY_CONFIG_FILENAME);
+	version = server_conf.SERVER_PROXY.version;
 	asterisk_user = server_conf.ASTERISK.user;
 	asterisk_pass = server_conf.ASTERISK.pass;
 	asterisk_host = server_conf.ASTERISK.host;
 	hostname = server_conf.SERVER_PROXY.hostname;
 	port = server_conf.SERVER_PROXY.port;
-	version = server_conf.SERVER_PROXY.version;
 }
 
 

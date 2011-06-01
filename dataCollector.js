@@ -3,14 +3,24 @@ var sys = require("sys");
 var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
 var mysql = require('./lib/node-mysql');
 var odbc = require("./lib/node-odbc/odbc");
+var log4js = require('./lib/log4js-node/lib/log4js')();
 
-const DEBUG = true;
 const DATACOLLECTOR_CONFIG_FILENAME = "config/dataProfiles.ini";
 const PHONEBOOK = "phonebook";
 const CUSTOMER_CARD = "customer_card";
 const DAY_HISTORY_CALL = "day_history_call";
 const CURRENT_WEEK_HISTORY_CALL = "current_week_history_call";
 const CURRENT_MONTH_HISTORY_CALL = "current_month_history_call";
+const LOGFILE = './log/proxy.log';
+
+
+/* logger that write in output console and file
+ * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF)
+ */
+log4js.addAppender(log4js.fileAppender(LOGFILE), '[DataCollector]');
+var logger = log4js.getLogger('[DataCollector]');
+logger.setLevel('ALL');
+
 
 
 /* this is the list of the queries expressed in the config file: the key is the section name
@@ -288,5 +298,5 @@ function executeSQLQuery(type, objQuery, cb){
 
 // custom log function to output debug info
 function log(msg){
-	if(DEBUG) console.log(new Date().toString() + " - [DataCollector]: " + msg);
+	logger.info(msg);
 }

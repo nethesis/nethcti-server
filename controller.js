@@ -2,8 +2,17 @@ var fs = require("fs");
 var sys = require("sys");
 var inherits = require("sys").inherits;
 var EventEmitter = require("events").EventEmitter;
-const DEBUG = true;
+var log4js = require('./lib/log4js-node/lib/log4js')();
 const INTERVAL_POLLING = 0;
+const LOGFILE = './log/proxy.log';
+
+/* logger that write in output console and file
+ * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF)
+ */
+log4js.addAppender(log4js.fileAppender(LOGFILE), '[Controller]');
+var logger = log4js.getLogger('[Controller]');
+logger.setLevel('ALL');
+
 // list of files to control
 fileToControl = {};
 // list of directories to control
@@ -16,7 +25,7 @@ exports.Controller = function(){
 	this.addDir = function(dir) { addDir(dir) };
 } 
 function log(msg){
-	if(DEBUG) console.log(new Date().toString() + " - [controller.js]: " + msg);
+	logger(msg);
 }
 // add directory to control and emit event when modified time changes
 function addDir(dir){

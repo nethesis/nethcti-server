@@ -4,14 +4,23 @@
  * to function properly. Is possible to add it with addAsteriskManager function.
  */
 var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
+var log4js = require('./lib/log4js-node/lib/log4js')();
 
-const DEBUG = true;
 const FILE_TAB_OP = "config/optab.ini";
 const FILE_EXT_LIST = "/etc/asterisk/nethcti.ini";
 const DIAL_FROM = 1;
 const DIAL_TO = 0;
 const START_RECORD = 1;
 const STOP_RECORD = 0;
+const LOGFILE = './log/proxy.log';
+
+// logger
+/* logger that write in output console and file
+ * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF)
+ */
+log4js.addAppender(log4js.fileAppender(LOGFILE), '[Modop]');
+var logger = log4js.getLogger('[Modop]');
+logger.setLevel('ALL');
 
 /* This is for update client on the status of all extension registered in the asterisk server.
  * The scope for the client is to create operator panel with all informations about the extensions.
@@ -414,5 +423,5 @@ function initTabOp(){
 
 
 function log(msg){
-        if(DEBUG) console.log(new Date().toString() + " - [Modop]: " + msg);
+        logger.info(msg);
 }

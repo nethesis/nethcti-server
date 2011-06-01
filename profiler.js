@@ -1,8 +1,9 @@
 var fs = require("fs");
 var sys = require("sys");
 var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
+var log4js = require('./lib/log4js-node/lib/log4js')();
 
-const DEBUG = true;
+
 const PROFILER_CONFIG_FILENAME = "config/profiles.ini";
 const CALL_OUT = "CALL_OUT";
 const CALL_IN = "CALL_IN";
@@ -14,6 +15,15 @@ const CUSTOMER_CARD = "CUSTOMER_CARD";
 const OP_PLUS = "OP_PLUS";
 const OP_BASE = "OP_BASE";
 const ALL = "all";
+const LOGFILE = './log/proxy.log';
+
+
+/* logger that write in output console and file
+ * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF)
+  */
+log4js.addAppender(log4js.fileAppender(LOGFILE), '[Profiler]');
+var logger = log4js.getLogger('[Profiler]');
+logger.setLevel('ALL');
 
 
 /* this is the list of actions with its relative list of extensions: the key is the action,
@@ -116,5 +126,5 @@ function initProfiles(){
 }
 
 function log(msg){
-	if(DEBUG) console.log(new Date().toString() + " - [Profiler]: " + msg);
+	logger.info(msg);
 }

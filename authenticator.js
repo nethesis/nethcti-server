@@ -1,8 +1,16 @@
 var fs = require("fs");
 var sys = require("sys");
 var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
-const DEBUG = true;
+var log4js = require('./lib/log4js-node/lib/log4js')();
 const AUTHENTICATOR_CONFIG_FILENAME = "/etc/asterisk/sip_additional.conf";
+const LOGFILE = './log/proxy.log';
+
+/* logger that write in output console and file
+ * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF)
+ */
+log4js.addAppender(log4js.fileAppender(LOGFILE), '[Authenticator]');
+var logger = log4js.getLogger('[Authenticator]');
+logger.setLevel('ALL');
 
 /* this is the authentication profile created by parsing the config file.
  * The key is the section of the file: the exten. The value is the content of the section,
@@ -62,5 +70,5 @@ authenticateUser = function(ext, secret){
 
 // custom log function to output debug info
 function log(msg){
-	if(DEBUG) console.log(new Date().toString() + " - [authenticator]: " + msg);
+	logger.info(msg);
 }
