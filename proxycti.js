@@ -1319,23 +1319,20 @@ io.on('connection', function(client){
 				});	
                         break;
 			case actions.ACTION_GET_PEER_LIST_COMPLETE_OP:
-				
-				/* Set the global variable 'extToReturnExtStatusForOp' and 'clientToReturnExtStatusForOp' because 
-				 * extStatusForOp is returned to the client when the event 'parkedcallscomplete' is emitted.
+				/* Set the global variables 'extToReturnExtStatusForOp' and 'clientToReturnExtStatusForOp' because 
+				 * 'extStatusForOp' is returned to the client when the event 'ParkedCallsComplete' is emitted.
 				 */
 				extToReturnExtStatusForOp = extFrom;
 				clientToReturnExtStatusForOp = client;
-
-				/* Send ParkedCalls action to asterisk to update timeout information of parked calls in extStatusForOp.
-				 * When ParkedCallsComplete event is emitted, the server return extStatusForOp to the client.
-				 */
-				// create action for asterisk server
+				/* send 'ParkedCalls' action to asterisk to update timeout information of parked calls in 'extStatusForOp'.
+				 * When 'ParkedCallsComplete' event is emitted, the server return 'extStatusForOp' to the client.
+				 * create action for asterisk server */
                                 var actionParkedCalls = {
                                         Action: 'ParkedCalls'
                                 };
                                 // send action to asterisk
                                 am.send(actionParkedCalls, function (resp) {
-                                        log("ParkedCalls action for update timeout of the parked calls has been sent to asterisk");
+                                        logger.info("'actionParkedCalls' " + sys.inspect(actionParkedCalls) + " has been sent to AST to update timeout of the parked calls");
                                 });
                         break;
 			case actions.ACTION_PARK:
