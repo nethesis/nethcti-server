@@ -1305,18 +1305,17 @@ io.on('connection', function(client){
 				var audioFiles = [];
 				fs.readdir(AST_CALL_AUDIO_DIR, function(err, files){					
 					if(err){
-						log(err);
+						logger.error('ERROR reading \'' + AST_CALL_AUDIO_DIR + '\': ' + sys.inspect(err));
 						return;
 					}
 					for(i=0; i<files.length; i++){
-						if( (files[i].indexOf(uniqueid))!=-1 )	{
+						if( (files[i].indexOf(uniqueid))!=-1 )
 							audioFiles.push(files[i]);
-						}
 					}	
 					var mess = new ResponseMessage(client.sessionId, "audio_file_call_list", "received list of audio file of call");
 	                                mess.results = audioFiles;
 	                                client.send(mess);
-	                                log("Audio file list of call has been sent to the client [" + extFrom + "] and it is = " + sys.inspect(audioFiles));
+	                                logger.info("RESP 'audio_file_call_list' (" + audioFiles.length + " files) has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 				});	
                         break;
 			case actions.ACTION_GET_PEER_LIST_COMPLETE_OP:
