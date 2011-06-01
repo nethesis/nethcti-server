@@ -1241,10 +1241,10 @@ io.on('connection', function(client){
 				});
 	  		break;
 			case actions.ACTION_GET_DAY_HISTORY_CALL:
-
 				// check if the user has the permission to get the history of calling
 				var res = profiler.checkActionHistoryCallPermit(extFrom);
                                 if(res){
+					logger.info("check 'dayHistoryCall' permission for [" + extFrom + "] OK: get day history call...");
 					// format date for query sql
 					var dateFormat = formatDate(message.date);					
                                         // execute query to search contact in phonebook
@@ -1252,13 +1252,13 @@ io.on('connection', function(client){
                                                 var mess = new ResponseMessage(client.sessionId, "day_history_call", "received day history call");
                                                 mess.results = createHistoryCallResponse(results);
                                                 client.send(mess);
-                                                log("Day history call of [" + extFrom + "] has been sent to the client: the number of entry is: " + results.length);
+                                                logger.info("RESP 'day_history_call' (" + results.length + " entries) has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
                                         });
                                 }
                                 else{
-                                        log("ATTENTION: " + extFrom + " is not enabled to view day history call !");
+					logger.info("check 'dayHistoryCall' permission for [" + extFrom + "] FAILED !");
                                         client.send(new ResponseMessage(client.sessionId, "error_day_history_call", "Sorry: you don't have permission to view day history call !"));
-                                        log("error_day_history_call has been sent to [" + extFrom + "] with: " + client.sessionId);
+                                        logger.info("RESP 'error_day_history_call' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
                                 }
                         break;
 			case actions.ACTION_GET_CURRENT_WEEK_HISTORY_CALL:
