@@ -1262,22 +1262,22 @@ io.on('connection', function(client){
                                 }
                         break;
 			case actions.ACTION_GET_CURRENT_WEEK_HISTORY_CALL:
-
                                 // check if the user has the permission to get history of calling
 				var res = profiler.checkActionHistoryCallPermit(extFrom);
                                 if(res){
+					logger.info("check 'currentWeekHistoryCall' permission for [" + extFrom + "] OK: get day history call...");
                                         // execute query to search contact in phonebook
                                         dataCollector.getCurrentWeekHistoryCall(extFrom, function(results){
                                                 var mess = new ResponseMessage(client.sessionId, "current_week_history_call", "received current week history call");
 						mess.results = createHistoryCallResponse(results);
                                                 client.send(mess);
-                                                log("Current week history call of [" + extFrom + "] has been sent to the client");
+                                                logger.info("RESP 'current_week_history_call' (" + results.length + " entries) has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
                                         });
                                 }
                                 else{
-                                        log("ATTENTION: " + extFrom + " is not enabled to view current week history call !");
+					logger.info("check 'currentWeekHistoryCall' permission for [" + extFrom + "] FAILED !");
                                         client.send(new ResponseMessage(client.sessionId, "error_current_week_history_call", "Sorry: you don't have permission to view current week history call !"));
-                                        log("error_current_week_history_call has been sent to [" + extFrom + "] with: " + client.sessionId);
+                                        logger.info("RESP 'error_current_week_history_call' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
                                 }
                         break;
 			case actions.ACTION_GET_CURRENT_MONTH_HISTORY_CALL:
