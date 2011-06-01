@@ -5,7 +5,6 @@
  */
 var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
 var log4js = require('./lib/log4js-node/lib/log4js')();
-
 const FILE_TAB_OP = "config/optab.ini";
 const FILE_EXT_LIST = "/etc/asterisk/nethcti.ini";
 const DIAL_FROM = 1;
@@ -22,12 +21,12 @@ log4js.addAppender(log4js.fileAppender(LOGFILE), '[Modop]');
 var logger = log4js.getLogger('[Modop]');
 logger.setLevel('ALL');
 
-/* This is for update client on the status of all extension registered in the asterisk server.
- * The scope for the client is to create operator panel with all informations about the extensions.
+/* This is for update CTI on the status of all extensions registered in the asterisk server.
+ * The scope for the clients is to create the operator panel with all informations about the extensions.
  * It is created by the server at the start and it is update by the server at runtime.
- * The key is the 'ext' and the status is an object.
- * 
-'SIP/500': 
+ * The key is the 'ext' and the value is an object with some informations:
+ *
+ 'SIP/500': 
    { Label: '"500 : alessandro"',
      Extension: '500',
      Context: 'from-internal',
@@ -55,9 +54,8 @@ var am;
  * Constructor
  */
 exports.Modop = function(){
-	/* initialize the list of tabs to view in operator panel by reading 
-	 * configuration file "optab.ini"
-	 */
+	/* initialize the list of tabs to view in the operator panel by reading 
+	 * configuration file 'optab.ini' */
 	initTabOp();
 	this.addAsteriskManager = function(amanager) { addAsteriskManager(amanager); }
 	this.getExtStatusForOp = function() { return extStatusForOp; }
@@ -121,8 +119,8 @@ function updateParkExtStatus(parking, extParked, parkFrom, timeout){
 }
 
 
-/* This function update the status of ext that receive a call. Set his status to 
- * 'dialTo' and add 'dialFromExt' key to its state with the value extFrom.
+/* This function update the status of 'ext' that receive a call. Set his status to 
+ * 'dialTo' and add 'dialFromExt' key to its state with the value 'extFrom'.
  */
 function updateExtStatusOpDialTo(ext, extFrom){
         for(key in extStatusForOp){
@@ -135,8 +133,8 @@ function updateExtStatusOpDialTo(ext, extFrom){
 
 
 
-/* This function update the status of ext that start call. Set his status to 
- * 'dialFrom' and add 'dialToExt' key to its state with the value extTo.
+/* This function update the status of 'ext' that start the call. Set his status to 
+ * 'dialFrom' and add 'dialToExt' key to its state with the value 'extTo'.
  */
 function updateExtStatusOpDialFrom(ext, extTo){
 	for(key in extStatusForOp){
@@ -174,12 +172,11 @@ function updateExtDNDStatusWithExt(ext, value){
 	}
 }
 
-// return the object of status associated with ext key in extStatusForOp
+// return the value object associated with 'ext' key in the 'extStatusForOp'
 function getExtStatusWithExt(ext){
 	for(key in extStatusForOp){	
-		if(key.indexOf(ext)!=-1){
+		if(key.indexOf(ext)!=-1)
 			return extStatusForOp[key];
-		}
 	}
 }
 
@@ -408,8 +405,8 @@ function initExtStatusForOp(){
         });
 }
 
-/* This function initialize all tab to be view in the operator panel, by reading 
- * the configuration file optab.ini.
+/* This function initialize all tabs to be view in the operator panel, by reading 
+ * the configuration file 'optab.ini'.
  *
 { interni_commerciali: { extensions: '500,501' },
   fasci: { show: 'yes' },
@@ -417,7 +414,6 @@ function initExtStatusForOp(){
   parcheggio: { show: 'si' } }
  */
 function initTabOp(){
-        log("initialize tabOp for tabs to view in the operator panel");
 	tabOp = iniparser.parseSync(FILE_TAB_OP);
 }
 
