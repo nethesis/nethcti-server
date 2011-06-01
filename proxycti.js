@@ -1136,11 +1136,11 @@ io.on('connection', function(client){
 				};
 				// send action to asterisk
 				am.send(actionDNDon, function () {
-					log("DND on action from " + extFrom + " has been sent to asterisk");
-					var msgstr = "Don't disturb  of [" + extFrom + "] is ON";
+					logger.info("'actionDNDon' " + sys.inspect(actionDNDon) + " has been sent to AST");
+					var msgstr = "[" + extFrom + "] DND ON";
 					client.send(new ResponseMessage(client.sessionId, 'ack_dnd_on', msgstr));
-					log("ack_dnd_on has been sent to [" + extFrom + "] with: " + client.sessionId);
-					log(msgstr);
+					logger.info("RESP 'ack_dnd_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+					logger.info(msgstr);
 					// update ext DND status
 					modop.updateExtDNDStatusWithExt(extFrom, 'on');
 					// update all clients for op
