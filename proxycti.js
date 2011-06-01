@@ -994,7 +994,7 @@ io.on('connection', function(client){
 	  		case actions.ACTION_REDIRECT:
 	  			// check if the user has the permission of dial out
 				if(profiler.checkActionRedirectPermit(extFrom)){
-	  				log("[" + extFrom + "] enabled to redirect call: execute redirecting...");
+	  				logger.info("check 'redirect' permission for [" + extFrom + "] OK: execute redirect...");	
 	  				// get the channel
 	  				var channel = '';
 	  				for(key in am.participants){
@@ -1012,21 +1012,22 @@ io.on('connection', function(client){
 					};
 					// send action to asterisk
 					am.send(actionRedirect, function () {
-						log("redirect action from " + message.redirectFrom + " to " + message.redirectTo + " has been sent to asterisk");
+						logger.info("'actionRedirect' " + sys.inspect(actionRedirect) + " has been sent to AST");
 						client.send(new ResponseMessage(client.sessionId, 'ack_redirect'), 'Redirection has been taken');
-						log("ack_redirect has been sent to [" + extFrom + "] with: " + client.sessionId);
+						logger.info("RESP 'ack_redirect' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 					});
 		  		}
 	  			else{
-			  		log("ATTENTION: " + extFrom + " is not enabled to redirect call!");
+					logger.info("check 'redirect' permission for [" + extFrom + "] FAILED !");
 			  		client.send(new ResponseMessage(client.sessionId, "error_redirect", "Sorry: you don't have permission to redirect !"));
-			  		log("error_redirect has been sent to [" + extFrom + "] with: " + client.sessionId);
+			  		logger.info("RESP 'error_redirect' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 	  			}
 	  		break;
 	  		case actions.ACTION_SEARCH_CONTACT_PHONEBOOK:
 	  			// check if the user has the permission to search contact in phonebook
 				var res = profiler.checkActionPhonebookPermit(extFrom);
 	  			if(res){
+					logger.info("check 'searchContactPhonebook' permission for [" + extFrom + "] OK: search...");
 	  				// execute query to search contact in phonebook
 	  				var namex = message.namex;
 					dataCollector.getContactsPhonebook(namex, function(results){
@@ -1034,13 +1035,13 @@ io.on('connection', function(client){
 	  					var mess = new ResponseMessage(client.sessionId, "search_contacts_results", "received phonebook contacts");
 	  					mess.resultHTML = resultHTML;
 	  					client.send(mess);
-	  					log("Results of searching contacts in phonebook has been sent to client");
+	  					logger.info("RESP 'search_contacts_results' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 	  				});
 	  			}
 	  			else{
-	  				log("ATTENTION: " + extFrom + " is not enabled to search contacts in phonebook !");
+					logger.info("check 'searchContactPhonebook' permission for [" + extFrom + "] FAILED !");
   					client.send(new ResponseMessage(client.sessionId, "error_search_contacts", "Sorry: you don't have permission to search contacts in phonebook !"));
-  					log("error_search_contacts has been sent to [" + extFrom + "] with: " + client.sessionId);
+  					logger.info("RESP 'error_search_contacts' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 	  			}
 	  		break;
 	  		case actions.ACTION_RECORD:
