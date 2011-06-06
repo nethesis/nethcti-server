@@ -256,8 +256,8 @@ am.addListener('dialing', function(from, to) {
 	logger.info("Dial FROM '" + sys.inspect(from) + "'  -->  TO '" + sys.inspect(to) + "'");
 	
 	// check if the user is logged in
-	var toExt = to.number;
 	if(to!=undefined && clients[toExt]!=undefined){
+		var toExt = to.number;
 		// check the permission of the user to receive the call
 		if(!profiler.checkActionCallInPermit(toExt)){
 			logger.info("check 'callIn' permission for [" + toExt + "] FAILED !");
@@ -297,6 +297,7 @@ am.addListener('dialing', function(from, to) {
 		}
 	}
 	if(to!=undefined){
+		var toExt = to.number;
 		// update ext status of extension that start the call
 		modop.updateExtStatusOpDialFrom(fromExt, toExt);	
 		// update all clients for op
@@ -638,7 +639,7 @@ am.addListener('parkedcallscomplete', function(){
 });
 
 /* This event is emitted by asterisk.js when a new voicemail is added
- * An example:
+ * An example of the event is:
  *
 { event: 'MessageWaiting',
   privilege: 'call,all',
@@ -646,7 +647,6 @@ am.addListener('parkedcallscomplete', function(){
   waiting: '1',
   new: '1',
   old: '0' }
- *
  */
 am.addListener('messagewaiting', function(headers){
 	logger.info("EVENT 'MessageWaiting': new voicemail for [" + headers.mailbox + "]; the number is: " + headers.new);
