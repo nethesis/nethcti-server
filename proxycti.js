@@ -370,10 +370,6 @@ am.addListener('hangup', function(participant, code, text, headersChannel) {
 				ext = participant.channel.split('/')[2].split('-')[0];
 			else
 				ext = participant.number;
-
-			console.log("aAAAAAA ext = " + ext);
-
-
 			if(clients[ext]!=undefined){
 				var c = clients[ext];
 				var msg = "Call has hung up. Reason: " + text + "  (Code: " + code + ")";
