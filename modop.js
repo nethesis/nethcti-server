@@ -210,12 +210,11 @@ function addAsteriskManager(amanager){
 // This function add listeners to asterisk manager.
 function addListenerToAm(){
 	/* This event is generated for each registered user.
-	 * This event is triggered after 'SIPPeers' action is executed into the asterisk server.
+	 * This event is triggered after the 'SIPPeers' action has been executed into the asterisk server.
 	 * This action is made by 'initExtStatusForOp' function.
-	 * This event permit to add status information about extension, to extStatusForOp.
+	 * This event permit to add status informations about extension, to 'extStatusForOp'.
 	 * The status informations are 'dndStatus', 'cfStatus' and 'status'. In the case 'cfStatus' is 'on',
-	 * then it report also 'cfStatusExtTo' information, to know the extension setted for call
-	 * forwarding.
+	 * then it report also 'cfStatusExtTo' information, to know the extension setted for call forwarding.
 	 *
 	 * An example of PeerEntry event is: 
 	 *
@@ -237,8 +236,7 @@ function addListenerToAm(){
 	am.addListener('peerentry', function(headers) {
 	        var ext = headers.objectname;
 	        var status = headers.status;
-		console.log("\n");
-	        log("PeerEntry event: ext [" + ext + "], status '" + status + "'");
+	        logger.info("EVENT 'PeerEntry': ext [" + ext + "], status '" + status + "'");
 	        var dndStatus = '';
 	        var cfStatus = '';
 	        var cfStatusToExt = '';
@@ -248,18 +246,15 @@ function addListenerToAm(){
 		 * The 'typeext' generated below to access 'extStatusForOp' is constructed with this 'objectname', but in 'extStatusForOp'
 		 * there aren't any key with 'IAX2/something/something', because 'extStatusForOp' is initially created considering 
 		 * 'nethcti.ini' file generated from perl script and in this file there are more IAX2 entries as 'IAX2/something' and not
-		 * 'IAX2/something/something'. So this line of code consider only the first part: 'IAX2/something'.
-		 */
-		if(headers.channeltype=='IAX2'){
+		 * 'IAX2/something/something'. So this line of code consider only the first part: 'IAX2/something' */
+		if(headers.channeltype=='IAX2')
 		        ext = headers.objectname.split("/")[0];
-	        }
 	        var typeext = headers.channeltype + "/" + ext;
 		// set status	
 		updateExtStatusForOpWithTypeExt(typeext, status);
-		/* Check for the dnd and cf status of current ext.
-	         * This is made beacuse PeerEntry event don't report the dnd and cf status, and so
-	         * it can be possibile to correctly update extStatusForOp.
-	         */
+		/* Check for the DND and CF status of current ext.
+	         * This is made beacuse 'PeerEntry' event don't report the DND and CF status, and so
+	         * it can be possibile to correctly update 'extStatusForOp' */
 	        // create action DND for asterisk server
 	        var cmd = "database get DND " + ext;
 	        var actionCheckDNDStatus = {
@@ -268,10 +263,8 @@ function addListenerToAm(){
 	        };
         	// send action to asterisk
 	        am.send(actionCheckDNDStatus, function (resp) {
-	                if(resp.value==undefined)
-	                        dndStatus = 'off';
-	                else
-	                        dndStatus = 'on';
+	                if(resp.value==undefined) dndStatus = 'off';
+	                else dndStatus = 'on';
 	                // set the status informations to ext of extStatusForOp
 	                extStatusForOp[typeext].dndStatus = dndStatus;
 	        });
@@ -283,8 +276,8 @@ function addListenerToAm(){
 	        };
 		// send action to asterisk
 	        am.send(actionCheckCFStatus, function (resp) {
-	                if(resp.value==undefined)
-	                        cfStatus = 'off';
+	                if(resp.value==undefined) 
+				cfStatus = 'off';
 	                else{
 	                        cfStatus = 'on';
 	                        cfStatusToExt = resp.value.split('\n')[0];
@@ -294,11 +287,10 @@ function addListenerToAm(){
 	                extStatusForOp[typeext].cfStatusToExt = cfStatusToExt;
 	        });
 		/* Check for the presence of voicemail.
-                 * This is made beacuse PeerEntry event don't report this information, and so
-                 * it can be possibile to correctly update extStatusForOp.
+                 * This is made beacuse 'PeerEntry' event don't report this information, and so
+                 * it can be possibile to correctly update 'extStatusForOp'.
 		 * This piece of code can be optimized obtaining the only mailbox status for
-		 * that extension obtained with command 'voicemail show users'
-                 */
+		 * that extension obtained with command 'voicemail show users' */
 		// create action for asterisk server
                 var cmd = "database get CF " + ext;
                 var actionMailboxCount = {
@@ -312,15 +304,14 @@ function addListenerToAm(){
                 });
 	});	
 
-	/* This event is triggered when PeerEntry event is emitted for each user registered in asterisk.
-	 * So, the initialization of extStatusForOp can be completed. 
-	 */
+	/* This event is triggered when 'PeerEntry' event is emitted for each user registered in asterisk.
+	 * So, the initialization of 'extStatusForOp' can be completed */
 	am.addListener('peerlistcomplete', function(){
-	        log("PeerListComplete event");
+	        logger.info("PeerListComplete event");
 	});
 
 	/* This event is necessary to add information of queue member to extension status
-	 * Example of QueueMember event headers
+	 * Example of 'QueueMember event' is:
 	 * 
 	{ event: 'QueueMember',
 	  queue: '901',
@@ -335,15 +326,14 @@ function addListenerToAm(){
 	  actionid: '1305039851763' }
 	*/
 	am.addListener('queuemember', function(headers){
-		log("QueueMember event");
+		logger.info("QueueMember event");
 		var ext = headers.name.split("/")[1];
 		var queue = headers.queue;
 		ext = ext.split("@")[0];
 		for(key in extStatusForOp){
 			var tempExt = extStatusForOp[key].Extension;
-			if(tempExt==ext){
+			if(tempExt==ext)
 				extStatusForOp[key].queue = queue;
-			}
 		}		
 	});	
 }
