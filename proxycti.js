@@ -174,19 +174,19 @@ am.addListener('servererror', function(err) {
 });
 
 am.addListener('agentcalled', function(fromid, fromname, queue, destchannel) {
-	logger.info("EVENT 'AgentCalled': from [" + fromid + " : '" + fromname + "' to queue '" + queue + "' and to -> '" + destchannel + "'");
+	logger.info("EVENT 'AgentCalled': from [" + fromid + "], '" + fromname + "' to queue '" + queue + "' and to -> '" + destchannel + "'");
+	/* ex. of 'destchannel' is:
+	 * 'Local/270@from-internal-0ffa;1'
+	 */
 	var start = destchannel.indexOf("/")+1;
 	var end = destchannel.indexOf("@");
 	var to = destchannel.substring(start, end);
-	
 	if(to!=undefined && clients[to]!=undefined){
-
 		// check the permission of the user to receive the call
                 if(!profiler.checkActionCallInPermit(to)){
-                        log("The user [" + to + "] hasn't the permission of receiving call !");
+			logger.info("check 'callIn' permission for [" + to + "] FAILED !");
                         return;
                 }
-
 		// create the response for the client
 	        var msg = fromname;	
 		var c = clients[to];
@@ -197,14 +197,13 @@ am.addListener('agentcalled', function(fromid, fromname, queue, destchannel) {
 		response.to = to;
 
 		var typesCC = profiler.getTypesCustomerCardPermit(to);
-                log("The user [" + to + "] has the permission of view following types of customer card");
-                log(sys.inspect(typesCC));
+		logger.info("[" + to + "] is able to view customer card of types: " + sys.inspect(typesCC));
 		if(typesCC.length==0){
                         // the user hasn't the authorization of view customer card: the length is 0
-                        log("The user " + to + " hasn't the permission of view customer card");
+			logger.info("check permission to view Customer Card for [" + to + "] FAILED !");
                         response.customerCard = ["Sorry, but you don't have permission of view customer card !"];
                         c.send(response)
-                        log("Notify of calling has been sent to client " + to);
+			logger.info("RESP 'dialing' has been sent to [" + to + "] sessionId '" + c.sessionId + "'");
                         return;
                 }
 		var customerCardResult = [];
@@ -215,11 +214,21 @@ am.addListener('agentcalled', function(fromid, fromname, queue, destchannel) {
                                 if(customerCardResult.length==typesCC.length){
                                         response.customerCard = customerCardResult;
                                         c.send(response);
-                                        log("Notify of calling has been sent to client " + to + " with relative customer card");
+					logger.info("RESP 'dialing' has been sent to [" + to + "] sessionId '" + c.sessionId + "' with relative customer card");
                                 }
                         });
                 }
 	}
+	if(to!=undefined){
+                // update ext status of extension that start the call
+                modop.updateExtStatusOpDialFrom(fromid, queue);
+                // update all clients for op
+                updateAllClientsForOpWithExt(fromid);
+                // update ext status of extension that receive the call
+                modop.updateExtStatusOpDialTo(to, fromid);
+                // update all clients for op
+                updateAllClientsForOpWithExt(to);
+        }
 });
 
 /* An example of 'from' and 'to'
