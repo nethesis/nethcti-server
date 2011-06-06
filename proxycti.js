@@ -380,7 +380,8 @@ am.addListener('callreport', function(report) {
 	logger.info("EVENT 'CallReport': " + sys.inspect(report));
 });
 
-/*
+/* Example of 'Peerstatus' event:
+ *
 { event: 'PeerStatus',
   privilege: 'system,all',
   channeltype: 'SIP',
@@ -390,10 +391,9 @@ am.addListener('callreport', function(report) {
 am.addListener('peerstatus', function(headers) {
 	var statusEvent = headers.peerstatus.toLowerCase();
 	var currStatus = modop.getExtStatusWithTypeExt(headers.peer).status;
-	/* if status of the event is 'registered' and current status of peer is different 
- 	 * from unregistered, then the event is ignored. In this way, when the calling is in progress, the arrive of
-	 * this event with status 'registered' don't change the status of the extension.
-	 */
+	/* if the status of the event is 'registered' and current status of peer is different 
+ 	 * from 'unregistered', then the event is ignored. In this way, when the calling is in progress, the arrive of
+	 * this event with status 'registered' don't change the status of the extension. */
 	if(statusEvent=='registered' && currStatus!='unregistered'){
 		logger.debug("EVENT 'PeerStatus' ignored. Status of [" + headers.peer + "] is already different from 'unregistered'");
 		return;
@@ -449,10 +449,9 @@ function updateAllClientsForOpWithExt(ext){
         }	
 }
 
-/* This function update all clients with the new state of extension, givin typeext. 
+/* This function update all clients with the new state of the extension, givin typeext. 
  * This sent is used by the clients to update operator panel.
- * example of typeext is SIP/500
- */
+ * Example of 'typeext' is: SIP/500 */ 
 function updateAllClientsForOpWithTypeExt(typeext){
 	// get new state of the extension typeext
 	logger.info('FUNCTION \'updateAllClientsForOpWithTypeExt(typeext)\': \'modop.getExtStatusWithTypeExt(typeext)\' with typeext = ' + typeext);
@@ -466,7 +465,7 @@ function updateAllClientsForOpWithTypeExt(typeext){
                 var response = new ResponseMessage(c.sessionId, "update_ext_new_state_op", msg);
                 response.extNewState = newState;
                 c.send(response);
-                logger.info("new ext state has been sent to client [" + key + "]");
+                logger.info("RESP 'update_ext_new_state_op' has been sent to client [" + key + "] sessionId '" + c.sessionId + "'");
         }
 }
 
