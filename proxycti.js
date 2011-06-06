@@ -406,7 +406,8 @@ am.addListener('peerstatus', function(headers) {
 });
 
 
-/*
+/* Example of 'NewState' event:
+ *
 { event: 'Newstate',
   privilege: 'call,all',
   channel: 'SIP/500-0000000b',
@@ -470,7 +471,8 @@ function updateAllClientsForOpWithTypeExt(typeext){
 }
 
 /* This event is generated only by the phone of the user.
- * An example of UserEvent event:
+ * An example of UserEvent event is:
+ *
 { event: 'UserEvent',
   privilege: 'user,all',
   serevent: 'ASTDB',
@@ -493,68 +495,60 @@ am.addListener('userevent', function(headers){
 	value = value.toLowerCase();
 
 	if(family=='dnd'){
-		log("[" + ext + "] has set its '" + family + "' to value '" + value + "'");
-		/* in this case the client who has modified its DND value is connected to cti
- 		 * and has modified its DND through his telephone. So he'll be advise of changing
-		 * to update its cti.
-		 */
+		logger.info("[" + ext + "] '" + family + " " + value + "'");
+		/* in this case the client who has modified its DND value is connected to the cti
+ 		 * and has modified its DND through his telephone. So he'll be advise of the changing
+		 * to update its cti. */
 		if(clients[ext]!=undefined){	
 			var c = clients[ext];
 			if(value==""){ // DND is disabled by the phone user
-				log("[" + ext + "] disable its '" + family + "'");
+				logger.info("[" + ext + "] '" + family + " OFF'");
 				var msg = ext + " has disabled its " + family;
         		        var response = new ResponseMessage(c.sessionId, "dnd_status_off", msg);
 		                c.send(response);
-		                log("Notify of '" + family + " OFF' of ext [" + ext + "] has been sent to the client " + ext);
+		                logger.info("RESP 'dnd_status_off' has been sent to [" + ext + "] sessionId '" + c.sessionId + "'");
 			}	
 			else if(value=="attivo"){ // DND is enable by the phone user
-				log("[" + ext + "] enable its '" + family + "'");
+				logger.info("[" + ext + "] '" + family + " ON'");
 				var msg = ext + " has enabled its " + family;
                                 var response = new ResponseMessage(c.sessionId, "dnd_status_on", msg);
                                 c.send(response);
-                                log("Notify of '" + family + " ON' of ext [" + ext + "] has been sent to the client " + ext);
+                                logger.info("RESP 'dnd_status_on' has been sent to [" + ext + "] sessionId '" + c.sessionId + "'");
 			}
 		}
-		// update extStatusForOp with the changing in dnd status
-		if(value==""){
+		if(value=="")
 			modop.updateExtDNDStatusWithExt(ext, "off");
-		}else if(value=="attivo"){
+		else if(value=="attivo")
 			modop.updateExtDNDStatusWithExt(ext, "on");
-		}
-                // update all clients with the new state of extension, for update operator panel
                 updateAllClientsForOpWithExt(ext);
 	}
 	else if(family=='cf'){
-		log("[" + ext + "] has set its '" + family + "' to value '" + value + "'");
-		/* in this case the client who has modified its CF value is connected to cti
-                 * and has modified its CF through his telephone. So he'll be advise of changing
-                 * to update its cti.
-                 */
+		logger.info("[" + ext + "] '" + family + " " + value + "'");
+		/* in this case the client who has modified his 'CF' value is connected to cti
+                 * and has modified his 'CF' through his telephone. So he'll be advise of changing
+                 * to update his cti */
                 if(clients[ext]!=undefined){
                         var c = clients[ext];
                         if(value==""){ // CF is disabled by the phone user
-                                log("[" + ext + "] disable its '" + family + "'");
+                                logger.info("[" + ext + "] '" + family + " OFF'");
                                 var msg = ext + " has disabled its " + family;
                                 var response = new ResponseMessage(c.sessionId, "cf_status_off", msg);
                                 c.send(response);
-                                log("Notify of '" + family + " OFF' of ext [" + ext + "] has been sent to the client " + ext);
+                                log("RESP 'cf_status_off' has been sent to [" + ext + "] sessionId '" + c.sessionId + "'");
                         }
                         else { // CF is enable by the phone user
-                                log("[" + ext + "] enable its '" + family + "' to [" + value + "]");
+                                logger.info("[" + ext + "] '" + family + " ON' to [" + value + "]");
                                 var msg = ext + " has enabled its " + family + " to " + value;
                                 var response = new ResponseMessage(c.sessionId, "cf_status_on", msg);
 				response.extTo = value;
                                 c.send(response);
-                                log("Notify of '" + family + " ON' for ext [" + ext + "] to [" + value + "] has been sent to the client " + ext);
+                                logger.info("RESP 'cf_status_on' to [" + value + "] has been sent to [" + ext + "] sessionId '" + c.sessionId + "'");
                         }
                 }
-		// update extStatusForOp with the changing in dnd status
-                if(value==""){
+                if(value=="")
                         modop.updateExtCFStatusWithExt(ext, "off");
-                }else {
+                else 
                         modop.updateExtCFStatusWithExt(ext, "on", value);
-                }
-                // update all clients with the new state of extension, for update operator panel
                 updateAllClientsForOpWithTypeExt(ext);
 	}
 });
