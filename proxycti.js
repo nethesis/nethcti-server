@@ -327,8 +327,12 @@ am.addListener('dialing', function(from, to) {
 
 am.addListener('callconnected', function(from, to) {
 	logger.info("EVENT 'CallConnected': FROM '" + sys.inspect(from) + "' TO '" + sys.inspect(to) + "'");
-	var fromExt = from.number;
-	var toExt = to.number;
+	var fromExt = '';
+	if(from!=undefined)
+		fromExt = from.number;
+	var toExt = '';
+	if(to!=undefined)
+		toExt = to.number;
 	if(clients[fromExt]!=undefined){
 		var c = clients[fromExt];
 		var msg = "Call from " + fromExt + " to " + toExt + " CONNECTED";
