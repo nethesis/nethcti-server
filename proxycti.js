@@ -347,13 +347,19 @@ am.addListener('unhold', function(participant) {
 	logger.info("EVENT 'Unhold': " + participant.number + " (" + participant.name + ") has taken " + other.number + " (" + other.name + ") off hold");
 });
 
+
 am.addListener('hangup', function(participant, code, text, headersChannel) {
-	logger.info("EVENT 'Hangup': participant '" + participant + "' has hung up. Reason: (code: " + code + ")  ( text: " + text + ") and headersChannel = " + headersChannel);
+	logger.info("EVENT 'Hangup': participant '" + sys.inspect(participant) + "' has hung up. Reason: (code: " + code + ")  ( text: " + text + ") and headersChannel = " + headersChannel);
 	/* check if the channel contains the string 'ZOMBIE'. In this case the hangup call is relative
  	 * to a call that has been redirected. So it don't advise any clients, because the call remains active */ 
 	if(headersChannel.indexOf('ZOMBIE')==-1){
 		if(participant!=undefined){
-			var ext = participant.number;
+			// participant.number can also be: number: '270@from'
+			var ext = '';
+			if(participant.number.indexOf('@')==-1)
+				ext = participant.number;
+			else
+				ext = participant.number.split('@')[0];
 			if(clients[ext]!=undefined){
 				var c = clients[ext];
 				var msg = "Call has hung up. Reason: " + text + "  (Code: " + code + ")";
@@ -417,10 +423,17 @@ am.addListener('peerstatus', function(headers) {
   calleridnum: '500',
   calleridname: '',
   uniqueid: '1303228098.13' }
+  *
+  * If the call come from queue, channel is:
+  channel: 'Local/270@from-internal-8acf;1', ...
 */
 am.addListener('newstate', function(headers){
         logger.info("EVENT 'NewState': headers '" + sys.inspect(headers) +  "'");
-	var typeext = headers.channel.split("-")[0];
+	var typeext = '';
+	if(headers.channel.indexOf('@')==-1)
+		typeext = headers.channel.split("-")[0];
+	else
+		typeext = 'SIP/' + headers.channel.split('@')[0].split('/')[1];
 	var statusEvent = headers.channelstatedesc.toLowerCase();
 	// if the call is a spy call, doesn't warn anyone
 	if(headers.calleridname.indexOf(SPY_PREFIX)==-1){
