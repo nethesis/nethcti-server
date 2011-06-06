@@ -309,24 +309,26 @@ am.addListener('dialing', function(from, to) {
 });
 
 am.addListener('callconnected', function(from, to) {
-	logger.info("EVENT 'CallConnected': between FROM '" + sys.inspect(from) + "' TO '" + sys.inspect(to) + "'");
-	if(clients[from.number]!=undefined){
-		var c = clients[from.number];
-		var msg = "Call from " + from.number + " to " + to.number + " CONNECTED";
+	logger.info("EVENT 'CallConnected': FROM '" + sys.inspect(from) + "' TO '" + sys.inspect(to) + "'");
+	var fromExt = from.number;
+	var toExt = to.number;
+	if(clients[fromExt]!=undefined){
+		var c = clients[fromExt];
+		var msg = "Call from " + fromExt + " to " + toExt + " CONNECTED";
 		var response = new ResponseMessage(c.sessionId, "callconnected", msg);
-		response.from = from.number;
-		response.to = to.number;
+		response.from = fromExt;
+		response.to = toExt;
 		c.send(response);
-		log("Notify of connected calling has been sent to " + from.number);
+		logger.info("RESP 'callconnected' has been sent to [" + fromExt + "] sessionId '" + c.sessionId + "'");
 	}
-	if(clients[to.number]!=undefined){
-		var c = clients[to.number];
-		var msg = "Call from " + from.number + " to " + to.number + " CONNECTED";
+	if(clients[toExt]!=undefined){
+		var c = clients[toExt];
+		var msg = "Call from " + fromExt + " to " + toExt + " CONNECTED";
 		var response = new ResponseMessage(c.sessionId, "callconnected", msg);
-		response.from = from.number;
-		response.to = to.number;
+		response.from = fromExt;
+		response.to = toExt;
 		c.send(response);
-		log("Notify of connected calling has been sent to " + to.number);
+		logger.info("RESP 'callconnected' has been sent to [" + toExt + "] sessionId '" + c.sessionId + "'");
 	}
 });
 
@@ -615,7 +617,7 @@ am.addListener('parkedcalltimeout', function(headers){
 extToReturnExtStatusForOp = '';
 clientToReturnExtStatusForOp = '';
 am.addListener('parkedcallscomplete', function(){
-	logger.info("EVENT 'ParkedCallsCmoplete'");
+	logger.info("EVENT 'ParkedCallsComplete'");
 	/* check if the user has the permission to view operator panel.
          * First check if the user has the "OP_PLUS" permission. If he hasn't the permission, then
          * it check if he has the "OP_BASE" permission. 
