@@ -355,7 +355,7 @@ function initExtStatusForOp(){
         };
         // send action to asterisk
         am.send(actionSIPPeersOP, function () {
-                log("'actionSIPPeersOP' " + sys.inspect(actionSIPPeersOP) + " has been sent to AST");
+                logger.info("'actionSIPPeersOP' " + sys.inspect(actionSIPPeersOP) + " has been sent to AST");
         });
 	/* create action for asterisk server that generate series of 'PeerEntry' events
          * to add status informations to 'extStatusForOp' for each IAXPeer */
@@ -364,7 +364,7 @@ function initExtStatusForOp(){
         };
         // send action to asterisk
         am.send(actionIAXPeersOP, function () {
-                log("'actionIAXPeersOP' " + sys.inspect(actionIAXPeersOP) + " has been sent to AST");
+                logger.info("'actionIAXPeersOP' " + sys.inspect(actionIAXPeersOP) + " has been sent to AST");
         });
 	/* create action for asterisk server that generate series of 'QueueMember' events
          * to add informations if the extension is present in some queue */
@@ -373,7 +373,7 @@ function initExtStatusForOp(){
         };
         // send action to asterisk
         am.send(actionQueueStatus, function () {
-                log("'actionQueueStatus' " + sys.inspect(actionQueueStatus) + " has been sent to AST");
+                logger.info("'actionQueueStatus' " + sys.inspect(actionQueueStatus) + " has been sent to AST");
         });
 }
 
