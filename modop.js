@@ -143,14 +143,14 @@ function updateExtStatusOpDialFrom(ext, extTo){
 	}
 }
 
-/* update the cf status of extension ext and in the case of 'on' cfStatus
- * it set also cfStatusToExt
- */
+/* update the cf status of extension. In the case it's 'on' it set 
+ * also 'cfStatusToExt' */
 function updateExtCFStatusWithExt(ext, value, extTo){
 	for(key in extStatusForOp){
                 if(key.indexOf(ext)!=-1){
 			if(value=='off'){
 	                        extStatusForOp[key].cfStatus = value;
+				extStatusForOp[key].cfStatusToExt = '';
 			}
 			else if(value=='on'){
 				extStatusForOp[key].cfStatus = value;
@@ -160,7 +160,6 @@ function updateExtCFStatusWithExt(ext, value, extTo){
         }
 }
 
-// update the dnd status of extension ext
 function updateExtDNDStatusWithExt(ext, value){
 	for(key in extStatusForOp){
 		if(key.indexOf(ext)!=-1){
@@ -188,19 +187,16 @@ function updateExtStatusForOpWithExt(ext, status){
 	}
 }
 
-// return the object of status associated with typeext key in extStatusForOp
+// return the object value of status associated with 'typeext' key in 'extStatusForOp'
 function getExtStatusWithTypeExt(typeext){
 	return extStatusForOp[typeext];
 }
 
-// Update the status of the ext givin typeext (ex. SIP/500)
+// Example of 'typeext' is: SIP/500
 function updateExtStatusForOpWithTypeExt(typeext, status){
-	// check if the typeext exists in extStatusForOp
 	if(extStatusForOp[typeext]!=undefined){
-	        // update extSatusForOP for future request from the clients
 	        extStatusForOp[typeext].lastStatus = extStatusForOp[typeext].status;
 	        extStatusForOp[typeext].status = status;
-	        log("updated new status '" + extStatusForOp[typeext].status + "' for typeext [" + typeext + "]");
 	}
 }
 
