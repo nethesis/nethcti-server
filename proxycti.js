@@ -364,10 +364,16 @@ am.addListener('hangup', function(participant, code, text, headersChannel) {
 		if(participant!=undefined){
 			// participant.number can also be: number: '270@from'
 			var ext = '';
-			if(participant.number.indexOf('@')==-1)
-				ext = participant.number;
-			else
+			if(participant.number.indexOf('@')!=-1)
 				ext = participant.number.split('@')[0];
+			else if(participant.channel.indexOf('AsyncGoto/SIP/')!=-1)
+				ext = participant.channel.split('/')[2].split('-')[0];
+			else
+				ext = participant.number;
+
+			console.log("aAAAAAA ext = " + ext);
+
+
 			if(clients[ext]!=undefined){
 				var c = clients[ext];
 				var msg = "Call has hung up. Reason: " + text + "  (Code: " + code + ")";
@@ -379,9 +385,9 @@ am.addListener('hangup', function(participant, code, text, headersChannel) {
 			 * If this code is commented, am.participants grow with more entry of the same extension,
 			 * so it refer wrong 'with' number in the follow hangup requests */
 			for(key in am.participants){
-				if(am.participants[key].number==ext){
+				if(am.participants[key].channel.indexOf(ext)!=-1){
 					delete am.participants[key];
-					logger.info("[" + ext + "] removed from 'am.participants' that now is: " + sys.inspect(am.participants));
+					logger.info("[" +  ext + "] removed from 'am.participants' that now is: " + sys.inspect(am.participants));
 				}
 			}
 			modop.updateExtStatusForOpWithExt(ext, 'hangup');
