@@ -78,9 +78,8 @@ exports.Modop = function(){
 // update voicemail count of the extension 
 function updateVMCountWithExt(ext,count){
 	for(key in extStatusForOp){
-        	if(key.indexOf(ext)!=-1){
+        	if(key.indexOf(ext)!=-1)
 			extStatusForOp[key].voicemailCount = count;
-		}
 	}
 }
 
@@ -95,9 +94,8 @@ function updateStopRecordExtStatusForOpWithExt(ext){
 // update status of ext with the info of start recording
 function updateStartRecordExtStatusForOpWithExt(ext){
 	for(key in extStatusForOp){
-                if(key.indexOf(ext)!=-1){
+                if(key.indexOf(ext)!=-1)
 			extStatusForOp[key].record = START_RECORD;
-                }
         }	
 }
 
@@ -107,9 +105,6 @@ function updateEndParkExtStatus(parking){
 	delete extStatusForOp[parking].parkFrom;
 }
 
-/* Update the status of the on Park extension.
- *
- */
 function updateParkExtStatus(parking, extParked, parkFrom, timeout){
         extStatusForOp[parking].parkedCall = extParked;
         extStatusForOp[parking].parkFrom = parkFrom;
@@ -201,16 +196,14 @@ function updateExtStatusForOpWithTypeExt(typeext, status){
 }
 
 /* This function add asterisk manager to local variable. Then addListener to it and
- * finally initialize extStatusForOp.
- */
+ * finally initialize 'extStatusForOp' */
 function addAsteriskManager(amanager){
 	am = amanager;
-	// add listener to asterisk manager to manage extStatusForOp
+	// add listeners to asterisk manager to manage extStatusForOp
 	addListenerToAm();
-	/* initialize the status of all extensions in the asterisk server (extStatusForOp).
-         * Its scope is to put the right informations to extStatusForOp to help proxycti.js
- 	 * to give correct informations to operator panel of the clients.
-         */
+	/* initialize the status of all extensions ('extStatusForOp') present in the asterisk server.
+         * Its scope is to put the right informations to 'extStatusForOp' to help 'proxycti.js'
+ 	 * to give correct informations to the clients for viewing the operator panel */
         initExtStatusForOp();
 }
 
@@ -356,46 +349,41 @@ function addListenerToAm(){
 }
 
 
-/* Initialize extStatusForOp. Initially it read a configuration file that contains list of
- * all extensions. After that it send the SIPPeers action to the asterisk server. So, it
- * successively receives more PeerEntry events from the asterisk server and at the end it receive
- * PeerListComplete event.
- * The number of PeerEntry is equal to number of extensions present in the asterisk server.
- * The receive of one PeerEntry event, allow to add status information of the extension to extStatusForOp.
- */
+/* Initialize 'extStatusForOp'. Initially it read a configuration file that contains list of
+ * all extensions. After that it sends the 'SIPPeers' action to the asterisk server. So, it
+ * successively receives more 'PeerEntry' events from the asterisk server and at the end it receive
+ * 'PeerListComplete' event.
+ * The number of 'PeerEntry' event is equal to the number of extensions present in the asterisk server.
+ * The receive of one 'PeerEntry' event, allow to add status informations of the extension to 'extStatusForOp' */
 function initExtStatusForOp(){
-        log("initialize status of all extensions");
+        logger.info("initialize status of all extensions...");
         // read file where are the list of all extensions
         extStatusForOp = iniparser.parseSync(FILE_EXT_LIST);
-        /* create action for asterisk server that generate series of PeerEntry events
-         * to add status informations to extStatusForOp
-         */
+        // create action for asterisk server that generate series of 'PeerEntry' events
         var actionSIPPeersOP = {
                 Action: 'SIPPeers'
         };
         // send action to asterisk
         am.send(actionSIPPeersOP, function () {
-                log("'SIPPeers' action has been sent to the asterisk server");
+                log("'actionSIPPeersOP' " + sys.inspect(actionSIPPeersOP) + " has been sent to AST");
         });
-	/* create action for asterisk server that generate series of PeerEntry events
-         * to add status informations to extStatusForOp for each IAXPeer
-         */
+	/* create action for asterisk server that generate series of 'PeerEntry' events
+         * to add status informations to 'extStatusForOp' for each IAXPeer */
         var actionIAXPeersOP = {
                 Action: 'IAXPeers'
         };
         // send action to asterisk
         am.send(actionIAXPeersOP, function () {
-                log("'IAXPeers' action has been sent to the asterisk server");
+                log("'actionIAXPeersOP' " + sys.inspect(actionIAXPeersOP) + " has been sent to AST");
         });
-	/* create action for asterisk server that generate series of QueueMember events
-         * to add information if the extension is present in some queue
-         */
+	/* create action for asterisk server that generate series of 'QueueMember' events
+         * to add informations if the extension is present in some queue */
         var actionQueueStatus = {
                 Action: 'QueueStatus'
         };
         // send action to asterisk
         am.send(actionQueueStatus, function () {
-                log("'QueueStatus' action has been sent to the asterisk server");
+                log("'actionQueueStatus' " + sys.inspect(actionQueueStatus) + " has been sent to AST");
         });
 }
 
