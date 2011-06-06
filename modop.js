@@ -84,12 +84,10 @@ function updateVMCountWithExt(ext,count){
 	}
 }
 
-// update status of ext with the info of stop recording
 function updateStopRecordExtStatusForOpWithExt(ext){
         for(key in extStatusForOp){
-                if(key.indexOf(ext)!=-1){
+                if(key.indexOf(ext)!=-1)
                         extStatusForOp[key].record = STOP_RECORD;
-                }
         }
 }
 
@@ -180,7 +178,7 @@ function getExtStatusWithExt(ext){
 	}
 }
 
-// Update the status of the ext givin ext (ex. 500)
+// example of 'ext' is: 500
 function updateExtStatusForOpWithExt(ext, status){
 	for(key in extStatusForOp){
 		if(key.indexOf(ext)!=-1){	
