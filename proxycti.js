@@ -555,7 +555,7 @@ am.addListener('userevent', function(headers){
 
 
 /* This event is necessary to add information to parked members of what extension is parked on it.
- * Example of ParkedCall event headers
+ * Example of 'ParkedCall' event is:
  * 
  { Event: ParkedCall
    Privilege: call,all
@@ -582,7 +582,7 @@ am.addListener('parkedcall', function(headers){
 
 
 /* This event is necessary to update the end of parked call to status of park extensions.
- * Example of ParkeCallTimeOut event headers
+ * Example of 'ParkeCallTimeOut' event is:
  * 
  { Event: ParkedCallTimeOut
    Privilege: call,all
@@ -596,19 +596,18 @@ am.addListener('parkedcalltimeout', function(headers){
         var parking = 'PARK' + headers.exten;
         // update status of park ext
         modop.updateEndParkExtStatus(parking);
-        // update all clients with the new state of extension, for update operator panel
         updateAllClientsForOpWithExt(parking);
 });
 
 
+// This event is emitted at the end of the answers generated after 'ParkedCalls' action
 extToReturnExtStatusForOp = '';
 clientToReturnExtStatusForOp = '';
 am.addListener('parkedcallscomplete', function(){
 	logger.info("EVENT 'ParkedCallsComplete'");
-	/* check if the user has the permission to view operator panel.
+	/* check if the user has the permission to view the operator panel.
          * First check if the user has the "OP_PLUS" permission. If he hasn't the permission, then
-         * it check if he has the "OP_BASE" permission. 
-         */
+         * it check if he has the "OP_BASE" permission. */
         if(profiler.checkActionOpPlusPermit(extToReturnExtStatusForOp)){
         	// create message
                 var msgstr = "received extStatusForOp to create operator panel";
@@ -617,7 +616,7 @@ am.addListener('parkedcallscomplete', function(){
                 mess.tabOp = modop.getTabOp();
                 mess.opPermit = 'plus';
                 clientToReturnExtStatusForOp.send(mess);
-               	log("ack_get_peer_list_complete_op has been sent to [" + extToReturnExtStatusForOp + "] with: " + clientToReturnExtStatusForOp.sessionId);
+               	logger.info("RESP 'ack_get_peer_list_complete_op' has been sent to [" + extToReturnExtStatusForOp + "] sessionId '" + clientToReturnExtStatusForOp.sessionId + "'");
         }
         else if(profiler.checkActionOpBasePermit(extToReturnExtStatusForOp)) {
         	// create message
@@ -627,14 +626,14 @@ am.addListener('parkedcallscomplete', function(){
                 mess.tabOp = modop.getTabOp();
                 mess.opPermit = 'base';
                 clientToReturnExtStatusForOp.send(mess);
-                log("ack_get_peer_list_complete_op has been sent to [" + extToReturnExtStatusForOp + "] with: " + clientToReturnExtStatusForOp.sessionId);
+                logger.info("RESP 'ack_get_peer_list_complete_op' has been sent to [" + extToReturnExtStatusForOp + "] sessionId '" + clientToReturnExtStatusForOp.sessionId + "'");
         }
         else{
         	// create message
                 var msgstr = "Sorry but you haven't the permission of view the operator panel";
                 var mess = new ResponseMessage(clientToReturnExtStatusForOp.sessionId, "error_get_peer_list_complete_op", msgstr);
                 clientToReturnExtStatusForOp.send(mess);
-                log("error_get_peer_list_complete_op has been sent to [" + extToReturnExtStatusForOp + "] with: " + clientToReturnExtStatusForOp.sessionId);
+                logger.info("RESP 'error_get_peer_list_complete_op' has been sent to [" + extToReturnExtStatusForOp + "] sessionId '" + clientToReturnExtStatusForOp.sessionId + "'");
        	}
 });
 
