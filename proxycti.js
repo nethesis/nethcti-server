@@ -220,14 +220,18 @@ am.addListener('agentcalled', function(fromid, fromname, queue, destchannel) {
                 }
 	}
 	if(to!=undefined){
-                // update ext status of extension that start the call
-                modop.updateExtStatusOpDialFrom(fromid, queue);
-                // update all clients for op
-                updateAllClientsForOpWithExt(fromid);
-                // update ext status of extension that receive the call
-                modop.updateExtStatusOpDialTo(to, fromid);
-                // update all clients for op
-                updateAllClientsForOpWithExt(to);
+		if(modop.isExtPresent(fromid)){
+	                // update ext status of extension that start the call
+	                modop.updateExtStatusOpDialFrom(fromid, queue);
+	                // update all clients for op
+	                updateAllClientsForOpWithExt(fromid);
+		}
+		if(modop.isExtPresent(to)){
+	                // update ext status of extension that receive the call
+	                modop.updateExtStatusOpDialTo(to, fromid);
+	                // update all clients for op
+	                updateAllClientsForOpWithExt(to);
+		}
         }
 });
 
@@ -306,14 +310,18 @@ am.addListener('dialing', function(from, to) {
 	}
 	if(to!=undefined){
 		var toExt = to.number;
-		// update ext status of extension that start the call
-		modop.updateExtStatusOpDialFrom(fromExt, toExt);	
-		// update all clients for op
-		updateAllClientsForOpWithExt(fromExt);
-		// update ext status of extension that receive the call
-		modop.updateExtStatusOpDialTo(toExt, fromExt);
-		// update all clients for op
-	        updateAllClientsForOpWithExt(toExt);
+		if(modop.isExtPresent(fromExt)){
+			// update ext status of extension that start the call
+			modop.updateExtStatusOpDialFrom(fromExt, toExt);	
+			// update all clients for op
+			updateAllClientsForOpWithExt(fromExt);
+		}
+		if(modop.isExtPresent(toExt)){
+			// update ext status of extension that receive the call
+			modop.updateExtStatusOpDialTo(toExt, fromExt);
+			// update all clients for op
+		        updateAllClientsForOpWithExt(toExt);
+		}
 	}
 });
 
@@ -1649,5 +1657,7 @@ process.on('uncaughtException', function(err){
 	logger.error(err.stack);
 	logger.error("am.participants:");
 	logger.error(sys.inspect(am.participants));
+	logger.error("extStatusForOp:");
+	logger.error(sys.inspect(modop.getExtStatusForOp()));
 	logger.error('*********************************************');
 });
