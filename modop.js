@@ -74,6 +74,15 @@ exports.Modop = function(){
 	this.updateStartRecordExtStatusForOpWithExt = function(ext) { updateStartRecordExtStatusForOpWithExt(ext); }
 	this.updateStopRecordExtStatusForOpWithExt = function(ext) { updateStopRecordExtStatusForOpWithExt(ext); }
 	this.updateVMCountWithExt = function(ext, count) { updateVMCountWithExt(ext,count) }
+	this.isExtPresent = function(ext) { isExtPresent(ext) }
+}
+
+function isExtPresent(ext){
+	for(key in extStatusForOp){
+                if(key.indexOf(ext)!=-1)
+			return true;
+        }
+	return false;
 }
 
 // update voicemail count of the extension 
