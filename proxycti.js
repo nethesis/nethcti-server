@@ -398,9 +398,12 @@ am.addListener('hangup', function(participant, code, text, headersChannel) {
 					logger.info("[" +  ext + "] removed from 'am.participants' that now is: " + sys.inspect(am.participants));
 				}
 			}
-			modop.updateExtStatusForOpWithExt(ext, 'hangup');
-			modop.updateStopRecordExtStatusForOpWithExt(ext);
-			updateAllClientsForOpWithExt(ext);
+			if(modop.isExtPresent(ext)){
+				modop.updateExtStatusForOpWithExt(ext, 'hangup');
+				modop.updateStopRecordExtStatusForOpWithExt(ext);
+				updateAllClientsForOpWithExt(ext);
+			} else 
+				logger.warn('[' + ext + '] is not present in extStatusForOp');
 		}
 	} 
 });
