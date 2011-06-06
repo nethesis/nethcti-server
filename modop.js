@@ -3,6 +3,7 @@
  * the management of operator panel. This object require asterisk manager
  * to function properly. Is possible to add it with addAsteriskManager function.
  */
+var sys = require('sys');
 var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
 var log4js = require('./lib/log4js-node/lib/log4js')();
 const FILE_TAB_OP = "config/optab.ini";
@@ -113,8 +114,7 @@ function updateParkExtStatus(parking, extParked, parkFrom, timeout){
 
 
 /* This function update the status of 'ext' that receive a call. Set his status to 
- * 'dialTo' and add 'dialFromExt' key to its state with the value 'extFrom'.
- */
+ * 'dialTo' and add 'dialFromExt' key to its state with the value 'extFrom'. */
 function updateExtStatusOpDialTo(ext, extFrom){
         for(key in extStatusForOp){
                 if(key.indexOf(ext)!=-1){
@@ -126,9 +126,8 @@ function updateExtStatusOpDialTo(ext, extFrom){
 
 
 
-/* This function update the status of 'ext' that start the call. Set his status to 
- * 'dialFrom' and add 'dialToExt' key to its state with the value 'extTo'.
- */
+/* This function update the status of 'ext' that start the call. Set his 'dialDirection' to 
+ * 'dialFrom' and add 'dialToExt' key to its state with the value 'extTo'. */
 function updateExtStatusOpDialFrom(ext, extTo){
 	for(key in extStatusForOp){
 		if(key.indexOf(ext)!=-1){
