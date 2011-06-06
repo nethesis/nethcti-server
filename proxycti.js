@@ -265,7 +265,7 @@ am.addListener('dialing', function(from, to) {
 	logger.info("Dial FROM '" + sys.inspect(from) + "'  -->  TO '" + sys.inspect(to) + "'");
 	
 	// check if the user is logged in
-	if(to!=undefined && clients[toExt]!=undefined){
+	if(to!=undefined && clients[to.number]!=undefined){
 		var toExt = to.number;
 		// check the permission of the user to receive the call
 		if(!profiler.checkActionCallInPermit(toExt)){
@@ -280,7 +280,6 @@ am.addListener('dialing', function(from, to) {
 		var response = new ResponseMessage(c.sessionId, "dialing", msg);
 		response.from = fromExt;
 		response.to = toExt;
-		
 		var typesCC = profiler.getTypesCustomerCardPermit(toExt);
 		logger.info("[" + toExt + "] is able to view customer card of types: " + sys.inspect(typesCC));
 

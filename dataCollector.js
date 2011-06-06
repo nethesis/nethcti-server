@@ -280,7 +280,7 @@ function getContactsPhonebook(name, cb){
 /*
  * Execute one sql query. This function must have 
  * a callback function as second parameter because the asynchronous nature of
- * mysql query function.Otherwise it is possibile that the function return before
+ * mysql query function. Otherwise it is possibile that the function return before
  * the completion of sql query operation.
  */
 function executeSQLQuery(type, objQuery, cb){
