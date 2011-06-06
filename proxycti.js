@@ -347,11 +347,9 @@ am.addListener('unhold', function(participant) {
 });
 
 am.addListener('hangup', function(participant, code, text, headersChannel) {
-	var ext = participant.number;
-	logger.info("EVENT 'Hangup': [" + ext + "] has hung up. Reason: (code: " + code + ")  ( text: " + text + ") and headersChannel = " + headersChannel);
+	logger.info("EVENT 'Hangup': participant '" + participant + "' has hung up. Reason: (code: " + code + ")  ( text: " + text + ") and headersChannel = " + headersChannel);
 	/* check if the channel contains the string 'ZOMBIE'. In this case the hangup call is relative
- 	 * to a call that has been redirected. So it don't advise any clients, because the call remains active.
-	 */
+ 	 * to a call that has been redirected. So it don't advise any clients, because the call remains active */ 
 	if(headersChannel.indexOf('ZOMBIE')==-1){
 		if(participant!=undefined){
 			var ext = participant.number;
@@ -360,23 +358,19 @@ am.addListener('hangup', function(participant, code, text, headersChannel) {
 				var msg = "Call has hung up. Reason: " + text + "  (Code: " + code + ")";
 				var response = new ResponseMessage(c.sessionId, "hangup", msg);
 				c.send(response);
-				log("Notify of hangup has been sent to " + ext);
+				logger.info("RESP 'hangup' has been sent to [" + ext + "] sessionId '" + c.sessionId + "'");
 			}
 			/* bug fix of asterisk.js in the wrong management of am.participants.
 			 * If this code is commented, am.participants grow with more entry of the same extension,
-			 * so it refer wrong 'with' number in follow hangup request.
-		 	 */
+			 * so it refer wrong 'with' number in the follow hangup requests */
 			for(key in am.participants){
 				if(am.participants[key].number==ext){
 					delete am.participants[key];
-					log("deleted entry [" + ext + "] from 'am.participants. The am.participants is:");
-					log(sys.inspect(am.participants) + "\n");
+					logger.info("[" + ext + "] removed from 'am.participants' that now is: " + sys.inspect(am.participants));
 				}
 			}
-			// update ext status for op
 			modop.updateExtStatusForOpWithExt(ext, 'hangup');
 			modop.updateStopRecordExtStatusForOpWithExt(ext);
-			// update all clients with the new state of extension, for update operator panel
 			updateAllClientsForOpWithExt(ext);
 		}
 	} 
