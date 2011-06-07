@@ -838,47 +838,42 @@ io.on('connection', function(client){
   		switch(action){
   			case actions.ACTION_LOGIN:
 	  			if(authenticator.authenticateUser(extFrom, message.secret)){  // the user is authenticated
-					// check if the user sessionId with extFrom is already logged in
-  					if(testAlreadyLoggedUser(client.sessionId, extFrom)){
-  						logger.warn("client sessionId '" + client.sessionId + "' is already logged in as [" + extFrom + "]");
-  						logger.warn(Object.keys(clients).length + " logged in clients");
-  						printLoggedClients();
-						client.send(new ResponseMessage(client.sessionId, "already_logged_in", "You are already logged in !"));
-					    	logger.warn("RESP 'already_logged_in' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
-	  					return;
-					}
-  					// check if the user sessionId is already logged in
-  					if(testAlreadyLoggedSessionId(client.sessionId)){
-  						logger.warn("client sessionId '" + client.sessionId + "' is already logged in");
-  						logger.warn(Object.keys(clients).length + " logged in clients");
-  						printLoggedClients();
-					    	client.send(new ResponseMessage(client.sessionId, "error_login", "Sorry, but you are already logged in !"));
-					    	logger.warn("RESP 'error_login' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
-  						return;
-  					}
-  					// check if the user extFrom is already logged in
+  					// if the user is already logged in, a new session is created and the old is closed
   					if(testAlreadyLoggedExten(extFrom)){
-  						logger.warn("client [" + extFrom + "] already logged in !");
-					    	logger.warn(Object.keys(clients).length + " logged in clients");
-					    	printLoggedClients();
-					    	client.send(new ResponseMessage(client.sessionId, "error_login", "Sorry, but the client [" + extFrom + "] is already logged in"));
-					    	logger.warn("error_login has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
-					    	return;
-  					}
-  					// authenticate the user
-  					else{
-		  				client.extension = extFrom;
-		  				clients[extFrom] = client;  
-		  				var ipAddrClient = client.connection.remoteAddress;
-			  			logger.info("logged IN: client [" + extFrom + "] IP '" + ipAddrClient + "' sessionId '" + client.sessionId + "'");
-			  			logger.info(Object.keys(clients).length + " logged in clients");
-			  			printLoggedClients();
-			  			var respMsg = new ResponseMessage(client.sessionId, "ack_login", "Login succesfully");
-			  			respMsg.ext = extFrom;
-			  			respMsg.secret = message.secret;
-		  				client.send(respMsg);
-		  				logger.info("RESP 'ack_login' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
-  					}
+						// close already present session
+						var clientToClose = clients[extFrom];
+						var respMsg = new ResponseMessage(clientToClose.sessionId, 'new_access', 'New Access from another place');
+						clientToClose.send(respMsg);
+						logger.warn("RESP 'new_access' has been sent to [" + extFrom + "] sessionId '" + clientToClose.sessionId + "'");
+						removeClient(clientToClose.sessionId);
+						if(!testAlreadyLoggedSessionId(clientToClose.sessionId))
+							logger.warn("new access [" + extFrom + "]: logged OUT sessiondId '" + clientToClose.sessionId + "'");
+						// new access: authenticate the user
+						client.extension = extFrom;
+						clients[extFrom] = client;
+						var ipAddrClient = client.connection.remoteAddress;
+						logger.warn("new access [" + extFrom + "]: logged IN, IP '" + ipAddrClient + "' sessionId '" + client.sessionId + "'");
+						logger.info(Object.keys(clients).length + " logged in clients");
+	                                        printLoggedClients();
+						respMsg = new ResponseMessage(client.sessionId, "ack_login", "Login succesfully");
+						respMsg.ext = extFrom;
+						respMsg.secret = message.secret;
+						client.send(respMsg);
+						logger.info("RESP 'ack_login' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+  					} else {
+	  					// authenticate the user
+			  			client.extension = extFrom;
+			  			clients[extFrom] = client;  
+			  			var ipAddrClient = client.connection.remoteAddress;
+				  		logger.info("logged IN: client [" + extFrom + "] IP '" + ipAddrClient + "' sessionId '" + client.sessionId + "'");
+				  		logger.info(Object.keys(clients).length + " logged in clients");
+				  		printLoggedClients();
+				  		var respMsg = new ResponseMessage(client.sessionId, "ack_login", "Login succesfully");
+				  		respMsg.ext = extFrom;
+				  		respMsg.secret = message.secret;
+			  			client.send(respMsg);
+			  			logger.info("RESP 'ack_login' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+					}
   				}
   				else{ // the user is not authenticated
   					logger.warn("AUTH FAILED: [" + extFrom + "] with secret '" + message.secret + "'");
@@ -1491,7 +1486,7 @@ io.on('connection', function(client){
   		if(!testAlreadyLoggedSessionId(client.sessionId))
   			logger.info("removed client sessionId '" + client.sessionId + "' from clients");
 	  	logger.info(Object.keys(clients).length + ' logged in clients');
-		logger.debug(sys.inspect(clients));
+		printLoggedClients();
   	});
 });
 
@@ -1579,11 +1574,6 @@ testAlreadyLoggedExten = function(exten){
 	return false;
 }
 
-// Check if the user exten already present in memory and its sessionId correspond.
-testAlreadyLoggedUser = function(sessionId, exten){
-	if(clients[exten]!=undefined && clients[exten].sessionId==sessionId) return true;
-	return false;
-}
 
 // Check if the user sessionId already present in memory.
 testAlreadyLoggedSessionId = function(sessionId){
