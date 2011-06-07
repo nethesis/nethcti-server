@@ -75,6 +75,12 @@ exports.Modop = function(){
 	this.updateStopRecordExtStatusForOpWithExt = function(ext) { updateStopRecordExtStatusForOpWithExt(ext); }
 	this.updateVMCountWithExt = function(ext, count) { updateVMCountWithExt(ext,count) }
 	this.isExtPresent = function(ext) { isExtPresent(ext) }
+	this.isTypeExtPresent = function(typeext) { isTypeExtPresent(typeext) }
+}
+
+function isTypeExtPresent(typeext){
+	if(extStatusForOp.typeext!=undefined) return true;
+	return false;
 }
 
 function isExtPresent(ext){
