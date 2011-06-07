@@ -402,7 +402,7 @@ am.addListener('hangup', function(participant, code, text, headersChannel) {
 				modop.updateExtStatusForOpWithExt(ext, 'hangup');
 				modop.updateStopRecordExtStatusForOpWithExt(ext);
 				updateAllClientsForOpWithExt(ext);
-			} else 
+			} else
 				logger.warn('[' + ext + '] is not present in extStatusForOp');
 		}
 	} 
@@ -462,10 +462,13 @@ am.addListener('newstate', function(headers){
 	var statusEvent = headers.channelstatedesc.toLowerCase();
 	// if the call is a spy call, doesn't warn anyone
 	if(headers.calleridname.indexOf(SPY_PREFIX)==-1){
-		// update ext status for op
-		modop.updateExtStatusForOpWithTypeExt(typeext, statusEvent);
-		// update all clients with the new state of extension, for update operator panel
-		updateAllClientsForOpWithTypeExt(typeext);
+		if(modop.isTypeExtPresent(typeext)){
+			// update ext status for op
+			modop.updateExtStatusForOpWithTypeExt(typeext, statusEvent);
+			// update all clients with the new state of extension, for update operator panel
+			updateAllClientsForOpWithTypeExt(typeext);
+		} else
+			logger.warn('[' + typeext + '] is not present in extStatusForOp');
 	}
 })
 
