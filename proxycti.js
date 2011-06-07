@@ -1539,7 +1539,8 @@ function createHistoryCallResponse(results){
 	for(i=0; i<results.length; i++){		
 		var currRes = results[i];
 		var temp = {};
-		temp.calldate = currRes.calldate;
+		temp.date = currRes.date;
+		temp.time = currRes.time;
 		temp.clid = currRes.clid;
 		temp.dst = currRes.dst;
 		temp.duration = currRes.duration;
