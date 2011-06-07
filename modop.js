@@ -79,7 +79,7 @@ exports.Modop = function(){
 }
 
 function isTypeExtPresent(typeext){
-	if(extStatusForOp.typeext!=undefined) return true;
+	if(extStatusForOp[typeext]!=undefined) return true;
 	return false;
 }
 
