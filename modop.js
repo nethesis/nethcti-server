@@ -76,6 +76,22 @@ exports.Modop = function(){
 	this.updateVMCountWithExt = function(ext, count) { updateVMCountWithExt(ext,count) }
 	this.isExtPresent = function(ext) { return isExtPresent(ext) }
 	this.isTypeExtPresent = function(typeext) { return isTypeExtPresent(typeext) }
+	this.incActiveCallingCount = function(ext) { incActiveCallingCount(ext) }
+	this.decActiveCallingCount = function(ext) { decActiveCallingCount(ext) }
+}
+
+function decActiveCallingCount(ext){
+	for(key in extStatusForOp){
+                if(key.indexOf(ext)!=-1)
+                        extStatusForOp[key].activeCallingCount--;
+        }
+}
+
+function incActiveCallingCount(ext){
+	for(key in extStatusForOp){
+                if(key.indexOf(ext)!=-1)
+                        extStatusForOp[key].activeCallingCount++;
+        }
 }
 
 function isTypeExtPresent(typeext){
@@ -363,6 +379,9 @@ function initExtStatusForOp(){
         logger.info("initialize status of all extensions...");
         // read file where are the list of all extensions
         extStatusForOp = iniparser.parseSync(FILE_EXT_LIST);
+	// add 'activeCallingCount' to all extensions and initialize it to 0
+	for(key in extStatusForOp)
+		extStatusForOp[key].activeCallingCount = 0;
         // create action for asterisk server that generate series of 'PeerEntry' events
         var actionSIPPeersOP = {
                 Action: 'SIPPeers'
