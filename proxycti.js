@@ -350,7 +350,6 @@ am.addListener('callconnected', function(from, to) {
 	 *   channel: 'Local/270@from-internal-fae4;2',
 	 *   with: '1307615262.818' }
 	 */
-
 	if(from!=undefined){
 		if(from.channel.indexOf('AsyncGoto/SIP/')==-1)
 			fromExt = from.channel.split('-')[0].split('/')[1]
@@ -363,12 +362,12 @@ am.addListener('callconnected', function(from, to) {
 		else
                 	toExt = to.channel.split('-')[0].split('/')[2]
 	}
-	if(modop.isExtPresent(fromExt) && to!=undefined){
+	if(from!=undefined && modop.isExtPresent(fromExt) && to!=undefined){
 		logger.info("add active link to [" + fromExt + "] with ch1 '" + from.channel + "' and ch2 '" + to.channel + "'");
 		modop.addActiveLinkExt(fromExt, from.channel, to.channel)
 		updateAllClientsForOpWithExt(fromExt);
 	}
-	if(modop.isExtPresent(toExt) && from!=undefined){
+	if(to!=undefined && modop.isExtPresent(toExt) && from!=undefined){
 		logger.info("add active link to [" + toExt + "] with ch1 '" + to.channel + "' and ch2 '" + from.channel + "'");
 		modop.addActiveLinkExt(toExt, to.channel, from.channel)
 		updateAllClientsForOpWithExt(toExt);
