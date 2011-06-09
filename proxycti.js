@@ -336,12 +336,21 @@ am.addListener('callconnected', function(from, to) {
 	 *   channel: 'AsyncGoto/SIP/271-000001f1',
 	 *   with: '1307605551.710' } 
 	 * 
-	 * else can be:
+	 * in normal case can be:
 	 * 
 	 * { name: '',
 	 *   number: '272',
 	 *   channel: 'SIP/272-000001f2',
-	 *   with: '1307605551.711' }' */
+	 *   with: '1307605551.711' } 
+	 *
+	 * in the case of queue can be:
+	 *
+	 * { name: '',
+	 *   number: '270@from',
+	 *   channel: 'Local/270@from-internal-fae4;2',
+	 *   with: '1307615262.818' }
+	 */
+
 	if(from!=undefined){
 		if(from.channel.indexOf('AsyncGoto/SIP/')==-1)
 			fromExt = from.channel.split('-')[0].split('/')[1]
@@ -398,20 +407,25 @@ am.addListener('hold', function(participant) {
 		logger.info("EVENT 'Unhold': " + participant.number + " (" + participant.name + ") has taken " + other.number + " (" + other.name + ") off hold");
 	});
 
-
 	am.addListener('hangup', function(participant, code, text, headersChannel) {
 		logger.info("EVENT 'Hangup': participant '" + sys.inspect(participant) + "' has hung up. Reason: (code: " + code + ")  ( text: " + text + ") and headersChannel = " + headersChannel)
 		if(headersChannel!=undefined){
 			var ext = ''
 			/* if the 'headersChannel' contains the string 'ZOMBIE', then the hangup call is relative to a call that has been redirected. 
-			 * Ex. of 'headersChannel' is: 'AsyncGoto/SIP/271-000001f1<ZOMBIE>' or 'SIP/270-000001f0' */ 
+			 * Ex. of 'headersChannel' in queue case is: 'AsyncGoto/SIP/271-000001f1<ZOMBIE>' 
+			 * in redirect case is: 'Local/271@from-internal-42d0;1'
+			 * in normal case is:   'SIP/270-000001f0' */ 
 			var hch = headersChannel
-			if(headersChannel.indexOf('ZOMBIE')==-1)
-				ext = headersChannel.split('-')[0].split('/')[1]
-			else{
+			if(headersChannel.indexOf('ZOMBIE')!=-1){
 				ext = headersChannel.split('-')[0].split('/')[2]
 				hch = hch.split('<ZOMBIE>')[0].split('AsyncGoto/')[1]
 			}
+			else if(headersChannel.indexOf('@')!=-1){
+				ext = headersChannel.split('@')[0].split('/')[1]
+                                hch = ext 
+			}
+			else
+				ext = headersChannel.split('-')[0].split('/')[1]
 			if(modop.isExtPresent(ext)){
 				modop.removeActiveLinkExt(ext, hch)
 				console.log("ho rimosso l'active link per [" + ext + "] con hch = " + hch)
