@@ -76,22 +76,22 @@ exports.Modop = function(){
 	this.updateVMCountWithExt = function(ext, count) { updateVMCountWithExt(ext,count) }
 	this.isExtPresent = function(ext) { return isExtPresent(ext) }
 	this.isTypeExtPresent = function(typeext) { return isTypeExtPresent(typeext) }
-	this.incActiveCallingCount = function(ext) { incActiveCallingCount(ext) }
-	this.decActiveCallingCount = function(ext) { decActiveCallingCount(ext) }
+	this.addActiveLinkExt = function(ext, ch1, ch2) { addActiveLinkExt(ext, ch1, ch2) }
+	this.removeActiveLinkExt = function(ext, ch) { removeActiveLinkExt(ext, ch) }
 }
 
-function decActiveCallingCount(ext){
-	for(key in extStatusForOp){
-                if(key.indexOf(ext)!=-1)
-                        extStatusForOp[key].activeCallingCount--;
-        }
+function removeActiveLinkExt(ext, ch){
+	for(key in extStatusForOp)
+		if(key.indexOf(ext)!=-1)
+			for(keyLink in extStatusForOp[key].activeLinks)
+				if(keyLink.indexOf(ch)!=-1)
+					delete extStatusForOp[key].activeLinks[keyLink]
 }
 
-function incActiveCallingCount(ext){
-	for(key in extStatusForOp){
-                if(key.indexOf(ext)!=-1)
-                        extStatusForOp[key].activeCallingCount++;
-        }
+function addActiveLinkExt(ext, ch1, ch2){
+	for(key in extStatusForOp)
+		if(key.indexOf(ext)!=-1)	
+			extStatusForOp[key].activeLinks[ch1] = ch2
 }
 
 function isTypeExtPresent(typeext){
@@ -379,9 +379,9 @@ function initExtStatusForOp(){
         logger.info("initialize status of all extensions...");
         // read file where are the list of all extensions
         extStatusForOp = iniparser.parseSync(FILE_EXT_LIST);
-	// add 'activeCallingCount' to all extensions and initialize it to 0
+	// add 'activeLinks' to all extensions and initialize it to empty value
 	for(key in extStatusForOp)
-		extStatusForOp[key].activeCallingCount = 0;
+		extStatusForOp[key].activeLinks = {};
         // create action for asterisk server that generate series of 'PeerEntry' events
         var actionSIPPeersOP = {
                 Action: 'SIPPeers'
