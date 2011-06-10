@@ -487,27 +487,30 @@ am.addListener('hold', function(participant) {
 	});
 
 
-	/* Example of 'NewState' event:
-	 *
-	{ event: 'Newstate',
-	  privilege: 'call,all',
-	  channel: 'SIP/500-0000000b',
-	  channelstate: '5',
-	  channelstatedesc: 'Ringing',
-	  calleridnum: '500',
-	  calleridname: '',
-	  uniqueid: '1303228098.13' }
-	  *
-	  * If the call come from queue, channel is:
-	  channel: 'Local/270@from-internal-8acf;1', ...
-	*/
+/* Example of 'NewState' event:
+ *
+{ event: 'Newstate',
+  privilege: 'call,all',
+  channel: 'SIP/500-0000000b',
+  channelstate: '5',
+  channelstatedesc: 'Ringing',
+  calleridnum: '500',
+  calleridname: '',
+  uniqueid: '1303228098.13' }
+  *
+  * If the call come from queue, channel is:
+  channel: 'Local/270@from-internal-8acf;1', ... */
 am.addListener('newstate', function(headers){
-        logger.info("EVENT 'NewState': headers '" + sys.inspect(headers) +  "'");
-	var typeext = '';
+        logger.info("EVENT 'NewState': headers '" + sys.inspect(headers) +  "'")
+	var typeext = ''
 	if(headers.channel.indexOf('@')==-1)
-		typeext = headers.channel.split("-")[0];
-	else
-		typeext = 'SIP/' + headers.channel.split('@')[0].split('/')[1];
+		typeext = headers.channel.split("-")[0]
+	else{
+		//typeext = 'SIP/' + headers.channel.split('@')[0].split('/')[1];
+		// return because another 'newState' event is generated for channel 'SIP/271-0000042f' (if the current channel is 'Local/271@from-internal-6f6c;1')
+		logger.info('channel \'' + headers.channel + '\' is for queue: return')
+		return
+	}
 	var statusEvent = headers.channelstatedesc.toLowerCase();
 	// if the call is a spy call, doesn't warn anyone
 	if(headers.calleridname.indexOf(SPY_PREFIX)==-1){
