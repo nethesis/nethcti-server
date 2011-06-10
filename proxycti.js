@@ -342,11 +342,13 @@ am.addListener('callconnected', function(from, to) {
 	 *
 	 * in the case of queue can be:
 	 *
-	 * { name: '',
-	 *   number: '270@from',
-	 *   channel: 'Local/270@from-internal-fae4;2',
-	 *   with: '1307615262.818' }
-	 */
+	 * EVENT 'CallConnected': FROM '{ name: '',
+	 *  number: '270@from',
+	 *  channel: 'Local/270@from-internal-7668;2',
+	 *  with: '1307712904.1949' }' TO '{ name: '',
+	 *  number: '270',
+	 *  channel: 'SIP/270-00000432',
+	 *  with: '1307712904.1952' }' */
 	if(from!=undefined){
 		if(from.channel.indexOf('AsyncGoto/SIP/')==-1)
 			fromExt = from.channel.split('-')[0].split('/')[1]
@@ -408,23 +410,24 @@ am.addListener('hold', function(participant) {
 		if(headersChannel!=undefined){
 			var ext = ''
 			/* if the 'headersChannel' contains the string 'ZOMBIE', then the hangup call is relative to a call that has been redirected. 
-			 * Ex. of 'headersChannel' in queue case is: 'AsyncGoto/SIP/271-000001f1<ZOMBIE>' 
-			 * in redirect case is: 'Local/271@from-internal-42d0;1'
+			 * Ex. of 'headersChannel' in redirect case is: 'AsyncGoto/SIP/271-000001f1<ZOMBIE>' 
+			 * in queue case is: 'Local/271@from-internal-42d0;1'
 			 * in normal case is:   'SIP/270-000001f0' */ 
 			var hch = headersChannel
 			if(headersChannel.indexOf('ZOMBIE')!=-1){
 				ext = headersChannel.split('-')[0].split('/')[2]
 				hch = hch.split('<ZOMBIE>')[0].split('AsyncGoto/')[1]
 			}
-			else if(headersChannel.indexOf('@')!=-1){
-				ext = headersChannel.split('@')[0].split('/')[1]
-                                hch = ext 
+			else if(headersChannel.indexOf('Local/')!=-1 && headersChannel.indexOf('@from-internal')!=-1){
+				//ext = headersChannel.split('@')[0].split('/')[1]
+                                //hch = ext 
+				logger.info('headersChannel \'' + headersChannel + '\' is due to queue: return')
+				return
 			}
 			else
 				ext = headersChannel.split('-')[0].split('/')[1]
 			if(modop.isExtPresent(ext)){
 				modop.removeActiveLinkExt(ext, hch)
-				console.log("ho rimosso l'active link per [" + ext + "] con hch = " + hch)
 				// if the 'headersChannel' contains 'ZOMBIE', then don't advise any clients because the call remains active, because it has been redirected 
 				if(headersChannel.indexOf('ZOMBIE')==-1){
 					modop.updateExtStatusForOpWithExt(ext, 'hangup')
