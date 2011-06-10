@@ -1,38 +1,30 @@
-var fs = require("fs");
-var sys = require("sys");
-var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
-var log4js = require('./lib/log4js-node/lib/log4js')();
-
-
-const PROFILER_CONFIG_FILENAME = "config/profiles.ini";
-const CALL_OUT = "CALL_OUT";
-const CALL_IN = "CALL_IN";
-const PHONEBOOK = "PHONEBOOK";
-const REDIRECT = "REDIRECT";
-const RECORD = "RECORD";
-const HISTORY_CALL = "HISTORY_CALL";
-const CUSTOMER_CARD = "CUSTOMER_CARD";
-const OP_PLUS = "OP_PLUS";
-const OP_BASE = "OP_BASE";
-const ALL = "all";
-const LOGFILE = './log/proxy.log';
-
-
+var fs = require("fs")
+var sys = require("sys")
+var iniparser = require("./lib/node-iniparser/lib/node-iniparser")
+var log4js = require('./lib/log4js-node/lib/log4js')()
+const PROFILER_CONFIG_FILENAME = "config/profiles.ini"
+const CALL_OUT = "CALL_OUT"
+const CALL_IN = "CALL_IN"
+const PHONEBOOK = "PHONEBOOK"
+const REDIRECT = "REDIRECT"
+const RECORD = "RECORD"
+const HISTORY_CALL = "HISTORY_CALL"
+const CUSTOMER_CARD = "CUSTOMER_CARD"
+const OP_PLUS = "OP_PLUS"
+const OP_BASE = "OP_BASE"
+const ALL = "all"
+const LOGFILE = './log/proxy.log'
 /* logger that write in output console and file
- * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF)
-  */
-log4js.addAppender(log4js.fileAppender(LOGFILE), '[Profiler]');
-var logger = log4js.getLogger('[Profiler]');
-logger.setLevel('ALL');
-
-
+ * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF) */
+log4js.addAppender(log4js.fileAppender(LOGFILE), '[Profiler]')
+var logger = log4js.getLogger('[Profiler]')
+logger.setLevel('ALL')
 /* this is the list of actions with its relative list of extensions: the key is the action,
  * (ex. "CALL_IN") and the value is the list of the user split by ',' (ex. 500,501,all)
  * If the action is CUSTOMER_CARD then the value is another object, with the key as
  * particulare customer card (ex. default or insoluti) and the value is the list of the
  * user. The name of the key are those that has been write in .ini file.
- */
-/* An example of actions: note that it is equal to the file .ini
+ * An example of actions: note that it is equal to the file .ini 
 actions = 
 { PHONEBOOK: { extensions: '500,501,all' },
   CALL_IN: { extensions: '501,500,ALL' },
@@ -45,18 +37,13 @@ actions =
      insoluti: '501,502,all',
      ticket: '501,500,all' },
   OP_PLUS: { extensions: 'all' },
-  OP_BASE: { extensions: 'all' } }
-*/
-actions = {};
-
+  OP_BASE: { extensions: 'all' } } */
+actions = {}
 // this is the controller to manage changing in the configuration file of profiles
-controller = null;
-
-/*
- * Constructor
- */
+controller = null
+// Constructor
 exports.Profiler = function(){
-	initProfiles();
+	initProfiles()
 	this.checkActionCallOutPermit = function(exten){ return checkActionPermit(exten, CALL_OUT) }
 	this.checkActionCallInPermit = function(exten){ return checkActionPermit(exten, CALL_IN) }
 	this.checkActionPhonebookPermit = function(exten){ return checkActionPermit(exten, PHONEBOOK) }
@@ -68,61 +55,44 @@ exports.Profiler = function(){
 	this.checkActionOpPlusPermit = function(exten) { return checkActionPermit(exten, OP_PLUS) }
 	this.checkActionOpBasePermit = function(exten) { return checkActionPermit(exten, OP_BASE) }
 }
-
 function addController(contr){
-	controller = contr;
-	log("added controller");
-	controller.addFile(PROFILER_CONFIG_FILENAME);
+	controller = contr
+	log("added controller")
+	controller.addFile(PROFILER_CONFIG_FILENAME)
 	controller.addListener("change_file", function(filename){
  	       if(filename==PROFILER_CONFIG_FILENAME){
-	                log("update configuration file " + PROFILER_CONFIG_FILENAME);
-	                updateConfiguration();
+	                log("update configuration file " + PROFILER_CONFIG_FILENAME)
+	                updateConfiguration()
 	        }
-	});
+	})
 }
-
-
-/* this function update profiles in memory after changing of confiuration
- * file.
- */
+// this function update profiles in memory after changing of confiuration file
 function updateConfiguration(){
-	initProfiles();
+	initProfiles()
 }
-
-
-/* 
- * Return an array containing the types of customer card for which the user is enable
- */
+// Return an array containing the types of customer card for which the user is enable
 function getTypesCustomerCardPermit(exten){
-	var typePermit = [];
-	var pattExt = new RegExp("\\b" + exten + "\\b");
-        var pattAll = new RegExp("\\b" + ALL + "\\b", "i");
+	var typePermit = []
+	var pattExt = new RegExp("\\b" + exten + "\\b")
+        var pattAll = new RegExp("\\b" + ALL + "\\b", "i")
 	for(type in actions[CUSTOMER_CARD]){
 		if( pattExt.test(actions[CUSTOMER_CARD][type]) || pattAll.test(actions[CUSTOMER_CARD][type]) )
-			typePermit.push(type);
+			typePermit.push(type)
 	}
-	return typePermit;
+	return typePermit
 }
-
-/*
- * Check if the user "exten" has the permit "action"
- */
+// Check if the user "exten" has the permit "action"
 function checkActionPermit(exten, action){
-	var pattExt = new RegExp("\\b" + exten + "\\b");
-        var pattAll = new RegExp("\\b" + ALL + "\\b", "i");
+	var pattExt = new RegExp("\\b" + exten + "\\b")
+        var pattAll = new RegExp("\\b" + ALL + "\\b", "i")
         if( pattExt.test(actions[action].extensions) || pattAll.test(actions[action].extensions)  )
-                return true;
+                return true
         else
-                return false;
+                return false
 }
-
-
 // Initialize the profiles of all extensions by means the reading of the config file.
 function initProfiles(){
-	this.actions = {};
-	this.actions = iniparser.parseSync(PROFILER_CONFIG_FILENAME); 
+	this.actions = {}
+	this.actions = iniparser.parseSync(PROFILER_CONFIG_FILENAME) 
 }
-
-function log(msg){
-	logger.info(msg);
-}
+function log(msg){ logger.info(msg) }
