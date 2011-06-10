@@ -450,6 +450,7 @@ am.addListener('hold', function(participant) {
 				var c = clients[ext];
 				var msg = "Call has hung up. Reason: " + text + "  (Code: " + code + ")";
 				var response = new ResponseMessage(c.sessionId, "hangup", msg);
+				response.code = code
 				c.send(response);
 				logger.info("RESP 'hangup' has been sent to [" + ext + "] sessionId '" + c.sessionId + "'");
 			}
