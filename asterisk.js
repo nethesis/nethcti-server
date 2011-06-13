@@ -315,7 +315,7 @@ exports.AsteriskManager = function (newconfig) {
 			 * for example: (channel: 'AsyncGoto/SIP/501-0000079a<ZOMBIE>'). It is used by the client when redirect a call,
 			 * for no sign free extension in the operator panel.
 			 */
-		        self.emit('hangup', self.participants[headers.uniqueid], headers.cause, headers.causetxt, headers.channel);
+		        self.emit('hangup', headers);
 		        // original: self.emit('hangup', self.participants[headers.uniqueid], headers.cause, headers.causetxt);
 			// End of change
 	        break;
