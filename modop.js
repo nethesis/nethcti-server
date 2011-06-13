@@ -91,9 +91,7 @@ function setCurrentActiveLink(ext, ch){
 function removeActiveLinkExt(ext, ch){
 	for(key in extStatusForOp)
 		if(key.indexOf(ext)!=-1)
-			for(keyLink in extStatusForOp[key].activeLinks)
-				if(keyLink.indexOf(ch)!=-1)
-					delete extStatusForOp[key].activeLinks[keyLink]
+			delete extStatusForOp[key].activeLinks[ch]
 }
 
 function addActiveLinkExt(ext, ch1, ch2){
