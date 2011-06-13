@@ -227,7 +227,7 @@ am.addListener('agentcalled', function(fromid, fromname, queue, destchannel) {
 	                // update ext status of extension that receive the call
 	                modop.updateExtStatusOpDialTo(to, fromid)
 	                // update all clients for op
-	                updateAllClientsForOpWithExt(to)
+	                //updateAllClientsForOpWithExt(to)
 		}
         }
 });
@@ -364,11 +364,13 @@ am.addListener('callconnected', function(from, to) {
 	if(from!=undefined && modop.isExtPresent(fromExt) && to!=undefined){
 		logger.info("add active link to [" + fromExt + "] with ch1 '" + from.channel + "' and ch2 '" + to.channel + "'");
 		modop.addActiveLinkExt(fromExt, from.channel, to.channel)
+		modop.setCurrentActiveLink(fromExt, from.channel)
 		updateAllClientsForOpWithExt(fromExt);
 	}
 	if(to!=undefined && modop.isExtPresent(toExt) && from!=undefined){
 		logger.info("add active link to [" + toExt + "] with ch1 '" + to.channel + "' and ch2 '" + from.channel + "'");
 		modop.addActiveLinkExt(toExt, to.channel, from.channel)
+		modop.setCurrentActiveLink(toExt, to.channel)
 		updateAllClientsForOpWithExt(toExt);
 	}
 	if(clients[fromExt]!=undefined){
@@ -396,73 +398,102 @@ am.addListener('calldisconnected', function(from, to) {
 });
 
 am.addListener('hold', function(participant) {
-		var other = am.getParticipant(participant['with']);
-		logger.info("EVENT 'Hold': " + participant.number + " (" + participant.name + ") has put " + other.number + " (" + other.name + ") on hold");
-	});
+	var other = am.getParticipant(participant['with']);
+	logger.info("EVENT 'Hold': " + participant.number + " (" + participant.name + ") has put " + other.number + " (" + other.name + ") on hold");
+});
 
-	am.addListener('unhold', function(participant) {
-		var other = am.getParticipant(participant['with']);
-		logger.info("EVENT 'Unhold': " + participant.number + " (" + participant.name + ") has taken " + other.number + " (" + other.name + ") off hold");
-	});
+am.addListener('unhold', function(participant) {
+	var other = am.getParticipant(participant['with']);
+	logger.info("EVENT 'Unhold': " + participant.number + " (" + participant.name + ") has taken " + other.number + " (" + other.name + ") off hold");
+});
 
-	am.addListener('hangup', function(participant, code, text, headersChannel) {
-		logger.info("EVENT 'Hangup': participant '" + sys.inspect(participant) + "' has hung up. Reason: (code: " + code + ")  ( text: " + text + ") and headersChannel = " + headersChannel)
-		if(headersChannel!=undefined){
-			var ext = ''
-			/* if the 'headersChannel' contains the string 'ZOMBIE', then the hangup call is relative to a call that has been redirected. 
-			 * Ex. of 'headersChannel' in redirect case is: 'AsyncGoto/SIP/271-000001f1<ZOMBIE>' 
-			 * in queue case is: 'Local/271@from-internal-42d0;1'
-			 * in normal case is:   'SIP/270-000001f0' */ 
-			var hch = headersChannel
-			if(headersChannel.indexOf('ZOMBIE')!=-1){
-				ext = headersChannel.split('-')[0].split('/')[2]
-				hch = hch.split('<ZOMBIE>')[0].split('AsyncGoto/')[1]
-			}
-			else if(headersChannel.indexOf('Local/')!=-1 && headersChannel.indexOf('@from-internal')!=-1){
-				//ext = headersChannel.split('@')[0].split('/')[1]
-                                //hch = ext 
-				logger.info('headersChannel \'' + headersChannel + '\' is due to queue: return')
-				return
-			}
-			else
-				ext = headersChannel.split('-')[0].split('/')[1]
-			if(modop.isExtPresent(ext)){
-				modop.removeActiveLinkExt(ext, hch)
-				// if the 'headersChannel' contains 'ZOMBIE', then don't advise any clients because the call remains active, because it has been redirected 
-				if(headersChannel.indexOf('ZOMBIE')==-1){
-					modop.updateExtStatusForOpWithExt(ext, 'hangup')
-					modop.updateStopRecordExtStatusForOpWithExt(ext)
-					updateAllClientsForOpWithExt(ext)
-					/* bug fix of asterisk.js in the wrong management of am.participants.
-					 * If this code is commented, am.participants grow with more entry of the same extension,
-					 * so it refer wrong 'with' number in the follow hangup requests */
-					for(key in am.participants){
-						if(am.participants[key].channel.indexOf(ext)!=-1){
-							delete am.participants[key];
-							logger.info("[" +  ext + "] removed from 'am.participants' that now is: " + sys.inspect(am.participants));
-						}
-					}
-				}
-			} else
-				logger.warn('[' + ext + '] is not present in extStatusForOp');
-			// here advise only the client that has hangup, so it can view popup info
-			if(clients[ext]!=undefined){
-				var c = clients[ext];
-				var msg = "Call has hung up. Reason: " + text + "  (Code: " + code + ")";
-				var response = new ResponseMessage(c.sessionId, "hangup", msg);
-				response.code = code
-				c.send(response);
-				logger.info("RESP 'hangup' has been sent to [" + ext + "] sessionId '" + c.sessionId + "'");
-			}
-		} else {
-			logger.warn("Unknown headersChannel '" + headersChannel + "'")
+	
+/* { event: 'Hangup',
+  privilege: 'call,all',
+  channel: 'SIP/272-000004e3',
+  uniqueid: '1307958249.2251',
+  calleridnum: '272',
+  calleridname: '<unknown>',
+  cause: '16',
+  causetxt: 'Normal Clearing' } 
+ *
+ { event: 'Hangup',
+  privilege: 'call,all',
+  channel: 'SIP/271-000004ff',
+  uniqueid: '1307959965.2279',
+  calleridnum: '<unknown>',
+  calleridname: 'CTI-271',
+  cause: '16',
+  causetxt: 'Normal Clearing' } */ 
+ am.addListener('hangup', function(headers) {
+	logger.info("EVENT 'Hangup': headers = " + sys.inspect(headers))
+	// ext is constructed from channel because other field change with context, for example when call come from cti
+	var ext = headers.channel.split('-')[0].split('/')[1]
+	var client = clients[ext]
+	// advise client of hangup
+	if(client!=undefined){
+		var msg = "Call has hung up. Reason: " + headers.causetxt + "  (Code: " + headers.cause + ")"
+		var resp = new ResponseMessage(client.sessionId, "hangup", msg)
+		resp.code = headers.cause
+		client.send(resp)
+		logger.info("RESP 'hangup' has been sent to [" + ext + "] sessionId '" + client.sessionId + "'")
+	}
+	if(modop.isExtPresent(ext)){
+		updateAllClientsForOpWithExt(ext)
+	} else
+		logger.warn('[' + ext + '] is not present in extStatusForOp')
+	delete am.participants[headers.uniqueid]
+	logger.info('removed \'' + headers.uniqueid  + '\' from am.participants: ' + sys.inspect(am.participants))
+//	if(headersChannel!=undefined){
+//		var ext = ''
+		/* if the 'headersChannel' contains the string 'ZOMBIE', then the hangup call is relative to a call that has been redirected. 
+		 * Ex. of 'headersChannel' in redirect case is: 'AsyncGoto/SIP/271-000001f1<ZOMBIE>' 
+		 * in queue case is: 'Local/271@from-internal-42d0;1'
+		 * in normal case is:   'SIP/270-000001f0' */ 
+/*		var hch = headers.channel
+		if(headersChannel.indexOf('ZOMBIE')!=-1){
+			ext = headersChannel.split('-')[0].split('/')[2]
+			hch = hch.split('<ZOMBIE>')[0].split('AsyncGoto/')[1]
+		}
+		else if(headersChannel.indexOf('Local/')!=-1 && headersChannel.indexOf('@from-internal')!=-1){
+			//ext = headersChannel.split('@')[0].split('/')[1]
+                               //hch = ext 
+			logger.info('headersChannel \'' + headersChannel + '\' is due to queue: return')
 			return
 		}
-	});
+		else
+			ext = headersChannel.split('-')[0].split('/')[1]
+		// here advise only the client that has hangup, so it can view popup info
+		if(clients[ext]!=undefined){
+			var c = clients[ext]
+			var msg = "Call has hung up. Reason: " + text + "  (Code: " + code + ")"
+			var response = new ResponseMessage(c.sessionId, "hangup", msg)
+			response.code = code
+			response.numActiveLinks = Object.keys(modop.getExtStatusWithExt(ext).activeLinks).length
+			response.numActiveChannel = 
+			c.send(response)
+			logger.info("RESP 'hangup' has been sent to [" + ext + "] sessionId '" + c.sessionId + "'")
+		}
+		if(modop.isExtPresent(ext)){
+			modop.removeActiveLinkExt(ext, hch)
+			// if the 'headersChannel' contains 'ZOMBIE', then don't advise any clients because the call remains active, because it has been redirected 
+			if(headersChannel.indexOf('ZOMBIE')==-1){
+				modop.updateExtStatusForOpWithExt(ext, 'hangup')
+				modop.updateStopRecordExtStatusForOpWithExt(ext)
+				updateAllClientsForOpWithExt(ext)
+			}
+		} else
+			logger.warn('[' + ext + '] is not present in extStatusForOp');
+	} else {
+		logger.warn("Unknown headersChannel '" + headersChannel + "'")
+		return
+	}
+	*/
+});
 
-	am.addListener('callreport', function(report) {
-		logger.info("EVENT 'CallReport': " + sys.inspect(report));
-	});
+am.addListener('callreport', function(report) {
+	logger.info("EVENT 'CallReport': " + sys.inspect(report));
+});
 
 	/* Example of 'Peerstatus' event:
 	 *
@@ -504,6 +535,9 @@ am.addListener('hold', function(participant) {
   * If the call come from queue, channel is:
   channel: 'Local/270@from-internal-8acf;1', ... */
 am.addListener('newstate', function(headers){
+	console.log("IIIIIIIIIIIIIIIIIIIII")
+	console.log(am.participants)
+	console.log("iiiiiiiiiiiiiiiii")
         logger.info("EVENT 'NewState': headers '" + sys.inspect(headers) +  "'")
 	var typeext = ''
 	if(headers.channel.indexOf('@')==-1)
@@ -1059,6 +1093,7 @@ io.on('connection', function(client){
 	  					break;
 	  				}
 	  			}
+				//var channel = modop.getExtStatusWithExt(extFrom).currentActiveLink
 	  			// create hangup action for asterisk server
 		  		var actionHangup = {
 					Action: 'Hangup',
