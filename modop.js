@@ -31,6 +31,7 @@ logger.setLevel('ALL');
    { Label: '"500 : alessandro"',
      Extension: '500',
      Context: 'from-internal',
+     activeLinks: {},
      Voicemail_Context: 'device',
      VoiceMailExt: '*500@from-internal',
      tab: 'interno',
@@ -78,6 +79,13 @@ exports.Modop = function(){
 	this.isTypeExtPresent = function(typeext) { return isTypeExtPresent(typeext) }
 	this.addActiveLinkExt = function(ext, ch1, ch2) { addActiveLinkExt(ext, ch1, ch2) }
 	this.removeActiveLinkExt = function(ext, ch) { removeActiveLinkExt(ext, ch) }
+	this.setCurrentActiveLink = function(ext, ch) { setCurrentActiveLink(ext, ch) }
+}
+
+function setCurrentActiveLink(ext, ch){
+	for(key in extStatusForOp)
+		if(key.indexOf(ext)!=-1)
+			extStatusForOp[key].currentActiveLink = ch
 }
 
 function removeActiveLinkExt(ext, ch){
