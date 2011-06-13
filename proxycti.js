@@ -442,6 +442,9 @@ am.addListener('unhold', function(participant) {
 		updateAllClientsForOpWithExt(ext)
 	} else
 		logger.warn('[' + ext + '] is not present in extStatusForOp')
+	modop.updateExtStatusForOpWithExt(ext, 'hangup')
+	modop.updateStopRecordExtStatusForOpWithExt(ext)
+	updateAllClientsForOpWithExt(ext)
 	delete am.participants[headers.uniqueid]
 	logger.info('removed \'' + headers.uniqueid  + '\' from am.participants: ' + sys.inspect(am.participants))
 //	if(headersChannel!=undefined){
