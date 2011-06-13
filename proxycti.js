@@ -173,34 +173,48 @@ am.addListener('servererror', function(err) {
 	logger.error("EVENT 'ServerError': error '" + err + "'");
 });
 
-am.addListener('agentcalled', function(fromid, fromname, queue, destchannel) {
-	logger.info("EVENT 'AgentCalled': from [" + fromid + "], '" + fromname + "' to queue '" + queue + "' and to -> '" + destchannel + "'")
-	// example: from [272], 'Alessandrotest3' to queue '900' and to -> 'Local/270@from-internal-1196;1'
-	var start = destchannel.indexOf("/") + 1
-	var end = destchannel.indexOf("@")
-	var to = destchannel.substring(start, end)
-	if(to!=undefined && clients[to]!=undefined){
+
+/* { event: 'AgentCalled',
+  privilege: 'agent,all',
+  queue: '900',
+  agentcalled: 'Local/270@from-internal/n',
+  agentname: 'Local/270@from-internal/n',
+  channelcalling: 'SIP/272-00000548',
+  destinationchannel: 'Local/270@from-internal-1f91;1',
+  calleridnum: '272',
+  calleridname: 'Alessandrotest3',
+  context: 'from-internal',
+  extension: '900',
+  priority: '10',
+  uniqueid: '1307966610.2357' } */
+
+//fromid, fromname, queue, destchannel
+am.addListener('agentcalled', function(headers) {
+	logger.info("EVENT 'AgentCalled': headers = " + sys.inspect(headers))
+	var toExt = headers.destinationchannel.split('@')[0].split('/')[1]
+	var c = clients[toExt]
+	var fromid = headers.calleridnum
+	if(toExt!=undefined && c!=undefined){
 		// check the permission of the user to receive the call
-                if(!profiler.checkActionCallInPermit(to)){
-			logger.info("check 'callIn' permission for [" + to + "] FAILED !")
+                if(!profiler.checkActionCallInPermit(toExt)){
+			logger.info("check 'callIn' permission for [" + toExt + "] FAILED !")
                         return
                 }
 		// create the response for the client
-	        var msg = fromname
-		var c = clients[to]
+	        var msg = headers.calleridname
 		/* in this response the html is not passed, because the chrome desktop 
                  * notification of the client accept only one absolute or relative url */
 		var response = new ResponseMessage(c.sessionId, "dialing", msg)
 		response.from = fromid
-		response.to = to
-		var typesCC = profiler.getTypesCustomerCardPermit(to)
-		logger.info("[" + to + "] is able to view customer card of types: " + sys.inspect(typesCC))
+		response.to = toExt
+		var typesCC = profiler.getTypesCustomerCardPermit(toExt)
+		logger.info("[" + toExt + "] is able to view customer card of types: " + sys.inspect(typesCC))
 		if(typesCC.length==0){
                         // the user hasn't the authorization of view customer card: the length is 0
-			logger.info("check permission to view Customer Card for [" + to + "] FAILED !")
+			logger.info("check permission to view Customer Card for [" + toExt + "] FAILED !")
                         response.customerCard = ["Sorry, but you don't have permission of view customer card !"]
                         c.send(response)
-			logger.info("RESP 'dialing' has been sent to [" + to + "] sessionId '" + c.sessionId + "'")
+			logger.info("RESP 'dialing' has been sent to [" + toExt + "] sessionId '" + c.sessionId + "'")
                         return
                 }
 		var customerCardResult = []
@@ -211,23 +225,19 @@ am.addListener('agentcalled', function(fromid, fromname, queue, destchannel) {
                                 if(customerCardResult.length==typesCC.length){
                                         response.customerCard = customerCardResult
                                         c.send(response)
-					logger.info("RESP 'dialing' has been sent to [" + to + "] sessionId '" + c.sessionId + "' with relative customer card")
+					logger.info("RESP 'dialing' has been sent to [" + toExt + "] sessionId '" + c.sessionId + "' with relative customer card")
                                 }
                         })
                 }
 	}
-	if(to!=undefined){
+	if(toExt!=undefined){
 		if(modop.isExtPresent(fromid)){
-	                // update ext status of extension that start the call
-	                modop.updateExtStatusOpDialFrom(fromid, queue)
-	                // update all clients for op
+	                modop.updateExtStatusOpDialFrom(fromid, headers.queue)
 	                updateAllClientsForOpWithExt(fromid)
 		}
-		if(modop.isExtPresent(to)){
-	                // update ext status of extension that receive the call
-	                modop.updateExtStatusOpDialTo(to, fromid)
-	                // update all clients for op
-	                //updateAllClientsForOpWithExt(to)
+		if(modop.isExtPresent(toExt)){
+	                modop.updateExtStatusOpDialTo(toExt, fromid)
+	                updateAllClientsForOpWithExt(toExt)
 		}
         }
 });
@@ -313,15 +323,11 @@ am.addListener('dialing', function(from, to) {
 	                }
 		}
 		if(modop.isExtPresent(fromExt)){
-			// update ext status of extension that start the call
 			modop.updateExtStatusOpDialFrom(fromExt, toExt)
-			// update all clients for op
 			updateAllClientsForOpWithExt(fromExt)
 		}
 		if(modop.isExtPresent(toExt)){
-			// update ext status of extension that receive the call
 			modop.updateExtStatusOpDialTo(toExt, fromExt)
-			// update all clients for op
 		        updateAllClientsForOpWithExt(toExt)
 		}
 	}
@@ -330,8 +336,8 @@ am.addListener('dialing', function(from, to) {
 // This event is emitted by asterisk.js when the 'Bridge' event is emitted from asterisk server
 am.addListener('callconnected', function(from, to) {
 	logger.info("EVENT 'CallConnected': FROM '" + sys.inspect(from) + "' TO '" + sys.inspect(to) + "'")
-	var fromExt = '',
-	    toExt = ''
+	var fromExt = ''
+	var toExt = ''
 	/* In the case that one ext has been redirected, 'from' can be:
 	 * { name: '',
 	 *   number: 'SIP',
@@ -345,26 +351,33 @@ am.addListener('callconnected', function(from, to) {
 	 *   channel: 'SIP/272-000001f2',
 	 *   with: '1307605551.711' } 
 	 *
-	 * in the case of queue can be:
+	 * in the case of queue:
 	 *
-	 * EVENT 'CallConnected': FROM '{ name: '',
-	 *  number: '270@from',
-	 *  channel: 'Local/270@from-internal-7668;2',
-	 *  with: '1307712904.1949' }' TO '{ name: '',
-	 *  number: '270',
-	 *  channel: 'SIP/270-00000432',
-	 *  with: '1307712904.1952' }' */
+	 * FROM '{ name: 'SIP/273',
+	  number: '273',
+	  channel: 'SIP/273-000005b0' }' TO '{ name: '',
+	  number: '271@from',
+	  channel: 'Local/271@from-internal-805b;1' }' 
+	 * 
+	 * or:
+ 	  FROM '{ name: '',
+	  number: '271@from',
+	  channel: 'Local/271@from-internal-d287;2',
+	  with: '1307972728.2666' }' TO '{ name: '',
+	  number: '271',
+	  channel: 'SIP/271-000005c7',
+	  with: '1307972728.2668' }' */
 	if(from!=undefined){
-		if(from.channel.indexOf('AsyncGoto/SIP/')==-1)
+		if(from.channel.indexOf('AsyncGoto/SIP/')==-1) 
 			fromExt = from.channel.split('-')[0].split('/')[1]
-		else
+		else 
 			fromExt = from.channel.split('-')[0].split('/')[2]
 	}
 	if(to!=undefined){
-		if(to.channel.indexOf('AsyncGoto/SIP/')==-1)
-			toExt = to.channel.split('-')[0].split('/')[1]
-		else
+		if(to.channel.indexOf('AsyncGoto/SIP/')!=-1)
                 	toExt = to.channel.split('-')[0].split('/')[2]
+		else
+			toExt = to.channel.split('-')[0].split('/')[1]
 	}
 	if(from!=undefined && modop.isExtPresent(fromExt) && to!=undefined){
 		logger.info("add active link to [" + fromExt + "] with ch1 '" + from.channel + "' and ch2 '" + to.channel + "'");
@@ -385,7 +398,7 @@ am.addListener('callconnected', function(from, to) {
 		response.from = fromExt;
 		response.to = toExt;
 		c.send(response);
-		logger.info("RESP 'callconnected' has been sent to [" + fromExt + "] sessionId '" + c.sessionId + "'");
+		logger.info("RESP 'callconnected' has been sent to [" + from.number + "] sessionId '" + c.sessionId + "'");
 	}
 	if(clients[toExt]!=undefined){
 		var c = clients[toExt];
@@ -422,6 +435,7 @@ am.addListener('unhold', function(participant) {
   cause: '16',
   causetxt: 'Normal Clearing' } 
  *
+ * or:
  { event: 'Hangup',
   privilege: 'call,all',
   channel: 'SIP/271-000004ff',
@@ -429,11 +443,35 @@ am.addListener('unhold', function(participant) {
   calleridnum: '<unknown>',
   calleridname: 'CTI-271',
   cause: '16',
-  causetxt: 'Normal Clearing' } */ 
+  causetxt: 'Normal Clearing' } 
+ *
+ * or when call come from queue:
+{ event: 'Hangup',
+  privilege: 'call,all',
+  channel: 'Local/271@from-internal-b48c;1',
+  uniqueid: '1307967705.2426',
+  calleridnum: '271',
+  calleridname: 'Alessandrotest2',
+  cause: '0',
+  causetxt: 'Unknown' } */ 
  am.addListener('hangup', function(headers) {
 	logger.info("EVENT 'Hangup': headers = " + sys.inspect(headers))
 	// ext is constructed from channel because other field change with context, for example when call come from cti
-	var ext = headers.channel.split('-')[0].split('/')[1]
+	var ch = headers.channel
+	var ext = ''
+	/* check if the hangup is relative to active channel of the client or not. If not, then is the case of a call the 
+	 * come from queue and that has been accepted from another client */
+	if(ch.indexOf('@from-internal')!=-1){
+		//ext = ch.split('@')[0].split('/')[1]
+		logger.info('hangup is relative to \'' + ch  + '\': delete from am.participants and return')
+		delete am.participants[headers.uniqueid]
+	        logger.info('_removed \'' + headers.uniqueid  + '\' from am.participants: ' + sys.inspect(am.participants))
+		return
+	}
+	else {
+		ext = ch.split('-')[0].split('/')[1]
+		modop.removeActiveLinkExt(ext, ch)
+	}
 	var client = clients[ext]
 	// advise client of hangup
 	if(client!=undefined){
@@ -443,9 +481,9 @@ am.addListener('unhold', function(participant) {
 		client.send(resp)
 		logger.info("RESP 'hangup' has been sent to [" + ext + "] sessionId '" + client.sessionId + "'")
 	}
-	if(modop.isExtPresent(ext)){
+	if(modop.isExtPresent(ext))
 		updateAllClientsForOpWithExt(ext)
-	} else
+	else
 		logger.warn('[' + ext + '] is not present in extStatusForOp')
 	modop.updateExtStatusForOpWithExt(ext, 'hangup')
 	modop.updateStopRecordExtStatusForOpWithExt(ext)
@@ -545,8 +583,9 @@ am.addListener('callreport', function(report) {
 am.addListener('newstate', function(headers){
         logger.info("EVENT 'NewState': headers '" + sys.inspect(headers) +  "'")
 	var typeext = ''
-	if(headers.channel.indexOf('@')==-1)
+	if(headers.channel.indexOf('@')==-1){
 		typeext = headers.channel.split("-")[0]
+	}
 	else{
 		//typeext = 'SIP/' + headers.channel.split('@')[0].split('/')[1];
 		// return because another 'newState' event is generated for channel 'SIP/271-0000042f' (if the current channel is 'Local/271@from-internal-6f6c;1')
