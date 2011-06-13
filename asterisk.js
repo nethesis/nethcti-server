@@ -266,7 +266,10 @@ exports.AsteriskManager = function (newconfig) {
 	        break;
 
 	        case "AgentCalled": // Agent on queue called
-			self.emit('agentcalled', headers.calleridnum, headers.calleridname, headers.queue, headers.destinationchannel);
+			// Change by Ale
+			self.emit('agentcalled', headers);
+			// original: self.emit('agentcalled', headers.calleridnum, headers.calleridname, headers.queue, headers.destinationchannel);
+			// end change by Ale
 	        break;
 
 	        case "Newcallerid": // potentially more useful information on an existing participant
