@@ -1375,9 +1375,11 @@ io.on('connection', function(client){
 				};
 				// send action to asterisk
 				am.send(actionCFon, function () {
-					logger.info("'actionCFon' " + sys.inspect(actionCFon) + " has been sent to AST");
-					var msgstr = "[" + extFrom + "] CF ON to [" + extTo + "]";
-					client.send(new ResponseMessage(client.sessionId, 'ack_cf_on', msgstr));
+					logger.info("'actionCFon' " + sys.inspect(actionCFon) + " has been sent to AST")
+					var msgstr = "[" + extFrom + "] CF ON to [" + extTo + "]"
+					var response = new ResponseMessage(client.sessionId, 'ack_cf_on', msgstr)
+					response.extTo = extTo
+					client.send(response)
 					logger.info("RESP 'ack_cf_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 					logger.info(msgstr);
 					// update ext CF status
