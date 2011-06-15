@@ -453,7 +453,17 @@ am.addListener('unhold', function(participant) {
   calleridnum: '271',
   calleridname: 'Alessandrotest2',
   cause: '0',
-  causetxt: 'Unknown' } */ 
+  causetxt: 'Unknown' }
+  *
+  * or when call has been redirect
+  EVENT 'Hangup': headers = { event: 'Hangup',
+  privilege: 'call,all',
+  channel: 'AsyncGoto/SIP/270-0000005c<ZOMBIE>',
+  uniqueid: '1308146834.135',
+  calleridnum: '<unknown>',
+  calleridname: '<unknown>',
+  cause: '16',
+  causetxt: 'Normal Clearing' } */
  am.addListener('hangup', function(headers) {
 	logger.info("EVENT 'Hangup': headers = " + sys.inspect(headers))
 	// ext is constructed from channel because other field change with context, for example when call come from cti
@@ -462,10 +472,15 @@ am.addListener('unhold', function(participant) {
 	/* check if the hangup is relative to active channel of the client or not. If not, then is the case of a call the 
 	 * come from queue and that has been accepted from another client */
 	if(ch.indexOf('@from-internal')!=-1){
-		//ext = ch.split('@')[0].split('/')[1]
 		logger.info('hangup is relative to \'' + ch  + '\': delete from am.participants and return')
 		delete am.participants[headers.uniqueid]
 	        logger.info('_removed \'' + headers.uniqueid  + '\' from am.participants: ' + sys.inspect(am.participants))
+		return
+	} else if(ch.indexOf('<ZOMBIE>')!=-1) {
+		ext = ch.split('-')[0].split('/')[2]
+		ch = ch.split('/')[1] + '/' + ch.split('<ZOMBIE>')[0].split('/')[2]
+		modop.removeActiveLinkExt(ext, ch)
+		logger.info('hangup is relative to \'' + ch + '\': don\'t advise any clients')
 		return
 	}
 	else {
