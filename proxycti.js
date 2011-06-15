@@ -1438,7 +1438,7 @@ io.on('connection', function(client){
                                 };
                                 // send action to asterisk
                                 am.send(actionCFUnavailableOff, function () {
-                                        logger.info("'actionCFUnavailableOn' " + sys.inspect(actionCFUnavailableOn) + " has been sent to AST");
+                                        logger.info("'actionCFUnavailableOff' " + sys.inspect(actionCFUnavailableOff) + " has been sent to AST");
                                         var msgstr = "[" + extFrom + "] CF Unavailable OFF";
                                         client.send(new ResponseMessage(client.sessionId, 'ack_cf_unavailable_off', msgstr));
                                         logger.info("RESP 'ack_cf_unavailable_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
