@@ -952,6 +952,8 @@ io.on('connection', function(client){
 			ACTION_CF_OFF: 	'cf_off',
 			ACTION_PARK: 	'park',
 			ACTION_PICKUP: 	'pickup',
+			ACTION_CF_BUSY_ON: 'cf_busy_on',
+			ACTION_CF_BUSY_OFF: 'cf_busy_off',
 			ACTION_STOP_RECORD: 'stoprecord',
 			ACTION_SPY_LISTEN:  'spy_listen',
 			ACTION_CHECK_CF_STATUS:    'check_cf_status',
@@ -1409,6 +1411,25 @@ io.on('connection', function(client){
                                         logger.info(msgstr);
                                 });
                         break;
+			case actions.ACTION_CF_BUSY_ON:
+                                var extTo = message.extTo;
+                                // create action for asterisk server
+                                var cmd = "database put CFB " + extFrom + " " + extTo;
+                                var actionCFBusyOn = {
+                                        Action: 'command',
+                                        Command: cmd
+                                };
+                                // send action to asterisk
+                                am.send(actionCFBusyOn, function () {
+                                        logger.info("'actionCFBusyOn' " + sys.inspect(actionCFBusyOn) + " has been sent to AST")
+                                        var msgstr = "[" + extFrom + "] CF Busy ON to [" + extTo + "]"
+                                        var response = new ResponseMessage(client.sessionId, 'ack_cf_busy_on', msgstr)
+                                        response.extTo = extTo
+                                        client.send(response)
+                                        logger.info("RESP 'ack_cf_busy_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+                                        logger.info(msgstr);
+                                });
+                        break;
 	  		case actions.ACTION_CF_OFF:
 		  		// create action for asterisk server
 	  			var cmd = "database del CF " + extFrom;
@@ -1442,6 +1463,22 @@ io.on('connection', function(client){
                                         var msgstr = "[" + extFrom + "] CF Unavailable OFF";
                                         client.send(new ResponseMessage(client.sessionId, 'ack_cf_unavailable_off', msgstr));
                                         logger.info("RESP 'ack_cf_unavailable_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+                                        logger.info(msgstr);
+                                });
+                        break;
+			case actions.ACTION_CF_BUSY_OFF:
+                                // create action for asterisk server
+                                var cmd = "database del CFB " + extFrom;
+                                var actionCFBusyOff = {
+                                        Action: 'command',
+                                        Command: cmd
+                                };
+                                // send action to asterisk
+                                am.send(actionCFBusyOff, function () {
+                                        logger.info("'actionCFBusyOff' " + sys.inspect(actionCFBusyOff) + " has been sent to AST");
+                                        var msgstr = "[" + extFrom + "] CF Busy OFF";
+                                        client.send(new ResponseMessage(client.sessionId, 'ack_cf_busy_off', msgstr));
+                                        logger.info("RESP 'ack_cf_busy_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
                                         logger.info(msgstr);
                                 });
                         break;
