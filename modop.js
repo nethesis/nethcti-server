@@ -90,8 +90,14 @@ function setCurrentActiveLink(ext, ch){
 
 function removeActiveLinkExt(ext, ch){
 	for(key in extStatusForOp)
-		if(key.indexOf(ext)!=-1)
+		if(key.indexOf(ext)!=-1){
+			var al = extStatusForOp[key].activeLinks
+			for(chKey in al){
+				if(chKey.indexOf('AsyncGoto/SIP/')!=-1 && chKey.indexOf(ch)!=-1)
+					delete extStatusForOp[key].activeLinks[chKey]
+			}
 			delete extStatusForOp[key].activeLinks[ch]
+		}
 }
 
 function addActiveLinkExt(ext, ch1, ch2){
