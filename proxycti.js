@@ -958,6 +958,8 @@ io.on('connection', function(client){
 			ACTION_CHECK_DND_STATUS:   'check_dnd_status',
 			ACTION_CHECK_CW_STATUS:    'check_cw_status',
 			ACTION_SPY_LISTEN_SPEAK:   'spy_listen_speak',
+			ACTION_CF_UNAVAILABLE_ON: 'cf_unavailable_on',
+			ACTION_CF_UNAVAILABLE_OFF: 'cf_unavailable_off',
 			ACTION_REDIRECT_VOICEMAIL: 'redirect_voicemail',
 			ACTION_GET_DAY_HISTORY_CALL:  'get_day_history_call',
 			ACTION_CHECK_CALL_AUDIO_FILE: 'check_call_audio_file',
@@ -1388,6 +1390,25 @@ io.on('connection', function(client){
                                         updateAllClientsForOpWithExt(extFrom);
 				});
 	  		break;
+			case actions.ACTION_CF_UNAVAILABLE_ON:
+                                var extTo = message.extTo;
+                                // create action for asterisk server
+                                var cmd = "database put CFU " + extFrom + " " + extTo;
+                                var actionCFUnavailableOn = {
+                                        Action: 'command',
+                                        Command: cmd
+                                };
+                                // send action to asterisk
+                                am.send(actionCFUnavailableOn, function () {
+                                        logger.info("'actionCFUnavailableOn' " + sys.inspect(actionCFUnavailableOn) + " has been sent to AST")
+                                        var msgstr = "[" + extFrom + "] CF Unavailable ON to [" + extTo + "]"
+                                        var response = new ResponseMessage(client.sessionId, 'ack_cf_unavailable_on', msgstr)
+                                        response.extTo = extTo
+                                        client.send(response)
+                                        logger.info("RESP 'ack_cf_unavailable_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+                                        logger.info(msgstr);
+                                });
+                        break;
 	  		case actions.ACTION_CF_OFF:
 		  		// create action for asterisk server
 	  			var cmd = "database del CF " + extFrom;
@@ -1408,6 +1429,22 @@ io.on('connection', function(client){
                                         updateAllClientsForOpWithExt(extFrom);
 				});
 	  		break;
+			case actions.ACTION_CF_UNAVAILABLE_OFF:
+                                // create action for asterisk server
+                                var cmd = "database del CFU " + extFrom;
+                                var actionCFUnavailableOff = {
+                                        Action: 'command',
+                                        Command: cmd
+                                };
+                                // send action to asterisk
+                                am.send(actionCFUnavailableOff, function () {
+                                        logger.info("'actionCFUnavailableOn' " + sys.inspect(actionCFUnavailableOn) + " has been sent to AST");
+                                        var msgstr = "[" + extFrom + "] CF Unavailable OFF";
+                                        client.send(new ResponseMessage(client.sessionId, 'ack_cf_unavailable_off', msgstr));
+                                        logger.info("RESP 'ack_cf_unavailable_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+                                        logger.info(msgstr);
+                                });
+                        break;
 			case actions.ACTION_GET_DAY_HISTORY_CALL:
 				// check if the user has the permission to get the history of calling
 				var res = profiler.checkActionHistoryCallPermit(extFrom);
