@@ -267,8 +267,20 @@ am.addListener('agentcalled', function(headers) {
   with: '1307961094.2305' } -> { name: '',
   number: '270',
   channel: 'SIP/270-00000517',
-  with: '1307961094.2308' } */
-am.addListener('dialing', function(from, to) {
+  with: '1307961094.2308' }
+ *
+ * when call out in a trunk the telnet event is:
+ Event: Dial
+ Privilege: call,all
+ SubEvent: Begin
+ Channel: SIP/208-000003b9
+ Destination: SIP/UMTS-000003ba
+ CallerIDNum: 208
+ CallerIDName: Giacomo Sanchietti
+ UniqueID: 1308153327.2010
+ DestUniqueID: 1308153328.2011
+ Dialstring: UMTS/#31#3393164194 */
+am.addListener('dialing', function(from, to, headers) {
 	logger.info("EVENT 'Dialing'")
 	// check the source of the call: if come from queue, then return because 'AgentCalled' event is emitted
 	var ch = from.channel
@@ -281,9 +293,19 @@ am.addListener('dialing', function(from, to) {
 		fromExt = from.channel.split('/')[2].split('-')[0]
 	else
 		fromExt = from.channel.split('-')[0].split('/')[1]
-	logger.info("Dial FROM '" + sys.inspect(from) + "'  -->  TO '" + sys.inspect(to) + "'")
+	logger.info("Dial FROM '" + sys.inspect(from) + "'  -->  TO '" + sys.inspect(to) + "' and headers: '" + sys.inspect(headers)  + "'")
 	if(to!=undefined){
-		var toExt = to.channel.split('-')[0].split('/')[1]
+		var toExt = ''
+		/* toExt:
+		 * if the call is out in a trunk then, the 'to.channel' is: 'SIP/UMTS-000003ae' */
+		var to = to.channel.split('-')[0]
+		if(modop.isTypeExtPresent(to)){ // the call is out into a trunk
+			toExt = headers.dialstring.split('/')[1]  // headers.dialstring is: 'UMTS/#31#3393164194'
+			if(toExt.indexOf('#31#')!=-1) // if it has hidden code, remove it
+				toExt = toExt.split('#31#')[1]
+		} else
+			toExt = to.channel.split('-')[0].split('/')[1]
+		logger.info('fromExt = ' + fromExt + ' &  toExt = ' + toExt)
 		var c = clients[toExt]
 		if(c!=undefined){
 			// check the permission of the user to receive the call
