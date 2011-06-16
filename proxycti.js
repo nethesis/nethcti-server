@@ -129,8 +129,9 @@ function getUniqueIdFromFilename(filename){
 var profiler = new proReq.Profiler();
 var dataCollector = new dataReq.DataCollector();
 var authenticator = new authReq.Authenticator();
-var modop = new modopReq.Modop();
 var controller = new contrReq.Controller(); // check changing in audio directory
+var modop = new modopReq.Modop();
+modop.addController(controller)
 logger.debug('added object modules: \'Profiler\', \'DataCollector\', \'Authenticator\', \'Modop\' and \'Controller\'')
 controller.addDir(AST_CALL_AUDIO_DIR);
 controller.addListener("change_dir", function(dir){
@@ -138,7 +139,28 @@ controller.addListener("change_dir", function(dir){
 		logger.info("update audio file list");
 		createAudioFileList();
 	}
-});
+})
+controller.addListener('change_vm_dir', function(dir){
+	// ex dir: '/var/spool/asterisk/voicemail/default/272/INBOX'
+        var ext = dir.split('/')[6]
+        var actionMailboxCount = {
+		Action: 'MailboxCount',
+		Mailbox: ext
+        }
+        am.send(actionMailboxCount, function (resp) {
+		/* resp = { response: 'Success',
+                actionid: '1308221582955',
+                message: 'Mailbox Message Count',
+                mailbox: '272',
+                newmessages: '2',
+                oldmessages: '0' } */
+                var newMsgCount = resp.newmessages
+		// update voicemail count of the extension
+	        modop.updateVMCountWithExt(ext,resp.newmessages)
+	        // update all clients with the new state of extension, for update operator panel
+	        updateAllClientsForOpWithExt(ext)
+	})
+})
 
 /* add 'controller' object to 'profiler' and to 'dataCollector'. They use it to 
  * manage changing in thier configuration file.
