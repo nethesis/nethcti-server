@@ -334,7 +334,6 @@ function addListenerToAm(){
 		 * This piece of code can be optimized obtaining the only mailbox status for
 		 * that extension obtained with command 'voicemail show users' */
 		// create action for asterisk server
-                var cmd = "database get CF " + ext;
                 var actionMailboxCount = {
                         Action: 'MailboxCount',
                         Mailbox: ext
