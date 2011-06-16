@@ -297,14 +297,17 @@ am.addListener('dialing', function(from, to, headers) {
 	if(to!=undefined){
 		var toExt = ''
 		/* toExt:
-		 * if the call is out in a trunk then, the 'to.channel' is: 'SIP/UMTS-000003ae' */
-		var to = to.channel.split('-')[0]
-		if(modop.isTypeExtPresent(to)){ // the call is out into a trunk
-			toExt = headers.dialstring.split('/')[1]  // headers.dialstring is: 'UMTS/#31#3393164194'
-			if(toExt.indexOf('#31#')!=-1) // if it has hidden code, remove it
-				toExt = toExt.split('#31#')[1]
-		} else
-			toExt = to.channel.split('-')[0].split('/')[1]
+		 * if the call is out in a trunk then, the 'to.channel' is: 'SIP/UMTS-000003ae'
+		 * otherwise it can be: 'SIP/272-00000088' */
+		var toTypeExt = to.channel.split('-')[0] // 'toTypeExt' has the form: 'SIP/UMTS' or 'SIP/272'
+		if(modop.isTypeExtPresent(toTypeExt)){ // the call is out into a trunk
+			if(modop.getExtStatusWithTypeExt(toTypeExt).tab=='fasci'){
+				toExt = headers.dialstring.split('/')[1]  // headers.dialstring is: 'UMTS/#31#3393164194'
+				if(toExt.indexOf('#31#')!=-1) // if it has hidden code, remove it
+					toExt = toExt.split('#31#')[1]
+			} else if(modop.getExtStatusWithTypeExt(toTypeExt).tab=='interno')
+				toExt = to.channel.split('-')[0].split('/')[1]
+		}
 		logger.info('fromExt = ' + fromExt + ' &  toExt = ' + toExt)
 		var c = clients[toExt]
 		if(c!=undefined){
