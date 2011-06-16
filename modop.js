@@ -80,8 +80,15 @@ exports.Modop = function(){
 	this.addActiveLinkExt = function(ext, ch1, ch2) { addActiveLinkExt(ext, ch1, ch2) }
 	this.removeActiveLinkExt = function(ext, ch) { removeActiveLinkExt(ext, ch) }
 	this.setCurrentActiveLink = function(ext, ch) { setCurrentActiveLink(ext, ch) }
+	this.isExtInterno = function(ext) { isExtInterno(ext) }
 }
-
+function isExtInterno(ext){
+	for(key in extStatusForOp)
+		if(key.indexOf(ext)!=-1)
+			if(extStatusForOp[key].tab=='interno')
+				return true
+	return false
+}
 function setCurrentActiveLink(ext, ch){
 	for(key in extStatusForOp)
 		if(key.indexOf(ext)!=-1)
