@@ -12,18 +12,33 @@ const LOGFILE = './log/proxy.log';
 log4js.addAppender(log4js.fileAppender(LOGFILE), '[Controller]');
 var logger = log4js.getLogger('[Controller]');
 logger.setLevel('ALL');
-
-// list of files to control
-fileToControl = {};
-// list of directories to control
-dirToControl = {};
+fileToControl = {} // list of files to control
+dirToControl = {} // list of directories to control
 // Constructor
 exports.Controller = function(){
 	EventEmitter.call(this);
 	self = this;
 	this.addFile = function(filename) { addFile(filename) };
 	this.addDir = function(dir) { addDir(dir) };
+	this.addVMDir = function(dir) { addVMDir(dir) }
 } 
+function addVMDir(dir){
+	try{
+                var stat = fs.lstatSync(dir)
+                if(stat.isDirectory){
+                        dirToControl[dir] = true;
+                        fs.watchFile(dir, { persistent: true, interval: INTERVAL_POLLING }, function(curr, prev){
+                                if(curr.mtime.getTime()!=prev.mtime.getTime())
+                                        self.emit("change_vm_dir", dir);
+                        })
+                }
+        }
+        catch(err){
+                log("Error: " + dir + " is not directory")
+                log(sys.inspect(err))
+                return
+        }
+}
 function log(msg){
 	logger(msg);
 }
