@@ -6,6 +6,7 @@
 var sys = require('sys');
 var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
 var log4js = require('./lib/log4js-node/lib/log4js')();
+var pathreq = require('path')
 const FILE_TAB_OP = "config/optab.ini";
 const FILE_EXT_LIST = "/etc/asterisk/nethcti.ini";
 const DIAL_FROM = 1;
@@ -13,6 +14,7 @@ const DIAL_TO = 0;
 const START_RECORD = 1;
 const STOP_RECORD = 0;
 const LOGFILE = './log/proxy.log';
+const VM_PATH_BASE = '/var/spool/asterisk/voicemail/default'
 
 // logger
 /* logger that write in output console and file
@@ -49,8 +51,8 @@ var extStatusForOp = {};
  */
 var tabOp = {};
 
-// this is the asterisk manager
-var am;
+var am // asterisk manager
+var controller // controller
 
 /*
  * Constructor
@@ -81,7 +83,9 @@ exports.Modop = function(){
 	this.removeActiveLinkExt = function(ext, ch) { removeActiveLinkExt(ext, ch) }
 	this.setCurrentActiveLink = function(ext, ch) { setCurrentActiveLink(ext, ch) }
 	this.isExtInterno = function(ext) { isExtInterno(ext) }
+	this.addController = function(contr) { addController(contr) }
 }
+function addController(contr){ controller = contr }
 function isExtInterno(ext){
 	for(key in extStatusForOp)
 		if(key.indexOf(ext)!=-1)
@@ -350,6 +354,14 @@ function addListenerToAm(){
 			var newMsgCount = resp.newmessages;
 			extStatusForOp[typeext].voicemailCount = newMsgCount;
                 });
+		// if the ext is an 'interno' then add to controller the directory of voicemail to controll
+		if(isExtInterno(ext)){
+			var pathDir = VM_PATH_BASE + '/' + ext + '/INBOX'
+			pathreq.exists(pathDir, function(exists){
+				if(exists)
+					controller.addVMDir(pathDir)
+			})
+		}
 	});	
 
 	/* This event is triggered when 'PeerEntry' event is emitted for each user registered in asterisk.
