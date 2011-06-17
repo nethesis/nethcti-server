@@ -1179,6 +1179,10 @@ io.on('connection', function(client){
 						Account: extToCall,
 						Timeout: 30000
 					};
+					/* update all clients that 'extFrom' has been started a call out, so they can update their OP.
+					 * This is made because asterisk.js not generate 'newState' ringing event until the user
+					 * has pickup his phone */
+					sendAllClientAckCalloutFromCti(extFrom)
 					// send action to asterisk
 					am.send(actionCall, function () {
 						logger.info('\'actionCall\' ' + sys.inspect(actionCall) + ' has been sent to AST');
@@ -1777,6 +1781,38 @@ am.connect();
 /************************************************************************************************
  * Section relative to functions
  */
+
+function updateAllClientsForOpWithExt(ext){
+        // get new state of the extension ext
+        logger.info('FUNCTION \'updateAllClientsForOpWithExt(ext)\': \'modop.getExtStatusWithExt(ext)\' with ext = \'' + ext + '\'');
+        var newState = modop.getExtStatusWithExt(ext);
+        logger.info('obtained newState: ' + sys.inspect(newState));
+        // send update to all clients with the new state
+        logger.info('update all clients (with ext)...');
+        for(key in clients){
+                var c = clients[key];
+                var msg = "state of " + newState.Label + " has changed: update ext new state";
+                var response = new ResponseMessage(c.sessionId, "update_ext_new_state_op", msg);
+                response.extNewState = newState;
+                c.send(response);
+                logger.info("RESP 'update_ext_new_state_op' has been sent to [" + key + "] sessionId '" + c.sessionId + "'");
+        }
+}
+
+/* Tells all clients that extFrom has started a call out from his CTI. So all clients can update
+ * their OP with ringing icon. This is because asterisk.js don't generate 'newState' ringing event until
+ * the user has pickup his phone */
+function sendAllClientAckCalloutFromCti(extFrom){
+	logger.info('FUNCTION \'sendAllClientAckCalloutFromCti(extFrom)\' for extFrom [' + extFrom + ']')
+	for(key in clients){
+                var c = clients[key]
+                var msg = "[" + extFrom + "] has started a callout from CTI"
+                var response = new ResponseMessage(c.sessionId, "ack_callout_from_cti", msg)
+		response.extFrom = extFrom
+                c.send(response)
+                logger.info("RESP 'ack_callout_from_cti' has been sent to [" + key + "] sessionId '" + c.sessionId + "'")
+        }
+}
 
 /* This function create the response for the client with the history call
  * that the client has been requested.
