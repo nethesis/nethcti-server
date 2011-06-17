@@ -309,6 +309,10 @@ am.addListener('dialing', function(from, to, headers) {
 	var fromExt = ''
 	if(ch.indexOf("@from-internal")!=-1){
 		logger.info('\'dialing\' come from queue: return')
+		// update caller number
+		var toExt = headers.dialstring
+		var fromNumber = headers.calleridnum
+		modop.updateDialExt(toExt, fromNumber)
 		return
 	}
 	else if(ch.indexOf('AsyncGoto/SIP/')!=-1)
@@ -543,61 +547,17 @@ am.addListener('unhold', function(participant) {
 		client.send(resp)
 		logger.info("RESP 'hangup' has been sent to [" + ext + "] sessionId '" + client.sessionId + "'")
 	}
-	if(modop.isExtPresent(ext))
+	if(modop.isExtPresent(ext)){
+		modop.updateExtStatusForOpWithExt(ext, 'hangup')
+		modop.updateStopRecordExtStatusForOpWithExt(ext)
+		modop.updateLastDialExt(ext)
 		updateAllClientsForOpWithExt(ext)
+	}
 	else
 		logger.warn('[' + ext + '] is not present in extStatusForOp')
-	modop.updateExtStatusForOpWithExt(ext, 'hangup')
-	modop.updateStopRecordExtStatusForOpWithExt(ext)
-	updateAllClientsForOpWithExt(ext)
 	delete am.participants[headers.uniqueid]
 	logger.info('removed \'' + headers.uniqueid  + '\' from am.participants: ' + sys.inspect(am.participants))
-//	if(headersChannel!=undefined){
-//		var ext = ''
-		/* if the 'headersChannel' contains the string 'ZOMBIE', then the hangup call is relative to a call that has been redirected. 
-		 * Ex. of 'headersChannel' in redirect case is: 'AsyncGoto/SIP/271-000001f1<ZOMBIE>' 
-		 * in queue case is: 'Local/271@from-internal-42d0;1'
-		 * in normal case is:   'SIP/270-000001f0' */ 
-/*		var hch = headers.channel
-		if(headersChannel.indexOf('ZOMBIE')!=-1){
-			ext = headersChannel.split('-')[0].split('/')[2]
-			hch = hch.split('<ZOMBIE>')[0].split('AsyncGoto/')[1]
-		}
-		else if(headersChannel.indexOf('Local/')!=-1 && headersChannel.indexOf('@from-internal')!=-1){
-			//ext = headersChannel.split('@')[0].split('/')[1]
-                               //hch = ext 
-			logger.info('headersChannel \'' + headersChannel + '\' is due to queue: return')
-			return
-		}
-		else
-			ext = headersChannel.split('-')[0].split('/')[1]
-		// here advise only the client that has hangup, so it can view popup info
-		if(clients[ext]!=undefined){
-			var c = clients[ext]
-			var msg = "Call has hung up. Reason: " + text + "  (Code: " + code + ")"
-			var response = new ResponseMessage(c.sessionId, "hangup", msg)
-			response.code = code
-			response.numActiveLinks = Object.keys(modop.getExtStatusWithExt(ext).activeLinks).length
-			response.numActiveChannel = 
-			c.send(response)
-			logger.info("RESP 'hangup' has been sent to [" + ext + "] sessionId '" + c.sessionId + "'")
-		}
-		if(modop.isExtPresent(ext)){
-			modop.removeActiveLinkExt(ext, hch)
-			// if the 'headersChannel' contains 'ZOMBIE', then don't advise any clients because the call remains active, because it has been redirected 
-			if(headersChannel.indexOf('ZOMBIE')==-1){
-				modop.updateExtStatusForOpWithExt(ext, 'hangup')
-				modop.updateStopRecordExtStatusForOpWithExt(ext)
-				updateAllClientsForOpWithExt(ext)
-			}
-		} else
-			logger.warn('[' + ext + '] is not present in extStatusForOp');
-	} else {
-		logger.warn("Unknown headersChannel '" + headersChannel + "'")
-		return
-	}
-	*/
-});
+})
 
 am.addListener('callreport', function(report) {
 	logger.info("EVENT 'CallReport': " + sys.inspect(report));
