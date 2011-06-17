@@ -85,6 +85,13 @@ exports.Modop = function(){
 	this.isExtInterno = function(ext) { isExtInterno(ext) }
 	this.addController = function(contr) { addController(contr) }
 	this.updateLastDialExt = function(ext) { updateLastDialExt(ext) }
+	this.updateDialExt = function(ext, fromNum) { updateDialExt(ext, fromNum) }
+}
+function updateDialExt(ext, fromNum){
+	for(key in extStatusForOp)
+		if(key.indexOf(ext)!=-1){
+			extStatusForOp[key].dialExt = fromNum
+		}
 }
 function updateLastDialExt(ext){
 	for(key in extStatusForOp)
