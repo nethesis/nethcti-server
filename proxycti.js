@@ -378,7 +378,11 @@ am.addListener('dialing', function(from, to, headers) {
 			updateAllClientsForOpWithExt(fromExt)
 		}
 		if(modop.isExtPresent(toExt)){
-			modop.updateExtStatusOpDialTo(toExt, fromExt)
+			var typeext = headers.channel.split('-')[0] // if the caller is a trunk, then headers.channel is: channel: 'SIP/2004-00000934'
+			if(modop.isTypeExtFascio(typeext))
+				modop.updateExtStatusOpDialTo(toExt, headers.calleridnum)
+			else
+				modop.updateExtStatusOpDialTo(toExt, fromExt)
 		        updateAllClientsForOpWithExt(toExt)
 		}
 	}
