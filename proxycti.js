@@ -1803,7 +1803,7 @@ function updateAllClientsForOpWithExt(ext){
  * their OP with ringing icon. This is because asterisk.js don't generate 'newState' ringing event until
  * the user has pickup his phone */
 function sendAllClientAckCalloutFromCti(extFrom){
-	logger.info('FUNCTION \'sendAllClientAckCalloutFromCti(extFrom)\' for extFrom [' + extFrom + ']')
+	logger.info('FUNCTION \'sendAllClientAckCalloutFromCti(extFrom)\' for extFrom [' + extFrom + '] to update ringin ball on OP')
 	for(key in clients){
                 var c = clients[key]
                 var msg = "[" + extFrom + "] has started a callout from CTI"
