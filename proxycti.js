@@ -385,8 +385,8 @@ am.addListener('dialing', function(from, to, headers) {
 })
 
 // This event is emitted by asterisk.js when the 'Bridge' event is emitted from asterisk server
-am.addListener('callconnected', function(from, to) {
-	logger.info("EVENT 'CallConnected': FROM '" + sys.inspect(from) + "' TO '" + sys.inspect(to) + "'")
+am.addListener('callconnected', function(from, to, headers) {
+	logger.info("EVENT 'CallConnected': FROM '" + sys.inspect(from) + "' TO '" + sys.inspect(to) + "' & headers = '" + sys.inspect(headers) + "'")
 	var fromExt = ''
 	var toExt = ''
 	/* In the case that one ext has been redirected, 'from' can be:
