@@ -613,7 +613,6 @@ am.addListener('newstate', function(headers){
 		typeext = headers.channel.split("-")[0]
 	}
 	else{
-		//typeext = 'SIP/' + headers.channel.split('@')[0].split('/')[1];
 		// return because another 'newState' event is generated for channel 'SIP/271-0000042f' (if the current channel is 'Local/271@from-internal-6f6c;1')
 		logger.info('channel \'' + headers.channel + '\' is for queue: return')
 		return
