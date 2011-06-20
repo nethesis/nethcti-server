@@ -82,7 +82,7 @@ exports.Modop = function(){
 	this.addActiveLinkExt = function(ext, ch1, ch2) { addActiveLinkExt(ext, ch1, ch2) }
 	this.removeActiveLinkExt = function(ext, ch) { removeActiveLinkExt(ext, ch) }
 	this.setCurrentActiveLink = function(ext, ch) { setCurrentActiveLink(ext, ch) }
-	this.isExtInterno = function(ext) { isExtInterno(ext) }
+	this.isExtInterno = function(ext) { return isExtInterno(ext) }
 	this.addController = function(contr) { addController(contr) }
 	this.updateLastDialExt = function(ext) { updateLastDialExt(ext) }
 	this.updateDialExt = function(ext, fromNum) { updateDialExt(ext, fromNum) }
@@ -104,10 +104,12 @@ function updateLastDialExt(ext){
 }
 function addController(contr){ controller = contr }
 function isExtInterno(ext){
-	for(key in extStatusForOp)
-		if(key.indexOf(ext)!=-1)
+	for(key in extStatusForOp){
+		if(key.indexOf(ext)!=-1){
 			if(extStatusForOp[key].tab=='interno')
 				return true
+		}
+	}
 	return false
 }
 function setCurrentActiveLink(ext, ch){
