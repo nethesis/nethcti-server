@@ -296,6 +296,15 @@ am.addListener('agentcalled', function(headers) {
   channel: 'SIP/270-00000517',
   with: '1307961094.2308' }
  *
+ * or from trunk:
+  FROM '{ name: '',
+  number: '541906611',
+  channel: 'SIP/2004-00000aac',
+  with: '1308554729.5888' }'  -->  TO '{ name: '',
+  number: '226',
+  channel: 'SIP/226-00000ab0',
+  with: '1308554734.5892' }'
+ *
  * when call out in a trunk the telnet event is:
  Event: Dial
  Privilege: call,all
@@ -322,8 +331,15 @@ am.addListener('dialing', function(from, to, headers) {
 	}
 	else if(ch.indexOf('AsyncGoto/SIP/')!=-1)
 		fromExt = from.channel.split('/')[2].split('-')[0]
-	else
-		fromExt = from.channel.split('-')[0].split('/')[1]
+	else{
+		var fromTypeExt = ch.split('-')[0]
+		if(modop.isTypeExtPresent(fromTypeExt)){
+			if(modop.getExtStatusWithTypeExt(fromTypeExt).tab=='fasci'){
+				fromExt = from.number
+			} else if(modop.getExtStatusWithTypeExt(fromTypeExt).tab=='interno')
+				fromExt = from.channel.split('-')[0].split('/')[1]
+		}
+	}
 	logger.info("Dial FROM '" + sys.inspect(from) + "'  -->  TO '" + sys.inspect(to) + "' and headers: '" + sys.inspect(headers)  + "'")
 	if(to!=undefined){
 		var toExt = ''
