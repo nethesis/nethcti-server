@@ -254,6 +254,7 @@ exports.AsteriskManager = function (newconfig) {
 
 			// change by Alessandro ***************************************************************
 			self.participants[headers.uniqueid] = {name: headers.calleridname != "device" ? headers.calleridname : channel , number: headers.calleridnum != "" ? headers.calleridnum : extension, channel: headers.channel};
+			self.emit('newchannel', headers)
 			/* the original was
 			self.participants[headers.uniqueid] = {name: headers.calleridname != "device" ? headers.calleridname : channel , number: headers.calleridnum != "" ? headers.calleridnum : extension};
 			 *
@@ -272,7 +273,10 @@ exports.AsteriskManager = function (newconfig) {
 			// end change by Ale
 	        break;
 
-	        case "Newcallerid": // potentially more useful information on an existing participant
+	        case "NewCallerid": // potentially more useful information on an existing participant
+			// added by alessandro
+			self.emit('newcallerid', headers)
+			// end added by alessandro
 		        if (typeof self.participants[headers.uniqueid]['number'] == 'undefined')
 				        self.participants[headers.uniqueid]['number'] = headers.calleridnum;
 		        if (headers.calleridname[0] != "")
