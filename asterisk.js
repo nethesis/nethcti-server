@@ -308,7 +308,7 @@ exports.AsteriskManager = function (newconfig) {
 		case "Bridge": // the participants have been connected and voice is now available
                         if (headers.bridgestate == "Link")
 			    // change by Alessandro
-		            self.emit('callconnected', self.participants[headers.uniqueid1], self.participants[headers.uniqueid2], headers)
+		            self.emit('callconnected', headers)
 		            //self.emit('callconnected', self.participants[headers.uniqueid1], self.participants[headers.uniqueid2]);
 			    // end change by Alessandro
                         else if (headers.bridgestate == "Unlink")
