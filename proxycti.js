@@ -234,7 +234,8 @@ am.addListener('agentcalled', function(headers) {
 		if(typesCC.length==0){
                         // the user hasn't the authorization of view customer card: the length is 0
 			logger.info("check permission to view Customer Card for [" + toExt + "] FAILED !")
-                        response.customerCard = ["Sorry, but you don't have permission of view customer card !"]
+                        response.customerCard = ""
+			response.noPermission = ''
                         c.send(response)
 			logger.info("RESP 'dialing' has been sent to [" + toExt + "] sessionId '" + c.sessionId + "'")
                         return
@@ -355,7 +356,8 @@ am.addListener('dialing', function(from, to, headers) {
 			if(typesCC.length==0){
 	                        // the user hasn't the authorization of view customer card, then the length is 0
 	                        logger.info("check permission to view Customer Card for [" + toExt + "] FAILED !")
-	                        response.customerCard = ["Sorry, but you don't have permission of view customer card !"]
+	                        response.customerCard = ""
+				response.noPermission = ''
 	                        c.send(response)
 	                        logger.info("RESP 'dialing' has been sent to [" + toExt + "] sessionId '" + c.sessionId + "'")
 	                        return
