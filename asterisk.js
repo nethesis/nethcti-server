@@ -299,7 +299,7 @@ exports.AsteriskManager = function (newconfig) {
                                 if( headers.destuniqueid)
 		                    self.participants[headers.destuniqueid]['with'] = headers.destuniqueid;
 				// Change by alessandro
-				self.emit('dialing', self.participants[headers.uniqueid], self.participants[headers.destuniqueid], headers)
+				self.emit('dialing', headers)
 		                // ori self.emit('dialing', self.participants[headers.uniqueid], self.participants[headers.destuniqueid]);
 				// end of change by alessandro
                         }
