@@ -195,6 +195,108 @@ am.addListener('servererror', function(err) {
 	logger.error("EVENT 'ServerError': error '" + err + "'");
 });
 
+// chStatus is the object that contains the 'uniqueid' as a key
+chStat = {}
+/* EVENT 'NewChannel': headers = { event: 'Newchannel',
+  privilege: 'call,all',
+  channel: 'SIP/270-000001bb',
+  channelstate: '0',
+  channelstatedesc: 'Down',
+  calleridnum: '',
+  calleridname: '',
+  accountcode: '',
+  uniqueid: '1308575856.547' } */
+am.addListener('newchannel', function(headers){
+	logger.info("EVENT 'NewChannel': headers = " + sys.inspect(headers))
+	chStat[headers.uniqueid] = {
+		channel: headers.channel,
+		status: headers.channelstatedesc.toLowerCase()
+	}
+})
+
+/* when call from the soft phone 
+ EVENT 'NewState': headers '{ event: 'Newstate',
+  privilege: 'call,all',
+  channel: 'SIP/271-000001be',
+  channelstate: '4',
+  channelstatedesc: 'Ring',
+  calleridnum: '271',
+  calleridname: 'device',
+  uniqueid: '1308576265.550' }' 
+*
+ EVENT 'NewState': headers '{ event: 'Newstate',
+  privilege: 'call,all',
+  channel: 'SIP/271-000001c4',
+  channelstate: '5',
+  channelstatedesc: 'Ringing',
+  calleridnum: '',
+  calleridname: 'CTI-271',
+  uniqueid: '1308579754.556' }' */
+am.addListener('newstate', function(headers){
+        logger.info("EVENT 'NewState': headers '" + sys.inspect(headers) +  "'")
+	chStat[headers.uniqueid].status = headers.channelstatedesc.toLowerCase()
+
+/*
+        var typeext = ''
+        if(headers.channel.indexOf('@')==-1){
+                typeext = headers.channel.split("-")[0]
+        }
+        else{
+                // return because another 'newState' event is generated for channel 'SIP/271-0000042f' (if the current channel is 'Local/271@from-internal-6f6c;1')
+                logger.info('channel \'' + headers.channel + '\' is for queue: return')
+                return
+        }
+        var statusEvent = headers.channelstatedesc.toLowerCase();
+        // if the call is a spy call, doesn't warn anyone
+        if(headers.calleridname.indexOf(SPY_PREFIX)==-1){
+                if(modop.isTypeExtPresent(typeext)){
+                        // update ext status for op
+                        modop.updateExtStatusForOpWithTypeExt(typeext, statusEvent);
+                        // update all clients with the new state of extension, for update operator panel
+                        updateAllClientsForOpWithTypeExt(typeext);
+                } else
+                        logger.warn('[' + typeext + '] is not present in extStatusForOp');
+        }
+*/
+})
+
+/* whe call come from soft phone
+EVENT 'NewCallerid': headers '{ event: 'NewCallerid',
+  privilege: 'call,all',
+  channel: 'SIP/271-000001d6',
+  calleridnum: '271',
+  calleridname: 'Alessandrotest2',
+  uniqueid: '1308581487.574',
+  cidcallingpres: '0 (Presentation Allowed, Not Screened)' }' 
+*
+* when call come from cti
+EVENT 'NewCallerid': headers '{ event: 'NewCallerid',
+  privilege: 'call,all',
+  channel: 'SIP/271-000001d8',
+  calleridnum: '',
+  calleridname: 'CTI-271',
+  uniqueid: '1308581562.576',
+  cidcallingpres: '0 (Presentation Allowed, Not Screened)' }' */
+am.addListener('newcallerid', function(headers){
+	logger.info("EVENT 'NewCallerid': headers '" + sys.inspect(headers) +  "'")
+	if(headers.calleridnum=='' && headers.calleridname!='')
+		chStat[headers.uniqueid].caller = headers.calleridname
+	else
+		chStat[headers.uniqueid].caller = headers.calleridnum
+})
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /* { event: 'AgentCalled',
   privilege: 'agent,all',
@@ -618,43 +720,6 @@ am.addListener('callreport', function(report) {
 		updateAllClientsForOpWithTypeExt(headers.peer);
 	});
 
-
-/* Example of 'NewState' event:
- *
-{ event: 'Newstate',
-  privilege: 'call,all',
-  channel: 'SIP/500-0000000b',
-  channelstate: '5',
-  channelstatedesc: 'Ringing',
-  calleridnum: '500',
-  calleridname: '',
-  uniqueid: '1303228098.13' }
-  *
-  * If the call come from queue, channel is:
-  channel: 'Local/270@from-internal-8acf;1', ... */
-am.addListener('newstate', function(headers){
-        logger.info("EVENT 'NewState': headers '" + sys.inspect(headers) +  "'")
-	var typeext = ''
-	if(headers.channel.indexOf('@')==-1){
-		typeext = headers.channel.split("-")[0]
-	}
-	else{
-		// return because another 'newState' event is generated for channel 'SIP/271-0000042f' (if the current channel is 'Local/271@from-internal-6f6c;1')
-		logger.info('channel \'' + headers.channel + '\' is for queue: return')
-		return
-	}
-	var statusEvent = headers.channelstatedesc.toLowerCase();
-	// if the call is a spy call, doesn't warn anyone
-	if(headers.calleridname.indexOf(SPY_PREFIX)==-1){
-		if(modop.isTypeExtPresent(typeext)){
-			// update ext status for op
-			modop.updateExtStatusForOpWithTypeExt(typeext, statusEvent);
-			// update all clients with the new state of extension, for update operator panel
-			updateAllClientsForOpWithTypeExt(typeext);
-		} else
-			logger.warn('[' + typeext + '] is not present in extStatusForOp');
-	}
-})
 
 /* This function update all clients with the new state of 'ext'. 
  * So the clients can update their operator panel.
@@ -1182,9 +1247,9 @@ io.on('connection', function(client){
 					});
 	  			}
   				else{
-		  			logger.info("check 'callOut' permission for [" + extFrom + "] FAILED !");
+		  			logger.warn("check 'callOut' permission for [" + extFrom + "] FAILED !");
 		  			client.send(new ResponseMessage(client.sessionId, 'error_call', "Sorry, but you don't have permission to call !"));
-		  			logger.info("RESP 'error_call' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+		  			logger.warn("RESP 'error_call' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
   				}
 		  	break;
 		  	case actions.ACTION_HANGUP:
