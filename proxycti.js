@@ -209,9 +209,9 @@ chStat = {}
 am.addListener('newchannel', function(headers){
 	logger.info("EVENT 'NewChannel': headers = " + sys.inspect(headers))
 	chStat[headers.uniqueid] = {
-		channel: headers.channel,
-		status: headers.channelstatedesc.toLowerCase()
+		channel: headers.channel
 	}
+	
 })
 
 /* when call from the soft phone 
@@ -236,6 +236,8 @@ am.addListener('newstate', function(headers){
         logger.info("EVENT 'NewState': headers '" + sys.inspect(headers) +  "'")
 	chStat[headers.uniqueid].status = headers.channelstatedesc.toLowerCase()
 
+
+// CODICE VECCHIO CHE NON VIENE ESEGUITO
 /*
         var typeext = ''
         if(headers.channel.indexOf('@')==-1){
@@ -279,11 +281,333 @@ EVENT 'NewCallerid': headers '{ event: 'NewCallerid',
   cidcallingpres: '0 (Presentation Allowed, Not Screened)' }' */
 am.addListener('newcallerid', function(headers){
 	logger.info("EVENT 'NewCallerid': headers '" + sys.inspect(headers) +  "'")
-	if(headers.calleridnum=='' && headers.calleridname!='')
-		chStat[headers.uniqueid].caller = headers.calleridname
-	else
-		chStat[headers.uniqueid].caller = headers.calleridnum
+	chStat[headers.uniqueid].calleridname = headers.calleridname
+	chStat[headers.uniqueid].calleridnum = headers.calleridnum
 })
+
+
+// OLDDDDDDDDDDDDDDDDDD
+/* Dial FROM '{ name: '',
+  number: '270',
+  channel: 'SIP/270-000008a9',
+  with: '1306940613.3224' }'  -->  TO '{ name: '',
+  number: '271',
+  channel: 'SIP/271-000008aa',
+  with: '1306940616.3225' }'
+ *
+ * when redirect:
+{ name: '',
+  number: 'SIP',
+  channel: 'AsyncGoto/SIP/270-00000514',
+  with: '1307961027.2301' } -> { name: '',
+  number: '272',
+  channel: 'SIP/272-00000515',
+  with: '1307961028.2302' } 
+ * 
+ * when come from queue:
+{ name: '',
+  number: '270@from',
+  channel: 'Local/270@from-internal-b3f4;2',
+  with: '1307961094.2305' } -> { name: '',
+  number: '270',
+  channel: 'SIP/270-00000517',
+  with: '1307961094.2308' }
+ *
+ * or from trunk:
+  FROM '{ name: '',
+  number: '541906611',
+  channel: 'SIP/2004-00000aac',
+  with: '1308554729.5888' }'  -->  TO '{ name: '',
+  number: '226',
+  channel: 'SIP/226-00000ab0',
+  with: '1308554734.5892' }'
+ *
+ * when call out in a trunk the telnet event is:
+ Event: Dial
+ Privilege: call,all
+ SubEvent: Begin
+ Channel: SIP/208-000003b9
+ Destination: SIP/UMTS-000003ba
+ CallerIDNum: 208
+ CallerIDName: Giacomo Sanchietti
+ UniqueID: 1308153327.2010
+ DestUniqueID: 1308153328.2011
+ Dialstring: UMTS/#31#3393164194 */
+
+//NEWWWWWWWWWWWWWWWW
+/* call come from soft phone
+EVENT 'Dialing': headers '{ event: 'Dial',
+  privilege: 'call,all',
+  subevent: 'Begin',
+  channel: 'SIP/271-000001e6',
+  destination: 'SIP/270-000001e7',
+  calleridnum: '271',
+  calleridname: 'Alessandrotest2',
+  uniqueid: '1308582430.590',
+  destuniqueid: '1308582431.591',
+  dialstring: '270' }' */
+am.addListener('dialing', function(headers) {
+        logger.info("EVENT 'Dialing': headers '" + sys.inspect(headers) + "'")
+	var from = headers.calleridnum
+	var to = headers.dialstring
+	logger.info("Dialing from '" + from + "' -> '" + to + "'")
+	if(to!=undefined && to!='' && modop.isExtPresent(to) && modop.isExtInterno(to)){
+		// check the permission of the user to receive the call
+                if(!profiler.checkActionCallInPermit(toExt)){
+                	logger.info("check 'callIn' permission for [" + toExt + "] FAILED !")
+                        return
+		}
+		var c = clients[to]
+		if(c!=undefined){
+                        /* in this response the html is not passed, because the chrome desktop 
+                         * notification of the client accept only one absolute or relative url */
+                        var response = new ResponseMessage(c.sessionId, "dialing", from)
+                        response.from = from
+                        response.to = to
+                        var typesCC = profiler.getTypesCustomerCardPermit(to)
+                        logger.info("[" + to + "] is able to view customer card of types: " + sys.inspect(typesCC))
+                        if(typesCC.length==0){
+                                // the user hasn't the authorization of view customer card, then the length is 0
+                                logger.info("check permission to view Customer Card for [" + to + "] FAILED !")
+                                response.customerCard = ""
+                                response.noPermission = ''
+                                c.send(response)
+                                logger.info("RESP 'dialing' has been sent to [" + to + "] sessionId '" + c.sessionId + "'")
+                                return
+                        }
+                        var customerCardResult = []
+                        for(i=0; i<typesCC.length; i++){
+                                dataCollector.getCustomerCard(from, typesCC[i], function(cc){
+                                        if(cc!=undefined){
+                                                var custCardHTML = createCustomerCardHTML(cc[0], from)
+                                                customerCardResult.push(custCardHTML)
+                                        } else{
+                                                customerCardResult.push(cc)
+                                        }
+                                        if(customerCardResult.length==typesCC.length){
+                                                response.customerCard = customerCardResult
+                                                c.send(response)
+                                                logger.info("RESP 'dialing' has been sent to [" + to + "] sessionId '" + c.sessionId + "' with relative customer card")
+                                        }
+                                })
+                        }
+                }
+	}
+	
+return
+// CODICE VECCHIO CHE NON VIENE ESEGUITO
+        // check the source of the call: if come from queue, then return because 'AgentCalled' event is emitted
+        var ch = from.channel
+        var fromExt = ''
+        if(ch.indexOf("@from-internal")!=-1){
+                logger.info('\'dialing\' come from queue: return')
+                // update caller number
+                var toExt = headers.dialstring
+                var fromNumber = headers.calleridnum
+                modop.updateDialExt(toExt, fromNumber)
+                return
+        }
+        else if(ch.indexOf('AsyncGoto/SIP/')!=-1)
+                fromExt = from.channel.split('/')[2].split('-')[0]
+        else{
+                var fromTypeExt = ch.split('-')[0]
+                if(modop.isTypeExtPresent(fromTypeExt)){
+                        if(modop.getExtStatusWithTypeExt(fromTypeExt).tab=='fasci'){
+                                fromExt = from.number
+                        } else if(modop.getExtStatusWithTypeExt(fromTypeExt).tab=='interno')
+                                fromExt = from.channel.split('-')[0].split('/')[1]
+                }
+        }
+        logger.info("Dial FROM '" + sys.inspect(from) + "'  -->  TO '" + sys.inspect(to) + "' and headers: '" + sys.inspect(headers)  + "'")
+        if(to!=undefined){
+                var toExt = ''
+                /* toExt:
+                 * if the call is out in a trunk then, the 'to.channel' is: 'SIP/UMTS-000003ae'
+                 * otherwise it can be: 'SIP/272-00000088' */
+                var toTypeExt = to.channel.split('-')[0] // 'toTypeExt' has the form: 'SIP/UMTS' or 'SIP/272'
+                if(modop.isTypeExtPresent(toTypeExt)){ // the call is out into a trunk
+                        if(modop.getExtStatusWithTypeExt(toTypeExt).tab=='fasci'){
+                                toExt = headers.dialstring.split('/')[1]  // headers.dialstring is: 'UMTS/#31#3393164194'
+                                if(toExt.indexOf('#31#')!=-1) // if it has hidden code, remove it
+                                        toExt = toExt.split('#31#')[1]
+                        } else if(modop.getExtStatusWithTypeExt(toTypeExt).tab=='interno')
+                                toExt = to.channel.split('-')[0].split('/')[1]
+                }
+                logger.info('fromExt = ' + fromExt + ' &  toExt = ' + toExt)
+                var c = clients[toExt]
+                if(c!=undefined){
+                        // check the permission of the user to receive the call
+                        if(!profiler.checkActionCallInPermit(toExt)){
+                                logger.info("check 'callIn' permission for [" + toExt + "] FAILED !")
+                                return
+                        }
+                        // create the response for the client
+			var msg = from.name
+                        /* in this response the html is not passed, because the chrome desktop 
+                         * notification of the client accept only one absolute or relative url */
+                        var response = new ResponseMessage(c.sessionId, "dialing", msg)
+                        response.from = fromExt
+                        response.to = toExt
+                        var typesCC = profiler.getTypesCustomerCardPermit(toExt)
+                        logger.info("[" + toExt + "] is able to view customer card of types: " + sys.inspect(typesCC))
+                        //
+                        if(typesCC.length==0){
+                                // the user hasn't the authorization of view customer card, then the length is 0
+                                logger.info("check permission to view Customer Card for [" + toExt + "] FAILED !")
+                                response.customerCard = ""
+                                response.noPermission = ''
+                                c.send(response)
+                                logger.info("RESP 'dialing' has been sent to [" + toExt + "] sessionId '" + c.sessionId + "'")
+                                return
+                        }
+                        var customerCardResult = []
+                        for(i=0; i<typesCC.length; i++){
+                                dataCollector.getCustomerCard(fromExt, typesCC[i], function(cc){
+                                        if(cc!=undefined){
+                                                var custCardHTML = createCustomerCardHTML(cc[0], fromExt)
+                                                customerCardResult.push(custCardHTML)
+                                        } else{
+                                                customerCardResult.push(cc)
+                                        }
+                                        if(customerCardResult.length==typesCC.length){
+                                                response.customerCard = customerCardResult
+                                                c.send(response)
+                                                logger.info("RESP 'dialing' has been sent to [" + toExt + "] sessionId '" + c.sessionId + "' with relative customer card")
+                                        }
+                                })
+                        }
+                }
+                if(modop.isExtPresent(fromExt)){
+                        modop.updateExtStatusOpDialFrom(fromExt, toExt)
+                        updateAllClientsForOpWithExt(fromExt)
+                }
+                if(modop.isExtPresent(toExt)){
+                        var typeext = headers.channel.split('-')[0] // if the caller is a trunk, then headers.channel is: channel: 'SIP/2004-00000934'
+                        if(modop.isTypeExtFascio(typeext))
+                                modop.updateExtStatusOpDialTo(toExt, headers.calleridnum)
+                        else
+                                modop.updateExtStatusOpDialTo(toExt, fromExt)
+                        updateAllClientsForOpWithExt(toExt)
+                }
+        }
+})
+
+
+/* { event: 'Hangup',
+  privilege: 'call,all',
+  channel: 'SIP/272-000004e3',
+  uniqueid: '1307958249.2251',
+  calleridnum: '272',
+  calleridname: '<unknown>',
+  cause: '16',
+  causetxt: 'Normal Clearing' } 
+ *
+ * or:
+ { event: 'Hangup',
+  privilege: 'call,all',
+  channel: 'SIP/271-000004ff',
+  uniqueid: '1307959965.2279',
+  calleridnum: '<unknown>',
+  calleridname: 'CTI-271',
+  cause: '16',
+  causetxt: 'Normal Clearing' } 
+ *
+ * or when call come from queue:
+{ event: 'Hangup',
+  privilege: 'call,all',
+  channel: 'Local/271@from-internal-b48c;1',
+  uniqueid: '1307967705.2426',
+  calleridnum: '271',
+  calleridname: 'Alessandrotest2',
+  cause: '0',
+  causetxt: 'Unknown' }
+  *
+  * or when call has been redirect
+  EVENT 'Hangup': headers = { event: 'Hangup',
+  privilege: 'call,all',
+  channel: 'AsyncGoto/SIP/270-0000005c<ZOMBIE>',
+  uniqueid: '1308146834.135',
+  calleridnum: '<unknown>',
+  calleridname: '<unknown>',
+  cause: '16',
+  causetxt: 'Normal Clearing' } */
+ am.addListener('hangup', function(headers) {
+        logger.info("EVENT 'Hangup': headers = " + sys.inspect(headers))
+        // ext is constructed from channel because other field change with context, for example when call come from cti
+        var ch = headers.channel
+        var ext = ''
+        /* check if the hangup is relative to active channel of the client or not. If not, then is the case of a call the 
+         * come from queue and that has been accepted from another client */
+        if(ch.indexOf('@from-internal')!=-1){
+                logger.info('hangup is relative to \'' + ch  + '\': delete from am.participants and return')
+                delete am.participants[headers.uniqueid]
+                logger.info('_removed \'' + headers.uniqueid  + '\' from am.participants: ' + sys.inspect(am.participants))
+                return
+        } else if(ch.indexOf('<ZOMBIE>')!=-1) {
+		ext = ch.split('-')[0].split('/')[2]
+                ch = ch.split('/')[1] + '/' + ch.split('<ZOMBIE>')[0].split('/')[2]
+                modop.removeActiveLinkExt(ext, ch)
+                logger.info('hangup is relative to \'' + ch + '\': don\'t advise any clients')
+                return
+        }
+        else {
+                ext = ch.split('-')[0].split('/')[1]
+                modop.removeActiveLinkExt(ext, ch)
+        }
+        var client = clients[ext]
+        // advise client of hangup
+        if(client!=undefined){
+                var msg = "Call has hung up. Reason: " + headers.causetxt + "  (Code: " + headers.cause + ")"
+                var resp = new ResponseMessage(client.sessionId, "hangup", msg)
+                resp.code = headers.cause
+                client.send(resp)
+                logger.info("RESP 'hangup' has been sent to [" + ext + "] sessionId '" + client.sessionId + "'")
+        }
+        if(modop.isExtPresent(ext)){
+                modop.updateExtStatusForOpWithExt(ext, 'hangup')
+                modop.updateStopRecordExtStatusForOpWithExt(ext)
+                modop.updateLastDialExt(ext)
+                updateAllClientsForOpWithExt(ext)
+        }
+        else
+                logger.warn('[' + ext + '] is not present in extStatusForOp')
+        delete am.participants[headers.uniqueid]
+        logger.info('removed \'' + headers.uniqueid  + '\' from am.participants: ' + sys.inspect(am.participants))
+})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -372,150 +696,6 @@ am.addListener('agentcalled', function(headers) {
 });
 
  
-/* Dial FROM '{ name: '',
-  number: '270',
-  channel: 'SIP/270-000008a9',
-  with: '1306940613.3224' }'  -->  TO '{ name: '',
-  number: '271',
-  channel: 'SIP/271-000008aa',
-  with: '1306940616.3225' }'
- *
- * when redirect:
-{ name: '',
-  number: 'SIP',
-  channel: 'AsyncGoto/SIP/270-00000514',
-  with: '1307961027.2301' } -> { name: '',
-  number: '272',
-  channel: 'SIP/272-00000515',
-  with: '1307961028.2302' } 
- * 
- * when come from queue:
-{ name: '',
-  number: '270@from',
-  channel: 'Local/270@from-internal-b3f4;2',
-  with: '1307961094.2305' } -> { name: '',
-  number: '270',
-  channel: 'SIP/270-00000517',
-  with: '1307961094.2308' }
- *
- * or from trunk:
-  FROM '{ name: '',
-  number: '541906611',
-  channel: 'SIP/2004-00000aac',
-  with: '1308554729.5888' }'  -->  TO '{ name: '',
-  number: '226',
-  channel: 'SIP/226-00000ab0',
-  with: '1308554734.5892' }'
- *
- * when call out in a trunk the telnet event is:
- Event: Dial
- Privilege: call,all
- SubEvent: Begin
- Channel: SIP/208-000003b9
- Destination: SIP/UMTS-000003ba
- CallerIDNum: 208
- CallerIDName: Giacomo Sanchietti
- UniqueID: 1308153327.2010
- DestUniqueID: 1308153328.2011
- Dialstring: UMTS/#31#3393164194 */
-am.addListener('dialing', function(from, to, headers) {
-	logger.info("EVENT 'Dialing'")
-	// check the source of the call: if come from queue, then return because 'AgentCalled' event is emitted
-	var ch = from.channel
-	var fromExt = ''
-	if(ch.indexOf("@from-internal")!=-1){
-		logger.info('\'dialing\' come from queue: return')
-		// update caller number
-		var toExt = headers.dialstring
-		var fromNumber = headers.calleridnum
-		modop.updateDialExt(toExt, fromNumber)
-		return
-	}
-	else if(ch.indexOf('AsyncGoto/SIP/')!=-1)
-		fromExt = from.channel.split('/')[2].split('-')[0]
-	else{
-		var fromTypeExt = ch.split('-')[0]
-		if(modop.isTypeExtPresent(fromTypeExt)){
-			if(modop.getExtStatusWithTypeExt(fromTypeExt).tab=='fasci'){
-				fromExt = from.number
-			} else if(modop.getExtStatusWithTypeExt(fromTypeExt).tab=='interno')
-				fromExt = from.channel.split('-')[0].split('/')[1]
-		}
-	}
-	logger.info("Dial FROM '" + sys.inspect(from) + "'  -->  TO '" + sys.inspect(to) + "' and headers: '" + sys.inspect(headers)  + "'")
-	if(to!=undefined){
-		var toExt = ''
-		/* toExt:
-		 * if the call is out in a trunk then, the 'to.channel' is: 'SIP/UMTS-000003ae'
-		 * otherwise it can be: 'SIP/272-00000088' */
-		var toTypeExt = to.channel.split('-')[0] // 'toTypeExt' has the form: 'SIP/UMTS' or 'SIP/272'
-		if(modop.isTypeExtPresent(toTypeExt)){ // the call is out into a trunk
-			if(modop.getExtStatusWithTypeExt(toTypeExt).tab=='fasci'){
-				toExt = headers.dialstring.split('/')[1]  // headers.dialstring is: 'UMTS/#31#3393164194'
-				if(toExt.indexOf('#31#')!=-1) // if it has hidden code, remove it
-					toExt = toExt.split('#31#')[1]
-			} else if(modop.getExtStatusWithTypeExt(toTypeExt).tab=='interno')
-				toExt = to.channel.split('-')[0].split('/')[1]
-		}
-		logger.info('fromExt = ' + fromExt + ' &  toExt = ' + toExt)
-		var c = clients[toExt]
-		if(c!=undefined){
-			// check the permission of the user to receive the call
-	                if(!profiler.checkActionCallInPermit(toExt)){
-	                        logger.info("check 'callIn' permission for [" + toExt + "] FAILED !")
-	                        return
-                	}
-			// create the response for the client
-	                var msg = from.name
-			/* in this response the html is not passed, because the chrome desktop 
-	                 * notification of the client accept only one absolute or relative url */
-	                var response = new ResponseMessage(c.sessionId, "dialing", msg)
-	                response.from = fromExt
-	                response.to = toExt
-	                var typesCC = profiler.getTypesCustomerCardPermit(toExt)
-	                logger.info("[" + toExt + "] is able to view customer card of types: " + sys.inspect(typesCC))
-			//
-			if(typesCC.length==0){
-	                        // the user hasn't the authorization of view customer card, then the length is 0
-	                        logger.info("check permission to view Customer Card for [" + toExt + "] FAILED !")
-	                        response.customerCard = ""
-				response.noPermission = ''
-	                        c.send(response)
-	                        logger.info("RESP 'dialing' has been sent to [" + toExt + "] sessionId '" + c.sessionId + "'")
-	                        return
-	                }
-			var customerCardResult = []
-	                for(i=0; i<typesCC.length; i++){
-	                        dataCollector.getCustomerCard(fromExt, typesCC[i], function(cc){
-	                                if(cc!=undefined){
-						var custCardHTML = createCustomerCardHTML(cc[0], fromExt)
-		                                customerCardResult.push(custCardHTML) 
-					} else{
-						customerCardResult.push(cc)
-					}
-	                                if(customerCardResult.length==typesCC.length){
-	                                        response.customerCard = customerCardResult
-	                                        c.send(response)
-	                                        logger.info("RESP 'dialing' has been sent to [" + toExt + "] sessionId '" + c.sessionId + "' with relative customer card")
-	                                }
-	                        })
-	                }
-		}
-		if(modop.isExtPresent(fromExt)){
-			modop.updateExtStatusOpDialFrom(fromExt, toExt)
-			updateAllClientsForOpWithExt(fromExt)
-		}
-		if(modop.isExtPresent(toExt)){
-			var typeext = headers.channel.split('-')[0] // if the caller is a trunk, then headers.channel is: channel: 'SIP/2004-00000934'
-			if(modop.isTypeExtFascio(typeext))
-				modop.updateExtStatusOpDialTo(toExt, headers.calleridnum)
-			else
-				modop.updateExtStatusOpDialTo(toExt, fromExt)
-		        updateAllClientsForOpWithExt(toExt)
-		}
-	}
-})
-
 // This event is emitted by asterisk.js when the 'Bridge' event is emitted from asterisk server
 am.addListener('callconnected', function(from, to, headers) {
 	logger.info("EVENT 'CallConnected': FROM '" + sys.inspect(from) + "' TO '" + sys.inspect(to) + "' & headers = '" + sys.inspect(headers) + "'")
@@ -609,87 +789,6 @@ am.addListener('unhold', function(participant) {
 });
 
 	
-/* { event: 'Hangup',
-  privilege: 'call,all',
-  channel: 'SIP/272-000004e3',
-  uniqueid: '1307958249.2251',
-  calleridnum: '272',
-  calleridname: '<unknown>',
-  cause: '16',
-  causetxt: 'Normal Clearing' } 
- *
- * or:
- { event: 'Hangup',
-  privilege: 'call,all',
-  channel: 'SIP/271-000004ff',
-  uniqueid: '1307959965.2279',
-  calleridnum: '<unknown>',
-  calleridname: 'CTI-271',
-  cause: '16',
-  causetxt: 'Normal Clearing' } 
- *
- * or when call come from queue:
-{ event: 'Hangup',
-  privilege: 'call,all',
-  channel: 'Local/271@from-internal-b48c;1',
-  uniqueid: '1307967705.2426',
-  calleridnum: '271',
-  calleridname: 'Alessandrotest2',
-  cause: '0',
-  causetxt: 'Unknown' }
-  *
-  * or when call has been redirect
-  EVENT 'Hangup': headers = { event: 'Hangup',
-  privilege: 'call,all',
-  channel: 'AsyncGoto/SIP/270-0000005c<ZOMBIE>',
-  uniqueid: '1308146834.135',
-  calleridnum: '<unknown>',
-  calleridname: '<unknown>',
-  cause: '16',
-  causetxt: 'Normal Clearing' } */
- am.addListener('hangup', function(headers) {
-	logger.info("EVENT 'Hangup': headers = " + sys.inspect(headers))
-	// ext is constructed from channel because other field change with context, for example when call come from cti
-	var ch = headers.channel
-	var ext = ''
-	/* check if the hangup is relative to active channel of the client or not. If not, then is the case of a call the 
-	 * come from queue and that has been accepted from another client */
-	if(ch.indexOf('@from-internal')!=-1){
-		logger.info('hangup is relative to \'' + ch  + '\': delete from am.participants and return')
-		delete am.participants[headers.uniqueid]
-	        logger.info('_removed \'' + headers.uniqueid  + '\' from am.participants: ' + sys.inspect(am.participants))
-		return
-	} else if(ch.indexOf('<ZOMBIE>')!=-1) {
-		ext = ch.split('-')[0].split('/')[2]
-		ch = ch.split('/')[1] + '/' + ch.split('<ZOMBIE>')[0].split('/')[2]
-		modop.removeActiveLinkExt(ext, ch)
-		logger.info('hangup is relative to \'' + ch + '\': don\'t advise any clients')
-		return
-	}
-	else {
-		ext = ch.split('-')[0].split('/')[1]
-		modop.removeActiveLinkExt(ext, ch)
-	}
-	var client = clients[ext]
-	// advise client of hangup
-	if(client!=undefined){
-		var msg = "Call has hung up. Reason: " + headers.causetxt + "  (Code: " + headers.cause + ")"
-		var resp = new ResponseMessage(client.sessionId, "hangup", msg)
-		resp.code = headers.cause
-		client.send(resp)
-		logger.info("RESP 'hangup' has been sent to [" + ext + "] sessionId '" + client.sessionId + "'")
-	}
-	if(modop.isExtPresent(ext)){
-		modop.updateExtStatusForOpWithExt(ext, 'hangup')
-		modop.updateStopRecordExtStatusForOpWithExt(ext)
-		modop.updateLastDialExt(ext)
-		updateAllClientsForOpWithExt(ext)
-	}
-	else
-		logger.warn('[' + ext + '] is not present in extStatusForOp')
-	delete am.participants[headers.uniqueid]
-	logger.info('removed \'' + headers.uniqueid  + '\' from am.participants: ' + sys.inspect(am.participants))
-})
 
 am.addListener('callreport', function(report) {
 	logger.info("EVENT 'CallReport': " + sys.inspect(report));
