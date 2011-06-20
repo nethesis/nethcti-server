@@ -493,7 +493,8 @@ return
 })
 
 
-/* { event: 'Hangup',
+/* OLD DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
+{ event: 'Hangup',
   privilege: 'call,all',
   channel: 'SIP/272-000004e3',
   uniqueid: '1307958249.2251',
@@ -531,8 +532,22 @@ return
   calleridname: '<unknown>',
   cause: '16',
   causetxt: 'Normal Clearing' } */
- am.addListener('hangup', function(headers) {
+
+/* NEWWWWWWWWWWWWWWWWW
+EVENT 'Hangup': headers = { event: 'Hangup',
+  privilege: 'call,all',
+  channel: 'SIP/270-000001f1',
+  uniqueid: '1308584583.601',
+  calleridnum: '270',
+  calleridname: '<unknown>',
+  cause: '16',
+  causetxt: 'Normal Clearing' } */
+am.addListener('hangup', function(headers) {
         logger.info("EVENT 'Hangup': headers = " + sys.inspect(headers))
+	delete chStat[headers.uniqueid]
+console.log(chStat)
+return
+// CODICE VECCHIO MAI ESEGUITO
         // ext is constructed from channel because other field change with context, for example when call come from cti
         var ch = headers.channel
         var ext = ''
@@ -577,7 +592,83 @@ return
 
 
 
-
+// This event is emitted by asterisk.js when the 'Bridge' event is emitted from asterisk server
+am.addListener('callconnected', function(from, to, headers) {
+        logger.info("EVENT 'CallConnected': FROM '" + sys.inspect(from) + "' TO '" + sys.inspect(to) + "' & headers = '" + sys.inspect(headers) + "'")
+        var fromExt = ''
+        var toExt = ''
+        /* In the case that one ext has been redirected, 'from' can be:
+         * { name: '',
+         *   number: 'SIP',
+         *   channel: 'AsyncGoto/SIP/271-000001f1',
+         *   with: '1307605551.710' } 
+         * 
+         * in normal case can be:
+         * 
+         * { name: '',
+         *   number: '272',
+         *   channel: 'SIP/272-000001f2',
+         *   with: '1307605551.711' } 
+         *
+         * in the case of queue:
+         *
+         * FROM '{ name: 'SIP/273',
+          number: '273',
+          channel: 'SIP/273-000005b0' }' TO '{ name: '',
+          number: '271@from',
+          channel: 'Local/271@from-internal-805b;1' }' 
+         * 
+         * or:
+          FROM '{ name: '',
+          number: '271@from',
+          channel: 'Local/271@from-internal-d287;2',
+          with: '1307972728.2666' }' TO '{ name: '',
+          number: '271',
+          channel: 'SIP/271-000005c7',
+          with: '1307972728.2668' }' */
+        if(from!=undefined){
+                if(from.channel.indexOf('AsyncGoto/SIP/')==-1)
+                        fromExt = from.channel.split('-')[0].split('/')[1]
+                else
+                        fromExt = from.channel.split('-')[0].split('/')[2]
+        }
+        if(to!=undefined){
+                if(to.channel.indexOf('AsyncGoto/SIP/')!=-1)
+                        toExt = to.channel.split('-')[0].split('/')[2]
+                else
+                        toExt = to.channel.split('-')[0].split('/')[1]
+        }
+        if(from!=undefined && modop.isExtPresent(fromExt) && to!=undefined){
+		logger.info("add active link to [" + fromExt + "] with ch1 '" + from.channel + "' and ch2 '" + to.channel + "'");
+                modop.addActiveLinkExt(fromExt, from.channel, to.channel)
+                modop.setCurrentActiveLink(fromExt, from.channel)
+                updateAllClientsForOpWithExt(fromExt);
+        }
+        if(to!=undefined && modop.isExtPresent(toExt) && from!=undefined){
+                logger.info("add active link to [" + toExt + "] with ch1 '" + to.channel + "' and ch2 '" + from.channel + "'");
+                modop.addActiveLinkExt(toExt, to.channel, from.channel)
+                modop.setCurrentActiveLink(toExt, to.channel)
+                updateAllClientsForOpWithExt(toExt);
+        }
+        if(clients[fromExt]!=undefined){
+                var c = clients[fromExt];
+                var msg = "Call from " + fromExt + " to " + toExt + " CONNECTED";
+                var response = new ResponseMessage(c.sessionId, "callconnected", msg);
+                response.from = fromExt;
+                response.to = toExt;
+                c.send(response);
+                logger.info("RESP 'callconnected' has been sent to [" + from.number + "] sessionId '" + c.sessionId + "'");
+        }
+        if(clients[toExt]!=undefined){
+                var c = clients[toExt];
+                var msg = "Call from " + fromExt + " to " + toExt + " CONNECTED";
+                var response = new ResponseMessage(c.sessionId, "callconnected", msg);
+                response.from = fromExt;
+                response.to = toExt;
+                c.send(response);
+                logger.info("RESP 'callconnected' has been sent to [" + toExt + "] sessionId '" + c.sessionId + "'");
+        }
+})
 
 
 
@@ -696,84 +787,6 @@ am.addListener('agentcalled', function(headers) {
 });
 
  
-// This event is emitted by asterisk.js when the 'Bridge' event is emitted from asterisk server
-am.addListener('callconnected', function(from, to, headers) {
-	logger.info("EVENT 'CallConnected': FROM '" + sys.inspect(from) + "' TO '" + sys.inspect(to) + "' & headers = '" + sys.inspect(headers) + "'")
-	var fromExt = ''
-	var toExt = ''
-	/* In the case that one ext has been redirected, 'from' can be:
-	 * { name: '',
-	 *   number: 'SIP',
-	 *   channel: 'AsyncGoto/SIP/271-000001f1',
-	 *   with: '1307605551.710' } 
-	 * 
-	 * in normal case can be:
-	 * 
-	 * { name: '',
-	 *   number: '272',
-	 *   channel: 'SIP/272-000001f2',
-	 *   with: '1307605551.711' } 
-	 *
-	 * in the case of queue:
-	 *
-	 * FROM '{ name: 'SIP/273',
-	  number: '273',
-	  channel: 'SIP/273-000005b0' }' TO '{ name: '',
-	  number: '271@from',
-	  channel: 'Local/271@from-internal-805b;1' }' 
-	 * 
-	 * or:
- 	  FROM '{ name: '',
-	  number: '271@from',
-	  channel: 'Local/271@from-internal-d287;2',
-	  with: '1307972728.2666' }' TO '{ name: '',
-	  number: '271',
-	  channel: 'SIP/271-000005c7',
-	  with: '1307972728.2668' }' */
-	if(from!=undefined){
-		if(from.channel.indexOf('AsyncGoto/SIP/')==-1) 
-			fromExt = from.channel.split('-')[0].split('/')[1]
-		else 
-			fromExt = from.channel.split('-')[0].split('/')[2]
-	}
-	if(to!=undefined){
-		if(to.channel.indexOf('AsyncGoto/SIP/')!=-1)
-                	toExt = to.channel.split('-')[0].split('/')[2]
-		else
-			toExt = to.channel.split('-')[0].split('/')[1]
-	}
-	if(from!=undefined && modop.isExtPresent(fromExt) && to!=undefined){
-		logger.info("add active link to [" + fromExt + "] with ch1 '" + from.channel + "' and ch2 '" + to.channel + "'");
-		modop.addActiveLinkExt(fromExt, from.channel, to.channel)
-		modop.setCurrentActiveLink(fromExt, from.channel)
-		updateAllClientsForOpWithExt(fromExt);
-	}
-	if(to!=undefined && modop.isExtPresent(toExt) && from!=undefined){
-		logger.info("add active link to [" + toExt + "] with ch1 '" + to.channel + "' and ch2 '" + from.channel + "'");
-		modop.addActiveLinkExt(toExt, to.channel, from.channel)
-		modop.setCurrentActiveLink(toExt, to.channel)
-		updateAllClientsForOpWithExt(toExt);
-	}
-	if(clients[fromExt]!=undefined){
-		var c = clients[fromExt];
-		var msg = "Call from " + fromExt + " to " + toExt + " CONNECTED";
-		var response = new ResponseMessage(c.sessionId, "callconnected", msg);
-		response.from = fromExt;
-		response.to = toExt;
-		c.send(response);
-		logger.info("RESP 'callconnected' has been sent to [" + from.number + "] sessionId '" + c.sessionId + "'");
-	}
-	if(clients[toExt]!=undefined){
-		var c = clients[toExt];
-		var msg = "Call from " + fromExt + " to " + toExt + " CONNECTED";
-		var response = new ResponseMessage(c.sessionId, "callconnected", msg);
-		response.from = fromExt;
-		response.to = toExt;
-		c.send(response);
-		logger.info("RESP 'callconnected' has been sent to [" + toExt + "] sessionId '" + c.sessionId + "'");
-	}
-});
-
 am.addListener('calldisconnected', function(from, to) {
 	logger.info("EVENT 'CallDisconnected': between '" + sys.inspect(from) + "' AND '" + sys.inspect(to) + "'");
 });
