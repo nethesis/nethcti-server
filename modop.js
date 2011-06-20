@@ -286,24 +286,46 @@ function addListenerToAm(){
 	 * The status informations are 'dndStatus', 'cfStatus' and 'status'. In the case 'cfStatus' is 'on',
 	 * then it report also 'cfStatusExtTo' information, to know the extension setted for call forwarding.
 	 *
-	 * An example of PeerEntry event is: 
-	 *
-	{ event: 'PeerEntry',
-	  actionid: 'autosip',
+	'PeerEntry' event: { event: 'PeerEntry',
+	  actionid: 'cti_SIPPeers_action',
 	  channeltype: 'SIP',
 	  objectname: '501',
 	  chanobjecttype: 'peer',
-	  ipaddress: '192.168.5.187',
-	  ipport: '46894',
+	  ipaddress: '-none-',
+	  ipport: '0',
 	  dynamic: 'yes',
 	  natsupport: 'yes',
-	  videosupport: 'no',
+	  videosupport: 'yes',
 	  textsupport: 'no',
 	  acl: 'yes',
-	  status: 'OK (1 ms)',
+	  status: 'UNKNOWN',
+	  realtimedevice: 'no' } 
+	*
+	'PeerEntry' event: { event: 'PeerEntry',
+	  actionid: 'cti_SIPPeers_action',
+	  channeltype: 'SIP',
+	  objectname: '2002',
+	  chanobjecttype: 'peer',
+	  ipaddress: '-none-',
+	  ipport: '5060',
+	  dynamic: 'yes',
+	  natsupport: 'no',
+	  videosupport: 'yes',
+	  textsupport: 'no',
+	  acl: 'no',
+	  status: 'UNKNOWN',
 	  realtimedevice: 'no' }
-	*/
+	* 
+	'PeerEntry' event: { event: 'PeerEntry',
+	  channeltype: 'IAX2',
+	  chanobjecttype: 'peer',
+	  objectname: 'villa/from-villa',
+	  ipaddress: '79.38.61.136',
+	  ipport: '4569',
+	  dynamic: 'no',
+	  status: 'OK (125 ms)' } */
 	am.addListener('peerentry', function(headers) {
+		//logger.info("'PeerEntry' event: " + sys.inspect(headers))
 	        var ext = headers.objectname;
 	        var status = headers.status;
 	        logger.info("EVENT 'PeerEntry': ext [" + ext + "], status '" + status + "'");
@@ -322,6 +344,7 @@ function addListenerToAm(){
 	        var typeext = headers.channeltype + "/" + ext;
 		// set status	
 		updateExtStatusForOpWithTypeExt(typeext, status);
+		extStatusForOp[typeext].chType = headers.channeltype
 		/* Check for the DND and CF status of current ext.
 	         * This is made beacuse 'PeerEntry' event don't report the DND and CF status, and so
 	         * it can be possibile to correctly update 'extStatusForOp' */
@@ -387,30 +410,27 @@ function addListenerToAm(){
 	        logger.info("PeerListComplete event");
 	});
 
-	/* This event is necessary to add information of queue member to extension status
-	 * Example of 'QueueMember event' is:
+	/* This event is necessary to add information of queue membership to extension status
 	 * 
-	{ event: 'QueueMember',
-	  queue: '901',
-	  name: 'Local/501@from-internal/n',
-	  location: 'Local/501@from-internal/n',
-	  membership: 'static',
+	 'QueueMember' event: { event: 'QueueMember',
+	  queue: '401',
+	  name: 'Local/202@from-internal/n',
+	  location: 'Local/202@from-internal/n',
+	  membership: 'dynamic',
 	  penalty: '0',
 	  callstaken: '0',
 	  lastcall: '0',
 	  status: '1',
 	  paused: '0',
-	  actionid: '1305039851763' }
-	*/
+	  actionid: '1308578822527' } */
 	am.addListener('queuemember', function(headers){
-		logger.info("QueueMember event");
-		var ext = headers.name.split("/")[1];
-		var queue = headers.queue;
-		ext = ext.split("@")[0];
+		//logger.info("'QueueMember' event: " + sys.inspect(headers))
+		var ext = headers.name.split("@")[0].split('/')[1]
+		var queue = headers.queue
+		logger.info("'QueueMember' event: [" + ext + "] belongs to queue '" + queue + "'")
 		for(key in extStatusForOp){
-			var tempExt = extStatusForOp[key].Extension;
-			if(tempExt==ext)
-				extStatusForOp[key].queue = queue;
+			if(key.indexOf(ext)!=-1)
+				extStatusForOp[key].queue = queue
 		}		
 	});	
 }
@@ -432,6 +452,7 @@ function initExtStatusForOp(){
         // create action for asterisk server that generate series of 'PeerEntry' events
         var actionSIPPeersOP = {
                 Action: 'SIPPeers'
+		//ActionId: 'cti_SIPPeers_action'
         };
         // send action to asterisk
         am.send(actionSIPPeersOP, function () {
@@ -441,6 +462,7 @@ function initExtStatusForOp(){
          * to add status informations to 'extStatusForOp' for each IAXPeer */
         var actionIAXPeersOP = {
                 Action: 'IAXPeers'
+//		Actionid: 'cti_IAXPeers_action'
         };
         // send action to asterisk
         am.send(actionIAXPeersOP, function () {
@@ -450,11 +472,13 @@ function initExtStatusForOp(){
          * to add informations if the extension is present in some queue */
         var actionQueueStatus = {
                 Action: 'QueueStatus'
+	//	Actionid: 'cti_QueueStatus_action'
         };
         // send action to asterisk
         am.send(actionQueueStatus, function () {
                 logger.info("'actionQueueStatus' " + sys.inspect(actionQueueStatus) + " has been sent to AST");
         });
+	
 }
 
 /* This function initialize all tabs to be view in the operator panel, by reading 
