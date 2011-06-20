@@ -254,8 +254,10 @@ getCustomerCard = function(ext, type, cb){
                 executeSQLQuery(section, copyObjQuery, function(results){
                         cb(results);
                 });
-        }
-        return undefined;
+        } else {
+		logger.error('no query for section \'' + section + '\'')
+		cb(undefined)
+	}
 }
 
 /*
