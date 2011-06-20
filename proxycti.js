@@ -243,8 +243,12 @@ am.addListener('agentcalled', function(headers) {
 		var customerCardResult = []
                 for(i=0; i<typesCC.length; i++){
                         dataCollector.getCustomerCard(fromid, typesCC[i], function(cc){
-                                var custCardHTML = createCustomerCardHTML(cc[0], fromid)
-                                customerCardResult.push(custCardHTML)
+				if(cc!=undefined){
+	                                var custCardHTML = createCustomerCardHTML(cc[0], fromid)
+	                                customerCardResult.push(custCardHTML)
+				} else {
+					customerCardResult.push(cc)
+				}
                                 if(customerCardResult.length==typesCC.length){
                                         response.customerCard = customerCardResult
                                         c.send(response)
@@ -365,8 +369,12 @@ am.addListener('dialing', function(from, to, headers) {
 			var customerCardResult = []
 	                for(i=0; i<typesCC.length; i++){
 	                        dataCollector.getCustomerCard(fromExt, typesCC[i], function(cc){
-	                                var custCardHTML = createCustomerCardHTML(cc[0], fromExt)
-	                                customerCardResult.push(custCardHTML)
+	                                if(cc!=undefined){
+						var custCardHTML = createCustomerCardHTML(cc[0], fromExt)
+		                                customerCardResult.push(custCardHTML) 
+					} else{
+						customerCardResult.push(cc)
+					}
 	                                if(customerCardResult.length==typesCC.length){
 	                                        response.customerCard = customerCardResult
 	                                        c.send(response)
