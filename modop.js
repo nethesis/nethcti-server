@@ -86,7 +86,7 @@ exports.Modop = function(){
 	this.addController = function(contr) { addController(contr) }
 	this.updateLastDialExt = function(ext) { updateLastDialExt(ext) }
 	this.updateDialExt = function(ext, fromNum) { updateDialExt(ext, fromNum) }
-	this.isTypeExtFascio = function(typeext) { isTypeExtFascio(typeext) }
+	this.isTypeExtFascio = function(typeext) { return isTypeExtFascio(typeext) }
 }
 function isTypeExtFascio(typeext){ return extStatusForOp[typeext].tab=='fasci' }
 function updateDialExt(ext, fromNum){
