@@ -1399,6 +1399,11 @@ io.on('connection', function(client){
   				}
 		  	break;
 		  	case actions.ACTION_HANGUP:
+
+				console.log("aaaaaaaaa")
+				console.log(chStat)
+				return
+
 	  			// retrieve the channel of the client who has request the hangup
 	  			var channel;
 	  			for(key in am.participants){
