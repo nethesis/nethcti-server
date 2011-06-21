@@ -351,10 +351,23 @@ EVENT 'Dialing': headers '{ event: 'Dial',
   calleridname: 'Alessandrotest2',
   uniqueid: '1308582430.590',
   destuniqueid: '1308582431.591',
+  dialstring: '270' }' 
+  *
+  * when call come from cti:
+EVENT 'Dialing': headers '{ event: 'Dial',
+  privilege: 'call,all',
+  subevent: 'Begin',
+  channel: 'SIP/271-00000252',
+  destination: 'SIP/270-00000253',
+  calleridnum: '<unknown>',
+  calleridname: 'CTI-271',
+  uniqueid: '1308645191.698',
+  destuniqueid: '1308645195.699',
   dialstring: '270' }' */
 am.addListener('dialing', function(headers) {
         logger.info("EVENT 'Dialing': headers '" + sys.inspect(headers) + "'")
-	var from = headers.calleridnum
+console.log("'dialing' chstat = " + sys.inspect(chStat))
+	var from = chStat[headers.uniqueid].calleridnum
 	var to = headers.dialstring
 	logger.info("Dialing from '" + from + "' -> '" + to + "'")
 	if(to!=undefined && to!='' && modop.isExtPresent(to) && modop.isExtInterno(to)){
@@ -652,8 +665,8 @@ EVENT 'CallConnected': headers = '{ event: 'Bridge',
   callerid1: '270',
   callerid2: '271' }' */
 am.addListener('callconnected', function(headers) {
-	console.log("'callconnected' chStat = " + sys.inspect(chStat))
         logger.info("EVENT 'CallConnected': headers = '" + sys.inspect(headers) + "'")
+	console.log("'callconnected' chStat = " + sys.inspect(chStat))
 	var from = headers.callerid1
         var to = headers.callerid2
 	if(clients[from]!=undefined){
