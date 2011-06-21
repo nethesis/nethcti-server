@@ -241,6 +241,7 @@ am.addListener('newstate', function(headers){
 		chStat[headers.uniqueid].calleridnum = headers.calleridnum
 	else if(headers.calleridname.indexOf('CTI-')!=-1) // call come from cti
 		chStat[headers.uniqueid].calleridnum = headers.calleridname.split('-')[1]
+
 	// calleridname
 	chStat[headers.uniqueid].calleridname = headers.calleridname
 
@@ -248,6 +249,18 @@ am.addListener('newstate', function(headers){
 	modop.updateExtStatusForOpWithExt(chStat[headers.uniqueid].calleridnum, chStat[headers.uniqueid].status)
 	updateAllClientsForOpWithExt(chStat[headers.uniqueid].calleridnum)
 return
+
+
+
+
+
+
+
+
+
+
+
+
 // CODICE VECCHIO CHE NON VIENE ESEGUITO
 
         var typeext = ''
@@ -292,9 +305,7 @@ EVENT 'NewCallerid': headers '{ event: 'NewCallerid',
   uniqueid: '1308581562.576',
   cidcallingpres: '0 (Presentation Allowed, Not Screened)' }' */
 am.addListener('newcallerid', function(headers){
-	logger.info("EVENT 'NewCallerid': headers '" + sys.inspect(headers) +  "'")
-	
-	
+	logger.info("EVENT 'NewCallerid': headers '" + sys.inspect(headers) +  "'")	
 })
 
 
@@ -382,6 +393,7 @@ console.log("'dialing' chstat = " + sys.inspect(chStat))
 	var from = chStat[headers.uniqueid].calleridnum
 	var to = headers.dialstring
 	logger.info("Dialing from '" + from + "' -> '" + to + "'")
+
 	// advise the client that receive the call
 	if(to!=undefined && to!='' && modop.isExtPresent(to) && modop.isExtInterno(to)){
 		// check the permission of the user to receive the call
@@ -438,6 +450,23 @@ console.log("'dialing' chstat = " + sys.inspect(chStat))
 	}
 	
 return
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // CODICE VECCHIO CHE NON VIENE ESEGUITO
         // check the source of the call: if come from queue, then return because 'AgentCalled' event is emitted
         var ch = from.channel
@@ -476,66 +505,6 @@ return
                         } else if(modop.getExtStatusWithTypeExt(toTypeExt).tab=='interno')
                                 toExt = to.channel.split('-')[0].split('/')[1]
                 }
-/*
-                logger.info('fromExt = ' + fromExt + ' &  toExt = ' + toExt)
-                var c = clients[toExt]
-                if(c!=undefined){
-                        // check the permission of the user to receive the call
-                        if(!profiler.checkActionCallInPermit(toExt)){
-                                logger.info("check 'callIn' permission for [" + toExt + "] FAILED !")
-                                return
-                        }
-                        // create the response for the client
-			var msg = from.name
-                        /* in this response the html is not passed, because the chrome desktop 
-                         * notification of the client accept only one absolute or relative url */
-/*
-                        var response = new ResponseMessage(c.sessionId, "dialing", msg)
-                        response.from = fromExt
-                        response.to = toExt
-                        var typesCC = profiler.getTypesCustomerCardPermit(toExt)
-                        logger.info("[" + toExt + "] is able to view customer card of types: " + sys.inspect(typesCC))
-                        //
-                        if(typesCC.length==0){
-                                // the user hasn't the authorization of view customer card, then the length is 0
-                                logger.info("check permission to view Customer Card for [" + toExt + "] FAILED !")
-                                response.customerCard = ""
-                                response.noPermission = ''
-                                c.send(response)
-                                logger.info("RESP 'dialing' has been sent to [" + toExt + "] sessionId '" + c.sessionId + "'")
-                                return
-                        }
-                        var customerCardResult = []
-                        for(i=0; i<typesCC.length; i++){
-                                dataCollector.getCustomerCard(fromExt, typesCC[i], function(cc){
-                                        if(cc!=undefined){
-                                                var custCardHTML = createCustomerCardHTML(cc[0], fromExt)
-                                                customerCardResult.push(custCardHTML)
-                                        } else{
-                                                customerCardResult.push(cc)
-                                        }
-                                        if(customerCardResult.length==typesCC.length){
-                                                response.customerCard = customerCardResult
-                                                c.send(response)
-                                                logger.info("RESP 'dialing' has been sent to [" + toExt + "] sessionId '" + c.sessionId + "' with relative customer card")
-                                        }
-                                })
-                        }
-                }
-
-                if(modop.isExtPresent(fromExt)){
-                        modop.updateExtStatusOpDialFrom(fromExt, toExt)
-                        updateAllClientsForOpWithExt(fromExt)
-                }
-                if(modop.isExtPresent(toExt)){
-                        var typeext = headers.channel.split('-')[0] // if the caller is a trunk, then headers.channel is: channel: 'SIP/2004-00000934'
-                        if(modop.isTypeExtFascio(typeext))
-                                modop.updateExtStatusOpDialTo(toExt, headers.calleridnum)
-                        else
-                                modop.updateExtStatusOpDialTo(toExt, fromExt)
-                        updateAllClientsForOpWithExt(toExt)
-                }
-*/
         }
 })
 
@@ -622,7 +591,7 @@ am.addListener('hangup', function(headers) {
 			ext = chStat[headers.uniqueid].channel.split('-')[0].split('/')[1]
 	}
 	delete chStat[headers.uniqueid]
-console.log("'hangup' chStat = " + sys.inspect(chStat))
+	console.log("'hangup' chStat = " + sys.inspect(chStat))
 
 	// advise client of hangup
 	var c = clients[ext]
@@ -633,7 +602,7 @@ console.log("'hangup' chStat = " + sys.inspect(chStat))
                 c.send(resp)
                 logger.info("RESP 'hangup' has been sent to [" + ext + "] sessionId '" + c.sessionId + "'")
         }
-	// update info for OP and advise all clients
+	// update for OP
 	if(modop.isExtPresent(ext)){
                 modop.updateExtStatusForOpWithExt(ext, 'hangup')
                 modop.updateStopRecordExtStatusForOpWithExt(ext)
@@ -641,7 +610,16 @@ console.log("'hangup' chStat = " + sys.inspect(chStat))
                 updateAllClientsForOpWithExt(ext)
         } else
                 logger.warn('[' + ext + '] is not present in extStatusForOp')
+
+	// TO eliminate data structure of asterisk.js
+	//delete am.participants[headers.uniqueid]
+        //logger.info('removed \'' + headers.uniqueid  + '\' from am.participants: ' + sys.inspect(am.participants))
+
 return
+
+
+
+
 // CODICE VECCHIO MAI ESEGUITO
         // ext is constructed from channel because other field change with context, for example when call come from cti
         var ch = headers.channel
@@ -664,28 +642,6 @@ return
                 ext = ch.split('-')[0].split('/')[1]
                 modop.removeActiveLinkExt(ext, ch)
         }
-/*
-        var client = clients[ext]
-        // advise client of hangup
-        if(client!=undefined){
-                var msg = "Call has hung up. Reason: " + headers.causetxt + "  (Code: " + headers.cause + ")"
-                var resp = new ResponseMessage(client.sessionId, "hangup", msg)
-                resp.code = headers.cause
-                client.send(resp)
-                logger.info("RESP 'hangup' has been sent to [" + ext + "] sessionId '" + client.sessionId + "'")
-        }
-
-        if(modop.isExtPresent(ext)){
-                modop.updateExtStatusForOpWithExt(ext, 'hangup')
-                modop.updateStopRecordExtStatusForOpWithExt(ext)
-                modop.updateLastDialExt(ext)
-                updateAllClientsForOpWithExt(ext)
-        }
-        else
-                logger.warn('[' + ext + '] is not present in extStatusForOp')
-*/
-        delete am.participants[headers.uniqueid]
-        logger.info('removed \'' + headers.uniqueid  + '\' from am.participants: ' + sys.inspect(am.participants))
 })
 
 
@@ -706,6 +662,7 @@ am.addListener('callconnected', function(headers) {
 	console.log("'callconnected' chStat = " + sys.inspect(chStat))
 	var from = headers.callerid1
         var to = headers.callerid2
+	// advise two clients of call
 	if(clients[from]!=undefined){
                 var c = clients[from]
                 var msg = "Call from " + from + " to " + to + " CONNECTED"
@@ -966,25 +923,6 @@ am.addListener('callreport', function(report) {
 	});
 
 
-/* This function update all clients with the new state of 'ext'. 
- * So the clients can update their operator panel.
- * 'ext' must be in the form: '500' */
-function updateAllClientsForOpWithExt(ext){	
-	// get new state of the extension ext
-	logger.info('FUNCTION \'updateAllClientsForOpWithExt(ext)\': \'modop.getExtStatusWithExt(ext)\' with ext = \'' + ext + '\'');
-        var newState = modop.getExtStatusWithExt(ext);
-	logger.info('obtained newState: ' + sys.inspect(newState));
-        // send update to all clients with the new state
-	logger.info('update all clients (with ext)...');
-        for(key in clients){
-                var c = clients[key];
-                var msg = "state of " + newState.Label + " has changed: update ext new state";
-                var response = new ResponseMessage(c.sessionId, "update_ext_new_state_op", msg);
-                response.extNewState = newState;
-                c.send(response);
-                logger.info("RESP 'update_ext_new_state_op' has been sent to [" + key + "] sessionId '" + c.sessionId + "'");
-        }	
-}
 
 /* This function update all clients with the new state of the extension, givin typeext. 
  * This sent is used by the clients to update operator panel.
@@ -2091,6 +2029,9 @@ am.connect();
  * Section relative to functions
  */
 
+/* This function update all clients with the new state of 'ext'. 
+ * So the clients can update their operator panel.
+ * 'ext' must be in the form: '500' */
 function updateAllClientsForOpWithExt(ext){
         // get new state of the extension ext
         logger.info('FUNCTION \'updateAllClientsForOpWithExt(ext)\': \'modop.getExtStatusWithExt(ext)\' with ext = \'' + ext + '\'');
