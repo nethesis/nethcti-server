@@ -592,9 +592,24 @@ return
 
 
 
-// This event is emitted by asterisk.js when the 'Bridge' event is emitted from asterisk server
-am.addListener('callconnected', function(from, to, headers) {
-        logger.info("EVENT 'CallConnected': FROM '" + sys.inspect(from) + "' TO '" + sys.inspect(to) + "' & headers = '" + sys.inspect(headers) + "'")
+/* This event is emitted by asterisk.js when the 'Bridge' event is emitted from asterisk server
+EVENT 'CallConnected': headers = '{ event: 'Bridge',
+  privilege: 'call,all',
+  bridgestate: 'Link',
+  bridgetype: 'core',
+  channel1: 'SIP/270-0000020d',
+  channel2: 'SIP/271-0000020e',
+  uniqueid1: '1308585805.629',
+  uniqueid2: '1308585806.630',
+  callerid1: '270',
+  callerid2: '271' }' */
+am.addListener('callconnected', function(headers) {
+        logger.info("EVENT 'CallConnected': headers = '" + sys.inspect(headers) + "'")
+	
+
+
+return
+// VECCHO CODICE NON ESEGUITO
         var fromExt = ''
         var toExt = ''
         /* In the case that one ext has been redirected, 'from' can be:
