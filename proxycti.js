@@ -216,12 +216,24 @@ EVENT 'NewChannel': headers = { event: 'Newchannel',
   calleridnum: '',
   calleridname: '',
   accountcode: '',
-  uniqueid: '1308652170.785' } */ 
+  uniqueid: '1308652170.785' } 
+*
+* when redirect
+EVENT 'NewChannel': headers = { event: 'Newchannel',
+  privilege: 'call,all',
+  channel: 'AsyncGoto/SIP/270-000002dc',
+  channelstate: '6',
+  channelstatedesc: 'Up',
+  calleridnum: '',
+  calleridname: '',
+  accountcode: '',
+  uniqueid: '1308662518.892' } */ 
 am.addListener('newchannel', function(headers){
 	logger.info("EVENT 'NewChannel': headers = " + sys.inspect(headers))
 	chStat[headers.uniqueid] = {
 		channel: headers.channel
 	}
+	console.log("'newChannel' chStat = " + sys.inspect(chStat))
 })
 
 /* when call from the soft phone 
@@ -258,6 +270,8 @@ am.addListener('newstate', function(headers){
 	// update for OP
 	modop.updateExtStatusForOpWithExt(chStat[headers.uniqueid].calleridnum, chStat[headers.uniqueid].status)
 	updateAllClientsForOpWithExt(chStat[headers.uniqueid].calleridnum)
+	
+	console.log("'newState' chStat = " + sys.inspect(chStat))
 return
 
 
@@ -1602,20 +1616,32 @@ io.on('connection', function(client){
 		  		logger.info(Object.keys(clients).length + " logged in clients");
 	  		break;
 	  		case actions.ACTION_REDIRECT:
+				console.log("'ACTION_REDIRECT' chStat = " + sys.inspect(chStat))
+				/* chStat = { '1308661886.872': 
+				   { channel: 'SIP/271-000002cb',
+				     status: 'up',
+				     calleridnum: '271',
+				     calleridname: 'Alessandrotest2' },
+				  '1308661887.873': 
+				   { channel: 'SIP/270-000002cc',
+				     status: 'up',
+				     calleridnum: '270',
+				     calleridname: '' } } */
 	  			// check if the user has the permission of dial out
 				if(profiler.checkActionRedirectPermit(extFrom)){
 	  				logger.info("check 'redirect' permission for [" + extFrom + "] OK: execute redirect...");	
 	  				// get the channel
-	  				var channel = '';
-	  				for(key in am.participants){
-	  					if(am.participants[key].number==message.redirectFrom){
-	  						channel = am.participants[key].channel;
-	  					}
-	  				}
+	  				var ch
+					for(key in chStat){
+						if(chStat[key].calleridnum==message.redirectFrom){
+							ch = chStat[key].channel
+							break
+						}
+					}
 		  			// create redirect action for the asterisk server
 		  			var actionRedirect = {
 						Action: 'Redirect',
-						Channel: channel,
+						Channel: ch,
 						Context: 'from-internal',
 						Exten: message.redirectTo,
 						Priority: 1
