@@ -428,7 +428,19 @@ EVENT 'Dialing': headers '{ event: 'Dial',
   calleridname: 'Alessandrotest1',
   uniqueid: '1308662518.892',
   destuniqueid: '1308662519.893',
-  dialstring: '272' }' */ 
+  dialstring: '272' }' 
+*
+* when callout through trunk
+EVENT 'Dialing': headers '{ event: 'Dial',
+  privilege: 'call,all',
+  subevent: 'Begin',
+  channel: 'SIP/272-0000104d',
+  destination: 'SIP/UMTS-0000104e',
+  calleridnum: '272',
+  calleridname: 'AlessandroTest3',
+  uniqueid: '1308669778.8745',
+  destuniqueid: '1308669778.8746',
+  dialstring: 'UMTS/#31#3405567088' }' */ 
 am.addListener('dialing', function(headers) {
         logger.info("EVENT 'Dialing': headers '" + sys.inspect(headers) + "'")
 console.log("'dialing' chstat = " + sys.inspect(chStat))
@@ -453,9 +465,27 @@ console.log("'dialing' chstat = " + sys.inspect(chStat))
 	*
 	* during redirect:
 	chstat = { '1308662518.892': { channel: 'AsyncGoto/SIP/270-000002dc' },
-	  '1308662519.893': { channel: 'SIP/272-000002dd' } } */
-	// from and to
+	  '1308662519.893': { channel: 'SIP/272-000002dd' } }
+	*
+	* when callout through a trunk:
+	chstat = { '1308669778.8745': 
+	   { channel: 'SIP/272-0000104d',
+	     status: 'ring',
+	     calleridnum: '272',
+	     calleridname: 'device' },
+	  '1308669778.8746': { channel: 'SIP/UMTS-0000104e' } }      (CASE A)  */
+	// to
 	var to = headers.dialstring
+	if(modop.isTypeExtFascio(chStat[headers.destuniqueid].channel.split('-')[0])){ // the call is out through a trunk (CASE A)
+		var trunk = chStat[headers.destuniqueid].channel.split('-')[0].split('/')[1]
+		if(to.indexOf(trunk)!=-1){
+			to = to.split(trunk + '/')[1]
+			if(to.indexOf('#31#')!=-1){
+				to = to.split('#31#')[1]
+			}
+		}
+	}
+	// from
 	var from = chStat[headers.uniqueid].calleridnum
 	// in this case the call come from queue
 	if(from==undefined && chStat[headers.uniqueid].channel.indexOf('Local/')!=-1 && chStat[headers.uniqueid].channel.indexOf('@from-internal-')!=-1 )
@@ -673,7 +703,7 @@ EVENT 'Hangup': headers = { event: 'Hangup',
   calleridname: 'Alessandrotest1',
   cause: '16',
   causetxt: 'Normal Clearing' }
-'hangup' chStat = {} */ 
+'hangup' chStat = {} */
 am.addListener('hangup', function(headers) {
         logger.info("EVENT 'Hangup': headers = " + sys.inspect(headers))
 
