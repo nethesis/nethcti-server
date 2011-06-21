@@ -416,7 +416,19 @@ EVENT 'Dialing': headers '{ event: 'Dial',
   calleridname: 'Alessandrotest3',
   uniqueid: '1308652170.786',
   destuniqueid: '1308652171.789',
-  dialstring: '270' }' */ 
+  dialstring: '270' }' 
+*
+* when redirect:
+EVENT 'Dialing': headers '{ event: 'Dial',
+  privilege: 'call,all',
+  subevent: 'Begin',
+  channel: 'SIP/270-000002dc',
+  destination: 'SIP/272-000002dd',
+  calleridnum: '270',
+  calleridname: 'Alessandrotest1',
+  uniqueid: '1308662518.892',
+  destuniqueid: '1308662519.893',
+  dialstring: '272' }' */ 
 am.addListener('dialing', function(headers) {
         logger.info("EVENT 'Dialing': headers '" + sys.inspect(headers) + "'")
 console.log("'dialing' chstat = " + sys.inspect(chStat))
@@ -437,13 +449,20 @@ console.log("'dialing' chstat = " + sys.inspect(chStat))
 	  '1308652170.786': { channel: 'Local/270@from-internal-b7d5;2' },
 	  '1308652170.787': { channel: 'Local/271@from-internal-3193;1' },
 	  '1308652170.788': { channel: 'Local/271@from-internal-3193;2' },
-	  '1308652171.789': { channel: 'SIP/270-000002a5' } } */
+	  '1308652171.789': { channel: 'SIP/270-000002a5' } }
+	*
+	* during redirect:
+	chstat = { '1308662518.892': { channel: 'AsyncGoto/SIP/270-000002dc' },
+	  '1308662519.893': { channel: 'SIP/272-000002dd' } } */
 	// from and to
 	var to = headers.dialstring
 	var from = chStat[headers.uniqueid].calleridnum
-	// in this is the call come from queue
+	// in this case the call come from queue
 	if(from==undefined && chStat[headers.uniqueid].channel.indexOf('Local/')!=-1 && chStat[headers.uniqueid].channel.indexOf('@from-internal-')!=-1 )
 		from = headers.calleridnum
+	// this case is the redirect
+	else if(from==undefined && chStat[headers.uniqueid].channel.indexOf('AsyncGoto/SIP/')!=-1 )
+		from = chStat[headers.uniqueid].channel.split('-')[0].split('/')[2]
 	logger.info("Dialing from '" + from + "' -> '" + to + "'")
 
 	// advise the client that receive the call
@@ -633,7 +652,28 @@ EVENT 'Hangup': headers = { event: 'Hangup',
   calleridnum: '272',
   calleridname: 'Alessandrotest3',
   cause: '0',
-  causetxt: 'Unknown' } */
+  causetxt: 'Unknown' } 
+  *
+  * when redirect
+EVENT 'Hangup': headers = { event: 'Hangup',
+  privilege: 'call,all',
+  channel: 'AsyncGoto/SIP/270-000002dc<ZOMBIE>',
+  uniqueid: '1308662508.891',
+  calleridnum: '<unknown>',
+  calleridname: '<unknown>',
+  cause: '16',
+  causetxt: 'Normal Clearing' }
+*
+* and
+EVENT 'Hangup': headers = { event: 'Hangup',
+  privilege: 'call,all',
+  channel: 'SIP/270-000002df',
+  uniqueid: '1308664818.896',
+  calleridnum: '270',
+  calleridname: 'Alessandrotest1',
+  cause: '16',
+  causetxt: 'Normal Clearing' }
+'hangup' chStat = {} */ 
 am.addListener('hangup', function(headers) {
         logger.info("EVENT 'Hangup': headers = " + sys.inspect(headers))
 
@@ -671,7 +711,23 @@ am.addListener('hangup', function(headers) {
 	   { channel: 'SIP/270-000002b1',
 	     status: 'ringing',
 	     calleridnum: '270',
-	     calleridname: '' } } */
+	     calleridname: '' } } 
+	*
+	* when redirect:
+	chStat = { '1308662507.890': 
+	   { channel: 'SIP/271-000002db',
+	     status: 'up',
+	     calleridnum: '271',
+	     calleridname: 'Alessandrotest2' },
+	  '1308662508.891': 
+	   { channel: 'SIP/270-000002dc',
+	     status: 'up',
+	     calleridnum: '270',
+	     calleridname: '' },
+	  '1308662518.892': { channel: 'AsyncGoto/SIP/270-000002dc' } } 
+	* 
+	* and
+	chStat = { '1308664818.896': { channel: 'AsyncGoto/SIP/270-000002df' } } */
 	if(chStat[headers.uniqueid].channel.indexOf('Local/')!=-1 && chStat[headers.uniqueid].channel.indexOf('@from-internal-')!=-1 && chStat[headers.uniqueid].channel.indexOf(';1')!=-1 ){
 		delete chStat[headers.uniqueid]
 	        console.log("'hangup' chStat = " + sys.inspect(chStat))
@@ -680,7 +736,7 @@ am.addListener('hangup', function(headers) {
 
 	// ext
 	var ext
-	if(chStat[headers.uniqueid].calleridnum!=''){
+	if(chStat[headers.uniqueid].calleridnum!='' && chStat[headers.uniqueid].calleridnum!=undefined ){
 		/* '1308643186.683': 
 		   { channel: 'SIP/270-00000243',
 		     calleridname: '',
@@ -694,29 +750,35 @@ am.addListener('hangup', function(headers) {
 		      calleridname: 'CTI-271',
 		      calleridnum: '',
 		      status: 'up' }, */
-		if(chStat[headers.uniqueid].channel.indexOf('SIP/')!=-1)
+		if(chStat[headers.uniqueid].channel.indexOf('SIP/')!=-1 && chStat[headers.uniqueid].channel.indexOf('AsyncGoto/')==-1 ) // not redirect
 			ext = chStat[headers.uniqueid].channel.split('-')[0].split('/')[1]
+		// chStat = { '1308664818.896': { channel: 'AsyncGoto/SIP/270-000002df' } } 
+		else if( chStat[headers.uniqueid].channel.indexOf('AsyncGoto/SIP/')!=-1 ) // is redirect
+			ext = chStat[headers.uniqueid].channel.split('-')[0].split('/')[2]
 	}
 	delete chStat[headers.uniqueid]
 	console.log("'hangup' chStat = " + sys.inspect(chStat))
 
-	// advise client of hangup
-	var c = clients[ext]
-	if(c!=undefined){
-                var msg = "Call has hung up. Reason: " + headers.causetxt + "  (Code: " + headers.cause + ")"
-                var resp = new ResponseMessage(c.sessionId, "hangup", msg)
-                resp.code = headers.cause
-                c.send(resp)
-                logger.info("RESP 'hangup' has been sent to [" + ext + "] sessionId '" + c.sessionId + "'")
-        }
-	// update for OP
-	if(modop.isExtPresent(ext)){
-                modop.updateExtStatusForOpWithExt(ext, 'hangup')
-                modop.updateStopRecordExtStatusForOpWithExt(ext)
-                modop.updateLastDialExt(ext)
-                updateAllClientsForOpWithExt(ext)
-        } else
-                logger.warn('[' + ext + '] is not present in extStatusForOp')
+	// advise client of hangup if this event is not relative to redirect operation
+	if( headers.channel.indexOf('AsyncGoto/SIP/')==-1 && headers.channel.indexOf('<ZOMBIE>')==-1 ){
+		var c = clients[ext]
+		if(c!=undefined){
+	                var msg = "Call has hung up. Reason: " + headers.causetxt + "  (Code: " + headers.cause + ")"
+	                var resp = new ResponseMessage(c.sessionId, "hangup", msg)
+	                resp.code = headers.cause
+	                c.send(resp)
+	                logger.info("RESP 'hangup' has been sent to [" + ext + "] sessionId '" + c.sessionId + "'")
+	        }
+		// update for OP
+		if(modop.isExtPresent(ext)){
+	                modop.updateExtStatusForOpWithExt(ext, 'hangup')
+	                modop.updateStopRecordExtStatusForOpWithExt(ext)
+	                modop.updateLastDialExt(ext)
+	                updateAllClientsForOpWithExt(ext)
+	        } else
+         	       logger.warn('[' + ext + '] is not present in extStatusForOp')
+	} else
+		logger.info("discarded event 'hangup' because redirect")
 
 	// TO eliminate data structure of asterisk.js
 	//delete am.participants[headers.uniqueid]
@@ -786,10 +848,29 @@ EVENT 'CallConnected': headers = '{ event: 'Bridge',
   uniqueid1: '1308652170.784',
   uniqueid2: '1308652170.787',
   callerid1: '272',
+  callerid2: '272' }' 
+*
+* when redirect:
+EVENT 'CallConnected': headers = '{ event: 'Bridge',
+  privilege: 'call,all',
+  bridgestate: 'Link',
+  bridgetype: 'core',
+  channel1: 'SIP/270-000002df',
+  channel2: 'SIP/272-000002e0',
+  uniqueid1: '1308664818.896',
+  uniqueid2: '1308664819.897',
+  callerid1: '270',
   callerid2: '272' }' */ 
 am.addListener('callconnected', function(headers) {
         logger.info("EVENT 'CallConnected': headers = '" + sys.inspect(headers) + "'")
 	console.log("'callconnected' chStat = " + sys.inspect(chStat))
+	/* when redirect:
+	chStat = { '1308664818.896': { channel: 'AsyncGoto/SIP/270-000002df' },
+	  '1308664819.897': 
+	   { channel: 'SIP/272-000002e0',
+	     status: 'up',
+	     calleridnum: '272',
+	     calleridname: '' } } */
 	// check if the call 
 	if( headers.callerid1==headers.callerid2 && headers.channel2.indexOf('Local/')!=-1 && headers.channel2.indexOf('@from-internal-')!=-1 && headers.channel2.indexOf(';1')!=-1  ){
 		logger.info("discarded event 'callconnected'")
