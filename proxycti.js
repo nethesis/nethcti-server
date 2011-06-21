@@ -1399,29 +1399,33 @@ io.on('connection', function(client){
   				}
 		  	break;
 		  	case actions.ACTION_HANGUP:
-
-				console.log("aaaaaaaaa")
-				console.log(chStat)
-				return
-
-	  			// retrieve the channel of the client who has request the hangup
-	  			var channel;
-	  			for(key in am.participants){
-	  				if(am.participants[key].number==extFrom){
-	  					channel = am.participants[key].channel;
-	  					break;
-	  				}
-	  			}
-				//var channel = modop.getExtStatusWithExt(extFrom).currentActiveLink
-	  			// create hangup action for asterisk server
-		  		var actionHangup = {
-					Action: 'Hangup',
-					Channel: channel
-				};
+				/* example chStat:
+				 { '1308640687.636': 
+				   { channel: 'SIP/270-00000214',
+				     status: 'up',
+				     calleridname: 'Alessandrotest1',
+				     calleridnum: '270' },
+				  '1308640688.637': 
+				   { channel: 'SIP/271-00000215',
+				     calleridname: '',
+				     calleridnum: '271',
+				     status: 'up' } } */
+				var ch = ''
+				for(key in chStat){
+					if(chStat[key].calleridnum==extFrom){
+						ch = chStat[key].channel
+						break
+					}
+				}
+				// create hangup action for asterisk server
+                                var actionHangup = {
+                                        Action: 'Hangup',
+                                        Channel: ch
+                                }
 				// send action to asterisk
-				am.send(actionHangup, function () {
-					logger.info("'actionHangup' " + sys.inspect(actionHangup) + " has been sent to AST");
-				});
+                                am.send(actionHangup, function () {
+                                        logger.info("'actionHangup' " + sys.inspect(actionHangup) + " has been sent to AST");
+                                })
 	  		break;
 	  		case actions.ACTION_LOGOUT:
 	  			removeClient(client.sessionId);
