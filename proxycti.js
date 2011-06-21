@@ -235,10 +235,21 @@ am.addListener('newchannel', function(headers){
 am.addListener('newstate', function(headers){
         logger.info("EVENT 'NewState': headers '" + sys.inspect(headers) +  "'")
 	chStat[headers.uniqueid].status = headers.channelstatedesc.toLowerCase()
+	
+	// calleridnum
+	if(headers.calleridnum!='') // call come from soft phone
+		chStat[headers.uniqueid].calleridnum = headers.calleridnum
+	else if(headers.calleridname.indexOf('CTI-')!=-1) // call come from cti
+		chStat[headers.uniqueid].calleridnum = headers.calleridname.split('-')[1]
+	// calleridname
+	chStat[headers.uniqueid].calleridname = headers.calleridname
 
-
+	// update for OP
+	modop.updateExtStatusForOpWithExt(chStat[headers.uniqueid].calleridnum, chStat[headers.uniqueid].status)
+	updateAllClientsForOpWithExt(chStat[headers.uniqueid].calleridnum)
+return
 // CODICE VECCHIO CHE NON VIENE ESEGUITO
-/*
+
         var typeext = ''
         if(headers.channel.indexOf('@')==-1){
                 typeext = headers.channel.split("-")[0]
@@ -259,7 +270,8 @@ am.addListener('newstate', function(headers){
                 } else
                         logger.warn('[' + typeext + '] is not present in extStatusForOp');
         }
-*/
+
+	console.log("'newState' chStat = " + sys.inspect(chStat))
 })
 
 /* whe call come from soft phone
@@ -282,12 +294,6 @@ EVENT 'NewCallerid': headers '{ event: 'NewCallerid',
 am.addListener('newcallerid', function(headers){
 	logger.info("EVENT 'NewCallerid': headers '" + sys.inspect(headers) +  "'")
 	
-	// calleridnum
-	if(headers.calleridnum!='') // call come from soft phone
-		chStat[headers.uniqueid].calleridnum = headers.calleridnum
-	else if(headers.calleridname.indexOf('CTI-')!=-1) // call come from cti
-		chStat[headers.uniqueid].calleridnum = headers.calleridname.split('-')[1]
-	chStat[headers.uniqueid].calleridname = headers.calleridname
 	
 })
 
@@ -367,9 +373,16 @@ EVENT 'Dialing': headers '{ event: 'Dial',
 am.addListener('dialing', function(headers) {
         logger.info("EVENT 'Dialing': headers '" + sys.inspect(headers) + "'")
 console.log("'dialing' chstat = " + sys.inspect(chStat))
+	/* chstat = { '1308646890.732': 
+	   { channel: 'SIP/271-00000274',
+	     status: 'ring',
+	     calleridnum: '271',
+	     calleridname: 'device' },
+	  '1308646890.733': { channel: 'SIP/270-00000275' } } */
 	var from = chStat[headers.uniqueid].calleridnum
 	var to = headers.dialstring
 	logger.info("Dialing from '" + from + "' -> '" + to + "'")
+	// advise the client that receive the call
 	if(to!=undefined && to!='' && modop.isExtPresent(to) && modop.isExtInterno(to)){
 		// check the permission of the user to receive the call
                 if(!profiler.checkActionCallInPermit(toExt)){
@@ -412,6 +425,17 @@ console.log("'dialing' chstat = " + sys.inspect(chStat))
                         }
                 }
 	}
+	// update info for OP (dialDirection) and update all clients
+	if(from!=undefined && to!=undefined){
+		if(modop.isExtPresent(from)){
+			modop.updateExtStatusOpDialFrom(from, to)
+	        	updateAllClientsForOpWithExt(from)
+		}
+		if(modop.isExtPresent(to)){
+	                modop.updateExtStatusOpDialTo(to, from)
+	        	updateAllClientsForOpWithExt(to)
+		}	
+	}
 	
 return
 // CODICE VECCHIO CHE NON VIENE ESEGUITO
@@ -452,6 +476,7 @@ return
                         } else if(modop.getExtStatusWithTypeExt(toTypeExt).tab=='interno')
                                 toExt = to.channel.split('-')[0].split('/')[1]
                 }
+/*
                 logger.info('fromExt = ' + fromExt + ' &  toExt = ' + toExt)
                 var c = clients[toExt]
                 if(c!=undefined){
@@ -464,6 +489,7 @@ return
 			var msg = from.name
                         /* in this response the html is not passed, because the chrome desktop 
                          * notification of the client accept only one absolute or relative url */
+/*
                         var response = new ResponseMessage(c.sessionId, "dialing", msg)
                         response.from = fromExt
                         response.to = toExt
@@ -496,6 +522,7 @@ return
                                 })
                         }
                 }
+
                 if(modop.isExtPresent(fromExt)){
                         modop.updateExtStatusOpDialFrom(fromExt, toExt)
                         updateAllClientsForOpWithExt(fromExt)
@@ -508,6 +535,7 @@ return
                                 modop.updateExtStatusOpDialTo(toExt, fromExt)
                         updateAllClientsForOpWithExt(toExt)
                 }
+*/
         }
 })
 
@@ -605,6 +633,14 @@ console.log("'hangup' chStat = " + sys.inspect(chStat))
                 c.send(resp)
                 logger.info("RESP 'hangup' has been sent to [" + ext + "] sessionId '" + c.sessionId + "'")
         }
+	// update info for OP and advise all clients
+	if(modop.isExtPresent(ext)){
+                modop.updateExtStatusForOpWithExt(ext, 'hangup')
+                modop.updateStopRecordExtStatusForOpWithExt(ext)
+                modop.updateLastDialExt(ext)
+                updateAllClientsForOpWithExt(ext)
+        } else
+                logger.warn('[' + ext + '] is not present in extStatusForOp')
 return
 // CODICE VECCHIO MAI ESEGUITO
         // ext is constructed from channel because other field change with context, for example when call come from cti
@@ -638,7 +674,7 @@ return
                 client.send(resp)
                 logger.info("RESP 'hangup' has been sent to [" + ext + "] sessionId '" + client.sessionId + "'")
         }
-*/
+
         if(modop.isExtPresent(ext)){
                 modop.updateExtStatusForOpWithExt(ext, 'hangup')
                 modop.updateStopRecordExtStatusForOpWithExt(ext)
@@ -647,6 +683,7 @@ return
         }
         else
                 logger.warn('[' + ext + '] is not present in extStatusForOp')
+*/
         delete am.participants[headers.uniqueid]
         logger.info('removed \'' + headers.uniqueid  + '\' from am.participants: ' + sys.inspect(am.participants))
 })
