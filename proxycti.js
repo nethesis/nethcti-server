@@ -545,7 +545,16 @@ EVENT 'Hangup': headers = { event: 'Hangup',
 am.addListener('hangup', function(headers) {
         logger.info("EVENT 'Hangup': headers = " + sys.inspect(headers))
 	delete chStat[headers.uniqueid]
-console.log(chStat)
+console.log("chStat = " + sys.inspect(chStat))
+	var ext = headers.calleridnum
+	var c = clients[ext]
+	if(c!=undefined){
+                var msg = "Call has hung up. Reason: " + headers.causetxt + "  (Code: " + headers.cause + ")"
+                var resp = new ResponseMessage(c.sessionId, "hangup", msg)
+                resp.code = headers.cause
+                c.send(resp)
+                logger.info("RESP 'hangup' has been sent to [" + ext + "] sessionId '" + c.sessionId + "'")
+        }
 return
 // CODICE VECCHIO MAI ESEGUITO
         // ext is constructed from channel because other field change with context, for example when call come from cti
