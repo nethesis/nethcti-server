@@ -205,13 +205,23 @@ chStat = {}
   calleridnum: '',
   calleridname: '',
   accountcode: '',
-  uniqueid: '1308575856.547' } */
+  uniqueid: '1308575856.547' }
+*
+* when call is to queue
+EVENT 'NewChannel': headers = { event: 'Newchannel',
+  privilege: 'call,all',
+  channel: 'Local/270@from-internal-b7d5;1',
+  channelstate: '0',
+  channelstatedesc: 'Down',
+  calleridnum: '',
+  calleridname: '',
+  accountcode: '',
+  uniqueid: '1308652170.785' } */ 
 am.addListener('newchannel', function(headers){
 	logger.info("EVENT 'NewChannel': headers = " + sys.inspect(headers))
 	chStat[headers.uniqueid] = {
 		channel: headers.channel
 	}
-	
 })
 
 /* when call from the soft phone 
@@ -380,7 +390,19 @@ EVENT 'Dialing': headers '{ event: 'Dial',
   calleridname: 'CTI-271',
   uniqueid: '1308645191.698',
   destuniqueid: '1308645195.699',
-  dialstring: '270' }' */
+  dialstring: '270' }'
+  *
+  * when call come from queue:
+EVENT 'Dialing': headers '{ event: 'Dial',
+  privilege: 'call,all',
+  subevent: 'Begin',
+  channel: 'Local/270@from-internal-b7d5;2',
+  destination: 'SIP/270-000002a5',
+  calleridnum: '272',
+  calleridname: 'Alessandrotest3',
+  uniqueid: '1308652170.786',
+  destuniqueid: '1308652171.789',
+  dialstring: '270' }' */ 
 am.addListener('dialing', function(headers) {
         logger.info("EVENT 'Dialing': headers '" + sys.inspect(headers) + "'")
 console.log("'dialing' chstat = " + sys.inspect(chStat))
@@ -389,9 +411,25 @@ console.log("'dialing' chstat = " + sys.inspect(chStat))
 	     status: 'ring',
 	     calleridnum: '271',
 	     calleridname: 'device' },
-	  '1308646890.733': { channel: 'SIP/270-00000275' } } */
-	var from = chStat[headers.uniqueid].calleridnum
+	  '1308646890.733': { channel: 'SIP/270-00000275' } }
+	*
+	* or when come from queue:
+	chstat = { '1308652170.784': 
+	   { channel: 'SIP/272-000002a4',
+	     status: 'up',
+	     calleridnum: '272',
+	     calleridname: 'Alessandrotest3' },
+	  '1308652170.785': { channel: 'Local/270@from-internal-b7d5;1' },
+	  '1308652170.786': { channel: 'Local/270@from-internal-b7d5;2' },
+	  '1308652170.787': { channel: 'Local/271@from-internal-3193;1' },
+	  '1308652170.788': { channel: 'Local/271@from-internal-3193;2' },
+	  '1308652171.789': { channel: 'SIP/270-000002a5' } } */
+	// from and to
 	var to = headers.dialstring
+	var from = chStat[headers.uniqueid].calleridnum
+	// in this is the call come from queue
+	if(from==undefined && chStat[headers.uniqueid].channel.indexOf('Local/')!=-1 && chStat[headers.uniqueid].channel.indexOf('@from-internal-')!=-1 )
+		from = headers.calleridnum
 	logger.info("Dialing from '" + from + "' -> '" + to + "'")
 
 	// advise the client that receive the call
@@ -437,11 +475,14 @@ console.log("'dialing' chstat = " + sys.inspect(chStat))
                         }
                 }
 	}
-	// update info for OP (dialDirection) and update all clients
+	// update for OP
 	if(from!=undefined && to!=undefined){
-		if(modop.isExtPresent(from)){
-			modop.updateExtStatusOpDialFrom(from, to)
-	        	updateAllClientsForOpWithExt(from)
+		// check if the call come from queue. In this case, the caller (272) has already been update in AgentCalled event
+		if(headers.channel.indexOf('Local/')==-1 && headers.channel.indexOf('@from-internal-')==-1 && headers.channel.indexOf(';2')==-1){ 
+			if(modop.isExtPresent(from)){
+				modop.updateExtStatusOpDialFrom(from, to)
+		        	updateAllClientsForOpWithExt(from)
+			}
 		}
 		if(modop.isExtPresent(to)){
 	                modop.updateExtStatusOpDialTo(to, from)
@@ -568,9 +609,61 @@ EVENT 'Hangup': headers = { event: 'Hangup',
   calleridnum: '<unknown>',
   calleridname: 'CTI-271',
   cause: '16',
-  causetxt: 'Normal Clearing' } */
+  causetxt: 'Normal Clearing' } 
+*
+* when call come from queue
+EVENT 'Hangup': headers = { event: 'Hangup',
+  privilege: 'call,all',
+  channel: 'Local/270@from-internal-a7dd;1',
+  uniqueid: '1308660251.812',
+  calleridnum: '272',
+  calleridname: 'Alessandrotest3',
+  cause: '0',
+  causetxt: 'Unknown' } */
 am.addListener('hangup', function(headers) {
         logger.info("EVENT 'Hangup': headers = " + sys.inspect(headers))
+
+	/* if the hangup event is relative to Local/270@from-internal-a7dd;1', means that this hangup is relative
+	 * to the intermediate node created by asterisk that finish with ';1'. So it is ingored, because there will be
+	 * other hangup event.
+	 *
+	chStat = { '1308660251.811': 
+	   { channel: 'SIP/272-000002af',
+	     status: 'up',
+	     calleridnum: '272',
+	     calleridname: 'Alessandrotest3' },
+	  '1308660251.812': 
+	   { channel: 'Local/270@from-internal-a7dd;1',
+	     status: 'ringing',
+	     calleridnum: '272',
+	     calleridname: 'Alessandrotest3' },
+	  '1308660251.813': { channel: 'Local/270@from-internal-a7dd;2' },
+	  '1308660251.814': 
+	   { channel: 'Local/271@from-internal-e0e6;1',
+	     status: 'ringing',
+	     calleridnum: '272',
+	     calleridname: 'Alessandrotest3' },
+	  '1308660251.815': 
+	   { channel: 'Local/271@from-internal-e0e6;2',
+	     status: 'up',
+	     calleridnum: '272',
+	     calleridname: 'Alessandrotest3' },
+	  '1308660252.816': 
+	   { channel: 'SIP/271-000002b0',
+	     status: 'up',
+	     calleridnum: '271',
+	     calleridname: '' },
+	  '1308660252.817': 
+	   { channel: 'SIP/270-000002b1',
+	     status: 'ringing',
+	     calleridnum: '270',
+	     calleridname: '' } } */
+	if(chStat[headers.uniqueid].channel.indexOf('Local/')!=-1 && chStat[headers.uniqueid].channel.indexOf('@from-internal-')!=-1 && chStat[headers.uniqueid].channel.indexOf(';1')!=-1 ){
+		delete chStat[headers.uniqueid]
+	        console.log("'hangup' chStat = " + sys.inspect(chStat))
+		return
+	}
+
 	// ext
 	var ext
 	if(chStat[headers.uniqueid].calleridnum!=''){
@@ -646,8 +739,7 @@ return
 
 
 
-/* This event is emitted by asterisk.js when the 'Bridge' event is emitted from asterisk server
-EVENT 'CallConnected': headers = '{ event: 'Bridge',
+/* EVENT 'CallConnected': headers = '{ event: 'Bridge',
   privilege: 'call,all',
   bridgestate: 'Link',
   bridgetype: 'core',
@@ -656,10 +748,39 @@ EVENT 'CallConnected': headers = '{ event: 'Bridge',
   uniqueid1: '1308585805.629',
   uniqueid2: '1308585806.630',
   callerid1: '270',
-  callerid2: '271' }' */
+  callerid2: '271' }' 
+*
+* when call is to queue:
+EVENT 'CallConnected': headers = '{ event: 'Bridge',
+  privilege: 'call,all',
+  bridgestate: 'Link',
+  bridgetype: 'core',
+  channel1: 'Local/271@from-internal-3193;2',
+  channel2: 'SIP/271-000002a6',
+  uniqueid1: '1308652170.788',
+  uniqueid2: '1308652171.790',
+  callerid1: '272',
+  callerid2: '271' }'
+*
+*
+EVENT 'CallConnected': headers = '{ event: 'Bridge',
+  privilege: 'call,all',
+  bridgestate: 'Link',
+  bridgetype: 'core',
+  channel1: 'SIP/272-000002a4',
+  channel2: 'Local/271@from-internal-3193;1',
+  uniqueid1: '1308652170.784',
+  uniqueid2: '1308652170.787',
+  callerid1: '272',
+  callerid2: '272' }' */ 
 am.addListener('callconnected', function(headers) {
         logger.info("EVENT 'CallConnected': headers = '" + sys.inspect(headers) + "'")
 	console.log("'callconnected' chStat = " + sys.inspect(chStat))
+	// check if the call 
+	if( headers.callerid1==headers.callerid2 && headers.channel2.indexOf('Local/')!=-1 && headers.channel2.indexOf('@from-internal-')!=-1 && headers.channel2.indexOf(';1')!=-1  ){
+		logger.info("discarded event 'callconnected'")
+		return
+	}
 	var from = headers.callerid1
         var to = headers.callerid2
 	// advise two clients of call
@@ -762,48 +883,8 @@ return
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* { event: 'AgentCalled',
+/* OLDDDDDDDDDDDDDDd
+{ event: 'AgentCalled',
   privilege: 'agent,all',
   queue: '900',
   agentcalled: 'Local/270@from-internal/n',
@@ -817,9 +898,31 @@ return
   priority: '10',
   uniqueid: '1307966610.2357' } */
 
-//fromid, fromname, queue, destchannel
+/* NEWWWWWWWWWWWW
+EVENT 'AgentCalled': headers = { event: 'AgentCalled',
+  privilege: 'agent,all',
+  queue: '900',
+  agentcalled: 'Local/270@from-internal/n',
+  agentname: 'Local/270@from-internal/n',
+  channelcalling: 'SIP/272-000002a4',
+  destinationchannel: 'Local/270@from-internal-b7d5;1',
+  calleridnum: '272',
+  calleridname: 'Alessandrotest3',
+  context: 'from-internal',
+  extension: '900',
+  priority: '10',
+  uniqueid: '1308652170.784' } */
 am.addListener('agentcalled', function(headers) {
 	logger.info("EVENT 'AgentCalled': headers = " + sys.inspect(headers))
+	var from = chStat[headers.uniqueid].calleridnum
+	if(modop.isExtPresent(from)){
+		modop.updateExtStatusOpDialFrom(from, headers.queue)
+		updateAllClientsForOpWithExt(from)
+	}
+	
+return
+
+// VECCHIO CODICE NON ESEGUITO
 	var toExt = headers.destinationchannel.split('@')[0].split('/')[1]
 	var c = clients[toExt]
 	var fromid = headers.calleridnum
@@ -877,6 +980,30 @@ am.addListener('agentcalled', function(headers) {
 });
 
  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 am.addListener('calldisconnected', function(from, to) {
 	logger.info("EVENT 'CallDisconnected': between '" + sys.inspect(from) + "' AND '" + sys.inspect(to) + "'");
 });
