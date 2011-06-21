@@ -281,8 +281,14 @@ EVENT 'NewCallerid': headers '{ event: 'NewCallerid',
   cidcallingpres: '0 (Presentation Allowed, Not Screened)' }' */
 am.addListener('newcallerid', function(headers){
 	logger.info("EVENT 'NewCallerid': headers '" + sys.inspect(headers) +  "'")
+	
+	// calleridnum
+	if(headers.calleridnum!='') // call come from soft phone
+		chStat[headers.uniqueid].calleridnum = headers.calleridnum
+	else if(headers.calleridname.indexOf('CTI-')!=-1) // call come from cti
+		chStat[headers.uniqueid].calleridnum = headers.calleridname.split('-')[1]
 	chStat[headers.uniqueid].calleridname = headers.calleridname
-	chStat[headers.uniqueid].calleridnum = headers.calleridnum
+	
 })
 
 
@@ -534,6 +540,7 @@ return
   causetxt: 'Normal Clearing' } */
 
 /* NEWWWWWWWWWWWWWWWWW
+* when call come from soft phone:
 EVENT 'Hangup': headers = { event: 'Hangup',
   privilege: 'call,all',
   channel: 'SIP/270-000001f1',
@@ -541,12 +548,42 @@ EVENT 'Hangup': headers = { event: 'Hangup',
   calleridnum: '270',
   calleridname: '<unknown>',
   cause: '16',
+  causetxt: 'Normal Clearing' } 
+  *
+  * when call come from cti:
+EVENT 'Hangup': headers = { event: 'Hangup',
+  privilege: 'call,all',
+  channel: 'SIP/271-00000242',
+  uniqueid: '1308643183.682',
+  calleridnum: '<unknown>',
+  calleridname: 'CTI-271',
+  cause: '16',
   causetxt: 'Normal Clearing' } */
 am.addListener('hangup', function(headers) {
         logger.info("EVENT 'Hangup': headers = " + sys.inspect(headers))
+	// ext
+	var ext
+	if(chStat[headers.uniqueid].calleridnum!=''){
+		/* '1308643186.683': 
+		   { channel: 'SIP/270-00000243',
+		     calleridname: '',
+		     calleridnum: '270',
+		     status: 'up' } } */
+		ext = chStat[headers.uniqueid].calleridnum
+	}
+	else{
+		/* { '1308643183.682': 
+		    { channel: 'SIP/271-00000242',
+		      calleridname: 'CTI-271',
+		      calleridnum: '',
+		      status: 'up' }, */
+		if(chStat[headers.uniqueid].channel.indexOf('SIP/')!=-1)
+			ext = chStat[headers.uniqueid].channel.split('-')[0].split('/')[1]
+	}
 	delete chStat[headers.uniqueid]
-console.log("chStat = " + sys.inspect(chStat))
-	var ext = headers.calleridnum
+console.log("'hangup' chStat = " + sys.inspect(chStat))
+
+	// advise client of hangup
 	var c = clients[ext]
 	if(c!=undefined){
                 var msg = "Call has hung up. Reason: " + headers.causetxt + "  (Code: " + headers.cause + ")"
@@ -578,6 +615,7 @@ return
                 ext = ch.split('-')[0].split('/')[1]
                 modop.removeActiveLinkExt(ext, ch)
         }
+/*
         var client = clients[ext]
         // advise client of hangup
         if(client!=undefined){
@@ -587,6 +625,7 @@ return
                 client.send(resp)
                 logger.info("RESP 'hangup' has been sent to [" + ext + "] sessionId '" + client.sessionId + "'")
         }
+*/
         if(modop.isExtPresent(ext)){
                 modop.updateExtStatusForOpWithExt(ext, 'hangup')
                 modop.updateStopRecordExtStatusForOpWithExt(ext)
@@ -613,6 +652,7 @@ EVENT 'CallConnected': headers = '{ event: 'Bridge',
   callerid1: '270',
   callerid2: '271' }' */
 am.addListener('callconnected', function(headers) {
+	console.log("'callconnected' chStat = " + sys.inspect(chStat))
         logger.info("EVENT 'CallConnected': headers = '" + sys.inspect(headers) + "'")
 	var from = headers.callerid1
         var to = headers.callerid2
@@ -1408,7 +1448,7 @@ io.on('connection', function(client){
   				}
 		  	break;
 		  	case actions.ACTION_HANGUP:
-				/* example chStat:
+				/* example chStat when call come from soft phone:
 				 { '1308640687.636': 
 				   { channel: 'SIP/270-00000214',
 				     status: 'up',
@@ -1419,8 +1459,9 @@ io.on('connection', function(client){
 				     calleridname: '',
 				     calleridnum: '271',
 				     status: 'up' } } */
-				var ch = ''
-				for(key in chStat){
+				console.log("ACTION_HANGUP chStat = " + sys.inspect(chStat))
+				var ch
+				for(key in chStat){ // when call come from soft phone
 					if(chStat[key].calleridnum==extFrom){
 						ch = chStat[key].channel
 						break
