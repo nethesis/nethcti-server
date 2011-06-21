@@ -605,7 +605,26 @@ EVENT 'CallConnected': headers = '{ event: 'Bridge',
   callerid2: '271' }' */
 am.addListener('callconnected', function(headers) {
         logger.info("EVENT 'CallConnected': headers = '" + sys.inspect(headers) + "'")
-	
+	var from = headers.callerid1
+        var to = headers.callerid2
+	if(clients[from]!=undefined){
+                var c = clients[from]
+                var msg = "Call from " + from + " to " + to + " CONNECTED"
+                var response = new ResponseMessage(c.sessionId, "callconnected", msg)
+                response.from = from
+                response.to = to
+                c.send(response)
+                logger.info("RESP 'callconnected' has been sent to [" + from + "] sessionId '" + c.sessionId + "'")
+        }
+        if(clients[to]!=undefined){
+                var c = clients[to]
+                var msg = "Call from " + from + " to " + to + " CONNECTED"
+                var response = new ResponseMessage(c.sessionId, "callconnected", msg)
+                response.from = from
+                response.to = to
+                c.send(response)
+                logger.info("RESP 'callconnected' has been sent to [" + to + "] sessionId '" + c.sessionId + "'")
+        }	
 
 
 return
