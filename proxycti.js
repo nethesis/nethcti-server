@@ -246,6 +246,7 @@ am.addListener('newchannel', function(headers){
   calleridname: 'device',
   uniqueid: '1308576265.550' }' 
 *
+* call come from cti:
  EVENT 'NewState': headers '{ event: 'Newstate',
   privilege: 'call,all',
   channel: 'SIP/271-000001c4',
@@ -253,11 +254,26 @@ am.addListener('newchannel', function(headers){
   channelstatedesc: 'Ringing',
   calleridnum: '',
   calleridname: 'CTI-271',
-  uniqueid: '1308579754.556' }' */
+  uniqueid: '1308579754.556' }' 
+  *
+  * call out through a trunk
+EVENT 'NewState': headers '{ event: 'Newstate',
+  privilege: 'call,all',
+  channel: 'SIP/UMTS-0000109c',
+  channelstate: '6',
+  channelstatedesc: 'Up',
+  calleridnum: '3405567088',
+  calleridname: '',
+  uniqueid: '1308672180.8934' }' */
 am.addListener('newstate', function(headers){
         logger.info("EVENT 'NewState': headers '" + sys.inspect(headers) +  "'")
 	chStat[headers.uniqueid].status = headers.channelstatedesc.toLowerCase()
-	
+	/* chstat = { '1308672180.8933': 
+	   { channel: 'SIP/272-0000109b',
+	     status: 'ring',
+	     calleridnum: '272',
+	     calleridname: 'device' },
+	  '1308672180.8934': { channel: 'SIP/UMTS-0000109c' } } */
 	// calleridnum
 	if(headers.calleridnum!='') // call come from soft phone
 		chStat[headers.uniqueid].calleridnum = headers.calleridnum
@@ -268,8 +284,15 @@ am.addListener('newstate', function(headers){
 	chStat[headers.uniqueid].calleridname = headers.calleridname
 
 	// update for OP
-	modop.updateExtStatusForOpWithExt(chStat[headers.uniqueid].calleridnum, chStat[headers.uniqueid].status)
-	updateAllClientsForOpWithExt(chStat[headers.uniqueid].calleridnum)
+	var typeext = chStat[headers.uniqueid].channel.split('-')[0]
+	if( modop.isTypeExtFascio(typeext) ){ // newstate is relative to a trunk
+		modop.updateExtStatusForOpWithTypeExt(typeext, headers.channelstatedesc.toLowerCase())
+	} else {
+		modop.updateExtStatusForOpWithExt(chStat[headers.uniqueid].calleridnum, chStat[headers.uniqueid].status)
+		updateAllClientsForOpWithExt(chStat[headers.uniqueid].calleridnum)
+	}
+		
+
 	
 	console.log("'newState' chStat = " + sys.inspect(chStat))
 return
@@ -703,7 +726,17 @@ EVENT 'Hangup': headers = { event: 'Hangup',
   calleridname: 'Alessandrotest1',
   cause: '16',
   causetxt: 'Normal Clearing' }
-'hangup' chStat = {} */
+'hangup' chStat = {}
+*
+* when one endpoint is out through a trunk:
+EVENT 'Hangup': headers = { event: 'Hangup',
+  privilege: 'call,all',
+  channel: 'SIP/UMTS-000010c0',
+  uniqueid: '1308673475.8970',
+  calleridnum: '3405567088',
+  calleridname: '<unknown>',
+  cause: '16',
+  causetxt: 'Normal Clearing' } */
 am.addListener('hangup', function(headers) {
         logger.info("EVENT 'Hangup': headers = " + sys.inspect(headers))
 
@@ -757,7 +790,19 @@ am.addListener('hangup', function(headers) {
 	  '1308662518.892': { channel: 'AsyncGoto/SIP/270-000002dc' } } 
 	* 
 	* and
-	chStat = { '1308664818.896': { channel: 'AsyncGoto/SIP/270-000002df' } } */
+	chStat = { '1308664818.896': { channel: 'AsyncGoto/SIP/270-000002df' } } 
+	*
+	* when one endpoint is out through a trunk:
+	chStat = { '1308673475.8969': 
+	   { channel: 'SIP/272-000010bf',
+	     status: 'up',
+	     calleridnum: '272',
+	     calleridname: 'AlessandroTest3' },
+	  '1308673475.8970': 
+	   { channel: 'SIP/UMTS-000010c0',
+	     status: 'up',
+	     calleridnum: '3405567088',
+	     calleridname: '' } } */
 	if(chStat[headers.uniqueid].channel.indexOf('Local/')!=-1 && chStat[headers.uniqueid].channel.indexOf('@from-internal-')!=-1 && chStat[headers.uniqueid].channel.indexOf(';1')!=-1 ){
 		delete chStat[headers.uniqueid]
 	        console.log("'hangup' chStat = " + sys.inspect(chStat))
@@ -890,7 +935,19 @@ EVENT 'CallConnected': headers = '{ event: 'Bridge',
   uniqueid1: '1308664818.896',
   uniqueid2: '1308664819.897',
   callerid1: '270',
-  callerid2: '272' }' */ 
+  callerid2: '272' }' 
+*
+* when one endpoint is out through a trunk
+EVENT 'CallConnected': headers = '{ event: 'Bridge',
+  privilege: 'call,all',
+  bridgestate: 'Link',
+  bridgetype: 'core',
+  channel1: 'SIP/272-000010bf',
+  channel2: 'SIP/UMTS-000010c0',
+  uniqueid1: '1308673475.8969',
+  uniqueid2: '1308673475.8970',
+  callerid1: '272',
+  callerid2: '3405567088' }' */ 
 am.addListener('callconnected', function(headers) {
         logger.info("EVENT 'CallConnected': headers = '" + sys.inspect(headers) + "'")
 	console.log("'callconnected' chStat = " + sys.inspect(chStat))
@@ -900,6 +957,18 @@ am.addListener('callconnected', function(headers) {
 	   { channel: 'SIP/272-000002e0',
 	     status: 'up',
 	     calleridnum: '272',
+	     calleridname: '' } }
+	*
+	* when one endpoint is out through a trunk
+	chStat = { '1308673475.8969': 
+	   { channel: 'SIP/272-000010bf',
+	     status: 'up',
+	     calleridnum: '272',
+	     calleridname: 'AlessandroTest3' },
+	  '1308673475.8970': 
+	   { channel: 'SIP/UMTS-000010c0',
+	     status: 'up',
+	     calleridnum: '3405567088',
 	     calleridname: '' } } */
 	// check if the call 
 	if( headers.callerid1==headers.callerid2 && headers.channel2.indexOf('Local/')!=-1 && headers.channel2.indexOf('@from-internal-')!=-1 && headers.channel2.indexOf(';1')!=-1  ){
@@ -1176,25 +1245,6 @@ am.addListener('callreport', function(report) {
 
 
 
-/* This function update all clients with the new state of the extension, givin typeext. 
- * This sent is used by the clients to update operator panel.
- * Example of 'typeext' is: SIP/500 */ 
-function updateAllClientsForOpWithTypeExt(typeext){
-	// get new state of the extension typeext
-	logger.info('FUNCTION \'updateAllClientsForOpWithTypeExt(typeext)\': \'modop.getExtStatusWithTypeExt(typeext)\' with typeext = ' + typeext);
-	var newState = modop.getExtStatusWithTypeExt(typeext);	
-	logger.info('obtained newState: ' + sys.inspect(newState));
-	// send update to all clients with the new state of the typeext for op (operator panel)
-	logger.info('update all clients (with typeext)...');
-        for(key in clients){
-                var c = clients[key];
-                var msg = "state of " + newState.Label + " has changed: update ext new state";
-                var response = new ResponseMessage(c.sessionId, "update_ext_new_state_op", msg);
-                response.extNewState = newState;
-                c.send(response);
-                logger.info("RESP 'update_ext_new_state_op' has been sent to client [" + key + "] sessionId '" + c.sessionId + "'");
-        }
-}
 
 /* This event is generated only by the phone of the user.
  * An example of UserEvent event is:
@@ -2292,6 +2342,27 @@ am.connect();
 /************************************************************************************************
  * Section relative to functions
  */
+
+
+/* This function update all clients with the new state of the extension, givin typeext. 
+ * This sent is used by the clients to update operator panel.
+ * Example of 'typeext' is: SIP/500 */ 
+function updateAllClientsForOpWithTypeExt(typeext){
+	// get new state of the extension typeext
+	logger.info('FUNCTION \'updateAllClientsForOpWithTypeExt(typeext)\': \'modop.getExtStatusWithTypeExt(typeext)\' with typeext = ' + typeext);
+	var newState = modop.getExtStatusWithTypeExt(typeext);	
+	logger.info('obtained newState: ' + sys.inspect(newState));
+	// send update to all clients with the new state of the typeext for op (operator panel)
+	logger.info('update all clients (with typeext)...');
+        for(key in clients){
+                var c = clients[key];
+                var msg = "state of " + newState.Label + " has changed: update ext new state";
+                var response = new ResponseMessage(c.sessionId, "update_ext_new_state_op", msg);
+                response.extNewState = newState;
+                c.send(response);
+                logger.info("RESP 'update_ext_new_state_op' has been sent to client [" + key + "] sessionId '" + c.sessionId + "'");
+        }
+}
 
 /* This function update all clients with the new state of 'ext'. 
  * So the clients can update their operator panel.
