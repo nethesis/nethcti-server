@@ -445,54 +445,6 @@ am.addListener('newcallerid', function(headers){
 })
 
 
-// OLDDDDDDDDDDDDDDDDDD
-/* Dial FROM '{ name: '',
-  number: '270',
-  channel: 'SIP/270-000008a9',
-  with: '1306940613.3224' }'  -->  TO '{ name: '',
-  number: '271',
-  channel: 'SIP/271-000008aa',
-  with: '1306940616.3225' }'
- *
- * when redirect:
-{ name: '',
-  number: 'SIP',
-  channel: 'AsyncGoto/SIP/270-00000514',
-  with: '1307961027.2301' } -> { name: '',
-  number: '272',
-  channel: 'SIP/272-00000515',
-  with: '1307961028.2302' } 
- * 
- * when come from queue:
-{ name: '',
-  number: '270@from',
-  channel: 'Local/270@from-internal-b3f4;2',
-  with: '1307961094.2305' } -> { name: '',
-  number: '270',
-  channel: 'SIP/270-00000517',
-  with: '1307961094.2308' }
- *
- * or from trunk:
-  FROM '{ name: '',
-  number: '541906611',
-  channel: 'SIP/2004-00000aac',
-  with: '1308554729.5888' }'  -->  TO '{ name: '',
-  number: '226',
-  channel: 'SIP/226-00000ab0',
-  with: '1308554734.5892' }'
- *
- * when call out in a trunk the telnet event is:
- Event: Dial
- Privilege: call,all
- SubEvent: Begin
- Channel: SIP/208-000003b9
- Destination: SIP/UMTS-000003ba
- CallerIDNum: 208
- CallerIDName: Giacomo Sanchietti
- UniqueID: 1308153327.2010
- DestUniqueID: 1308153328.2011
- Dialstring: UMTS/#31#3393164194 */
-
 //NEWWWWWWWWWWWWWWWW
 /* call come from soft phone
 EVENT 'Dialing': headers '{ event: 'Dial',
@@ -698,64 +650,6 @@ console.log("'dialing' chstat = " + sys.inspect(chStat))
 	        	updateAllClientsForOpWithExt(to)
 		}	
 	}
-	
-return
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// CODICE VECCHIO CHE NON VIENE ESEGUITO
-        // check the source of the call: if come from queue, then return because 'AgentCalled' event is emitted
-        var ch = from.channel
-        var fromExt = ''
-        if(ch.indexOf("@from-internal")!=-1){
-                logger.info('\'dialing\' come from queue: return')
-                // update caller number
-                var toExt = headers.dialstring
-                var fromNumber = headers.calleridnum
-                modop.updateDialExt(toExt, fromNumber)
-                return
-        }
-        else if(ch.indexOf('AsyncGoto/SIP/')!=-1)
-                fromExt = from.channel.split('/')[2].split('-')[0]
-        else{
-                var fromTypeExt = ch.split('-')[0]
-                if(modop.isTypeExtPresent(fromTypeExt)){
-                        if(modop.getExtStatusWithTypeExt(fromTypeExt).tab=='fasci'){
-                                fromExt = from.number
-                        } else if(modop.getExtStatusWithTypeExt(fromTypeExt).tab=='interno')
-                                fromExt = from.channel.split('-')[0].split('/')[1]
-                }
-        }
-        logger.info("Dial FROM '" + sys.inspect(from) + "'  -->  TO '" + sys.inspect(to) + "' and headers: '" + sys.inspect(headers)  + "'")
-        if(to!=undefined){
-                var toExt = ''
-                /* toExt:
-                 * if the call is out in a trunk then, the 'to.channel' is: 'SIP/UMTS-000003ae'
-                 * otherwise it can be: 'SIP/272-00000088' */
-                var toTypeExt = to.channel.split('-')[0] // 'toTypeExt' has the form: 'SIP/UMTS' or 'SIP/272'
-                if(modop.isTypeExtPresent(toTypeExt)){ // the call is out into a trunk
-                        if(modop.getExtStatusWithTypeExt(toTypeExt).tab=='fasci'){
-                                toExt = headers.dialstring.split('/')[1]  // headers.dialstring is: 'UMTS/#31#3393164194'
-                                if(toExt.indexOf('#31#')!=-1) // if it has hidden code, remove it
-                                        toExt = toExt.split('#31#')[1]
-                        } else if(modop.getExtStatusWithTypeExt(toTypeExt).tab=='interno')
-                                toExt = to.channel.split('-')[0].split('/')[1]
-                }
-        }
 })
 
 
