@@ -496,7 +496,15 @@ EVENT 'Dialing': headers '{ event: 'Dial',
   calleridname: 'Andrea Curzi',
   uniqueid: '1308726926.8996',
   destuniqueid: '1308726926.8997',
-  dialstring: '224' }' */
+  dialstring: '224' }' 
+  *
+  * when dial not execute correctly, for ex. for congestion:
+EVENT 'Dialing': headers '{ event: 'Dial',
+  privilege: 'call,all',
+  subevent: 'End',
+  channel: 'SIP/224-000011c8',
+  uniqueid: '1308732470.9425',
+  dialstatus: 'CONGESTION' }' */
 am.addListener('dialing', function(headers) {
         logger.info("EVENT 'Dialing': headers '" + sys.inspect(headers) + "'")
 console.log("'dialing' chstat = " + sys.inspect(chStat))
@@ -534,6 +542,13 @@ console.log("'dialing' chstat = " + sys.inspect(chStat))
 	* when callin through a trunk:  (CASE B)
 	chstat = { '1308726926.8996': { channel: 'IAX2/from-lab-6680' },
 	  '1308726926.8997': { channel: 'SIP/224-000010d7' } } */
+
+	/* check if the current dialing event can't be completed for some reason.
+	 * In this case there isn't headers.destuniqueid and there is headers.dialstatus */
+	if( headers.destuniqueid==undefined && headers.dialstatus!=undefined && headers.dialstatus=='CONGESTION' ){
+		logger.warn("discard 'dialing' event: headers.destuniqueid = " + headers.destuniqueid + " and headers.dialstatus = " + headers.dialstatus)
+		return
+	}
 	// to
 	var to = headers.dialstring
 	if(modop.isTypeExtFascio(chStat[headers.destuniqueid].channel.split('-')[0])){ // the call is out through a trunk (CASE A)
