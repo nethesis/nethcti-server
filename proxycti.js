@@ -947,21 +947,6 @@ am.addListener('callconnected', function(headers) {
 
 
 
-/* OLDDDDDDDDDDDDDDd
-{ event: 'AgentCalled',
-  privilege: 'agent,all',
-  queue: '900',
-  agentcalled: 'Local/270@from-internal/n',
-  agentname: 'Local/270@from-internal/n',
-  channelcalling: 'SIP/272-00000548',
-  destinationchannel: 'Local/270@from-internal-1f91;1',
-  calleridnum: '272',
-  calleridname: 'Alessandrotest3',
-  context: 'from-internal',
-  extension: '900',
-  priority: '10',
-  uniqueid: '1307966610.2357' } */
-
 /* NEWWWWWWWWWWWW
 EVENT 'AgentCalled': headers = { event: 'AgentCalled',
   privilege: 'agent,all',
@@ -983,65 +968,7 @@ am.addListener('agentcalled', function(headers) {
 		modop.updateExtStatusOpDialFrom(from, headers.queue)
 		updateAllClientsForOpWithExt(from)
 	}
-	
-return
-
-// VECCHIO CODICE NON ESEGUITO
-	var toExt = headers.destinationchannel.split('@')[0].split('/')[1]
-	var c = clients[toExt]
-	var fromid = headers.calleridnum
-	if(toExt!=undefined && c!=undefined){
-		// check the permission of the user to receive the call
-                if(!profiler.checkActionCallInPermit(toExt)){
-			logger.info("check 'callIn' permission for [" + toExt + "] FAILED !")
-                        return
-                }
-		// create the response for the client
-	        var msg = headers.calleridname
-		/* in this response the html is not passed, because the chrome desktop 
-                 * notification of the client accept only one absolute or relative url */
-		var response = new ResponseMessage(c.sessionId, "dialing", msg)
-		response.from = fromid
-		response.to = toExt
-		var typesCC = profiler.getTypesCustomerCardPermit(toExt)
-		logger.info("[" + toExt + "] is able to view customer card of types: " + sys.inspect(typesCC))
-		if(typesCC.length==0){
-                        // the user hasn't the authorization of view customer card: the length is 0
-			logger.info("check permission to view Customer Card for [" + toExt + "] FAILED !")
-                        response.customerCard = ""
-			response.noPermission = ''
-                        c.send(response)
-			logger.info("RESP 'dialing' has been sent to [" + toExt + "] sessionId '" + c.sessionId + "'")
-                        return
-                }
-		var customerCardResult = []
-                for(i=0; i<typesCC.length; i++){
-                        dataCollector.getCustomerCard(fromid, typesCC[i], function(cc){
-				if(cc!=undefined){
-	                                var custCardHTML = createCustomerCardHTML(cc[0], fromid)
-	                                customerCardResult.push(custCardHTML)
-				} else {
-					customerCardResult.push(cc)
-				}
-                                if(customerCardResult.length==typesCC.length){
-                                        response.customerCard = customerCardResult
-                                        c.send(response)
-					logger.info("RESP 'dialing' has been sent to [" + toExt + "] sessionId '" + c.sessionId + "' with relative customer card")
-                                }
-                        })
-                }
-	}
-	if(toExt!=undefined){
-		if(modop.isExtPresent(fromid)){
-	                modop.updateExtStatusOpDialFrom(fromid, headers.queue)
-	                updateAllClientsForOpWithExt(fromid)
-		}
-		if(modop.isExtPresent(toExt)){
-	                modop.updateExtStatusOpDialTo(toExt, fromid)
-	                updateAllClientsForOpWithExt(toExt)
-		}
-        }
-});
+})
 
  
 
