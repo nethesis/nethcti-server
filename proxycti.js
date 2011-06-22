@@ -384,43 +384,6 @@ am.addListener('newstate', function(headers){
 	}
 	
 	console.log("'newState' chStat = " + sys.inspect(chStat))
-return
-
-
-
-
-
-
-
-
-
-
-
-
-// CODICE VECCHIO CHE NON VIENE ESEGUITO
-
-        var typeext = ''
-        if(headers.channel.indexOf('@')==-1){
-                typeext = headers.channel.split("-")[0]
-        }
-        else{
-                // return because another 'newState' event is generated for channel 'SIP/271-0000042f' (if the current channel is 'Local/271@from-internal-6f6c;1')
-                logger.info('channel \'' + headers.channel + '\' is for queue: return')
-                return
-        }
-        var statusEvent = headers.channelstatedesc.toLowerCase();
-        // if the call is a spy call, doesn't warn anyone
-        if(headers.calleridname.indexOf(SPY_PREFIX)==-1){
-                if(modop.isTypeExtPresent(typeext)){
-                        // update ext status for op
-                        modop.updateExtStatusForOpWithTypeExt(typeext, statusEvent);
-                        // update all clients with the new state of extension, for update operator panel
-                        updateAllClientsForOpWithTypeExt(typeext);
-                } else
-                        logger.warn('[' + typeext + '] is not present in extStatusForOp');
-        }
-
-	console.log("'newState' chStat = " + sys.inspect(chStat))
 })
 
 /* whe call come from soft phone
