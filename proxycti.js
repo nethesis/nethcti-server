@@ -616,46 +616,6 @@ console.log("'dialing' chstat = " + sys.inspect(chStat))
 })
 
 
-/* OLD DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
-{ event: 'Hangup',
-  privilege: 'call,all',
-  channel: 'SIP/272-000004e3',
-  uniqueid: '1307958249.2251',
-  calleridnum: '272',
-  calleridname: '<unknown>',
-  cause: '16',
-  causetxt: 'Normal Clearing' } 
- *
- * or:
- { event: 'Hangup',
-  privilege: 'call,all',
-  channel: 'SIP/271-000004ff',
-  uniqueid: '1307959965.2279',
-  calleridnum: '<unknown>',
-  calleridname: 'CTI-271',
-  cause: '16',
-  causetxt: 'Normal Clearing' } 
- *
- * or when call come from queue:
-{ event: 'Hangup',
-  privilege: 'call,all',
-  channel: 'Local/271@from-internal-b48c;1',
-  uniqueid: '1307967705.2426',
-  calleridnum: '271',
-  calleridname: 'Alessandrotest2',
-  cause: '0',
-  causetxt: 'Unknown' }
-  *
-  * or when call has been redirect
-  EVENT 'Hangup': headers = { event: 'Hangup',
-  privilege: 'call,all',
-  channel: 'AsyncGoto/SIP/270-0000005c<ZOMBIE>',
-  uniqueid: '1308146834.135',
-  calleridnum: '<unknown>',
-  calleridname: '<unknown>',
-  cause: '16',
-  causetxt: 'Normal Clearing' } */
-
 /* NEWWWWWWWWWWWWWWWWW
 * when call come from soft phone:
 EVENT 'Hangup': headers = { event: 'Hangup',
@@ -873,34 +833,6 @@ am.addListener('hangup', function(headers) {
 	// TO eliminate data structure of asterisk.js
 	//delete am.participants[headers.uniqueid]
         //logger.info('removed \'' + headers.uniqueid  + '\' from am.participants: ' + sys.inspect(am.participants))
-
-return
-
-
-
-
-// CODICE VECCHIO MAI ESEGUITO
-        // ext is constructed from channel because other field change with context, for example when call come from cti
-        var ch = headers.channel
-        var ext = ''
-        /* check if the hangup is relative to active channel of the client or not. If not, then is the case of a call the 
-         * come from queue and that has been accepted from another client */
-        if(ch.indexOf('@from-internal')!=-1){
-                logger.info('hangup is relative to \'' + ch  + '\': delete from am.participants and return')
-                delete am.participants[headers.uniqueid]
-                logger.info('_removed \'' + headers.uniqueid  + '\' from am.participants: ' + sys.inspect(am.participants))
-                return
-        } else if(ch.indexOf('<ZOMBIE>')!=-1) {
-		ext = ch.split('-')[0].split('/')[2]
-                ch = ch.split('/')[1] + '/' + ch.split('<ZOMBIE>')[0].split('/')[2]
-                modop.removeActiveLinkExt(ext, ch)
-                logger.info('hangup is relative to \'' + ch + '\': don\'t advise any clients')
-                return
-        }
-        else {
-                ext = ch.split('-')[0].split('/')[1]
-                modop.removeActiveLinkExt(ext, ch)
-        }
 })
 
 
