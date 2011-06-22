@@ -615,7 +615,7 @@ console.log("'dialing' chstat = " + sys.inspect(chStat))
 	 * In this case there isn't headers.destuniqueid and there is headers.dialstatus 
 	 * From documentation, dialstatus can be:
 	 CHANUNAVAIL | CONGESTION | BUSY | NOANSWER | ANSWER | CANCEL | HANGUP */
-	if( headers.destuniqueid==undefined && headers.dialstatus!=undefined && headers.dialstatus=='CONGESTION' ){
+	if( headers.destuniqueid==undefined && headers.dialstatus!=undefined ){
 		logger.warn("discard 'dialing' event: headers.destuniqueid = " + headers.destuniqueid + " and headers.dialstatus = " + headers.dialstatus)
 		return
 	}
@@ -859,6 +859,16 @@ EVENT 'Hangup': headers = { event: 'Hangup',
   calleridnum: '3405567088',
   calleridname: '<unknown>',
   cause: '16',
+  causetxt: 'Normal Clearing' }
+  *
+  * when callin come from group:
+EVENT 'Hangup': headers = { event: 'Hangup',
+  privilege: 'call,all',
+  channel: 'SIP/271-0000034a',
+  uniqueid: '1308749652.1072',
+  calleridnum: '700',
+  calleridname: '<unknown>',
+  cause: '16',
   causetxt: 'Normal Clearing' } */
 am.addListener('hangup', function(headers) {
         logger.info("EVENT 'Hangup': headers = " + sys.inspect(headers))
@@ -925,6 +935,23 @@ am.addListener('hangup', function(headers) {
 	   { channel: 'SIP/UMTS-000010c0',
 	     status: 'up',
 	     calleridnum: '3405567088',
+	     calleridname: '' } } 
+	*
+	* when callin come from group:
+	chStat = { '1308749652.1070': 
+	   { channel: 'SIP/272-00000348',
+	     status: 'ring',
+	     calleridnum: '272',
+	     calleridname: 'device' },
+	  '1308749652.1071': 
+	   { channel: 'SIP/270-00000349',
+	     status: 'up',
+	     calleridnum: '700',
+	     calleridname: '' },
+	  '1308749652.1072': 
+	   { channel: 'SIP/271-0000034a',
+	     status: 'ringing',
+	     calleridnum: '700',
 	     calleridname: '' } } */
 	/* check if the chStat contains the entry relative to this hangup event.
 	 * This is because this proxy server can be started after the asterisk server. So some calling can be in execution when this
