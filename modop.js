@@ -93,7 +93,7 @@ exports.Modop = function(){
 function updateTrunkStatusWithChannel(ch, stat){
 	for(key in extStatusForOp){
 		if( ch.indexOf(key)!=-1 && extStatusForOp[key].tab=='fasci' ){
-			extStatusForOp[key].status = status
+			extStatusForOp[key].status = stat
 		}
 	}
 }
