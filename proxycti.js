@@ -544,7 +544,9 @@ console.log("'dialing' chstat = " + sys.inspect(chStat))
 	  '1308726926.8997': { channel: 'SIP/224-000010d7' } } */
 
 	/* check if the current dialing event can't be completed for some reason.
-	 * In this case there isn't headers.destuniqueid and there is headers.dialstatus */
+	 * In this case there isn't headers.destuniqueid and there is headers.dialstatus 
+	 * From documentation, dialstatus can be:
+	 CHANUNAVAIL | CONGESTION | BUSY | NOANSWER | ANSWER | CANCEL | HANGUP */
 	if( headers.destuniqueid==undefined && headers.dialstatus!=undefined && headers.dialstatus=='CONGESTION' ){
 		logger.warn("discard 'dialing' event: headers.destuniqueid = " + headers.destuniqueid + " and headers.dialstatus = " + headers.dialstatus)
 		return
