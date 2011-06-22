@@ -87,6 +87,14 @@ exports.Modop = function(){
 	this.updateLastDialExt = function(ext) { updateLastDialExt(ext) }
 	this.updateDialExt = function(ext, fromNum) { updateDialExt(ext, fromNum) }
 	this.isTypeExtFascio = function(typeext) { return isTypeExtFascio(typeext) }
+	this.isChannelTrunk = function(ch) { return isChannelTrunk(ch) }
+}
+function isChannelTrunk(ch){
+	for(key in extStatusForOp){
+		if( ch.indexOf(key)!=-1 && extStatusForOp[key].tab=='fasci' )
+			return true
+	}
+	return false
 }
 function isTypeExtFascio(typeext){ return extStatusForOp[typeext].tab=='fasci' }
 function updateDialExt(ext, fromNum){
