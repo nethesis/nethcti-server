@@ -897,7 +897,7 @@ am.addListener('hangup', function(headers) {
 	                modop.updateLastDialExt(ext)
 	                updateAllClientsForOpWithExt(ext)
 	        } else
-         	       logger.warn('[' + ext + '] is not present in extStatusForOp')
+			logger.warn('[' + ext + '] is not present in extStatusForOp: so not advise it')
 	} else
 		logger.info("discarded event 'hangup' because redirect")
 
