@@ -278,6 +278,16 @@ EVENT 'NewState': headers '{ event: 'Newstate',
   uniqueid: '1308672180.8934' }' */
 am.addListener('newstate', function(headers){
         logger.info("EVENT 'NewState': headers '" + sys.inspect(headers) +  "'")
+
+	/* check if the chStat contains the entry relative to this newstate event.
+         * This is because this proxy server can be started after the asterisk server. So some calling can be in execution when this
+         * proxy server starting and so it can receive some newState event relative to old call for which it haven't the relative channel in chStat. 
+         * In this case it simply discard this newState event */
+        if(chStat[headers.uniqueid]==undefined){
+                logger.warn("discard 'newState' event: it isn't present in chStat. The cause can be the start of this server during the asterisk functioning")
+                return
+        }
+
 	chStat[headers.uniqueid].status = headers.channelstatedesc.toLowerCase()
 	/* chstat = { '1308672180.8933': 
 	   { channel: 'SIP/272-0000109b',
@@ -474,7 +484,19 @@ EVENT 'Dialing': headers '{ event: 'Dial',
   calleridname: 'AlessandroTest3',
   uniqueid: '1308669778.8745',
   destuniqueid: '1308669778.8746',
-  dialstring: 'UMTS/#31#3405567088' }' */ 
+  dialstring: 'UMTS/#31#3405567088' }' 
+  *
+  * when callin through a trunk:
+EVENT 'Dialing': headers '{ event: 'Dial',
+  privilege: 'call,all',
+  subevent: 'Begin',
+  channel: 'IAX2/from-lab-6680',
+  destination: 'SIP/224-000010d7',
+  calleridnum: '305',
+  calleridname: 'Andrea Curzi',
+  uniqueid: '1308726926.8996',
+  destuniqueid: '1308726926.8997',
+  dialstring: '224' }' */
 am.addListener('dialing', function(headers) {
         logger.info("EVENT 'Dialing': headers '" + sys.inspect(headers) + "'")
 console.log("'dialing' chstat = " + sys.inspect(chStat))
@@ -507,7 +529,11 @@ console.log("'dialing' chstat = " + sys.inspect(chStat))
 	     status: 'ring',
 	     calleridnum: '272',
 	     calleridname: 'device' },
-	  '1308669778.8746': { channel: 'SIP/UMTS-0000104e' } }      (CASE A)  */
+	  '1308669778.8746': { channel: 'SIP/UMTS-0000104e' } }      (CASE A) 
+	*
+	* when callin through a trunk:  (CASE B)
+	chstat = { '1308726926.8996': { channel: 'IAX2/from-lab-6680' },
+	  '1308726926.8997': { channel: 'SIP/224-000010d7' } } */
 	// to
 	var to = headers.dialstring
 	if(modop.isTypeExtFascio(chStat[headers.destuniqueid].channel.split('-')[0])){ // the call is out through a trunk (CASE A)
@@ -524,9 +550,10 @@ console.log("'dialing' chstat = " + sys.inspect(chStat))
 	// in this case the call come from queue
 	if(from==undefined && chStat[headers.uniqueid].channel.indexOf('Local/')!=-1 && chStat[headers.uniqueid].channel.indexOf('@from-internal-')!=-1 )
 		from = headers.calleridnum
-	// this case is the redirect
-	else if(from==undefined && chStat[headers.uniqueid].channel.indexOf('AsyncGoto/SIP/')!=-1 )
+	else if(from==undefined && chStat[headers.uniqueid].channel.indexOf('AsyncGoto/SIP/')!=-1 ) // this case is the redirect
 		from = chStat[headers.uniqueid].channel.split('-')[0].split('/')[2]
+	else if( from==undefined && modop.isChannelTrunk(chStat[headers.uniqueid].channel) ) // callin through a trunk (CASE B)
+		from = headers.calleridnum
 	logger.info("Dialing from '" + from + "' -> '" + to + "'")
 
 	// advise the client that receive the call
@@ -814,6 +841,14 @@ am.addListener('hangup', function(headers) {
 	     status: 'up',
 	     calleridnum: '3405567088',
 	     calleridname: '' } } */
+	/* check if the chStat contains the entry relative to this hangup event.
+	 * This is because this proxy server can be started after the asterisk server. So some calling can be in execution when this
+ 	 * proxy server starting and so it can receive some hangup event relative to old call for which it haven't the relative channel in chStat. 
+	 * In this case it simply discard this hangup event */
+	if(chStat[headers.uniqueid]==undefined){
+		logger.warn("discard 'hangup' event: it isn't present in chStat. The cause can be the start of this server during the asterisk functioning")
+		return
+	}
 	if(chStat[headers.uniqueid].channel.indexOf('Local/')!=-1 && chStat[headers.uniqueid].channel.indexOf('@from-internal-')!=-1 && chStat[headers.uniqueid].channel.indexOf(';1')!=-1 ){
 		delete chStat[headers.uniqueid]
 	        console.log("'hangup' chStat = " + sys.inspect(chStat))
