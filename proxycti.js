@@ -369,7 +369,7 @@ am.addListener('newstate', function(headers){
 	// update for OP
 	/* check if the newstate is relative to a call that come from queue. In this case (CASE C), 
  	 * discard this newState event */
-	if( chStat[headers.uniqueid].channel.indexOf('Local/')!=-1 && chStat[headers.uniqueid].channel.indexOf('@from-internal-')!=-1 && chStat[headers.uniqueid].channel.indexOf(';1')!=-1 ){
+	if( chStat[headers.uniqueid].channel.indexOf('Local/')!=-1 && chStat[headers.uniqueid].channel.indexOf('@from-internal-')!=-1 && ( chStat[headers.uniqueid].channel.indexOf(';1')!=-1 || chStat[headers.uniqueid].channel.indexOf(';2')!=-1 ) ){
 		logger.warn("discard 'newState' event: is relative to '" + chStat[headers.uniqueid].channel + "'")
 		return
 	}
@@ -961,7 +961,7 @@ am.addListener('hangup', function(headers) {
 		logger.warn("discard 'hangup' event: it isn't present in chStat. The cause can be the start of this server during the asterisk functioning")
 		return
 	}
-	if(chStat[headers.uniqueid].channel.indexOf('Local/')!=-1 && chStat[headers.uniqueid].channel.indexOf('@from-internal-')!=-1 && chStat[headers.uniqueid].channel.indexOf(';1')!=-1 ){
+	if(chStat[headers.uniqueid].channel.indexOf('Local/')!=-1 && chStat[headers.uniqueid].channel.indexOf('@from-internal-')!=-1 && (chStat[headers.uniqueid].channel.indexOf(';1')!=-1 || chStat[headers.uniqueid].channel.indexOf(';2')!=-1 ) ){
 		delete chStat[headers.uniqueid]
 	        console.log("'hangup' chStat = " + sys.inspect(chStat))
 		return
