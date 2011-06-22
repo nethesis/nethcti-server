@@ -275,7 +275,27 @@ EVENT 'NewState': headers '{ event: 'Newstate',
   channelstatedesc: 'Up',
   calleridnum: '3405567088',
   calleridname: '',
-  uniqueid: '1308672180.8934' }' */
+  uniqueid: '1308672180.8934' }' 
+  *
+  * when call come from queue: (CASE C)
+EVENT 'NewState': headers '{ event: 'Newstate',
+  privilege: 'call,all',
+  channel: 'Local/210@from-internal-005d;1',
+  channelstate: '5',
+  channelstatedesc: 'Ringing',
+  calleridnum: '0266125547',
+  calleridname: 'Microtronica',
+  uniqueid: '1308736050.9841' }'
+*
+* when callin come from group (700 is the group):
+EVENT 'NewState': headers '{ event: 'Newstate',
+  privilege: 'call,all',
+  channel: 'SIP/271-0000033b',
+  channelstate: '5',
+  channelstatedesc: 'Ringing',
+  calleridnum: '700',
+  calleridname: '',
+  uniqueid: '1308745579.1057' }' */
 am.addListener('newstate', function(headers){
         logger.info("EVENT 'NewState': headers '" + sys.inspect(headers) +  "'")
 
@@ -294,7 +314,49 @@ am.addListener('newstate', function(headers){
 	     status: 'ring',
 	     calleridnum: '272',
 	     calleridname: 'device' },
-	  '1308672180.8934': { channel: 'SIP/UMTS-0000109c' } } */
+	  '1308672180.8934': { channel: 'SIP/UMTS-0000109c' } }
+	*
+	* when call come from queue:
+	chStat = { '1308736049.9828': 
+	   { channel: 'SIP/2004-00001282',
+	     status: 'up',
+	     calleridnum: '0266125547',
+	     calleridname: 'Microtronica' },
+	  '1308736049.9829': { channel: 'Local/202@from-internal-4196;1' },
+	  '1308736049.9830': { channel: 'Local/202@from-internal-4196;2' },
+	  '1308736049.9831': { channel: 'Local/204@from-internal-acce;1' },
+	  '1308736049.9832': { channel: 'Local/204@from-internal-acce;2' },
+	  '1308736049.9833': { channel: 'Local/205@from-internal-5df7;1' },
+	  '1308736049.9834': { channel: 'Local/205@from-internal-5df7;2' },
+	  '1308736050.9835': { channel: 'Local/207@from-internal-0f01;1' },
+	  '1308736050.9836': { channel: 'Local/207@from-internal-0f01;2' },
+	  '1308736050.9837': { channel: 'Local/333@from-internal-caf4;1' },
+	  '1308736050.9838': { channel: 'Local/333@from-internal-caf4;2' },
+	  '1308736050.9839': { channel: 'Local/209@from-internal-95c6;1' },
+	  '1308736050.9840': { channel: 'Local/209@from-internal-95c6;2' },
+	  '1308736050.9841': { channel: 'Local/210@from-internal-005d;1' },
+	  '1308736050.9842': { channel: 'Local/210@from-internal-005d;2' },
+	  '1308736050.9843': { channel: 'Local/211@from-internal-7a3d;1' },
+	  '1308736050.9844': { channel: 'Local/211@from-internal-7a3d;2' },
+	  '1308736050.9845': { channel: 'Local/212@from-internal-479d;1' },
+	  '1308736050.9846': { channel: 'Local/212@from-internal-479d;2' },
+	  '1308736051.9847': { channel: 'SIP/202-00001283' },
+	  '1308736052.9848': { channel: 'SIP/205-00001284' },
+	  '1308736052.9849': { channel: 'SIP/209-00001285' },
+	  '1308736052.9850': 
+	   { channel: 'SIP/210-00001286',
+	     status: 'ringing',
+	     calleridnum: '210',
+	     calleridname: '' } }
+	*
+	* when callin come from group (700):
+	chstat = { '1308745579.1055': 
+	   { channel: 'SIP/272-00000339',
+	     status: 'ring',
+	     calleridnum: '272',
+	     calleridname: 'device' },
+	  '1308745579.1056': { channel: 'SIP/270-0000033a' },
+	  '1308745579.1057': { channel: 'SIP/271-0000033b' } } */
 	// calleridnum
 	if(headers.calleridnum!='') // call come from soft phone
 		chStat[headers.uniqueid].calleridnum = headers.calleridnum
@@ -305,15 +367,21 @@ am.addListener('newstate', function(headers){
 	chStat[headers.uniqueid].calleridname = headers.calleridname
 
 	// update for OP
+	/* check if the newstate is relative to a call that come from queue. In this case (CASE C), 
+ 	 * discard this newState event */
+	if( chStat[headers.uniqueid].channel.indexOf('Local/')!=-1 && chStat[headers.uniqueid].channel.indexOf('@from-internal-')!=-1 && chStat[headers.uniqueid].channel.indexOf(';1')!=-1 ){
+		logger.warn("discard 'newState' event: is relative to '" + chStat[headers.uniqueid].channel + "'")
+		return
+	}
 	var typeext = chStat[headers.uniqueid].channel.split('-')[0]
 	if( modop.isTypeExtFascio(typeext) ){ // newstate is relative to a trunk
 		modop.updateExtStatusForOpWithTypeExt(typeext, headers.channelstatedesc.toLowerCase())
 	} else {
-		modop.updateExtStatusForOpWithExt(chStat[headers.uniqueid].calleridnum, chStat[headers.uniqueid].status)
-		updateAllClientsForOpWithExt(chStat[headers.uniqueid].calleridnum)
+		//modop.updateExtStatusForOpWithExt(chStat[headers.uniqueid].calleridnum, chStat[headers.uniqueid].status)
+		//updateAllClientsForOpWithExt(chStat[headers.uniqueid].calleridnum)
+		modop.updateExtStatusForOpWithTypeExt(typeext, chStat[headers.uniqueid].status)
+		updateAllClientsForOpWithTypeExt(typeext)
 	}
-		
-
 	
 	console.log("'newState' chStat = " + sys.inspect(chStat))
 return
