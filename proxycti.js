@@ -277,6 +277,16 @@ EVENT 'NewState': headers '{ event: 'Newstate',
   calleridname: '',
   uniqueid: '1308672180.8934' }' 
   *
+  * or:
+EVENT 'NewState': headers '{ event: 'Newstate',
+  privilege: 'call,all',
+  channel: 'IAX2/from-astr-10508',
+  channelstate: '6',
+  channelstatedesc: 'Up',
+  calleridnum: '222',
+  calleridname: 'Gregorio Scafa',
+  uniqueid: '1308757311.11029' }'
+  *
   * when call come from queue: (CASE C)
 EVENT 'NewState': headers '{ event: 'Newstate',
   privilege: 'call,all',
@@ -374,8 +384,8 @@ am.addListener('newstate', function(headers){
 		return
 	}
 	var typeext = chStat[headers.uniqueid].channel.split('-')[0]
-	if( modop.isTypeExtFascio(typeext) ){ // newstate is relative to a trunk
-		modop.updateExtStatusForOpWithTypeExt(typeext, headers.channelstatedesc.toLowerCase())
+	if( modop.isChannelTrunk(chStat[headers.uniqueid].channel) ){ // newstate is relative to a trunk
+		modop.updateTrunkStatusWithChannel(chStat[headers.uniqueid].channel, headers.channelstatedesc.toLowerCase())
 	} else {
 		//modop.updateExtStatusForOpWithExt(chStat[headers.uniqueid].calleridnum, chStat[headers.uniqueid].status)
 		//updateAllClientsForOpWithExt(chStat[headers.uniqueid].calleridnum)
