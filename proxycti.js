@@ -227,7 +227,18 @@ EVENT 'NewChannel': headers = { event: 'Newchannel',
   calleridnum: '',
   calleridname: '',
   accountcode: '',
-  uniqueid: '1308662518.892' } */ 
+  uniqueid: '1308662518.892' } 
+  *
+  * when callin through a trunk:
+EVENT 'NewChannel': headers = { event: 'Newchannel',
+  privilege: 'call,all',
+  channel: 'IAX2/from-lab-6680',
+  channelstate: '4',
+  channelstatedesc: 'Ring',
+  calleridnum: '305',
+  calleridname: 'Andrea Curzi',
+  accountcode: '',
+  uniqueid: '1308726926.8996' } */
 am.addListener('newchannel', function(headers){
 	logger.info("EVENT 'NewChannel': headers = " + sys.inspect(headers))
 	chStat[headers.uniqueid] = {
