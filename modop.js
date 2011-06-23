@@ -90,6 +90,17 @@ exports.Modop = function(){
 	this.isChannelTrunk = function(ch) { return isChannelTrunk(ch) }
 	this.updateTrunkStatusWithChannel = function(ch, stat) { updateTrunkStatusWithChannel(ch, stat) }
 	this.incTrunkCallConnectedCountWithChannel = function(ch) { incTrunkCallConnectedCountWithChannel(ch) }
+	this.hasTrunkCallConnectedUniqueidWithChannel = function(ch, uniqueid) {  return hasTrunkCallConnectedUniqueidWithChannel(ch, uniqueid) }
+}
+/* check if the trunk identified by channel 'ch' has the uniqueid of the channel relative to
+ * received 'CallConnected' event */
+function hasTrunkCallConnectedUniqueidWithChannel(ch, uniqueid){
+	for(key in extStatusForOp){
+		if( ch.indexOf(key)!=-1 && extStatusForOp[key].tab=='fasci' )
+			if( extStatusForOp[key].callConnectedUniqueid[uniqueid]!=undefined )
+				return true
+	}
+	return false
 }
 function incTrunkCallConnectedCountWithChannel(ch){
 	for(key in extStatusForOp)
