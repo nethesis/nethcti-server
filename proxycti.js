@@ -817,7 +817,8 @@ am.addListener('hangup', function(headers) {
 			modop.removeCallConnectedUniqueidTrunkWithTypeExt(trunkTypeExt, headers.uniqueid)
 			logger.info("removed callConnectedUniqueid '" + headers.uniqueid + "' from trunk '" + trunkTypeExt + "'")
 			updateAllClientsForOpWithTypeExt(trunkTypeExt)
-		}
+		} else
+			logger.warn("callConnected uniqueid '" + headers.uniqueid1 + "' has already not present into trunk '" + trunkTypeext  + "'")
 	}
 
 	// ext
