@@ -813,9 +813,10 @@ am.addListener('hangup', function(headers) {
 
 	if( modop.isChannelTrunk(chStat[headers.uniqueid].channel) ){ // the channel is a trunk
 		var trunkTypeExt = modop.getTrunkTypeExtFromChannel(chStat[headers.uniqueid].channel)
-		if( modop.hasTrunkCallConnectedUniqueidWithTypeExt(trunkTypeExt) ){ // remove callconnectedUniqueid for current trunk
+		if( modop.hasTrunkCallConnectedUniqueidWithTypeExt(trunkTypeExt, headers.uniqueid) ){ // remove callconnectedUniqueid for current trunk
 			modop.removeCallConnectedUniqueidTrunkWithTypeExt(trunkTypeExt, headers.uniqueid)
 			logger.info("removed callConnectedUniqueid '" + headers.uniqueid + "' from trunk '" + trunkTypeExt + "'")
+			updateAllClientsForOpWithTypeExt(trunkTypeExt)
 		}
 	}
 
@@ -931,7 +932,7 @@ EVENT 'CallConnected': headers = '{ event: 'Bridge',
   callerid1: '270',
   callerid2: '272' }' 
 *
-* when one endpoint is out through a trunk
+* when one endpoint is out through a trunk (CASE F)
 EVENT 'CallConnected': headers = '{ event: 'Bridge',
   privilege: 'call,all',
   bridgestate: 'Link',
@@ -1013,9 +1014,22 @@ am.addListener('callconnected', function(headers) {
 		logger.warn("discarded event 'callconnected'")
 		return
 	}
+
+	// channel2 is a trunk, so add uniqueid of its channel to it
+	if(modop.isChannelTrunk(headers.channel2) ){ // (CASE F)
+		var trunkTypeext = modop.getTrunkTypeExtFromChannel(headers.channel2)
+		// add uniqueid of trunk 'headers.channel2' to trunk itself, if it isn't already been added
+		if( !modop.hasTrunkCallConnectedUniqueidWithTypeExt(trunkTypeext, headers.uniqueid2) ){
+			modop.addCallConnectedUniqueidTrunkWithTypeExt(trunkTypeext, headers.uniqueid2)
+			logger.info("added callConnectedUniqueid '" + headers.uniqueid2 + "' to trunk '" + trunkTypeext + "'")
+			updateAllClientsForOpWithTypeExt(trunkTypeext)
+		} else
+			logger.warn("callConneted uniqueid '" + headers.uniqueid2 + "' has already been added to trunk '" + trunkTypeext  + "'")
+	}
+
+	// advise two clients of call
 	var from = headers.callerid1
         var to = headers.callerid2
-	// advise two clients of call
 	if(clients[from]!=undefined){
                 var c = clients[from]
                 var msg = "Call from " + from + " to " + to + " CONNECTED"
