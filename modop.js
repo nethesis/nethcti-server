@@ -92,13 +92,15 @@ exports.Modop = function(){
 	this.hasTrunkCallConnectedUniqueidWithChannel = function(ch, uniqueid) {  return hasTrunkCallConnectedUniqueidWithChannel(ch, uniqueid) }
 	this.hasTrunkCallConnectedUniqueidWithTypeExt = function(typeExt, uniqueid) { return hasTrunkCallConnectedUniqueidWithTypeExt(typeExt, uniqueid) }
 	this.addCallConnectedUniqueidTrunkWithChannel = function(ch, uniqueid) { addCallConnectedUniqueidTrunkWithChannel(ch, uniqueid) }
-	this.addCallConnectedUniqueidTrunkWithTypeExt = function(typeExt, uniqueid) { addCallConnectedUniqueidTrunkWithTypeExt(typExt, uniqueid) }
+	this.addCallConnectedUniqueidTrunkWithTypeExt = function(typeExt, uniqueid) { addCallConnectedUniqueidTrunkWithTypeExt(typeExt, uniqueid) }
 	this.getTrunkTypeExtFromChannel = function(ch) { return getTrunkTypeExtFromChannel(ch) }
 	this.removeCallConnectedUniqueidTrunkWithTypeExt = function(typeExt, uniqueid) { removeCallConnectedUniqueidTrunkWithTypeExt(typeExt, uniqueid) }
 }
 function removeCallConnectedUniqueidTrunkWithTypeExt(typeExt, uniqueid){
-	if(extStatusForOp[typeExt].tab=='fasci')
+	if(extStatusForOp[typeExt].tab=='fasci'){
 		delete extStatusForOp[typeExt].callConnectedUniqueid[uniqueid]
+		extStatusForOp[typeExt].callConnectedCount--
+	}
 }
 // return typeext if the passed channel is a trunk
 function getTrunkTypeExtFromChannel(ch){
