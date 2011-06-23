@@ -89,7 +89,6 @@ exports.Modop = function(){
 	this.isTypeExtFascio = function(typeext) { return isTypeExtFascio(typeext) }
 	this.isChannelTrunk = function(ch) { return isChannelTrunk(ch) }
 	this.updateTrunkStatusWithChannel = function(ch, stat) { updateTrunkStatusWithChannel(ch, stat) }
-	this.incTrunkCallConnectedCountWithChannel = function(ch) { incTrunkCallConnectedCountWithChannel(ch) }
 	this.hasTrunkCallConnectedUniqueidWithChannel = function(ch, uniqueid) {  return hasTrunkCallConnectedUniqueidWithChannel(ch, uniqueid) }
 	this.addCallConnectedUniqueidTrunkWithChannel = function(ch, uniqueid) { addCallConnectedUniqueidTrunkWithChannel(ch, uniqueid) }
 }
@@ -109,11 +108,6 @@ function hasTrunkCallConnectedUniqueidWithChannel(ch, uniqueid){
 				return true
 	}
 	return false
-}
-function incTrunkCallConnectedCountWithChannel(ch){
-	for(key in extStatusForOp)
-		if( ch.indexOf(key)!=-1 && extStatusForOp[key].tab=='fasci' )
-			extStatusForOp[key].callConnectedCount++
 }
 function updateTrunkStatusWithChannel(ch, stat){
 	for(key in extStatusForOp){
