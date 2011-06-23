@@ -465,6 +465,15 @@ function initCallConnectedCountForTrunk(){
 		if(extStatusForOp[key].tab=='fasci')
 			extStatusForOp[key].callConnectedCount = 0
 }
+/* add object 'callConnectedUniqueid' to all trunk. This object has 'uniquedid' of callconnected
+ * event as a key and an empty string ('') as a value */
+function initCallConnectedUniqueidForTrunk(){
+	for(key in extStatusForOp){
+		if(extStatusForOp[key].tab=='fasci'){
+			extStatusForOp.callConnectedUniqueid = {}
+		}
+	}
+}
 
 /* Initialize 'extStatusForOp'. Initially it read a configuration file that contains list of
  * all extensions. After that it sends the 'SIPPeers' action to the asterisk server. So, it
@@ -476,7 +485,9 @@ function initExtStatusForOp(){
         logger.info("initialize status of all extensions...");
         // read file where are the list of all extensions
         extStatusForOp = iniparser.parseSync(FILE_EXT_LIST);
+	// init trunk
 	initCallConnectedCountForTrunk()
+	initCallConnectedUniqueidForTrunk()
 	// create action for asterisk server that generate series of 'PeerEntry' events
         var actionSIPPeersOP = {
                 Action: 'SIPPeers'
