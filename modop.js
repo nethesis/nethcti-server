@@ -91,6 +91,13 @@ exports.Modop = function(){
 	this.updateTrunkStatusWithChannel = function(ch, stat) { updateTrunkStatusWithChannel(ch, stat) }
 	this.hasTrunkCallConnectedUniqueidWithChannel = function(ch, uniqueid) {  return hasTrunkCallConnectedUniqueidWithChannel(ch, uniqueid) }
 	this.addCallConnectedUniqueidTrunkWithChannel = function(ch, uniqueid) { addCallConnectedUniqueidTrunkWithChannel(ch, uniqueid) }
+	this.getTrunkTypeExtFromChannel = function(ch) { return getTrunkTypeExtFromChannel(ch) }
+}
+// return typeext if the passed channel is a trunk
+function getTrunkTypeExtFromChannel(ch){
+	for(key in extStatusForOp)
+		if( ch.indexOf(key)!=-1 && extStatusForOp[key].tab=='fasci' )
+			return key
 }
 /* add uniqueid of channel to trunk identified by channel 'ch'. Uniqueid and channel is relative to
  * received 'CallConnected' event */
