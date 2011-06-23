@@ -453,6 +453,12 @@ function addListenerToAm(){
 	});	
 }
 
+// add callConnectedCount = 0 to all trunk
+function initCallConnectedCountForTrunk(){
+	for(key in extStatusForOp)
+		if(extStatusForOp[key].tab=='fasci')
+			extStatusForOp[key].callConnectedCount = 0
+}
 
 /* Initialize 'extStatusForOp'. Initially it read a configuration file that contains list of
  * all extensions. After that it sends the 'SIPPeers' action to the asterisk server. So, it
@@ -464,10 +470,8 @@ function initExtStatusForOp(){
         logger.info("initialize status of all extensions...");
         // read file where are the list of all extensions
         extStatusForOp = iniparser.parseSync(FILE_EXT_LIST);
-	// add 'activeLinks' to all extensions and initialize it to empty value
-	for(key in extStatusForOp)
-		extStatusForOp[key].activeLinks = {};
-        // create action for asterisk server that generate series of 'PeerEntry' events
+	initCallConnectedCountForTrunk()
+	// create action for asterisk server that generate series of 'PeerEntry' events
         var actionSIPPeersOP = {
                 Action: 'SIPPeers'
 		//ActionId: 'cti_SIPPeers_action'
