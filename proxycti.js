@@ -626,8 +626,7 @@ console.log("'dialing' chstat = " + sys.inspect(chStat))
 })
 
 
-/* NEWWWWWWWWWWWWWWWWW
-* when call come from soft phone:
+/* when call come from soft phone:
 EVENT 'Hangup': headers = { event: 'Hangup',
   privilege: 'call,all',
   channel: 'SIP/270-000001f1',
@@ -687,6 +686,16 @@ EVENT 'Hangup': headers = { event: 'Hangup',
   calleridname: '<unknown>',
   cause: '16',
   causetxt: 'Normal Clearing' }
+  *
+  * or:
+EVENT 'Hangup': headers = { event: 'Hangup', (CASE F)
+  privilege: 'call,all',
+  channel: 'SIP/2004-000014b4',
+  uniqueid: '1308813216.11162',
+  calleridnum: '0721830152',
+  calleridname: '<unknown>',
+  cause: '0',
+  causetxt: 'Unknown' }
   *
   * when callin come from group:
 EVENT 'Hangup': headers = { event: 'Hangup',
@@ -764,6 +773,13 @@ am.addListener('hangup', function(headers) {
 	     calleridnum: '3405567088',
 	     calleridname: '' } } 
 	*
+	* or: (CASE F)
+	chStat = { '1308813216.11162':
+	   { channel: 'SIP/2004-000014b4',
+	     status: 'up',
+	     calleridnum: '0721830152',
+	     calleridname: '' }, ...
+	*
 	* when callin come from group:
 	chStat = { '1308749652.1070': 
 	   { channel: 'SIP/272-00000348',
@@ -793,6 +809,14 @@ am.addListener('hangup', function(headers) {
 		delete chStat[headers.uniqueid]
 	        console.log("'hangup' chStat = " + sys.inspect(chStat))
 		return
+	}
+
+	if( modop.isChannelTrunk(chStat[headers.uniqueid].channel) ){ // the channel is a trunk
+		var trunkTypeExt = modop.getTrunkTypeExtFromChannel(chStat[headers.uniqueid].channel)
+		if( modop.hasTrunkCallConnectedUniqueidWithTypeExt(trunkTypeExt) ){ // remove callconnectedUniqueid for current trunk
+			modop.removeCallConnectedUniqueidTrunkWithTypeExt(trunkTypeExt, headers.uniqueid)
+			logger.info("removed callConnectedUniqueid '" + headers.uniqueid + "' from trunk '" + trunkTypeExt + "'")
+		}
 	}
 
 	// ext
