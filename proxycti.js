@@ -418,7 +418,6 @@ am.addListener('newcallerid', function(headers){
 })
 
 
-//NEWWWWWWWWWWWWWWWW
 /* call come from soft phone
 EVENT 'Dialing': headers '{ event: 'Dial',
   privilege: 'call,all',
@@ -491,6 +490,18 @@ EVENT 'Dialing': headers '{ event: 'Dial',
   destuniqueid: '1308726926.8997',
   dialstring: '224' }' 
   *
+  * here, 225 is remote intern that call through a trunk, but 225 is also a local intern (CASE H)
+EVENT 'Dialing': headers '{ event: 'Dial',
+  privilege: 'call,all',
+  subevent: 'Begin',
+  channel: 'IAX2/from-astr-7929',
+  destination: 'SIP/250-0000175e',
+  calleridnum: '225',
+  calleridname: 'Francesco Brecciaroli',
+  uniqueid: '1308839796.12668',
+  destuniqueid: '1308839796.12669',
+  dialstring: '250' }'
+  *
   * when dial not execute correctly, for ex. for congestion:
 EVENT 'Dialing': headers '{ event: 'Dial',
   privilege: 'call,all',
@@ -500,7 +511,7 @@ EVENT 'Dialing': headers '{ event: 'Dial',
   dialstatus: 'CONGESTION' }' */
 am.addListener('dialing', function(headers) {
         logger.info("EVENT 'Dialing': headers '" + sys.inspect(headers) + "'")
-console.log("'dialing' chstat = " + sys.inspect(chStat))
+	logger.info("'dialing' chstat = " + sys.inspect(chStat))
 	/* chstat = { '1308646890.732': 
 	   { channel: 'SIP/271-00000274',
 	     status: 'ring',
@@ -613,10 +624,13 @@ console.log("'dialing' chstat = " + sys.inspect(chStat))
 	if(from!=undefined && to!=undefined){
 		// check if the call come from queue. In this case, the caller (272) has already been update in AgentCalled event
 		if(headers.channel.indexOf('Local/')==-1 && headers.channel.indexOf('@from-internal-')==-1 && headers.channel.indexOf(';2')==-1){ 
-			if(modop.isExtPresent(from)){
+			/* check also !modop.isChannelTrunk(headers.channel)  because (CASE H): 
+			 * headers.calleridnum come from trunk, that is remote location but is equal to local intern (namesake) */
+			if(modop.isExtPresent(from) && !modop.isChannelTrunk(headers.channel) ){ 
 				modop.updateExtStatusOpDialFrom(from, to)
 		        	updateAllClientsForOpWithExt(from)
-			}
+			} else if( modop.isExtPresent(from) && modop.isChannelTrunk(headers.channel) )
+				logger.warn("[" + from + "] is namesake: comes from remote location through trunk '" + headers.channel + "'")
 		}
 		if(modop.isExtPresent(to)){
 	                modop.updateExtStatusOpDialTo(to, from)
