@@ -244,7 +244,7 @@ am.addListener('newchannel', function(headers){
 	chStat[headers.uniqueid] = {
 		channel: headers.channel
 	}
-	console.log("'newChannel' chStat = " + sys.inspect(chStat))
+	logger.info("'newChannel' chStat = " + sys.inspect(chStat))
 })
 
 /* when call from the soft phone 
@@ -393,7 +393,7 @@ am.addListener('newstate', function(headers){
 		updateAllClientsForOpWithTypeExt(typeext)
 	}
 	
-	console.log("'newState' chStat = " + sys.inspect(chStat))
+	logger.info("'newState' chStat = " + sys.inspect(chStat))
 })
 
 /* whe call come from soft phone
@@ -821,7 +821,7 @@ am.addListener('hangup', function(headers) {
 	if(chStat[headers.uniqueid].channel.indexOf('Local/')!=-1 && chStat[headers.uniqueid].channel.indexOf('@from-internal-')!=-1 && (chStat[headers.uniqueid].channel.indexOf(';1')!=-1 || chStat[headers.uniqueid].channel.indexOf(';2')!=-1 ) ){
 		logger.warn("discard 'hangup' event: relative to queue. Delete it from chStat")
 		delete chStat[headers.uniqueid]
-	        console.log("'hangup' chStat = " + sys.inspect(chStat))
+	        logger.info("'hangup' chStat = " + sys.inspect(chStat))
 		return
 	}
 
@@ -858,7 +858,7 @@ am.addListener('hangup', function(headers) {
 			ext = chStat[headers.uniqueid].channel.split('-')[0].split('/')[2]
 	}
 	delete chStat[headers.uniqueid]
-	console.log("'hangup' chStat = " + sys.inspect(chStat))
+	logger.info("'hangup' chStat = " + sys.inspect(chStat))
 
 	// advise client of hangup if this event is not relative to redirect operation
 	if( headers.channel.indexOf('AsyncGoto/SIP/')==-1 && headers.channel.indexOf('<ZOMBIE>')==-1 ){
@@ -972,7 +972,7 @@ EVENT 'CallConnected': headers = '{ event: 'Bridge',
   callerid2: '350' }' */
 am.addListener('callconnected', function(headers) {
         logger.info("EVENT 'CallConnected': headers = '" + sys.inspect(headers) + "'")
-	console.log("'callconnected' chStat = " + sys.inspect(chStat))
+	logger.info("'callconnected' chStat = " + sys.inspect(chStat))
 	/* when redirect:
 	chStat = { '1308664818.896': { channel: 'AsyncGoto/SIP/270-000002df' },
 	  '1308664819.897': 
@@ -1692,7 +1692,7 @@ io.on('connection', function(client){
 				     calleridname: '',
 				     calleridnum: '271',
 				     status: 'up' } } */
-				console.log("ACTION_HANGUP chStat = " + sys.inspect(chStat))
+				logger.info("ACTION_HANGUP chStat = " + sys.inspect(chStat))
 				var ch
 				for(key in chStat){ // when call come from soft phone
 					if(chStat[key].calleridnum==extFrom){
@@ -1720,7 +1720,7 @@ io.on('connection', function(client){
 		  		logger.info(Object.keys(clients).length + " logged in clients");
 	  		break;
 	  		case actions.ACTION_REDIRECT:
-				console.log("'ACTION_REDIRECT' chStat = " + sys.inspect(chStat))
+				logger.info("'ACTION_REDIRECT' chStat = " + sys.inspect(chStat))
 				/* chStat = { '1308661886.872': 
 				   { channel: 'SIP/271-000002cb',
 				     status: 'up',
