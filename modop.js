@@ -96,12 +96,18 @@ exports.Modop = function(){
 	this.getTrunkTypeExtFromChannel = function(ch) { return getTrunkTypeExtFromChannel(ch) }
 	this.removeCallConnectedUniqueidTrunkWithTypeExt = function(typeExt, uniqueid) { removeCallConnectedUniqueidTrunkWithTypeExt(typeExt, uniqueid) }
 	this.isChannelIntern = function(ch) { return isChannelIntern(ch) }
+	this.getInternTypeExtFromChannel = function(ch) { return getInternTypeExtFromChannel(ch) }
 }
 function removeCallConnectedUniqueidTrunkWithTypeExt(typeExt, uniqueid){
 	if(extStatusForOp[typeExt].tab=='fasci'){
 		delete extStatusForOp[typeExt].callConnectedUniqueid[uniqueid]
 		extStatusForOp[typeExt].callConnectedCount--
 	}
+}
+function getInternTypeExtFromChannel(ch){
+	for(key in extStatusForOp)
+		if(ch.indexOf(key)!=-1 && extStatusForOp[key].tab=='interno')
+			return key
 }
 // return typeext if the passed channel is a trunk
 function getTrunkTypeExtFromChannel(ch){
