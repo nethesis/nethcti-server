@@ -1091,8 +1091,7 @@ am.addListener('callconnected', function(headers) {
 
 
 
-/* NEWWWWWWWWWWWW
-EVENT 'AgentCalled': headers = { event: 'AgentCalled',
+/*EVENT 'AgentCalled': headers = { event: 'AgentCalled',
   privilege: 'agent,all',
   queue: '900',
   agentcalled: 'Local/270@from-internal/n',
