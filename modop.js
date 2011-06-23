@@ -94,6 +94,11 @@ exports.Modop = function(){
 	this.addCallConnectedUniqueidTrunkWithChannel = function(ch, uniqueid) { addCallConnectedUniqueidTrunkWithChannel(ch, uniqueid) }
 	this.addCallConnectedUniqueidTrunkWithTypeExt = function(typeExt, uniqueid) { addCallConnectedUniqueidTrunkWithTypeExt(typExt, uniqueid) }
 	this.getTrunkTypeExtFromChannel = function(ch) { return getTrunkTypeExtFromChannel(ch) }
+	this.removeCallConnectedUniqueidTrunkWithTypeExt = function(typeExt, uniqueid) { removeCallConnectedUniqueidTrunkWithTypeExt(typeExt, uniqueid) }
+}
+function removeCallConnectedUniqueidTrunkWithTypeExt(typeExt, uniqueid){
+	if(extStatusForOp[typeExt].tab=='fasci')
+		delete extStatusForOp[typeExt].callConnectedUniqueid[uniqueid]
 }
 /* check if the trunk identified by 'typeExt' has the uniqueid of the channel relative to
  * received 'CallConnected' event */
