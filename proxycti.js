@@ -871,7 +871,19 @@ EVENT 'CallConnected': headers = '{ event: 'Bridge',
   callerid1: '272',
   callerid2: '271' }'
 *
+* or when call come from an extern to queue: (CASE D)
+EVENT 'CallConnected': headers = '{ event: 'Bridge',
+  privilege: 'call,all',
+  bridgestate: 'Link',
+  bridgetype: 'core',
+  channel1: 'SIP/2004-000014b4',
+  channel2: 'Local/207@from-internal-ef64;1',
+  uniqueid1: '1308813216.11162',
+  uniqueid2: '1308813217.11169',
+  callerid1: '0721830152',
+  callerid2: '0721830152' }' 
 *
+* or when call come from intern to queue: (CASE E)
 EVENT 'CallConnected': headers = '{ event: 'Bridge',
   privilege: 'call,all',
   bridgestate: 'Link',
@@ -927,10 +939,54 @@ am.addListener('callconnected', function(headers) {
 	   { channel: 'SIP/UMTS-000010c0',
 	     status: 'up',
 	     calleridnum: '3405567088',
-	     calleridname: '' } } */
-	// check if the call 
-	if( headers.callerid1==headers.callerid2 && headers.channel2.indexOf('Local/')!=-1 && headers.channel2.indexOf('@from-internal-')!=-1 && headers.channel2.indexOf(';1')!=-1  ){
-		logger.info("discarded event 'callconnected'")
+	     calleridname: '' } } 
+	*
+	* or when call come from an extern to queue: (CASE D)
+	chStat = { '1308813216.11162': 
+	   { channel: 'SIP/2004-000014b4',
+	     status: 'up',
+	     calleridnum: '0721830152',
+	     calleridname: '' },
+	  '1308813217.11164': { channel: 'Local/202@from-internal-7a84;2' },
+	  '1308813217.11166': { channel: 'Local/204@from-internal-550c;2' },
+	  '1308813217.11168': { channel: 'Local/205@from-internal-e105;2' },
+	  '1308813217.11169': 
+	   { channel: 'Local/207@from-internal-ef64;1',
+	     status: 'up',
+	     calleridnum: '0721830152',
+	     calleridname: '' },
+	  '1308813217.11170': 
+	   { channel: 'Local/207@from-internal-ef64;2',
+	     status: 'up',
+	     calleridnum: '0721830152',
+	     calleridname: '' },
+	  '1308813217.11172': { channel: 'Local/333@from-internal-3114;2' },
+	  '1308813217.11176': { channel: 'Local/210@from-internal-3f5b;2' },
+	  '1308813217.11178': { channel: 'Local/211@from-internal-9c54;2' },
+	  '1308813220.11185': 
+	   { channel: 'SIP/207-000014b9',
+	     status: 'up',
+	     calleridnum: '207',
+	     calleridname: '' },
+	  '1308813225.11190': 
+	   { channel: 'SIP/222-000014be',
+	     status: 'ring',
+	     calleridnum: '222',
+	     calleridname: 'device' },
+	  '1308813225.11191': { channel: 'SIP/2001-000014bf' } } */
+	// check if the callconnected is between internal and intermediate node created by asterisk when the call pass through a queue
+	if( headers.callerid1==headers.callerid2 && headers.channel2.indexOf('Local/')!=-1 && headers.channel2.indexOf('@from-internal-')!=-1 && headers.channel2.indexOf(';1')!=-1  ){ // (CASE E)
+		if( modop.isChannelTrunk(headers.channel1) ){ // (CASE D)
+			var trunkTypeext = modop.getTrunkTypeExtFromChannel(headers.channel1)
+			// add uniqueid of trunk 'headers.channel1' to trunk itself, if it isn't already been added
+			if( !modop.hasTrunkCallConnectedUniqueidWithTypeExt(trunkTypeext, headers.uniqueid1) ){
+				modop.addCallConnectedUniqueidTrunkWithTypeExt(trunkTypeext, headers.uniqueid1)
+				logger.info("added callConnectedUniqueid '" + headers.uniqueid1 + "' to trunk '" + trunkTypeext + "'")
+				updateAllClientsForOpWithTypeExt(trunkTypeext)
+			} else
+				logger.warn("callConneted uniqueid '" + headers.uniqueid1 + "' has already been added to trunk '" + trunkTypeext  + "'")
+		}
+		logger.warn("discarded event 'callconnected'")
 		return
 	}
 	var from = headers.callerid1
