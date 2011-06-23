@@ -90,8 +90,15 @@ exports.Modop = function(){
 	this.isChannelTrunk = function(ch) { return isChannelTrunk(ch) }
 	this.updateTrunkStatusWithChannel = function(ch, stat) { updateTrunkStatusWithChannel(ch, stat) }
 	this.hasTrunkCallConnectedUniqueidWithChannel = function(ch, uniqueid) {  return hasTrunkCallConnectedUniqueidWithChannel(ch, uniqueid) }
+	this.hasTrunkCallConnectedUniqueidWithTypeExt = function(typeExt, uniqueid) { return hasTrunkCallConnectedUniqueidWithTypeExt(typeExt, uniqueid) }
 	this.addCallConnectedUniqueidTrunkWithChannel = function(ch, uniqueid) { addCallConnectedUniqueidTrunkWithChannel(ch, uniqueid) }
 	this.getTrunkTypeExtFromChannel = function(ch) { return getTrunkTypeExtFromChannel(ch) }
+}
+/* check if the trunk identified by 'typeExt' has the uniqueid of the channel relative to
+ * received 'CallConnected' event */
+function hasTrunkCallConnectedUniqueidWithTypeExt(typeExt, uniqueid){
+	if( extStatusForOp[typeExt].tab=='fasci' && extStatusForOp[typeExt].callConnectedUniqueid[uniqueid]!=undefined ) return true
+	return false
 }
 // return typeext if the passed channel is a trunk
 function getTrunkTypeExtFromChannel(ch){
