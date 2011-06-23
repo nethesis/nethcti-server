@@ -95,9 +95,12 @@ exports.Modop = function(){
 /* add uniqueid of channel to trunk identified by channel 'ch'. Uniqueid and channel is relative to
  * received 'CallConnected' event */
 function addCallConnectedUniqueidTrunkWithChannel(ch, uniqueid){
-	for(key in extStatusForOp)
-		if( ch.indexOf(key)!=-1 && extStatusForOp[key].tab=='fasci' )
+	for(key in extStatusForOp){
+		if( ch.indexOf(key)!=-1 && extStatusForOp[key].tab=='fasci' ){
 			extStatusForOp[key].callConnectedUniqueid[uniqueid] = ''
+			extStatusForOp[key].callConnectedCount++
+		}
+	}
 }
 /* check if the trunk identified by channel 'ch' has the uniqueid of the channel relative to
  * received 'CallConnected' event */
