@@ -89,6 +89,12 @@ exports.Modop = function(){
 	this.isTypeExtFascio = function(typeext) { return isTypeExtFascio(typeext) }
 	this.isChannelTrunk = function(ch) { return isChannelTrunk(ch) }
 	this.updateTrunkStatusWithChannel = function(ch, stat) { updateTrunkStatusWithChannel(ch, stat) }
+	this.incTrunkCallConnectedCountWithChannel = function(ch) { incTrunkCallConnectedCountWithChannel(ch) }
+}
+function incTrunkCallConnectedCountWithChannel(ch){
+	for(key in extStatusForOp)
+		if( ch.indexOf(key)!=-1 && extStatusForOp[key].tab=='fasci' )
+			extStatusForOp[key].callConnectedCount++
 }
 function updateTrunkStatusWithChannel(ch, stat){
 	for(key in extStatusForOp){
