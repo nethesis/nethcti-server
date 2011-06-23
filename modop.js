@@ -92,6 +92,7 @@ exports.Modop = function(){
 	this.hasTrunkCallConnectedUniqueidWithChannel = function(ch, uniqueid) {  return hasTrunkCallConnectedUniqueidWithChannel(ch, uniqueid) }
 	this.hasTrunkCallConnectedUniqueidWithTypeExt = function(typeExt, uniqueid) { return hasTrunkCallConnectedUniqueidWithTypeExt(typeExt, uniqueid) }
 	this.addCallConnectedUniqueidTrunkWithChannel = function(ch, uniqueid) { addCallConnectedUniqueidTrunkWithChannel(ch, uniqueid) }
+	this.addCallConnectedUniqueidTrunkWithTypeExt = function(typeExt, uniqueid) { addCallConnectedUniqueidTrunkWithTypeExt(typExt, uniqueid) }
 	this.getTrunkTypeExtFromChannel = function(ch) { return getTrunkTypeExtFromChannel(ch) }
 }
 /* check if the trunk identified by 'typeExt' has the uniqueid of the channel relative to
@@ -105,6 +106,14 @@ function getTrunkTypeExtFromChannel(ch){
 	for(key in extStatusForOp)
 		if( ch.indexOf(key)!=-1 && extStatusForOp[key].tab=='fasci' )
 			return key
+}
+/* add uniqueid of channel to trunk identified by 'typeExt'. Uniqueid and channel is relative to
+ * received 'CallConnected' event */
+function addCallConnectedUniqueidTrunkWithTypeExt(typeExt, uniqueid){
+	if( extStatusForOp[typeExt].tab=='fasci' ){
+		extStatusForOp[typeExt].callConnectedUniqueid[uniqueid] = ''
+		extStatusForOp[typeExt].callConnectedCount++
+	}
 }
 /* add uniqueid of channel to trunk identified by channel 'ch'. Uniqueid and channel is relative to
  * received 'CallConnected' event */
