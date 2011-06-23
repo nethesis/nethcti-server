@@ -100,12 +100,6 @@ function removeCallConnectedUniqueidTrunkWithTypeExt(typeExt, uniqueid){
 	if(extStatusForOp[typeExt].tab=='fasci')
 		delete extStatusForOp[typeExt].callConnectedUniqueid[uniqueid]
 }
-/* check if the trunk identified by 'typeExt' has the uniqueid of the channel relative to
- * received 'CallConnected' event */
-function hasTrunkCallConnectedUniqueidWithTypeExt(typeExt, uniqueid){
-	if( extStatusForOp[typeExt].tab=='fasci' && extStatusForOp[typeExt].callConnectedUniqueid[uniqueid]!=undefined ) return true
-	return false
-}
 // return typeext if the passed channel is a trunk
 function getTrunkTypeExtFromChannel(ch){
 	for(key in extStatusForOp)
@@ -129,6 +123,12 @@ function addCallConnectedUniqueidTrunkWithChannel(ch, uniqueid){
 			extStatusForOp[key].callConnectedCount++
 		}
 	}
+}
+/* check if the trunk identified by 'typeExt' has the uniqueid of the channel relative to
+ * received 'CallConnected' event */
+function hasTrunkCallConnectedUniqueidWithTypeExt(typeExt, uniqueid){
+	if( extStatusForOp[typeExt].tab=='fasci' && extStatusForOp[typeExt].callConnectedUniqueid[uniqueid]!=undefined ) return true
+	return false
 }
 /* check if the trunk identified by channel 'ch' has the uniqueid of the channel relative to
  * received 'CallConnected' event */
@@ -514,7 +514,7 @@ function initCallConnectedCountForTrunk(){
 function initCallConnectedUniqueidForTrunk(){
 	for(key in extStatusForOp){
 		if(extStatusForOp[key].tab=='fasci'){
-			extStatusForOp.callConnectedUniqueid = {}
+			extStatusForOp[key].callConnectedUniqueid = {}
 		}
 	}
 }
