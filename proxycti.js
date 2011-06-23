@@ -688,7 +688,7 @@ EVENT 'Hangup': headers = { event: 'Hangup',
   causetxt: 'Normal Clearing' }
   *
   * or:
-EVENT 'Hangup': headers = { event: 'Hangup', (CASE F)
+EVENT 'Hangup': headers = { event: 'Hangup', (CASE F) 700 is a group
   privilege: 'call,all',
   channel: 'SIP/2004-000014b4',
   uniqueid: '1308813216.11162',
@@ -794,7 +794,7 @@ am.addListener('hangup', function(headers) {
 	  '1308749652.1072': 
 	   { channel: 'SIP/271-0000034a',
 	     status: 'ringing',
-	     calleridnum: '700',
+	     calleridnum: '700',        (700 is a group)
 	     calleridname: '' } } */
 	/* check if the chStat contains the entry relative to this hangup event.
 	 * This is because this proxy server can be started after the asterisk server. So some calling can be in execution when this
@@ -823,7 +823,7 @@ am.addListener('hangup', function(headers) {
 
 	// ext
 	var ext
-	if(chStat[headers.uniqueid].calleridnum!='' && chStat[headers.uniqueid].calleridnum!=undefined ){
+	if( chStat[headers.uniqueid].calleridnum!='' && chStat[headers.uniqueid].calleridnum!=undefined && !modop.isExtGroup(chStat[headers.uniqueid].calleridnum) ){
 		/* '1308643186.683': 
 		   { channel: 'SIP/270-00000243',
 		     calleridname: '',
