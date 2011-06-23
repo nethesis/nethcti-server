@@ -832,7 +832,7 @@ am.addListener('hangup', function(headers) {
 			logger.info("removed callConnectedUniqueid '" + headers.uniqueid + "' from trunk '" + trunkTypeExt + "'")
 			updateAllClientsForOpWithTypeExt(trunkTypeExt)
 		} else
-			logger.warn("callConnected uniqueid '" + headers.uniqueid1 + "' has already not present into trunk '" + trunkTypeExt + "'")
+			logger.warn("callConnected uniqueid '" + headers.uniqueid + "' has already not present into trunk '" + trunkTypeExt + "'")
 	}
 
 	// ext
