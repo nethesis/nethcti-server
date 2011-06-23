@@ -789,6 +789,7 @@ am.addListener('hangup', function(headers) {
 		return
 	}
 	if(chStat[headers.uniqueid].channel.indexOf('Local/')!=-1 && chStat[headers.uniqueid].channel.indexOf('@from-internal-')!=-1 && (chStat[headers.uniqueid].channel.indexOf(';1')!=-1 || chStat[headers.uniqueid].channel.indexOf(';2')!=-1 ) ){
+		logger.warn("discard 'hangup' event: relative to queue. Delete it from chStat")
 		delete chStat[headers.uniqueid]
 	        console.log("'hangup' chStat = " + sys.inspect(chStat))
 		return
