@@ -942,7 +942,19 @@ EVENT 'CallConnected': headers = '{ event: 'Bridge',
   uniqueid1: '1308673475.8969',
   uniqueid2: '1308673475.8970',
   callerid1: '272',
-  callerid2: '3405567088' }' */ 
+  callerid2: '3405567088' }'
+  *
+  * when callin through a trunk to IAX2 fax: (CASE G)
+EVENT 'CallConnected': headers = '{ event: 'Bridge',
+  privilege: 'call,all',
+  bridgestate: 'Link',
+  bridgetype: 'core',
+  channel1: 'SIP/2004-00001702',
+  channel2: 'IAX2/350-8199',
+  uniqueid1: '1308834534.12481',
+  uniqueid2: '1308834535.12482',
+  callerid1: '0817598495',
+  callerid2: '350' }' */
 am.addListener('callconnected', function(headers) {
         logger.info("EVENT 'CallConnected': headers = '" + sys.inspect(headers) + "'")
 	console.log("'callconnected' chStat = " + sys.inspect(chStat))
@@ -1009,7 +1021,7 @@ am.addListener('callconnected', function(headers) {
 				logger.info("added callConnectedUniqueid '" + headers.uniqueid1 + "' to trunk '" + trunkTypeext + "'")
 				updateAllClientsForOpWithTypeExt(trunkTypeext)
 			} else
-				logger.warn("callConneted uniqueid '" + headers.uniqueid1 + "' has already been added to trunk '" + trunkTypeext  + "'")
+				logger.warn("callConnected uniqueid '" + headers.uniqueid1 + "' has already been added to trunk '" + trunkTypeext  + "'")
 		}
 		logger.warn("discarded event 'callconnected'")
 		return
@@ -1024,7 +1036,19 @@ am.addListener('callconnected', function(headers) {
 			logger.info("added callConnectedUniqueid '" + headers.uniqueid2 + "' to trunk '" + trunkTypeext + "'")
 			updateAllClientsForOpWithTypeExt(trunkTypeext)
 		} else
-			logger.warn("callConneted uniqueid '" + headers.uniqueid2 + "' has already been added to trunk '" + trunkTypeext  + "'")
+			logger.warn("callConnected uniqueid '" + headers.uniqueid2 + "' has already been added to trunk '" + trunkTypeext  + "'")
+	}
+
+	// channel1 is a trunk and channel2 is an intern (CASE G)
+	if( modop.isChannelTrunk(headers.channel1) && modop.isChannelIntern(headers.channel2) ){
+		var trunkTypeext = modop.getTrunkTypeExtFromChannel(headers.channel1)
+		// add uniqueid of trunk 'headers.channel1' to trunk itself, if it isn't already been added
+		if( !modop.hasTrunkCallConnectedUniqueidWithTypeExt(trunkTypeext, headers.uniqueid1) ){
+			modop.addCallConnectedUniqueidTrunkWithTypeExt(trunkTypeext, headers.uniqueid1)
+			logger.info("added callConnectedUniqueid '" + headers.uniqueid1 + "' to trunk '" + trunkTypeext + "'")
+			updateAllClientsForOpWithTypeExt(trunkTypeext)
+		} else
+			logger.warn("callConnected uniqueid '" + headers.uniqueid1 + "' has already been added to trunk '" + trunkTypeext  + "'")
 	}
 
 	// advise two clients of call
