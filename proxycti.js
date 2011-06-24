@@ -1047,6 +1047,7 @@ am.addListener('callconnected', function(headers) {
 	  '1308813225.11191': { channel: 'SIP/2001-000014bf' } } */
 	// check if the callconnected is between internal and intermediate node created by asterisk when the call pass through a queue
 	if( headers.callerid1==headers.callerid2 && headers.channel2.indexOf('Local/')!=-1 && headers.channel2.indexOf('@from-internal-')!=-1 && headers.channel2.indexOf(';1')!=-1  ){ // (CASE E)
+		// add uniquedid
 		if( modop.isChannelTrunk(headers.channel1) ){ // (CASE D)
 			var trunkTypeext = modop.getTrunkTypeExtFromChannel(headers.channel1)
 			// add uniqueid of trunk 'headers.channel1' to trunk itself, if it isn't already been added
@@ -1056,9 +1057,14 @@ am.addListener('callconnected', function(headers) {
 				updateAllClientsForOpWithTypeExt(trunkTypeext)
 			} else
 				logger.warn("callConnected uniqueid '" + headers.uniqueid1 + "' has already been added to trunk '" + trunkTypeext  + "'")
-
-			// Faccio lo stesso per l'utente del channel 2: aggiungo l'uniqueid
-
+		} else if(modop.isChannelIntern(headers.channel1)){  // channel 1 is intern
+			var internTypeExt = modop.getInternTypeExtFromChannel(headers.channel1)
+			if(!modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, headers.uniqueid1)){
+				modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid1)
+				logger.info("added callConnectedUniqueid '" + headers.uniqueid1 + "' to intern '" + internTypeExt + "'")
+				updateAllClientsForOpWithTypeExt(internTypeExt)
+			} else
+				logger.warn("callConnected uniqueid '" + headers.uniqueid1 + "' has already been added to intern '" + internTypeExt + "'")
 		}
 		logger.warn("discarded event 'callconnected'")
 		return
@@ -1074,6 +1080,15 @@ am.addListener('callconnected', function(headers) {
 			updateAllClientsForOpWithTypeExt(trunkTypeext)
 		} else
 			logger.warn("callConnected uniqueid '" + headers.uniqueid2 + "' has already been added to trunk '" + trunkTypeext  + "'")
+
+		// add uniqueid of intern 'headers.channel1' to intern itself, if it isn't already been added
+		var internTypeExt = modop.getInternTypeExtFromChannel(headers.channel1)
+		if(!modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, headers.uniqueid1)){
+			modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid1)
+			logger.info("added callConnectedUniqueid '" + headers.uniqueid1 + "' to intern '" + internTypeExt + "'")
+			updateAllClientsForOpWithTypeExt(internTypeExt)
+		} else
+			logger.warn("callConnected uniqueid '" + headers.uniqueid1 + "' has already been added to intern '" + internTypeExt + "'")
 	}
 
 	// channel1 is a trunk and channel2 is an intern (CASE G)
@@ -1086,6 +1101,46 @@ am.addListener('callconnected', function(headers) {
 			updateAllClientsForOpWithTypeExt(trunkTypeext)
 		} else
 			logger.warn("callConnected uniqueid '" + headers.uniqueid1 + "' has already been added to trunk '" + trunkTypeext  + "'")
+
+		// add uniqueid of intern 'headers.channel2' to intern itself, if it isn't already been added
+		var internTypeExt = modop.getInternTypeExtFromChannel(headers.channel2)
+		if(!modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, headers.uniqueid2)){
+			modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid2)
+			logger.info("added callConnectedUniqueid '" + headers.uniqueid2 + "' to intern '" + internTypeExt + "'")
+			updateAllClientsForOpWithTypeExt(internTypeExt)
+		} else
+			logger.warn("callConnected uniqueid '" + headers.uniqueid2 + "' has already been added to intern '" + internTypeExt + "'")
+	}
+
+	// the call is for queue and this is the part from intermediate node ...;2 and the intern
+	if( headers.channel1.indexOf('Local/')!=-1 && headers.channel1.indexOf('@from-internal-')!=-1 && headers.channel1.indexOf(';2')!=-1  ){
+		var internTypeExt = modop.getInternTypeExtFromChannel(headers.channel2)
+		if(!modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, headers.uniqueid2)){
+			modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid2)
+			logger.info("added callConnectedUniqueid '" + headers.uniqueid2 + "' to intern '" + internTypeExt + "'")
+			updateAllClientsForOpWithTypeExt(internTypeExt)
+		} else
+			logger.warn("callConnected uniqueid '" + headers.uniqueid2 + "' has already been added to intern '" + internTypeExt + "'")
+	}
+
+	// the call is between 2 intern
+	if(modop.isChannelIntern(headers.channel1) && modop.isChannelIntern(headers.channel2)){
+		// channel 1
+		var internTypeExt1 = modop.getInternTypeExtFromChannel(headers.channel1)
+		if(!modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt1, headers.uniqueid1)){
+                        modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt1, headers.uniqueid1)
+                        logger.info("added callConnectedUniqueid '" + headers.uniqueid1 + "' to intern '" + internTypeExt1 + "'")
+                        updateAllClientsForOpWithTypeExt(internTypeExt1)
+                } else
+                        logger.warn("callConnected uniqueid '" + headers.uniqueid1 + "' has already been added to intern '" + internTypeExt1 + "'")
+		// channel 2
+		var internTypeExt2 = modop.getInternTypeExtFromChannel(headers.channel2)
+                if(!modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt2, headers.uniqueid2)){
+                        modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt2, headers.uniqueid2)
+                        logger.info("added callConnectedUniqueid '" + headers.uniqueid2 + "' to intern '" + internTypeExt2 + "'")
+                        updateAllClientsForOpWithTypeExt(internTypeExt2)
+                } else
+                        logger.warn("callConnected uniqueid '" + headers.uniqueid2 + "' has already been added to intern '" + internTypeExt2 + "'")
 	}
 
 	// advise two clients of call
