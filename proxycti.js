@@ -863,6 +863,7 @@ am.addListener('hangup', function(headers) {
 		var internTypeExt = modop.getInternTypeExtFromChannel(chStat[headers.uniqueid].channel)
 		if( modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, headers.uniqueid) ){ // remove callconnectedUniqueid for current intern
 			modop.removeCallConnectedUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid)
+			modop.updateHangupUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid) // add uniqueid of current hangup as 'hangupUniqueid'
 			logger.info("removed callConnectedUniqueid '" + headers.uniqueid + "' from intern '" + internTypeExt + "'")
 			updateAllClientsForOpWithTypeExt(internTypeExt)
 		} else
@@ -875,6 +876,7 @@ am.addListener('hangup', function(headers) {
 		var internTypeExt = temp + '/' + headers.channel.split('-')[0].split('/')[2]
 		if( modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, headers.uniqueid) ){ // remove callconnectedUniqueid for current intern
 			modop.removeCallConnectedUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid)
+			modop.updateHangupUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid) // add uniqueid of current hangup as 'hangupUniqueid'
 			logger.info("removed callConnectedUniqueid '" + headers.uniqueid + "' from intern '" + internTypeExt + "'")
 			updateAllClientsForOpWithTypeExt(internTypeExt)
 		} else
