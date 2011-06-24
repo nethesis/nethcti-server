@@ -103,6 +103,11 @@ exports.Modop = function(){
 	this.hasInternCallConnectedUniqueidWithTypeExt = function(typeExt, uniqueid) { return hasInternCallConnectedUniqueidWithTypeExt(typeExt, uniqueid) }
 	this.addCallConnectedUniqueidInternWithTypeExt = function(typeExt, uniqueid, chValue) { addCallConnectedUniqueidInternWithTypeExt(typeExt, uniqueid, chValue) }
 	this.removeCallConnectedUniqueidInternWithTypeExt = function(typeExt, uniqueid) { removeCallConnectedUniqueidInternWithTypeExt(typeExt, uniqueid) }
+	this.updateHangupUniqueidInternWithTypeExt = function(typeExt, uniqueid) { updateHangupUniqueidInternWithTypeExt(typeExt, uniqueid) }
+}
+function updateHangupUniqueidInternWithTypeExt(typeExt, uniqueid){
+	if(extStatusForOp[typeExt].tab=='interno')
+		extStatusForOp[typeExt].hangupUniqueid = uniqueid
 }
 function getInternTypeExtFromChannel(ch){
 	for(key in extStatusForOp)
