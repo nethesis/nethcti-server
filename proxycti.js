@@ -634,7 +634,9 @@ am.addListener('dialing', function(headers) {
 		}
 		if(modop.isExtPresent(to)){
 	                modop.updateExtStatusOpDialTo(to, from)
-	        	updateAllClientsForOpWithExt(to)
+	        	//updateAllClientsForOpWithExt(to) 
+			// commented because send newState to all clients with the status set to 'up'. However there
+			// will be a newState event with the status ringing and with the right dialExt 
 		}	
 	}
 })
