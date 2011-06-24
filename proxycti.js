@@ -853,6 +853,28 @@ am.addListener('hangup', function(headers) {
 			logger.warn("callConnected uniqueid '" + headers.uniqueid + "' has already not present into trunk '" + trunkTypeExt + "'")
 	}
 
+	if(modop.isChannelIntern(chStat[headers.uniqueid].channel)){ // headers.channel is an intern: remove callConnectedUniqueid
+		var internTypeExt = modop.getInternTypeExtFromChannel(chStat[headers.uniqueid].channel)
+		if( modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, headers.uniqueid) ){ // remove callconnectedUniqueid for current intern
+			modop.removeCallConnectedUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid)
+			logger.info("removed callConnectedUniqueid '" + headers.uniqueid + "' from intern '" + internTypeExt + "'")
+			updateAllClientsForOpWithTypeExt(internTypeExt)
+		} else
+			logger.warn("callConnected uniqueid '" + headers.uniqueid + "' has already not present into intern '" + internTypeExt + "'")
+	}
+
+	// headers.channel = 'AsyncGoto/SIP/270-000002dc<ZOMBIE>'
+	if(headers.channel.indexOf('AsyncGoto/SIP/')!=-1 && headers.channel.indexOf('<ZOMBIE>')!=-1){ // headers.channel is an intern that has redirect: remove callConnectedUniqueid
+		var temp = headers.channel.split('/')[1] // SIP
+		var internTypeExt = temp + '/' + headers.channel.split('-')[0].split('/')[2]
+		if( modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, headers.uniqueid) ){ // remove callconnectedUniqueid for current intern
+			modop.removeCallConnectedUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid)
+			logger.info("removed callConnectedUniqueid '" + headers.uniqueid + "' from intern '" + internTypeExt + "'")
+			updateAllClientsForOpWithTypeExt(internTypeExt)
+		} else
+			logger.warn("callConnected uniqueid '" + headers.uniqueid + "' has already not present into intern '" + internTypeExt + "'")
+        }
+
 	// ext
 	var ext
 	if( chStat[headers.uniqueid].calleridnum!='' && chStat[headers.uniqueid].calleridnum!=undefined && !modop.isExtGroup(chStat[headers.uniqueid].calleridnum) ){
