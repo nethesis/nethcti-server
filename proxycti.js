@@ -387,8 +387,6 @@ am.addListener('newstate', function(headers){
 	if( modop.isChannelTrunk(chStat[headers.uniqueid].channel) ){ // newstate is relative to a trunk
 		modop.updateTrunkStatusWithChannel(chStat[headers.uniqueid].channel, headers.channelstatedesc.toLowerCase())
 	} else {
-		//modop.updateExtStatusForOpWithExt(chStat[headers.uniqueid].calleridnum, chStat[headers.uniqueid].status)
-		//updateAllClientsForOpWithExt(chStat[headers.uniqueid].calleridnum)
 		modop.updateExtStatusForOpWithTypeExt(typeext, chStat[headers.uniqueid].status)
 		updateAllClientsForOpWithTypeExt(typeext)
 	}
