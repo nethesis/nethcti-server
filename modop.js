@@ -101,7 +101,7 @@ exports.Modop = function(){
 	this.getExtInternFromChannel = function(ch) { return getExtInternFromChannel(ch) }
 	this.getInternTypeExtFromChannel = function(ch) { return getInternTypeExtFromChannel(ch) }
 	this.hasInternCallConnectedUniqueidWithTypeExt = function(typeExt, uniqueid) { return hasInternCallConnectedUniqueidWithTypeExt(typeExt, uniqueid) }
-	this.addCallConnectedUniqueidInternWithTypeExt = function(typeExt, uniqueid) { addCallConnectedUniqueidInternWithTypeExt(typeExt, uniqueid) }
+	this.addCallConnectedUniqueidInternWithTypeExt = function(typeExt, uniqueid, chValue) { addCallConnectedUniqueidInternWithTypeExt(typeExt, uniqueid, chValue) }
 	this.removeCallConnectedUniqueidInternWithTypeExt = function(typeExt, uniqueid) { removeCallConnectedUniqueidInternWithTypeExt(typeExt, uniqueid) }
 }
 function getInternTypeExtFromChannel(ch){
@@ -144,9 +144,9 @@ function getTrunkTypeExtFromChannel(ch){
 		if( ch.indexOf(key)!=-1 && extStatusForOp[key].tab=='fasci' )
 			return key
 }
-function addCallConnectedUniqueidInternWithTypeExt(typeExt, uniqueid){
+function addCallConnectedUniqueidInternWithTypeExt(typeExt, uniqueid, chValue){
 	if( extStatusForOp[typeExt].tab=='interno'){
-		extStatusForOp[typeExt].callConnectedUniqueid[uniqueid] = ''
+		extStatusForOp[typeExt].callConnectedUniqueid[uniqueid] = chValue
 		extStatusForOp[typeExt].callConnectedCount++
 	}
 }
