@@ -719,6 +719,16 @@ EVENT 'Hangup': headers = { event: 'Hangup',
   calleridnum: '700',
   calleridname: '<unknown>',
   cause: '16',
+  causetxt: 'Normal Clearing' } 
+  *
+  * 250 is already connected with external ext of remote location: calleridnum is not it (CASE I)
+EVENT 'Hangup': headers = { event: 'Hangup',
+  privilege: 'call,all',
+  channel: 'SIP/250-000018da',
+  uniqueid: '1308905184.13346',
+  calleridnum: '5250',
+  calleridname: '<unknown>',
+  cause: '16',
   causetxt: 'Normal Clearing' } */
 am.addListener('hangup', function(headers) {
         logger.info("EVENT 'Hangup': headers = " + sys.inspect(headers))
@@ -809,6 +819,14 @@ am.addListener('hangup', function(headers) {
 	   { channel: 'SIP/271-0000034a',
 	     status: 'ringing',
 	     calleridnum: '700',        (700 is a group)
+	     calleridname: '' } } 
+	*
+	* 250 is already connected with ext of remote location: calleridnum not is it  (CASE I)
+	chStat = { '1308905184.13345': { channel: 'IAX2/from-astr-2703' },
+	  '1308905184.13346':
+	   { channel: 'SIP/250-000018da',
+	     status: 'ringing',
+	     calleridnum: '5250',
 	     calleridname: '' } } */
 	/* check if the chStat contains the entry relative to this hangup event.
 	 * This is because this proxy server can be started after the asterisk server. So some calling can be in execution when this
@@ -843,7 +861,8 @@ am.addListener('hangup', function(headers) {
 		     calleridname: '',
 		     calleridnum: '270',
 		     status: 'up' } } */
-		ext = chStat[headers.uniqueid].calleridnum
+		// because (CASE I) is not possibile to calculate ext with ( ext = chStat[headers.uniqueid].calleridnum ). So:
+		ext = modop.getExtInternFromChannel(chStat[headers.uniqueid].channel)
 	}
 	else{
 		/* { '1308643183.682': 
