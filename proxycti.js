@@ -25,6 +25,8 @@ const SPY_PREFIX = "SPY-";
 const REDIRECT_VM_PREFIX = "REDIR_VM-";
 const START_TAG_FILENAME = "auto-";
 const LOGFILE = './log/proxy.log';
+const DIAL_FROM = 1
+const DIAL_TO = 0
 // asterisk manager
 var am;
 // the server
@@ -625,12 +627,16 @@ am.addListener('dialing', function(headers) {
 			/* check also !modop.isChannelTrunk(headers.channel)  because (CASE H): 
 			 * headers.calleridnum come from trunk, that is remote location but is equal to local intern (namesake) */
 			if(modop.isExtPresent(from) && !modop.isChannelTrunk(headers.channel) ){ 
-				modop.updateExtStatusOpDialFrom(from, to)
+				chStat[headers.uniqueid].dialExt = to // set dial from identification in chStat (dialExt)
+				chStat[headers.uniqueid].dialDirection = DIAL_FROM
+				modop.updateExtStatusOpDialFrom(from, to) // set dial from identification in extStatusForOp
 		        	updateAllClientsForOpWithExt(from)
 			} else if( modop.isExtPresent(from) && modop.isChannelTrunk(headers.channel) )
 				logger.warn("[" + from + "] is namesake: comes from remote location through trunk '" + headers.channel + "'")
 		}
 		if(modop.isExtPresent(to)){
+			chStat[headers.destuniqueid].dialExt = from // set dial to identification in chStat (dialExt)
+			chStat[headers.destuniqueid].dialDirection = DIAL_TO
 	                modop.updateExtStatusOpDialTo(to, from)
 	        	//updateAllClientsForOpWithExt(to) 
 			// commented because send newState to all clients with the status set to 'up'. However there
@@ -1082,7 +1088,7 @@ am.addListener('callconnected', function(headers) {
 		} else if(modop.isChannelIntern(headers.channel1)){  // channel 1 is intern
 			var internTypeExt = modop.getInternTypeExtFromChannel(headers.channel1)
 			if(!modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, headers.uniqueid1)){
-				modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid1)
+				modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid1, chStat[headers.uniqueid1])
 				logger.info("added callConnectedUniqueid '" + headers.uniqueid1 + "' to intern '" + internTypeExt + "'")
 				updateAllClientsForOpWithTypeExt(internTypeExt)
 			} else
@@ -1106,7 +1112,7 @@ am.addListener('callconnected', function(headers) {
 		// add uniqueid of intern 'headers.channel1' to intern itself, if it isn't already been added
 		var internTypeExt = modop.getInternTypeExtFromChannel(headers.channel1)
 		if(!modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, headers.uniqueid1)){
-			modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid1)
+			modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid1, chStat[headers.uniqueid1])
 			logger.info("added callConnectedUniqueid '" + headers.uniqueid1 + "' to intern '" + internTypeExt + "'")
 			updateAllClientsForOpWithTypeExt(internTypeExt)
 		} else
@@ -1127,7 +1133,7 @@ am.addListener('callconnected', function(headers) {
 		// add uniqueid of intern 'headers.channel2' to intern itself, if it isn't already been added
 		var internTypeExt = modop.getInternTypeExtFromChannel(headers.channel2)
 		if(!modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, headers.uniqueid2)){
-			modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid2)
+			modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid2, chStat[headers.uniqueid2])
 			logger.info("added callConnectedUniqueid '" + headers.uniqueid2 + "' to intern '" + internTypeExt + "'")
 			updateAllClientsForOpWithTypeExt(internTypeExt)
 		} else
@@ -1138,7 +1144,7 @@ am.addListener('callconnected', function(headers) {
 	if( headers.channel1.indexOf('Local/')!=-1 && headers.channel1.indexOf('@from-internal-')!=-1 && headers.channel1.indexOf(';2')!=-1  ){
 		var internTypeExt = modop.getInternTypeExtFromChannel(headers.channel2)
 		if(!modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, headers.uniqueid2)){
-			modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid2)
+			modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid2, chStat[headers.uniqueid2])
 			logger.info("added callConnectedUniqueid '" + headers.uniqueid2 + "' to intern '" + internTypeExt + "'")
 			updateAllClientsForOpWithTypeExt(internTypeExt)
 		} else
@@ -1150,7 +1156,7 @@ am.addListener('callconnected', function(headers) {
 		// channel 1
 		var internTypeExt1 = modop.getInternTypeExtFromChannel(headers.channel1)
 		if(!modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt1, headers.uniqueid1)){
-                        modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt1, headers.uniqueid1)
+                        modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt1, headers.uniqueid1, chStat[headers.uniqueid1])
                         logger.info("added callConnectedUniqueid '" + headers.uniqueid1 + "' to intern '" + internTypeExt1 + "'")
                         updateAllClientsForOpWithTypeExt(internTypeExt1)
                 } else
@@ -1158,7 +1164,7 @@ am.addListener('callconnected', function(headers) {
 		// channel 2
 		var internTypeExt2 = modop.getInternTypeExtFromChannel(headers.channel2)
                 if(!modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt2, headers.uniqueid2)){
-                        modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt2, headers.uniqueid2)
+                        modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt2, headers.uniqueid2, chStat[headers.uniqueid2])
                         logger.info("added callConnectedUniqueid '" + headers.uniqueid2 + "' to intern '" + internTypeExt2 + "'")
                         updateAllClientsForOpWithTypeExt(internTypeExt2)
                 } else
