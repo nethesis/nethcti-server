@@ -98,6 +98,12 @@ exports.Modop = function(){
 	this.isChannelIntern = function(ch) { return isChannelIntern(ch) }
 	this.getInternTypeExtFromChannel = function(ch) { return getInternTypeExtFromChannel(ch) }
 	this.isExtGroup = function(ext) { return isExtGroup(ext) }
+	this.getExtInternFromChannel = function(ch) { return getExtInternFromChannel(ch) }
+}
+function getExtInternFromChannel(ch){
+	for(key in extStatusForOp)
+		if(ch.indexOf(key)!=-1 && extStatusForOp[key].tab=='interno')
+			return extStatusForOp[key].Extension
 }
 function isExtGroup(ext){
 	for(key in extStatusForOp){
