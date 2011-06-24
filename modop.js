@@ -101,6 +101,7 @@ exports.Modop = function(){
 	this.getExtInternFromChannel = function(ch) { return getExtInternFromChannel(ch) }
 	this.getInternTypeExtFromChannel = function(ch) { return getInternTypeExtFromChannel(ch) }
 	this.hasInternCallConnectedUniqueidWithTypeExt = function(typeExt, uniqueid) { return hasInternCallConnectedUniqueidWithTypeExt(typeExt, uniqueid) }
+	this.addCallConnectedUniqueidInternWithTypeExt = function(typeExt, uniqueid) { addCallConnectedUniqueidInternWithTypeExt(typeExt, uniqueid) }
 }
 function getInternTypeExtFromChannel(ch){
 	for(key in extStatusForOp)
@@ -135,6 +136,12 @@ function getTrunkTypeExtFromChannel(ch){
 	for(key in extStatusForOp)
 		if( ch.indexOf(key)!=-1 && extStatusForOp[key].tab=='fasci' )
 			return key
+}
+function addCallConnectedUniqueidInternWithTypeExt(typeExt, uniqueid){
+	if( extStatusForOp[typeExt].tab=='interno'){
+		extStatusForOp[typeExt].callConnectedUniqueid[uniqueid] = ''
+		extStatusForOp[typeExt].callConnectedCount++
+	}
 }
 /* add uniqueid of channel to trunk identified by 'typeExt'. Uniqueid and channel is relative to
  * received 'CallConnected' event */
