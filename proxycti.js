@@ -1037,6 +1037,9 @@ am.addListener('callconnected', function(headers) {
 				updateAllClientsForOpWithTypeExt(trunkTypeext)
 			} else
 				logger.warn("callConnected uniqueid '" + headers.uniqueid1 + "' has already been added to trunk '" + trunkTypeext  + "'")
+
+			// Faccio lo stesso per l'utente del channel 2: aggiungo l'uniqueid
+
 		}
 		logger.warn("discarded event 'callconnected'")
 		return
