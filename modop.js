@@ -567,11 +567,22 @@ function initCallConnectedCountForTrunk(){
 /* add object 'callConnectedUniqueid' to all trunk. This object has 'uniquedid' of callconnected
  * event as a key and an empty string ('') as a value */
 function initCallConnectedUniqueidForTrunk(){
-	for(key in extStatusForOp){
-		if(extStatusForOp[key].tab=='fasci'){
+	for(key in extStatusForOp)
+		if(extStatusForOp[key].tab=='fasci')
 			extStatusForOp[key].callConnectedUniqueid = {}
-		}
-	}
+}
+// add callConnectedCount = 0 to all intern
+function initCallConnectedCountForIntern(){
+        for(key in extStatusForOp)
+                if(extStatusForOp[key].tab=='interno')
+                        extStatusForOp[key].callConnectedCount = 0
+}
+/* add object 'callConnectedUniqueid' to all intern. This object has 'uniquedid' of callconnected
+ * event as a key and an empty string ('') as a value */
+function initCallConnectedUniqueidForIntern(){
+        for(key in extStatusForOp)
+                if(extStatusForOp[key].tab=='interno')
+                        extStatusForOp[key].callConnectedUniqueid = {}
 }
 
 /* Initialize 'extStatusForOp'. Initially it read a configuration file that contains list of
@@ -587,6 +598,9 @@ function initExtStatusForOp(){
 	// init trunk
 	initCallConnectedCountForTrunk()
 	initCallConnectedUniqueidForTrunk()
+	// init intern
+	initCallConnectedCountForIntern()
+	initCallConnectedUniqueidForIntern()
 	// create action for asterisk server that generate series of 'PeerEntry' events
         var actionSIPPeersOP = {
                 Action: 'SIPPeers'
