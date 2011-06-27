@@ -608,11 +608,6 @@ function initDialingUniqueidForIntern(){
 		if(extStatusForOp[key].tab=='interno')
 			extStatusForOp[key].dialingUniqueid = {}
 }
-function initChannelUniqueidForIntern(){
-	for(key in extStatusForOp)
-		if(extStatusForOp[key].tab=='interno')
-			extStatusForOp[key].channelUniqueid = {}
-}
 /* Initialize 'extStatusForOp'. Initially it read a configuration file that contains list of
  * all extensions. After that it sends the 'SIPPeers' action to the asterisk server. So, it
  * successively receives more 'PeerEntry' events from the asterisk server and at the end it receive
