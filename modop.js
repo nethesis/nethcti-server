@@ -96,7 +96,6 @@ exports.Modop = function(){
 	this.getTrunkTypeExtFromChannel = function(ch) { return getTrunkTypeExtFromChannel(ch) }
 	this.removeCallConnectedUniqueidTrunkWithTypeExt = function(typeExt, uniqueid) { removeCallConnectedUniqueidTrunkWithTypeExt(typeExt, uniqueid) }
 	this.isChannelIntern = function(ch) { return isChannelIntern(ch) }
-	this.getInternTypeExtFromChannel = function(ch) { return getInternTypeExtFromChannel(ch) }
 	this.isExtGroup = function(ext) { return isExtGroup(ext) }
 	this.getExtInternFromChannel = function(ch) { return getExtInternFromChannel(ch) }
 	this.getInternTypeExtFromChannel = function(ch) { return getInternTypeExtFromChannel(ch) }
@@ -104,10 +103,25 @@ exports.Modop = function(){
 	this.addCallConnectedUniqueidInternWithTypeExt = function(typeExt, uniqueid, chValue) { addCallConnectedUniqueidInternWithTypeExt(typeExt, uniqueid, chValue) }
 	this.removeCallConnectedUniqueidInternWithTypeExt = function(typeExt, uniqueid) { removeCallConnectedUniqueidInternWithTypeExt(typeExt, uniqueid) }
 	this.updateHangupUniqueidInternWithTypeExt = function(typeExt, uniqueid) { updateHangupUniqueidInternWithTypeExt(typeExt, uniqueid) }
+	this.addDialingUniqueidInternWithTypeExt = function(typeExt, uniqueid, chValue) { addDialingUniqueidInternWithTypeExt(typeExt, uniqueid, chValue) }
+	this.removeDialingUniqueidInternWithTypeExt = function(typeExt, uniqueid) { removeDialingUniqueidInternWithTypeExt(typeExt, uniqueid) }
+	this.hasInternDialingUniqueidWithTypeExt = function(typeExt, uniqueid) { return hasInternDialingUniqueidWithTypeExt(typeExt, uniqueid) }
+}
+function removeDialingUniqueidInternWithTypeExt(typeExt, uniqueid){
+	console.log("debug uniqueid = " + uniqueid)
+	console.log("DEBUG extStatusForOp[typeExt] = " + sys.inspect(extStatusForOp[typeExt]))
+	delete extStatusForOp[typeExt].dialingUniqueid[uniqueid]
+	console.log("DEBUG extStatusForOp[typeExt] = " + sys.inspect(extStatusForOp[typeExt]))
+}
+function addDialingUniqueidInternWithTypeExt(typeExt, uniqueid, chValue){
+	if(extStatusForOp[typeExt].tab=='interno'){
+		extStatusForOp[typeExt].dialingUniqueid[uniqueid] = chValue
+		extStatusForOp[typeExt].lastDialingUniqueid = uniqueid
+	}
 }
 function updateHangupUniqueidInternWithTypeExt(typeExt, uniqueid){
 	if(extStatusForOp[typeExt].tab=='interno')
-		extStatusForOp[typeExt].hangupUniqueid = uniqueid
+		extStatusForOp[typeExt].lastHangupUniqueid = uniqueid
 }
 function getInternTypeExtFromChannel(ch){
 	for(key in extStatusForOp)
@@ -137,11 +151,6 @@ function removeCallConnectedUniqueidTrunkWithTypeExt(typeExt, uniqueid){
 		delete extStatusForOp[typeExt].callConnectedUniqueid[uniqueid]
 		extStatusForOp[typeExt].callConnectedCount--
 	}
-}
-function getInternTypeExtFromChannel(ch){
-	for(key in extStatusForOp)
-		if(ch.indexOf(key)!=-1 && extStatusForOp[key].tab=='interno')
-			return key
 }
 // return typeext if the passed channel is a trunk
 function getTrunkTypeExtFromChannel(ch){
@@ -173,6 +182,10 @@ function addCallConnectedUniqueidTrunkWithChannel(ch, uniqueid){
 			extStatusForOp[key].callConnectedCount++
 		}
 	}
+}
+function hasInternDialingUniqueidWithTypeExt(typeExt, uniqueid){
+	if(extStatusForOp[typeExt].tab=='interno' && extStatusForOp[typeExt].dialingUniqueid[uniqueid]!=undefined ) return true
+	return false
 }
 function hasInternCallConnectedUniqueidWithTypeExt(typeExt, uniqueid){
 	if(extStatusForOp[typeExt].tab=='interno' && extStatusForOp[typeExt].callConnectedUniqueid[uniqueid]!=undefined ) return true
@@ -590,7 +603,16 @@ function initCallConnectedUniqueidForIntern(){
                 if(extStatusForOp[key].tab=='interno')
                         extStatusForOp[key].callConnectedUniqueid = {}
 }
-
+function initDialingUniqueidForIntern(){
+	for(key in extStatusForOp)
+		if(extStatusForOp[key].tab=='interno')
+			extStatusForOp[key].dialingUniqueid = {}
+}
+function initChannelUniqueidForIntern(){
+	for(key in extStatusForOp)
+		if(extStatusForOp[key].tab=='interno')
+			extStatusForOp[key].channelUniqueid = {}
+}
 /* Initialize 'extStatusForOp'. Initially it read a configuration file that contains list of
  * all extensions. After that it sends the 'SIPPeers' action to the asterisk server. So, it
  * successively receives more 'PeerEntry' events from the asterisk server and at the end it receive
@@ -605,8 +627,9 @@ function initExtStatusForOp(){
 	initCallConnectedCountForTrunk()
 	initCallConnectedUniqueidForTrunk()
 	// init intern
-	initCallConnectedCountForIntern()
 	initCallConnectedUniqueidForIntern()
+	initCallConnectedCountForIntern()
+	initDialingUniqueidForIntern()
 	// create action for asterisk server that generate series of 'PeerEntry' events
         var actionSIPPeersOP = {
                 Action: 'SIPPeers'
