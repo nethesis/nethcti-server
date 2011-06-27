@@ -153,6 +153,7 @@ function addCallConnectedUniqueidInternWithTypeExt(typeExt, uniqueid, chValue){
 	if( extStatusForOp[typeExt].tab=='interno'){
 		extStatusForOp[typeExt].callConnectedUniqueid[uniqueid] = chValue
 		extStatusForOp[typeExt].callConnectedCount++
+		extStatusForOp[typeExt].lastCallConnectedUniqueid = uniqueid
 	}
 }
 /* add uniqueid of channel to trunk identified by 'typeExt'. Uniqueid and channel is relative to
