@@ -626,18 +626,22 @@ am.addListener('dialing', function(headers) {
 		if(headers.channel.indexOf('Local/')==-1 && headers.channel.indexOf('@from-internal-')==-1 && headers.channel.indexOf(';2')==-1){ 
 			/* check also !modop.isChannelTrunk(headers.channel)  because (CASE H): 
 			 * headers.calleridnum come from trunk, that is remote location but is equal to local intern (namesake) */
-			if(modop.isExtPresent(from) && !modop.isChannelTrunk(headers.channel) ){ 
+			if(modop.isExtPresent(from) && modop.isChannelIntern(headers.channel) && !modop.isChannelTrunk(headers.channel) ){
 				chStat[headers.uniqueid].dialExt = to // set dial from identification in chStat (dialExt)
 				chStat[headers.uniqueid].dialDirection = DIAL_FROM
-				modop.updateExtStatusOpDialFrom(from, to) // set dial from identification in extStatusForOp
+				var internTypeExt = modop.getInternTypeExtFromChannel(headers.channel)
+				modop.addDialingUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid, chStat[headers.uniqueid])
+				logger.info("added dialingUniqueid '" + headers.uniqueid + "' to interTypeExt '" + internTypeExt + "'")
 		        	updateAllClientsForOpWithExt(from)
 			} else if( modop.isExtPresent(from) && modop.isChannelTrunk(headers.channel) )
 				logger.warn("[" + from + "] is namesake: comes from remote location through trunk '" + headers.channel + "'")
 		}
-		if(modop.isExtPresent(to)){
+		if(modop.isExtPresent(to) && modop.isChannelIntern(headers.destination)){
 			chStat[headers.destuniqueid].dialExt = from // set dial to identification in chStat (dialExt)
 			chStat[headers.destuniqueid].dialDirection = DIAL_TO
-	                modop.updateExtStatusOpDialTo(to, from)
+			var internTypeExt = modop.getInternTypeExtFromChannel(headers.destination)
+			modop.addDialingUniqueidInternWithTypeExt(internTypeExt, headers.destuniqueid, chStat[headers.destuniqueid])
+			logger.info("added dialingUniqueid '" + headers.destuniqueid + "' to interTypeExt '" + internTypeExt + "'")
 	        	//updateAllClientsForOpWithExt(to) 
 			// commented because send newState to all clients with the status set to 'up'. However there
 			// will be a newState event with the status ringing and with the right dialExt 
@@ -859,28 +863,38 @@ am.addListener('hangup', function(headers) {
 			logger.warn("callConnected uniqueid '" + headers.uniqueid + "' has already not present into trunk '" + trunkTypeExt + "'")
 	}
 
-	if(modop.isChannelIntern(chStat[headers.uniqueid].channel)){ // headers.channel is an intern: remove callConnectedUniqueid
+	if(modop.isChannelIntern(chStat[headers.uniqueid].channel)){ // headers.channel is an intern
 		var internTypeExt = modop.getInternTypeExtFromChannel(chStat[headers.uniqueid].channel)
-		if( modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, headers.uniqueid) ){ // remove callconnectedUniqueid for current intern
+		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt, headers.uniqueid)){
+			modop.removeDialingUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid)
+			logger.info("removed dialingUniqueid '" + headers.uniqueid + "' from intern '" + internTypeExt + "'")
+		} else
+			logger.warn("dialingUniqueid '" + headers.uniqueid + "' has already not present into intern '" + internTypeExt + "'")
+		if(modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, headers.uniqueid)){
 			modop.removeCallConnectedUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid)
-			modop.updateHangupUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid) // add uniqueid of current hangup as 'hangupUniqueid'
 			logger.info("removed callConnectedUniqueid '" + headers.uniqueid + "' from intern '" + internTypeExt + "'")
-			updateAllClientsForOpWithTypeExt(internTypeExt)
 		} else
 			logger.warn("callConnected uniqueid '" + headers.uniqueid + "' has already not present into intern '" + internTypeExt + "'")
+		modop.updateHangupUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid) // add uniqueid of current hangup as 'lastHangupUniqueid'
+		updateAllClientsForOpWithTypeExt(internTypeExt)
 	}
 
 	// headers.channel = 'AsyncGoto/SIP/270-000002dc<ZOMBIE>'
 	if(headers.channel.indexOf('AsyncGoto/SIP/')!=-1 && headers.channel.indexOf('<ZOMBIE>')!=-1){ // headers.channel is an intern that has redirect: remove callConnectedUniqueid
 		var temp = headers.channel.split('/')[1] // SIP
 		var internTypeExt = temp + '/' + headers.channel.split('-')[0].split('/')[2]
-		if( modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, headers.uniqueid) ){ // remove callconnectedUniqueid for current intern
+		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt, headers.uniqueid)){
+			modop.removeDialingUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid)
+			logger.info("removed dialingUniqueid '" + headers.uniqueid + "' from intern '" + internTypeExt + "'")
+		} else
+			logger.warn("dialingUniqueid '" + headers.uniqueid + "' has already not present into intern '" + internTypeExt + "'")
+		if(modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, headers.uniqueid)){
 			modop.removeCallConnectedUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid)
-			modop.updateHangupUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid) // add uniqueid of current hangup as 'hangupUniqueid'
 			logger.info("removed callConnectedUniqueid '" + headers.uniqueid + "' from intern '" + internTypeExt + "'")
-			updateAllClientsForOpWithTypeExt(internTypeExt)
 		} else
 			logger.warn("callConnected uniqueid '" + headers.uniqueid + "' has already not present into intern '" + internTypeExt + "'")
+		modop.updateHangupUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid) // add uniqueid of current hangup as 'lastHangupUniqueid'
+		updateAllClientsForOpWithTypeExt(internTypeExt)
         }
 
 	// ext
@@ -1089,12 +1103,17 @@ am.addListener('callconnected', function(headers) {
 				logger.warn("callConnected uniqueid '" + headers.uniqueid1 + "' has already been added to trunk '" + trunkTypeext  + "'")
 		} else if(modop.isChannelIntern(headers.channel1)){  // channel 1 is intern
 			var internTypeExt = modop.getInternTypeExtFromChannel(headers.channel1)
+			if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt, headers.uniqueid1)){
+				modop.removeDialingUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid1)
+				logger.info("removed dialingUniqueid '" + headers.uniqueid1 + "' from internTypeExt '" + internTypeExt + "'")
+			} else
+				logger.warn("dialingUniqueid '" + headers.uniqueid1 + "' has already not present into intern '" + internTypeExt  + "'")
 			if(!modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, headers.uniqueid1)){
 				modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid1, chStat[headers.uniqueid1])
-				logger.info("added callConnectedUniqueid '" + headers.uniqueid1 + "' to intern '" + internTypeExt + "'")
-				updateAllClientsForOpWithTypeExt(internTypeExt)
+				logger.info("added callConnectedUniqueid '" + headers.uniqueid1 + "' into intern '" + internTypeExt + "'")
 			} else
-				logger.warn("callConnected uniqueid '" + headers.uniqueid1 + "' has already been added to intern '" + internTypeExt + "'")
+				logger.warn("callConnectedUniqueid '" + headers.uniqueid1 + "' has already present into intern '" + internTypeExt  + "'")
+			updateAllClientsForOpWithTypeExt(internTypeExt)
 		}
 		logger.warn("discarded event 'callconnected'")
 		return
@@ -1113,12 +1132,17 @@ am.addListener('callconnected', function(headers) {
 
 		// add uniqueid of intern 'headers.channel1' to intern itself, if it isn't already been added
 		var internTypeExt = modop.getInternTypeExtFromChannel(headers.channel1)
+		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt, headers.uniqueid1)){
+			modop.removeDialingUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid1)
+			logger.info("removed dialingUniqueid '" + headers.uniqueid1 + "' from internTypeExt '" + internTypeExt + "'")
+		} else
+			logger.warn("dialingUniqueid '" + headers.uniqueid1 + "' has already not present into intern '" + internTypeExt  + "'")
 		if(!modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, headers.uniqueid1)){
 			modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid1, chStat[headers.uniqueid1])
-			logger.info("added callConnectedUniqueid '" + headers.uniqueid1 + "' to intern '" + internTypeExt + "'")
-			updateAllClientsForOpWithTypeExt(internTypeExt)
+			logger.info("added callConnectedUniqueid '" + headers.uniqueid1 + "' into intern '" + internTypeExt + "'")
 		} else
-			logger.warn("callConnected uniqueid '" + headers.uniqueid1 + "' has already been added to intern '" + internTypeExt + "'")
+			logger.warn("callConnectedUniqueid '" + headers.uniqueid1 + "' has already present into intern '" + internTypeExt  + "'")
+		updateAllClientsForOpWithTypeExt(internTypeExt)
 	}
 
 	// channel1 is a trunk and channel2 is an intern (CASE G)
@@ -1134,43 +1158,63 @@ am.addListener('callconnected', function(headers) {
 
 		// add uniqueid of intern 'headers.channel2' to intern itself, if it isn't already been added
 		var internTypeExt = modop.getInternTypeExtFromChannel(headers.channel2)
+		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt, headers.uniqueid2)){
+			modop.removeDialingUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid2)
+			logger.info("removed dialingUniqueid '" + headers.uniqueid2 + "' from internTypeExt '" + internTypeExt + "'")
+		} else
+			logger.warn("dialingUniqueid '" + headers.uniqueid2 + "' has already not present into intern '" + internTypeext  + "'")
 		if(!modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, headers.uniqueid2)){
 			modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid2, chStat[headers.uniqueid2])
-			logger.info("added callConnectedUniqueid '" + headers.uniqueid2 + "' to intern '" + internTypeExt + "'")
-			updateAllClientsForOpWithTypeExt(internTypeExt)
+			logger.info("added callConnectedUniqueid '" + headers.uniqueid2 + "' into intern '" + internTypeExt + "'")
 		} else
-			logger.warn("callConnected uniqueid '" + headers.uniqueid2 + "' has already been added to intern '" + internTypeExt + "'")
+			logger.warn("callConnectedUniqueid '" + headers.uniqueid2 + "' has already present into intern '" + internTypeExt  + "'")
+		updateAllClientsForOpWithTypeExt(internTypeExt)
 	}
 
 	// the call is for queue and this is the part from intermediate node ...;2 and the intern
 	if( headers.channel1.indexOf('Local/')!=-1 && headers.channel1.indexOf('@from-internal-')!=-1 && headers.channel1.indexOf(';2')!=-1  ){
 		var internTypeExt = modop.getInternTypeExtFromChannel(headers.channel2)
+		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt, headers.uniqueid2)){
+			modop.removeDialingUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid2)
+			logger.info("removed dialingUniqueid '" + headers.uniqueid2 + "' from internTypeExt '" + internTypeExt + "'")
+		} else
+			logger.warn("dialingUniqueid '" + headers.uniqueid2 + "' has already not present into intern '" + internTypeext  + "'")
 		if(!modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, headers.uniqueid2)){
 			modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid2, chStat[headers.uniqueid2])
-			logger.info("added callConnectedUniqueid '" + headers.uniqueid2 + "' to intern '" + internTypeExt + "'")
-			updateAllClientsForOpWithTypeExt(internTypeExt)
+			logger.info("added callConnectedUniqueid '" + headers.uniqueid2 + "' into intern '" + internTypeExt + "'")
 		} else
-			logger.warn("callConnected uniqueid '" + headers.uniqueid2 + "' has already been added to intern '" + internTypeExt + "'")
+			logger.warn("callConnectedUniqueid '" + headers.uniqueid2 + "' has already present into intern '" + internTypeExt  + "'")
+		updateAllClientsForOpWithTypeExt(internTypeExt)
 	}
 
 	// the call is between 2 intern
 	if(modop.isChannelIntern(headers.channel1) && modop.isChannelIntern(headers.channel2)){
 		// channel 1
 		var internTypeExt1 = modop.getInternTypeExtFromChannel(headers.channel1)
+		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt1, headers.uniqueid1)){
+			modop.removeDialingUniqueidInternWithTypeExt(internTypeExt1, headers.uniqueid1)
+			logger.info("removed dialingUniqueid '" + headers.uniqueid1 + "' from internTypeExt '" + internTypeExt1 + "'")
+		} else
+			logger.warn("dialingUniqueid '" + headers.uniqueid1 + "' has already not present into intern '" + internTypeext1  + "'")
 		if(!modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt1, headers.uniqueid1)){
-                        modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt1, headers.uniqueid1, chStat[headers.uniqueid1])
-                        logger.info("added callConnectedUniqueid '" + headers.uniqueid1 + "' to intern '" + internTypeExt1 + "'")
-                        updateAllClientsForOpWithTypeExt(internTypeExt1)
-                } else
-                        logger.warn("callConnected uniqueid '" + headers.uniqueid1 + "' has already been added to intern '" + internTypeExt1 + "'")
+			modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt1, headers.uniqueid1, chStat[headers.uniqueid1])
+			logger.info("added callConnectedUniqueid '" + headers.uniqueid1 + "' into intern '" + internTypeExt1 + "'")
+		} else
+			logger.warn("callConnectedUniqueid '" + headers.uniqueid1 + "' has already present into intern '" + internTypeExt1  + "'")
+                updateAllClientsForOpWithTypeExt(internTypeExt1)
 		// channel 2
 		var internTypeExt2 = modop.getInternTypeExtFromChannel(headers.channel2)
-                if(!modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt2, headers.uniqueid2)){
-                        modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt2, headers.uniqueid2, chStat[headers.uniqueid2])
-                        logger.info("added callConnectedUniqueid '" + headers.uniqueid2 + "' to intern '" + internTypeExt2 + "'")
-                        updateAllClientsForOpWithTypeExt(internTypeExt2)
-                } else
-                        logger.warn("callConnected uniqueid '" + headers.uniqueid2 + "' has already been added to intern '" + internTypeExt2 + "'")
+		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt2, headers.uniqueid2)){
+			modop.removeDialingUniqueidInternWithTypeExt(internTypeExt2, headers.uniqueid2)
+			logger.info("removed dialingUniqueid '" + headers.uniqueid2 + "' from internTypeExt '" + internTypeExt2 + "'")
+		} else
+			logger.warn("dialingUniqueid '" + headers.uniqueid2 + "' has already not present into intern '" + internTypeExt2  + "'")
+		if(!modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt2, headers.uniqueid2)){
+			modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt2, headers.uniqueid2, chStat[headers.uniqueid2])
+			logger.info("added callConnectedUniqueid '" + headers.uniqueid2 + "' into intern '" + internTypeExt2 + "'")
+		} else
+			logger.warn("callConnectedUniqueid '" + headers.uniqueid2 + "' has already present into intern '" + internTypeExt2  + "'")
+                updateAllClientsForOpWithTypeExt(internTypeExt2)
 	}
 
 	// advise two clients of call
@@ -1214,9 +1258,9 @@ am.addListener('callconnected', function(headers) {
 am.addListener('agentcalled', function(headers) {
 	logger.info("EVENT 'AgentCalled': headers = " + sys.inspect(headers))
 	var from = chStat[headers.uniqueid].calleridnum
-	if(modop.isExtPresent(from)){
-		modop.updateExtStatusOpDialFrom(from, headers.queue)
-		updateAllClientsForOpWithExt(from)
+	if(modop.isExtPresent(from) && modop.isChannelIntern(headers.channelcalling)){
+		chStat[headers.uniqueid].dialDirection = DIAL_FROM
+		chStat[headers.uniqueid].dialExt = headers.queue
 	}
 })
 
