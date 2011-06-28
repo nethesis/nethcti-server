@@ -1147,12 +1147,12 @@ am.addListener('callconnected', function(headers) {
 
 	// channel1 is a trunk and channel2 is an intern (CASE G)
 	if( modop.isChannelTrunk(headers.channel1) && modop.isChannelIntern(headers.channel2) ){
-		var trunkTypeext = modop.getTrunkTypeExtFromChannel(headers.channel1)
+		var trunkTypeExt = modop.getTrunkTypeExtFromChannel(headers.channel1)
 		// add uniqueid of trunk 'headers.channel1' to trunk itself, if it isn't already been added
-		if( !modop.hasTrunkCallConnectedUniqueidWithTypeExt(trunkTypeext, headers.uniqueid1) ){
-			modop.addCallConnectedUniqueidTrunkWithTypeExt(trunkTypeext, headers.uniqueid1, chStat[headers.uniqueid1])
-			logger.info("added callConnectedUniqueid '" + headers.uniqueid1 + "' to trunk '" + trunkTypeext + "'")
-			updateAllClientsForOpWithTypeExt(trunkTypeext)
+		if( !modop.hasTrunkCallConnectedUniqueidWithTypeExt(trunkTypEext, headers.uniqueid1) ){
+			modop.addCallConnectedUniqueidTrunkWithTypeExt(trunkTypeExt, headers.uniqueid1, chStat[headers.uniqueid1])
+			logger.info("added callConnectedUniqueid '" + headers.uniqueid1 + "' to trunk '" + trunkTypeExt + "'")
+			updateAllClientsForOpWithTypeExt(trunkTypeExt)
 		} else
 			logger.warn("callConnected uniqueid '" + headers.uniqueid1 + "' has already been added to trunk '" + trunkTypeext  + "'")
 
@@ -1162,7 +1162,7 @@ am.addListener('callconnected', function(headers) {
 			modop.removeDialingUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid2)
 			logger.info("removed dialingUniqueid '" + headers.uniqueid2 + "' from internTypeExt '" + internTypeExt + "'")
 		} else
-			logger.warn("dialingUniqueid '" + headers.uniqueid2 + "' has already not present into intern '" + internTypeext  + "'")
+			logger.warn("dialingUniqueid '" + headers.uniqueid2 + "' has already not present into intern '" + internTypeExt  + "'")
 		if(!modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, headers.uniqueid2)){
 			modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid2, chStat[headers.uniqueid2])
 			logger.info("added callConnectedUniqueid '" + headers.uniqueid2 + "' into intern '" + internTypeExt + "'")
@@ -1178,7 +1178,7 @@ am.addListener('callconnected', function(headers) {
 			modop.removeDialingUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid2)
 			logger.info("removed dialingUniqueid '" + headers.uniqueid2 + "' from internTypeExt '" + internTypeExt + "'")
 		} else
-			logger.warn("dialingUniqueid '" + headers.uniqueid2 + "' has already not present into intern '" + internTypeext  + "'")
+			logger.warn("dialingUniqueid '" + headers.uniqueid2 + "' has already not present into intern '" + internTypeExt  + "'")
 		if(!modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, headers.uniqueid2)){
 			modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid2, chStat[headers.uniqueid2])
 			logger.info("added callConnectedUniqueid '" + headers.uniqueid2 + "' into intern '" + internTypeExt + "'")
