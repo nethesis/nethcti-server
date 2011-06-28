@@ -1149,12 +1149,12 @@ am.addListener('callconnected', function(headers) {
 	if( modop.isChannelTrunk(headers.channel1) && modop.isChannelIntern(headers.channel2) ){
 		var trunkTypeExt = modop.getTrunkTypeExtFromChannel(headers.channel1)
 		// add uniqueid of trunk 'headers.channel1' to trunk itself, if it isn't already been added
-		if( !modop.hasTrunkCallConnectedUniqueidWithTypeExt(trunkTypEext, headers.uniqueid1) ){
+		if( !modop.hasTrunkCallConnectedUniqueidWithTypeExt(trunkTypeExt, headers.uniqueid1) ){
 			modop.addCallConnectedUniqueidTrunkWithTypeExt(trunkTypeExt, headers.uniqueid1, chStat[headers.uniqueid1])
 			logger.info("added callConnectedUniqueid '" + headers.uniqueid1 + "' to trunk '" + trunkTypeExt + "'")
 			updateAllClientsForOpWithTypeExt(trunkTypeExt)
 		} else
-			logger.warn("callConnected uniqueid '" + headers.uniqueid1 + "' has already been added to trunk '" + trunkTypeext  + "'")
+			logger.warn("callConnected uniqueid '" + headers.uniqueid1 + "' has already been added to trunk '" + trunkTypeExt  + "'")
 
 		// add uniqueid of intern 'headers.channel2' to intern itself, if it isn't already been added
 		var internTypeExt = modop.getInternTypeExtFromChannel(headers.channel2)
