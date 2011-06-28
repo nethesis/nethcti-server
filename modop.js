@@ -108,10 +108,7 @@ exports.Modop = function(){
 	this.hasInternDialingUniqueidWithTypeExt = function(typeExt, uniqueid) { return hasInternDialingUniqueidWithTypeExt(typeExt, uniqueid) }
 }
 function removeDialingUniqueidInternWithTypeExt(typeExt, uniqueid){
-	console.log("debug uniqueid = " + uniqueid)
-	console.log("DEBUG extStatusForOp[typeExt] = " + sys.inspect(extStatusForOp[typeExt]))
 	delete extStatusForOp[typeExt].dialingUniqueid[uniqueid]
-	console.log("DEBUG extStatusForOp[typeExt] = " + sys.inspect(extStatusForOp[typeExt]))
 }
 function addDialingUniqueidInternWithTypeExt(typeExt, uniqueid, chValue){
 	if(extStatusForOp[typeExt].tab=='interno'){
