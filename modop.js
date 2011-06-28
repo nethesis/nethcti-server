@@ -8,6 +8,7 @@ var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
 var log4js = require('./lib/log4js-node/lib/log4js')();
 var pathreq = require('path')
 const FILE_TAB_OP = "config/optab.ini";
+const FILE_FASCI_INI = "config/fasci.ini"
 const FILE_EXT_LIST = "/etc/asterisk/nethcti.ini";
 const DIAL_FROM = 1;
 const DIAL_TO = 0;
@@ -605,6 +606,19 @@ function initDialingUniqueidForIntern(){
 		if(extStatusForOp[key].tab=='interno')
 			extStatusForOp[key].dialingUniqueid = {}
 }
+function initTrunkWithFasciIni(tempFasciIni){
+	for(key in extStatusForOp){
+		if(extStatusForOp[key].tab=='fasci'){
+			var tempLabel = extStatusForOp[key].Label.replace(/['"']/g, "").replace(/[' ']/g, "")
+			if(tempFasciIni[tempLabel]!=undefined){
+				if(tempFasciIni[tempLabel].label1!=undefined)
+					extStatusForOp[key].label1 = tempFasciIni[tempLabel].label1
+				if(tempFasciIni[tempLabel].label2!=undefined)
+					extStatusForOp[key].label2 = tempFasciIni[tempLabel].label2
+			}
+		}
+	}
+}
 /* Initialize 'extStatusForOp'. Initially it read a configuration file that contains list of
  * all extensions. After that it sends the 'SIPPeers' action to the asterisk server. So, it
  * successively receives more 'PeerEntry' events from the asterisk server and at the end it receive
@@ -615,6 +629,12 @@ function initExtStatusForOp(){
         logger.info("initialize status of all extensions...");
         // read file where are the list of all extensions
         extStatusForOp = iniparser.parseSync(FILE_EXT_LIST);
+	// check if exists config/fasci.ini
+	var tempFasciIni = undefined
+	if(pathreq.existsSync(FILE_FASCI_INI)){
+		tempFasciIni = iniparser.parseSync(FILE_FASCI_INI)
+		initTrunkWithFasciIni(tempFasciIni)
+	}
 	// init trunk
 	initCallConnectedCountForTrunk()
 	initCallConnectedUniqueidForTrunk()
