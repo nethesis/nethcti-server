@@ -588,7 +588,7 @@ am.addListener('dialing', function(headers) {
 		if(c!=undefined){
                         /* in this response the html is not passed, because the chrome desktop 
                          * notification of the client accept only one absolute or relative url */
-                        var response = new ResponseMessage(c.sessionId, "dialing", from)
+                        var response = new ResponseMessage(c.sessionId, "dialing", headers.calleridname)
                         response.from = from
                         response.to = to
                         var typesCC = profiler.getTypesCustomerCardPermit(to)
