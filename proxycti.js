@@ -1096,7 +1096,7 @@ am.addListener('callconnected', function(headers) {
 			var trunkTypeext = modop.getTrunkTypeExtFromChannel(headers.channel1)
 			// add uniqueid of trunk 'headers.channel1' to trunk itself, if it isn't already been added
 			if( !modop.hasTrunkCallConnectedUniqueidWithTypeExt(trunkTypeext, headers.uniqueid1) ){
-				modop.addCallConnectedUniqueidTrunkWithTypeExt(trunkTypeext, headers.uniqueid1)
+				modop.addCallConnectedUniqueidTrunkWithTypeExt(trunkTypeext, headers.uniqueid1, chStat[headers.uniqueid1])
 				logger.info("added callConnectedUniqueid '" + headers.uniqueid1 + "' to trunk '" + trunkTypeext + "'")
 				updateAllClientsForOpWithTypeExt(trunkTypeext)
 			} else
@@ -1124,7 +1124,7 @@ am.addListener('callconnected', function(headers) {
 		var trunkTypeext = modop.getTrunkTypeExtFromChannel(headers.channel2)
 		// add uniqueid of trunk 'headers.channel2' to trunk itself, if it isn't already been added
 		if( !modop.hasTrunkCallConnectedUniqueidWithTypeExt(trunkTypeext, headers.uniqueid2) ){
-			modop.addCallConnectedUniqueidTrunkWithTypeExt(trunkTypeext, headers.uniqueid2)
+			modop.addCallConnectedUniqueidTrunkWithTypeExt(trunkTypeext, headers.uniqueid2, chStat[headers.uniqueid2])
 			logger.info("added callConnectedUniqueid '" + headers.uniqueid2 + "' to trunk '" + trunkTypeext + "'")
 			updateAllClientsForOpWithTypeExt(trunkTypeext)
 		} else
@@ -1150,7 +1150,7 @@ am.addListener('callconnected', function(headers) {
 		var trunkTypeext = modop.getTrunkTypeExtFromChannel(headers.channel1)
 		// add uniqueid of trunk 'headers.channel1' to trunk itself, if it isn't already been added
 		if( !modop.hasTrunkCallConnectedUniqueidWithTypeExt(trunkTypeext, headers.uniqueid1) ){
-			modop.addCallConnectedUniqueidTrunkWithTypeExt(trunkTypeext, headers.uniqueid1)
+			modop.addCallConnectedUniqueidTrunkWithTypeExt(trunkTypeext, headers.uniqueid1, chStat[headers.uniqueid1])
 			logger.info("added callConnectedUniqueid '" + headers.uniqueid1 + "' to trunk '" + trunkTypeext + "'")
 			updateAllClientsForOpWithTypeExt(trunkTypeext)
 		} else

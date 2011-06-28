@@ -92,7 +92,7 @@ exports.Modop = function(){
 	this.hasTrunkCallConnectedUniqueidWithChannel = function(ch, uniqueid) {  return hasTrunkCallConnectedUniqueidWithChannel(ch, uniqueid) }
 	this.hasTrunkCallConnectedUniqueidWithTypeExt = function(typeExt, uniqueid) { return hasTrunkCallConnectedUniqueidWithTypeExt(typeExt, uniqueid) }
 	this.addCallConnectedUniqueidTrunkWithChannel = function(ch, uniqueid) { addCallConnectedUniqueidTrunkWithChannel(ch, uniqueid) }
-	this.addCallConnectedUniqueidTrunkWithTypeExt = function(typeExt, uniqueid) { addCallConnectedUniqueidTrunkWithTypeExt(typeExt, uniqueid) }
+	this.addCallConnectedUniqueidTrunkWithTypeExt = function(typeExt, uniqueid, chValue) { addCallConnectedUniqueidTrunkWithTypeExt(typeExt, uniqueid, chValue) }
 	this.getTrunkTypeExtFromChannel = function(ch) { return getTrunkTypeExtFromChannel(ch) }
 	this.removeCallConnectedUniqueidTrunkWithTypeExt = function(typeExt, uniqueid) { removeCallConnectedUniqueidTrunkWithTypeExt(typeExt, uniqueid) }
 	this.isChannelIntern = function(ch) { return isChannelIntern(ch) }
@@ -167,9 +167,9 @@ function addCallConnectedUniqueidInternWithTypeExt(typeExt, uniqueid, chValue){
 }
 /* add uniqueid of channel to trunk identified by 'typeExt'. Uniqueid and channel is relative to
  * received 'CallConnected' event */
-function addCallConnectedUniqueidTrunkWithTypeExt(typeExt, uniqueid){
+function addCallConnectedUniqueidTrunkWithTypeExt(typeExt, uniqueid, chValue){
 	if( extStatusForOp[typeExt].tab=='fasci' ){
-		extStatusForOp[typeExt].callConnectedUniqueid[uniqueid] = ''
+		extStatusForOp[typeExt].callConnectedUniqueid[uniqueid] = chValue
 		extStatusForOp[typeExt].callConnectedCount++
 	}
 }
