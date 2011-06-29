@@ -936,9 +936,12 @@ am.addListener('hangup', function(headers) {
 		// update for OP
 		if(modop.isExtPresent(ext)){
 	                modop.updateExtStatusForOpWithExt(ext, 'hangup')
-	                modop.updateStopRecordExtStatusForOpWithExt(ext)
+			
+			var internTypeExt = modop.getInternTypeExtFromChannel(headers.channel)
+			chStat[headers.uniqueid].record = 0	
+			modop.updateCallConnectedUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid, chStat[headers.uniqueid])
 	                modop.updateLastDialExt(ext)
-	                updateAllClientsForOpWithExt(ext)
+	                updateAllClientsForOpWithTypeExt(internTypeExt)
 	        } else
 			logger.warn('[' + ext + '] is not present in extStatusForOp: so not advise it')
 	} else
@@ -1940,7 +1943,9 @@ io.on('connection', function(client){
 				if(profiler.checkActionRecordPermit(extFrom)){
 					logger.info("check 'record' permission for [" + extFrom + "] OK: record...");
 	  				var channel = '';
+	  				var destChannel = ''
 					var uniqueid = '';
+					var destUniqueid = ''
 					var callFromExt = message.callFromExt;
 					var callToExt = message.callToExt
 					// get channel to record. It is always the caller (callFromExt)
@@ -1948,6 +1953,10 @@ io.on('connection', function(client){
 						if(chStat[key].channel.indexOf(callFromExt)!=-1 && chStat[key].dialExt==callToExt){
 							channel = chStat[key].channel
 							uniqueid = key
+						}
+						else if(chStat[key].channel.indexOf(callToExt)!=-1 && chStat[key].dialExt==callFromExt){
+							destChannel = chStat[key].channel
+							destUniqueid = key
 						}
 					}
 	  				// create filename	
@@ -1968,6 +1977,8 @@ io.on('connection', function(client){
 						File: filename,
 						Mix: 1
 					};
+					var callFromInternTypeExt = modop.getInternTypeExtFromChannel(channel)
+					var callToInternTypeExt = modop.getInternTypeExtFromChannel(destChannel)
 					// send action to asterisk
 					am.send(actionRecord, function () {
 						logger.info("'actionRecord' " + sys.inspect(actionRecord) + " has been sent to AST");
@@ -1977,14 +1988,17 @@ io.on('connection', function(client){
 						client.send(msg);
 						logger.info("RESP 'ack_record' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 						logger.info(msgstr);
-						// update status information for operator panel
-						modop.updateStartRecordExtStatusForOpWithExt(message.callFromExt);
-						modop.updateStartRecordExtStatusForOpWithExt(message.callToExt);
-						// update all clients for op
-						if(modop.isExtPresent(callFromExt))
-		                                        updateAllClientsForOpWithExt(callFromExt)
-						if(modop.isExtPresent(callToExt))
-		                                        updateAllClientsForOpWithExt(callToExt)
+						// update info
+						chStat[uniqueid].record = 1
+						chStat[destUniqueid].record = 1
+						if(modop.isTypeExtPresent(callFromInternTypeExt)){
+							modop.updateCallConnectedUniqueidInternWithTypeExt(callFromInternTypeExt, uniqueid, chStat[uniqueid])
+							updateAllClientsForOpWithTypeExt(callFromInternTypeExt)
+						}
+						if(modop.isTypeExtPresent(callToInternTypeExt)){
+							modop.updateCallConnectedUniqueidInternWithTypeExt(callToInternTypeExt, destUniqueid, chStat[destUniqueid])
+							updateAllClientsForOpWithTypeExt(callToInternTypeExt)
+						}
 					});
 				}
 				else{
@@ -1996,16 +2010,28 @@ io.on('connection', function(client){
 	  		case actions.ACTION_STOP_RECORD:
   				// get channel
   				var channel = ''
+				var destChannel = ''
+				var uniqueid = ''
+				var destUniqueid = ''
 				var callFromExt = message.extFrom
 				var callToExt = message.extTo
-				for(key in chStat)
-					if(chStat[key].channel.indexOf(callFromExt)!=-1 && chStat[key].dialExt==callToExt)
+				for(key in chStat){
+					if(chStat[key].channel.indexOf(callFromExt)!=-1 && chStat[key].dialExt==callToExt){
 						channel = chStat[key].channel
+						uniqueid = key
+					}
+					else if(chStat[key].channel.indexOf(callToExt)!=-1 && chStat[key].dialExt==callFromExt){
+                                                destChannel = chStat[key].channel
+                                        	destUniqueid = key
+                                        }
+				}
 	  			// create stop record action for asterisk server
 			  	var actionStopRecord = {
 					Action: 'StopMonitor',
 					Channel: channel
 				};
+				var callFromInternTypeExt = modop.getInternTypeExtFromChannel(channel)
+                                var callToInternTypeExt = modop.getInternTypeExtFromChannel(destChannel)
 				// send action to asterisk
 				am.send(actionStopRecord, function () {
 					logger.info("'actionStopRecord' " + sys.inspect(actionStopRecord) + " has been sent to AST");
@@ -2013,14 +2039,17 @@ io.on('connection', function(client){
 					client.send(new ResponseMessage(client.sessionId, 'ack_stoprecord', msgstr));
 					logger.info("RESP 'ack_stoprecord' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 					logger.info(msgstr);
-					// update status information for operator panel
-                                        modop.updateStopRecordExtStatusForOpWithExt(extFrom);
-                                        modop.updateStopRecordExtStatusForOpWithExt(message.extTo);
-                                        // update all clients for op
-					if(modop.isExtPresent(callFromExt))
-	                                        updateAllClientsForOpWithExt(callFromExt)
-					if(modop.isExtPresent(callToExt))
-	                                        updateAllClientsForOpWithExt(callToExt)
+					// update info
+					chStat[uniqueid].record = 0
+					chStat[destUniqueid].record = 0
+					if(modop.isTypeExtPresent(callFromInternTypeExt)){
+                                                modop.updateCallConnectedUniqueidInternWithTypeExt(callFromInternTypeExt, uniqueid, chStat[uniqueid])
+                                        	updateAllClientsForOpWithTypeExt(callFromInternTypeExt)
+                                        }
+                                       	if(modop.isTypeExtPresent(callToInternTypeExt)){
+                                                modop.updateCallConnectedUniqueidInternWithTypeExt(callToInternTypeExt, destUniqueid, chStat[destUniqueid])
+                                        	updateAllClientsForOpWithTypeExt(callToInternTypeExt)
+                                        }
 				});
 	  		break;
 	  		case actions.ACTION_DND_ON:
