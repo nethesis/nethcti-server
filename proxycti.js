@@ -1993,12 +1993,12 @@ io.on('connection', function(client){
 	  		break;
 	  		case actions.ACTION_STOP_RECORD:
   				// get channel
-  				var channel = '';
-  				for(key in am.participants){
-  					if(am.participants[key].number==extFrom){
-  						channel = am.participants[key].channel;
-  					}
-  				}
+  				var channel = ''
+				var callFromExt = message.extFrom
+				var callToExt = message.extTo
+				for(key in chStat)
+					if(chStat[key].channel.indexOf(callFromExt)!=-1 && chStat[key].dialExt==callToExt)
+						channel = chStat[key].channel
 	  			// create stop record action for asterisk server
 			  	var actionStopRecord = {
 					Action: 'StopMonitor',
