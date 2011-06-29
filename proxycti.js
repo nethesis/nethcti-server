@@ -2017,8 +2017,10 @@ io.on('connection', function(client){
                                         modop.updateStopRecordExtStatusForOpWithExt(extFrom);
                                         modop.updateStopRecordExtStatusForOpWithExt(message.extTo);
                                         // update all clients for op
-                                        updateAllClientsForOpWithExt(extFrom);
-                                        updateAllClientsForOpWithExt(message.extTo);
+					if(modop.isExtPresent(callFromExt))
+	                                        updateAllClientsForOpWithExt(callFromExt)
+					if(modop.isExtPresent(callToExt))
+	                                        updateAllClientsForOpWithExt(callToExt)
 				});
 	  		break;
 	  		case actions.ACTION_DND_ON:
