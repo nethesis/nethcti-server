@@ -75,8 +75,6 @@ exports.Modop = function(){
 	this.updateExtStatusOpDialTo = function(ext, extFrom) { updateExtStatusOpDialTo(ext, extFrom); }
 	this.updateParkExtStatus = function(parking, extParked, parkFrom, timeout) { updateParkExtStatus(parking, extParked, parkFrom, timeout); }
 	this.updateEndParkExtStatus = function(parking) { updateEndParkExtStatus(parking); }
-	this.updateStartRecordExtStatusForOpWithExt = function(ext) { updateStartRecordExtStatusForOpWithExt(ext); }
-	this.updateStopRecordExtStatusForOpWithExt = function(ext) { updateStopRecordExtStatusForOpWithExt(ext); }
 	this.updateVMCountWithExt = function(ext, count) { updateVMCountWithExt(ext,count) }
 	this.isExtPresent = function(ext) { return isExtPresent(ext) }
 	this.isTypeExtPresent = function(typeext) { return isTypeExtPresent(typeext) }
@@ -298,22 +296,6 @@ function updateVMCountWithExt(ext,count){
         	if(key.indexOf(ext)!=-1)
 			extStatusForOp[key].voicemailCount = count;
 	}
-}
-
-function updateStopRecordExtStatusForOpWithExt(ext){
-        for(key in extStatusForOp){
-                if(key.indexOf(ext)!=-1)
-                        extStatusForOp[key].record = STOP_RECORD;
-        }
-}
-
-
-// update status of ext with the info of start recording
-function updateStartRecordExtStatusForOpWithExt(ext){
-	for(key in extStatusForOp){
-                if(key.indexOf(ext)!=-1)
-			extStatusForOp[key].record = START_RECORD;
-        }	
 }
 
 // Delete old information of the parked call
