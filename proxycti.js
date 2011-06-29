@@ -1942,13 +1942,14 @@ io.on('connection', function(client){
 	  				var channel = '';
 					var uniqueid = '';
 					var callFromExt = message.callFromExt;
+					var callToExt = message.callToExt
 					// get channel to record. It is always the caller (callFromExt)
-	  				for(key in am.participants){
-	  					if(am.participants[key].number==callFromExt){
-	  						channel = am.participants[key].channel;
-							uniqueid = am.participants[key].with;
-	  					}
-	  				}
+					for(key in chStat){
+						if(chStat[key].channel.indexOf(callFromExt)!=-1 && chStat[key].dialExt==callToExt){
+							channel = chStat[key].channel
+							uniqueid = key
+						}
+					}
 	  				// create filename	
 					var d = new Date();
 					var yyyy = d.getFullYear();
