@@ -107,6 +107,11 @@ exports.Modop = function(){
 	this.addDialingUniqueidInternWithTypeExt = function(typeExt, uniqueid, chValue) { addDialingUniqueidInternWithTypeExt(typeExt, uniqueid, chValue) }
 	this.removeDialingUniqueidInternWithTypeExt = function(typeExt, uniqueid) { removeDialingUniqueidInternWithTypeExt(typeExt, uniqueid) }
 	this.hasInternDialingUniqueidWithTypeExt = function(typeExt, uniqueid) { return hasInternDialingUniqueidWithTypeExt(typeExt, uniqueid) }
+	this.addRecordingUniqueidInternWithTypeExt = function(typeExt, uniqueid) { addRecordingUniqueidInternWithTypeExt(typeExt, uniqueid) }
+}
+function addRecordingUniqueidInternWithTypeExt(typeExt, uniqueid){
+	if(extStatusForOp[typeExt].tab=='interno')
+		extStatusForOp[typeExt].recordingUniqueid[uniqueid] = ''
 }
 function removeDialingUniqueidInternWithTypeExt(typeExt, uniqueid){
 	delete extStatusForOp[typeExt].dialingUniqueid[uniqueid]
@@ -619,6 +624,11 @@ function initTrunkWithFasciIni(tempFasciIni){
 		}
 	}
 }
+function initRecordingUniqueidForIntern(){
+	for(key in extStatusForOp){
+		if(extStatusForOp[key].tab=='interno')
+			extStatusForOp[key].recordingUniqueid = {}
+}
 /* Initialize 'extStatusForOp'. Initially it read a configuration file that contains list of
  * all extensions. After that it sends the 'SIPPeers' action to the asterisk server. So, it
  * successively receives more 'PeerEntry' events from the asterisk server and at the end it receive
@@ -642,6 +652,7 @@ function initExtStatusForOp(){
 	initCallConnectedUniqueidForIntern()
 	initCallConnectedCountForIntern()
 	initDialingUniqueidForIntern()
+	initRecordingUniqueidForIntern()
 	// create action for asterisk server that generate series of 'PeerEntry' events
         var actionSIPPeersOP = {
                 Action: 'SIPPeers'
