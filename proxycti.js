@@ -1843,9 +1843,13 @@ io.on('connection', function(client){
 				logger.info("ACTION_HANGUP chStat = " + sys.inspect(chStat))
 				var ch
 				for(key in chStat){ // when call come from soft phone
-					if(chStat[key].calleridnum==extFrom){
-						ch = chStat[key].channel
-						break
+					var tempChannel = chStat[key].channel
+					if(modop.isChannelIntern(tempChannel)){
+						var tempExt = modop.getExtInternFromChannel(tempChannel)
+						if(tempExt==extFrom){
+							ch = chStat[key].channel
+							break
+						}
 					}
 				}
 				// create hangup action for asterisk server
@@ -2353,12 +2357,17 @@ io.on('connection', function(client){
                                 });
 			break;
 			case actions.ACTION_SPY_LISTEN:
-				var extToSpy = message.extToSpy;
-                                var channelToSpy = '';
-                                for(key in am.participants){
-                                        if(am.participants[key].number==extToSpy)
-                                                channelToSpy = am.participants[key].channel;
-                                }
+				var extToSpy = message.extToSpy
+				var callDialExtToSpy = message.callDialExtToSpy
+                                var channelToSpy = ''
+				for(var key in chStat){
+					var tempChannel = chStat[key].channel
+					if(modop.isChannelIntern(tempChannel)){
+						var tempExt = modop.getExtInternFromChannel(tempChannel)
+						if(extToSpy==tempExt && chStat[key].dialExt!=undefined && chStat[key].dialExt==callDialExtToSpy)
+							channelToSpy = tempChannel
+					}
+				}
 				// create action to spy channel
 				var actionSpyListen = {
 					Action: 'Originate',
