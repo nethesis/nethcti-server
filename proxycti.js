@@ -846,10 +846,9 @@ am.addListener('hangup', function(headers) {
 		logger.warn("discard 'hangup' event: it isn't present in chStat. The cause can be the start of this server during the asterisk functioning")
 		return
 	}
+
 	if(chStat[headers.uniqueid].channel.indexOf('Local/')!=-1 && chStat[headers.uniqueid].channel.indexOf('@from-internal-')!=-1 && (chStat[headers.uniqueid].channel.indexOf(';1')!=-1 || chStat[headers.uniqueid].channel.indexOf(';2')!=-1 ) ){
 		logger.warn("discard 'hangup' event: relative to queue. Delete it from chStat")
-		delete chStat[headers.uniqueid]
-	        logger.info("'hangup' chStat = " + sys.inspect(chStat))
 		return
 	}
 
@@ -862,9 +861,11 @@ am.addListener('hangup', function(headers) {
 		} else
 			logger.warn("callConnected uniqueid '" + headers.uniqueid + "' has already not present into trunk '" + trunkTypeExt + "'")
 	}
-
-	if(modop.isChannelIntern(chStat[headers.uniqueid].channel)){ // headers.channel is an intern
+	else if(modop.isChannelIntern(chStat[headers.uniqueid].channel)){ // headers.channel is an intern
 		var internTypeExt = modop.getInternTypeExtFromChannel(chStat[headers.uniqueid].channel)
+
+		
+
 		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt, headers.uniqueid)){
 			modop.removeDialingUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid)
 			logger.info("removed dialingUniqueid '" + headers.uniqueid + "' from intern '" + internTypeExt + "'")
@@ -878,9 +879,8 @@ am.addListener('hangup', function(headers) {
 		modop.updateHangupUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid) // add uniqueid of current hangup as 'lastHangupUniqueid'
 		updateAllClientsForOpWithTypeExt(internTypeExt)
 	}
-
 	// headers.channel = 'AsyncGoto/SIP/270-000002dc<ZOMBIE>'
-	if(headers.channel.indexOf('AsyncGoto/SIP/')!=-1 && headers.channel.indexOf('<ZOMBIE>')!=-1){ // headers.channel is an intern that has redirect: remove callConnectedUniqueid
+	else if(headers.channel.indexOf('AsyncGoto/SIP/')!=-1 && headers.channel.indexOf('<ZOMBIE>')!=-1){ // headers.channel is an intern that has redirect: remove callConnectedUniqueid
 		var temp = headers.channel.split('/')[1] // SIP
 		var internTypeExt = temp + '/' + headers.channel.split('-')[0].split('/')[2]
 		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt, headers.uniqueid)){
@@ -896,7 +896,6 @@ am.addListener('hangup', function(headers) {
 		modop.updateHangupUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid) // add uniqueid of current hangup as 'lastHangupUniqueid'
 		updateAllClientsForOpWithTypeExt(internTypeExt)
         }
-
 	// ext
 	var ext
 	if( chStat[headers.uniqueid].calleridnum!='' && chStat[headers.uniqueid].calleridnum!=undefined && !modop.isExtGroup(chStat[headers.uniqueid].calleridnum) ){
@@ -907,8 +906,7 @@ am.addListener('hangup', function(headers) {
 		     status: 'up' } } */
 		// because (CASE I) is not possibile to calculate ext with ( ext = chStat[headers.uniqueid].calleridnum ). So:
 		ext = modop.getExtInternFromChannel(chStat[headers.uniqueid].channel)
-	}
-	else{
+	} else {
 		/* { '1308643183.682': 
 		    { channel: 'SIP/271-00000242',
 		      calleridname: 'CTI-271',
@@ -920,9 +918,6 @@ am.addListener('hangup', function(headers) {
 		else if( chStat[headers.uniqueid].channel.indexOf('AsyncGoto/SIP/')!=-1 ) // is redirect
 			ext = chStat[headers.uniqueid].channel.split('-')[0].split('/')[2]
 	}
-	delete chStat[headers.uniqueid]
-	logger.info("'hangup' chStat = " + sys.inspect(chStat))
-
 	// advise client of hangup if this event is not relative to redirect operation
 	if( headers.channel.indexOf('AsyncGoto/SIP/')==-1 && headers.channel.indexOf('<ZOMBIE>')==-1 ){
 		var c = clients[ext]
@@ -934,12 +929,9 @@ am.addListener('hangup', function(headers) {
 	                logger.info("RESP 'hangup' has been sent to [" + ext + "] sessionId '" + c.sessionId + "'")
 	        }
 		// update for OP
-		if(modop.isExtPresent(ext)){
+		if(modop.isExtPresent(ext) && modop.isExtInterno(ext)){
 	                modop.updateExtStatusForOpWithExt(ext, 'hangup')
-			
 			var internTypeExt = modop.getInternTypeExtFromChannel(headers.channel)
-			chStat[headers.uniqueid].record = 0	
-			modop.updateCallConnectedUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid, chStat[headers.uniqueid])
 	                modop.updateLastDialExt(ext)
 	                updateAllClientsForOpWithTypeExt(internTypeExt)
 	        } else
@@ -947,6 +939,8 @@ am.addListener('hangup', function(headers) {
 	} else
 		logger.info("discarded event 'hangup' because redirect")
 
+	delete chStat[headers.uniqueid]
+	logger.info("delete '" + headers.uniqueid + "' from chStat: so it is = " + sys.inspect(chStat))
 	// TO eliminate data structure of asterisk.js
 	//delete am.participants[headers.uniqueid]
         //logger.info('removed \'' + headers.uniqueid  + '\' from am.participants: ' + sys.inspect(am.participants))
@@ -1198,7 +1192,7 @@ am.addListener('callconnected', function(headers) {
 			modop.removeDialingUniqueidInternWithTypeExt(internTypeExt1, headers.uniqueid1)
 			logger.info("removed dialingUniqueid '" + headers.uniqueid1 + "' from internTypeExt '" + internTypeExt1 + "'")
 		} else
-			logger.warn("dialingUniqueid '" + headers.uniqueid1 + "' has already not present into intern '" + internTypeext1  + "'")
+			logger.warn("dialingUniqueid '" + headers.uniqueid1 + "' has already not present into intern '" + internTypeExt1  + "'")
 		if(!modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt1, headers.uniqueid1)){
 			modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt1, headers.uniqueid1, chStat[headers.uniqueid1])
 			logger.info("added callConnectedUniqueid '" + headers.uniqueid1 + "' into intern '" + internTypeExt1 + "'")
