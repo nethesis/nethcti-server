@@ -1841,12 +1841,14 @@ io.on('connection', function(client){
 				     calleridnum: '271',
 				     status: 'up' } } */
 				logger.info("ACTION_HANGUP chStat = " + sys.inspect(chStat))
+				var extToHangup = message.extToHangup
+				var callDialExtHangup = message.callDialExtHangup
 				var ch
-				for(key in chStat){ // when call come from soft phone
+				for(key in chStat){
 					var tempChannel = chStat[key].channel
 					if(modop.isChannelIntern(tempChannel)){
 						var tempExt = modop.getExtInternFromChannel(tempChannel)
-						if(tempExt==extFrom){
+						if(tempExt==extToHangup && chStat[key].dialExt!=undefined && chStat[key].dialExt==callDialExtHangup){
 							ch = chStat[key].channel
 							break
 						}
@@ -2402,11 +2404,16 @@ io.on('connection', function(client){
                                 });
                         break;
 			case actions.ACTION_SPY_LISTEN_SPEAK:
-                                var extToSpy = message.extToSpy;
-                                var channelToSpy = '';
-                                for(key in am.participants){
-                                        if(am.participants[key].number==extToSpy)
-                                                channelToSpy = am.participants[key].channel;
+				var extToSpy = message.extToSpy
+                                var callDialExtToSpy = message.callDialExtToSpy
+                                var channelToSpy = ''
+                                for(var key in chStat){
+                                        var tempChannel = chStat[key].channel
+                                        if(modop.isChannelIntern(tempChannel)){
+                                                var tempExt = modop.getExtInternFromChannel(tempChannel)
+                                                if(extToSpy==tempExt && chStat[key].dialExt!=undefined && chStat[key].dialExt==callDialExtToSpy)
+                                                        channelToSpy = tempChannel
+                                        }
                                 }
                                 // create action to spy channel
                                 var actionSpyListenSpeak = {
