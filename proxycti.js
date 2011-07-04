@@ -1644,6 +1644,7 @@ io.on('connection', function(client){
 			ACTION_CF_OFF: 	'cf_off',
 			ACTION_PARK: 	'park',
 			ACTION_PICKUP: 	'pickup',
+			ACTION_HANGUP_SPY: 'hangup_spy',
 			ACTION_CF_BUSY_ON: 'cf_busy_on',
 			ACTION_CF_BUSY_OFF: 'cf_busy_off',
 			ACTION_STOP_RECORD: 'stoprecord',
@@ -1864,6 +1865,36 @@ io.on('connection', function(client){
                                         logger.info("'actionHangup' " + sys.inspect(actionHangup) + " has been sent to AST");
                                 })
 	  		break;
+			case actions.ACTION_HANGUP_SPY:
+				logger.info("ACTION_HANGUP_SPY chStat = " + sys.inspect(chStat))
+				/* { channel: 'SIP/271-0000023a',
+				     status: 'up',
+				     calleridname: 'SPY-270' } */
+				var extToHangup = message.extToHangup
+				var spyExt = message.spyExt
+				var ch
+				for(key in chStat){
+					if(chStat[key].calleridname==('SPY-'+spyExt)){
+						var tempChannel = chStat[key].channel
+						if(modop.isChannelIntern(tempChannel)){
+							var tempExt = modop.getExtInternFromChannel(tempChannel)
+							if(tempExt==extToHangup){
+								ch = tempChannel
+							} 
+						}
+					}
+				}
+				// create hangup action for asterisk server
+                                var actionHangupSpy = {
+                                        Action: 'Hangup', 
+                                        Channel: ch
+                                }
+                                // send action to asterisk
+                                am.send(actionHangupSpy, function () {
+                                        logger.info("'actionHangupSpy' " + sys.inspect(actionHangupSpy) + " has been sent to AST");
+                                })
+
+			break
 	  		case actions.ACTION_LOGOUT:
 	  			removeClient(client.sessionId);
 	  			if(!testAlreadyLoggedSessionId(client.sessionId)){
@@ -2390,12 +2421,22 @@ io.on('connection', function(client){
 				});
 			break;
 			case actions.ACTION_PICKUP:
-                                var callerExt = message.callerExt;
-                        	var channel = '';
-                                for(key in am.participants){
-                                        if(am.participants[key].number==callerExt)
-                                                channel = am.participants[key].channel;
-                                };
+				console.log("chStat = " + sys.inspect(chStat))
+                                var callerExt = message.callerExt
+				var callTo = message.callTo
+                        	var channel = ''
+				for(key in chStat){
+					var tempChannel = chStat[key].channel
+					if(modop.isChannelIntern(tempChannel)){
+						var tempExt = modop.getExtInternFromChannel(tempChannel)
+						if(tempExt==callerExt && chStat[key].dialExt==callTo){
+							channel = tempChannel
+							break
+						}
+					}
+				}
+
+				console.log("UAOO channel = " + channel)
                                 // create action to pickup the call. It is realized with redirect action 
                                 var actionPickup = {
                                        Action: 'Redirect',
