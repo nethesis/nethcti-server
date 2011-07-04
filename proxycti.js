@@ -1890,10 +1890,16 @@ io.on('connection', function(client){
 	  				logger.info("check 'redirect' permission for [" + extFrom + "] OK: execute redirect...");	
 	  				// get the channel
 	  				var ch
+					var redirectFromExt = message.redirectFromExt
+					var redirectToExt = message.redirectToExt
 					for(key in chStat){
-						if(chStat[key].calleridnum==message.redirectFrom){
-							ch = chStat[key].channel
-							break
+						var tempChannel = chStat[key].channel
+						if(modop.isChannelIntern(tempChannel)){
+							var tempExt = modop.getExtInternFromChannel(tempChannel)
+							if(tempExt==redirectFromExt && chStat[key].dialExt==extFrom){
+								ch = tempChannel
+								break
+							}
 						}
 					}
 		  			// create redirect action for the asterisk server
@@ -1901,7 +1907,7 @@ io.on('connection', function(client){
 						Action: 'Redirect',
 						Channel: ch,
 						Context: 'from-internal',
-						Exten: message.redirectTo,
+						Exten: redirectToExt,
 						Priority: 1
 					};
 					// send action to asterisk
