@@ -1980,14 +1980,11 @@ io.on('connection', function(client){
 	  			// check if the user has the permission of dial out
 				if(profiler.checkActionRecordPermit(extFrom)){
 					logger.info("check 'record' permission for [" + extFrom + "] OK: record...");
-					logger.info("----------------------------")
-					logger.info("----------------------------")
-					logger.info(sys.inspect(chStat))
 	  				var channel = '';
 	  				var destChannel = ''
 					var uniqueid = '';
 					var destUniqueid = ''
-					var callFromExt = message.callFromExt;
+					var callFromExt = message.callFromExt
 					var callToExt = message.callToExt
 					// get channel to record. It is always the caller (callFromExt)
 					if(modop.isExtInterno(callFromExt)){ // the caller is an intern
@@ -2074,17 +2071,39 @@ io.on('connection', function(client){
 				var destChannel = ''
 				var uniqueid = ''
 				var destUniqueid = ''
-				var callFromExt = message.extFrom
-				var callToExt = message.extTo
-				for(key in chStat){
-					if(chStat[key].channel.indexOf(callFromExt)!=-1 && chStat[key].dialExt==callToExt){
-						channel = chStat[key].channel
-						uniqueid = key
-					}
-					else if(chStat[key].channel.indexOf(callToExt)!=-1 && chStat[key].dialExt==callFromExt){
-                                                destChannel = chStat[key].channel
-                                        	destUniqueid = key
-                                        }
+				var callFromExt = message.callFromExt
+				var callToExt = message.callToExt
+				// get channel to record. It is always the caller (callFromExt)
+                                if(modop.isExtInterno(callFromExt)){ // the caller is an intern
+                                	for(key in chStat){
+                                        	var tempCh = chStat[key].channel
+                                                // get caller channel and uniqueid
+                                                if(modop.isChannelIntern(tempCh)){
+                                                	var tempExt = modop.getExtInternFromChannel(tempCh)
+                                                        if(tempExt==callFromExt && chStat[key].dialExt==callToExt){
+                                                        	channel = chStat[key].channel
+                                                                uniqueid = key
+                                                        }
+                                               	} else if(modop.isChannelTrunk(tempCh)){ // get destination channel and uniqueid
+							/* '1309858231.1105':
+							   { channel: 'SIP/2004-000001fb',
+							     status: 'up',
+							     calleridnum: '187',
+							     calleridname: '',
+							     dialConnectedUniqueid: '1309858231.1104',
+							     record: 1 } } */
+                                                	var dialConnectedUniqueid = chStat[key].dialConnectedUniqueid
+                                                     	if(dialConnectedUniqueid!=undefined){
+                                                        	var tempExt = modop.getExtInternFromChannel(chStat[dialConnectedUniqueid].channel)
+	                                                        if(chStat[key].calleridnum==callToExt && tempExt==callFromExt){
+	                                                        	destChannel = chStat[key].channel
+        	                                                        destUniqueid = key
+                	                                        }
+                        	                        }
+                                	        }
+                                	}
+                              	} else { // the caller is a trunk or an intermediate node for queue
+
 				}
 	  			// create stop record action for asterisk server
 			  	var actionStopRecord = {
