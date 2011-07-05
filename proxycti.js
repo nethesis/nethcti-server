@@ -620,6 +620,13 @@ am.addListener('dialing', function(headers) {
                         }
                 }
 	}
+
+	if(from!=undefined && !modop.isChannelIntern(headers.channel) && headers.channel.indexOf(';1')==-1)
+		chStat[headers.uniqueid].dialExtUniqueid = headers.destuniqueid
+	if(to!=undefined && !modop.isChannelIntern(headers.destination) && headers.destination.indexOf(';1')==-1)
+		chStat[headers.destuniqueid].dialExtUniqueid = headers.uniqueid
+
+
 	// update for OP
 	if(from!=undefined && to!=undefined){
 		// check if the call come from queue. In this case, the caller (272) has already been update in AgentCalled event
@@ -863,9 +870,6 @@ am.addListener('hangup', function(headers) {
 	}
 	else if(modop.isChannelIntern(chStat[headers.uniqueid].channel)){ // headers.channel is an intern
 		var internTypeExt = modop.getInternTypeExtFromChannel(chStat[headers.uniqueid].channel)
-
-		
-
 		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt, headers.uniqueid)){
 			modop.removeDialingUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid)
 			logger.info("removed dialingUniqueid '" + headers.uniqueid + "' from intern '" + internTypeExt + "'")
@@ -1121,7 +1125,6 @@ am.addListener('callconnected', function(headers) {
 		var trunkTypeext = modop.getTrunkTypeExtFromChannel(headers.channel2)
 		// add uniqueid of trunk 'headers.channel2' to trunk itself, if it isn't already been added
 		if( !modop.hasTrunkCallConnectedUniqueidWithTypeExt(trunkTypeext, headers.uniqueid2) ){
-			chStat[headers.uniqueid2].dialConnectedUniqueid = headers.uniqueid1
 			modop.addCallConnectedUniqueidTrunkWithTypeExt(trunkTypeext, headers.uniqueid2, chStat[headers.uniqueid2])
 			logger.info("added callConnectedUniqueid '" + headers.uniqueid2 + "' to trunk '" + trunkTypeext + "'")
 			updateAllClientsForOpWithTypeExt(trunkTypeext)
@@ -2003,9 +2006,9 @@ io.on('connection', function(client){
 								     calleridnum: '187',
 								     calleridname: '',
 								     dialConnectedUniqueid: '1309855888.777' } */
-								var dialConnectedUniqueid = chStat[key].dialConnectedUniqueid
-								if(dialConnectedUniqueid!=undefined){
-									var tempExt = modop.getExtInternFromChannel(chStat[dialConnectedUniqueid].channel)
+								var dialExtUniqueid = chStat[key].dialExtUniqueid
+								if(dialExtUniqueid!=undefined){
+									var tempExt = modop.getExtInternFromChannel(chStat[dialExtUniqueid].channel)
 									if(chStat[key].calleridnum==callToExt && tempExt==callFromExt){
 										destChannel = chStat[key].channel
 										destUniqueid = key
@@ -2013,7 +2016,6 @@ io.on('connection', function(client){
 								}
 							}
 						}
-
 					} else { // the caller is a trunk or an intermediate node for queue
 						
 					}
@@ -2092,9 +2094,9 @@ io.on('connection', function(client){
 							     calleridname: '',
 							     dialConnectedUniqueid: '1309858231.1104',
 							     record: 1 } } */
-                                                	var dialConnectedUniqueid = chStat[key].dialConnectedUniqueid
-                                                     	if(dialConnectedUniqueid!=undefined){
-                                                        	var tempExt = modop.getExtInternFromChannel(chStat[dialConnectedUniqueid].channel)
+                                                	var dialExtUniqueid = chStat[key].dialExtUniqueid
+                                                     	if(dialExtUniqueid!=undefined){
+                                                        	var tempExt = modop.getExtInternFromChannel(chStat[dialExtUniqueid].channel)
 	                                                        if(chStat[key].calleridnum==callToExt && tempExt==callFromExt){
 	                                                        	destChannel = chStat[key].channel
         	                                                        destUniqueid = key
