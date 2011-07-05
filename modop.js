@@ -106,6 +106,12 @@ exports.Modop = function(){
 	this.removeDialingUniqueidInternWithTypeExt = function(typeExt, uniqueid) { removeDialingUniqueidInternWithTypeExt(typeExt, uniqueid) }
 	this.hasInternDialingUniqueidWithTypeExt = function(typeExt, uniqueid) { return hasInternDialingUniqueidWithTypeExt(typeExt, uniqueid) }
 	this.updateCallConnectedUniqueidInternWithTypeExt = function(typeExt, uniqueid, chValue) { updateCallConnectedUniqueidInternWithTypeExt(typeExt, uniqueid, chValue) }
+	this.getExtFromQueueChannel = function(ch) { return getExtFromQueueChannel(ch) }
+}
+function getExtFromQueueChannel(ch){
+	// Local/270@from-internal-7f89;1
+	if(ch.indexOf('Local/')!=-1 && ch.indexOf('@from-internal-')!=-1 && (ch.indexOf(';2')!=-1 || ch.indexOf(';1')!=-1))
+		return ch.split('@')[0].split('/')[1]
 }
 function removeDialingUniqueidInternWithTypeExt(typeExt, uniqueid){
 	delete extStatusForOp[typeExt].dialingUniqueid[uniqueid]
