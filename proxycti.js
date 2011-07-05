@@ -1121,6 +1121,7 @@ am.addListener('callconnected', function(headers) {
 		var trunkTypeext = modop.getTrunkTypeExtFromChannel(headers.channel2)
 		// add uniqueid of trunk 'headers.channel2' to trunk itself, if it isn't already been added
 		if( !modop.hasTrunkCallConnectedUniqueidWithTypeExt(trunkTypeext, headers.uniqueid2) ){
+			chStat[headers.uniqueid2].dialConnectedUniqueid = headers.uniqueid1
 			modop.addCallConnectedUniqueidTrunkWithTypeExt(trunkTypeext, headers.uniqueid2, chStat[headers.uniqueid2])
 			logger.info("added callConnectedUniqueid '" + headers.uniqueid2 + "' to trunk '" + trunkTypeext + "'")
 			updateAllClientsForOpWithTypeExt(trunkTypeext)
@@ -1979,6 +1980,9 @@ io.on('connection', function(client){
 	  			// check if the user has the permission of dial out
 				if(profiler.checkActionRecordPermit(extFrom)){
 					logger.info("check 'record' permission for [" + extFrom + "] OK: record...");
+					logger.info("----------------------------")
+					logger.info("----------------------------")
+					logger.info(sys.inspect(chStat))
 	  				var channel = '';
 	  				var destChannel = ''
 					var uniqueid = '';
@@ -1986,15 +1990,35 @@ io.on('connection', function(client){
 					var callFromExt = message.callFromExt;
 					var callToExt = message.callToExt
 					// get channel to record. It is always the caller (callFromExt)
-					for(key in chStat){
-						if(chStat[key].channel.indexOf(callFromExt)!=-1 && chStat[key].dialExt==callToExt){
-							channel = chStat[key].channel
-							uniqueid = key
+					if(modop.isExtInterno(callFromExt)){ // the caller is an intern
+						for(key in chStat){
+							var tempCh = chStat[key].channel
+							// get caller channel and uniqueid
+							if(modop.isChannelIntern(tempCh)){
+								var tempExt = modop.getExtInternFromChannel(tempCh)
+								if(tempExt==callFromExt && chStat[key].dialExt==callToExt){
+									channel = chStat[key].channel
+									uniqueid = key
+								}
+							} else if(modop.isChannelTrunk(tempCh)){ // get destination channel and uniqueid
+								/* { channel: 'SIP/2004-0000017a',
+								     status: 'up',
+								     calleridnum: '187',
+								     calleridname: '',
+								     dialConnectedUniqueid: '1309855888.777' } */
+								var dialConnectedUniqueid = chStat[key].dialConnectedUniqueid
+								if(dialConnectedUniqueid!=undefined){
+									var tempExt = modop.getExtInternFromChannel(chStat[dialConnectedUniqueid].channel)
+									if(chStat[key].calleridnum==callToExt && tempExt==callFromExt){
+										destChannel = chStat[key].channel
+										destUniqueid = key
+									}
+								}
+							}
 						}
-						else if(chStat[key].channel.indexOf(callToExt)!=-1 && chStat[key].dialExt==callFromExt){
-							destChannel = chStat[key].channel
-							destUniqueid = key
-						}
+
+					} else { // the caller is a trunk or an intermediate node for queue
+						
 					}
 	  				// create filename	
 					var d = new Date();
