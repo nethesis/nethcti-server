@@ -2020,7 +2020,7 @@ io.on('connection', function(client){
 					} else if(!modop.isExtInterno(callFromExt) && modop.isExtInterno(callToExt)){ // the caller is a trunk or an intermediate node for queue
 						for(key in chStat){
 							var tempCh = chStat[key].channel
-							if(modop.isChannelTrunk(tempCh)){ // caller: trunk
+							if(modop.isChannelTrunk(tempCh) && chStat[key].dialExtUniqueid!=undefined){ // caller: trunk
 								var dialExtUniqueid = chStat[key].dialExtUniqueid
 								var tempExt = modop.getExtInternFromChannel(chStat[dialExtUniqueid].channel)
 								if(chStat[key].calleridnum==callFromExt && tempExt==callToExt && chStat[dialExtUniqueid].dialExt==callFromExt){
@@ -2146,7 +2146,7 @@ io.on('connection', function(client){
                               	} else if(!modop.isExtInterno(callFromExt) && modop.isExtInterno(callToExt)){ // the caller is a trunk or an intermediate node for queue
                                         for(key in chStat){
                                         	var tempCh = chStat[key].channel
-                                                if(modop.isChannelTrunk(tempCh)){ // caller: trunk
+                                                if(modop.isChannelTrunk(tempCh)  && chStat[key].dialExtUniqueid!=undefined){ // caller: trunk
                                                         var dialExtUniqueid = chStat[key].dialExtUniqueid
                                                         var tempExt = modop.getExtInternFromChannel(chStat[dialExtUniqueid].channel)
                                                         if(chStat[key].calleridnum==callFromExt && tempExt==callToExt && chStat[dialExtUniqueid].dialExt==callFromExt){
