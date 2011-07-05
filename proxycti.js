@@ -1184,6 +1184,9 @@ am.addListener('callconnected', function(headers) {
 		} else
 			logger.warn("callConnectedUniqueid '" + headers.uniqueid2 + "' has already present into intern '" + internTypeExt  + "'")
 		updateAllClientsForOpWithTypeExt(internTypeExt)
+
+		// add dialExtUniqueid for queue ;2 (;2 means the call to client intern)
+		chStat[headers.uniqueid1].dialExtUniqueid = headers.uniqueid2
 	}
 
 	// the call is between 2 intern
@@ -2017,10 +2020,17 @@ io.on('connection', function(client){
 					} else if(!modop.isExtInterno(callFromExt) && modop.isExtInterno(callToExt)){ // the caller is a trunk or an intermediate node for queue
 						for(key in chStat){
 							var tempCh = chStat[key].channel
-							if(!modop.isChannelIntern(tempCh) && tempCh.indexOf(';1')==-1){ // caller
+							if(modop.isChannelTrunk(tempCh)){ // caller: trunk
 								var dialExtUniqueid = chStat[key].dialExtUniqueid
 								var tempExt = modop.getExtInternFromChannel(chStat[dialExtUniqueid].channel)
 								if(chStat[key].calleridnum==callFromExt && tempExt==callToExt && chStat[dialExtUniqueid].dialExt==callFromExt){
+									channel = tempCh
+									uniqueid = key
+								}
+							} else if(tempCh.indexOf('Local/')!=-1 && tempCh.indexOf('@from-internal-')!=-1 && tempCh.indexOf(';2')!=-1){
+								var tempExt = modop.getExtFromQueueChannel(tempCh)
+								var dialExtUniqueid = chStat[key].dialExtUniqueid
+								if(tempExt==callToExt && chStat[dialExtUniqueid]!=undefined && chStat[dialExtUniqueid].dialExt==callFromExt){
 									channel = tempCh
 									uniqueid = key
 								}
@@ -2134,24 +2144,31 @@ io.on('connection', function(client){
                                 	        }
                                 	}
                               	} else if(!modop.isExtInterno(callFromExt) && modop.isExtInterno(callToExt)){ // the caller is a trunk or an intermediate node for queue
-					for(key in chStat){
+                                        for(key in chStat){
                                         	var tempCh = chStat[key].channel
-                                                if(!modop.isChannelIntern(tempCh) && tempCh.indexOf(';1')==-1){ // caller
-                                                	var dialExtUniqueid = chStat[key].dialExtUniqueid
+                                                if(modop.isChannelTrunk(tempCh)){ // caller: trunk
+                                                        var dialExtUniqueid = chStat[key].dialExtUniqueid
                                                         var tempExt = modop.getExtInternFromChannel(chStat[dialExtUniqueid].channel)
                                                         if(chStat[key].calleridnum==callFromExt && tempExt==callToExt && chStat[dialExtUniqueid].dialExt==callFromExt){
                                                         	channel = tempCh
                                                                 uniqueid = key
                                                         }
+                                               	} else if(tempCh.indexOf('Local/')!=-1 && tempCh.indexOf('@from-internal-')!=-1 && tempCh.indexOf(';2')!=-1){
+                                                        var tempExt = modop.getExtFromQueueChannel(tempCh)
+                                                        var dialExtUniqueid = chStat[key].dialExtUniqueid
+                                                        if(tempExt==callToExt && chStat[dialExtUniqueid]!=undefined && chStat[dialExtUniqueid].dialExt==callFromExt){
+                                                        	channel = tempCh
+                                                                uniqueid = key
+                                                        }
                                                	} else if(modop.isChannelIntern(tempCh)){ // called
-                                                	var tempExt = modop.getExtInternFromChannel(tempCh)
+                                                        var tempExt = modop.getExtInternFromChannel(tempCh)
                                                         if(tempExt==callToExt && chStat[key].dialExt==callFromExt){
                                                         	destChannel = tempCh
                                                                 destUniqueid = key
                                                         }
                                                 }
-                                        }	
-                                } else if(modop.isExtInterno(callFromExt) && modop.isExtInterno(callToExt)){ // both are intern
+                                        }
+                             	} else if(modop.isExtInterno(callFromExt) && modop.isExtInterno(callToExt)){ // both are intern
                                 	for(key in chStat){
                                         	var tempCh = chStat[key].channel
                                                 if(modop.isChannelIntern(tempCh)){
