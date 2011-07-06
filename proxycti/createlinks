@@ -10,7 +10,10 @@ service_link_enhanced('proxycti', 'K02', '1');
 service_link_enhanced('proxycti', 'K02', '0');
 
 
-
+templates2events("/usr/lib/node/proxycti/config/dataprofiles.ini", qw(proxycti-update bootstrap-console-save));
+templates2events("/usr/lib/node/proxycti/config/optab.ini", qw(proxycti-update bootstrap-console-save));
+templates2events("/usr/lib/node/proxycti/config/profiles.ini", qw(proxycti-update bootstrap-console-save));
+templates2events("/usr/lib/node/proxycti/config/proxycti.ini", qw(proxycti-update bootstrap-console-save));
 templates2events("/usr/lib/node/proxycti/config/proxycti.ini", qw(proxycti-update bootstrap-console-save));
 templates2events("/etc/asterisk/manager.conf", qw(proxycti-update));
 

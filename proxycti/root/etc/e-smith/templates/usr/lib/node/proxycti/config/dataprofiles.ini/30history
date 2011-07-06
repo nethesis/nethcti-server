@@ -1,0 +1,26 @@
+[day_history_call]
+dbhost=localhost
+dbport=3306
+dbtype=mysql
+dbuser=asteriskuser
+{ $OUT.="dbpassword=$db_pwd\n"; }
+dbname=asteriskcdrdb
+query=select date_format(calldate,'%d/%m/%Y') as date, date_format(calldate,'%H:%i:%S') as time, clid, src, dst, uniqueid,duration,billsec,disposition from cdr where ( (channel like '%/$EXTEN%' OR dstchannel like '%/$EXTEN%' ) && DATE(calldate)='$DATE' )
+
+[current_week_history_call]
+dbhost=localhost
+dbport=3306
+dbtype=mysql
+dbuser=asteriskuser
+{ $OUT.="dbpassword=$db_pwd\n"; }
+dbname=asteriskcdrdb
+query=select date_format(calldate,'%d/%m/%Y') as date, date_format(calldate,'%H:%i:%S') as time, clid, src, dst, uniqueid,duration,billsec,disposition from cdr where ( (channel like '%/$EXTEN%' OR dstchannel like '%/$EXTEN%' ) && ( DATE(calldate)>=(DATE_SUB(CURDATE(), INTERVAL DAYOFWEEK( CURDATE() )-2 DAY)) )  )
+
+[current_month_history_call]
+dbhost=localhost
+dbport=3306
+dbtype=mysql
+dbuser=asteriskuser
+{ $OUT.="dbpassword=$db_pwd\n"; }
+dbname=asteriskcdrdb
+query=select date_format(calldate,'%d/%m/%Y') as date, date_format(calldate,'%H:%i:%S') as time, clid, src, dst, uniqueid,duration,billsec,disposition from cdr where ( (channel like '%/$EXTEN%' OR dstchannel like '%/$EXTEN%' ) && ( DATE(calldate)>=(DATE_SUB(CURDATE(), INTERVAL DAYOFMONTH( CURDATE() )-1 DAY)) )  )

@@ -1,0 +1,8 @@
+[customer_card_default]
+dbhost=localhost
+dbport=3306
+dbtype=mysql
+dbuser=pbookuser
+dbpassword=pbookpass
+dbname=phonebook
+query=select * from phonebook where homephone like '%$EXTEN' or workphone like '%$EXTEN' or cellphone like '%$EXTEN' or fax like '%$EXTEN'
