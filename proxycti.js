@@ -2591,7 +2591,7 @@ io.on('connection', function(client){
 					} else if(modop.isChannelTrunk(tempCh) && chStat[key].dialExtUniqueid!=undefined){
 						var dialExtUniqueid = chStat[key].dialExtUniqueid
 						var tempExt = modop.getExtInternFromChannel(chStat[dialExtUniqueid].channel)
-						if(chStat[key].calleridnum==callerExt && tempExt==callto){
+						if(chStat[key].calleridnum==callerExt && tempExt==callTo){
 							channel = tempCh
 							break
 						}
