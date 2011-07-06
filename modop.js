@@ -671,9 +671,9 @@ function initExtStatusForOp(){
  * the configuration file 'optab.ini'.
  *
 { interni_commerciali: { extensions: '500,501' },
-  fasci: { show: 'yes' },
-  code: { show: 'yes' },
-  parcheggio: { show: 'si' } }
+  trunks: { show: 'yes' },
+  queues: { show: 'yes' },
+  parking: { show: 'si' } }
  */
 function initTabOp(){
 	tabOp = iniparser.parseSync(FILE_TAB_OP);
