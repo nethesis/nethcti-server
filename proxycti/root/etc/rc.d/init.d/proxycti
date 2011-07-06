@@ -12,9 +12,9 @@
 helper="/usr/lib/node/forever/bin/forever"
 exec="/usr/lib/node/proxycti/proxycti.js"
 prog=$(basename $exec)
+dirname=$(dirname $exec)
 
 LOGFILE=/var/log/forever_$prog.log
-PID=/var/run/$prog.pid
 
 [ -e /etc/sysconfig/$prog ] && . /etc/sysconfig/$prog
 
@@ -22,7 +22,7 @@ lockfile=/var/lock/subsys/$prog
 
 start() {
     echo -n $"Starting $prog: "
-    daemon "$helper start -a -l $LOGFILE -o $LOGFILE -e $LOGFILE -p $PID $exec"
+    daemon "cd $dirname; $helper start -a -l $LOGFILE -o $LOGFILE -e $LOGFILE $prog"
     retval=$?
     echo
     [ $retval -eq 0 ] && touch $lockfile
@@ -31,7 +31,7 @@ start() {
 
 stop() {
     echo -n $"Stopping $prog: "
-    $helper stop  $exec
+    cd $dirname; $helper stop $prog
     retval=$?
     echo
     [ $retval -eq 0 ] && rm -f $lockfile
@@ -46,23 +46,11 @@ case "$1" in
     start|stop|restart)
         $1
         ;;
-    force-reload)
-        restart
-        ;;
     status)
-        $helper list 
-        ;;
-    reload)
-        # If config can be reloaded without restarting, implement it here,
-        # remove the "exit", and add "reload" to the usage message below.
-        # For example:
-        # status $prog >/dev/null || exit 7
-        # killproc $prog -HUP
-        action $"Service ${0##*/} does not support the reload action: " /bin/false
-        exit 3
+        cd $dirname; $helper list 
         ;;
     *)
-        echo $"Usage: $0 {start|stop|status|restart|force-reload}"
+        echo $"Usage: $0 {start|stop|status|restart}"
         exit 2
 esac
 
