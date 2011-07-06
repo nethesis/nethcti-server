@@ -129,11 +129,16 @@ function getUniqueIdFromFilename(filename){
 
 // Add object modules
 var profiler = new proReq.Profiler();
+profiler.setLogger(logfile,loglevel);
 var dataCollector = new dataReq.DataCollector();
 dataCollector.setLogger(logfile,loglevel);
 var authenticator = new authReq.Authenticator();
+authenticator.setLogger(logfile,loglevel);
 var controller = new contrReq.Controller(); // check changing in audio directory
+controller.setLogger(logfile,loglevel);
 var modop = new modopReq.Modop();
+modop.setLogger(logfile,loglevel);
+
 modop.addController(controller)
 logger.debug('added object modules: \'Profiler\', \'DataCollector\', \'Authenticator\', \'Modop\' and \'Controller\'')
 controller.addDir(AST_CALL_AUDIO_DIR);
