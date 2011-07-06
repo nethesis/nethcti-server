@@ -1,0 +1,22 @@
+#!/usr/bin/perl -w
+
+use esmith::Build::CreateLinks qw(:all);
+
+
+service_link_enhanced('proxycti', 'S98', '7');
+service_link_enhanced('proxycti', 'K02', '6');
+service_link_enhanced('proxycti', 'K02', '2');
+service_link_enhanced('proxycti', 'K02', '1');
+service_link_enhanced('proxycti', 'K02', '0');
+
+
+
+templates2events("/usr/lib/node/proxycti/config/proxycti.ini", qw(proxycti-update bootstrap-console-save));
+templates2events("/etc/asterisk/manager.conf", qw(proxycti-update));
+
+for my $event (qw(pre-backup))
+{
+    event_link("proxycti-backup", $event, "90");
+}
+
+safe_symlink("restart", "root/etc/e-smith/events/proxycti-update/services2adjust/proxycti");

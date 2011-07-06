@@ -1,0 +1,14 @@
+
+; proxycti
+
+[cti]
+secret = cti
+deny=0.0.0.0/0.0.0.0
+permit=127.0.0.1/255.255.255.0
+{
+    my ($network, $broadcast) =  esmith::util::computeNetworkAndBroadcast ($LocalIP, $LocalNetmask);
+    $OUT.="permit=$network/$LocalNetmask"
+}
+read = system,call,log,verbose,command,agent,user,originate,all
+write = system,call,log,verbose,command,agent,user,originate,all
+
