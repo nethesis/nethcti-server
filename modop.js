@@ -8,7 +8,7 @@ var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
 var log4js = require('./lib/log4js-node/lib/log4js')();
 var pathreq = require('path')
 const FILE_TAB_OP = "config/optab.ini";
-const FILE_FASCI_INI = "config/fasci.ini"
+const FILE_FASCI_INI = "config/trunks.ini"
 const FILE_EXT_LIST = "/etc/asterisk/nethcti.ini";
 const DIAL_FROM = 1;
 const DIAL_TO = 0;
@@ -622,7 +622,7 @@ function initExtStatusForOp(){
         logger.info("initialize status of all extensions...");
         // read file where are the list of all extensions
         extStatusForOp = iniparser.parseSync(FILE_EXT_LIST);
-	// check if exists config/fasci.ini
+	// check if exists FILE_FASCI_INI
 	var tempFasciIni = undefined
 	if(pathreq.existsSync(FILE_FASCI_INI)){
 		tempFasciIni = iniparser.parseSync(FILE_FASCI_INI)
