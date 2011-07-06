@@ -571,10 +571,10 @@ am.addListener('dialing', function(headers) {
 	// in this case the call come from queue
 	if(from==undefined && chStat[headers.uniqueid].channel.indexOf('Local/')!=-1 && chStat[headers.uniqueid].channel.indexOf('@from-internal-')!=-1 )
 		from = headers.calleridnum
-	else if(from==undefined && chStat[headers.uniqueid].channel.indexOf('AsyncGoto/SIP/')!=-1 ) // this case is the redirect
-		from = chStat[headers.uniqueid].channel.split('-')[0].split('/')[2]
 	else if( from==undefined && modop.isChannelTrunk(chStat[headers.uniqueid].channel) ) // callin through a trunk (CASE B)
 		from = headers.calleridnum
+	else if(from==undefined && chStat[headers.uniqueid].channel.indexOf('AsyncGoto/SIP/')!=-1 ) // this case is the redirect
+		from = chStat[headers.uniqueid].channel.split('-')[0].split('/')[2]
 	logger.info("Dialing from '" + from + "' -> '" + to + "'")
 
 	// advise the client that receive the call
