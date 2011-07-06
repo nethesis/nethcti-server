@@ -694,6 +694,16 @@ EVENT 'Hangup': headers = { event: 'Hangup',
   calleridname: '<unknown>',
   cause: '16',
   causetxt: 'Normal Clearing' }
+  *
+  * or:
+EVENT 'Hangup': headers = { event: 'Hangup', (CASE M)
+  privilege: 'call,all',
+  channel: 'SIP/204-00000401<ZOMBIE>',
+  uniqueid: '1309879483.2177',
+  calleridnum: '204',
+  calleridname: 'Davide Marini',
+  cause: '16',
+  causetxt: 'Normal Clearing' } 
 *
 * and
 EVENT 'Hangup': headers = { event: 'Hangup',
@@ -847,13 +857,36 @@ am.addListener('hangup', function(headers) {
 	 * This is because this proxy server can be started after the asterisk server. So some calling can be in execution when this
  	 * proxy server starting and so it can receive some hangup event relative to old call for which it haven't the relative channel in chStat. 
 	 * In this case it simply discard this hangup event */
-	if(chStat[headers.uniqueid]==undefined){
+	if(headers.channel.indexOf('<ZOMBIE>')==-1 && chStat[headers.uniqueid]==undefined){
 		logger.warn("discard 'hangup' event: it isn't present in chStat. The cause can be the start of this server during the asterisk functioning")
 		return
 	}
 
 	if(chStat[headers.uniqueid].channel.indexOf('Local/')!=-1 && chStat[headers.uniqueid].channel.indexOf('@from-internal-')!=-1 && (chStat[headers.uniqueid].channel.indexOf(';1')!=-1 || chStat[headers.uniqueid].channel.indexOf(';2')!=-1 ) ){
 		logger.warn("discard 'hangup' event: relative to queue. Delete it from chStat")
+		return
+	}
+
+	if(headers.channel.indexOf('<ZOMBIE>')!=-1 && headers.channel.indexOf('AsyncGoto/SIP/')==-1){ // (CASE M)  channel: 'SIP/204-00000401<ZOMBIE>'
+		var tempCh = headers.channel.split('<ZOMBIE>')[0]
+		var internTypeExt = modop.getInternTypeExtFromChannel(tempCh)
+		var tempUniqueid
+		for(key in chStat){
+			if(chStat[key].channel==tempCh)
+				tempUniqueid = key
+		}
+		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt, tempUniqueid)){
+                        modop.removeDialingUniqueidInternWithTypeExt(internTypeExt, tempUniqueid)
+                        logger.info("removed dialingUniqueid '" + tempUniqueid + "' from intern '" + internTypeExt + "'")
+                } else
+                        logger.warn("dialingUniqueid '" + tempUniqueid + "' has already not present into intern '" + internTypeExt + "'")
+		if(modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, tempUniqueid)){
+                        modop.removeCallConnectedUniqueidInternWithTypeExt(internTypeExt, tempUniqueid)
+                        logger.info("removed callConnectedUniqueid '" + tempUniqueid + "' from intern '" + internTypeExt + "'")
+                } else
+                        logger.warn("callConnected uniqueid '" + tempUniqueid + "' has already not present into intern '" + internTypeExt + "'")
+		modop.updateHangupUniqueidInternWithTypeExt(internTypeExt, tempUniqueid) // add uniqueid of current hangup as 'lastHangupUniqueid'
+                updateAllClientsForOpWithTypeExt(internTypeExt)
 		return
 	}
 
@@ -2543,16 +2576,23 @@ io.on('connection', function(client){
 				});
 			break;
 			case actions.ACTION_PICKUP:
-				console.log("chStat = " + sys.inspect(chStat))
+				logger.info("chStat = " + sys.inspect(chStat))
                                 var callerExt = message.callerExt
 				var callTo = message.callTo
                         	var channel = ''
 				for(key in chStat){
-					var tempChannel = chStat[key].channel
-					if(modop.isChannelIntern(tempChannel)){
-						var tempExt = modop.getExtInternFromChannel(tempChannel)
+					var tempCh = chStat[key].channel
+					if(modop.isChannelIntern(tempCh)){
+						var tempExt = modop.getExtInternFromChannel(tempCh)
 						if(tempExt==callerExt && chStat[key].dialExt==callTo){
-							channel = tempChannel
+							channel = tempCh
+							break
+						}
+					} else if(modop.isChannelTrunk(tempCh) && chStat[key].dialExtUniqueid!=undefined){
+						var dialExtUniqueid = chStat[key].dialExtUniqueid
+						var tempExt = modop.getExtInternFromChannel(chStat[dialExtUniqueid].channel)
+						if(chStat[key].calleridnum==callerExt && tempExt==callto){
+							channel = tempCh
 							break
 						}
 					}
