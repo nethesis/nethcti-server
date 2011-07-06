@@ -1970,6 +1970,14 @@ io.on('connection', function(client){
 								break
 							}
 						}
+						if(modop.isChannelTrunk(tempChannel) && chStat[key].dialExtUniqueid!=undefined){
+							var dialExtUniqueid = chStat[key].dialExtUniqueid
+							var tempExt = modop.getExtInternFromChannel(chStat[dialExtUniqueid].channel)
+							if(chStat[key].calleridnum==redirectFromExt && tempExt==extFrom){
+								ch = tempChannel
+								break
+							}
+						}
 					}
 		  			// create redirect action for the asterisk server
 		  			var actionRedirect = {
@@ -2597,8 +2605,6 @@ io.on('connection', function(client){
 						}
 					}
 				}
-
-				console.log("UAOO channel = " + channel)
                                 // create action to pickup the call. It is realized with redirect action 
                                 var actionPickup = {
                                        Action: 'Redirect',
