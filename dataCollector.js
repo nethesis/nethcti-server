@@ -10,13 +10,10 @@ const CUSTOMER_CARD = "customer_card";
 const DAY_HISTORY_CALL = "day_history_call";
 const CURRENT_WEEK_HISTORY_CALL = "current_week_history_call";
 const CURRENT_MONTH_HISTORY_CALL = "current_month_history_call";
-const LOGFILE = './log/proxy.log';
 
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF) */
-log4js.addAppender(log4js.fileAppender(LOGFILE), '[DataCollector]');
 var logger = log4js.getLogger('[DataCollector]');
-logger.setLevel('ALL');
 
 /* this is the list of the queries expressed in the config file: the key is the section name
  * and the value is the all parameter to execute the query.
@@ -50,6 +47,7 @@ exports.DataCollector = function(){
 	this.getCurrentWeekHistoryCall = function(ext, cb) { return getCurrentWeekHistoryCall(ext, cb); }
 	this.getCurrentMonthHistoryCall = function(ext, cb) { return getCurrentMonthHistoryCall(ext, cb); }
 	this.addController = function(contr) { addController(contr) }
+	this.setLogger = function(logfile,level) { log4js.addAppender(log4js.fileAppender(logfile), '[DataCollector]'); logger.setLevel(level); }
 }
 
 // add controller to manage changin in configuration file

@@ -24,7 +24,6 @@ const CALL_PREFIX = "CTI-";
 const SPY_PREFIX = "SPY-";
 const REDIRECT_VM_PREFIX = "REDIR_VM-";
 const START_TAG_FILENAME = "auto-";
-const LOGFILE = './log/proxy.log';
 // asterisk manager
 var am;
 // the server
@@ -63,17 +62,20 @@ function initServerAndAsteriskParameters(){
 	asterisk_host = server_conf.ASTERISK.host;
 	hostname = server_conf.SERVER_PROXY.hostname;
 	port = server_conf.SERVER_PROXY.port;
+	logfile = server_conf.SERVER_PROXY.logfile;
+	if(logfile == undefined) logfile = "/var/log/proxycti.log";
+	loglevel = server_conf.SERVER_PROXY.loglevel;
+	if(loglevel == undefined) loglevel = "INFO";
 }
-
 
 
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF)
  */
-log4js.addAppender(log4js.fileAppender(LOGFILE), '[ProxyCTI]');
+log4js.clearAppenders();
+log4js.addAppender(log4js.fileAppender(logfile), '[ProxyCTI]');
 var logger = log4js.getLogger('[ProxyCTI]');
-logger.setLevel('ALL');
-
+logger.setLevel(loglevel);
 
 
 
@@ -128,6 +130,7 @@ function getUniqueIdFromFilename(filename){
 // Add object modules
 var profiler = new proReq.Profiler();
 var dataCollector = new dataReq.DataCollector();
+dataCollector.setLogger(logfile,loglevel);
 var authenticator = new authReq.Authenticator();
 var controller = new contrReq.Controller(); // check changing in audio directory
 var modop = new modopReq.Modop();

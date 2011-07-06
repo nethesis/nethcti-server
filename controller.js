@@ -4,14 +4,11 @@ var inherits = require("sys").inherits;
 var EventEmitter = require("events").EventEmitter;
 var log4js = require('./lib/log4js-node/lib/log4js')();
 const INTERVAL_POLLING = 0;
-const LOGFILE = './log/proxy.log';
 
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF)
  */
-log4js.addAppender(log4js.fileAppender(LOGFILE), '[Controller]');
 var logger = log4js.getLogger('[Controller]');
-logger.setLevel('ALL');
 fileToControl = {} // list of files to control
 dirToControl = {} // list of directories to control
 // Constructor
@@ -21,6 +18,7 @@ exports.Controller = function(){
 	this.addFile = function(filename) { addFile(filename) };
 	this.addDir = function(dir) { addDir(dir) };
 	this.addVMDir = function(dir) { addVMDir(dir) }
+        this.setLogger = function(logfile,level) { log4js.addAppender(log4js.fileAppender(logfile), '[Controller]'); logger.setLevel(level); }
 } 
 function addVMDir(dir){
 	try{

@@ -13,16 +13,13 @@ const DIAL_FROM = 1;
 const DIAL_TO = 0;
 const START_RECORD = 1;
 const STOP_RECORD = 0;
-const LOGFILE = './log/proxy.log';
 const VM_PATH_BASE = '/var/spool/asterisk/voicemail/default'
 
 // logger
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF)
  */
-log4js.addAppender(log4js.fileAppender(LOGFILE), '[Modop]');
 var logger = log4js.getLogger('[Modop]');
-logger.setLevel('ALL');
 
 /* This is for update CTI on the status of all extensions registered in the asterisk server.
  * The scope for the clients is to create the operator panel with all informations about the extensions.
@@ -99,6 +96,7 @@ exports.Modop = function(){
 	this.getInternTypeExtFromChannel = function(ch) { return getInternTypeExtFromChannel(ch) }
 	this.isExtGroup = function(ext) { return isExtGroup(ext) }
 	this.getExtInternFromChannel = function(ch) { return getExtInternFromChannel(ch) }
+        this.setLogger = function(logfile,level) { log4js.addAppender(log4js.fileAppender(logfile), '[Modop]'); logger.setLevel(level); }
 }
 function getExtInternFromChannel(ch){
 	for(key in extStatusForOp)
