@@ -1960,12 +1960,13 @@ io.on('connection', function(client){
 	  				// get the channel
 	  				var ch
 					var redirectFromExt = message.redirectFromExt
+					var callTo = message.callTo
 					var redirectToExt = message.redirectToExt
 					for(key in chStat){
 						var tempChannel = chStat[key].channel
 						if(modop.isChannelIntern(tempChannel)){
 							var tempExt = modop.getExtInternFromChannel(tempChannel)
-							if(tempExt==redirectFromExt && chStat[key].dialExt==extFrom){
+							if(tempExt==redirectFromExt && chStat[key].dialExt==callTo){
 								ch = tempChannel
 								break
 							}
@@ -1973,7 +1974,7 @@ io.on('connection', function(client){
 						if(modop.isChannelTrunk(tempChannel) && chStat[key].dialExtUniqueid!=undefined){
 							var dialExtUniqueid = chStat[key].dialExtUniqueid
 							var tempExt = modop.getExtInternFromChannel(chStat[dialExtUniqueid].channel)
-							if(chStat[key].calleridnum==redirectFromExt && tempExt==extFrom){
+							if(chStat[key].calleridnum==redirectFromExt && tempExt==callTo){
 								ch = tempChannel
 								break
 							}
