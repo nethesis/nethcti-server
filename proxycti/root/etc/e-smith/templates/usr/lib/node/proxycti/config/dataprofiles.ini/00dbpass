@@ -1,5 +1,5 @@
 {
-   $db_pwd = $nethvoice{DbPasswd} || 'aaa';
+   $db_pwd = $nethvoice{DbPasswd} || '';
 
    "";
 }
