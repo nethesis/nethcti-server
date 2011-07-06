@@ -1,3 +1,5 @@
 {
-   $db_pwd = $voicerec->prop('DbPasswd') || 'DbPasswd';
+   $db_pwd = $nethvoice{DbPasswd} || 'aaa';
+
+   "";
 }
