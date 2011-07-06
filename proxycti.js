@@ -1068,6 +1068,10 @@ EVENT 'CallConnected': headers = '{ event: 'Bridge',
 am.addListener('callconnected', function(headers) {
         logger.info("EVENT 'CallConnected': headers = '" + sys.inspect(headers) + "'")
 	logger.info("'callconnected' chStat = " + sys.inspect(chStat))
+	if(chStat[headers.uniqueid1]==undefined || chStat[headers.uniqueid2]==undefined){
+		logger.warn("discard 'callConnected' event: it isn't present in chStat. The cause can be the start of this server during the asterisk functioning")
+		return
+	}
 	/* when redirect:
 	chStat = { '1308664818.896': { channel: 'AsyncGoto/SIP/270-000002df' },
 	  '1308664819.897': 
