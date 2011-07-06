@@ -1,0 +1,2 @@
+logfile=/var/log/proxycti.log
+loglevel=INFO
