@@ -39,6 +39,7 @@ rm -rf $RPM_BUILD_ROOT
 %doc
 
 %post
+/etc/e-smith/events/actions/initialize-default-databases
 /sbin/e-smith/signal-event %{name}-update
 
 
