@@ -583,6 +583,8 @@ am.addListener('dialing', function(headers) {
 		from = headers.calleridnum
 	else if(from==undefined && chStat[headers.uniqueid].channel.indexOf('AsyncGoto/SIP/')!=-1 ) // this case is the redirect
 		from = chStat[headers.uniqueid].channel.split('-')[0].split('/')[2]
+	else if(from==undefined && modop.isChannelIntern(chStat[headers.uniqueid].channel))
+		from = headers.calleridnum
 	logger.info("Dialing from '" + from + "' -> '" + to + "'")
 
 	// advise the client that receive the call
