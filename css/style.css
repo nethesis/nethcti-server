@@ -160,3 +160,30 @@
    padding: 5px;
 }
 
+
+#cdr {
+    margin: 10px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    text-align: center;
+}
+
+#cdr .name {
+  width: 98%;
+}
+
+#cdr table {
+  border-collapse:collapse;
+  margin: 30px;
+  margin-top: 50px;
+  padding: 5px;
+  width: 90%;
+}
+
+#cdr td,tr,th{
+  border-bottom: 2px solid #ccc;
+  border-top: 1px solid #ccc;
+  text-align: center;
+  padding: 3px;
+}
+
