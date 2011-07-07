@@ -1712,6 +1712,7 @@ io.on('connection', function(client){
 			ACTION_CHECK_CALL_AUDIO_FILE: 'check_call_audio_file',
 			ACTION_SEARCH_CONTACT_PHONEBOOK:  'search_contact_phonebook',
 			ACTION_GET_PEER_LIST_COMPLETE_OP: 'get_peer_list_complete_op',
+			ACTION_REDIRECT_VOICEMAIL_FROM_OP: 'redirect_voicemail_from_op',
 			ACTION_GET_CURRENT_WEEK_HISTORY_CALL:  'get_current_week_history_call',
 			ACTION_GET_CURRENT_MONTH_HISTORY_CALL: 'get_current_month_history_call'
 		}
@@ -2678,6 +2679,45 @@ io.on('connection', function(client){
                                 am.send(actionRedirectVoicemail, function(){
 					logger.info("'actionRedirectVoicemail' " + sys.inspect(actionRedirectVoicemail) + " has been sent to AST");
                                 });
+                        break;
+			case actions.ACTION_REDIRECT_VOICEMAIL_FROM_OP:
+				var callFrom = message.callFrom
+				var callTo = message.callTo
+				var redirectToExt = message.redirectToExt
+				var ch
+				for(key in chStat){
+					var tempChannel = chStat[key].channel
+					if(modop.isChannelIntern(tempChannel)){
+						var tempExt = modop.getExtInternFromChannel(tempChannel)
+						if(tempExt==callFrom && chStat[key].dialExt==callTo){
+							ch = tempChannel
+							break
+						}
+					} else if(modop.isChannelTrunk(tempChannel)){
+						var dialExtUniqueid = chStat[key].dialExtUniqueid
+						var tempExt = modop.getExtInternFromChannel(chStat[dialExtUniqueid].channel)
+						if(chStat[key].calleridnum==callFrom && tempExt==callTo){
+							ch = tempChannel
+							break
+						}
+					}
+					else if(chStat[key].channel.indexOf('callFrom')!=-1 && chStat[key].dialExt==callTo){
+						ch = chStat[key].channel
+						break
+					}
+				}
+				// create action to spy channel
+                                var actionRedirectVoicemailToExt = {
+                                        Action: 'Redirect',
+                                        Channel: ch,
+                                        Context: 'ext-local',
+                                        Exten: 'vmu' + redirectToExt,
+                                        Priority: 1
+                                }
+                                // send spy action to the asterisk server
+                                am.send(actionRedirectVoicemailToExt, function(){
+                                        logger.info("'actionRedirectVoicemailToExt' " + sys.inspect(actionRedirectVoicemailToExt) + " has been sent to AST");
+                                })
                         break;
 	  		default:
 	  			logger.warn("ATTENTION: received unknown ACTION '" + action + "': not supported");
