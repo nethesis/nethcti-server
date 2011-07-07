@@ -128,7 +128,6 @@ function getInternTypeExtFromChannel(ch){
 	for(key in extStatusForOp)
 		if(ch.indexOf(key)!=-1 && extStatusForOp[key].tab=='interno')
 			return key
->>>>>>> doubleCall
 }
 function getExtInternFromChannel(ch){
 	for(key in extStatusForOp)
