@@ -909,7 +909,7 @@ am.addListener('hangup', function(headers) {
 		} else
 			logger.warn("callConnected uniqueid '" + headers.uniqueid + "' has already not present into trunk '" + trunkTypeExt + "'")
 	}
-	else if(modop.isChannelIntern(chStat[headers.uniqueid].channel)){ // headers.channel is an intern
+	else if(modop.isChannelIntern(headers.channel)){ // headers.channel is an intern
 		var internTypeExt = modop.getInternTypeExtFromChannel(chStat[headers.uniqueid].channel)
 		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt, headers.uniqueid)){
 			modop.removeDialingUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid)
