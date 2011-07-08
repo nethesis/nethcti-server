@@ -188,9 +188,9 @@ am = new ast.AsteriskManager({user: asterisk_user, password: asterisk_pass, host
 logger.debug('created asterisk manager');
 
 am.addListener('serverconnect', function() {
-	logger.info("EVENT 'ServerConnect' to AST");
+	logger.debug("EVENT 'ServerConnect' to AST");
 	am.login(function () {
-		logger.info("logged into AST");
+		logger.info("logged into ASTESRISK");
 		// Add asterisk manager to modop
 		modop.addAsteriskManager(am);
 	});

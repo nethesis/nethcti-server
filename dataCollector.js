@@ -53,7 +53,7 @@ exports.DataCollector = function(){
 // add controller to manage changin in configuration file
 function addController(contr){
         controller = contr;
-        logger.info("added controller");
+        logger.debug("added controller");
         controller.addFile(DATACOLLECTOR_CONFIG_FILENAME);
         controller.addListener("change_file", function(filename){
                if(filename==DATACOLLECTOR_CONFIG_FILENAME){
