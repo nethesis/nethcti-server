@@ -6,3 +6,13 @@ dbuser=pbookuser
 dbpassword=pbookpass
 dbname=phonebook
 query=select * from phonebook where homephone like '%$EXTEN' or workphone like '%$EXTEN' or cellphone like '%$EXTEN' or fax like '%$EXTEN'
+
+[customer_card_chiamate]
+dbhost=localhost
+dbport=3306
+dbtype=mysql
+dbuser=asteriskuser
+{ $OUT.="dbpassword=$db_pwd"; }
+dbname=asteriskcdrdb
+query=select date_format(calldate,'%d/%m/%Y') as date, date_format(calldate,'%H:%i:%S') as time, clid, src, dst, uniqueid,duration,billsec,disposition,if(src='$EXTEN','in','out') as direction from cdr where (src = '$EXTEN' or dst = '$EXTEN') and disposition = 'ANSWERED' order by calldate desc limit 0,10
+
