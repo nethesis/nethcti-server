@@ -1,5 +1,5 @@
 Name:		proxycti
-Version:	0.2.7
+Version:	0.2.7.2
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI	
 
@@ -44,6 +44,13 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Fri Jul 08 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 0.2.7.2-1.nh
+- Alpha2 release
+
+* Thu Jul 07 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 0.2.7.1-1.nh
+- Alpha release
+
+
 * Tue Jul 05 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 0.2.7-1.nh
 - First release
 
