@@ -227,8 +227,8 @@ getCustomerCard = function(ext, type, cb){
                 // substitue template field in query
                 copyObjQuery.query = copyObjQuery.query.replace(/\$EXTEN/g, ext);
                 // execute current sql query
-                executeSQLQuery(section, copyObjQuery, function(results){
-                        cb(results);
+                executeNamedSQLQuery(section, copyObjQuery, type, function(results, type){
+                        cb(results, type);
                 });
         } else {
 		logger.error('no query for section \'' + section + '\'')
@@ -268,5 +268,23 @@ function executeSQLQuery(type, objQuery, cb){
 	                logger.error(sys.inspect(err));
 	        }
 	        cb(results);
+        });
+}
+
+
+/* Execute name one sql query. This function must have 
+ * a callback function as second parameter because the asynchronous nature of
+ * mysql query function. Otherwise it is possibile that the function return before
+ * the completion of sql query operation */
+function executeNamedSQLQuery(type, objQuery, name, cb){
+        // get already opened connection
+        var conn = dbConnections[type];
+        var query = objQuery.query + ";";
+        conn.query(query, function (err, results, fields) {
+                if (err) {
+                        logger.error("ERROR in execute " + objQuery.dbtype + " query");
+                        logger.error(sys.inspect(err));
+                }
+                cb(results, name);
         });
 }

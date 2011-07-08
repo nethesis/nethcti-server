@@ -592,32 +592,37 @@ am.addListener('dialing', function(headers) {
                         response.from = from
                         response.to = to
                         var typesCC = profiler.getTypesCustomerCardPermit(to)
-                        logger.info("[" + to + "] is able to view customer card of types: " + sys.inspect(typesCC))
+                        logger.debug("[" + to + "] is able to view customer card of types: " + sys.inspect(typesCC))
                         if(typesCC.length==0){
                                 // the user hasn't the authorization of view customer card, then the length is 0
-                                logger.info("check permission to view Customer Card for [" + to + "] FAILED !")
+                                logger.debug("check permission to view Customer Card for [" + to + "] FAILED !")
                                 response.customerCard = ""
                                 response.noPermission = ''
                                 c.send(response)
-                                logger.info("RESP 'dialing' has been sent to [" + to + "] sessionId '" + c.sessionId + "'")
+                                logger.debug("RESP 'dialing' has been sent to [" + to + "] sessionId '" + c.sessionId + "'")
                                 return
                         }
-                        var customerCardResult = []
-                        for(i=0; i<typesCC.length; i++){
-                                dataCollector.getCustomerCard(from, typesCC[i], function(cc){
-                                        if(cc!=undefined){
-                                                var custCardHTML = createCustomerCardHTML(cc[0], from)
-                                                customerCardResult.push(custCardHTML)
-                                        } else{
-                                                customerCardResult.push(cc)
-                                        }
-                                        if(customerCardResult.length==typesCC.length){
-                                                response.customerCard = customerCardResult
-                                                c.send(response)
-                                                logger.info("RESP 'dialing' has been sent to [" + to + "] sessionId '" + c.sessionId + "' with relative customer card")
-                                        }
-                                })
-                        }
+		        var customerCardResult = []
+       			for(i=0; i<typesCC.length; i++){
+                		var name = typesCC[i];
+                		dataCollector.getCustomerCard(from, typesCC[i], function(cc, name) {
+                        		if(cc!=undefined){
+                                		var obj = {};
+                                		for(var item in cc)
+                                       		 	cc[item].server_address = "http://" + hostname + ":" + port;
+                               			obj[name] = cc;
+                                		var custCardHTML = createCustomerCardHTML(obj, from)
+                                		customerCardResult.push(custCardHTML)
+                        		} else{
+                        	       	 	customerCardResult.push(cc)
+                        		}
+                        		if(customerCardResult.length==typesCC.length){
+                                		response.customerCard = customerCardResult
+                                		c.send(response)
+                                		logger.debug("RESP 'dialing' has been sent to [" + to + "] sessionId '" + c.sessionId + "' with relative customer card")
+                        		}
+                		})
+        		}
                 }
 	}
 	// update for OP
