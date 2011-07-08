@@ -77,7 +77,7 @@
 	        {:if url }
 		<div class='label numbers'>Sito</div>
 	        <div class='numbers'>
-			<div class='label tr' style='clear: both'><span class='value td'><img src="{=server_address}/template/images/web.png" title='Web' alt='Wrb'/></span> <span class='td'><a href='{=url}'>{=url}</a></span>
+			<div class='label tr' style='clear: both'><span class='value td'><img src="{=server_address}/template/images/web.png" title='Web' alt='Web'/></span> <span class='td'><a href='{=url}'>{=url}</a></span>
 
 	        </div>
 	        {/:if}
@@ -92,9 +92,9 @@
 <div id='cdr'>
 <div class='name'>Ultime chiamate</div>
 <table>
-<tr><th>Data</th><th>Ora</th><th>Durata</th><th>Destinazione</th></tr>
+<tr><th>Data</th><th>Ora</th><th>Durata</th><th>Sorgente</th><th/><th>Destinazione</th></tr>
 {:r .}
-  <tr><td>{=date}</td><td>{=time}</td><td>{=billsec}</td><td>{=dst}</td></tr>
+  <tr><td>{=date}</td><td>{=time}</td><td>{=billsec}</td><td>{=clid}</td><td><img src="{=server_address}/template/images/{=direction}.png" title='Direction' alt='Direction'/></td><td>{=dst}</td></tr>
 {/:r}
 </table>
 </div>
