@@ -18,6 +18,7 @@ extensions=all
 
 [CUSTOMER_CARD]
 default=all
+chiamate=all
 
 [OP_PLUS]
 extensions=all
