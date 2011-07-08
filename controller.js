@@ -32,14 +32,12 @@ function addVMDir(dir){
                 }
         }
         catch(err){
-                log("Error: " + dir + " is not directory")
-                log(sys.inspect(err))
+                logger.error("Error: " + dir + " is not directory")
+                logger.error(sys.inspect(err))
                 return
         }
 }
-function log(msg){
-	logger(msg);
-}
+
 // add directory to control and emit event when modified time changes
 function addDir(dir){
 	try{
@@ -54,8 +52,8 @@ function addDir(dir){
 	        }
 	}
 	catch(err){	
-		log("Error: " + dir + " is not directory");
-		log(sys.inspect(err));
+		logger.error("Error: " + dir + " is not directory");
+		logger.error(sys.inspect(err));
 		return;
 	}
 }
@@ -73,8 +71,8 @@ function addFile(filename){
                 }
         }
         catch(err){
-                log("Error: " + filename + " is not file");
-                log(sys.inspect(err));
+                logger.error("Error: " + filename + " is not file");
+                logger.error(sys.inspect(err));
                 return;
         }
 }

@@ -55,11 +55,11 @@ exports.Profiler = function(){
 }
 function addController(contr){
 	controller = contr
-	log("added controller")
+	logger.debug("added controller")
 	controller.addFile(PROFILER_CONFIG_FILENAME)
 	controller.addListener("change_file", function(filename){
  	       if(filename==PROFILER_CONFIG_FILENAME){
-	                log("update configuration file " + PROFILER_CONFIG_FILENAME)
+	                logger.info("update configuration file " + PROFILER_CONFIG_FILENAME)
 	                updateConfiguration()
 	        }
 	})
@@ -93,4 +93,3 @@ function initProfiles(){
 	this.actions = {}
 	this.actions = iniparser.parseSync(PROFILER_CONFIG_FILENAME) 
 }
-function log(msg){ logger.info(msg) }

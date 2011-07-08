@@ -82,8 +82,7 @@ logger.setLevel(loglevel);
 
 
 // START
-logger.info("-------------------------------------------------------------");
-logger.info("------------------- START Server v. " + version + " -------------------");
+logger.info("Starting server...");
 
 
 
@@ -250,11 +249,11 @@ EVENT 'NewChannel': headers = { event: 'Newchannel',
   accountcode: '',
   uniqueid: '1308726926.8996' } */
 am.addListener('newchannel', function(headers){
-	logger.info("EVENT 'NewChannel': headers = " + sys.inspect(headers))
+	logger.debug("EVENT 'NewChannel': headers = " + sys.inspect(headers))
 	chStat[headers.uniqueid] = {
 		channel: headers.channel
 	}
-	logger.info("'newChannel' chStat = " + sys.inspect(chStat))
+	logger.debug("'newChannel' chStat = " + sys.inspect(chStat))
 })
 
 /* when call from the soft phone 
@@ -317,14 +316,14 @@ EVENT 'NewState': headers '{ event: 'Newstate',
   calleridname: '',
   uniqueid: '1308745579.1057' }' */
 am.addListener('newstate', function(headers){
-        logger.info("EVENT 'NewState': headers '" + sys.inspect(headers) +  "'")
+        logger.debug("EVENT 'NewState': headers '" + sys.inspect(headers) +  "'")
 
 	/* check if the chStat contains the entry relative to this newstate event.
          * This is because this proxy server can be started after the asterisk server. So some calling can be in execution when this
          * proxy server starting and so it can receive some newState event relative to old call for which it haven't the relative channel in chStat. 
          * In this case it simply discard this newState event */
         if(chStat[headers.uniqueid]==undefined){
-                logger.warn("discard 'newState' event: it isn't present in chStat. The cause can be the start of this server during the asterisk functioning")
+                logger.debug("discard 'newState' event: it isn't present in chStat. The cause can be the start of this server during the asterisk functioning")
                 return
         }
 
@@ -401,7 +400,7 @@ am.addListener('newstate', function(headers){
 		updateAllClientsForOpWithTypeExt(typeext)
 	}
 	
-	logger.info("'newState' chStat = " + sys.inspect(chStat))
+	logger.debug("'newState' chStat = " + sys.inspect(chStat))
 })
 
 /* whe call come from soft phone
@@ -422,7 +421,7 @@ EVENT 'NewCallerid': headers '{ event: 'NewCallerid',
   uniqueid: '1308581562.576',
   cidcallingpres: '0 (Presentation Allowed, Not Screened)' }' */
 am.addListener('newcallerid', function(headers){
-	logger.info("EVENT 'NewCallerid': headers '" + sys.inspect(headers) +  "'")	
+	logger.debug("EVENT 'NewCallerid': headers '" + sys.inspect(headers) +  "'")	
 })
 
 
@@ -518,8 +517,8 @@ EVENT 'Dialing': headers '{ event: 'Dial',
   uniqueid: '1308732470.9425',
   dialstatus: 'CONGESTION' }' */
 am.addListener('dialing', function(headers) {
-        logger.info("EVENT 'Dialing': headers '" + sys.inspect(headers) + "'")
-	logger.info("'dialing' chstat = " + sys.inspect(chStat))
+        logger.debug("EVENT 'Dialing': headers '" + sys.inspect(headers) + "'")
+	logger.debug("'dialing' chstat = " + sys.inspect(chStat))
 	/* chstat = { '1308646890.732': 
 	   { channel: 'SIP/271-00000274',
 	     status: 'ring',
@@ -585,13 +584,13 @@ am.addListener('dialing', function(headers) {
 		from = chStat[headers.uniqueid].channel.split('-')[0].split('/')[2]
 	else if(from==undefined && modop.isChannelIntern(chStat[headers.uniqueid].channel))
 		from = headers.calleridnum
-	logger.info("Dialing from '" + from + "' -> '" + to + "'")
+	logger.debug("Dialing from '" + from + "' -> '" + to + "'")
 
 	// advise the client that receive the call
 	if(to!=undefined && to!='' && modop.isExtPresent(to) && modop.isExtInterno(to)){
 		// check the permission of the user to receive the call
                 if(!profiler.checkActionCallInPermit(to)){
-                	logger.info("check 'callIn' permission for [" + to + "] FAILED !")
+                	logger.warn("check 'callIn' permission for [" + to + "] FAILED !")
                         return
 		}
 		var c = clients[to]
@@ -651,7 +650,7 @@ am.addListener('dialing', function(headers) {
 				chStat[headers.uniqueid].dialDirection = DIAL_FROM
 				var internTypeExt = modop.getInternTypeExtFromChannel(headers.channel)
 				modop.addDialingUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid, chStat[headers.uniqueid])
-				logger.info("added dialingUniqueid '" + headers.uniqueid + "' to interTypeExt '" + internTypeExt + "'")
+				logger.debug("added dialingUniqueid '" + headers.uniqueid + "' to interTypeExt '" + internTypeExt + "'")
 		        	updateAllClientsForOpWithExt(from)
 			} else if( modop.isExtPresent(from) && modop.isChannelTrunk(headers.channel) )
 				logger.warn("[" + from + "] is namesake: comes from remote location through trunk '" + headers.channel + "'")
@@ -661,7 +660,7 @@ am.addListener('dialing', function(headers) {
 			chStat[headers.destuniqueid].dialDirection = DIAL_TO
 			var internTypeExt = modop.getInternTypeExtFromChannel(headers.destination)
 			modop.addDialingUniqueidInternWithTypeExt(internTypeExt, headers.destuniqueid, chStat[headers.destuniqueid])
-			logger.info("added dialingUniqueid '" + headers.destuniqueid + "' to interTypeExt '" + internTypeExt + "'")
+			logger.debug("added dialingUniqueid '" + headers.destuniqueid + "' to interTypeExt '" + internTypeExt + "'")
 	        	//updateAllClientsForOpWithExt(to) 
 			// commented because send newState to all clients with the status set to 'up'. However there
 			// will be a newState event with the status ringing and with the right dialExt 
@@ -771,7 +770,7 @@ EVENT 'Hangup': headers = { event: 'Hangup',
   cause: '16',
   causetxt: 'Normal Clearing' } */
 am.addListener('hangup', function(headers) {
-        logger.info("EVENT 'Hangup': headers = " + sys.inspect(headers))
+        logger.debug("EVENT 'Hangup': headers = " + sys.inspect(headers))
 
 	/* if the hangup event is relative to Local/270@from-internal-a7dd;1', means that this hangup is relative
 	 * to the intermediate node created by asterisk that finish with ';1'. So it is ingored, because there will be
@@ -878,7 +877,7 @@ am.addListener('hangup', function(headers) {
 	}
 
 	if(chStat[headers.uniqueid].channel.indexOf('Local/')!=-1 && chStat[headers.uniqueid].channel.indexOf('@from-internal-')!=-1 && (chStat[headers.uniqueid].channel.indexOf(';1')!=-1 || chStat[headers.uniqueid].channel.indexOf(';2')!=-1 ) ){
-		logger.warn("discard 'hangup' event: relative to queue. Delete it from chStat")
+		logger.debug("discard 'hangup' event: relative to queue. Delete it from chStat")
 		return
 	}
 
@@ -892,14 +891,14 @@ am.addListener('hangup', function(headers) {
 		}
 		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt, tempUniqueid)){
                         modop.removeDialingUniqueidInternWithTypeExt(internTypeExt, tempUniqueid)
-                        logger.info("removed dialingUniqueid '" + tempUniqueid + "' from intern '" + internTypeExt + "'")
+                        logger.debug("removed dialingUniqueid '" + tempUniqueid + "' from intern '" + internTypeExt + "'")
                 } else
-                        logger.warn("dialingUniqueid '" + tempUniqueid + "' has already not present into intern '" + internTypeExt + "'")
+                        logger.debug("dialingUniqueid '" + tempUniqueid + "' has already not present into intern '" + internTypeExt + "'")
 		if(modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, tempUniqueid)){
                         modop.removeCallConnectedUniqueidInternWithTypeExt(internTypeExt, tempUniqueid)
-                        logger.info("removed callConnectedUniqueid '" + tempUniqueid + "' from intern '" + internTypeExt + "'")
+                        logger.debug("removed callConnectedUniqueid '" + tempUniqueid + "' from intern '" + internTypeExt + "'")
                 } else
-                        logger.warn("callConnected uniqueid '" + tempUniqueid + "' has already not present into intern '" + internTypeExt + "'")
+                        logger.debug("callConnected uniqueid '" + tempUniqueid + "' has already not present into intern '" + internTypeExt + "'")
 		modop.updateHangupUniqueidInternWithTypeExt(internTypeExt, tempUniqueid) // add uniqueid of current hangup as 'lastHangupUniqueid'
                 updateAllClientsForOpWithTypeExt(internTypeExt)
 		return
@@ -909,23 +908,23 @@ am.addListener('hangup', function(headers) {
 		var trunkTypeExt = modop.getTrunkTypeExtFromChannel(chStat[headers.uniqueid].channel)
 		if( modop.hasTrunkCallConnectedUniqueidWithTypeExt(trunkTypeExt, headers.uniqueid) ){ // remove callconnectedUniqueid for current trunk
 			modop.removeCallConnectedUniqueidTrunkWithTypeExt(trunkTypeExt, headers.uniqueid)
-			logger.info("removed callConnectedUniqueid '" + headers.uniqueid + "' from trunk '" + trunkTypeExt + "'")
+			logger.debug("removed callConnectedUniqueid '" + headers.uniqueid + "' from trunk '" + trunkTypeExt + "'")
 			updateAllClientsForOpWithTypeExt(trunkTypeExt)
 		} else
-			logger.warn("callConnected uniqueid '" + headers.uniqueid + "' has already not present into trunk '" + trunkTypeExt + "'")
+			logger.debug("callConnected uniqueid '" + headers.uniqueid + "' has already not present into trunk '" + trunkTypeExt + "'")
 	}
 	else if(modop.isChannelIntern(headers.channel)){ // headers.channel is an intern
 		var internTypeExt = modop.getInternTypeExtFromChannel(chStat[headers.uniqueid].channel)
 		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt, headers.uniqueid)){
 			modop.removeDialingUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid)
-			logger.info("removed dialingUniqueid '" + headers.uniqueid + "' from intern '" + internTypeExt + "'")
+			logger.debug("removed dialingUniqueid '" + headers.uniqueid + "' from intern '" + internTypeExt + "'")
 		} else
-			logger.warn("dialingUniqueid '" + headers.uniqueid + "' has already not present into intern '" + internTypeExt + "'")
+			logger.debug("dialingUniqueid '" + headers.uniqueid + "' has already not present into intern '" + internTypeExt + "'")
 		if(modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, headers.uniqueid)){
 			modop.removeCallConnectedUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid)
-			logger.info("removed callConnectedUniqueid '" + headers.uniqueid + "' from intern '" + internTypeExt + "'")
+			logger.debug("removed callConnectedUniqueid '" + headers.uniqueid + "' from intern '" + internTypeExt + "'")
 		} else
-			logger.warn("callConnected uniqueid '" + headers.uniqueid + "' has already not present into intern '" + internTypeExt + "'")
+			logger.debug("callConnected uniqueid '" + headers.uniqueid + "' has already not present into intern '" + internTypeExt + "'")
 		modop.updateHangupUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid) // add uniqueid of current hangup as 'lastHangupUniqueid'
 		updateAllClientsForOpWithTypeExt(internTypeExt)
 	}
@@ -935,14 +934,14 @@ am.addListener('hangup', function(headers) {
 		var internTypeExt = temp + '/' + headers.channel.split('-')[0].split('/')[2]
 		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt, headers.uniqueid)){
 			modop.removeDialingUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid)
-			logger.info("removed dialingUniqueid '" + headers.uniqueid + "' from intern '" + internTypeExt + "'")
+			loggerd.debug("removed dialingUniqueid '" + headers.uniqueid + "' from intern '" + internTypeExt + "'")
 		} else
-			logger.warn("dialingUniqueid '" + headers.uniqueid + "' has already not present into intern '" + internTypeExt + "'")
+			logger.debug("dialingUniqueid '" + headers.uniqueid + "' has already not present into intern '" + internTypeExt + "'")
 		if(modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, headers.uniqueid)){
 			modop.removeCallConnectedUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid)
-			logger.info("removed callConnectedUniqueid '" + headers.uniqueid + "' from intern '" + internTypeExt + "'")
+			logger.debug("removed callConnectedUniqueid '" + headers.uniqueid + "' from intern '" + internTypeExt + "'")
 		} else
-			logger.warn("callConnected uniqueid '" + headers.uniqueid + "' has already not present into intern '" + internTypeExt + "'")
+			logger.debug("callConnected uniqueid '" + headers.uniqueid + "' has already not present into intern '" + internTypeExt + "'")
 		modop.updateHangupUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid) // add uniqueid of current hangup as 'lastHangupUniqueid'
 		updateAllClientsForOpWithTypeExt(internTypeExt)
         }
@@ -976,7 +975,7 @@ am.addListener('hangup', function(headers) {
 	                var resp = new ResponseMessage(c.sessionId, "hangup", msg)
 	                resp.code = headers.cause
 	                c.send(resp)
-	                logger.info("RESP 'hangup' has been sent to [" + ext + "] sessionId '" + c.sessionId + "'")
+	                logger.debug("RESP 'hangup' has been sent to [" + ext + "] sessionId '" + c.sessionId + "'")
 	        }
 		// update for OP
 		if(modop.isExtPresent(ext) && modop.isExtInterno(ext)){
@@ -985,12 +984,12 @@ am.addListener('hangup', function(headers) {
 	                modop.updateLastDialExt(ext)
 	                updateAllClientsForOpWithTypeExt(internTypeExt)
 	        } else
-			logger.warn('[' + ext + '] is not present in extStatusForOp: so not advise it')
+			logger.debug('[' + ext + '] is not present in extStatusForOp: so not advise it')
 	} else
-		logger.info("discarded event 'hangup' because redirect")
+		logger.debug("discarded event 'hangup' because redirect")
 
 	delete chStat[headers.uniqueid]
-	logger.info("delete '" + headers.uniqueid + "' from chStat: so it is = " + sys.inspect(chStat))
+	logger.debug("delete '" + headers.uniqueid + "' from chStat: so it is = " + sys.inspect(chStat))
 	// TO eliminate data structure of asterisk.js
 	//delete am.participants[headers.uniqueid]
         //logger.info('removed \'' + headers.uniqueid  + '\' from am.participants: ' + sys.inspect(am.participants))
@@ -1081,10 +1080,10 @@ EVENT 'CallConnected': headers = '{ event: 'Bridge',
   callerid1: '0817598495',
   callerid2: '350' }' */
 am.addListener('callconnected', function(headers) {
-        logger.info("EVENT 'CallConnected': headers = '" + sys.inspect(headers) + "'")
-	logger.info("'callconnected' chStat = " + sys.inspect(chStat))
+        logger.debug("EVENT 'CallConnected': headers = '" + sys.inspect(headers) + "'")
+	logger.debug("'callconnected' chStat = " + sys.inspect(chStat))
 	if(chStat[headers.uniqueid1]==undefined || chStat[headers.uniqueid2]==undefined){
-		logger.warn("discard 'callConnected' event: it isn't present in chStat. The cause can be the start of this server during the asterisk functioning")
+		logger.info("discard 'callConnected' event: it isn't present in chStat. The cause can be the start of this server during the asterisk functioning")
 		return
 	}
 	/* when redirect:
@@ -1148,25 +1147,25 @@ am.addListener('callconnected', function(headers) {
 			// add uniqueid of trunk 'headers.channel1' to trunk itself, if it isn't already been added
 			if( !modop.hasTrunkCallConnectedUniqueidWithTypeExt(trunkTypeext, headers.uniqueid1) ){
 				modop.addCallConnectedUniqueidTrunkWithTypeExt(trunkTypeext, headers.uniqueid1, chStat[headers.uniqueid1])
-				logger.info("added callConnectedUniqueid '" + headers.uniqueid1 + "' to trunk '" + trunkTypeext + "'")
+				logger.debug("added callConnectedUniqueid '" + headers.uniqueid1 + "' to trunk '" + trunkTypeext + "'")
 				updateAllClientsForOpWithTypeExt(trunkTypeext)
 			} else
-				logger.warn("callConnected uniqueid '" + headers.uniqueid1 + "' has already been added to trunk '" + trunkTypeext  + "'")
+				logger.debug("callConnected uniqueid '" + headers.uniqueid1 + "' has already been added to trunk '" + trunkTypeext  + "'")
 		} else if(modop.isChannelIntern(headers.channel1)){  // channel 1 is intern
 			var internTypeExt = modop.getInternTypeExtFromChannel(headers.channel1)
 			if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt, headers.uniqueid1)){
 				modop.removeDialingUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid1)
-				logger.info("removed dialingUniqueid '" + headers.uniqueid1 + "' from internTypeExt '" + internTypeExt + "'")
+				logger.debug("removed dialingUniqueid '" + headers.uniqueid1 + "' from internTypeExt '" + internTypeExt + "'")
 			} else
-				logger.warn("dialingUniqueid '" + headers.uniqueid1 + "' has already not present into intern '" + internTypeExt  + "'")
+				logger.debug("dialingUniqueid '" + headers.uniqueid1 + "' has already not present into intern '" + internTypeExt  + "'")
 			if(!modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, headers.uniqueid1)){
 				modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid1, chStat[headers.uniqueid1])
-				logger.info("added callConnectedUniqueid '" + headers.uniqueid1 + "' into intern '" + internTypeExt + "'")
+				logger.debug("added callConnectedUniqueid '" + headers.uniqueid1 + "' into intern '" + internTypeExt + "'")
 			} else
-				logger.warn("callConnectedUniqueid '" + headers.uniqueid1 + "' has already present into intern '" + internTypeExt  + "'")
+				logger.debug("callConnectedUniqueid '" + headers.uniqueid1 + "' has already present into intern '" + internTypeExt  + "'")
 			updateAllClientsForOpWithTypeExt(internTypeExt)
 		}
-		logger.warn("discarded event 'callconnected'")
+		logger.info("discarded event 'callconnected'")
 		return
 	}
 
@@ -1176,23 +1175,23 @@ am.addListener('callconnected', function(headers) {
 		// add uniqueid of trunk 'headers.channel2' to trunk itself, if it isn't already been added
 		if( !modop.hasTrunkCallConnectedUniqueidWithTypeExt(trunkTypeext, headers.uniqueid2) ){
 			modop.addCallConnectedUniqueidTrunkWithTypeExt(trunkTypeext, headers.uniqueid2, chStat[headers.uniqueid2])
-			logger.info("added callConnectedUniqueid '" + headers.uniqueid2 + "' to trunk '" + trunkTypeext + "'")
+			logger.debug("added callConnectedUniqueid '" + headers.uniqueid2 + "' to trunk '" + trunkTypeext + "'")
 			updateAllClientsForOpWithTypeExt(trunkTypeext)
 		} else
-			logger.warn("callConnected uniqueid '" + headers.uniqueid2 + "' has already been added to trunk '" + trunkTypeext  + "'")
+			logger.debug("callConnected uniqueid '" + headers.uniqueid2 + "' has already been added to trunk '" + trunkTypeext  + "'")
 
 		// add uniqueid of intern 'headers.channel1' to intern itself, if it isn't already been added
 		var internTypeExt = modop.getInternTypeExtFromChannel(headers.channel1)
 		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt, headers.uniqueid1)){
 			modop.removeDialingUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid1)
-			logger.info("removed dialingUniqueid '" + headers.uniqueid1 + "' from internTypeExt '" + internTypeExt + "'")
+			logger.debug("removed dialingUniqueid '" + headers.uniqueid1 + "' from internTypeExt '" + internTypeExt + "'")
 		} else
-			logger.warn("dialingUniqueid '" + headers.uniqueid1 + "' has already not present into intern '" + internTypeExt  + "'")
+			logger.debug("dialingUniqueid '" + headers.uniqueid1 + "' has already not present into intern '" + internTypeExt  + "'")
 		if(!modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, headers.uniqueid1)){
 			modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid1, chStat[headers.uniqueid1])
-			logger.info("added callConnectedUniqueid '" + headers.uniqueid1 + "' into intern '" + internTypeExt + "'")
+			logger.debug("added callConnectedUniqueid '" + headers.uniqueid1 + "' into intern '" + internTypeExt + "'")
 		} else
-			logger.warn("callConnectedUniqueid '" + headers.uniqueid1 + "' has already present into intern '" + internTypeExt  + "'")
+			logger.debug("callConnectedUniqueid '" + headers.uniqueid1 + "' has already present into intern '" + internTypeExt  + "'")
 		updateAllClientsForOpWithTypeExt(internTypeExt)
 	}
 
@@ -1202,23 +1201,23 @@ am.addListener('callconnected', function(headers) {
 		// add uniqueid of trunk 'headers.channel1' to trunk itself, if it isn't already been added
 		if( !modop.hasTrunkCallConnectedUniqueidWithTypeExt(trunkTypeExt, headers.uniqueid1) ){
 			modop.addCallConnectedUniqueidTrunkWithTypeExt(trunkTypeExt, headers.uniqueid1, chStat[headers.uniqueid1])
-			logger.info("added callConnectedUniqueid '" + headers.uniqueid1 + "' to trunk '" + trunkTypeExt + "'")
+			logger.debug("added callConnectedUniqueid '" + headers.uniqueid1 + "' to trunk '" + trunkTypeExt + "'")
 			updateAllClientsForOpWithTypeExt(trunkTypeExt)
 		} else
-			logger.warn("callConnected uniqueid '" + headers.uniqueid1 + "' has already been added to trunk '" + trunkTypeExt  + "'")
+			logger.debug("callConnected uniqueid '" + headers.uniqueid1 + "' has already been added to trunk '" + trunkTypeExt  + "'")
 
 		// add uniqueid of intern 'headers.channel2' to intern itself, if it isn't already been added
 		var internTypeExt = modop.getInternTypeExtFromChannel(headers.channel2)
 		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt, headers.uniqueid2)){
 			modop.removeDialingUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid2)
-			logger.info("removed dialingUniqueid '" + headers.uniqueid2 + "' from internTypeExt '" + internTypeExt + "'")
+			logger.debug("removed dialingUniqueid '" + headers.uniqueid2 + "' from internTypeExt '" + internTypeExt + "'")
 		} else
-			logger.warn("dialingUniqueid '" + headers.uniqueid2 + "' has already not present into intern '" + internTypeExt  + "'")
+			logger.debug("dialingUniqueid '" + headers.uniqueid2 + "' has already not present into intern '" + internTypeExt  + "'")
 		if(!modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, headers.uniqueid2)){
 			modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid2, chStat[headers.uniqueid2])
-			logger.info("added callConnectedUniqueid '" + headers.uniqueid2 + "' into intern '" + internTypeExt + "'")
+			logger.debug("added callConnectedUniqueid '" + headers.uniqueid2 + "' into intern '" + internTypeExt + "'")
 		} else
-			logger.warn("callConnectedUniqueid '" + headers.uniqueid2 + "' has already present into intern '" + internTypeExt  + "'")
+			logger.debug("callConnectedUniqueid '" + headers.uniqueid2 + "' has already present into intern '" + internTypeExt  + "'")
 		updateAllClientsForOpWithTypeExt(internTypeExt)
 	}
 
@@ -1227,14 +1226,14 @@ am.addListener('callconnected', function(headers) {
 		var internTypeExt = modop.getInternTypeExtFromChannel(headers.channel2)
 		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt, headers.uniqueid2)){
 			modop.removeDialingUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid2)
-			logger.info("removed dialingUniqueid '" + headers.uniqueid2 + "' from internTypeExt '" + internTypeExt + "'")
+			logger.debug("removed dialingUniqueid '" + headers.uniqueid2 + "' from internTypeExt '" + internTypeExt + "'")
 		} else
-			logger.warn("dialingUniqueid '" + headers.uniqueid2 + "' has already not present into intern '" + internTypeExt  + "'")
+			logger.debug("dialingUniqueid '" + headers.uniqueid2 + "' has already not present into intern '" + internTypeExt  + "'")
 		if(!modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, headers.uniqueid2)){
 			modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid2, chStat[headers.uniqueid2])
-			logger.info("added callConnectedUniqueid '" + headers.uniqueid2 + "' into intern '" + internTypeExt + "'")
+			logger.debug("added callConnectedUniqueid '" + headers.uniqueid2 + "' into intern '" + internTypeExt + "'")
 		} else
-			logger.warn("callConnectedUniqueid '" + headers.uniqueid2 + "' has already present into intern '" + internTypeExt  + "'")
+			logger.debug("callConnectedUniqueid '" + headers.uniqueid2 + "' has already present into intern '" + internTypeExt  + "'")
 		updateAllClientsForOpWithTypeExt(internTypeExt)
 
 		// add dialExtUniqueid for queue ;2 (;2 means the call to client intern)
@@ -1247,27 +1246,27 @@ am.addListener('callconnected', function(headers) {
 		var internTypeExt1 = modop.getInternTypeExtFromChannel(headers.channel1)
 		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt1, headers.uniqueid1)){
 			modop.removeDialingUniqueidInternWithTypeExt(internTypeExt1, headers.uniqueid1)
-			logger.info("removed dialingUniqueid '" + headers.uniqueid1 + "' from internTypeExt '" + internTypeExt1 + "'")
+			logger.debug("removed dialingUniqueid '" + headers.uniqueid1 + "' from internTypeExt '" + internTypeExt1 + "'")
 		} else
-			logger.warn("dialingUniqueid '" + headers.uniqueid1 + "' has already not present into intern '" + internTypeExt1  + "'")
+			logger.debug("dialingUniqueid '" + headers.uniqueid1 + "' has already not present into intern '" + internTypeExt1  + "'")
 		if(!modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt1, headers.uniqueid1)){
 			modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt1, headers.uniqueid1, chStat[headers.uniqueid1])
-			logger.info("added callConnectedUniqueid '" + headers.uniqueid1 + "' into intern '" + internTypeExt1 + "'")
+			logger.debug("added callConnectedUniqueid '" + headers.uniqueid1 + "' into intern '" + internTypeExt1 + "'")
 		} else
-			logger.warn("callConnectedUniqueid '" + headers.uniqueid1 + "' has already present into intern '" + internTypeExt1  + "'")
+			logger.debug("callConnectedUniqueid '" + headers.uniqueid1 + "' has already present into intern '" + internTypeExt1  + "'")
                 updateAllClientsForOpWithTypeExt(internTypeExt1)
 		// channel 2
 		var internTypeExt2 = modop.getInternTypeExtFromChannel(headers.channel2)
 		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt2, headers.uniqueid2)){
 			modop.removeDialingUniqueidInternWithTypeExt(internTypeExt2, headers.uniqueid2)
-			logger.info("removed dialingUniqueid '" + headers.uniqueid2 + "' from internTypeExt '" + internTypeExt2 + "'")
+			logger.debug("removed dialingUniqueid '" + headers.uniqueid2 + "' from internTypeExt '" + internTypeExt2 + "'")
 		} else
-			logger.warn("dialingUniqueid '" + headers.uniqueid2 + "' has already not present into intern '" + internTypeExt2  + "'")
+			logger.debug("dialingUniqueid '" + headers.uniqueid2 + "' has already not present into intern '" + internTypeExt2  + "'")
 		if(!modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt2, headers.uniqueid2)){
 			modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt2, headers.uniqueid2, chStat[headers.uniqueid2])
-			logger.info("added callConnectedUniqueid '" + headers.uniqueid2 + "' into intern '" + internTypeExt2 + "'")
+			logger.debug("added callConnectedUniqueid '" + headers.uniqueid2 + "' into intern '" + internTypeExt2 + "'")
 		} else
-			logger.warn("callConnectedUniqueid '" + headers.uniqueid2 + "' has already present into intern '" + internTypeExt2  + "'")
+			logger.debug("callConnectedUniqueid '" + headers.uniqueid2 + "' has already present into intern '" + internTypeExt2  + "'")
                 updateAllClientsForOpWithTypeExt(internTypeExt2)
 	}
 
@@ -1281,7 +1280,7 @@ am.addListener('callconnected', function(headers) {
                 response.from = from
                 response.to = to
                 c.send(response)
-                logger.info("RESP 'callconnected' has been sent to [" + from + "] sessionId '" + c.sessionId + "'")
+                logger.debug("RESP 'callconnected' has been sent to [" + from + "] sessionId '" + c.sessionId + "'")
         }
         if(clients[to]!=undefined){
                 var c = clients[to]
@@ -1290,7 +1289,7 @@ am.addListener('callconnected', function(headers) {
                 response.from = from
                 response.to = to
                 c.send(response)
-                logger.info("RESP 'callconnected' has been sent to [" + to + "] sessionId '" + c.sessionId + "'")
+                logger.debug("RESP 'callconnected' has been sent to [" + to + "] sessionId '" + c.sessionId + "'")
         }	
 })
 
@@ -1310,7 +1309,7 @@ am.addListener('callconnected', function(headers) {
   priority: '10',
   uniqueid: '1308652170.784' } */
 am.addListener('agentcalled', function(headers) {
-	logger.info("EVENT 'AgentCalled': headers = " + sys.inspect(headers))
+	logger.debug("EVENT 'AgentCalled': headers = " + sys.inspect(headers))
 	var from = chStat[headers.uniqueid].calleridnum
 	if(modop.isExtPresent(from) && modop.isChannelIntern(headers.channelcalling)){
 		chStat[headers.uniqueid].dialDirection = DIAL_FROM
@@ -1349,23 +1348,23 @@ am.addListener('agentcalled', function(headers) {
 
 
 am.addListener('calldisconnected', function(from, to) {
-	logger.info("EVENT 'CallDisconnected': between '" + sys.inspect(from) + "' AND '" + sys.inspect(to) + "'");
+	logger.debug("EVENT 'CallDisconnected': between '" + sys.inspect(from) + "' AND '" + sys.inspect(to) + "'");
 });
 
 am.addListener('hold', function(participant) {
 	var other = am.getParticipant(participant['with']);
-	logger.info("EVENT 'Hold': " + participant.number + " (" + participant.name + ") has put " + other.number + " (" + other.name + ") on hold");
+	logger.debug("EVENT 'Hold': " + participant.number + " (" + participant.name + ") has put " + other.number + " (" + other.name + ") on hold");
 });
 
 am.addListener('unhold', function(participant) {
 	var other = am.getParticipant(participant['with']);
-	logger.info("EVENT 'Unhold': " + participant.number + " (" + participant.name + ") has taken " + other.number + " (" + other.name + ") off hold");
+	logger.debug("EVENT 'Unhold': " + participant.number + " (" + participant.name + ") has taken " + other.number + " (" + other.name + ") off hold");
 });
 
 	
 
 am.addListener('callreport', function(report) {
-	logger.info("EVENT 'CallReport': " + sys.inspect(report));
+	logger.debug("EVENT 'CallReport': " + sys.inspect(report));
 });
 
 /*{ event: 'PeerStatus',
@@ -1384,7 +1383,7 @@ am.addListener('peerstatus', function(headers) {
 		logger.debug("EVENT 'PeerStatus' ignored. Status of [" + headers.peer + "] is already different from 'unregistered'");
 		return;
 	}
-	logger.info("EVENT 'PeerStatus': " + sys.inspect(headers));
+	logger.debug("EVENT 'PeerStatus': " + sys.inspect(headers));
 	// update ext status for op
 	modop.updateExtStatusForOpWithTypeExt(headers.peer, headers.peerstatus.toLowerCase());
 	// update all clients with the new state of extension, for update operator panel
@@ -1404,7 +1403,7 @@ am.addListener('peerstatus', function(headers) {
   extra: 'Family: DND^Value: Attivo^' }
  */
 am.addListener('userevent', function(headers){
-	logger.info("EVENT 'UserEvent'");
+	logger.debug("EVENT 'UserEvent'");
 	// get ext, family and value
 	var ext = headers.channel.split("/")[1]; // 503-0000000d^Family
 	ext = ext.split("-")[0]; // 503
@@ -1419,25 +1418,25 @@ am.addListener('userevent', function(headers){
 	value = value.toLowerCase();
 
 	if(family=='dnd'){
-		logger.info("[" + ext + "] '" + family + " " + value + "'");
+		logger.debug("[" + ext + "] '" + family + " " + value + "'");
 		/* in this case the client who has modified its DND value is connected to the cti
  		 * and has modified its DND through his telephone. So he'll be advise of the changing
 		 * to update its cti. */
 		if(clients[ext]!=undefined){	
 			var c = clients[ext];
 			if(value==""){ // DND is disabled by the phone user
-				logger.info("[" + ext + "] '" + family + " OFF'");
+				logger.debug("[" + ext + "] '" + family + " OFF'");
 				var msg = ext + " has disabled its " + family;
         		        var response = new ResponseMessage(c.sessionId, "dnd_status_off", msg);
 		                c.send(response);
-		                logger.info("RESP 'dnd_status_off' has been sent to [" + ext + "] sessionId '" + c.sessionId + "'");
+		                logger.debug("RESP 'dnd_status_off' has been sent to [" + ext + "] sessionId '" + c.sessionId + "'");
 			}	
 			else if(value=="attivo"){ // DND is enable by the phone user
-				logger.info("[" + ext + "] '" + family + " ON'");
+				logger.debug("[" + ext + "] '" + family + " ON'");
 				var msg = ext + " has enabled its " + family;
                                 var response = new ResponseMessage(c.sessionId, "dnd_status_on", msg);
                                 c.send(response);
-                                logger.info("RESP 'dnd_status_on' has been sent to [" + ext + "] sessionId '" + c.sessionId + "'");
+                                logger.debug("RESP 'dnd_status_on' has been sent to [" + ext + "] sessionId '" + c.sessionId + "'");
 			}
 		}
 		if(value=="")
@@ -1454,19 +1453,19 @@ am.addListener('userevent', function(headers){
                 if(clients[ext]!=undefined){
                         var c = clients[ext];
                         if(value==""){ // CF is disabled by the phone user
-                                logger.info("[" + ext + "] '" + family + " OFF'");
+                                logger.debug("[" + ext + "] '" + family + " OFF'");
                                 var msg = ext + " has disabled its " + family;
                                 var response = new ResponseMessage(c.sessionId, "cf_status_off", msg);
                                 c.send(response);
-                                log("RESP 'cf_status_off' has been sent to [" + ext + "] sessionId '" + c.sessionId + "'");
+                                logger.debug("RESP 'cf_status_off' has been sent to [" + ext + "] sessionId '" + c.sessionId + "'");
                         }
                         else { // CF is enable by the phone user
-                                logger.info("[" + ext + "] '" + family + " ON' to [" + value + "]");
+                                logger.debug("[" + ext + "] '" + family + " ON' to [" + value + "]");
                                 var msg = ext + " has enabled its " + family + " to " + value;
                                 var response = new ResponseMessage(c.sessionId, "cf_status_on", msg);
 				response.extTo = value;
                                 c.send(response);
-                                logger.info("RESP 'cf_status_on' to [" + value + "] has been sent to [" + ext + "] sessionId '" + c.sessionId + "'");
+                                logger.debug("RESP 'cf_status_on' to [" + value + "] has been sent to [" + ext + "] sessionId '" + c.sessionId + "'");
                         }
                 }
                 if(value=="")
@@ -1492,7 +1491,7 @@ am.addListener('userevent', function(headers){
    Uniqueid: 1305117424.486 }
  */
 am.addListener('parkedcall', function(headers){
-	logger.info("EVENT 'ParkedCall'");
+	logger.debug("EVENT 'ParkedCall'");
 	var parking = 'PARK' + headers.exten;
 	var extParked = headers.channel.split("/")[1];
 	extParked = extParked.split("-")[0];
@@ -1516,7 +1515,7 @@ am.addListener('parkedcall', function(headers){
    CallerIDName: giovanni }
  */
 am.addListener('parkedcalltimeout', function(headers){
-        logger.info("EVENT 'ParkedCallTimeOut'");
+        logger.debug("EVENT 'ParkedCallTimeOut'");
         var parking = 'PARK' + headers.exten;
         // update status of park ext
         modop.updateEndParkExtStatus(parking);
@@ -1528,7 +1527,7 @@ am.addListener('parkedcalltimeout', function(headers){
 extToReturnExtStatusForOp = '';
 clientToReturnExtStatusForOp = '';
 am.addListener('parkedcallscomplete', function(){
-	logger.info("EVENT 'ParkedCallsComplete'");
+	logger.debug("EVENT 'ParkedCallsComplete'");
 	/* check if the user has the permission to view the operator panel.
          * First check if the user has the "OP_PLUS" permission. If he hasn't the permission, then
          * it check if he has the "OP_BASE" permission. */
@@ -1540,7 +1539,7 @@ am.addListener('parkedcallscomplete', function(){
                 mess.tabOp = modop.getTabOp();
                 mess.opPermit = 'plus';
                 clientToReturnExtStatusForOp.send(mess);
-               	logger.info("RESP 'ack_get_peer_list_complete_op' has been sent to [" + extToReturnExtStatusForOp + "] sessionId '" + clientToReturnExtStatusForOp.sessionId + "'");
+               	logger.debug("RESP 'ack_get_peer_list_complete_op' has been sent to [" + extToReturnExtStatusForOp + "] sessionId '" + clientToReturnExtStatusForOp.sessionId + "'");
         }
         else if(profiler.checkActionOpBasePermit(extToReturnExtStatusForOp)) {
         	// create message
@@ -1550,14 +1549,14 @@ am.addListener('parkedcallscomplete', function(){
                 mess.tabOp = modop.getTabOp();
                 mess.opPermit = 'base';
                 clientToReturnExtStatusForOp.send(mess);
-                logger.info("RESP 'ack_get_peer_list_complete_op' has been sent to [" + extToReturnExtStatusForOp + "] sessionId '" + clientToReturnExtStatusForOp.sessionId + "'");
+                logger.debug("RESP 'ack_get_peer_list_complete_op' has been sent to [" + extToReturnExtStatusForOp + "] sessionId '" + clientToReturnExtStatusForOp.sessionId + "'");
         }
         else{
         	// create message
                 var msgstr = "Sorry but you haven't the permission of view the operator panel";
                 var mess = new ResponseMessage(clientToReturnExtStatusForOp.sessionId, "error_get_peer_list_complete_op", msgstr);
                 clientToReturnExtStatusForOp.send(mess);
-                logger.info("RESP 'error_get_peer_list_complete_op' has been sent to [" + extToReturnExtStatusForOp + "] sessionId '" + clientToReturnExtStatusForOp.sessionId + "'");
+                logger.debug("RESP 'error_get_peer_list_complete_op' has been sent to [" + extToReturnExtStatusForOp + "] sessionId '" + clientToReturnExtStatusForOp.sessionId + "'");
        	}
 });
 
@@ -1572,7 +1571,7 @@ am.addListener('parkedcallscomplete', function(){
   old: '0' }
  */
 am.addListener('messagewaiting', function(headers){
-	logger.info("EVENT 'MessageWaiting': new voicemail for [" + headers.mailbox + "]; the number is: " + headers.new);
+	logger.debug("EVENT 'MessageWaiting': new voicemail for [" + headers.mailbox + "]; the number is: " + headers.new);
 	var ext = headers.mailbox.split('@')[0];
 	// update voicemail count of the extension
 	modop.updateVMCountWithExt(ext,headers.new);
@@ -1679,7 +1678,7 @@ var io = io.listen(server);
 io.on('connection', function(client){
 	// send acknowledgment of established connection 
 	client.send(new ResponseMessage(client.sessionId, "connected", "[DEBUG] client " + client.sessionId + " connected"));
-	logger.info("'ack' to connection has been sent to the client with sessionId: " + client.sessionId);
+	logger.debug("'ack' to connection has been sent to the client with sessionId: " + client.sessionId);
 
 	client.on('message', function(message){
 		// all received messages have the information 'extenFrom' and the information about the 'action' to execute
@@ -1721,7 +1720,7 @@ io.on('connection', function(client){
 			ACTION_GET_CURRENT_WEEK_HISTORY_CALL:  'get_current_week_history_call',
 			ACTION_GET_CURRENT_MONTH_HISTORY_CALL: 'get_current_month_history_call'
 		}
-  		logger.info("ACTION received: from sessionId '" + client.sessionId + "' message " + sys.inspect(message));	
+  		logger.debug("ACTION received: from sessionId '" + client.sessionId + "' message " + sys.inspect(message));	
   		// manage request
   		switch(action){
   			case actions.ACTION_LOGIN:
@@ -1732,41 +1731,41 @@ io.on('connection', function(client){
 						var clientToClose = clients[extFrom];
 						var respMsg = new ResponseMessage(clientToClose.sessionId, 'new_access', 'New Access from another place');
 						clientToClose.send(respMsg);
-						logger.warn("RESP 'new_access' has been sent to [" + extFrom + "] sessionId '" + clientToClose.sessionId + "'");
+						logger.debug("RESP 'new_access' has been sent to [" + extFrom + "] sessionId '" + clientToClose.sessionId + "'");
 						removeClient(clientToClose.sessionId);
 						if(!testAlreadyLoggedSessionId(clientToClose.sessionId))
-							logger.warn("new access [" + extFrom + "]: logged OUT sessiondId '" + clientToClose.sessionId + "'");
+							logger.debug("new access [" + extFrom + "]: logged OUT sessiondId '" + clientToClose.sessionId + "'");
 						// new access: authenticate the user
 						client.extension = extFrom;
 						clients[extFrom] = client;
 						var ipAddrClient = client.connection.remoteAddress;
-						logger.warn("new access [" + extFrom + "]: logged IN, IP '" + ipAddrClient + "' sessionId '" + client.sessionId + "'");
+						logger.info("new access [" + extFrom + "]: logged IN, IP '" + ipAddrClient + "' sessionId '" + client.sessionId + "'");
 						logger.info(Object.keys(clients).length + " logged in clients");
 	                                        printLoggedClients();
 						respMsg = new ResponseMessage(client.sessionId, "ack_login", "Login succesfully");
 						respMsg.ext = extFrom;
 						respMsg.secret = message.secret;
 						client.send(respMsg);
-						logger.info("RESP 'ack_login' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+						logger.debug("RESP 'ack_login' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
   					} else {
 	  					// authenticate the user
 			  			client.extension = extFrom;
 			  			clients[extFrom] = client;  
 			  			var ipAddrClient = client.connection.remoteAddress;
 				  		logger.info("logged IN: client [" + extFrom + "] IP '" + ipAddrClient + "' sessionId '" + client.sessionId + "'");
-				  		logger.info(Object.keys(clients).length + " logged in clients");
+				  		logger.debug(Object.keys(clients).length + " logged in clients");
 				  		printLoggedClients();
 				  		var respMsg = new ResponseMessage(client.sessionId, "ack_login", "Login succesfully");
 				  		respMsg.ext = extFrom;
 				  		respMsg.secret = message.secret;
 			  			client.send(respMsg);
-			  			logger.info("RESP 'ack_login' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+			  			logger.debug("RESP 'ack_login' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 					}
   				}
   				else{ // the user is not authenticated
   					logger.warn("AUTH FAILED: [" + extFrom + "] with secret '" + message.secret + "'");
   					client.send(new ResponseMessage(client.sessionId, "error_login", "Sorry, authentication failed !"));
-  					logger.warn("RESP 'error_login' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+  					logger.debug("RESP 'error_login' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
   				}
 	  		break;
 	  		case actions.ACTION_CHECK_DND_STATUS:
@@ -1782,12 +1781,12 @@ io.on('connection', function(client){
 					if(resp.value==undefined){
 						var msgstr = "Don't disturb  status of [" + extFrom + "] is OFF";
 						client.send(new ResponseMessage(client.sessionId, 'dnd_status_off', msgstr));
-						logger.info("RESP 'dnd_status_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+						logger.debug("RESP 'dnd_status_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 					}
 					else{
 						var msgstr = "Don't disturb  status of [" + extFrom + "] is ON";
 						client.send(new ResponseMessage(client.sessionId, 'dnd_status_on', msgstr));
-						logger.info("RESP 'dnd_status_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+						logger.debug("RESP 'dnd_status_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 					}
 				});
 	  		break;
@@ -1804,12 +1803,12 @@ io.on('connection', function(client){
 					if(resp.value==undefined){
 						var msgstr = "Call waiting  status of [" + extFrom + "] is OFF";
 						client.send(new ResponseMessage(client.sessionId, 'cw_status_off', msgstr));
-						logger.info("RESP 'cw_status_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+						logger.debug("RESP 'cw_status_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 					}
 					else{
 						var msgstr = "Call waiting  status of [" + extFrom + "] is ON";
 						client.send(new ResponseMessage(client.sessionId, 'cw_status_on', msgstr));
-						logger.info("RESP 'cw_status_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+						logger.debug("RESP 'cw_status_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 					}
 				});
 	  		break;
@@ -1826,7 +1825,7 @@ io.on('connection', function(client){
 					if(resp.value==undefined){
 						var msgstr = "Call forwarding  status of [" + extFrom + "] is OFF";
 						client.send(new ResponseMessage(client.sessionId, 'cf_status_off', msgstr));
-						logger.info("RESP 'cf_status_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+						logger.debug("RESP 'cf_status_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 					}
 					else{
 						var extTo = resp.value.split('\n')[0];
@@ -1834,7 +1833,7 @@ io.on('connection', function(client){
 						var respMessage = new ResponseMessage(client.sessionId, 'cf_status_on', msgstr);
 						respMessage.extTo = extTo;
 						client.send(respMessage);
-						logger.info("RESP 'cf_status_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+						logger.debug("RESP 'cf_status_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 					}
 				});
 	  		break;
@@ -1844,19 +1843,19 @@ io.on('connection', function(client){
 	  			if(clients[extFrom]==undefined){
 	  				logger.warn("ATTENTION: client [" + extFrom + "] not logged in");
 	  				client.send(new ResponseMessage(client.sessionId, 'error_call', 'Error in calling: client not logged in'));
-	  				logger.warn("RESP 'error_call' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+	  				logger.debug("RESP 'error_call' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 	  				return;
   				}
 	  			// security check of real authenticity of the user who originated the call
 	  			else if(client.sessionId != clients[extFrom].sessionId){
 	  				logger.warn("SECURITY WARNING: attempt to fake the sender: session '" + client.sessionId + "' attempt to call with the fake exten [" + extFrom + "] !");
 	  				client.send(new ResponseMessage(client.sessionId, 'error_call', 'Error in calling: attempt to call with the fake exten ' + extFrom));
-	  				logger.warn("RESP 'error_call' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+	  				logger.debug("RESP 'error_call' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 	  				return;
 	  			}
   				// check if the user has the permission of dial out
   				if(profiler.checkActionCallOutPermit(extFrom)){
-  					logger.info("check 'callOut' permission for [" + extFrom + "] OK: execute calling...");
+  					logger.debug("check 'callOut' permission for [" + extFrom + "] OK: execute calling...");
 	  				// create call action for asterisk server
 	  				var actionCall = {
 						Action: 'Originate',
@@ -1874,17 +1873,17 @@ io.on('connection', function(client){
 					sendAllClientAckCalloutFromCti(extFrom)
 					// send action to asterisk
 					am.send(actionCall, function () {
-						logger.info('\'actionCall\' ' + sys.inspect(actionCall) + ' has been sent to AST');
+						logger.debug('\'actionCall\' ' + sys.inspect(actionCall) + ' has been sent to AST');
 						var msgTxt = "call action has been sent to asterisk: " + extFrom + " -> " + extToCall;
 						var respMsg = new ResponseMessage(client.sessionId, "ack_callout", msgTxt);
                                                 client.send(respMsg);
-                                                logger.info("RESP 'ack_callout' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+                                                logger.debug("RESP 'ack_callout' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 					});
 	  			}
   				else{
 		  			logger.warn("check 'callOut' permission for [" + extFrom + "] FAILED !");
 		  			client.send(new ResponseMessage(client.sessionId, 'error_call', "Sorry, but you don't have permission to call !"));
-		  			logger.warn("RESP 'error_call' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+		  			logger.debug("RESP 'error_call' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
   				}
 		  	break;
 		  	case actions.ACTION_HANGUP:
@@ -1899,7 +1898,7 @@ io.on('connection', function(client){
 				     calleridname: '',
 				     calleridnum: '271',
 				     status: 'up' } } */
-				logger.info("ACTION_HANGUP chStat = " + sys.inspect(chStat))
+				logger.debug("ACTION_HANGUP chStat = " + sys.inspect(chStat))
 				var extToHangup = message.extToHangup
 				var callDialExtHangup = message.callDialExtHangup
 				var ch
@@ -1920,11 +1919,11 @@ io.on('connection', function(client){
                                 }
 				// send action to asterisk
                                 am.send(actionHangup, function () {
-                                        logger.info("'actionHangup' " + sys.inspect(actionHangup) + " has been sent to AST");
+                                        logger.debug("'actionHangup' " + sys.inspect(actionHangup) + " has been sent to AST");
                                 })
 	  		break;
 			case actions.ACTION_HANGUP_SPY:
-				logger.info("ACTION_HANGUP_SPY chStat = " + sys.inspect(chStat))
+				logger.debug("ACTION_HANGUP_SPY chStat = " + sys.inspect(chStat))
 				/* { channel: 'SIP/271-0000023a',
 				     status: 'up',
 				     calleridname: 'SPY-270' } */
@@ -1949,7 +1948,7 @@ io.on('connection', function(client){
                                 }
                                 // send action to asterisk
                                 am.send(actionHangupSpy, function () {
-                                        logger.info("'actionHangupSpy' " + sys.inspect(actionHangupSpy) + " has been sent to AST");
+                                        logger.debug("'actionHangupSpy' " + sys.inspect(actionHangupSpy) + " has been sent to AST");
                                 })
 
 			break
@@ -1958,12 +1957,12 @@ io.on('connection', function(client){
 	  			if(!testAlreadyLoggedSessionId(client.sessionId)){
 			  		logger.info("logged OUT [" + extFrom + "] sessiondId '" + client.sessionId + "'");
 			  		client.send(new ResponseMessage(client.sessionId, "ack_logout", "logout has been succesfully"));
-			  		logger.info("RESP 'ack_logout' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+			  		logger.debug("RESP 'ack_logout' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 			  	}
 		  		logger.info(Object.keys(clients).length + " logged in clients");
 	  		break;
 	  		case actions.ACTION_REDIRECT:
-				logger.info("'ACTION_REDIRECT' chStat = " + sys.inspect(chStat))
+				logger.debug("'ACTION_REDIRECT' chStat = " + sys.inspect(chStat))
 				/* chStat = { '1308661886.872': 
 				   { channel: 'SIP/271-000002cb',
 				     status: 'up',
@@ -1976,7 +1975,7 @@ io.on('connection', function(client){
 				     calleridname: '' } } */
 	  			// check if the user has the permission of dial out
 				if(profiler.checkActionRedirectPermit(extFrom)){
-	  				logger.info("check 'redirect' permission for [" + extFrom + "] OK: execute redirect...");	
+	  				logger.debug("check 'redirect' permission for [" + extFrom + "] OK: execute redirect...");	
 	  				// get the channel
 	  				var ch
 					var redirectFromExt = message.redirectFromExt
@@ -2010,22 +2009,22 @@ io.on('connection', function(client){
 					};
 					// send action to asterisk
 					am.send(actionRedirect, function () {
-						logger.info("'actionRedirect' " + sys.inspect(actionRedirect) + " has been sent to AST");
+						logger.debug("'actionRedirect' " + sys.inspect(actionRedirect) + " has been sent to AST");
 						client.send(new ResponseMessage(client.sessionId, 'ack_redirect'), 'Redirection has been taken');
-						logger.info("RESP 'ack_redirect' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+						logger.debug("RESP 'ack_redirect' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 					});
 		  		}
 	  			else{
-					logger.info("check 'redirect' permission for [" + extFrom + "] FAILED !");
+					logger.debug("check 'redirect' permission for [" + extFrom + "] FAILED !");
 			  		client.send(new ResponseMessage(client.sessionId, "error_redirect", "Sorry: you don't have permission to redirect !"));
-			  		logger.info("RESP 'error_redirect' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+			  		logger.debug("RESP 'error_redirect' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 	  			}
 	  		break;
 	  		case actions.ACTION_SEARCH_CONTACT_PHONEBOOK:
 	  			// check if the user has the permission to search contact in phonebook
 				var res = profiler.checkActionPhonebookPermit(extFrom);
 	  			if(res){
-					logger.info("check 'searchContactPhonebook' permission for [" + extFrom + "] OK: search...");
+					logger.debug("check 'searchContactPhonebook' permission for [" + extFrom + "] OK: search...");
 	  				// execute query to search contact in phonebook
 	  				var namex = message.namex;
 					dataCollector.getContactsPhonebook(namex, function(results){
@@ -2033,19 +2032,19 @@ io.on('connection', function(client){
 	  					var mess = new ResponseMessage(client.sessionId, "search_contacts_results", "received phonebook contacts");
 	  					mess.resultHTML = resultHTML;
 	  					client.send(mess);
-	  					logger.info("RESP 'search_contacts_results' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+	  					logger.debug("RESP 'search_contacts_results' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 	  				});
 	  			}
 	  			else{
-					logger.info("check 'searchContactPhonebook' permission for [" + extFrom + "] FAILED !");
+					logger.debug("check 'searchContactPhonebook' permission for [" + extFrom + "] FAILED !");
   					client.send(new ResponseMessage(client.sessionId, "error_search_contacts", "Sorry: you don't have permission to search contacts in phonebook !"));
-  					logger.info("RESP 'error_search_contacts' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+  					logger.debug("RESP 'error_search_contacts' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 	  			}
 	  		break;
 	  		case actions.ACTION_RECORD:
 	  			// check if the user has the permission of dial out
 				if(profiler.checkActionRecordPermit(extFrom)){
-					logger.info("check 'record' permission for [" + extFrom + "] OK: record...");
+					logger.debug("check 'record' permission for [" + extFrom + "] OK: record...");
 	  				var channel = '';
 	  				var destChannel = ''
 					var uniqueid = '';
@@ -2142,13 +2141,13 @@ io.on('connection', function(client){
 					var callToInternTypeExt = modop.getInternTypeExtFromChannel(destChannel)
 					// send action to asterisk
 					am.send(actionRecord, function () {
-						logger.info("'actionRecord' " + sys.inspect(actionRecord) + " has been sent to AST");
+						logger.debug("'actionRecord' " + sys.inspect(actionRecord) + " has been sent to AST");
 						var msgstr = 'Recording of call ' + filename + ' started...';
 						var msg = new ResponseMessage(client.sessionId, 'ack_record', msgstr);
 						msg.extRecord = callFromExt;
 						client.send(msg);
-						logger.info("RESP 'ack_record' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
-						logger.info(msgstr);
+						logger.debug("RESP 'ack_record' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+						logger.debug(msgstr);
 						// update info
 						chStat[uniqueid].record = 1
 						chStat[destUniqueid].record = 1
@@ -2163,9 +2162,9 @@ io.on('connection', function(client){
 					});
 				}
 				else{
-					logger.info("check 'record' permission for [" + extFrom + "] FAILED !");
+					logger.debug("check 'record' permission for [" + extFrom + "] FAILED !");
 			  		client.send(new ResponseMessage(client.sessionId, "error_record", "Sorry: you don't have permission to record call !"));
-			  		log("RESP 'error_record' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+			  		logger.debug("RESP 'error_record' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 	  			}	
 	  		break;
 	  		case actions.ACTION_STOP_RECORD:
@@ -2255,11 +2254,9 @@ io.on('connection', function(client){
                                 var callToInternTypeExt = modop.getInternTypeExtFromChannel(destChannel)
 				// send action to asterisk
 				am.send(actionStopRecord, function () {
-					logger.info("'actionStopRecord' " + sys.inspect(actionStopRecord) + " has been sent to AST");
 					var msgstr = 'Recording for ' + extFrom + ' stopped';
 					client.send(new ResponseMessage(client.sessionId, 'ack_stoprecord', msgstr));
-					logger.info("RESP 'ack_stoprecord' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
-					logger.info(msgstr);
+					logger.debug("'actionStopRecord' " + sys.inspect(actionStopRecord) + " has been sent to AST\nRESP 'ack_stoprecord' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'\n"+msgstr);
 					// update info
 					chStat[uniqueid].record = 0
 					chStat[destUniqueid].record = 0
@@ -2282,11 +2279,9 @@ io.on('connection', function(client){
 				};
 				// send action to asterisk
 				am.send(actionDNDon, function () {
-					logger.info("'actionDNDon' " + sys.inspect(actionDNDon) + " has been sent to AST");
 					var msgstr = "[" + extFrom + "] DND ON";
 					client.send(new ResponseMessage(client.sessionId, 'ack_dnd_on', msgstr));
-					logger.info("RESP 'ack_dnd_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
-					logger.info(msgstr);
+					logger.debug("'actionDNDon' " + sys.inspect(actionDNDon) + " has been sent to AST\nRESP 'ack_dnd_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'\n"+msgstr);
 					// update ext DND status
 					modop.updateExtDNDStatusWithExt(extFrom, 'on');
 					// update all clients for op
@@ -2302,11 +2297,9 @@ io.on('connection', function(client){
 				};
 				// send action to asterisk
 				am.send(actionDNDoff, function () {
-					logger.info("'actionDNDoff' " + sys.inspect(actionDNDoff) + " has been sent to AST");
 					var msgstr = "[" + extFrom + "] DND OFF";
 					client.send(new ResponseMessage(client.sessionId, 'ack_dnd_off', msgstr));
-					logger.info("RESP 'ack_dnd_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
-					logger.info(msgstr);
+					logger.debug("'actionDNDoff' " + sys.inspect(actionDNDoff) + " has been sent to AST\nRESP 'ack_dnd_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'\n"+msgstr);
 					// update ext DND status
                                         modop.updateExtDNDStatusWithExt(extFrom, 'off');
 					// update all clients for op
@@ -2322,11 +2315,9 @@ io.on('connection', function(client){
 				};
 				// send action to asterisk
 				am.send(actionCWon, function () {
-					logger.info("'actionCWon' " + sys.inspect(actionCWon) + " has been sent to AST");
 					var msgstr = "[" + extFrom + "] CW ON";
 					client.send(new ResponseMessage(client.sessionId, 'ack_cw_on', msgstr));
-					logger.info("RESP 'ack_cw_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
-					logger.info(msgstr);
+					logger.debug("'actionCWon' " + sys.inspect(actionCWon) + " has been sent to AST\nRESP 'ack_cw_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'\n"+msgstr);
 				});
 	  		break;
 	  		case actions.ACTION_CW_OFF:
@@ -2338,11 +2329,9 @@ io.on('connection', function(client){
 				};
 				// send action to asterisk
 				am.send(actionCWoff, function () {
-					logger.info("'actionCWoff' " + sys.inspect(actionCWoff) + " has been sent to AST");
 					var msgstr = "[" + extFrom + "] CW OFF";
 					client.send(new ResponseMessage(client.sessionId, 'ack_cw_off', msgstr));
-					logger.info("RESP 'ack_cw_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
-					logger.info(msgstr);
+					logger.debug("'actionCWoff' " + sys.inspect(actionCWoff) + " has been sent to AST\nRESP 'ack_cw_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'"+msgstr);
 				});
 	  		break;
 	  		case actions.ACTION_CF_ON:
@@ -2355,13 +2344,11 @@ io.on('connection', function(client){
 				};
 				// send action to asterisk
 				am.send(actionCFon, function () {
-					logger.info("'actionCFon' " + sys.inspect(actionCFon) + " has been sent to AST")
 					var msgstr = "[" + extFrom + "] CF ON to [" + extTo + "]"
 					var response = new ResponseMessage(client.sessionId, 'ack_cf_on', msgstr)
 					response.extTo = extTo
 					client.send(response)
-					logger.info("RESP 'ack_cf_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
-					logger.info(msgstr);
+					logger.debug("'actionCFon' " + sys.inspect(actionCFon) + " has been sent to AST\nRESP 'ack_cf_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'"+msgstr);
 					// update ext CF status
                                         modop.updateExtCFStatusWithExt(extFrom, 'on', extTo);
                                         // update all clients for op
@@ -2378,13 +2365,11 @@ io.on('connection', function(client){
                                 };
                                 // send action to asterisk
                                 am.send(actionCFUnavailableOn, function () {
-                                        logger.info("'actionCFUnavailableOn' " + sys.inspect(actionCFUnavailableOn) + " has been sent to AST")
                                         var msgstr = "[" + extFrom + "] CF Unavailable ON to [" + extTo + "]"
                                         var response = new ResponseMessage(client.sessionId, 'ack_cf_unavailable_on', msgstr)
                                         response.extTo = extTo
                                         client.send(response)
-                                        logger.info("RESP 'ack_cf_unavailable_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
-                                        logger.info(msgstr);
+                                        logger.debug("'actionCFUnavailableOn' " + sys.inspect(actionCFUnavailableOn) + " has been sent to AST\nRESP 'ack_cf_unavailable_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'"+msgstr);
                                 });
                         break;
 			case actions.ACTION_CF_BUSY_ON:
@@ -2397,13 +2382,11 @@ io.on('connection', function(client){
                                 };
                                 // send action to asterisk
                                 am.send(actionCFBusyOn, function () {
-                                        logger.info("'actionCFBusyOn' " + sys.inspect(actionCFBusyOn) + " has been sent to AST")
                                         var msgstr = "[" + extFrom + "] CF Busy ON to [" + extTo + "]"
                                         var response = new ResponseMessage(client.sessionId, 'ack_cf_busy_on', msgstr)
                                         response.extTo = extTo
                                         client.send(response)
-                                        logger.info("RESP 'ack_cf_busy_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
-                                        logger.info(msgstr);
+                                        logger.debug("'actionCFBusyOn' " + sys.inspect(actionCFBusyOn) + " has been sent to AST\nRESP 'ack_cf_busy_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'\n"+msgstr);
                                 });
                         break;
 	  		case actions.ACTION_CF_OFF:
@@ -2415,11 +2398,9 @@ io.on('connection', function(client){
 				};
 				// send action to asterisk
 				am.send(actionCFoff, function () {
-					logger.info("'actionCFoff' " + sys.inspect(actionCFoff) + " has been sent to AST");
 					var msgstr = "[" + extFrom + "] CF OFF";
 					client.send(new ResponseMessage(client.sessionId, 'ack_cf_off', msgstr));
-					logger.info("RESP 'ack_cf_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
-					logger.info(msgstr);
+					logger.debug("'actionCFoff' " + sys.inspect(actionCFoff) + " has been sent to AST\nRESP 'ack_cf_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'\n"+msgstr);
 					// update ext CF status
                                         modop.updateExtCFStatusWithExt(extFrom, 'off');
                                         // update all clients for op
@@ -2435,11 +2416,9 @@ io.on('connection', function(client){
                                 };
                                 // send action to asterisk
                                 am.send(actionCFUnavailableOff, function () {
-                                        logger.info("'actionCFUnavailableOff' " + sys.inspect(actionCFUnavailableOff) + " has been sent to AST");
                                         var msgstr = "[" + extFrom + "] CF Unavailable OFF";
                                         client.send(new ResponseMessage(client.sessionId, 'ack_cf_unavailable_off', msgstr));
-                                        logger.info("RESP 'ack_cf_unavailable_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
-                                        logger.info(msgstr);
+                                        logger.debug("'actionCFUnavailableOff' " + sys.inspect(actionCFUnavailableOff) + " has been sent to AST\nRESP 'ack_cf_unavailable_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'\n"+msgstr);
                                 });
                         break;
 			case actions.ACTION_CF_BUSY_OFF:
@@ -2451,18 +2430,17 @@ io.on('connection', function(client){
                                 };
                                 // send action to asterisk
                                 am.send(actionCFBusyOff, function () {
-                                        logger.info("'actionCFBusyOff' " + sys.inspect(actionCFBusyOff) + " has been sent to AST");
+                                        logger.debug("'actionCFBusyOff' " + sys.inspect(actionCFBusyOff) + " has been sent to AST");
                                         var msgstr = "[" + extFrom + "] CF Busy OFF";
                                         client.send(new ResponseMessage(client.sessionId, 'ack_cf_busy_off', msgstr));
-                                        logger.info("RESP 'ack_cf_busy_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
-                                        logger.info(msgstr);
+                                        logger.debug("RESP 'ack_cf_busy_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'\n"+msgstr);
                                 });
                         break;
 			case actions.ACTION_GET_DAY_HISTORY_CALL:
 				// check if the user has the permission to get the history of calling
 				var res = profiler.checkActionHistoryCallPermit(extFrom);
                                 if(res){
-					logger.info("check 'dayHistoryCall' permission for [" + extFrom + "] OK: get day history call...");
+					logger.debug("check 'dayHistoryCall' permission for [" + extFrom + "] OK: get day history call...");
 					// format date for query sql
 					var dateFormat = formatDate(message.date);					
                                         // execute query to search contact in phonebook
@@ -2470,32 +2448,32 @@ io.on('connection', function(client){
                                                 var mess = new ResponseMessage(client.sessionId, "day_history_call", "received day history call");
                                                 mess.results = createHistoryCallResponse(results);
                                                 client.send(mess);
-                                                logger.info("RESP 'day_history_call' (" + results.length + " entries) has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+                                                logger.debug("RESP 'day_history_call' (" + results.length + " entries) has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
                                         });
                                 }
                                 else{
 					logger.info("check 'dayHistoryCall' permission for [" + extFrom + "] FAILED !");
                                         client.send(new ResponseMessage(client.sessionId, "error_day_history_call", "Sorry: you don't have permission to view day history call !"));
-                                        logger.info("RESP 'error_day_history_call' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+                                        logger.debug("RESP 'error_day_history_call' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
                                 }
                         break;
 			case actions.ACTION_GET_CURRENT_WEEK_HISTORY_CALL:
                                 // check if the user has the permission to get history of calling
 				var res = profiler.checkActionHistoryCallPermit(extFrom);
                                 if(res){
-					logger.info("check 'currentWeekHistoryCall' permission for [" + extFrom + "] OK: get current week history call...");
+					logger.debug("check 'currentWeekHistoryCall' permission for [" + extFrom + "] OK: get current week history call...");
                                         // execute query to search contact in phonebook
                                         dataCollector.getCurrentWeekHistoryCall(extFrom, function(results){
                                                 var mess = new ResponseMessage(client.sessionId, "current_week_history_call", "received current week history call");
 						mess.results = createHistoryCallResponse(results);
                                                 client.send(mess);
-                                                logger.info("RESP 'current_week_history_call' (" + results.length + " entries) has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+                                                logger.debug("RESP 'current_week_history_call' (" + results.length + " entries) has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
                                         });
                                 }
                                 else{
 					logger.info("check 'currentWeekHistoryCall' permission for [" + extFrom + "] FAILED !");
                                         client.send(new ResponseMessage(client.sessionId, "error_current_week_history_call", "Sorry: you don't have permission to view current week history call !"));
-                                        logger.info("RESP 'error_current_week_history_call' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+                                        logger.debug("RESP 'error_current_week_history_call' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
                                 }
                         break;
 			case actions.ACTION_GET_CURRENT_MONTH_HISTORY_CALL:
@@ -2508,13 +2486,13 @@ io.on('connection', function(client){
                                                 var mess = new ResponseMessage(client.sessionId, "current_month_history_call", "received current month history call");
 						mess.results = createHistoryCallResponse(results);
                                                 client.send(mess);
-                                                logger.info("RESP 'current_month_history_call' (" + results.length + " entries) has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+                                                logger.debug("RESP 'current_month_history_call' (" + results.length + " entries) has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
                                         });
                                 }
                                 else{
 					logger.info("check 'currentMonthHistoryCall' permission for [" + extFrom + "] FAILED !");
                                         client.send(new ResponseMessage(client.sessionId, "error_current_month_history_call", "Sorry: you don't have permission to view current month history call !"));
-                                        logger.info("RESP 'error_current_month_history_call' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+                                        logger.debug("RESP 'error_current_month_history_call' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
                                 }
                         break;
 			case actions.ACTION_CHECK_CALL_AUDIO_FILE:
@@ -2533,7 +2511,7 @@ io.on('connection', function(client){
 					var mess = new ResponseMessage(client.sessionId, "audio_file_call_list", "received list of audio file of call");
 	                                mess.results = audioFiles;
 	                                client.send(mess);
-	                                logger.info("RESP 'audio_file_call_list' (" + audioFiles.length + " files) has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+	                                logger.debug("RESP 'audio_file_call_list' (" + audioFiles.length + " files) has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 				});	
                         break;
 			case actions.ACTION_GET_PEER_LIST_COMPLETE_OP:
@@ -2550,7 +2528,7 @@ io.on('connection', function(client){
                                 };
                                 // send action to asterisk
                                 am.send(actionParkedCalls, function (resp) {
-                                        logger.info("'actionParkedCalls' " + sys.inspect(actionParkedCalls) + " has been sent to AST to update timeout of the parked calls");
+                                        logger.debug("'actionParkedCalls' " + sys.inspect(actionParkedCalls) + " has been sent to AST to update timeout of the parked calls");
                                 });
                         break;
 			case actions.ACTION_PARK:
@@ -2571,12 +2549,12 @@ io.on('connection', function(client){
                                 };
                                 // send action to asterisk
                                 am.send(actionPark, function (resp) {
-					logger.info("'actionPark' " + sys.inspect(actionPark) + " has been sent to AST");
+					logger.debug("'actionPark' " + sys.inspect(actionPark) + " has been sent to AST");
 					// create message
 	                                var msgstr = "received acknowledgment for parking the call";
 	                                var mess = new ResponseMessage(client.sessionId, "ack_park", msgstr);
 	                                client.send(mess);
-	                                logger.info("RESP 'ack_park' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+	                                logger.debug("RESP 'ack_park' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
                                 });
 			break;
 			case actions.ACTION_SPY_LISTEN:
@@ -2601,11 +2579,11 @@ io.on('connection', function(client){
 				};
 				// send spy action to the asterisk server
 				am.send(actionSpyListen, function(){
-					logger.info("'actionSpyListen' " + sys.inspect(actionSpyListen) + " has been sent to AST");
+					logger.debug("'actionSpyListen' " + sys.inspect(actionSpyListen) + " has been sent to AST");
 				});
 			break;
 			case actions.ACTION_PICKUP:
-				logger.info("chStat = " + sys.inspect(chStat))
+				logger.debug("chStat = " + sys.inspect(chStat))
                                 var callerExt = message.callerExt
 				var callTo = message.callTo
                         	var channel = ''
@@ -2636,7 +2614,7 @@ io.on('connection', function(client){
 				};
                                 // send the action to the asterisk server
                                 am.send(actionPickup, function(){
-					logger.info("'actionPickup' " + sys.inspect(actionPickup) + " has been sent to AST");
+					logger.debug("'actionPickup' " + sys.inspect(actionPickup) + " has been sent to AST");
                                 });
                         break;
 			case actions.ACTION_SPY_LISTEN_SPEAK:
@@ -2661,7 +2639,7 @@ io.on('connection', function(client){
                                 };
                                 // send spy action to the asterisk server
                                 am.send(actionSpyListenSpeak, function(){
-					logger.info("'actionSpyListenSpeak' " + sys.inspect(actionSpyListenSpeak) + " has been sent to AST");
+					logger.debug("'actionSpyListenSpeak' " + sys.inspect(actionSpyListenSpeak) + " has been sent to AST");
                                 });
                         break;
 			case actions.ACTION_REDIRECT_VOICEMAIL:
@@ -2682,7 +2660,7 @@ io.on('connection', function(client){
 				}
                                 // send spy action to the asterisk server
                                 am.send(actionRedirectVoicemail, function(){
-					logger.info("'actionRedirectVoicemail' " + sys.inspect(actionRedirectVoicemail) + " has been sent to AST");
+					logger.debug("'actionRedirectVoicemail' " + sys.inspect(actionRedirectVoicemail) + " has been sent to AST");
                                 });
                         break;
 			case actions.ACTION_REDIRECT_VOICEMAIL_FROM_OP:
@@ -2721,7 +2699,7 @@ io.on('connection', function(client){
                                 }
                                 // send spy action to the asterisk server
                                 am.send(actionRedirectVoicemailToExt, function(){
-                                        logger.info("'actionRedirectVoicemailToExt' " + sys.inspect(actionRedirectVoicemailToExt) + " has been sent to AST");
+                                        logger.debug("'actionRedirectVoicemailToExt' " + sys.inspect(actionRedirectVoicemailToExt) + " has been sent to AST");
                                 })
                         break;
 	  		default:
@@ -2734,8 +2712,8 @@ io.on('connection', function(client){
   		logger.info("EVENT 'Disconnected': WebSocket client '" + client.sessionId + "' disconnected");
   		removeClient(client.sessionId);
   		if(!testAlreadyLoggedSessionId(client.sessionId))
-  			logger.info("removed client sessionId '" + client.sessionId + "' from clients");
-	  	logger.info(Object.keys(clients).length + ' logged in clients');
+  			logger.debug("removed client sessionId '" + client.sessionId + "' from clients");
+	  	logger.debug(Object.keys(clients).length + ' logged in clients');
 		printLoggedClients();
   	});
 });
@@ -2762,18 +2740,18 @@ am.connect();
  * Example of 'typeext' is: SIP/500 */ 
 function updateAllClientsForOpWithTypeExt(typeext){
 	// get new state of the extension typeext
-	logger.info('FUNCTION \'updateAllClientsForOpWithTypeExt(typeext)\': \'modop.getExtStatusWithTypeExt(typeext)\' with typeext = ' + typeext);
+	logger.debug('FUNCTION \'updateAllClientsForOpWithTypeExt(typeext)\': \'modop.getExtStatusWithTypeExt(typeext)\' with typeext = ' + typeext);
 	var newState = modop.getExtStatusWithTypeExt(typeext);	
-	logger.info('obtained newState: ' + sys.inspect(newState));
+	logger.debug('obtained newState: ' + sys.inspect(newState));
 	// send update to all clients with the new state of the typeext for op (operator panel)
-	logger.info('update all clients (with typeext)...');
+	logger.debug('update all clients (with typeext)...');
         for(key in clients){
                 var c = clients[key];
                 var msg = "state of " + newState.Label + " has changed: update ext new state";
                 var response = new ResponseMessage(c.sessionId, "update_ext_new_state_op", msg);
                 response.extNewState = newState;
                 c.send(response);
-                logger.info("RESP 'update_ext_new_state_op' has been sent to client [" + key + "] sessionId '" + c.sessionId + "'");
+                logger.debug("RESP 'update_ext_new_state_op' has been sent to client [" + key + "] sessionId '" + c.sessionId + "'");
         }
 }
 
@@ -2782,18 +2760,18 @@ function updateAllClientsForOpWithTypeExt(typeext){
  * 'ext' must be in the form: '500' */
 function updateAllClientsForOpWithExt(ext){
         // get new state of the extension ext
-        logger.info('FUNCTION \'updateAllClientsForOpWithExt(ext)\': \'modop.getExtStatusWithExt(ext)\' with ext = \'' + ext + '\'');
+        logger.debug('FUNCTION \'updateAllClientsForOpWithExt(ext)\': \'modop.getExtStatusWithExt(ext)\' with ext = \'' + ext + '\'');
         var newState = modop.getExtStatusWithExt(ext);
-        logger.info('obtained newState: ' + sys.inspect(newState));
+        logger.debug('obtained newState: ' + sys.inspect(newState));
         // send update to all clients with the new state
-        logger.info('update all clients (with ext)...');
+        logger.debug('update all clients (with ext)...');
         for(key in clients){
                 var c = clients[key];
                 var msg = "state of " + newState.Label + " has changed: update ext new state";
                 var response = new ResponseMessage(c.sessionId, "update_ext_new_state_op", msg);
                 response.extNewState = newState;
                 c.send(response);
-                logger.info("RESP 'update_ext_new_state_op' has been sent to [" + key + "] sessionId '" + c.sessionId + "'");
+                logger.debug("RESP 'update_ext_new_state_op' has been sent to [" + key + "] sessionId '" + c.sessionId + "'");
         }
 }
 
@@ -2801,14 +2779,14 @@ function updateAllClientsForOpWithExt(ext){
  * their OP with ringing icon. This is because asterisk.js don't generate 'newState' ringing event until
  * the user has pickup his phone */
 function sendAllClientAckCalloutFromCti(extFrom){
-	logger.info('FUNCTION \'sendAllClientAckCalloutFromCti(extFrom)\' for extFrom [' + extFrom + '] to update ringin ball on OP')
+	logger.debug('FUNCTION \'sendAllClientAckCalloutFromCti(extFrom)\' for extFrom [' + extFrom + '] to update ringin ball on OP')
 	for(key in clients){
                 var c = clients[key]
                 var msg = "[" + extFrom + "] has started a callout from CTI"
                 var response = new ResponseMessage(c.sessionId, "ack_callout_from_cti", msg)
 		response.extFrom = extFrom
                 c.send(response)
-                logger.info("RESP 'ack_callout_from_cti' has been sent to [" + key + "] sessionId '" + c.sessionId + "'")
+                logger.debug("RESP 'ack_callout_from_cti' has been sent to [" + key + "] sessionId '" + c.sessionId + "'")
         }
 }
 
@@ -2909,7 +2887,7 @@ createCustomerCardHTML = function(customerCard, from){
 		customerCard.from = from;
 	}
 	var template = normal.compile(htmlTemplate);
-	customerCard.server_address = "http://" + hostname + ":" + port;
+	//customerCard.server_address = "http://" + hostname + ":" + port;
 	var toAdd = template(customerCard);
 	var HTMLresult = toAdd;		
 	return HTMLresult;
@@ -2943,9 +2921,9 @@ function createResultSearchContactsPhonebook(results){
 
 //
 function printLoggedClients(){
-	logger.info("logged in clients:");
+	logger.debug("logged in clients:");
 	for(key in clients)
-		logger.info("\t[" + key + "] - IP '" + clients[key].connection.remoteAddress + "' - sessionId '" + clients[key].sessionId + "'");
+		logger.debug("\t[" + key + "] - IP '" + clients[key].connection.remoteAddress + "' - sessionId '" + clients[key].sessionId + "'");
 }
 
 /*

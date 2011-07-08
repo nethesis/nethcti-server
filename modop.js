@@ -617,7 +617,7 @@ function initTrunkWithFasciIni(tempFasciIni){
  * The number of 'PeerEntry' event is equal to the number of extensions present in the asterisk server.
  * The receive of one 'PeerEntry' event, allow to add status informations of the extension to 'extStatusForOp' */
 function initExtStatusForOp(){
-        logger.info("initialize status of all extensions...");
+        logger.debug("initialize status of all extensions...");
         // read file where are the list of all extensions
         extStatusForOp = iniparser.parseSync(FILE_EXT_LIST);
 	// check if exists FILE_FASCI_INI
@@ -640,7 +640,7 @@ function initExtStatusForOp(){
         };
         // send action to asterisk
         am.send(actionSIPPeersOP, function () {
-                logger.info("'actionSIPPeersOP' " + sys.inspect(actionSIPPeersOP) + " has been sent to AST");
+                logger.debug("'actionSIPPeersOP' " + sys.inspect(actionSIPPeersOP) + " has been sent to AST");
         });
 	/* create action for asterisk server that generate series of 'PeerEntry' events
          * to add status informations to 'extStatusForOp' for each IAXPeer */
@@ -650,7 +650,7 @@ function initExtStatusForOp(){
         };
         // send action to asterisk
         am.send(actionIAXPeersOP, function () {
-                logger.info("'actionIAXPeersOP' " + sys.inspect(actionIAXPeersOP) + " has been sent to AST");
+                logger.debug("'actionIAXPeersOP' " + sys.inspect(actionIAXPeersOP) + " has been sent to AST");
         });
 	/* create action for asterisk server that generate series of 'QueueMember' events
          * to add informations if the extension is present in some queue */
@@ -660,7 +660,7 @@ function initExtStatusForOp(){
         };
         // send action to asterisk
         am.send(actionQueueStatus, function () {
-                logger.info("'actionQueueStatus' " + sys.inspect(actionQueueStatus) + " has been sent to AST");
+                logger.debug("'actionQueueStatus' " + sys.inspect(actionQueueStatus) + " has been sent to AST");
         });
 	
 }

@@ -74,10 +74,10 @@ function updateConfiguration(){
 	for(key in reloadQueries){
 		var modified = false;
 		if(queries[key]==undefined) {  // a new section is added to configuration file
-			logger.info("new section '" + key + "' into " + DATACOLLECTOR_CONFIG_FILENAME + " has been added");
+			logger.debug("new section '" + key + "' into " + DATACOLLECTOR_CONFIG_FILENAME + " has been added");
 			queries[key] = reloadQueries[key];
 			// new connection of added section
-                        logger.info("made new db connection of key = " + key + " " + sys.inspect(queries[key]));
+                        logger.debug("made new db connection of key = " + key + " " + sys.inspect(queries[key]));
                         initConn(queries[key], key);
 		}
 		else{
@@ -104,15 +104,15 @@ function updateConfiguration(){
 			logger.info("section '" + key + "' has been modified in " + DATACOLLECTOR_CONFIG_FILENAME);
 			if(queries[key].dbtype=="mysql"){ 
 				// close mysql connection
-				logger.info("close mysql connection of key = " + key);
+				logger.debug("close mysql connection of key = " + key);
 				dbConnections[key].end();
 			}
 			else if(queries[key].dbtype=="mssql"){ // close mssql connection
-				logger.info("close mssql connection");
+				logger.debug("close mssql connection");
 				dbConnections[key].close(function(){});
 			}
 			// new connection of modified section
-                        logger.info("made new db connection of key = " + key + " " + sys.inspect(queries[key]));
+                        logger.debug("made new db connection of key = " + key + " " + sys.inspect(queries[key]));
                         initConn(queries[key], key);
 		}
 	}
