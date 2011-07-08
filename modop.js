@@ -459,7 +459,7 @@ function addListenerToAm(){
 		//logger.info("'PeerEntry' event: " + sys.inspect(headers))
 	        var ext = headers.objectname;
 	        var status = headers.status;
-	        logger.info("EVENT 'PeerEntry': ext [" + ext + "], status '" + status + "'");
+	        logger.debug("EVENT 'PeerEntry': ext [" + ext + "], status '" + status + "'");
 	        var dndStatus = '';
 	        var cfStatus = '';
 	        var cfStatusToExt = '';
@@ -538,7 +538,7 @@ function addListenerToAm(){
 	/* This event is triggered when 'PeerEntry' event is emitted for each user registered in asterisk.
 	 * So, the initialization of 'extStatusForOp' can be completed */
 	am.addListener('peerlistcomplete', function(){
-	        logger.info("PeerListComplete event");
+	        logger.debug("PeerListComplete event");
 	});
 
 	/* This event is necessary to add information of queue membership to extension status
@@ -558,7 +558,7 @@ function addListenerToAm(){
 		//logger.info("'QueueMember' event: " + sys.inspect(headers))
 		var ext = headers.name.split("@")[0].split('/')[1]
 		var queue = headers.queue
-		logger.info("'QueueMember' event: [" + ext + "] belongs to queue '" + queue + "'")
+		logger.debug("'QueueMember' event: [" + ext + "] belongs to queue '" + queue + "'")
 		for(key in extStatusForOp){
 			if(key.indexOf(ext)!=-1)
 				extStatusForOp[key].queue = queue
@@ -678,6 +678,3 @@ function initTabOp(){
 }
 
 
-function log(msg){
-        logger.info(msg);
-}
