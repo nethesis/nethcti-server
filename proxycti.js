@@ -24,7 +24,8 @@ const CALL_PREFIX = "CTI-";
 const SPY_PREFIX = "SPY-";
 const REDIRECT_VM_PREFIX = "REDIR_VM-";
 const START_TAG_FILENAME = "auto-";
-const LOGFILE = './log/proxy.log';
+const DIAL_FROM = 1
+const DIAL_TO = 0
 // asterisk manager
 var am;
 // the server
@@ -63,17 +64,20 @@ function initServerAndAsteriskParameters(){
 	asterisk_host = server_conf.ASTERISK.host;
 	hostname = server_conf.SERVER_PROXY.hostname;
 	port = server_conf.SERVER_PROXY.port;
+	logfile = server_conf.SERVER_PROXY.logfile;
+	if(logfile == undefined) logfile = "/var/log/proxycti.log";
+	loglevel = server_conf.SERVER_PROXY.loglevel;
+	if(loglevel == undefined) loglevel = "INFO";
 }
-
 
 
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF)
  */
-log4js.addAppender(log4js.fileAppender(LOGFILE), '[ProxyCTI]');
+log4js.clearAppenders();
+log4js.addAppender(log4js.fileAppender(logfile), '[ProxyCTI]');
 var logger = log4js.getLogger('[ProxyCTI]');
-logger.setLevel('ALL');
-
+logger.setLevel(loglevel);
 
 
 
@@ -127,10 +131,16 @@ function getUniqueIdFromFilename(filename){
 
 // Add object modules
 var profiler = new proReq.Profiler();
+profiler.setLogger(logfile,loglevel);
 var dataCollector = new dataReq.DataCollector();
+dataCollector.setLogger(logfile,loglevel);
 var authenticator = new authReq.Authenticator();
+authenticator.setLogger(logfile,loglevel);
 var controller = new contrReq.Controller(); // check changing in audio directory
+controller.setLogger(logfile,loglevel);
 var modop = new modopReq.Modop();
+modop.setLogger(logfile,loglevel);
+
 modop.addController(controller)
 logger.debug('added object modules: \'Profiler\', \'DataCollector\', \'Authenticator\', \'Modop\' and \'Controller\'')
 controller.addDir(AST_CALL_AUDIO_DIR);
@@ -387,8 +397,6 @@ am.addListener('newstate', function(headers){
 	if( modop.isChannelTrunk(chStat[headers.uniqueid].channel) ){ // newstate is relative to a trunk
 		modop.updateTrunkStatusWithChannel(chStat[headers.uniqueid].channel, headers.channelstatedesc.toLowerCase())
 	} else {
-		//modop.updateExtStatusForOpWithExt(chStat[headers.uniqueid].calleridnum, chStat[headers.uniqueid].status)
-		//updateAllClientsForOpWithExt(chStat[headers.uniqueid].calleridnum)
 		modop.updateExtStatusForOpWithTypeExt(typeext, chStat[headers.uniqueid].status)
 		updateAllClientsForOpWithTypeExt(typeext)
 	}
@@ -571,9 +579,11 @@ am.addListener('dialing', function(headers) {
 	// in this case the call come from queue
 	if(from==undefined && chStat[headers.uniqueid].channel.indexOf('Local/')!=-1 && chStat[headers.uniqueid].channel.indexOf('@from-internal-')!=-1 )
 		from = headers.calleridnum
+	else if( from==undefined && modop.isChannelTrunk(chStat[headers.uniqueid].channel) ) // callin through a trunk (CASE B)
+		from = headers.calleridnum
 	else if(from==undefined && chStat[headers.uniqueid].channel.indexOf('AsyncGoto/SIP/')!=-1 ) // this case is the redirect
 		from = chStat[headers.uniqueid].channel.split('-')[0].split('/')[2]
-	else if( from==undefined && modop.isChannelTrunk(chStat[headers.uniqueid].channel) ) // callin through a trunk (CASE B)
+	else if(from==undefined && modop.isChannelIntern(chStat[headers.uniqueid].channel))
 		from = headers.calleridnum
 	logger.info("Dialing from '" + from + "' -> '" + to + "'")
 
@@ -588,7 +598,7 @@ am.addListener('dialing', function(headers) {
 		if(c!=undefined){
                         /* in this response the html is not passed, because the chrome desktop 
                          * notification of the client accept only one absolute or relative url */
-                        var response = new ResponseMessage(c.sessionId, "dialing", from)
+                        var response = new ResponseMessage(c.sessionId, "dialing", headers.calleridname)
                         response.from = from
                         response.to = to
                         var typesCC = profiler.getTypesCustomerCardPermit(to)
@@ -625,21 +635,36 @@ am.addListener('dialing', function(headers) {
         		}
                 }
 	}
+	// add dialExtUniqueid for trunk and for queue ;2 (;2 means the call to client intern)
+	if(from!=undefined && !modop.isChannelIntern(headers.channel) && headers.channel.indexOf(';1')==-1)
+		chStat[headers.uniqueid].dialExtUniqueid = headers.destuniqueid
+	if(to!=undefined && !modop.isChannelIntern(headers.destination) && headers.destination.indexOf(';1')==-1)
+		chStat[headers.destuniqueid].dialExtUniqueid = headers.uniqueid
 	// update for OP
 	if(from!=undefined && to!=undefined){
 		// check if the call come from queue. In this case, the caller (272) has already been update in AgentCalled event
 		if(headers.channel.indexOf('Local/')==-1 && headers.channel.indexOf('@from-internal-')==-1 && headers.channel.indexOf(';2')==-1){ 
 			/* check also !modop.isChannelTrunk(headers.channel)  because (CASE H): 
 			 * headers.calleridnum come from trunk, that is remote location but is equal to local intern (namesake) */
-			if(modop.isExtPresent(from) && !modop.isChannelTrunk(headers.channel) ){ 
-				modop.updateExtStatusOpDialFrom(from, to)
+			if(modop.isExtPresent(from) && modop.isChannelIntern(headers.channel) && !modop.isChannelTrunk(headers.channel) ){
+				chStat[headers.uniqueid].dialExt = to // set dial from identification in chStat (dialExt)
+				chStat[headers.uniqueid].dialDirection = DIAL_FROM
+				var internTypeExt = modop.getInternTypeExtFromChannel(headers.channel)
+				modop.addDialingUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid, chStat[headers.uniqueid])
+				logger.info("added dialingUniqueid '" + headers.uniqueid + "' to interTypeExt '" + internTypeExt + "'")
 		        	updateAllClientsForOpWithExt(from)
 			} else if( modop.isExtPresent(from) && modop.isChannelTrunk(headers.channel) )
 				logger.warn("[" + from + "] is namesake: comes from remote location through trunk '" + headers.channel + "'")
 		}
-		if(modop.isExtPresent(to)){
-	                modop.updateExtStatusOpDialTo(to, from)
-	        	updateAllClientsForOpWithExt(to)
+		if(modop.isExtPresent(to) && modop.isChannelIntern(headers.destination)){
+			chStat[headers.destuniqueid].dialExt = from // set dial to identification in chStat (dialExt)
+			chStat[headers.destuniqueid].dialDirection = DIAL_TO
+			var internTypeExt = modop.getInternTypeExtFromChannel(headers.destination)
+			modop.addDialingUniqueidInternWithTypeExt(internTypeExt, headers.destuniqueid, chStat[headers.destuniqueid])
+			logger.info("added dialingUniqueid '" + headers.destuniqueid + "' to interTypeExt '" + internTypeExt + "'")
+	        	//updateAllClientsForOpWithExt(to) 
+			// commented because send newState to all clients with the status set to 'up'. However there
+			// will be a newState event with the status ringing and with the right dialExt 
 		}	
 	}
 })
@@ -684,6 +709,16 @@ EVENT 'Hangup': headers = { event: 'Hangup',
   calleridname: '<unknown>',
   cause: '16',
   causetxt: 'Normal Clearing' }
+  *
+  * or:
+EVENT 'Hangup': headers = { event: 'Hangup', (CASE M)
+  privilege: 'call,all',
+  channel: 'SIP/204-00000401<ZOMBIE>',
+  uniqueid: '1309879483.2177',
+  calleridnum: '204',
+  calleridname: 'Davide Marini',
+  cause: '16',
+  causetxt: 'Normal Clearing' } 
 *
 * and
 EVENT 'Hangup': headers = { event: 'Hangup',
@@ -837,14 +872,36 @@ am.addListener('hangup', function(headers) {
 	 * This is because this proxy server can be started after the asterisk server. So some calling can be in execution when this
  	 * proxy server starting and so it can receive some hangup event relative to old call for which it haven't the relative channel in chStat. 
 	 * In this case it simply discard this hangup event */
-	if(chStat[headers.uniqueid]==undefined){
+	if(headers.channel.indexOf('<ZOMBIE>')==-1 && chStat[headers.uniqueid]==undefined){
 		logger.warn("discard 'hangup' event: it isn't present in chStat. The cause can be the start of this server during the asterisk functioning")
 		return
 	}
+
 	if(chStat[headers.uniqueid].channel.indexOf('Local/')!=-1 && chStat[headers.uniqueid].channel.indexOf('@from-internal-')!=-1 && (chStat[headers.uniqueid].channel.indexOf(';1')!=-1 || chStat[headers.uniqueid].channel.indexOf(';2')!=-1 ) ){
 		logger.warn("discard 'hangup' event: relative to queue. Delete it from chStat")
-		delete chStat[headers.uniqueid]
-	        logger.info("'hangup' chStat = " + sys.inspect(chStat))
+		return
+	}
+
+	if(headers.channel.indexOf('<ZOMBIE>')!=-1 && headers.channel.indexOf('AsyncGoto/SIP/')==-1){ // (CASE M)  channel: 'SIP/204-00000401<ZOMBIE>'
+		var tempCh = headers.channel.split('<ZOMBIE>')[0]
+		var internTypeExt = modop.getInternTypeExtFromChannel(tempCh)
+		var tempUniqueid
+		for(key in chStat){
+			if(chStat[key].channel==tempCh)
+				tempUniqueid = key
+		}
+		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt, tempUniqueid)){
+                        modop.removeDialingUniqueidInternWithTypeExt(internTypeExt, tempUniqueid)
+                        logger.info("removed dialingUniqueid '" + tempUniqueid + "' from intern '" + internTypeExt + "'")
+                } else
+                        logger.warn("dialingUniqueid '" + tempUniqueid + "' has already not present into intern '" + internTypeExt + "'")
+		if(modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, tempUniqueid)){
+                        modop.removeCallConnectedUniqueidInternWithTypeExt(internTypeExt, tempUniqueid)
+                        logger.info("removed callConnectedUniqueid '" + tempUniqueid + "' from intern '" + internTypeExt + "'")
+                } else
+                        logger.warn("callConnected uniqueid '" + tempUniqueid + "' has already not present into intern '" + internTypeExt + "'")
+		modop.updateHangupUniqueidInternWithTypeExt(internTypeExt, tempUniqueid) // add uniqueid of current hangup as 'lastHangupUniqueid'
+                updateAllClientsForOpWithTypeExt(internTypeExt)
 		return
 	}
 
@@ -857,7 +914,38 @@ am.addListener('hangup', function(headers) {
 		} else
 			logger.warn("callConnected uniqueid '" + headers.uniqueid + "' has already not present into trunk '" + trunkTypeExt + "'")
 	}
-
+	else if(modop.isChannelIntern(headers.channel)){ // headers.channel is an intern
+		var internTypeExt = modop.getInternTypeExtFromChannel(chStat[headers.uniqueid].channel)
+		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt, headers.uniqueid)){
+			modop.removeDialingUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid)
+			logger.info("removed dialingUniqueid '" + headers.uniqueid + "' from intern '" + internTypeExt + "'")
+		} else
+			logger.warn("dialingUniqueid '" + headers.uniqueid + "' has already not present into intern '" + internTypeExt + "'")
+		if(modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, headers.uniqueid)){
+			modop.removeCallConnectedUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid)
+			logger.info("removed callConnectedUniqueid '" + headers.uniqueid + "' from intern '" + internTypeExt + "'")
+		} else
+			logger.warn("callConnected uniqueid '" + headers.uniqueid + "' has already not present into intern '" + internTypeExt + "'")
+		modop.updateHangupUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid) // add uniqueid of current hangup as 'lastHangupUniqueid'
+		updateAllClientsForOpWithTypeExt(internTypeExt)
+	}
+	// headers.channel = 'AsyncGoto/SIP/270-000002dc<ZOMBIE>'
+	else if(headers.channel.indexOf('AsyncGoto/SIP/')!=-1 && headers.channel.indexOf('<ZOMBIE>')!=-1){ // headers.channel is an intern that has redirect: remove callConnectedUniqueid
+		var temp = headers.channel.split('/')[1] // SIP
+		var internTypeExt = temp + '/' + headers.channel.split('-')[0].split('/')[2]
+		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt, headers.uniqueid)){
+			modop.removeDialingUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid)
+			logger.info("removed dialingUniqueid '" + headers.uniqueid + "' from intern '" + internTypeExt + "'")
+		} else
+			logger.warn("dialingUniqueid '" + headers.uniqueid + "' has already not present into intern '" + internTypeExt + "'")
+		if(modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, headers.uniqueid)){
+			modop.removeCallConnectedUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid)
+			logger.info("removed callConnectedUniqueid '" + headers.uniqueid + "' from intern '" + internTypeExt + "'")
+		} else
+			logger.warn("callConnected uniqueid '" + headers.uniqueid + "' has already not present into intern '" + internTypeExt + "'")
+		modop.updateHangupUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid) // add uniqueid of current hangup as 'lastHangupUniqueid'
+		updateAllClientsForOpWithTypeExt(internTypeExt)
+        }
 	// ext
 	var ext
 	if( chStat[headers.uniqueid].calleridnum!='' && chStat[headers.uniqueid].calleridnum!=undefined && !modop.isExtGroup(chStat[headers.uniqueid].calleridnum) ){
@@ -868,8 +956,7 @@ am.addListener('hangup', function(headers) {
 		     status: 'up' } } */
 		// because (CASE I) is not possibile to calculate ext with ( ext = chStat[headers.uniqueid].calleridnum ). So:
 		ext = modop.getExtInternFromChannel(chStat[headers.uniqueid].channel)
-	}
-	else{
+	} else {
 		/* { '1308643183.682': 
 		    { channel: 'SIP/271-00000242',
 		      calleridname: 'CTI-271',
@@ -881,9 +968,6 @@ am.addListener('hangup', function(headers) {
 		else if( chStat[headers.uniqueid].channel.indexOf('AsyncGoto/SIP/')!=-1 ) // is redirect
 			ext = chStat[headers.uniqueid].channel.split('-')[0].split('/')[2]
 	}
-	delete chStat[headers.uniqueid]
-	logger.info("'hangup' chStat = " + sys.inspect(chStat))
-
 	// advise client of hangup if this event is not relative to redirect operation
 	if( headers.channel.indexOf('AsyncGoto/SIP/')==-1 && headers.channel.indexOf('<ZOMBIE>')==-1 ){
 		var c = clients[ext]
@@ -895,16 +979,18 @@ am.addListener('hangup', function(headers) {
 	                logger.info("RESP 'hangup' has been sent to [" + ext + "] sessionId '" + c.sessionId + "'")
 	        }
 		// update for OP
-		if(modop.isExtPresent(ext)){
+		if(modop.isExtPresent(ext) && modop.isExtInterno(ext)){
 	                modop.updateExtStatusForOpWithExt(ext, 'hangup')
-	                modop.updateStopRecordExtStatusForOpWithExt(ext)
+			var internTypeExt = modop.getInternTypeExtFromChannel(headers.channel)
 	                modop.updateLastDialExt(ext)
-	                updateAllClientsForOpWithExt(ext)
+	                updateAllClientsForOpWithTypeExt(internTypeExt)
 	        } else
 			logger.warn('[' + ext + '] is not present in extStatusForOp: so not advise it')
 	} else
 		logger.info("discarded event 'hangup' because redirect")
 
+	delete chStat[headers.uniqueid]
+	logger.info("delete '" + headers.uniqueid + "' from chStat: so it is = " + sys.inspect(chStat))
 	// TO eliminate data structure of asterisk.js
 	//delete am.participants[headers.uniqueid]
         //logger.info('removed \'' + headers.uniqueid  + '\' from am.participants: ' + sys.inspect(am.participants))
@@ -997,6 +1083,10 @@ EVENT 'CallConnected': headers = '{ event: 'Bridge',
 am.addListener('callconnected', function(headers) {
         logger.info("EVENT 'CallConnected': headers = '" + sys.inspect(headers) + "'")
 	logger.info("'callconnected' chStat = " + sys.inspect(chStat))
+	if(chStat[headers.uniqueid1]==undefined || chStat[headers.uniqueid2]==undefined){
+		logger.warn("discard 'callConnected' event: it isn't present in chStat. The cause can be the start of this server during the asterisk functioning")
+		return
+	}
 	/* when redirect:
 	chStat = { '1308664818.896': { channel: 'AsyncGoto/SIP/270-000002df' },
 	  '1308664819.897': 
@@ -1052,18 +1142,29 @@ am.addListener('callconnected', function(headers) {
 	  '1308813225.11191': { channel: 'SIP/2001-000014bf' } } */
 	// check if the callconnected is between internal and intermediate node created by asterisk when the call pass through a queue
 	if( headers.callerid1==headers.callerid2 && headers.channel2.indexOf('Local/')!=-1 && headers.channel2.indexOf('@from-internal-')!=-1 && headers.channel2.indexOf(';1')!=-1  ){ // (CASE E)
+		// add uniquedid
 		if( modop.isChannelTrunk(headers.channel1) ){ // (CASE D)
 			var trunkTypeext = modop.getTrunkTypeExtFromChannel(headers.channel1)
 			// add uniqueid of trunk 'headers.channel1' to trunk itself, if it isn't already been added
 			if( !modop.hasTrunkCallConnectedUniqueidWithTypeExt(trunkTypeext, headers.uniqueid1) ){
-				modop.addCallConnectedUniqueidTrunkWithTypeExt(trunkTypeext, headers.uniqueid1)
+				modop.addCallConnectedUniqueidTrunkWithTypeExt(trunkTypeext, headers.uniqueid1, chStat[headers.uniqueid1])
 				logger.info("added callConnectedUniqueid '" + headers.uniqueid1 + "' to trunk '" + trunkTypeext + "'")
 				updateAllClientsForOpWithTypeExt(trunkTypeext)
 			} else
 				logger.warn("callConnected uniqueid '" + headers.uniqueid1 + "' has already been added to trunk '" + trunkTypeext  + "'")
-
-			// Faccio lo stesso per l'utente del channel 2: aggiungo l'uniqueid
-
+		} else if(modop.isChannelIntern(headers.channel1)){  // channel 1 is intern
+			var internTypeExt = modop.getInternTypeExtFromChannel(headers.channel1)
+			if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt, headers.uniqueid1)){
+				modop.removeDialingUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid1)
+				logger.info("removed dialingUniqueid '" + headers.uniqueid1 + "' from internTypeExt '" + internTypeExt + "'")
+			} else
+				logger.warn("dialingUniqueid '" + headers.uniqueid1 + "' has already not present into intern '" + internTypeExt  + "'")
+			if(!modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, headers.uniqueid1)){
+				modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid1, chStat[headers.uniqueid1])
+				logger.info("added callConnectedUniqueid '" + headers.uniqueid1 + "' into intern '" + internTypeExt + "'")
+			} else
+				logger.warn("callConnectedUniqueid '" + headers.uniqueid1 + "' has already present into intern '" + internTypeExt  + "'")
+			updateAllClientsForOpWithTypeExt(internTypeExt)
 		}
 		logger.warn("discarded event 'callconnected'")
 		return
@@ -1074,23 +1175,100 @@ am.addListener('callconnected', function(headers) {
 		var trunkTypeext = modop.getTrunkTypeExtFromChannel(headers.channel2)
 		// add uniqueid of trunk 'headers.channel2' to trunk itself, if it isn't already been added
 		if( !modop.hasTrunkCallConnectedUniqueidWithTypeExt(trunkTypeext, headers.uniqueid2) ){
-			modop.addCallConnectedUniqueidTrunkWithTypeExt(trunkTypeext, headers.uniqueid2)
+			modop.addCallConnectedUniqueidTrunkWithTypeExt(trunkTypeext, headers.uniqueid2, chStat[headers.uniqueid2])
 			logger.info("added callConnectedUniqueid '" + headers.uniqueid2 + "' to trunk '" + trunkTypeext + "'")
 			updateAllClientsForOpWithTypeExt(trunkTypeext)
 		} else
 			logger.warn("callConnected uniqueid '" + headers.uniqueid2 + "' has already been added to trunk '" + trunkTypeext  + "'")
+
+		// add uniqueid of intern 'headers.channel1' to intern itself, if it isn't already been added
+		var internTypeExt = modop.getInternTypeExtFromChannel(headers.channel1)
+		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt, headers.uniqueid1)){
+			modop.removeDialingUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid1)
+			logger.info("removed dialingUniqueid '" + headers.uniqueid1 + "' from internTypeExt '" + internTypeExt + "'")
+		} else
+			logger.warn("dialingUniqueid '" + headers.uniqueid1 + "' has already not present into intern '" + internTypeExt  + "'")
+		if(!modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, headers.uniqueid1)){
+			modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid1, chStat[headers.uniqueid1])
+			logger.info("added callConnectedUniqueid '" + headers.uniqueid1 + "' into intern '" + internTypeExt + "'")
+		} else
+			logger.warn("callConnectedUniqueid '" + headers.uniqueid1 + "' has already present into intern '" + internTypeExt  + "'")
+		updateAllClientsForOpWithTypeExt(internTypeExt)
 	}
 
 	// channel1 is a trunk and channel2 is an intern (CASE G)
 	if( modop.isChannelTrunk(headers.channel1) && modop.isChannelIntern(headers.channel2) ){
-		var trunkTypeext = modop.getTrunkTypeExtFromChannel(headers.channel1)
+		var trunkTypeExt = modop.getTrunkTypeExtFromChannel(headers.channel1)
 		// add uniqueid of trunk 'headers.channel1' to trunk itself, if it isn't already been added
-		if( !modop.hasTrunkCallConnectedUniqueidWithTypeExt(trunkTypeext, headers.uniqueid1) ){
-			modop.addCallConnectedUniqueidTrunkWithTypeExt(trunkTypeext, headers.uniqueid1)
-			logger.info("added callConnectedUniqueid '" + headers.uniqueid1 + "' to trunk '" + trunkTypeext + "'")
-			updateAllClientsForOpWithTypeExt(trunkTypeext)
+		if( !modop.hasTrunkCallConnectedUniqueidWithTypeExt(trunkTypeExt, headers.uniqueid1) ){
+			modop.addCallConnectedUniqueidTrunkWithTypeExt(trunkTypeExt, headers.uniqueid1, chStat[headers.uniqueid1])
+			logger.info("added callConnectedUniqueid '" + headers.uniqueid1 + "' to trunk '" + trunkTypeExt + "'")
+			updateAllClientsForOpWithTypeExt(trunkTypeExt)
 		} else
-			logger.warn("callConnected uniqueid '" + headers.uniqueid1 + "' has already been added to trunk '" + trunkTypeext  + "'")
+			logger.warn("callConnected uniqueid '" + headers.uniqueid1 + "' has already been added to trunk '" + trunkTypeExt  + "'")
+
+		// add uniqueid of intern 'headers.channel2' to intern itself, if it isn't already been added
+		var internTypeExt = modop.getInternTypeExtFromChannel(headers.channel2)
+		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt, headers.uniqueid2)){
+			modop.removeDialingUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid2)
+			logger.info("removed dialingUniqueid '" + headers.uniqueid2 + "' from internTypeExt '" + internTypeExt + "'")
+		} else
+			logger.warn("dialingUniqueid '" + headers.uniqueid2 + "' has already not present into intern '" + internTypeExt  + "'")
+		if(!modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, headers.uniqueid2)){
+			modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid2, chStat[headers.uniqueid2])
+			logger.info("added callConnectedUniqueid '" + headers.uniqueid2 + "' into intern '" + internTypeExt + "'")
+		} else
+			logger.warn("callConnectedUniqueid '" + headers.uniqueid2 + "' has already present into intern '" + internTypeExt  + "'")
+		updateAllClientsForOpWithTypeExt(internTypeExt)
+	}
+
+	// the call is for queue and this is the part from intermediate node ...;2 and the intern
+	if( headers.channel1.indexOf('Local/')!=-1 && headers.channel1.indexOf('@from-internal-')!=-1 && headers.channel1.indexOf(';2')!=-1  ){
+		var internTypeExt = modop.getInternTypeExtFromChannel(headers.channel2)
+		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt, headers.uniqueid2)){
+			modop.removeDialingUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid2)
+			logger.info("removed dialingUniqueid '" + headers.uniqueid2 + "' from internTypeExt '" + internTypeExt + "'")
+		} else
+			logger.warn("dialingUniqueid '" + headers.uniqueid2 + "' has already not present into intern '" + internTypeExt  + "'")
+		if(!modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, headers.uniqueid2)){
+			modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid2, chStat[headers.uniqueid2])
+			logger.info("added callConnectedUniqueid '" + headers.uniqueid2 + "' into intern '" + internTypeExt + "'")
+		} else
+			logger.warn("callConnectedUniqueid '" + headers.uniqueid2 + "' has already present into intern '" + internTypeExt  + "'")
+		updateAllClientsForOpWithTypeExt(internTypeExt)
+
+		// add dialExtUniqueid for queue ;2 (;2 means the call to client intern)
+		chStat[headers.uniqueid1].dialExtUniqueid = headers.uniqueid2
+	}
+
+	// the call is between 2 intern
+	if(modop.isChannelIntern(headers.channel1) && modop.isChannelIntern(headers.channel2)){
+		// channel 1
+		var internTypeExt1 = modop.getInternTypeExtFromChannel(headers.channel1)
+		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt1, headers.uniqueid1)){
+			modop.removeDialingUniqueidInternWithTypeExt(internTypeExt1, headers.uniqueid1)
+			logger.info("removed dialingUniqueid '" + headers.uniqueid1 + "' from internTypeExt '" + internTypeExt1 + "'")
+		} else
+			logger.warn("dialingUniqueid '" + headers.uniqueid1 + "' has already not present into intern '" + internTypeExt1  + "'")
+		if(!modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt1, headers.uniqueid1)){
+			modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt1, headers.uniqueid1, chStat[headers.uniqueid1])
+			logger.info("added callConnectedUniqueid '" + headers.uniqueid1 + "' into intern '" + internTypeExt1 + "'")
+		} else
+			logger.warn("callConnectedUniqueid '" + headers.uniqueid1 + "' has already present into intern '" + internTypeExt1  + "'")
+                updateAllClientsForOpWithTypeExt(internTypeExt1)
+		// channel 2
+		var internTypeExt2 = modop.getInternTypeExtFromChannel(headers.channel2)
+		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt2, headers.uniqueid2)){
+			modop.removeDialingUniqueidInternWithTypeExt(internTypeExt2, headers.uniqueid2)
+			logger.info("removed dialingUniqueid '" + headers.uniqueid2 + "' from internTypeExt '" + internTypeExt2 + "'")
+		} else
+			logger.warn("dialingUniqueid '" + headers.uniqueid2 + "' has already not present into intern '" + internTypeExt2  + "'")
+		if(!modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt2, headers.uniqueid2)){
+			modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt2, headers.uniqueid2, chStat[headers.uniqueid2])
+			logger.info("added callConnectedUniqueid '" + headers.uniqueid2 + "' into intern '" + internTypeExt2 + "'")
+		} else
+			logger.warn("callConnectedUniqueid '" + headers.uniqueid2 + "' has already present into intern '" + internTypeExt2  + "'")
+                updateAllClientsForOpWithTypeExt(internTypeExt2)
 	}
 
 	// advise two clients of call
@@ -1134,9 +1312,9 @@ am.addListener('callconnected', function(headers) {
 am.addListener('agentcalled', function(headers) {
 	logger.info("EVENT 'AgentCalled': headers = " + sys.inspect(headers))
 	var from = chStat[headers.uniqueid].calleridnum
-	if(modop.isExtPresent(from)){
-		modop.updateExtStatusOpDialFrom(from, headers.queue)
-		updateAllClientsForOpWithExt(from)
+	if(modop.isExtPresent(from) && modop.isChannelIntern(headers.channelcalling)){
+		chStat[headers.uniqueid].dialDirection = DIAL_FROM
+		chStat[headers.uniqueid].dialExt = headers.queue
 	}
 })
 
@@ -1523,6 +1701,7 @@ io.on('connection', function(client){
 			ACTION_CF_OFF: 	'cf_off',
 			ACTION_PARK: 	'park',
 			ACTION_PICKUP: 	'pickup',
+			ACTION_HANGUP_SPY: 'hangup_spy',
 			ACTION_CF_BUSY_ON: 'cf_busy_on',
 			ACTION_CF_BUSY_OFF: 'cf_busy_off',
 			ACTION_STOP_RECORD: 'stoprecord',
@@ -1538,6 +1717,7 @@ io.on('connection', function(client){
 			ACTION_CHECK_CALL_AUDIO_FILE: 'check_call_audio_file',
 			ACTION_SEARCH_CONTACT_PHONEBOOK:  'search_contact_phonebook',
 			ACTION_GET_PEER_LIST_COMPLETE_OP: 'get_peer_list_complete_op',
+			ACTION_REDIRECT_VOICEMAIL_FROM_OP: 'redirect_voicemail_from_op',
 			ACTION_GET_CURRENT_WEEK_HISTORY_CALL:  'get_current_week_history_call',
 			ACTION_GET_CURRENT_MONTH_HISTORY_CALL: 'get_current_month_history_call'
 		}
@@ -1720,11 +1900,17 @@ io.on('connection', function(client){
 				     calleridnum: '271',
 				     status: 'up' } } */
 				logger.info("ACTION_HANGUP chStat = " + sys.inspect(chStat))
+				var extToHangup = message.extToHangup
+				var callDialExtHangup = message.callDialExtHangup
 				var ch
-				for(key in chStat){ // when call come from soft phone
-					if(chStat[key].calleridnum==extFrom){
-						ch = chStat[key].channel
-						break
+				for(key in chStat){
+					var tempChannel = chStat[key].channel
+					if(modop.isChannelIntern(tempChannel)){
+						var tempExt = modop.getExtInternFromChannel(tempChannel)
+						if(tempExt==extToHangup && chStat[key].dialExt!=undefined && chStat[key].dialExt==callDialExtHangup){
+							ch = chStat[key].channel
+							break
+						}
 					}
 				}
 				// create hangup action for asterisk server
@@ -1737,6 +1923,36 @@ io.on('connection', function(client){
                                         logger.info("'actionHangup' " + sys.inspect(actionHangup) + " has been sent to AST");
                                 })
 	  		break;
+			case actions.ACTION_HANGUP_SPY:
+				logger.info("ACTION_HANGUP_SPY chStat = " + sys.inspect(chStat))
+				/* { channel: 'SIP/271-0000023a',
+				     status: 'up',
+				     calleridname: 'SPY-270' } */
+				var extToHangup = message.extToHangup
+				var spyExt = message.spyExt
+				var ch
+				for(key in chStat){
+					if(chStat[key].calleridname==('SPY-'+spyExt)){
+						var tempChannel = chStat[key].channel
+						if(modop.isChannelIntern(tempChannel)){
+							var tempExt = modop.getExtInternFromChannel(tempChannel)
+							if(tempExt==extToHangup){
+								ch = tempChannel
+							} 
+						}
+					}
+				}
+				// create hangup action for asterisk server
+                                var actionHangupSpy = {
+                                        Action: 'Hangup', 
+                                        Channel: ch
+                                }
+                                // send action to asterisk
+                                am.send(actionHangupSpy, function () {
+                                        logger.info("'actionHangupSpy' " + sys.inspect(actionHangupSpy) + " has been sent to AST");
+                                })
+
+			break
 	  		case actions.ACTION_LOGOUT:
 	  			removeClient(client.sessionId);
 	  			if(!testAlreadyLoggedSessionId(client.sessionId)){
@@ -1763,10 +1979,25 @@ io.on('connection', function(client){
 	  				logger.info("check 'redirect' permission for [" + extFrom + "] OK: execute redirect...");	
 	  				// get the channel
 	  				var ch
+					var redirectFromExt = message.redirectFromExt
+					var callTo = message.callTo
+					var redirectToExt = message.redirectToExt
 					for(key in chStat){
-						if(chStat[key].calleridnum==message.redirectFrom){
-							ch = chStat[key].channel
-							break
+						var tempChannel = chStat[key].channel
+						if(modop.isChannelIntern(tempChannel)){
+							var tempExt = modop.getExtInternFromChannel(tempChannel)
+							if(tempExt==redirectFromExt && chStat[key].dialExt==callTo){
+								ch = tempChannel
+								break
+							}
+						}
+						if(modop.isChannelTrunk(tempChannel) && chStat[key].dialExtUniqueid!=undefined){
+							var dialExtUniqueid = chStat[key].dialExtUniqueid
+							var tempExt = modop.getExtInternFromChannel(chStat[dialExtUniqueid].channel)
+							if(chStat[key].calleridnum==redirectFromExt && tempExt==callTo){
+								ch = tempChannel
+								break
+							}
 						}
 					}
 		  			// create redirect action for the asterisk server
@@ -1774,7 +2005,7 @@ io.on('connection', function(client){
 						Action: 'Redirect',
 						Channel: ch,
 						Context: 'from-internal',
-						Exten: message.redirectTo,
+						Exten: redirectToExt,
 						Priority: 1
 					};
 					// send action to asterisk
@@ -1816,15 +2047,79 @@ io.on('connection', function(client){
 				if(profiler.checkActionRecordPermit(extFrom)){
 					logger.info("check 'record' permission for [" + extFrom + "] OK: record...");
 	  				var channel = '';
+	  				var destChannel = ''
 					var uniqueid = '';
-					var callFromExt = message.callFromExt;
+					var destUniqueid = ''
+					var callFromExt = message.callFromExt
+					var callToExt = message.callToExt
 					// get channel to record. It is always the caller (callFromExt)
-	  				for(key in am.participants){
-	  					if(am.participants[key].number==callFromExt){
-	  						channel = am.participants[key].channel;
-							uniqueid = am.participants[key].with;
-	  					}
-	  				}
+					if(modop.isExtInterno(callFromExt) && !modop.isExtInterno(callToExt)){ // the caller is an intern
+						for(key in chStat){
+							var tempCh = chStat[key].channel
+							// get caller channel and uniqueid
+							if(modop.isChannelIntern(tempCh)){
+								var tempExt = modop.getExtInternFromChannel(tempCh)
+								if(tempExt==callFromExt && chStat[key].dialExt==callToExt){
+									channel = chStat[key].channel
+									uniqueid = key
+								}
+							} else if(modop.isChannelTrunk(tempCh)){ // get destination channel and uniqueid
+								/* { channel: 'SIP/2004-0000017a',
+								     status: 'up',
+								     calleridnum: '187',
+								     calleridname: '',
+								     dialConnectedUniqueid: '1309855888.777' } */
+								var dialExtUniqueid = chStat[key].dialExtUniqueid
+								if(dialExtUniqueid!=undefined){
+									var tempExt = modop.getExtInternFromChannel(chStat[dialExtUniqueid].channel)
+									if(chStat[key].calleridnum==callToExt && tempExt==callFromExt){
+										destChannel = chStat[key].channel
+										destUniqueid = key
+									}
+								}
+							}
+						}
+					} else if(!modop.isExtInterno(callFromExt) && modop.isExtInterno(callToExt)){ // the caller is a trunk or an intermediate node for queue
+						for(key in chStat){
+							var tempCh = chStat[key].channel
+							if(modop.isChannelTrunk(tempCh) && chStat[key].dialExtUniqueid!=undefined){ // caller: trunk
+								var dialExtUniqueid = chStat[key].dialExtUniqueid
+								var tempExt = modop.getExtInternFromChannel(chStat[dialExtUniqueid].channel)
+								if(chStat[key].calleridnum==callFromExt && tempExt==callToExt && chStat[dialExtUniqueid].dialExt==callFromExt){
+									channel = tempCh
+									uniqueid = key
+								}
+							} else if(tempCh.indexOf('Local/')!=-1 && tempCh.indexOf('@from-internal-')!=-1 && tempCh.indexOf(';2')!=-1){
+								var tempExt = modop.getExtFromQueueChannel(tempCh)
+								var dialExtUniqueid = chStat[key].dialExtUniqueid
+								if(tempExt==callToExt && chStat[dialExtUniqueid]!=undefined && chStat[dialExtUniqueid].dialExt==callFromExt){
+									channel = tempCh
+									uniqueid = key
+								}
+							} else if(modop.isChannelIntern(tempCh)){ // called
+								var tempExt = modop.getExtInternFromChannel(tempCh)
+								if(tempExt==callToExt && chStat[key].dialExt==callFromExt){
+									destChannel = tempCh
+									destUniqueid = key
+								}
+							}
+						}
+					} else if(modop.isExtInterno(callFromExt) && modop.isExtInterno(callToExt)){ // both are intern
+						for(key in chStat){
+							var tempCh = chStat[key].channel
+							if(modop.isChannelIntern(tempCh)){
+								var tempExt = modop.getExtInternFromChannel(tempCh)
+								if(tempExt==callFromExt && chStat[key].dialExt==callToExt){
+									channel = chStat[key].channel
+	                                                                uniqueid = key
+								} else if(tempExt==callToExt && chStat[key].dialExt==callFromExt){
+									destChannel = chStat[key].channel
+                                                                        destUniqueid = key
+								}
+							}
+						}
+					} else
+						logger.warn("unknow state for ACTION_RECORD: callFromExt = " + callFromExt + " callToExt = " + callToExt)
 	  				// create filename	
 					var d = new Date();
 					var yyyy = d.getFullYear();
@@ -1843,6 +2138,8 @@ io.on('connection', function(client){
 						File: filename,
 						Mix: 1
 					};
+					var callFromInternTypeExt = modop.getInternTypeExtFromChannel(channel)
+					var callToInternTypeExt = modop.getInternTypeExtFromChannel(destChannel)
 					// send action to asterisk
 					am.send(actionRecord, function () {
 						logger.info("'actionRecord' " + sys.inspect(actionRecord) + " has been sent to AST");
@@ -1852,12 +2149,17 @@ io.on('connection', function(client){
 						client.send(msg);
 						logger.info("RESP 'ack_record' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 						logger.info(msgstr);
-						// update status information for operator panel
-						modop.updateStartRecordExtStatusForOpWithExt(message.callFromExt);
-						modop.updateStartRecordExtStatusForOpWithExt(message.callToExt);
-						// update all clients for op
-	                                        updateAllClientsForOpWithExt(message.callFromExt);
-	                                        updateAllClientsForOpWithExt(message.callToExt);
+						// update info
+						chStat[uniqueid].record = 1
+						chStat[destUniqueid].record = 1
+						if(modop.isTypeExtPresent(callFromInternTypeExt)){
+							modop.updateCallConnectedUniqueidInternWithTypeExt(callFromInternTypeExt, uniqueid, chStat[uniqueid])
+							updateAllClientsForOpWithTypeExt(callFromInternTypeExt)
+						}
+						if(modop.isTypeExtPresent(callToInternTypeExt)){
+							modop.updateCallConnectedUniqueidInternWithTypeExt(callToInternTypeExt, destUniqueid, chStat[destUniqueid])
+							updateAllClientsForOpWithTypeExt(callToInternTypeExt)
+						}
 					});
 				}
 				else{
@@ -1868,17 +2170,89 @@ io.on('connection', function(client){
 	  		break;
 	  		case actions.ACTION_STOP_RECORD:
   				// get channel
-  				var channel = '';
-  				for(key in am.participants){
-  					if(am.participants[key].number==extFrom){
-  						channel = am.participants[key].channel;
-  					}
-  				}
+  				var channel = ''
+				var destChannel = ''
+				var uniqueid = ''
+				var destUniqueid = ''
+				var callFromExt = message.callFromExt
+				var callToExt = message.callToExt
+				// get channel to record. It is always the caller (callFromExt)
+                                if(modop.isExtInterno(callFromExt) && !modop.isExtInterno(callToExt)){ // the caller is an intern
+                                	for(key in chStat){
+                                        	var tempCh = chStat[key].channel
+                                                // get caller channel and uniqueid
+                                                if(modop.isChannelIntern(tempCh)){
+                                                	var tempExt = modop.getExtInternFromChannel(tempCh)
+                                                        if(tempExt==callFromExt && chStat[key].dialExt==callToExt){
+                                                        	channel = chStat[key].channel
+                                                                uniqueid = key
+                                                        }
+                                               	} else if(modop.isChannelTrunk(tempCh)){ // get destination channel and uniqueid
+							/* '1309858231.1105':
+							   { channel: 'SIP/2004-000001fb',
+							     status: 'up',
+							     calleridnum: '187',
+							     calleridname: '',
+							     dialConnectedUniqueid: '1309858231.1104',
+							     record: 1 } } */
+                                                	var dialExtUniqueid = chStat[key].dialExtUniqueid
+                                                     	if(dialExtUniqueid!=undefined){
+                                                        	var tempExt = modop.getExtInternFromChannel(chStat[dialExtUniqueid].channel)
+	                                                        if(chStat[key].calleridnum==callToExt && tempExt==callFromExt){
+	                                                        	destChannel = chStat[key].channel
+        	                                                        destUniqueid = key
+                	                                        }
+                        	                        }
+                                	        }
+                                	}
+                              	} else if(!modop.isExtInterno(callFromExt) && modop.isExtInterno(callToExt)){ // the caller is a trunk or an intermediate node for queue
+                                        for(key in chStat){
+                                        	var tempCh = chStat[key].channel
+                                                if(modop.isChannelTrunk(tempCh)  && chStat[key].dialExtUniqueid!=undefined){ // caller: trunk
+                                                        var dialExtUniqueid = chStat[key].dialExtUniqueid
+                                                        var tempExt = modop.getExtInternFromChannel(chStat[dialExtUniqueid].channel)
+                                                        if(chStat[key].calleridnum==callFromExt && tempExt==callToExt && chStat[dialExtUniqueid].dialExt==callFromExt){
+                                                        	channel = tempCh
+                                                                uniqueid = key
+                                                        }
+                                               	} else if(tempCh.indexOf('Local/')!=-1 && tempCh.indexOf('@from-internal-')!=-1 && tempCh.indexOf(';2')!=-1){
+                                                        var tempExt = modop.getExtFromQueueChannel(tempCh)
+                                                        var dialExtUniqueid = chStat[key].dialExtUniqueid
+                                                        if(tempExt==callToExt && chStat[dialExtUniqueid]!=undefined && chStat[dialExtUniqueid].dialExt==callFromExt){
+                                                        	channel = tempCh
+                                                                uniqueid = key
+                                                        }
+                                               	} else if(modop.isChannelIntern(tempCh)){ // called
+                                                        var tempExt = modop.getExtInternFromChannel(tempCh)
+                                                        if(tempExt==callToExt && chStat[key].dialExt==callFromExt){
+                                                        	destChannel = tempCh
+                                                                destUniqueid = key
+                                                        }
+                                                }
+                                        }
+                             	} else if(modop.isExtInterno(callFromExt) && modop.isExtInterno(callToExt)){ // both are intern
+                                	for(key in chStat){
+                                        	var tempCh = chStat[key].channel
+                                                if(modop.isChannelIntern(tempCh)){
+                                                	var tempExt = modop.getExtInternFromChannel(tempCh)
+                                                        if(tempExt==callFromExt && chStat[key].dialExt==callToExt){
+                                                        	channel = chStat[key].channel
+                                                                uniqueid = key
+                                                        } else if(tempExt==callToExt && chStat[key].dialExt==callFromExt){
+                                        	                destChannel = chStat[key].channel
+                                                                destUniqueid = key
+                                                        }
+                                                }
+                                        }
+                                } else
+                                	logger.warn("unknow state for ACTION_RECORD: callFromExt = " + callFromExt + " callToExt = " + callToExt)
 	  			// create stop record action for asterisk server
 			  	var actionStopRecord = {
 					Action: 'StopMonitor',
 					Channel: channel
 				};
+				var callFromInternTypeExt = modop.getInternTypeExtFromChannel(channel)
+                                var callToInternTypeExt = modop.getInternTypeExtFromChannel(destChannel)
 				// send action to asterisk
 				am.send(actionStopRecord, function () {
 					logger.info("'actionStopRecord' " + sys.inspect(actionStopRecord) + " has been sent to AST");
@@ -1886,12 +2260,17 @@ io.on('connection', function(client){
 					client.send(new ResponseMessage(client.sessionId, 'ack_stoprecord', msgstr));
 					logger.info("RESP 'ack_stoprecord' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 					logger.info(msgstr);
-					// update status information for operator panel
-                                        modop.updateStopRecordExtStatusForOpWithExt(extFrom);
-                                        modop.updateStopRecordExtStatusForOpWithExt(message.extTo);
-                                        // update all clients for op
-                                        updateAllClientsForOpWithExt(extFrom);
-                                        updateAllClientsForOpWithExt(message.extTo);
+					// update info
+					chStat[uniqueid].record = 0
+					chStat[destUniqueid].record = 0
+					if(modop.isTypeExtPresent(callFromInternTypeExt)){
+                                                modop.updateCallConnectedUniqueidInternWithTypeExt(callFromInternTypeExt, uniqueid, chStat[uniqueid])
+                                        	updateAllClientsForOpWithTypeExt(callFromInternTypeExt)
+                                        }
+                                       	if(modop.isTypeExtPresent(callToInternTypeExt)){
+                                                modop.updateCallConnectedUniqueidInternWithTypeExt(callToInternTypeExt, destUniqueid, chStat[destUniqueid])
+                                        	updateAllClientsForOpWithTypeExt(callToInternTypeExt)
+                                        }
 				});
 	  		break;
 	  		case actions.ACTION_DND_ON:
@@ -2201,12 +2580,17 @@ io.on('connection', function(client){
                                 });
 			break;
 			case actions.ACTION_SPY_LISTEN:
-				var extToSpy = message.extToSpy;
-                                var channelToSpy = '';
-                                for(key in am.participants){
-                                        if(am.participants[key].number==extToSpy)
-                                                channelToSpy = am.participants[key].channel;
-                                }
+				var extToSpy = message.extToSpy
+				var callDialExtToSpy = message.callDialExtToSpy
+                                var channelToSpy = ''
+				for(var key in chStat){
+					var tempChannel = chStat[key].channel
+					if(modop.isChannelIntern(tempChannel)){
+						var tempExt = modop.getExtInternFromChannel(tempChannel)
+						if(extToSpy==tempExt && chStat[key].dialExt!=undefined && chStat[key].dialExt==callDialExtToSpy)
+							channelToSpy = tempChannel
+					}
+				}
 				// create action to spy channel
 				var actionSpyListen = {
 					Action: 'Originate',
@@ -2221,12 +2605,27 @@ io.on('connection', function(client){
 				});
 			break;
 			case actions.ACTION_PICKUP:
-                                var callerExt = message.callerExt;
-                        	var channel = '';
-                                for(key in am.participants){
-                                        if(am.participants[key].number==callerExt)
-                                                channel = am.participants[key].channel;
-                                };
+				logger.info("chStat = " + sys.inspect(chStat))
+                                var callerExt = message.callerExt
+				var callTo = message.callTo
+                        	var channel = ''
+				for(key in chStat){
+					var tempCh = chStat[key].channel
+					if(modop.isChannelIntern(tempCh)){
+						var tempExt = modop.getExtInternFromChannel(tempCh)
+						if(tempExt==callerExt && chStat[key].dialExt==callTo){
+							channel = tempCh
+							break
+						}
+					} else if(modop.isChannelTrunk(tempCh) && chStat[key].dialExtUniqueid!=undefined){
+						var dialExtUniqueid = chStat[key].dialExtUniqueid
+						var tempExt = modop.getExtInternFromChannel(chStat[dialExtUniqueid].channel)
+						if(chStat[key].calleridnum==callerExt && tempExt==callTo){
+							channel = tempCh
+							break
+						}
+					}
+				}
                                 // create action to pickup the call. It is realized with redirect action 
                                 var actionPickup = {
                                        Action: 'Redirect',
@@ -2241,11 +2640,16 @@ io.on('connection', function(client){
                                 });
                         break;
 			case actions.ACTION_SPY_LISTEN_SPEAK:
-                                var extToSpy = message.extToSpy;
-                                var channelToSpy = '';
-                                for(key in am.participants){
-                                        if(am.participants[key].number==extToSpy)
-                                                channelToSpy = am.participants[key].channel;
+				var extToSpy = message.extToSpy
+                                var callDialExtToSpy = message.callDialExtToSpy
+                                var channelToSpy = ''
+                                for(var key in chStat){
+                                        var tempChannel = chStat[key].channel
+                                        if(modop.isChannelIntern(tempChannel)){
+                                                var tempExt = modop.getExtInternFromChannel(tempChannel)
+                                                if(extToSpy==tempExt && chStat[key].dialExt!=undefined && chStat[key].dialExt==callDialExtToSpy)
+                                                        channelToSpy = tempChannel
+                                        }
                                 }
                                 // create action to spy channel
                                 var actionSpyListenSpeak = {
@@ -2280,6 +2684,45 @@ io.on('connection', function(client){
                                 am.send(actionRedirectVoicemail, function(){
 					logger.info("'actionRedirectVoicemail' " + sys.inspect(actionRedirectVoicemail) + " has been sent to AST");
                                 });
+                        break;
+			case actions.ACTION_REDIRECT_VOICEMAIL_FROM_OP:
+				var callFrom = message.callFrom
+				var callTo = message.callTo
+				var redirectToExt = message.redirectToExt
+				var ch
+				for(key in chStat){
+					var tempChannel = chStat[key].channel
+					if(modop.isChannelIntern(tempChannel)){
+						var tempExt = modop.getExtInternFromChannel(tempChannel)
+						if(tempExt==callFrom && chStat[key].dialExt==callTo){
+							ch = tempChannel
+							break
+						}
+					} else if(modop.isChannelTrunk(tempChannel)){
+						var dialExtUniqueid = chStat[key].dialExtUniqueid
+						var tempExt = modop.getExtInternFromChannel(chStat[dialExtUniqueid].channel)
+						if(chStat[key].calleridnum==callFrom && tempExt==callTo){
+							ch = tempChannel
+							break
+						}
+					}
+					else if(chStat[key].channel.indexOf('callFrom')!=-1 && chStat[key].dialExt==callTo){
+						ch = chStat[key].channel
+						break
+					}
+				}
+				// create action to spy channel
+                                var actionRedirectVoicemailToExt = {
+                                        Action: 'Redirect',
+                                        Channel: ch,
+                                        Context: 'ext-local',
+                                        Exten: 'vmu' + redirectToExt,
+                                        Priority: 1
+                                }
+                                // send spy action to the asterisk server
+                                am.send(actionRedirectVoicemailToExt, function(){
+                                        logger.info("'actionRedirectVoicemailToExt' " + sys.inspect(actionRedirectVoicemailToExt) + " has been sent to AST");
+                                })
                         break;
 	  		default:
 	  			logger.warn("ATTENTION: received unknown ACTION '" + action + "': not supported");

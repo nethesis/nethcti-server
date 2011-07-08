@@ -53,7 +53,7 @@ exports.AsteriskManager = function (newconfig) {
 		if (req.action == 'login')
 			loginId = id;
 		self.conn.write(msg);
-		console.log("send: " + sys.inspect(msg));
+		//console.log("send: " + sys.inspect(msg));
 	};
 	
 	this.getParticipant = function(id) {

@@ -13,12 +13,9 @@ const CUSTOMER_CARD = "CUSTOMER_CARD"
 const OP_PLUS = "OP_PLUS"
 const OP_BASE = "OP_BASE"
 const ALL = "all"
-const LOGFILE = './log/proxy.log'
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF) */
-log4js.addAppender(log4js.fileAppender(LOGFILE), '[Profiler]')
 var logger = log4js.getLogger('[Profiler]')
-logger.setLevel('ALL')
 /* this is the list of actions with its relative list of extensions: the key is the action,
  * (ex. "CALL_IN") and the value is the list of the user split by ',' (ex. 500,501,all)
  * If the action is CUSTOMER_CARD then the value is another object, with the key as
@@ -54,6 +51,7 @@ exports.Profiler = function(){
 	this.addController = function(contr) { addController(contr) }
 	this.checkActionOpPlusPermit = function(exten) { return checkActionPermit(exten, OP_PLUS) }
 	this.checkActionOpBasePermit = function(exten) { return checkActionPermit(exten, OP_BASE) }
+        this.setLogger = function(logfile,level) { log4js.addAppender(log4js.fileAppender(logfile), '[Profiler]'); logger.setLevel(level); }
 }
 function addController(contr){
 	controller = contr
