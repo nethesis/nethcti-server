@@ -248,6 +248,21 @@ if  (defined($sortoption) && ($sortoption eq "lastname")) {
 	@extensionlist=sort {$a->[1] cmp $b->[1]}(@extensionlist);
 }
 
+#Second, populate groups
+
+@grouplist=();
+
+if (table_exists($dbh,"ringgroups")) {
+        $statement = "SELECT grpnum,strategy,grplist,postdest,description from ringgroups";
+        $result = $dbh->selectall_arrayref($statement);
+        @resultSet = @{$result};
+        if ( $#resultSet == -1 ) {
+                print "Notice: no devices defined\n";
+        }
+        push(@grouplist, @{ $result });
+}
+else { print "Table does not exist: devices\n"; }
+
 #Next, populate queues
 @queues=(); 
 	if (table_exists($dbh,"queues_config")) {
@@ -316,7 +331,7 @@ if (table_exists($dbh,"ampusers")) {
 }
 
 #Write a separate panel context from each AMP User's department
-foreach my $pcontext ( @ampusers ) {
+#foreach my $pcontext ( @ampusers ) {
 	my $exten_low = @{$pcontext}[1];
 	my $exten_high = @{$pcontext}[2];
 	my $panelcontext = @{$pcontext}[0];
@@ -383,6 +398,23 @@ foreach my $pcontext ( @ampusers ) {
 	}
 	
 	
+        ### WRITE GROUPS
+
+        if ($exten_low != 0 && $exten_high != 0) {  #display only allowed range of extensions for panel_contexts
+                @grouprange = grep { @{ $_ }[1]+0 >= $exten_low && @{ $_ }[1]+0 <= $exten_high } @grouplist;
+        } else {
+                @grouprange = @grouplist;
+        }
+        foreach my $row ( @grouprange ) {
+                my $id = @{ $row }[0];
+                my $strategy = @{ $row }[1];
+                my $list = @{ $row }[2];
+                my $context = @{ $row }[3];
+                my $description = @{ $row }[4]; 
+
+                print EXTEN "[GROUP/$id]\nLabel=\"$id : $description\"\nExtension=$id\nContext=$context\nStrategy=$strategy\nList=$list\ntab=group\nastdbkey=$id\n";
+        }
+
 	### NOW WRITE TRUNKS.. WE START WITH ZAP TRUNKS DEFINED ABOVE
 	
 	
@@ -518,7 +550,7 @@ foreach my $pcontext ( @ampusers ) {
 	}
 
 	
-}
+#}
 
 sub get_next_btn {
 	my $data = shift;
