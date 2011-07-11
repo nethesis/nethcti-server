@@ -1,2 +1,2 @@
-logfile=/var/log/proxycti.log
+logfile=/var/log/asterisk/proxycti.log
 loglevel=INFO
