@@ -1,5 +1,5 @@
 [ASTERISK]
-user=cti
-pass=cti
+user=proxycti
+pass=proxycti
 host=localhost
 
