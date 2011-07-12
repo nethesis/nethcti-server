@@ -563,7 +563,13 @@ function addListenerToAm(){
 			if(key.indexOf(ext)!=-1)
 				extStatusForOp[key].queue = queue
 		}		
-	});	
+	});
+	am.addListener('coreshowchannelscomplete', function(headers){
+		logger.debug("EVENT 'CoreShowChannelsComplete': headers = " + sys.inspect(headers))
+	})
+	am.addListener('ctiresultcoreshowchannels', function(headers){
+		logger.debug("EVENT 'CtiResultCoreShowChannels': headers = " + sys.inspect(headers))
+	})
 }
 
 // add callConnectedCount = 0 to all trunk
@@ -662,7 +668,6 @@ function initExtStatusForOp(){
         am.send(actionQueueStatus, function () {
                 logger.debug("'actionQueueStatus' " + sys.inspect(actionQueueStatus) + " has been sent to AST");
         });
-	
 }
 
 /* This function initialize all tabs to be view in the operator panel, by reading 
