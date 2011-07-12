@@ -509,6 +509,11 @@ EVENT 'Dialing': headers '{ event: 'Dial',
   destuniqueid: '1308839796.12669',
   dialstring: '250' }'
   *
+  * calleridname can be unknown:
+  ...
+  calleridname: '<unknown>'
+  ...
+  *
   * when dial not execute correctly, for ex. for congestion:
 EVENT 'Dialing': headers '{ event: 'Dial',
   privilege: 'call,all',
