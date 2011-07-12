@@ -139,6 +139,14 @@ exports.AsteriskManager = function (newconfig) {
 				case "event":
 					self.OnEvent(headers);
 				break;
+				/* Added by Alessandro Polidori:
+				 * manage result of "Action: CoreShowChannels".
+				 * This action is used to obtain all channels and their status */
+				case "channel":
+					headers.event = 'CtiResultCoreShowChannels'
+					self.OnEvent(headers)
+				break;
+				// End added by Alessandro Polidori
 			}
 		}
 	};
@@ -215,7 +223,16 @@ exports.AsteriskManager = function (newconfig) {
         {
              switch (headers.event) {
 
-		// Added by Alessandro
+		/* Added by Alessandro
+		 * This event is used to obtain all channels ant their status. 
+		 * It is emitted after "Action: CoreShowChannels" command*/
+		case "CtiResultCoreShowChannels":
+			self.emit('ctiresultcoreshowchannels', headers);
+		break;
+		// This event is emitted at the end of "Action: CoreShowChannels" command
+		case "CoreShowChannelsComplete": //
+			self.emit('coreshowchannelscomplete', headers);
+		break;
 		case "MessageWaiting":
 			self.emit('messagewaiting', headers);
 		break;
