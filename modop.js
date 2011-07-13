@@ -112,8 +112,7 @@ function stopRefresh(){
 	clearInterval(idIntervalRefresh)
 }
 function setRefreshInterval(sec){
-	var intSec = sec*1000
-	logger.debug("set refresh interval to '" + intSec + "' sec")
+	logger.debug("set refresh interval to '" + sec + "' sec")
 	idIntervalRefresh = setInterval(function(){ refresh() },(sec*1000)) 
 }
 function refresh(){
