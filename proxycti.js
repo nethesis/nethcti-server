@@ -35,6 +35,7 @@ var server;
  * and value are removed.
  */ 
 var clients = {};
+refresh = false // indicate wheter the refresh is in progress
 
 
 
@@ -141,6 +142,15 @@ var modop = new modopReq.Modop();
 modop.setLogger(logfile,loglevel);
 modop.addController(controller)
 modop.addListener("RefreshOperatorPanel", function(){
+	logger.debug("EVENT 'RefreshOperatorPanel'")
+	refresh = true // gloabal variable
+	/* send 'ParkedCalls' action to asterisk to update timeout information of parked calls in 'extStatusForOp'.
+         * When 'ParkedCallsComplete' event is emitted, the server return 'extStatusForOp' to the client */
+        var actionParkedCalls = { Action: 'ParkedCalls' }
+        // send action to asterisk
+        am.send(actionParkedCalls, function (resp) {
+        	logger.debug("'actionParkedCalls' " + sys.inspect(actionParkedCalls) + " has been sent to AST to update timeout of the parked calls");
+        })
 })
 logger.debug('added object modules: \'Profiler\', \'DataCollector\', \'Authenticator\', \'Modop\' and \'Controller\'')
 controller.addDir(AST_CALL_AUDIO_DIR);
@@ -194,8 +204,7 @@ am.addListener('serverconnect', function() {
 		logger.info("logged into ASTESRISK");
 		// Add asterisk manager to modop
 		modop.addAsteriskManager(am);
-		// set refresh interval at which the modop refresh status of alla extensions
-		modop.setRefreshInterval(10)
+		modop.setRefreshInterval(10) // set refresh interval at which the modop refresh status of alla extension
 	});
 });
 
@@ -1536,37 +1545,72 @@ extToReturnExtStatusForOp = '';
 clientToReturnExtStatusForOp = '';
 am.addListener('parkedcallscomplete', function(){
 	logger.debug("EVENT 'ParkedCallsComplete'");
+	if(!refresh) returnOperatorPanelToClient() // return operator panel to only the client who has made the request
+	else refreshAllClientsOperatorPanel() // return operator panel to all clients to refresh their data
+})
+
+function refreshAllClientsOperatorPanel(){
+	logger.debug('Refresh all clients operator panel')
+	var currClient
+	for(currExt in clients){
+		logger.debug('refresh operator panel of ext [' + currExt + ']')
+		currClient = clients[currExt]
+		/* check if the user has the permission to view the operator panel.
+         	 * First check if the user has the "OP_PLUS" permission. If he hasn't the permission, then
+	         * it check if he has the "OP_BASE" permission */
+	        if(profiler.checkActionOpPlusPermit(currExt)){
+	                var msgstr = "received extStatusForOp to refresh operator panel"
+	                var mess = new ResponseMessage(currClient.sessionId, "refresh_op", msgstr)
+	                mess.extStatusForOp = modop.getExtStatusForOp()
+	                mess.tabOp = modop.getTabOp()
+	                mess.opPermit = 'plus'
+	                currClient.send(mess)
+	                logger.debug("RESP 'refresh_op' has been sent to [" + currExt + "] sessionId '" + currClient.sessionId + "'")
+	        }
+		else if(profiler.checkActionOpBasePermit(currExt)) {
+         		var msgstr = "received extStatusForOp to refresh operator panel"
+	                var mess = new ResponseMessage(currClient.sessionId, "refresh_op", msgstr)
+	                mess.extStatusForOp = modop.getExtStatusForOp()
+	                mess.tabOp = modop.getTabOp()
+	                mess.opPermit = 'base'
+	                currClient.send(mess)
+	                logger.debug("RESP 'refresh_op' has been sent to [" + currExt + "] sessionId '" + currClient.sessionId + "'")
+        	}
+		else
+			logger.debug('not refresh operator panel of [' + currExt + ']: he doesn\'t have permission')
+	}
+	refresh = false
+}
+
+function returnOperatorPanelToClient(){
 	/* check if the user has the permission to view the operator panel.
          * First check if the user has the "OP_PLUS" permission. If he hasn't the permission, then
-         * it check if he has the "OP_BASE" permission. */
+         * it check if he has the "OP_BASE" permission */
         if(profiler.checkActionOpPlusPermit(extToReturnExtStatusForOp)){
-        	// create message
                 var msgstr = "received extStatusForOp to create operator panel";
                 var mess = new ResponseMessage(clientToReturnExtStatusForOp.sessionId, "ack_get_peer_list_complete_op", msgstr);
-                mess.extStatusForOp = modop.getExtStatusForOp();
-                mess.tabOp = modop.getTabOp();
-                mess.opPermit = 'plus';
-                clientToReturnExtStatusForOp.send(mess);
-               	logger.debug("RESP 'ack_get_peer_list_complete_op' has been sent to [" + extToReturnExtStatusForOp + "] sessionId '" + clientToReturnExtStatusForOp.sessionId + "'");
+                mess.extStatusForOp = modop.getExtStatusForOp()
+                mess.tabOp = modop.getTabOp()
+                mess.opPermit = 'plus'
+                clientToReturnExtStatusForOp.send(mess)
+                logger.debug("RESP 'ack_get_peer_list_complete_op' has been sent to [" + extToReturnExtStatusForOp + "] sessionId '" + clientToReturnExtStatusForOp.sessionId + "'")
         }
-        else if(profiler.checkActionOpBasePermit(extToReturnExtStatusForOp)) {
-        	// create message
-                var msgstr = "received extStatusForOp to create operator panel";
-                var mess = new ResponseMessage(clientToReturnExtStatusForOp.sessionId, "ack_get_peer_list_complete_op", msgstr);
-                mess.extStatusForOp = modop.getExtStatusForOp();
-                mess.tabOp = modop.getTabOp();
-                mess.opPermit = 'base';
-                clientToReturnExtStatusForOp.send(mess);
-                logger.debug("RESP 'ack_get_peer_list_complete_op' has been sent to [" + extToReturnExtStatusForOp + "] sessionId '" + clientToReturnExtStatusForOp.sessionId + "'");
+	else if(profiler.checkActionOpBasePermit(extToReturnExtStatusForOp)) {
+                var msgstr = "received extStatusForOp to create operator panel"
+                var mess = new ResponseMessage(clientToReturnExtStatusForOp.sessionId, "ack_get_peer_list_complete_op", msgstr)
+                mess.extStatusForOp = modop.getExtStatusForOp()
+                mess.tabOp = modop.getTabOp()
+                mess.opPermit = 'base'
+                clientToReturnExtStatusForOp.send(mess)
+                logger.debug("RESP 'ack_get_peer_list_complete_op' has been sent to [" + extToReturnExtStatusForOp + "] sessionId '" + clientToReturnExtStatusForOp.sessionId + "'")
         }
-        else{
-        	// create message
-                var msgstr = "Sorry but you haven't the permission of view the operator panel";
-                var mess = new ResponseMessage(clientToReturnExtStatusForOp.sessionId, "error_get_peer_list_complete_op", msgstr);
-                clientToReturnExtStatusForOp.send(mess);
-                logger.debug("RESP 'error_get_peer_list_complete_op' has been sent to [" + extToReturnExtStatusForOp + "] sessionId '" + clientToReturnExtStatusForOp.sessionId + "'");
-       	}
-});
+	else{
+                var msgstr = "Sorry but you haven't the permission of view the operator panel"
+                var mess = new ResponseMessage(clientToReturnExtStatusForOp.sessionId, "error_get_peer_list_complete_op", msgstr)
+                clientToReturnExtStatusForOp.send(mess)
+                logger.debug("RESP 'error_get_peer_list_complete_op' has been sent to [" + extToReturnExtStatusForOp + "] sessionId '" + clientToReturnExtStatusForOp.sessionId + "'")
+        }
+}
 
 /* This event is emitted by asterisk.js when a new voicemail is added
  * An example of the event is:
