@@ -1,0 +1,3 @@
+#!/bin/bash
+
+/var/lib/asterisk/bin/retrieve_nethcti_from_mysql.pl
