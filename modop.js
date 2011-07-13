@@ -107,8 +107,15 @@ exports.Modop = function(){
 	this.setRefreshInterval = function(sec) { setRefreshInterval(sec) }
 	this.stopRefresh = function() { stopRefresh() }
 }
-function stopRefresh(){ clearInterval(idIntervalRefresh) }
-function setRefreshInterval(sec){ idIntervalRefresh = setInterval(function(){ refresh() },(sec*1000)) }
+function stopRefresh(){
+	logger.debug("stop refresh")
+	clearInterval(idIntervalRefresh)
+}
+function setRefreshInterval(sec){
+	var intSec = sec*1000
+	logger.debug("set refresh interval to '" + intSec + "' sec")
+	idIntervalRefresh = setInterval(function(){ refresh() },(sec*1000)) 
+}
 function refresh(){
 	/* initialize the status of all extensions ('extStatusForOp') present in the asterisk server.
          * Its scope is to put the right informations to 'extStatusForOp' to help 'proxycti.js'
