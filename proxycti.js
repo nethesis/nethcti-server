@@ -26,7 +26,6 @@ const REDIRECT_VM_PREFIX = "REDIR_VM-";
 const START_TAG_FILENAME = "auto-";
 const DIAL_FROM = 1
 const DIAL_TO = 0
-const INTERVAL_REFRESH_OPERATOR_PANEL = -1
 // asterisk manager
 var am;
 // the server
