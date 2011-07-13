@@ -113,7 +113,7 @@ function stopRefresh(){
 }
 function setRefreshInterval(min){
 	logger.debug("set refresh interval to '" + min + "' min")
-	idIntervalRefresh = setInterval(function(){ refresh() },(sec*1000*60)) 
+	idIntervalRefresh = setInterval(function(){ refresh() },(min*1000*60)) 
 }
 function refresh(){
 	/* initialize the status of all extensions ('extStatusForOp') present in the asterisk server.
