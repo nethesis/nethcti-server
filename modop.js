@@ -8,6 +8,7 @@ var pathreq = require('path')
 var inherits = require("sys").inherits
 var EventEmitter = require("events").EventEmitter
 var idIntervalRefresh
+var refreshChannels = {}
 const FILE_TAB_OP = "config/optab.ini";
 const FILE_FASCI_INI = "config/trunks.ini"
 const FILE_EXT_LIST = "/etc/asterisk/nethcti.ini";
@@ -116,10 +117,7 @@ function setRefreshInterval(min){
 	idIntervalRefresh = setInterval(function(){ refresh() },(min*1000*60)) 
 }
 function refresh(){
-	/* initialize the status of all extensions ('extStatusForOp') present in the asterisk server.
-         * Its scope is to put the right informations to 'extStatusForOp' to help 'proxycti.js'
- 	 * to give correct informations to the clients for viewing the operator panel */
-        initExtStatusForOp()
+	refreshChannels = {}
 	var actionCoreShowChannels = { Action: 'CoreShowChannels' }
         am.send(actionCoreShowChannels, function () { logger.debug("'actionCoreShowChannels' " + sys.inspect(actionCoreShowChannels) + " has been sent to AST") })
 }
@@ -595,12 +593,172 @@ function addListenerToAm(){
 	  accountcode: '',
 	  bridgedchannel: 'Local/209@from-internal-080e;2',
 	  bridgeduniqueid: '1310544814.334',
-	  event: 'CtiResultCoreShowChannels' } */
+	  event: 'CtiResultCoreShowChannels' }
+	 *
+	 *
+	EVENT 'CtiResultCoreShowChannels': headers = { channel: 'SIP/272-0000030f',
+	  uniqueid: '1310562416.1628',
+	  context: 'from-internal',
+	  extension: '272',
+	  priority: '1',
+	  channelstate: '5',
+	  channelstatedesc: 'Ringing',
+	  application: 'AppDial',
+	  applicationdata: '(Outgoing Line)',
+	  calleridnum: '272',
+	  duration: '00:00:08',
+	  accountcode: '',
+	  bridgedchannel: '',
+	  bridgeduniqueid: '',
+	  event: 'CtiResultCoreShowChannels' }
+	 *
+	 *
+	EVENT 'CtiResultCoreShowChannels': headers = { channel: 'SIP/2004-00000290',
+	  uniqueid: '1310558983.1374',
+	  context: 'from-pstn',
+	  extension: '187',
+	  priority: '1',
+	  channelstate: '0',
+	  channelstatedesc: 'Down',
+	  application: 'AppDial',
+	  applicationdata: '(Outgoing Line)',
+	  calleridnum: '187',
+	  duration: '00:00:03',
+	  accountcode: '',
+	  bridgedchannel: '',
+	  bridgeduniqueid: '',
+	  event: 'CtiResultCoreShowChannels' }
+	*
+	*
+	EVENT 'CtiResultCoreShowChannels': headers = { channel: 'SIP/271-0000028f',
+	  uniqueid: '1310558982.1373',
+	  context: 'macro-dialout-trunk',
+	  extension: 's',
+	  priority: '21',
+	  channelstate: '4',
+	  channelstatedesc: 'Ring',
+	  application: 'Dial',
+	  applicationdata: 'SIP/2004/187,300,wWtT',
+	  calleridnum: '271',
+	  duration: '00:00:04',
+	  accountcode: '',
+	  bridgedchannel: '',
+	  bridgeduniqueid: '',
+	  event: 'CtiResultCoreShowChannels' } 
+	  *
+	* collect active channel in refreshChannels until 'coreshowchannelscomplete' event is emitted */
 	am.addListener('ctiresultcoreshowchannels', function(headers){
 		logger.debug("EVENT 'CtiResultCoreShowChannels': headers = " + sys.inspect(headers))
+		var ch = headers.channel
+		var typeExt
+		var uniqueid = headers.uniqueid
+		var temp
+		if(isChannelIntern(ch)){ // intern channel
+			typeExt = getInternTypeExtFromChannel(ch)
+			if(refreshChannels[typeExt]==undefined) refreshChannels[typeExt] = {}
+			refreshChannels[typeExt][uniqueid] = headers
+		} else if(isChannelTrunk(ch)){ // truk channel
+			typeExt = getTrunkTypeExtFromChannel(ch)
+			if(refreshChannels[typeExt]==undefined) refreshChannels[typeExt] = {}
+			refreshChannels[typeExt][uniqueid] = headers
+		}
 	})
+	/* { 'SIP/2004': 
+   { '1310563770.1697': 
+      { channel: 'SIP/2004-0000032d',
+        uniqueid: '1310563770.1697',
+        context: 'from-pstn',
+        extension: '',
+        priority: '1',
+        channelstate: '6',
+        channelstatedesc: 'Up',
+        application: 'AppDial',
+        applicationdata: '(Outgoing Line)',
+        calleridnum: '187',
+        duration: '00:00:55',
+        accountcode: '',
+        bridgedchannel: 'SIP/271-0000032c',
+        bridgeduniqueid: '1310563769.1696',
+        event: 'CtiResultCoreShowChannels' } },
+  'SIP/271': 
+   { '1310563769.1696': 
+      { channel: 'SIP/271-0000032c',
+        uniqueid: '1310563769.1696',
+        context: 'macro-dialout-trunk',
+        extension: 's',
+        priority: '21',
+        channelstate: '6',
+        channelstatedesc: 'Up',
+        application: 'Dial',
+        applicationdata: 'SIP/2004/187,300,wWtT',
+        calleridnum: '271',
+        duration: '00:00:55',
+        accountcode: '',
+        bridgedchannel: 'SIP/2004-0000032d',
+        bridgeduniqueid: '1310563770.1697',
+        event: 'CtiResultCoreShowChannels' } } } 
+	* check inconsistencies between refreshChannels (current active channels) and 
+	* status of all extensions in extStatusForOp */
 	am.addListener('coreshowchannelscomplete', function(headers){
 		logger.debug("EVENT 'CoreShowChannelsComplete': headers = " + sys.inspect(headers))
+		logger.debug("refreshChannels = " + sys.inspect(refreshChannels))
+		for(typeExt in extStatusForOp){
+			if(extStatusForOp[typeExt].tab=='interno' || extStatusForOp[typeExt].tab=='fasci'){
+				var refreshCh = refreshChannels[typeExt] // all real active channels for current typeExt
+				if(refreshCh==undefined){ // typeExt hasn't any connections, so reset data
+					extStatusForOp[typeExt].callConnectedCount = 0
+					extStatusForOp[typeExt].callConnectedUniqueid = {}
+					extStatusForOp[typeExt].dialingUniqueid = {}
+					extStatusForOp[typeExt].lastCallConnectedUniqueid = ''
+					extStatusForOp[typeExt].lastDialingUniqueid = ''
+					var sta = extStatusForOp[typeExt].status
+					if(sta!=undefined && (sta=='ring' || sta=='up' || sta=='ringing'))
+						extStatusForOp[typeExt].status = 'ok'
+				} else { // check if there is some channel in wrong position: checking in dialingUniqueid and callConnectedUniqueid
+					for(uniqueid in refreshCh){
+						var currCh = refreshCh[uniqueid]
+						var sta = currCh.channelstatedesc.toLowerCase()
+						if(sta=='ring' || sta=='ringing'){
+							if(extStatusForOp[typeExt].callConnectedUniqueid[uniqueid]!=undefined){ // check if it is in callConnectedUniqueid
+								logger.warn("refresh: there is the active channel '" + sys.inspect(currCh) + "' that is present in extStatusForOp[" + typeExt + "].callConnectedUniqueid, that is " + sys.inspect(extStatusForOp[typeExt].callConnectedUniqueid) + ". So remove it")
+								delete extStatusForOp[typeExt].callConnectedUniqueid[uniqueid]
+							}
+							if(extStatusForOp[typeExt].dialingUniqueid!=undefined && extStatusForOp[typeExt].dialingUniqueid[uniqueid]==undefined){ // check if it is present in dialingUniqueid: it must be present
+								logger.warn("refresh: there is the active channel '" + sys.inspect(currCh) + "' that isn't present in extStatusForOp[" + typeExt + "].dialingUniqueid that is: " + sys.inspect(extStatusForOp[typeExt].dialingUniqueid) + ". Update not possible")
+							}
+						} else if(sta=='up'){
+							if(extStatusForOp[typeExt].dialingUniqueid!=undefined && extStatusForOp[typeExt].dialingUniqueid[uniqueid]!=undefined){ // check if it is in dialingUniqueid
+								logger.warn("refresh: there is the active channel '" + sys.inspect(currCh) + "' that is present in extStatusForOp[" + typeExt + "].dialingUniqueid, that is " + sys.inspect(extStatusForOp[typeExt].dialingUniqueid) + ". So remove it")
+								delete extStatusForOp[typeExt].dialingUniqueid[uniqueid]
+							}
+							if(extStatusForOp[typeExt].callConnectedUniqueid[uniqueid]==undefined){ // check if it is present in callConnectedUniqueid: it must be present
+								logger.warn("refresh: there is the active channel '" + sys.inspect(currCh) + "' that isn't present in extStatusForOp[" + typeExt + "].callConnectedUniqueid that is: " + sys.inspect(extStatusForOp[typeExt].callConnectedUniqueid) + ". Update not possible")
+							}
+						}
+					}
+				}
+				// check if the extStatusForOp[typeExt] has some channels 'dialingUniqueid' that doesn't exists
+				var dialingUniqueid = extStatusForOp[typeExt].dialingUniqueid
+				if(dialingUniqueid!=undefined){
+					for(uniqueid in dialingUniqueid){
+						if(refreshCh[uniqueid]==undefined){
+							logger.warn("'refresh: find a dialingUniqueid '" + uniqueid + "that doesn't exits, so remove it")
+							delete extStatusForOp[typeExt].dialingUniqueid[uniqueid]
+						}
+					}
+				}
+				// check if the extStatusForOp[typeExt] has some channels 'callConnectedUniqueid' that doesn't exists
+				var callConnectedUniqueid = extStatusForOp[typeExt].callConnectedUniqueid
+				if(callConnectedUniqueid!=undefined){
+					for(uniqueid in callConnectedUniqueid){
+						if(refreshCh[uniqueid]==undefined){
+							logger.warn("'refresh: find a callConnectedUniqueid '" + uniqueid + "that doesn't exits, so remove it")
+							delete extStatusForOp[typeExt].callConnectedUniqueid[uniqueid]
+						}
+					}
+				}
+			}
+		}
 		self.emit('RefreshOperatorPanel')
 	})
 }
