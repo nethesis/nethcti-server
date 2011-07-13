@@ -7,6 +7,7 @@ var log4js = require('./lib/log4js-node/lib/log4js')();
 var pathreq = require('path')
 var inherits = require("sys").inherits
 var EventEmitter = require("events").EventEmitter
+var idIntervalRefresh
 const FILE_TAB_OP = "config/optab.ini";
 const FILE_FASCI_INI = "config/trunks.ini"
 const FILE_EXT_LIST = "/etc/asterisk/nethcti.ini";
@@ -104,8 +105,10 @@ exports.Modop = function(){
 	this.updateCallConnectedUniqueidInternWithTypeExt = function(typeExt, uniqueid, chValue) { updateCallConnectedUniqueidInternWithTypeExt(typeExt, uniqueid, chValue) }
 	this.getExtFromQueueChannel = function(ch) { return getExtFromQueueChannel(ch) }
 	this.setRefreshInterval = function(sec) { setRefreshInterval(sec) }
+	this.stopRefresh = function() { stopRefresh() }
 }
-function setRefreshInterval(sec){ setInterval(refresh(), sec*1000) }
+function stopRefresh(){ clearInterval(idIntervalRefresh) }
+function setRefreshInterval(sec){ idIntervalRefresh = setInterval(function(){ refresh() },(sec*1000)) }
 function refresh(){
 	/* initialize the status of all extensions ('extStatusForOp') present in the asterisk server.
          * Its scope is to put the right informations to 'extStatusForOp' to help 'proxycti.js'
@@ -407,9 +410,12 @@ function updateExtStatusForOpWithTypeExt(typeext, status){
 /* This function add asterisk manager to local variable. Then addListener to it and
  * finally initialize 'extStatusForOp' */
 function addAsteriskManager(amanager){
-	am = amanager;
-	// add listeners to asterisk manager to manage extStatusForOp
-	addListenerToAm();
+	am = amanager
+	addListenerToAm() // add listeners to asterisk manager to manage extStatusForOp
+	/* initialize the status of all extensions ('extStatusForOp') present in the asterisk server.
+         * Its scope is to put the right informations to 'extStatusForOp' to help 'proxycti.js'
+         * to give correct informations to the clients for viewing the operator panel */
+        initExtStatusForOp()
 }
 
 // This function add listeners to asterisk manager.
@@ -568,6 +574,22 @@ function addListenerToAm(){
 				extStatusForOp[key].queue = queue
 		}		
 	});
+
+	/* EVENT 'CtiResultCoreShowChannels': headers = { channel: 'SIP/209-000000a1',
+	  uniqueid: '1310544816.345',
+	  context: 'macro-dial',
+	  extension: 's',
+	  priority: '1',
+	  channelstate: '6',
+	  channelstatedesc: 'Up',
+	  application: 'AppDial',
+	  applicationdata: '(Outgoing Line)',
+	  calleridnum: '209',
+	  duration: '00:01:11',
+	  accountcode: '',
+	  bridgedchannel: 'Local/209@from-internal-080e;2',
+	  bridgeduniqueid: '1310544814.334',
+	  event: 'CtiResultCoreShowChannels' } */
 	am.addListener('ctiresultcoreshowchannels', function(headers){
 		logger.debug("EVENT 'CtiResultCoreShowChannels': headers = " + sys.inspect(headers))
 	})
