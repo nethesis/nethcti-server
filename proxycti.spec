@@ -1,18 +1,21 @@
 Name:		proxycti
 Version:	0.2.8
-Release:	1%{?dist}
+Release:	2%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI	
 
 Group:		Network	
 License:	ASIS
 #URL:		
 Source0:	%{name}-%{version}.tar.gz
-BuildRoot:	%(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
+BuildRoot:	/var/tmp/%{name}-%{version}-%{release}-buildroot
+
 
 BuildRequires:	e-smith-devtools
 Requires:	nodejs
 Requires:	node-forever
+Requires:	nethvoice
 AutoReq:	no
+
 %description
 Nodejs Asterisk proxy used for NethCTI
 
@@ -22,12 +25,16 @@ Nodejs Asterisk proxy used for NethCTI
 
 %build
 perl -w createlinks
+mkdir -p root/var/lib/asterisk/bin
+mkdir -p root//var/spool/asterisk/monitor
+mv root/usr/lib/node/proxycti/script/retrieve_nethcti_from_mysql.pl root/var/lib/asterisk/bin
+rm -rf root/usr/lib/node/proxycti/script
+
 
 %install
 rm -rf $RPM_BUILD_ROOT
 (cd root; find . -depth -print | cpio -dump $RPM_BUILD_ROOT)
-rm -f %{name}-%{version}-filelist
-/sbin/e-smith/genfilelist $RPM_BUILD_ROOT --file /etc/rc.d/init.d/proxycti 'attr(0755,root,root)' > %{name}-%{version}-filelist
+/sbin/e-smith/genfilelist --file /etc/rc.d/init.d/proxycti 'attr(0755,root,root)' --file /var/lib/asterisk/bin/retrieve_nethcti_from_mysql.pl 'attr(0755,asterisk,asterisk)' --dir /var/spool/asterisk/monitor 'attr(0775,asterisk,asterisk)' --dir /var/lib/asterisk 'attr(0775,asterisk,asterisk)' --dir /var/lib/asterisk/bin 'attr(0775,asterisk,asterisk)' $RPM_BUILD_ROOT > %{name}-%{version}-filelist
 
 
 %clean
@@ -44,6 +51,11 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Mon Jul 11 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 0.2.8-2.nh
+- Alpha 4 release
+- Add /var/spool/asterisk/monitor directory
+- Move retrieve_nethcti_from_mysql.pl to the right place
+
 * Mon Jul 11 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 0.2.8-1.nh
 - Alpha 3 release
 - Change lgo directory
