@@ -104,16 +104,16 @@ exports.Modop = function(){
 	this.hasInternDialingUniqueidWithTypeExt = function(typeExt, uniqueid) { return hasInternDialingUniqueidWithTypeExt(typeExt, uniqueid) }
 	this.updateCallConnectedUniqueidInternWithTypeExt = function(typeExt, uniqueid, chValue) { updateCallConnectedUniqueidInternWithTypeExt(typeExt, uniqueid, chValue) }
 	this.getExtFromQueueChannel = function(ch) { return getExtFromQueueChannel(ch) }
-	this.setRefreshInterval = function(sec) { setRefreshInterval(sec) }
+	this.setRefreshInterval = function(min) { setRefreshInterval(min) }
 	this.stopRefresh = function() { stopRefresh() }
 }
 function stopRefresh(){
 	logger.debug("stop refresh")
 	clearInterval(idIntervalRefresh)
 }
-function setRefreshInterval(sec){
-	logger.debug("set refresh interval to '" + sec + "' sec")
-	idIntervalRefresh = setInterval(function(){ refresh() },(sec*1000)) 
+function setRefreshInterval(min){
+	logger.debug("set refresh interval to '" + min + "' min")
+	idIntervalRefresh = setInterval(function(){ refresh() },(sec*1000*60)) 
 }
 function refresh(){
 	/* initialize the status of all extensions ('extStatusForOp') present in the asterisk server.
