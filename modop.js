@@ -1,12 +1,12 @@
-/*
- * This object provides all data structure and operations to simplify 
+/* This object provides all data structure and operations to simplify 
  * the management of operator panel. This object require asterisk manager
- * to function properly. Is possible to add it with addAsteriskManager function.
- */
+ * to function properly. Is possible to add it with addAsteriskManager function */
 var sys = require('sys');
 var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
 var log4js = require('./lib/log4js-node/lib/log4js')();
 var pathreq = require('path')
+var inherits = require("sys").inherits
+var EventEmitter = require("events").EventEmitter
 const FILE_TAB_OP = "config/optab.ini";
 const FILE_FASCI_INI = "config/trunks.ini"
 const FILE_EXT_LIST = "/etc/asterisk/nethcti.ini";
@@ -15,13 +15,9 @@ const DIAL_TO = 0;
 const START_RECORD = 1;
 const STOP_RECORD = 0;
 const VM_PATH_BASE = '/var/spool/asterisk/voicemail/default'
-
-// logger
 /* logger that write in output console and file
- * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF)
- */
+ * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF) */
 var logger = log4js.getLogger('[Modop]');
-
 /* This is for update CTI on the status of all extensions registered in the asterisk server.
  * The scope for the clients is to create the operator panel with all informations about the extensions.
  * It is created by the server at the start and it is update by the server at runtime.
@@ -56,6 +52,8 @@ var controller // controller
  * Constructor
  */
 exports.Modop = function(){
+	EventEmitter.call(this)
+	self = this
 	/* initialize the list of tabs to view in the operator panel by reading 
 	 * configuration file 'optab.ini' */
 	initTabOp();
@@ -105,6 +103,16 @@ exports.Modop = function(){
 	this.hasInternDialingUniqueidWithTypeExt = function(typeExt, uniqueid) { return hasInternDialingUniqueidWithTypeExt(typeExt, uniqueid) }
 	this.updateCallConnectedUniqueidInternWithTypeExt = function(typeExt, uniqueid, chValue) { updateCallConnectedUniqueidInternWithTypeExt(typeExt, uniqueid, chValue) }
 	this.getExtFromQueueChannel = function(ch) { return getExtFromQueueChannel(ch) }
+	this.setRefreshInterval = function(sec) { setRefreshInterval(sec) }
+}
+function setRefreshInterval(sec){ setInterval(refresh(), sec*1000) }
+function refresh(){
+	/* initialize the status of all extensions ('extStatusForOp') present in the asterisk server.
+         * Its scope is to put the right informations to 'extStatusForOp' to help 'proxycti.js'
+ 	 * to give correct informations to the clients for viewing the operator panel */
+        initExtStatusForOp()
+	var actionCoreShowChannels = { Action: 'CoreShowChannels' }
+        am.send(actionCoreShowChannels, function () { logger.debug("'actionCoreShowChannels' " + sys.inspect(actionCoreShowChannels) + " has been sent to AST") })
 }
 function getExtFromQueueChannel(ch){
 	// Local/270@from-internal-7f89;1
@@ -402,10 +410,6 @@ function addAsteriskManager(amanager){
 	am = amanager;
 	// add listeners to asterisk manager to manage extStatusForOp
 	addListenerToAm();
-	/* initialize the status of all extensions ('extStatusForOp') present in the asterisk server.
-         * Its scope is to put the right informations to 'extStatusForOp' to help 'proxycti.js'
- 	 * to give correct informations to the clients for viewing the operator panel */
-        initExtStatusForOp();
 }
 
 // This function add listeners to asterisk manager.
@@ -564,11 +568,12 @@ function addListenerToAm(){
 				extStatusForOp[key].queue = queue
 		}		
 	});
-	am.addListener('coreshowchannelscomplete', function(headers){
-		logger.debug("EVENT 'CoreShowChannelsComplete': headers = " + sys.inspect(headers))
-	})
 	am.addListener('ctiresultcoreshowchannels', function(headers){
 		logger.debug("EVENT 'CtiResultCoreShowChannels': headers = " + sys.inspect(headers))
+	})
+	am.addListener('coreshowchannelscomplete', function(headers){
+		logger.debug("EVENT 'CoreShowChannelsComplete': headers = " + sys.inspect(headers))
+		self.emit('RefreshOperatorPanel')
 	})
 }
 
@@ -624,7 +629,8 @@ function initTrunkWithFasciIni(tempFasciIni){
  * The receive of one 'PeerEntry' event, allow to add status informations of the extension to 'extStatusForOp' */
 function initExtStatusForOp(){
         logger.debug("initialize status of all extensions...");
-        // read file where are the list of all extensions
+	extStatusForOp = {}
+	// read file where are the list of all extensions
         extStatusForOp = iniparser.parseSync(FILE_EXT_LIST);
 	// check if exists FILE_FASCI_INI
 	var tempFasciIni = undefined
@@ -671,15 +677,10 @@ function initExtStatusForOp(){
 }
 
 /* This function initialize all tabs to be view in the operator panel, by reading 
- * the configuration file 'optab.ini'.
- *
+ * the configuration file 'optab.ini'
 { interni_commerciali: { extensions: '500,501' },
   trunks: { show: 'yes' },
   queues: { show: 'yes' },
-  parking: { show: 'si' } }
- */
-function initTabOp(){
-	tabOp = iniparser.parseSync(FILE_TAB_OP);
-}
-
-
+  parking: { show: 'si' } } */
+function initTabOp(){ tabOp = iniparser.parseSync(FILE_TAB_OP) }
+inherits(exports.Modop, EventEmitter)
