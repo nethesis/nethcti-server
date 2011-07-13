@@ -74,7 +74,7 @@ function initServerAndAsteriskParameters(){
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF)
  */
-log4js.clearAppenders();
+//log4js.clearAppenders();
 log4js.addAppender(log4js.fileAppender(logfile), '[ProxyCTI]');
 var logger = log4js.getLogger('[ProxyCTI]');
 logger.setLevel(loglevel);
@@ -139,8 +139,9 @@ var controller = new contrReq.Controller(); // check changing in audio directory
 controller.setLogger(logfile,loglevel);
 var modop = new modopReq.Modop();
 modop.setLogger(logfile,loglevel);
-
 modop.addController(controller)
+modop.addListener("RefreshOperatorPanel", function(){
+})
 logger.debug('added object modules: \'Profiler\', \'DataCollector\', \'Authenticator\', \'Modop\' and \'Controller\'')
 controller.addDir(AST_CALL_AUDIO_DIR);
 controller.addListener("change_dir", function(dir){
@@ -193,6 +194,8 @@ am.addListener('serverconnect', function() {
 		logger.info("logged into ASTESRISK");
 		// Add asterisk manager to modop
 		modop.addAsteriskManager(am);
+		// set refresh interval at which the modop refresh status of alla extensions
+		modop.setRefreshInterval(10)
 	});
 });
 
