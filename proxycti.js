@@ -26,6 +26,7 @@ const REDIRECT_VM_PREFIX = "REDIR_VM-";
 const START_TAG_FILENAME = "auto-";
 const DIAL_FROM = 1
 const DIAL_TO = 0
+const INTERVAL_REFRESH_OPERATOR_PANEL = -1
 // asterisk manager
 var am;
 // the server
@@ -65,6 +66,7 @@ function initServerAndAsteriskParameters(){
 	asterisk_host = server_conf.ASTERISK.host;
 	hostname = server_conf.SERVER_PROXY.hostname;
 	port = server_conf.SERVER_PROXY.port;
+	INTERVAL_REFRESH_OPERATOR_PANEL = server_conf.SERVER_PROXY.interval_refresh_operator_panel
 	logfile = server_conf.SERVER_PROXY.logfile;
 	if(logfile == undefined) logfile = "/var/log/proxycti.log";
 	loglevel = server_conf.SERVER_PROXY.loglevel;
@@ -204,7 +206,7 @@ am.addListener('serverconnect', function() {
 		logger.info("logged into ASTESRISK");
 		// Add asterisk manager to modop
 		modop.addAsteriskManager(am);
-		modop.setRefreshInterval(10) // set refresh interval at which the modop refresh status of alla extension
+		modop.setRefreshInterval(INTERVAL_REFRESH_OPERATOR_PANEL) // set refresh interval at which the modop refresh status of alla extension
 	});
 });
 
