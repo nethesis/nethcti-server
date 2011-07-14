@@ -1,6 +1,6 @@
 Name:		proxycti
-Version:	0.2.8
-Release:	2%{?dist}
+Version:	0.2.9
+Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI	
 
 Group:		Network	
@@ -51,6 +51,10 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Thu Jul 14 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 0.2.9-1.nh
+- Alpha 5 release
+- Add refresh operator status
+
 * Mon Jul 11 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 0.2.8-2.nh
 - Alpha 4 release
 - Add /var/spool/asterisk/monitor directory
