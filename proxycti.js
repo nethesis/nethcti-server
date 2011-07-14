@@ -1346,25 +1346,6 @@ am.addListener('agentcalled', function(headers) {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 am.addListener('calldisconnected', function(from, to) {
 	logger.debug("EVENT 'CallDisconnected': between '" + sys.inspect(from) + "' AND '" + sys.inspect(to) + "'");
 });
@@ -1377,20 +1358,17 @@ am.addListener('hold', function(participant) {
 am.addListener('unhold', function(participant) {
 	var other = am.getParticipant(participant['with']);
 	logger.debug("EVENT 'Unhold': " + participant.number + " (" + participant.name + ") has taken " + other.number + " (" + other.name + ") off hold");
-});
-
-	
+});	
 
 am.addListener('callreport', function(report) {
 	logger.debug("EVENT 'CallReport': " + sys.inspect(report));
 });
 
-/*{ event: 'PeerStatus',
+/* { event: 'PeerStatus',
   privilege: 'system,all',
   channeltype: 'SIP',
   peer: 'SIP/504',
-  peerstatus: 'Registered' }
-*/
+  peerstatus: 'Registered' } */
 am.addListener('peerstatus', function(headers) {
 	var statusEvent = headers.peerstatus.toLowerCase();
 	var currStatus = modop.getExtStatusWithTypeExt(headers.peer).status;
@@ -1421,47 +1399,46 @@ am.addListener('peerstatus', function(headers) {
   extra: 'Family: DND^Value: Attivo^' }
  */
 am.addListener('userevent', function(headers){
-	logger.debug("EVENT 'UserEvent'");
+	logger.debug("EVENT 'UserEvent': headers = " + sys.inspect(headers))
 	// get ext, family and value
-	var ext = headers.channel.split("/")[1]; // 503-0000000d^Family
-	ext = ext.split("-")[0]; // 503
-	var family = headers.extra.split("^")[0]; // Family: DND
-	family = family.split(":")[1]; // DND
-	var value = headers.extra.split("^")[1]; // Value: Attivo
-	value = value.split(":")[1]; // Attivo or ' '
+	var ext = headers.channel.split("/")[1] // 503-0000000d^Family
+	ext = ext.split("-")[0] // 503
+	var family = headers.extra.split("^")[0] // Family: DND
+	family = family.split(":")[1] // DND
+	var value = headers.extra.split("^")[1] // Value: Attivo
+	value = value.split(":")[1] // Attivo or ' '
 	// remove whitespace from 'family' and 'value'
-	family = family.split(' ').join('');
-	value = value.split(' ').join('');
-	family = family.toLowerCase();
-	value = value.toLowerCase();
-
+	family = family.split(' ').join('')
+	value = value.split(' ').join('')
+	family = family.toLowerCase()
+	value = value.toLowerCase()
 	if(family=='dnd'){
 		logger.debug("[" + ext + "] '" + family + " " + value + "'");
 		/* in this case the client who has modified its DND value is connected to the cti
  		 * and has modified its DND through his telephone. So he'll be advise of the changing
 		 * to update its cti. */
 		if(clients[ext]!=undefined){	
-			var c = clients[ext];
+			var c = clients[ext]
 			if(value==""){ // DND is disabled by the phone user
-				logger.debug("[" + ext + "] '" + family + " OFF'");
-				var msg = ext + " has disabled its " + family;
-        		        var response = new ResponseMessage(c.sessionId, "dnd_status_off", msg);
-		                c.send(response);
-		                logger.debug("RESP 'dnd_status_off' has been sent to [" + ext + "] sessionId '" + c.sessionId + "'");
-			}	
+				logger.debug("[" + ext + "] '" + family + " OFF'")
+				var msg = ext + " has disabled its " + family
+        		        var response = new ResponseMessage(c.sessionId, "dnd_status_off", msg)
+		                c.send(response)
+		                logger.debug("RESP 'dnd_status_off' has been sent to [" + ext + "] sessionId '" + c.sessionId + "'")
+			}
 			else if(value=="attivo"){ // DND is enable by the phone user
-				logger.debug("[" + ext + "] '" + family + " ON'");
-				var msg = ext + " has enabled its " + family;
-                                var response = new ResponseMessage(c.sessionId, "dnd_status_on", msg);
-                                c.send(response);
-                                logger.debug("RESP 'dnd_status_on' has been sent to [" + ext + "] sessionId '" + c.sessionId + "'");
+				logger.debug("[" + ext + "] '" + family + " ON'")
+				var msg = ext + " has enabled its " + family
+                                var response = new ResponseMessage(c.sessionId, "dnd_status_on", msg)
+                                c.send(response)
+                                logger.debug("RESP 'dnd_status_on' has been sent to [" + ext + "] sessionId '" + c.sessionId + "'")
 			}
 		}
 		if(value=="")
-			modop.updateExtDNDStatusWithExt(ext, "off");
+			modop.updateExtDNDStatusWithExt(ext, "off")
 		else if(value=="attivo")
-			modop.updateExtDNDStatusWithExt(ext, "on");
-                updateAllClientsForOpWithExt(ext);
+			modop.updateExtDNDStatusWithExt(ext, "on")
+                updateAllClientsForOpWithExt(ext)
 	}
 	else if(family=='cf'){
 		logger.info("[" + ext + "] '" + family + " " + value + "'");
@@ -1487,12 +1464,12 @@ am.addListener('userevent', function(headers){
                         }
                 }
                 if(value=="")
-                        modop.updateExtCFStatusWithExt(ext, "off");
+                        modop.updateExtCFStatusWithExt(ext, "off")
                 else 
-                        modop.updateExtCFStatusWithExt(ext, "on", value);
-                updateAllClientsForOpWithTypeExt(ext);
+                        modop.updateExtCFStatusWithExt(ext, "on", value)
+                updateAllClientsForOpWithTypeExt(ext)
 	}
-});
+})
 
 
 /* This event is necessary to add information to parked members of what extension is parked on it.
