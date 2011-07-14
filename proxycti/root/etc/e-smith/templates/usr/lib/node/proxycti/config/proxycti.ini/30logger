@@ -1,2 +1,2 @@
 logfile=/var/log/asterisk/proxycti.log
-loglevel=INFO
+loglevel=WARN
