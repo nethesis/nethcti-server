@@ -489,7 +489,10 @@ function addListenerToAm(){
 	        var typeext = headers.channeltype + "/" + ext;
 		// set status	
 		updateExtStatusForOpWithTypeExt(typeext, status);
-		extStatusForOp[typeext].chType = headers.channeltype
+		if(extStatusForOp[typeext]==undefined)
+			logger.warn("extStatusForOp[" + typeext + "] is undefined: " + extStatusForOp[typeext])
+		else
+			extStatusForOp[typeext].chType = headers.channeltype
 		/* Check for the DND and CF status of current ext.
 	         * This is made beacuse 'PeerEntry' event don't report the DND and CF status, and so
 	         * it can be possibile to correctly update 'extStatusForOp' */
