@@ -74,8 +74,7 @@ function initServerAndAsteriskParameters(){
 
 
 /* logger that write in output console and file
- * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF)
- */
+ * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF) */
 log4js.clearAppenders();
 log4js.addAppender(log4js.fileAppender(logfile), '[ProxyCTI]');
 var logger = log4js.getLogger('[ProxyCTI]');
@@ -142,8 +141,72 @@ controller.setLogger(logfile,loglevel);
 var modop = new modopReq.Modop();
 modop.setLogger(logfile,loglevel);
 modop.addController(controller)
-modop.addListener("RefreshOperatorPanel", function(){
+modop.addListener("RefreshOperatorPanel", function(refreshChannels){
 	logger.debug("EVENT 'RefreshOperatorPanel'")
+
+	/* chStat = { '1308736049.9828': 
+           { channel: 'SIP/2004-00001282',
+             status: 'up',
+             calleridnum: '0266125547',
+             calleridname: 'Microtronica' },
+          '1308736049.9829': { channel: 'Local/202@from-internal-4196;1' }, ... 
+	*
+	* refreshChannels = 
+	refreshChannels = { 'SIP/211': 
+   { '1310743114.2158': 
+      { channel: 'SIP/211-00000431',
+        uniqueid: '1310743114.2158',
+        context: 'macro-dial',
+        extension: 's',
+        priority: '1',
+        channelstate: '6',
+        channelstatedesc: 'Up',
+        application: 'AppDial',
+        applicationdata: '(Outgoing Line)',
+        calleridnum: '211',
+        duration: '00:10:38',
+        accountcode: '',
+        bridgedchannel: 'Local/211@from-internal-bbc2;2',
+        bridgeduniqueid: '1310743111.2152',
+        event: 'CtiResultCoreShowChannels' } },
+  'SIP/2004': 
+   { '1310743111.2136': 
+      { channel: 'SIP/2004-0000042d',
+        uniqueid: '1310743111.2136',
+        context: 'ext-queues',
+        extension: '401',
+        priority: '10',
+        channelstate: '6',
+        channelstatedesc: 'Up',
+        application: 'Queue',
+        applicationdata: '401,t,,',
+        calleridnum: '0733967019',
+        duration: '00:10:41',
+        accountcode: '',
+        bridgedchannel: 'Local/211@from-internal-bbc2;1',
+        bridgeduniqueid: '1310743111.2151',
+        event: 'CtiResultCoreShowChannels' } } } */
+	logger.debug("clean chStat")
+	logger.debug("key of chStat before clean = " + Object.keys(chStat).length)
+	var currRefChs = undefined
+	var ok = false
+	for(uniqueid in chStat){
+		
+		for(typeExt in refreshChannels){
+			currRefChs = refreshChannels[typeExt]
+			for(uid in currRefChs){
+				if(uniqueid==uid){
+					ok = true
+					break
+				}
+			}
+		}
+		if(ok==false){
+			delete chStat[uniqueid]
+		}
+		
+	}
+	logger.debug("key of chStat after clean = " + Object.keys(chStat).length)
 	refresh = true // gloabal variable
 	/* send 'ParkedCalls' action to asterisk to update timeout information of parked calls in 'extStatusForOp'.
          * When 'ParkedCallsComplete' event is emitted, the server return 'extStatusForOp' to the client */
@@ -193,6 +256,14 @@ logger.debug('add \'controller\' object to \'Profiler\' and \'DataCollector\'')
 
 
 
+
+
+
+
+
+
+
+
 /******************************************************
  * Section relative to asterisk interaction    
  */
@@ -219,6 +290,7 @@ am.addListener('servererror', function(err) {
 
 // chStatus is the object that contains the 'uniqueid' as a key
 chStat = {}
+
 /* EVENT 'NewChannel': headers = { event: 'Newchannel',
   privilege: 'call,all',
   channel: 'SIP/270-000001bb',
@@ -263,10 +335,11 @@ EVENT 'NewChannel': headers = { event: 'Newchannel',
   uniqueid: '1308726926.8996' } */
 am.addListener('newchannel', function(headers){
 	logger.debug("EVENT 'NewChannel': headers = " + sys.inspect(headers))
+	logger.debug("key of chStat = " + Object.keys(chStat).length)
 	chStat[headers.uniqueid] = {
 		channel: headers.channel
 	}
-	logger.debug("'newChannel' chStat = " + sys.inspect(chStat))
+	//logger.debug("'newChannel' chStat = " + sys.inspect(chStat))
 })
 
 /* when call from the soft phone 
@@ -330,6 +403,7 @@ EVENT 'NewState': headers '{ event: 'Newstate',
   uniqueid: '1308745579.1057' }' */
 am.addListener('newstate', function(headers){
         logger.debug("EVENT 'NewState': headers '" + sys.inspect(headers) +  "'")
+	logger.debug("key of chStat = " + Object.keys(chStat).length)
 
 	/* check if the chStat contains the entry relative to this newstate event.
          * This is because this proxy server can be started after the asterisk server. So some calling can be in execution when this
@@ -413,7 +487,7 @@ am.addListener('newstate', function(headers){
 		updateAllClientsForOpWithTypeExt(typeext)
 	}
 	
-	logger.debug("'newState' chStat = " + sys.inspect(chStat))
+	//logger.debug("'newState' chStat = " + sys.inspect(chStat))
 })
 
 /* whe call come from soft phone
@@ -527,6 +601,19 @@ EVENT 'Dialing': headers '{ event: 'Dial',
   calleridname: '<unknown>'
   ...
   *
+  *
+ EVENT 'Dialing': headers '{ event: 'Dial',
+  privilege: 'call,all',
+  subevent: 'Begin',
+  channel: 'SIP/2004-0000048c',
+  destination: 'Local/3898031806@from-internal-989c;1',
+  calleridnum: '3939727637',
+  calleridname: 'Assistenza Cellulare',
+  uniqueid: '1310744575.2395',
+  destuniqueid: '1310744576.2396',
+  dialstring: '3898031806@from-internal/n' }'
+*
+*
   * when dial not execute correctly, for ex. for congestion:
 EVENT 'Dialing': headers '{ event: 'Dial',
   privilege: 'call,all',
@@ -536,7 +623,8 @@ EVENT 'Dialing': headers '{ event: 'Dial',
   dialstatus: 'CONGESTION' }' */
 am.addListener('dialing', function(headers) {
         logger.debug("EVENT 'Dialing': headers '" + sys.inspect(headers) + "'")
-	logger.debug("'dialing' chstat = " + sys.inspect(chStat))
+	logger.debug("key of chStat = " + Object.keys(chStat).length)
+//	logger.debug("'dialing' chstat = " + sys.inspect(chStat))
 	/* chstat = { '1308646890.732': 
 	   { channel: 'SIP/271-00000274',
 	     status: 'ring',
@@ -582,7 +670,7 @@ am.addListener('dialing', function(headers) {
 	}
 	// to
 	var to = headers.dialstring
-	if(modop.isTypeExtFascio(chStat[headers.destuniqueid].channel.split('-')[0])){ // the call is out through a trunk (CASE A)
+	if(modop.isTypeExtFascio(headers.destination.split('-')[0])){ // the call is out through a trunk (CASE A)
 		var trunk = chStat[headers.destuniqueid].channel.split('-')[0].split('/')[1]
 		if(to.indexOf(trunk)!=-1){
 			to = to.split(trunk + '/')[1]
@@ -789,6 +877,7 @@ EVENT 'Hangup': headers = { event: 'Hangup',
   causetxt: 'Normal Clearing' } */
 am.addListener('hangup', function(headers) {
         logger.debug("EVENT 'Hangup': headers = " + sys.inspect(headers))
+	logger.debug("keys of chStat = " + Object.keys(chStat).length)
 
 	/* if the hangup event is relative to Local/270@from-internal-a7dd;1', means that this hangup is relative
 	 * to the intermediate node created by asterisk that finish with ';1'. So it is ingored, because there will be
@@ -896,6 +985,8 @@ am.addListener('hangup', function(headers) {
 
 	if(headers.channel.indexOf('Local/')!=-1 && headers.channel.indexOf('@from-internal-')!=-1 && (headers.channel.indexOf(';1')!=-1 || headers.channel.indexOf(';2')!=-1 ) ){
 		logger.debug("discard 'hangup' event: relative to queue. Delete it from chStat")
+		delete chStat[headers.uniqueid]
+		logger.debug("keys of chStat = " + Object.keys(chStat).length)
 		return
 	}
 
@@ -919,6 +1010,8 @@ am.addListener('hangup', function(headers) {
                         logger.debug("callConnected uniqueid '" + tempUniqueid + "' has already not present into intern '" + internTypeExt + "'")
 		modop.updateHangupUniqueidInternWithTypeExt(internTypeExt, tempUniqueid) // add uniqueid of current hangup as 'lastHangupUniqueid'
                 updateAllClientsForOpWithTypeExt(internTypeExt)
+		delete chStat[headers.uniqueid]
+		logger.debug("keys of chStat = " + Object.keys(chStat).length)
 		return
 	}
 
@@ -1007,10 +1100,8 @@ am.addListener('hangup', function(headers) {
 		logger.debug("discarded event 'hangup' because redirect")
 
 	delete chStat[headers.uniqueid]
-	logger.debug("delete '" + headers.uniqueid + "' from chStat: so it is = " + sys.inspect(chStat))
-	// TO eliminate data structure of asterisk.js
-	//delete am.participants[headers.uniqueid]
-        //logger.info('removed \'' + headers.uniqueid  + '\' from am.participants: ' + sys.inspect(am.participants))
+	logger.debug("keys of chStat = " + Object.keys(chStat).length)
+//	logger.debug("delete '" + headers.uniqueid + "' from chStat: so it is = " + sys.inspect(chStat))
 })
 
 
@@ -1099,7 +1190,8 @@ EVENT 'CallConnected': headers = '{ event: 'Bridge',
   callerid2: '350' }' */
 am.addListener('callconnected', function(headers) {
         logger.debug("EVENT 'CallConnected': headers = '" + sys.inspect(headers) + "'")
-	logger.debug("'callconnected' chStat = " + sys.inspect(chStat))
+	logger.debug("key of chStat = " + Object.keys(chStat).length)
+//	logger.debug("'callconnected' chStat = " + sys.inspect(chStat))
 	if(chStat[headers.uniqueid1]==undefined || chStat[headers.uniqueid2]==undefined){
 		logger.info("discard 'callConnected' event: it isn't present in chStat. The cause can be the start of this server during the asterisk functioning")
 		return
@@ -1928,7 +2020,8 @@ io.on('connection', function(client){
 				     calleridname: '',
 				     calleridnum: '271',
 				     status: 'up' } } */
-				logger.debug("ACTION_HANGUP chStat = " + sys.inspect(chStat))
+//				logger.debug("ACTION_HANGUP chStat = " + sys.inspect(chStat))
+				logger.debug("key of chStat = " + Object.keys(chStat).length)
 				var extToHangup = message.extToHangup
 				var callDialExtHangup = message.callDialExtHangup
 				var ch
@@ -1953,7 +2046,8 @@ io.on('connection', function(client){
                                 })
 	  		break;
 			case actions.ACTION_HANGUP_SPY:
-				logger.debug("ACTION_HANGUP_SPY chStat = " + sys.inspect(chStat))
+//				logger.debug("ACTION_HANGUP_SPY chStat = " + sys.inspect(chStat))
+				logger.debug("key of chStat = " + Object.keys(chStat).length)
 				/* { channel: 'SIP/271-0000023a',
 				     status: 'up',
 				     calleridname: 'SPY-270' } */
@@ -1992,7 +2086,8 @@ io.on('connection', function(client){
 		  		logger.info(Object.keys(clients).length + " logged in clients");
 	  		break;
 	  		case actions.ACTION_REDIRECT:
-				logger.debug("'ACTION_REDIRECT' chStat = " + sys.inspect(chStat))
+//				logger.debug("'ACTION_REDIRECT' chStat = " + sys.inspect(chStat))
+				logger.debug("key of chStat = " + Object.keys(chStat).length)
 				/* chStat = { '1308661886.872': 
 				   { channel: 'SIP/271-000002cb',
 				     status: 'up',
@@ -2613,7 +2708,8 @@ io.on('connection', function(client){
 				});
 			break;
 			case actions.ACTION_PICKUP:
-				logger.debug("chStat = " + sys.inspect(chStat))
+//				logger.debug("chStat = " + sys.inspect(chStat))
+				logger.debug("key of chStat = " + Object.keys(chStat).length)
                                 var callerExt = message.callerExt
 				var callTo = message.callTo
                         	var channel = ''
