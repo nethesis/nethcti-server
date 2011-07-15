@@ -705,6 +705,7 @@ function addListenerToAm(){
 	am.addListener('coreshowchannelscomplete', function(headers){
 		logger.debug("EVENT 'CoreShowChannelsComplete': headers = " + sys.inspect(headers))
 		logger.debug("refreshChannels = " + sys.inspect(refreshChannels))
+		// clean extStatusForOp
 		for(typeExt in extStatusForOp){
 			if(extStatusForOp[typeExt].tab=='interno' || extStatusForOp[typeExt].tab=='fasci'){
 				var refreshCh = refreshChannels[typeExt] // all real active channels for current typeExt
@@ -762,7 +763,7 @@ function addListenerToAm(){
 				}
 			}
 		}
-		self.emit('RefreshOperatorPanel')
+		self.emit('RefreshOperatorPanel', refreshChannels)
 	})
 }
 
