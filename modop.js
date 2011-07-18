@@ -87,10 +87,13 @@ exports.Modop = function(){
 	this.updateTrunkStatusWithChannel = function(ch, stat) { updateTrunkStatusWithChannel(ch, stat) }
 	this.hasTrunkCallConnectedUniqueidWithChannel = function(ch, uniqueid) {  return hasTrunkCallConnectedUniqueidWithChannel(ch, uniqueid) }
 	this.hasTrunkCallConnectedUniqueidWithTypeExt = function(typeExt, uniqueid) { return hasTrunkCallConnectedUniqueidWithTypeExt(typeExt, uniqueid) }
+	this.hasTrunkDialingUniqueidWithTypeExt = function(typeExt, uniqueid) { return hasTrunkDialingUniqueidWithTypeExt(typeExt, uniqueid) }
 	this.addCallConnectedUniqueidTrunkWithChannel = function(ch, uniqueid) { addCallConnectedUniqueidTrunkWithChannel(ch, uniqueid) }
 	this.addCallConnectedUniqueidTrunkWithTypeExt = function(typeExt, uniqueid, chValue) { addCallConnectedUniqueidTrunkWithTypeExt(typeExt, uniqueid, chValue) }
+	this.addDialingUniqueidTrunkWithTypeExt = function(typeExt, uniqueid, chValue) { addDialingUniqueidTrunkWithTypeExt(typeExt, uniqueid, chValue) }
 	this.getTrunkTypeExtFromChannel = function(ch) { return getTrunkTypeExtFromChannel(ch) }
 	this.removeCallConnectedUniqueidTrunkWithTypeExt = function(typeExt, uniqueid) { removeCallConnectedUniqueidTrunkWithTypeExt(typeExt, uniqueid) }
+	this.removeDialingUniqueidTrunkWithTypeExt = function(typeExt, uniqueid) { removeDialingUniqueidTrunkWithTypeExt(typeExt, uniqueid) }
 	this.isChannelIntern = function(ch) { return isChannelIntern(ch) }
 	this.isExtGroup = function(ext) { return isExtGroup(ext) }
 	this.getExtInternFromChannel = function(ch) { return getExtInternFromChannel(ch) }
@@ -114,7 +117,8 @@ function stopRefresh(){
 }
 function setRefreshInterval(min){
 	logger.debug("set refresh interval to '" + min + "' min")
-	idIntervalRefresh = setInterval(function(){ refresh() },(min*1000*60)) 
+	//idIntervalRefresh = setInterval(function(){ refresh() },(min*1000*60)) 
+	idIntervalRefresh = setInterval(function(){ refresh() },(min*1000)) 
 }
 function refresh(){
 	refreshChannels = {}
@@ -162,6 +166,11 @@ function removeCallConnectedUniqueidInternWithTypeExt(typeExt, uniqueid){
 		extStatusForOp[typeExt].callConnectedCount--
 	}
 }
+function removeDialingUniqueidTrunkWithTypeExt(typeExt, uniqueid){
+	if(extStatusForOp[typeExt].tab=='fasci'){
+		delete extStatusForOp[typeExt].dialingUniqueid[uniqueid]
+	}
+}
 function removeCallConnectedUniqueidTrunkWithTypeExt(typeExt, uniqueid){
 	if(extStatusForOp[typeExt].tab=='fasci'){
 		delete extStatusForOp[typeExt].callConnectedUniqueid[uniqueid]
@@ -184,6 +193,13 @@ function addCallConnectedUniqueidInternWithTypeExt(typeExt, uniqueid, chValue){
 function updateCallConnectedUniqueidInternWithTypeExt(typeExt, uniqueid, chValue){
 	if(extStatusForOp[typeExt].tab=='interno')
 		extStatusForOp[typeExt].callConnectedUniqueid[uniqueid] = chValue
+}
+/* add uniqueid of channel to trunk identified by 'typeExt'. Uniqueid and channel is relative to
+ * received 'dialing' event */
+function addDialingUniqueidTrunkWithTypeExt(typeExt, uniqueid, chValue){
+        if( extStatusForOp[typeExt].tab=='fasci' ){
+                extStatusForOp[typeExt].dialingUniqueid[uniqueid] = chValue
+        }
 }
 /* add uniqueid of channel to trunk identified by 'typeExt'. Uniqueid and channel is relative to
  * received 'CallConnected' event */
@@ -210,6 +226,12 @@ function hasInternDialingUniqueidWithTypeExt(typeExt, uniqueid){
 function hasInternCallConnectedUniqueidWithTypeExt(typeExt, uniqueid){
 	if(extStatusForOp[typeExt].tab=='interno' && extStatusForOp[typeExt].callConnectedUniqueid[uniqueid]!=undefined ) return true
 	return false
+}
+/* check if the trunk identified by 'typeExt' has the uniqueid of the channel relative to
+ * received 'dialing' event */
+function hasTrunkDialingUniqueidWithTypeExt(typeExt, uniqueid){
+        if( extStatusForOp[typeExt].tab=='fasci' && extStatusForOp[typeExt].dialingUniqueid[uniqueid]!=undefined ) return true
+        return false
 }
 /* check if the trunk identified by 'typeExt' has the uniqueid of the channel relative to
  * received 'CallConnected' event */
@@ -798,6 +820,11 @@ function initDialingUniqueidForIntern(){
 		if(extStatusForOp[key].tab=='interno')
 			extStatusForOp[key].dialingUniqueid = {}
 }
+function initDialingUniqueidForTrunk(){
+	for(key in extStatusForOp)
+		if(extStatusForOp[key].tab=='fasci')
+			extStatusForOp[key].dialingUniqueid = {}
+}
 function initTrunkWithFasciIni(tempFasciIni){
 	for(key in extStatusForOp){
 		if(extStatusForOp[key].tab=='fasci'){
@@ -831,6 +858,7 @@ function initExtStatusForOp(){
 	// init trunk
 	initCallConnectedCountForTrunk()
 	initCallConnectedUniqueidForTrunk()
+	initDialingUniqueidForTrunk()
 	// init intern
 	initCallConnectedUniqueidForIntern()
 	initCallConnectedCountForIntern()
