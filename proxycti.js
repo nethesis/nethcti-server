@@ -741,10 +741,14 @@ am.addListener('dialing', function(headers) {
                 }
 	}
 	// add dialExtUniqueid for trunk and for queue ;2 (;2 means the call to client intern)
-	if(from!=undefined && !modop.isChannelIntern(headers.channel) && headers.channel.indexOf(';1')==-1)
+	if(from!=undefined && !modop.isChannelIntern(headers.channel) && headers.channel.indexOf(';1')==-1){
 		chStat[headers.uniqueid].dialExtUniqueid = headers.destuniqueid
-	if(to!=undefined && !modop.isChannelIntern(headers.destination) && headers.destination.indexOf(';1')==-1)
+		chStat[headers.uniqueid].dialDirection = DIAL_TO
+	}
+	if(to!=undefined && !modop.isChannelIntern(headers.destination) && headers.destination.indexOf(';1')==-1){
 		chStat[headers.destuniqueid].dialExtUniqueid = headers.uniqueid
+		chStat[headers.destuniqueid].dialDirection = DIAL_FROM
+	}
 	// update for OP
 	if(from!=undefined && to!=undefined){
 		// check if the call come from queue. In this case, the caller (272) has already been update in AgentCalled event
@@ -1253,6 +1257,7 @@ am.addListener('callconnected', function(headers) {
 	if( headers.callerid1==headers.callerid2 && headers.channel2.indexOf('Local/')!=-1 && headers.channel2.indexOf('@from-internal-')!=-1 && headers.channel2.indexOf(';1')!=-1  ){ // (CASE E)
 		// add uniquedid
 		if( modop.isChannelTrunk(headers.channel1) ){ // (CASE D)
+			chStat[headers.uniqueid1].dialDirection = DIAL_TO
 			var trunkTypeext = modop.getTrunkTypeExtFromChannel(headers.channel1)
 			// add uniqueid of trunk 'headers.channel1' to trunk itself, if it isn't already been added
 			if( !modop.hasTrunkCallConnectedUniqueidWithTypeExt(trunkTypeext, headers.uniqueid1) ){
