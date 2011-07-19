@@ -191,20 +191,18 @@ modop.addListener("RefreshOperatorPanel", function(refreshChannels){
 	var currRefChs = undefined
 	var ok = false
 	for(uniqueid in chStat){
-		
 		for(typeExt in refreshChannels){
 			currRefChs = refreshChannels[typeExt]
 			for(uid in currRefChs){
 				if(uniqueid==uid){
 					ok = true
-					break
 				}
 			}
 		}
 		if(ok==false){
 			delete chStat[uniqueid]
 		}
-		
+		ok = false
 	}
 	logger.debug("key of chStat after clean = " + Object.keys(chStat).length)
 	refresh = true // gloabal variable
@@ -276,7 +274,7 @@ am.addListener('serverconnect', function() {
 		logger.info("logged into ASTESRISK");
 		// Add asterisk manager to modop
 		modop.addAsteriskManager(am);
-		modop.setRefreshInterval(INTERVAL_REFRESH_OPERATOR_PANEL) // set refresh interval at which the modop refresh status of alla extension
+//		modop.setRefreshInterval(INTERVAL_REFRESH_OPERATOR_PANEL) // set refresh interval at which the modop refresh status of alla extension
 	});
 });
 
@@ -759,13 +757,15 @@ am.addListener('dialing', function(headers) {
 		chStat[headers.uniqueid].dialDirection = DIAL_TO
 		var trunkTypeext = modop.getTrunkTypeExtFromChannel(headers.channel)
 		// add uniqueid of trunk 'headers.channel' to trunk itself, if it isn't already been added
-                if(!modop.hasTrunkDialingUniqueidWithTypeExt(trunkTypeext, headers.uniqueid)){
-			modop.addDialingUniqueidTrunkWithTypeExt(trunkTypeext, headers.uniqueid, chStat[headers.uniqueid])
-                        logger.debug("added dialingUniqueid '" + headers.uniqueid + "' to trunk '" + trunkTypeext + "'")
-                        updateAllClientsForOpWithTypeExt(trunkTypeext)
+		if(modop.isChannelTrunk(headers.channel)){
+	                if(!modop.hasTrunkDialingUniqueidWithTypeExt(trunkTypeext, headers.uniqueid)){
+				modop.addDialingUniqueidTrunkWithTypeExt(trunkTypeext, headers.uniqueid, chStat[headers.uniqueid])
+	                        logger.debug("added dialingUniqueid '" + headers.uniqueid + "' to trunk '" + trunkTypeext + "'")
+	                        updateAllClientsForOpWithTypeExt(trunkTypeext)
+			}
+			else
+		                logger.debug("dialing uniqueid '" + headers.uniqueid + "' has already been added to trunk '" + trunkTypeext  + "'")
 		}
-		else
-	                logger.debug("dialing uniqueid '" + headers.uniqueid + "' has already been added to trunk '" + trunkTypeext  + "'")
 	}
 	if(to!=undefined && !modop.isChannelIntern(headers.destination) && headers.destination.indexOf(';1')==-1){
 		chStat[headers.destuniqueid].dialExtUniqueid = headers.uniqueid
@@ -1226,7 +1226,19 @@ EVENT 'CallConnected': headers = '{ event: 'Bridge',
   uniqueid1: '1308834534.12481',
   uniqueid2: '1308834535.12482',
   callerid1: '0817598495',
-  callerid2: '350' }' */
+  callerid2: '350' }' 
+  *
+  * 606 is a group
+  EVENT 'CallConnected': headers = '{ event: 'Bridge',
+  privilege: 'call,all',
+  bridgestate: 'Link',
+  bridgetype: 'core',
+  channel1: 'SIP/2004-00000829',
+  channel2: 'SIP/224-0000082c',
+  uniqueid1: '1311060178.4056',
+  uniqueid2: '1311060180.4059',
+  callerid1: '714609850',
+  callerid2: '606' }' */
 am.addListener('callconnected', function(headers) {
         logger.debug("EVENT 'CallConnected': headers = '" + sys.inspect(headers) + "'")
 	logger.debug("key of chStat = " + Object.keys(chStat).length)
@@ -1358,11 +1370,11 @@ am.addListener('callconnected', function(headers) {
 	// channel1 is a trunk and channel2 is an intern (CASE G)
 	if( modop.isChannelTrunk(headers.channel1) && modop.isChannelIntern(headers.channel2) ){
 		var trunkTypeExt = modop.getTrunkTypeExtFromChannel(headers.channel1)
-		if(modop.hasTrunkDialingUniqueidWithTypeExt(trunkTypeext, headers.uniqueid1)){
-                        modop.removeDialingUniqueidTrunkWithTypeExt(trunkTypeext, headers.uniqueid1)
-                	logger.debug("removed dialingUniqueid '" + headers.uniqueid1 + "' from trunkTypeExt '" + trunkTypeext + "'")
+		if(modop.hasTrunkDialingUniqueidWithTypeExt(trunkTypeExt, headers.uniqueid1)){
+                        modop.removeDialingUniqueidTrunkWithTypeExt(trunkTypeExt, headers.uniqueid1)
+                	logger.debug("removed dialingUniqueid '" + headers.uniqueid1 + "' from trunkTypeExt '" + trunkTypeExt + "'")
         	} else
-	                logger.debug("dialingUniqueid '" + headers.uniqueid1 + "' has already not present into trunk '" + trunkTypeext  + "'")
+	                logger.debug("dialingUniqueid '" + headers.uniqueid1 + "' has already not present into trunk '" + trunkTypeExt  + "'")
 		// add uniqueid of trunk 'headers.channel1' to trunk itself, if it isn't already been added
 		if( !modop.hasTrunkCallConnectedUniqueidWithTypeExt(trunkTypeExt, headers.uniqueid1) ){
 			modop.addCallConnectedUniqueidTrunkWithTypeExt(trunkTypeExt, headers.uniqueid1, chStat[headers.uniqueid1])
