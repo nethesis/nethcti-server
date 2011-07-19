@@ -678,14 +678,26 @@ function addListenerToAm(){
 		var typeExt
 		var uniqueid = headers.uniqueid
 		var temp
+		logger.debug("refreshChannels elements are:")
+		for(key in refreshChannels){
+			logger.debug("[" + key + "] has " + Object.keys(refreshChannels[key]).length + " channels")
+		}
 		if(isChannelIntern(ch)){ // intern channel
+			logger.debug("channel [" + ch + "] is an intern")
 			typeExt = getInternTypeExtFromChannel(ch)
-			if(refreshChannels[typeExt]==undefined) refreshChannels[typeExt] = {}
+			if(refreshChannels[typeExt]==undefined) refreshChannels[typeExt] = {} // initialize
+			logger.debug("add headers to refreshChannels[" + typeExt + "][" + uniqueid + "]")
 			refreshChannels[typeExt][uniqueid] = headers
 		} else if(isChannelTrunk(ch)){ // truk channel
+			logger.debug("channel [" + ch + "] is a trunk")
 			typeExt = getTrunkTypeExtFromChannel(ch)
-			if(refreshChannels[typeExt]==undefined) refreshChannels[typeExt] = {}
+			if(refreshChannels[typeExt]==undefined) refreshChannels[typeExt] = {} // initialize
+			logger.debug("add headers to refreshChannels[" + typeExt + "][" + uniqueid + "]")
 			refreshChannels[typeExt][uniqueid] = headers
+		}
+		logger.debug("refreshChannels elements are:")
+		for(key in refreshChannels){
+			logger.debug("[" + key + "] has " + Object.keys(refreshChannels[key]).length + " channels")
 		}
 	})
 	/* { 'SIP/2004': 
@@ -732,6 +744,7 @@ function addListenerToAm(){
 			if(extStatusForOp[typeExt].tab=='interno' || extStatusForOp[typeExt].tab=='fasci'){
 				var refreshCh = refreshChannels[typeExt] // all real active channels for current typeExt
 				if(refreshCh==undefined){ // typeExt hasn't any connections, so reset data
+					logger.debug("no channels for [" + typeExt + "]: reset it")
 					extStatusForOp[typeExt].callConnectedCount = 0
 					extStatusForOp[typeExt].callConnectedUniqueid = {}
 					extStatusForOp[typeExt].dialingUniqueid = {}
@@ -741,6 +754,7 @@ function addListenerToAm(){
 					if(sta!=undefined && (sta=='ring' || sta=='up' || sta=='ringing'))
 						extStatusForOp[typeExt].status = 'ok'
 				} else { // check if there is some channel in wrong position: checking in dialingUniqueid and callConnectedUniqueid
+					logger.debug("there are refreshCh = " + sys.inspect(refreshCh) + " for typeExt [" + typeExt + "]")
 					for(uniqueid in refreshCh){
 						var currCh = refreshCh[uniqueid]
 						var sta = currCh.channelstatedesc.toLowerCase()
@@ -763,6 +777,7 @@ function addListenerToAm(){
 						}
 					}
 				}
+				logger.debug("check if extStatusForOp contains some dialing channels that doesn't exists")
 				// check if the extStatusForOp[typeExt] has some channels 'dialingUniqueid' that doesn't exists
 				var dialingUniqueid = extStatusForOp[typeExt].dialingUniqueid
 				if(dialingUniqueid!=undefined){
@@ -773,6 +788,7 @@ function addListenerToAm(){
 						}
 					}
 				}
+				logger.debug("check if extStatusForOp contains some callConnected channels that doesn't exists")
 				// check if the extStatusForOp[typeExt] has some channels 'callConnectedUniqueid' that doesn't exists
 				var callConnectedUniqueid = extStatusForOp[typeExt].callConnectedUniqueid
 				if(callConnectedUniqueid!=undefined){
