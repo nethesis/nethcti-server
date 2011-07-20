@@ -337,7 +337,7 @@ am.addListener('newchannel', function(headers){
 	chStat[headers.uniqueid] = {
 		channel: headers.channel
 	}
-	//logger.debug("'newChannel' chStat = " + sys.inspect(chStat))
+	logger.debug("'newChannel' chStat = " + sys.inspect(chStat))
 })
 
 /* when call from the soft phone 
@@ -1064,7 +1064,7 @@ am.addListener('hangup', function(headers) {
 		updateAllClientsForOpWithTypeExt(trunkTypeExt)
 	}
 	else if(modop.isChannelIntern(headers.channel)){ // headers.channel is an intern
-		var internTypeExt = modop.getInternTypeExtFromChannel(chStat[headers.uniqueid].channel)
+		var internTypeExt = modop.getInternTypeExtFromChannel(headers.channel)
 		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt, headers.uniqueid)){
 			modop.removeDialingUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid)
 			logger.debug("removed dialingUniqueid '" + headers.uniqueid + "' from intern '" + internTypeExt + "'")
