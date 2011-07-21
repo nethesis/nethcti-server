@@ -1021,119 +1021,127 @@ am.addListener('hangup', function(headers) {
 	 * This is because this proxy server can be started after the asterisk server. So some calling can be in execution when this
  	 * proxy server starting and so it can receive some hangup event relative to old call for which it haven't the relative channel in chStat. 
 	 * In this case it simply discard this hangup event */
-	if(headers.channel.indexOf('<ZOMBIE>')==-1 && chStat[headers.uniqueid]==undefined){
-		logger.warn("discard 'hangup' event: it isn't present in chStat. The cause can be the start of this server during the asterisk functioning")
-		return
+	var trueUniqueid = '';
+	for(uniqueid in chStat){
+		if(chStat[uniqueid].channel===headers.channel){
+			trueUniqueid = uniqueid;
+		}
+	}
+
+	if(headers.channel.indexOf('<ZOMBIE>')===-1 && chStat[trueUniqueid]===undefined){
+		logger.warn("discard 'hangup' event: it isn't present in chStat. The cause can be the start of this server during the asterisk functioning");
+		return;
 	}
 
 	if(headers.channel.indexOf('Local/')!=-1 && headers.channel.indexOf('@from-internal-')!=-1 && (headers.channel.indexOf(';1')!=-1 || headers.channel.indexOf(';2')!=-1 ) ){
-		logger.debug("discard 'hangup' event: relative to queue. Delete it from chStat")
-		delete chStat[headers.uniqueid]
-		logger.debug("keys of chStat = " + Object.keys(chStat).length)
-		return
+		logger.debug("discard 'hangup' event: relative to queue. Delete it from chStat");
+		delete chStat[trueUniqueid];
+		logger.debug("keys of chStat = " + Object.keys(chStat).length);
+		return;
 	}
-
 	if(headers.channel.indexOf('<ZOMBIE>')!=-1 && headers.channel.indexOf('AsyncGoto/SIP/')==-1){ // (CASE M)  channel: 'SIP/204-00000401<ZOMBIE>'
-		var tempCh = headers.channel.split('<ZOMBIE>')[0]
-		var internTypeExt = modop.getInternTypeExtFromChannel(tempCh)
-		var tempUniqueid
-		for(key in chStat){
-			if(chStat[key].channel==tempCh)
-				tempUniqueid = key
+		var tempCh = headers.channel.split('<ZOMBIE>')[0];
+		var internTypeExt = modop.getInternTypeExtFromChannel(tempCh);
+		var tempUniqueid = '';
+		for(uniqueid in chStat){
+			if(chStat[uniqueid].channel===tempCh)
+				tempUniqueid = uniqueid;
 		}
 		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt, tempUniqueid)){
-                        modop.removeDialingUniqueidInternWithTypeExt(internTypeExt, tempUniqueid)
-                        logger.debug("removed dialingUniqueid '" + tempUniqueid + "' from intern '" + internTypeExt + "'")
+                        modop.removeDialingUniqueidInternWithTypeExt(internTypeExt, tempUniqueid);
+                        logger.debug("removed dialingUniqueid '" + tempUniqueid + "' from intern '" + internTypeExt + "'");
                 } else
-                        logger.debug("dialingUniqueid '" + tempUniqueid + "' has already not present into intern '" + internTypeExt + "'")
+                        logger.debug("dialingUniqueid '" + tempUniqueid + "' has already not present into intern '" + internTypeExt + "'");
 		if(modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, tempUniqueid)){
-                        modop.removeCallConnectedUniqueidInternWithTypeExt(internTypeExt, tempUniqueid)
-                        logger.debug("removed callConnectedUniqueid '" + tempUniqueid + "' from intern '" + internTypeExt + "'")
+                        modop.removeCallConnectedUniqueidInternWithTypeExt(internTypeExt, tempUniqueid);
+                        logger.debug("removed callConnectedUniqueid '" + tempUniqueid + "' from intern '" + internTypeExt + "'");
                 } else
-                        logger.debug("callConnected uniqueid '" + tempUniqueid + "' has already not present into intern '" + internTypeExt + "'")
+                        logger.debug("callConnected uniqueid '" + tempUniqueid + "' has already not present into intern '" + internTypeExt + "'");
 		modop.updateExtStatusForOpWithTypeExt(internTypeExt,"hangup");
-		modop.updateHangupUniqueidInternWithTypeExt(internTypeExt, tempUniqueid) // add uniqueid of current hangup as 'lastHangupUniqueid'
-                updateAllClientsForOpWithTypeExt(internTypeExt)
-		
+		modop.updateHangupUniqueidInternWithTypeExt(internTypeExt, tempUniqueid); // add uniqueid of current hangup as 'lastHangupUniqueid'
+                updateAllClientsForOpWithTypeExt(internTypeExt);
 		// remove channel from chStat
-		for(uniqueid in chStat){
-			if(chStat[uniqueid].channel===headers.channel){
-				delete chStat[uniqueid];
-			}
-		}
-		logger.debug("keys of chStat = " + Object.keys(chStat).length)
-		return
+		delete chStat[tempUniqueid];
+		logger.debug("keys of chStat = " + Object.keys(chStat).length);
+		return;
 	}
 
-	if( modop.isChannelTrunk(chStat[headers.uniqueid].channel) ){ // the channel is a trunk
-		var trunkTypeExt = modop.getTrunkTypeExtFromChannel(chStat[headers.uniqueid].channel)
-		if( modop.hasTrunkDialingUniqueidWithTypeExt(trunkTypeExt, headers.uniqueid) ){ // remove dialingUniqueid for current trunk
-			modop.removeDialingUniqueidTrunkWithTypeExt(trunkTypeExt, headers.uniqueid)
-			logger.debug("removed dialingUniqueid '" + headers.uniqueid + "' from trunk '" + trunkTypeExt + "'")
+	if( modop.isChannelTrunk(headers.channel) ){ // the channel is a trunk
+		var trunkTypeExt = modop.getTrunkTypeExtFromChannel(headers.channel);
+		if( modop.hasTrunkDialingUniqueidWithTypeExt(trunkTypeExt, trueUniqueid) ){ // remove dialingUniqueid for current trunk
+			modop.removeDialingUniqueidTrunkWithTypeExt(trunkTypeExt, trueUniqueid);
+			logger.debug("removed dialingUniqueid '" + trueUniqueid + "' from trunk '" + trunkTypeExt + "'");
 		}
-		if( modop.hasTrunkCallConnectedUniqueidWithTypeExt(trunkTypeExt, headers.uniqueid) ){ // remove callconnectedUniqueid for current trunk
-			modop.removeCallConnectedUniqueidTrunkWithTypeExt(trunkTypeExt, headers.uniqueid)
-			logger.debug("removed callConnectedUniqueid '" + headers.uniqueid + "' from trunk '" + trunkTypeExt + "'")
+		if( modop.hasTrunkCallConnectedUniqueidWithTypeExt(trunkTypeExt, trueUniqueid) ){ // remove callconnectedUniqueid for current trunk
+			modop.removeCallConnectedUniqueidTrunkWithTypeExt(trunkTypeExt, trueUniqueid);
+			logger.debug("removed callConnectedUniqueid '" + trueUniqueid + "' from trunk '" + trunkTypeExt + "'");
 		} else
-			logger.debug("callConnected uniqueid '" + headers.uniqueid + "' has already not present into trunk '" + trunkTypeExt + "'")
-		updateAllClientsForOpWithTypeExt(trunkTypeExt)
+			logger.debug("callConnected uniqueid '" + trueUniqueid + "' has already not present into trunk '" + trunkTypeExt + "'");
+		updateAllClientsForOpWithTypeExt(trunkTypeExt);
 	}
 	else if(modop.isChannelIntern(headers.channel)){ // headers.channel is an intern
 		var internTypeExt = modop.getInternTypeExtFromChannel(headers.channel)
-		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt, headers.uniqueid)){
-			modop.removeDialingUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid)
-			logger.debug("removed dialingUniqueid '" + headers.uniqueid + "' from intern '" + internTypeExt + "'")
+		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt, trueUniqueid)){
+			modop.removeDialingUniqueidInternWithTypeExt(internTypeExt, trueUniqueid);
+			logger.debug("removed dialingUniqueid '" + trueUniqueid + "' from intern '" + internTypeExt + "'");
 		} else
-			logger.debug("dialingUniqueid '" + headers.uniqueid + "' has already not present into intern '" + internTypeExt + "'")
-		if(modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, headers.uniqueid)){
-			modop.removeCallConnectedUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid)
-			logger.debug("removed callConnectedUniqueid '" + headers.uniqueid + "' from intern '" + internTypeExt + "'")
+			logger.debug("dialingUniqueid '" + trueUniqueid + "' has already not present into intern '" + internTypeExt + "'");
+		if(modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, trueUniqueid)){
+			modop.removeCallConnectedUniqueidInternWithTypeExt(internTypeExt, trueUniqueid);
+			logger.debug("removed callConnectedUniqueid '" + trueUniqueid + "' from intern '" + internTypeExt + "'");
 		} else
-			logger.debug("callConnected uniqueid '" + headers.uniqueid + "' has already not present into intern '" + internTypeExt + "'")
-		modop.updateHangupUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid) // add uniqueid of current hangup as 'lastHangupUniqueid'
-		updateAllClientsForOpWithTypeExt(internTypeExt)
+			logger.debug("callConnected uniqueid '" + trueUniqueid + "' has already not present into intern '" + internTypeExt + "'");
+		modop.updateHangupUniqueidInternWithTypeExt(internTypeExt, trueUniqueid); // add uniqueid of current hangup as 'lastHangupUniqueid'
+		updateAllClientsForOpWithTypeExt(internTypeExt);
 	}
 	// headers.channel = 'AsyncGoto/SIP/270-000002dc<ZOMBIE>'
 	else if(headers.channel.indexOf('AsyncGoto/SIP/')!=-1 && headers.channel.indexOf('<ZOMBIE>')!=-1){ // headers.channel is an intern that has redirect: remove callConnectedUniqueid
-		var temp = headers.channel.split('/')[1] // SIP
-		var internTypeExt = temp + '/' + headers.channel.split('-')[0].split('/')[2]
-		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt, headers.uniqueid)){
-			modop.removeDialingUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid)
-			loggerd.debug("removed dialingUniqueid '" + headers.uniqueid + "' from intern '" + internTypeExt + "'")
+		var temp = headers.channel.split('/')[1]; // SIP
+		var internTypeExt = temp + '/' + headers.channel.split('-')[0].split('/')[2]; // SIP/270
+		var tempCh = temp + '/' + headers.channel.split('<ZOMBIE>')[0].split('/')[2]; // SIP/270-000002dc
+		var tempUniqueid = '';
+		for(uniqueid in chStat){
+			if(chStat[uniqueid].channel===tempCh)
+				tempUniqueid = uniqueid;
+		}
+		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt, tempUniqueid)){
+			modop.removeDialingUniqueidInternWithTypeExt(internTypeExt, tempUniqueid);
+			loggerd.debug("removed dialingUniqueid '" + tempUniqueid + "' from intern '" + internTypeExt + "'");
 		} else
-			logger.debug("dialingUniqueid '" + headers.uniqueid + "' has already not present into intern '" + internTypeExt + "'")
-		if(modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, headers.uniqueid)){
-			modop.removeCallConnectedUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid)
-			logger.debug("removed callConnectedUniqueid '" + headers.uniqueid + "' from intern '" + internTypeExt + "'")
+			logger.debug("dialingUniqueid '" + tempUniqueid + "' has already not present into intern '" + internTypeExt + "'");
+		if(modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, tempUniqueid)){
+			modop.removeCallConnectedUniqueidInternWithTypeExt(internTypeExt, tempUniqueid);
+			logger.debug("removed callConnectedUniqueid '" + tempUniqueid + "' from intern '" + internTypeExt + "'");
 		} else
-			logger.debug("callConnected uniqueid '" + headers.uniqueid + "' has already not present into intern '" + internTypeExt + "'")
-		modop.updateHangupUniqueidInternWithTypeExt(internTypeExt, headers.uniqueid) // add uniqueid of current hangup as 'lastHangupUniqueid'
-		updateAllClientsForOpWithTypeExt(internTypeExt)
+			logger.debug("callConnected uniqueid '" + tempUniqueid + "' has already not present into intern '" + internTypeExt + "'");
+		modop.updateHangupUniqueidInternWithTypeExt(internTypeExt, tempUniqueid); // add uniqueid of current hangup as 'lastHangupUniqueid'
+		updateAllClientsForOpWithTypeExt(internTypeExt);
+		trueUniqueid = tempUniqueid;
         }
 	// ext
-	var ext
-	if( chStat[headers.uniqueid].calleridnum!='' && chStat[headers.uniqueid].calleridnum!=undefined && !modop.isExtGroup(chStat[headers.uniqueid].calleridnum) ){
+	var ext;
+	if( chStat[trueUniqueid].calleridnum!=='' && chStat[trueUniqueid].calleridnum!==undefined && !modop.isExtGroup(chStat[trueUniqueid].calleridnum) ){
 		/* '1308643186.683': 
 		   { channel: 'SIP/270-00000243',
 		     calleridname: '',
 		     calleridnum: '270',
 		     status: 'up' } } */
 		// because (CASE I) is not possibile to calculate ext with ( ext = chStat[headers.uniqueid].calleridnum ). So:
-		ext = modop.getExtInternFromChannel(chStat[headers.uniqueid].channel)
+		ext = modop.getExtInternFromChannel(chStat[trueUniqueid].channel);
 	} else {
 		/* { '1308643183.682': 
 		    { channel: 'SIP/271-00000242',
 		      calleridname: 'CTI-271',
 		      calleridnum: '',
 		      status: 'up' }, */
-		if(chStat[headers.uniqueid].channel.indexOf('SIP/')!=-1 && chStat[headers.uniqueid].channel.indexOf('AsyncGoto/')==-1 ) // not redirect
-			ext = chStat[headers.uniqueid].channel.split('-')[0].split('/')[1]
+		if(chStat[trueUniqueid].channel.indexOf('SIP/')!=-1 && chStat[trueUniqueid].channel.indexOf('AsyncGoto/')==-1 ) // not redirect
+			ext = chStat[trueUniqueid].channel.split('-')[0].split('/')[1];
 		// chStat = { '1308664818.896': { channel: 'AsyncGoto/SIP/270-000002df' } } 
 		else if( chStat[headers.uniqueid].channel.indexOf('AsyncGoto/SIP/')!=-1 ) // is redirect
-			ext = chStat[headers.uniqueid].channel.split('-')[0].split('/')[2]
+			ext = chStat[trueUniqueid].channel.split('-')[0].split('/')[2];
 	}
 	// advise client of hangup if this event is not relative to redirect operation
-	if( headers.channel.indexOf('AsyncGoto/SIP/')==-1 && headers.channel.indexOf('<ZOMBIE>')==-1 ){
+	if( headers.channel.indexOf('AsyncGoto/SIP/')===-1 && headers.channel.indexOf('<ZOMBIE>')===-1 ){
 		var c = clients[ext]
 		if(c!=undefined){
 	                var msg = "Call has hung up. Reason: " + headers.causetxt + "  (Code: " + headers.cause + ")"
@@ -1153,10 +1161,10 @@ am.addListener('hangup', function(headers) {
 	} else
 		logger.debug("discarded event 'hangup' because redirect")
 
-	delete chStat[headers.uniqueid]
+	delete chStat[trueUniqueid];
 	logger.debug("keys of chStat = " + Object.keys(chStat).length)
-//	logger.debug("delete '" + headers.uniqueid + "' from chStat: so it is = " + sys.inspect(chStat))
-})
+	logger.debug("delete '" + headers.uniqueid + "' from chStat: so it is = " + sys.inspect(chStat))
+});
 
 
 
@@ -1510,7 +1518,9 @@ am.addListener('callconnected', function(headers) {
   context: 'from-internal',
   extension: '900',
   priority: '10',
-  uniqueid: '1308652170.784' } */
+  uniqueid: '1308652170.784' }
+  *
+  * by default this event is not generated. Can be activated by amp */
 am.addListener('agentcalled', function(headers) {
 	logger.debug("EVENT 'AgentCalled': headers = " + sys.inspect(headers))
 	var from = chStat[headers.uniqueid].calleridnum
