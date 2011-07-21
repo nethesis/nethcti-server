@@ -248,6 +248,17 @@ if  (defined($sortoption) && ($sortoption eq "lastname")) {
 	@extensionlist=sort {$a->[1] cmp $b->[1]}(@extensionlist);
 }
 
+# get voicemail enabled extension
+
+my @array;
+open(FILE,"/etc/asterisk/voicemail_additionals.conf");
+while (<FILE>) {
+   if (/^[0-9]/) {
+       my @data = split;
+       push(@array,$data[0])
+   }
+}
+
 #Second, populate groups
 
 @grouplist=();
@@ -276,7 +287,7 @@ else { print "Table does not exist: devices\n"; }
 	}
 
 
-## SME server chnges
+## SME server changes
 
 #Next, populate conferences
 @conferences=();
@@ -357,6 +368,13 @@ if (table_exists($dbh,"ampusers")) {
 		# some sensible defaults for voicemail ext and context
 		my $vmext = @{ $row }[1];
 		my $vmcontext = "default";
+		my $vm = "no";
+                # get if voicemail is enabled
+                foreach my $sow ( @array ) {
+
+                  if ($sow eq $id) {$vm = "yes";}
+
+                }
 		# the device tech table should also have a dial context - if not assume from-internal
 		my $context = "from-internal";
 		# database table name for iax2 is just iax but sip and zap are ok
@@ -394,7 +412,7 @@ if (table_exists($dbh,"ampusers")) {
 		
 		
 		$btn=get_next_btn($extenpos,$btn);
-		print EXTEN "[$dial]\nLabel=\"$id : $description\"\nExtension=$id\nContext=$context\nVoicemail_Context=$vmcontext\nVoiceMailExt=$vmprefix$vmext\@$context\ntab=interno\nastdbkey=$id\n";
+		print EXTEN "[$dial]\nLabel=\"$id : $description\"\nExtension=$id\nContext=$context\nVoicemail=$vm\nVoicemail_Context=$vmcontext\nVoiceMailExt=$vmprefix$vmext\@$context\ntab=interno\nastdbkey=$id\n";
 	}
 	
 	
