@@ -1,6 +1,6 @@
 [customer_card_default]
 dbhost=localhost
-dbport=3306
+dbport=/var/lib/mysql/mysql.sock
 dbtype=mysql
 dbuser=pbookuser
 dbpassword=pbookpass
@@ -9,7 +9,7 @@ query=select * from phonebook where homephone like '%$EXTEN' or workphone like '
 
 [customer_card_chiamate]
 dbhost=localhost
-dbport=3306
+dbport=/var/lib/mysql/mysql.sock
 dbtype=mysql
 dbuser=asteriskuser
 { $OUT.="dbpassword=$db_pwd"; }

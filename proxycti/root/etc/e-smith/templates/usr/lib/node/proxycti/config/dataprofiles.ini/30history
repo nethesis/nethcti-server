@@ -1,6 +1,6 @@
 [day_history_call]
 dbhost=localhost
-dbport=3306
+dbport=/var/lib/mysql/mysql.sock
 dbtype=mysql
 dbuser=asteriskuser
 { $OUT.="dbpassword=$db_pwd"; }
@@ -9,7 +9,7 @@ query=select date_format(calldate,'%d/%m/%Y') as date, date_format(calldate,'%H:
 
 [current_week_history_call]
 dbhost=localhost
-dbport=3306
+dbport=/var/lib/mysql/mysql.sock
 dbtype=mysql
 dbuser=asteriskuser
 { $OUT.="dbpassword=$db_pwd"; }
@@ -18,7 +18,7 @@ query=select date_format(calldate,'%d/%m/%Y') as date, date_format(calldate,'%H:
 
 [current_month_history_call]
 dbhost=localhost
-dbport=3306
+dbport=/var/lib/mysql/mysql.sock
 dbtype=mysql
 dbuser=asteriskuser
 { $OUT.="dbpassword=$db_pwd"; }
