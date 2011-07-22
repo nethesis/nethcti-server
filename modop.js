@@ -37,22 +37,16 @@ var logger = log4js.getLogger('[Modop]');
      status: 'OK (1 ms)',
      dndStatus: 'on',
      cfStatus: 'off',
-     cfStatusToExt: '' },
-*/
+     cfStatusToExt: '' }, */
 var extStatusForOp = {};
-
 /* This is the list of tab to view or not in the operator panel of the clients.
  * It has the same structure as the configuration file optab.ini, with key equal
- * to section names, and the value the object that reports keywords of the section.
- */
+ * to section names, and the value the object that reports keywords of the section */
 var tabOp = {};
-
-var am // asterisk manager
-var controller // controller
-
-/*
- * Constructor
- */
+var am; // asterisk manager
+var controller; // controller
+var listExtActiveVM = {}; // list of extensions that has active voicemail
+// Constructor 
 exports.Modop = function(){
 	EventEmitter.call(this)
 	self = this
@@ -110,7 +104,9 @@ exports.Modop = function(){
 	this.getExtFromQueueChannel = function(ch) { return getExtFromQueueChannel(ch) }
 	this.setRefreshInterval = function(min) { setRefreshInterval(min) }
 	this.stopRefresh = function() { stopRefresh() }
+	this.getAllVoicemailStatus = function() { return getAllVoicemailStatus(); }
 }
+function getAllVoicemailStatus(){ return listExtActiveVM; }
 function stopRefresh(){
 	logger.debug("stop refresh")
 	clearInterval(idIntervalRefresh)
@@ -865,6 +861,14 @@ function initExtStatusForOp(){
 	extStatusForOp = {}
 	// read file where are the list of all extensions
         extStatusForOp = iniparser.parseSync(FILE_EXT_LIST);
+	// initialize listExtActiveVM
+	var tempExt = '';
+	for(typeExt in extStatusForOp){
+		if(extStatusForOp[typeExt].tab==="interno" && extStatusForOp[typeExt].Voicemail==="yes"){
+			tempExt = extStatusForOp[typeExt].Extension;
+			listExtActiveVM[tempExt] = "";
+		}
+	}
 	// check if exists FILE_FASCI_INI
 	var tempFasciIni = undefined
 	if(pathreq.existsSync(FILE_FASCI_INI)){

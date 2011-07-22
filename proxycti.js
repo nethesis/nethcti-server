@@ -1967,6 +1967,7 @@ io.on('connection', function(client){
 			ACTION_CHECK_DND_STATUS:   'check_dnd_status',
 			ACTION_CHECK_CW_STATUS:    'check_cw_status',
 			ACTION_SPY_LISTEN_SPEAK:   'spy_listen_speak',
+			ACTION_GET_ALL_VM_STATUS:  'get_all_vm_status',
 			ACTION_CF_UNAVAILABLE_ON: 'cf_unavailable_on',
 			ACTION_CF_UNAVAILABLE_OFF: 'cf_unavailable_off',
 			ACTION_REDIRECT_VOICEMAIL: 'redirect_voicemail',
@@ -2095,6 +2096,13 @@ io.on('connection', function(client){
 					}
 				});
 	  		break;
+			case actions.ACTION_GET_ALL_VM_STATUS:
+				var list = modop.getAllVoicemailStatus();
+				var respMessage = new ResponseMessage(client.sessionId, 'ack_all_vm_status', '');
+				respMessage.list = list;
+				client.send(respMessage);
+                                logger.debug("RESP 'ack_all_vm_status' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+			break;
 	  		case actions.ACTION_CALLOUT:
   				var extToCall = message.extToCall;
   				// check if the client is logged in
