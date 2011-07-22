@@ -1,0 +1,7 @@
+; tutte le operazioni sulle chiamate, comprese l'ascolto (spy) e la registrazione
+[OP_PLUS]
+extensions=all
+
+; tutte le operazioni sulle chiamate, ESCLUSE l'ascolto (spy) e la registrazione
+[OP_BASE]
+extensions=all

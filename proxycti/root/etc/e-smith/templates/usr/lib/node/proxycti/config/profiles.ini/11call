@@ -1,0 +1,5 @@
+[CALL_IN]
+extensions=ALL
+
+[CALL_OUT]
+extensions=all
