@@ -12,6 +12,7 @@ const HISTORY_CALL = "HISTORY_CALL"
 const CUSTOMER_CARD = "CUSTOMER_CARD"
 const OP_PLUS = "OP_PLUS"
 const OP_BASE = "OP_BASE"
+const PRIVACY = "PRIVACY";
 const ALL = "all"
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF) */
@@ -34,7 +35,8 @@ actions =
      insoluti: '501,502,all',
      ticket: '501,500,all' },
   OP_PLUS: { extensions: 'all' },
-  OP_BASE: { extensions: 'all' } } */
+  OP_BASE: { extensions: 'all' } 
+  PRIVACY: { extensions: 'all' } } */
 actions = {}
 // this is the controller to manage changing in the configuration file of profiles
 controller = null
@@ -52,6 +54,7 @@ exports.Profiler = function(){
 	this.checkActionOpPlusPermit = function(exten) { return checkActionPermit(exten, OP_PLUS) }
 	this.checkActionOpBasePermit = function(exten) { return checkActionPermit(exten, OP_BASE) }
         this.setLogger = function(logfile,level) { log4js.addAppender(log4js.fileAppender(logfile), '[Profiler]'); logger.setLevel(level); }
+	this.checkPrivacyPermit = function(exten) { return checkActionPermit(exten, PRIVACY); }
 }
 function addController(contr){
 	controller = contr
@@ -81,12 +84,12 @@ function getTypesCustomerCardPermit(exten){
 }
 // Check if the user "exten" has the permit "action"
 function checkActionPermit(exten, action){
-	var pattExt = new RegExp("\\b" + exten + "\\b")
-        var pattAll = new RegExp("\\b" + ALL + "\\b", "i")
-        if( pattExt.test(actions[action].extensions) || pattAll.test(actions[action].extensions)  )
-                return true
+	var pattExt = new RegExp("\\b" + exten + "\\b");
+        var pattAll = new RegExp("\\b" + ALL + "\\b", "i");
+        if( pattExt.test(actions[action].extensions) || (pattAll.test(actions[action].extensions) && !pattExt.test(actions[action].exclude))  )
+                return true;
         else
-                return false
+                return false;
 }
 // Initialize the profiles of all extensions by means the reading of the config file.
 function initProfiles(){
