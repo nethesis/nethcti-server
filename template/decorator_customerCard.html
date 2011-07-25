@@ -1,3 +1,4 @@
+<div id='date'></div><div style='clear: both'> </div>
 {:if customerNotInDB}
 <table width="50%" cellpadding="5" style="border: 1px solid gray"><tr><td><h3>{=from}</h3></td></tr> <tr><td>Spiacente, nessun dato presente.</td></tr></table>
 {:else}
@@ -92,9 +93,9 @@
 <div id='cdr'>
 <div class='name'>Ultime chiamate</div>
 <table>
-<tr><th>Data</th><th>Ora</th><th>Durata</th><th>Sorgente</th><th>Destinazione</th></tr>
+<tr><th>Data</th><th>Ora</th><th>Durata</th><th>Sorgente</th><th/><th>Destinazione</th></tr>
 {:r .}
-  <tr><td>{=date}</td><td>{=time}</td><td>{=billsec}</td><td>{=clid}</td><td>{=dst}</td></tr>
+  <tr><td>{=date}</td><td>{=time}</td><td>{=billsec}</td><td>{=clid}</td><td><img src="{=server_address}/template/images/{=direction}.png" title='Direction' alt='Direction'/></td><td>{=dst}</td></tr>
 {/:r}
 </table>
 </div>
@@ -102,3 +103,18 @@
 
 {/:s}
 {/:if}
+<script type="text/javascript">
+$(function() {
+        var currentDate = new Date()
+        var day = currentDate.getDate()
+        var month = currentDate.getMonth()
+        var year = currentDate.getFullYear()
+        var hours = currentDate.getHours()
+	var minutes = currentDate.getMinutes()
+
+        if (minutes < 10)  minutes = "0" + minutes
+        if (hours < 10)  hours = "0" + hours
+	$("#date").html(day + "/" + month + "/" + year + " "+ hours + ":" + minutes);
+});
+</script>
+
