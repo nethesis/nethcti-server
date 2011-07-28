@@ -1798,6 +1798,11 @@ function returnOperatorPanelToClient(){
                 mess.extStatusForOp = modop.getExtStatusForOp()
                 mess.tabOp = modop.getTabOp()
                 mess.opPermit = 'plus'
+		if(profiler.checkPrivacyPermit(clientToReturnExtStatusForOp.extension)){
+			mess.priv = '1';
+		} else {
+			mess.priv = '0';
+		}
                 clientToReturnExtStatusForOp.send(mess)
                 logger.debug("RESP 'ack_get_peer_list_complete_op' has been sent to [" + extToReturnExtStatusForOp + "] sessionId '" + clientToReturnExtStatusForOp.sessionId + "'")
         }
@@ -1807,6 +1812,11 @@ function returnOperatorPanelToClient(){
                 mess.extStatusForOp = modop.getExtStatusForOp()
                 mess.tabOp = modop.getTabOp()
                 mess.opPermit = 'base'
+		if(profiler.checkPrivacyPermit(clientToReturnExtStatusForOp.extension)){
+                        mess.priv = '1';
+                } else {
+                        mess.priv = '0';
+                }
                 clientToReturnExtStatusForOp.send(mess)
                 logger.debug("RESP 'ack_get_peer_list_complete_op' has been sent to [" + extToReturnExtStatusForOp + "] sessionId '" + clientToReturnExtStatusForOp.sessionId + "'")
         }
@@ -3030,6 +3040,11 @@ function updateAllClientsForOpWithTypeExt(typeext){
                 var msg = "state of " + newState.Label + " has changed: update ext new state";
                 var response = new ResponseMessage(c.sessionId, "update_ext_new_state_op", msg);
                 response.extNewState = newState;
+		if(profiler.checkPrivacyPermit(c.extension)){
+	                response.priv = '1';
+	        } else {
+			response.priv = '0';
+		}
                 c.send(response);
                 logger.debug("RESP 'update_ext_new_state_op' has been sent to client [" + key + "] sessionId '" + c.sessionId + "'");
         }
@@ -3050,6 +3065,11 @@ function updateAllClientsForOpWithExt(ext){
                 var msg = "state of " + newState.Label + " has changed: update ext new state";
                 var response = new ResponseMessage(c.sessionId, "update_ext_new_state_op", msg);
                 response.extNewState = newState;
+		if(profiler.checkPrivacyPermit(c.extension)){
+			response.priv = '1';	
+		} else {
+			response.priv = '0';
+		}
                 c.send(response);
                 logger.debug("RESP 'update_ext_new_state_op' has been sent to [" + key + "] sessionId '" + c.sessionId + "'");
         }
