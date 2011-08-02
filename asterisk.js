@@ -194,6 +194,11 @@ exports.AsteriskManager = function (newconfig) {
 		/* Added by Alessandro
 		 * This event is used to obtain all channels ant their status. 
 		 * It is emitted after "Action: CoreShowChannels" command*/
+		case "QueueMemberStatus":
+			console.log("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+			console.log(headers);
+			console.log("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+		break;
 		case "CtiResultCoreShowChannels":
 			self.emit('ctiresultcoreshowchannels', headers);
 		break;
