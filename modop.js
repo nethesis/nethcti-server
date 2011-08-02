@@ -17,6 +17,7 @@ const DIAL_TO = 0;
 const START_RECORD = 1;
 const STOP_RECORD = 0;
 const VM_PATH_BASE = '/var/spool/asterisk/voicemail/default'
+const QUEUE_NAME = 'code';
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF) */
 var logger = log4js.getLogger('[Modop]');
@@ -105,6 +106,30 @@ exports.Modop = function(){
 	this.setRefreshInterval = function(min) { setRefreshInterval(min) }
 	this.stopRefresh = function() { stopRefresh() }
 	this.getAllVoicemailStatus = function() { return getAllVoicemailStatus(); }
+	this.addUniqueidCallToQueueWithTypeExt = function(queueTypeExt, uniqueid, calleridnum) { addUniqueidCallToQueueWithTypeExt(queueTypeExt, uniqueid, calleridnum);  }
+	this.hasQueueUniqueidCallWithTypeExt = function(queueTypeExt, uniqueid) { return hasQueueUniqueidCallWithTypeExt(queueTypeExt, uniqueid); }
+	this.removeUniqueidCallFromQueue = function(uniqueid) { return removeUniqueidCallFromQueue(uniqueid); }
+}
+function removeUniqueidCallFromQueue(uniqueid){
+	var queueTypeExt = undefined;
+	for(typeExt in extStatusForOp){
+		if(extStatusForOp[typeExt].tab==='code' && extStatusForOp[typeExt].listCall[uniqueid]!==undefined){
+			queueTypeExt = typeExt;
+			delete extStatusForOp[typeExt].listCall[uniqueid];
+		}
+	}
+	return queueTypeExt;
+}
+function hasQueueUniqueidCallWithTypeExt(queueTypeExt, uniqueid){
+	if(extStatusForOp[queueTypeExt].tab==='code' && extStatusForOp[queueTypeExt].listCall[uniqueid]!==undefined){
+		return true;
+	}
+	return false;
+}
+function addUniqueidCallToQueueWithTypeExt(queueTypeExt, uniqueid, calleridnum){
+	if(extStatusForOp[queueTypeExt].tab==='code'){
+		extStatusForOp[queueTypeExt].listCall[uniqueid] = calleridnum;
+	}
 }
 function getAllVoicemailStatus(){ return listExtActiveVM; }
 function stopRefresh(){
@@ -850,6 +875,13 @@ function initTrunkWithFasciIni(tempFasciIni){
 		}
 	}
 }
+function initListCallForQueue(){
+	for(key in extStatusForOp){
+		if(extStatusForOp[key].tab===QUEUE_NAME){
+			extStatusForOp[key].listCall = {};
+		}
+	}
+}
 /* Initialize 'extStatusForOp'. Initially it read a configuration file that contains list of
  * all extensions. After that it sends the 'SIPPeers' action to the asterisk server. So, it
  * successively receives more 'PeerEntry' events from the asterisk server and at the end it receive
@@ -883,6 +915,8 @@ function initExtStatusForOp(){
 	initCallConnectedUniqueidForIntern()
 	initCallConnectedCountForIntern()
 	initDialingUniqueidForIntern()
+	// init queue
+	initListCallForQueue();
 	// create action for asterisk server that generate series of 'PeerEntry' events
         var actionSIPPeersOP = {
                 Action: 'SIPPeers'
