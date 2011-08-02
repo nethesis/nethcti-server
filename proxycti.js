@@ -1050,6 +1050,13 @@ am.addListener('hangup', function(headers) {
 		}
 	}
 
+	// remove call uniqueid from listCall of queue. Return queueTypeExt of the queue that has the uniqueid in its listCall, otherwise undefined is returned
+	var queueTypeExt = modop.removeUniqueidCallFromQueue(headers.uniqueid);
+	if(queueTypeExt!==undefined){
+		logger.debug("hangup call is relative to queue: remove uniqueid '" + headers.uniqueid + "' from listCall of [" + queueTypeExt + "]");
+		updateAllClientsForOpWithTypeExt(queueTypeExt);
+	}
+
 	if(headers.channel.indexOf('<ZOMBIE>')===-1 && chStat[trueUniqueid]===undefined){
 		logger.warn("discard 'hangup' event: it isn't present in chStat. The cause can be the start of this server during the asterisk functioning");
 		return;
@@ -1553,13 +1560,23 @@ am.addListener('callconnected', function(headers) {
   priority: '10',
   uniqueid: '1308652170.784' }
   *
-  * by default this event is not generated. Can be activated by amp */
+  * by default this event is not generated. Can be activated by amp
+  *
+  * if the queue hasn't the uniqueid in its 'listCall', then add calleridnum
+  * to its listCall object as: ..uniqueid: calleridnum.. */
 am.addListener('agentcalled', function(headers) {
 	logger.debug("EVENT 'AgentCalled': headers = " + sys.inspect(headers))
+	/*
 	var from = chStat[headers.uniqueid].calleridnum
 	if(modop.isExtPresent(from) && modop.isChannelIntern(headers.channelcalling)){
 		chStat[headers.uniqueid].dialDirection = DIAL_FROM
 		chStat[headers.uniqueid].dialExt = headers.queue
+	}
+	*/
+	var queueTypeExt = 'QUEUE/'+headers.queue;
+	if(!modop.hasQueueUniqueidCallWithTypeExt(queueTypeExt, headers.uniqueid)){
+		modop.addUniqueidCallToQueueWithTypeExt(queueTypeExt, headers.uniqueid, headers.calleridnum);
+		updateAllClientsForOpWithTypeExt(queueTypeExt);
 	}
 })
 
@@ -2999,7 +3016,7 @@ io.on('connection', function(client){
   	});
 
   	client.on('disconnect', function(){
-  		logger.info("EVENT 'Disconnected': WebSocket client '" + client.sessionId + "' disconnected");
+  		logger.info("EVENT 'Disconnected': WebSocket client '" + client.sessionId + "' disconnected with IP = " + client.connection.remoteAddress);
   		removeClient(client.sessionId);
   		if(!testAlreadyLoggedSessionId(client.sessionId))
   			logger.debug("removed client sessionId '" + client.sessionId + "' from clients");
