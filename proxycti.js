@@ -710,9 +710,11 @@ am.addListener('dialing', function(headers) {
 			trueDestUniqueid = uniqueid;
 		}
 	}
-
 	// from
-	var from = chStat[trueUniqueid].calleridnum
+	var from = undefined;
+	if(chStat[trueUniqueid]!==undefined){
+		from = chStat[trueUniqueid].calleridnum
+	}
 	// in this case the call come from queue
 	if(from==undefined && headers.channel.indexOf('Local/')!=-1 && headers.channel.indexOf('@from-internal-')!=-1 )
 		from = headers.calleridnum;
