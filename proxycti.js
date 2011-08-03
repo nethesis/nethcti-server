@@ -20,6 +20,7 @@ const TEMPLATE_DECORATOR_VCARD_FILENAME = "./template/decorator_vcard.html";
 const TEMPLATE_DECORATOR_CUSTOMERCARD_FILENAME = "./template/decorator_customerCard.html";
 const TEMPLATE_DECORATOR_HISTORY_CALL_FILENAME = "./template/decorator_historyCall.html";
 const AST_CALL_AUDIO_DIR = "/var/spool/asterisk/monitor";
+const SMS_DIR = "sms";
 const CALL_PREFIX = "CTI-";
 const SPY_PREFIX = "SPY-";
 const REDIRECT_VM_PREFIX = "REDIR_VM-";
@@ -75,7 +76,7 @@ function initServerAndAsteriskParameters(){
 
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF) */
-//log4js.clearAppenders();
+log4js.clearAppenders();
 log4js.addAppender(log4js.fileAppender(logfile), '[ProxyCTI]');
 var logger = log4js.getLogger('[ProxyCTI]');
 logger.setLevel(loglevel);
@@ -1985,6 +1986,7 @@ io.on('connection', function(client){
 			ACTION_CF_OFF: 	'cf_off',
 			ACTION_PARK: 	'park',
 			ACTION_PICKUP: 	'pickup',
+			ACTION_SEND_SMS:   'send_sms',
 			ACTION_HANGUP_SPY: 'hangup_spy',
 			ACTION_CF_BUSY_ON: 'cf_busy_on',
 			ACTION_CF_BUSY_OFF: 'cf_busy_off',
@@ -3009,6 +3011,38 @@ io.on('connection', function(client){
                                         logger.debug("'actionRedirectVoicemailToExt' " + sys.inspect(actionRedirectVoicemailToExt) + " has been sent to AST");
                                 })
                         break;
+			case actions.ACTION_SEND_SMS:
+				var destNum = message.destNum;
+				var text = message.text;
+				var pathori = SMS_DIR+'/'+destNum;
+				var smsFilepath = SMS_DIR+'/'+destNum;
+				var res = true;
+				var index = 1;
+				while(res){ // check if the file already exist: if exist it modify file name
+					try{
+						fs.statSync(smsFilepath);
+						smsFilepath = pathori+'-'+index;
+						index++;
+					} catch(e){
+						res=false;
+					}
+				}
+				fs.writeFile(smsFilepath, text, function(err){
+					if(err){
+						logger.error(err + ': there was a problem in creation of sms file "' + smsFilepath + '"');
+						// send error to client
+                                        	var mess = new ResponseMessage(client.sessionId, "error_send_sms", '');
+                                        	client.send(mess);
+                                        	logger.debug("RESP 'error_send_sms' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+					} else{
+						logger.debug('created sms file "' + smsFilepath + '"');
+						// send ack to client
+                                        	var mess = new ResponseMessage(client.sessionId, "ack_send_sms", '');
+                                        	client.send(mess);
+                                        	logger.debug("RESP 'ack_send_sms' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+					}
+				});
+			break;
 	  		default:
 	  			logger.warn("ATTENTION: received unknown ACTION '" + action + "': not supported");
 	  		break;
