@@ -199,6 +199,9 @@ exports.AsteriskManager = function (newconfig) {
 			console.log(headers);
 			console.log("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
 		break;
+		case "ParkedCallGiveUp":
+			self.emit('parkedcallgiveup', headers);
+		break;
 		case "CtiResultCoreShowChannels":
 			self.emit('ctiresultcoreshowchannels', headers);
 		break;
