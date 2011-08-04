@@ -945,7 +945,7 @@ EVENT 'Hangup': headers = { event: 'Hangup',
   causetxt: 'Normal Clearing' } */
 am.addListener('hangup', function(headers) {
         logger.debug("EVENT 'Hangup': headers = " + sys.inspect(headers))
-	logger.debug("keys of chStat = " + Object.keys(chStat).length)
+	logger.debug("chStat = " + sys.inspect(chStat));
 
 	/* if the hangup event is relative to Local/270@from-internal-a7dd;1', means that this hangup is relative
 	 * to the intermediate node created by asterisk that finish with ';1'. So it is ingored, because there will be
@@ -1069,6 +1069,10 @@ am.addListener('hangup', function(headers) {
 		logger.debug("discard 'hangup' event: relative to queue. Delete it from chStat");
 		delete chStat[trueUniqueid];
 		logger.debug("keys of chStat = " + Object.keys(chStat).length);
+		return;
+	}
+	if(headers.channel.indexOf('Parked/SIP/')!==-1 && headers.channel.indexOf('<ZOMBIE>')!==-1){ // channel = Parked/SIP/271-000008ab<ZOMBIE>
+		logger.debug("discard 'hangup' event: relative to call that has been parked");
 		return;
 	}
 	if(headers.channel.indexOf('<ZOMBIE>')!=-1 && headers.channel.indexOf('AsyncGoto/SIP/')==-1){ // (CASE M)  channel: 'SIP/204-00000401<ZOMBIE>'
@@ -1734,7 +1738,7 @@ am.addListener('userevent', function(headers){
    Uniqueid: 1305117424.486 }
  */
 am.addListener('parkedcall', function(headers){
-	logger.debug("EVENT 'ParkedCall'");
+	logger.debug("EVENT 'ParkedCall': headers = " + sys.inspect(headers));
 	var parking = 'PARK' + headers.exten;
 	var extParked = headers.channel.split("/")[1];
 	extParked = extParked.split("-")[0];
@@ -1758,11 +1762,69 @@ am.addListener('parkedcall', function(headers){
    CallerIDName: giovanni }
  */
 am.addListener('parkedcalltimeout', function(headers){
-        logger.debug("EVENT 'ParkedCallTimeOut'");
+        logger.debug("EVENT 'ParkedCallTimeOut': headers = " + sys.inspect(headers));
+	logger.debug("chStat = " + sys.inspect(chStat));
         var parking = 'PARK' + headers.exten;
         // update status of park ext
         modop.updateEndParkExtStatus(parking);
         updateAllClientsForOpWithExt(parking);
+});
+
+/* This event is trigger when the call parked has hangup
+ *
+EVENT 'ParkedCallGiveUp': headers = { event: 'ParkedCallGiveUp',
+  privilege: 'call,all',
+  exten: '71',
+  channel: 'SIP/271-000008e7',
+  calleridnum: '271',
+  calleridname: 'AlessandroTest2' } */
+am.addListener('parkedcallgiveup', function(headers){
+	// park
+	logger.debug("EVENT 'ParkedCallGiveUp': headers = " + sys.inspect(headers));
+	logger.debug("chStat = " + sys.inspect(chStat));
+	var parking = 'PARK' + headers.exten;
+	modop.updateEndParkExtStatus(parking);
+	updateAllClientsForOpWithExt(parking);
+	/* channel
+	chStat = { '1312444622.4987':
+		   { channel: 'SIP/271-000008e7',
+		     status: 'up',
+		     calleridnum: '271',
+		     calleridname: 'AlessandroTest2',
+		     dialExt: '270',
+		     dialDirection: 1 },
+		  '1312444632.4989': { channel: 'Parked/SIP/271-000008e7' } } */
+	var trueUniqueid = '';
+	for(uniqueid in chStat){
+		if(chStat[uniqueid].channel===headers.channel){
+			trueUniqueid = uniqueid;
+		}
+	}
+	if(modop.isChannelIntern(headers.channel)){
+		var internTypeExt = modop.getInternTypeExtFromChannel(headers.channel);
+		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt, trueUniqueid)){
+			modop.removeDialingUniqueidInternWithTypeExt(internTypeExt, trueUniqueid);
+			logger.debug("removed dialingUniqueid '" + trueUniqueid + "' from intern '" + internTypeExt + "'");
+		} else {
+			logger.debug("dialingUniqueid '" + trueUniqueid + "' has already not present into intern '" + internTypeExt + "'");
+		}
+		if(modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, trueUniqueid)){
+			modop.removeCallConnectedUniqueidInternWithTypeExt(internTypeExt, trueUniqueid);
+                        logger.debug("removed callConnectedUniqueid '" + trueUniqueid + "' from intern '" + internTypeExt + "'");
+		} else {
+			logger.debug("callConnected uniqueid '" + trueUniqueid + "' has already not present into intern '" + internTypeExt + "'");
+		}
+		modop.updateExtStatusForOpWithTypeExt(internTypeExt,"hangup");
+		modop.updateHangupUniqueidInternWithTypeExt(internTypeExt, trueUniqueid); // add uniqueid of current hangup as 'lastHangupUniqueid'
+		updateAllClientsForOpWithTypeExt(internTypeExt);
+	}
+	// chStat
+	for(uniqueid in chStat){ // clean chStat
+		if(chStat[uniqueid].channel.indexOf(headers.channel)!==-1){
+			logger.debug("remove '" + chStat[uniqueid].channel + "' from chStat");
+			delete chStat[uniqueid];
+		}
+	}
 });
 
 
