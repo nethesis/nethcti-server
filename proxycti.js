@@ -1939,11 +1939,9 @@ am.addListener('messagewaiting', function(headers){
  * Section relative to HTTP server
  */
 server = http.createServer(function(req, res){
-  	
   	var parsed_url = url.parse(req.url,true);
 	var path = parsed_url.pathname;
 	var params = parsed_url.query;
-
 	switch (path){
 	    case '/':
     		path = "/index.html";
@@ -1980,6 +1978,11 @@ server = http.createServer(function(req, res){
                                 send404(res);
                         }
                 });
+	    break;
+	    case '/call':
+		var ext = params.ext;
+		var to = params.to;
+		callout(ext, to);
 	    break;
 	    default: 
     		// check if the requested file exists
@@ -2018,6 +2021,49 @@ logger.info("HTTP server listening on port: " + port);
  * end of section relative to HTTP server
  ******************************************************************************/
 
+function callout(extFrom, to){
+	// check if the user has the permission of dial out
+	if(profiler.checkActionCallOutPermit(extFrom)){
+		logger.debug("check 'callOut' permission for [" + extFrom + "] OK: execute calling...");
+                // create call action for asterisk server
+                var actionCall = {
+			Action: 'Originate',
+                        Channel: 'SIP/' + extFrom,
+			Exten: to,
+                        Context: 'from-internal',
+                        Priority: 1,
+                        Callerid: CALL_PREFIX + extFrom,
+                        Account: to,
+                        Timeout: 30000
+                };
+                /* update all clients that 'extFrom' has been started a call out, so they can update their OP.
+                 * This is made because asterisk.js not generate 'newState' ringing event until the user
+                 * has pickup his phone */
+                sendAllClientAckCalloutFromCti(extFrom)
+                // send action to asterisk
+                am.send(actionCall, function () {
+			logger.debug('\'actionCall\' ' + sys.inspect(actionCall) + ' has been sent to AST');
+			var client = clients[extFrom];
+			if(client!==undefined){
+				var msgTxt = "call action has been sent to asterisk: " + extFrom + " -> " + to;
+	                        var respMsg = new ResponseMessage(client.sessionId, "ack_callout", msgTxt);
+				client.send(respMsg);
+	                        logger.debug("RESP 'ack_callout' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+			} else {
+				logger.debug("don't send ack_callout to client, because it isn't present: the call was originated from outside of the cti");
+			}
+                });
+	} else{
+		logger.warn("check 'callOut' permission for [" + extFrom + "] FAILED !");
+		var client = clients[extFrom];
+		if(client!==undefined){
+	                client.send(new ResponseMessage(client.sessionId, 'error_call', "Sorry, but you don't have permission to call !"));
+	                logger.debug("RESP 'error_call' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+		} else{
+			logger.debug("don't send error_call to client, because it isn't present: the call was originated from outside of the cti");
+		}
+	}
+}
 
 
 /*******************************************************************************
@@ -2197,7 +2243,6 @@ io.on('connection', function(client){
                                 logger.debug("RESP 'ack_all_vm_status' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 			break;
 	  		case actions.ACTION_CALLOUT:
-  				var extToCall = message.extToCall;
   				// check if the client is logged in
 	  			if(clients[extFrom]==undefined){
 	  				logger.warn("ATTENTION: client [" + extFrom + "] not logged in");
@@ -2212,38 +2257,8 @@ io.on('connection', function(client){
 	  				logger.debug("RESP 'error_call' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 	  				return;
 	  			}
-  				// check if the user has the permission of dial out
-  				if(profiler.checkActionCallOutPermit(extFrom)){
-  					logger.debug("check 'callOut' permission for [" + extFrom + "] OK: execute calling...");
-	  				// create call action for asterisk server
-	  				var actionCall = {
-						Action: 'Originate',
-						Channel: 'SIP/' + extFrom,
-						Exten: extToCall,
-						Context: 'from-internal',
-						Priority: 1,
-						Callerid: CALL_PREFIX + extFrom,
-						Account: extToCall,
-						Timeout: 30000
-					};
-					/* update all clients that 'extFrom' has been started a call out, so they can update their OP.
-					 * This is made because asterisk.js not generate 'newState' ringing event until the user
-					 * has pickup his phone */
-					sendAllClientAckCalloutFromCti(extFrom)
-					// send action to asterisk
-					am.send(actionCall, function () {
-						logger.debug('\'actionCall\' ' + sys.inspect(actionCall) + ' has been sent to AST');
-						var msgTxt = "call action has been sent to asterisk: " + extFrom + " -> " + extToCall;
-						var respMsg = new ResponseMessage(client.sessionId, "ack_callout", msgTxt);
-                                                client.send(respMsg);
-                                                logger.debug("RESP 'ack_callout' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
-					});
-	  			}
-  				else{
-		  			logger.warn("check 'callOut' permission for [" + extFrom + "] FAILED !");
-		  			client.send(new ResponseMessage(client.sessionId, 'error_call', "Sorry, but you don't have permission to call !"));
-		  			logger.debug("RESP 'error_call' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
-  				}
+				var extToCall = message.extToCall;
+				callout(extFrom, extToCall);
 		  	break;
 		  	case actions.ACTION_HANGUP:
 				/* example chStat when call come from soft phone:
