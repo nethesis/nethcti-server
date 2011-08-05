@@ -1117,6 +1117,7 @@ am.addListener('hangup', function(headers) {
 		} else
 			logger.debug("callConnected uniqueid '" + trueUniqueid + "' has already not present into trunk '" + trunkTypeExt + "'");
 		updateAllClientsForOpWithTypeExt(trunkTypeExt);
+		delete chStat[trueUniqueid];
 		return;
 	}
 	else if(modop.isChannelIntern(headers.channel)){ // headers.channel is an intern
