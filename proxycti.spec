@@ -1,5 +1,5 @@
 Name:		proxycti
-Version:	0.3.0
+Version:	0.3.2
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI	
 
@@ -51,6 +51,16 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Fri Aug 05 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 0.3.2-1nh
+- Add privacy template fragment to profiles.ini
+
+* Fri Aug 05 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 0.3.1-1nh
+- Update voicemail status
+- Fix call parking
+- Use unix socket for mysql
+- Add action for click2call for tbclick2call (Thunderbird Extension)
+
+
 * Thu Jul 21 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 0.3.0-1.nh
 - Alpha 7 release
 - Better event handling
