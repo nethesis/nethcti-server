@@ -1980,9 +1980,10 @@ server = http.createServer(function(req, res){
                 });
 	    break;
 	    case '/call':
+		logger.debug("received request of 'click2call' through HTTP request");
 		var ext = params.ext;
 		var to = params.to;
-		callout(ext, to);
+		callout(ext, to, res);
 	    break;
 	    default: 
     		// check if the requested file exists
@@ -2021,7 +2022,7 @@ logger.info("HTTP server listening on port: " + port);
  * end of section relative to HTTP server
  ******************************************************************************/
 
-function callout(extFrom, to){
+function callout(extFrom, to, res){
 	// check if the user has the permission of dial out
 	if(profiler.checkActionCallOutPermit(extFrom)){
 		logger.debug("check 'callOut' permission for [" + extFrom + "] OK: execute calling...");
@@ -2053,6 +2054,8 @@ function callout(extFrom, to){
 				logger.debug("don't send ack_callout to client, because it isn't present: the call was originated from outside of the cti");
 			}
                 });
+		res.writeHead(200, {"Content-Type":"text/plain"});
+		res.end("ack_click2call");
 	} else{
 		logger.warn("check 'callOut' permission for [" + extFrom + "] FAILED !");
 		var client = clients[extFrom];
@@ -2062,6 +2065,8 @@ function callout(extFrom, to){
 		} else{
 			logger.debug("don't send error_call to client, because it isn't present: the call was originated from outside of the cti");
 		}
+		res.writeHead(404,{"Content-type":"text/plain"});
+		res.end("no_permission");
 	}
 }
 
