@@ -564,7 +564,7 @@ if (table_exists($dbh,"ampusers")) {
 		$queuename=@{$row}[0];
 		$queuedesc=@{$row}[1];
 		$icon='5';
-		print EXTEN "[QUEUE/$queuename]\nPosition=$btn\nLabel=\"$queuedesc\"\nContext=from-internal\ntab=code\n";
+		print EXTEN "[QUEUE/$queuename]\nQueue=$queuename\nPosition=$btn\nLabel=\"$queuedesc\"\nContext=from-internal\ntab=code\n";
 	}
 
 	
