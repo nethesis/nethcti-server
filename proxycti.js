@@ -1785,12 +1785,20 @@ am.addListener('userevent', function(headers){
 am.addListener('parkedcall', function(headers){
 	logger.debug("EVENT 'ParkedCall': headers = " + sys.inspect(headers));
 	var parking = 'PARK' + headers.exten;
-	var extParked = headers.channel.split("/")[1];
-	extParked = extParked.split("-")[0];
+	//var extParked = headers.channel.split("/")[1];
+	//extParked = extParked.split("-")[0];
+	var extParked = headers.calleridnum;
 	var parkFrom = headers.from.split("/")[1];
 	parkFrom = parkFrom.split("-")[0];
+	var trueUniq='';
+	for(key in chStat){ // get uniqueid from chStat
+		if(chStat[key].channel===headers.channel){
+			trueUniq=key;
+		}
+	}
+	console.log("trueUniq="+trueUniq+" in event ParkedCall");
 	// update status of park ext
-	modop.updateParkExtStatus(parking, extParked, parkFrom, headers.timeout);
+	modop.updateParkExtStatus(parking, trueUniq, extParked, parkFrom, headers.timeout);
 	// update all clients with the new state of extension, for update operator panel
         updateAllClientsForOpWithExt(parking);
 });
@@ -2971,12 +2979,14 @@ io.on('connection', function(client){
 				}
 				var chToPark = ''; // channel to be parked
 				var correspondingCh = ''; // corresponding channel
+				var uniqToPark = '';
 				for(uniqueid in chStat){
 					if(chStat[uniqueid].calleridnum===callToPark){
 						chToPark = chStat[uniqueid].channel;
+						uniqToPark = uniqueid;
 					}
 					if(chStat[uniqueid].calleridnum!==undefined && chStat[uniqueid].calleridnum.indexOf(correspondingExt)!==-1){
-						correspondingCh = chStat[uniqueid].channel;
+						correspondingCh=chStat[uniqueid].channel;
 					}
 				}
 				// create action for asterisk server
@@ -3024,19 +3034,9 @@ io.on('connection', function(client){
 				var extFrom = message.extFrom;
 				var callToPickup = message.callToPickup;
 				var extHasParked = message.extHasParked;
+				var uniqueid = message.uniqueid;
 				var ch='';
-				for(key in chStat){
-					var tempCh = chStat[key].channel;
-					if(tempCh.indexOf(callToPickup)!==-1 && chStat[key].dialExt===extHasParked){
-						for(oKey in chStat){
-							var t = 'Parked/'+tempCh;
-							if(chStat[oKey].channel==='Parked/'+tempCh){
-								ch = tempCh;
-								break;
-							}
-						}
-					}
-				}
+				ch = chStat[uniqueid].channel;
 				// create action to pickup the call. It is realized with redirect action 
                                 var actionPickup = {
                                        Action: 'Redirect',
