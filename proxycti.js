@@ -2161,6 +2161,7 @@ io.on('connection', function(client){
 			ACTION_STOP_RECORD: 'stoprecord',
 			ACTION_SPY_LISTEN:  'spy_listen',
 			ACTION_PARKING_PICKUP: 	'parking_pickup',
+			ACTION_HANGUP_UNIQUEID:	'hangup_uniqueid',
 			ACTION_CHECK_CF_STATUS:    'check_cf_status',
 			ACTION_CHECK_DND_STATUS:   'check_dnd_status',
 			ACTION_CHECK_CW_STATUS:    'check_cw_status',
@@ -2319,6 +2320,13 @@ io.on('connection', function(client){
 				var extToCall = message.extToCall;
 				callout(extFrom, extToCall);
 		  	break;
+			case actions.ACTION_HANGUP_UNIQUEID:
+				var ch=chStat[message.uniqueid].channel;
+				var actionHangupUniqueid = { Action: 'Hangup', Channel: ch };
+				am.send(actionHangupUniqueid, function () {
+                                        logger.debug("'actionHangupiUniqueid' " + sys.inspect(actionHangupUniqueid) + " has been sent to AST");
+                                })
+			break;
 		  	case actions.ACTION_HANGUP:
 				/* example chStat when call come from soft phone:
 				 { '1308640687.636': 
