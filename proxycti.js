@@ -555,6 +555,18 @@ EVENT 'Dialing': headers '{ event: 'Dial',
   destuniqueid: '1308652171.789',
   dialstring: '270' }' 
 *
+* when redirect through soft phone when ringing (verified with twinkle)
+EVENT 'Dialing': headers '{ event: 'Dial',
+  privilege: 'call,all',
+  subevent: 'Begin',
+  channel: 'SIP/270-00000f0e',
+  destination: 'Local/272@from-internal-b9a8;1',
+  calleridnum: '270',
+  calleridname: 'AlessandroTest1',
+  uniqueid: '1312790208.8011',
+  destuniqueid: '1312790216.8013',
+  dialstring: '272@from-internal' }'
+*
 * when redirect:
 EVENT 'Dialing': headers '{ event: 'Dial',
   privilege: 'call,all',
@@ -688,8 +700,9 @@ am.addListener('dialing', function(headers) {
 		return
 	}
 	// to
+	// dialstring can be: ...dialstring: '272@from-internal' }'
 	var to = headers.dialstring
-	if(modop.isTypeExtFascio(headers.destination.split('-')[0])){ // the call is out through a trunk (CASE A)
+	if(modop.isTypeExtFascio(headers.destination.split('-')[0])){ // the call is out through a trunk (CASE A) ex. ..destination: 'SIP/UMTS-0000104e'..
 		var trunk = chStat[headers.destuniqueid].channel.split('-')[0].split('/')[1]
 		if(to.indexOf(trunk)!=-1){
 			to = to.split(trunk + '/')[1]
@@ -698,6 +711,8 @@ am.addListener('dialing', function(headers) {
 			}
 		}
 		chStat[headers.destuniqueid].dialExt = to
+	} else if(headers.destination.indexOf('Local/')!==-1 && headers.destination.indexOf('@from-internal')!==-1){ // destination: 'Local/272@from-internal-b9a8;1',
+		to = to.split('@')[0];
 	}
 
 	// get true uniqueid, because in some case (for ex. in parking) cann't be the right uniqueid
@@ -1529,9 +1544,31 @@ am.addListener('callconnected', function(headers) {
                 updateAllClientsForOpWithTypeExt(internTypeExt2);
 	}
 
+	var from = undefined;
+	var to = undefined;
+
+	// the call has been redirect through two extensions
+	if(modop.isChannelIntern(headers.channel1) && headers.channel2.indexOf('Local/')!==-1 && headers.channel2.indexOf('@from-internal-')!==-1 && headers.channel2.indexOf(';1')!==-1){
+		var internTypeExt1 = modop.getInternTypeExtFromChannel(headers.channel1);
+		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt1, tempUniqueid1)){
+                        modop.removeDialingUniqueidInternWithTypeExt(internTypeExt1, tempUniqueid1);
+                        logger.debug("removed dialingUniqueid '" + tempUniqueid1 + "' from internTypeExt '" + internTypeExt1 + "'");
+                } else
+                        logger.debug("dialingUniqueid '" + tempUniqueid1 + "' has already not present into intern '" + internTypeExt1  + "'");
+                if(!modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt1, tempUniqueid1)){
+                        modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt1, tempUniqueid1, chStat[tempUniqueid1]);
+                        logger.debug("added callConnectedUniqueid '" + tempUniqueid1 + "' into intern '" + internTypeExt1 + "'");
+                } else
+                        logger.debug("callConnectedUniqueid '" + tempUniqueid1 + "' has already present into intern '" + internTypeExt1  + "'");
+                updateAllClientsForOpWithTypeExt(internTypeExt1);
+		to=headers.channel2.split('@')[0].split('/')[1];
+	}
+
 	// advise two clients of call
-	var from = headers.callerid1
-        var to = headers.callerid2
+	from = headers.callerid1;
+	if(to===undefined){
+	        to = headers.callerid2;
+	}
 	if(clients[from]!=undefined){
                 var c = clients[from]
                 var msg = "Call from " + from + " to " + to + " CONNECTED"
