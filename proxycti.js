@@ -76,7 +76,7 @@ function initServerAndAsteriskParameters(){
 
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF) */
-log4js.clearAppenders();
+//log4js.clearAppenders();
 log4js.addAppender(log4js.fileAppender(logfile), '[ProxyCTI]');
 var logger = log4js.getLogger('[ProxyCTI]');
 logger.setLevel(loglevel);
@@ -1217,9 +1217,16 @@ am.addListener('hangup', function(headers) {
 	} else
 		logger.debug("discarded event 'hangup' because redirect")
 
+	logger.debug("delete '" + trueUniqueid + "' ["+chStat[trueUniqueid].channel+"] from chStat");
 	delete chStat[trueUniqueid];
-	logger.debug("keys of chStat = " + Object.keys(chStat).length)
-	logger.debug("delete '" + headers.uniqueid + "' from chStat: so it is = " + sys.inspect(chStat))
+	for(key in chStat){
+		if(chStat[key].channel.indexOf(headers.channel)!==-1){
+			logger.debug("delete '" + key + "' ["+chStat[key].channel+"] from chStat");
+			delete chStat[key];
+		}
+	}
+	logger.debug("keys of chStat = " + Object.keys(chStat).length);
+	logger.debug("chStat = " + sys.inspect(chStat));
 });
 
 
