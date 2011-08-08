@@ -2145,6 +2145,7 @@ io.on('connection', function(client){
 			ACTION_CF_BUSY_OFF: 'cf_busy_off',
 			ACTION_STOP_RECORD: 'stoprecord',
 			ACTION_SPY_LISTEN:  'spy_listen',
+			ACTION_PARKING_PICKUP: 	'parking_pickup',
 			ACTION_CHECK_CF_STATUS:    'check_cf_status',
 			ACTION_CHECK_DND_STATUS:   'check_dnd_status',
 			ACTION_CHECK_CW_STATUS:    'check_cw_status',
@@ -3011,6 +3012,36 @@ io.on('connection', function(client){
 				am.send(actionSpyListen, function(){
 					logger.debug("'actionSpyListen' " + sys.inspect(actionSpyListen) + " has been sent to AST");
 				});
+			break;
+			case actions.ACTION_PARKING_PICKUP:
+				var extFrom = message.extFrom;
+				var callToPickup = message.callToPickup;
+				var extHasParked = message.extHasParked;
+				var ch='';
+				for(key in chStat){
+					var tempCh = chStat[key].channel;
+					if(tempCh.indexOf(callToPickup)!==-1 && chStat[key].dialExt===extHasParked){
+						for(oKey in chStat){
+							var t = 'Parked/'+tempCh;
+							if(chStat[oKey].channel==='Parked/'+tempCh){
+								ch = tempCh;
+								break;
+							}
+						}
+					}
+				}
+				// create action to pickup the call. It is realized with redirect action 
+                                var actionPickup = {
+                                       Action: 'Redirect',
+                                       Channel: ch,
+                                       Context: 'from-internal',
+                                       Exten: extFrom,
+                                       Priority: 1
+                                };
+                                // send the action to the asterisk server
+                                am.send(actionPickup, function(){
+                                        logger.debug("'actionPickup' " + sys.inspect(actionPickup) + " has been sent to AST");
+                                });
 			break;
 			case actions.ACTION_PICKUP:
 //				logger.debug("chStat = " + sys.inspect(chStat))
