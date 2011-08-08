@@ -291,7 +291,10 @@ function isChannelTrunk(ch){
 	}
 	return false
 }
-function isTypeExtFascio(typeext){ return extStatusForOp[typeext].tab=='fasci' }
+function isTypeExtFascio(typeext){ 
+	if(extStatusForOp[typeext]!==undefined && extStatusForOp[typeext].tab==='fasci') return true;
+	return false;
+}
 function updateDialExt(ext, fromNum){
 	for(key in extStatusForOp)
 		if(key.indexOf(ext)!=-1){
