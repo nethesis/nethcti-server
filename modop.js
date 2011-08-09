@@ -109,7 +109,9 @@ exports.Modop = function(){
 	this.addUniqueidCallToQueueWithTypeExt = function(queueTypeExt, uniqueid, calleridnum) { addUniqueidCallToQueueWithTypeExt(queueTypeExt, uniqueid, calleridnum);  }
 	this.hasQueueUniqueidCallWithTypeExt = function(queueTypeExt, uniqueid) { return hasQueueUniqueidCallWithTypeExt(queueTypeExt, uniqueid); }
 	this.removeUniqueidCallFromQueue = function(uniqueid) { return removeUniqueidCallFromQueue(uniqueid); }
+	this.getParkedUniqueid = function(parking) { return getParkedUniqueid(parking)}
 }
+function getParkedUniqueid(parking){ return extStatusForOp['PARK'+parking].parkedUniqueid;}
 function removeUniqueidCallFromQueue(uniqueid){
 	var queueTypeExt = undefined;
 	for(typeExt in extStatusForOp){

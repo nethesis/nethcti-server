@@ -2172,6 +2172,7 @@ io.on('connection', function(client){
 			ACTION_REDIRECT_VOICEMAIL: 'redirect_voicemail',
 			ACTION_GET_DAY_HISTORY_CALL:  'get_day_history_call',
 			ACTION_CHECK_CALL_AUDIO_FILE: 'check_call_audio_file',
+			ACTION_CF_UNCOND_FROM_PARKING: 'cf_uncond_from_parking',
 			ACTION_SEARCH_CONTACT_PHONEBOOK:  'search_contact_phonebook',
 			ACTION_GET_PEER_LIST_COMPLETE_OP: 'get_peer_list_complete_op',
 			ACTION_REDIRECT_VOICEMAIL_FROM_OP: 'redirect_voicemail_from_op',
@@ -2181,6 +2182,23 @@ io.on('connection', function(client){
   		logger.debug("ACTION received: from sessionId '" + client.sessionId + "' message " + sys.inspect(message));	
   		// manage request
   		switch(action){
+			case actions.ACTION_CF_UNCOND_FROM_PARKING:
+				var redirectTo = message.redirectCallTo;
+				var fromPark = message.parkingRedirectCallFrom;
+				var uniq=modop.getParkedUniqueid(fromPark);
+				var ch = chStat[uniq].channel;
+				var actionRedirFromParking = {
+                                       Action: 'Redirect',
+                                       Channel: ch,
+                                       Context: 'from-internal',
+                                       Exten: redirectTo,
+                                       Priority: 1
+                                };
+                                // send the action to the asterisk server
+                                am.send(actionRedirFromParking, function(){
+                                        logger.debug("'actionRedirFromParking' " + sys.inspect(actionRedirFromParking) + " has been sent to AST");
+                                });
+			break;
   			case actions.ACTION_LOGIN:
 	  			if(authenticator.authenticateUser(extFrom, message.secret)){  // the user is authenticated
   					// if the user is already logged in, a new session is created and the old is closed
