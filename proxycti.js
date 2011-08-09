@@ -2160,6 +2160,7 @@ io.on('connection', function(client){
 			ACTION_CF_BUSY_OFF: 'cf_busy_off',
 			ACTION_STOP_RECORD: 'stoprecord',
 			ACTION_SPY_LISTEN:  'spy_listen',
+			ACTION_CF_VM_PARKING: 'cf_vm_parking',
 			ACTION_PARKING_PICKUP: 	'parking_pickup',
 			ACTION_HANGUP_UNIQUEID:	'hangup_uniqueid',
 			ACTION_CHECK_CF_STATUS:    'check_cf_status',
@@ -2182,6 +2183,24 @@ io.on('connection', function(client){
   		logger.debug("ACTION received: from sessionId '" + client.sessionId + "' message " + sys.inspect(message));	
   		// manage request
   		switch(action){
+			case actions.ACTION_CF_VM_PARKING:
+				var redirectTo = message.redirectToExt;
+				var parking = message.parking;
+				var uniq=modop.getParkedUniqueid(parking);
+                                var ch = chStat[uniq].channel;
+				// create action to spy channel
+                                var actionCfVMParking = {
+                                        Action: 'Redirect',
+                                        Channel: ch,
+                                        Context: 'ext-local',
+                                        Exten: 'vmu' + redirectTo,
+                                        Priority: 1
+                                }
+                                // send spy action to the asterisk server
+                                am.send(actionCfVMParking, function(){
+                                        logger.debug("'actionCfVMParking' " + sys.inspect(actionCfVMParking) + " has been sent to AST");
+                                });
+			break;
 			case actions.ACTION_CF_UNCOND_FROM_PARKING:
 				var redirectTo = message.redirectCallTo;
 				var fromPark = message.parkingRedirectCallFrom;
