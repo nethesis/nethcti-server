@@ -38,17 +38,12 @@ var server;
 var clients = {};
 refresh = false // indicate wheter the refresh is in progress
 
-
-
 // This object is the response that this server pass to the clients.
 var ResponseMessage = function(clientSessionId, typeMessage, respMessage){
 	this.clientSessionId = clientSessionId;
 	this.typeMessage = typeMessage;
 	this.respMessage = respMessage;
 }
-
-
-
 
 // initialize parameters for this server and for asterisk server
 initServerAndAsteriskParameters();
@@ -404,22 +399,21 @@ am.addListener('newstate', function(headers){
         logger.debug("EVENT 'NewState': headers '" + sys.inspect(headers) +  "'")
 	logger.debug("key of chStat = " + Object.keys(chStat).length)
 
-	/* check if the chStat contains the entry relative to this newstate event.
-         * This is because this proxy server can be started after the asterisk server. So some calling can be in execution when this
-         * proxy server starting and so it can receive some newState event relative to old call for which it haven't the relative channel in chStat. 
-         * In this case it simply discard this newState event */
-        if(chStat[headers.uniqueid]==undefined){
-                logger.debug("discard 'newState' event: it isn't present in chStat. The cause can be the start of this server during the asterisk functioning")
-                return
-        }
-
 	var tempUniqueid = '';
-	for(uniqueid in chStat){
+	for(uniqueid in chStat){ // get real uniqueid
 		if(chStat[uniqueid].channel===headers.channel){
 			tempUniqueid = uniqueid;
 		}
 	}
-	
+
+	/* check if the chStat contains the entry relative to this newstate event.
+         * This is because this proxy server can be started after the asterisk server. So some calling can be in execution when this
+         * proxy server starting and so it can receive some newState event relative to old call for which it haven't the relative channel in chStat. 
+         * In this case it simply discard this newState event */
+        if(chStat[tempUniqueid]===undefined){
+                logger.debug("discard 'newState' event: it isn't present in chStat. The cause can be the start of this server during the asterisk functioning")
+                return
+        }
 
 	chStat[tempUniqueid].status = headers.channelstatedesc.toLowerCase()
 	/* chstat = { '1308672180.8933': 
