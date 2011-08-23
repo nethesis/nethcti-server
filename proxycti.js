@@ -76,7 +76,7 @@ function initServerAndAsteriskParameters(){
 
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF) */
-//log4js.clearAppenders();
+log4js.clearAppenders();
 log4js.addAppender(log4js.fileAppender(logfile), '[ProxyCTI]');
 var logger = log4js.getLogger('[ProxyCTI]');
 logger.setLevel(loglevel);
@@ -1133,6 +1133,7 @@ am.addListener('hangup', function(headers) {
 			logger.debug("callConnected uniqueid '" + trueUniqueid + "' has already not present into trunk '" + trunkTypeExt + "'");
 		updateAllClientsForOpWithTypeExt(trunkTypeExt);
 		delete chStat[trueUniqueid];
+		deleteAllChOccurrenceFromChstat(headers.channel);
 		return;
 	}
 	else if(modop.isChannelIntern(headers.channel)){ // headers.channel is an intern
@@ -1173,6 +1174,7 @@ am.addListener('hangup', function(headers) {
 		modop.updateHangupUniqueidInternWithTypeExt(internTypeExt, tempUniqueid); // add uniqueid of current hangup as 'lastHangupUniqueid'
 		updateAllClientsForOpWithTypeExt(internTypeExt);
 		trueUniqueid = tempUniqueid;
+		return;
         }
 	// ext
 	var ext;
@@ -1219,16 +1221,20 @@ am.addListener('hangup', function(headers) {
 
 	logger.debug("delete '" + trueUniqueid + "' ["+chStat[trueUniqueid].channel+"] from chStat");
 	delete chStat[trueUniqueid];
-	for(key in chStat){
-		if(chStat[key].channel.indexOf(headers.channel)!==-1){
-			logger.debug("delete '" + key + "' ["+chStat[key].channel+"] from chStat");
-			delete chStat[key];
-		}
-	}
+	deleteAllChOccurrenceFromChstat(headers.channel);
 	logger.debug("keys of chStat = " + Object.keys(chStat).length);
 	logger.debug("chStat = " + sys.inspect(chStat));
 });
 
+// delete all occurrence of channel from chStat
+function deleteAllChOccurrenceFromChstat(ch){ 
+	for(key in chStat){
+		if(chStat[key].channel.indexOf(ch)!==-1){
+			logger.debug("delete '" + key + "' ["+chStat[key].channel+"] from chStat");
+			delete chStat[key];
+		}
+	}
+}
 
 
 /* EVENT 'CallConnected': headers = '{ event: 'Bridge',
@@ -1995,6 +2001,9 @@ server = http.createServer(function(req, res){
   	var parsed_url = url.parse(req.url,true);
 	var path = parsed_url.pathname;
 	var params = parsed_url.query;
+
+logger.debug("received request HTTP: path = " + path + " params = " + sys.inspect(params));
+
 	switch (path){
 	    case '/':
     		path = "/index.html";
