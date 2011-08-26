@@ -1346,6 +1346,8 @@ am.addListener('callconnected', function(headers) {
 		logger.info("discard 'callConnected' event: it isn't present in chStat. The cause can be the start of this server during the asterisk functioning")
 		return
 	}
+	chStat[tempUniqueid1].destCh = headers.channel2;
+	chStat[tempUniqueid2].destCh = headers.channel1;
 	/* when redirect:
 	chStat = { '1308664818.896': { channel: 'AsyncGoto/SIP/270-000002df' },
 	  '1308664819.897': 
@@ -1584,6 +1586,7 @@ am.addListener('callconnected', function(headers) {
                 var response = new ResponseMessage(c.sessionId, "callconnected", msg)
                 response.from = from
                 response.to = to
+		response.destCh = headers.channel2;
                 c.send(response)
                 logger.debug("RESP 'callconnected' has been sent to [" + from + "] sessionId '" + c.sessionId + "'")
         }
@@ -1593,6 +1596,7 @@ am.addListener('callconnected', function(headers) {
                 var response = new ResponseMessage(c.sessionId, "callconnected", msg)
                 response.from = from
                 response.to = to
+		response.destCh = headers.channel1;
                 c.send(response)
                 logger.debug("RESP 'callconnected' has been sent to [" + to + "] sessionId '" + c.sessionId + "'")
         }	
@@ -3173,28 +3177,17 @@ io.on('connection', function(client){
 			case actions.ACTION_REDIRECT_VOICEMAIL:
                                 var extTo = message.extTo;
 				var callFromExt = message.callFromExt;
-                                var channel = '';
-				console.log("66666666666666666");
-				console.log(chStat);
-				console.log("66666666666666666");
-				for(key in chStat){
-
-				}
-                                for(key in am.participants){
-	                                if(am.participants[key].number==callFromExt)
-        	        	        	channel = am.participants[key].channel;
-                                }
-                                // create action to spy channel
-				var actionRedirectVoicemail = {
+				var ch = message.destCh;
+				var actRedirVoicemail = { 
 					Action: 'Redirect',
-					Channel: channel,
+					Channel: ch,
 					Context: 'ext-local',
 					Exten: 'vmu' + extTo,
 					Priority: 1
 				}
                                 // send spy action to the asterisk server
-                                am.send(actionRedirectVoicemail, function(){
-					logger.debug("'actionRedirectVoicemail' " + sys.inspect(actionRedirectVoicemail) + " has been sent to AST");
+                                am.send(actRedirVoicemail, function(){
+					logger.debug("'actRedirVoicemail' " + sys.inspect(actRedirVoicemail) + " has been sent to AST");
                                 });
                         break;
 			case actions.ACTION_REDIRECT_VOICEMAIL_FROM_OP:
