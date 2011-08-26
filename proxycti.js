@@ -236,7 +236,8 @@ controller.addListener('change_vm_dir', function(dir){
 		// update voicemail count of the extension
 	        modop.updateVMCountWithExt(ext,resp.newmessages)
 	        // update all clients with the new state of extension, for update operator panel
-	        updateAllClientsForOpWithExt(ext)
+//	        updateAllClientsForOpWithExt(ext)
+		updateAllClientsForOpWithTypeExt("SIP/"+ext);
 	})
 })
 
@@ -824,7 +825,8 @@ am.addListener('dialing', function(headers) {
 				var internTypeExt = modop.getInternTypeExtFromChannel(headers.channel);
 				modop.addDialingUniqueidInternWithTypeExt(internTypeExt, trueUniqueid, chStat[trueUniqueid]);
 				logger.debug("added dialingUniqueid '" + trueUniqueid + "' to interTypeExt '" + internTypeExt + "'");
-		        	updateAllClientsForOpWithExt(from);
+//		        	updateAllClientsForOpWithExt(from);
+				updateAllClientsForOpWithTypeExt(internTypeExt);
 			} else if( modop.isExtPresent(from) && modop.isChannelTrunk(headers.channel) )
 				logger.warn("[" + from + "] is namesake: comes from remote location through trunk '" + headers.channel + "'");
 		}
@@ -1735,7 +1737,8 @@ am.addListener('userevent', function(headers){
 			modop.updateExtDNDStatusWithExt(ext, "off")
 		else if(value=="attivo")
 			modop.updateExtDNDStatusWithExt(ext, "on")
-                updateAllClientsForOpWithExt(ext)
+//              updateAllClientsForOpWithExt(ext)
+                updateAllClientsForOpWithTypeExt("SIP/"+ext);
 	}
 	else if(family=='cf'){
 		logger.info("[" + ext + "] '" + family + " " + value + "'");
@@ -1800,7 +1803,8 @@ am.addListener('parkedcall', function(headers){
 	// update status of park ext
 	modop.updateParkExtStatus(parking, trueUniq, extParked, parkFrom, headers.timeout);
 	// update all clients with the new state of extension, for update operator panel
-        updateAllClientsForOpWithExt(parking);
+//      updateAllClientsForOpWithExt(parking);
+        updateAllClientsForOpWithTypeExt(parking);
 });
 
 
@@ -1820,7 +1824,8 @@ am.addListener('parkedcalltimeout', function(headers){
         var parking = 'PARK' + headers.exten;
         // update status of park ext
         modop.updateEndParkExtStatus(parking);
-        updateAllClientsForOpWithExt(parking);
+//      updateAllClientsForOpWithExt(parking);
+        updateAllClientsForOpWithTypeExt(parking);
 });
 
 /* This event is trigger when the call parked has hangup
@@ -1837,7 +1842,8 @@ am.addListener('parkedcallgiveup', function(headers){
 	logger.debug("chStat = " + sys.inspect(chStat));
 	var parking = 'PARK' + headers.exten;
 	modop.updateEndParkExtStatus(parking);
-	updateAllClientsForOpWithExt(parking);
+//	updateAllClientsForOpWithExt(parking);
+	updateAllClientsForOpWithTypeExt(parking);
 	/* channel
 	chStat = { '1312444622.4987':
 		   { channel: 'SIP/271-000008e7',
@@ -1979,7 +1985,8 @@ am.addListener('messagewaiting', function(headers){
 	// update voicemail count of the extension
 	modop.updateVMCountWithExt(ext,headers.new);
 	// update all clients with the new state of extension, for update operator panel
-	updateAllClientsForOpWithExt(ext);
+//	updateAllClientsForOpWithExt(ext);
+	updateAllClientsForOpWithTypeExt("SIP/"+ext);
 });
 
 /*
@@ -2769,7 +2776,8 @@ io.on('connection', function(client){
 					// update ext DND status
 					modop.updateExtDNDStatusWithExt(extFrom, 'on');
 					// update all clients for op
-					updateAllClientsForOpWithExt(extFrom);
+//					updateAllClientsForOpWithExt(extFrom);
+					updateAllClientsForOpWithTypeExt("SIP/"+extFrom);
 				});
 	  		break;
 	  		case actions.ACTION_DND_OFF:
@@ -2787,7 +2795,8 @@ io.on('connection', function(client){
 					// update ext DND status
                                         modop.updateExtDNDStatusWithExt(extFrom, 'off');
 					// update all clients for op
-                                        updateAllClientsForOpWithExt(extFrom);
+//                                      updateAllClientsForOpWithExt(extFrom);
+                                        updateAllClientsForOpWithTypeExt("SIP/"+extFrom);
 				});
 	  		break;
 	  		case actions.ACTION_CW_ON:
@@ -2836,7 +2845,8 @@ io.on('connection', function(client){
 					// update ext CF status
                                         modop.updateExtCFStatusWithExt(extFrom, 'on', extTo);
                                         // update all clients for op
-                                        updateAllClientsForOpWithExt(extFrom);
+//                                      updateAllClientsForOpWithExt(extFrom);
+                                        updateAllClientsForOpWithTypeExt("SIP/"+extFrom);
 				});
 	  		break;
 			case actions.ACTION_CF_UNAVAILABLE_ON:
@@ -2888,7 +2898,8 @@ io.on('connection', function(client){
 					// update ext CF status
                                         modop.updateExtCFStatusWithExt(extFrom, 'off');
                                         // update all clients for op
-                                        updateAllClientsForOpWithExt(extFrom);
+//                                      updateAllClientsForOpWithExt(extFrom);
+                                        updateAllClientsForOpWithTypeExt("SIP/"+extFrom);
 				});
 	  		break;
 			case actions.ACTION_CF_UNAVAILABLE_OFF:
@@ -3163,6 +3174,12 @@ io.on('connection', function(client){
                                 var extTo = message.extTo;
 				var callFromExt = message.callFromExt;
                                 var channel = '';
+				console.log("66666666666666666");
+				console.log(chStat);
+				console.log("66666666666666666");
+				for(key in chStat){
+
+				}
                                 for(key in am.participants){
 	                                if(am.participants[key].number==callFromExt)
         	        	        	channel = am.participants[key].channel;
@@ -3299,6 +3316,7 @@ function updateAllClientsForOpWithTypeExt(typeext){
                 var msg = "state of " + newState.Label + " has changed: update ext new state";
                 var response = new ResponseMessage(c.sessionId, "update_ext_new_state_op", msg);
                 response.extNewState = newState;
+		response.tyext = typeext;
 		if(profiler.checkPrivacyPermit(c.extension)){
 	                response.priv = '1';
 	        } else {
