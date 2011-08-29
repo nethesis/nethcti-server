@@ -1575,12 +1575,16 @@ am.addListener('callconnected', function(headers) {
 		to=headers.channel2.split('@')[0].split('/')[1];
 	}
 
-	// advise two clients of call
-	from = headers.callerid1;
+	// advise two clients of this call
+	if(headers.callerid1==="" && modop.isChannelIntern(headers.channel1)){
+		from = modop.getExtInternFromChannel(headers.channel1);
+	} else {
+		from = headers.callerid1;
+	}
 	if(to===undefined){
 	        to = headers.callerid2;
 	}
-	if(clients[from]!=undefined){
+	if(clients[from]!==undefined){
                 var c = clients[from]
                 var msg = "Call from " + from + " to " + to + " CONNECTED"
                 var response = new ResponseMessage(c.sessionId, "callconnected", msg)
@@ -1590,7 +1594,7 @@ am.addListener('callconnected', function(headers) {
                 c.send(response)
                 logger.debug("RESP 'callconnected' has been sent to [" + from + "] sessionId '" + c.sessionId + "'")
         }
-        if(clients[to]!=undefined){
+        if(clients[to]!==undefined){
                 var c = clients[to]
                 var msg = "Call from " + from + " to " + to + " CONNECTED"
                 var response = new ResponseMessage(c.sessionId, "callconnected", msg)
