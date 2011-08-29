@@ -2090,8 +2090,7 @@ logger.info("HTTP server listening on port: " + port);
  ******************************************************************************/
 
 function callout(extFrom, to, res){
-	// check if the user has the permission of dial out
-	if(profiler.checkActionCallOutPermit(extFrom)){
+	if(profiler.checkActionCallOutPermit(extFrom)){ // check if the user has the permission of dial out
 		logger.debug("check 'callOut' permission for [" + extFrom + "] OK: execute calling...");
                 // create call action for asterisk server
                 var actionCall = {
@@ -2108,8 +2107,7 @@ function callout(extFrom, to, res){
                  * This is made because asterisk.js not generate 'newState' ringing event until the user
                  * has pickup his phone */
                 sendAllClientAckCalloutFromCti(extFrom)
-                // send action to asterisk
-                am.send(actionCall, function () {
+                am.send(actionCall, function () { // send action to asterisk
 			logger.debug('\'actionCall\' ' + sys.inspect(actionCall) + ' has been sent to AST');
 			var client = clients[extFrom];
 			if(client!==undefined){
@@ -2121,8 +2119,10 @@ function callout(extFrom, to, res){
 				logger.debug("don't send ack_callout to client, because it isn't present: the call was originated from outside of the cti");
 			}
                 });
-		res.writeHead(200, {"Content-Type":"text/plain"});
-		res.end("ack_click2call");
+		if(res!==undefined){
+			res.writeHead(200, {"Content-Type":"text/plain"});
+			res.end("ack_click2call");
+		}
 	} else{
 		logger.warn("check 'callOut' permission for [" + extFrom + "] FAILED !");
 		var client = clients[extFrom];
@@ -2132,8 +2132,10 @@ function callout(extFrom, to, res){
 		} else{
 			logger.debug("don't send error_call to client, because it isn't present: the call was originated from outside of the cti");
 		}
-		res.writeHead(404,{"Content-type":"text/plain"});
-		res.end("no_permission");
+		if(res!==undefined){
+			res.writeHead(404,{"Content-type":"text/plain"});
+			res.end("no_permission");
+		}
 	}
 }
 
@@ -2354,15 +2356,13 @@ io.on('connection', function(client){
                                 logger.debug("RESP 'ack_all_vm_status' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 			break;
 	  		case actions.ACTION_CALLOUT:
-  				// check if the client is logged in
-	  			if(clients[extFrom]==undefined){
+	  			if(clients[extFrom]===undefined){ // check if the client is logged in
 	  				logger.warn("ATTENTION: client [" + extFrom + "] not logged in");
 	  				client.send(new ResponseMessage(client.sessionId, 'error_call', 'Error in calling: client not logged in'));
 	  				logger.debug("RESP 'error_call' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 	  				return;
   				}
-	  			// security check of real authenticity of the user who originated the call
-	  			else if(client.sessionId != clients[extFrom].sessionId){
+	  			else if(client.sessionId!==clients[extFrom].sessionId){ // security check of real authenticity of the user who originated the call
 	  				logger.warn("SECURITY WARNING: attempt to fake the sender: session '" + client.sessionId + "' attempt to call with the fake exten [" + extFrom + "] !");
 	  				client.send(new ResponseMessage(client.sessionId, 'error_call', 'Error in calling: attempt to call with the fake exten ' + extFrom));
 	  				logger.debug("RESP 'error_call' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
