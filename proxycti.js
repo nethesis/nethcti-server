@@ -24,7 +24,7 @@ const SMS_DIR = "sms";
 const CALL_PREFIX = "CTI-";
 const SPY_PREFIX = "SPY-";
 const REDIRECT_VM_PREFIX = "REDIR_VM-";
-const START_TAG_FILENAME = "auto-";
+const START_AUDIO_FILE = "auto-";
 const DIAL_FROM = 1
 const DIAL_TO = 0
 // asterisk manager
@@ -69,6 +69,10 @@ function initServerAndAsteriskParameters(){
 }
 
 
+
+
+
+
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF) */
 log4js.clearAppenders();
@@ -76,54 +80,8 @@ log4js.addAppender(log4js.fileAppender(logfile), '[ProxyCTI]');
 var logger = log4js.getLogger('[ProxyCTI]');
 logger.setLevel(loglevel);
 
-
-
 // START
 logger.info("Starting server...");
-
-
-
-
-/* Audio file list of recorded call. This is an hash table that has the 'unique id' of the file
- * as the key and the 'filename' as value.
- * (view 'createAudioFileList' function).
- */
-var audioFileList = {};
-// create the list of audio files of recorded call
-createAudioFileList();
-/* This function create hash table of audio file. The key is the unique id of the file, 
- * and the value is set to filename.
- */
-function createAudioFileList(){
-	var temp = fs.readdirSync(AST_CALL_AUDIO_DIR);
-	for(i=0; i<temp.length; i++){
-		var u = getUniqueIdFromFilename(temp[i]);
-		audioFileList[u] = temp[i];
-	}
-	logger.debug("audio file list of calls has been created");
-}
-/* This function return the 'unique id' of the filename. The uniqueid field is different for
- * those files that has been recorded from cti. 
- * ex. of file name recorded by cti: 'auto-500-501-20110426-113833-1303810692.18-in.wav'
- * ex. of file name recorded by asterisk: 'OUT202-20110405-173946-1302017986.4016.wav'
- * The unique id field is the last field of filename before extension and before "in" indication
- * in the case of cti recorded call.
- */
-function getUniqueIdFromFilename(filename){
-	if(filename.indexOf(START_TAG_FILENAME)!=-1)
-		return filename.split("-")[5];
-	else{
-		var x = filename.split("-")[3];
-		return x.split(".")[0] + "." + x.split(".")[1];
-	}
-}
-
-
-
-
-
-
-
 
 // Add object modules
 var profiler = new proReq.Profiler();
@@ -249,15 +207,54 @@ dataCollector.addController(controller);
 logger.debug('add \'controller\' object to \'Profiler\' and \'DataCollector\'')
 
 
-
-
-
-
-
-
-
-
-
+/* Audio file list of recorded call. This is an hash table that has the 'unique id' of the file
+ * as the key and the 'filename' as value. (view 'createAudioFileList' function) */
+var audioFileList = {};
+createAudioFileList();
+/* Create hash table of audio files. The key is the unique id of the file, and the value is set to filename.
+ * The function attempt to recognize three format of audio file:
+ * ex. of file name recorded by cti: 'auto-500-501-20110426-113833-1303810692.18-in.wav'
+ * ex. of file name recorded by asterisk: 'OUT202-20110405-173946-1302017986.4016.wav' or 'IN202-20110405-173946-1302017986.4016.wav'
+ * ex. of file name automatically recorder through user amp setting: '20110829-124622-1314614782.16.wav'
+ * In this last case, the function attempt to find uniqueid field (third field of filename) in 'cdr' table of 'asteriskcdrdb' db.
+ * This request is asynchronous. In the case of unknown  format of audio file, one warning log is added to log file */
+function createAudioFileList(){
+        var temp = fs.readdirSync(AST_CALL_AUDIO_DIR);
+        var uid = undefined;
+        var filename = undefined;
+	var asyncReq = false;
+        for(i=0; i<temp.length; i++){
+		asyncReq = false; // tell if the filename need an asynchronous request to db
+                uid = undefined;
+                filename = temp[i];
+                if(filename.substring(0,5)===START_AUDIO_FILE){
+                        uid = filename.split("-")[5];
+                } else if(filename.substring(0,3)==="OUT" || filename.substring(0,2)==="IN"){
+                        uid = filename.split("-")[3];
+                        uid = uid.split(".")[0] + "." + uid.split(".")[1];
+                } else if(uid===undefined && filename.split("-")[2]!==undefined){ // made asynchronous request
+                        uid=filename.split("-")[2];
+                        uid=uid.split(".")[0]+"."+uid.split(".")[1];
+                        dataCollector.checkAudioUid(uid, filename, function(res, fname, uniqueid){
+				if(res.length===0){
+					logger.warn("audio filename not in 'cdr' db: uniqueid \"" + uniqueid + "\" of filename " + fname);
+				} else {
+					logger.debug("audio filename present: uniqueid \"" + uniqueid + "\" of filename " + fname);
+					audioFileList[uniqueid] = fname;
+				}
+                        });
+			asyncReq = true; // set asyncReq to not consider uid below
+                }
+                if(uid!==undefined && asyncReq===false){
+			logger.debug("add know audio filename: uid \"" + uid + "\" of filename " + filename);
+                        audioFileList[uid] = temp[i];
+                }else if(asyncReq===false){
+			logger.warn("format of audio filename unknown: \"" + filename + "\" in " + AST_CALL_AUDIO_DIR + " directory");
+		} else{
+			logger.debug("unknown format of audio filename \"" + filename + "\": attempt to find it in db 'cdr' with async request...");
+		}
+        }
+}
 
 /******************************************************
  * Section relative to asterisk interaction    
@@ -2628,7 +2625,7 @@ io.on('connection', function(client){
 					var mm = d.getMinutes(); if(mm<10) mm = '0' + mm;
 					var ss = d.getSeconds(); if(ss<10) ss = '0' + ss;
 					var hhmmss = hh + "" + mm + "" + ss;
-	  				var filename = START_TAG_FILENAME + message.callFromExt + "-" + message.callToExt + "-" + yyyyMMdd + "-" + hhmmss + "-" + uniqueid; 
+	  				var filename = START_ADUIO_FILE + message.callFromExt + "-" + message.callToExt + "-" + yyyyMMdd + "-" + hhmmss + "-" + uniqueid; 
 	  				// create record action for asterisk server
 			  		var actionRecord = {
 						Action: 'Monitor',
@@ -3369,8 +3366,8 @@ function sendAllClientAckCalloutFromCti(extFrom){
  */
 function createHistoryCallResponse(results){
 	var res = [];
-/*
- * An example of result obtained by the database of history call
+
+/* An example of result obtained by the database of history call
 [ { calldate: Tue, 26 Apr 2011 11:38:12 GMT,
     clid: 'CTI500',
     src: '',
@@ -3387,8 +3384,7 @@ function createHistoryCallResponse(results){
     accountcode: '501',
     uniqueid: '1303810692.18',
     userfield: '' },
-    ...]
-*/
+    ...] */
 	for(i=0; i<results.length; i++){		
 		var currRes = results[i];
 		var temp = {};
@@ -3400,10 +3396,11 @@ function createHistoryCallResponse(results){
 		temp.billsec = currRes.billsec;
 		temp.disposition = currRes.disposition;
 		temp.uniqueid = currRes.uniqueid;
-		if(audioFileList[currRes.uniqueid]!=undefined)
+		if(audioFileList[currRes.uniqueid]!==undefined){
 			temp.recording = true;
-		else
+		} else {
 			temp.recording = false;
+		}
 		res.push(temp);
 	}
 	return res;

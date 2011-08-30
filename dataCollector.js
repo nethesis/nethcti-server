@@ -48,8 +48,20 @@ exports.DataCollector = function(){
 	this.getCurrentMonthHistoryCall = function(ext, cb) { return getCurrentMonthHistoryCall(ext, cb); }
 	this.addController = function(contr) { addController(contr) }
 	this.setLogger = function(logfile,level) { log4js.addAppender(log4js.fileAppender(logfile), '[DataCollector]'); logger.setLevel(level); }
+	this.checkAudioUid = function(uid, filename, cb) { return checkAudioUid(uid, filename, cb); }
 }
-
+/* check if the uniqueid 'uid' is present in 'cdr' table of 'asteriskcdrdb' database
+ * return true if it is present, false otherwise */
+function checkAudioUid(uid, filename, cb){
+	var objQuery = queries[DAY_HISTORY_CALL];
+        if(objQuery!==undefined){
+                var copyObjQuery = Object.create(objQuery); // copy object
+                copyObjQuery.query = "SELECT * FROM cdr WHERE uniqueid=\""+uid+"\" AND disposition=\"ANSWERED\""; // substitute query
+                executeSQLQuery(DAY_HISTORY_CALL, copyObjQuery, function(results){ // execute current sql query
+                        cb(results, filename, uid);
+                });
+        }
+}
 // add controller to manage changin in configuration file
 function addController(contr){
         controller = contr;
