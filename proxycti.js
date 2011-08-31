@@ -45,6 +45,35 @@ var ResponseMessage = function(clientSessionId, typeMessage, respMessage){
 	this.respMessage = respMessage;
 }
 
+
+
+
+var html_vcard_template = undefined;
+var html_cc_template = undefined;
+function readVCardTemplate(){
+	html_vcard_template = fs.readFile(TEMPLATE_DECORATOR_VCARD_FILENAME, "UTF-8", function(err, data) {
+                if(err){
+                        logger.error("ERROR in reading '" + TEMPLATE_DECORATOR_VCARD_FILENAME + "' (function 'readVCardTemplate'): " + err);
+			process.exit(0);
+                }
+                html_vcard_template = data;
+        });	
+}
+function readCCTemplate(){
+	html_cc_template = fs.readFile(TEMPLATE_DECORATOR_CUSTOMERCARD_FILENAME, "UTF-8", function(err, data) {
+                if(err){
+                        logger.error("ERROR in reading '" + TEMPLATE_DECORATOR_CUSTOMERCARD_FILENAME + "' (function 'readCCTemplate'): " +err);
+			process.exit(0);
+                }
+                html_cc_template = data;
+        });
+}
+function readAllTemplate(){ // read all html template
+	readVCardTemplate();
+	readCCTemplate();
+}
+readAllTemplate();
+
 // initialize parameters for this server and for asterisk server
 initServerAndAsteriskParameters();
 /* Initialize some configuration parameters
@@ -70,11 +99,6 @@ function initServerAndAsteriskParameters(){
 		phone_prefix = "";
 	}
 }
-
-
-
-
-
 
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF) */
@@ -3450,14 +3474,6 @@ testAlreadyLoggedSessionId = function(sessionId){
 /* Create html code to return to the client after when he receive calling. This code is 
  * the customer card of the calling user */
 createCustomerCardHTML = function(customerCard, from){
-	// read file
-	var htmlTemplate = fs.readFileSync(TEMPLATE_DECORATOR_CUSTOMERCARD_FILENAME, "UTF-8", function(err, data) {
-		if(err){
-			logger.error("ERROR in reading '" + TEMPLATE_DECORATOR_CUSTOMERCARD_FILENAME + "' (function 'createCustomerCardHTML'): " + sys.inspect(err));
-			return;
-		}
-		return data;
-	});
 	/* customerCard is undefined if the user that has do the request
   	 * hasn't the relative permission or the calling user is not in the db */
 	if(customerCard===undefined){
@@ -3465,31 +3481,24 @@ createCustomerCardHTML = function(customerCard, from){
 		customerCard.customerNotInDB = "true";
 		customerCard.from = from;
 	}
-	var template = normal.compile(htmlTemplate);
+	var template = normal.compile(html_cc_template);
 	var toAdd = template(customerCard);
 	var HTMLresult = toAdd;		
 	return HTMLresult;
 }
 
+
+
 /* Create the html code for viewing result of searching contacts in phonebook.
  * It read template html file and personalize it with the parameter results. */
 function createResultSearchContactsPhonebook(results){
 	var HTMLresult = '';
-	// read file
-	var htmlTemplate = fs.readFileSync(TEMPLATE_DECORATOR_VCARD_FILENAME, "UTF-8", function(err, data) {
-		if(err){
-			logger.error("ERROR in reading '" + TEMPLATE_DECORATOR_VCARD_FILENAME + "' (function 'createResultSearchContactsPhonebook'): " + sys.inspect(err));
-			return;
-		}
-		return data;
-	});
-	// repeat htmlTemplate for number of results
 	var currentUser = '';
 	var temp = '';
 	var template = '';
-	for(var i=0; i<results.length; i++){
+	for(var i=0; i<results.length; i++){ // repeat html_vcard_template for number of results
 		currentUser = results[i];
-		template = normal.compile(htmlTemplate);
+		template = normal.compile(html_vcard_template);
 		currentUser.server_address = "http://" + hostname + ":" + port;
 		currentUser.prefix = phone_prefix;
 		temp = template(currentUser);
