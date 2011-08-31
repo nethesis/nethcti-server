@@ -299,6 +299,7 @@ am.addListener('serverconnect', function() {
 		}
 		catch(err){
 			logger.error("error in login into ASTERISK: " + err + ". Check the config file");
+			process.exit(0);
 		}
 	});
 });
