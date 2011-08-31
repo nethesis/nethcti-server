@@ -45,14 +45,41 @@ var ResponseMessage = function(clientSessionId, typeMessage, respMessage){
 	this.respMessage = respMessage;
 }
 
+
+
+
+var html_vcard_template = undefined;
+var html_cc_template = undefined;
+function readVCardTemplate(){
+	html_vcard_template = fs.readFile(TEMPLATE_DECORATOR_VCARD_FILENAME, "UTF-8", function(err, data) {
+                if(err){
+                        logger.error("ERROR in reading '" + TEMPLATE_DECORATOR_VCARD_FILENAME + "' (function 'readVCardTemplate'): " + err);
+			process.exit(0);
+                }
+                html_vcard_template = data;
+        });	
+}
+function readCCTemplate(){
+	html_cc_template = fs.readFile(TEMPLATE_DECORATOR_CUSTOMERCARD_FILENAME, "UTF-8", function(err, data) {
+                if(err){
+                        logger.error("ERROR in reading '" + TEMPLATE_DECORATOR_CUSTOMERCARD_FILENAME + "' (function 'readCCTemplate'): " +err);
+			process.exit(0);
+                }
+                html_cc_template = data;
+        });
+}
+function readAllTemplate(){ // read all html template
+	readVCardTemplate();
+	readCCTemplate();
+}
+readAllTemplate();
+
 // initialize parameters for this server and for asterisk server
 initServerAndAsteriskParameters();
-/* Initialize some configuration parameters.
- *
+/* Initialize some configuration parameters
 server_conf = 
 { ASTERISK: { user: 'vtiger', pass: 'vtiger', host: 'localhost' },
-  SERVER_PROXY: { hostname: 'amaduzzi', port: '8080', version: '0.2' } }
-*/
+  SERVER_PROXY: { hostname: 'amaduzzi', port: '8080', version: '0.2' } } */
 function initServerAndAsteriskParameters(){
 	var server_conf = iniparser.parseSync(PROXY_CONFIG_FILENAME);
 	version = server_conf.SERVER_PROXY.version;
@@ -66,12 +93,12 @@ function initServerAndAsteriskParameters(){
 	if(logfile == undefined) logfile = "/var/log/proxycti.log";
 	loglevel = server_conf.SERVER_PROXY.loglevel;
 	if(loglevel == undefined) loglevel = "INFO";
+	if(server_conf.SERVER_PROXY.prefix!==undefined){
+		phone_prefix = server_conf.SERVER_PROXY.prefix;
+	} else {
+		phone_prefix = "";
+	}
 }
-
-
-
-
-
 
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF) */
@@ -265,10 +292,15 @@ logger.debug('created asterisk manager');
 am.addListener('serverconnect', function() {
 	logger.debug("EVENT 'ServerConnect' to AST");
 	am.login(function () {
-		logger.info("logged into ASTESRISK");
-		// Add asterisk manager to modop
-		modop.addAsteriskManager(am);
-//		modop.setRefreshInterval(INTERVAL_REFRESH_OPERATOR_PANEL) // set refresh interval at which the modop refresh status of alla extension
+		try{
+			logger.info("login into ASTERISK");
+			modop.addAsteriskManager(am); // Add asterisk manager to modop
+//			modop.setRefreshInterval(INTERVAL_REFRESH_OPERATOR_PANEL) // set refresh interval at which the modop refresh status of alla extension
+		}
+		catch(err){
+			logger.error("error in login into ASTERISK: " + err + ". Check the config file");
+			process.exit(0);
+		}
 	});
 });
 
@@ -764,8 +796,10 @@ am.addListener('dialing', function(headers) {
                 		dataCollector.getCustomerCard(from, typesCC[i], function(cc, name) {
                         		if(cc!=undefined){
                                 		var obj = {};
-                                		for(var item in cc)
+                                		for(var item in cc){
                                        		 	cc[item].server_address = "http://" + hostname + ":" + port;
+							cc[item].prefix = phone_prefix;
+						}
                                			obj[name] = cc;
                                 		var custCardHTML = createCustomerCardHTML(obj, from)
                                 		customerCardResult.push(custCardHTML)
@@ -1804,7 +1838,6 @@ am.addListener('parkedcall', function(headers){
 			trueUniq=key;
 		}
 	}
-	console.log("trueUniq="+trueUniq+" in event ParkedCall");
 	// update status of park ext
 	modop.updateParkExtStatus(parking, trueUniq, extParked, parkFrom, headers.timeout);
 	// update all clients with the new state of extension, for update operator panel
@@ -3442,48 +3475,33 @@ testAlreadyLoggedSessionId = function(sessionId){
 /* Create html code to return to the client after when he receive calling. This code is 
  * the customer card of the calling user */
 createCustomerCardHTML = function(customerCard, from){
-	// read file
-	var htmlTemplate = fs.readFileSync(TEMPLATE_DECORATOR_CUSTOMERCARD_FILENAME, "UTF-8", function(err, data) {
-		if(err){
-			logger.error("ERROR in reading '" + TEMPLATE_DECORATOR_CUSTOMERCARD_FILENAME + "' (function 'createCustomerCardHTML'): " + sys.inspect(err));
-			return;
-		}
-		return data;
-	});
 	/* customerCard is undefined if the user that has do the request
   	 * hasn't the relative permission or the calling user is not in the db */
-	if(customerCard==undefined){
+	if(customerCard===undefined){
 		customerCard = {};
 		customerCard.customerNotInDB = "true";
 		customerCard.from = from;
 	}
-	var template = normal.compile(htmlTemplate);
-	//customerCard.server_address = "http://" + hostname + ":" + port;
+	var template = normal.compile(html_cc_template);
 	var toAdd = template(customerCard);
 	var HTMLresult = toAdd;		
 	return HTMLresult;
 }
 
+
+
 /* Create the html code for viewing result of searching contacts in phonebook.
  * It read template html file and personalize it with the parameter results. */
 function createResultSearchContactsPhonebook(results){
 	var HTMLresult = '';
-	// read file
-	var htmlTemplate = fs.readFileSync(TEMPLATE_DECORATOR_VCARD_FILENAME, "UTF-8", function(err, data) {
-		if(err){
-			logger.error("ERROR in reading '" + TEMPLATE_DECORATOR_VCARD_FILENAME + "' (function 'createResultSearchContactsPhonebook'): " + sys.inspect(err));
-			return;
-		}
-		return data;
-	});
-	// repeat htmlTemplate for number of results
 	var currentUser = '';
 	var temp = '';
 	var template = '';
-	for(var i=0; i<results.length; i++){
+	for(var i=0; i<results.length; i++){ // repeat html_vcard_template for number of results
 		currentUser = results[i];
-		template = normal.compile(htmlTemplate);
+		template = normal.compile(html_vcard_template);
 		currentUser.server_address = "http://" + hostname + ":" + port;
+		currentUser.prefix = phone_prefix;
 		temp = template(currentUser);
 		HTMLresult += temp;
 	}
