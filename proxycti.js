@@ -47,12 +47,10 @@ var ResponseMessage = function(clientSessionId, typeMessage, respMessage){
 
 // initialize parameters for this server and for asterisk server
 initServerAndAsteriskParameters();
-/* Initialize some configuration parameters.
- *
+/* Initialize some configuration parameters
 server_conf = 
 { ASTERISK: { user: 'vtiger', pass: 'vtiger', host: 'localhost' },
-  SERVER_PROXY: { hostname: 'amaduzzi', port: '8080', version: '0.2' } }
-*/
+  SERVER_PROXY: { hostname: 'amaduzzi', port: '8080', version: '0.2' } } */
 function initServerAndAsteriskParameters(){
 	var server_conf = iniparser.parseSync(PROXY_CONFIG_FILENAME);
 	version = server_conf.SERVER_PROXY.version;
@@ -66,6 +64,11 @@ function initServerAndAsteriskParameters(){
 	if(logfile == undefined) logfile = "/var/log/proxycti.log";
 	loglevel = server_conf.SERVER_PROXY.loglevel;
 	if(loglevel == undefined) loglevel = "INFO";
+	if(server_conf.SERVER_PROXY.prefix!==undefined){
+		phone_prefix = server_conf.SERVER_PROXY.prefix;
+	} else {
+		phone_prefix = "";
+	}
 }
 
 
@@ -764,8 +767,10 @@ am.addListener('dialing', function(headers) {
                 		dataCollector.getCustomerCard(from, typesCC[i], function(cc, name) {
                         		if(cc!=undefined){
                                 		var obj = {};
-                                		for(var item in cc)
+                                		for(var item in cc){
                                        		 	cc[item].server_address = "http://" + hostname + ":" + port;
+							cc[item].prefix = phone_prefix;
+						}
                                			obj[name] = cc;
                                 		var custCardHTML = createCustomerCardHTML(obj, from)
                                 		customerCardResult.push(custCardHTML)
@@ -1804,7 +1809,6 @@ am.addListener('parkedcall', function(headers){
 			trueUniq=key;
 		}
 	}
-	console.log("trueUniq="+trueUniq+" in event ParkedCall");
 	// update status of park ext
 	modop.updateParkExtStatus(parking, trueUniq, extParked, parkFrom, headers.timeout);
 	// update all clients with the new state of extension, for update operator panel
@@ -3452,13 +3456,12 @@ createCustomerCardHTML = function(customerCard, from){
 	});
 	/* customerCard is undefined if the user that has do the request
   	 * hasn't the relative permission or the calling user is not in the db */
-	if(customerCard==undefined){
+	if(customerCard===undefined){
 		customerCard = {};
 		customerCard.customerNotInDB = "true";
 		customerCard.from = from;
 	}
 	var template = normal.compile(htmlTemplate);
-	//customerCard.server_address = "http://" + hostname + ":" + port;
 	var toAdd = template(customerCard);
 	var HTMLresult = toAdd;		
 	return HTMLresult;
@@ -3484,6 +3487,7 @@ function createResultSearchContactsPhonebook(results){
 		currentUser = results[i];
 		template = normal.compile(htmlTemplate);
 		currentUser.server_address = "http://" + hostname + ":" + port;
+		currentUser.prefix = phone_prefix;
 		temp = template(currentUser);
 		HTMLresult += temp;
 	}
