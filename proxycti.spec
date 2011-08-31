@@ -1,5 +1,5 @@
 Name:		proxycti
-Version:	0.3.2
+Version:	0.3.3
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI	
 
@@ -51,6 +51,13 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Wed Aug 21 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 0.3.3-1nh
+- Add actions on parked calls
+- Add prefix for call-out
+- New audio filename format from FreePBX configuration
+- Template caching
+- Various fixes and error handling
+
 * Fri Aug 05 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 0.3.2-1nh
 - Add privacy template fragment to profiles.ini
 
