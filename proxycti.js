@@ -268,10 +268,14 @@ logger.debug('created asterisk manager');
 am.addListener('serverconnect', function() {
 	logger.debug("EVENT 'ServerConnect' to AST");
 	am.login(function () {
-		logger.info("logged into ASTESRISK");
-		// Add asterisk manager to modop
-		modop.addAsteriskManager(am);
-//		modop.setRefreshInterval(INTERVAL_REFRESH_OPERATOR_PANEL) // set refresh interval at which the modop refresh status of alla extension
+		try{
+			logger.info("login into ASTERISK");
+			modop.addAsteriskManager(am); // Add asterisk manager to modop
+//			modop.setRefreshInterval(INTERVAL_REFRESH_OPERATOR_PANEL) // set refresh interval at which the modop refresh status of alla extension
+		}
+		catch(err){
+			logger.error("error in login into ASTERISK: " + err + ". Check the config file");
+		}
 	});
 });
 
