@@ -14,7 +14,6 @@ var pathreq = require('path');
 var normal = require("./lib/normal-template/lib/normal-template");
 var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
 var log4js = require('./lib/log4js-node/lib/log4js')();
-//
 const PROXY_CONFIG_FILENAME = "config/proxycti.ini";
 const TEMPLATE_DECORATOR_VCARD_FILENAME = "./template/decorator_vcard.html";
 const TEMPLATE_DECORATOR_CUSTOMERCARD_FILENAME = "./template/decorator_customerCard.html";
@@ -25,18 +24,15 @@ const CALL_PREFIX = "CTI-";
 const SPY_PREFIX = "SPY-";
 const REDIRECT_VM_PREFIX = "REDIR_VM-";
 const START_AUDIO_FILE = "auto-";
-const DIAL_FROM = 1
-const DIAL_TO = 0
-// asterisk manager
-var am;
-// the server
-var server;
+const DIAL_FROM = 1;
+const DIAL_TO = 0;
+
+var am; // asterisk manager
+var server; // http server
 /* The list of the logged clients. The key is the 'exten' and the value is the 
  * object relative to the client. When the client logs off, the corresponding key 
- * and value are removed.
- */ 
+ * and value are removed */ 
 var clients = {};
-refresh = false // indicate wheter the refresh is in progress
 
 // This object is the response that this server pass to the clients.
 var ResponseMessage = function(clientSessionId, typeMessage, respMessage){
@@ -88,7 +84,6 @@ function initServerAndAsteriskParameters(){
 	asterisk_host = server_conf.ASTERISK.host;
 	hostname = server_conf.SERVER_PROXY.hostname;
 	port = server_conf.SERVER_PROXY.port;
-	INTERVAL_REFRESH_OPERATOR_PANEL = server_conf.SERVER_PROXY.interval_refresh_operator_panel
 	logfile = server_conf.SERVER_PROXY.logfile;
 	if(logfile == undefined) logfile = "/var/log/proxycti.log";
 	loglevel = server_conf.SERVER_PROXY.loglevel;
@@ -102,7 +97,7 @@ function initServerAndAsteriskParameters(){
 
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF) */
-log4js.clearAppenders();
+//log4js.clearAppenders();
 log4js.addAppender(log4js.fileAppender(logfile), '[ProxyCTI]');
 var logger = log4js.getLogger('[ProxyCTI]');
 logger.setLevel(loglevel);
@@ -122,83 +117,6 @@ controller.setLogger(logfile,loglevel);
 var modop = new modopReq.Modop();
 modop.setLogger(logfile,loglevel);
 modop.addController(controller)
-modop.addListener("RefreshOperatorPanel", function(refreshChannels){
-	logger.debug("EVENT 'RefreshOperatorPanel'")
-
-	/* chStat = { '1308736049.9828': 
-           { channel: 'SIP/2004-00001282',
-             status: 'up',
-             calleridnum: '0266125547',
-             calleridname: 'Microtronica' },
-          '1308736049.9829': { channel: 'Local/202@from-internal-4196;1' }, ... 
-	*
-	* refreshChannels = 
-	refreshChannels = { 'SIP/211': 
-   { '1310743114.2158': 
-      { channel: 'SIP/211-00000431',
-        uniqueid: '1310743114.2158',
-        context: 'macro-dial',
-        extension: 's',
-        priority: '1',
-        channelstate: '6',
-        channelstatedesc: 'Up',
-        application: 'AppDial',
-        applicationdata: '(Outgoing Line)',
-        calleridnum: '211',
-        duration: '00:10:38',
-        accountcode: '',
-        bridgedchannel: 'Local/211@from-internal-bbc2;2',
-        bridgeduniqueid: '1310743111.2152',
-        event: 'CtiResultCoreShowChannels' } },
-  'SIP/2004': 
-   { '1310743111.2136': 
-      { channel: 'SIP/2004-0000042d',
-        uniqueid: '1310743111.2136',
-        context: 'ext-queues',
-        extension: '401',
-        priority: '10',
-        channelstate: '6',
-        channelstatedesc: 'Up',
-        application: 'Queue',
-        applicationdata: '401,t,,',
-        calleridnum: '0733967019',
-        duration: '00:10:41',
-        accountcode: '',
-        bridgedchannel: 'Local/211@from-internal-bbc2;1',
-        bridgeduniqueid: '1310743111.2151',
-        event: 'CtiResultCoreShowChannels' } } } */
-	logger.debug("clean chStat")
-	logger.debug("key of chStat before clean = " + Object.keys(chStat).length)
-	var currRefChs = undefined
-	var ok = false
-	for(uniqueid in chStat){
-		for(typeExt in refreshChannels){
-			currRefChs = refreshChannels[typeExt]
-			for(uid in currRefChs){
-				if(uniqueid==uid){
-					ok = true
-				}
-			}
-		}
-		if(ok==false){
-			delete chStat[uniqueid]
-		}
-		ok = false
-	}
-	logger.debug("key of chStat after clean = " + Object.keys(chStat).length)
-	refresh = true // gloabal variable
-	/* send 'ParkedCalls' action to asterisk to update timeout information of parked calls in 'extStatusForOp'.
-         * When 'ParkedCallsComplete' event is emitted, the server return 'extStatusForOp' to the client */
-        var actionParkedCalls = { Action: 'ParkedCalls' }
-        // send action to asterisk
-	if(am.loggedIn){
-	        am.send(actionParkedCalls, function (resp) {
-	        	logger.debug("'actionParkedCalls' " + sys.inspect(actionParkedCalls) + " has been sent to AST to update timeout of the parked calls");
-	        });
-	} else{
-		logger.warn("no connection to asterisk");
-	}
-})
 logger.debug('added object modules: \'Profiler\', \'DataCollector\', \'Authenticator\', \'Modop\' and \'Controller\'')
 controller.addDir(AST_CALL_AUDIO_DIR);
 controller.addListener("change_dir", function(dir){
@@ -303,7 +221,6 @@ am.addListener('serverconnect', function() {
 		try{
 			logger.info("login into ASTERISK");
 			modop.addAsteriskManager(am); // Add asterisk manager to modop
-//			modop.setRefreshInterval(INTERVAL_REFRESH_OPERATOR_PANEL) // set refresh interval at which the modop refresh status of alla extension
 		}
 		catch(err){
 			logger.error("error in login into ASTERISK: " + err + ". Check the config file");
@@ -314,11 +231,7 @@ am.addListener('serverconnect', function() {
 
 am.addListener('serverdisconnect', function(had_error) {
 	logger.warn("EVENT 'ServerDisconnected': asterisk connection lost");
-	logger.warn(am.loggedIn);	
-	console.log("server");
-	console.log(server);
-	console.log("io");
-	console.log(io);
+	
 });
 
 am.addListener('servererror', function(err) {
@@ -1944,42 +1857,8 @@ extToReturnExtStatusForOp = '';
 clientToReturnExtStatusForOp = '';
 am.addListener('parkedcallscomplete', function(){
 	logger.debug("EVENT 'ParkedCallsComplete'");
-	if(!refresh) returnOperatorPanelToClient() // return operator panel to only the client who has made the request
-	else refreshAllClientsOperatorPanel() // return operator panel to all clients to refresh their data
+	returnOperatorPanelToClient() // return operator panel to only the client who has made the request
 })
-
-function refreshAllClientsOperatorPanel(){
-	logger.debug('Refresh all clients operator panel')
-	var currClient
-	for(currExt in clients){
-		logger.debug('refresh operator panel of ext [' + currExt + ']')
-		currClient = clients[currExt]
-		/* check if the user has the permission to view the operator panel.
-         	 * First check if the user has the "OP_PLUS" permission. If he hasn't the permission, then
-	         * it check if he has the "OP_BASE" permission */
-	        if(profiler.checkActionOpPlusPermit(currExt)){
-	                var msgstr = "received extStatusForOp to refresh operator panel"
-	                var mess = new ResponseMessage(currClient.sessionId, "refresh_op", msgstr)
-	                mess.extStatusForOp = modop.getExtStatusForOp()
-	                mess.tabOp = modop.getTabOp()
-	                mess.opPermit = 'plus'
-	                currClient.send(mess)
-	                logger.debug("RESP 'refresh_op' has been sent to [" + currExt + "] sessionId '" + currClient.sessionId + "'")
-	        }
-		else if(profiler.checkActionOpBasePermit(currExt)) {
-         		var msgstr = "received extStatusForOp to refresh operator panel"
-	                var mess = new ResponseMessage(currClient.sessionId, "refresh_op", msgstr)
-	                mess.extStatusForOp = modop.getExtStatusForOp()
-	                mess.tabOp = modop.getTabOp()
-	                mess.opPermit = 'base'
-	                currClient.send(mess)
-	                logger.debug("RESP 'refresh_op' has been sent to [" + currExt + "] sessionId '" + currClient.sessionId + "'")
-        	}
-		else
-			logger.debug('not refresh operator panel of [' + currExt + ']: he doesn\'t have permission')
-	}
-	refresh = false
-}
 
 function returnOperatorPanelToClient(){
 	/* check if the user has the permission to view the operator panel.
