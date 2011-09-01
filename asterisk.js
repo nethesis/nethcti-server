@@ -75,7 +75,7 @@ exports.AsteriskManager = function (newconfig) {
 	
 	this.OnEnd = function() {
 		self.conn.end();
-		this.OnClose(false);
+		self.OnClose(false);
 	};
 
 	this.OnData = function(tcpbuffer) {
@@ -324,7 +324,7 @@ exports.AsteriskManager = function (newconfig) {
 		if (!self.conn || self.conn.readyState == 'closed') {
 			self.conn = net.createConnection(config.port, config.host);
 			self.conn.addListener('connect', self.OnConnect);
-			//self.conn.addListener('error', self.OnError); // disable for now to get a better idea of source of bugs/errors
+			self.conn.addListener('error', self.OnError); // disable for now to get a better idea of source of bugs/errors
 			self.conn.addListener('close', self.OnClose);
 			self.conn.addListener('end', self.OnEnd);
 			self.conn.addListener('data', self.OnData);
