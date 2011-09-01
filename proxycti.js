@@ -26,13 +26,18 @@ const REDIRECT_VM_PREFIX = "REDIR_VM-";
 const START_AUDIO_FILE = "auto-";
 const DIAL_FROM = 1;
 const DIAL_TO = 0;
-
-var am; // asterisk manager
+const N_AST_RECON = 3; // number of reconnection attempts to asterisk when fail connection
+const DELAY_AST_RECON = 3000; // delay between two reconnection attempts to asterisk
+var am = undefined; // asterisk manager
 var server; // http server
+var counter_ast_recon = 0;
+var extToReturnExtStatusForOp = '';
+var clientToReturnExtStatusForOp = '';
 /* The list of the logged clients. The key is the 'exten' and the value is the 
  * object relative to the client. When the client logs off, the corresponding key 
  * and value are removed */ 
 var clients = {};
+var chStat = {}; // object that contains the 'uniqueid' as a key
 
 // This object is the response that this server pass to the clients.
 var ResponseMessage = function(clientSessionId, typeMessage, respMessage){
@@ -40,9 +45,6 @@ var ResponseMessage = function(clientSessionId, typeMessage, respMessage){
 	this.typeMessage = typeMessage;
 	this.respMessage = respMessage;
 }
-
-
-
 
 var html_vcard_template = undefined;
 var html_cc_template = undefined;
@@ -97,7 +99,7 @@ function initServerAndAsteriskParameters(){
 
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF) */
-//log4js.clearAppenders();
+log4js.clearAppenders();
 log4js.addAppender(log4js.fileAppender(logfile), '[ProxyCTI]');
 var logger = log4js.getLogger('[ProxyCTI]');
 logger.setLevel(loglevel);
@@ -209,9 +211,21 @@ function createAudioFileList(){
         }
 }
 
+function recon_ast(){
+	if(!am.loggedIn && counter_ast_recon<N_AST_RECON){
+		counter_ast_recon++;
+		setTimeout(function(){
+			logger.warn("asterisk reconnection attempt #"+counter_ast_recon);
+			init_connect_ast();
+		}, DELAY_AST_RECON);
+	}
+}
+
 /******************************************************
  * Section relative to asterisk interaction    
  */
+function init_connect_ast(){
+
 am = new ast.AsteriskManager({user: asterisk_user, password: asterisk_pass, host: asterisk_host});
 logger.debug('created asterisk manager');
 
@@ -221,6 +235,7 @@ am.addListener('serverconnect', function() {
 		try{
 			logger.info("login into ASTERISK");
 			modop.addAsteriskManager(am); // Add asterisk manager to modop
+			counter_ast_recon=0;	
 		}
 		catch(err){
 			logger.error("error in login into ASTERISK: " + err + ". Check the config file");
@@ -231,16 +246,17 @@ am.addListener('serverconnect', function() {
 
 am.addListener('serverdisconnect', function(had_error) {
 	logger.warn("EVENT 'ServerDisconnected': asterisk connection lost");
-	
+	recon_ast();
 });
+
 
 am.addListener('servererror', function(err) {
 	logger.error("EVENT 'ServerError', connection attempt to asterisk server failed: (" + err + ")");
-	process.exit(0);
+	if(!am.loggedIn && counter_ast_recon>=N_AST_RECON){
+		process.exit(0);
+	}
 });
 
-// chStatus is the object that contains the 'uniqueid' as a key
-chStat = {}
 
 /* EVENT 'NewChannel': headers = { event: 'Newchannel',
   privilege: 'call,all',
@@ -1180,17 +1196,6 @@ am.addListener('hangup', function(headers) {
 	logger.debug("chStat = " + sys.inspect(chStat));
 });
 
-// delete all occurrence of channel from chStat
-function deleteAllChOccurrenceFromChstat(ch){ 
-	for(key in chStat){
-		if(chStat[key].channel.indexOf(ch)!==-1){
-			logger.debug("delete '" + key + "' ["+chStat[key].channel+"] from chStat");
-			delete chStat[key];
-		}
-	}
-}
-
-
 /* EVENT 'CallConnected': headers = '{ event: 'Bridge',
   privilege: 'call,all',
   bridgestate: 'Link',
@@ -1288,8 +1293,6 @@ EVENT 'CallConnected': headers = '{ event: 'Bridge',
 am.addListener('callconnected', function(headers) {
         logger.debug("EVENT 'CallConnected': headers = '" + sys.inspect(headers) + "'")
 	logger.debug("key of chStat = " + Object.keys(chStat).length)
-//	logger.debug("'callconnected' chStat = " + sys.inspect(chStat))
-
 	var tempUniqueid1 = '';
 	var tempUniqueid2 = '';
 	for(uniqueid in chStat){
@@ -1564,8 +1567,6 @@ am.addListener('callconnected', function(headers) {
         }	
 })
 
-
-
 /*EVENT 'AgentCalled': headers = { event: 'AgentCalled',
   privilege: 'agent,all',
   queue: '900',
@@ -1599,17 +1600,6 @@ am.addListener('agentcalled', function(headers) {
 		updateAllClientsForOpWithTypeExt(queueTypeExt);
 	}
 })
-
-
-
-
-
-
-
-
-
-
-
 
 am.addListener('calldisconnected', function(from, to) {
 	logger.debug("EVENT 'CallDisconnected': between '" + sys.inspect(from) + "' AND '" + sys.inspect(to) + "'");
@@ -1645,14 +1635,9 @@ am.addListener('peerstatus', function(headers) {
 		return;
 	}
 	logger.debug("EVENT 'PeerStatus': " + sys.inspect(headers));
-	// update ext status for op
 	modop.updateExtStatusForOpWithTypeExt(headers.peer, headers.peerstatus.toLowerCase());
-	// update all clients with the new state of extension, for update operator panel
 	updateAllClientsForOpWithTypeExt(headers.peer);
 });
-
-
-
 
 /* This event is generated only by the phone of the user.
  * An example of UserEvent event is:
@@ -1703,7 +1688,6 @@ am.addListener('userevent', function(headers){
 			modop.updateExtDNDStatusWithExt(ext, "off")
 		else if(value=="attivo")
 			modop.updateExtDNDStatusWithExt(ext, "on")
-//              updateAllClientsForOpWithExt(ext)
                 updateAllClientsForOpWithTypeExt("SIP/"+ext);
 	}
 	else if(family=='cf'){
@@ -1754,8 +1738,6 @@ am.addListener('userevent', function(headers){
 am.addListener('parkedcall', function(headers){
 	logger.debug("EVENT 'ParkedCall': headers = " + sys.inspect(headers));
 	var parking = 'PARK' + headers.exten;
-	//var extParked = headers.channel.split("/")[1];
-	//extParked = extParked.split("-")[0];
 	var extParked = headers.calleridnum;
 	var parkFrom = headers.from.split("/")[1];
 	parkFrom = parkFrom.split("-")[0];
@@ -1765,10 +1747,7 @@ am.addListener('parkedcall', function(headers){
 			trueUniq=key;
 		}
 	}
-	// update status of park ext
 	modop.updateParkExtStatus(parking, trueUniq, extParked, parkFrom, headers.timeout);
-	// update all clients with the new state of extension, for update operator panel
-//      updateAllClientsForOpWithExt(parking);
         updateAllClientsForOpWithTypeExt(parking);
 });
 
@@ -1781,20 +1760,16 @@ am.addListener('parkedcall', function(headers){
    Exten: 71
    Channel: SIP/502-00000171
    CallerIDNum: 502
-   CallerIDName: giovanni }
- */
+   CallerIDName: giovanni } */
 am.addListener('parkedcalltimeout', function(headers){
         logger.debug("EVENT 'ParkedCallTimeOut': headers = " + sys.inspect(headers));
 	logger.debug("chStat = " + sys.inspect(chStat));
         var parking = 'PARK' + headers.exten;
-        // update status of park ext
         modop.updateEndParkExtStatus(parking);
-//      updateAllClientsForOpWithExt(parking);
         updateAllClientsForOpWithTypeExt(parking);
 });
 
 /* This event is trigger when the call parked has hangup
- *
 EVENT 'ParkedCallGiveUp': headers = { event: 'ParkedCallGiveUp',
   privilege: 'call,all',
   exten: '71',
@@ -1802,12 +1777,10 @@ EVENT 'ParkedCallGiveUp': headers = { event: 'ParkedCallGiveUp',
   calleridnum: '271',
   calleridname: 'AlessandroTest2' } */
 am.addListener('parkedcallgiveup', function(headers){
-	// park
 	logger.debug("EVENT 'ParkedCallGiveUp': headers = " + sys.inspect(headers));
 	logger.debug("chStat = " + sys.inspect(chStat));
 	var parking = 'PARK' + headers.exten;
 	modop.updateEndParkExtStatus(parking);
-//	updateAllClientsForOpWithExt(parking);
 	updateAllClientsForOpWithTypeExt(parking);
 	/* channel
 	chStat = { '1312444622.4987':
@@ -1853,13 +1826,44 @@ am.addListener('parkedcallgiveup', function(headers){
 
 
 // This event is emitted at the end of the answers generated after 'ParkedCalls' action
-extToReturnExtStatusForOp = '';
-clientToReturnExtStatusForOp = '';
 am.addListener('parkedcallscomplete', function(){
 	logger.debug("EVENT 'ParkedCallsComplete'");
 	returnOperatorPanelToClient() // return operator panel to only the client who has made the request
 })
 
+/* This event is emitted by asterisk.js when a new voicemail is added
+ * An example of the event is:
+{ event: 'MessageWaiting',
+  privilege: 'call,all',
+  mailbox: '500@default',
+  waiting: '1',
+  new: '1',
+  old: '0' } */
+am.addListener('messagewaiting', function(headers){
+	logger.debug("EVENT 'MessageWaiting': new voicemail for [" + headers.mailbox + "]; the number is: " + headers.new);
+	var ext = headers.mailbox.split('@')[0];
+	modop.updateVMCountWithExt(ext,headers.new);
+	updateAllClientsForOpWithTypeExt("SIP/"+ext);
+});
+
+logger.info("connection to asterisk server...");
+am.connect();
+} // end of 'function init_connect_ast(){'
+init_connect_ast();
+
+/*
+ * End of section relative to asterisk interaction
+ *************************************************/
+
+// delete all occurrence of channel from chStat
+function deleteAllChOccurrenceFromChstat(ch){ 
+	for(key in chStat){
+		if(chStat[key].channel.indexOf(ch)!==-1){
+			logger.debug("delete '" + key + "' ["+chStat[key].channel+"] from chStat");
+			delete chStat[key];
+		}
+	}
+}
 function returnOperatorPanelToClient(){
 	/* check if the user has the permission to view the operator panel.
          * First check if the user has the "OP_PLUS" permission. If he hasn't the permission, then
@@ -1899,31 +1903,6 @@ function returnOperatorPanelToClient(){
                 logger.debug("RESP 'error_get_peer_list_complete_op' has been sent to [" + extToReturnExtStatusForOp + "] sessionId '" + clientToReturnExtStatusForOp.sessionId + "'")
         }
 }
-
-/* This event is emitted by asterisk.js when a new voicemail is added
- * An example of the event is:
- *
-{ event: 'MessageWaiting',
-  privilege: 'call,all',
-  mailbox: '500@default',
-  waiting: '1',
-  new: '1',
-  old: '0' }
- */
-am.addListener('messagewaiting', function(headers){
-	logger.debug("EVENT 'MessageWaiting': new voicemail for [" + headers.mailbox + "]; the number is: " + headers.new);
-	var ext = headers.mailbox.split('@')[0];
-	// update voicemail count of the extension
-	modop.updateVMCountWithExt(ext,headers.new);
-	// update all clients with the new state of extension, for update operator panel
-//	updateAllClientsForOpWithExt(ext);
-	updateAllClientsForOpWithTypeExt("SIP/"+ext);
-});
-
-/*
- * End of section relative to asterisk interaction
- *************************************************/
-
 
 
 /*******************************************************************************
@@ -3241,8 +3220,6 @@ io.on('connection', function(client){
  ************************************************************************************************/
 
 
-logger.info("connection to asterisk server...");
-am.connect();
 
 
 
