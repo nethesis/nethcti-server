@@ -148,8 +148,18 @@ exports.AsteriskManager = function (newconfig) {
 
 	this.OnResponse = function(headers) {
 		var id = headers.actionid, req = actions[id];
-		if (id == loginId && headers.response == "Success")
+		// Change by Alessandro Polidori
+		//if (id == loginId && headers.response == "Success")
+		//	loggedIn_ = true;
+		if (id==loginId && headers.response==="Success"){
 			loggedIn_ = true;
+			headers.event = "ServerLogin";
+			self.OnEvent(headers);
+		} else if (id==loginId && headers.response==="Error"){
+			headers.event = "ServerLoginFailed";
+	                self.OnEvent(headers);
+		}
+		// end of change
 		if (typeof req.callback == 'function'){
 			req.callback(headers);
 		}
@@ -190,7 +200,6 @@ exports.AsteriskManager = function (newconfig) {
         else if (config.version == '1.6')
         {
              switch (headers.event) {
-
 		/* Added by Alessandro
 		 * This event is used to obtain all channels ant their status. 
 		 * It is emitted after "Action: CoreShowChannels" command*/
@@ -199,14 +208,19 @@ exports.AsteriskManager = function (newconfig) {
 			console.log(headers);
 			console.log("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
 		break;
+		case "ServerLogin":
+			self.emit("serverlogin", headers);
+		break;
+		case "ServerLoginFailed":
+			self.emit("serverloginfailed", headers);
+		break;
 		case "ParkedCallGiveUp":
 			self.emit('parkedcallgiveup', headers);
 		break;
 		case "CtiResultCoreShowChannels":
 			self.emit('ctiresultcoreshowchannels', headers);
 		break;
-		// This event is emitted at the end of "Action: CoreShowChannels" command
-		case "CoreShowChannelsComplete": //
+		case "CoreShowChannelsComplete": // This event is emitted at the end of "Action: CoreShowChannels" command
 			self.emit('coreshowchannelscomplete', headers);
 		break;
 		case "MessageWaiting":
