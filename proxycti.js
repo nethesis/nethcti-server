@@ -229,19 +229,20 @@ function init_connect_ast(){
 am = new ast.AsteriskManager({user: asterisk_user, password: asterisk_pass, host: asterisk_host});
 logger.debug('created asterisk manager');
 
+am.addListener("serverlogin", function(){
+	logger.debug("EVENT 'ServerLogin': asterisk logged in successfully");
+	modop.addAsteriskManager(am); // Add asterisk manager to modop
+	modop.initExtStatusForOp();
+	counter_ast_recon=0;
+});
+am.addListener("serverloginfailed", function(){
+	logger.error("EVENT 'ServerLoginFailed': asterisk login failed (check the config file)");
+	process.exit(0);
+});
+
 am.addListener('serverconnect', function() {
 	logger.debug("EVENT 'ServerConnect' to AST");
-	am.login(function () {
-		try{
-			logger.info("login into ASTERISK");
-			modop.addAsteriskManager(am); // Add asterisk manager to modop
-			counter_ast_recon=0;	
-		}
-		catch(err){
-			logger.error("error in login into ASTERISK: " + err + ". Check the config file");
-			process.exit(0);
-		}
-	});
+	am.login();
 });
 
 am.addListener('serverdisconnect', function(had_error) {

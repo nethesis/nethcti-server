@@ -44,7 +44,7 @@ var extStatusForOp = {};
  * It has the same structure as the configuration file optab.ini, with key equal
  * to section names, and the value the object that reports keywords of the section */
 var tabOp = {};
-var am; // asterisk manager
+var am = undefined; // asterisk manager
 var controller; // controller
 var listExtActiveVM = {}; // list of extensions that has active voicemail
 // Constructor 
@@ -55,6 +55,7 @@ exports.Modop = function(){
 	 * configuration file 'optab.ini' */
 	initTabOp();
 	this.addAsteriskManager = function(amanager) { addAsteriskManager(amanager); }
+	this.initExtStatusForOp = function(){ initExtStatusForOp(); }
 	this.getExtStatusForOp = function() { return extStatusForOp; }
 	this.updateExtStatusForOpWithTypeExt = function(typeext, status) { updateExtStatusForOpWithTypeExt(typeext, status);  }  // example of typeext is SIP/500
 	this.getExtStatusWithTypeExt = function(typeext) { return getExtStatusWithTypeExt(typeext); }
@@ -463,12 +464,13 @@ function updateExtStatusForOpWithTypeExt(typeext, status){
 /* This function add asterisk manager to local variable. Then addListener to it and
  * finally initialize 'extStatusForOp' */
 function addAsteriskManager(amanager){
-	am = amanager
-	addListenerToAm() // add listeners to asterisk manager to manage extStatusForOp
+
+	am = amanager;
+	addListenerToAm(); // add listeners to asterisk manager to manage extStatusForOp
 	/* initialize the status of all extensions ('extStatusForOp') present in the asterisk server.
          * Its scope is to put the right informations to 'extStatusForOp' to help 'proxycti.js'
          * to give correct informations to the clients for viewing the operator panel */
-        initExtStatusForOp()
+//        initExtStatusForOp();
 }
 
 // This function add listeners to asterisk manager.
