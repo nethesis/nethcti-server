@@ -2075,7 +2075,6 @@ io.on('connection', function(client){
 			ACTION_CALLOUT: 'call_out_from_client',
 			ACTION_LOGOUT: 	'logout',
 			ACTION_HANGUP:	'hangup',
-			ACTION_REDIRECT:'redirect',
 			ACTION_RECORD: 	'record',
 			ACTION_DND_ON:  'dnd_on',
                 	ACTION_DND_OFF:	'dnd_off',
@@ -2086,6 +2085,8 @@ io.on('connection', function(client){
 			ACTION_PARK: 	'park',
 			ACTION_PARKCH: 	'parkch',
 			ACTION_PICKUP: 	'pickup',
+			HANGUPCH:   'hangupch',
+			ACTION_REDIRECT:   'redirect',
 			ACTION_SEND_SMS:   'send_sms',
 			ACTION_HANGUP_SPY: 'hangup_spy',
 			ACTION_CF_BUSY_ON: 'cf_busy_on',
@@ -2309,6 +2310,18 @@ io.on('connection', function(client){
 				} else {
                                         logger.warn("no connection to asterisk");
                                 }
+			break;
+			case actions.HANGUPCH:
+				var hangupch=message.hangupch;
+				var act_hangup={
+					Action: "Hangup",
+					Channel: hangupch
+				};
+				if(am.loggedIn){
+					am.send(act_hangup, function(){
+						logger.debug("'act_hangup' " + sys.inspect(act_hangup) + " has been sent to AST");
+					});
+				} else {logger.warn("no connection to asterisk");}
 			break;
 		  	case actions.ACTION_HANGUP:
 				/* example chStat when call come from soft phone:
