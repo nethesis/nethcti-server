@@ -763,6 +763,7 @@ am.addListener('dialing', function(headers) {
 	if(from!=undefined && !modop.isChannelIntern(headers.channel) && headers.channel.indexOf(';1')==-1){
 		chStat[headers.uniqueid].dialExtUniqueid = headers.trueDestUniqueid
 		chStat[headers.uniqueid].dialDirection = DIAL_TO
+		chStat[headers.uniqueid].dialCh = headers.destination;
 		var trunkTypeext = modop.getTrunkTypeExtFromChannel(headers.channel)
 		// add uniqueid of trunk 'headers.channel' to trunk itself, if it isn't already been added
 		if(modop.isChannelTrunk(headers.channel)){
@@ -778,6 +779,7 @@ am.addListener('dialing', function(headers) {
 	if(to!=undefined && !modop.isChannelIntern(headers.destination) && headers.destination.indexOf(';1')==-1){
 		chStat[trueDestUniqueid].dialExtUniqueid = trueUniqueid;
 		chStat[trueDestUniqueid].dialDirection = DIAL_FROM;
+		chStat[trueDestUniqueid].dialCh = headers.channel;
 		var trunkTypeext = modop.getTrunkTypeExtFromChannel(headers.destination);
 		// add uniqueid of trunk 'headers.destination' to trunk itself, if it isn't already been added
                 if(!modop.hasTrunkDialingUniqueidWithTypeExt(trunkTypeext, trueDestUniqueid)){
@@ -797,6 +799,7 @@ am.addListener('dialing', function(headers) {
 			if(modop.isExtPresent(from) && modop.isChannelIntern(headers.channel) && !modop.isChannelTrunk(headers.channel) ){
 				chStat[trueUniqueid].dialExt = to; // set dial from identification in chStat (dialExt)
 				chStat[trueUniqueid].dialDirection = DIAL_FROM;
+				chStat[trueUniqueid].dialCh = headers.destination;
 				var internTypeExt = modop.getInternTypeExtFromChannel(headers.channel);
 				modop.addDialingUniqueidInternWithTypeExt(internTypeExt, trueUniqueid, chStat[trueUniqueid]);
 				logger.debug("added dialingUniqueid '" + trueUniqueid + "' to interTypeExt '" + internTypeExt + "'");
@@ -808,6 +811,7 @@ am.addListener('dialing', function(headers) {
 		if(modop.isExtPresent(to) && modop.isChannelIntern(headers.destination)){
 			chStat[trueDestUniqueid].dialExt = from; // set dial to identification in chStat (dialExt)
 			chStat[trueDestUniqueid].dialDirection = DIAL_TO;
+			chStat[trueDestUniqueid].dialCh = headers.channel;
 			var internTypeExt = modop.getInternTypeExtFromChannel(headers.destination);
 			modop.addDialingUniqueidInternWithTypeExt(internTypeExt, trueDestUniqueid, chStat[trueDestUniqueid]);
 			logger.debug("added dialingUniqueid '" + trueDestUniqueid + "' to interTypeExt '" + internTypeExt + "'");
@@ -2080,6 +2084,7 @@ io.on('connection', function(client){
 			ACTION_CF_ON: 	'cf_on',
 			ACTION_CF_OFF: 	'cf_off',
 			ACTION_PARK: 	'park',
+			ACTION_PARKCH: 	'parkch',
 			ACTION_PICKUP: 	'pickup',
 			ACTION_SEND_SMS:   'send_sms',
 			ACTION_HANGUP_SPY: 'hangup_spy',
@@ -2558,7 +2563,7 @@ io.on('connection', function(client){
 					var mm = d.getMinutes(); if(mm<10) mm = '0' + mm;
 					var ss = d.getSeconds(); if(ss<10) ss = '0' + ss;
 					var hhmmss = hh + "" + mm + "" + ss;
-	  				var filename = START_ADUIO_FILE + message.callFromExt + "-" + message.callToExt + "-" + yyyyMMdd + "-" + hhmmss + "-" + uniqueid; 
+	  				var filename = START_AUDIO_FILE + message.callFromExt + "-" + message.callToExt + "-" + yyyyMMdd + "-" + hhmmss + "-" + uniqueid; 
 	  				// create record action for asterisk server
 			  		var actionRecord = {
 						Action: 'Monitor',
@@ -2967,6 +2972,23 @@ io.on('connection', function(client){
 	                                });
 				} else {logger.warn("no connection to asterisk");}
                         break;
+			case actions.ACTION_PARKCH:
+				var ch_to_park = message.ch_to_park;
+				var ch_ringing_to = message.ch_ringing_to;
+				var act_parkch={
+					Action: "Park",
+					Channel: ch_to_park,
+					Channel2: ch_ringing_to
+				};
+				if(am.loggedIn){
+					am.send(act_parkch, function(resp){
+						logger.debug("'act_parkch' " + sys.inspect(act_parkch) + " has been sent to asterisk");
+						var msg = new ResponseMessage(client.sessionId, "ack_parkch", "");
+						client.send(msg);
+						logger.debug("RESP 'act_parkch' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+					});
+				} else {logger.warn("no connection to asterisk");}
+			break;
 			case actions.ACTION_PARK:
 				var callToPark = message.callToPark; // ext to be parked
 				var callFrom = message.callFrom;     // ext from which the call is started
