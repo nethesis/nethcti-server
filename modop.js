@@ -470,7 +470,6 @@ function addAsteriskManager(amanager){
 	/* initialize the status of all extensions ('extStatusForOp') present in the asterisk server.
          * Its scope is to put the right informations to 'extStatusForOp' to help 'proxycti.js'
          * to give correct informations to the clients for viewing the operator panel */
-//        initExtStatusForOp();
 }
 
 // This function add listeners to asterisk manager.
@@ -542,8 +541,10 @@ function addListenerToAm(){
 		updateExtStatusForOpWithTypeExt(typeext, status);
 		if(extStatusForOp[typeext]==undefined)
 			logger.warn("extStatusForOp[" + typeext + "] is undefined: " + extStatusForOp[typeext])
-		else
-			extStatusForOp[typeext].chType = headers.channeltype
+		else{
+			extStatusForOp[typeext].chType = headers.channeltype;
+			extStatusForOp[typeext].ip = headers.ipaddress;
+		}
 		/* Check for the DND and CF status of current ext.
 	         * This is made beacuse 'PeerEntry' event don't report the DND and CF status, and so
 	         * it can be possibile to correctly update 'extStatusForOp' */
@@ -928,7 +929,6 @@ function initExtStatusForOp(){
 	// create action for asterisk server that generate series of 'PeerEntry' events
         var actionSIPPeersOP = {
                 Action: 'SIPPeers'
-		//ActionId: 'cti_SIPPeers_action'
         };
         // send action to asterisk
         am.send(actionSIPPeersOP, function () {
@@ -938,7 +938,6 @@ function initExtStatusForOp(){
          * to add status informations to 'extStatusForOp' for each IAXPeer */
         var actionIAXPeersOP = {
                 Action: 'IAXPeers'
-//		Actionid: 'cti_IAXPeers_action'
         };
         // send action to asterisk
         am.send(actionIAXPeersOP, function () {
@@ -948,7 +947,6 @@ function initExtStatusForOp(){
          * to add informations if the extension is present in some queue */
         var actionQueueStatus = {
                 Action: 'QueueStatus'
-	//	Actionid: 'cti_QueueStatus_action'
         };
         // send action to asterisk
         am.send(actionQueueStatus, function () {
