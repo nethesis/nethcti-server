@@ -103,6 +103,7 @@ exports.Modop = function(){
 	this.removeDialingUniqueidInternWithTypeExt = function(typeExt, uniqueid) { removeDialingUniqueidInternWithTypeExt(typeExt, uniqueid) }
 	this.hasInternDialingUniqueidWithTypeExt = function(typeExt, uniqueid) { return hasInternDialingUniqueidWithTypeExt(typeExt, uniqueid) }
 	this.updateCallConnectedUniqueidInternWithTypeExt = function(typeExt, uniqueid, chValue) { updateCallConnectedUniqueidInternWithTypeExt(typeExt, uniqueid, chValue) }
+	this.updateDialingUniqueidInternWithTypeExt = function(typeExt, uniqueid, chValue) { updateDialingUniqueidInternWithTypeExt(typeExt, uniqueid, chValue) }
 	this.getExtFromQueueChannel = function(ch) { return getExtFromQueueChannel(ch) }
 	this.setRefreshInterval = function(min) { setRefreshInterval(min) }
 	this.stopRefresh = function() { stopRefresh() }
@@ -217,6 +218,11 @@ function addCallConnectedUniqueidInternWithTypeExt(typeExt, uniqueid, chValue){
 function updateCallConnectedUniqueidInternWithTypeExt(typeExt, uniqueid, chValue){
 	if(extStatusForOp[typeExt].tab=='interno')
 		extStatusForOp[typeExt].callConnectedUniqueid[uniqueid] = chValue
+}
+function updateDialingUniqueidInternWithTypeExt(typeExt, uniqueid, chValue){
+	if(extStatusForOp[typeExt].tab=='interno'){
+		extStatusForOp[typeExt].dialingUniqueid[uniqueid] = chValue;
+	}
 }
 /* add uniqueid of channel to trunk identified by 'typeExt'. Uniqueid and channel is relative to
  * received 'dialing' event */
