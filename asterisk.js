@@ -68,9 +68,9 @@ exports.AsteriskManager = function (newconfig) {
 	};
 	
 	this.OnClose = function(had_error) {
-		self.emit('serverdisconnect', had_error);
 		self.conn.destroy();
 		loggedIn_ = false;
+		self.emit('serverdisconnect', had_error);
 	};
 	
 	this.OnEnd = function() {
