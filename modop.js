@@ -464,7 +464,6 @@ function updateExtStatusForOpWithTypeExt(typeext, status){
 /* This function add asterisk manager to local variable. Then addListener to it and
  * finally initialize 'extStatusForOp' */
 function addAsteriskManager(amanager){
-
 	am = amanager;
 	addListenerToAm(); // add listeners to asterisk manager to manage extStatusForOp
 	/* initialize the status of all extensions ('extStatusForOp') present in the asterisk server.
@@ -831,7 +830,6 @@ function addListenerToAm(){
 				}
 			}
 		}
-		self.emit('RefreshOperatorPanel', refreshChannels)
 	})
 }
 
