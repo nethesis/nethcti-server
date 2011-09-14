@@ -99,7 +99,7 @@ function initServerAndAsteriskParameters(){
 
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF) */
-log4js.clearAppenders();
+//log4js.clearAppenders();
 log4js.addAppender(log4js.fileAppender(logfile), '[ProxyCTI]');
 var logger = log4js.getLogger('[ProxyCTI]');
 logger.setLevel(loglevel);
@@ -2071,52 +2071,52 @@ io.on('connection', function(client){
   		var action = message.action;
 		// object that contains all actions that can be executed
 		var actions = {
-			ACTION_LOGIN: 	'login',
-			ACTION_CALLOUT: 'call_out_from_client',
-			ACTION_LOGOUT: 	'logout',
-			ACTION_HANGUP:	'hangup',
-			ACTION_RECORD: 	'record',
-			ACTION_DND_ON:  'dnd_on',
-                	ACTION_DND_OFF:	'dnd_off',
-			ACTION_CW_ON: 	'cw_on',
-                	ACTION_CW_OFF:	'cw_off',
-			ACTION_CF_ON: 	'cf_on',
-			ACTION_CF_OFF: 	'cf_off',
-			ACTION_PARK: 	'park',
-			ACTION_PARKCH: 	'parkch',
-			ACTION_PICKUP: 	'pickup',
+			LOGIN: 	'login',
+			CALLOUT: 'call_out_from_client',
+			LOGOUT: 	'logout',
+			HANGUP:	'hangup',
+			RECORD: 	'record',
+			DND_ON:  'dnd_on',
+                	DND_OFF:	'dnd_off',
+			CW_ON: 	'cw_on',
+                	CW_OFF:	'cw_off',
+			CF_ON: 	'cf_on',
+			CF_OFF: 	'cf_off',
+			PARK: 	'park',
+			PARKCH: 	'parkch',
+			PICKUP: 	'pickup',
 			HANGUPCH:   'hangupch',
-			ACTION_REDIRECT:   'redirect',
-			ACTION_SEND_SMS:   'send_sms',
-			ACTION_HANGUP_SPY: 'hangup_spy',
-			ACTION_CF_BUSY_ON: 'cf_busy_on',
-			ACTION_CF_BUSY_OFF: 'cf_busy_off',
-			ACTION_STOP_RECORD: 'stoprecord',
-			ACTION_SPY_LISTEN:  'spy_listen',
-			ACTION_CF_VM_PARKING: 'cf_vm_parking',
-			ACTION_PARKING_PICKUP: 	'parking_pickup',
-			ACTION_HANGUP_UNIQUEID:	'hangup_uniqueid',
-			ACTION_CHECK_CF_STATUS:    'check_cf_status',
-			ACTION_CHECK_DND_STATUS:   'check_dnd_status',
-			ACTION_CHECK_CW_STATUS:    'check_cw_status',
-			ACTION_SPY_LISTEN_SPEAK:   'spy_listen_speak',
-			ACTION_GET_ALL_VM_STATUS:  'get_all_vm_status',
-			ACTION_CF_UNAVAILABLE_ON: 'cf_unavailable_on',
-			ACTION_CF_UNAVAILABLE_OFF: 'cf_unavailable_off',
-			ACTION_REDIRECT_VOICEMAIL: 'redirect_voicemail',
-			ACTION_GET_DAY_HISTORY_CALL:  'get_day_history_call',
-			ACTION_CHECK_CALL_AUDIO_FILE: 'check_call_audio_file',
-			ACTION_CF_UNCOND_FROM_PARKING: 'cf_uncond_from_parking',
-			ACTION_SEARCH_CONTACT_PHONEBOOK:  'search_contact_phonebook',
-			ACTION_GET_PEER_LIST_COMPLETE_OP: 'get_peer_list_complete_op',
-			ACTION_REDIRECT_VOICEMAIL_FROM_OP: 'redirect_voicemail_from_op',
-			ACTION_GET_CURRENT_WEEK_HISTORY_CALL:  'get_current_week_history_call',
-			ACTION_GET_CURRENT_MONTH_HISTORY_CALL: 'get_current_month_history_call'
+			REDIRECT:   'redirect',
+			SEND_SMS:   'send_sms',
+			HANGUP_SPY: 'hangup_spy',
+			CF_BUSY_ON: 'cf_busy_on',
+			CF_BUSY_OFF: 'cf_busy_off',
+			STOP_RECORD: 'stoprecord',
+			SPY_LISTEN:  'spy_listen',
+			CF_VM_PARKING: 'cf_vm_parking',
+			PARKING_PICKUP: 	'parking_pickup',
+			HANGUP_UNIQUEID:	'hangup_uniqueid',
+			CHECK_CF_STATUS:    'check_cf_status',
+			CHECK_DND_STATUS:   'check_dnd_status',
+			CHECK_CW_STATUS:    'check_cw_status',
+			SPY_LISTEN_SPEAK:   'spy_listen_speak',
+			GET_ALL_VM_STATUS:  'get_all_vm_status',
+			CF_UNAVAILABLE_ON: 'cf_unavailable_on',
+			CF_UNAVAILABLE_OFF: 'cf_unavailable_off',
+			REDIRECT_VOICEMAIL: 'redirect_voicemail',
+			GET_DAY_HISTORY_CALL:  'get_day_history_call',
+			CHECK_CALL_AUDIO_FILE: 'check_call_audio_file',
+			CF_UNCOND_FROM_PARKING: 'cf_uncond_from_parking',
+			SEARCH_CONTACT_PHONEBOOK:  'search_contact_phonebook',
+			GET_PEER_LIST_COMPLETE_OP: 'get_peer_list_complete_op',
+			REDIRECT_VOICEMAIL_FROM_OP: 'redirect_voicemail_from_op',
+			GET_CURRENT_WEEK_HISTORY_CALL:  'get_current_week_history_call',
+			GET_CURRENT_MONTH_HISTORY_CALL: 'get_current_month_history_call'
 		}
   		logger.debug("ACTION received: from sessionId '" + client.sessionId + "' message " + sys.inspect(message));	
   		// manage request
   		switch(action){
-			case actions.ACTION_CF_VM_PARKING:
+			case actions.CF_VM_PARKING:
 				var redirectTo = message.redirectToExt;
 				var parking = message.parking;
 				var uniq=modop.getParkedUniqueid(parking);
@@ -2137,7 +2137,7 @@ io.on('connection', function(client){
 					logger.warn("no connection to asterisk");
 				}
 			break;
-			case actions.ACTION_CF_UNCOND_FROM_PARKING:
+			case actions.CF_UNCOND_FROM_PARKING:
 				var redirectTo = message.redirectCallTo;
 				var fromPark = message.parkingRedirectCallFrom;
 				var uniq=modop.getParkedUniqueid(fromPark);
@@ -2157,7 +2157,7 @@ io.on('connection', function(client){
                                         logger.warn("no connection to asterisk");
                                 }
 			break;
-  			case actions.ACTION_LOGIN:
+  			case actions.LOGIN:
 	  			if(authenticator.authenticateUser(extFrom, message.secret)){  // the user is authenticated
   					// if the user is already logged in, a new session is created and the old is closed
   					if(testAlreadyLoggedExten(extFrom)){
@@ -2202,7 +2202,7 @@ io.on('connection', function(client){
   					logger.debug("RESP 'error_login' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
   				}
 	  		break;
-	  		case actions.ACTION_CHECK_DND_STATUS:
+	  		case actions.CHECK_DND_STATUS:
 	  			var cmd = "database get DND " + extFrom;
 			  	var actionCheckDNDStatus = {
 					Action: 'command',
@@ -2226,7 +2226,7 @@ io.on('connection', function(client){
 					logger.warn("no connection with asterisk");
 				}
 	  		break;
-	  		case actions.ACTION_CHECK_CW_STATUS:
+	  		case actions.CHECK_CW_STATUS:
 	  			var cmd = "database get CW " + extFrom;
 			  	var actionCheckCWStatus = {
 					Action: 'command',
@@ -2250,7 +2250,7 @@ io.on('connection', function(client){
 					logger.warn("no connection with asterisk");
 				}
 	  		break;
-	  		case actions.ACTION_CHECK_CF_STATUS:
+	  		case actions.CHECK_CF_STATUS:
 	  			var cmd = "database get CF " + extFrom;
 			  	var actionCheckCFStatus = {
 					Action: 'command',
@@ -2277,14 +2277,14 @@ io.on('connection', function(client){
 					logger.warn("no connection with asterisk");
 				}
 	  		break;
-			case actions.ACTION_GET_ALL_VM_STATUS:
+			case actions.GET_ALL_VM_STATUS:
 				var list = modop.getAllVoicemailStatus();
 				var respMessage = new ResponseMessage(client.sessionId, 'ack_all_vm_status', '');
 				respMessage.list = list;
 				client.send(respMessage);
                                 logger.debug("RESP 'ack_all_vm_status' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 			break;
-	  		case actions.ACTION_CALLOUT:
+	  		case actions.CALLOUT:
 	  			if(clients[extFrom]===undefined){ // check if the client is logged in
 	  				logger.warn("ATTENTION: client [" + extFrom + "] not logged in");
 	  				client.send(new ResponseMessage(client.sessionId, 'error_call', 'Error in calling: client not logged in'));
@@ -2300,7 +2300,7 @@ io.on('connection', function(client){
 				var extToCall = message.extToCall;
 				callout(extFrom, extToCall);
 		  	break;
-			case actions.ACTION_HANGUP_UNIQUEID:
+			case actions.HANGUP_UNIQUEID:
 				var ch=chStat[message.uniqueid].channel;
 				var actionHangupUniqueid = { Action: 'Hangup', Channel: ch };
 				if(am.loggedIn){
@@ -2323,7 +2323,7 @@ io.on('connection', function(client){
 					});
 				} else {logger.warn("no connection to asterisk");}
 			break;
-		  	case actions.ACTION_HANGUP:
+		  	case actions.HANGUP:
 				/* example chStat when call come from soft phone:
 				 { '1308640687.636': 
 				   { channel: 'SIP/270-00000214',
@@ -2362,7 +2362,7 @@ io.on('connection', function(client){
                                         logger.warn("no connection to asterisk");
                                 }
 	  		break;
-			case actions.ACTION_HANGUP_SPY:
+			case actions.HANGUP_SPY:
 //				logger.debug("ACTION_HANGUP_SPY chStat = " + sys.inspect(chStat))
 				logger.debug("key of chStat = " + Object.keys(chStat).length)
 				/* { channel: 'SIP/271-0000023a',
@@ -2396,7 +2396,7 @@ io.on('connection', function(client){
                                         logger.warn("no connection to asterisk");
                                 }
 			break
-	  		case actions.ACTION_LOGOUT:
+	  		case actions.LOGOUT:
 	  			removeClient(client.sessionId);
 	  			if(!testAlreadyLoggedSessionId(client.sessionId)){
 			  		logger.info("logged OUT [" + extFrom + "] sessiondId '" + client.sessionId + "'");
@@ -2405,7 +2405,7 @@ io.on('connection', function(client){
 			  	}
 		  		logger.info(Object.keys(clients).length + " logged in clients");
 	  		break;
-	  		case actions.ACTION_REDIRECT:
+	  		case actions.REDIRECT:
 //				logger.debug("'ACTION_REDIRECT' chStat = " + sys.inspect(chStat))
 				logger.debug("key of chStat = " + Object.keys(chStat).length)
 				/* chStat = { '1308661886.872': 
@@ -2467,7 +2467,7 @@ io.on('connection', function(client){
 			  		logger.debug("RESP 'error_redirect' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 	  			}
 	  		break;
-	  		case actions.ACTION_SEARCH_CONTACT_PHONEBOOK:
+	  		case actions.SEARCH_CONTACT_PHONEBOOK:
 	  			// check if the user has the permission to search contact in phonebook
 				var res = profiler.checkActionPhonebookPermit(extFrom);
 	  			if(res){
@@ -2488,7 +2488,7 @@ io.on('connection', function(client){
   					logger.debug("RESP 'error_search_contacts' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 	  			}
 	  		break;
-	  		case actions.ACTION_RECORD:
+	  		case actions.RECORD:
 	  			// check if the user has the permission of dial out
 				if(profiler.checkActionRecordPermit(extFrom)){
 					logger.debug("check 'record' permission for [" + extFrom + "] OK: record...");
@@ -2618,7 +2618,7 @@ io.on('connection', function(client){
 			  		logger.debug("RESP 'error_record' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 	  			}	
 	  		break;
-	  		case actions.ACTION_STOP_RECORD:
+	  		case actions.STOP_RECORD:
   				// get channel
   				var channel = ''
 				var destChannel = ''
@@ -2723,7 +2723,7 @@ io.on('connection', function(client){
                                         logger.warn("no connection to asterisk");
                                 }
 	  		break;
-	  		case actions.ACTION_DND_ON:
+	  		case actions.DND_ON:
 	  			var cmd = "database put DND " + extFrom + " 1";
 			  	var actionDNDon = {
 					Action: 'command',
@@ -2741,7 +2741,7 @@ io.on('connection', function(client){
                                         logger.warn("no connection to asterisk");
                                 }
 	  		break;
-	  		case actions.ACTION_DND_OFF:
+	  		case actions.DND_OFF:
 	  			var cmd = "database del DND " + extFrom;
 			  	var actionDNDoff = {
 					Action: 'command',
@@ -2759,7 +2759,7 @@ io.on('connection', function(client){
                                         logger.warn("no connection to asterisk");
                                 }
 	  		break;
-	  		case actions.ACTION_CW_ON:
+	  		case actions.CW_ON:
 	  			var cmd = "database put CW " + extFrom + " 1";
 			  	var actionCWon = {
 					Action: 'command',
@@ -2775,7 +2775,7 @@ io.on('connection', function(client){
                                         logger.warn("no connection to asterisk");
                                 }
 	  		break;
-	  		case actions.ACTION_CW_OFF:
+	  		case actions.CW_OFF:
 	  			var cmd = "database del CW " + extFrom;
 			  	var actionCWoff = {
 					Action: 'command',
@@ -2791,7 +2791,7 @@ io.on('connection', function(client){
                                         logger.warn("no connection to asterisk");
                                 }
 	  		break;
-	  		case actions.ACTION_CF_ON:
+	  		case actions.CF_ON:
 	  			var extTo = message.extTo;
 	  			var cmd = "database put CF " + extFrom + " " + extTo;
 			  	var actionCFon = {
@@ -2810,7 +2810,7 @@ io.on('connection', function(client){
 					});
 				} else {logger.warn("no connection to asterisk");}
 	  		break;
-			case actions.ACTION_CF_UNAVAILABLE_ON:
+			case actions.CF_UNAVAILABLE_ON:
                                 var extTo = message.extTo;
                                 var cmd = "database put CFU " + extFrom + " " + extTo;
                                 var actionCFUnavailableOn = {
@@ -2827,7 +2827,7 @@ io.on('connection', function(client){
         	                        });
 				} else {logger.warn("no connection to asterisk");}
                         break;
-			case actions.ACTION_CF_BUSY_ON:
+			case actions.CF_BUSY_ON:
                                 var extTo = message.extTo;
                                 var cmd = "database put CFB " + extFrom + " " + extTo;
                                 var actionCFBusyOn = {
@@ -2844,7 +2844,7 @@ io.on('connection', function(client){
         	                        });
 				} else {logger.warn("no connection to asterisk");}
                         break;
-	  		case actions.ACTION_CF_OFF:
+	  		case actions.CF_OFF:
 	  			var cmd = "database del CF " + extFrom;
 			  	var actionCFoff = {
 					Action: 'command',
@@ -2860,7 +2860,7 @@ io.on('connection', function(client){
 					});
 				} else {logger.warn("no connection to asterisk");}
 	  		break;
-			case actions.ACTION_CF_UNAVAILABLE_OFF:
+			case actions.CF_UNAVAILABLE_OFF:
                                 var cmd = "database del CFU " + extFrom;
                                 var actionCFUnavailableOff = {
                                         Action: 'command',
@@ -2874,7 +2874,7 @@ io.on('connection', function(client){
         	                        });
 				} else {logger.warn("no connection to asterisk");}
                         break;
-			case actions.ACTION_CF_BUSY_OFF:
+			case actions.CF_BUSY_OFF:
                                 var cmd = "database del CFB " + extFrom;
                                 var actionCFBusyOff = {
                                         Action: 'command',
@@ -2889,7 +2889,7 @@ io.on('connection', function(client){
 	                                });
 				} else {logger.warn("no connection to asterisk");}
                         break;
-			case actions.ACTION_GET_DAY_HISTORY_CALL:
+			case actions.GET_DAY_HISTORY_CALL:
 				// check if the user has the permission to get the history of calling
 				var res = profiler.checkActionHistoryCallPermit(extFrom);
                                 if(res){
@@ -2910,7 +2910,7 @@ io.on('connection', function(client){
                                         logger.debug("RESP 'error_day_history_call' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
                                 }
                         break;
-			case actions.ACTION_GET_CURRENT_WEEK_HISTORY_CALL:
+			case actions.GET_CURRENT_WEEK_HISTORY_CALL:
                                 // check if the user has the permission to get history of calling
 				var res = profiler.checkActionHistoryCallPermit(extFrom);
                                 if(res){
@@ -2929,7 +2929,7 @@ io.on('connection', function(client){
                                         logger.debug("RESP 'error_current_week_history_call' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
                                 }
                         break;
-			case actions.ACTION_GET_CURRENT_MONTH_HISTORY_CALL:
+			case actions.GET_CURRENT_MONTH_HISTORY_CALL:
                                 // check if the user has the permission to get history of calling
 				var res = profiler.checkActionHistoryCallPermit(extFrom);
                                 if(res){
@@ -2948,7 +2948,7 @@ io.on('connection', function(client){
                                         logger.debug("RESP 'error_current_month_history_call' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
                                 }
                         break;
-			case actions.ACTION_CHECK_CALL_AUDIO_FILE:
+			case actions.CHECK_CALL_AUDIO_FILE:
 				// check if there are some audio file with particular uniqueid
 				var uniqueid = message.uniqueid;
 				var audioFiles = [];
@@ -2967,7 +2967,7 @@ io.on('connection', function(client){
 	                                logger.debug("RESP 'audio_file_call_list' (" + audioFiles.length + " files) has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 				});	
                         break;
-			case actions.ACTION_GET_PEER_LIST_COMPLETE_OP:
+			case actions.GET_PEER_LIST_COMPLETE_OP:
 				/* Set the global variables 'extToReturnExtStatusForOp' and 'clientToReturnExtStatusForOp' because 
 				 * 'extStatusForOp' is returned to the client when the event 'ParkedCallsComplete' is emitted.
 				 */
@@ -2985,7 +2985,7 @@ io.on('connection', function(client){
 	                                });
 				} else {logger.warn("no connection to asterisk");}
                         break;
-			case actions.ACTION_PARKCH:
+			case actions.PARKCH:
 				var ch_to_park = message.ch_to_park;
 				var ch_ringing_to = message.ch_ringing_to;
 				var act_parkch={
@@ -3002,7 +3002,7 @@ io.on('connection', function(client){
 					});
 				} else {logger.warn("no connection to asterisk");}
 			break;
-			case actions.ACTION_PARK:
+			case actions.PARK:
 				var callToPark = message.callToPark; // ext to be parked
 				var callFrom = message.callFrom;     // ext from which the call is started
 				var callTo = message.callTo;         // ext destination of the call
@@ -3039,7 +3039,7 @@ io.on('connection', function(client){
 	                                });
 				} else {logger.warn("no connection to asterisk");}
 			break;
-			case actions.ACTION_SPY_LISTEN:
+			case actions.SPY_LISTEN:
 				var extToSpy = message.extToSpy
 				var callDialExtToSpy = message.callDialExtToSpy
                                 var channelToSpy = ''
@@ -3065,7 +3065,7 @@ io.on('connection', function(client){
 					});
 				} else {logger.warn("no connection to asterisk");}
 			break;
-			case actions.ACTION_PARKING_PICKUP:
+			case actions.PARKING_PICKUP:
 				var extFrom = message.extFrom;
 				var callToPickup = message.callToPickup;
 				var extHasParked = message.extHasParked;
@@ -3085,7 +3085,7 @@ io.on('connection', function(client){
 	                                });
 				} else {logger.warn("no connection to asterisk");}
 			break;
-			case actions.ACTION_PICKUP:
+			case actions.PICKUP:
 				logger.debug("key of chStat = " + Object.keys(chStat).length)
                                 var callerExt = message.callerExt
 				var callTo = message.callTo
@@ -3120,7 +3120,7 @@ io.on('connection', function(client){
 	                                });
 				} else {logger.warn("no connection to asterisk");}
                         break;
-			case actions.ACTION_SPY_LISTEN_SPEAK:
+			case actions.SPY_LISTEN_SPEAK:
 				var extToSpy = message.extToSpy
                                 var callDialExtToSpy = message.callDialExtToSpy
                                 var channelToSpy = ''
@@ -3146,7 +3146,7 @@ io.on('connection', function(client){
 	                                });
 				} else {logger.warn("no connection to asterisk");}
                         break;
-			case actions.ACTION_REDIRECT_VOICEMAIL:
+			case actions.REDIRECT_VOICEMAIL:
                                 var extTo = message.extTo;
 				var callFromExt = message.callFromExt;
 				var ch = message.destCh;
@@ -3163,7 +3163,7 @@ io.on('connection', function(client){
 	                                });
 				} else {logger.warn("no connection to asterisk");}
                         break;
-			case actions.ACTION_REDIRECT_VOICEMAIL_FROM_OP:
+			case actions.REDIRECT_VOICEMAIL_FROM_OP:
 				var callFrom = message.callFrom
 				var callTo = message.callTo
 				var redirectToExt = message.redirectToExt
@@ -3203,7 +3203,7 @@ io.on('connection', function(client){
 	                                });
 				} else {logger.warn("no connection to asterisk");}
                         break;
-			case actions.ACTION_SEND_SMS:
+			case actions.SEND_SMS:
 				var destNum = message.destNum;
 				var text = message.text;
 				var pathori = SMS_DIR+'/'+destNum;
