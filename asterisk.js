@@ -52,7 +52,6 @@ exports.AsteriskManager = function (newconfig) {
 		if (req.action == 'login')
 			loginId = id;
 		self.conn.write(msg);
-		//console.log("send: " + sys.inspect(msg));
 	};
 	
 
@@ -333,22 +332,27 @@ exports.AsteriskManager = function (newconfig) {
 	}
     };
     
-
 	this.connect = function() {
-		if (!self.conn || self.conn.readyState == 'closed') {
-			self.conn = net.createConnection(config.port, config.host);
-			self.conn.addListener('connect', self.OnConnect);
-			self.conn.addListener('error', self.OnError); // disable for now to get a better idea of source of bugs/errors
-			self.conn.addListener('close', self.OnClose);
-			self.conn.addListener('end', self.OnEnd);
-			self.conn.addListener('data', self.OnData);
-			if (config.connect_timeout > 0) {
-				self.tmoConn = setTimeout(function() {
-					self.emit('timeout');
-					self.conn.end();
-				}, config.connect_timeout);
-			}
+		// Added by Alessandro
+		if(self.conn!==undefined){
+			self.conn.destroy();
+			loggedIn_ = false;
 		}
+		// end of added by Alessandro
+		//if (!self.conn || self.conn.readyState == 'closed') { // removed by Alessandro
+		self.conn = net.createConnection(config.port, config.host);
+		self.conn.addListener('connect', self.OnConnect);
+		self.conn.addListener('error', self.OnError); // disable for now to get a better idea of source of bugs/errors
+		self.conn.addListener('close', self.OnClose);
+		self.conn.addListener('end', self.OnEnd);
+		self.conn.addListener('data', self.OnData);
+		if (config.connect_timeout > 0) {
+			self.tmoConn = setTimeout(function() {
+				self.emit('timeout');
+				self.conn.end();
+			}, config.connect_timeout);
+		}
+		//} // removed by Alessandro
 	};
 	
 	this.login = function(cb) {
