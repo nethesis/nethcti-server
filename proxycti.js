@@ -99,7 +99,7 @@ function initServerAndAsteriskParameters(){
 
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF) */
-//log4js.clearAppenders();
+log4js.clearAppenders();
 log4js.addAppender(log4js.fileAppender(logfile), '[ProxyCTI]');
 var logger = log4js.getLogger('[ProxyCTI]');
 logger.setLevel(loglevel);
@@ -2218,7 +2218,7 @@ io.on('connection', function(client){
 						}
 					});
 				} catch(err){
-					logger.warn("no connection with asterisk --------------------------------------------------------");
+					logger.warn("no connection with asterisk: " + err);
 				}
 	  		break;
 	  		case actions.CHECK_CW_STATUS:
@@ -2241,7 +2241,7 @@ io.on('connection', function(client){
 							logger.debug("RESP 'cw_status_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 						}
 					});
-				} cath(err){logger.warn("no connection with asterisk: " + err);}
+				} catch(err){logger.warn("no connection with asterisk: " + err);}
 	  		break;
 	  		case actions.CHECK_CF_STATUS:
 	  			var cmd = "database get CF " + extFrom;
@@ -2578,12 +2578,22 @@ io.on('connection', function(client){
 							chStat[uniqueid].record = 1
 							chStat[destUniqueid].record = 1
 							if(modop.isTypeExtPresent(callFromInternTypeExt)){
-								modop.updateCallConnectedUniqueidInternWithTypeExt(callFromInternTypeExt, uniqueid, chStat[uniqueid])
-								updateAllClientsForOpWithTypeExt(callFromInternTypeExt)
+								if(modop.hasInternCallConnectedUniqueidWithTypeExt(callFromInternTypeExt,uniqueid)){
+									modop.updateCallConnectedUniqueidInternWithTypeExt(callFromInternTypeExt, uniqueid, chStat[uniqueid]);
+								}
+								if(modop.hasInternDialingUniqueidWithTypeExt(callFromInternTypeExt,uniqueid)){
+									modop.updateDialingUniqueidInternWithTypeExt(callFromInternTypeExt,uniqueid,chStat[uniqueid]);
+								}
+								updateAllClientsForOpWithTypeExt(callFromInternTypeExt);
 							}
 							if(modop.isTypeExtPresent(callToInternTypeExt)){
-								modop.updateCallConnectedUniqueidInternWithTypeExt(callToInternTypeExt, destUniqueid, chStat[destUniqueid])
-								updateAllClientsForOpWithTypeExt(callToInternTypeExt)
+								if(modop.hasInternCallConnectedUniqueidWithTypeExt(callToInternTypeExt,destUniqueid)){
+									modop.updateCallConnectedUniqueidInternWithTypeExt(callToInternTypeExt, destUniqueid, chStat[destUniqueid]);
+								}
+								if(modop.hasInternDialingUniqueidWithTypeExt(callToInternTypeExt,destUniqueid)){
+									modop.updateDialingUniqueidInternWithTypeExt(callToInternTypeExt,destUniqueid,chStat[destUniqueid]);
+								}
+								updateAllClientsForOpWithTypeExt(callToInternTypeExt);
 							}
 						});
 					} catch(err) {
@@ -2689,12 +2699,22 @@ io.on('connection', function(client){
 						chStat[uniqueid].record = 0
 						chStat[destUniqueid].record = 0
 						if(modop.isTypeExtPresent(callFromInternTypeExt)){
-	                                                modop.updateCallConnectedUniqueidInternWithTypeExt(callFromInternTypeExt, uniqueid, chStat[uniqueid])
-	                                        	updateAllClientsForOpWithTypeExt(callFromInternTypeExt)
+							if(modop.hasInternCallConnectedUniqueidWithTypeExt(callFromInternTypeExt,uniqueid)){
+	                                                	modop.updateCallConnectedUniqueidInternWithTypeExt(callFromInternTypeExt, uniqueid, chStat[uniqueid])
+							}
+							if(modop.hasInternDialingUniqueidWithTypeExt(callFromInternTypeExt,uniqueid)){
+								modop.updateDialingUniqueidInternWithTypeExt(callFromInternTypeExt,uniqueid,chStat[uniqueid]);
+							}
+	                                        	updateAllClientsForOpWithTypeExt(callFromInternTypeExt);
 	                                        }
 	                                       	if(modop.isTypeExtPresent(callToInternTypeExt)){
-	                                                modop.updateCallConnectedUniqueidInternWithTypeExt(callToInternTypeExt, destUniqueid, chStat[destUniqueid])
-	                                        	updateAllClientsForOpWithTypeExt(callToInternTypeExt)
+	                                                if(modop.hasInternCallConnectedUniqueidWithTypeExt(callToInternTypeExt,destUniqueid)){
+								modop.updateCallConnectedUniqueidInternWithTypeExt(callToInternTypeExt, destUniqueid, chStat[destUniqueid])
+							}
+							if(modop.hasInternDialingUniqueidWithTypeExt(callToInternTypeExt,destUniqueid)){
+								modop.updateDialingUniqueidInternWithTypeExt(callToInternTypeExt,destUniqueid,chStat[destUniqueid]);
+							}
+	                                        	updateAllClientsForOpWithTypeExt(callToInternTypeExt);
 	                                        }
 					});
 				} catch(err) {
