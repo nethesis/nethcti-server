@@ -27,8 +27,8 @@ const START_AUDIO_FILE = "auto-";
 const DIAL_FROM = 1;
 const DIAL_TO = 0;
 const N_AST_RECON = 3; // number of reconnection attempts to asterisk when fail connection
-const DELAY_AST_RECON = 3000; // delay between two reconnection attempts to asterisk
-var am = undefined; // asterisk manager
+const DELAY_AST_RECON = 8000; // delay between two reconnection attempts to asterisk
+var astrecon = false; // avoids more contemporary reconnection to asterisk server
 var server; // http server
 var counter_ast_recon = 0;
 var extToReturnExtStatusForOp = '';
@@ -211,21 +211,9 @@ function createAudioFileList(){
         }
 }
 
-function recon_ast(){
-	if(!am.loggedIn && counter_ast_recon<N_AST_RECON){
-		counter_ast_recon++;
-		setTimeout(function(){
-			logger.warn("asterisk reconnection attempt #"+counter_ast_recon);
-			init_connect_ast();
-		}, DELAY_AST_RECON);
-	}
-}
-
 /******************************************************
  * Section relative to asterisk interaction    
  */
-function init_connect_ast(){
-
 am = new ast.AsteriskManager({user: asterisk_user, password: asterisk_pass, host: asterisk_host});
 logger.debug('created asterisk manager');
 
@@ -250,14 +238,10 @@ am.addListener('serverdisconnect', function(had_error) {
 	recon_ast();
 });
 
-
 am.addListener('servererror', function(err) {
 	logger.error("EVENT 'ServerError', connection attempt to asterisk server failed: (" + err + ")");
-	if(!am.loggedIn && counter_ast_recon>=N_AST_RECON){
-		process.exit(0);
-	}
+	recon_ast();
 });
-
 
 /* EVENT 'NewChannel': headers = { event: 'Newchannel',
   privilege: 'call,all',
@@ -1853,9 +1837,25 @@ am.addListener('messagewaiting', function(headers){
 
 logger.info("connection to asterisk server...");
 am.connect();
-} // end of 'function init_connect_ast(){'
-init_connect_ast();
 
+function recon_ast(){
+	if(!astrecon){
+		astrecon=true;
+		logger.warn("'recon_ast' function");
+		if(counter_ast_recon<N_AST_RECON){
+			counter_ast_recon++;
+			setTimeout(function(){
+				logger.warn("asterisk reconnection attempt #"+counter_ast_recon);
+				am.connect();
+				astrecon=false;
+			}, DELAY_AST_RECON);
+		}else{
+			process.exit(0);
+		}
+	}else{
+		logger.warn("there is already one attempt to reconnect to asterisk");
+	}
+}
 /*
  * End of section relative to asterisk interaction
  *************************************************/
