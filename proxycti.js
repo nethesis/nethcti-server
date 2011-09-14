@@ -127,14 +127,13 @@ controller.addListener("change_dir", function(dir){
 		createAudioFileList();
 	}
 })
-controller.addListener('change_vm_dir', function(dir){
-	// ex dir: '/var/spool/asterisk/voicemail/default/272/INBOX'
+controller.addListener('change_vm_dir', function(dir){ // ex dir: '/var/spool/asterisk/voicemail/default/272/INBOX'
         var ext = dir.split('/')[6]
         var actionMailboxCount = {
 		Action: 'MailboxCount',
 		Mailbox: ext
         }
-	if(am.loggedIn){
+	try{
 	        am.send(actionMailboxCount, function (resp) {
 			/* resp = { response: 'Success',
 	                actionid: '1308221582955',
@@ -143,14 +142,11 @@ controller.addListener('change_vm_dir', function(dir){
 	                newmessages: '2',
 	                oldmessages: '0' } */
 	                var newMsgCount = resp.newmessages
-			// update voicemail count of the extension
 		        modop.updateVMCountWithExt(ext,resp.newmessages)
-		        // update all clients with the new state of extension, for update operator panel
-	//	        updateAllClientsForOpWithExt(ext)
 			updateAllClientsForOpWithTypeExt("SIP/"+ext);
 		});
-	} else{
-	        logger.warn("no connection to asterisk");
+	} catch(err) {
+	        logger.warn("no connection to asterisk: "+err);
 	}
 })
 
@@ -2018,7 +2014,7 @@ function callout(extFrom, to, res){
                  * This is made because asterisk.js not generate 'newState' ringing event until the user
                  * has pickup his phone */
                 sendAllClientAckCalloutFromCti(extFrom);
-		if(am.loggedIn){
+		try{
 	                am.send(actionCall, function () { // send action to asterisk
 				logger.debug('\'actionCall\' ' + sys.inspect(actionCall) + ' has been sent to AST');
 				var client = clients[extFrom];
@@ -2031,8 +2027,8 @@ function callout(extFrom, to, res){
 					logger.debug("don't send ack_callout to client, because it isn't present: the call was originated from outside of the cti");
 				}
 	                });
-		} else{
-			logger.warn("no connection to asterisk");
+		} catch(err){
+			logger.warn("no connection to asterisk: "+err);
 		}
 		if(res!==undefined){
 			res.writeHead(200, {"Content-Type":"text/plain"});
@@ -2072,49 +2068,48 @@ io.on('connection', function(client){
 		// object that contains all actions that can be executed
 		var actions = {
 			LOGIN: 	'login',
-			CALLOUT: 'call_out_from_client',
-			LOGOUT: 	'logout',
+			CALLOUT:'call_out_from_client',
+			LOGOUT:	'logout',
 			HANGUP:	'hangup',
-			RECORD: 	'record',
-			DND_ON:  'dnd_on',
-                	DND_OFF:	'dnd_off',
+			RECORD: 'record',
+			DND_ON: 'dnd_on',
+                	DND_OFF:'dnd_off',
 			CW_ON: 	'cw_on',
                 	CW_OFF:	'cw_off',
 			CF_ON: 	'cf_on',
-			CF_OFF: 	'cf_off',
+			CF_OFF: 'cf_off',
 			PARK: 	'park',
-			PARKCH: 	'parkch',
-			PICKUP: 	'pickup',
-			HANGUPCH:   'hangupch',
-			REDIRECT:   'redirect',
-			SEND_SMS:   'send_sms',
-			HANGUP_SPY: 'hangup_spy',
-			CF_BUSY_ON: 'cf_busy_on',
-			CF_BUSY_OFF: 'cf_busy_off',
-			STOP_RECORD: 'stoprecord',
-			SPY_LISTEN:  'spy_listen',
-			CF_VM_PARKING: 'cf_vm_parking',
-			PARKING_PICKUP: 	'parking_pickup',
-			HANGUP_UNIQUEID:	'hangup_uniqueid',
-			CHECK_CF_STATUS:    'check_cf_status',
-			CHECK_DND_STATUS:   'check_dnd_status',
-			CHECK_CW_STATUS:    'check_cw_status',
-			SPY_LISTEN_SPEAK:   'spy_listen_speak',
-			GET_ALL_VM_STATUS:  'get_all_vm_status',
-			CF_UNAVAILABLE_ON: 'cf_unavailable_on',
-			CF_UNAVAILABLE_OFF: 'cf_unavailable_off',
-			REDIRECT_VOICEMAIL: 'redirect_voicemail',
-			GET_DAY_HISTORY_CALL:  'get_day_history_call',
-			CHECK_CALL_AUDIO_FILE: 'check_call_audio_file',
+			PARKCH: 'parkch',
+			PICKUP: 'pickup',
+			HANGUPCH:	'hangupch',
+			REDIRECT:   	'redirect',
+			SEND_SMS:	'send_sms',
+			HANGUP_SPY: 	'hangup_spy',
+			CF_BUSY_ON: 	'cf_busy_on',
+			CF_BUSY_OFF: 	'cf_busy_off',
+			STOP_RECORD: 	'stoprecord',
+			SPY_LISTEN:  	'spy_listen',
+			CF_VM_PARKING: 	'cf_vm_parking',
+			PARKING_PICKUP: 'parking_pickup',
+			HANGUP_UNIQUEID:'hangup_uniqueid',
+			CHECK_CF_STATUS:'check_cf_status',
+			CHECK_DND_STATUS:	'check_dnd_status',
+			CHECK_CW_STATUS:    	'check_cw_status',
+			SPY_LISTEN_SPEAK:   	'spy_listen_speak',
+			GET_ALL_VM_STATUS:  	'get_all_vm_status',
+			CF_UNAVAILABLE_ON: 	'cf_unavailable_on',
+			CF_UNAVAILABLE_OFF: 	'cf_unavailable_off',
+			REDIRECT_VOICEMAIL: 	'redirect_voicemail',
+			GET_DAY_HISTORY_CALL:  	'get_day_history_call',
+			CHECK_CALL_AUDIO_FILE: 	'check_call_audio_file',
 			CF_UNCOND_FROM_PARKING: 'cf_uncond_from_parking',
-			SEARCH_CONTACT_PHONEBOOK:  'search_contact_phonebook',
-			GET_PEER_LIST_COMPLETE_OP: 'get_peer_list_complete_op',
-			REDIRECT_VOICEMAIL_FROM_OP: 'redirect_voicemail_from_op',
+			SEARCH_CONTACT_PHONEBOOK:	'search_contact_phonebook',
+			GET_PEER_LIST_COMPLETE_OP: 	'get_peer_list_complete_op',
+			REDIRECT_VOICEMAIL_FROM_OP: 	'redirect_voicemail_from_op',
 			GET_CURRENT_WEEK_HISTORY_CALL:  'get_current_week_history_call',
 			GET_CURRENT_MONTH_HISTORY_CALL: 'get_current_month_history_call'
 		}
   		logger.debug("ACTION received: from sessionId '" + client.sessionId + "' message " + sys.inspect(message));	
-  		// manage request
   		switch(action){
 			case actions.CF_VM_PARKING:
 				var redirectTo = message.redirectToExt;
@@ -2129,12 +2124,12 @@ io.on('connection', function(client){
                                         Exten: 'vmu' + redirectTo,
                                         Priority: 1
                                 }
-				if(am.loggedIn){
+				try{
 	                                am.send(actionCfVMParking, function(){
 	                                        logger.debug("'actionCfVMParking' " + sys.inspect(actionCfVMParking) + " has been sent to AST");
 	                                });
-				} else {
-					logger.warn("no connection to asterisk");
+				} catch(err) {
+					logger.warn("no connection to asterisk: "+err);
 				}
 			break;
 			case actions.CF_UNCOND_FROM_PARKING:
@@ -2149,12 +2144,12 @@ io.on('connection', function(client){
                                        Exten: redirectTo,
                                        Priority: 1
                                 };
-				if(am.loggedIn){
+				try{
                 	                am.send(actionRedirFromParking, function(){
         	                                logger.debug("'actionRedirFromParking' " + sys.inspect(actionRedirFromParking) + " has been sent to AST");
 	                                });
-				} else {
-                                        logger.warn("no connection to asterisk");
+				} catch(err) {
+                                        logger.warn("no connection to asterisk: "+err);
                                 }
 			break;
   			case actions.LOGIN:
@@ -2208,7 +2203,7 @@ io.on('connection', function(client){
 					Action: 'command',
 					Command: cmd
 				};
-				if(am.loggedIn){
+				try{
 					am.send(actionCheckDNDStatus, function (resp) {
 						logger.debug("'actionCheckDNDStatus' " + sys.inspect(actionCheckDNDStatus) + " has been sent to AST");
 						if(resp.value==undefined){
@@ -2222,8 +2217,8 @@ io.on('connection', function(client){
 							logger.debug("RESP 'dnd_status_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 						}
 					});
-				}else{
-					logger.warn("no connection with asterisk");
+				} catch(err){
+					logger.warn("no connection with asterisk --------------------------------------------------------");
 				}
 	  		break;
 	  		case actions.CHECK_CW_STATUS:
@@ -2232,7 +2227,7 @@ io.on('connection', function(client){
 					Action: 'command',
 					Command: cmd
 				};
-				if(am.loggedIn){
+				try{
 					am.send(actionCheckCWStatus, function (resp) {
 						logger.debug("'actionCheckCWStatus' " + sys.inspect(actionCheckCWStatus) + " has been sent to AST");
 						if(resp.value==undefined){
@@ -2246,9 +2241,7 @@ io.on('connection', function(client){
 							logger.debug("RESP 'cw_status_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 						}
 					});
-				} else{
-					logger.warn("no connection with asterisk");
-				}
+				} cath(err){logger.warn("no connection with asterisk: " + err);}
 	  		break;
 	  		case actions.CHECK_CF_STATUS:
 	  			var cmd = "database get CF " + extFrom;
@@ -2256,7 +2249,7 @@ io.on('connection', function(client){
 					Action: 'command',
 					Command: cmd
 				};
-				if(am.loggedIn){
+				try{
 					am.send(actionCheckCFStatus, function (resp) {
 						logger.debug("'actionCheckCFStatus' " + sys.inspect(actionCheckCFStatus) + " has been sent to AST");
 						if(resp.value==undefined){
@@ -2273,9 +2266,7 @@ io.on('connection', function(client){
 							logger.debug("RESP 'cf_status_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 						}
 					});
-				}else{
-					logger.warn("no connection with asterisk");
-				}
+				}catch(err){logger.warn("no connection with asterisk: "+err);}
 	  		break;
 			case actions.GET_ALL_VM_STATUS:
 				var list = modop.getAllVoicemailStatus();
@@ -2303,13 +2294,11 @@ io.on('connection', function(client){
 			case actions.HANGUP_UNIQUEID:
 				var ch=chStat[message.uniqueid].channel;
 				var actionHangupUniqueid = { Action: 'Hangup', Channel: ch };
-				if(am.loggedIn){
+				try{
 					am.send(actionHangupUniqueid, function () {
 	                                        logger.debug("'actionHangupiUniqueid' " + sys.inspect(actionHangupUniqueid) + " has been sent to AST");
 	                                })
-				} else {
-                                        logger.warn("no connection to asterisk");
-                                }
+				}catch(err){logger.warn("no connection to asterisk: "+err);}
 			break;
 			case actions.HANGUPCH:
 				var hangupch=message.hangupch;
@@ -2317,11 +2306,11 @@ io.on('connection', function(client){
 					Action: "Hangup",
 					Channel: hangupch
 				};
-				if(am.loggedIn){
+				try{
 					am.send(act_hangup, function(){
 						logger.debug("'act_hangup' " + sys.inspect(act_hangup) + " has been sent to AST");
 					});
-				} else {logger.warn("no connection to asterisk");}
+				}catch(err){logger.warn("no connection to asterisk: "+err);}
 			break;
 		  	case actions.HANGUP:
 				/* example chStat when call come from soft phone:
@@ -2335,7 +2324,6 @@ io.on('connection', function(client){
 				     calleridname: '',
 				     calleridnum: '271',
 				     status: 'up' } } */
-//				logger.debug("ACTION_HANGUP chStat = " + sys.inspect(chStat))
 				logger.debug("key of chStat = " + Object.keys(chStat).length)
 				var extToHangup = message.extToHangup
 				var callDialExtHangup = message.callDialExtHangup
@@ -2354,16 +2342,13 @@ io.on('connection', function(client){
                                         Action: 'Hangup',
                                         Channel: ch
                                 }
-				if(am.loggedIn){
+				try{
 	                                am.send(actionHangup, function () {
 	                                        logger.debug("'actionHangup' " + sys.inspect(actionHangup) + " has been sent to AST");
 	                                });
-				} else {
-                                        logger.warn("no connection to asterisk");
-                                }
+				}catch(err){logger.warn("no connection to asterisk: "+err);}
 	  		break;
 			case actions.HANGUP_SPY:
-//				logger.debug("ACTION_HANGUP_SPY chStat = " + sys.inspect(chStat))
 				logger.debug("key of chStat = " + Object.keys(chStat).length)
 				/* { channel: 'SIP/271-0000023a',
 				     status: 'up',
@@ -2387,14 +2372,11 @@ io.on('connection', function(client){
                                         Action: 'Hangup', 
                                         Channel: ch
                                 }
-                                // send action to asterisk
-				if(am.loggedIn){
+				try{
 	                                am.send(actionHangupSpy, function () {
 	                                        logger.debug("'actionHangupSpy' " + sys.inspect(actionHangupSpy) + " has been sent to AST");
 	                                });
-				} else {
-                                        logger.warn("no connection to asterisk");
-                                }
+				}catch(err){logger.warn("no connection to asterisk: "+err);}
 			break
 	  		case actions.LOGOUT:
 	  			removeClient(client.sessionId);
@@ -2406,7 +2388,6 @@ io.on('connection', function(client){
 		  		logger.info(Object.keys(clients).length + " logged in clients");
 	  		break;
 	  		case actions.REDIRECT:
-//				logger.debug("'ACTION_REDIRECT' chStat = " + sys.inspect(chStat))
 				logger.debug("key of chStat = " + Object.keys(chStat).length)
 				/* chStat = { '1308661886.872': 
 				   { channel: 'SIP/271-000002cb',
@@ -2451,15 +2432,13 @@ io.on('connection', function(client){
 						Exten: redirectToExt,
 						Priority: 1
 					};
-					if(am.loggedIn){
+					try{
 						am.send(actionRedirect, function () {
 							logger.debug("'actionRedirect' " + sys.inspect(actionRedirect) + " has been sent to AST");
 							client.send(new ResponseMessage(client.sessionId, 'ack_redirect'), 'Redirection has been taken');
 							logger.debug("RESP 'ack_redirect' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 						});
-					} else {
-                                        	logger.warn("no connection to asterisk");
-                                	}
+					}catch(err){logger.warn("no connection to asterisk: "+err);}
 		  		}
 	  			else{
 					logger.debug("check 'redirect' permission for [" + extFrom + "] FAILED !");
@@ -2586,8 +2565,7 @@ io.on('connection', function(client){
 					};
 					var callFromInternTypeExt = modop.getInternTypeExtFromChannel(channel)
 					var callToInternTypeExt = modop.getInternTypeExtFromChannel(destChannel)
-					// send action to asterisk
-					if(am.loggedIn){
+					try{
 						am.send(actionRecord, function () {
 							logger.debug("'actionRecord' " + sys.inspect(actionRecord) + " has been sent to AST");
 							var msgstr = 'Recording of call ' + filename + ' started...';
@@ -2608,8 +2586,8 @@ io.on('connection', function(client){
 								updateAllClientsForOpWithTypeExt(callToInternTypeExt)
 							}
 						});
-					} else {
-	                                       	logger.warn("no connection to asterisk");
+					} catch(err) {
+	                                       	logger.warn("no connection to asterisk: " + err);
         	                        }	
 				}
 				else{
@@ -2702,7 +2680,7 @@ io.on('connection', function(client){
 				};
 				var callFromInternTypeExt = modop.getInternTypeExtFromChannel(channel)
                                 var callToInternTypeExt = modop.getInternTypeExtFromChannel(destChannel)
-				if(am.loggedIn){
+				try{
 					am.send(actionStopRecord, function () {
 						var msgstr = 'Recording for ' + extFrom + ' stopped';
 						client.send(new ResponseMessage(client.sessionId, 'ack_stoprecord', msgstr));
@@ -2719,8 +2697,8 @@ io.on('connection', function(client){
 	                                        	updateAllClientsForOpWithTypeExt(callToInternTypeExt)
 	                                        }
 					});
-				} else {
-                                        logger.warn("no connection to asterisk");
+				} catch(err) {
+                                        logger.warn("no connection to asterisk: "+err);
                                 }
 	  		break;
 	  		case actions.DND_ON:
@@ -2729,7 +2707,7 @@ io.on('connection', function(client){
 					Action: 'command',
 					Command: cmd
 				};
-				if(am.loggedIn){
+				try{
 					am.send(actionDNDon, function () {
 						var msgstr = "[" + extFrom + "] DND ON";
 						client.send(new ResponseMessage(client.sessionId, 'ack_dnd_on', msgstr));
@@ -2737,8 +2715,8 @@ io.on('connection', function(client){
 						modop.updateExtDNDStatusWithExt(extFrom, 'on');
 						updateAllClientsForOpWithTypeExt("SIP/"+extFrom);
 					});
-				} else {
-                                        logger.warn("no connection to asterisk");
+				} catch(err) {
+                                        logger.warn("no connection to asterisk: "+err);
                                 }
 	  		break;
 	  		case actions.DND_OFF:
@@ -2747,7 +2725,7 @@ io.on('connection', function(client){
 					Action: 'command',
 					Command: cmd
 				};
-				if(am.loggedIn){
+				try{
 					am.send(actionDNDoff, function () {
 						var msgstr = "[" + extFrom + "] DND OFF";
 						client.send(new ResponseMessage(client.sessionId, 'ack_dnd_off', msgstr));
@@ -2755,8 +2733,8 @@ io.on('connection', function(client){
 	                                        modop.updateExtDNDStatusWithExt(extFrom, 'off');
 	                                        updateAllClientsForOpWithTypeExt("SIP/"+extFrom);
 					});
-				} else {
-                                        logger.warn("no connection to asterisk");
+				} catch(err) {
+                                        logger.warn("no connection to asterisk: "+err);
                                 }
 	  		break;
 	  		case actions.CW_ON:
@@ -2765,14 +2743,14 @@ io.on('connection', function(client){
 					Action: 'command',
 					Command: cmd
 				};
-				if(am.loggedIn){
+				try{
 					am.send(actionCWon, function () {
 						var msgstr = "[" + extFrom + "] CW ON";
 						client.send(new ResponseMessage(client.sessionId, 'ack_cw_on', msgstr));
 						logger.debug("'actionCWon' " + sys.inspect(actionCWon) + " has been sent to AST\nRESP 'ack_cw_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'\n"+msgstr);
 					});
-				} else {
-                                        logger.warn("no connection to asterisk");
+				} catch(err) {
+                                        logger.warn("no connection to asterisk: "+err);
                                 }
 	  		break;
 	  		case actions.CW_OFF:
@@ -2781,14 +2759,14 @@ io.on('connection', function(client){
 					Action: 'command',
 					Command: cmd
 				};
-				if(am.loggedIn){
+				try{
 					am.send(actionCWoff, function () {
 						var msgstr = "[" + extFrom + "] CW OFF";
 						client.send(new ResponseMessage(client.sessionId, 'ack_cw_off', msgstr));
 						logger.debug("'actionCWoff' " + sys.inspect(actionCWoff) + " has been sent to AST\nRESP 'ack_cw_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'"+msgstr);
 					});
-				} else {
-                                        logger.warn("no connection to asterisk");
+				} catch(err) {
+                                        logger.warn("no connection to asterisk: " + err);
                                 }
 	  		break;
 	  		case actions.CF_ON:
@@ -2798,7 +2776,7 @@ io.on('connection', function(client){
 					Action: 'command',
 					Command: cmd
 				};
-				if(am.loggedIn){
+				try{
 					am.send(actionCFon, function () {
 						var msgstr = "[" + extFrom + "] CF ON to [" + extTo + "]"
 						var response = new ResponseMessage(client.sessionId, 'ack_cf_on', msgstr)
@@ -2808,7 +2786,7 @@ io.on('connection', function(client){
 	                                        modop.updateExtCFStatusWithExt(extFrom, 'on', extTo);
 	                                        updateAllClientsForOpWithTypeExt("SIP/"+extFrom);
 					});
-				} else {logger.warn("no connection to asterisk");}
+				} catch(err) {logger.warn("no connection to asterisk: " + err);}
 	  		break;
 			case actions.CF_UNAVAILABLE_ON:
                                 var extTo = message.extTo;
@@ -2817,7 +2795,7 @@ io.on('connection', function(client){
                                         Action: 'command',
                                         Command: cmd
                                 };
-				if(am.loggedIn){
+				try{
 	                                am.send(actionCFUnavailableOn, function () {
 	                                        var msgstr = "[" + extFrom + "] CF Unavailable ON to [" + extTo + "]"
 	                                        var response = new ResponseMessage(client.sessionId, 'ack_cf_unavailable_on', msgstr)
@@ -2825,7 +2803,7 @@ io.on('connection', function(client){
 	                                        client.send(response)
 	                                        logger.debug("'actionCFUnavailableOn' " + sys.inspect(actionCFUnavailableOn) + " has been sent to AST\nRESP 'ack_cf_unavailable_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'"+msgstr);
         	                        });
-				} else {logger.warn("no connection to asterisk");}
+				} catch(err) {logger.warn("no connection to asterisk: "+err);}
                         break;
 			case actions.CF_BUSY_ON:
                                 var extTo = message.extTo;
@@ -2834,7 +2812,7 @@ io.on('connection', function(client){
                                         Action: 'command',
                                         Command: cmd
                                 };
-				if(am.loggedIn){
+				try{
 	                                am.send(actionCFBusyOn, function () {
 	                                        var msgstr = "[" + extFrom + "] CF Busy ON to [" + extTo + "]"
 	                                        var response = new ResponseMessage(client.sessionId, 'ack_cf_busy_on', msgstr)
@@ -2842,7 +2820,7 @@ io.on('connection', function(client){
 	                                        client.send(response)
 	                                        logger.debug("'actionCFBusyOn' " + sys.inspect(actionCFBusyOn) + " has been sent to AST\nRESP 'ack_cf_busy_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'\n"+msgstr);
         	                        });
-				} else {logger.warn("no connection to asterisk");}
+				} catch(err) {logger.warn("no connection to asterisk: "+err);}
                         break;
 	  		case actions.CF_OFF:
 	  			var cmd = "database del CF " + extFrom;
@@ -2850,7 +2828,7 @@ io.on('connection', function(client){
 					Action: 'command',
 					Command: cmd
 				};
-				if(am.loggedIn){
+				try{
 					am.send(actionCFoff, function () {
 						var msgstr = "[" + extFrom + "] CF OFF";
 						client.send(new ResponseMessage(client.sessionId, 'ack_cf_off', msgstr));
@@ -2858,7 +2836,7 @@ io.on('connection', function(client){
 	                                        modop.updateExtCFStatusWithExt(extFrom, 'off');
 	                                        updateAllClientsForOpWithTypeExt("SIP/"+extFrom);
 					});
-				} else {logger.warn("no connection to asterisk");}
+				} catch(err) {logger.warn("no connection to asterisk: " +err);}
 	  		break;
 			case actions.CF_UNAVAILABLE_OFF:
                                 var cmd = "database del CFU " + extFrom;
@@ -2866,13 +2844,13 @@ io.on('connection', function(client){
                                         Action: 'command',
                                         Command: cmd
                                 };
-				if(am.loggedIn){
+				try{
 	                                am.send(actionCFUnavailableOff, function () {
 	                                        var msgstr = "[" + extFrom + "] CF Unavailable OFF";
 	                                        client.send(new ResponseMessage(client.sessionId, 'ack_cf_unavailable_off', msgstr));
 	                                        logger.debug("'actionCFUnavailableOff' " + sys.inspect(actionCFUnavailableOff) + " has been sent to AST\nRESP 'ack_cf_unavailable_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'\n"+msgstr);
         	                        });
-				} else {logger.warn("no connection to asterisk");}
+				} catch(err) {logger.warn("no connection to asterisk: " +err);}
                         break;
 			case actions.CF_BUSY_OFF:
                                 var cmd = "database del CFB " + extFrom;
@@ -2880,14 +2858,14 @@ io.on('connection', function(client){
                                         Action: 'command',
                                         Command: cmd
                                 };
-				if(am.loggedIn){
+				try{
 	                                am.send(actionCFBusyOff, function () {
 	                                        logger.debug("'actionCFBusyOff' " + sys.inspect(actionCFBusyOff) + " has been sent to AST");
 	                                        var msgstr = "[" + extFrom + "] CF Busy OFF";
 	                                        client.send(new ResponseMessage(client.sessionId, 'ack_cf_busy_off', msgstr));
 	                                        logger.debug("RESP 'ack_cf_busy_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'\n"+msgstr);
 	                                });
-				} else {logger.warn("no connection to asterisk");}
+				} catch(err) {logger.warn("no connection to asterisk: " +err);}
                         break;
 			case actions.GET_DAY_HISTORY_CALL:
 				// check if the user has the permission to get the history of calling
@@ -2969,21 +2947,18 @@ io.on('connection', function(client){
                         break;
 			case actions.GET_PEER_LIST_COMPLETE_OP:
 				/* Set the global variables 'extToReturnExtStatusForOp' and 'clientToReturnExtStatusForOp' because 
-				 * 'extStatusForOp' is returned to the client when the event 'ParkedCallsComplete' is emitted.
-				 */
+				 * 'extStatusForOp' is returned to the client when the event 'ParkedCallsComplete' is emitted */
 				extToReturnExtStatusForOp = extFrom;
 				clientToReturnExtStatusForOp = client;
 				/* send 'ParkedCalls' action to asterisk to update timeout information of parked calls in 'extStatusForOp'.
 				 * When 'ParkedCallsComplete' event is emitted, the server return 'extStatusForOp' to the client.
 				 * create action for asterisk server */
-                                var actionParkedCalls = {
-                                        Action: 'ParkedCalls'
-                                };
-				if(am.loggedIn){
-	                                am.send(actionParkedCalls, function (resp) {
-	                                        logger.debug("'actionParkedCalls' " + sys.inspect(actionParkedCalls) + " has been sent to AST to update timeout of the parked calls");
+                                var actParkedCalls = {Action: 'ParkedCalls'};
+				try{
+	                                am.send(actParkedCalls, function (resp) {
+	                                        logger.debug("'actParkedCalls' " + sys.inspect(actParkedCalls) + " has been sent to AST to update timeout of the parked calls");
 	                                });
-				} else {logger.warn("no connection to asterisk");}
+				} catch(err) { logger.warn("no connection to asterisk: " + err);}
                         break;
 			case actions.PARKCH:
 				var ch_to_park = message.ch_to_park;
@@ -2993,14 +2968,14 @@ io.on('connection', function(client){
 					Channel: ch_to_park,
 					Channel2: ch_ringing_to
 				};
-				if(am.loggedIn){
+				try{
 					am.send(act_parkch, function(resp){
 						logger.debug("'act_parkch' " + sys.inspect(act_parkch) + " has been sent to asterisk");
 						var msg = new ResponseMessage(client.sessionId, "ack_parkch", "");
 						client.send(msg);
 						logger.debug("RESP 'act_parkch' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 					});
-				} else {logger.warn("no connection to asterisk");}
+				} catch(err) {logger.warn("no connection to asterisk: " +err);}
 			break;
 			case actions.PARK:
 				var callToPark = message.callToPark; // ext to be parked
@@ -3029,7 +3004,7 @@ io.on('connection', function(client){
 					Channel: chToPark,
 					Channel2: correspondingCh
                                 };
-				if(am.loggedIn){
+				try{
 	                                am.send(actionPark, function (resp) {
 						logger.debug("'actionPark' " + sys.inspect(actionPark) + " has been sent to AST");
 		                                var msgstr = "received acknowledgment for parking the call";
@@ -3037,7 +3012,7 @@ io.on('connection', function(client){
 		                                client.send(mess);
 		                                logger.debug("RESP 'ack_park' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
 	                                });
-				} else {logger.warn("no connection to asterisk");}
+				} catch(err) {logger.warn("no connection to asterisk: "+err);}
 			break;
 			case actions.SPY_LISTEN:
 				var extToSpy = message.extToSpy
@@ -3059,11 +3034,11 @@ io.on('connection', function(client){
 					Data: channelToSpy,
 					Callerid: SPY_PREFIX + extToSpy
 				};
-				if(am.loggedIn){
+				try{
 					am.send(actionSpyListen, function(){
 						logger.debug("'actionSpyListen' " + sys.inspect(actionSpyListen) + " has been sent to AST");
 					});
-				} else {logger.warn("no connection to asterisk");}
+				} catch(err) {logger.warn("no connection to asterisk: "+err);}
 			break;
 			case actions.PARKING_PICKUP:
 				var extFrom = message.extFrom;
@@ -3079,11 +3054,11 @@ io.on('connection', function(client){
                                        Exten: extFrom,
                                        Priority: 1
                                 };
-				if(am.loggedIn){
+				try{
 	                                am.send(actionPickup, function(){
 	                                        logger.debug("'actionPickup' " + sys.inspect(actionPickup) + " has been sent to AST");
 	                                });
-				} else {logger.warn("no connection to asterisk");}
+				} catch(err) {logger.warn("no connection to asterisk: " +err);}
 			break;
 			case actions.PICKUP:
 				logger.debug("key of chStat = " + Object.keys(chStat).length)
@@ -3114,11 +3089,11 @@ io.on('connection', function(client){
                                        Exten: extFrom,
                                        Priority: 1
 				};
-				if(am.loggedIn){
+				try{
 	                                am.send(actionPickup, function(){
 						logger.debug("'actionPickup' " + sys.inspect(actionPickup) + " has been sent to AST");
 	                                });
-				} else {logger.warn("no connection to asterisk");}
+				} catch(err) {logger.warn("no connection to asterisk: "+err);}
                         break;
 			case actions.SPY_LISTEN_SPEAK:
 				var extToSpy = message.extToSpy
@@ -3140,11 +3115,11 @@ io.on('connection', function(client){
                                         Data: channelToSpy + ',w',
                                         Callerid: SPY_PREFIX + extToSpy
                                 };
-				if(am.loggedIn){
+				try{
 	                                am.send(actionSpyListenSpeak, function(){
 						logger.debug("'actionSpyListenSpeak' " + sys.inspect(actionSpyListenSpeak) + " has been sent to AST");
 	                                });
-				} else {logger.warn("no connection to asterisk");}
+				} catch(err) {logger.warn("no connection to asterisk: "+err);}
                         break;
 			case actions.REDIRECT_VOICEMAIL:
                                 var extTo = message.extTo;
@@ -3157,11 +3132,11 @@ io.on('connection', function(client){
 					Exten: 'vmu' + extTo,
 					Priority: 1
 				}
-				if(am.loggedIn){
+				try{
 	                                am.send(actRedirVoicemail, function(){
 						logger.debug("'actRedirVoicemail' " + sys.inspect(actRedirVoicemail) + " has been sent to AST");
 	                                });
-				} else {logger.warn("no connection to asterisk");}
+				} catch(err) {logger.warn("no connection to asterisk: "+err);}
                         break;
 			case actions.REDIRECT_VOICEMAIL_FROM_OP:
 				var callFrom = message.callFrom
@@ -3197,11 +3172,11 @@ io.on('connection', function(client){
                                         Exten: 'vmu' + redirectToExt,
                                         Priority: 1
                                 }
-				if(am.loggedIn){
+				try{
 	                                am.send(actionRedirectVoicemailToExt, function(){
 	                                        logger.debug("'actionRedirectVoicemailToExt' " + sys.inspect(actionRedirectVoicemailToExt) + " has been sent to AST");
 	                                });
-				} else {logger.warn("no connection to asterisk");}
+				} catch(err) {logger.warn("no connection to asterisk: "+err);}
                         break;
 			case actions.SEND_SMS:
 				var destNum = message.destNum;
