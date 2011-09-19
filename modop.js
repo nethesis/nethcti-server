@@ -12,6 +12,7 @@ var refreshChannels = {}
 const FILE_TAB_OP = "config/optab.ini";
 const FILE_FASCI_INI = "config/trunks.ini"
 const FILE_EXT_LIST = "/etc/asterisk/nethcti.ini";
+const FILE_VM = "/etc/asterisk/voicemail_additionals.conf";
 const DIAL_FROM = 1;
 const DIAL_TO = 0;
 const START_RECORD = 1;
@@ -907,12 +908,9 @@ function initExtStatusForOp(){
 	// read file where are the list of all extensions
         extStatusForOp = iniparser.parseSync(FILE_EXT_LIST);
 	// initialize listExtActiveVM
-	var tempExt = '';
-	for(typeExt in extStatusForOp){
-		if(extStatusForOp[typeExt].tab==="interno" && extStatusForOp[typeExt].Voicemail==="yes"){
-			tempExt = extStatusForOp[typeExt].Extension;
-			listExtActiveVM[tempExt] = "";
-		}
+	var contFileVm = iniparser.parseSync(FILE_VM);
+	for(key in contFileVm["default"]){
+		listExtActiveVM[key] = "";
 	}
 	// check if exists FILE_FASCI_INI
 	var tempFasciIni = undefined
