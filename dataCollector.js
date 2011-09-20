@@ -10,6 +10,7 @@ const CUSTOMER_CARD = "customer_card";
 const DAY_HISTORY_CALL = "day_history_call";
 const CURRENT_WEEK_HISTORY_CALL = "current_week_history_call";
 const CURRENT_MONTH_HISTORY_CALL = "current_month_history_call";
+const SMS = "sms";
 
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF) */
@@ -49,6 +50,34 @@ exports.DataCollector = function(){
 	this.addController = function(contr) { addController(contr) }
 	this.setLogger = function(logfile,level) { log4js.addAppender(log4js.fileAppender(logfile), '[DataCollector]'); logger.setLevel(level); }
 	this.checkAudioUid = function(uid, filename, cb) { return checkAudioUid(uid, filename, cb); }
+	this.registerSmsSuccess = function(sender, destination, text, cb){ registerSmsSuccess(sender, destination, text, cb); }
+	this.registerSmsFailed = function(sender, destination, text, cb){ registerSmsFailed(sender, destination, text, cb); }
+}
+function registerSmsSuccess(sender, destination, text, cb){
+	var objQuery = queries[SMS];
+	objQuery.query = "INSERT INTO history (sender,destination,text,date,status) VALUES ('$SENDER','$DESTINATION','$TEXT',now(),1)";
+        if(objQuery!==undefined){
+                objQuery.query = objQuery.query.replace(/\$SENDER/g, sender);
+                objQuery.query = objQuery.query.replace(/\$DESTINATION/g, destination);
+                objQuery.query = objQuery.query.replace(/\$TEXT/g, text);
+                executeSQLQuery(SMS, objQuery, function(results){ // execute current sql query
+                        cb(results);
+                });
+        }
+        return undefined;
+}
+function registerSmsFailed(sender, destination, text, cb){
+	var objQuery = queries[SMS];
+	objQuery.query = "INSERT INTO history (sender,destination,text,date,status) VALUES ('$SENDER','$DESTINATION','$TEXT',now(),0)";
+        if(objQuery!==undefined){
+                objQuery.query = objQuery.query.replace(/\$SENDER/g, sender);
+                objQuery.query = objQuery.query.replace(/\$DESTINATION/g, destination);
+                objQuery.query = objQuery.query.replace(/\$TEXT/g, text);
+                executeSQLQuery(SMS, objQuery, function(results){ // execute current sql query
+                        cb(results);
+                });
+        }
+        return undefined;
 }
 /* check if the uniqueid 'uid' is present in 'cdr' table of 'asteriskcdrdb' database
  * return true if it is present, false otherwise */
@@ -172,6 +201,15 @@ function initConn(objQuery, key){
 // Initialize all the queries that can be executed and relative connection to database
 function initQueries(){
         this.queries = iniparser.parseSync(DATACOLLECTOR_CONFIG_FILENAME);
+	this.queries['sms'] = {
+		dbhost: 'localhost',
+		dbport: '/var/lib/mysql/mysql.sock',
+		dbtype: 'mysql',
+		dbuser: 'smsuser',
+		dbpassword: 'smspass',
+		dbname: 'smsdb',
+		query: ''
+	};
 	initDBConnections();
 }
 
