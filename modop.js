@@ -12,6 +12,7 @@ var refreshChannels = {}
 const FILE_TAB_OP = "config/optab.ini";
 const FILE_FASCI_INI = "config/trunks.ini"
 const FILE_EXT_LIST = "/etc/asterisk/nethcti.ini";
+const FILE_VM = "/etc/asterisk/voicemail_additionals.conf";
 const DIAL_FROM = 1;
 const DIAL_TO = 0;
 const START_RECORD = 1;
@@ -103,6 +104,7 @@ exports.Modop = function(){
 	this.removeDialingUniqueidInternWithTypeExt = function(typeExt, uniqueid) { removeDialingUniqueidInternWithTypeExt(typeExt, uniqueid) }
 	this.hasInternDialingUniqueidWithTypeExt = function(typeExt, uniqueid) { return hasInternDialingUniqueidWithTypeExt(typeExt, uniqueid) }
 	this.updateCallConnectedUniqueidInternWithTypeExt = function(typeExt, uniqueid, chValue) { updateCallConnectedUniqueidInternWithTypeExt(typeExt, uniqueid, chValue) }
+	this.updateDialingUniqueidInternWithTypeExt = function(typeExt, uniqueid, chValue) { updateDialingUniqueidInternWithTypeExt(typeExt, uniqueid, chValue) }
 	this.getExtFromQueueChannel = function(ch) { return getExtFromQueueChannel(ch) }
 	this.setRefreshInterval = function(min) { setRefreshInterval(min) }
 	this.stopRefresh = function() { stopRefresh() }
@@ -217,6 +219,11 @@ function addCallConnectedUniqueidInternWithTypeExt(typeExt, uniqueid, chValue){
 function updateCallConnectedUniqueidInternWithTypeExt(typeExt, uniqueid, chValue){
 	if(extStatusForOp[typeExt].tab=='interno')
 		extStatusForOp[typeExt].callConnectedUniqueid[uniqueid] = chValue
+}
+function updateDialingUniqueidInternWithTypeExt(typeExt, uniqueid, chValue){
+	if(extStatusForOp[typeExt].tab=='interno'){
+		extStatusForOp[typeExt].dialingUniqueid[uniqueid] = chValue;
+	}
 }
 /* add uniqueid of channel to trunk identified by 'typeExt'. Uniqueid and channel is relative to
  * received 'dialing' event */
@@ -464,13 +471,11 @@ function updateExtStatusForOpWithTypeExt(typeext, status){
 /* This function add asterisk manager to local variable. Then addListener to it and
  * finally initialize 'extStatusForOp' */
 function addAsteriskManager(amanager){
-
 	am = amanager;
 	addListenerToAm(); // add listeners to asterisk manager to manage extStatusForOp
 	/* initialize the status of all extensions ('extStatusForOp') present in the asterisk server.
          * Its scope is to put the right informations to 'extStatusForOp' to help 'proxycti.js'
          * to give correct informations to the clients for viewing the operator panel */
-//        initExtStatusForOp();
 }
 
 // This function add listeners to asterisk manager.
@@ -542,8 +547,10 @@ function addListenerToAm(){
 		updateExtStatusForOpWithTypeExt(typeext, status);
 		if(extStatusForOp[typeext]==undefined)
 			logger.warn("extStatusForOp[" + typeext + "] is undefined: " + extStatusForOp[typeext])
-		else
-			extStatusForOp[typeext].chType = headers.channeltype
+		else{
+			extStatusForOp[typeext].chType = headers.channeltype;
+			extStatusForOp[typeext].ip = headers.ipaddress;
+		}
 		/* Check for the DND and CF status of current ext.
 	         * This is made beacuse 'PeerEntry' event don't report the DND and CF status, and so
 	         * it can be possibile to correctly update 'extStatusForOp' */
@@ -830,7 +837,6 @@ function addListenerToAm(){
 				}
 			}
 		}
-		self.emit('RefreshOperatorPanel', refreshChannels)
 	})
 }
 
@@ -902,12 +908,9 @@ function initExtStatusForOp(){
 	// read file where are the list of all extensions
         extStatusForOp = iniparser.parseSync(FILE_EXT_LIST);
 	// initialize listExtActiveVM
-	var tempExt = '';
-	for(typeExt in extStatusForOp){
-		if(extStatusForOp[typeExt].tab==="interno" && extStatusForOp[typeExt].Voicemail==="yes"){
-			tempExt = extStatusForOp[typeExt].Extension;
-			listExtActiveVM[tempExt] = "";
-		}
+	var contFileVm = iniparser.parseSync(FILE_VM);
+	for(key in contFileVm["default"]){
+		listExtActiveVM[key] = "";
 	}
 	// check if exists FILE_FASCI_INI
 	var tempFasciIni = undefined
@@ -928,7 +931,6 @@ function initExtStatusForOp(){
 	// create action for asterisk server that generate series of 'PeerEntry' events
         var actionSIPPeersOP = {
                 Action: 'SIPPeers'
-		//ActionId: 'cti_SIPPeers_action'
         };
         // send action to asterisk
         am.send(actionSIPPeersOP, function () {
@@ -938,7 +940,6 @@ function initExtStatusForOp(){
          * to add status informations to 'extStatusForOp' for each IAXPeer */
         var actionIAXPeersOP = {
                 Action: 'IAXPeers'
-//		Actionid: 'cti_IAXPeers_action'
         };
         // send action to asterisk
         am.send(actionIAXPeersOP, function () {
@@ -948,7 +949,6 @@ function initExtStatusForOp(){
          * to add informations if the extension is present in some queue */
         var actionQueueStatus = {
                 Action: 'QueueStatus'
-	//	Actionid: 'cti_QueueStatus_action'
         };
         // send action to asterisk
         am.send(actionQueueStatus, function () {
