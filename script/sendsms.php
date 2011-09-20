@@ -1,6 +1,22 @@
 #!/usr/bin/php
 <?php
+/**
+This script search SMS_DIR for files containing a sms to send.
+The file name must be in the form SENDER-DESTINATION and must contain a text of max 160 characters.
+
+If a prefix is passed on command line, the prefix is added in front of the destination number.
+
+**/
+
+
+
 define("SMS_DIR","/usr/lib/node/proxycti/sms");
+
+define("SERVER","localhost");
+define("DB","smsdb");
+define("USER","smsuser");
+define("PASS","smspass");
+
 if($argc < 4)
 {
   echo "Usage: sendsms <ip> <username> <password> [prefix]\n";
@@ -20,25 +36,31 @@ $lock = SMS_DIR."/"."lock";
 if (file_exists($lock))
    exit(1);
 
+mysql_connect(SERVER,DB,USER,PASS);
 if ($handle = opendir(SMS_DIR)) 
 {
     file_put_contents($lock,"");
     while (false !== ($file = readdir($handle))) {
-    	if($file == "." || $file == "..")
+    	if($file == "." || $file == ".." || $file == "lock")
 	    continue;
 	$xbody = trim(file_get_contents(SMS_DIR.'/'.$file));
-	send_sms($prefix.$file,$xbody,$xhost,$xusername,$xpassword);
+	$tmp = explode("-",$file);
+	$sender = $tmp[0];
+	$destination = $prefix.$tmp[1];
+	send_sms($destination,$xbody,$xhost,$xusername,$xpassword);
 	unlink(SMS_DIR.'/'.$file);
+	mysql_query("INSERT INTO history (sender,destination,text,date,status) VALUES ('$sender','$destination','$xbody',now(),1)");
 	sleep(5);
     }
 } 
 else 
 {
+    mysql_close();
     echo "Error opening sms directory: ".SMS_DIR."\n";
     exit(1);
 }
 
-
+mysql_close();
 unlink($lock);
 exit(0);
 
