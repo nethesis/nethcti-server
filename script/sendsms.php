@@ -1,7 +1,6 @@
 #!/usr/bin/php
 <?php
 define("SMS_DIR","/usr/lib/node/proxycti/sms");
-
 if($argc < 4)
 {
   echo "Usage: sendsms <ip> <username> <password> [prefix]\n";
@@ -16,21 +15,32 @@ if($argc > 4)
 else
   $prefix = "";
 
+$lock = SMS_DIR."/"."lock";
+
+if (file_exists($lock))
+   exit(1);
+
 if ($handle = opendir(SMS_DIR)) 
 {
+    file_put_contents($lock,"");
     while (false !== ($file = readdir($handle))) {
     	if($file == "." || $file == "..")
 	    continue;
 	$xbody = trim(file_get_contents(SMS_DIR.'/'.$file));
 	send_sms($prefix.$file,$xbody,$xhost,$xusername,$xpassword);
 	unlink(SMS_DIR.'/'.$file);
+	sleep(5);
     }
 } 
 else 
 {
     echo "Error opening sms directory: ".SMS_DIR."\n";
-    die(1);
+    exit(1);
 }
+
+
+unlink($lock);
+exit(0);
 
 function send_sms($tomobile,$xbody,$xhost,$xusername,$xpassword)
 {
