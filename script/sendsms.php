@@ -36,10 +36,11 @@ $lock = SMS_DIR."/"."lock";
 if (file_exists($lock))
    exit(1);
 
-mysql_connect(SERVER,DB,USER,PASS);
+mysql_connect(SERVER,USER,PASS);
+mysql_select_db(DB);
 if ($handle = opendir(SMS_DIR)) 
 {
-    file_put_contents($lock,"");
+    file_put_contents($lock,getmypid());
     while (false !== ($file = readdir($handle))) {
     	if($file == "." || $file == ".." || $file == "lock")
 	    continue;
