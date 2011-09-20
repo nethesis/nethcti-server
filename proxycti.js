@@ -80,6 +80,7 @@ server_conf =
   SERVER_PROXY: { hostname: 'amaduzzi', port: '8080', version: '0.2' } } */
 function initServerAndAsteriskParameters(){
 	var server_conf = iniparser.parseSync(PROXY_CONFIG_FILENAME);
+	console.log(server_conf);
 	version = server_conf.SERVER_PROXY.version;
 	asterisk_user = server_conf.ASTERISK.user;
 	asterisk_pass = server_conf.ASTERISK.pass;
@@ -3201,34 +3202,45 @@ io.on('connection', function(client){
 			case actions.SEND_SMS:
 				var destNum = message.destNum;
 				var text = message.text;
-				var pathori = SMS_DIR+'/'+destNum;
-				var smsFilepath = SMS_DIR+'/'+destNum;
-				var res = true;
-				var index = 1;
-				while(res){ // check if the file already exist: if exist it modify file name
-					try{
-						fs.statSync(smsFilepath);
-						smsFilepath = pathori+'-'+index;
-						index++;
-					} catch(e){
-						res=false;
+				if(server_conf["SMS"].type==="web"){
+					var user = server_conf["SMS"].user;
+					var pwd = server_conf["SMS"].password;
+					var url = server_conf["SMS"].url;
+					url = url.replace("$USER",user);	
+					url = url.replace("$PASSWORD",pwd);
+
+				} else if(server_conf["SMS"].type==="portech"){
+					var pathori = SMS_DIR+'/'+extFrom+'-'+destNum;
+					var smsFilepath = SMS_DIR+'/'+extFrom+'-'+destNum;
+					var res = true;
+					var index = 1;
+					while(res){ // check if the file already exist: if exist it modify file name
+						try{
+							fs.statSync(smsFilepath);
+							smsFilepath = pathori+'-'+index;
+							index++;
+						} catch(e){
+							res=false;
+						}
 					}
+					fs.writeFile(smsFilepath, text, function(err){
+						if(err){
+							logger.error(err + ': there was a problem in creation of sms file "' + smsFilepath + '"');
+							// send error to client
+	                                        	var mess = new ResponseMessage(client.sessionId, "error_send_sms", '');
+	                                        	client.send(mess);
+	                                        	logger.debug("RESP 'error_send_sms' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+						} else{
+							logger.debug('created sms file "' + smsFilepath + '"');
+							// send ack to client
+	                                        	var mess = new ResponseMessage(client.sessionId, "ack_send_sms", '');
+	                                        	client.send(mess);
+        	                                	logger.debug("RESP 'ack_send_sms' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+						}
+					});
+				} else {
+					logger.error("sms type in server configuration is: " + server.conf["SMS"].type);
 				}
-				fs.writeFile(smsFilepath, text, function(err){
-					if(err){
-						logger.error(err + ': there was a problem in creation of sms file "' + smsFilepath + '"');
-						// send error to client
-                                        	var mess = new ResponseMessage(client.sessionId, "error_send_sms", '');
-                                        	client.send(mess);
-                                        	logger.debug("RESP 'error_send_sms' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
-					} else{
-						logger.debug('created sms file "' + smsFilepath + '"');
-						// send ack to client
-                                        	var mess = new ResponseMessage(client.sessionId, "ack_send_sms", '');
-                                        	client.send(mess);
-                                        	logger.debug("RESP 'ack_send_sms' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
-					}
-				});
 			break;
 	  		default:
 	  			logger.warn("ATTENTION: received unknown ACTION '" + action + "': not supported");
