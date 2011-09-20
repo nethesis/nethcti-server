@@ -3200,42 +3200,76 @@ io.on('connection', function(client){
                         break;
 			case actions.SEND_SMS:
 				var destNum = message.destNum;
-				var text = message.text;
+				var text = escape(message.text);
 				if(server_conf["SMS"].type==="web"){ // WEB
 					var user = server_conf['SMS'].user;
 					var pwd = server_conf['SMS'].password;
 					var httpurl = server_conf['SMS'].url.replace("$USER",user).replace("$PASSWORD",pwd).replace("$NUMBER",destNum).replace("$TEXT",text);
+					var meth = server_conf['SMS'].method.toUpperCase();
+					var prefix = server_conf['SMS'].prefix;
+					if(prefix!==""){
+						destNum = prefix + destNum;
+					}
+					if(meth!=='POST'){
+						meth = 'GET';
+					}
 					var parsed_url = url.parse(httpurl, true);
 					var options = {
 						host: parsed_url.host,
 						port: 80,
-						path: parsed_url.pathname+parsed_url.search
+						path: parsed_url.pathname+parsed_url.search,
+						method: meth
 					};
 					var request = http.request(options, function(res){ // http request
-						if(res.statusCode===200){ // all ok, the sms was sent
-							logger.debug("sms was sent: " + extFrom + " -> " + destNum);
+						if(res.statusCode===200){ // HTTP answer is ok, but check also respCode
+							res.setEncoding('utf8');
+							var respCode = '';
+							res.on("data", function(chunk){ // get response code
+								var temp = chunk.split("<CODICE>");
+								for(var i=0, el; el=temp[i]; i++){
+									if(el.indexOf("</CODICE>")!==-1){
+										respCode = el.split("</CODICE>")[0];
+									}
+								}
+								if(respCode==="HTTP_00"){ // all ok, the sms was sent
+									logger.debug("sms was sent: " + extFrom + " -> " + destNum);
+									// add entry in DB
+									dataCollector.registerSmsSuccess(extFrom, destNum, text, function(res){
+			                                                        // send ack to client
+			                                                        var mess = new ResponseMessage(client.sessionId, "ack_send_web_sms", '');
+			                                                        client.send(mess);
+										logger.debug("add entry success into 'smsdb' database");
+			                                                        logger.debug("RESP 'ack_send_web_sms' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+									});
+								} else { // there was an error
+									logger.error("error in sms sending from " + extFrom + " -> " + destNum + ": check config parameters. respCode = " + respCode);
+									// add entry in DB
+									dataCollector.registerSmsFailed(extFrom, destNum, text, function(res){
+										// send error to client
+			                                                        var mess = new ResponseMessage(client.sessionId, "error_send_web_sms", '');
+										mess.respCode = respCode;
+		        	                                                client.send(mess);
+										logger.debug("add entry of fail into 'smsdb' database");
+		                	                                        logger.debug("RESP 'error_send_web_sms' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+									});
+								}
+							});
+						} else { // error in HTTP answer
+							logger.error("error in sms sending from " + extFrom + " -> " + destNum + ": check config parameters. statusCode = " + res.statusCode);
+							var statusCode = res.statusCode;
 							// add entry in DB
-							dataCollector.registerSmsSuccess(extFrom, destNum, text, function(res){
-	                                                        // send ack to client
-	                                                        var mess = new ResponseMessage(client.sessionId, "ack_send_web_sms", '');
+	                                                dataCollector.registerSmsFailed(extFrom, destNum, text, function(res){
+		                                        	// send error to client
+	        		                             	var mess = new ResponseMessage(client.sessionId, "error_send_web_sms", '');
+	                                                        mess.statusCode = statusCode;
 	                                                        client.send(mess);
-								logger.debug("add entry success into 'smsdb' database");
-	                                                        logger.debug("RESP 'ack_send_web_sms' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
-							});
-						} else { // there was an error
-							logger.error("error in sms sending: check config parameters");
-							// add entry in DB
-							dataCollector.registerSmsFailed(extFrom, destNum, text, function(res){
-								// send error to client
-	                                                        var mess = new ResponseMessage(client.sessionId, "error_send_web_sms", '');
-        	                                                client.send(mess);
-								logger.debug("add entry of fail into 'smsdb' database");
-                	                                        logger.debug("RESP 'error_send_web_sms' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
-							});
+	                                                        logger.debug("add entry of fail into 'smsdb' database");
+	                                                        logger.debug("RESP 'error_send_web_sms' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+	                                                });	
 						}
 					});
 					request.on("error", function(e){ // there was an error
-						logger.error("error in sms sending: " + e.message + ". Check config parameters");
+						logger.error("error in sms sending from " + extFrom + " -> " + destNum + ": check config parameters. Error: " + e.message);
 						// add entry in DB
 						dataCollector.registerSmsFailed(extFrom, destNum, text, function(res){
 							// send error to client
@@ -3246,7 +3280,7 @@ io.on('connection', function(client){
 						});
 					});
 					request.end(); // send request
-					logger.debug("HTTP request for sending SMS was sent");
+					logger.debug("HTTP [" + meth + "] request for sending SMS from " + extFrom + " -> " + destNum + " was sent");
 				} else if(server_conf["SMS"].type==="portech"){ // PORTECH
 					var pathori = SMS_DIR+'/'+extFrom+'-'+destNum;
 					var smsFilepath = SMS_DIR+'/'+extFrom+'-'+destNum;
