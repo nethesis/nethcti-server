@@ -3239,7 +3239,7 @@ io.on('connection', function(client){
 								if(respCode==="HTTP_00"){ // all ok, the sms was sent
 									logger.debug("sms was sent: " + extFrom + " -> " + destNum);
 									// add entry in DB
-									dataCollector.registerSmsSuccess(extFrom, destNum, text, function(res){
+									dataCollector.registerSmsSuccess(extFrom, destNum, unescape(text), function(res){
 			                                                        // send ack to client
 			                                                        var mess = new ResponseMessage(client.sessionId, "ack_send_web_sms", '');
 			                                                        client.send(mess);
