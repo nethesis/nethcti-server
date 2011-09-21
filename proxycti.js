@@ -2100,14 +2100,14 @@ io.on('connection', function(client){
 			CF_UNAVAILABLE_ON: 	'cf_unavailable_on',
 			CF_UNAVAILABLE_OFF: 	'cf_unavailable_off',
 			REDIRECT_VOICEMAIL: 	'redirect_voicemail',
-			GET_DAY_HISTORY_CALL:  	'get_day_history_call',
+			GET_DAY_HISTORY:  	'get_day_history',
 			CHECK_CALL_AUDIO_FILE: 	'check_call_audio_file',
 			CF_UNCOND_FROM_PARKING: 'cf_uncond_from_parking',
 			SEARCH_CONTACT_PHONEBOOK:	'search_contact_phonebook',
 			GET_PEER_LIST_COMPLETE_OP: 	'get_peer_list_complete_op',
 			REDIRECT_VOICEMAIL_FROM_OP: 	'redirect_voicemail_from_op',
-			GET_CURRENT_WEEK_HISTORY_CALL:  'get_current_week_history_call',
-			GET_CURRENT_MONTH_HISTORY_CALL: 'get_current_month_history_call'
+			GET_CURRENT_WEEK_HISTORY:  'get_current_week_history',
+			GET_CURRENT_MONTH_HISTORY: 'get_current_month_history'
 		}
   		logger.debug("ACTION received: from sessionId '" + client.sessionId + "' message " + sys.inspect(message));	
   		switch(action){
@@ -2887,63 +2887,67 @@ io.on('connection', function(client){
 	                                });
 				} catch(err) {logger.warn("no connection to asterisk: " +err);}
                         break;
-			case actions.GET_DAY_HISTORY_CALL:
-				// check if the user has the permission to get the history of calling
+			case actions.GET_DAY_HISTORY:
 				var res = profiler.checkActionHistoryCallPermit(extFrom);
-                                if(res){
-					logger.debug("check 'dayHistoryCall' permission for [" + extFrom + "] OK: get day history call...");
+                                if(res){ // ok, the user has the permit
+					logger.debug("check 'dayHistory' permission for [" + extFrom + "] OK: get day history ...");
 					// format date for query sql
 					var dateFormat = formatDate(message.date);					
-                                        // execute query to search contact in phonebook
-                                        dataCollector.getDayHistoryCall(extFrom, dateFormat, function(results){
-                                                var mess = new ResponseMessage(client.sessionId, "day_history_call", "received day history call");
-                                                mess.results = createHistoryCallResponse(results);
-                                                client.send(mess);
-                                                logger.debug("RESP 'day_history_call' (" + results.length + " entries) has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+                                        dataCollector.getDayHistoryCall(extFrom, dateFormat, function(callResults){ // get day history call
+						dataCollector.getDayHistorySms(extFrom, dateFormat, function(smsResults){ // get day history sms
+                                                	var mess = new ResponseMessage(client.sessionId, "day_history", "received day history");
+	                                                mess.callResults = createHistoryCallResponse(callResults);
+							mess.smsResults = smsResults;
+	                                                client.send(mess);
+	                                                logger.debug("RESP 'day_history' (call [" + callResults.length + "] - sms [" + smsResults.length +"] entries) has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+						});
                                         });
-                                }
-                                else{
-					logger.info("check 'dayHistoryCall' permission for [" + extFrom + "] FAILED !");
-                                        client.send(new ResponseMessage(client.sessionId, "error_day_history_call", "Sorry: you don't have permission to view day history call !"));
-                                        logger.debug("RESP 'error_day_history_call' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+                                } else{ // permit are deny
+					logger.info("check 'dayHistory' permission for [" + extFrom + "] FAILED !");
+                                        client.send(new ResponseMessage(client.sessionId, "error_day_history", ""));
+                                        logger.debug("RESP 'error_day_history' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
                                 }
                         break;
-			case actions.GET_CURRENT_WEEK_HISTORY_CALL:
+			case actions.GET_CURRENT_WEEK_HISTORY:
                                 // check if the user has the permission to get history of calling
 				var res = profiler.checkActionHistoryCallPermit(extFrom);
                                 if(res){
-					logger.debug("check 'currentWeekHistoryCall' permission for [" + extFrom + "] OK: get current week history call...");
+					logger.debug("check 'currentWeekHistory' permission for [" + extFrom + "] OK: get current week history ...");
                                         // execute query to search contact in phonebook
-                                        dataCollector.getCurrentWeekHistoryCall(extFrom, function(results){
-                                                var mess = new ResponseMessage(client.sessionId, "current_week_history_call", "received current week history call");
-						mess.results = createHistoryCallResponse(results);
-                                                client.send(mess);
-                                                logger.debug("RESP 'current_week_history_call' (" + results.length + " entries) has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+                                        dataCollector.getCurrentWeekHistoryCall(extFrom, function(callResults){
+						dataCollector.getCurrentWeekHistorySms(extFrom, function(smsResults){
+                                                	var mess = new ResponseMessage(client.sessionId, "current_week_history", "received current week history");
+							mess.callResults = createHistoryCallResponse(callResults);
+							mess.smsResults = smsResults;
+	                                                client.send(mess);
+	                                                logger.debug("RESP 'current_week_history' (call [" + callResults.length + "] - sms ["+smsResults.length+"] entries) has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+						});
                                         });
-                                }
-                                else{
-					logger.info("check 'currentWeekHistoryCall' permission for [" + extFrom + "] FAILED !");
-                                        client.send(new ResponseMessage(client.sessionId, "error_current_week_history_call", "Sorry: you don't have permission to view current week history call !"));
-                                        logger.debug("RESP 'error_current_week_history_call' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+                                } else{
+					logger.info("check 'currentWeekHistory' permission for [" + extFrom + "] FAILED !");
+                                        client.send(new ResponseMessage(client.sessionId, "error_current_week_history", ""));
+                                        logger.debug("RESP 'error_current_week_history' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
                                 }
                         break;
-			case actions.GET_CURRENT_MONTH_HISTORY_CALL:
+			case actions.GET_CURRENT_MONTH_HISTORY:
                                 // check if the user has the permission to get history of calling
 				var res = profiler.checkActionHistoryCallPermit(extFrom);
                                 if(res){
-					logger.info("check 'currentMonthHistoryCall' permission for [" + extFrom + "] OK: get current month history call...");
+					logger.info("check 'currentMonthHistory' permission for [" + extFrom + "] OK: get current month history...");
                                         // execute query to search contact in phonebook
-                                        dataCollector.getCurrentMonthHistoryCall(extFrom, function(results){
-                                                var mess = new ResponseMessage(client.sessionId, "current_month_history_call", "received current month history call");
-						mess.results = createHistoryCallResponse(results);
-                                                client.send(mess);
-                                                logger.debug("RESP 'current_month_history_call' (" + results.length + " entries) has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+                                        dataCollector.getCurrentMonthHistoryCall(extFrom, function(callResults){
+						dataCollector.getCurrentMonthHistorySms(extFrom, function(smsResults){
+	                                                var mess = new ResponseMessage(client.sessionId, "current_month_history", "received current month history");
+							mess.callResults = createHistoryCallResponse(callResults);
+							mess.smsResults = smsResults;
+	                                                client.send(mess);
+	                                                logger.debug("RESP 'current_month_history' (call [" + callResults.length + "] - sms ["+smsResults.length+"] entries) has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+						});
                                         });
-                                }
-                                else{
-					logger.info("check 'currentMonthHistoryCall' permission for [" + extFrom + "] FAILED !");
-                                        client.send(new ResponseMessage(client.sessionId, "error_current_month_history_call", "Sorry: you don't have permission to view current month history call !"));
-                                        logger.debug("RESP 'error_current_month_history_call' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+                                } else{
+					logger.info("check 'currentMonthHistory' permission for [" + extFrom + "] FAILED !");
+                                        client.send(new ResponseMessage(client.sessionId, "error_current_month_history", ""));
+                                        logger.debug("RESP 'error_current_month_history' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
                                 }
                         break;
 			case actions.CHECK_CALL_AUDIO_FILE:
@@ -3200,8 +3204,9 @@ io.on('connection', function(client){
                         break;
 			case actions.SEND_SMS:
 				var destNum = message.destNum;
-				var text = escape(message.text);
+				var text = message.text;
 				if(server_conf["SMS"].type==="web"){ // WEB
+					text = escape(text);
 					var user = server_conf['SMS'].user;
 					var pwd = server_conf['SMS'].password;
 					var httpurl = server_conf['SMS'].url.replace("$USER",user).replace("$PASSWORD",pwd).replace("$NUMBER",destNum).replace("$TEXT",text);
