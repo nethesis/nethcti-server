@@ -2072,43 +2072,41 @@ io.on('connection', function(client){
 			LOGOUT:	'logout',
 			HANGUP:	'hangup',
 			RECORD: 'record',
+			PARK: 	'park',
+			PARKCH: 'parkch',
+			PICKUP: 'pickup',
 			DND_ON: 'dnd_on',
                 	DND_OFF:'dnd_off',
 			CW_ON: 	'cw_on',
                 	CW_OFF:	'cw_off',
 			CF_ON: 	'cf_on',
 			CF_OFF: 'cf_off',
-			PARK: 	'park',
-			PARKCH: 'parkch',
-			PICKUP: 'pickup',
-
-			CFVM_ON: 'cfvm_on',
-			CFUVM_ON: 'cfuvm_on',
-			CFBVM_OFF:	'cfbvm_on',
-			CFVM_OFF: 'cfvm_off',
+			CFU_ON:	'cfu_on',
+			CFU_OFF:	'cfu_off',
+			CFB_ON: 	'cfb_on',
+			CFB_OFF: 	'cfb_off',
+			CFVM_ON: 	'cfvm_on',
+			CFVM_OFF: 	'cfvm_off',
+			CFUVM_ON: 	'cfuvm_on',
 			CFUVM_OFF:	'cfuvm_off',
+			CFBVM_ON:	'cfbvm_on',
 			CFBVM_OFF:	'cfbvm_off',
-
+			CHECK_DND_STATUS:	'check_dnd_status',
+			CHECK_CW_STATUS:    	'check_cw_status',
+			CHECK_CF_STATUS:	'check_cf_status',
+			CHECK_CFU_STATUS:	'check_cfu_status',
+			CHECK_CFB_STATUS:	'check_cfb_status',
 			HANGUPCH:	'hangupch',
 			REDIRECT:   	'redirect',
 			SEND_SMS:	'send_sms',
 			HANGUP_SPY: 	'hangup_spy',
-			CF_BUSY_ON: 	'cf_busy_on',
-			CF_BUSY_OFF: 	'cf_busy_off',
 			STOP_RECORD: 	'stoprecord',
 			SPY_LISTEN:  	'spy_listen',
 			CF_VM_PARKING: 	'cf_vm_parking',
 			PARKING_PICKUP: 'parking_pickup',
 			HANGUP_UNIQUEID:'hangup_uniqueid',
-			CHECK_CF_STATUS:'check_cf_status',
-			CHECK_DND_STATUS:	'check_dnd_status',
-			CHECK_CW_STATUS:    	'check_cw_status',
-			CHECK_CFU_STATUS:	'check_cfu_status',
-			CHECK_CFB_STATUS:	'check_cfb_status',
 			SPY_LISTEN_SPEAK:   	'spy_listen_speak',
 			GET_ALL_VM_STATUS:  	'get_all_vm_status',
-			CF_UNAVAILABLE_ON: 	'cf_unavailable_on',
-			CF_UNAVAILABLE_OFF: 	'cf_unavailable_off',
 			REDIRECT_VOICEMAIL: 	'redirect_voicemail',
 			GET_DAY_HISTORY:  	'get_day_history',
 			CHECK_CALL_AUDIO_FILE: 	'check_call_audio_file',
@@ -2854,22 +2852,91 @@ io.on('connection', function(client){
 
 
 			case actions.CFVM_ON:
-
+				var cmd = "database put CF " + extFrom + " vmu" + extFrom;
+				var actCFVMOn = {
+                                        Action: 'command',
+                                        Command: cmd
+                                };
+                                try{
+                                	am.send(actCFVMOn, function () {
+                                        	var msgstr = "[" + extFrom + "] CFVM ON";
+                                                var response = new ResponseMessage(client.sessionId, 'ack_cfvm_on', msgstr);
+                                                client.send(response);
+                                                logger.debug("'actCFVMOn' " + sys.inspect(actCFVMOn) + " has been sent to AST\nRESP 'ack_cfvm_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'"+msgstr);
+                                        });
+                                } catch(err) {logger.warn("no connection to asterisk: " + err);}	
 			break;
-			case actions.CFUM_ON:
-
+			case actions.CFUVM_ON:
+				var cmd = "database put CFU " + extFrom + " vmu" + extFrom;
+                                var actCFUVMOn = {
+                                        Action: 'command',
+                                        Command: cmd
+                                };
+                                try{
+                                        am.send(actCFUVMOn, function () {
+                                                var msgstr = "[" + extFrom + "] CFUVM ON";
+                                                var response = new ResponseMessage(client.sessionId, 'ack_cfuvm_on', msgstr);
+                                                client.send(response);
+                                                logger.debug("'actCFUVMOn' " + sys.inspect(actCFUVMOn) + " has been sent to AST\nRESP 'ack_cfuvm_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'"+msgstr);
+                                        });
+                                } catch(err) {logger.warn("no connection to asterisk: " + err);}
 			break;
-			case actions.CFBM_ON:
-
+			case actions.CFBVM_ON:
+				var cmd = "database put CFB " + extFrom + " vmb" + extFrom;
+                                var actCFBVMOn = {
+                                        Action: 'command',
+                                        Command: cmd
+                                };
+                                try{
+                                        am.send(actCFBVMOn, function () {
+                                                var msgstr = "[" + extFrom + "] CFBVM ON";
+                                                var response = new ResponseMessage(client.sessionId, 'ack_cfbvm_on', msgstr);
+                                                client.send(response);
+                                                logger.debug("'actCFBVMOn' " + sys.inspect(actCFBVMOn) + " has been sent to AST\nRESP 'ack_cfbvm_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'"+msgstr);
+                                        });
+                                } catch(err) {logger.warn("no connection to asterisk: " + err);}
 			break;
 			case actions.CFVM_OFF:
-
+				var cmd = "database del CF " + extFrom;
+                                var actCFVMOff = {
+                                        Action: 'command',
+                                        Command: cmd
+                                };
+                                try{
+                                        am.send(actCFVMOff, function () {
+                                                var msgstr = "[" + extFrom + "] CFVM OFF";
+                                                client.send(new ResponseMessage(client.sessionId, 'ack_cfvm_off', msgstr));
+                                                logger.debug("'actCFVMOff' " + sys.inspect(actCFVMOff) + " has been sent to AST\nRESP 'ack_cfvm_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'\n"+msgstr);
+                                        });
+                                } catch(err) {logger.warn("no connection to asterisk: " +err);}
 			break;
 			case actions.CFUVM_OFF:
-
+				var cmd = "database del CFU " + extFrom;
+                                var actCFUVMOff = {
+                                        Action: 'command',
+                                        Command: cmd
+                                };
+                                try{
+                                        am.send(actCFUVMOff, function () {
+                                                var msgstr = "[" + extFrom + "] CFUVM OFF";
+                                                client.send(new ResponseMessage(client.sessionId, 'ack_cfuvm_off', msgstr));
+                                                logger.debug("'actCFUVMOff' " + sys.inspect(actCFUVMOff) + " has been sent to AST\nRESP 'ack_cfuvm_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'\n"+msgstr);
+                                        });
+                                } catch(err) {logger.warn("no connection to asterisk: " +err);}
 			break;
-			case actions.CFBM_OFF:
-
+			case actions.CFBVM_OFF:
+				var cmd = "database del CFB " + extFrom;
+                                var actCFBVMOff = {
+                                        Action: 'command',
+                                        Command: cmd
+                                };
+                                try{
+                                        am.send(actCFBVMOff, function () {
+                                                var msgstr = "[" + extFrom + "] CFBVM OFF";
+                                                client.send(new ResponseMessage(client.sessionId, 'ack_cfbvm_off', msgstr));
+                                                logger.debug("'actCFBVMOff' " + sys.inspect(actCFBVMOff) + " has been sent to AST\nRESP 'ack_cfbvm_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'\n"+msgstr);
+                                        });
+                                } catch(err) {logger.warn("no connection to asterisk: " +err);}
 			break;
 
 
@@ -2893,37 +2960,37 @@ io.on('connection', function(client){
 					});
 				} catch(err) {logger.warn("no connection to asterisk: " + err);}
 	  		break;
-			case actions.CF_UNAVAILABLE_ON:
+			case actions.CFU_ON:
                                 var extTo = message.extTo;
                                 var cmd = "database put CFU " + extFrom + " " + extTo;
-                                var actionCFUnavailableOn = {
+                                var actCFUOn = {
                                         Action: 'command',
                                         Command: cmd
                                 };
 				try{
-	                                am.send(actionCFUnavailableOn, function () {
-	                                        var msgstr = "[" + extFrom + "] CF Unavailable ON to [" + extTo + "]"
-	                                        var response = new ResponseMessage(client.sessionId, 'ack_cf_unavailable_on', msgstr)
+	                                am.send(actCFUOn, function () {
+	                                        var msgstr = "[" + extFrom + "] CFU ON to [" + extTo + "]"
+	                                        var response = new ResponseMessage(client.sessionId, 'ack_cfu_on', msgstr)
 	                                        response.extTo = extTo
 	                                        client.send(response)
-	                                        logger.debug("'actionCFUnavailableOn' " + sys.inspect(actionCFUnavailableOn) + " has been sent to AST\nRESP 'ack_cf_unavailable_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'"+msgstr);
+	                                        logger.debug("'actCFUOn' " + sys.inspect(actCFUOn) + " has been sent to AST\nRESP 'ack_cfu_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'"+msgstr);
         	                        });
 				} catch(err) {logger.warn("no connection to asterisk: "+err);}
                         break;
-			case actions.CF_BUSY_ON:
+			case actions.CFB_ON:
                                 var extTo = message.extTo;
                                 var cmd = "database put CFB " + extFrom + " " + extTo;
-                                var actionCFBusyOn = {
+                                var actCFBOn = {
                                         Action: 'command',
                                         Command: cmd
                                 };
 				try{
-	                                am.send(actionCFBusyOn, function () {
-	                                        var msgstr = "[" + extFrom + "] CF Busy ON to [" + extTo + "]"
-	                                        var response = new ResponseMessage(client.sessionId, 'ack_cf_busy_on', msgstr)
+	                                am.send(actCFBOn, function () {
+	                                        var msgstr = "[" + extFrom + "] CFB ON to [" + extTo + "]"
+	                                        var response = new ResponseMessage(client.sessionId, 'ack_cfb_on', msgstr)
 	                                        response.extTo = extTo
 	                                        client.send(response)
-	                                        logger.debug("'actionCFBusyOn' " + sys.inspect(actionCFBusyOn) + " has been sent to AST\nRESP 'ack_cf_busy_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'\n"+msgstr);
+	                                        logger.debug("'actCFBOn' " + sys.inspect(actCFBOn) + " has been sent to AST\nRESP 'ack_cfb_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'\n"+msgstr);
         	                        });
 				} catch(err) {logger.warn("no connection to asterisk: "+err);}
                         break;
@@ -2943,32 +3010,32 @@ io.on('connection', function(client){
 					});
 				} catch(err) {logger.warn("no connection to asterisk: " +err);}
 	  		break;
-			case actions.CF_UNAVAILABLE_OFF:
+			case actions.CFU_OFF:
                                 var cmd = "database del CFU " + extFrom;
-                                var actionCFUnavailableOff = {
+                                var actCFUOff = {
                                         Action: 'command',
                                         Command: cmd
                                 };
 				try{
-	                                am.send(actionCFUnavailableOff, function () {
-	                                        var msgstr = "[" + extFrom + "] CF Unavailable OFF";
-	                                        client.send(new ResponseMessage(client.sessionId, 'ack_cf_unavailable_off', msgstr));
-	                                        logger.debug("'actionCFUnavailableOff' " + sys.inspect(actionCFUnavailableOff) + " has been sent to AST\nRESP 'ack_cf_unavailable_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'\n"+msgstr);
+	                                am.send(actCFUOff, function () {
+	                                        var msgstr = "[" + extFrom + "] CFU OFF";
+	                                        client.send(new ResponseMessage(client.sessionId, 'ack_cfu_off', msgstr));
+	                                        logger.debug("'actCFUOff' " + sys.inspect(actCFUOff) + " has been sent to AST\nRESP 'ack_cfu_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'\n"+msgstr);
         	                        });
 				} catch(err) {logger.warn("no connection to asterisk: " +err);}
                         break;
-			case actions.CF_BUSY_OFF:
+			case actions.CFB_OFF:
                                 var cmd = "database del CFB " + extFrom;
-                                var actionCFBusyOff = {
+                                var actCFBOff = {
                                         Action: 'command',
                                         Command: cmd
                                 };
 				try{
-	                                am.send(actionCFBusyOff, function () {
-	                                        logger.debug("'actionCFBusyOff' " + sys.inspect(actionCFBusyOff) + " has been sent to AST");
-	                                        var msgstr = "[" + extFrom + "] CF Busy OFF";
-	                                        client.send(new ResponseMessage(client.sessionId, 'ack_cf_busy_off', msgstr));
-	                                        logger.debug("RESP 'ack_cf_busy_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'\n"+msgstr);
+	                                am.send(actCFBOff, function () {
+	                                        logger.debug("'actCFBOff' " + sys.inspect(actCFBOff) + " has been sent to AST");
+	                                        var msgstr = "[" + extFrom + "] CFB OFF";
+	                                        client.send(new ResponseMessage(client.sessionId, 'ack_cfb_off', msgstr));
+	                                        logger.debug("RESP 'ack_cfb_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'\n"+msgstr);
 	                                });
 				} catch(err) {logger.warn("no connection to asterisk: " +err);}
                         break;
