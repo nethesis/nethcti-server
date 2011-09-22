@@ -35,7 +35,7 @@
 		<div class='numbers td' style="margin-left: 100px">
 		<div class='label numbers'>Numeri personali</div>
 		{:if cellphone}
-        	<div class='label tr' style='clear: both'><span class='value td'><img src="{=server_address}/template/images/mobile.png" title='Cellulare' alt='Cellulare'/></span> <span class='td'><a href='#' class='click2call' data-prefix='{=prefix}'>{=cellphone}</a></span></div>
+        	<div class='label tr' style='clear: both'><span class='value td'><img src="{=server_address}/template/images/mobile.png" title='Cellulare' alt='Cellulare'/></span> <span class='value td'><img src="{=server_address}/template/images/sms.png" class="click2sms cursorPointer" title='Invia SMS' data-num='{=cellphone}' alt='SMS'/></span><span class='td'><a href='#' class='click2call' data-prefix='{=prefix}'>{=cellphone}</a></span></div>
 		{/:if}
 
 		
