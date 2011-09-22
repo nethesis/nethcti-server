@@ -2081,6 +2081,14 @@ io.on('connection', function(client){
 			PARK: 	'park',
 			PARKCH: 'parkch',
 			PICKUP: 'pickup',
+
+			CFVM_ON: 'cfvm_on',
+			CFUVM_ON: 'cfuvm_on',
+			CFBVM_OFF:	'cfbvm_on',
+			CFVM_OFF: 'cfvm_off',
+			CFUVM_OFF:	'cfuvm_off',
+			CFBVM_OFF:	'cfbvm_off',
+
 			HANGUPCH:	'hangupch',
 			REDIRECT:   	'redirect',
 			SEND_SMS:	'send_sms',
@@ -2841,6 +2849,31 @@ io.on('connection', function(client){
                                         logger.warn("no connection to asterisk: " + err);
                                 }
 	  		break;
+
+
+
+
+			case actions.CFVM_ON:
+
+			break;
+			case actions.CFUM_ON:
+
+			break;
+			case actions.CFBM_ON:
+
+			break;
+			case actions.CFVM_OFF:
+
+			break;
+			case actions.CFUVM_OFF:
+
+			break;
+			case actions.CFBM_OFF:
+
+			break;
+
+
+
 	  		case actions.CF_ON:
 	  			var extTo = message.extTo;
 	  			var cmd = "database put CF " + extFrom + " " + extTo;
