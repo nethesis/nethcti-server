@@ -99,7 +99,7 @@ function initServerAndAsteriskParameters(){
 
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF) */
-log4js.clearAppenders();
+//log4js.clearAppenders();
 log4js.addAppender(log4js.fileAppender(logfile), '[ProxyCTI]');
 var logger = log4js.getLogger('[ProxyCTI]');
 logger.setLevel(loglevel);
@@ -2095,6 +2095,8 @@ io.on('connection', function(client){
 			CHECK_CF_STATUS:'check_cf_status',
 			CHECK_DND_STATUS:	'check_dnd_status',
 			CHECK_CW_STATUS:    	'check_cw_status',
+			CHECK_CFU_STATUS:	'check_cfu_status',
+			CHECK_CFB_STATUS:	'check_cfb_status',
 			SPY_LISTEN_SPEAK:   	'spy_listen_speak',
 			GET_ALL_VM_STATUS:  	'get_all_vm_status',
 			CF_UNAVAILABLE_ON: 	'cf_unavailable_on',
@@ -2243,6 +2245,56 @@ io.on('connection', function(client){
 					});
 				} catch(err){logger.warn("no connection with asterisk: " + err);}
 	  		break;
+			case actions.CHECK_CFU_STATUS:
+                                var cmd = "database get CFU " + extFrom;
+                                var actCheckCFU = {
+                                        Action: 'command',
+                                        Command: cmd
+                                };
+                                try{
+                                        am.send(actCheckCFU, function (resp) {
+                                                logger.debug("'actCheckCFU' " + sys.inspect(actCheckCFU) + " has been sent to AST");
+                                                if(resp.value==undefined){
+                                                        var msgstr = "CFU  status of [" + extFrom + "] is OFF";
+                                                        client.send(new ResponseMessage(client.sessionId, 'cfu_status_off', msgstr));
+                                                        logger.debug("RESP 'cfu_status_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+                                                }
+                                                else{
+                                                        var extTo = resp.value.split('\n')[0];
+                                                        var msgstr = "CFU  status of [" + extFrom + "] is ON to " + extTo;
+                                                        var respMessage = new ResponseMessage(client.sessionId, 'cfu_status_on', msgstr);
+                                                        respMessage.extTo = extTo;
+                                                        client.send(respMessage);
+                                                        logger.debug("RESP 'cfu_status_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+                                                }
+                                        });
+                                }catch(err){logger.warn("no connection with asterisk: "+err);}
+                        break;
+			case actions.CHECK_CFB_STATUS:
+                                var cmd = "database get CFB " + extFrom;
+                                var actCheckCFB = {
+                                        Action: 'command',
+                                        Command: cmd
+                                };
+                                try{
+                                        am.send(actCheckCFB, function (resp) {
+                                                logger.debug("'actCheckCFB' " + sys.inspect(actCheckCFB) + " has been sent to AST");
+                                                if(resp.value==undefined){
+                                                        var msgstr = "CFB  status of [" + extFrom + "] is OFF";
+                                                        client.send(new ResponseMessage(client.sessionId, 'cfb_status_off', msgstr));
+                                                        logger.debug("RESP 'cfb_status_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+                                                }
+                                                else{
+                                                        var extTo = resp.value.split('\n')[0];
+                                                        var msgstr = "CFB  status of [" + extFrom + "] is ON to " + extTo;
+                                                        var respMessage = new ResponseMessage(client.sessionId, 'cfb_status_on', msgstr);
+                                                        respMessage.extTo = extTo;
+                                                        client.send(respMessage);
+                                                        logger.debug("RESP 'cfb_status_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+                                                }
+                                        });
+                                }catch(err){logger.warn("no connection with asterisk: "+err);}
+                        break;
 	  		case actions.CHECK_CF_STATUS:
 	  			var cmd = "database get CF " + extFrom;
 			  	var actionCheckCFStatus = {
