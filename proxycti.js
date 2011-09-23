@@ -700,7 +700,7 @@ am.addListener('dialing', function(headers) {
 		if(c!=undefined){
                         /* in this response the html is not passed, because the chrome desktop 
                          * notification of the client accept only one absolute or relative url */
-                        var response = new ResponseMessage(c.sessionId, "dialing", headers.calleridname)
+                        var response = new ResponseMessage(c.id, "dialing", headers.calleridname)
                         response.from = from
                         response.to = to
                         var typesCC = profiler.getTypesCustomerCardPermit(to)
@@ -710,8 +710,8 @@ am.addListener('dialing', function(headers) {
                                 logger.debug("check permission to view Customer Card for [" + to + "] FAILED !")
                                 response.customerCard = ""
                                 response.noPermission = ''
-                                c.send(response)
-                                logger.debug("RESP 'dialing' has been sent to [" + to + "] sessionId '" + c.sessionId + "'")
+                                c.emit('message',response);
+                                logger.debug("RESP 'dialing' has been sent to [" + to + "] id '" + c.id + "'")
                                 return
                         }
 		        var customerCardResult = []
@@ -732,8 +732,8 @@ am.addListener('dialing', function(headers) {
                         		}
                         		if(customerCardResult.length==typesCC.length){
                                 		response.customerCard = customerCardResult
-                                		c.send(response)
-                                		logger.debug("RESP 'dialing' has been sent to [" + to + "] sessionId '" + c.sessionId + "' with relative customer card")
+                                		c.emit('message',response);
+                                		logger.debug("RESP 'dialing' has been sent to [" + to + "] id '" + c.id + "' with relative customer card")
                         		}
                 		})
         		}
@@ -1158,10 +1158,10 @@ am.addListener('hangup', function(headers) {
 		var c = clients[ext]
 		if(c!=undefined){
 	                var msg = "Call has hung up. Reason: " + headers.causetxt + "  (Code: " + headers.cause + ")"
-	                var resp = new ResponseMessage(c.sessionId, "hangup", msg)
+	                var resp = new ResponseMessage(c.id, "hangup", msg)
 	                resp.code = headers.cause
-	                c.send(resp)
-	                logger.debug("RESP 'hangup' has been sent to [" + ext + "] sessionId '" + c.sessionId + "'")
+	                c.emit('message',resp);
+	                logger.debug("RESP 'hangup' has been sent to [" + ext + "] id '" + c.id + "'")
 	        }
 		// update for OP
 		if(modop.isExtPresent(ext) && modop.isExtInterno(ext)){
@@ -1533,22 +1533,22 @@ am.addListener('callconnected', function(headers) {
 	if(clients[from]!==undefined){
                 var c = clients[from]
                 var msg = "Call from " + from + " to " + to + " CONNECTED"
-                var response = new ResponseMessage(c.sessionId, "callconnected", msg)
+                var response = new ResponseMessage(c.id, "callconnected", msg)
                 response.from = from
                 response.to = to
 		response.destCh = headers.channel2;
-                c.send(response)
-                logger.debug("RESP 'callconnected' has been sent to [" + from + "] sessionId '" + c.sessionId + "'")
+                c.emit('message',response);
+                logger.debug("RESP 'callconnected' has been sent to [" + from + "] id '" + c.id + "'")
         }
         if(clients[to]!==undefined){
                 var c = clients[to]
                 var msg = "Call from " + from + " to " + to + " CONNECTED"
-                var response = new ResponseMessage(c.sessionId, "callconnected", msg)
+                var response = new ResponseMessage(c.id, "callconnected", msg)
                 response.from = from
                 response.to = to
 		response.destCh = headers.channel1;
-                c.send(response)
-                logger.debug("RESP 'callconnected' has been sent to [" + to + "] sessionId '" + c.sessionId + "'")
+                c.emit('message',response);
+                logger.debug("RESP 'callconnected' has been sent to [" + to + "] id '" + c.id + "'")
         }	
 })
 
@@ -1657,16 +1657,16 @@ am.addListener('userevent', function(headers){
 			if(value==""){ // DND is disabled by the phone user
 				logger.debug("[" + ext + "] '" + family + " OFF'")
 				var msg = ext + " has disabled its " + family
-        		        var response = new ResponseMessage(c.sessionId, "dnd_status_off", msg)
-		                c.send(response)
-		                logger.debug("RESP 'dnd_status_off' has been sent to [" + ext + "] sessionId '" + c.sessionId + "'")
+        		        var response = new ResponseMessage(c.id, "dnd_status_off", msg)
+		                c.emit('message',response);
+		                logger.debug("RESP 'dnd_status_off' has been sent to [" + ext + "] id '" + c.id + "'")
 			}
 			else if(value=="attivo"){ // DND is enable by the phone user
 				logger.debug("[" + ext + "] '" + family + " ON'")
 				var msg = ext + " has enabled its " + family
-                                var response = new ResponseMessage(c.sessionId, "dnd_status_on", msg)
-                                c.send(response)
-                                logger.debug("RESP 'dnd_status_on' has been sent to [" + ext + "] sessionId '" + c.sessionId + "'")
+                                var response = new ResponseMessage(c.id, "dnd_status_on", msg)
+                                c.emit('message',response);
+                                logger.debug("RESP 'dnd_status_on' has been sent to [" + ext + "] id '" + c.id + "'")
 			}
 		}
 		if(value=="")
@@ -1685,17 +1685,17 @@ am.addListener('userevent', function(headers){
                         if(value==""){ // CF is disabled by the phone user
                                 logger.debug("[" + ext + "] '" + family + " OFF'");
                                 var msg = ext + " has disabled its " + family;
-                                var response = new ResponseMessage(c.sessionId, "cf_status_off", msg);
-                                c.send(response);
-                                logger.debug("RESP 'cf_status_off' has been sent to [" + ext + "] sessionId '" + c.sessionId + "'");
+                                var response = new ResponseMessage(c.id, "cf_status_off", msg);
+                                c.emit('message',response);
+                                logger.debug("RESP 'cf_status_off' has been sent to [" + ext + "] id '" + c.id + "'");
                         }
                         else { // CF is enable by the phone user
                                 logger.debug("[" + ext + "] '" + family + " ON' to [" + value + "]");
                                 var msg = ext + " has enabled its " + family + " to " + value;
-                                var response = new ResponseMessage(c.sessionId, "cf_status_on", msg);
+                                var response = new ResponseMessage(c.id, "cf_status_on", msg);
 				response.extTo = value;
-                                c.send(response);
-                                logger.debug("RESP 'cf_status_on' to [" + value + "] has been sent to [" + ext + "] sessionId '" + c.sessionId + "'");
+                                c.emit('message',response);
+                                logger.debug("RESP 'cf_status_on' to [" + value + "] has been sent to [" + ext + "] id '" + c.id + "'");
                         }
                 }
                 if(value=="")
@@ -1871,7 +1871,7 @@ function returnOperatorPanelToClient(){
          * it check if he has the "OP_BASE" permission */
         if(profiler.checkActionOpPlusPermit(extToReturnExtStatusForOp)){
                 var msgstr = "received extStatusForOp to create operator panel";
-                var mess = new ResponseMessage(clientToReturnExtStatusForOp.sessionId, "ack_get_peer_list_complete_op", msgstr);
+                var mess = new ResponseMessage(clientToReturnExtStatusForOp.id, "ack_get_peer_list_complete_op", msgstr);
                 mess.extStatusForOp = modop.getExtStatusForOp()
                 mess.tabOp = modop.getTabOp()
                 mess.opPermit = 'plus'
@@ -1880,12 +1880,12 @@ function returnOperatorPanelToClient(){
 		} else {
 			mess.priv = '0';
 		}
-                clientToReturnExtStatusForOp.send(mess)
-                logger.debug("RESP 'ack_get_peer_list_complete_op' has been sent to [" + extToReturnExtStatusForOp + "] sessionId '" + clientToReturnExtStatusForOp.sessionId + "'")
+                clientToReturnExtStatusForOp.emit('message', mess);
+                logger.debug("RESP 'ack_get_peer_list_complete_op' has been sent to [" + extToReturnExtStatusForOp + "] id '" + clientToReturnExtStatusForOp.id + "'")
         }
 	else if(profiler.checkActionOpBasePermit(extToReturnExtStatusForOp)) {
                 var msgstr = "received extStatusForOp to create operator panel"
-                var mess = new ResponseMessage(clientToReturnExtStatusForOp.sessionId, "ack_get_peer_list_complete_op", msgstr)
+                var mess = new ResponseMessage(clientToReturnExtStatusForOp.id, "ack_get_peer_list_complete_op", msgstr)
                 mess.extStatusForOp = modop.getExtStatusForOp()
                 mess.tabOp = modop.getTabOp()
                 mess.opPermit = 'base'
@@ -1894,14 +1894,14 @@ function returnOperatorPanelToClient(){
                 } else {
                         mess.priv = '0';
                 }
-                clientToReturnExtStatusForOp.send(mess)
-                logger.debug("RESP 'ack_get_peer_list_complete_op' has been sent to [" + extToReturnExtStatusForOp + "] sessionId '" + clientToReturnExtStatusForOp.sessionId + "'")
+                clientToReturnExtStatusForOp.emit('message',mess);
+                logger.debug("RESP 'ack_get_peer_list_complete_op' has been sent to [" + extToReturnExtStatusForOp + "] id '" + clientToReturnExtStatusForOp.id + "'")
         }
 	else{
                 var msgstr = "Sorry but you haven't the permission of view the operator panel"
-                var mess = new ResponseMessage(clientToReturnExtStatusForOp.sessionId, "error_get_peer_list_complete_op", msgstr)
-                clientToReturnExtStatusForOp.send(mess)
-                logger.debug("RESP 'error_get_peer_list_complete_op' has been sent to [" + extToReturnExtStatusForOp + "] sessionId '" + clientToReturnExtStatusForOp.sessionId + "'")
+                var mess = new ResponseMessage(clientToReturnExtStatusForOp.id, "error_get_peer_list_complete_op", msgstr)
+                clientToReturnExtStatusForOp.emit('message',mess);
+                logger.debug("RESP 'error_get_peer_list_complete_op' has been sent to [" + extToReturnExtStatusForOp + "] id '" + clientToReturnExtStatusForOp.id + "'")
         }
 }
 
@@ -1914,7 +1914,7 @@ server = http.createServer(function(req, res){
 	var path = parsed_url.pathname;
 	var params = parsed_url.query;
 
-logger.debug("received request HTTP: path = " + path + " params = " + sys.inspect(params));
+	logger.debug("received request HTTP: path = " + path + " params = " + sys.inspect(params));
 
 	switch (path){
 	    case '/':
@@ -2020,9 +2020,9 @@ function callout(extFrom, to, res){
 				var client = clients[extFrom];
 				if(client!==undefined){
 					var msgTxt = "call action has been sent to asterisk: " + extFrom + " -> " + to;
-		                        var respMsg = new ResponseMessage(client.sessionId, "ack_callout", msgTxt);
-					client.send(respMsg);
-		                        logger.debug("RESP 'ack_callout' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+		                        var respMsg = new ResponseMessage(client.id, "ack_callout", msgTxt);
+					client.emit('message',respMsg);
+		                        logger.debug("RESP 'ack_callout' has been sent to [" + extFrom + "] id '" + client.id + "'");
 				} else {
 					logger.debug("don't send ack_callout to client, because it isn't present: the call was originated from outside of the cti");
 				}
@@ -2038,8 +2038,8 @@ function callout(extFrom, to, res){
 		logger.warn("check 'callOut' permission for [" + extFrom + "] FAILED !");
 		var client = clients[extFrom];
 		if(client!==undefined){
-	                client.send(new ResponseMessage(client.sessionId, 'error_call', "Sorry, but you don't have permission to call !"));
-	                logger.debug("RESP 'error_call' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+	                client.emit('message',new ResponseMessage(client.id, 'error_call', "Sorry, but you don't have permission to call !"));
+	                logger.debug("RESP 'error_call' has been sent to [" + extFrom + "] id '" + client.id + "'");
 		} else{
 			logger.debug("don't send error_call to client, because it isn't present: the call was originated from outside of the cti");
 		}
@@ -2055,13 +2055,34 @@ function callout(extFrom, to, res){
  * Section relative to WebSocket
  */ 
 var io = io.listen(server);
- 
-io.on('connection', function(client){
+// set with env NODE_ENV
+io.configure('production', function(){
+	io.enable('browser client minification');  // send minified client
+	io.enable('browser client etag');          // apply etag caching logic based on version number
+	io.set('log level', 1);                    // reduce logging
+	/*io.set('transports', [                     // enable all transports (optional if you want flashsocket)
+		'websocket'
+	  	, 'htmlfile'
+	  	, 'xhr-polling'
+	  	, 'jsonp-polling'
+	]);*/
+});
+io.configure('development', function(){
+	io.set('log level', 3);
+});
+
+/*
+io.set('log level', 1);
+io.enable('logger');
+io.set('transports', ['websocket']);
+*/
+io.sockets.on('connection', function(client){
 	// send acknowledgment of established connection 
-	client.send(new ResponseMessage(client.sessionId, "connected", "[DEBUG] client " + client.sessionId + " connected"));
-	logger.debug("'ack' to connection has been sent to the client with sessionId: " + client.sessionId);
+	client.emit('message', new ResponseMessage(client.id, "connected", "[DEBUG] client " + client.id + " connected"));
+	logger.debug("'ack' to connection has been sent to the client with id: " + client.id);
 
 	client.on('message', function(message){
+	console.log(typeof(message));
 		// all received messages have the information 'extenFrom' and the information about the 'action' to execute
   		var extFrom = message.extFrom;
   		var action = message.action;
@@ -2117,7 +2138,7 @@ io.on('connection', function(client){
 			GET_CURRENT_WEEK_HISTORY:  'get_current_week_history',
 			GET_CURRENT_MONTH_HISTORY: 'get_current_month_history'
 		}
-  		logger.debug("ACTION received: from sessionId '" + client.sessionId + "' message " + sys.inspect(message));	
+  		logger.debug("ACTION received: from id '" + client.id + "' message " + sys.inspect(message));	
   		switch(action){
 			case actions.CF_VM_PARKING:
 				var redirectTo = message.redirectToExt;
@@ -2166,43 +2187,43 @@ io.on('connection', function(client){
   					if(testAlreadyLoggedExten(extFrom)){
 						// close already present session
 						var clientToClose = clients[extFrom];
-						var respMsg = new ResponseMessage(clientToClose.sessionId, 'new_access', 'New Access from another place');
+						var respMsg = new ResponseMessage(clientToClose.id, 'new_access', 'New Access from another place');
 						clientToClose.send(respMsg);
-						logger.debug("RESP 'new_access' has been sent to [" + extFrom + "] sessionId '" + clientToClose.sessionId + "'");
-						removeClient(clientToClose.sessionId);
-						if(!testAlreadyLoggedSessionId(clientToClose.sessionId))
-							logger.debug("new access [" + extFrom + "]: logged OUT sessiondId '" + clientToClose.sessionId + "'");
+						logger.debug("RESP 'new_access' has been sent to [" + extFrom + "] id '" + clientToClose.id + "'");
+						removeClient(clientToClose.id);
+						if(!testAlreadyLoggedSessionId(clientToClose.id))
+							logger.debug("new access [" + extFrom + "]: logged OUT sessiondId '" + clientToClose.id + "'");
 						// new access: authenticate the user
 						client.extension = extFrom;
 						clients[extFrom] = client;
-						var ipAddrClient = client.connection.remoteAddress;
-						logger.info("new access [" + extFrom + "]: logged IN, IP '" + ipAddrClient + "' sessionId '" + client.sessionId + "'");
+						var ipAddrClient = client.handshake.address.address;
+						logger.info("new access [" + extFrom + "]: logged IN, IP '" + ipAddrClient + "' id '" + client.id + "'");
 						logger.info(Object.keys(clients).length + " logged in clients");
 	                                        printLoggedClients();
-						respMsg = new ResponseMessage(client.sessionId, "ack_login", "Login succesfully");
+						respMsg = new ResponseMessage(client.id, "ack_login", "Login succesfully");
 						respMsg.ext = extFrom;
 						respMsg.secret = message.secret;
-						client.send(respMsg);
-						logger.debug("RESP 'ack_login' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+						client.emit('message',respMsg);
+						logger.debug("RESP 'ack_login' has been sent to [" + extFrom + "] id '" + client.id + "'");
   					} else {
 	  					// authenticate the user
 			  			client.extension = extFrom;
 			  			clients[extFrom] = client;  
-			  			var ipAddrClient = client.connection.remoteAddress;
-				  		logger.info("logged IN: client [" + extFrom + "] IP '" + ipAddrClient + "' sessionId '" + client.sessionId + "'");
+			  			var ipAddrClient = client.handshake.address.address;
+				  		logger.info("logged IN: client [" + extFrom + "] IP '" + ipAddrClient + "' id '" + client.id + "'");
 				  		logger.debug(Object.keys(clients).length + " logged in clients");
 				  		printLoggedClients();
-				  		var respMsg = new ResponseMessage(client.sessionId, "ack_login", "Login succesfully");
+				  		var respMsg = new ResponseMessage(client.id, "ack_login", "Login succesfully");
 				  		respMsg.ext = extFrom;
 				  		respMsg.secret = message.secret;
-			  			client.send(respMsg);
-			  			logger.debug("RESP 'ack_login' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+			  			client.emit('message',respMsg);
+			  			logger.debug("RESP 'ack_login' has been sent to [" + extFrom + "] id '" + client.id + "'");
 					}
   				}
   				else{ // the user is not authenticated
   					logger.warn("AUTH FAILED: [" + extFrom + "] with secret '" + message.secret + "'");
-  					client.send(new ResponseMessage(client.sessionId, "error_login", "Sorry, authentication failed !"));
-  					logger.debug("RESP 'error_login' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+  					client.emit('message',new ResponseMessage(client.id, "error_login", "Sorry, authentication failed !"));
+  					logger.debug("RESP 'error_login' has been sent to [" + extFrom + "] id '" + client.id + "'");
   				}
 	  		break;
 	  		case actions.CHECK_DND_STATUS:
@@ -2216,13 +2237,13 @@ io.on('connection', function(client){
 						logger.debug("'actionCheckDNDStatus' " + sys.inspect(actionCheckDNDStatus) + " has been sent to AST");
 						if(resp.value==undefined){
 							var msgstr = "Don't disturb  status of [" + extFrom + "] is OFF";
-							client.send(new ResponseMessage(client.sessionId, 'dnd_status_off', msgstr));
-							logger.debug("RESP 'dnd_status_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+							client.emit('message',new ResponseMessage(client.id, 'dnd_status_off', msgstr));
+							logger.debug("RESP 'dnd_status_off' has been sent to [" + extFrom + "] id '" + client.id + "'");
 						}
 						else{
 							var msgstr = "Don't disturb  status of [" + extFrom + "] is ON";
-							client.send(new ResponseMessage(client.sessionId, 'dnd_status_on', msgstr));
-							logger.debug("RESP 'dnd_status_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+							client.emit('message',new ResponseMessage(client.id, 'dnd_status_on', msgstr));
+							logger.debug("RESP 'dnd_status_on' has been sent to [" + extFrom + "] id '" + client.id + "'");
 						}
 					});
 				} catch(err){
@@ -2240,13 +2261,13 @@ io.on('connection', function(client){
 						logger.debug("'actionCheckCWStatus' " + sys.inspect(actionCheckCWStatus) + " has been sent to AST");
 						if(resp.value==undefined){
 							var msgstr = "Call waiting  status of [" + extFrom + "] is OFF";
-							client.send(new ResponseMessage(client.sessionId, 'cw_status_off', msgstr));
-							logger.debug("RESP 'cw_status_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+							client.emit('message',new ResponseMessage(client.id, 'cw_status_off', msgstr));
+							logger.debug("RESP 'cw_status_off' has been sent to [" + extFrom + "] id '" + client.id + "'");
 						}
 						else{
 							var msgstr = "Call waiting  status of [" + extFrom + "] is ON";
-							client.send(new ResponseMessage(client.sessionId, 'cw_status_on', msgstr));
-							logger.debug("RESP 'cw_status_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+							client.emit('message',new ResponseMessage(client.id, 'cw_status_on', msgstr));
+							logger.debug("RESP 'cw_status_on' has been sent to [" + extFrom + "] id '" + client.id + "'");
 						}
 					});
 				} catch(err){logger.warn("no connection with asterisk: " + err);}
@@ -2262,16 +2283,16 @@ io.on('connection', function(client){
                                                 logger.debug("'actCheckCFU' " + sys.inspect(actCheckCFU) + " has been sent to AST");
                                                 if(resp.value==undefined){
                                                         var msgstr = "CFU  status of [" + extFrom + "] is OFF";
-                                                        client.send(new ResponseMessage(client.sessionId, 'cfu_status_off', msgstr));
-                                                        logger.debug("RESP 'cfu_status_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+                                                        client.emit('message',new ResponseMessage(client.id, 'cfu_status_off', msgstr));
+                                                        logger.debug("RESP 'cfu_status_off' has been sent to [" + extFrom + "] id '" + client.id + "'");
                                                 }
                                                 else{
                                                         var extTo = resp.value.split('\n')[0];
                                                         var msgstr = "CFU  status of [" + extFrom + "] is ON to " + extTo;
-                                                        var respMessage = new ResponseMessage(client.sessionId, 'cfu_status_on', msgstr);
+                                                        var respMessage = new ResponseMessage(client.id, 'cfu_status_on', msgstr);
                                                         respMessage.extTo = extTo;
-                                                        client.send(respMessage);
-                                                        logger.debug("RESP 'cfu_status_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+                                                        client.emit('message',respMessage);
+                                                        logger.debug("RESP 'cfu_status_on' has been sent to [" + extFrom + "] id '" + client.id + "'");
                                                 }
                                         });
                                 }catch(err){logger.warn("no connection with asterisk: "+err);}
@@ -2287,16 +2308,16 @@ io.on('connection', function(client){
                                                 logger.debug("'actCheckCFB' " + sys.inspect(actCheckCFB) + " has been sent to AST");
                                                 if(resp.value==undefined){
                                                         var msgstr = "CFB  status of [" + extFrom + "] is OFF";
-                                                        client.send(new ResponseMessage(client.sessionId, 'cfb_status_off', msgstr));
-                                                        logger.debug("RESP 'cfb_status_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+                                                        client.emit('message',new ResponseMessage(client.id, 'cfb_status_off', msgstr));
+                                                        logger.debug("RESP 'cfb_status_off' has been sent to [" + extFrom + "] id '" + client.id + "'");
                                                 }
                                                 else{
                                                         var extTo = resp.value.split('\n')[0];
                                                         var msgstr = "CFB  status of [" + extFrom + "] is ON to " + extTo;
-                                                        var respMessage = new ResponseMessage(client.sessionId, 'cfb_status_on', msgstr);
+                                                        var respMessage = new ResponseMessage(client.id, 'cfb_status_on', msgstr);
                                                         respMessage.extTo = extTo;
-                                                        client.send(respMessage);
-                                                        logger.debug("RESP 'cfb_status_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+                                                        client.emit('message',respMessage);
+                                                        logger.debug("RESP 'cfb_status_on' has been sent to [" + extFrom + "] id '" + client.id + "'");
                                                 }
                                         });
                                 }catch(err){logger.warn("no connection with asterisk: "+err);}
@@ -2312,38 +2333,38 @@ io.on('connection', function(client){
 						logger.debug("'actionCheckCFStatus' " + sys.inspect(actionCheckCFStatus) + " has been sent to AST");
 						if(resp.value==undefined){
 							var msgstr = "Call forwarding  status of [" + extFrom + "] is OFF";
-							client.send(new ResponseMessage(client.sessionId, 'cf_status_off', msgstr));
-							logger.debug("RESP 'cf_status_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+							client.emit('message',new ResponseMessage(client.id, 'cf_status_off', msgstr));
+							logger.debug("RESP 'cf_status_off' has been sent to [" + extFrom + "] id '" + client.id + "'");
 						}
 						else{
 							var extTo = resp.value.split('\n')[0];
 							var msgstr = "Call forwarding  status of [" + extFrom + "] is ON to " + extTo;
-							var respMessage = new ResponseMessage(client.sessionId, 'cf_status_on', msgstr);
+							var respMessage = new ResponseMessage(client.id, 'cf_status_on', msgstr);
 							respMessage.extTo = extTo;
-							client.send(respMessage);
-							logger.debug("RESP 'cf_status_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+							client.emit('message',respMessage);
+							logger.debug("RESP 'cf_status_on' has been sent to [" + extFrom + "] id '" + client.id + "'");
 						}
 					});
 				}catch(err){logger.warn("no connection with asterisk: "+err);}
 	  		break;
 			case actions.GET_ALL_VM_STATUS:
 				var list = modop.getAllVoicemailStatus();
-				var respMessage = new ResponseMessage(client.sessionId, 'ack_all_vm_status', '');
+				var respMessage = new ResponseMessage(client.id, 'ack_all_vm_status', '');
 				respMessage.list = list;
-				client.send(respMessage);
-                                logger.debug("RESP 'ack_all_vm_status' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+				client.emit('message',respMessage);
+                                logger.debug("RESP 'ack_all_vm_status' has been sent to [" + extFrom + "] id '" + client.id + "'");
 			break;
 	  		case actions.CALLOUT:
 	  			if(clients[extFrom]===undefined){ // check if the client is logged in
 	  				logger.warn("ATTENTION: client [" + extFrom + "] not logged in");
-	  				client.send(new ResponseMessage(client.sessionId, 'error_call', 'Error in calling: client not logged in'));
-	  				logger.debug("RESP 'error_call' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+	  				client.emit('message',new ResponseMessage(client.id, 'error_call', 'Error in calling: client not logged in'));
+	  				logger.debug("RESP 'error_call' has been sent to [" + extFrom + "] id '" + client.id + "'");
 	  				return;
   				}
-	  			else if(client.sessionId!==clients[extFrom].sessionId){ // security check of real authenticity of the user who originated the call
-	  				logger.warn("SECURITY WARNING: attempt to fake the sender: session '" + client.sessionId + "' attempt to call with the fake exten [" + extFrom + "] !");
-	  				client.send(new ResponseMessage(client.sessionId, 'error_call', 'Error in calling: attempt to call with the fake exten ' + extFrom));
-	  				logger.debug("RESP 'error_call' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+	  			else if(client.id!==clients[extFrom].id){ // security check of real authenticity of the user who originated the call
+	  				logger.warn("SECURITY WARNING: attempt to fake the sender: session '" + client.id + "' attempt to call with the fake exten [" + extFrom + "] !");
+	  				client.emit('message',new ResponseMessage(client.id, 'error_call', 'Error in calling: attempt to call with the fake exten ' + extFrom));
+	  				logger.debug("RESP 'error_call' has been sent to [" + extFrom + "] id '" + client.id + "'");
 	  				return;
 	  			}
 				var extToCall = message.extToCall;
@@ -2437,11 +2458,11 @@ io.on('connection', function(client){
 				}catch(err){logger.warn("no connection to asterisk: "+err);}
 			break
 	  		case actions.LOGOUT:
-	  			removeClient(client.sessionId);
-	  			if(!testAlreadyLoggedSessionId(client.sessionId)){
-			  		logger.info("logged OUT [" + extFrom + "] sessiondId '" + client.sessionId + "'");
-			  		client.send(new ResponseMessage(client.sessionId, "ack_logout", "logout has been succesfully"));
-			  		logger.debug("RESP 'ack_logout' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+	  			removeClient(client.id);
+	  			if(!testAlreadyLoggedSessionId(client.id)){
+			  		logger.info("logged OUT [" + extFrom + "] sessiondId '" + client.id + "'");
+			  		client.emit('message',new ResponseMessage(client.id, "ack_logout", "logout has been succesfully"));
+			  		logger.debug("RESP 'ack_logout' has been sent to [" + extFrom + "] id '" + client.id + "'");
 			  	}
 		  		logger.info(Object.keys(clients).length + " logged in clients");
 	  		break;
@@ -2493,15 +2514,15 @@ io.on('connection', function(client){
 					try{
 						am.send(actionRedirect, function () {
 							logger.debug("'actionRedirect' " + sys.inspect(actionRedirect) + " has been sent to AST");
-							client.send(new ResponseMessage(client.sessionId, 'ack_redirect'), 'Redirection has been taken');
-							logger.debug("RESP 'ack_redirect' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+							client.emit('message',new ResponseMessage(client.id, 'ack_redirect'), 'Redirection has been taken');
+							logger.debug("RESP 'ack_redirect' has been sent to [" + extFrom + "] id '" + client.id + "'");
 						});
 					}catch(err){logger.warn("no connection to asterisk: "+err);}
 		  		}
 	  			else{
 					logger.debug("check 'redirect' permission for [" + extFrom + "] FAILED !");
-			  		client.send(new ResponseMessage(client.sessionId, "error_redirect", "Sorry: you don't have permission to redirect !"));
-			  		logger.debug("RESP 'error_redirect' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+			  		client.emit('message',new ResponseMessage(client.id, "error_redirect", "Sorry: you don't have permission to redirect !"));
+			  		logger.debug("RESP 'error_redirect' has been sent to [" + extFrom + "] id '" + client.id + "'");
 	  			}
 	  		break;
 	  		case actions.SEARCH_CONTACT_PHONEBOOK:
@@ -2513,16 +2534,16 @@ io.on('connection', function(client){
 	  				var namex = message.namex;
 					dataCollector.getContactsPhonebook(namex, function(results){
 	  					var resultHTML = createResultSearchContactsPhonebook(results);
-	  					var mess = new ResponseMessage(client.sessionId, "search_contacts_results", "received phonebook contacts");
+	  					var mess = new ResponseMessage(client.id, "search_contacts_results", "received phonebook contacts");
 	  					mess.resultHTML = resultHTML;
-	  					client.send(mess);
-	  					logger.debug("RESP 'search_contacts_results' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+	  					client.emit('message',mess);
+	  					logger.debug("RESP 'search_contacts_results' has been sent to [" + extFrom + "] id '" + client.id + "'");
 	  				});
 	  			}
 	  			else{
 					logger.debug("check 'searchContactPhonebook' permission for [" + extFrom + "] FAILED !");
-  					client.send(new ResponseMessage(client.sessionId, "error_search_contacts", "Sorry: you don't have permission to search contacts in phonebook !"));
-  					logger.debug("RESP 'error_search_contacts' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+  					client.emit('message',new ResponseMessage(client.id, "error_search_contacts", "Sorry: you don't have permission to search contacts in phonebook !"));
+  					logger.debug("RESP 'error_search_contacts' has been sent to [" + extFrom + "] id '" + client.id + "'");
 	  			}
 	  		break;
 	  		case actions.RECORD:
@@ -2627,10 +2648,10 @@ io.on('connection', function(client){
 						am.send(actionRecord, function () {
 							logger.debug("'actionRecord' " + sys.inspect(actionRecord) + " has been sent to AST");
 							var msgstr = 'Recording of call ' + filename + ' started...';
-							var msg = new ResponseMessage(client.sessionId, 'ack_record', msgstr);
+							var msg = new ResponseMessage(client.id, 'ack_record', msgstr);
 							msg.extRecord = callFromExt;
-							client.send(msg);
-							logger.debug("RESP 'ack_record' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+							client.emit('message',msg);
+							logger.debug("RESP 'ack_record' has been sent to [" + extFrom + "] id '" + client.id + "'");
 							logger.debug(msgstr);
 							// update info
 							chStat[uniqueid].record = 1
@@ -2660,8 +2681,8 @@ io.on('connection', function(client){
 				}
 				else{
 					logger.debug("check 'record' permission for [" + extFrom + "] FAILED !");
-			  		client.send(new ResponseMessage(client.sessionId, "error_record", "Sorry: you don't have permission to record call !"));
-			  		logger.debug("RESP 'error_record' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+			  		client.emit('message',new ResponseMessage(client.id, "error_record", "Sorry: you don't have permission to record call !"));
+			  		logger.debug("RESP 'error_record' has been sent to [" + extFrom + "] id '" + client.id + "'");
 	  			}	
 	  		break;
 	  		case actions.STOP_RECORD:
@@ -2751,8 +2772,8 @@ io.on('connection', function(client){
 				try{
 					am.send(actionStopRecord, function () {
 						var msgstr = 'Recording for ' + extFrom + ' stopped';
-						client.send(new ResponseMessage(client.sessionId, 'ack_stoprecord', msgstr));
-						logger.debug("'actionStopRecord' " + sys.inspect(actionStopRecord) + " has been sent to AST\nRESP 'ack_stoprecord' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'\n"+msgstr);
+						client.emit('message',new ResponseMessage(client.id, 'ack_stoprecord', msgstr));
+						logger.debug("'actionStopRecord' " + sys.inspect(actionStopRecord) + " has been sent to AST\nRESP 'ack_stoprecord' has been sent to [" + extFrom + "] id '" + client.id + "'\n"+msgstr);
 						// update info
 						chStat[uniqueid].record = 0
 						chStat[destUniqueid].record = 0
@@ -2788,8 +2809,8 @@ io.on('connection', function(client){
 				try{
 					am.send(actionDNDon, function () {
 						var msgstr = "[" + extFrom + "] DND ON";
-						client.send(new ResponseMessage(client.sessionId, 'ack_dnd_on', msgstr));
-						logger.debug("'actionDNDon' " + sys.inspect(actionDNDon) + " has been sent to AST\nRESP 'ack_dnd_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'\n"+msgstr);
+						client.emit('message',new ResponseMessage(client.id, 'ack_dnd_on', msgstr));
+						logger.debug("'actionDNDon' " + sys.inspect(actionDNDon) + " has been sent to AST\nRESP 'ack_dnd_on' has been sent to [" + extFrom + "] id '" + client.id + "'\n"+msgstr);
 						modop.updateExtDNDStatusWithExt(extFrom, 'on');
 						updateAllClientsForOpWithTypeExt("SIP/"+extFrom);
 					});
@@ -2806,8 +2827,8 @@ io.on('connection', function(client){
 				try{
 					am.send(actionDNDoff, function () {
 						var msgstr = "[" + extFrom + "] DND OFF";
-						client.send(new ResponseMessage(client.sessionId, 'ack_dnd_off', msgstr));
-						logger.debug("'actionDNDoff' " + sys.inspect(actionDNDoff) + " has been sent to AST\nRESP 'ack_dnd_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'\n"+msgstr);
+						client.emit('message',new ResponseMessage(client.id, 'ack_dnd_off', msgstr));
+						logger.debug("'actionDNDoff' " + sys.inspect(actionDNDoff) + " has been sent to AST\nRESP 'ack_dnd_off' has been sent to [" + extFrom + "] id '" + client.id + "'\n"+msgstr);
 	                                        modop.updateExtDNDStatusWithExt(extFrom, 'off');
 	                                        updateAllClientsForOpWithTypeExt("SIP/"+extFrom);
 					});
@@ -2824,8 +2845,8 @@ io.on('connection', function(client){
 				try{
 					am.send(actionCWon, function () {
 						var msgstr = "[" + extFrom + "] CW ON";
-						client.send(new ResponseMessage(client.sessionId, 'ack_cw_on', msgstr));
-						logger.debug("'actionCWon' " + sys.inspect(actionCWon) + " has been sent to AST\nRESP 'ack_cw_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'\n"+msgstr);
+						client.emit('message',new ResponseMessage(client.id, 'ack_cw_on', msgstr));
+						logger.debug("'actionCWon' " + sys.inspect(actionCWon) + " has been sent to AST\nRESP 'ack_cw_on' has been sent to [" + extFrom + "] id '" + client.id + "'\n"+msgstr);
 					});
 				} catch(err) {
                                         logger.warn("no connection to asterisk: "+err);
@@ -2840,8 +2861,8 @@ io.on('connection', function(client){
 				try{
 					am.send(actionCWoff, function () {
 						var msgstr = "[" + extFrom + "] CW OFF";
-						client.send(new ResponseMessage(client.sessionId, 'ack_cw_off', msgstr));
-						logger.debug("'actionCWoff' " + sys.inspect(actionCWoff) + " has been sent to AST\nRESP 'ack_cw_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'"+msgstr);
+						client.emit('message',new ResponseMessage(client.id, 'ack_cw_off', msgstr));
+						logger.debug("'actionCWoff' " + sys.inspect(actionCWoff) + " has been sent to AST\nRESP 'ack_cw_off' has been sent to [" + extFrom + "] id '" + client.id + "'"+msgstr);
 					});
 				} catch(err) {
                                         logger.warn("no connection to asterisk: " + err);
@@ -2860,9 +2881,9 @@ io.on('connection', function(client){
                                 try{
                                 	am.send(actCFVMOn, function () {
                                         	var msgstr = "[" + extFrom + "] CFVM ON";
-                                                var response = new ResponseMessage(client.sessionId, 'ack_cfvm_on', msgstr);
-                                                client.send(response);
-                                                logger.debug("'actCFVMOn' " + sys.inspect(actCFVMOn) + " has been sent to AST\nRESP 'ack_cfvm_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'"+msgstr);
+                                                var response = new ResponseMessage(client.id, 'ack_cfvm_on', msgstr);
+                                                client.emit('message',response);
+                                                logger.debug("'actCFVMOn' " + sys.inspect(actCFVMOn) + " has been sent to AST\nRESP 'ack_cfvm_on' has been sent to [" + extFrom + "] id '" + client.id + "'"+msgstr);
                                         });
                                 } catch(err) {logger.warn("no connection to asterisk: " + err);}	
 			break;
@@ -2875,9 +2896,9 @@ io.on('connection', function(client){
                                 try{
                                         am.send(actCFUVMOn, function () {
                                                 var msgstr = "[" + extFrom + "] CFUVM ON";
-                                                var response = new ResponseMessage(client.sessionId, 'ack_cfuvm_on', msgstr);
-                                                client.send(response);
-                                                logger.debug("'actCFUVMOn' " + sys.inspect(actCFUVMOn) + " has been sent to AST\nRESP 'ack_cfuvm_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'"+msgstr);
+                                                var response = new ResponseMessage(client.id, 'ack_cfuvm_on', msgstr);
+                                                client.emit('message',response);
+                                                logger.debug("'actCFUVMOn' " + sys.inspect(actCFUVMOn) + " has been sent to AST\nRESP 'ack_cfuvm_on' has been sent to [" + extFrom + "] id '" + client.id + "'"+msgstr);
                                         });
                                 } catch(err) {logger.warn("no connection to asterisk: " + err);}
 			break;
@@ -2890,9 +2911,9 @@ io.on('connection', function(client){
                                 try{
                                         am.send(actCFBVMOn, function () {
                                                 var msgstr = "[" + extFrom + "] CFBVM ON";
-                                                var response = new ResponseMessage(client.sessionId, 'ack_cfbvm_on', msgstr);
-                                                client.send(response);
-                                                logger.debug("'actCFBVMOn' " + sys.inspect(actCFBVMOn) + " has been sent to AST\nRESP 'ack_cfbvm_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'"+msgstr);
+                                                var response = new ResponseMessage(client.id, 'ack_cfbvm_on', msgstr);
+                                                client.emit('message',response);
+                                                logger.debug("'actCFBVMOn' " + sys.inspect(actCFBVMOn) + " has been sent to AST\nRESP 'ack_cfbvm_on' has been sent to [" + extFrom + "] id '" + client.id + "'"+msgstr);
                                         });
                                 } catch(err) {logger.warn("no connection to asterisk: " + err);}
 			break;
@@ -2905,8 +2926,8 @@ io.on('connection', function(client){
                                 try{
                                         am.send(actCFVMOff, function () {
                                                 var msgstr = "[" + extFrom + "] CFVM OFF";
-                                                client.send(new ResponseMessage(client.sessionId, 'ack_cfvm_off', msgstr));
-                                                logger.debug("'actCFVMOff' " + sys.inspect(actCFVMOff) + " has been sent to AST\nRESP 'ack_cfvm_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'\n"+msgstr);
+                                                client.emit('message',new ResponseMessage(client.id, 'ack_cfvm_off', msgstr));
+                                                logger.debug("'actCFVMOff' " + sys.inspect(actCFVMOff) + " has been sent to AST\nRESP 'ack_cfvm_off' has been sent to [" + extFrom + "] id '" + client.id + "'\n"+msgstr);
                                         });
                                 } catch(err) {logger.warn("no connection to asterisk: " +err);}
 			break;
@@ -2919,8 +2940,8 @@ io.on('connection', function(client){
                                 try{
                                         am.send(actCFUVMOff, function () {
                                                 var msgstr = "[" + extFrom + "] CFUVM OFF";
-                                                client.send(new ResponseMessage(client.sessionId, 'ack_cfuvm_off', msgstr));
-                                                logger.debug("'actCFUVMOff' " + sys.inspect(actCFUVMOff) + " has been sent to AST\nRESP 'ack_cfuvm_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'\n"+msgstr);
+                                                client.emit('message',new ResponseMessage(client.id, 'ack_cfuvm_off', msgstr));
+                                                logger.debug("'actCFUVMOff' " + sys.inspect(actCFUVMOff) + " has been sent to AST\nRESP 'ack_cfuvm_off' has been sent to [" + extFrom + "] id '" + client.id + "'\n"+msgstr);
                                         });
                                 } catch(err) {logger.warn("no connection to asterisk: " +err);}
 			break;
@@ -2933,8 +2954,8 @@ io.on('connection', function(client){
                                 try{
                                         am.send(actCFBVMOff, function () {
                                                 var msgstr = "[" + extFrom + "] CFBVM OFF";
-                                                client.send(new ResponseMessage(client.sessionId, 'ack_cfbvm_off', msgstr));
-                                                logger.debug("'actCFBVMOff' " + sys.inspect(actCFBVMOff) + " has been sent to AST\nRESP 'ack_cfbvm_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'\n"+msgstr);
+                                                client.emit('message',new ResponseMessage(client.id, 'ack_cfbvm_off', msgstr));
+                                                logger.debug("'actCFBVMOff' " + sys.inspect(actCFBVMOff) + " has been sent to AST\nRESP 'ack_cfbvm_off' has been sent to [" + extFrom + "] id '" + client.id + "'\n"+msgstr);
                                         });
                                 } catch(err) {logger.warn("no connection to asterisk: " +err);}
 			break;
@@ -2951,10 +2972,10 @@ io.on('connection', function(client){
 				try{
 					am.send(actionCFon, function () {
 						var msgstr = "[" + extFrom + "] CF ON to [" + extTo + "]"
-						var response = new ResponseMessage(client.sessionId, 'ack_cf_on', msgstr)
+						var response = new ResponseMessage(client.id, 'ack_cf_on', msgstr)
 						response.extTo = extTo
-						client.send(response)
-						logger.debug("'actionCFon' " + sys.inspect(actionCFon) + " has been sent to AST\nRESP 'ack_cf_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'"+msgstr);
+						client.emit('message',response)
+						logger.debug("'actionCFon' " + sys.inspect(actionCFon) + " has been sent to AST\nRESP 'ack_cf_on' has been sent to [" + extFrom + "] id '" + client.id + "'"+msgstr);
 	                                        modop.updateExtCFStatusWithExt(extFrom, 'on', extTo);
 	                                        updateAllClientsForOpWithTypeExt("SIP/"+extFrom);
 					});
@@ -2970,10 +2991,10 @@ io.on('connection', function(client){
 				try{
 	                                am.send(actCFUOn, function () {
 	                                        var msgstr = "[" + extFrom + "] CFU ON to [" + extTo + "]"
-	                                        var response = new ResponseMessage(client.sessionId, 'ack_cfu_on', msgstr)
+	                                        var response = new ResponseMessage(client.id, 'ack_cfu_on', msgstr)
 	                                        response.extTo = extTo
-	                                        client.send(response)
-	                                        logger.debug("'actCFUOn' " + sys.inspect(actCFUOn) + " has been sent to AST\nRESP 'ack_cfu_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'"+msgstr);
+	                                        client.emit('message',response)
+	                                        logger.debug("'actCFUOn' " + sys.inspect(actCFUOn) + " has been sent to AST\nRESP 'ack_cfu_on' has been sent to [" + extFrom + "] id '" + client.id + "'"+msgstr);
         	                        });
 				} catch(err) {logger.warn("no connection to asterisk: "+err);}
                         break;
@@ -2987,10 +3008,10 @@ io.on('connection', function(client){
 				try{
 	                                am.send(actCFBOn, function () {
 	                                        var msgstr = "[" + extFrom + "] CFB ON to [" + extTo + "]"
-	                                        var response = new ResponseMessage(client.sessionId, 'ack_cfb_on', msgstr)
+	                                        var response = new ResponseMessage(client.id, 'ack_cfb_on', msgstr)
 	                                        response.extTo = extTo
-	                                        client.send(response)
-	                                        logger.debug("'actCFBOn' " + sys.inspect(actCFBOn) + " has been sent to AST\nRESP 'ack_cfb_on' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'\n"+msgstr);
+	                                        client.emit('message',response)
+	                                        logger.debug("'actCFBOn' " + sys.inspect(actCFBOn) + " has been sent to AST\nRESP 'ack_cfb_on' has been sent to [" + extFrom + "] id '" + client.id + "'\n"+msgstr);
         	                        });
 				} catch(err) {logger.warn("no connection to asterisk: "+err);}
                         break;
@@ -3003,8 +3024,8 @@ io.on('connection', function(client){
 				try{
 					am.send(actionCFoff, function () {
 						var msgstr = "[" + extFrom + "] CF OFF";
-						client.send(new ResponseMessage(client.sessionId, 'ack_cf_off', msgstr));
-						logger.debug("'actionCFoff' " + sys.inspect(actionCFoff) + " has been sent to AST\nRESP 'ack_cf_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'\n"+msgstr);
+						client.emit('message',new ResponseMessage(client.id, 'ack_cf_off', msgstr));
+						logger.debug("'actionCFoff' " + sys.inspect(actionCFoff) + " has been sent to AST\nRESP 'ack_cf_off' has been sent to [" + extFrom + "] id '" + client.id + "'\n"+msgstr);
 	                                        modop.updateExtCFStatusWithExt(extFrom, 'off');
 	                                        updateAllClientsForOpWithTypeExt("SIP/"+extFrom);
 					});
@@ -3019,8 +3040,8 @@ io.on('connection', function(client){
 				try{
 	                                am.send(actCFUOff, function () {
 	                                        var msgstr = "[" + extFrom + "] CFU OFF";
-	                                        client.send(new ResponseMessage(client.sessionId, 'ack_cfu_off', msgstr));
-	                                        logger.debug("'actCFUOff' " + sys.inspect(actCFUOff) + " has been sent to AST\nRESP 'ack_cfu_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'\n"+msgstr);
+	                                        client.emit('message',new ResponseMessage(client.id, 'ack_cfu_off', msgstr));
+	                                        logger.debug("'actCFUOff' " + sys.inspect(actCFUOff) + " has been sent to AST\nRESP 'ack_cfu_off' has been sent to [" + extFrom + "] id '" + client.id + "'\n"+msgstr);
         	                        });
 				} catch(err) {logger.warn("no connection to asterisk: " +err);}
                         break;
@@ -3034,8 +3055,8 @@ io.on('connection', function(client){
 	                                am.send(actCFBOff, function () {
 	                                        logger.debug("'actCFBOff' " + sys.inspect(actCFBOff) + " has been sent to AST");
 	                                        var msgstr = "[" + extFrom + "] CFB OFF";
-	                                        client.send(new ResponseMessage(client.sessionId, 'ack_cfb_off', msgstr));
-	                                        logger.debug("RESP 'ack_cfb_off' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'\n"+msgstr);
+	                                        client.emit('message',new ResponseMessage(client.id, 'ack_cfb_off', msgstr));
+	                                        logger.debug("RESP 'ack_cfb_off' has been sent to [" + extFrom + "] id '" + client.id + "'\n"+msgstr);
 	                                });
 				} catch(err) {logger.warn("no connection to asterisk: " +err);}
                         break;
@@ -3047,17 +3068,17 @@ io.on('connection', function(client){
 					var dateFormat = formatDate(message.date);					
                                         dataCollector.getDayHistoryCall(extFrom, dateFormat, function(callResults){ // get day history call
 						dataCollector.getDayHistorySms(extFrom, dateFormat, function(smsResults){ // get day history sms
-                                                	var mess = new ResponseMessage(client.sessionId, "day_history", "received day history");
+                                                	var mess = new ResponseMessage(client.id, "day_history", "received day history");
 	                                                mess.callResults = createHistoryCallResponse(callResults);
 							mess.smsResults = smsResults;
-	                                                client.send(mess);
-	                                                logger.debug("RESP 'day_history' (call [" + callResults.length + "] - sms [" + smsResults.length +"] entries) has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+	                                                client.emit('message',mess);
+	                                                logger.debug("RESP 'day_history' (call [" + callResults.length + "] - sms [" + smsResults.length +"] entries) has been sent to [" + extFrom + "] id '" + client.id + "'");
 						});
                                         });
                                 } else{ // permit are deny
 					logger.info("check 'dayHistory' permission for [" + extFrom + "] FAILED !");
-                                        client.send(new ResponseMessage(client.sessionId, "error_day_history", ""));
-                                        logger.debug("RESP 'error_day_history' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+                                        client.emit('message',new ResponseMessage(client.id, "error_day_history", ""));
+                                        logger.debug("RESP 'error_day_history' has been sent to [" + extFrom + "] id '" + client.id + "'");
                                 }
                         break;
 			case actions.GET_CURRENT_WEEK_HISTORY:
@@ -3068,17 +3089,17 @@ io.on('connection', function(client){
                                         // execute query to search contact in phonebook
                                         dataCollector.getCurrentWeekHistoryCall(extFrom, function(callResults){
 						dataCollector.getCurrentWeekHistorySms(extFrom, function(smsResults){
-                                                	var mess = new ResponseMessage(client.sessionId, "current_week_history", "received current week history");
+                                                	var mess = new ResponseMessage(client.id, "current_week_history", "received current week history");
 							mess.callResults = createHistoryCallResponse(callResults);
 							mess.smsResults = smsResults;
-	                                                client.send(mess);
-	                                                logger.debug("RESP 'current_week_history' (call [" + callResults.length + "] - sms ["+smsResults.length+"] entries) has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+	                                                client.emit('message',mess);
+	                                                logger.debug("RESP 'current_week_history' (call [" + callResults.length + "] - sms ["+smsResults.length+"] entries) has been sent to [" + extFrom + "] id '" + client.id + "'");
 						});
                                         });
                                 } else{
 					logger.info("check 'currentWeekHistory' permission for [" + extFrom + "] FAILED !");
-                                        client.send(new ResponseMessage(client.sessionId, "error_current_week_history", ""));
-                                        logger.debug("RESP 'error_current_week_history' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+                                        client.emit('message',new ResponseMessage(client.id, "error_current_week_history", ""));
+                                        logger.debug("RESP 'error_current_week_history' has been sent to [" + extFrom + "] id '" + client.id + "'");
                                 }
                         break;
 			case actions.GET_CURRENT_MONTH_HISTORY:
@@ -3089,17 +3110,17 @@ io.on('connection', function(client){
                                         // execute query to search contact in phonebook
                                         dataCollector.getCurrentMonthHistoryCall(extFrom, function(callResults){
 						dataCollector.getCurrentMonthHistorySms(extFrom, function(smsResults){
-	                                                var mess = new ResponseMessage(client.sessionId, "current_month_history", "received current month history");
+	                                                var mess = new ResponseMessage(client.id, "current_month_history", "received current month history");
 							mess.callResults = createHistoryCallResponse(callResults);
 							mess.smsResults = smsResults;
-	                                                client.send(mess);
-	                                                logger.debug("RESP 'current_month_history' (call [" + callResults.length + "] - sms ["+smsResults.length+"] entries) has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+	                                                client.emit('message',mess);
+	                                                logger.debug("RESP 'current_month_history' (call [" + callResults.length + "] - sms ["+smsResults.length+"] entries) has been sent to [" + extFrom + "] id '" + client.id + "'");
 						});
                                         });
                                 } else{
 					logger.info("check 'currentMonthHistory' permission for [" + extFrom + "] FAILED !");
-                                        client.send(new ResponseMessage(client.sessionId, "error_current_month_history", ""));
-                                        logger.debug("RESP 'error_current_month_history' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+                                        client.emit('message',new ResponseMessage(client.id, "error_current_month_history", ""));
+                                        logger.debug("RESP 'error_current_month_history' has been sent to [" + extFrom + "] id '" + client.id + "'");
                                 }
                         break;
 			case actions.CHECK_CALL_AUDIO_FILE:
@@ -3115,10 +3136,10 @@ io.on('connection', function(client){
 						if( (files[i].indexOf(uniqueid))!=-1 )
 							audioFiles.push(files[i]);
 					}	
-					var mess = new ResponseMessage(client.sessionId, "audio_file_call_list", "received list of audio file of call");
+					var mess = new ResponseMessage(client.id, "audio_file_call_list", "received list of audio file of call");
 	                                mess.results = audioFiles;
-	                                client.send(mess);
-	                                logger.debug("RESP 'audio_file_call_list' (" + audioFiles.length + " files) has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+	                                client.emit('message',mess);
+	                                logger.debug("RESP 'audio_file_call_list' (" + audioFiles.length + " files) has been sent to [" + extFrom + "] id '" + client.id + "'");
 				});	
                         break;
 			case actions.GET_PEER_LIST_COMPLETE_OP:
@@ -3147,9 +3168,9 @@ io.on('connection', function(client){
 				try{
 					am.send(act_parkch, function(resp){
 						logger.debug("'act_parkch' " + sys.inspect(act_parkch) + " has been sent to asterisk");
-						var msg = new ResponseMessage(client.sessionId, "ack_parkch", "");
-						client.send(msg);
-						logger.debug("RESP 'act_parkch' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+						var msg = new ResponseMessage(client.id, "ack_parkch", "");
+						client.emit('message',msg);
+						logger.debug("RESP 'act_parkch' has been sent to [" + extFrom + "] id '" + client.id + "'");
 					});
 				} catch(err) {logger.warn("no connection to asterisk: " +err);}
 			break;
@@ -3184,9 +3205,9 @@ io.on('connection', function(client){
 	                                am.send(actionPark, function (resp) {
 						logger.debug("'actionPark' " + sys.inspect(actionPark) + " has been sent to AST");
 		                                var msgstr = "received acknowledgment for parking the call";
-		                                var mess = new ResponseMessage(client.sessionId, "ack_park", msgstr);
-		                                client.send(mess);
-		                                logger.debug("RESP 'ack_park' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+		                                var mess = new ResponseMessage(client.id, "ack_park", msgstr);
+		                                client.emit('message',mess);
+		                                logger.debug("RESP 'ack_park' has been sent to [" + extFrom + "] id '" + client.id + "'");
 	                                });
 				} catch(err) {logger.warn("no connection to asterisk: "+err);}
 			break;
@@ -3393,21 +3414,21 @@ io.on('connection', function(client){
 									// add entry in DB
 									dataCollector.registerSmsSuccess(extFrom, destNum, unescape(text), function(res){
 			                                                        // send ack to client
-			                                                        var mess = new ResponseMessage(client.sessionId, "ack_send_web_sms", '');
-			                                                        client.send(mess);
+			                                                        var mess = new ResponseMessage(client.id, "ack_send_web_sms", '');
+			                                                        client.emit('message',mess);
 										logger.debug("add entry success into 'smsdb' database");
-			                                                        logger.debug("RESP 'ack_send_web_sms' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+			                                                        logger.debug("RESP 'ack_send_web_sms' has been sent to [" + extFrom + "] id '" + client.id + "'");
 									});
 								} else { // there was an error
 									logger.error("error in sms sending from " + extFrom + " -> " + destNum + ": check config parameters. respCode = " + respCode);
 									// add entry in DB
 									dataCollector.registerSmsFailed(extFrom, destNum, text, function(res){
 										// send error to client
-			                                                        var mess = new ResponseMessage(client.sessionId, "error_send_web_sms", '');
+			                                                        var mess = new ResponseMessage(client.id, "error_send_web_sms", '');
 										mess.respCode = respCode;
-		        	                                                client.send(mess);
+		        	                                                client.emit('message',mess);
 										logger.debug("add entry of fail into 'smsdb' database");
-		                	                                        logger.debug("RESP 'error_send_web_sms' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+		                	                                        logger.debug("RESP 'error_send_web_sms' has been sent to [" + extFrom + "] id '" + client.id + "'");
 									});
 								}
 							});
@@ -3417,11 +3438,11 @@ io.on('connection', function(client){
 							// add entry in DB
 	                                                dataCollector.registerSmsFailed(extFrom, destNum, text, function(res){
 		                                        	// send error to client
-	        		                             	var mess = new ResponseMessage(client.sessionId, "error_send_web_sms", '');
+	        		                             	var mess = new ResponseMessage(client.id, "error_send_web_sms", '');
 	                                                        mess.statusCode = statusCode;
-	                                                        client.send(mess);
+	                                                        client.emit('message',mess);
 	                                                        logger.debug("add entry of fail into 'smsdb' database");
-	                                                        logger.debug("RESP 'error_send_web_sms' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+	                                                        logger.debug("RESP 'error_send_web_sms' has been sent to [" + extFrom + "] id '" + client.id + "'");
 	                                                });	
 						}
 					});
@@ -3430,10 +3451,10 @@ io.on('connection', function(client){
 						// add entry in DB
 						dataCollector.registerSmsFailed(extFrom, destNum, text, function(res){
 							// send error to client
-                                                       	var mess = new ResponseMessage(client.sessionId, "error_send_web_sms", '');
-                                                	client.send(mess);
+                                                       	var mess = new ResponseMessage(client.id, "error_send_web_sms", '');
+                                                	client.emit('message',mess);
 							logger.debug("add entry of fail into 'smsdb' database");
-                        			        logger.debug("RESP 'error_send_web_sms' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+                        			        logger.debug("RESP 'error_send_web_sms' has been sent to [" + extFrom + "] id '" + client.id + "'");
 						});
 					});
 					request.end(); // send request
@@ -3456,15 +3477,15 @@ io.on('connection', function(client){
 						if(err){
 							logger.error(err + ': there was a problem in creation of sms file "' + smsFilepath + '"');
 							// send error to client
-	                                        	var mess = new ResponseMessage(client.sessionId, "error_send_sms", '');
-	                                        	client.send(mess);
-	                                        	logger.debug("RESP 'error_send_sms' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+	                                        	var mess = new ResponseMessage(client.id, "error_send_sms", '');
+	                                        	client.emit('message',mess);
+	                                        	logger.debug("RESP 'error_send_sms' has been sent to [" + extFrom + "] id '" + client.id + "'");
 						} else{
 							logger.debug('created sms file "' + smsFilepath + '"');
 							// send ack to client
-	                                        	var mess = new ResponseMessage(client.sessionId, "ack_send_sms", '');
-	                                        	client.send(mess);
-        	                                	logger.debug("RESP 'ack_send_sms' has been sent to [" + extFrom + "] sessionId '" + client.sessionId + "'");
+	                                        	var mess = new ResponseMessage(client.id, "ack_send_sms", '');
+	                                        	client.emit('message',mess);
+        	                                	logger.debug("RESP 'ack_send_sms' has been sent to [" + extFrom + "] id '" + client.id + "'");
 						}
 					});
 				} else {
@@ -3478,10 +3499,10 @@ io.on('connection', function(client){
   	});
 
   	client.on('disconnect', function(){
-  		logger.info("EVENT 'Disconnected': WebSocket client '" + client.sessionId + "' disconnected with IP = " + client.connection.remoteAddress);
-  		removeClient(client.sessionId);
-  		if(!testAlreadyLoggedSessionId(client.sessionId))
-  			logger.debug("removed client sessionId '" + client.sessionId + "' from clients");
+  		logger.info("EVENT 'Disconnected': WebSocket client '" + client.id + "' disconnected with IP = " + client.handshake.address.address);
+  		removeClient(client.id);
+  		if(!testAlreadyLoggedSessionId(client.id))
+  			logger.debug("removed client id '" + client.id + "' from clients");
 	  	logger.debug(Object.keys(clients).length + ' logged in clients');
 		printLoggedClients();
   	});
@@ -3515,7 +3536,7 @@ function updateAllClientsForOpWithTypeExt(typeext){
         for(key in clients){
                 var c = clients[key];
                 var msg = "state of " + newState.Label + " has changed: update ext new state";
-                var response = new ResponseMessage(c.sessionId, "update_ext_new_state_op", msg);
+                var response = new ResponseMessage(c.id, "update_ext_new_state_op", msg);
                 response.extNewState = newState;
 		response.tyext = typeext;
 		if(profiler.checkPrivacyPermit(c.extension)){
@@ -3523,8 +3544,8 @@ function updateAllClientsForOpWithTypeExt(typeext){
 	        } else {
 			response.priv = '0';
 		}
-                c.send(response);
-                logger.debug("RESP 'update_ext_new_state_op' has been sent to client [" + key + "] sessionId '" + c.sessionId + "'");
+                c.emit('message',response);
+                logger.debug("RESP 'update_ext_new_state_op' has been sent to client [" + key + "] id '" + c.id + "'");
         }
 }
 
@@ -3541,15 +3562,15 @@ function updateAllClientsForOpWithExt(ext){
         for(key in clients){
                 var c = clients[key];
                 var msg = "state of " + newState.Label + " has changed: update ext new state";
-                var response = new ResponseMessage(c.sessionId, "update_ext_new_state_op", msg);
+                var response = new ResponseMessage(c.id, "update_ext_new_state_op", msg);
                 response.extNewState = newState;
 		if(profiler.checkPrivacyPermit(c.extension)){
 			response.priv = '1';	
 		} else {
 			response.priv = '0';
 		}
-                c.send(response);
-                logger.debug("RESP 'update_ext_new_state_op' has been sent to [" + key + "] sessionId '" + c.sessionId + "'");
+                c.emit('message',response);
+                logger.debug("RESP 'update_ext_new_state_op' has been sent to [" + key + "] id '" + c.id + "'");
         }
 }
 
@@ -3561,10 +3582,10 @@ function sendAllClientAckCalloutFromCti(extFrom){
 	for(key in clients){
                 var c = clients[key]
                 var msg = "[" + extFrom + "] has started a callout from CTI"
-                var response = new ResponseMessage(c.sessionId, "ack_callout_from_cti", msg)
+                var response = new ResponseMessage(c.id, "ack_callout_from_cti", msg)
 		response.extFrom = extFrom
-                c.send(response)
-                logger.debug("RESP 'ack_callout_from_cti' has been sent to [" + key + "] sessionId '" + c.sessionId + "'")
+                c.emit('message',response);
+                logger.debug("RESP 'ack_callout_from_cti' has been sent to [" + key + "] id '" + c.id + "'")
         }
 }
 
@@ -3622,10 +3643,10 @@ function formatDate(date){
 	return result;
 }
 
-// Remove client with specified sessionId
-removeClient = function(sessionId){
+// Remove client with specified id
+removeClient = function(id){
 	for(client in clients){
-		if( (clients[client].sessionId)==sessionId )
+		if( (clients[client].id)==id )
 			delete clients[client];
 	}
 }
@@ -3637,10 +3658,10 @@ testAlreadyLoggedExten = function(exten){
 }
 
 
-// Check if the user sessionId already present in memory.
-testAlreadyLoggedSessionId = function(sessionId){
+// Check if the user id already present in memory.
+testAlreadyLoggedSessionId = function(id){
 	for(client in clients){
-		if(clients[client].sessionId==sessionId)
+		if(clients[client].id==id)
 			return true;
 	}
 	return false;
@@ -3686,7 +3707,7 @@ function createResultSearchContactsPhonebook(results){
 function printLoggedClients(){
 	logger.debug("logged in clients:");
 	for(key in clients)
-		logger.debug("\t[" + key + "] - IP '" + clients[key].connection.remoteAddress + "' - sessionId '" + clients[key].sessionId + "'");
+		logger.debug("\t[" + key + "] - IP '" + clients[key].handshake.address.address + "' - id '" + clients[key].id + "'");
 }
 
 /*
