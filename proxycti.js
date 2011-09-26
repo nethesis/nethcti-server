@@ -99,7 +99,7 @@ function initServerAndAsteriskParameters(){
 
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF) */
-//log4js.clearAppenders();
+log4js.clearAppenders();
 log4js.addAppender(log4js.fileAppender(logfile), '[ProxyCTI]');
 var logger = log4js.getLogger('[ProxyCTI]');
 logger.setLevel(loglevel);
@@ -2056,33 +2056,33 @@ function callout(extFrom, to, res){
  */ 
 var io = io.listen(server);
 // set with env NODE_ENV
+/*
 io.configure('production', function(){
 	io.enable('browser client minification');  // send minified client
 	io.enable('browser client etag');          // apply etag caching logic based on version number
 	io.set('log level', 1);                    // reduce logging
+*/
 	/*io.set('transports', [                     // enable all transports (optional if you want flashsocket)
 		'websocket'
 	  	, 'htmlfile'
 	  	, 'xhr-polling'
 	  	, 'jsonp-polling'
 	]);*/
+/*
 });
 io.configure('development', function(){
 	io.set('log level', 3);
 });
-
-/*
-io.set('log level', 1);
-io.enable('logger');
-io.set('transports', ['websocket']);
 */
+io.configure('', function(){
+	io.set('log level', 1);
+});
 io.sockets.on('connection', function(client){
 	// send acknowledgment of established connection 
 	client.emit('message', new ResponseMessage(client.id, "connected", "[DEBUG] client " + client.id + " connected"));
 	logger.debug("'ack' to connection has been sent to the client with id: " + client.id);
 
 	client.on('message', function(message){
-	console.log(typeof(message));
 		// all received messages have the information 'extenFrom' and the information about the 'action' to execute
   		var extFrom = message.extFrom;
   		var action = message.action;
