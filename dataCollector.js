@@ -45,21 +45,50 @@ exports.DataCollector = function(){
 	this.getContactsPhonebook = function(name, cb){ return getContactsPhonebook(name, cb); }
 	this.getCustomerCard = function(ext, type, cb) { return getCustomerCard(ext, type, cb); }
 	this.getDayHistoryCall = function(ext, date, cb) { return getDayHistoryCall(ext, date, cb); }
+	this.getDayHistorySms = function(ext, date, cb) { return getDayHistorySms(ext, date, cb); }
 	this.getCurrentWeekHistoryCall = function(ext, cb) { return getCurrentWeekHistoryCall(ext, cb); }
+	this.getCurrentWeekHistorySms= function(ext, cb) { return getCurrentWeekHistorySms(ext, cb); }
 	this.getCurrentMonthHistoryCall = function(ext, cb) { return getCurrentMonthHistoryCall(ext, cb); }
+	this.getCurrentMonthHistorySms = function(ext, cb) { return getCurrentMonthHistorySms(ext, cb); }
 	this.addController = function(contr) { addController(contr) }
 	this.setLogger = function(logfile,level) { log4js.addAppender(log4js.fileAppender(logfile), '[DataCollector]'); logger.setLevel(level); }
 	this.checkAudioUid = function(uid, filename, cb) { return checkAudioUid(uid, filename, cb); }
 	this.registerSmsSuccess = function(sender, destination, text, cb){ registerSmsSuccess(sender, destination, text, cb); }
 	this.registerSmsFailed = function(sender, destination, text, cb){ registerSmsFailed(sender, destination, text, cb); }
 }
+function getCurrentMonthHistorySms(ext, cb){
+	var objQuery = queries[SMS];
+	objQuery.query = "SELECT id, sender, destination, text, date_format(date,'%d/%m/%Y') AS date, date_format(date,'%H:%i:%S') AS time, status FROM history WHERE ( (sender LIKE '"+ext+"') AND (DATE(date)>=(DATE_SUB(CURDATE(), INTERVAL DAYOFMONTH(CURDATE())-1 DAY)))  )";
+	if(objQuery!==undefined){
+		executeSQLQuery(SMS, objQuery, function(results){
+			cb(results);
+		});
+	}
+}
+function getCurrentWeekHistorySms(ext, cb){
+	var objQuery = queries[SMS];
+	objQuery.query = "SELECT id, sender, destination, text, date_format(date,'%d/%m/%Y') AS date, date_format(date,'%H:%i:%S') AS time, status FROM history WHERE ( (sender LIKE '"+ext+"') AND (DATE(date)>=(DATE_SUB(CURDATE(), INTERVAL DAYOFWEEK(CURDATE())-2 DAY)))  )";
+	if(objQuery!==undefined){
+		executeSQLQuery(SMS, objQuery, function(results){
+			cb(results);
+		});
+	}
+}
+function getDayHistorySms(ext, date, cb){
+	var objQuery = queries[SMS];
+	objQuery.query = "SELECT id, sender, destination, text, date_format(date,'%d/%m/%Y') AS date, date_format(date,'%H:%i:%S') AS time, status FROM history WHERE (sender LIKE '"+ext+"' && DATE(date)='"+date+"')";
+	if(objQuery!==undefined){
+	        executeSQLQuery(SMS, objQuery, function(results){
+			var objQuery = queries[SMS];
+			cb(results);
+		});
+	}
+	return undefined;
+}
 function registerSmsSuccess(sender, destination, text, cb){
 	var objQuery = queries[SMS];
-	objQuery.query = "INSERT INTO history (sender,destination,text,date,status) VALUES ('$SENDER','$DESTINATION','$TEXT',now(),1)";
+	objQuery.query = "INSERT INTO history (sender,destination,text,date,status) VALUES ('"+sender+"','"+destination+"','"+text+"',now(),1)";
         if(objQuery!==undefined){
-                objQuery.query = objQuery.query.replace(/\$SENDER/g, sender);
-                objQuery.query = objQuery.query.replace(/\$DESTINATION/g, destination);
-                objQuery.query = objQuery.query.replace(/\$TEXT/g, text);
                 executeSQLQuery(SMS, objQuery, function(results){ // execute current sql query
                         cb(results);
                 });
@@ -68,11 +97,8 @@ function registerSmsSuccess(sender, destination, text, cb){
 }
 function registerSmsFailed(sender, destination, text, cb){
 	var objQuery = queries[SMS];
-	objQuery.query = "INSERT INTO history (sender,destination,text,date,status) VALUES ('$SENDER','$DESTINATION','$TEXT',now(),0)";
+	objQuery.query = "INSERT INTO history (sender,destination,text,date,status) VALUES ('"+sender+"','"+destination+"','"+text+"',now(),0)";
         if(objQuery!==undefined){
-                objQuery.query = objQuery.query.replace(/\$SENDER/g, sender);
-                objQuery.query = objQuery.query.replace(/\$DESTINATION/g, destination);
-                objQuery.query = objQuery.query.replace(/\$TEXT/g, text);
                 executeSQLQuery(SMS, objQuery, function(results){ // execute current sql query
                         cb(results);
                 });
@@ -245,6 +271,7 @@ getCurrentWeekHistoryCall = function(ext, cb){
         }
         return undefined;
 }
+
 
 // Return the history of calling of one day.
 getDayHistoryCall = function(ext, date, cb){
