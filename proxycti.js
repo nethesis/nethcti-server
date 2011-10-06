@@ -2209,6 +2209,8 @@ io.sockets.on('connection', function(client){
 	  					// authenticate the user
 			  			client.extension = extFrom;
 			  			clients[extFrom] = client;  
+						var userBareJid = message.userBareJid;
+						modop.setUserBareJid(extFrom, userBareJid);
 			  			var ipAddrClient = client.handshake.address.address;
 				  		logger.info("logged IN: client [" + extFrom + "] IP '" + ipAddrClient + "' id '" + client.id + "'");
 				  		logger.debug(Object.keys(clients).length + " logged in clients");
