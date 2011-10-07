@@ -113,6 +113,10 @@ exports.Modop = function(){
 	this.hasQueueUniqueidCallWithTypeExt = function(queueTypeExt, uniqueid) { return hasQueueUniqueidCallWithTypeExt(queueTypeExt, uniqueid); }
 	this.removeUniqueidCallFromQueue = function(uniqueid) { return removeUniqueidCallFromQueue(uniqueid); }
 	this.getParkedUniqueid = function(parking) { return getParkedUniqueid(parking)}
+	this.setUserBareJid = function(ext,bareJid){setUserBareJid(ext,bareJid);}
+}
+function setUserBareJid(ext,bareJid){
+	extStatusForOp['SIP/'+ext].bareJid = bareJid;
 }
 function getParkedUniqueid(parking){ return extStatusForOp['PARK'+parking].parkedUniqueid;}
 function removeUniqueidCallFromQueue(uniqueid){
