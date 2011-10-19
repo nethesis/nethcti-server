@@ -15,6 +15,7 @@ var normal = require("./lib/normal-template/lib/normal-template");
 var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
 var log4js = require('./lib/log4js-node/lib/log4js')();
 const PROXY_CONFIG_FILENAME = "config/proxycti.ini";
+const CHAT_ASSOC_FILE = "./store/chat-assoc";
 const TEMPLATE_DECORATOR_VCARD_FILENAME = "./template/decorator_vcard.html";
 const TEMPLATE_DECORATOR_CUSTOMERCARD_FILENAME = "./template/decorator_customerCard.html";
 const TEMPLATE_DECORATOR_HISTORY_CALL_FILENAME = "./template/decorator_historyCall.html";
@@ -48,6 +49,7 @@ var ResponseMessage = function(clientSessionId, typeMessage, respMessage){
 
 var html_vcard_template = undefined;
 var html_cc_template = undefined;
+var chatAssociation = {}; // association between extensions and their chat user
 function readVCardTemplate(){
 	html_vcard_template = fs.readFile(TEMPLATE_DECORATOR_VCARD_FILENAME, "UTF-8", function(err, data) {
                 if(err){
@@ -99,7 +101,7 @@ function initServerAndAsteriskParameters(){
 
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF) */
-log4js.clearAppenders();
+//log4js.clearAppenders();
 log4js.addAppender(log4js.fileAppender(logfile), '[ProxyCTI]');
 var logger = log4js.getLogger('[ProxyCTI]');
 logger.setLevel(loglevel);
@@ -2125,6 +2127,7 @@ io.sockets.on('connection', function(client){
 			SPY_LISTEN:  	'spy_listen',
 			CF_VM_PARKING: 	'cf_vm_parking',
 			PARKING_PICKUP: 'parking_pickup',
+			GET_CHAT_ASSOC: 'get_chat_association',
 			HANGUP_UNIQUEID:'hangup_uniqueid',
 			SPY_LISTEN_SPEAK:   	'spy_listen_speak',
 			GET_ALL_VM_STATUS:  	'get_all_vm_status',
@@ -2211,6 +2214,7 @@ io.sockets.on('connection', function(client){
 			  			clients[extFrom] = client;  
 						var userBareJid = message.userBareJid;
 						modop.setUserBareJid(extFrom, userBareJid);
+						storeChatAssociation(extFrom, userBareJid);
 			  			var ipAddrClient = client.handshake.address.address;
 				  		logger.info("logged IN: client [" + extFrom + "] IP '" + ipAddrClient + "' id '" + client.id + "'");
 				  		logger.debug(Object.keys(clients).length + " logged in clients");
@@ -3125,6 +3129,12 @@ io.sockets.on('connection', function(client){
                                         logger.debug("RESP 'error_current_month_history' has been sent to [" + extFrom + "] id '" + client.id + "'");
                                 }
                         break;
+			case actions.GET_CHAT_ASSOC:
+				var mess = new ResponseMessage(client.id, "chat_assoc", "");
+				mess.chatAssoc = chatAssociation.CHAT_ASSOCIATION;
+				client.emit('message',mess);
+				logger.debug("RESP 'chat_assoc' has been sent to [" + extFrom + "] id '"+ client.id + "'");
+			break;
 			case actions.CHECK_CALL_AUDIO_FILE:
 				// check if there are some audio file with particular uniqueid
 				var uniqueid = message.uniqueid;
@@ -3523,7 +3533,52 @@ io.sockets.on('connection', function(client){
 /************************************************************************************************
  * Section relative to functions
  */
-
+// Add chat association into the file. It it is already present, rewrite it.
+function storeChatAssociation(extFrom, bareJid){
+	pathreq.exists(CHAT_ASSOC_FILE, function(exists){
+	        if(exists){
+			chatAssociation = iniparser.parseSync(CHAT_ASSOC_FILE);
+			if(chatAssociation.CHAT_ASSOCIATION[extFrom]===bareJid){ // association is already present
+				logger.debug('chat association ['+extFrom+'='+bareJid+'] is already present');
+				return;
+			} else if(chatAssociation.CHAT_ASSOCIATION[extFrom]!==undefined) {
+				chatAssociation.CHAT_ASSOCIATION[extFrom] = bareJid;
+				fs.unlinkSync(CHAT_ASSOC_FILE); // remove file
+				var content = "[CHAT_ASSOCIATION]\n";
+				for(key in chatAssociation.CHAT_ASSOCIATION){
+					content += key+"="+chatAssociation.CHAT_ASSOCIATION[key]+"\n";
+				}
+				writeFile(CHAT_ASSOC_FILE,content);
+				logger.debug("updated chat association file " + CHAT_ASSOC_FILE);
+			} else {
+		                fs.open(CHAT_ASSOC_FILE, 'a', '666', function(err, id){
+		                        if(err){
+		                                logger.error(err + " : error in file '"+ CHAT_ASSOC_FILE  +"'");
+		                                return;
+		                        } else {
+	                	                fs.write(id, extFrom+"="+bareJid+"\n", null, 'utf8', function(){
+		                                        fs.close(id, function(){
+		                                                logger.debug("chat association is stored in file " + CHAT_ASSOC_FILE);
+		                                        });
+		                                });
+		                        }
+		                });
+			}
+	        } else {
+	                var str = "[CHAT_ASSOCIATION]\n"+extFrom+"="+bareJid+"\n";
+			writeFile(CHAT_ASSOC_FILE, str);
+			logger.debug("chat association is stored in file " + CHAT_ASSOC_FILE);
+	        }
+	});
+}
+// write a file with a content
+function writeFile(file, content){
+	fs.writeFile(file, content, function(err){
+        	if(err){
+                	logger.error(err + ": error in write file " + file);
+                }
+        });	
+}
 
 /* This function update all clients with the new state of the extension, givin typeext. 
  * This sent is used by the clients to update operator panel.
