@@ -2221,9 +2221,9 @@ io.sockets.on('connection', function(client){
 				  		var respMsg = new ResponseMessage(client.id, "ack_login", "Login succesfully");
 				  		respMsg.ext = extFrom;
 				  		respMsg.secret = message.secret;
-						var chaturl = server_conf.SERVER_CHAT.url;
-						if(chaturl===undefined){
-							logger.warn('chat url is not specified');
+						var chaturl = server_conf.SERVER_CHAT.url; // url of the chat server
+						if(chaturl==='' || chaturl===undefined){
+							chaturl = 'http://'+server_conf.SERVER_PROXY.hostname+'/http-bind';
 						}
 						respMsg.chatUrl = chaturl;
 			  			client.emit('message',respMsg);
