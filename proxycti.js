@@ -2127,7 +2127,6 @@ io.sockets.on('connection', function(client){
 			SPY_LISTEN:  	'spy_listen',
 			CF_VM_PARKING: 	'cf_vm_parking',
 			PARKING_PICKUP: 'parking_pickup',
-			GET_CHAT_ASSOC: 'get_chat_association',
 			HANGUP_UNIQUEID:'hangup_uniqueid',
 			SPY_LISTEN_SPEAK:   	'spy_listen_speak',
 			GET_ALL_VM_STATUS:  	'get_all_vm_status',
@@ -3129,12 +3128,6 @@ io.sockets.on('connection', function(client){
                                         logger.debug("RESP 'error_current_month_history' has been sent to [" + extFrom + "] id '" + client.id + "'");
                                 }
                         break;
-			case actions.GET_CHAT_ASSOC:
-				var mess = new ResponseMessage(client.id, "chat_assoc", "");
-				mess.chatAssoc = chatAssociation.CHAT_ASSOCIATION;
-				client.emit('message',mess);
-				logger.debug("RESP 'chat_assoc' has been sent to [" + extFrom + "] id '"+ client.id + "'");
-			break;
 			case actions.CHECK_CALL_AUDIO_FILE:
 				// check if there are some audio file with particular uniqueid
 				var uniqueid = message.uniqueid;
@@ -3550,13 +3543,16 @@ function storeChatAssociation(extFrom, bareJid){
 				}
 				writeFile(CHAT_ASSOC_FILE,content);
 				logger.debug("updated chat association file " + CHAT_ASSOC_FILE);
+				updateAllClientsForChatAssociation();
 			} else {
 		                fs.open(CHAT_ASSOC_FILE, 'a', '666', function(err, id){
 		                        if(err){
 		                                logger.error(err + " : error in file '"+ CHAT_ASSOC_FILE  +"'");
 		                                return;
 		                        } else {
+						chatAssociation.CHAT_ASSOCIATION[extFrom] = bareJid;
 	                	                fs.write(id, extFrom+"="+bareJid+"\n", null, 'utf8', function(){
+							updateAllClientsForChatAssociation();
 		                                        fs.close(id, function(){
 		                                                logger.debug("chat association is stored in file " + CHAT_ASSOC_FILE);
 		                                        });
@@ -3566,14 +3562,18 @@ function storeChatAssociation(extFrom, bareJid){
 			}
 	        } else {
 	                var str = "[CHAT_ASSOCIATION]\n"+extFrom+"="+bareJid+"\n";
-			writeFile(CHAT_ASSOC_FILE, str);
+			var o = {};
+			o[extFrom] = bareJid;
+			chatAssociation = {CHAT_ASSOCIATION: o};
+			writeChatAssociationFile(CHAT_ASSOC_FILE, str);
 			logger.debug("chat association is stored in file " + CHAT_ASSOC_FILE);
 	        }
 	});
 }
 // write a file with a content
-function writeFile(file, content){
+function writeChatAssociationFile(file, content){
 	fs.writeFile(file, content, function(err){
+		updateAllClientsForChatAssociation();
         	if(err){
                 	logger.error(err + ": error in write file " + file);
                 }
@@ -3603,6 +3603,16 @@ function updateAllClientsForOpWithTypeExt(typeext){
 		}
                 c.emit('message',response);
                 logger.debug("RESP 'update_ext_new_state_op' has been sent to client [" + key + "] id '" + c.id + "'");
+        }
+}
+// Update all clients with modified chat association between extensions and its chat identifier jid
+function updateAllClientsForChatAssociation(){
+	for(key in clients){
+                var c = clients[key];
+                var response = new ResponseMessage(c.id, "update_chat_assoc", "");
+                response.chatAssoc = chatAssociation.CHAT_ASSOCIATION;
+                c.emit('message',response);
+                logger.debug("RESP 'update_chat_assoc' has been sent to client [" + key + "] id '" + c.id + "'");
         }
 }
 
