@@ -2221,6 +2221,11 @@ io.sockets.on('connection', function(client){
 				  		var respMsg = new ResponseMessage(client.id, "ack_login", "Login succesfully");
 				  		respMsg.ext = extFrom;
 				  		respMsg.secret = message.secret;
+						var chaturl = server_conf.SERVER_CHAT.url;
+						if(chaturl===undefined){
+							logger.warn('chat url is not specified');
+						}
+						respMsg.chatUrl = chaturl;
 			  			client.emit('message',respMsg);
 			  			logger.debug("RESP 'ack_login' has been sent to [" + extFrom + "] id '" + client.id + "'");
 					}
@@ -3533,6 +3538,7 @@ function storeChatAssociation(extFrom, bareJid){
 			chatAssociation = iniparser.parseSync(CHAT_ASSOC_FILE);
 			if(chatAssociation.CHAT_ASSOCIATION[extFrom]===bareJid){ // association is already present
 				logger.debug('chat association ['+extFrom+'='+bareJid+'] is already present');
+				updateAllClientsForChatAssociation();
 				return;
 			} else if(chatAssociation.CHAT_ASSOCIATION[extFrom]!==undefined) {
 				chatAssociation.CHAT_ASSOCIATION[extFrom] = bareJid;
