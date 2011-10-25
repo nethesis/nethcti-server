@@ -1093,7 +1093,7 @@ am.addListener('hangup', function(headers) {
 		deleteAllChOccurrenceFromChstat(headers.channel);
 		return;
 	}
-	else if(modop.isChannelIntern(headers.channel)){ // headers.channel is an intern
+	else if(modop.isChannelIntern(headers.channel) && headers.channel.indexOf('AsyncGoto/SIP/')===-1){ // headers.channel is an intern
 		var internTypeExt = modop.getInternTypeExtFromChannel(headers.channel)
 		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt, trueUniqueid)){
 			modop.removeDialingUniqueidInternWithTypeExt(internTypeExt, trueUniqueid);
