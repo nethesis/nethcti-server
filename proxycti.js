@@ -101,7 +101,7 @@ function initServerAndAsteriskParameters(){
 
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF) */
-//log4js.clearAppenders();
+log4js.clearAppenders();
 log4js.addAppender(log4js.fileAppender(logfile), '[ProxyCTI]');
 var logger = log4js.getLogger('[ProxyCTI]');
 logger.setLevel(loglevel);
@@ -2226,6 +2226,7 @@ io.sockets.on('connection', function(client){
 							chaturl = 'http://'+server_conf.SERVER_PROXY.hostname+'/http-bind';
 						}
 						respMsg.chatUrl = chaturl;
+						respMsg.prefix = server_conf.SERVER_PROXY.prefix;
 			  			client.emit('message',respMsg);
 			  			logger.debug("RESP 'ack_login' has been sent to [" + extFrom + "] id '" + client.id + "'");
 					}
@@ -2491,29 +2492,8 @@ io.sockets.on('connection', function(client){
 	  			// check if the user has the permission of dial out
 				if(profiler.checkActionRedirectPermit(extFrom)){
 	  				logger.debug("check 'redirect' permission for [" + extFrom + "] OK: execute redirect...");	
-	  				// get the channel
-	  				var ch
-					var redirectFromExt = message.redirectFromExt
-					var callTo = message.callTo
-					var redirectToExt = message.redirectToExt
-					for(key in chStat){
-						var tempChannel = chStat[key].channel
-						if(modop.isChannelIntern(tempChannel)){
-							var tempExt = modop.getExtInternFromChannel(tempChannel)
-							if(tempExt==redirectFromExt && chStat[key].dialExt==callTo){
-								ch = tempChannel
-								break
-							}
-						}
-						if(modop.isChannelTrunk(tempChannel) && chStat[key].dialExtUniqueid!=undefined){
-							var dialExtUniqueid = chStat[key].dialExtUniqueid
-							var tempExt = modop.getExtInternFromChannel(chStat[dialExtUniqueid].channel)
-							if(chStat[key].calleridnum==redirectFromExt && tempExt==callTo){
-								ch = tempChannel
-								break
-							}
-						}
-					}
+					var ch = message.chToRedirect;
+					var redirectToExt = message.redirectToExt;
 		  			var actionRedirect = {
 						Action: 'Redirect',
 						Channel: ch,
@@ -3692,6 +3672,7 @@ function createHistoryCallResponse(results){
 		temp.date = currRes.date;
 		temp.time = currRes.time;
 		temp.clid = currRes.clid;
+		temp.src = currRes.src;
 		temp.dst = currRes.dst;
 		temp.duration = currRes.duration;
 		temp.billsec = currRes.billsec;
