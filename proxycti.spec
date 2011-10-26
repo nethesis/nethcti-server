@@ -1,5 +1,5 @@
 Name:		proxycti
-Version:	0.3.5
+Version:	0.3.8
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI	
 
@@ -60,6 +60,14 @@ ln -s /usr/lib/node/proxycti/sql/smsdb.sql /etc/e-smith/sql/init/10ctisms.sql
 
 
 %changelog
+* Wed Oct 26 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 0.3.8-1nh
+- Add new chat functions
+- Fix call redirect and hangup event
+
+* Fri Oct 07 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 0.3.7-1nh
+- Add jabber chat support
+- Show extension status on chat
+
 * Tue Sep 20 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 0.3.5-1nh
 - Enable SMS sending: web and portech
 - Fix registration
