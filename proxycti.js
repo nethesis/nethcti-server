@@ -3522,14 +3522,14 @@ function storeChatAssociation(extFrom, bareJid){
 				return;
 			} else if(chatAssociation.CHAT_ASSOCIATION[extFrom]!==undefined) {
 				chatAssociation.CHAT_ASSOCIATION[extFrom] = bareJid;
-				fs.unlinkSync(CHAT_ASSOC_FILE); // remove file
+				updateAllClientsForChatAssociation();
 				var content = "[CHAT_ASSOCIATION]\n";
 				for(key in chatAssociation.CHAT_ASSOCIATION){
 					content += key+"="+chatAssociation.CHAT_ASSOCIATION[key]+"\n";
 				}
-				writeFile(CHAT_ASSOC_FILE,content);
-				logger.debug("updated chat association file " + CHAT_ASSOC_FILE);
-				updateAllClientsForChatAssociation();
+				fs.unlinkSync(CHAT_ASSOC_FILE); // remove file
+				writeChatAssociationFile(CHAT_ASSOC_FILE,content);
+				logger.debug("updated chat association file " + CHAT_ASSOC_FILE+" with " + extFrom+"="+bareJid);
 			} else {
 		                fs.open(CHAT_ASSOC_FILE, 'a', '666', function(err, id){
 		                        if(err){
@@ -3537,29 +3537,29 @@ function storeChatAssociation(extFrom, bareJid){
 		                                return;
 		                        } else {
 						chatAssociation.CHAT_ASSOCIATION[extFrom] = bareJid;
+						updateAllClientsForChatAssociation();
 	                	                fs.write(id, extFrom+"="+bareJid+"\n", null, 'utf8', function(){
-							updateAllClientsForChatAssociation();
 		                                        fs.close(id, function(){
-		                                                logger.debug("chat association is stored in file " + CHAT_ASSOC_FILE);
+		                                                logger.debug("chat association has been appended in file " + CHAT_ASSOC_FILE+" with ["+extFrom+"="+bareJid+"]");
 		                                        });
 		                                });
 		                        }
 		                });
 			}
 	        } else {
-	                var str = "[CHAT_ASSOCIATION]\n"+extFrom+"="+bareJid+"\n";
 			var o = {};
 			o[extFrom] = bareJid;
 			chatAssociation = {CHAT_ASSOCIATION: o};
+			updateAllClientsForChatAssociation();
+	                var str = "[CHAT_ASSOCIATION]\n"+extFrom+"="+bareJid+"\n";
 			writeChatAssociationFile(CHAT_ASSOC_FILE, str);
-			logger.debug("chat association is stored in file " + CHAT_ASSOC_FILE);
+			logger.debug("chat association ["+extFrom+"="+bareJid+"] is stored in file " + CHAT_ASSOC_FILE);
 	        }
 	});
 }
 // write a file with a content
 function writeChatAssociationFile(file, content){
 	fs.writeFile(file, content, function(err){
-		updateAllClientsForChatAssociation();
         	if(err){
                 	logger.error(err + ": error in write file " + file);
                 }
