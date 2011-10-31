@@ -101,7 +101,7 @@ function initServerAndAsteriskParameters(){
 
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF) */
-//log4js.clearAppenders();
+log4js.clearAppenders();
 log4js.addAppender(log4js.fileAppender(logfile), '[ProxyCTI]');
 var logger = log4js.getLogger('[ProxyCTI]');
 logger.setLevel(loglevel);
@@ -2144,14 +2144,7 @@ io.sockets.on('connection', function(client){
   		logger.debug("ACTION received: from id '" + client.id + "' message " + sys.inspect(message));	
   		switch(action){
 			case actions.SAVE_NOTE_OF_CALL:
-				console.log("SSSSSSSSSSS");
-				var note = message.note;
-				var extension = extFrom;
-				var public = message.public
-				var expiration = message.expiration;
-				var expFormatVal = message.expFormatVal;
-				var number = message.number;
-				dataCollector.saveCallNote(note,extension,public,expiration,expFormatVal,number,function(){
+				dataCollector.saveCallNote(message.note,extFrom,message.public,message.expiration,message.expFormatVal,message.number,function(){
 					logger.debug('call note from [' + extFrom + '] for number \'' + number + '\' has been saved into database');
 				});
 			break;
