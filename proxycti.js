@@ -2129,6 +2129,7 @@ io.sockets.on('connection', function(client){
 			PARKING_PICKUP: 'parking_pickup',
 			HANGUP_UNIQUEID:'hangup_uniqueid',
 			SPY_LISTEN_SPEAK:   	'spy_listen_speak',
+			SAVE_NOTE_OF_CALL:	'save_note_of_call',
 			GET_ALL_VM_STATUS:  	'get_all_vm_status',
 			REDIRECT_VOICEMAIL: 	'redirect_voicemail',
 			GET_DAY_HISTORY:  	'get_day_history',
@@ -2142,6 +2143,11 @@ io.sockets.on('connection', function(client){
 		}
   		logger.debug("ACTION received: from id '" + client.id + "' message " + sys.inspect(message));	
   		switch(action){
+			case actions.SAVE_NOTE_OF_CALL:
+				dataCollector.saveCallNote(message.note,extFrom,message.public,message.expiration,message.expFormatVal,message.number,function(){
+					logger.debug('call note from [' + extFrom + '] for number \'' + number + '\' has been saved into database');
+				});
+			break;
 			case actions.CF_VM_PARKING:
 				var redirectTo = message.redirectToExt;
 				var parking = message.parking;
