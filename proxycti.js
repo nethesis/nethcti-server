@@ -2204,6 +2204,9 @@ io.sockets.on('connection', function(client){
 			case actions.SAVE_NOTE_OF_CALL:
 				dataCollector.saveCallNote(message.note,extFrom,message.pub,message.expiration,message.expFormatVal,message.num,function(){
 					logger.debug('call note from [' + extFrom + '] for number \'' + message.num + '\' has been saved into database');
+					var respMsg = new ResponseMessage(client.id, 'ack_save_callnote', '');
+					client.emit('message',respMsg);
+					logger.debug("RESP 'ack_save_callnote' has been sent to [" + extFrom + "] id '" + client.id + "'");
 				});
 			break;
 			case actions.CF_VM_PARKING:
