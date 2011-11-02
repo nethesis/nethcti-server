@@ -690,55 +690,67 @@ am.addListener('dialing', function(headers) {
 	else if(from==undefined && modop.isChannelIntern(headers.channel))
 		from = headers.calleridnum;
 	logger.debug("Dialing from '" + from + "' -> '" + to + "'");
-
 	// advise the client that receive the call
 	if(to!==undefined && to!=='' && modop.isExtPresent(to) && modop.isExtInterno(to)){
 		// check the permission of the user to receive the call
                 if(!profiler.checkActionCallInPermit(to)){
-                	logger.warn("check 'callIn' permission for [" + to + "] FAILED !")
-                        return
+                	logger.warn("check 'callIn' permission for [" + to + "] FAILED !");
+                        return;
 		}
-		var c = clients[to]
-		if(c!=undefined){
-                        /* in this response the html is not passed, because the chrome desktop 
+		var c = clients[to];
+		if(c!==undefined){
+			/* in this response the html is not passed, because the chrome desktop 	
                          * notification of the client accept only one absolute or relative url */
-                        var response = new ResponseMessage(c.id, "dialing", headers.calleridname)
-                        response.from = from
-                        response.to = to
-                        var typesCC = profiler.getTypesCustomerCardPermit(to)
-                        logger.debug("[" + to + "] is able to view customer card of types: " + sys.inspect(typesCC))
-                        if(typesCC.length==0){
-                                // the user hasn't the authorization of view customer card, then the length is 0
-                                logger.debug("check permission to view Customer Card for [" + to + "] FAILED !")
-                                response.customerCard = ""
-                                response.noPermission = ''
-                                c.emit('message',response);
-                                logger.debug("RESP 'dialing' has been sent to [" + to + "] id '" + c.id + "'")
-                                return
-                        }
-		        var customerCardResult = []
-       			for(i=0; i<typesCC.length; i++){
-                		var name = typesCC[i];
-                		dataCollector.getCustomerCard(from, typesCC[i], function(cc, name) {
-                        		if(cc!=undefined){
-                                		var obj = {};
-                                		for(var item in cc){
-                                       		 	cc[item].server_address = "http://" + hostname + ":" + port;
-							cc[item].prefix = phone_prefix;
-						}
-                               			obj[name] = cc;
-                                		var custCardHTML = createCustomerCardHTML(obj, from)
-                                		customerCardResult.push(custCardHTML)
-                        		} else{
-                        	       	 	customerCardResult.push(cc)
-                        		}
-                        		if(customerCardResult.length==typesCC.length){
-                                		response.customerCard = customerCardResult
-                                		c.emit('message',response);
-                                		logger.debug("RESP 'dialing' has been sent to [" + to + "] id '" + c.id + "' with relative customer card")
-                        		}
-                		})
-        		}
+                        var response = new ResponseMessage(c.id, "dialing", headers.calleridname);
+                        response.from = from;
+                        response.to = to;
+                        var typesCC = profiler.getTypesCustomerCardPermit(to);
+                        logger.debug("[" + to + "] is able to view customer card of types: " + sys.inspect(typesCC));
+
+
+			dataCollector.getCallNotes(from,function(results){ // get call notes for the caller (from)
+				var pub = false;
+				var result = [];
+				for(var i=0, entry; entry=results[i]; i++){
+					pub = entry.public;
+					if(pub || entry.extension===to){ // add entry if it's public or the requester is the creator
+						result.push(entry);
+					}
+				}
+				response.callNotes = result;
+				if(typesCC.length===0){
+                                	// the user hasn't the authorization of view customer card, then the length is 0
+	                                logger.debug("check permission to view Customer Card for [" + to + "] FAILED !");
+	                                response.customerCard = "";
+	                                response.noPermission = '';
+	                                c.emit('message',response);
+	                                logger.debug("RESP 'dialing' has been sent to [" + to + "] id '" + c.id + "'");
+	                                return;
+	                        }
+	                        var customerCardResult = [];
+	                        for(i=0; i<typesCC.length; i++){
+	                                var name = typesCC[i];
+	                                dataCollector.getCustomerCard(from, typesCC[i], function(cc, name) {
+	                                        if(cc!==undefined){
+	                                                var obj = {};
+	                                                for(var item in cc){
+	                                                        cc[item].server_address = "http://" + hostname + ":" + port;
+	                                                        cc[item].prefix = phone_prefix;
+	                                                }
+	                                                obj[name] = cc;
+	                                                var custCardHTML = createCustomerCardHTML(obj, from);
+	                                                customerCardResult.push(custCardHTML);
+	                                        } else {
+	                                                customerCardResult.push(cc);
+	                                        }
+	                                        if(customerCardResult.length==typesCC.length){
+	                                                response.customerCard = customerCardResult;
+	                                                c.emit('message',response);
+	                                                logger.debug("RESP 'dialing' has been sent to [" + to + "] id '" + c.id + "' with relative customer card");
+	                                        }
+        	                        });
+	                        }
+			});
                 }
 	}
 	// add dialExtUniqueid for trunk and for queue ;2 (;2 means the call to client intern)
@@ -2127,9 +2139,11 @@ io.sockets.on('connection', function(client){
 			SPY_LISTEN:  	'spy_listen',
 			CF_VM_PARKING: 	'cf_vm_parking',
 			PARKING_PICKUP: 'parking_pickup',
+			GET_CALL_NOTES:	'get_call_notes',
 			HANGUP_UNIQUEID:'hangup_uniqueid',
 			SPY_LISTEN_SPEAK:   	'spy_listen_speak',
 			SAVE_NOTE_OF_CALL:	'save_note_of_call',
+			MODIFY_NOTE_OF_CALL:	'modify_note_of_call',
 			GET_ALL_VM_STATUS:  	'get_all_vm_status',
 			REDIRECT_VOICEMAIL: 	'redirect_voicemail',
 			GET_DAY_HISTORY:  	'get_day_history',
@@ -2143,9 +2157,53 @@ io.sockets.on('connection', function(client){
 		}
   		logger.debug("ACTION received: from id '" + client.id + "' message " + sys.inspect(message));	
   		switch(action){
+			/*
+			case actions.GET_CALL_NOTES:
+				dataCollector.getCallNotes(message.num,function(results){ // get call notes for the caller (from)
+					var owner = '';
+					var pub = false;
+					var result = [];
+					for(var i=0, entry; entry=results[i]; i++){
+						pub = entry.public;
+						if(pub || entry.extension===extFrom){ // add entry if it's public or the requester is the creator
+							result.push(entry);
+						}
+					}
+					var respMsg = new ResponseMessage(client.id, "resp_call_notes", '');
+                                        respMsg.callNotes = result;
+                                        client.emit('message',respMsg);
+                                        logger.debug("RESP 'resp_call_notes' has been sent to [" + extFrom + "] id '" + client.id + "'");
+				});
+			break;
+			*/
+			case actions.MODIFY_NOTE_OF_CALL:
+				dataCollector.modifyCallNote(message.note,message.pub,message.expiration,message.expFormatVal,message.entryId,function(){
+					logger.debug('call note from [' + extFrom + '] for number \'' + message.num + '\' has been modified into database');
+					var respMsg = new ResponseMessage(client.id, 'ack_modify_callnote', '');
+					respMsg.note = message.note;
+					respMsg.pub = message.pub;
+					respMsg.entryId = message.entryId;
+					var d = new Date();
+					var dd = d.getDate();
+					var mm = d.getMonth()+1;
+					respMsg.creationDate = (dd<10 ? ('0'+dd) : dd) + '/' + (mm<10 ? ('0'+mm) : mm) + '/' + d.getFullYear();
+					var newdate = new Date(d);
+					if(message.expFormatVal==='DAY') {
+						newdate.setDate(d.getDate() + parseInt(message.expiration));
+					} else if(message.expFormatVal==='MONTH') {
+						newdate.setMonth(d.getMonth() + parseInt(message.expiration));
+					}
+					console.log(newdate);
+					dd = newdate.getDate();
+					mm = newdate.getMonth()+1;
+					respMsg.expirationDate = (dd<10 ? ('0'+dd) : dd) + '/' + (mm<10 ? ('0'+mm) : mm) + '/' + newdate.getFullYear();
+                                        client.emit('message',respMsg);
+                                        logger.debug("RESP 'ack_modify_callnote' has been sent to [" + extFrom + "] id '" + client.id + "'");	
+				});
+			break;
 			case actions.SAVE_NOTE_OF_CALL:
-				dataCollector.saveCallNote(message.note,extFrom,message.public,message.expiration,message.expFormatVal,message.number,function(){
-					logger.debug('call note from [' + extFrom + '] for number \'' + number + '\' has been saved into database');
+				dataCollector.saveCallNote(message.note,extFrom,message.pub,message.expiration,message.expFormatVal,message.num,function(){
+					logger.debug('call note from [' + extFrom + '] for number \'' + message.num + '\' has been saved into database');
 				});
 			break;
 			case actions.CF_VM_PARKING:
