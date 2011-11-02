@@ -101,7 +101,7 @@ function initServerAndAsteriskParameters(){
 
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF) */
-log4js.clearAppenders();
+//log4js.clearAppenders();
 log4js.addAppender(log4js.fileAppender(logfile), '[ProxyCTI]');
 var logger = log4js.getLogger('[ProxyCTI]');
 logger.setLevel(loglevel);
@@ -2139,7 +2139,7 @@ io.sockets.on('connection', function(client){
 			SPY_LISTEN:  	'spy_listen',
 			CF_VM_PARKING: 	'cf_vm_parking',
 			PARKING_PICKUP: 'parking_pickup',
-			GET_CALL_NOTES:	'get_call_notes',
+			//GET_CALL_NOTES:	'get_call_notes',
 			HANGUP_UNIQUEID:'hangup_uniqueid',
 			SPY_LISTEN_SPEAK:   	'spy_listen_speak',
 			SAVE_NOTE_OF_CALL:	'save_note_of_call',
@@ -3125,11 +3125,14 @@ io.sockets.on('connection', function(client){
 					var dateFormat = formatDate(message.date);					
                                         dataCollector.getDayHistoryCall(extFrom, dateFormat, function(callResults){ // get day history call
 						dataCollector.getDayHistorySms(extFrom, dateFormat, function(smsResults){ // get day history sms
-                                                	var mess = new ResponseMessage(client.id, "day_history", "received day history");
-	                                                mess.callResults = createHistoryCallResponse(callResults);
-							mess.smsResults = smsResults;
-	                                                client.emit('message',mess);
-	                                                logger.debug("RESP 'day_history' (call [" + callResults.length + "] - sms [" + smsResults.length +"] entries) has been sent to [" + extFrom + "] id '" + client.id + "'");
+							dataCollector.getDayHistoryCallNotes(extFrom, dateFormat, function(callNotesResults){
+	                                                	var mess = new ResponseMessage(client.id, "day_history", "received day history");
+		                                                mess.callResults = createHistoryCallResponse(callResults);
+								mess.smsResults = smsResults;
+								mess.callNotesResults = callNotesResults;
+		                                                client.emit('message',mess);
+		                                                logger.debug("RESP 'day_history' (call [" + callResults.length + "] - sms [" + smsResults.length +"] entries) has been sent to [" + extFrom + "] id '" + client.id + "'");
+							});
 						});
                                         });
                                 } else{ // permit are deny
@@ -3146,11 +3149,14 @@ io.sockets.on('connection', function(client){
                                         // execute query to search contact in phonebook
                                         dataCollector.getCurrentWeekHistoryCall(extFrom, function(callResults){
 						dataCollector.getCurrentWeekHistorySms(extFrom, function(smsResults){
-                                                	var mess = new ResponseMessage(client.id, "current_week_history", "received current week history");
-							mess.callResults = createHistoryCallResponse(callResults);
-							mess.smsResults = smsResults;
-	                                                client.emit('message',mess);
-	                                                logger.debug("RESP 'current_week_history' (call [" + callResults.length + "] - sms ["+smsResults.length+"] entries) has been sent to [" + extFrom + "] id '" + client.id + "'");
+							dataCollector.getCurrentWeekHistoryCallNotes(extFrom, function(callNotesResults){
+	                                                	var mess = new ResponseMessage(client.id, "current_week_history", "received current week history");
+								mess.callResults = createHistoryCallResponse(callResults);
+								mess.smsResults = smsResults;
+								mess.callNotesResults = callNotesResults;
+		                                                client.emit('message',mess);
+		                                                logger.debug("RESP 'current_week_history' (call [" + callResults.length + "] - sms ["+smsResults.length+"] entries) has been sent to [" + extFrom + "] id '" + client.id + "'");
+							});
 						});
                                         });
                                 } else{
@@ -3167,11 +3173,14 @@ io.sockets.on('connection', function(client){
                                         // execute query to search contact in phonebook
                                         dataCollector.getCurrentMonthHistoryCall(extFrom, function(callResults){
 						dataCollector.getCurrentMonthHistorySms(extFrom, function(smsResults){
-	                                                var mess = new ResponseMessage(client.id, "current_month_history", "received current month history");
-							mess.callResults = createHistoryCallResponse(callResults);
-							mess.smsResults = smsResults;
-	                                                client.emit('message',mess);
-	                                                logger.debug("RESP 'current_month_history' (call [" + callResults.length + "] - sms ["+smsResults.length+"] entries) has been sent to [" + extFrom + "] id '" + client.id + "'");
+							dataCollector.getCurrentMonthHistoryCallNotes(extFrom, function(callNotesResults){
+		                                                var mess = new ResponseMessage(client.id, "current_month_history", "received current month history");
+								mess.callResults = createHistoryCallResponse(callResults);
+								mess.smsResults = smsResults;
+								mess.callNotesResults = callNotesResults;
+		                                                client.emit('message',mess);
+		                                                logger.debug("RESP 'current_month_history' (call [" + callResults.length + "] - sms ["+smsResults.length+"] entries) has been sent to [" + extFrom + "] id '" + client.id + "'");
+							});
 						});
                                         });
                                 } else{

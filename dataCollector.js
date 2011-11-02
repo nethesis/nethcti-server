@@ -49,10 +49,13 @@ exports.DataCollector = function(){
 	this.getCustomerCard = function(ext, type, cb) { return getCustomerCard(ext, type, cb); }
 	this.getDayHistoryCall = function(ext, date, cb) { return getDayHistoryCall(ext, date, cb); }
 	this.getDayHistorySms = function(ext, date, cb) { return getDayHistorySms(ext, date, cb); }
+	this.getDayHistoryCallNotes = function(ext, date, cb) { return getDayHistoryCallNotes(ext, date, cb); }
 	this.getCurrentWeekHistoryCall = function(ext, cb) { return getCurrentWeekHistoryCall(ext, cb); }
-	this.getCurrentWeekHistorySms= function(ext, cb) { return getCurrentWeekHistorySms(ext, cb); }
+	this.getCurrentWeekHistorySms = function(ext, cb) { return getCurrentWeekHistorySms(ext, cb); }
+	this.getCurrentWeekHistoryCallNotes = function(ext, cb) { return getCurrentWeekHistoryCallNotes(ext, cb); }
 	this.getCurrentMonthHistoryCall = function(ext, cb) { return getCurrentMonthHistoryCall(ext, cb); }
 	this.getCurrentMonthHistorySms = function(ext, cb) { return getCurrentMonthHistorySms(ext, cb); }
+	this.getCurrentMonthHistoryCallNotes = function(ext, cb) { return getCurrentMonthHistoryCallNotes(ext, cb); }
 	this.addController = function(contr) { addController(contr) }
 	this.setLogger = function(logfile,level) { log4js.addAppender(log4js.fileAppender(logfile), '[DataCollector]'); logger.setLevel(level); }
 	this.checkAudioUid = function(uid, filename, cb) { return checkAudioUid(uid, filename, cb); }
@@ -72,7 +75,7 @@ function getCallNotes(num,cb){
 }
 function modifyCallNote(note,pub,expiration,expFormatVal,entryId,cb){
 	var objQuery = queries[CALL_NOTES];
-	objQuery.query = "UPDATE call_notes SET text='"+note+"',date=curdate(),public="+pub+",expiration=DATE_ADD(curdate(),INTERVAL "+expiration+" "+expFormatVal+") where id="+entryId+";";
+	objQuery.query = "UPDATE call_notes SET text='"+note+"',date=CURRENT_TIMESTAMP,public="+pub+",expiration=DATE_ADD(curdate(),INTERVAL "+expiration+" "+expFormatVal+") where id="+entryId+";";
 	executeSQLQuery(CALL_NOTES, objQuery, function(results){
 		cb(results);
 	});
@@ -84,11 +87,29 @@ function saveCallNote(note,extension,pub,expiration,expFormatVal,num,cb){
 		cb(results);
 	});
 }
+function getCurrentMonthHistoryCallNotes(ext, cb){
+	var objQuery = queries[CALL_NOTES];
+	objQuery.query = "SELECT * from "+DB_TABLE_CALLNOTES+" WHERE extension="+ext+" AND (DATE(date)>=(DATE_SUB(CURDATE(), INTERVAL DAYOFMONTH(CURDATE())-1 DAY)))";
+	if(objQuery!==undefined){
+		executeSQLQuery(CALL_NOTES, objQuery, function(results){
+			cb(results);
+		});
+	}
+}
 function getCurrentMonthHistorySms(ext, cb){
 	var objQuery = queries[SMS];
 	objQuery.query = "SELECT id, sender, destination, text, date_format(date,'%d/%m/%Y') AS date, date_format(date,'%H:%i:%S') AS time, status FROM "+DB_TABLE_SMS+" WHERE ( (sender LIKE '"+ext+"') AND (DATE(date)>=(DATE_SUB(CURDATE(), INTERVAL DAYOFMONTH(CURDATE())-1 DAY)))  )";
 	if(objQuery!==undefined){
 		executeSQLQuery(SMS, objQuery, function(results){
+			cb(results);
+		});
+	}
+}
+function getCurrentWeekHistoryCallNotes(ext, cb){
+	var objQuery = queries[CALL_NOTES];
+	objQuery.query = "SELECT * from "+DB_TABLE_CALLNOTES+" WHERE extension="+ext+" AND (DATE(date)>=(DATE_SUB(CURDATE(), INTERVAL DAYOFWEEK(CURDATE())-2 DAY)))";
+	if(objQuery!==undefined){
+		executeSQLQuery(CALL_NOTES, objQuery, function(results){
 			cb(results);
 		});
 	}
@@ -101,6 +122,16 @@ function getCurrentWeekHistorySms(ext, cb){
 			cb(results);
 		});
 	}
+}
+function getDayHistoryCallNotes(ext, date, cb){
+	var objQuery = queries[CALL_NOTES];
+	objQuery.query = "SELECT * from "+DB_TABLE_CALLNOTES+" WHERE extension="+ext+" AND DATE(date)='"+date+"'";
+	if(objQuery!==undefined){
+	        executeSQLQuery(CALL_NOTES, objQuery, function(results){
+			cb(results);
+		});
+	}
+	return undefined;
 }
 function getDayHistorySms(ext, date, cb){
 	var objQuery = queries[SMS];
