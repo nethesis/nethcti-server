@@ -9,6 +9,7 @@ var inherits = require("sys").inherits
 var EventEmitter = require("events").EventEmitter
 var idIntervalRefresh
 var refreshChannels = {}
+var cacheQueueTypeExt = [];
 const FILE_TAB_OP = "config/optab.ini";
 const FILE_FASCI_INI = "config/trunks.ini"
 const FILE_EXT_LIST = "/etc/asterisk/nethcti.ini";
@@ -114,6 +115,48 @@ exports.Modop = function(){
 	this.removeUniqueidCallFromQueue = function(uniqueid) { return removeUniqueidCallFromQueue(uniqueid); }
 	this.getParkedUniqueid = function(parking) { return getParkedUniqueid(parking)}
 	this.setUserBareJid = function(ext,bareJid){setUserBareJid(ext,bareJid);}
+	this.addQueueWaitingCaller = function(channel,calleridnum,calleridname,queueTypeExt) { addQueueWaitingCaller(channel,calleridnum,calleridname,queueTypeExt); }
+	this.addQueueCcCaller = function(ch,ext){return addQueueCcCaller(ch,ext)}
+	this.removeQueueCcCaller = function(ch){return removeQueueCcCaller(ch)}
+	this.removeQueueWaitingCaller = function(ch){return removeQueueWaitingCaller(ch)}
+	this.getInternExtFromQueueChannel = function(ch){ return getInternExtFromQueueChannel(ch) }
+}
+function getInternExtFromQueueChannel(ch){ // ex ch = Local/272@from-internal-57dd;1
+	return ch.split('@')[0].split('/')[1];
+}
+function removeQueueWaitingCaller(ch){
+	for(var i=0, qtypeExt; qtypeExt=cacheQueueTypeExt[i]; i++){
+		if(extStatusForOp[qtypeExt].queueWaitingCaller[ch]!==undefined){
+			delete extStatusForOp[qtypeExt].queueWaitingCaller[ch];
+			return qtypeExt;
+		}
+	}
+	return undefined;
+}
+function removeQueueCcCaller(ch){
+	for(var i=0, qtypeExt; qtypeExt=cacheQueueTypeExt[i]; i++){
+		if(extStatusForOp[qtypeExt].queueCcCaller[ch]!==undefined){
+			delete extStatusForOp[qtypeExt].queueCcCaller[ch];
+			return qtypeExt;
+		}
+	}
+	return undefined;
+}
+function addQueueCcCaller(ch,ext){
+	for(var i=0, qtypeExt; qtypeExt=cacheQueueTypeExt[i]; i++){
+		console.log("qtypeExt = " + qtypeExt);
+		if(extStatusForOp[qtypeExt].queueWaitingCaller[ch]!==undefined){
+			extStatusForOp[qtypeExt].queueCcCaller[ch] = extStatusForOp[qtypeExt].queueWaitingCaller[ch];
+			extStatusForOp[qtypeExt].queueCcCaller[ch].startCcDate = new Date();
+			extStatusForOp[qtypeExt].queueCcCaller[ch].ext = ext;
+			delete extStatusForOp[qtypeExt].queueWaitingCaller[ch];
+			return qtypeExt;
+		}
+	}
+	return undefined;
+}
+function addQueueWaitingCaller(channel,calleridnum,calleridname,queueTypeExt){
+	extStatusForOp[queueTypeExt].queueWaitingCaller[channel] = {calleridnum: calleridnum, calleridname: calleridname, startWaitingDate: new Date()}
 }
 function setUserBareJid(ext,bareJid){
 	extStatusForOp['SIP/'+ext].bareJid = bareJid;
@@ -894,10 +937,18 @@ function initTrunkWithFasciIni(tempFasciIni){
 		}
 	}
 }
-function initListCallForQueue(){
+function initQueueWaitingCaller(){
 	for(key in extStatusForOp){
 		if(extStatusForOp[key].tab===QUEUE_NAME){
-			extStatusForOp[key].listCall = {};
+			cacheQueueTypeExt.push(key); // cache of queueTypeExt
+			extStatusForOp[key].queueWaitingCaller = {};
+		}
+	}
+}
+function initQueueCcCaller(){
+	for(key in extStatusForOp){
+		if(extStatusForOp[key].tab===QUEUE_NAME){
+			extStatusForOp[key].queueCcCaller = {};
 		}
 	}
 }
@@ -932,7 +983,8 @@ function initExtStatusForOp(){
 	initCallConnectedCountForIntern()
 	initDialingUniqueidForIntern()
 	// init queue
-	initListCallForQueue();
+	initQueueWaitingCaller();
+	initQueueCcCaller();
 	// create action for asterisk server that generate series of 'PeerEntry' events
         var actionSIPPeersOP = {
                 Action: 'SIPPeers'
