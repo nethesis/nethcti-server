@@ -12,6 +12,8 @@ const CURRENT_WEEK_HISTORY_CALL = "current_week_history_call";
 const CURRENT_MONTH_HISTORY_CALL = "current_month_history_call";
 const SMS = "sms";
 const CALL_NOTES = "call_notes";
+const DB_TABLE_SMS = 'sms_history';
+const DB_TABLE_CALLNOTES = 'call_notes';
 
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF) */
@@ -47,45 +49,93 @@ exports.DataCollector = function(){
 	this.getCustomerCard = function(ext, type, cb) { return getCustomerCard(ext, type, cb); }
 	this.getDayHistoryCall = function(ext, date, cb) { return getDayHistoryCall(ext, date, cb); }
 	this.getDayHistorySms = function(ext, date, cb) { return getDayHistorySms(ext, date, cb); }
+	this.getDayHistoryCallNotes = function(ext, date, cb) { return getDayHistoryCallNotes(ext, date, cb); }
 	this.getCurrentWeekHistoryCall = function(ext, cb) { return getCurrentWeekHistoryCall(ext, cb); }
-	this.getCurrentWeekHistorySms= function(ext, cb) { return getCurrentWeekHistorySms(ext, cb); }
+	this.getCurrentWeekHistorySms = function(ext, cb) { return getCurrentWeekHistorySms(ext, cb); }
+	this.getCurrentWeekHistoryCallNotes = function(ext, cb) { return getCurrentWeekHistoryCallNotes(ext, cb); }
 	this.getCurrentMonthHistoryCall = function(ext, cb) { return getCurrentMonthHistoryCall(ext, cb); }
 	this.getCurrentMonthHistorySms = function(ext, cb) { return getCurrentMonthHistorySms(ext, cb); }
+	this.getCurrentMonthHistoryCallNotes = function(ext, cb) { return getCurrentMonthHistoryCallNotes(ext, cb); }
 	this.addController = function(contr) { addController(contr) }
 	this.setLogger = function(logfile,level) { log4js.addAppender(log4js.fileAppender(logfile), '[DataCollector]'); logger.setLevel(level); }
 	this.checkAudioUid = function(uid, filename, cb) { return checkAudioUid(uid, filename, cb); }
 	this.registerSmsSuccess = function(sender, destination, text, cb){ registerSmsSuccess(sender, destination, text, cb); }
 	this.registerSmsFailed = function(sender, destination, text, cb){ registerSmsFailed(sender, destination, text, cb); }
-	this.saveCallNote = function(note,extension,public,expiration,expFormatVal,number,cb){ saveCallNote(note,extension,public,expiration,expFormatVal,number,cb); }
+	this.saveCallNote = function(note,extension,pub,expiration,expFormatVal,num,cb){ saveCallNote(note,extension,pub,expiration,expFormatVal,num,cb); }
+	this.modifyCallNote = function(note,pub,expiration,expFormatVal,entryId,cb){ modifyCallNote(note,pub,expiration,expFormatVal,entryId,cb); }
+	this.getCallNotes = function(num,cb){ getCallNotes(num,cb); }
 }
-function saveCallNote(note,extension,public,expiration,expFormatVal,number,cb){
+function getCallNotes(num,cb){
 	var objQuery = queries[CALL_NOTES];
-	objQuery.query = "INSERT INTO call_notes (text,extension,number,public,expiration) VALUES ('"+note+"','"+extension+"','"+number+"',"+public+",DATE_ADD(curdate(), INTERVAL "+expiration+" "+expFormatVal+"));";
-	executeSQLQuery(SMS, objQuery, function(results){
+	objQuery.query = "select * from call_notes where number="+num+" AND expiration>curdate();";
+	executeSQLQuery(CALL_NOTES, objQuery, function(results){
+		cb(results);
+       	});
+
+}
+function modifyCallNote(note,pub,expiration,expFormatVal,entryId,cb){
+	var objQuery = queries[CALL_NOTES];
+	objQuery.query = "UPDATE call_notes SET text='"+note+"',date=CURRENT_TIMESTAMP,public="+pub+",expiration=DATE_ADD(curdate(),INTERVAL "+expiration+" "+expFormatVal+") where id="+entryId+";";
+	executeSQLQuery(CALL_NOTES, objQuery, function(results){
 		cb(results);
 	});
 }
+function saveCallNote(note,extension,pub,expiration,expFormatVal,num,cb){
+	var objQuery = queries[CALL_NOTES];
+	objQuery.query = "INSERT INTO call_notes (text,extension,number,public,expiration) VALUES ('"+note+"','"+extension+"','"+num+"',"+pub+",DATE_ADD(curdate(), INTERVAL "+expiration+" "+expFormatVal+"));";
+	executeSQLQuery(CALL_NOTES, objQuery, function(results){
+		cb(results);
+	});
+}
+function getCurrentMonthHistoryCallNotes(ext, cb){
+	var objQuery = queries[CALL_NOTES];
+	objQuery.query = "SELECT * from "+DB_TABLE_CALLNOTES+" WHERE extension="+ext+" AND (DATE(date)>=(DATE_SUB(CURDATE(), INTERVAL DAYOFMONTH(CURDATE())-1 DAY)))";
+	if(objQuery!==undefined){
+		executeSQLQuery(CALL_NOTES, objQuery, function(results){
+			cb(results);
+		});
+	}
+}
 function getCurrentMonthHistorySms(ext, cb){
 	var objQuery = queries[SMS];
-	objQuery.query = "SELECT id, sender, destination, text, date_format(date,'%d/%m/%Y') AS date, date_format(date,'%H:%i:%S') AS time, status FROM history WHERE ( (sender LIKE '"+ext+"') AND (DATE(date)>=(DATE_SUB(CURDATE(), INTERVAL DAYOFMONTH(CURDATE())-1 DAY)))  )";
+	objQuery.query = "SELECT id, sender, destination, text, date_format(date,'%d/%m/%Y') AS date, date_format(date,'%H:%i:%S') AS time, status FROM "+DB_TABLE_SMS+" WHERE ( (sender LIKE '"+ext+"') AND (DATE(date)>=(DATE_SUB(CURDATE(), INTERVAL DAYOFMONTH(CURDATE())-1 DAY)))  )";
 	if(objQuery!==undefined){
 		executeSQLQuery(SMS, objQuery, function(results){
+			cb(results);
+		});
+	}
+}
+function getCurrentWeekHistoryCallNotes(ext, cb){
+	var objQuery = queries[CALL_NOTES];
+	objQuery.query = "SELECT * from "+DB_TABLE_CALLNOTES+" WHERE extension="+ext+" AND (DATE(date)>=(DATE_SUB(CURDATE(), INTERVAL DAYOFWEEK(CURDATE())-2 DAY)))";
+	if(objQuery!==undefined){
+		executeSQLQuery(CALL_NOTES, objQuery, function(results){
 			cb(results);
 		});
 	}
 }
 function getCurrentWeekHistorySms(ext, cb){
 	var objQuery = queries[SMS];
-	objQuery.query = "SELECT id, sender, destination, text, date_format(date,'%d/%m/%Y') AS date, date_format(date,'%H:%i:%S') AS time, status FROM history WHERE ( (sender LIKE '"+ext+"') AND (DATE(date)>=(DATE_SUB(CURDATE(), INTERVAL DAYOFWEEK(CURDATE())-2 DAY)))  )";
+	objQuery.query = "SELECT id, sender, destination, text, date_format(date,'%d/%m/%Y') AS date, date_format(date,'%H:%i:%S') AS time, status FROM "+DB_TABLE_SMS+" WHERE ( (sender LIKE '"+ext+"') AND (DATE(date)>=(DATE_SUB(CURDATE(), INTERVAL DAYOFWEEK(CURDATE())-2 DAY)))  )";
 	if(objQuery!==undefined){
 		executeSQLQuery(SMS, objQuery, function(results){
 			cb(results);
 		});
 	}
 }
+function getDayHistoryCallNotes(ext, date, cb){
+	var objQuery = queries[CALL_NOTES];
+	objQuery.query = "SELECT * from "+DB_TABLE_CALLNOTES+" WHERE extension="+ext+" AND DATE(date)='"+date+"'";
+	if(objQuery!==undefined){
+	        executeSQLQuery(CALL_NOTES, objQuery, function(results){
+			cb(results);
+		});
+	}
+	return undefined;
+}
 function getDayHistorySms(ext, date, cb){
 	var objQuery = queries[SMS];
-	objQuery.query = "SELECT id, sender, destination, text, date_format(date,'%d/%m/%Y') AS date, date_format(date,'%H:%i:%S') AS time, status FROM history WHERE (sender LIKE '"+ext+"' && DATE(date)='"+date+"')";
+	objQuery.query = "SELECT id, sender, destination, text, date_format(date,'%d/%m/%Y') AS date, date_format(date,'%H:%i:%S') AS time, status FROM "+DB_TABLE_SMS+" WHERE (sender LIKE '"+ext+"' && DATE(date)='"+date+"')";
 	if(objQuery!==undefined){
 	        executeSQLQuery(SMS, objQuery, function(results){
 			var objQuery = queries[SMS];
@@ -96,7 +146,7 @@ function getDayHistorySms(ext, date, cb){
 }
 function registerSmsSuccess(sender, destination, text, cb){
 	var objQuery = queries[SMS];
-	objQuery.query = "INSERT INTO history (sender,destination,text,date,status) VALUES ('"+sender+"','"+destination+"','"+text+"',now(),1)";
+	objQuery.query = "INSERT INTO i"+DB_TABLE_SMS+" (sender,destination,text,date,status) VALUES ('"+sender+"','"+destination+"','"+text+"',now(),1)";
         if(objQuery!==undefined){
                 executeSQLQuery(SMS, objQuery, function(results){ // execute current sql query
                         cb(results);
@@ -106,7 +156,7 @@ function registerSmsSuccess(sender, destination, text, cb){
 }
 function registerSmsFailed(sender, destination, text, cb){
 	var objQuery = queries[SMS];
-	objQuery.query = "INSERT INTO history (sender,destination,text,date,status) VALUES ('"+sender+"','"+destination+"','"+text+"',now(),0)";
+	objQuery.query = "INSERT INTO "+DB_TABLE_SMS+" (sender,destination,text,date,status) VALUES ('"+sender+"','"+destination+"','"+text+"',now(),0)";
         if(objQuery!==undefined){
                 executeSQLQuery(SMS, objQuery, function(results){ // execute current sql query
                         cb(results);

@@ -690,55 +690,67 @@ am.addListener('dialing', function(headers) {
 	else if(from==undefined && modop.isChannelIntern(headers.channel))
 		from = headers.calleridnum;
 	logger.debug("Dialing from '" + from + "' -> '" + to + "'");
-
 	// advise the client that receive the call
 	if(to!==undefined && to!=='' && modop.isExtPresent(to) && modop.isExtInterno(to)){
 		// check the permission of the user to receive the call
                 if(!profiler.checkActionCallInPermit(to)){
-                	logger.warn("check 'callIn' permission for [" + to + "] FAILED !")
-                        return
+                	logger.warn("check 'callIn' permission for [" + to + "] FAILED !");
+                        return;
 		}
-		var c = clients[to]
-		if(c!=undefined){
-                        /* in this response the html is not passed, because the chrome desktop 
+		var c = clients[to];
+		if(c!==undefined){
+			/* in this response the html is not passed, because the chrome desktop 	
                          * notification of the client accept only one absolute or relative url */
-                        var response = new ResponseMessage(c.id, "dialing", headers.calleridname)
-                        response.from = from
-                        response.to = to
-                        var typesCC = profiler.getTypesCustomerCardPermit(to)
-                        logger.debug("[" + to + "] is able to view customer card of types: " + sys.inspect(typesCC))
-                        if(typesCC.length==0){
-                                // the user hasn't the authorization of view customer card, then the length is 0
-                                logger.debug("check permission to view Customer Card for [" + to + "] FAILED !")
-                                response.customerCard = ""
-                                response.noPermission = ''
-                                c.emit('message',response);
-                                logger.debug("RESP 'dialing' has been sent to [" + to + "] id '" + c.id + "'")
-                                return
-                        }
-		        var customerCardResult = []
-       			for(i=0; i<typesCC.length; i++){
-                		var name = typesCC[i];
-                		dataCollector.getCustomerCard(from, typesCC[i], function(cc, name) {
-                        		if(cc!=undefined){
-                                		var obj = {};
-                                		for(var item in cc){
-                                       		 	cc[item].server_address = "http://" + hostname + ":" + port;
-							cc[item].prefix = phone_prefix;
-						}
-                               			obj[name] = cc;
-                                		var custCardHTML = createCustomerCardHTML(obj, from)
-                                		customerCardResult.push(custCardHTML)
-                        		} else{
-                        	       	 	customerCardResult.push(cc)
-                        		}
-                        		if(customerCardResult.length==typesCC.length){
-                                		response.customerCard = customerCardResult
-                                		c.emit('message',response);
-                                		logger.debug("RESP 'dialing' has been sent to [" + to + "] id '" + c.id + "' with relative customer card")
-                        		}
-                		})
-        		}
+                        var response = new ResponseMessage(c.id, "dialing", headers.calleridname);
+                        response.from = from;
+                        response.to = to;
+                        var typesCC = profiler.getTypesCustomerCardPermit(to);
+                        logger.debug("[" + to + "] is able to view customer card of types: " + sys.inspect(typesCC));
+
+
+			dataCollector.getCallNotes(from,function(results){ // get call notes for the caller (from)
+				var pub = false;
+				var result = [];
+				for(var i=0, entry; entry=results[i]; i++){
+					pub = entry.public;
+					if(pub || entry.extension===to){ // add entry if it's public or the requester is the creator
+						result.push(entry);
+					}
+				}
+				response.callNotes = result;
+				if(typesCC.length===0){
+                                	// the user hasn't the authorization of view customer card, then the length is 0
+	                                logger.debug("check permission to view Customer Card for [" + to + "] FAILED !");
+	                                response.customerCard = "";
+	                                response.noPermission = '';
+	                                c.emit('message',response);
+	                                logger.debug("RESP 'dialing' has been sent to [" + to + "] id '" + c.id + "'");
+	                                return;
+	                        }
+	                        var customerCardResult = [];
+	                        for(i=0; i<typesCC.length; i++){
+	                                var name = typesCC[i];
+	                                dataCollector.getCustomerCard(from, typesCC[i], function(cc, name) {
+	                                        if(cc!==undefined){
+	                                                var obj = {};
+	                                                for(var item in cc){
+	                                                        cc[item].server_address = "http://" + hostname + ":" + port;
+	                                                        cc[item].prefix = phone_prefix;
+	                                                }
+	                                                obj[name] = cc;
+	                                                var custCardHTML = createCustomerCardHTML(obj, from);
+	                                                customerCardResult.push(custCardHTML);
+	                                        } else {
+	                                                customerCardResult.push(cc);
+	                                        }
+	                                        if(customerCardResult.length==typesCC.length){
+	                                                response.customerCard = customerCardResult;
+	                                                c.emit('message',response);
+	                                                logger.debug("RESP 'dialing' has been sent to [" + to + "] id '" + c.id + "' with relative customer card");
+	                                        }
+        	                        });
+	                        }
+			});
                 }
 	}
 	// add dialExtUniqueid for trunk and for queue ;2 (;2 means the call to client intern)
@@ -1024,14 +1036,24 @@ am.addListener('hangup', function(headers) {
 			trueUniqueid = uniqueid;
 		}
 	}
-
+	var qtypeExt = modop.removeQueueCcCaller(headers.channel); // if it is present in queueCcCaller of one queue, remove it
+	if(qtypeExt!==undefined){
+		logger.debug("hangup call is relative to queue: remove ch '" + headers.channel + "' from queueCcCaller of [" + qtypeExt + "]");
+		updateAllClientsForOpWithTypeExt(qtypeExt);
+	}
+	qtypeExt = modop.removeQueueWaitingCaller(headers.channel); // if it is present in queueWaitingCaller of one queue, remove it
+	if(qtypeExt!==undefined){
+		logger.debug("hangup call is relative to queue: remove ch '" + headers.channel + "' from queueWaitingCaller of [" + qtypeExt + "]");
+		updateAllClientsForOpWithTypeExt(qtypeExt);
+	}
+/*
 	// remove call uniqueid from listCall of queue. Return queueTypeExt of the queue that has the uniqueid in its listCall, otherwise undefined is returned
 	var queueTypeExt = modop.removeUniqueidCallFromQueue(headers.uniqueid);
 	if(queueTypeExt!==undefined){
 		logger.debug("hangup call is relative to queue: remove uniqueid '" + headers.uniqueid + "' from listCall of [" + queueTypeExt + "]");
 		updateAllClientsForOpWithTypeExt(queueTypeExt);
 	}
-
+*/
 	if(headers.channel.indexOf('<ZOMBIE>')===-1 && chStat[trueUniqueid]===undefined){
 		logger.warn("discard 'hangup' event: it isn't present in chStat. The cause can be the start of this server during the asterisk functioning");
 		return;
@@ -1107,6 +1129,7 @@ am.addListener('hangup', function(headers) {
 			logger.debug("callConnected uniqueid '" + trueUniqueid + "' has already not present into intern '" + internTypeExt + "'");
 		modop.updateHangupUniqueidInternWithTypeExt(internTypeExt, trueUniqueid); // add uniqueid of current hangup as 'lastHangupUniqueid'
 		updateAllClientsForOpWithTypeExt(internTypeExt);
+		
 	}
 	// headers.channel = 'AsyncGoto/SIP/270-000002dc<ZOMBIE>'
 	else if(headers.channel.indexOf('AsyncGoto/SIP/')!=-1 && headers.channel.indexOf('<ZOMBIE>')!=-1){ // headers.channel is an intern that has redirect: remove callConnectedUniqueid
@@ -1358,28 +1381,38 @@ am.addListener('callconnected', function(headers) {
 			if(modop.hasTrunkDialingUniqueidWithTypeExt(trunkTypeext, tempUniqueid1)){
 				modop.removeDialingUniqueidTrunkWithTypeExt(trunkTypeext, tempUniqueid1);
 				logger.debug("removed dialingUniqueid '" + tempUniqueid1 + "' from trunkTypeExt '" + trunkTypeext + "'");
-			} else
+			} else {
 				logger.debug("dialingUniqueid '" + tempUniqueid1 + "' has already not present into trunk '" + trunkTypeext  + "'");
+			}
 			// add uniqueid of trunk 'headers.channel1' to trunk itself, if it isn't already been added
 			if( !modop.hasTrunkCallConnectedUniqueidWithTypeExt(trunkTypeext, tempUniqueid1) ){
 				modop.addCallConnectedUniqueidTrunkWithTypeExt(trunkTypeext, tempUniqueid1, chStat[tempUniqueid1]);
 				logger.debug("added callConnectedUniqueid '" + tempUniqueid1 + "' to trunk '" + trunkTypeext + "'");
 				updateAllClientsForOpWithTypeExt(trunkTypeext);
-			} else
+			} else {
 				logger.debug("callConnected uniqueid '" + tempUniqueid1 + "' has already been added to trunk '" + trunkTypeext  + "'");
+			}
 		} else if(modop.isChannelIntern(headers.channel1)){  // channel 1 is intern
 			var internTypeExt = modop.getInternTypeExtFromChannel(headers.channel1);
 			if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt, tempUniqueid1)){
 				modop.removeDialingUniqueidInternWithTypeExt(internTypeExt, tempUniqueid1);
 				logger.debug("removed dialingUniqueid '" + tempUniqueid1 + "' from internTypeExt '" + internTypeExt + "'");
-			} else
+			} else {
 				logger.debug("dialingUniqueid '" + tempUniqueid1 + "' has already not present into intern '" + internTypeExt  + "'");
+			}
 			if(!modop.hasInternCallConnectedUniqueidWithTypeExt(internTypeExt, tempUniqueid1)){
 				modop.addCallConnectedUniqueidInternWithTypeExt(internTypeExt, tempUniqueid1, chStat[tempUniqueid1]);
 				logger.debug("added callConnectedUniqueid '" + tempUniqueid1 + "' into intern '" + internTypeExt + "'");
-			} else
+			} else {
 				logger.debug("callConnectedUniqueid '" + tempUniqueid1 + "' has already present into intern '" + internTypeExt  + "'");
+			}
 			updateAllClientsForOpWithTypeExt(internTypeExt);
+		}
+		var extOperator = modop.getInternExtFromQueueChannel(headers.channel2);
+		var qtypeExt = modop.addQueueCcCaller(headers.channel1,extOperator);
+		if(qtypeExt!==undefined){
+			logger.info("added call connected caller to queueCcCaller in extStatusForOp");
+			updateAllClientsForOpWithTypeExt(qtypeExt);
 		}
 		logger.info("discarded event 'callconnected'");
 		return;
@@ -1574,18 +1607,9 @@ am.addListener('callconnected', function(headers) {
   * to its listCall object as: ..uniqueid: calleridnum.. */
 am.addListener('agentcalled', function(headers) {
 	logger.debug("EVENT 'AgentCalled': headers = " + sys.inspect(headers))
-	/*
-	var from = chStat[headers.uniqueid].calleridnum
-	if(modop.isExtPresent(from) && modop.isChannelIntern(headers.channelcalling)){
-		chStat[headers.uniqueid].dialDirection = DIAL_FROM
-		chStat[headers.uniqueid].dialExt = headers.queue
-	}
-	*/
 	var queueTypeExt = 'QUEUE/'+headers.queue;
-	if(!modop.hasQueueUniqueidCallWithTypeExt(queueTypeExt, headers.uniqueid)){
-		modop.addUniqueidCallToQueueWithTypeExt(queueTypeExt, headers.uniqueid, headers.calleridnum);
-		updateAllClientsForOpWithTypeExt(queueTypeExt);
-	}
+	modop.addQueueWaitingCaller(headers.channelcalling,headers.calleridnum,headers.calleridname,queueTypeExt);
+	updateAllClientsForOpWithTypeExt(queueTypeExt);
 })
 
 am.addListener('calldisconnected', function(from, to) {
@@ -2127,9 +2151,11 @@ io.sockets.on('connection', function(client){
 			SPY_LISTEN:  	'spy_listen',
 			CF_VM_PARKING: 	'cf_vm_parking',
 			PARKING_PICKUP: 'parking_pickup',
+			//GET_CALL_NOTES:	'get_call_notes',
 			HANGUP_UNIQUEID:'hangup_uniqueid',
 			SPY_LISTEN_SPEAK:   	'spy_listen_speak',
 			SAVE_NOTE_OF_CALL:	'save_note_of_call',
+			MODIFY_NOTE_OF_CALL:	'modify_note_of_call',
 			GET_ALL_VM_STATUS:  	'get_all_vm_status',
 			REDIRECT_VOICEMAIL: 	'redirect_voicemail',
 			GET_DAY_HISTORY:  	'get_day_history',
@@ -2143,9 +2169,56 @@ io.sockets.on('connection', function(client){
 		}
   		logger.debug("ACTION received: from id '" + client.id + "' message " + sys.inspect(message));	
   		switch(action){
+			/*
+			case actions.GET_CALL_NOTES:
+				dataCollector.getCallNotes(message.num,function(results){ // get call notes for the caller (from)
+					var owner = '';
+					var pub = false;
+					var result = [];
+					for(var i=0, entry; entry=results[i]; i++){
+						pub = entry.public;
+						if(pub || entry.extension===extFrom){ // add entry if it's public or the requester is the creator
+							result.push(entry);
+						}
+					}
+					var respMsg = new ResponseMessage(client.id, "resp_call_notes", '');
+                                        respMsg.callNotes = result;
+                                        client.emit('message',respMsg);
+                                        logger.debug("RESP 'resp_call_notes' has been sent to [" + extFrom + "] id '" + client.id + "'");
+				});
+			break;
+			*/
+			case actions.MODIFY_NOTE_OF_CALL:
+				dataCollector.modifyCallNote(message.note,message.pub,message.expiration,message.expFormatVal,message.entryId,function(){
+					logger.debug('call note from [' + extFrom + '] for number \'' + message.num + '\' has been modified into database');
+					var respMsg = new ResponseMessage(client.id, 'ack_modify_callnote', '');
+					respMsg.note = message.note;
+					respMsg.pub = message.pub;
+					respMsg.entryId = message.entryId;
+					var d = new Date();
+					var dd = d.getDate();
+					var mm = d.getMonth()+1;
+					respMsg.creationDate = (dd<10 ? ('0'+dd) : dd) + '/' + (mm<10 ? ('0'+mm) : mm) + '/' + d.getFullYear();
+					var newdate = new Date(d);
+					if(message.expFormatVal==='DAY') {
+						newdate.setDate(d.getDate() + parseInt(message.expiration));
+					} else if(message.expFormatVal==='MONTH') {
+						newdate.setMonth(d.getMonth() + parseInt(message.expiration));
+					}
+					console.log(newdate);
+					dd = newdate.getDate();
+					mm = newdate.getMonth()+1;
+					respMsg.expirationDate = (dd<10 ? ('0'+dd) : dd) + '/' + (mm<10 ? ('0'+mm) : mm) + '/' + newdate.getFullYear();
+                                        client.emit('message',respMsg);
+                                        logger.debug("RESP 'ack_modify_callnote' has been sent to [" + extFrom + "] id '" + client.id + "'");	
+				});
+			break;
 			case actions.SAVE_NOTE_OF_CALL:
-				dataCollector.saveCallNote(message.note,extFrom,message.public,message.expiration,message.expFormatVal,message.number,function(){
-					logger.debug('call note from [' + extFrom + '] for number \'' + number + '\' has been saved into database');
+				dataCollector.saveCallNote(message.note,extFrom,message.pub,message.expiration,message.expFormatVal,message.num,function(){
+					logger.debug('call note from [' + extFrom + '] for number \'' + message.num + '\' has been saved into database');
+					var respMsg = new ResponseMessage(client.id, 'ack_save_callnote', '');
+					client.emit('message',respMsg);
+					logger.debug("RESP 'ack_save_callnote' has been sent to [" + extFrom + "] id '" + client.id + "'");
 				});
 			break;
 			case actions.CF_VM_PARKING:
@@ -3064,11 +3137,14 @@ io.sockets.on('connection', function(client){
 					var dateFormat = formatDate(message.date);					
                                         dataCollector.getDayHistoryCall(extFrom, dateFormat, function(callResults){ // get day history call
 						dataCollector.getDayHistorySms(extFrom, dateFormat, function(smsResults){ // get day history sms
-                                                	var mess = new ResponseMessage(client.id, "day_history", "received day history");
-	                                                mess.callResults = createHistoryCallResponse(callResults);
-							mess.smsResults = smsResults;
-	                                                client.emit('message',mess);
-	                                                logger.debug("RESP 'day_history' (call [" + callResults.length + "] - sms [" + smsResults.length +"] entries) has been sent to [" + extFrom + "] id '" + client.id + "'");
+							dataCollector.getDayHistoryCallNotes(extFrom, dateFormat, function(callNotesResults){
+	                                                	var mess = new ResponseMessage(client.id, "day_history", "received day history");
+		                                                mess.callResults = createHistoryCallResponse(callResults);
+								mess.smsResults = smsResults;
+								mess.callNotesResults = callNotesResults;
+		                                                client.emit('message',mess);
+		                                                logger.debug("RESP 'day_history' (call [" + callResults.length + "] - sms [" + smsResults.length +"] entries) has been sent to [" + extFrom + "] id '" + client.id + "'");
+							});
 						});
                                         });
                                 } else{ // permit are deny
@@ -3085,11 +3161,14 @@ io.sockets.on('connection', function(client){
                                         // execute query to search contact in phonebook
                                         dataCollector.getCurrentWeekHistoryCall(extFrom, function(callResults){
 						dataCollector.getCurrentWeekHistorySms(extFrom, function(smsResults){
-                                                	var mess = new ResponseMessage(client.id, "current_week_history", "received current week history");
-							mess.callResults = createHistoryCallResponse(callResults);
-							mess.smsResults = smsResults;
-	                                                client.emit('message',mess);
-	                                                logger.debug("RESP 'current_week_history' (call [" + callResults.length + "] - sms ["+smsResults.length+"] entries) has been sent to [" + extFrom + "] id '" + client.id + "'");
+							dataCollector.getCurrentWeekHistoryCallNotes(extFrom, function(callNotesResults){
+	                                                	var mess = new ResponseMessage(client.id, "current_week_history", "received current week history");
+								mess.callResults = createHistoryCallResponse(callResults);
+								mess.smsResults = smsResults;
+								mess.callNotesResults = callNotesResults;
+		                                                client.emit('message',mess);
+		                                                logger.debug("RESP 'current_week_history' (call [" + callResults.length + "] - sms ["+smsResults.length+"] entries) has been sent to [" + extFrom + "] id '" + client.id + "'");
+							});
 						});
                                         });
                                 } else{
@@ -3106,11 +3185,14 @@ io.sockets.on('connection', function(client){
                                         // execute query to search contact in phonebook
                                         dataCollector.getCurrentMonthHistoryCall(extFrom, function(callResults){
 						dataCollector.getCurrentMonthHistorySms(extFrom, function(smsResults){
-	                                                var mess = new ResponseMessage(client.id, "current_month_history", "received current month history");
-							mess.callResults = createHistoryCallResponse(callResults);
-							mess.smsResults = smsResults;
-	                                                client.emit('message',mess);
-	                                                logger.debug("RESP 'current_month_history' (call [" + callResults.length + "] - sms ["+smsResults.length+"] entries) has been sent to [" + extFrom + "] id '" + client.id + "'");
+							dataCollector.getCurrentMonthHistoryCallNotes(extFrom, function(callNotesResults){
+		                                                var mess = new ResponseMessage(client.id, "current_month_history", "received current month history");
+								mess.callResults = createHistoryCallResponse(callResults);
+								mess.smsResults = smsResults;
+								mess.callNotesResults = callNotesResults;
+		                                                client.emit('message',mess);
+		                                                logger.debug("RESP 'current_month_history' (call [" + callResults.length + "] - sms ["+smsResults.length+"] entries) has been sent to [" + extFrom + "] id '" + client.id + "'");
+							});
 						});
                                         });
                                 } else{
