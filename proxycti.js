@@ -2150,6 +2150,7 @@ io.sockets.on('connection', function(client){
 			STOP_RECORD: 	'stoprecord',
 			SPY_LISTEN:  	'spy_listen',
 			CF_VM_PARKING: 	'cf_vm_parking',
+			GET_VCARD_CC:  	'get_vcard_cc',
 			PARKING_PICKUP: 'parking_pickup',
 			//GET_CALL_NOTES:	'get_call_notes',
 			HANGUP_UNIQUEID:'hangup_uniqueid',
@@ -2188,6 +2189,50 @@ io.sockets.on('connection', function(client){
 				});
 			break;
 			*/
+			case actions.GET_VCARD_CC: // return customer card for each num in nums array
+				var customerCardResult = [],
+					nums = message.nums,
+					custCardHTML = '',
+					add = '',
+					countEnd = 0,
+					tempcc = [],
+					obj = {};
+				for(var i=0, num; num=nums[i]; i++){
+					dataCollector.getCustomerCard(num, 'default', function(cc, name) { // get customer cards of num
+						if(cc!==undefined){
+                                                        obj = {};
+                                                        for(var item in cc){
+                                                                cc[item].server_address = "http://" + hostname + ":" + port;
+                                                                cc[item].prefix = phone_prefix;
+                                                        }
+							for(var x=0; x<cc.length; x++){
+								tempcc = [cc[x]];
+								obj[name] = tempcc;
+								custCardHTML = createCustomerCardHTML(obj, num); // get one customer card html
+								add = true;
+								for(var y=0; y<customerCardResult.length; y++){
+									if(customerCardResult[y]===custCardHTML){ // if already present not add it
+	                                                                        add = false;
+	                                                                        break;
+									}
+								}
+								if(add){
+									customerCardResult.push(custCardHTML);
+								}
+							}
+                                                } else {
+                                                        customerCardResult.push(cc);
+                                                }
+						countEnd++;
+                                                if(countEnd===nums.length){
+							var response = new ResponseMessage(client.id, "resp_get_vcard_cc", '');
+                                                        response.customerCard = customerCardResult;
+                                                        client.emit('message',response);
+                                                        logger.debug("RESP 'resp_get_vcard_cc' has been sent to [" + extFrom + "] id '" + client.id + "' with relative customer card");
+                                                }
+					});
+				}
+			break;
 			case actions.MODIFY_NOTE_OF_CALL:
 				dataCollector.modifyCallNote(message.note,message.pub,message.expiration,message.expFormatVal,message.entryId,function(){
 					logger.debug('call note from [' + extFrom + '] for number \'' + message.num + '\' has been modified into database');
