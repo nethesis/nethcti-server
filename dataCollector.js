@@ -67,7 +67,7 @@ exports.DataCollector = function(){
 }
 function getCallNotes(num,cb){
 	var objQuery = queries[CALL_NOTES];
-	objQuery.query = "select * from call_notes where number="+num+" AND expiration>curdate();";
+	objQuery.query = "select * from call_notes where number='"+num+"' AND expiration>curdate();";
 	executeSQLQuery(CALL_NOTES, objQuery, function(results){
 		cb(results);
        	});
