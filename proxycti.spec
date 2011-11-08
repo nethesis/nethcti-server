@@ -1,5 +1,5 @@
 Name:		proxycti
-Version:	0.4.1
+Version:	0.4.2
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI	
 
@@ -60,6 +60,9 @@ ln -s /usr/lib/node/proxycti/sql/nethcti.sql /etc/e-smith/sql/init/10cti.sql
 
 
 %changelog
+* Tue Nov 08 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 0.4.2-1nh
+- New behaviour for click2customercard
+
 * Tue Nov 08 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 0.4.1-1nh
 - Bug fixes for call notes
 - Support for click2customercard
