@@ -71,7 +71,6 @@ function getCallNotes(num,cb){
 	executeSQLQuery(CALL_NOTES, objQuery, function(results){
 		cb(results);
        	});
-
 }
 function modifyCallNote(note,pub,expiration,expFormatVal,entryId,cb){
 	var objQuery = queries[CALL_NOTES];

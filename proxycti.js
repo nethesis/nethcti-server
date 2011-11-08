@@ -2152,7 +2152,7 @@ io.sockets.on('connection', function(client){
 			CF_VM_PARKING: 	'cf_vm_parking',
 			GET_VCARD_CC:  	'get_vcard_cc',
 			PARKING_PICKUP: 'parking_pickup',
-			//GET_CALL_NOTES:	'get_call_notes',
+			GET_CALL_NOTES:	'get_call_notes',
 			HANGUP_UNIQUEID:'hangup_uniqueid',
 			SPY_LISTEN_SPEAK:   	'spy_listen_speak',
 			SAVE_NOTE_OF_CALL:	'save_note_of_call',
@@ -2170,25 +2170,23 @@ io.sockets.on('connection', function(client){
 		}
   		logger.debug("ACTION received: from id '" + client.id + "' message " + sys.inspect(message));	
   		switch(action){
-			/*
 			case actions.GET_CALL_NOTES:
 				dataCollector.getCallNotes(message.num,function(results){ // get call notes for the caller (from)
-					var owner = '';
-					var pub = false;
-					var result = [];
+					var owner = '',
+						pub = false,
+						result = [];
 					for(var i=0, entry; entry=results[i]; i++){
 						pub = entry.public;
 						if(pub || entry.extension===extFrom){ // add entry if it's public or the requester is the creator
 							result.push(entry);
 						}
 					}
-					var respMsg = new ResponseMessage(client.id, "resp_call_notes", '');
+					var respMsg = new ResponseMessage(client.id, "resp_get_call_notes", '');
                                         respMsg.callNotes = result;
                                         client.emit('message',respMsg);
-                                        logger.debug("RESP 'resp_call_notes' has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                        logger.debug("RESP 'resp_get_call_notes' has been sent to [" + extFrom + "] id '" + client.id + "'");
 				});
 			break;
-			*/
 			case actions.GET_VCARD_CC: // return customer card for each num in nums array
 				var customerCardResult = [],
 					nums = message.nums,
