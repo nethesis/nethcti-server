@@ -1,5 +1,5 @@
 Name:		proxycti
-Version:	0.3.8
+Version:	0.4.1
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI	
 
@@ -53,13 +53,21 @@ rm -rf $RPM_BUILD_ROOT
 /etc/e-smith/events/actions/initialize-default-databases
 
 # crate sms db
-ln -s /usr/lib/node/proxycti/sql/smsdb.sql /etc/e-smith/sql/init/10ctisms.sql
+ln -s /usr/lib/node/proxycti/sql/nethcti.sql /etc/e-smith/sql/init/10cti.sql
 /sbin/e-smith/service mysql.init start
 
 /sbin/e-smith/signal-event %{name}-update
 
 
 %changelog
+* Tue Nov 08 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 0.4.1-1nh
+- Bug fixes for call notes
+- Support for click2customercard
+
+* Fri Nov 04 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 0.4.0-1nh
+- Add public/private note support 
+- Fix bug for chat associations
+
 * Wed Oct 26 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 0.3.8-1nh
 - Add new chat functions
 - Fix call redirect and hangup event
