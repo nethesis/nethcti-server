@@ -2197,40 +2197,54 @@ io.sockets.on('connection', function(client){
 					countEnd = 0,
 					tempcc = [],
 					obj = {};
+
+				var response = new ResponseMessage(client.id, "resp_get_vcard_cc", '');
+				var typesCC = profiler.getTypesCustomerCardPermit(extFrom);
+				logger.debug("[" + extFrom + "] is able to view customer card of types: " + sys.inspect(typesCC));
+				if(typesCC.length===0){
+					// the user hasn't the authorization of view customer card, then the length is 0
+					logger.debug("check permission to view Customer Card for [" + extFrom + "] FAILED !");
+					response.customerCard = "";
+					response.noPermission = '';
+					client.emit('message',response);
+					logger.debug("RESP 'resp_get_vcard_cc' has been sent to [" + extFrom + "] id '" + client.id + "'");
+					return;
+				}
 				for(var i=0, num; num=nums[i]; i++){
-					dataCollector.getCustomerCard(num, 'default', function(cc, name) { // get customer cards of num
-						if(cc!==undefined){
-                                                        obj = {};
-                                                        for(var item in cc){
-                                                                cc[item].server_address = "http://" + hostname + ":" + port;
-                                                                cc[item].prefix = phone_prefix;
-                                                        }
-							for(var x=0; x<cc.length; x++){
-								tempcc = [cc[x]];
-								obj[name] = tempcc;
-								custCardHTML = createCustomerCardHTML(obj, num); // get one customer card html
-								add = true;
-								for(var y=0; y<customerCardResult.length; y++){
-									if(customerCardResult[y]===custCardHTML){ // if already present not add it
-	                                                                        add = false;
-	                                                                        break;
+					for(var w=0; w<typesCC.length; w++){
+						dataCollector.getCustomerCard(num, typesCC[w], function(cc, name) { // get customer cards of num
+							if(cc!==undefined){
+	                                                        obj = {};
+	                                                        for(var item in cc){
+	                                                                cc[item].server_address = "http://" + hostname + ":" + port;
+	                                                                cc[item].prefix = phone_prefix;
+	                                                        }
+								for(var x=0; x<cc.length; x++){
+									tempcc = [cc[x]];
+									obj[name] = tempcc;
+									custCardHTML = createCustomerCardHTML(obj, num); // get one customer card html
+									add = true;
+									for(var y=0; y<customerCardResult.length; y++){
+										if(customerCardResult[y]===custCardHTML){ // if already present not add it
+		                                                                        add = false;
+		                                                                        break;
+										}
+									}
+									if(add){
+										customerCardResult.push(custCardHTML);
 									}
 								}
-								if(add){
-									customerCardResult.push(custCardHTML);
-								}
-							}
-                                                } else {
-                                                        customerCardResult.push(cc);
-                                                }
-						countEnd++;
-                                                if(countEnd===nums.length){
-							var response = new ResponseMessage(client.id, "resp_get_vcard_cc", '');
-                                                        response.customerCard = customerCardResult;
-                                                        client.emit('message',response);
-                                                        logger.debug("RESP 'resp_get_vcard_cc' has been sent to [" + extFrom + "] id '" + client.id + "' with relative customer card");
-                                                }
-					});
+	                                                } else {
+	                                                        customerCardResult.push(cc);
+	                                                }
+							countEnd++;
+        	                                        if(countEnd===(nums.length*typesCC.length)){
+                	                                        response.customerCard = customerCardResult;
+                        	                                client.emit('message',response);
+                                	                        logger.debug("RESP 'resp_get_vcard_cc' has been sent to [" + extFrom + "] id '" + client.id + "' with relative customer card");
+                                        	        }
+						});
+					}
 				}
 			break;
 			case actions.MODIFY_NOTE_OF_CALL:
