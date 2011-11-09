@@ -78,51 +78,6 @@
 {/:s}
 {/:if}
 
-{:s ticket}
-<div id='ticket'  class='flatTable'>
-<div class='name'>Ultimi Ticket OTRS</div>
-<table>
-<tr><th>Creazione</th><th>Risposta</th><th>Operatore</th><th>Cliente</th><th>Stato</th><th>Assistenza</th></tr>
-{:r .}
-  <tr><td>{=c_time}</td><td>{=m_time}</td><td>{=gestore}</td><td>{=first_name}</td><td>{=stato}</td><td>{=lp}</td></tr>
-{/:r}
-</table>
-</div>
-{:e}
-
-{/:s}
-
-{:s insoluti}
-<div id='insoluti'  class='flatTable'>
-<div class='name'>Situazione Contabile Business</div>
-<table>
-<tr><th>Cliente</th><th>PIVA</th><th>Data</th><th>Num</th><th>Causale</th><th>D-A</th><th>Importo</th><th>Dare</th><th>Avere</th></tr>
-{:r .}
-  <tr><td>{=an_descr1}</td><td>{=an_pariva}</td><td>{=pn_datreg}</td><td>{=pn_numreg}</td><td>{=pn_causale}</td><td>{=pn_darave}</td><td>{=pn_importo}</td><td>{=pn_dare}</td><td>{=pn_avere}</td></tr>
-{/:r}
-</table>
-</div>
-{:e}
-
-{/:s}
-
-
-{:s trattative}
-<div id='trattative'  class='flatTable'>
-<div class='name'>Trattative vTiger</div>
-<table>
-<tr><th>Cliente</th><th>Opportunità</th><th>Importo</th><th>Chiusura</th><th>Prox.Azione</th><th>%</th><th>Stato</th><th>Descrizione</th><th>Provenienza</th></tr>
-{:r .}
-  <tr><td>{=accountname}</td><td>{=potentialname}</td><td>{=amount}</td><td>{=closingdate}</td><td>{=nextstep}</td><td>{=probability}</td><td>{=sales_stage}</td><td>{=description}</td><td>{=leadsource}</td></tr>
-{/:r}
-</table>
-</div>
-{:e}
-
-{/:s}
-
-
-
 <script type="text/javascript">
 $(function() {
         var currentDate = new Date()
