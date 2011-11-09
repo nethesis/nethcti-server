@@ -727,29 +727,29 @@ am.addListener('dialing', function(headers) {
 	                                logger.debug("RESP 'dialing' has been sent to [" + to + "] id '" + c.id + "'");
 	                                return;
 	                        }
-	                        var customerCardResult = [];
-	                        for(i=0; i<typesCC.length; i++){
-	                                var name = typesCC[i];
-	                                dataCollector.getCustomerCard(from, typesCC[i], function(cc, name) {
-	                                        if(cc!==undefined){
-	                                                var obj = {};
-	                                                for(var item in cc){
-	                                                        cc[item].server_address = "http://" + hostname + ":" + port;
-	                                                        cc[item].prefix = phone_prefix;
-	                                                }
-	                                                obj[name] = cc;
-	                                                var custCardHTML = createCustomerCardHTML(obj, from);
-	                                                customerCardResult.push(custCardHTML);
-	                                        } else {
-	                                                customerCardResult.push(cc);
-	                                        }
-	                                        if(customerCardResult.length==typesCC.length){
-	                                                response.customerCard = customerCardResult;
-	                                                c.emit('message',response);
-	                                                logger.debug("RESP 'dialing' has been sent to [" + to + "] id '" + c.id + "' with relative customer card");
-	                                        }
-        	                        });
-	                        }
+                                var customerCardResult = [];
+                                var obj = {};
+                                for(i=0; i<typesCC.length; i++){
+                                        var name = typesCC[i];
+                                        dataCollector.getCustomerCard(from, typesCC[i], function(cc, name) {
+                                                if(cc!==undefined){
+                                                        obj = {};
+                                                        for(var item in cc){
+                                                                cc[item].server_address = "http://" + hostname + ":" + port;
+                                                                cc[item].prefix = phone_prefix;
+                                                        }
+                                                        obj[name] = cc;
+                                                        customerCardResult.push(obj);
+                                                } else {
+                                                        customerCardResult.push(cc);
+                                                }
+                                                if(customerCardResult.length==typesCC.length){
+                                                        response.customerCard = createCustomerCardHTML(customerCardResult, from);
+                                                        c.emit('message',response);
+                                                        logger.debug("RESP 'dialing' has been sent to [" + to + "] id '" + c.id + "' with relative customer card");
+                                                }
+                                        });
+                                }
 			});
                 }
 	}
@@ -2208,42 +2208,35 @@ io.sockets.on('connection', function(client){
 					logger.debug("RESP 'resp_get_vcard_cc' has been sent to [" + extFrom + "] id '" + client.id + "'");
 					return;
 				}
-				for(var i=0, num; num=nums[i]; i++){
-					for(var w=0; w<typesCC.length; w++){
-						dataCollector.getCustomerCard(num, typesCC[w], function(cc, name) { // get customer cards of num
-							if(cc!==undefined){
-	                                                        obj = {};
-	                                                        for(var item in cc){
-	                                                                cc[item].server_address = "http://" + hostname + ":" + port;
-	                                                                cc[item].prefix = phone_prefix;
-	                                                        }
-								for(var x=0; x<cc.length; x++){
-									tempcc = [cc[x]];
-									obj[name] = tempcc;
-									custCardHTML = createCustomerCardHTML(obj, num); // get one customer card html
-									add = true;
-									for(var y=0; y<customerCardResult.length; y++){
-										if(customerCardResult[y]===custCardHTML){ // if already present not add it
-		                                                                        add = false;
-		                                                                        break;
-										}
-									}
-									if(add){
-										customerCardResult.push(custCardHTML);
-									}
-								}
-	                                                } else {
-	                                                        customerCardResult.push(cc);
-	                                                }
-							countEnd++;
-        	                                        if(countEnd===(nums.length*typesCC.length)){
-                	                                        response.customerCard = customerCardResult;
-                        	                                client.emit('message',response);
-                                	                        logger.debug("RESP 'resp_get_vcard_cc' has been sent to [" + extFrom + "] id '" + client.id + "' with relative customer card");
-                                        	        }
-						});
-					}
-				}
+				//for(var i=0, num; num=nums[i]; i++){
+                                var from = nums[0];
+                                var customerCardResult = [];
+                                var obj = {};
+                                for(i=0; i<typesCC.length; i++){
+                                        var name = typesCC[i];
+                                        dataCollector.getCustomerCard(from, typesCC[i], function(cc, name) {
+                                                if(cc!==undefined){
+                                                        obj = {};
+                                                        for(var item in cc){
+                                                                cc[item].server_address = "http://" + hostname + ":" + port;
+                                                                cc[item].prefix = phone_prefix;
+                                                        }
+                                                        obj[name] = cc;
+                                                        customerCardResult.push(obj);
+                                                } else {
+                                                        customerCardResult.push(cc);
+                                                }
+                                                if(customerCardResult.length==typesCC.length){
+                                                        response.customerCard = createCustomerCardHTML(customerCardResult, from);
+                                                        client.emit('message',response);
+                                                        logger.debug("RESP 'dialing' has been sent to [" + extFrom + "] id '" + client.id + "' with relative customer card");
+                                                }
+                                        });
+                                }
+
+
+
+				//}
 			break;
 			case actions.MODIFY_NOTE_OF_CALL:
 				dataCollector.modifyCallNote(message.note,message.pub,message.expiration,message.expFormatVal,message.entryId,function(){
@@ -3871,13 +3864,20 @@ testAlreadyLoggedSessionId = function(id){
 createCustomerCardHTML = function(customerCard, from){
 	/* customerCard is undefined if the user that has do the request
   	 * hasn't the relative permission or the calling user is not in the db */
-	if(customerCard===undefined){
-		customerCard = {};
-		customerCard.customerNotInDB = "true";
-		customerCard.from = from;
-	}
+        var tmp = {};
+        for(x in customerCard) {
+	   if(customerCard[x]==undefined){
+		customerCard[x] = {};
+		customerCard[x].customerNotInDB = "true";
+		customerCard[x].from = from;
+	   }
+           for(key in customerCard[x]) {
+               tmp[key] =  customerCard[x][key];
+           }
+        }
+
 	var template = normal.compile(html_cc_template);
-	var toAdd = template(customerCard);
+	var toAdd = template(tmp);
 	var HTMLresult = toAdd;		
 	return HTMLresult;
 }
