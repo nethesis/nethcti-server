@@ -107,59 +107,6 @@
    font-size: 80%;
 }
 
-.customerCard {
-    margin: 10px;
-    border: 1px solid #ccc;
-    border-radius: 10px;
-} 
-		    
-.customerCard a:visited {
-    text-decoration: none;
-    color: black;
-    font-weight: normal;
-}
-
-.customerCard a:link {
-    text-decoration: none;
-    color: black;
-    font-weight: normal;
-}  
-				   
-.customerCard a:hover {
-    text-decoration: underline;
-    color: black;
-    font-weight: normal;
-}
-
-.customerCard div.name {
-    background: #eef;
-    border-bottom: 1px solid #ccc;
-    font-size: 120%;
-    font-weight: bold;
-    padding: 5px;
-    border-radius: 5px;
-    text-align: center;
-    width: 98%;
-}
-
-
-.customerCard .label {
-   margin-right: 10px;
-   font-weight: bold;
-   float: left;
-}
-
-
-.customerCard .numbers {
-   margin: 10px;
-   padding: 10px;
-}
-
-.customerCard .address {
-   margin: 5px;
-   margin-top: 5px;
-   padding: 5px;
-}
 
 #date {
     font-size: 80%;
@@ -170,18 +117,19 @@
 }
 
 
-#cdr {
+div.flatTable {
     margin: 10px;
     border: 1px solid #ccc;
     border-radius: 10px;
     text-align: center;
+    clear: both;
 }
 
-#cdr .name {
+.flatTable div.name {
   width: 98%;
 }
 
-#cdr table {
+.flatTable table {
   border-collapse:collapse;
   margin: 30px;
   margin-top: 50px;
@@ -189,21 +137,7 @@
   width: 90%;
 }
 
-#cdr td{
-  border-bottom: 2px solid #ccc;
-  border-top: 1px solid #ccc;
-  text-align: center;
-  padding: 3px;
-}
-
-#cdr tr{
-  border-bottom: 2px solid #ccc;
-  border-top: 1px solid #ccc;
-  text-align: center;
-  padding: 3px;
-}
-
-#cdr th{
+.flatTable td, .flatTable tr, .flatTable th  { 
   border-bottom: 2px solid #ccc;
   border-top: 1px solid #ccc;
   text-align: center;

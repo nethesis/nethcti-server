@@ -3,94 +3,68 @@
 <table width="50%" cellpadding="5" style="border: 1px solid gray"><tr><td><h3>{=from}</h3></td></tr> <tr><td>Spiacente, nessun dato presente.</td></tr></table>
 {:else}
 {:r default}
-<div class="customerCard">
-		{:if name}
-	  	<div class='name'>{=name}
-	  		{:if title}	<div class='title'>{=title} {=type}</div>  {/:if}
-          	</div>
-		{/:if}
+<div class="contactsVCard">
+        <div class='logo click2cc' style='float: left'>
+                {:if name}
+                <img src="{=server_address}/template/images/contact.png"/>
+                {:else}
+                <img src="{=server_address}/template/images/company.png"/>
+                {/:if}
+        </div>
+                {:if name}
+                <div class='name'>{=name}
+                        {:if title}     <div class='title'>{=title} {=type}</div>  {/:if}
+                </div>
+                {/:if}
 
-		{:if company}
-        		{:if name}
-	     		<div class='company'> {=company}</div>
-		        {:else}
-		        <div class='name'> {=company}</div>
-		        {/:if}
-		{/:if}
-	
-		<div id='cont' style='width: 100%'>
+                {:if company}
+                        {:if name}
+                        <div class='company'> {=company}</div>
+                        {:else}
+                        <div class='name'> {=company}</div>
+                        {/:if}
+                {/:if}
 
-		<div class='numbers tr'>
-		<div class='numbers td'>
-		<div class='label numbers'>Numeri lavoro</div>
-		{:if workphone}
-		<div class='label tr' style='clear: both'><span class='value td'><img src="{=server_address}/template/images/phone.png" title='Telefono Ufficio' alt='Telefono Ufficio'/></span> <span class='td'><a href='#' class='click2call' data-prefix='{=prefix}'>{=workphone}</a> <a href='#'></a></span></div>
-		{/:if}
-		
-		{:if fax}
-	        <div class='label tr'><span class='value td'><img src="{=server_address}/template/images/fax.png" title='Fax' alt='Fax'/></span> <span class='td'><a href='#' class='click2fax'>{=fax}</a></span></div>
-		{/:if}
-		</div>
+                <div class='numbers'>
+                {:if workphone}
+                <div class='label tr'><span class='value td'><img src="{=server_address}/template/images/phone.png" title='Telefono Ufficio' alt='Telefono Ufficio'/></span> <span class='td'><a href='#' class='click2call' data-prefix='{=prefix}'>{=workphone}</a> <a href='#'></a></span></div>
+                {/:if}
 
-		<div class='numbers td' style="margin-left: 100px">
-		<div class='label numbers'>Numeri personali</div>
-		{:if cellphone}
-        	<div class='label tr' style='clear: both'><span class='value td'><img src="{=server_address}/template/images/mobile.png" title='Cellulare' alt='Cellulare'/></span> <span class='value td'><img src="{=server_address}/template/images/sms.png" class="click2sms cursorPointer" title='Invia SMS' data-num='{=cellphone}' alt='SMS'/></span><span class='td'><a href='#' class='click2call' data-prefix='{=prefix}'>{=cellphone}</a></span></div>
-		{/:if}
+                {:if cellphone}
+                <div class='label tr'><span class='value td'><img src="{=server_address}/template/images/mobile.png" title='Cellulare' alt='Cellulare'/></span> <span class='value td'><img src="{=server_address}/template/images/sms.png" class="click2sms cursorPointer" title='Invia SMS' data-num='{=cellphone}' alt='SMS'/></span><span class='td'><a href='#' class='click2call' data-prefix='{=prefix}'>{=cellphone}</a></span></div>
+                {/:if}
 
-		
-		{:if homephone}
-	       <div class='label tr'><span class='value td'><img src="{=server_address}/template/images/phone.png" title='Telefono Casa' alt='Telefono Casa'/></span> <span class='td'><a href='#' class='click2call' data-prefix='{=prefix}'>{=homephone}</a></a></span></div>
-		{/:if}
-		</div>
-		</div>
+                {:if homephone}
+               <div class='label tr'><span class='value td'><img src="{=server_address}/template/images/phone.png" title='Telefono Casa' alt='Telefono Casa'/></span> <span class='td'><a href='#' class='click2call' data-prefix='{=prefix}'>{=homephone}</a></a></span></div>
+                {/:if}
+                {:if fax}
+                <div class='label tr'><span class='value td'><img src="{=server_address}/template/images/fax.png" title='Fax' alt='Fax'/></span> <span class='td'><a href='#' class='click2fax'>{=fax}</a></span></div>
+                {/:if}
+                </div>         
 
-  
-		
-		<div class='numbers tr'>
-		<div class='numbers td'>
-		<div class='label numbers'>Indirizzo Ufficio <span style="margin-left: 10px"><a href='http://maps.google.it/maps?q={=workcity}, {=workstreet} ({=workprovince}) - {=workpostalcode}' target='_blank'><img src='{=server_address}/template/images/map.png' title='Cerca su Google Maps'/></a></span></div>
-		{:if workstreet } <div class='numbers'> <div class='address'> {=workcity}, {=workstreet} ({=workprovince}) - {=workpostalcode}</div> </div>
-		{/:if}
-		</div>
-		
-		<div class='numbers td'>
-		<div class='label numbers'>Indirizzo Casa <span style="margin-left: 10px"> <a href='http://maps.google.it/maps?q={=homecity}, {=homestreet} ({=homeprovince})' target='_blank'><img src='{=server_address}/template/images/map.png' title='Cerca su Google Maps'/></a></span></div>
-	        {:if homestreet }  <div class='numbers'> <div class='address'> {=homecity}, {=homestreet} ({=homeprovince}) </div> </div>
-		{/:if}
-		</div>
-		</div>
-		</div>
-	       
+                {:if workemail} 
+                <div class='numbers'> 
+                        <div class='label tr'><span class='value td'><img src="{=server_address}/template/images/mail.png" title='Email' alt='Email'/></span> <span class='td'><a href='mailto:{=workemail}'>{=workemail}</a></span>
+                        </div>
+                </div>
+                {/:if}
 
-		<div class='numbers tr'>
-		<div class='numbers td'>
-		{:if workemail} 
-		<div class='label numbers'>Email</div>
-	        <div class='numbers'> 
-		        <div class='label tr' style='clear: both'><span class='value td'><img src="{=server_address}/template/images/mail.png" title='Email' alt='Email'/></span> <span class='td'><a href='mailto:{=workemail}'>{=workemail}</a></span>
-			</div>  
-		</div>
-	        {/:if}
-		</div>
+                {:if workstreet } <div class='numbers'> <div class='label' style="margin-top: 5px">Ufficio <a href='http://maps.google.it/maps?q={=workcity}, {=workstreet} ({=workprovince}) - {=workpostalcode}' target='_blank'><img src='{=server_address}/template/images/map.png' title='Cerca su Google Maps'/></a></div> <div class='address'> {=workcity}, {=workstreet} ({=workprovince}) - {=workpostalcode}</div> </div>
+                {/:if}
+                {:if homestreet }  <div class='numbers'> <div class='label' style="margin-top: 5px">Casa <a href='http://maps.google.it/maps?q={=homecity}, {=homestreet} ({=homeprovince})' target='_blank'><img src='{=server_address}/template/images/map.png' title='Cerca su Google Maps'/></a></div> <div class='address'> {=homecity}, {=homestreet} ({=homeprovince}) </div> </div>
+                {/:if}
 
-		<div class='numbers td'>
-	        {:if url }
-		<div class='label numbers'>Sito</div>
-	        <div class='numbers'>
-			<div class='label tr' style='clear: both'><span class='value td'><img src="{=server_address}/template/images/web.png" title='Web' alt='Web'/></span> <span class='td'><a href='{=url}'>{=url}</a></span>
+                {:if url }
+                <div class='numbers'>
+                        <span class=''>Sito:</span> <a href='{=url}'>{=url}</a>
+                </div>
+                {/:if}
 
-	        </div>
-	        {/:if}
-		</div>
-		</div>
-
-		</div>
 </div>
 {/:r}
 
 {:s chiamate}
-<div id='cdr'>
+<div id='cdr' class='flatTable'>
 <div class='name'>Ultime chiamate</div>
 <table>
 <tr><th>Data</th><th>Ora</th><th>Durata</th><th>Sorgente</th><th/><th>Destinazione</th></tr>
@@ -103,6 +77,7 @@
 
 {/:s}
 {/:if}
+
 <script type="text/javascript">
 $(function() {
         var currentDate = new Date()
