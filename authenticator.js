@@ -61,8 +61,9 @@ function initProfiles(){
  * initialized user authentication profile.
  */
 authenticateUser = function(ext, secret){
-	if(userAuthProfiles[ext].secret==secret)
+	if(userAuthProfiles[ext]!==undefined && userAuthProfiles[ext].secret===secret){
 		return true;
+	}
 	return false;
 }
 
