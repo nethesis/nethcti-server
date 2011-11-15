@@ -1566,6 +1566,11 @@ am.addListener('callconnected', function(headers) {
 	        to = headers.callerid2;
 	}
 	if(clients[from]!==undefined){
+		// check the permission of the user to receive the call
+                if(!profiler.checkActionCallInPermit(from)){
+                        logger.warn("check 'callIn' permission for [" + from + "] FAILED !");
+                        return;
+                }
                 var c = clients[from]
                 var msg = "Call from " + from + " to " + to + " CONNECTED"
                 var response = new ResponseMessage(c.id, "callconnected", msg)
@@ -1576,6 +1581,11 @@ am.addListener('callconnected', function(headers) {
                 logger.debug("RESP 'callconnected' has been sent to [" + from + "] id '" + c.id + "'")
         }
         if(clients[to]!==undefined){
+		// check the permission of the user to receive the call
+                if(!profiler.checkActionCallInPermit(to)){
+                        logger.warn("check 'callIn' permission for [" + to + "] FAILED !");
+                        return;
+                }
                 var c = clients[to]
                 var msg = "Call from " + from + " to " + to + " CONNECTED"
                 var response = new ResponseMessage(c.id, "callconnected", msg)
@@ -2633,7 +2643,7 @@ io.sockets.on('connection', function(client){
 					try{
 						am.send(actionRedirect, function () {
 							logger.debug("'actionRedirect' " + sys.inspect(actionRedirect) + " has been sent to AST");
-							client.emit('message',new ResponseMessage(client.id, 'ack_redirect'), 'Redirection has been taken');
+							client.emit('message',new ResponseMessage(client.id, 'ack_redirect'), '');
 							logger.debug("RESP 'ack_redirect' has been sent to [" + extFrom + "] id '" + client.id + "'");
 						});
 					}catch(err){logger.warn("no connection to asterisk: "+err);}
@@ -2646,8 +2656,7 @@ io.sockets.on('connection', function(client){
 	  		break;
 	  		case actions.SEARCH_CONTACT_PHONEBOOK:
 	  			// check if the user has the permission to search contact in phonebook
-				var res = profiler.checkActionPhonebookPermit(extFrom);
-	  			if(res){
+	  			if(profiler.checkActionPhonebookPermit(extFrom)){
 					logger.debug("check 'searchContactPhonebook' permission for [" + extFrom + "] OK: search...");
 	  				// execute query to search contact in phonebook
 	  				var namex = message.namex;
@@ -2661,7 +2670,7 @@ io.sockets.on('connection', function(client){
 	  			}
 	  			else{
 					logger.debug("check 'searchContactPhonebook' permission for [" + extFrom + "] FAILED !");
-  					client.emit('message',new ResponseMessage(client.id, "error_search_contacts", "Sorry: you don't have permission to search contacts in phonebook !"));
+  					client.emit('message',new ResponseMessage(client.id, "error_search_contacts", ""));
   					logger.debug("RESP 'error_search_contacts' has been sent to [" + extFrom + "] id '" + client.id + "'");
 	  			}
 	  		break;
