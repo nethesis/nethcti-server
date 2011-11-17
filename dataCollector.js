@@ -145,7 +145,7 @@ function getDayHistorySms(ext, date, cb){
 }
 function registerSmsSuccess(sender, destination, text, cb){
 	var objQuery = queries[SMS];
-	objQuery.query = "INSERT INTO i"+DB_TABLE_SMS+" (sender,destination,text,date,status) VALUES ('"+sender+"','"+destination+"','"+text+"',now(),1)";
+	objQuery.query = "INSERT INTO "+DB_TABLE_SMS+" (sender,destination,text,date,status) VALUES ('"+sender+"','"+destination+"','"+text+"',now(),1)";
         if(objQuery!==undefined){
                 executeSQLQuery(SMS, objQuery, function(results){ // execute current sql query
                         cb(results);
