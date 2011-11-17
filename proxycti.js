@@ -2176,10 +2176,41 @@ io.sockets.on('connection', function(client){
 			GET_PEER_LIST_COMPLETE_OP: 	'get_peer_list_complete_op',
 			REDIRECT_VOICEMAIL_FROM_OP: 	'redirect_voicemail_from_op',
 			GET_CURRENT_WEEK_HISTORY:  'get_current_week_history',
-			GET_CURRENT_MONTH_HISTORY: 'get_current_month_history'
+			GET_CURRENT_MONTH_HISTORY: 'get_current_month_history',
+			DELETE_AUDIO_RECORDING_CALL: 'delete_audio_recording_call'
 		}
   		logger.debug("ACTION received: from id '" + client.id + "' message " + sys.inspect(message));	
   		switch(action){
+			case actions.DELETE_AUDIO_RECORDING_CALL:
+				var uniqueid = message.uniqueid;
+				fs.readdir(AST_CALL_AUDIO_DIR,function(err,files){
+					if(err){
+						logger.error('from ['+extFrom+'] - error deleting audio recording call with uniqueid ['+uniqueid+']: ' + err);
+						var respMsg = new ResponseMessage(client.id, "error_delete_audio_recording_call", '');
+						client.emit('message',respMsg);
+						logger.debug("RESP 'error_delete_audio_recording_call' has been sent to [" + extFrom + "] id '" + client.id + "'");
+						return;
+					}
+                			for(var i=0, filename; filename=files[i]; i++){
+                        			if(filename.indexOf(uniqueid)!==-1){
+							var filepath = pathreq.join(AST_CALL_AUDIO_DIR,filename);
+			                                fs.unlink(filepath, function(err){
+								if(err){
+									logger.error('from ['+extFrom+'] - error deleting audio recording call ['+filepath+']: ' + err);
+									var respMsg = new ResponseMessage(client.id, "error_delete_audio_recording_call", '');
+									client.emit('message',respMsg);
+									logger.debug("RESP 'error_delete_audio_recording_call' has been sent to [" + extFrom + "] id '" + client.id + "'");
+									return;
+								}
+								logger.debug('deleted file ['+filepath+']');
+								var respMsg = new ResponseMessage(client.id, "ack_delete_audio_recording_call", '');
+								client.emit('message',respMsg);
+								logger.debug("RESP 'ack_delete_audio_recording_call' has been sent to [" + extFrom + "] id '" + client.id + "'");
+							});
+                        			}
+                			}
+				});
+			break;
 			case actions.GET_CALL_NOTES:
 				dataCollector.getCallNotes(message.num,function(results){ // get call notes for the caller (from)
 					var owner = '',
