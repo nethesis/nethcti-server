@@ -2287,19 +2287,19 @@ io.sockets.on('connection', function(client){
 					respMsg.pub = message.pub;
 					respMsg.entryId = message.entryId;
 					var d = new Date();
-					var dd = d.getDate();
-					var mm = d.getMonth()+1;
-					respMsg.creationDate = (dd<10 ? ('0'+dd) : dd) + '/' + (mm<10 ? ('0'+mm) : mm) + '/' + d.getFullYear();
 					var newdate = new Date(d);
 					if(message.expFormatVal==='DAY') {
 						newdate.setDate(d.getDate() + parseInt(message.expiration));
-					} else if(message.expFormatVal==='MONTH') {
-						newdate.setMonth(d.getMonth() + parseInt(message.expiration));
+					} else if(message.expFormatVal==='HOUR') {
+						newdate.setHours(d.getHours() + parseInt(message.expiration));
 					}
-					console.log(newdate);
-					dd = newdate.getDate();
-					mm = newdate.getMonth()+1;
+					var dd = newdate.getDate();
+					var mm = newdate.getMonth()+1;
+					var hh = newdate.getHours();
+					var min = newdate.getMinutes();
+					var sec = newdate.getSeconds();
 					respMsg.expirationDate = (dd<10 ? ('0'+dd) : dd) + '/' + (mm<10 ? ('0'+mm) : mm) + '/' + newdate.getFullYear();
+					respMsg.expirationTime = (hh<10 ? ('0'+hh) : hh) + ':' + (min<10 ? ('0'+min) : min) + ':' + (sec<10 ? ('0'+sec) : sec);
                                         client.emit('message',respMsg);
                                         logger.debug("RESP 'ack_modify_callnote' has been sent to [" + extFrom + "] id '" + client.id + "'");	
 				});

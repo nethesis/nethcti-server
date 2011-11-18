@@ -74,14 +74,14 @@ function getCallNotes(num,cb){
 }
 function modifyCallNote(note,pub,expiration,expFormatVal,entryId,cb){
 	var objQuery = queries[CALL_NOTES];
-	objQuery.query = "UPDATE call_notes SET text='"+note+"',date=CURRENT_TIMESTAMP,public="+pub+",expiration=DATE_ADD(curdate(),INTERVAL "+expiration+" "+expFormatVal+") where id="+entryId+";";
+	objQuery.query = "UPDATE call_notes SET text='"+note+"',public="+pub+",expiration=DATE_ADD(now(),INTERVAL "+expiration+" "+expFormatVal+") where id="+entryId+";";
 	executeSQLQuery(CALL_NOTES, objQuery, function(results){
 		cb(results);
 	});
 }
 function saveCallNote(note,extension,pub,expiration,expFormatVal,num,cb){
 	var objQuery = queries[CALL_NOTES];
-	objQuery.query = "INSERT INTO call_notes (text,extension,number,public,expiration) VALUES ('"+note+"','"+extension+"','"+num+"',"+pub+",DATE_ADD(curdate(), INTERVAL "+expiration+" "+expFormatVal+"));";
+	objQuery.query = "INSERT INTO call_notes (text,extension,number,public,expiration) VALUES ('"+note+"','"+extension+"','"+num+"',"+pub+",DATE_ADD(now(), INTERVAL "+expiration+" "+expFormatVal+"));";
 	executeSQLQuery(CALL_NOTES, objQuery, function(results){
 		cb(results);
 	});
