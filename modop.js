@@ -10,6 +10,7 @@ var EventEmitter = require("events").EventEmitter
 var idIntervalRefresh
 var refreshChannels = {}
 var cacheQueueTypeExt = [];
+var intervalUpdateQueueExpired = true;
 const FILE_TAB_OP = "config/optab.ini";
 const FILE_FASCI_INI = "config/trunks.ini"
 const FILE_EXT_LIST = "/etc/asterisk/nethcti.ini";
@@ -49,6 +50,11 @@ var tabOp = {};
 var am = undefined; // asterisk manager
 var controller; // controller
 var listExtActiveVM = {}; // list of extensions that has active voicemail
+/* create action for asterisk server that generate series of 'QueueMember' events
+ * to add informations if the extension is present in some queue */
+var actionQueueStatus = {
+	Action: 'QueueStatus'
+};
 // Constructor 
 exports.Modop = function(){
 	EventEmitter.call(this)
@@ -115,11 +121,36 @@ exports.Modop = function(){
 	this.removeUniqueidCallFromQueue = function(uniqueid) { return removeUniqueidCallFromQueue(uniqueid); }
 	this.getParkedUniqueid = function(parking) { return getParkedUniqueid(parking)}
 	this.setUserBareJid = function(ext,bareJid){setUserBareJid(ext,bareJid);}
-	this.addQueueWaitingCaller = function(channel,calleridnum,calleridname,queueTypeExt) { addQueueWaitingCaller(channel,calleridnum,calleridname,queueTypeExt); }
+	this.addQueueWaitingCaller = function(channel,calleridnum,calleridname,waitingTime,queueTypeExt) { addQueueWaitingCaller(channel,calleridnum,calleridname,waitingTime,queueTypeExt); }
 	this.addQueueCcCaller = function(ch,ext){return addQueueCcCaller(ch,ext)}
 	this.removeQueueCcCaller = function(ch){return removeQueueCcCaller(ch)}
 	this.removeQueueWaitingCaller = function(ch){return removeQueueWaitingCaller(ch)}
 	this.getInternExtFromQueueChannel = function(ch){ return getInternExtFromQueueChannel(ch) }
+	this.updateQueueStatus = function(interval){ updateQueueStatus(interval) }
+	this.getQueueStatus = function(){ return getQueueStatus(); }
+}
+// Return the status of all queues get from extStatusForOp
+function getQueueStatus(){
+	var obj = {};
+	for(key in extStatusForOp){
+		if(extStatusForOp[key].tab==='code'){
+			obj[key] = extStatusForOp[key];
+		}
+	}
+	return obj;
+}
+/* Execute asterisk action to update queue status. At most it execute one action in one period of time (interval).
+ * So, if multiple request arrive simultaneously, only one will be executed */
+function updateQueueStatus(interval){
+	if(intervalUpdateQueueExpired){
+		intervalUpdateQueueExpired = false;
+		setTimeout(function(){
+			intervalUpdateQueueExpired = true;
+		}, interval);
+	        am.send(actionQueueStatus, function () {
+	                logger.debug("'actionQueueStatus' " + sys.inspect(actionQueueStatus) + " has been sent to AST");
+	        });
+	}
 }
 function getInternExtFromQueueChannel(ch){ // ex ch = Local/272@from-internal-57dd;1
 	return ch.split('@')[0].split('/')[1];
@@ -155,8 +186,13 @@ function addQueueCcCaller(ch,ext){
 	}
 	return undefined;
 }
-function addQueueWaitingCaller(channel,calleridnum,calleridname,queueTypeExt){
-	extStatusForOp[queueTypeExt].queueWaitingCaller[channel] = {calleridnum: calleridnum, calleridname: calleridname, startWaitingDate: new Date()}
+function addQueueWaitingCaller(channel,calleridnum,calleridname,waitingTime,queueTypeExt){
+	if(extStatusForOp[queueTypeExt].queueWaitingCaller[channel]===undefined){
+		var startWaitingDate = new Date((new Date()).getTime() - (waitingTime*1000));
+		extStatusForOp[queueTypeExt].queueWaitingCaller[channel] = {calleridnum: calleridnum, calleridname: calleridname, startWaitingDate: startWaitingDate, waitingTime: waitingTime};
+	} else {
+		extStatusForOp[queueTypeExt].queueWaitingCaller[channel].waitingTime = waitingTime;
+	}
 }
 function setUserBareJid(ext,bareJid){
 	extStatusForOp['SIP/'+ext].bareJid = bareJid;
@@ -687,6 +723,10 @@ function addListenerToAm(){
 				extStatusForOp[key].queue = queue
 		}		
 	});
+	am.addListener('queueentry', function(headers){
+		logger.info("'QueueEntry' event: " + sys.inspect(headers));
+		addQueueWaitingCaller(headers.channel,headers.calleridnum,headers.calleridname,headers.wait,'QUEUE/'+headers.queue);
+	});
 
 	/* EVENT 'CtiResultCoreShowChannels': headers = { channel: 'SIP/209-000000a1',
 	  uniqueid: '1310544816.345',
@@ -1002,11 +1042,6 @@ function initExtStatusForOp(){
         am.send(actionIAXPeersOP, function () {
                 logger.debug("'actionIAXPeersOP' " + sys.inspect(actionIAXPeersOP) + " has been sent to AST");
         });
-	/* create action for asterisk server that generate series of 'QueueMember' events
-         * to add informations if the extension is present in some queue */
-        var actionQueueStatus = {
-                Action: 'QueueStatus'
-        };
         // send action to asterisk
         am.send(actionQueueStatus, function () {
                 logger.debug("'actionQueueStatus' " + sys.inspect(actionQueueStatus) + " has been sent to AST");

@@ -240,7 +240,6 @@ am.addListener('servererror', function(err) {
 	logger.error("EVENT 'ServerError', connection attempt to asterisk server failed: (" + err + ")");
 	recon_ast();
 });
-
 /* EVENT 'NewChannel': headers = { event: 'Newchannel',
   privilege: 'call,all',
   channel: 'SIP/270-000001bb',
@@ -291,6 +290,11 @@ am.addListener('newchannel', function(headers){
 	}
 	logger.debug("'newChannel' chStat = " + sys.inspect(chStat))
 })
+
+am.addListener('queuestatuscomplete',function(headers){
+        logger.debug("EVENT 'QueueStatusComplete': headers = " + sys.inspect(headers));
+	updateAllClientsWithQueueStatusForOp();
+});
 
 /* when call from the soft phone 
  EVENT 'NewState': headers '{ event: 'Newstate',
@@ -1617,9 +1621,9 @@ am.addListener('callconnected', function(headers) {
   * to its listCall object as: ..uniqueid: calleridnum.. */
 am.addListener('agentcalled', function(headers) {
 	logger.debug("EVENT 'AgentCalled': headers = " + sys.inspect(headers))
-	var queueTypeExt = 'QUEUE/'+headers.queue;
-	modop.addQueueWaitingCaller(headers.channelcalling,headers.calleridnum,headers.calleridname,queueTypeExt);
-	updateAllClientsForOpWithTypeExt(queueTypeExt);
+	//var queueTypeExt = 'QUEUE/'+headers.queue;
+	//modop.addQueueWaitingCaller(headers.channelcalling,headers.calleridnum,headers.calleridname,queueTypeExt);
+	//updateAllClientsForOpWithTypeExt(queueTypeExt);
 })
 
 am.addListener('calldisconnected', function(from, to) {
@@ -2172,6 +2176,7 @@ io.sockets.on('connection', function(client){
 			GET_DAY_HISTORY:  	'get_day_history',
 			CHECK_CALL_AUDIO_FILE: 	'check_call_audio_file',
 			CF_UNCOND_FROM_PARKING: 'cf_uncond_from_parking',
+			GET_QUEUE_STATUS:	'get_queue_status',
 			SEARCH_CONTACT_PHONEBOOK:	'search_contact_phonebook',
 			GET_PEER_LIST_COMPLETE_OP: 	'get_peer_list_complete_op',
 			REDIRECT_VOICEMAIL_FROM_OP: 	'redirect_voicemail_from_op',
@@ -2181,6 +2186,9 @@ io.sockets.on('connection', function(client){
 		}
   		logger.debug("ACTION received: from id '" + client.id + "' message " + sys.inspect(message));	
   		switch(action){
+			case actions.GET_QUEUE_STATUS:
+				modop.updateQueueStatus(message.interval);
+			break;
 			case actions.DELETE_AUDIO_RECORDING_CALL:
 				var uniqueid = message.uniqueid;
 				fs.readdir(AST_CALL_AUDIO_DIR,function(err,files){
@@ -3742,6 +3750,22 @@ function writeChatAssociationFile(file, content){
                 	logger.error(err + ": error in write file " + file);
                 }
         });	
+}
+
+function updateAllClientsWithQueueStatusForOp(){
+	var queueStatus = modop.getQueueStatus();
+	for(key in clients){
+		var c = clients[key];
+		var response = new ResponseMessage(c.id, "update_queue_status", '');
+		response.queueStatus = queueStatus;
+		if(profiler.checkPrivacyPermit(c.extension)){
+                        response.priv = '1';
+                } else {
+                        response.priv = '0';
+                }
+		c.emit('message',response);
+		logger.debug("RESP 'update_queue_status' has been sent to client [" + key + "] id '" + c.id + "'");
+	}
 }
 
 /* This function update all clients with the new state of the extension, givin typeext. 
