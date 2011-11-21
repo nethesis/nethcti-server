@@ -2177,6 +2177,7 @@ io.sockets.on('connection', function(client){
 			CHECK_CALL_AUDIO_FILE: 	'check_call_audio_file',
 			CF_UNCOND_FROM_PARKING: 'cf_uncond_from_parking',
 			GET_QUEUE_STATUS:	'get_queue_status',
+			GET_PRIORITY_QUEUE_STATUS:	'get_priority_queue_status',
 			SEARCH_CONTACT_PHONEBOOK:	'search_contact_phonebook',
 			GET_PEER_LIST_COMPLETE_OP: 	'get_peer_list_complete_op',
 			REDIRECT_VOICEMAIL_FROM_OP: 	'redirect_voicemail_from_op',
@@ -2186,6 +2187,9 @@ io.sockets.on('connection', function(client){
 		}
   		logger.debug("ACTION received: from id '" + client.id + "' message " + sys.inspect(message));	
   		switch(action){
+			case actions.GET_PRIORITY_QUEUE_STATUS:
+				modop.updatePriorityQueueStatus(message.interval);
+			break;
 			case actions.GET_QUEUE_STATUS:
 				modop.updateQueueStatus(message.interval);
 			break;
