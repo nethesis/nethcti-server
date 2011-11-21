@@ -239,6 +239,12 @@ exports.AsteriskManager = function (newconfig) {
 		case "PeerlistComplete":
 			self.emit('peerlistcomplete');
 		break;
+		case "QueueStatusComplete":
+			self.emit('queuestatuscomplete', headers);
+		break;
+		case "QueueEntry":
+			self.emit('queueentry', headers);
+		break;
 		case "QueueMember":
 			self.emit('queuemember', headers);
 		break;
