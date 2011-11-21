@@ -127,6 +127,7 @@ exports.Modop = function(){
 	this.removeQueueWaitingCaller = function(ch){return removeQueueWaitingCaller(ch)}
 	this.getInternExtFromQueueChannel = function(ch){ return getInternExtFromQueueChannel(ch) }
 	this.updateQueueStatus = function(interval){ updateQueueStatus(interval) }
+	this.updatePriorityQueueStatus = function(interval){ updatePriorityQueueStatus() }
 	this.getQueueStatus = function(){ return getQueueStatus(); }
 }
 // Return the status of all queues get from extStatusForOp
@@ -138,6 +139,11 @@ function getQueueStatus(){
 		}
 	}
 	return obj;
+}
+function updatePriorityQueueStatus(){
+	am.send(actionQueueStatus, function () {
+        	logger.debug("'actionQueueStatus' " + sys.inspect(actionQueueStatus) + " has been sent to AST");
+	});	
 }
 /* Execute asterisk action to update queue status. At most it execute one action in one period of time (interval).
  * So, if multiple request arrive simultaneously, only one will be executed */
