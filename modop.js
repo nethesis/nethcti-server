@@ -141,6 +141,7 @@ function getQueueStatus(){
 	return obj;
 }
 function updatePriorityQueueStatus(){
+	initQueueMembers();
 	am.send(actionQueueStatus, function () {
         	logger.debug("'actionQueueStatus' " + sys.inspect(actionQueueStatus) + " has been sent to AST");
 	});	
@@ -148,6 +149,7 @@ function updatePriorityQueueStatus(){
 /* Execute asterisk action to update queue status. At most it execute one action in one period of time (interval).
  * So, if multiple request arrive simultaneously, only one will be executed */
 function updateQueueStatus(interval){
+	initQueueMembers();	
 	if(intervalUpdateQueueExpired){
 		intervalUpdateQueueExpired = false;
 		setTimeout(function(){
@@ -720,14 +722,11 @@ function addListenerToAm(){
 	  paused: '0',
 	  actionid: '1308578822527' } */
 	am.addListener('queuemember', function(headers){
-		//logger.info("'QueueMember' event: " + sys.inspect(headers))
-		var ext = headers.name.split("@")[0].split('/')[1]
-		var queue = headers.queue
-		logger.debug("'QueueMember' event: [" + ext + "] belongs to queue '" + queue + "'")
-		for(key in extStatusForOp){
-			if(key.indexOf(ext)!=-1)
-				extStatusForOp[key].queue = queue
-		}		
+		//logger.debug("'QueueMember' event: [" + ext + "] belongs to queue '" + queue + "'")
+		var ext = headers.name.split("@")[0].split('/')[1];
+		var queue = headers.queue;
+		extStatusForOp['SIP/'+ext].queue = queue;
+		extStatusForOp['QUEUE/'+queue].member[ext] = '';
 	});
 	am.addListener('queueentry', function(headers){
 		logger.info("'QueueEntry' event: " + sys.inspect(headers));
@@ -998,6 +997,13 @@ function initQueueCcCaller(){
 		}
 	}
 }
+function initQueueMembers(){
+	for(key in extStatusForOp){
+		if(extStatusForOp[key].tab===QUEUE_NAME){
+			extStatusForOp[key].member = {};
+		}
+	}
+}
 /* Initialize 'extStatusForOp'. Initially it read a configuration file that contains list of
  * all extensions. After that it sends the 'SIPPeers' action to the asterisk server. So, it
  * successively receives more 'PeerEntry' events from the asterisk server and at the end it receive
@@ -1031,6 +1037,7 @@ function initExtStatusForOp(){
 	// init queue
 	initQueueWaitingCaller();
 	initQueueCcCaller();
+	initQueueMembers();
 	// create action for asterisk server that generate series of 'PeerEntry' events
         var actionSIPPeersOP = {
                 Action: 'SIPPeers'
