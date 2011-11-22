@@ -89,13 +89,12 @@ function initServerAndAsteriskParameters(){
 	hostname = server_conf.SERVER_PROXY.hostname;
 	port = server_conf.SERVER_PROXY.port;
 	logfile = server_conf.SERVER_PROXY.logfile;
-	if(logfile == undefined) logfile = "/var/log/proxycti.log";
+	if(logfile == undefined) {
+		logfile = "/var/log/proxycti.log";
+	}
 	loglevel = server_conf.SERVER_PROXY.loglevel;
-	if(loglevel == undefined) loglevel = "INFO";
-	if(server_conf.SERVER_PROXY.prefix!==undefined){
-		phone_prefix = server_conf.SERVER_PROXY.prefix;
-	} else {
-		phone_prefix = "";
+	if(loglevel == undefined) {
+		loglevel = "INFO";
 	}
 }
 
@@ -743,7 +742,6 @@ am.addListener('dialing', function(headers) {
                                                         obj = {};
                                                         for(var item in cc){
                                                                 cc[item].server_address = "http://" + hostname + ":" + port;
-                                                                cc[item].prefix = phone_prefix;
                                                         }
                                                         obj[name] = cc;
                                                         customerCardResult.push(obj);
@@ -2040,6 +2038,9 @@ logger.info("HTTP server listening on port: " + port);
  ******************************************************************************/
 
 function callout(extFrom, to, res){
+	if(server_conf.SERVER_PROXY.prefix!==''){
+		to = server_conf.SERVER_PROXY.prefix + to;
+	}
 	if(profiler.checkActionCallOutPermit(extFrom)){ // check if the user has the permission of dial out
 		logger.debug("check 'callOut' permission for [" + extFrom + "] OK: execute calling...");
                 // create call action for asterisk server
@@ -2275,7 +2276,6 @@ io.sockets.on('connection', function(client){
                                                         obj = {};
                                                         for(var item in cc){
                                                                 cc[item].server_address = "http://" + hostname + ":" + port;
-                                                                cc[item].prefix = phone_prefix;
                                                         }
                                                         obj[name] = cc;
                                                         customerCardResult.push(obj);
@@ -2411,7 +2411,6 @@ io.sockets.on('connection', function(client){
 							chaturl = 'http://'+server_conf.SERVER_PROXY.hostname+'/http-bind';
 						}
 						respMsg.chatUrl = chaturl;
-						respMsg.prefix = server_conf.SERVER_PROXY.prefix;
 			  			client.emit('message',respMsg);
 			  			logger.debug("RESP 'ack_login' has been sent to [" + extFrom + "] id '" + client.id + "'");
 					}
@@ -3966,7 +3965,6 @@ function createResultSearchContactsPhonebook(results){
 		currentUser = results[i];
 		template = normal.compile(html_vcard_template);
 		currentUser.server_address = "http://" + hostname + ":" + port;
-		currentUser.prefix = phone_prefix;
 		temp = template(currentUser);
 		HTMLresult += temp;
 	}
