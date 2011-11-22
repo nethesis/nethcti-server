@@ -295,6 +295,9 @@ am.addListener('queuestatuscomplete',function(headers){
         logger.debug("EVENT 'QueueStatusComplete': headers = " + sys.inspect(headers));
 	updateAllClientsWithQueueStatusForOp();
 });
+am.addListener('agiexec',function(headers){
+	logger.debug("EVENT 'AGIExec': headers = " + sys.inspect(headers));
+});
 
 /* when call from the soft phone 
  EVENT 'NewState': headers '{ event: 'Newstate',
