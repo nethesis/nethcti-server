@@ -225,13 +225,8 @@ exports.AsteriskManager = function (newconfig) {
 		case "MessageWaiting":
 			self.emit('messagewaiting', headers);
 		break;
-		// end added
-
 		case "UserEvent":
 			self.emit('userevent', headers);
-		break;
-		case "AGIExec":
-			self.emit('agiexec', headers);
 		break;
 		case "PeerStatus":
 			self.emit('peerstatus', headers);
