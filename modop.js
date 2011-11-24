@@ -21,6 +21,7 @@ const START_RECORD = 1;
 const STOP_RECORD = 0;
 const VM_PATH_BASE = '/var/spool/asterisk/voicemail/default'
 const QUEUE_NAME = 'code';
+const INTERNO = 'interno';
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF) */
 var logger = log4js.getLogger('[Modop]');
@@ -251,23 +252,23 @@ function removeDialingUniqueidInternWithTypeExt(typeExt, uniqueid){
 	delete extStatusForOp[typeExt].dialingUniqueid[uniqueid]
 }
 function addDialingUniqueidInternWithTypeExt(typeExt, uniqueid, chValue){
-	if(extStatusForOp[typeExt].tab=='interno'){
+	if(extStatusForOp[typeExt].tab===INTERNO){
 		extStatusForOp[typeExt].dialingUniqueid[uniqueid] = chValue
 		extStatusForOp[typeExt].lastDialingUniqueid = uniqueid
 	}
 }
 function updateHangupUniqueidInternWithTypeExt(typeExt, uniqueid){
-	if(extStatusForOp[typeExt].tab=='interno')
+	if(extStatusForOp[typeExt].tab===INTERNO)
 		extStatusForOp[typeExt].lastHangupUniqueid = uniqueid
 }
 function getInternTypeExtFromChannel(ch){
 	for(key in extStatusForOp)
-		if(ch.indexOf(key)!=-1 && extStatusForOp[key].tab=='interno')
+		if(ch.indexOf(key)!=-1 && extStatusForOp[key].tab===INTERNO)
 			return key
 }
 function getExtInternFromChannel(ch){
 	for(key in extStatusForOp)
-		if(ch.indexOf(key)!=-1 && extStatusForOp[key].tab=='interno')
+		if(ch.indexOf(key)!=-1 && extStatusForOp[key].tab===INTERNO)
 			return extStatusForOp[key].Extension
 }
 function isExtGroup(ext){
@@ -278,7 +279,7 @@ function isExtGroup(ext){
 	return false
 }
 function removeCallConnectedUniqueidInternWithTypeExt(typeExt, uniqueid){
-	if(extStatusForOp[typeExt].tab=='interno'){
+	if(extStatusForOp[typeExt].tab===INTERNO){
 		delete extStatusForOp[typeExt].callConnectedUniqueid[uniqueid]
 		extStatusForOp[typeExt].callConnectedCount--
 	}
@@ -301,18 +302,18 @@ function getTrunkTypeExtFromChannel(ch){
 			return key
 }
 function addCallConnectedUniqueidInternWithTypeExt(typeExt, uniqueid, chValue){
-	if(extStatusForOp[typeExt].tab=='interno'){
+	if(extStatusForOp[typeExt].tab===INTERNO){
 		extStatusForOp[typeExt].callConnectedUniqueid[uniqueid] = chValue
 		extStatusForOp[typeExt].callConnectedCount++
 		extStatusForOp[typeExt].lastCallConnectedUniqueid = uniqueid
 	}
 }
 function updateCallConnectedUniqueidInternWithTypeExt(typeExt, uniqueid, chValue){
-	if(extStatusForOp[typeExt].tab=='interno')
+	if(extStatusForOp[typeExt].tab===INTERNO)
 		extStatusForOp[typeExt].callConnectedUniqueid[uniqueid] = chValue
 }
 function updateDialingUniqueidInternWithTypeExt(typeExt, uniqueid, chValue){
-	if(extStatusForOp[typeExt].tab=='interno'){
+	if(extStatusForOp[typeExt].tab===INTERNO){
 		extStatusForOp[typeExt].dialingUniqueid[uniqueid] = chValue;
 	}
 }
@@ -342,11 +343,11 @@ function addCallConnectedUniqueidTrunkWithChannel(ch, uniqueid){
 	}
 }
 function hasInternDialingUniqueidWithTypeExt(typeExt, uniqueid){
-	if(extStatusForOp[typeExt].tab=='interno' && extStatusForOp[typeExt].dialingUniqueid[uniqueid]!=undefined ) return true
+	if(extStatusForOp[typeExt].tab===INTERNO && extStatusForOp[typeExt].dialingUniqueid[uniqueid]!=undefined ) return true
 	return false
 }
 function hasInternCallConnectedUniqueidWithTypeExt(typeExt, uniqueid){
-	if(extStatusForOp[typeExt].tab=='interno' && extStatusForOp[typeExt].callConnectedUniqueid[uniqueid]!=undefined ) return true
+	if(extStatusForOp[typeExt].tab===INTERNO && extStatusForOp[typeExt].callConnectedUniqueid[uniqueid]!=undefined ) return true
 	return false
 }
 /* check if the trunk identified by 'typeExt' has the uniqueid of the channel relative to
@@ -380,7 +381,7 @@ function updateTrunkStatusWithChannel(ch, stat){
 }
 function isChannelIntern(ch){
 	for(key in extStatusForOp){
-		if( ch.indexOf(key)!=-1 && extStatusForOp[key].tab=='interno')
+		if( ch.indexOf(key)!=-1 && extStatusForOp[key].tab===INTERNO)
 			return true
 	}
 	return false
@@ -413,7 +414,7 @@ function addController(contr){ controller = contr }
 function isExtInterno(ext){
 	for(key in extStatusForOp){
 		if(key.indexOf(ext)!=-1){
-			if(extStatusForOp[key].tab=='interno')
+			if(extStatusForOp[key].tab===INTERNO)
 				return true
 		}
 	}
@@ -722,7 +723,7 @@ function addListenerToAm(){
 	  paused: '0',
 	  actionid: '1308578822527' } */
 	am.addListener('queuemember', function(headers){
-		//logger.debug("'QueueMember' event: [" + ext + "] belongs to queue '" + queue + "'")
+		//logger.debug("'QueueMember' event: [" + ext + "] belongs to queue '" + queue + "': " + sys.inspect(headers));
 		var ext = headers.name.split("@")[0].split('/')[1];
 		var queue = headers.queue;
 		extStatusForOp['SIP/'+ext].queue = queue;
@@ -870,7 +871,7 @@ function addListenerToAm(){
 		logger.debug("refreshChannels = " + sys.inspect(refreshChannels))
 		// clean extStatusForOp
 		for(typeExt in extStatusForOp){
-			if(extStatusForOp[typeExt].tab=='interno' || extStatusForOp[typeExt].tab=='fasci'){
+			if(extStatusForOp[typeExt].tab===INTERNO || extStatusForOp[typeExt].tab=='fasci'){
 				var refreshCh = refreshChannels[typeExt] // all real active channels for current typeExt
 				if(refreshCh==undefined){ // typeExt hasn't any connections, so reset data
 					logger.debug("no channels for [" + typeExt + "]: reset it")
@@ -949,19 +950,19 @@ function initCallConnectedUniqueidForTrunk(){
 // add callConnectedCount = 0 to all intern
 function initCallConnectedCountForIntern(){
         for(key in extStatusForOp)
-                if(extStatusForOp[key].tab=='interno')
+                if(extStatusForOp[key].tab===INTERNO)
                         extStatusForOp[key].callConnectedCount = 0
 }
 /* add object 'callConnectedUniqueid' to all intern. This object has 'uniquedid' of callconnected
  * event as a key and an empty string ('') as a value */
 function initCallConnectedUniqueidForIntern(){
         for(key in extStatusForOp)
-                if(extStatusForOp[key].tab=='interno')
+                if(extStatusForOp[key].tab===INTERNO)
                         extStatusForOp[key].callConnectedUniqueid = {}
 }
 function initDialingUniqueidForIntern(){
 	for(key in extStatusForOp)
-		if(extStatusForOp[key].tab=='interno')
+		if(extStatusForOp[key].tab===INTERNO)
 			extStatusForOp[key].dialingUniqueid = {}
 }
 function initDialingUniqueidForTrunk(){
