@@ -46,7 +46,7 @@ var ResponseMessage = function(clientSessionId, typeMessage, respMessage){
 	this.typeMessage = typeMessage;
 	this.respMessage = respMessage;
 }
-
+var currentCallInInfo = {}; // the info (callNotes, Customer Card...) for the current caller
 var html_vcard_template = undefined;
 var html_cc_template = undefined;
 var chatAssociation = {}; // association between extensions and their chat user
@@ -293,9 +293,6 @@ am.addListener('newchannel', function(headers){
 am.addListener('queuestatuscomplete',function(headers){
         logger.debug("EVENT 'QueueStatusComplete': headers = " + sys.inspect(headers));
 	updateAllClientsWithQueueStatusForOp();
-});
-am.addListener('agiexec',function(headers){
-	logger.debug("EVENT 'AGIExec': headers = " + sys.inspect(headers));
 });
 
 /* when call from the soft phone 
@@ -610,8 +607,7 @@ EVENT 'Dialing': headers '{ event: 'Dial',
   dialstatus: 'CONGESTION' }' */
 am.addListener('dialing', function(headers) {
         logger.debug("EVENT 'Dialing': headers '" + sys.inspect(headers) + "'")
-	logger.debug("key of chStat = " + Object.keys(chStat).length)
-//	logger.debug("'dialing' chstat = " + sys.inspect(chStat))
+
 	/* chstat = { '1308646890.732': 
 	   { channel: 'SIP/271-00000274',
 	     status: 'ring',
@@ -710,52 +706,42 @@ am.addListener('dialing', function(headers) {
                         var response = new ResponseMessage(c.id, "dialing", headers.calleridname);
                         response.from = from;
                         response.to = to;
-                        var typesCC = profiler.getTypesCustomerCardPermit(to);
+                        var typesCC = profiler.getTypesCustomerCardPermit(to); // array
                         logger.debug("[" + to + "] is able to view customer card of types: " + sys.inspect(typesCC));
-
-
-			dataCollector.getCallNotes(from,function(results){ // get call notes for the caller (from)
-				var pub = false;
-				var result = [];
-				for(var i=0, entry; entry=results[i]; i++){
-					pub = entry.public;
-					if(pub || entry.extension===to){ // add entry if it's public or the requester is the creator
-						result.push(entry);
-					}
+			var callNotes = [];
+			if(currentCallInInfo[from]!==undefined){
+				callNotes = currentCallInInfo[from].callNotes; // call notes calculated in 'UserEvent' event
+				response.reservation = currentCallInInfo[from].reservation;
+			}
+			var result = [];
+			for(var w=0, callnote; callnote=callNotes[w]; w++){
+				if(callnote.pub || callnote.extension===to){
+					result.push(callnote);
 				}
-				response.callNotes = result;
-				if(typesCC.length===0){
-                                	// the user hasn't the authorization of view customer card, then the length is 0
-	                                logger.debug("check permission to view Customer Card for [" + to + "] FAILED !");
-	                                response.customerCard = "";
-	                                response.noPermission = '';
-	                                c.emit('message',response);
-	                                logger.debug("RESP 'dialing' has been sent to [" + to + "] id '" + c.id + "'");
-	                                return;
-	                        }
-                                var customerCardResult = [];
-                                var obj = {};
-                                for(i=0; i<typesCC.length; i++){
-                                        var name = typesCC[i];
-                                        dataCollector.getCustomerCard(from, typesCC[i], function(cc, name) {
-                                                if(cc!==undefined){
-                                                        obj = {};
-                                                        for(var item in cc){
-                                                                cc[item].server_address = "http://" + hostname + ":" + port;
-                                                        }
-                                                        obj[name] = cc;
-                                                        customerCardResult.push(obj);
-                                                } else {
-                                                        customerCardResult.push(cc);
-                                                }
-                                                if(customerCardResult.length==typesCC.length){
-                                                        response.customerCard = createCustomerCardHTML(customerCardResult, from);
-                                                        c.emit('message',response);
-                                                        logger.debug("RESP 'dialing' has been sent to [" + to + "] id '" + c.id + "' with relative customer card");
-                                                }
-                                        });
-                                }
-			});
+			}
+			response.callNotes = result;
+			var ccArr = {};
+			if(currentCallInInfo[from]!==undefined){
+				ccArr = currentCallInInfo[from].cc; // customer card calculated in 'UserEvent' event
+			}
+			if(typesCC.length===0){
+				// the user hasn't the authorization of view customer card, then the length is 0
+                                logger.debug("check permission to view Customer Card for [" + to + "] FAILED !");
+                                response.customerCard = "";
+                                response.noPermission = '';
+                                c.emit('message',response);
+                                logger.debug("RESP 'dialing' has been sent to [" + to + "] id '" + c.id + "'");
+                                return;
+			}
+			var str = '';
+			if(Object.keys(ccArr).length>0){
+				for(var w=0, typecc; typecc=typesCC[w]; w++){
+					str += ccArr[typecc];
+				}
+			}
+			response.customerCard = str;
+			c.emit('message',response);
+                        logger.debug("RESP 'dialing' has been sent to [" + to + "] id '" + c.id + "' with relative customer card");
                 }
 	}
 	// add dialExtUniqueid for trunk and for queue ;2 (;2 means the call to client intern)
@@ -1051,14 +1037,6 @@ am.addListener('hangup', function(headers) {
 		logger.debug("hangup call is relative to queue: remove ch '" + headers.channel + "' from queueWaitingCaller of [" + qtypeExt + "]");
 		updateAllClientsForOpWithTypeExt(qtypeExt);
 	}
-/*
-	// remove call uniqueid from listCall of queue. Return queueTypeExt of the queue that has the uniqueid in its listCall, otherwise undefined is returned
-	var queueTypeExt = modop.removeUniqueidCallFromQueue(headers.uniqueid);
-	if(queueTypeExt!==undefined){
-		logger.debug("hangup call is relative to queue: remove uniqueid '" + headers.uniqueid + "' from listCall of [" + queueTypeExt + "]");
-		updateAllClientsForOpWithTypeExt(queueTypeExt);
-	}
-*/
 	if(headers.channel.indexOf('<ZOMBIE>')===-1 && chStat[trueUniqueid]===undefined){
 		logger.warn("discard 'hangup' event: it isn't present in chStat. The cause can be the start of this server during the asterisk functioning");
 		return;
@@ -1118,6 +1096,8 @@ am.addListener('hangup', function(headers) {
 		updateAllClientsForOpWithTypeExt(trunkTypeExt);
 		delete chStat[trueUniqueid];
 		deleteAllChOccurrenceFromChstat(headers.channel);
+		delete currentCallInInfo[headers.calleridnum]; // delete info of the current call (callNotes, Customer Card,...)
+		logger.debug("currentCallInInfo = " + sys.inspect(currentCallInInfo));
 		return;
 	}
 	else if(modop.isChannelIntern(headers.channel) && headers.channel.indexOf('AsyncGoto/SIP/')===-1){ // headers.channel is an intern
@@ -1665,7 +1645,8 @@ am.addListener('peerstatus', function(headers) {
 	updateAllClientsForOpWithTypeExt(headers.peer);
 });
 
-/* This event is generated only by the phone of the user.
+/* This event is generated, by the phone of the user and when the 
+ * call coming from outside.
  * An example of UserEvent event is:
  *
 { event: 'UserEvent',
@@ -1673,79 +1654,135 @@ am.addListener('peerstatus', function(headers) {
   serevent: 'ASTDB',
   channel: 'SIP/503-0000000d^Family',
   extra: 'Family: DND^Value: Attivo^' }
- */
+ *
+ * when the call come from the outside:
+{ event: 'UserEvent',
+  privilege: 'user,all',
+  userevent: 'CAllIN|Data; 3405567088' } */
 am.addListener('userevent', function(headers){
 	logger.debug("EVENT 'UserEvent': headers = " + sys.inspect(headers))
-	// get ext, family and value
-	var ext = headers.channel.split("/")[1] // 503-0000000d^Family
-	ext = ext.split("-")[0] // 503
-	var family = headers.extra.split("^")[0] // Family: DND
-	family = family.split(":")[1] // DND
-	var value = headers.extra.split("^")[1] // Value: Attivo
-	value = value.split(":")[1] // Attivo or ' '
-	// remove whitespace from 'family' and 'value'
-	family = family.split(' ').join('')
-	value = value.split(' ').join('')
-	family = family.toLowerCase()
-	value = value.toLowerCase()
-	if(family=='dnd'){
-		logger.debug("[" + ext + "] '" + family + " " + value + "'");
-		/* in this case the client who has modified its DND value is connected to the cti
- 		 * and has modified its DND through his telephone. So he'll be advise of the changing
-		 * to update its cti. */
-		if(clients[ext]!=undefined){	
-			var c = clients[ext]
-			if(value==""){ // DND is disabled by the phone user
-				logger.debug("[" + ext + "] '" + family + " OFF'")
-				var msg = ext + " has disabled its " + family
-        		        var response = new ResponseMessage(c.id, "dnd_status_off", msg)
-		                c.emit('message',response);
-		                logger.debug("RESP 'dnd_status_off' has been sent to [" + ext + "] id '" + c.id + "'")
+	// Manage first case: the event is generated from the phone og the user
+	if(headers.channel!==undefined && headers.extra!==undefined){
+		// get ext, family and value
+		var ext = headers.channel.split("/")[1]; // 503-0000000d^Family
+		ext = ext.split("-")[0]; // 503
+		var family = headers.extra.split("^")[0]; // Family: DND
+		family = family.split(":")[1]; // DND
+		var value = headers.extra.split("^")[1]; // Value: Attivo
+		value = value.split(":")[1]; // Attivo or ' '
+		// remove whitespace from 'family' and 'value'
+		family = family.split(' ').join('');
+		value = value.split(' ').join('');
+		family = family.toLowerCase();
+		value = value.toLowerCase();
+		if(family==='dnd'){
+			logger.debug("[" + ext + "] '" + family + " " + value + "'");
+			/* in this case the client who has modified its DND value is connected to the cti
+	 		 * and has modified its DND through his telephone. So he'll be advise of the changing
+			 * to update its cti. */
+			if(clients[ext]!=undefined){	
+				var c = clients[ext]
+				if(value==""){ // DND is disabled by the phone user
+					logger.debug("[" + ext + "] '" + family + " OFF'")
+					var msg = ext + " has disabled its " + family
+	        		        var response = new ResponseMessage(c.id, "dnd_status_off", msg)
+			                c.emit('message',response);
+			                logger.debug("RESP 'dnd_status_off' has been sent to [" + ext + "] id '" + c.id + "'")
+				}
+				else if(value=="attivo"){ // DND is enable by the phone user
+					logger.debug("[" + ext + "] '" + family + " ON'")
+					var msg = ext + " has enabled its " + family
+	                                var response = new ResponseMessage(c.id, "dnd_status_on", msg)
+	                                c.emit('message',response);
+	                                logger.debug("RESP 'dnd_status_on' has been sent to [" + ext + "] id '" + c.id + "'")
+				}
 			}
-			else if(value=="attivo"){ // DND is enable by the phone user
-				logger.debug("[" + ext + "] '" + family + " ON'")
-				var msg = ext + " has enabled its " + family
-                                var response = new ResponseMessage(c.id, "dnd_status_on", msg)
-                                c.emit('message',response);
-                                logger.debug("RESP 'dnd_status_on' has been sent to [" + ext + "] id '" + c.id + "'")
-			}
+			if(value=="")
+				modop.updateExtDNDStatusWithExt(ext, "off")
+			else if(value=="attivo")
+				modop.updateExtDNDStatusWithExt(ext, "on")
+	                updateAllClientsForOpWithTypeExt("SIP/"+ext);
 		}
-		if(value=="")
-			modop.updateExtDNDStatusWithExt(ext, "off")
-		else if(value=="attivo")
-			modop.updateExtDNDStatusWithExt(ext, "on")
-                updateAllClientsForOpWithTypeExt("SIP/"+ext);
+		else if(family=='cf'){
+			logger.info("[" + ext + "] '" + family + " " + value + "'");
+			/* in this case the client who has modified his 'CF' value is connected to cti
+	                 * and has modified his 'CF' through his telephone. So he'll be advise of changing
+	                 * to update his cti */
+	                if(clients[ext]!=undefined){
+	                        var c = clients[ext];
+	                        if(value==""){ // CF is disabled by the phone user
+	                                logger.debug("[" + ext + "] '" + family + " OFF'");
+	                                var msg = ext + " has disabled its " + family;
+	                                var response = new ResponseMessage(c.id, "cf_status_off", msg);
+	                                c.emit('message',response);
+	                                logger.debug("RESP 'cf_status_off' has been sent to [" + ext + "] id '" + c.id + "'");
+	                        }
+	                        else { // CF is enable by the phone user
+	                                logger.debug("[" + ext + "] '" + family + " ON' to [" + value + "]");
+	                                var msg = ext + " has enabled its " + family + " to " + value;
+	                                var response = new ResponseMessage(c.id, "cf_status_on", msg);
+					response.extTo = value;
+	                                c.emit('message',response);
+	                                logger.debug("RESP 'cf_status_on' to [" + value + "] has been sent to [" + ext + "] id '" + c.id + "'");
+	                        }
+	                }
+	                if(value=="")
+	                        modop.updateExtCFStatusWithExt(ext, "off")
+	                else 
+	                        modop.updateExtCFStatusWithExt(ext, "on", value)
+	                updateAllClientsForOpWithTypeExt(ext)
+		}
+	} // end of the first case
+	// Manage secon case: the event is generated from the arrive of an outside call
+	var userevent = headers.userevent;
+	if(userevent!==undefined && userevent.indexOf('CAllIN')!==undefined){
+		var callerFromOutside = userevent.split(';')[1];
+		callerFromOutside = callerFromOutside.replace(/[" "]/g,"");
+		currentCallInInfo[callerFromOutside] = {}; // init current data info of the caller
+		// get call notes for the caller
+		dataCollector.getCallNotes(callerFromOutside,function(results){
+			currentCallInInfo[callerFromOutside].callNotes = results;
+		});
+		// get all customer cards for the caller
+		var allTypesCC = profiler.getAllTypesCustomerCard(); // array
+		var obj = {};
+		var customerCardResult = [];
+		currentCallInInfo[callerFromOutside].cc = customerCardResult;
+		for(var i=0, type; type=allTypesCC[i]; i++){
+			dataCollector.getCustomerCard(callerFromOutside, type, function(cc, name) {
+				if(cc!==undefined){
+					obj = {};
+					for(var item in cc){
+                                      		cc[item].server_address = "http://" + hostname + ":" + port;
+                                        }
+					obj[name] = cc;
+					customerCardResult.push(obj);
+				} else {
+					customerCardResult.push(cc);
+				}
+				if(customerCardResult.length===allTypesCC.length){
+					currentCallInInfo[callerFromOutside].cc = {};
+					var key = '';
+					var ccHtml = '';
+					for(var w=0, cc; cc=customerCardResult[w]; w++){
+						key = Object.keys(cc)[0];
+						ccHtml = createCustomerCardHTML([cc],callerFromOutside);
+						currentCallInInfo[callerFromOutside].cc[key] = ccHtml;
+					}
+				}
+			});
+		}
+		// check if there is a booked call
+		dataCollector.isCallReserved(callerFromOutside,function(results){
+			if(results.length>0){
+				currentCallInInfo[callerFromOutside].reservation = {value: true, ext: results[0].extension};
+			} else {
+				currentCallInInfo[callerFromOutside].reservation = {value: false};
+			}
+		});
 	}
-	else if(family=='cf'){
-		logger.info("[" + ext + "] '" + family + " " + value + "'");
-		/* in this case the client who has modified his 'CF' value is connected to cti
-                 * and has modified his 'CF' through his telephone. So he'll be advise of changing
-                 * to update his cti */
-                if(clients[ext]!=undefined){
-                        var c = clients[ext];
-                        if(value==""){ // CF is disabled by the phone user
-                                logger.debug("[" + ext + "] '" + family + " OFF'");
-                                var msg = ext + " has disabled its " + family;
-                                var response = new ResponseMessage(c.id, "cf_status_off", msg);
-                                c.emit('message',response);
-                                logger.debug("RESP 'cf_status_off' has been sent to [" + ext + "] id '" + c.id + "'");
-                        }
-                        else { // CF is enable by the phone user
-                                logger.debug("[" + ext + "] '" + family + " ON' to [" + value + "]");
-                                var msg = ext + " has enabled its " + family + " to " + value;
-                                var response = new ResponseMessage(c.id, "cf_status_on", msg);
-				response.extTo = value;
-                                c.emit('message',response);
-                                logger.debug("RESP 'cf_status_on' to [" + value + "] has been sent to [" + ext + "] id '" + c.id + "'");
-                        }
-                }
-                if(value=="")
-                        modop.updateExtCFStatusWithExt(ext, "off")
-                else 
-                        modop.updateExtCFStatusWithExt(ext, "on", value)
-                updateAllClientsForOpWithTypeExt(ext)
-	}
-})
+	// end of the second case
+});
 
 
 /* This event is necessary to add information to parked members of what extension is parked on it.
@@ -2038,7 +2075,7 @@ logger.info("HTTP server listening on port: " + port);
  ******************************************************************************/
 
 function callout(extFrom, to, res){
-	if(server_conf.SERVER_PROXY.prefix!==''){
+	if(server_conf.SERVER_PROXY.prefix!=='' && !modop.isExtInterno(to)){
 		to = server_conf.SERVER_PROXY.prefix + to;
 	}
 	if(profiler.checkActionCallOutPermit(extFrom)){ // check if the user has the permission of dial out
@@ -2318,6 +2355,11 @@ io.sockets.on('connection', function(client){
                                         client.emit('message',respMsg);
                                         logger.debug("RESP 'ack_modify_callnote' has been sent to [" + extFrom + "] id '" + client.id + "'");	
 				});
+				if(message.nextCallReservation){
+					dataCollector.saveCallReservation(extFrom,message.num,function(){
+						logger.debug('call reservation from [' + extFrom + '] for number \'' + message.num + '\' has been saved into database');
+					});
+				}
 			break;
 			case actions.SAVE_NOTE_OF_CALL:
 				dataCollector.saveCallNote(message.note,extFrom,message.pub,message.expiration,message.expFormatVal,message.num,function(){
@@ -2326,6 +2368,11 @@ io.sockets.on('connection', function(client){
 					client.emit('message',respMsg);
 					logger.debug("RESP 'ack_save_callnote' has been sent to [" + extFrom + "] id '" + client.id + "'");
 				});
+				if(message.nextCallReservation){
+					dataCollector.saveCallReservation(extFrom,message.num,function(){
+						logger.debug('call reservation from [' + extFrom + '] for number \'' + message.num + '\' has been saved into database');
+					});
+				}
 			break;
 			case actions.CF_VM_PARKING:
 				var redirectTo = message.redirectToExt;
@@ -3789,7 +3836,7 @@ function updateAllClientsForOpWithTypeExt(typeext){
                 var msg = "state of " + newState.Label + " has changed: update ext new state";
                 var response = new ResponseMessage(c.id, "update_ext_new_state_op", msg);
                 response.extNewState = newState;
-		response.tyext = typeext;
+		response.typeExt = typeext;
 		if(profiler.checkPrivacyPermit(c.extension)){
 	                response.priv = '1';
 	        } else {
