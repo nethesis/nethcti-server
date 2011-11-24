@@ -55,6 +55,7 @@ exports.Profiler = function(){
 	this.checkActionOpBasePermit = function(exten) { return checkActionPermit(exten, OP_BASE) }
         this.setLogger = function(logfile,level) { log4js.addAppender(log4js.fileAppender(logfile), '[Profiler]'); logger.setLevel(level); }
 	this.checkPrivacyPermit = function(exten) { return checkActionPermit(exten, PRIVACY); }
+	this.getAllTypesCustomerCard = function(){ return getAllTypesCustomerCard(); }
 }
 function addController(contr){
 	controller = contr
@@ -70,6 +71,9 @@ function addController(contr){
 // this function update profiles in memory after changing of confiuration file
 function updateConfiguration(){
 	initProfiles()
+}
+function getAllTypesCustomerCard(){
+	return Object.keys(actions[CUSTOMER_CARD]);
 }
 // Return an array containing the types of customer card for which the user is enable
 function getTypesCustomerCardPermit(exten){
