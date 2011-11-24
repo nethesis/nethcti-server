@@ -48,7 +48,7 @@ var ResponseMessage = function(clientSessionId, typeMessage, respMessage){
 }
 var currentCallInInfo = {}; // the info (callNotes, Customer Card...) for the current caller
 var html_vcard_template = undefined;
-var html_cc_template = undefined;
+var cc_templates = undefined;
 var chatAssociation = {}; // association between extensions and their chat user
 function readVCardTemplate(){
 	html_vcard_template = fs.readFile(TEMPLATE_DECORATOR_VCARD_FILENAME, "UTF-8", function(err, data) {
@@ -60,12 +60,12 @@ function readVCardTemplate(){
         });	
 }
 function readCCTemplate(){
-	html_cc_template = fs.readFile(TEMPLATE_DECORATOR_CUSTOMERCARD_FILENAME, "UTF-8", function(err, data) {
+	cc_templates = fs.readFile(TEMPLATE_DECORATOR_CUSTOMERCARD_FILENAME, "UTF-8", function(err, data) {
                 if(err){
                         logger.error("ERROR in reading '" + TEMPLATE_DECORATOR_CUSTOMERCARD_FILENAME + "' (function 'readCCTemplate'): " +err);
 			process.exit(0);
                 }
-                html_cc_template = data;
+                cc_templates = data;
         });
 }
 function readAllTemplate(){ // read all html template
@@ -100,7 +100,7 @@ function initServerAndAsteriskParameters(){
 
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF) */
-log4js.clearAppenders();
+//log4js.clearAppenders();
 log4js.addAppender(log4js.fileAppender(logfile), '[ProxyCTI]');
 var logger = log4js.getLogger('[ProxyCTI]');
 logger.setLevel(loglevel);
@@ -3993,7 +3993,7 @@ createCustomerCardHTML = function(customerCard, from){
            }
         }
 
-	var template = normal.compile(html_cc_template);
+	var template = normal.compile(cc_templates);
 	var toAdd = template(tmp);
 	var HTMLresult = toAdd;		
 	return HTMLresult;
