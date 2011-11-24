@@ -12,6 +12,7 @@ const CURRENT_WEEK_HISTORY_CALL = "current_week_history_call";
 const CURRENT_MONTH_HISTORY_CALL = "current_month_history_call";
 const SMS = "sms";
 const CALL_NOTES = "call_notes";
+const CALL_RESERVATION = "call_reservation";
 const DB_TABLE_SMS = 'sms_history';
 const DB_TABLE_CALLNOTES = 'call_notes';
 
@@ -64,10 +65,27 @@ exports.DataCollector = function(){
 	this.saveCallNote = function(note,extension,pub,expiration,expFormatVal,num,cb){ saveCallNote(note,extension,pub,expiration,expFormatVal,num,cb); }
 	this.modifyCallNote = function(note,pub,expiration,expFormatVal,entryId,cb){ modifyCallNote(note,pub,expiration,expFormatVal,entryId,cb); }
 	this.getCallNotes = function(num,cb){ getCallNotes(num,cb); }
+	this.saveCallReservation = function(ext,num,cb){ saveCallReservation(ext,num,cb); }
+	this.isCallReserved = function(num,cb){ isCallReserved(num,cb); }
+}
+function isCallReserved(num,cb){
+	var objQuery = queries[CALL_RESERVATION];
+	objQuery.query = "select * from call_reservation where number="+num+";";
+	executeSQLQuery(CALL_RESERVATION, objQuery, function(results){
+		cb(results);
+	});
+}
+// if already exist a reservation call for number num, update the entry
+function saveCallReservation(ext, num, cb){
+	var objQuery = queries[CALL_RESERVATION];
+	objQuery.query = "INSERT INTO call_reservation (extension,number) VALUES ('"+ext+"','"+num+"') ON DUPLICATE KEY UPDATE extension="+ext+", date=now();";
+	executeSQLQuery(CALL_RESERVATION, objQuery, function(results){
+		cb(results);
+	});
 }
 function getCallNotes(num,cb){
 	var objQuery = queries[CALL_NOTES];
-	objQuery.query = "select * from call_notes where number='"+num+"' AND expiration>curdate();";
+	objQuery.query = "select * from call_notes where number='"+num+"' AND expiration>now();";
 	executeSQLQuery(CALL_NOTES, objQuery, function(results){
 		cb(results);
        	});
@@ -303,6 +321,15 @@ function initQueries(){
 		dbname: 'nethcti',
 		query: ''
 	};
+	this.queries[CALL_RESERVATION] = {
+		dbhost: 'localhost',
+		dbport: '/var/lib/mysql/mysql.sock',
+		dbtype: 'mysql',
+		dbuser: 'smsuser',
+		dbpassword: 'smspass',
+		dbname: 'nethcti',
+		query: ''
+	};
 	initDBConnections();
 }
 
@@ -356,8 +383,6 @@ getDayHistoryCall = function(ext, date, cb){
         }
         return undefined;
 }
-
-
 /* Return the customer card of the client extCC in type format.
  * The type is specified in section [CUSTOMER_CARD] of profiles.ini file */
 getCustomerCard = function(ext, type, cb){
