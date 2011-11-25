@@ -715,6 +715,7 @@ am.addListener('dialing', function(headers) {
 		if(c!==undefined){
 			var response = new ResponseMessage(c.id, "dialing", headers.calleridname);
 			setResponseWithCurrentCallInfoCC(c,from,to,response);
+			response.dialCh = headers.destination;
 			c.emit('message',response);
                         logger.debug("RESP 'dialing' has been sent to [" + to + "] id '" + c.id + "' with relative customer card");
                 }
@@ -763,7 +764,6 @@ am.addListener('dialing', function(headers) {
 				var internTypeExt = modop.getInternTypeExtFromChannel(headers.channel);
 				modop.addDialingUniqueidInternWithTypeExt(internTypeExt, trueUniqueid, chStat[trueUniqueid]);
 				logger.debug("added dialingUniqueid '" + trueUniqueid + "' to interTypeExt '" + internTypeExt + "'");
-//		        	updateAllClientsForOpWithExt(from);
 				updateAllClientsForOpWithTypeExt(internTypeExt);
 			} else if( modop.isExtPresent(from) && modop.isChannelTrunk(headers.channel) )
 				logger.warn("[" + from + "] is namesake: comes from remote location through trunk '" + headers.channel + "'");
