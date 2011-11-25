@@ -16,9 +16,6 @@ var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
 var log4js = require('./lib/log4js-node/lib/log4js')();
 const PROXY_CONFIG_FILENAME = "config/proxycti.ini";
 const CHAT_ASSOC_FILE = "./store/chat-assoc";
-const TEMPLATE_DECORATOR_VCARD_FILENAME = "./template/decorator_vcard.html";
-const TEMPLATE_DECORATOR_CUSTOMERCARD_FILENAME = "./template/decorator_customerCard.html";
-const TEMPLATE_DECORATOR_HISTORY_CALL_FILENAME = "./template/decorator_historyCall.html";
 const AST_CALL_AUDIO_DIR = "/var/spool/asterisk/monitor";
 const SMS_DIR = "sms";
 const CALL_PREFIX = "CTI-";
@@ -29,6 +26,11 @@ const DIAL_FROM = 1;
 const DIAL_TO = 0;
 const N_AST_RECON = 3; // number of reconnection attempts to asterisk when fail connection
 const DELAY_AST_RECON = 8000; // delay between two reconnection attempts to asterisk
+var cc_templates = {}; // key is filename of the template and value is its content
+var template_cc_dir = { // directories of all templates (customer card, vcard, ...)
+	PROXY: './template',
+	ESMITH: '/home/e-smith/proxycti/template'
+};
 var astrecon = false; // avoids more contemporary reconnection to asterisk server
 var server; // http server
 var counter_ast_recon = 0;
@@ -48,29 +50,40 @@ var ResponseMessage = function(clientSessionId, typeMessage, respMessage){
 }
 var currentCallInInfo = {}; // the info (callNotes, Customer Card...) for the current caller
 var html_vcard_template = undefined;
-var cc_templates = undefined;
 var chatAssociation = {}; // association between extensions and their chat user
-function readVCardTemplate(){
-	html_vcard_template = fs.readFile(TEMPLATE_DECORATOR_VCARD_FILENAME, "UTF-8", function(err, data) {
-                if(err){
-                        logger.error("ERROR in reading '" + TEMPLATE_DECORATOR_VCARD_FILENAME + "' (function 'readVCardTemplate'): " + err);
-			process.exit(0);
-                }
-                html_vcard_template = data;
-        });	
+function readSingleTemplate(filename,filepath){
+	fs.stat(filepath, function(err,stats){
+		if(err){
+			logger.error('read template: ' + err);
+			return;
+		}
+		if(stats.isFile()){
+			var fileContent = fs.readFile(filepath,'UTF-8',function(err,data){
+				if(err){
+					logger.error('read template: ' + err);
+					return;
+				}
+				cc_templates[filename] = data;
+			});
+		}
+	});
 }
-function readCCTemplate(){
-	cc_templates = fs.readFile(TEMPLATE_DECORATOR_CUSTOMERCARD_FILENAME, "UTF-8", function(err, data) {
-                if(err){
-                        logger.error("ERROR in reading '" + TEMPLATE_DECORATOR_CUSTOMERCARD_FILENAME + "' (function 'readCCTemplate'): " +err);
-			process.exit(0);
-                }
-                cc_templates = data;
-        });
+function readDirTemplate(dir){
+	fs.readdir(dir,function(err,files){
+		var filepath = '';
+		var file = '';
+		for(var i in files){
+			file = files[i];
+			filepath = pathreq.join(dir,file);
+			readSingleTemplate(file,filepath);
+		}
+	});
 }
-function readAllTemplate(){ // read all html template
-	readVCardTemplate();
-	readCCTemplate();
+function readAllTemplate(){
+	console.log("read all templates");
+	for(key in template_cc_dir){
+		readDirTemplate(template_cc_dir[key]);
+	}
 }
 readAllTemplate();
 
@@ -100,7 +113,7 @@ function initServerAndAsteriskParameters(){
 
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF) */
-//log4js.clearAppenders();
+log4js.clearAppenders();
 log4js.addAppender(log4js.fileAppender(logfile), '[ProxyCTI]');
 var logger = log4js.getLogger('[ProxyCTI]');
 logger.setLevel(loglevel);
