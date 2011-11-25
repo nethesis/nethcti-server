@@ -49,7 +49,6 @@ var ResponseMessage = function(clientSessionId, typeMessage, respMessage){
 	this.respMessage = respMessage;
 }
 var currentCallInInfo = {}; // the info (callNotes, Customer Card...) for the current caller
-var html_vcard_template = undefined;
 var chatAssociation = {}; // association between extensions and their chat user
 function readSingleTemplate(filename,filepath){
 	fs.stat(filepath, function(err,stats){
@@ -714,45 +713,8 @@ am.addListener('dialing', function(headers) {
 		}
 		var c = clients[to];
 		if(c!==undefined){
-			/* in this response the html is not passed, because the chrome desktop 	
-                         * notification of the client accept only one absolute or relative url */
-                        var response = new ResponseMessage(c.id, "dialing", headers.calleridname);
-                        response.from = from;
-                        response.to = to;
-                        var typesCC = profiler.getTypesCustomerCardPermit(to); // array
-                        logger.debug("[" + to + "] is able to view customer card of types: " + sys.inspect(typesCC));
-			var callNotes = [];
-			if(currentCallInInfo[from]!==undefined){
-				callNotes = currentCallInInfo[from].callNotes; // call notes calculated in 'UserEvent' event
-				response.reservation = currentCallInInfo[from].reservation;
-			}
-			var result = [];
-			for(var w=0, callnote; callnote=callNotes[w]; w++){
-				if(callnote.pub || callnote.extension===to){
-					result.push(callnote);
-				}
-			}
-			response.callNotes = result;
-			var ccArr = {};
-			if(currentCallInInfo[from]!==undefined){
-				ccArr = currentCallInInfo[from].cc; // customer card calculated in 'UserEvent' event
-			}
-			if(typesCC.length===0){
-				// the user hasn't the authorization of view customer card, then the length is 0
-                                logger.debug("check permission to view Customer Card for [" + to + "] FAILED !");
-                                response.customerCard = "";
-                                response.noPermission = '';
-                                c.emit('message',response);
-                                logger.debug("RESP 'dialing' has been sent to [" + to + "] id '" + c.id + "'");
-                                return;
-			}
-			var str = '';
-			if(Object.keys(ccArr).length>0){
-				for(var w=0, typecc; typecc=typesCC[w]; w++){
-					str += ccArr[typecc];
-				}
-			}
-			response.customerCard = str;
+			var response = new ResponseMessage(c.id, "dialing", headers.calleridname);
+			setResponseWithCurrentCallInfoCC(c,from,to,response);
 			c.emit('message',response);
                         logger.debug("RESP 'dialing' has been sent to [" + to + "] id '" + c.id + "' with relative customer card");
                 }
@@ -819,6 +781,49 @@ am.addListener('dialing', function(headers) {
 		}	
 	}
 })
+/* set response with informations (customer card, call notes, ... ) of current caller.
+ * It is also used as cache for action GET_VCARD_CC */
+function setResponseWithCurrentCallInfoCC(c,from,to,response){
+	/* in this response the html is not passed, because the chrome desktop  
+         * notification of the client accept only one absolute or relative url */
+        response.from = from;
+        response.to = to;
+        var typesCC = profiler.getTypesCustomerCardPermit(to); // array
+        logger.debug("[" + to + "] is able to view customer card of types: " + sys.inspect(typesCC));
+        var callNotes = [];
+        if(currentCallInInfo[from]!==undefined){
+        	callNotes = currentCallInInfo[from].callNotes; // call notes calculated in 'UserEvent' event
+                response.reservation = currentCallInInfo[from].reservation;
+        }
+        var result = [];
+        for(var w=0, callnote; callnote=callNotes[w]; w++){
+        	if(callnote.pub || callnote.extension===to){
+                	result.push(callnote);
+                }
+       	}
+        response.callNotes = result;
+        var ccArr = {};
+        if(currentCallInInfo[from]!==undefined){
+        	ccArr = currentCallInInfo[from].cc; // customer card calculated in 'UserEvent' event
+        }
+        if(typesCC.length===0){
+        	// the user hasn't the authorization of view customer card, then the length is 0
+                logger.debug("check permission to view Customer Card for [" + to + "] FAILED !");
+                response.customerCard = "";
+                response.noPermission = '';
+                c.emit('message',response);
+                logger.debug("RESP 'dialing' has been sent to [" + to + "] id '" + c.id + "'");
+                return;
+        }
+        var str = '';
+        if(Object.keys(ccArr).length>0){
+ 	       for(var w=0, typecc; typecc=typesCC[w]; w++){
+	               str += ccArr[typecc];
+               }
+        }
+        response.customerCard = str;
+        return response;
+}
 
 
 /* when call come from soft phone:
@@ -1779,7 +1784,7 @@ am.addListener('userevent', function(headers){
 					var ccHtml = '';
 					for(var w=0, cc; cc=customerCardResult[w]; w++){
 						key = Object.keys(cc)[0];
-						ccHtml = createCustomerCardHTML([cc],callerFromOutside);
+						ccHtml = createCustomerCardHTML([cc],key,callerFromOutside);
 						currentCallInInfo[callerFromOutside].cc[key] = ccHtml;
 					}
 				}
@@ -2319,30 +2324,38 @@ io.sockets.on('connection', function(client){
                                 var from = nums[0];
                                 var customerCardResult = [];
                                 var obj = {};
-                                for(i=0; i<typesCC.length; i++){
-                                        var name = typesCC[i];
-                                        dataCollector.getCustomerCard(from, typesCC[i], function(cc, name) {
-                                                if(cc!==undefined){
-                                                        obj = {};
-                                                        for(var item in cc){
-                                                                cc[item].server_address = "http://" + hostname + ":" + port;
-                                                        }
-                                                        obj[name] = cc;
-                                                        customerCardResult.push(obj);
-                                                } else {
-                                                        customerCardResult.push(cc);
-                                                }
-                                                if(customerCardResult.length==typesCC.length){
-                                                        response.customerCard = createCustomerCardHTML(customerCardResult, from);
-                                                        client.emit('message',response);
-                                                        logger.debug("RESP 'dialing' has been sent to [" + extFrom + "] id '" + client.id + "' with relative customer card");
-                                                }
-                                        });
-                                }
-
-
-
-				//}
+				if(currentCallInInfo[from]!==undefined){ // check if there is info about the contact in cache (of the current call)
+					setResponseWithCurrentCallInfoCC(client,from,extFrom,response);
+					client.emit('message',response);
+                                        logger.debug("RESP 'resp_get_vcard_cc' has been sent to [" + extFrom + "] id '" + client.id + "' with relative customer card");
+				} else { // construct the response because there isn't into the case
+			                for(i=0; i<typesCC.length; i++){
+		                                var name = typesCC[i];
+	                                        dataCollector.getCustomerCard(from, typesCC[i], function(cc, name) {
+        	                                        if(cc!==undefined){
+	                                                        obj = {};
+	                                                        for(var item in cc){
+	                                                                cc[item].server_address = "http://" + hostname + ":" + port;
+	                                                        }
+	                                                        obj[name] = cc;
+	                                                        customerCardResult.push(obj);
+	                                                } else {
+	                                                        customerCardResult.push(cc);
+	                                                }
+	                                                if(customerCardResult.length==typesCC.length){
+								var key = ''; 
+	                                                        var ccHtml = '';
+								for(var w=0, cc; cc=customerCardResult[w]; w++){
+									key = Object.keys(cc)[0];
+									ccHtml += createCustomerCardHTML([cc],key,from);
+								}
+								response.customerCard = ccHtml;
+								client.emit('message',response);
+								logger.debug("RESP 'resp_get_vcard_cc' has been sent to [" + extFrom + "] id '" + client.id + "' with relative customer card");
+	                                                }
+                                        	});
+	                                }
+				}
 			break;
 			case actions.MODIFY_NOTE_OF_CALL:
 				dataCollector.modifyCallNote(message.note,message.pub,message.expiration,message.expFormatVal,message.entryId,function(){
@@ -3991,7 +4004,7 @@ testAlreadyLoggedSessionId = function(id){
 
 /* Create html code to return to the client after when he receive calling. This code is 
  * the customer card of the calling user */
-createCustomerCardHTML = function(customerCard, from){
+createCustomerCardHTML = function(customerCard, type, from){
 	/* customerCard is undefined if the user that has do the request
   	 * hasn't the relative permission or the calling user is not in the db */
         var tmp = {};
@@ -4005,11 +4018,20 @@ createCustomerCardHTML = function(customerCard, from){
                tmp[key] =  customerCard[x][key];
            }
         }
-
-	var template = normal.compile(cc_templates);
-	var toAdd = template(tmp);
-	var HTMLresult = toAdd;		
-	return HTMLresult;
+	var typeFromFilename = '';
+	var template = '';
+	var toAdd = '';
+	var htmlResult = '';
+	// pass the results of db to all templates of the same type (ex. ..02_calls.html, ..20_calls.html)
+	for(key in cc_templates){
+		typeFromFilename = key.split('.')[0].split('_')[3];
+		if(typeFromFilename===type){
+			template = normal.compile(cc_templates[key]);
+			toAdd = template(tmp);
+			htmlResult += toAdd;
+		}
+	}
+	return htmlResult;
 }
 
 
@@ -4021,9 +4043,9 @@ function createResultSearchContactsPhonebook(results){
 	var currentUser = '';
 	var temp = '';
 	var template = '';
-	for(var i=0; i<results.length; i++){ // repeat html_vcard_template for number of results
+	for(var i=0; i<results.length; i++){ // repeat vcard template for all results
 		currentUser = results[i];
-		template = normal.compile(html_vcard_template);
+		template = normal.compile(cc_templates["decorator_vcard.html"]);
 		currentUser.server_address = "http://" + hostname + ":" + port;
 		temp = template(currentUser);
 		HTMLresult += temp;
