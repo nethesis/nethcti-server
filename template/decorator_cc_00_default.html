@@ -63,19 +63,6 @@
 </div>
 {/:r}
 
-{:s chiamate}
-<div id='cdr' class='flatTable'>
-<div class='name'>Ultime chiamate</div>
-<table>
-<tr><th>Data</th><th>Ora</th><th>Durata</th><th>Sorgente</th><th/><th>Destinazione</th></tr>
-{:r .}
-  <tr><td>{=date}</td><td>{=time}</td><td>{=billsec}</td><td>{=clid}</td><td><img src="{=server_address}/template/images/out.png" title='Direction' alt='Direction'/></td><td>{=dst}</td></tr>
-{/:r}
-</table>
-</div>
-{:e}
-
-{/:s}
 {/:if}
 
 <script type="text/javascript">
