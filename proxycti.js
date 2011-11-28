@@ -3123,7 +3123,7 @@ io.sockets.on('connection', function(client){
                                 } catch(err) {logger.warn("no connection to asterisk: " + err);}	
 			break;
 			case actions.CFUVM_ON:
-				var cmd = "database put CFU " + extFrom + " vmu" + extFrom;
+				var cmd = "database put CFU " + extFrom + " vmu" + message.vmext;
                                 var actCFUVMOn = {
                                         Action: 'command',
                                         Command: cmd
@@ -3132,13 +3132,14 @@ io.sockets.on('connection', function(client){
                                         am.send(actCFUVMOn, function () {
                                                 var msgstr = "[" + extFrom + "] CFUVM ON";
                                                 var response = new ResponseMessage(client.id, 'ack_cfuvm_on', msgstr);
+						response.vmext = 'vmu'+message.vmext;
                                                 client.emit('message',response);
                                                 logger.debug("'actCFUVMOn' " + sys.inspect(actCFUVMOn) + " has been sent to AST\nRESP 'ack_cfuvm_on' has been sent to [" + extFrom + "] id '" + client.id + "'"+msgstr);
                                         });
                                 } catch(err) {logger.warn("no connection to asterisk: " + err);}
 			break;
 			case actions.CFBVM_ON:
-				var cmd = "database put CFB " + extFrom + " vmb" + extFrom;
+				var cmd = "database put CFB " + extFrom + " vmb" + message.vmext;
                                 var actCFBVMOn = {
                                         Action: 'command',
                                         Command: cmd
@@ -3147,6 +3148,7 @@ io.sockets.on('connection', function(client){
                                         am.send(actCFBVMOn, function () {
                                                 var msgstr = "[" + extFrom + "] CFBVM ON";
                                                 var response = new ResponseMessage(client.id, 'ack_cfbvm_on', msgstr);
+						response.vmext = 'vmb'+message.vmext;
                                                 client.emit('message',response);
                                                 logger.debug("'actCFBVMOn' " + sys.inspect(actCFBVMOn) + " has been sent to AST\nRESP 'ack_cfbvm_on' has been sent to [" + extFrom + "] id '" + client.id + "'"+msgstr);
                                         });
