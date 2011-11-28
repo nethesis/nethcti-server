@@ -130,6 +130,13 @@ exports.Modop = function(){
 	this.updateQueueStatus = function(interval){ updateQueueStatus(interval) }
 	this.updatePriorityQueueStatus = function(interval){ updatePriorityQueueStatus() }
 	this.getQueueStatus = function(){ return getQueueStatus(); }
+	this.vmExist = function(vmext) { return vmExist(vmext); }
+}
+function vmExist(vmext){
+	if(listExtActiveVM[vmext]!==undefined){
+		return true;
+	}
+	return false;
 }
 // Return the status of all queues get from extStatusForOp
 function getQueueStatus(){
