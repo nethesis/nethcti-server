@@ -2472,6 +2472,11 @@ io.sockets.on('connection', function(client){
 						chaturl = 'http://'+server_conf.SERVER_PROXY.hostname+'/http-bind';
 					}
 					respMsg.chatUrl = chaturl;
+					var vm = message.voicemail;
+					if(vm!==undefined){
+						var res = modop.vmExist(vm);
+						respMsg.existVoicemail = res;
+					}
 					client.emit('message',respMsg);
 					logger.debug("RESP 'ack_login' has been sent to [" + extFrom + "] id '" + client.id + "'");
   				}
@@ -3101,12 +3106,8 @@ io.sockets.on('connection', function(client){
                                         logger.warn("no connection to asterisk: " + err);
                                 }
 	  		break;
-
-
-
-
 			case actions.CFVM_ON:
-				var cmd = "database put CF " + extFrom + " vmu" + extFrom;
+				var cmd = "database put CF " + extFrom + " vmu" + message.vmext;
 				var actCFVMOn = {
                                         Action: 'command',
                                         Command: cmd
@@ -3115,6 +3116,7 @@ io.sockets.on('connection', function(client){
                                 	am.send(actCFVMOn, function () {
                                         	var msgstr = "[" + extFrom + "] CFVM ON";
                                                 var response = new ResponseMessage(client.id, 'ack_cfvm_on', msgstr);
+						response.vmext = "vmu"+message.vmext;
                                                 client.emit('message',response);
                                                 logger.debug("'actCFVMOn' " + sys.inspect(actCFVMOn) + " has been sent to AST\nRESP 'ack_cfvm_on' has been sent to [" + extFrom + "] id '" + client.id + "'"+msgstr);
                                         });
