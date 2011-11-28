@@ -2448,45 +2448,32 @@ io.sockets.on('connection', function(client){
 						// close already present session
 						var clientToClose = clients[extFrom];
 						var respMsg = new ResponseMessage(clientToClose.id, 'new_access', 'New Access from another place');
-						clientToClose.send(respMsg);
+						clientToClose.emit('message',respMsg);
 						logger.debug("RESP 'new_access' has been sent to [" + extFrom + "] id '" + clientToClose.id + "'");
 						removeClient(clientToClose.id);
-						if(!testAlreadyLoggedSessionId(clientToClose.id))
+						if(!testAlreadyLoggedSessionId(clientToClose.id)){
 							logger.debug("new access [" + extFrom + "]: logged OUT sessiondId '" + clientToClose.id + "'");
-						// new access: authenticate the user
-						client.extension = extFrom;
-						clients[extFrom] = client;
-						var ipAddrClient = client.handshake.address.address;
-						logger.info("new access [" + extFrom + "]: logged IN, IP '" + ipAddrClient + "' id '" + client.id + "'");
-						logger.info(Object.keys(clients).length + " logged in clients");
-	                                        printLoggedClients();
-						respMsg = new ResponseMessage(client.id, "ack_login", "Login succesfully");
-						respMsg.ext = extFrom;
-						respMsg.secret = message.secret;
-						client.emit('message',respMsg);
-						logger.debug("RESP 'ack_login' has been sent to [" + extFrom + "] id '" + client.id + "'");
-  					} else {
-	  					// authenticate the user
-			  			client.extension = extFrom;
-			  			clients[extFrom] = client;  
-						var userBareJid = message.userBareJid;
-						modop.setUserBareJid(extFrom, userBareJid);
-						storeChatAssociation(extFrom, userBareJid);
-			  			var ipAddrClient = client.handshake.address.address;
-				  		logger.info("logged IN: client [" + extFrom + "] IP '" + ipAddrClient + "' id '" + client.id + "'");
-				  		logger.debug(Object.keys(clients).length + " logged in clients");
-				  		printLoggedClients();
-				  		var respMsg = new ResponseMessage(client.id, "ack_login", "Login succesfully");
-				  		respMsg.ext = extFrom;
-				  		respMsg.secret = message.secret;
-						var chaturl = server_conf.SERVER_CHAT.url; // url of the chat server
-						if(chaturl==='' || chaturl===undefined){
-							chaturl = 'http://'+server_conf.SERVER_PROXY.hostname+'/http-bind';
 						}
-						respMsg.chatUrl = chaturl;
-			  			client.emit('message',respMsg);
-			  			logger.debug("RESP 'ack_login' has been sent to [" + extFrom + "] id '" + client.id + "'");
 					}
+					client.extension = extFrom;
+					clients[extFrom] = client;
+					var userBareJid = message.userBareJid;
+					modop.setUserBareJid(extFrom, userBareJid);
+					storeChatAssociation(extFrom, userBareJid);
+					var ipAddrClient = client.handshake.address.address;
+					logger.info("logged IN: client [" + extFrom + "] IP '" + ipAddrClient + "' id '" + client.id + "'");
+					logger.debug(Object.keys(clients).length + " logged in clients");
+					printLoggedClients();
+					var respMsg = new ResponseMessage(client.id, "ack_login", "Login succesfully");
+					respMsg.ext = extFrom;
+					respMsg.secret = message.secret;
+					var chaturl = server_conf.SERVER_CHAT.url; // url of the chat server
+					if(chaturl==='' || chaturl===undefined){
+						chaturl = 'http://'+server_conf.SERVER_PROXY.hostname+'/http-bind';
+					}
+					respMsg.chatUrl = chaturl;
+					client.emit('message',respMsg);
+					logger.debug("RESP 'ack_login' has been sent to [" + extFrom + "] id '" + client.id + "'");
   				}
   				else{ // the user is not authenticated
   					logger.warn("AUTH FAILED: [" + extFrom + "] with secret '" + message.secret + "'");
