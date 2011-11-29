@@ -746,8 +746,10 @@ function addListenerToAm(){
 		//logger.debug("'QueueMember' event: [" + ext + "] belongs to queue '" + queue + "': " + sys.inspect(headers));
 		var ext = headers.name.split("@")[0].split('/')[1];
 		var queue = headers.queue;
-		extStatusForOp['SIP/'+ext].queue = queue;
-		extStatusForOp['QUEUE/'+queue].member[ext] = '';
+		if(extStatusForOp['SIP/'+ext]!==undefined){
+			extStatusForOp['SIP/'+ext].queue = queue;
+			extStatusForOp['QUEUE/'+queue].member[ext] = '';
+		}
 	});
 	am.addListener('queueentry', function(headers){
 		logger.info("'QueueEntry' event: " + sys.inspect(headers));
