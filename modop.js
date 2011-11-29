@@ -72,6 +72,7 @@ exports.Modop = function(){
 	this.getExtStatusWithExt = function(ext) { return getExtStatusWithExt(ext); }
 	this.updateExtDNDStatusWithExt = function(ext, value) { updateExtDNDStatusWithExt(ext, value); }
 	this.updateExtCFStatusWithExt = function(ext, value, extTo) { updateExtCFStatusWithExt(ext, value, extTo); }
+	this.updateExtCFVMStatusWithExt = function(ext, value, extTo) { updateExtCFVMStatusWithExt(ext, value, extTo); }
 	this.getTabOp = function() { return tabOp; }
 	this.updateExtStatusOpDialFrom = function(ext, extTo) { updateExtStatusOpDialFrom(ext, extTo); }
 	this.updateExtStatusOpDialTo = function(ext, extFrom) { updateExtStatusOpDialTo(ext, extFrom); }
@@ -510,18 +511,30 @@ function updateExtStatusOpDialFrom(ext, extTo){
 	}
 }
 
+function updateExtCFVMStatusWithExt(ext,value,vmext){
+	for(key in extStatusForOp){
+		if(key.indexOf(ext)!==-1){
+			extStatusForOp[key].cfvmStatus = value;
+			if(value=='off'){
+				extStatusForOp[key].cfvmStatusToExt = '';
+			} else if(value=='on'){
+				extStatusForOp[key].cfvmStatusToExt = vmext;
+				updateExtCFStatusWithExt(ext,'off');
+			}
+		}
+	}
+}
 /* update the cf status of extension. In the case it's 'on' it set 
  * also 'cfStatusToExt' */
 function updateExtCFStatusWithExt(ext, value, extTo){
 	for(key in extStatusForOp){
                 if(key.indexOf(ext)!=-1){
+	                extStatusForOp[key].cfStatus = value;
 			if(value=='off'){
-	                        extStatusForOp[key].cfStatus = value;
 				extStatusForOp[key].cfStatusToExt = '';
-			}
-			else if(value=='on'){
-				extStatusForOp[key].cfStatus = value;
+			} else if(value=='on') {
 				extStatusForOp[key].cfStatusToExt = extTo;
+				updateExtCFVMStatusWithExt(ext,'off');
 			}
                 }
         }
