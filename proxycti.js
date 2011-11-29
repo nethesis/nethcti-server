@@ -2467,11 +2467,14 @@ io.sockets.on('connection', function(client){
 					var respMsg = new ResponseMessage(client.id, "ack_login", "Login succesfully");
 					respMsg.ext = extFrom;
 					respMsg.secret = message.secret;
-					var chaturl = server_conf.SERVER_CHAT.url; // url of the chat server
-					if(chaturl==='' || chaturl===undefined){
-						chaturl = 'http://'+server_conf.SERVER_PROXY.hostname+'/http-bind';
+					respMsg.permissions = profiler.getAllPermissions(extFrom);
+					if(profiler.checkActionChatPermit(extFrom)){ // check user permission to use the chat
+						var chaturl = server_conf.SERVER_CHAT.url; // url of the chat server
+						if(chaturl==='' || chaturl===undefined){
+							chaturl = 'http://'+server_conf.SERVER_PROXY.hostname+'/http-bind';
+						}
+						respMsg.chatUrl = chaturl;
 					}
-					respMsg.chatUrl = chaturl;
 					var vm = message.voicemail;
 					if(vm!==undefined){
 						var res = modop.vmExist(vm);
@@ -3116,9 +3119,12 @@ io.sockets.on('connection', function(client){
                                 	am.send(actCFVMOn, function () {
                                         	var msgstr = "[" + extFrom + "] CFVM ON";
                                                 var response = new ResponseMessage(client.id, 'ack_cfvm_on', msgstr);
-						response.vmext = "vmu"+message.vmext;
+						var vmext = "vmu"+message.vmext;
+						response.vmext = vmext;
                                                 client.emit('message',response);
                                                 logger.debug("'actCFVMOn' " + sys.inspect(actCFVMOn) + " has been sent to AST\nRESP 'ack_cfvm_on' has been sent to [" + extFrom + "] id '" + client.id + "'"+msgstr);
+						modop.updateExtCFVMStatusWithExt(extFrom, 'on', vmext);
+                                                updateAllClientsForOpWithTypeExt("SIP/"+extFrom);
                                         });
                                 } catch(err) {logger.warn("no connection to asterisk: " + err);}	
 			break;
@@ -3165,6 +3171,8 @@ io.sockets.on('connection', function(client){
                                                 var msgstr = "[" + extFrom + "] CFVM OFF";
                                                 client.emit('message',new ResponseMessage(client.id, 'ack_cfvm_off', msgstr));
                                                 logger.debug("'actCFVMOff' " + sys.inspect(actCFVMOff) + " has been sent to AST\nRESP 'ack_cfvm_off' has been sent to [" + extFrom + "] id '" + client.id + "'\n"+msgstr);
+						modop.updateExtCFVMStatusWithExt(extFrom, 'off');
+                                                updateAllClientsForOpWithTypeExt("SIP/"+extFrom);
                                         });
                                 } catch(err) {logger.warn("no connection to asterisk: " +err);}
 			break;
