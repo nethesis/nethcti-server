@@ -13,6 +13,8 @@ const CUSTOMER_CARD = "CUSTOMER_CARD"
 const OP_PLUS = "OP_PLUS"
 const OP_BASE = "OP_BASE"
 const PRIVACY = "PRIVACY";
+const CHAT = "CHAT";
+const PHONE_SERVICE = "PHONE_SERVICE";
 const ALL = "all"
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF) */
@@ -56,6 +58,20 @@ exports.Profiler = function(){
         this.setLogger = function(logfile,level) { log4js.addAppender(log4js.fileAppender(logfile), '[Profiler]'); logger.setLevel(level); }
 	this.checkPrivacyPermit = function(exten) { return checkActionPermit(exten, PRIVACY); }
 	this.getAllTypesCustomerCard = function(){ return getAllTypesCustomerCard(); }
+	this.checkActionChatPermit = function(exten){ return checkActionPermit(exten, CHAT); }
+	this.checkActionPhoneServicePermit = function(exten){ return checkActionPermit(exten, PHONE_SERVICE); }
+	this.getAllPermissions = function(exten){ return getAllPermissions(exten); }
+}
+function getAllPermissions(exten){
+	var obj = {};
+	obj.phonebook = checkActionPermit(exten, PHONEBOOK);
+	obj.history_call = checkActionPermit(exten, HISTORY_CALL);
+	obj.types_customer_card = getTypesCustomerCardPermit(exten);
+	obj.op_plus = checkActionPermit(exten, OP_PLUS);
+	obj.op_base = checkActionPermit(exten, OP_BASE);
+	obj.chat = checkActionPermit(exten, CHAT);
+	obj.phone_service = checkActionPermit(exten, PHONE_SERVICE);
+	return obj;
 }
 function addController(contr){
 	controller = contr
@@ -90,10 +106,11 @@ function getTypesCustomerCardPermit(exten){
 function checkActionPermit(exten, action){
 	var pattExt = new RegExp("\\b" + exten + "\\b");
         var pattAll = new RegExp("\\b" + ALL + "\\b", "i");
-        if( pattExt.test(actions[action].extensions) || (pattAll.test(actions[action].extensions) && !pattExt.test(actions[action].exclude))  )
+        if(pattExt.test(actions[action].extensions) || (pattAll.test(actions[action].extensions) && !pattExt.test(actions[action].exclude))){
                 return true;
-        else
+        } else {
                 return false;
+	}
 }
 // Initialize the profiles of all extensions by means the reading of the config file.
 function initProfiles(){
