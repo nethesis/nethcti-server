@@ -1,9 +1,0 @@
-[phonebook]
-dbhost=localhost
-dbport=/var/lib/mysql/mysql.sock
-dbtype=mysql
-dbuser=pbookuser
-dbpassword=pbookpass
-dbname=phonebook
-query=select * from phonebook where name like "%$NAME_TO_REPLACE%" or company like '%$NAME_TO_REPLACE%' or workphone like '%$NAME_TO_REPLACE%' or homephone like '%$NAME_TO_REPLACE%' or cellphone like '%$NAME_TO_REPLACE%' order by name ASC, company ASC
-
