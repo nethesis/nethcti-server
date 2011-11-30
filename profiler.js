@@ -66,11 +66,15 @@ function getAllPermissions(exten){
 	var obj = {};
 	obj.phonebook = checkActionPermit(exten, PHONEBOOK);
 	obj.history_call = checkActionPermit(exten, HISTORY_CALL);
-	obj.types_customer_card = getTypesCustomerCardPermit(exten);
 	obj.op_plus = checkActionPermit(exten, OP_PLUS);
 	obj.op_base = checkActionPermit(exten, OP_BASE);
 	obj.chat = checkActionPermit(exten, CHAT);
 	obj.phone_service = checkActionPermit(exten, PHONE_SERVICE);
+	if(getTypesCustomerCardPermit(exten).length>0){
+		obj.customer_card = true;
+	} else {
+		obj.customer_card = false;
+	}
 	return obj;
 }
 function addController(contr){
