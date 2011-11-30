@@ -1779,13 +1779,13 @@ am.addListener('userevent', function(headers){
 				} else {
 					customerCardResult.push(cc);
 				}
-				if(customerCardResult.length===allTypesCC.length){
+				if(customerCardResult.length===allTypesCC.length){ // ex. customerCardResult = [ { default: [ [Object] ] }, { calls: [ [Object] ] } ]
 					currentCallInInfo[callerFromOutside].cc = {};
 					var key = '';
 					var ccHtml = '';
 					for(var w=0, cc; cc=customerCardResult[w]; w++){
 						key = Object.keys(cc)[0];
-						ccHtml = createCustomerCardHTML([cc],key,callerFromOutside);
+						ccHtml = createCustomerCardHTML(cc,key,callerFromOutside);
 						currentCallInInfo[callerFromOutside].cc[key] = ccHtml;
 					}
 				}
@@ -2344,15 +2344,15 @@ io.sockets.on('connection', function(client){
 	                                                        customerCardResult.push(cc);
 	                                                }
 	                                                if(customerCardResult.length==typesCC.length){
-								var key = ''; 
-	                                                        var ccHtml = '';
-								for(var w=0, cc; cc=customerCardResult[w]; w++){
-									key = Object.keys(cc)[0];
-									ccHtml += createCustomerCardHTML([cc],key,from);
-								}
+                                        			var key = '';
+			                                        var ccHtml = '';
+			                                        for(var w=0, cc; cc=customerCardResult[w]; w++){
+                        			                        key = Object.keys(cc)[0];
+                                                			ccHtml += createCustomerCardHTML(cc,key,from);
+                                        			}
 								response.customerCard = ccHtml;
 								client.emit('message',response);
-								logger.debug("RESP 'resp_get_vcard_cc' has been sent to [" + extFrom + "] id '" + client.id + "' with relative customer card");
+                                                                logger.debug("RESP 'resp_get_vcard_cc' has been sent to [" + extFrom + "] id '" + client.id + "' with relative customer card");
 	                                                }
                                         	});
 	                                }
@@ -4002,33 +4002,39 @@ testAlreadyLoggedSessionId = function(id){
 	return false;
 }
 
+getCCTemplate = function(type){
+	var typeFilename = ''; // ex. decorator_cc_00_default.ejs
+	for(key in cc_templates){
+		typeFilename = key.split('.')[0].split('_')[3];
+		if(typeFilename===type){
+			console.log("ritorno il template per key = " + key + " e type = " + type);
+			return cc_templates[key]; // return ejs template
+		}
+	}
+}
+
 /* Create html code to return to the client after when he receive calling. This code is 
  * the customer card of the calling user */
-createCustomerCardHTML = function(customerCard, type, from){
-	/* customerCard is undefined if the user that has do the request
-  	 * hasn't the relative permission or the calling user is not in the db */
-        var tmp = {};
-        for(x in customerCard) {
-	   if(customerCard[x]==undefined){
-		customerCard[x] = {};
-		customerCard[x].customerNotInDB = "true";
-		customerCard[x].from = from;
-	   }
-           for(key in customerCard[x]) {
-               tmp[key] =  customerCard[x][key];
-           }
-        }
+createCustomerCardHTML = function(cc,type,from){ // ex. cc = { default: [ [Object] ] } or { calls: [ [Object] ] }
+	/*
+	if(cc[type]===undefined){
+		cc[type] = {};
+		cc[type].customerNotInDB = "true";
+		cc[type].from = from;
+	}
+	*/
 	var typeFromFilename = '';
-	var template = '';
-	var toAdd = '';
 	var htmlResult = '';
-	// pass the results of db to all templates of the same type (ex. ..02_calls.html, ..20_calls.html)
-	for(key in cc_templates){
-		typeFromFilename = key.split('.')[0].split('_')[3];
+	var obj = {};
+	var localsObj = {};
+	for(filenameEjs in cc_templates){
+		typeFromFilename = filenameEjs.split('.')[0].split('_')[3];
 		if(typeFromFilename===type){
-			template = normal.compile(cc_templates[key]);
-			toAdd = template(tmp);
-			htmlResult += toAdd;
+			obj = {};
+			localsObj = {};
+			obj.results = cc[type];
+			localsObj.locals = obj;
+			htmlResult += ejs.render(cc_templates[filenameEjs],localsObj);
 		}
 	}
 	return htmlResult;
@@ -4047,7 +4053,7 @@ function createResultSearchContactsPhonebook(results){
 		currentUser = results[i];
 		currentUser.server_address = "http://" + hostname + ":" + port;
 	}
-	HTMLresult = ejs.render(cc_templates["decorator_vcard.html"],{ 
+	HTMLresult = ejs.render(cc_templates["decorator_vcard.ejs"],{ 
 			locals: {
 				results: results
 			}
