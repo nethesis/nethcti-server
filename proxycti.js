@@ -11,7 +11,8 @@ var fs = require('fs');
 var io = require('./lib/socket.io');
 var sys = require(process.binding('natives').util ? 'util' : 'sys');
 var pathreq = require('path');
-var normal = require("./lib/normal-template/lib/normal-template");
+//var normal = require("./lib/normal-template/lib/normal-template");
+var ejs = require('./lib/ejs/lib/ejs.js');
 var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
 var log4js = require('./lib/log4js-node/lib/log4js')();
 const PROXY_CONFIG_FILENAME = "config/proxycti.ini";
@@ -4042,13 +4043,16 @@ function createResultSearchContactsPhonebook(results){
 	var currentUser = '';
 	var temp = '';
 	var template = '';
-	for(var i=0; i<results.length; i++){ // repeat vcard template for all results
+	for(var i=0; i<results.length; i++){
 		currentUser = results[i];
-		template = normal.compile(cc_templates["decorator_vcard.html"]);
 		currentUser.server_address = "http://" + hostname + ":" + port;
-		temp = template(currentUser);
-		HTMLresult += temp;
 	}
+	HTMLresult = ejs.render(cc_templates["decorator_vcard.html"],{ 
+			locals: {
+				results: results
+			}
+		}
+	);
 	return HTMLresult;
 }
 
