@@ -1,5 +1,5 @@
 Name:		proxycti
-Version:	0.4.2
+Version:	1.0.0
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI	
 
@@ -14,6 +14,7 @@ BuildRequires:	e-smith-devtools
 Requires:	nodejs
 Requires:	node-forever
 Requires:	nethvoice
+Requires:       nethcti-nethvoice-module
 AutoReq:	no
 
 %description
@@ -27,15 +28,13 @@ Nodejs Asterisk proxy used for NethCTI
 perl -w createlinks
 mkdir -p root/var/lib/asterisk/bin
 mkdir -p root/var/spool/asterisk/monitor
-mv root/usr/lib/node/proxycti/script/retrieve_nethcti_from_mysql.pl root/var/lib/asterisk/bin
 
 %install
 rm -rf $RPM_BUILD_ROOT
 (cd root; find . -depth -print | cpio -dump $RPM_BUILD_ROOT)
 /sbin/e-smith/genfilelist \
---file /etc/rc.d/init.d/proxycti 'attr(0755,root,root)' \
---file /var/lib/asterisk/bin/retrieve_nethcti_from_mysql.pl 'attr(0755,asterisk,asterisk)' \
---file /usr/lib/node/proxycti/script/sendsms.php 'attr(0755,root,root)' \
+--file /etc/rc.d/init.d/proxycti 'attr(0755,asterisk,asterisk)' \
+--file /usr/lib/node/proxycti/script/sendsms.php 'attr(0755,asterisk,asterisk)' \
 --dir /var/spool/asterisk/monitor 'attr(0775,asterisk,asterisk)' \
 --dir /var/lib/asterisk 'attr(0775,asterisk,asterisk)' \
 --dir /var/lib/asterisk/bin 'attr(0775,asterisk,asterisk)' $RPM_BUILD_ROOT > %{name}-%{version}-filelist
@@ -46,7 +45,7 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %files -f %{name}-%{version}-filelist
-%defattr(-,root,root,-)
+%defattr(-,asterisk,asterisk,-)
 %doc
 
 %post
@@ -60,6 +59,16 @@ ln -s /usr/lib/node/proxycti/sql/nethcti.sql /etc/e-smith/sql/init/10cti.sql
 
 
 %changelog
+* Tue Nov 08 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.0.0-1nh
+- Code cleanup
+- Update note system
+- New template rendering engine: use ejs
+- Update Queue module
+- Add call reservation
+- New logo
+- Add voicemail option
+- Add CHAT and PHONE_SERVICE
+
 * Tue Nov 08 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 0.4.2-1nh
 - New behaviour for click2customercard
 
