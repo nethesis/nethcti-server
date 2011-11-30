@@ -30,3 +30,14 @@ CREATE TABLE IF NOT EXISTS `call_notes` (
   PRIMARY KEY  (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
+CREATE TABLE IF NOT EXISTS `call_reservation` (
+  `id` int(11) NOT NULL auto_increment,
+  `date` timestamp NOT NULL default CURRENT_TIMESTAMP,
+  `extension` varchar(50) NOT NULL,
+  `number` varchar(50) NOT NULL,
+  PRIMARY KEY  (`id`),
+  UNIQUE KEY `number` (`number`),
+  UNIQUE KEY `number_2` (`number`),
+  KEY `index_extension` (`extension`),
+  KEY `index_number` (`number`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8
