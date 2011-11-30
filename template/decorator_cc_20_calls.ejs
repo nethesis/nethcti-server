@@ -1,13 +1,13 @@
-<% if(customerNotInDB){ %>
-	<table width="50%" cellpadding="5" style="border: 1px solid gray"><tr><td><h3><%= calls[i].from %></h3></td></tr> <tr><td>Spiacente, nessun dato presente.</td></tr></table>
+<% if(results.length==0){ %>
+	<table width="50%" cellpadding="5" style="border: 1px solid gray"><tr><td><h3></h3></td></tr> <tr><td>Spiacente, nessun dato presente.</td></tr></table>
 <% } else { %>
 	<div id='cdr' class='flatTable'>
-	<div class='name'>Ultime chiamate</div>
-	<table>
-		<tr><th>Data</th><th>Ora</th><th>Durata</th><th>Sorgente</th><th/><th>Destinazione</th></tr>
-	<% for(var i=0; i<calls.lenght; i++){ %>
-		<tr><td><%= calls[i].date %></td><td><%= calls[i].time %></td><td><%= calls[i].billsec %></td><td><%= calls[i].clid %></td><td><img src="<%= calls[i].server_address %>/template/images/out.png" title='Direction' alt='Direction'/></td><td><%= calls[i].dst %></td></tr>
-	<% } %>
-	</table>
+		<div class='name'>Ultime chiamate</div>
+		<table>
+			<tr><th>Data</th><th>Ora</th><th>Durata</th><th>Sorgente</th><th/><th>Destinazione</th></tr>
+			<% for(var i=0; i<results.lenght; i++){ %>
+				<tr><td><%= results[i].date %></td><td><%= results[i].time %></td><td><%= results[i].billsec %></td><td><%= results[i].clid %></td><td><img src="<%= results[i].server_address %>/template/images/out.png" title='Direction' alt='Direction'/></td><td><%= results[i].dst %></td></tr>
+			<% } %>
+		</table>
 	</div>
 <% } %>
