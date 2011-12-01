@@ -15,6 +15,7 @@ const OP_BASE = "OP_BASE"
 const PRIVACY = "PRIVACY";
 const CHAT = "CHAT";
 const PHONE_SERVICE = "PHONE_SERVICE";
+const STREAMING = "STREAMING";
 const ALL = "all"
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF) */
@@ -70,6 +71,7 @@ function getAllPermissions(exten){
 	obj.op_base = checkActionPermit(exten, OP_BASE);
 	obj.chat = checkActionPermit(exten, CHAT);
 	obj.phone_service = checkActionPermit(exten, PHONE_SERVICE);
+	obj.streaming = checkActionPermit(exten, STREAMING);
 	if(getTypesCustomerCardPermit(exten).length>0){
 		obj.customer_card = true;
 	} else {
