@@ -70,7 +70,7 @@ exports.DataCollector = function(){
 }
 function isCallReserved(num,cb){
 	var objQuery = queries[CALL_RESERVATION];
-	objQuery.query = "select * from call_reservation where number="+num+";";
+	objQuery.query = "select * from call_reservation where number='"+num+"';";
 	executeSQLQuery(CALL_RESERVATION, objQuery, function(results){
 		cb(results);
 	});
