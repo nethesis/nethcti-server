@@ -1766,6 +1766,8 @@ am.addListener('userevent', function(headers){
 		var allTypesCC = profiler.getAllTypesCustomerCard(); // array
 		var obj = {};
 		var customerCardResult = [];
+
+
 		currentCallInInfo[callerFromOutside].cc = customerCardResult;
 		for(var i=0, type; type=allTypesCC[i]; i++){
 			dataCollector.getCustomerCard(callerFromOutside, type, function(cc, name) {
@@ -2234,6 +2236,7 @@ io.sockets.on('connection', function(client){
 			GET_ALL_VM_STATUS:  	'get_all_vm_status',
 			REDIRECT_VOICEMAIL: 	'redirect_voicemail',
 			GET_DAY_HISTORY:  	'get_day_history',
+			STORE_CHAT_ASSOC:	'store_chat_association',
 			CHECK_CALL_AUDIO_FILE: 	'check_call_audio_file',
 			CF_UNCOND_FROM_PARKING: 'cf_uncond_from_parking',
 			GET_QUEUE_STATUS:	'get_queue_status',
@@ -2442,6 +2445,11 @@ io.sockets.on('connection', function(client){
                                         logger.warn("no connection to asterisk: "+err);
                                 }
 			break;
+			case actions.STORE_CHAT_ASSOC:
+				var userBareJid = message.userBareJid;
+				modop.setUserBareJid(extFrom, userBareJid);
+				storeChatAssociation(extFrom, userBareJid);
+			break;
   			case actions.LOGIN:
 	  			if(authenticator.authenticateUser(extFrom, message.secret)){  // the user is authenticated
   					// if the user is already logged in, a new session is created and the old is closed
@@ -2458,9 +2466,6 @@ io.sockets.on('connection', function(client){
 					}
 					client.extension = extFrom;
 					clients[extFrom] = client;
-					var userBareJid = message.userBareJid;
-					modop.setUserBareJid(extFrom, userBareJid);
-					storeChatAssociation(extFrom, userBareJid);
 					var ipAddrClient = client.handshake.address.address;
 					logger.info("logged IN: client [" + extFrom + "] IP '" + ipAddrClient + "' id '" + client.id + "'");
 					logger.debug(Object.keys(clients).length + " logged in clients");
@@ -3785,17 +3790,17 @@ function storeChatAssociation(extFrom, bareJid){
 				logger.debug('chat association ['+extFrom+'='+bareJid+'] is already present');
 				updateAllClientsForChatAssociation();
 				return;
-			} else if(chatAssociation.CHAT_ASSOCIATION[extFrom]!==undefined) {
+			} else if(chatAssociation.CHAT_ASSOCIATION[extFrom]!==undefined) { // the association is present: rewrite it
 				chatAssociation.CHAT_ASSOCIATION[extFrom] = bareJid;
 				updateAllClientsForChatAssociation();
-				var content = "[CHAT_ASSOCIATION]\n";
+				var content = "[CHAT_ASSOCIATION]\n"; // the content of the file
 				for(key in chatAssociation.CHAT_ASSOCIATION){
 					content += key+"="+chatAssociation.CHAT_ASSOCIATION[key]+"\n";
 				}
 				fs.unlinkSync(CHAT_ASSOC_FILE); // remove file
-				writeChatAssociationFile(CHAT_ASSOC_FILE,content);
+				writeChatAssociationFile(CHAT_ASSOC_FILE,content); // create the file
 				logger.debug("updated chat association file " + CHAT_ASSOC_FILE+" with " + extFrom+"="+bareJid);
-			} else {
+			} else { // the association is not present and the file exists
 		                fs.open(CHAT_ASSOC_FILE, 'a', '666', function(err, id){
 		                        if(err){
 		                                logger.error(err + " : error in file '"+ CHAT_ASSOC_FILE  +"'");
@@ -3811,7 +3816,7 @@ function storeChatAssociation(extFrom, bareJid){
 		                        }
 		                });
 			}
-	        } else {
+	        } else { // file not exists
 			var o = {};
 			o[extFrom] = bareJid;
 			chatAssociation = {CHAT_ASSOCIATION: o};
