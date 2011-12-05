@@ -3,6 +3,7 @@ var sys = require("sys")
 var iniparser = require("./lib/node-iniparser/lib/node-iniparser")
 var log4js = require('./lib/log4js-node/lib/log4js')()
 const PROFILER_CONFIG_FILENAME = "config/profiles.ini"
+const STREAMING_SETTINGS_FILENAME = "config/streaming.ini"
 const CALL_OUT = "CALL_OUT"
 const CALL_IN = "CALL_IN"
 const PHONEBOOK = "PHONEBOOK"
@@ -15,7 +16,7 @@ const OP_BASE = "OP_BASE"
 const PRIVACY = "PRIVACY";
 const CHAT = "CHAT";
 const PHONE_SERVICE = "PHONE_SERVICE";
-const STREAMING = "STREAMING";
+const STREAMING_GENERAL = "general";
 const ALL = "all"
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF) */
@@ -41,11 +42,13 @@ actions =
   OP_BASE: { extensions: 'all' } 
   PRIVACY: { extensions: 'all' } } */
 actions = {}
+streamingSettings = {};
 // this is the controller to manage changing in the configuration file of profiles
 controller = null
 // Constructor
 exports.Profiler = function(){
-	initProfiles()
+	initProfiles();
+	initStreamingSettings();
 	this.checkActionCallOutPermit = function(exten){ return checkActionPermit(exten, CALL_OUT) }
 	this.checkActionCallInPermit = function(exten){ return checkActionPermit(exten, CALL_IN) }
 	this.checkActionPhonebookPermit = function(exten){ return checkActionPermit(exten, PHONEBOOK) }
@@ -62,6 +65,25 @@ exports.Profiler = function(){
 	this.checkActionChatPermit = function(exten){ return checkActionPermit(exten, CHAT); }
 	this.checkActionPhoneServicePermit = function(exten){ return checkActionPermit(exten, PHONE_SERVICE); }
 	this.getAllPermissions = function(exten){ return getAllPermissions(exten); }
+	this.getStreamingSettings = function(exten) { return getStreamingSettings(exten); }
+	this.checkGeneralStreamingPermit = function(exten) { return checkStreamingPermit(STREAMING_GENERAL,exten); }
+}
+function checkStreamingPermit(oneStream,exten){
+	var pattExt = new RegExp("\\b" + exten + "\\b");
+	var pattAll = new RegExp("\\b" + ALL + "\\b", "i");
+	if(pattExt.test(actions.STREAMING[oneStream]) || pattAll.test(actions.STREAMING[oneStream])){
+		return true;
+	}
+	return false;
+}
+function getStreamingSettings(exten){
+	var obj = {};
+	for(var key in streamingSettings){
+		if(checkStreamingPermit(key,exten)){
+			obj[key] = streamingSettings[key];
+		}
+	}
+	return obj;
 }
 function getAllPermissions(exten){
 	var obj = {};
@@ -71,11 +93,24 @@ function getAllPermissions(exten){
 	obj.op_base = checkActionPermit(exten, OP_BASE);
 	obj.chat = checkActionPermit(exten, CHAT);
 	obj.phone_service = checkActionPermit(exten, PHONE_SERVICE);
-	obj.streaming = checkActionPermit(exten, STREAMING);
+	obj.streaming = getAllStreamingPermissions(exten);
 	if(getTypesCustomerCardPermit(exten).length>0){
 		obj.customer_card = true;
 	} else {
 		obj.customer_card = false;
+	}
+	return obj;
+}
+function getAllStreamingPermissions(exten){
+	var obj = {};
+	var pattExt = new RegExp("\\b" + exten + "\\b");
+        var pattAll = new RegExp("\\b" + ALL + "\\b", "i");
+	for(var key in actions.STREAMING){	
+        	if(pattExt.test(actions.STREAMING[key]) || pattAll.test(actions.STREAMING[key])){
+			obj[key] = true;
+	        } else {
+			obj[key] = false;
+	        }
 	}
 	return obj;
 }
@@ -122,4 +157,9 @@ function checkActionPermit(exten, action){
 function initProfiles(){
 	this.actions = {}
 	this.actions = iniparser.parseSync(PROFILER_CONFIG_FILENAME) 
+}
+// Initialize all streaming settings 
+function initStreamingSettings(){
+	this.streamingSettings = {};
+	this.streamingSettings = iniparser.parseSync(STREAMING_SETTINGS_FILENAME);
 }
