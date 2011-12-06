@@ -80,7 +80,6 @@ function readDirTemplate(dir){
 	});
 }
 function readAllTemplate(){
-	console.log("read all templates");
 	for(key in template_cc_dir){
 		readDirTemplate(template_cc_dir[key]);
 	}
@@ -2486,9 +2485,7 @@ io.sockets.on('connection', function(client){
 						var res = modop.vmExist(vm);
 						respMsg.existVoicemail = res;
 					}
-					if(profiler.checkGeneralStreamingPermit(extFrom)){
-						respMsg.streamingSettings = profiler.getStreamingSettings(extFrom);
-					}
+					respMsg.streamingSettings = profiler.getStreamingSettings(extFrom);
 					client.emit('message',respMsg);
 					logger.debug("RESP 'ack_login' has been sent to [" + extFrom + "] id '" + client.id + "'");
   				}

@@ -16,7 +16,6 @@ const OP_BASE = "OP_BASE"
 const PRIVACY = "PRIVACY";
 const CHAT = "CHAT";
 const PHONE_SERVICE = "PHONE_SERVICE";
-const STREAMING_GENERAL = "general";
 const ALL = "all"
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF) */
@@ -66,7 +65,6 @@ exports.Profiler = function(){
 	this.checkActionPhoneServicePermit = function(exten){ return checkActionPermit(exten, PHONE_SERVICE); }
 	this.getAllPermissions = function(exten){ return getAllPermissions(exten); }
 	this.getStreamingSettings = function(exten) { return getStreamingSettings(exten); }
-	this.checkGeneralStreamingPermit = function(exten) { return checkStreamingPermit(STREAMING_GENERAL,exten); }
 }
 function checkStreamingPermit(oneStream,exten){
 	var pattExt = new RegExp("\\b" + exten + "\\b");
