@@ -192,7 +192,6 @@ function removeQueueCcCaller(ch){
 }
 function addQueueCcCaller(ch,ext){
 	for(var i=0, qtypeExt; qtypeExt=cacheQueueTypeExt[i]; i++){
-		console.log("qtypeExt = " + qtypeExt);
 		if(extStatusForOp[qtypeExt].queueWaitingCaller[ch]!==undefined){
 			extStatusForOp[qtypeExt].queueCcCaller[ch] = extStatusForOp[qtypeExt].queueWaitingCaller[ch];
 			extStatusForOp[qtypeExt].queueCcCaller[ch].startCcDate = new Date();
