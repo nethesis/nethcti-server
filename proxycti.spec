@@ -37,6 +37,7 @@ rm -rf $RPM_BUILD_ROOT
 --file /usr/lib/node/proxycti/script/sendsms.php 'attr(0755,asterisk,asterisk)' \
 --dir /var/spool/asterisk/monitor 'attr(0775,asterisk,asterisk)' \
 --dir /var/lib/asterisk 'attr(0775,asterisk,asterisk)' \
+--dir /usr/lib/node/proxycti/config 'attr(0775,asterisk,asterisk)' \
 --dir /var/lib/asterisk/bin 'attr(0775,asterisk,asterisk)' $RPM_BUILD_ROOT > %{name}-%{version}-filelist
 
 
