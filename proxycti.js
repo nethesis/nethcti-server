@@ -1979,8 +1979,8 @@ function returnOperatorPanelToClient(){
 		}
                 clientToReturnExtStatusForOp.emit('message', mess);
                 logger.debug("RESP 'ack_get_peer_list_complete_op' has been sent to [" + extToReturnExtStatusForOp + "] id '" + clientToReturnExtStatusForOp.id + "'")
-        }
-	else if(profiler.checkActionOpBasePermit(extToReturnExtStatusForOp)) {
+        } else {
+	//else if(profiler.checkActionOpBasePermit(extToReturnExtStatusForOp)) {
                 var msgstr = "received extStatusForOp to create operator panel"
                 var mess = new ResponseMessage(clientToReturnExtStatusForOp.id, "ack_get_peer_list_complete_op", msgstr)
                 mess.extStatusForOp = modop.getExtStatusForOp()
@@ -1994,12 +1994,14 @@ function returnOperatorPanelToClient(){
                 clientToReturnExtStatusForOp.emit('message',mess);
                 logger.debug("RESP 'ack_get_peer_list_complete_op' has been sent to [" + extToReturnExtStatusForOp + "] id '" + clientToReturnExtStatusForOp.id + "'")
         }
+	/*
 	else{
                 var msgstr = "Sorry but you haven't the permission of view the operator panel"
                 var mess = new ResponseMessage(clientToReturnExtStatusForOp.id, "error_get_peer_list_complete_op", msgstr)
                 clientToReturnExtStatusForOp.emit('message',mess);
                 logger.debug("RESP 'error_get_peer_list_complete_op' has been sent to [" + extToReturnExtStatusForOp + "] id '" + clientToReturnExtStatusForOp.id + "'")
         }
+	*/
 }
 
 
