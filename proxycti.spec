@@ -1,5 +1,5 @@
 Name:		proxycti
-Version:	1.0.0
+Version:	1.0.2
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI	
 
@@ -46,6 +46,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %files -f %{name}-%{version}-filelist
 %defattr(-,asterisk,asterisk,-)
+%config /usr/lib/node/proxycti/config/*
 %doc
 
 %post
@@ -59,7 +60,13 @@ ln -s /usr/lib/node/proxycti/sql/nethcti.sql /etc/e-smith/sql/init/10cti.sql
 
 
 %changelog
-* Tue Nov 08 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.0.0-1nh
+* Wed Dec 07 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.0.2-1nh
+- Add streamin permission
+- Fix query to check if the call has been booked
+- Fix chat association: store association when the user connects to chat server
+- Fix templates
+
+* Tue Nov 29 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.0.0-1nh
 - Code cleanup
 - Update note system
 - New template rendering engine: use ejs
