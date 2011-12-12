@@ -48,7 +48,8 @@ rm -rf $RPM_BUILD_ROOT
 
 %files -f %{name}-%{version}-filelist
 %defattr(-,asterisk,asterisk,-)
-%config /usr/lib/node/proxycti/config/*
+%config(noreplace) /usr/lib/node/proxycti/config/*
+%config(noreplace) /usr/lib/node/proxycti/store/*
 %doc
 
 %post
@@ -64,6 +65,7 @@ ln -s /usr/lib/node/proxycti/sql/nethcti.sql /etc/e-smith/sql/init/10cti.sql
 %changelog
 * Mon Dec 12 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.0.3-1nh
 - Add smeserver-ejabberd dependency
+- Move sms configuration to sms.ini
 - Various small fixes
 
 * Wed Dec 07 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.0.2-1nh
