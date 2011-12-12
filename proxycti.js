@@ -15,6 +15,7 @@ var ejs = require('./lib/ejs/ejs.js');
 var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
 var log4js = require('./lib/log4js-node/lib/log4js')();
 const PROXY_CONFIG_FILENAME = "config/proxycti.ini";
+const SMS_CONFIG_FILENAME = "config/sms.ini";
 const CHAT_ASSOC_FILE = "./store/chat-assoc";
 const AST_CALL_AUDIO_DIR = "/var/spool/asterisk/monitor";
 const SMS_DIR = "sms";
@@ -42,6 +43,7 @@ var clientToReturnExtStatusForOp = '';
 var clients = {};
 var chStat = {}; // object that contains the 'uniqueid' as a key
 var server_conf = {}; // configuration content of the file config/proxycti.ini
+var sms_conf = {}; // configuration content of the file config/sms.ini
 // This object is the response that this server pass to the clients.
 var ResponseMessage = function(clientSessionId, typeMessage, respMessage){
 	this.clientSessionId = clientSessionId;
@@ -87,6 +89,10 @@ readAllTemplate();
 
 // initialize parameters for this server and for asterisk server
 initServerAndAsteriskParameters();
+initSmsParameters();
+function initSmsParameters(){
+	sms_conf = iniparser.parseSync(SMS_CONFIG_FILENAME);
+}
 /* Initialize some configuration parameters
 server_conf = 
 { ASTERISK: { user: 'vtiger', pass: 'vtiger', host: 'localhost' },
@@ -3639,13 +3645,13 @@ io.sockets.on('connection', function(client){
 			case actions.SEND_SMS:
 				var destNum = message.destNum;
 				var text = message.text;
-				if(server_conf["SMS"].type==="web"){ // WEB
+				if(sms_conf["SMS"].type==="web"){ // WEB
 					text = escape(text);
-					var user = server_conf['SMS'].user;
-					var pwd = server_conf['SMS'].password;
-					var httpurl = server_conf['SMS'].url.replace("$USER",user).replace("$PASSWORD",pwd).replace("$NUMBER",destNum).replace("$TEXT",text);
-					var meth = server_conf['SMS'].method.toUpperCase();
-					var prefix = server_conf['SMS'].prefix;
+					var user = sms_conf['SMS'].user;
+					var pwd = sms_conf['SMS'].password;
+					var httpurl = sms_conf['SMS'].url.replace("$USER",user).replace("$PASSWORD",pwd).replace("$NUMBER",destNum).replace("$TEXT",text);
+					var meth = sms_conf['SMS'].method.toUpperCase();
+					var prefix = sms_conf['SMS'].prefix;
 					if(prefix!==""){
 						destNum = prefix + destNum;
 					}
@@ -3720,7 +3726,7 @@ io.sockets.on('connection', function(client){
 					});
 					request.end(); // send request
 					logger.debug("HTTP [" + meth + "] request for sending SMS from " + extFrom + " -> " + destNum + " was sent");
-				} else if(server_conf["SMS"].type==="portech"){ // PORTECH
+				} else if(sms_conf["SMS"].type==="portech"){ // PORTECH
 					var pathori = SMS_DIR+'/'+extFrom+'-'+destNum;
 					var smsFilepath = SMS_DIR+'/'+extFrom+'-'+destNum;
 					var res = true;
@@ -3750,7 +3756,7 @@ io.sockets.on('connection', function(client){
 						}
 					});
 				} else {
-					logger.error("sms type in server configuration is: " + server.conf["SMS"].type);
+					logger.error("sms type in server configuration is: " + sms_conf["SMS"].type);
 				}
 			break;
 	  		default:
