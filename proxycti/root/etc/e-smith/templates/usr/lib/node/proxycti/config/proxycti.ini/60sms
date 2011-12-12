@@ -1,7 +1,0 @@
-[SMS]
-type={$proxycti{SMSType} || "web"}
-url={$proxycti{SMSUrl} || ""}
-user={$proxycti{SMSUser} || ""}
-password={$proxycti{SMSPassword} || ""}
-method={$proxycti{SMSMethod} || "GET"}
-prefix={$proxycti{SMSPrefix} || ""}
