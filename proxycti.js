@@ -3793,36 +3793,20 @@ function storeChatAssociation(extFrom, bareJid){
 	pathreq.exists(CHAT_ASSOC_FILE, function(exists){
 	        if(exists){
 			chatAssociation = iniparser.parseSync(CHAT_ASSOC_FILE);
-			if(chatAssociation.CHAT_ASSOCIATION[extFrom]===bareJid){ // association is already present
-				logger.debug('chat association ['+extFrom+'='+bareJid+'] is already present');
-				updateAllClientsForChatAssociation();
-				return;
-			} else if(chatAssociation.CHAT_ASSOCIATION[extFrom]!==undefined) { // the association is present: rewrite it
-				chatAssociation.CHAT_ASSOCIATION[extFrom] = bareJid;
-				updateAllClientsForChatAssociation();
-				var content = "[CHAT_ASSOCIATION]\n"; // the content of the file
-				for(key in chatAssociation.CHAT_ASSOCIATION){
-					content += key+"="+chatAssociation.CHAT_ASSOCIATION[key]+"\n";
+			for(var key in chatAssociation.CHAT_ASSOCIATION){
+				if(key===extFrom || chatAssociation.CHAT_ASSOCIATION[key]===bareJid){
+					delete chatAssociation.CHAT_ASSOCIATION[key];
 				}
-				fs.unlinkSync(CHAT_ASSOC_FILE); // remove file
-				writeChatAssociationFile(CHAT_ASSOC_FILE,content); // create the file
-				logger.debug("updated chat association file " + CHAT_ASSOC_FILE+" with " + extFrom+"="+bareJid);
-			} else { // the association is not present and the file exists
-		                fs.open(CHAT_ASSOC_FILE, 'a', '666', function(err, id){
-		                        if(err){
-		                                logger.error(err + " : error in file '"+ CHAT_ASSOC_FILE  +"'");
-		                                return;
-		                        } else {
-						chatAssociation.CHAT_ASSOCIATION[extFrom] = bareJid;
-						updateAllClientsForChatAssociation();
-	                	                fs.write(id, extFrom+"="+bareJid+"\n", null, 'utf8', function(){
-		                                        fs.close(id, function(){
-		                                                logger.debug("chat association has been appended in file " + CHAT_ASSOC_FILE+" with ["+extFrom+"="+bareJid+"]");
-		                                        });
-		                                });
-		                        }
-		                });
 			}
+			chatAssociation.CHAT_ASSOCIATION[extFrom] = bareJid;
+			updateAllClientsForChatAssociation();
+			var content = "[CHAT_ASSOCIATION]\n"; // the content of the file
+			for(var key in chatAssociation.CHAT_ASSOCIATION){
+				content += key+"="+chatAssociation.CHAT_ASSOCIATION[key]+"\n";
+			}
+			fs.unlinkSync(CHAT_ASSOC_FILE); // remove file
+			writeChatAssociationFile(CHAT_ASSOC_FILE,content); // create the file
+			logger.debug("updated chat association file " + CHAT_ASSOC_FILE+" with " + extFrom+"="+bareJid);
 	        } else { // file not exists
 			var o = {};
 			o[extFrom] = bareJid;
