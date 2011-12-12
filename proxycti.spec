@@ -14,6 +14,7 @@ BuildRequires:	e-smith-devtools
 Requires:	nodejs
 Requires:	node-forever
 Requires:	nethvoice
+Requires:	smeserver-ejabberd
 Requires:       nethcti-nethvoice-module
 AutoReq:	no
 
@@ -62,6 +63,7 @@ ln -s /usr/lib/node/proxycti/sql/nethcti.sql /etc/e-smith/sql/init/10cti.sql
 
 %changelog
 * Mon Dec 12 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.0.3-1nh
+- Add smeserver-ejabberd dependency
 - Various small fixes
 
 * Wed Dec 07 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.0.2-1nh
