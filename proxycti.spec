@@ -1,5 +1,5 @@
 Name:		proxycti
-Version:	1.0.2
+Version:	1.0.3
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI	
 
@@ -61,6 +61,9 @@ ln -s /usr/lib/node/proxycti/sql/nethcti.sql /etc/e-smith/sql/init/10cti.sql
 
 
 %changelog
+* Mon Dec 12 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.0.3-1nh
+- Various small fixes
+
 * Wed Dec 07 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.0.2-1nh
 - Add streamin permission
 - Fix query to check if the call has been booked
