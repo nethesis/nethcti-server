@@ -15,7 +15,7 @@ Requires:	nodejs
 Requires:	node-forever
 Requires:	nethvoice
 Requires:	smeserver-ejabberd
-Requires:       nethcti-nethvoice-module
+Requires:       nethcti-module
 AutoReq:	no
 
 %description
