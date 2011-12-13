@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS `call_reservation` (
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8
 
 CREATE TABLE `chat_association` (
-  `extension` varchar(50) NOT NULL,
+  `extension` varchar(50) NOT NULL default '',
   `bare_jid` varchar(50) default '',
   PRIMARY KEY  (`extension`),
   UNIQUE KEY `extension` (`extension`,`bare_jid`)
