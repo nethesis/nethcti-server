@@ -52,37 +52,36 @@ var ResponseMessage = function(clientSessionId, typeMessage, respMessage){
 }
 var currentCallInInfo = {}; // the info (callNotes, Customer Card...) for the current caller
 var chatAssociation = {}; // association between extensions and their chat user
-function readSingleTemplate(filename,filepath){
-	fs.stat(filepath, function(err,stats){
-		if(err){
-			logger.error('read template: ' + err);
-			return;
-		}
-		if(stats.isFile()){
-			var fileContent = fs.readFile(filepath,'UTF-8',function(err,data){
-				if(err){
-					logger.error('read template: ' + err);
-					return;
-				}
-				cc_templates[filename] = data;
-			});
-		}
-	});
-}
-function readDirTemplate(dir){
-	fs.readdir(dir,function(err,files){
-		var filepath = '';
-		var file = '';
-		for(var i in files){
-			file = files[i];
-			filepath = pathreq.join(dir,file);
-			readSingleTemplate(file,filepath);
-		}
-	});
-}
+
 function readAllTemplate(){
+	var files = {};
+	var temp = [];
+	var est = '';
+	var filepath = '';
+	var dirpath = '';
 	for(key in template_cc_dir){
-		readDirTemplate(template_cc_dir[key]);
+		dirpath = template_cc_dir[key];
+		temp = fs.readdirSync(dirpath);
+		for(var x=0; x<temp.length; x++){
+			est = temp[x].substring( temp[x].length-4,temp[x].length );
+			if(est==='.ejs'){
+				filepath = pathreq.join(dirpath,temp[x]);
+				files[temp[x]] = filepath;
+			}
+		}
+	}
+	// order 
+	var filesArr = Object.keys(files);
+	filesArr.sort();
+	var filename = '';
+	var fpath = '';
+	var content = '';
+	for(var x=0; x<filesArr.length; x++){
+		filename = filesArr[x];
+		fpath = files[filename];
+		// read file content
+		content = fs.readFileSync(fpath,'UTF-8');
+		cc_templates[filename] = content;
 	}
 }
 readAllTemplate();
@@ -831,10 +830,19 @@ function setResponseWithCurrentCallInfoCC(c,from,to,response){
                 return;
         }
         var str = '';
+	var typesCCObj = {};
+	for(var i=0; i<typesCC.length; i++){
+		typesCCObj[typesCC[i]] = '';
+	}
         if(Object.keys(ccArr).length>0){
- 	       for(var w=0, typecc; typecc=typesCC[w]; w++){
-	               str += ccArr[typecc];
-               }
+
+		var tempTypeName = '';
+		for(var key in cc_templates){
+			tempTypeName = key.split('.')[0].split('_')[3];
+			if(typesCCObj[tempTypeName]!==undefined){
+				str += ccArr[tempTypeName];
+			}
+		}
         }
         response.customerCard = str;
         return response;
@@ -2344,6 +2352,12 @@ io.sockets.on('connection', function(client){
                                 var from = nums[0];
                                 var customerCardResult = [];
                                 var obj = {};
+
+			
+				var typesCCObj = {};
+			        for(var i=0; i<typesCC.length; i++){
+			                typesCCObj[typesCC[i]] = '';
+			        }
 				if(currentCallInInfo[from]!==undefined){ // check if there is info about the contact in cache (of the current call)
 					setResponseWithCurrentCallInfoCC(client,from,extFrom,response);
 					client.emit('message',response);
@@ -2362,14 +2376,26 @@ io.sockets.on('connection', function(client){
 	                                                } else {
 	                                                        customerCardResult.push(cc);
 	                                                }
-	                                                if(customerCardResult.length==typesCC.length){
+
+	                                                if(customerCardResult.length===typesCC.length){
                                         			var key = '';
 			                                        var ccHtml = '';
+								var tempObj = {};
 			                                        for(var w=0, cc; cc=customerCardResult[w]; w++){
                         			                        key = Object.keys(cc)[0];
-                                                			ccHtml += createCustomerCardHTML(cc,key,from);
+                                                			ccHtml = createCustomerCardHTML(cc,key,from);
+									tempObj[key] = ccHtml;
                                         			}
-								response.customerCard = ccHtml;
+								var tempTypeName = '';
+								var str = '';
+								for(var key in cc_templates){
+									tempTypeName = key.split('.')[0].split('_')[3];
+									if(tempObj[tempTypeName]!==undefined){
+										str += tempObj[tempTypeName];
+									}
+
+								}
+								response.customerCard = str;
 								client.emit('message',response);
                                                                 logger.debug("RESP 'resp_get_vcard_cc' has been sent to [" + extFrom + "] id '" + client.id + "' with relative customer card");
 	                                                }
@@ -4004,7 +4030,6 @@ getCCTemplate = function(type){
 	for(key in cc_templates){
 		typeFilename = key.split('.')[0].split('_')[3];
 		if(typeFilename===type){
-			console.log("ritorno il template per key = " + key + " e type = " + type);
 			return cc_templates[key]; // return ejs template
 		}
 	}
