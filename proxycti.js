@@ -52,37 +52,36 @@ var ResponseMessage = function(clientSessionId, typeMessage, respMessage){
 }
 var currentCallInInfo = {}; // the info (callNotes, Customer Card...) for the current caller
 var chatAssociation = {}; // association between extensions and their chat user
-function readSingleTemplate(filename,filepath){
-	fs.stat(filepath, function(err,stats){
-		if(err){
-			logger.error('read template: ' + err);
-			return;
-		}
-		if(stats.isFile()){
-			var fileContent = fs.readFile(filepath,'UTF-8',function(err,data){
-				if(err){
-					logger.error('read template: ' + err);
-					return;
-				}
-				cc_templates[filename] = data;
-			});
-		}
-	});
-}
-function readDirTemplate(dir){
-	fs.readdir(dir,function(err,files){
-		var filepath = '';
-		var file = '';
-		for(var i in files){
-			file = files[i];
-			filepath = pathreq.join(dir,file);
-			readSingleTemplate(file,filepath);
-		}
-	});
-}
+
 function readAllTemplate(){
+	var files = {};
+	var temp = [];
+	var est = '';
+	var filepath = '';
+	var dirpath = '';
 	for(key in template_cc_dir){
-		readDirTemplate(template_cc_dir[key]);
+		dirpath = template_cc_dir[key];
+		temp = fs.readdirSync(dirpath);
+		for(var x=0; x<temp.length; x++){
+			est = temp[x].substring( temp[x].length-4,temp[x].length );
+			if(est==='.ejs'){
+				filepath = pathreq.join(dirpath,temp[x]);
+				files[temp[x]] = filepath;
+			}
+		}
+	}
+	// order 
+	var filesArr = Object.keys(files);
+	filesArr.sort();
+	var filename = '';
+	var fpath = '';
+	var content = '';
+	for(var x=0; x<filesArr.length; x++){
+		filename = filesArr[x];
+		fpath = files[filename];
+		// read file content
+		content = fs.readFileSync(fpath,'UTF-8');
+		cc_templates[filename] = content;
 	}
 }
 readAllTemplate();
@@ -224,6 +223,16 @@ function createAudioFileList(){
 		}
         }
 }
+
+// initialize chatAssociation global variable
+dataCollector.getChatAssociation(function(results){
+	var obj = undefined;
+	for(var i=0; i<results.length; i++){
+		obj = results[i];
+		chatAssociation[obj.extension] = obj.bare_jid;
+	}
+	logger.debug("initialized chatAssociation from DB: chatAssociation = " + sys.inspect(chatAssociation));
+});
 
 /******************************************************
  * Section relative to asterisk interaction    
@@ -821,10 +830,19 @@ function setResponseWithCurrentCallInfoCC(c,from,to,response){
                 return;
         }
         var str = '';
+	var typesCCObj = {};
+	for(var i=0; i<typesCC.length; i++){
+		typesCCObj[typesCC[i]] = '';
+	}
         if(Object.keys(ccArr).length>0){
- 	       for(var w=0, typecc; typecc=typesCC[w]; w++){
-	               str += ccArr[typecc];
-               }
+
+		var tempTypeName = '';
+		for(var key in cc_templates){
+			tempTypeName = key.split('.')[0].split('_')[3];
+			if(typesCCObj[tempTypeName]!==undefined){
+				str += ccArr[tempTypeName];
+			}
+		}
         }
         response.customerCard = str;
         return response;
@@ -2334,6 +2352,12 @@ io.sockets.on('connection', function(client){
                                 var from = nums[0];
                                 var customerCardResult = [];
                                 var obj = {};
+
+			
+				var typesCCObj = {};
+			        for(var i=0; i<typesCC.length; i++){
+			                typesCCObj[typesCC[i]] = '';
+			        }
 				if(currentCallInInfo[from]!==undefined){ // check if there is info about the contact in cache (of the current call)
 					setResponseWithCurrentCallInfoCC(client,from,extFrom,response);
 					client.emit('message',response);
@@ -2352,14 +2376,26 @@ io.sockets.on('connection', function(client){
 	                                                } else {
 	                                                        customerCardResult.push(cc);
 	                                                }
-	                                                if(customerCardResult.length==typesCC.length){
+
+	                                                if(customerCardResult.length===typesCC.length){
                                         			var key = '';
 			                                        var ccHtml = '';
+								var tempObj = {};
 			                                        for(var w=0, cc; cc=customerCardResult[w]; w++){
                         			                        key = Object.keys(cc)[0];
-                                                			ccHtml += createCustomerCardHTML(cc,key,from);
+                                                			ccHtml = createCustomerCardHTML(cc,key,from);
+									tempObj[key] = ccHtml;
                                         			}
-								response.customerCard = ccHtml;
+								var tempTypeName = '';
+								var str = '';
+								for(var key in cc_templates){
+									tempTypeName = key.split('.')[0].split('_')[3];
+									if(tempObj[tempTypeName]!==undefined){
+										str += tempObj[tempTypeName];
+									}
+
+								}
+								response.customerCard = str;
 								client.emit('message',response);
                                                                 logger.debug("RESP 'resp_get_vcard_cc' has been sent to [" + extFrom + "] id '" + client.id + "' with relative customer card");
 	                                                }
@@ -3788,35 +3824,26 @@ io.sockets.on('connection', function(client){
 /************************************************************************************************
  * Section relative to functions
  */
-// Add chat association into the file. It it is already present, rewrite it.
+// Update chat assocation in 'chatAssociation' and in DB and then return 'chatAssociation' to all clients
 function storeChatAssociation(extFrom, bareJid){
-	pathreq.exists(CHAT_ASSOC_FILE, function(exists){
-	        if(exists){
-			chatAssociation = iniparser.parseSync(CHAT_ASSOC_FILE);
-			for(var key in chatAssociation.CHAT_ASSOCIATION){
-				if(key===extFrom || chatAssociation.CHAT_ASSOCIATION[key]===bareJid){
-					delete chatAssociation.CHAT_ASSOCIATION[key];
-				}
+	// if the 'extFrom=bareJid' is already present in chatAssociation, then it don't do anything
+	if(chatAssociation[extFrom]!==undefined && chatAssociation[extFrom]===bareJid){
+		logger.debug("chat association '"+extFrom+"="+bareJid+"' is already present: don't do anything");
+	} else { // else delete all entry from DB that contains 'extFrom' or 'bareJid' and then insert new entry extFrom=bareJid and update chatAssociation in the same way
+		//  update chatAssociation (delete and insert)
+		for(var key in chatAssociation){
+			if(key===extFrom || chatAssociation[key]===bareJid){
+				delete chatAssociation[key];
 			}
-			chatAssociation.CHAT_ASSOCIATION[extFrom] = bareJid;
-			updateAllClientsForChatAssociation();
-			var content = "[CHAT_ASSOCIATION]\n"; // the content of the file
-			for(var key in chatAssociation.CHAT_ASSOCIATION){
-				content += key+"="+chatAssociation.CHAT_ASSOCIATION[key]+"\n";
-			}
-			fs.unlinkSync(CHAT_ASSOC_FILE); // remove file
-			writeChatAssociationFile(CHAT_ASSOC_FILE,content); // create the file
-			logger.debug("updated chat association file " + CHAT_ASSOC_FILE+" with " + extFrom+"="+bareJid);
-	        } else { // file not exists
-			var o = {};
-			o[extFrom] = bareJid;
-			chatAssociation = {CHAT_ASSOCIATION: o};
-			updateAllClientsForChatAssociation();
-	                var str = "[CHAT_ASSOCIATION]\n"+extFrom+"="+bareJid+"\n";
-			writeChatAssociationFile(CHAT_ASSOC_FILE, str);
-			logger.debug("chat association ["+extFrom+"="+bareJid+"] is stored in file " + CHAT_ASSOC_FILE);
-	        }
-	});
+		}
+		chatAssociation[extFrom] = bareJid;
+		// update DB
+		dataCollector.insertAndUpdateChatAssociation(extFrom,bareJid,function(){
+			logger.debug("insert and update chat association '"+extFrom+"="+bareJid+"' in DB");
+		});
+	}
+	updateAllClientsForChatAssociation();
+	logger.debug("chatAssociation = " + sys.inspect(chatAssociation));
 }
 // write a file with a content
 function writeChatAssociationFile(file, content){
@@ -3873,7 +3900,7 @@ function updateAllClientsForChatAssociation(){
 	for(key in clients){
                 var c = clients[key];
                 var response = new ResponseMessage(c.id, "update_chat_assoc", "");
-                response.chatAssoc = chatAssociation.CHAT_ASSOCIATION;
+                response.chatAssoc = chatAssociation;
                 c.emit('message',response);
                 logger.debug("RESP 'update_chat_assoc' has been sent to client [" + key + "] id '" + c.id + "'");
         }
@@ -4003,7 +4030,6 @@ getCCTemplate = function(type){
 	for(key in cc_templates){
 		typeFilename = key.split('.')[0].split('_')[3];
 		if(typeFilename===type){
-			console.log("ritorno il template per key = " + key + " e type = " + type);
 			return cc_templates[key]; // return ejs template
 		}
 	}
