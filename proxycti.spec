@@ -1,5 +1,5 @@
 Name:		proxycti
-Version:	1.0.3
+Version:	1.0.4
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI	
 
@@ -13,7 +13,6 @@ BuildRoot:	/var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildRequires:	e-smith-devtools
 Requires:	nodejs
 Requires:	node-forever
-Requires:	nethvoice
 Requires:	smeserver-ejabberd
 Requires:       nethcti-module
 AutoReq:	no
@@ -29,6 +28,7 @@ Nodejs Asterisk proxy used for NethCTI
 perl -w createlinks
 mkdir -p root/var/lib/asterisk/bin
 mkdir -p root/var/spool/asterisk/monitor
+mkdir -p root/home/e-smith/proxycti/template/
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -49,7 +49,6 @@ rm -rf $RPM_BUILD_ROOT
 %files -f %{name}-%{version}-filelist
 %defattr(-,asterisk,asterisk,-)
 %config(noreplace) /usr/lib/node/proxycti/config/*
-%config(noreplace) /usr/lib/node/proxycti/store/*
 %doc
 
 %post
@@ -63,6 +62,13 @@ ln -s /usr/lib/node/proxycti/sql/nethcti.sql /etc/e-smith/sql/init/10cti.sql
 
 
 %changelog
+* Tue Dec 13 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.0.4-1nh
+- Move chat association into mysql
+- Fix template order
+
+* Mon Dec 12 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.0.3-2nh
+- Fix call cc template
+
 * Mon Dec 12 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.0.3-1nh
 - Add smeserver-ejabberd dependency
 - Move sms configuration to sms.ini
