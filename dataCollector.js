@@ -15,6 +15,7 @@ const CALL_NOTES = "call_notes";
 const CALL_RESERVATION = "call_reservation";
 const DB_TABLE_SMS = 'sms_history';
 const DB_TABLE_CALLNOTES = 'call_notes';
+const CHAT_ASSOCIATION = 'chat_association';
 
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF) */
@@ -67,6 +68,28 @@ exports.DataCollector = function(){
 	this.getCallNotes = function(num,cb){ getCallNotes(num,cb); }
 	this.saveCallReservation = function(ext,num,cb){ saveCallReservation(ext,num,cb); }
 	this.isCallReserved = function(num,cb){ isCallReserved(num,cb); }
+	this.getChatAssociation = function(cb){ getChatAssociation(cb); }
+	this.insertAndUpdateChatAssociation = function(extFrom,bareJid,cb){ insertAndUpdateChatAssociation(extFrom,bareJid,cb); }
+}
+// delete all entries that contains extFrom or bareJid. Then insert new chat association extFrom=bareJid
+function insertAndUpdateChatAssociation(extFrom,bareJid,cb){
+	var objQuery = queries[CHAT_ASSOCIATION];
+	// delete all entries
+	objQuery.query = "delete from chat_association where extension='"+extFrom+"' OR bare_jid='"+bareJid+"';";
+	executeSQLQuery(CHAT_ASSOCIATION, objQuery, function(results){
+	});
+	// insert new chat association
+	objQuery.query = "insert into chat_association (extension,bare_jid) values ('"+extFrom+"','"+bareJid+"');";
+	executeSQLQuery(CHAT_ASSOCIATION, objQuery, function(results){
+                cb(results);
+        });
+}
+function getChatAssociation(cb){
+	var objQuery = queries[CHAT_ASSOCIATION];
+	objQuery.query = "select * from chat_association;";
+        executeSQLQuery(CHAT_ASSOCIATION, objQuery, function(results){
+                cb(results);
+        });
 }
 function isCallReserved(num,cb){
 	var objQuery = queries[CALL_RESERVATION];
@@ -322,6 +345,15 @@ function initQueries(){
 		query: ''
 	};
 	this.queries[CALL_RESERVATION] = {
+		dbhost: 'localhost',
+		dbport: '/var/lib/mysql/mysql.sock',
+		dbtype: 'mysql',
+		dbuser: 'smsuser',
+		dbpassword: 'smspass',
+		dbname: 'nethcti',
+		query: ''
+	};
+	this.queries[CHAT_ASSOCIATION] = {
 		dbhost: 'localhost',
 		dbport: '/var/lib/mysql/mysql.sock',
 		dbtype: 'mysql',
