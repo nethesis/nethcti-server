@@ -40,11 +40,11 @@ CREATE TABLE IF NOT EXISTS `call_reservation` (
   UNIQUE KEY `number_2` (`number`),
   KEY `index_extension` (`extension`),
   KEY `index_number` (`number`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
-CREATE TABLE `chat_association` (
+CREATE TABLE IF NOT EXISTS `chat_association` (
   `extension` varchar(50) NOT NULL default '',
   `bare_jid` varchar(50) default '',
   PRIMARY KEY  (`extension`),
-  UNIQUE KEY `extension` (`extension`,`bare_jid`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8
+  UNIQUE KEY `ext_jid` (`extension`,`bare_jid`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
