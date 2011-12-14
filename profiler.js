@@ -117,7 +117,7 @@ function addController(contr){
 	logger.debug("added controller")
 	controller.addFile(PROFILER_CONFIG_FILENAME)
 	controller.addListener("change_file", function(filename){
- 	       if(filename==PROFILER_CONFIG_FILENAME){
+		if(filename==PROFILER_CONFIG_FILENAME){
 	                logger.info("update configuration file " + PROFILER_CONFIG_FILENAME)
 	                updateConfiguration()
 	        }
