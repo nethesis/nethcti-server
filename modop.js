@@ -59,7 +59,7 @@ var actionQueueStatus = {
 // Constructor 
 exports.Modop = function(){
 	EventEmitter.call(this)
-	self = this
+	_selfModop = this
 	/* initialize the list of tabs to view in the operator panel by reading 
 	 * configuration file 'optab.ini' */
 	initTabOp();
@@ -417,7 +417,9 @@ function updateLastDialExt(ext){
 			extStatusForOp[key].dialExt = ''
 		}
 }
-function addController(contr){ controller = contr }
+function addController(contr){
+	controller = contr;
+}
 function isExtInterno(ext){
 	for(key in extStatusForOp){
 		if(key.indexOf(ext)!=-1){
