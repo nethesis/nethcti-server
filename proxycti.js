@@ -138,12 +138,13 @@ modop.setLogger(logfile,loglevel);
 modop.addController(controller)
 logger.debug('added object modules: \'Profiler\', \'DataCollector\', \'Authenticator\', \'Modop\' and \'Controller\'')
 controller.addDir(AST_CALL_AUDIO_DIR);
-controller.addListener("change_dir", function(dir){
+controller.addListener('change_dir', function(dir){
+	logger.debug("EVENT 'chang_dir' by controller relative to directory '"+dir+"'");
 	if(dir==AST_CALL_AUDIO_DIR){
 		logger.info("update audio file list");
 		createAudioFileList();
 	}
-})
+});
 controller.addListener('change_vm_dir', function(dir){ // ex dir: '/var/spool/asterisk/voicemail/default/272/INBOX'
         var ext = dir.split('/')[6]
         var actionMailboxCount = {
@@ -4105,9 +4106,5 @@ process.on('uncaughtException', function(err){
 	logger.error(sys.inspect(err));
 	logger.error("STACK:");
 	logger.error(err.stack);
-	logger.error("chStat:");
-	logger.error(sys.inspect(chStat));
-	logger.error("extStatusForOp:");
-	logger.error(sys.inspect(modop.getExtStatusForOp()));
 	logger.error('*********************************************');
 });
