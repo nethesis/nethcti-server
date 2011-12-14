@@ -14,7 +14,7 @@ dirToControl = {} // list of directories to control
 // Constructor
 exports.Controller = function(){
 	EventEmitter.call(this);
-	self = this;
+	_selfController = this;
 	this.addFile = function(filename) { addFile(filename) };
 	this.addDir = function(dir) { addDir(dir) };
 	this.addVMDir = function(dir) { addVMDir(dir) }
@@ -27,7 +27,7 @@ function addVMDir(dir){
                         dirToControl[dir] = true;
                         fs.watchFile(dir, { persistent: true, interval: INTERVAL_POLLING }, function(curr, prev){
                                 if(curr.mtime.getTime()!=prev.mtime.getTime())
-                                        self.emit("change_vm_dir", dir);
+                                        _selfController.emit("change_vm_dir", dir);
                         })
                 }
         }
@@ -46,7 +46,7 @@ function addDir(dir){
 	                dirToControl[dir] = true;
 			fs.watchFile(dir, { persistent: true, interval: INTERVAL_POLLING }, function(curr, prev){
 				if(curr.mtime.getTime()!=prev.mtime.getTime()){
-					self.emit("change_dir", dir);
+					_selfController.emit('change_dir', dir);
 				}
 			});
 	        }
@@ -65,7 +65,7 @@ function addFile(filename){
                         fileToControl[filename] = true;
                         fs.watchFile(filename, { persistent: true, interval: INTERVAL_POLLING }, function(curr, prev){
                                 if(curr.mtime.getTime()!=prev.mtime.getTime()){
-                                        self.emit("change_file", filename);
+                                        _selfController.emit("change_file", filename);
                                 }
                         });
                 }
