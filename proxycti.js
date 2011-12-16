@@ -2183,24 +2183,9 @@ function callout(extFrom, to, res){
  */ 
 var io = io.listen(server);
 // set with env NODE_ENV
-/*
-io.configure('production', function(){
-	io.enable('browser client minification');  // send minified client
-	io.enable('browser client etag');          // apply etag caching logic based on version number
-	io.set('log level', 1);                    // reduce logging
-*/
-	/*io.set('transports', [                     // enable all transports (optional if you want flashsocket)
-		'websocket'
-	  	, 'htmlfile'
-	  	, 'xhr-polling'
-	  	, 'jsonp-polling'
-	]);*/
-/*
-});
 io.configure('development', function(){
 	io.set('log level', 3);
 });
-*/
 io.configure('', function(){
 	io.set('log level', 1);
 });
