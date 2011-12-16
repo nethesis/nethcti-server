@@ -57,7 +57,7 @@ rm -rf $RPM_BUILD_ROOT
 ln -s /usr/lib/node/proxycti/sql/nethcti.sql /etc/e-smith/sql/init/10cti.sql
 /sbin/e-smith/service mysql.init start
 
-/sbin/e-smith/signal-event %{name}-update
+/sbin/e-smith/signal-event %{name}-update || exit 0
 
 
 %changelog
