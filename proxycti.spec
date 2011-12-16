@@ -1,6 +1,6 @@
 Name:		proxycti
 Version:	1.0.6
-Release:	1%{?dist}
+Release:	2%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI	
 
 Group:		Network	
@@ -61,6 +61,9 @@ ln -s /usr/lib/node/proxycti/sql/nethcti.sql /etc/e-smith/sql/init/10cti.sql
 
 
 %changelog
+
+* Fri Dec 16 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.0.6-2nh
+- Really update to 1.0.6
 
 * Fri Dec 16 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.0.6-1nh
 - Update websocket protocol to HyBi-16 (compatible with Chrome 16)
