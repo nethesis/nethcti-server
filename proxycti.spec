@@ -1,10 +1,10 @@
 Name:		proxycti
-Version:	1.0.4
+Version:	1.0.6
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI	
 
 Group:		Network	
-License:	ASIS
+License:	GPLv2
 #URL:		
 Source0:	%{name}-%{version}.tar.gz
 BuildRoot:	/var/tmp/%{name}-%{version}-%{release}-buildroot
@@ -62,6 +62,15 @@ ln -s /usr/lib/node/proxycti/sql/nethcti.sql /etc/e-smith/sql/init/10cti.sql
 
 
 %changelog
+
+* Fri Dec 16 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.0.6-1nh
+- Update websocket protocol to HyBi-16 (compatible with Chrome 16)
+
+* Wed Dec 14 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.0.5-1nh
+- More compact error debug
+- Fix runtime update of audio file list
+- Add directory example with some 'ejs' templates for customer card
+
 * Tue Dec 13 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.0.4-1nh
 - Move chat association into mysql
 - Fix template order
