@@ -5,7 +5,6 @@ Summary:	Nodejs Asterisk proxy for NethCTI
 
 Group:		Network	
 License:	GPLv2
-#URL:		
 Source0:	%{name}-%{version}.tar.gz
 BuildRoot:	/var/tmp/%{name}-%{version}-%{release}-buildroot
 
