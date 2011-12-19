@@ -2510,7 +2510,11 @@ io.sockets.on('connection', function(client){
 					var respMsg = new ResponseMessage(client.id, "ack_login", "Login succesfully");
 					respMsg.ext = extFrom;
 					respMsg.secret = message.secret;
+					var keys = Object.keys(sms_conf.SMS);
 					respMsg.permissions = profiler.getAllPermissions(extFrom);
+					if(keys.length===0 || sms_conf.SMS.type===undefined || sms_conf.SMS.type===''){
+						respMsg.permissions.sms = false
+					}
 					if(profiler.checkActionChatPermit(extFrom)){ // check user permission to use the chat
 						var chaturl = server_conf.SERVER_CHAT.url; // url of the chat server
 						if(chaturl==='' || chaturl===undefined){
@@ -3674,120 +3678,124 @@ io.sockets.on('connection', function(client){
 				} catch(err) {logger.warn("no connection to asterisk: "+err);}
                         break;
 			case actions.SEND_SMS:
-				var destNum = message.destNum;
-				var text = message.text;
-				if(sms_conf["SMS"].type==="web"){ // WEB
-					text = escape(text);
-					var user = sms_conf['SMS'].user;
-					var pwd = sms_conf['SMS'].password;
-					var httpurl = sms_conf['SMS'].url.replace("$USER",user).replace("$PASSWORD",pwd).replace("$NUMBER",destNum).replace("$TEXT",text);
-					var meth = sms_conf['SMS'].method.toUpperCase();
-					var prefix = sms_conf['SMS'].prefix;
-					if(prefix!==""){
-						destNum = prefix + destNum;
-					}
-					if(meth!=='POST'){
-						meth = 'GET';
-					}
-					var parsed_url = url.parse(httpurl, true);
-					var options = {
-						host: parsed_url.host,
-						port: 80,
-						path: parsed_url.pathname+parsed_url.search,
-						method: meth
-					};
-					var request = http.request(options, function(res){ // http request
-						if(res.statusCode===200){ // HTTP answer is ok, but check also respCode
-							res.setEncoding('utf8');
-							var respCode = '';
-							res.on("data", function(chunk){ // get response code
-								var temp = chunk.split("<CODICE>");
-								for(var i=0, el; el=temp[i]; i++){
-									if(el.indexOf("</CODICE>")!==-1){
-										respCode = el.split("</CODICE>")[0];
+				if(profiler.checkActionSmsPermit(extFrom)){
+					var destNum = message.destNum;
+					var text = message.text;
+					if(sms_conf["SMS"].type==="web"){ // WEB
+						text = escape(text);
+						var user = sms_conf['SMS'].user;
+						var pwd = sms_conf['SMS'].password;
+						var httpurl = sms_conf['SMS'].url.replace("$USER",user).replace("$PASSWORD",pwd).replace("$NUMBER",destNum).replace("$TEXT",text);
+						var meth = sms_conf['SMS'].method.toUpperCase();
+						var prefix = sms_conf['SMS'].prefix;
+						if(prefix!==""){
+							destNum = prefix + destNum;
+						}
+						if(meth!=='POST'){
+							meth = 'GET';
+						}
+						var parsed_url = url.parse(httpurl, true);
+						var options = {
+							host: parsed_url.host,
+							port: 80,
+							path: parsed_url.pathname+parsed_url.search,
+							method: meth
+						};
+						var request = http.request(options, function(res){ // http request
+							if(res.statusCode===200){ // HTTP answer is ok, but check also respCode
+								res.setEncoding('utf8');
+								var respCode = '';
+								res.on("data", function(chunk){ // get response code
+									var temp = chunk.split("<CODICE>");
+									for(var i=0, el; el=temp[i]; i++){
+										if(el.indexOf("</CODICE>")!==-1){
+											respCode = el.split("</CODICE>")[0];
+										}
 									}
-								}
-								if(respCode==="HTTP_00"){ // all ok, the sms was sent
-									logger.debug("sms was sent: " + extFrom + " -> " + destNum);
-									// add entry in DB
-									dataCollector.registerSmsSuccess(extFrom, destNum, unescape(text), function(res){
-			                                                        // send ack to client
-			                                                        var mess = new ResponseMessage(client.id, "ack_send_web_sms", '');
-			                                                        client.emit('message',mess);
-										logger.debug("add entry success into 'smsdb' database");
-			                                                        logger.debug("RESP 'ack_send_web_sms' has been sent to [" + extFrom + "] id '" + client.id + "'");
-									});
-								} else { // there was an error
-									logger.error("error in sms sending from " + extFrom + " -> " + destNum + ": check config parameters. respCode = " + respCode);
-									// add entry in DB
-									dataCollector.registerSmsFailed(extFrom, destNum, text, function(res){
-										// send error to client
-			                                                        var mess = new ResponseMessage(client.id, "error_send_web_sms", '');
-										mess.respCode = respCode;
-		        	                                                client.emit('message',mess);
-										logger.debug("add entry of fail into 'smsdb' database");
-		                	                                        logger.debug("RESP 'error_send_web_sms' has been sent to [" + extFrom + "] id '" + client.id + "'");
-									});
-								}
-							});
-						} else { // error in HTTP answer
-							logger.error("error in sms sending from " + extFrom + " -> " + destNum + ": check config parameters. statusCode = " + res.statusCode);
-							var statusCode = res.statusCode;
-							// add entry in DB
-	                                                dataCollector.registerSmsFailed(extFrom, destNum, text, function(res){
-		                                        	// send error to client
-	        		                             	var mess = new ResponseMessage(client.id, "error_send_web_sms", '');
-	                                                        mess.statusCode = statusCode;
-	                                                        client.emit('message',mess);
-	                                                        logger.debug("add entry of fail into 'smsdb' database");
-	                                                        logger.debug("RESP 'error_send_web_sms' has been sent to [" + extFrom + "] id '" + client.id + "'");
-	                                                });	
-						}
-					});
-					request.on("error", function(e){ // there was an error
-						logger.error("error in sms sending from " + extFrom + " -> " + destNum + ": check config parameters. Error: " + e.message);
-						// add entry in DB
-						dataCollector.registerSmsFailed(extFrom, destNum, text, function(res){
-							// send error to client
-                                                       	var mess = new ResponseMessage(client.id, "error_send_web_sms", '');
-                                                	client.emit('message',mess);
-							logger.debug("add entry of fail into 'smsdb' database");
-                        			        logger.debug("RESP 'error_send_web_sms' has been sent to [" + extFrom + "] id '" + client.id + "'");
+									if(respCode==="HTTP_00"){ // all ok, the sms was sent
+										logger.debug("sms was sent: " + extFrom + " -> " + destNum);
+										// add entry in DB
+										dataCollector.registerSmsSuccess(extFrom, destNum, unescape(text), function(res){
+				                                                        // send ack to client
+				                                                        var mess = new ResponseMessage(client.id, "ack_send_web_sms", '');
+				                                                        client.emit('message',mess);
+											logger.debug("add entry success into 'smsdb' database");
+				                                                        logger.debug("RESP 'ack_send_web_sms' has been sent to [" + extFrom + "] id '" + client.id + "'");
+										});
+									} else { // there was an error
+										logger.error("error in sms sending from " + extFrom + " -> " + destNum + ": check config parameters. respCode = " + respCode);
+										// add entry in DB
+										dataCollector.registerSmsFailed(extFrom, destNum, text, function(res){
+											// send error to client
+				                                                        var mess = new ResponseMessage(client.id, "error_send_web_sms", '');
+											mess.respCode = respCode;
+			        	                                                client.emit('message',mess);
+											logger.debug("add entry of fail into 'smsdb' database");
+			                	                                        logger.debug("RESP 'error_send_web_sms' has been sent to [" + extFrom + "] id '" + client.id + "'");
+										});
+									}
+								});
+							} else { // error in HTTP answer
+								logger.error("error in sms sending from " + extFrom + " -> " + destNum + ": check config parameters. statusCode = " + res.statusCode);
+								var statusCode = res.statusCode;
+								// add entry in DB
+		                                                dataCollector.registerSmsFailed(extFrom, destNum, text, function(res){
+			                                        	// send error to client
+		        		                             	var mess = new ResponseMessage(client.id, "error_send_web_sms", '');
+		                                                        mess.statusCode = statusCode;
+		                                                        client.emit('message',mess);
+		                                                        logger.debug("add entry of fail into 'smsdb' database");
+		                                                        logger.debug("RESP 'error_send_web_sms' has been sent to [" + extFrom + "] id '" + client.id + "'");
+		                                                });	
+							}
 						});
-					});
-					request.end(); // send request
-					logger.debug("HTTP [" + meth + "] request for sending SMS from " + extFrom + " -> " + destNum + " was sent");
-				} else if(sms_conf["SMS"].type==="portech"){ // PORTECH
-					var pathori = SMS_DIR+'/'+extFrom+'-'+destNum;
-					var smsFilepath = SMS_DIR+'/'+extFrom+'-'+destNum;
-					var res = true;
-					var index = 1;
-					while(res){ // check if the file already exist: if exist it modify file name
-						try{
-							fs.statSync(smsFilepath);
-							smsFilepath = pathori+'-'+index;
-							index++;
-						} catch(e){
-							res=false;
+						request.on("error", function(e){ // there was an error
+							logger.error("error in sms sending from " + extFrom + " -> " + destNum + ": check config parameters. Error: " + e.message);
+							// add entry in DB
+							dataCollector.registerSmsFailed(extFrom, destNum, text, function(res){
+								// send error to client
+	                                                       	var mess = new ResponseMessage(client.id, "error_send_web_sms", '');
+	                                                	client.emit('message',mess);
+								logger.debug("add entry of fail into 'smsdb' database");
+	                        			        logger.debug("RESP 'error_send_web_sms' has been sent to [" + extFrom + "] id '" + client.id + "'");
+							});
+						});
+						request.end(); // send request
+						logger.debug("HTTP [" + meth + "] request for sending SMS from " + extFrom + " -> " + destNum + " was sent");
+					} else if(sms_conf["SMS"].type==="portech"){ // PORTECH
+						var pathori = SMS_DIR+'/'+extFrom+'-'+destNum;
+						var smsFilepath = SMS_DIR+'/'+extFrom+'-'+destNum;
+						var res = true;
+						var index = 1;
+						while(res){ // check if the file already exist: if exist it modify file name
+							try{
+								fs.statSync(smsFilepath);
+								smsFilepath = pathori+'-'+index;
+								index++;
+							} catch(e){
+								res=false;
+							}
 						}
+						fs.writeFile(smsFilepath, text, function(err){
+							if(err){
+								logger.error(err + ': there was a problem in creation of sms file "' + smsFilepath + '"');
+								// send error to client
+		                                        	var mess = new ResponseMessage(client.id, "error_send_sms", '');
+		                                        	client.emit('message',mess);
+		                                        	logger.debug("RESP 'error_send_sms' has been sent to [" + extFrom + "] id '" + client.id + "'");
+							} else{
+								logger.debug('created sms file "' + smsFilepath + '"');
+								// send ack to client
+		                                        	var mess = new ResponseMessage(client.id, "ack_send_sms", '');
+		                                        	client.emit('message',mess);
+	        	                                	logger.debug("RESP 'ack_send_sms' has been sent to [" + extFrom + "] id '" + client.id + "'");
+							}
+						});
+					} else {
+						logger.error("sms type in server configuration is: " + sms_conf["SMS"].type);
 					}
-					fs.writeFile(smsFilepath, text, function(err){
-						if(err){
-							logger.error(err + ': there was a problem in creation of sms file "' + smsFilepath + '"');
-							// send error to client
-	                                        	var mess = new ResponseMessage(client.id, "error_send_sms", '');
-	                                        	client.emit('message',mess);
-	                                        	logger.debug("RESP 'error_send_sms' has been sent to [" + extFrom + "] id '" + client.id + "'");
-						} else{
-							logger.debug('created sms file "' + smsFilepath + '"');
-							// send ack to client
-	                                        	var mess = new ResponseMessage(client.id, "ack_send_sms", '');
-	                                        	client.emit('message',mess);
-        	                                	logger.debug("RESP 'ack_send_sms' has been sent to [" + extFrom + "] id '" + client.id + "'");
-						}
-					});
-				} else {
-					logger.error("sms type in server configuration is: " + sms_conf["SMS"].type);
+				} else { // the user hasn't the permission to send sms
+					logger.warn("[" + extFrom + "] doesn't have permission to send SMS!");
 				}
 			break;
 	  		default:
