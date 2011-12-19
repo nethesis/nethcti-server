@@ -2242,6 +2242,7 @@ io.sockets.on('connection', function(client){
 			HANGUP_UNIQUEID:'hangup_uniqueid',
 			SPY_LISTEN_SPEAK:   	'spy_listen_speak',
 			SAVE_NOTE_OF_CALL:	'save_note_of_call',
+			DELETE_CALL_NOTE:	'delete_call_note',
 			MODIFY_NOTE_OF_CALL:	'modify_note_of_call',
 			GET_ALL_VM_STATUS:  	'get_all_vm_status',
 			REDIRECT_VOICEMAIL: 	'redirect_voicemail',
@@ -2418,6 +2419,14 @@ io.sockets.on('connection', function(client){
 						logger.debug('call reservation from [' + extFrom + '] for number \'' + message.num + '\' has been saved into database');
 					});
 				}
+			break;
+			case actions.DELETE_CALL_NOTE:
+				dataCollector.deleteCallNote(message.id,function(){
+					logger.debug('call note [id=' + message.id + '] has been deleted from database');
+					var respMsg = new ResponseMessage(client.id, 'ack_delete_callnote', '');
+					client.emit('message',respMsg);
+					logger.debug("RESP 'ack_delete_callnote' has been sent to [" + extFrom + "] id '" + client.id + "'");
+				});
 			break;
 			case actions.SAVE_NOTE_OF_CALL:
 				dataCollector.saveCallNote(message.note,extFrom,message.pub,message.expiration,message.expFormatVal,message.num,function(){
