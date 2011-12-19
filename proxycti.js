@@ -4041,13 +4041,15 @@ getCCTemplate = function(type){
 /* Create html code to return to the client after when he receive calling. This code is 
  * the customer card of the calling user */
 createCustomerCardHTML = function(cc,type,from){ // ex. cc = { default: [ [Object] ] } or { calls: [ [Object] ] }
-	/*
-	if(cc[type]===undefined){
-		cc[type] = {};
-		cc[type].customerNotInDB = "true";
-		cc[type].from = from;
+	if(type==='calls'){
+		var arr = cc.calls;
+		for(var i=0, call; call=arr[i]; i++){
+			res = modop.getNameIntern('SIP/'+call.dst);
+			if(res!==undefined){
+				cc.calls[i].dst = res;
+			}
+		}
 	}
-	*/
 	var typeFromFilename = '';
 	var htmlResult = '';
 	var obj = {};
