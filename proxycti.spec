@@ -1,6 +1,6 @@
 Name:		proxycti
 Version:	1.0.6
-Release:	2%{?dist}
+Release:	3%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI	
 
 Group:		Network	
@@ -61,6 +61,8 @@ ln -s /usr/lib/node/proxycti/sql/nethcti.sql /etc/e-smith/sql/init/10cti.sql
 
 
 %changelog
+* Tue Dec 20 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.0.6-3nh
+- sendsms.php: read configuration from sms.ini
 
 * Fri Dec 16 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.0.6-2nh
 - Really update to 1.0.6
