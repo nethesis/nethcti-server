@@ -1,14 +1,4 @@
 {
-   #SMSType SMSUser  SMSPassword   SMSUrl    SMSMethod   SMSPrefix
-   my $type = $proxycti{SMSType} || "";
-   if ($type eq "portech")
-   {
-      my $ip = $proxycti{SMSUrl} || "";
-      my $user = $proxycti{SMSUser} || "";
-      my $password = $proxycti{SMSPassword} || "" ;
-      my $prefix = $proxycti{SMSPrefix} || "";
-
       $OUT.="# send sms from cti via portech\n";
-      $OUT.= "*/5 * * * * root /usr/lib/node/proxycti/script/sendsms.php '$ip' '$user' '$password' '$prefix'\n"
-   }
+      $OUT.= "*/5 * * * * root /usr/lib/node/proxycti/script/sendsms.php"
 }
