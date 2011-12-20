@@ -17,19 +17,13 @@ define("DB","smsdb");
 define("USER","smsuser");
 define("PASS","smspass");
 
-if($argc < 4)
-{
-  echo "Usage: sendsms <ip> <username> <password> [prefix]\n";
-  die(1);
-}
-
-$xhost = $argv[1];
-$xusername = $argv[2];
-$xpassword = $argv[3];
-if($argc > 4)
-  $prefix = $argv[4];
-else
-  $prefix = "";
+$smsdata = parse_ini_file ('/usr/lib/node/proxycti/config/sms.ini');
+if ($smsdata['type'] != 'portech')
+	exit(0);
+$xhost = $smsdata['url'];
+$xusername = $smsdata['user'];
+$xpassword = $smsdata['password'];
+$prefix = $smsdata['prefix'];
 
 $lock = SMS_DIR."/"."lock";
 
