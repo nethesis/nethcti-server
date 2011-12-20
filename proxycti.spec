@@ -1,6 +1,6 @@
 Name:		proxycti
 Version:	1.0.6
-Release:	3%{?dist}
+Release:	4%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI	
 
 Group:		Network	
@@ -28,6 +28,7 @@ perl -w createlinks
 mkdir -p root/var/lib/asterisk/bin
 mkdir -p root/var/spool/asterisk/monitor
 mkdir -p root/home/e-smith/proxycti/template/
+mkdir -p root/usr/lib/node/proxycti/sms
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -38,6 +39,7 @@ rm -rf $RPM_BUILD_ROOT
 --dir /var/spool/asterisk/monitor 'attr(0775,asterisk,asterisk)' \
 --dir /var/lib/asterisk 'attr(0775,asterisk,asterisk)' \
 --dir /usr/lib/node/proxycti/config 'attr(0775,asterisk,asterisk)' \
+--dir /usr/lib/node/proxycti/sms 'attr(0775,asterisk,asterisk)' \
 --dir /var/lib/asterisk/bin 'attr(0775,asterisk,asterisk)' $RPM_BUILD_ROOT > %{name}-%{version}-filelist
 
 
@@ -61,6 +63,9 @@ ln -s /usr/lib/node/proxycti/sql/nethcti.sql /etc/e-smith/sql/init/10cti.sql
 
 
 %changelog
+* Tue Dec 20 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.0.6-4nh
+- Add sms dir
+
 * Tue Dec 20 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.0.6-3nh
 - sendsms.php: read configuration from sms.ini
 
