@@ -1,6 +1,6 @@
 Name:		proxycti
-Version:	1.0.6
-Release:	4%{?dist}
+Version:	1.0.7
+Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI	
 
 Group:		Network	
@@ -63,6 +63,11 @@ ln -s /usr/lib/node/proxycti/sql/nethcti.sql /etc/e-smith/sql/init/10cti.sql
 
 
 %changelog
+* Thu Dec 22 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.0.7-1nh
+- Bug fix: click2call to external phone number (bug of node-iniparser lib).
+- Bug fix: send SMS in POST, manage escape of text to insert into database and better manage of prefix.
+- Bug fix: chat support for user with '.' char in the name.
+
 * Tue Dec 20 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.0.6-4nh
 - Add sms dir
 
