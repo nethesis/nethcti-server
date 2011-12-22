@@ -44,6 +44,7 @@ if ($handle = opendir(SMS_DIR))
 	$destination = $prefix.$tmp[1];
 	send_sms($destination,$xbody,$xhost,$xusername,$xpassword);
 	unlink(SMS_DIR.'/'.$file);
+	$xbody = mysql_real_escape_string($xbody);
 	mysql_query("INSERT INTO sms_history (sender,destination,text,date,status) VALUES ('$sender','$destination','$xbody',now(),1)");
 	sleep(5);
     }
