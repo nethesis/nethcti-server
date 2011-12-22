@@ -186,23 +186,33 @@ function getDayHistorySms(ext, date, cb){
 }
 function registerSmsSuccess(sender, destination, text, cb){
 	var objQuery = queries[SMS];
-	objQuery.query = "INSERT INTO "+DB_TABLE_SMS+" (sender,destination,text,date,status) VALUES ('"+sender+"','"+destination+"','"+text+"',now(),1)";
-        if(objQuery!==undefined){
-                executeSQLQuery(SMS, objQuery, function(results){ // execute current sql query
-                        cb(results);
-                });
-        }
-        return undefined;
+	if(objQuery!==undefined){
+		var conn = dbConnections[SMS];
+		var que = 'INSERT INTO '+DB_TABLE_SMS+' SET sender = ?, destination = ?, text = ?, date = now(), status = 1';
+		conn.query(que, [sender, destination, text], function (err, results, fields){
+			if(err){
+				logger.error("ERROR in execute query: " + que);
+				logger.error(sys.inspect(err));
+			}
+			cb(results);
+		});
+	}
+	return undefined;
 }
 function registerSmsFailed(sender, destination, text, cb){
 	var objQuery = queries[SMS];
-	objQuery.query = "INSERT INTO "+DB_TABLE_SMS+" (sender,destination,text,date,status) VALUES ('"+sender+"','"+destination+"','"+text+"',now(),0)";
-        if(objQuery!==undefined){
-                executeSQLQuery(SMS, objQuery, function(results){ // execute current sql query
-                        cb(results);
-                });
-        }
-        return undefined;
+	if(objQuery!==undefined){
+		var conn = dbConnections[SMS];
+		var que = 'INSERT INTO '+DB_TABLE_SMS+' SET sender = ?, destination = ?, text = ?, date = now(), status = 0';
+		conn.query(que, [sender, destination, text], function (err, results, fields){
+			if(err){
+				logger.error("ERROR in execute query: " + que);
+				logger.error(sys.inspect(err));
+			}
+			cb(results);
+		});
+	}
+	return undefined;
 }
 /* check if the uniqueid 'uid' is present in 'cdr' table of 'asteriskcdrdb' database
  * return true if it is present, false otherwise */
