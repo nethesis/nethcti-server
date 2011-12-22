@@ -66,7 +66,7 @@ ln -s /usr/lib/node/proxycti/sql/nethcti.sql /etc/e-smith/sql/init/10cti.sql
 * Thu Dec 22 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.0.7-1nh
 - Bug fix: click2call to external phone number (bug of node-iniparser lib).
 - Bug fix: send SMS in POST, manage escape of text to insert into database and better manage of prefix.
-- Bug fix: chat support for user with '.' char in the name.
+- Fix sendsms.php for Portech.
 
 * Tue Dec 20 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.0.6-4nh
 - Add sms dir
