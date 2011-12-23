@@ -132,6 +132,12 @@ exports.Modop = function(){
 	this.updatePriorityQueueStatus = function(interval){ updatePriorityQueueStatus() }
 	this.getQueueStatus = function(){ return getQueueStatus(); }
 	this.vmExist = function(vmext) { return vmExist(vmext); }
+	this.getNameIntern = function(typeext){ return getNameIntern(typeext); }
+}
+function getNameIntern(typeext){
+	if(extStatusForOp[typeext]!==undefined && extStatusForOp[typeext].tab===INTERNO){
+		return (extStatusForOp[typeext].Label).replace(/"/g,'');
+	}
 }
 function vmExist(vmext){
 	if(listExtActiveVM[vmext]!==undefined){

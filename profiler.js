@@ -14,6 +14,7 @@ const CUSTOMER_CARD = "CUSTOMER_CARD"
 const OP_PLUS = "OP_PLUS"
 const OP_BASE = "OP_BASE"
 const PRIVACY = "PRIVACY";
+const SMS = "SMS";
 const CHAT = "CHAT";
 const PHONE_SERVICE = "PHONE_SERVICE";
 const ALL = "all"
@@ -54,6 +55,7 @@ exports.Profiler = function(){
 	this.checkActionRedirectPermit = function(exten){ return checkActionPermit(exten, REDIRECT) }
 	this.checkActionRecordPermit = function(exten){ return checkActionPermit(exten, RECORD) }
 	this.checkActionHistoryCallPermit = function(exten){ return checkActionPermit(exten, HISTORY_CALL) }
+	this.checkActionSmsPermit = function(exten){ return checkActionPermit(exten, SMS) }
 	this.getTypesCustomerCardPermit = function(exten){ return getTypesCustomerCardPermit(exten) }
 	this.addController = function(contr) { addController(contr) }
 	this.checkActionOpPlusPermit = function(exten) { return checkActionPermit(exten, OP_PLUS) }
@@ -91,6 +93,7 @@ function getAllPermissions(exten){
 	obj.op_base = checkActionPermit(exten, OP_BASE);
 	obj.chat = checkActionPermit(exten, CHAT);
 	obj.phone_service = checkActionPermit(exten, PHONE_SERVICE);
+	obj.sms = checkActionPermit(exten, SMS);
 	obj.streaming = getAllStreamingPermissions(exten);
 	if(getTypesCustomerCardPermit(exten).length>0){
 		obj.customer_card = true;

@@ -70,6 +70,7 @@ exports.DataCollector = function(){
 	this.isCallReserved = function(num,cb){ isCallReserved(num,cb); }
 	this.getChatAssociation = function(cb){ getChatAssociation(cb); }
 	this.insertAndUpdateChatAssociation = function(extFrom,bareJid,cb){ insertAndUpdateChatAssociation(extFrom,bareJid,cb); }
+	this.deleteCallNote = function(id,cb) { deleteCallNote(id,cb); }
 }
 // delete all entries that contains extFrom or bareJid. Then insert new chat association extFrom=bareJid
 function insertAndUpdateChatAssociation(extFrom,bareJid,cb){
@@ -116,6 +117,13 @@ function getCallNotes(num,cb){
 function modifyCallNote(note,pub,expiration,expFormatVal,entryId,cb){
 	var objQuery = queries[CALL_NOTES];
 	objQuery.query = "UPDATE call_notes SET text='"+note+"',public="+pub+",expiration=DATE_ADD(now(),INTERVAL "+expiration+" "+expFormatVal+") where id="+entryId+";";
+	executeSQLQuery(CALL_NOTES, objQuery, function(results){
+		cb(results);
+	});
+}
+function deleteCallNote(id,cb){
+	var objQuery = queries[CALL_NOTES];
+	objQuery.query = "delete from " + CALL_NOTES + " where id='"+id+"';";
 	executeSQLQuery(CALL_NOTES, objQuery, function(results){
 		cb(results);
 	});
