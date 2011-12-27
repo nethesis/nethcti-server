@@ -3693,10 +3693,13 @@ io.sockets.on('connection', function(client){
 							return;
 						}
 						if(meth==='GET'){
-							var textEscape = escape(text);
 							var user = sms_conf['SMS'].user;
 							var pwd = sms_conf['SMS'].password;
-							var httpurl = sms_conf['SMS'].url.replace("$USER",user).replace("$PASSWORD",pwd).replace("$NUMBER",destNum).replace("$TEXT",textEscape);
+							var userEscape = _urlEscape(user);
+							var pwdEscape = _urlEscape(pwd);
+							var destNumEscape = _urlEscape(destNum);
+							var textEscape = _urlEscape(text);
+							var httpurl = sms_conf['SMS'].url.replace("$USER",userEscape).replace("$PASSWORD",pwdEscape).replace("$NUMBER",destNumEscape).replace("$TEXT",textEscape);
 							var parsed_url = url.parse(httpurl, true);
 							var porturl = 80;
 							if(parsed_url.port!==undefined){
@@ -3709,8 +3712,6 @@ io.sockets.on('connection', function(client){
 								method: meth
 							};	
 							logger.debug("send GET sms with options = " + sys.inspect(options));
-						
-						
 							var request = http.request(options, function(res){ // http request
 								if(res.statusCode===200){ // HTTP answer is ok, but check also respCode
 									res.setEncoding('utf8');
@@ -3774,7 +3775,11 @@ io.sockets.on('connection', function(client){
 						} else if(meth==='POST'){
 							var user = sms_conf['SMS'].user;
 	        	                                var pwd = sms_conf['SMS'].password;
-	                	                        var httpurl = sms_conf['SMS'].url.replace("$USER",user).replace("$PASSWORD",pwd).replace("$NUMBER",destNum).replace("$TEXT",escape(text));
+							var userEscape = _urlEscape(user);
+							var pwdEscape = _urlEscape(pwd);
+							var destNumEscape = _urlEscape(destNum);
+							var textEscape = _urlEscape(text);
+	                	                        var httpurl = sms_conf['SMS'].url.replace("$USER",userEscape).replace("$PASSWORD",pwdEscape).replace("$NUMBER",destNumEscape).replace("$TEXT",textEscape);
                                 	        	var parsed_url = url.parse(httpurl, true);
 	                                	        var porturl = 80;
 	                                        	if(parsed_url.port!==undefined){
@@ -3908,6 +3913,10 @@ io.sockets.on('connection', function(client){
 /************************************************************************************************
  * Section relative to functions
  */
+function _urlEscape(url){
+	url = escape(url);
+	return url.replace(/[*]/g, "%2A").replace(/[@]/g, "%40").replace(/[-]/g, "%2D").replace(/[_]/g, "%5F").replace(/[+]/g, "%2B").replace(/[.]/g, "%2E").replace(/[/]/g, "%2F");
+}
 // Update chat assocation in 'chatAssociation' and in DB and then return 'chatAssociation' to all clients
 function storeChatAssociation(extFrom, bareJid){
 	// if the 'extFrom=bareJid' is already present in chatAssociation, then it don't do anything
