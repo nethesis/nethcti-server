@@ -3680,6 +3680,7 @@ io.sockets.on('connection', function(client){
                         break;
 			case actions.SEND_SMS:
 				if(profiler.checkActionSmsPermit(extFrom)){
+					const SMSHOSTING_URL = 'smshosting';
 					var destNum = message.destNum;
 					var text = message.text;
 					var prefix = sms_conf['SMS'].prefix;
@@ -3723,7 +3724,7 @@ io.sockets.on('connection', function(client){
 												respCode = el.split("</CODICE>")[0];
 											}
 										}
-										if(respCode==="HTTP_00"){ // all ok, the sms was sent
+										if(respCode==="HTTP_00" || parsed_url.hostname.indexOf(SMSHOSTING_URL)===-1){ // all ok, the sms was sent
 											logger.debug("sms was sent: " + extFrom + " -> " + destNum);
 											// add entry in DB
 											dataCollector.registerSmsSuccess(extFrom, destNum, text, function(res){
@@ -3809,14 +3810,14 @@ io.sockets.on('connection', function(client){
 												respCode = el.split("</CODICE>")[0];
 											}
 										}
-										if(respCode==="HTTP_00"){ // all ok, the sms was sent
+										if(respCode==="HTTP_00" || parsed_url.hostname.indexOf(SMSHOSTING_URL)===-1){ // all ok, the sms was sent
 											logger.debug("sms was sent: " + extFrom + " -> " + destNum);
 		                                	                                // add entry in DB
 		                                        	                        dataCollector.registerSmsSuccess(extFrom, destNum, text, function(res){
 		                                                	                	// send ack to client
 		                                                        	                var mess = new ResponseMessage(client.id, "ack_send_web_sms", '');
 		                                                                	        client.emit('message',mess);
-			                                                                        logger.debug("add entry success into 'smsdb' database");
+			                                                                        logger.debug("add entry success into sms database");
 			                                                                        logger.debug("RESP 'ack_send_web_sms' has been sent to [" + extFrom + "] id '" + client.id + "'");
 			                                                                });
 										} else { // there was an error
@@ -3826,7 +3827,7 @@ io.sockets.on('connection', function(client){
 												var mess = new ResponseMessage(client.id, "error_send_web_sms", '');
 												mess.respCode = respCode;
 												client.emit('message',mess);
-												logger.debug("add entry of fail into 'smsdb' database");
+												logger.debug("add entry of fail into sms database");
 											});
 										}
 									});
@@ -3839,7 +3840,7 @@ io.sockets.on('connection', function(client){
 	                                                                	var mess = new ResponseMessage(client.id, "error_send_web_sms", '');
 		                                                                mess.statusCode = statusCode;
         		                                                        client.emit('message',mess);
-                		                                                logger.debug("add entry of fail into 'smsdb' database");
+                		                                                logger.debug("add entry of fail into sms database");
                         		                                        logger.debug("RESP 'error_send_web_sms' has been sent to [" + extFrom + "] id '" + client.id + "'");
                                 		                        });
 								}
