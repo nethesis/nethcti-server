@@ -4,7 +4,7 @@
 This script search SMS_DIR for files containing a sms to send.
 The file name must be in the form SENDER-DESTINATION and must contain a text of max 160 characters.
 
-If a prefix is passed on command line, the prefix is added in front of the destination number.
+The prefix is managed by proxycti server. It is present in the file name (ex. 271-00393331234567)
 
 **/
 
@@ -23,7 +23,6 @@ if ($smsdata['type'] != 'portech')
 $xhost = $smsdata['url'];
 $xusername = $smsdata['user'];
 $xpassword = $smsdata['password'];
-$prefix = $smsdata['prefix'];
 
 $lock = SMS_DIR."/"."lock";
 
@@ -41,7 +40,8 @@ if ($handle = opendir(SMS_DIR))
 	$xbody = trim(file_get_contents(SMS_DIR.'/'.$file));
 	$tmp = explode("-",$file);
 	$sender = $tmp[0];
-	$destination = $prefix.$tmp[1];
+	// the prefix is managed by proxycti server. It is present in the file name (ex. 271-00393331234567)
+	$destination = $tmp[1];
 	send_sms($destination,$xbody,$xhost,$xusername,$xpassword);
 	unlink(SMS_DIR.'/'.$file);
 	$xbody = mysql_real_escape_string($xbody);
