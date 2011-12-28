@@ -67,6 +67,7 @@ function send_sms($tomobile,$xbody,$xhost,$xusername,$xpassword)
         if (!$fp)
         {
                 echo "$errstr ($errno)\n";
+		unlink($lock);
                 die;
         }
 
