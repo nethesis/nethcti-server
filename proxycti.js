@@ -5,6 +5,7 @@ var proReq = require("./profiler.js");
 var authReq = require("./authenticator.js");
 var contrReq = require("./controller.js");
 var modopReq = require("./modop.js");
+var voicemailReq = require("./voicemail.js");
 var http = require('http');
 var url = require('url');
 var fs = require('fs');
@@ -134,6 +135,9 @@ var authenticator = new authReq.Authenticator();
 authenticator.setLogger(logfile,loglevel);
 var controller = new contrReq.Controller(); // check changing in audio directory
 controller.setLogger(logfile,loglevel);
+
+var voicemail = new voicemailReq.Voicemail();
+
 var modop = new modopReq.Modop();
 modop.setLogger(logfile,loglevel);
 modop.addController(controller)
@@ -175,6 +179,8 @@ controller.addListener('change_vm_dir', function(dir){ // ex dir: '/var/spool/as
 profiler.addController(controller);
 dataCollector.addController(controller);
 logger.debug('add \'controller\' object to \'Profiler\' and \'DataCollector\'')
+
+
 
 
 /* Audio file list of recorded call. This is an hash table that has the 'unique id' of the file
@@ -2252,6 +2258,7 @@ io.sockets.on('connection', function(client){
 			CHECK_CALL_AUDIO_FILE: 	'check_call_audio_file',
 			CF_UNCOND_FROM_PARKING: 'cf_uncond_from_parking',
 			GET_QUEUE_STATUS:	'get_queue_status',
+			GET_VOICEMAIL_LIST: 	'get_voicemail_list',
 			GET_PRIORITY_QUEUE_STATUS:	'get_priority_queue_status',
 			SEARCH_CONTACT_PHONEBOOK:	'search_contact_phonebook',
 			GET_PEER_LIST_COMPLETE_OP: 	'get_peer_list_complete_op',
@@ -2262,6 +2269,12 @@ io.sockets.on('connection', function(client){
 		}
   		logger.debug("ACTION received: from id '" + client.id + "' message " + sys.inspect(message));	
   		switch(action){
+			case actions.GET_VOICEMAIL_LIST:
+				var respMsg = new ResponseMessage(client.id, "ack_voicemail_list", '');
+				respMsg.voicemailList = voicemail.getVoicemailList(extFrom);
+				client.emit('message',respMsg);
+				logger.debug("RESP 'ack_voicemail_list' has been sent to [" + extFrom + "] id '" + client.id + "'");
+			break;
 			case actions.GET_PRIORITY_QUEUE_STATUS:
 				modop.updatePriorityQueueStatus(message.interval);
 			break;
