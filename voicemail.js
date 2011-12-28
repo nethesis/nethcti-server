@@ -69,6 +69,7 @@ function _readVoicemailDir(dir,dirpath,extension){
 		if(extfile==='txt'){ // txt file report voicemail information
 			filepath = path.join(dirpath,filename);
 			content = iniparser.parseSync(filepath); // the txt file has ini structure with one "[message]" section
+			content.message.filename = name; // add filename
 			switch(dir){ // store voicemail into appropriate array of extension in _voicemailList object
 				case OLD_DIR:
 					_voicemailList[extension].old.push(content.message);
