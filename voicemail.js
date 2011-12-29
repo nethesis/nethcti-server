@@ -10,6 +10,7 @@ const DIR_PATH_VM = "/var/spool/asterisk/voicemail/default";
 const OLD_DIR = "Old";
 const NEW_DIR = "INBOX";
 const PERSONAL_DIR = "Family";
+const DEFAULT_AUDIO_EXT = "wav";
 /* contains the list of voicemail for each extension. The key is the extension (ex. 271)
  * and the value is an array of objects. Each object has keys and values for one recording */
 var _voicemailList = {};
@@ -17,6 +18,22 @@ var _voicemailList = {};
 exports.Voicemail = function(){
 	_init();
 	this.getVoicemailList = function(ext) { return _getVoicemailList(ext); }
+	this.getFilepath = function(filename,type,ext){ return _getFilepath(filename,type,ext); }
+}
+function _getFilepath(filename,type,ext){
+	var typedir = '';
+	switch(type){
+		case 'new':
+			typedir = NEW_DIR;
+		break;
+		case 'old':
+			typedir = OLD_DIR;
+		break;
+		case 'personal':
+			typedir = PERSONAL_DIR;
+		break;
+	}
+	return path.join(DIR_PATH_VM,ext,typedir,filename) + "." + DEFAULT_AUDIO_EXT;
 }
 function _getVoicemailList(ext){
 	return _voicemailList[ext];
