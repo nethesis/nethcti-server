@@ -2057,6 +2057,39 @@ server = http.createServer(function(req, res){
     		    res.end();
     	  	});
 	    break;
+	    case '/getVoicemailAudioFile':
+		var filename = params.filename;
+		var typevm = params.type;
+		var extFrom = params.extFrom;
+		var filepath = voicemail.getFilepath(filename,typevm,extFrom);
+	    	logger.debug(extFrom + " has request to listen voicemail " + filepath);
+		pathreq.exists(filepath, function(exists){
+			if(exists){
+				var fileExt = pathreq.extname(filepath);
+				var typefile = '';
+				if(params.down==='0'){
+					typefile = 'application/octect-stream'; // this is to force download of voicemail file
+				} else if(fileExt.toLowerCase()==='.wav'){
+					typefile = 'audio/x-wav';
+				} else if(fileExt==='.mp3'){
+					typefile = 'audio/mpeg';
+				} else if(fileExt==='.ogg'){
+					typefile = 'application/ogg';
+				}
+				fs.readFile(filepath, function(err, data){
+					if(err){
+						return send404(res);
+					}
+					res.writeHead(200, {'Content-Type': typefile, 'Content-disposition': 'attachment; filename='+(filename+fileExt)});
+					res.write(data, 'utf8');
+					res.end();
+				});
+			} else {
+				logger.error("requested voicemail audio file '" + filepath + "' not found");
+				send404(res);
+			}
+		});
+	    break;
 	    case '/getCallAudioFile':
 		var filename = params.file;
 		var extFrom = params.extFrom;
@@ -2073,7 +2106,7 @@ server = http.createServer(function(req, res){
                                 else if(fileExt=='.ogg') type = 'application/ogg';
                                 fs.readFile(tempPath, function(err, data){
                                         if (err) return send404(res);
-                                        res.writeHead(200, {'Content-Type': type});
+                                        res.writeHead(200, {'Content-Type': type, 'Content-disposition': 'attachment; filename='+(filename)});
                                         res.write(data, 'utf8');
                                         res.end();
                                 });
