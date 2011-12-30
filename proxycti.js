@@ -137,6 +137,8 @@ var controller = new contrReq.Controller(); // check changing in audio directory
 controller.setLogger(logfile,loglevel);
 
 var voicemail = new voicemailReq.Voicemail();
+voicemail.setLogger(logfile,loglevel);
+
 
 var modop = new modopReq.Modop();
 modop.setLogger(logfile,loglevel);
@@ -151,6 +153,8 @@ controller.addListener('change_dir', function(dir){
 	}
 });
 controller.addListener('change_vm_dir', function(dir){ // ex dir: '/var/spool/asterisk/voicemail/default/272/INBOX'
+	logger.debug("event 'change_vm_dir'");
+	voicemail.updateVoicemailList(dir); // update voicemail list of the extension obtained from dir
         var ext = dir.split('/')[6]
         var actionMailboxCount = {
 		Action: 'MailboxCount',
@@ -171,7 +175,16 @@ controller.addListener('change_vm_dir', function(dir){ // ex dir: '/var/spool/as
 	} catch(err) {
 	        logger.warn("no connection to asterisk: "+err);
 	}
-})
+});
+controller.addListener('change_vm_personal_dir', function(dir){
+	logger.debug("event 'change_vm_personal_dir'");
+	voicemail.updateVoicemailList(dir);
+
+});
+controller.addListener('change_vm_old_dir', function(dir){
+	logger.debug("event 'change_vm_old_dir'");
+	voicemail.updateVoicemailList(dir);
+});
 
 /* add 'controller' object to 'profiler' and to 'dataCollector'. They use it to 
  * manage changing in thier configuration file.
@@ -2292,6 +2305,7 @@ io.sockets.on('connection', function(client){
 			CF_UNCOND_FROM_PARKING: 'cf_uncond_from_parking',
 			GET_QUEUE_STATUS:	'get_queue_status',
 			GET_VOICEMAIL_LIST: 	'get_voicemail_list',
+			DELETE_VOICEMAIL: 	'del_voicemail',
 			GET_PRIORITY_QUEUE_STATUS:	'get_priority_queue_status',
 			SEARCH_CONTACT_PHONEBOOK:	'search_contact_phonebook',
 			GET_PEER_LIST_COMPLETE_OP: 	'get_peer_list_complete_op',
@@ -2302,6 +2316,22 @@ io.sockets.on('connection', function(client){
 		}
   		logger.debug("ACTION received: from id '" + client.id + "' message " + sys.inspect(message));	
   		switch(action){
+			case actions.DELETE_VOICEMAIL:
+				var filename = message.filename;
+				var type = message.type;
+				var res = voicemail.delVoicemail(filename,type,extFrom);
+				if(res){
+					var respMsg = new ResponseMessage(client.id, "ack_del_voicemail", '');
+					respMsg.filename = filename;
+					respMsg.type = type;
+					client.emit('message',respMsg);
+	                                logger.debug("RESP 'ack_del_voicemail' has been sent to [" + extFrom + "] id '" + client.id + "'");
+				} else {
+					var respMsg = new ResponseMessage(client.id, "error_del_voicemail", '');
+                                        client.emit('message',respMsg);
+                                        logger.debug("RESP 'error_del_voicemail' has been sent to [" + extFrom + "] id '" + client.id + "'");
+				}
+			break;
 			case actions.GET_VOICEMAIL_LIST:
 				var respMsg = new ResponseMessage(client.id, "ack_voicemail_list", '');
 				respMsg.voicemailList = voicemail.getVoicemailList(extFrom);
