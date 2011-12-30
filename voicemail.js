@@ -1,6 +1,7 @@
 var fs = require("fs");
 var sys = require("sys");
 var path = require("path");
+var nethesis_io = require('./nethesis_io');
 var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
 var log4js = require('./lib/log4js-node/lib/log4js')();
 /* logger that write in output console and file
@@ -19,22 +20,54 @@ exports.Voicemail = function(){
 	_init();
 	this.getVoicemailList = function(ext) { return _getVoicemailList(ext); }
 	this.getFilepath = function(filename,type,ext){ return _getFilepath(filename,type,ext); }
+	this.delVoicemail = function(filename,type,ext){ return _delVoicemail(filename,type,ext); }
+	this.updateVoicemailList = function(dirpath){ _updateVoicemailList(dirpath); }
+	this.setLogger = function(logfile,level){
+		log4js.addAppender(log4js.fileAppender(logfile), '[voicemail]');
+		logger.setLevel(level);
+		_setLibLogger(logfile,level); // set also the library logger
+	}
 }
-function _getFilepath(filename,type,ext){
+function _updateVoicemailList(dirpath){
+	var arrpath = dirpath.split('/');
+	var dirtype = arrpath[arrpath.length-1];
+	var ext = arrpath[arrpath.length-2];
+	_readVoicemailDir(dirtype,dirpath,ext);
+	logger.debug("updated voicemail list of [" + ext + "] of type '"+dirtype+"'");
+}
+// set loggers of all libraries
+function _setLibLogger(logfile,level){
+	nethesis_io.setLogger(logfile,level); // set also the library logger
+}
+// delete voicemail file
+function _delVoicemail(filename,type,ext){
+	var filepath = _getFilepath(filename,type,ext);
+	var dirpathType = _getDirpathType(type,ext);
+	var res = nethesis_io.deleteAllFiles(dirpathType,filename);
+	return res;
+}
+// return directory path of one type of voicemail: new, old, ...
+function _getDirpathType(type,ext){
 	var typedir = '';
 	switch(type){
 		case 'new':
-			typedir = NEW_DIR;
-		break;
-		case 'old':
-			typedir = OLD_DIR;
-		break;
-		case 'personal':
-			typedir = PERSONAL_DIR;
-		break;
+                        typedir = NEW_DIR;
+                break;
+                case 'old':
+                        typedir = OLD_DIR;
+                break;
+                case 'personal':
+                        typedir = PERSONAL_DIR;
+                break;
 	}
-	return path.join(DIR_PATH_VM,ext,typedir,filename) + "." + DEFAULT_AUDIO_EXT;
+	return path.join(DIR_PATH_VM,ext,typedir);
 }
+// return path of voicemail file
+function _getFilepath(filename,type,ext){
+	var dirpathType = _getDirpathType(type,ext);
+	return path.join(dirpathType,filename) + "." + DEFAULT_AUDIO_EXT;
+}
+// return the voicemail list of one extension
 function _getVoicemailList(ext){
 	return _voicemailList[ext];
 }
@@ -50,7 +83,6 @@ function _init(){
 			_readVoicemailExtension(filepath,files[i]); // read directory of one extension
 		}
 	}
-	logger.debug('_voicemailList initialized: has ' + Object.keys(_voicemailList).length + " extension");
 }
 // initialize all types of voicemail of one extension
 function _readVoicemailExtension(dirpath,ext){
@@ -71,8 +103,23 @@ function _readVoicemailExtension(dirpath,ext){
 		}
 	}
 }
+// empty voicemail list of a type (new,old...) of an extension
+function _resetVoicemailList(type,extension){
+	switch(type){
+		case OLD_DIR:
+			_voicemailList[extension].old = [];
+		break;
+		case NEW_DIR:
+			_voicemailList[extension].newx = [];
+		break;
+		case PERSONAL_DIR:
+			_voicemailList[extension].personal = [];
+		break;
+	}
+}
 // initialize voicemail present into 'dir' directory of extension 'extension'
 function _readVoicemailDir(dir,dirpath,extension){
+	_resetVoicemailList(dir,extension); // reset voicemail list before update it
 	var files = fs.readdirSync(dirpath);
 	var filename = '';
 	var filepath = '';
