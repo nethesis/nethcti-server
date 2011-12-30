@@ -18,6 +18,8 @@ exports.Controller = function(){
 	this.addFile = function(filename) { addFile(filename) };
 	this.addDir = function(dir) { addDir(dir) };
 	this.addVMDir = function(dir) { addVMDir(dir) }
+	this.addVMOldDir = function(dir) { addVMOldDir(dir) }
+	this.addVMPersonalDir = function(dir) { addVMPersonalDir(dir) }
         this.setLogger = function(logfile,level) { log4js.addAppender(log4js.fileAppender(logfile), '[Controller]'); logger.setLevel(level); }
 } 
 function addVMDir(dir){
@@ -37,7 +39,40 @@ function addVMDir(dir){
                 return
         }
 }
-
+function addVMOldDir(dir){
+        try{
+                var stat = fs.lstatSync(dir)
+                if(stat.isDirectory){
+                        dirToControl[dir] = true;
+                        fs.watchFile(dir, { persistent: true, interval: INTERVAL_POLLING }, function(curr, prev){
+                                if(curr.mtime.getTime()!=prev.mtime.getTime())
+                                        _selfController.emit("change_vm_old_dir", dir);
+                        })
+                }
+        }
+        catch(err){
+                logger.error("Error: " + dir + " is not directory")
+                logger.error(sys.inspect(err));
+                return;
+        }
+}
+function addVMPersonalDir(dir){
+        try{
+                var stat = fs.lstatSync(dir)
+                if(stat.isDirectory){
+                        dirToControl[dir] = true;
+                        fs.watchFile(dir, { persistent: true, interval: INTERVAL_POLLING }, function(curr, prev){
+                                if(curr.mtime.getTime()!=prev.mtime.getTime())
+                                        _selfController.emit("change_vm_personal_dir", dir);
+                        })
+                }
+        }
+        catch(err){
+                logger.error("Error: " + dir + " is not directory")
+                logger.error(sys.inspect(err));
+                return;
+        }
+}
 // add directory to control and emit event when modified time changes
 function addDir(dir){
 	try{
