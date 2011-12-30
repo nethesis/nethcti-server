@@ -724,9 +724,18 @@ function addListenerToAm(){
 		if(isExtInterno(ext)){
 			var pathDir = VM_PATH_BASE + '/' + ext + '/INBOX'
 			pathreq.exists(pathDir, function(exists){
-				if(exists)
+				if(exists){
 					controller.addVMDir(pathDir)
-			})
+					var pathDirOld = pathreq.join(VM_PATH_BASE,ext,'Old');
+					if(pathreq.existsSync(pathDirOld)){
+						controller.addVMOldDir(pathDirOld);
+					}
+					var pathDirPersonal = pathreq.join(VM_PATH_BASE,ext,'Family');
+					if(pathreq.existsSync(pathDirPersonal)){
+						controller.addVMPersonalDir(pathDirPersonal);
+					}
+				}
+			});
 		}
 	});	
 
