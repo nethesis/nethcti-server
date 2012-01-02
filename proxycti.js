@@ -208,6 +208,7 @@ createAudioFileList();
  * In this last case, the function attempt to find uniqueid field (third field of filename) in 'cdr' table of 'asteriskcdrdb' db.
  * This request is asynchronous. In the case of unknown  format of audio file, one warning log is added to log file */
 function createAudioFileList(){
+	audioFileList = {};
         var temp = fs.readdirSync(AST_CALL_AUDIO_DIR);
         var uid = undefined;
         var filename = undefined;
@@ -2357,19 +2358,22 @@ io.sockets.on('connection', function(client){
                 			for(var i=0, filename; filename=files[i]; i++){
                         			if(filename.indexOf(uniqueid)!==-1){
 							var filepath = pathreq.join(AST_CALL_AUDIO_DIR,filename);
-			                                fs.unlink(filepath, function(err){
-								if(err){
-									logger.error('from ['+extFrom+'] - error deleting audio recording call ['+filepath+']: ' + err);
-									var respMsg = new ResponseMessage(client.id, "error_delete_audio_recording_call", '');
-									client.emit('message',respMsg);
-									logger.debug("RESP 'error_delete_audio_recording_call' has been sent to [" + extFrom + "] id '" + client.id + "'");
-									return;
-								}
-								logger.debug('deleted file ['+filepath+']');
+							fs.unlinkSync(filepath);
+							var res = pathreq.existsSync(filepath);
+							if(!res){
+								logger.debug('audio file ['+filepath+'] deleted');
 								var respMsg = new ResponseMessage(client.id, "ack_delete_audio_recording_call", '');
+								respMsg.uniqueid = uniqueid;
 								client.emit('message',respMsg);
 								logger.debug("RESP 'ack_delete_audio_recording_call' has been sent to [" + extFrom + "] id '" + client.id + "'");
-							});
+							} else {
+								logger.error('from ['+extFrom+'] - error deleting audio recording call ['+filepath+']');
+								var respMsg = new ResponseMessage(client.id, "error_delete_audio_recording_call", '');
+								respMsg.filepath = filepath;
+								client.emit('message',respMsg);
+								logger.debug("RESP 'error_delete_audio_recording_call' has been sent to [" + extFrom + "] id '" + client.id + "'");
+								return;
+							}
                         			}
                 			}
 				});
@@ -3512,8 +3516,9 @@ io.sockets.on('connection', function(client){
 						return;
 					}
 					for(i=0; i<files.length; i++){
-						if( (files[i].indexOf(uniqueid))!=-1 )
+						if( (files[i].indexOf(uniqueid))!=-1 ){
 							audioFiles.push(files[i]);
+						}
 					}	
 					var mess = new ResponseMessage(client.id, "audio_file_call_list", "received list of audio file of call");
 	                                mess.results = audioFiles;
