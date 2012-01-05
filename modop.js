@@ -726,6 +726,7 @@ function addListenerToAm(){
 			pathreq.exists(pathDir, function(exists){
 				if(exists){
 					controller.addVMDir(pathDir)
+					/*
 					var pathDirOld = pathreq.join(VM_PATH_BASE,ext,'Old');
 					if(pathreq.existsSync(pathDirOld)){
 						controller.addVMOldDir(pathDirOld);
@@ -734,6 +735,7 @@ function addListenerToAm(){
 					if(pathreq.existsSync(pathDirPersonal)){
 						controller.addVMPersonalDir(pathDirPersonal);
 					}
+					*/
 				}
 			});
 		}
