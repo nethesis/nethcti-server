@@ -3,6 +3,7 @@ var sys = require("sys");
 var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
 var log4js = require('./lib/log4js-node/lib/log4js')();
 const AUTHENTICATOR_CONFIG_FILENAME = "/etc/asterisk/sip_additional.conf";
+const VOICEMAIL_AUTH_FILENAME = "/etc/asterisk/voicemail_additionals.conf";
 
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF)
@@ -38,6 +39,7 @@ userAuthProfiles =
 userAuthProfiles = {};
 
 
+voicemailAuthProfiles = {};
 
 /*
  * Constructor
@@ -45,15 +47,37 @@ userAuthProfiles = {};
 exports.Authenticator = function(){
 	initProfiles();
 	this.authenticateUser = function(ext, secret){ return authenticateUser(ext, secret); }
+	this.authenticateVoicemail = function(vm,pwd){ return authenticateVoicemail(vm,pwd); }
         this.setLogger = function(logfile,level) { log4js.addAppender(log4js.fileAppender(logfile), '[Authenticator]'); logger.setLevel(level); }
 }
-
+function authenticateVoicemail(vm,pwd){
+	if(voicemailAuthProfiles[vm]===pwd){
+		return true;
+	}
+	return false;
+}
+function initVoicemailAuthProfiles(){
+        var fileContent = iniparser.parseSync(VOICEMAIL_AUTH_FILENAME);
+	var objVm = undefined;
+	var section = undefined;
+	var keyVm = undefined;
+	var pwd = undefined;
+	for(section in fileContent){
+		objVm = fileContent[section];
+		for(keyVm in objVm){
+			pwd = objVm[keyVm].split('>')[1].split(',')[0];
+			pwd = pwd.replace(/[' ']/g, ''); // remove white space
+			this.voicemailAuthProfiles[keyVm] = pwd;
+		}
+	}
+}
 
 /*
  * Initialize the profiles of all users by means the reading of the config file.
  */
 function initProfiles(){
         this.userAuthProfiles = iniparser.parseSync(AUTHENTICATOR_CONFIG_FILENAME);
+	initVoicemailAuthProfiles();
 }
 
 /*
