@@ -153,6 +153,10 @@ function getTypesCustomerCardPermit(exten){
 function checkActionPermit(exten, action){
 	var pattExt = new RegExp("\\b" + exten + "\\b");
         var pattAll = new RegExp("\\b" + ALL + "\\b", "i");
+	if(actions[action]===undefined){ // missing section in config file
+		logger.error('wrong profile: missing permission "' + action + '"');
+		return false;
+	}
         if(pattExt.test(actions[action].extensions) || (pattAll.test(actions[action].extensions) && !pattExt.test(actions[action].exclude))){
                 return true;
         } else {
