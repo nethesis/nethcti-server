@@ -176,6 +176,7 @@ controller.addListener('change_vm_dir', function(dir){ // ex dir: '/var/spool/as
 	        logger.warn("no connection to asterisk: "+err);
 	}
 });
+/*
 controller.addListener('change_vm_personal_dir', function(dir){
 	logger.debug("event 'change_vm_personal_dir'");
 	voicemail.updateVoicemailList(dir);
@@ -185,6 +186,7 @@ controller.addListener('change_vm_old_dir', function(dir){
 	logger.debug("event 'change_vm_old_dir'");
 	voicemail.updateVoicemailList(dir);
 });
+*/
 
 /* add 'controller' object to 'profiler' and to 'dataCollector'. They use it to 
  * manage changing in thier configuration file.
@@ -2055,21 +2057,44 @@ function returnOperatorPanelToClient(){
  * Section relative to HTTP server
  */
 server = http.createServer(function(req, res){
-  	var parsed_url = url.parse(req.url,true);
+	var parsed_url = url.parse(req.url,true);
 	var path = parsed_url.pathname;
 	var params = parsed_url.query;
-
 	logger.debug("received request HTTP: path = " + path + " params = " + sys.inspect(params));
-
 	switch (path){
 	    case '/':
     		path = "/index.html";
-		    fs.readFile(__dirname + path, function(err, data){
-    	    	if (err) return send404(res);
+	    	fs.readFile(__dirname + path, function(err, data){
+			if (err) return send404(res);
 		        res.writeHead(200, {'Content-Type': 'text/html'});
-    		    res.write(data, 'utf8');
-    		    res.end();
+			res.write(data, 'utf8');
+			res.end();
     	  	});
+	    break;
+	    case '/getStreamingFrameImageFile':
+	    	logger.warn("/getStreamingFrameImageFile to IMPLEMENT");
+	    	/*
+		var name = params.name;
+		var urlToGet = params.url;
+		var urlToGetParsed = url.parse(urlToGet);
+		var portToGet = '80';
+		if(urlToGetParsed.port!==undefined){
+			portToGet = urlToGetParsed.port;
+		}
+		var options = {
+			host: urlToGetParsed.hostname,
+			port: portToGet,
+			path: urlToGetParsed.pathname
+		}
+		console.log("options = " + sys.inspect(options));
+		http.get(options, function(res){
+			res.on('data', function(data){
+
+			}).on('end',function(){
+
+			});
+		});
+		*/
 	    break;
 	    case '/getVoicemailAudioFile':
 		var filename = params.filename;
@@ -2311,33 +2336,43 @@ io.sockets.on('connection', function(client){
 			SEARCH_CONTACT_PHONEBOOK:	'search_contact_phonebook',
 			GET_PEER_LIST_COMPLETE_OP: 	'get_peer_list_complete_op',
 			REDIRECT_VOICEMAIL_FROM_OP: 	'redirect_voicemail_from_op',
-			GET_CURRENT_WEEK_HISTORY:  'get_current_week_history',
-			GET_CURRENT_MONTH_HISTORY: 'get_current_month_history',
-			DELETE_AUDIO_RECORDING_CALL: 'delete_audio_recording_call'
+			GET_CURRENT_WEEK_HISTORY:  	'get_current_week_history',
+			GET_CURRENT_MONTH_HISTORY:	'get_current_month_history',
+			DELETE_AUDIO_RECORDING_CALL:	'delete_audio_recording_call'
 		}
   		logger.debug("ACTION received: from id '" + client.id + "' message " + sys.inspect(message));	
   		switch(action){
 			case actions.DELETE_VOICEMAIL:
-				var filename = message.filename;
-				var type = message.type;
-				var res = voicemail.delVoicemail(filename,type,extFrom);
-				if(res){
-					var respMsg = new ResponseMessage(client.id, "ack_del_voicemail", '');
-					respMsg.filename = filename;
-					respMsg.type = type;
-					client.emit('message',respMsg);
-	                                logger.debug("RESP 'ack_del_voicemail' has been sent to [" + extFrom + "] id '" + client.id + "'");
+				var resPermit = profiler.checkActionVoicemailPermit(extFrom);
+				if(resPermit){
+					var filename = message.filename;
+					var type = message.type;
+					var res = voicemail.delVoicemail(filename,type,extFrom);
+					if(res){
+						var respMsg = new ResponseMessage(client.id, "ack_del_voicemail", '');
+						respMsg.filename = filename;
+						respMsg.type = type;
+						client.emit('message',respMsg);
+		                                logger.debug("RESP 'ack_del_voicemail' has been sent to [" + extFrom + "] id '" + client.id + "'");
+					} else {
+						var respMsg = new ResponseMessage(client.id, "error_del_voicemail", '');
+	                                        client.emit('message',respMsg);
+	                                        logger.debug("RESP 'error_del_voicemail' has been sent to [" + extFrom + "] id '" + client.id + "'");
+					}
 				} else {
-					var respMsg = new ResponseMessage(client.id, "error_del_voicemail", '');
-                                        client.emit('message',respMsg);
-                                        logger.debug("RESP 'error_del_voicemail' has been sent to [" + extFrom + "] id '" + client.id + "'");
+					logger.warn("["+extFrom+"] hasn't the permission to delete voicemail");
 				}
 			break;
 			case actions.GET_VOICEMAIL_LIST:
-				var respMsg = new ResponseMessage(client.id, "ack_voicemail_list", '');
-				respMsg.voicemailList = voicemail.getVoicemailList(extFrom);
-				client.emit('message',respMsg);
-				logger.debug("RESP 'ack_voicemail_list' has been sent to [" + extFrom + "] id '" + client.id + "'");
+				var res = profiler.checkActionVoicemailPermit(extFrom);
+				if(res){
+					var respMsg = new ResponseMessage(client.id, "ack_voicemail_list", '');
+					respMsg.voicemailList = voicemail.getVoicemailList(extFrom);
+					client.emit('message',respMsg);
+					logger.debug("RESP 'ack_voicemail_list' has been sent to [" + extFrom + "] id '" + client.id + "'");
+				} else {
+					logger.warn("["+extFrom+"] hasn't the permission to request voicemail");
+				}
 			break;
 			case actions.GET_PRIORITY_QUEUE_STATUS:
 				modop.updatePriorityQueueStatus(message.interval);
@@ -4050,9 +4085,8 @@ function updateAllClientsWithQueueStatusForOp(){
  * Example of 'typeext' is: SIP/500 */ 
 function updateAllClientsForOpWithTypeExt(typeext){
 	// get new state of the extension typeext
-	logger.debug('FUNCTION \'updateAllClientsForOpWithTypeExt(typeext)\': \'modop.getExtStatusWithTypeExt(typeext)\' with typeext = ' + typeext);
+	logger.debug('updateAllClientsForOpWithTypeExt('+typeext+')');
 	var newState = modop.getExtStatusWithTypeExt(typeext);	
-	logger.debug('obtained newState: ' + sys.inspect(newState));
 	// send update to all clients with the new state of the typeext for op (operator panel)
 	logger.debug('update all clients (with typeext)...');
         for(key in clients){

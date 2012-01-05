@@ -17,6 +17,7 @@ const PRIVACY = "PRIVACY";
 const SMS = "SMS";
 const CHAT = "CHAT";
 const PHONE_SERVICE = "PHONE_SERVICE";
+const VOICEMAIL = "VOICEMAIL";
 const ALL = "all"
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF) */
@@ -56,6 +57,7 @@ exports.Profiler = function(){
 	this.checkActionRecordPermit = function(exten){ return checkActionPermit(exten, RECORD) }
 	this.checkActionHistoryCallPermit = function(exten){ return checkActionPermit(exten, HISTORY_CALL) }
 	this.checkActionSmsPermit = function(exten){ return checkActionPermit(exten, SMS) }
+	this.checkActionVoicemailPermit = function(exten){ return checkActionPermit(exten, VOICEMAIL) }
 	this.getTypesCustomerCardPermit = function(exten){ return getTypesCustomerCardPermit(exten) }
 	this.addController = function(contr) { addController(contr) }
 	this.checkActionOpPlusPermit = function(exten) { return checkActionPermit(exten, OP_PLUS) }
@@ -93,7 +95,10 @@ function getAllPermissions(exten){
 	obj.op_base = checkActionPermit(exten, OP_BASE);
 	obj.chat = checkActionPermit(exten, CHAT);
 	obj.phone_service = checkActionPermit(exten, PHONE_SERVICE);
+	obj.record = checkActionPermit(exten, RECORD);
+	obj.redirect = checkActionPermit(exten, REDIRECT);
 	obj.sms = checkActionPermit(exten, SMS);
+	obj.voicemail = checkActionPermit(exten, VOICEMAIL);
 	obj.streaming = getAllStreamingPermissions(exten);
 	if(getTypesCustomerCardPermit(exten).length>0){
 		obj.customer_card = true;
