@@ -2639,9 +2639,17 @@ io.sockets.on('connection', function(client){
 						respMsg.chatUrl = chaturl;
 					}
 					var vm = message.voicemail;
+					var vmPwd = message.voicemailSecret;
 					if(vm!==undefined){
 						var res = modop.vmExist(vm);
-						respMsg.existVoicemail = res;
+						var resVm = authenticator.authenticateVoicemail(vm,vmPwd);
+						if(!resVm){
+							logger.warn('authentication of voicemail ' + vm + ' failed');
+						}
+						if(res && !resVm){
+							respMsg.authVoicemail = 'auth-vm-failed';
+						}
+						respMsg.existVoicemail = (res && resVm);
 					}
 					respMsg.streamingSettings = profiler.getStreamingSettings(extFrom);
 					client.emit('message',respMsg);
