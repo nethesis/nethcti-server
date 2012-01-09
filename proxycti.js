@@ -154,7 +154,6 @@ controller.addListener('change_dir', function(dir){
 });
 controller.addListener('change_vm_dir', function(dir){ // ex dir: '/var/spool/asterisk/voicemail/default/272/INBOX'
 	logger.debug("event 'change_vm_dir'");
-	voicemail.updateVoicemailList(dir); // update voicemail list of the extension obtained from dir
         var ext = dir.split('/')[6]
         var actionMailboxCount = {
 		Action: 'MailboxCount',
@@ -175,6 +174,20 @@ controller.addListener('change_vm_dir', function(dir){ // ex dir: '/var/spool/as
 	} catch(err) {
 	        logger.warn("no connection to asterisk: "+err);
 	}
+	// send info of new voicemail to all clients
+	voicemail.updateVoicemailList(dir); // update voicemail list of the extension obtained from dir
+	var count = voicemail.getCountVoicemailNewx(ext);
+	logger.debug("broadcast 'new_voicemail' info message for [" + ext + "] with " + count + " voicemail to all clients");
+	var c = undefined;
+	var response = undefined;
+	for(key in clients){
+                c = clients[key];
+		response = new ResponseMessage(c.id, "new_voicemail", '');
+        	response.extVoicemail = ext;
+		response.countVoicemailNewx = count;
+                c.emit('message',response);
+                logger.debug("RESP 'new_voicemail' has been sent to client [" + key + "] id '" + c.id + "'");
+        }
 });
 /*
 controller.addListener('change_vm_personal_dir', function(dir){
@@ -2366,8 +2379,9 @@ io.sockets.on('connection', function(client){
 			case actions.GET_VOICEMAIL_LIST:
 				var res = profiler.checkActionVoicemailPermit(extFrom);
 				if(res){
+					var vm = message.voicemail;
 					var respMsg = new ResponseMessage(client.id, "ack_voicemail_list", '');
-					respMsg.voicemailList = voicemail.getVoicemailList(extFrom);
+					respMsg.voicemailList = voicemail.getVoicemailList(vm);
 					client.emit('message',respMsg);
 					logger.debug("RESP 'ack_voicemail_list' has been sent to [" + extFrom + "] id '" + client.id + "'");
 				} else {
