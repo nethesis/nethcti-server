@@ -22,11 +22,15 @@ exports.Voicemail = function(){
 	this.getFilepath = function(filename,type,ext){ return _getFilepath(filename,type,ext); }
 	this.delVoicemail = function(filename,type,ext){ return _delVoicemail(filename,type,ext); }
 	this.updateVoicemailList = function(dirpath){ _updateVoicemailList(dirpath); }
+	this.getCountVoicemailNewx = function(ext){ return _getCountVoicemailNewx(ext); }
 	this.setLogger = function(logfile,level){
 		log4js.addAppender(log4js.fileAppender(logfile), '[voicemail]');
 		logger.setLevel(level);
 		_setLibLogger(logfile,level); // set also the library logger
 	}
+}
+function _getCountVoicemailNewx(ext){
+	return _voicemailList[ext].newx.length;
 }
 function _updateVoicemailList(dirpath){
 	var arrpath = dirpath.split('/');
