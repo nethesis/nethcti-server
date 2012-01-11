@@ -42,7 +42,7 @@ if ($handle = opendir(SMS_DIR))
 	$sender = $tmp[0];
 	// the prefix is managed by proxycti server. It is present in the file name (ex. 271-00393331234567)
 	$destination = $tmp[1];
-	send_sms($destination,$xbody,$xhost,$xusername,$xpassword);
+	send_sms($destination,$xbody,$xhost,$xusername,$xpassword,$lock);
 	unlink(SMS_DIR.'/'.$file);
 	$xbody = mysql_real_escape_string($xbody);
 	mysql_query("INSERT INTO sms_history (sender,destination,text,date,status) VALUES ('$sender','$destination','$xbody',now(),1)");
@@ -60,7 +60,7 @@ mysql_close();
 unlink($lock);
 exit(0);
 
-function send_sms($tomobile,$xbody,$xhost,$xusername,$xpassword)
+function send_sms($tomobile,$xbody,$xhost,$xusername,$xpassword,$lock)
 {
         $myoutput = "";
         $fp = fsockopen("$xhost", 23, $errno, $errstr, 30);
