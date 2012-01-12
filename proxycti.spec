@@ -1,5 +1,5 @@
 Name:		proxycti
-Version:	1.0.7
+Version:	1.0.8
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI	
 
@@ -50,6 +50,8 @@ rm -rf $RPM_BUILD_ROOT
 %files -f %{name}-%{version}-filelist
 %defattr(-,asterisk,asterisk,-)
 %config(noreplace) /usr/lib/node/proxycti/config/*
+%config(noreplace) /usr/lib/node/proxycti/images/logo.png
+
 %doc
 
 %post
@@ -63,6 +65,10 @@ ln -s /usr/lib/node/proxycti/sql/nethcti.sql /etc/e-smith/sql/init/10cti.sql
 
 
 %changelog
+* Thu Jan 12 2012 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.0.8-1nh
+- Do not scan error response when send SMS with other service than smshosting and response status code is 200.
+- Fix sendsms.php: not add prefix and delete lock when fail send_sms function.
+
 * Thu Dec 22 2011 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.0.7-1nh
 - Bug fix: click2call to external phone number (bug of node-iniparser lib).
 - Bug fix: send SMS in POST, manage escape of text to insert into database and better manage of prefix.
