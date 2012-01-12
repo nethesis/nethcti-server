@@ -21,7 +21,7 @@ const SMS_CONFIG_FILENAME = "config/sms.ini";
 const CHAT_ASSOC_FILE = "./store/chat-assoc";
 const AST_CALL_AUDIO_DIR = "/var/spool/asterisk/monitor";
 const SMS_DIR = "sms";
-const CALL_PREFIX = "CTI-";
+const CALL_PREFIX = "CTI->";
 const SPY_PREFIX = "SPY-";
 const REDIRECT_VM_PREFIX = "REDIR_VM-";
 const START_AUDIO_FILE = "auto-";
@@ -2225,7 +2225,7 @@ function callout(extFrom, to, res){
 			Exten: to,
                         Context: 'from-internal',
                         Priority: 1,
-                        Callerid: CALL_PREFIX + extFrom,
+                        Callerid: CALL_PREFIX + to + ' <' + extFrom + '>',
                         Account: to,
                         Timeout: 30000
                 };
