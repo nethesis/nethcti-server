@@ -123,7 +123,7 @@ var logger = log4js.getLogger('[ProxyCTI]');
 logger.setLevel(loglevel);
 
 // START
-logger.info("Starting server...");
+logger.warn("Starting server...");
 
 // Add object modules
 var profiler = new proReq.Profiler();
