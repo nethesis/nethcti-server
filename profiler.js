@@ -18,6 +18,7 @@ const SMS = "SMS";
 const CHAT = "CHAT";
 const PHONE_SERVICE = "PHONE_SERVICE";
 const VOICEMAIL = "VOICEMAIL";
+const STREAMING = "STREAMING";
 const ALL = "all"
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF) */
@@ -80,6 +81,10 @@ function checkStreamingPermit(oneStream,exten){
 }
 function getStreamingSettings(exten){
 	var obj = {};
+	if(actions[STREAMING]===undefined){
+		logger.error('permission "'+STREAMING+'" isn\'t defined in config file of profiles');
+		return obj;
+	}
 	for(var key in streamingSettings){
 		if(checkStreamingPermit(key,exten)){
 			obj[key] = streamingSettings[key];
@@ -135,7 +140,12 @@ function addController(contr){
 function updateConfiguration(){
 	initProfiles()
 }
+// return an object (ex. { default: 'all', other: 'all' })
 function getAllTypesCustomerCard(){
+	if(actions[CUSTOMER_CARD]===undefined){
+		logger.error('permission "' + CUSTOMER_CARD + '" isn\'t present in config file of profiles');
+		return {};
+	}
 	return Object.keys(actions[CUSTOMER_CARD]);
 }
 // Return an array containing the types of customer card for which the user is enable
@@ -151,6 +161,10 @@ function getTypesCustomerCardPermit(exten){
 }
 // Check if the user "exten" has the permit "action"
 function checkActionPermit(exten, action){
+	if(actions[action]===undefined){ // the permission action is not present in config file
+		logger.error('permission "'+action+'" isn\'t defined in config file of profiles');
+		return false;
+	}
 	var pattExt = new RegExp("\\b" + exten + "\\b");
         var pattAll = new RegExp("\\b" + ALL + "\\b", "i");
 	if(actions[action]===undefined){ // missing section in config file
