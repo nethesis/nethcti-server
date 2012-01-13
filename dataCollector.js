@@ -197,6 +197,7 @@ function registerSmsSuccess(sender, destination, text, cb){
 	if(objQuery!==undefined){
 		var conn = dbConnections[SMS];
 		var que = 'INSERT INTO '+DB_TABLE_SMS+' SET sender = ?, destination = ?, text = ?, date = now(), status = 1';
+		logger.debug('execute SQL query: ' + que);
 		conn.query(que, [sender, destination, text], function (err, results, fields){
 			if(err){
 				logger.error("ERROR in execute query: " + que);
@@ -212,6 +213,7 @@ function registerSmsFailed(sender, destination, text, cb){
 	if(objQuery!==undefined){
 		var conn = dbConnections[SMS];
 		var que = 'INSERT INTO '+DB_TABLE_SMS+' SET sender = ?, destination = ?, text = ?, date = now(), status = 0';
+		logger.debug('execute SQL query: ' + que);
 		conn.query(que, [sender, destination, text], function (err, results, fields){
 			if(err){
 				logger.error("ERROR in execute query: " + que);
@@ -479,6 +481,7 @@ function executeSQLQuery(type, objQuery, cb){
 	// get already opened connection
 	var conn = dbConnections[type];
         var query = objQuery.query + ";";
+	logger.debug('execute SQL query: ' + query);
 	conn.query(query, function (err, results, fields) {
         	if (err) {
         		logger.error("ERROR in execute " + objQuery.dbtype + " query");
@@ -497,6 +500,7 @@ function executeNamedSQLQuery(type, objQuery, name, cb){
         // get already opened connection
         var conn = dbConnections[type];
         var query = objQuery.query + ";";
+	logger.debug('execute SQL query: ' + query);
         conn.query(query, function (err, results, fields) {
                 if (err) {
                         logger.error("ERROR in execute " + objQuery.dbtype + " query");
