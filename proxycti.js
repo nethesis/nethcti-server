@@ -2085,8 +2085,6 @@ server = http.createServer(function(req, res){
     	  	});
 	    break;
 	    case '/getStreamingFrameImageFile':
-	    	logger.warn("/getStreamingFrameImageFile to IMPLEMENT");
-	    	/*
 		var name = params.name;
 		var urlToGet = params.url;
 		var urlToGetParsed = url.parse(urlToGet);
@@ -2099,15 +2097,17 @@ server = http.createServer(function(req, res){
 			port: portToGet,
 			path: urlToGetParsed.pathname
 		}
-		console.log("options = " + sys.inspect(options));
-		http.get(options, function(res){
-			res.on('data', function(data){
-
+		http.get(options, function(response){
+			res.writeHead(200, {'Content-type': 'application/octect-stream', 'Content-disposition': 'attachment; filename='+name+'.jpg'});
+			response.on('data', function(data){
+				res.write(data, 'utf8');
 			}).on('end',function(){
-
+				res.end();
 			});
+		}).on('error',function(err){
+			logger.error('error on request screenshot of streaming frame: ' + urlToGet);
+			logger.error(err.message);
 		});
-		*/
 	    break;
 	    case '/getVoicemailAudioFile':
 		var filename = params.filename;
