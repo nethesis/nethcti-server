@@ -70,6 +70,7 @@ exports.Profiler = function(){
 	this.checkActionPhoneServicePermit = function(exten){ return checkActionPermit(exten, PHONE_SERVICE); }
 	this.getAllPermissions = function(exten){ return getAllPermissions(exten); }
 	this.getStreamingSettings = function(exten) { return getStreamingSettings(exten); }
+	this.checkStreamingPermission = function(stream,exten) { return checkStreamingPermit(stream,exten); }
 }
 function checkStreamingPermit(oneStream,exten){
 	var pattExt = new RegExp("\\b" + exten + "\\b");
