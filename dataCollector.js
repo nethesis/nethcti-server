@@ -454,25 +454,19 @@ getCustomerCard = function(ext, type, cb){
 		cb(undefined)
 	}
 }
-
-
 // Search in the database all phonebook contacts that match the given name
 function getContactsPhonebook(name, cb){
 	var objQuery = queries[PHONEBOOK];
 	if(objQuery!=undefined){
-		// copy object
-                var copyObjQuery = Object.create(objQuery);
-		// substitue template field in query
-                copyObjQuery.query = copyObjQuery.query.replace(/\$NAME_TO_REPLACE/g, name);
-		// execute current sql query
+                var copyObjQuery = Object.create(objQuery); // copy object
+		name = name.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
+                copyObjQuery.query = copyObjQuery.query.replace(/\$NAME_TO_REPLACE/g, name); // substitue template field in query
 		executeSQLQuery(PHONEBOOK, copyObjQuery, function(results){
 			cb(results);
 		});
 	}
 	return undefined;
 }
-
-
 /* Execute one sql query. This function must have 
  * a callback function as second parameter because the asynchronous nature of
  * mysql query function. Otherwise it is possibile that the function return before
@@ -490,8 +484,6 @@ function executeSQLQuery(type, objQuery, cb){
 	        cb(results);
         });
 }
-
-
 /* Execute name one sql query. This function must have 
  * a callback function as second parameter because the asynchronous nature of
  * mysql query function. Otherwise it is possibile that the function return before
