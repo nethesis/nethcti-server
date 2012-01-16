@@ -2342,6 +2342,7 @@ io.sockets.on('connection', function(client){
 			STORE_CHAT_ASSOC:	'store_chat_association',
 			CHECK_CALL_AUDIO_FILE: 	'check_call_audio_file',
 			CF_UNCOND_FROM_PARKING: 'cf_uncond_from_parking',
+			OPEN_CALL_STREAMING:	'open_call_streaming',
 			GET_QUEUE_STATUS:	'get_queue_status',
 			GET_VOICEMAIL_LIST: 	'get_voicemail_list',
 			DELETE_VOICEMAIL: 	'del_voicemail',
@@ -2351,10 +2352,21 @@ io.sockets.on('connection', function(client){
 			REDIRECT_VOICEMAIL_FROM_OP: 	'redirect_voicemail_from_op',
 			GET_CURRENT_WEEK_HISTORY:  	'get_current_week_history',
 			GET_CURRENT_MONTH_HISTORY:	'get_current_month_history',
-			DELETE_AUDIO_RECORDING_CALL:	'delete_audio_recording_call'
+				DELETE_AUDIO_RECORDING_CALL:	'delete_audio_recording_call'
 		}
   		logger.debug("ACTION received: from id '" + client.id + "' message " + sys.inspect(message));	
   		switch(action){
+			case actions.OPEN_CALL_STREAMING:
+				var name = message.name;
+				if(profiler.checkStreamingPermission(name,extFrom)){
+					var cmd = message.cmd;
+				} else {
+					logger.warn('['+extFrom+'] hasn\'t the permission for opening call "streaming - ' + name + '"');
+					var respMsg = new ResponseMessage(client.id, "error_open_call_streaming", '');
+					client.emit('message',respMsg);
+                                        logger.debug("RESP 'error_open_call_streaming' has been sent to [" + extFrom + "] id '" + client.id + "'");
+				}
+			break;
 			case actions.DELETE_VOICEMAIL:
 				var resPermit = profiler.checkActionVoicemailPermit(extFrom);
 				if(resPermit){
