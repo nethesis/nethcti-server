@@ -444,6 +444,7 @@ getCustomerCard = function(ext, type, cb){
 		// copy object
                 var copyObjQuery = Object.create(objQuery);
                 // substitue template field in query
+		ext = ext.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
                 copyObjQuery.query = copyObjQuery.query.replace(/\$EXTEN/g, ext);
                 // execute current sql query
                 executeNamedSQLQuery(section, copyObjQuery, type, function(results, type){
