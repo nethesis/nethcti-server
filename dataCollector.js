@@ -71,6 +71,10 @@ exports.DataCollector = function(){
 	this.getChatAssociation = function(cb){ getChatAssociation(cb); }
 	this.insertAndUpdateChatAssociation = function(extFrom,bareJid,cb){ insertAndUpdateChatAssociation(extFrom,bareJid,cb); }
 	this.deleteCallNote = function(id,cb) { deleteCallNote(id,cb); }
+	this.getQueries = function(){ return getQueries(); }
+}
+function getQueries(){
+	return queries;
 }
 // delete all entries that contains extFrom or bareJid. Then insert new chat association extFrom=bareJid
 function insertAndUpdateChatAssociation(extFrom,bareJid,cb){
