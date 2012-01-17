@@ -350,7 +350,6 @@ am.addListener('newchannel', function(headers){
 	chStat[headers.uniqueid] = {
 		channel: headers.channel
 	}
-	logger.debug("'newChannel' chStat = " + sys.inspect(chStat))
 })
 
 am.addListener('queuestatuscomplete',function(headers){
@@ -509,10 +508,7 @@ am.addListener('newstate', function(headers){
 		modop.updateExtStatusForOpWithTypeExt(typeext, chStat[tempUniqueid].status)
 		updateAllClientsForOpWithTypeExt(typeext)
 	}
-	
-	//logger.debug("'newState' chStat = " + sys.inspect(chStat))
 })
-
 /* whe call come from soft phone
 EVENT 'NewCallerid': headers '{ event: 'NewCallerid',
   privilege: 'call,all',
@@ -533,8 +529,6 @@ EVENT 'NewCallerid': headers '{ event: 'NewCallerid',
 am.addListener('newcallerid', function(headers){
 	logger.debug("EVENT 'NewCallerid': headers '" + sys.inspect(headers) +  "'")	
 })
-
-
 /* call come from soft phone
 EVENT 'Dialing': headers '{ event: 'Dial',
   privilege: 'call,all',
@@ -998,8 +992,6 @@ EVENT 'Hangup': headers = { event: 'Hangup',
   causetxt: 'Normal Clearing' } */
 am.addListener('hangup', function(headers) {
         logger.debug("EVENT 'Hangup': headers = " + sys.inspect(headers))
-	logger.debug("chStat = " + sys.inspect(chStat));
-
 	/* if the hangup event is relative to Local/270@from-internal-a7dd;1', means that this hangup is relative
 	 * to the intermediate node created by asterisk that finish with ';1'. So it is ingored, because there will be
 	 * other hangup event.
@@ -1266,7 +1258,6 @@ am.addListener('hangup', function(headers) {
 	delete chStat[trueUniqueid];
 	deleteAllChOccurrenceFromChstat(headers.channel);
 	logger.debug("keys of chStat = " + Object.keys(chStat).length);
-	logger.debug("chStat = " + sys.inspect(chStat));
 });
 
 /* EVENT 'CallConnected': headers = '{ event: 'Bridge',
@@ -1906,7 +1897,6 @@ am.addListener('parkedcall', function(headers){
    CallerIDName: giovanni } */
 am.addListener('parkedcalltimeout', function(headers){
         logger.debug("EVENT 'ParkedCallTimeOut': headers = " + sys.inspect(headers));
-	logger.debug("chStat = " + sys.inspect(chStat));
         var parking = 'PARK' + headers.exten;
         modop.updateEndParkExtStatus(parking);
         updateAllClientsForOpWithTypeExt(parking);
@@ -1921,7 +1911,6 @@ EVENT 'ParkedCallGiveUp': headers = { event: 'ParkedCallGiveUp',
   calleridname: 'AlessandroTest2' } */
 am.addListener('parkedcallgiveup', function(headers){
 	logger.debug("EVENT 'ParkedCallGiveUp': headers = " + sys.inspect(headers));
-	logger.debug("chStat = " + sys.inspect(chStat));
 	var parking = 'PARK' + headers.exten;
 	modop.updateEndParkExtStatus(parking);
 	updateAllClientsForOpWithTypeExt(parking);
@@ -2360,6 +2349,29 @@ io.sockets.on('connection', function(client){
 				var name = message.name;
 				if(profiler.checkStreamingPermission(name,extFrom)){
 					var cmd = message.cmd;
+					var exten = message.exten;
+					var actionOpen = {
+			                        Action: 'Originate',
+			                        Channel: 'SIP/' + exten,
+                        			Context: 'from-internal',
+						Application: 'SendDTMF',
+						Data: 'w'+cmd
+			                };
+                			try{
+			                        am.send(actionOpen, function () {
+			                                logger.debug('\'actionOpen\' ' + sys.inspect(actionOpen) + ' has been sent to AST');
+			                                var client = clients[extFrom];
+			                                if(client!==undefined){
+                                        			var respMsg = new ResponseMessage(client.id, "ack_open_call_streaming", '');
+			                                        client.emit('message',respMsg);
+                        			                logger.debug("RESP 'ack_open_call_streaming' has been sent to [" + extFrom + "] id '" + client.id + "'");
+			                                } else {
+			                                        logger.debug("don't send ack_open_call_streaming to client, because it isn't present: the call was originated from outside of the cti");
+			                                }
+			                        });
+			                } catch(err){
+			                        logger.warn("no connection to asterisk: "+err);
+			                }
 				} else {
 					logger.warn('['+extFrom+'] hasn\'t the permission for opening call "streaming - ' + name + '"');
 					var respMsg = new ResponseMessage(client.id, "error_open_call_streaming", '');
