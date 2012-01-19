@@ -10,6 +10,7 @@ const CUSTOMER_CARD = "customer_card";
 const DAY_HISTORY_CALL = "day_history_call";
 const CURRENT_WEEK_HISTORY_CALL = "current_week_history_call";
 const CURRENT_MONTH_HISTORY_CALL = "current_month_history_call";
+const INTERVAL_HISTORY_CALL = "interval_history_call";
 const SMS = "sms";
 const CALL_NOTES = "call_notes";
 const CALL_RESERVATION = "call_reservation";
@@ -58,6 +59,9 @@ exports.DataCollector = function(){
 	this.getCurrentMonthHistoryCall = function(ext, cb) { return getCurrentMonthHistoryCall(ext, cb); }
 	this.getCurrentMonthHistorySms = function(ext, cb) { return getCurrentMonthHistorySms(ext, cb); }
 	this.getCurrentMonthHistoryCallNotes = function(ext, cb) { return getCurrentMonthHistoryCallNotes(ext, cb); }
+	this.getIntervalHistoryCall = function(ext,dateFrom,dateTo,cb){ return getIntervalHistoryCall(ext,dateFrom,dateTo,cb); }
+	this.getIntervalHistorySms = function(ext,dateFrom,dateTo,cb){ return getIntervalHistorySms(ext,dateFrom,dateTo,cb); }
+	this.getIntervalHistoryCallNotes = function(ext,dateFrom,dateTo,cb){ return getIntervalHistoryCallNotes(ext,dateFrom,dateTo,cb); }
 	this.addController = function(contr) { addController(contr) }
 	this.setLogger = function(logfile,level) { log4js.addAppender(log4js.fileAppender(logfile), '[DataCollector]'); logger.setLevel(level); }
 	this.checkAudioUid = function(uid, filename, cb) { return checkAudioUid(uid, filename, cb); }
@@ -138,6 +142,24 @@ function saveCallNote(note,extension,pub,expiration,expFormatVal,num,cb){
 	executeSQLQuery(CALL_NOTES, objQuery, function(results){
 		cb(results);
 	});
+}
+function getIntervalHistorySms(ext,dateFrom,dateTo,cb){
+	var objQuery = queries[SMS];
+	objQuery.query = "SELECT id, sender, destination, text, date_format(date,'%d/%m/%Y') AS date, date_format(date,'%H:%i:%S') AS time, status FROM "+DB_TABLE_SMS+" WHERE ( (sender LIKE '"+ext+"') AND (DATE(date)>='"+dateFrom+"' AND DATE(date)<='"+dateTo+"'))";
+	if(objQuery!==undefined){
+		executeSQLQuery(SMS, objQuery, function(results){
+			cb(results);
+		});
+	}
+}
+function getIntervalHistoryCallNotes(ext,dateFrom,dateTo,cb){
+	var objQuery = queries[CALL_NOTES];
+	objQuery.query = "SELECT * from "+DB_TABLE_CALLNOTES+" WHERE extension="+ext+" AND (DATE(date)>='"+dateFrom+"' AND DATE(date)<='"+dateTo+"')";
+	if(objQuery!==undefined){
+		executeSQLQuery(CALL_NOTES, objQuery, function(results){
+			cb(results);
+		});
+	}
 }
 function getCurrentMonthHistoryCallNotes(ext, cb){
 	var objQuery = queries[CALL_NOTES];
@@ -388,7 +410,19 @@ function initQueries(){
 	};
 	initDBConnections();
 }
-
+// Return the history of calling between specified interval time
+getIntervalHistoryCall = function(ext,dateFrom,dateTo,cb){
+	var objQuery = queries[INTERVAL_HISTORY_CALL];
+	if(objQuery!=undefined){
+		var copyObjQuery = Object.create(objQuery);
+		copyObjQuery.query = copyObjQuery.query.replace(/\$EXTEN/g, ext).replace(/\$DATE_FROM/g,dateFrom).replace(/\$DATE_TO/g,dateTo);
+		console.log("query = " + copyObjQuery.query);
+		executeSQLQuery(INTERVAL_HISTORY_CALL, copyObjQuery, function(results){
+			cb(results);
+		});
+	}
+	return undefined;
+}
 // Return the history of calling of the current month.
 getCurrentMonthHistoryCall = function(ext, cb){
 	var objQuery = queries[CURRENT_MONTH_HISTORY_CALL];

@@ -1816,8 +1816,6 @@ am.addListener('userevent', function(headers){
 		var allTypesCC = profiler.getAllTypesCustomerCard(); // array
 		var obj = {};
 		var customerCardResult = [];
-
-
 		currentCallInInfo[callerFromOutside].cc = customerCardResult;
 		for(var i=0, type; type=allTypesCC[i]; i++){
 			dataCollector.getCustomerCard(callerFromOutside, type, function(cc, name) {
@@ -2331,6 +2329,7 @@ io.sockets.on('connection', function(client){
 			STORE_CHAT_ASSOC:	'store_chat_association',
 			CHECK_CALL_AUDIO_FILE: 	'check_call_audio_file',
 			CF_UNCOND_FROM_PARKING: 'cf_uncond_from_parking',
+			GET_INTERVAL_HISTORY:	'get_interval_history',
 			OPEN_CALL_STREAMING:	'open_call_streaming',
 			GET_QUEUE_STATUS:	'get_queue_status',
 			GET_VOICEMAIL_LIST: 	'get_voicemail_list',
@@ -3587,6 +3586,31 @@ io.sockets.on('connection', function(client){
                                         logger.debug("RESP 'error_current_month_history' has been sent to [" + extFrom + "] id '" + client.id + "'");
                                 }
                         break;
+			case actions.GET_INTERVAL_HISTORY:
+				var res = profiler.checkActionHistoryCallPermit(extFrom);
+				if(res){
+					logger.info("check 'History' permission for [" + extFrom + "] OK: get interval history...");
+					var dateFrom = fromMMddYYYYtoYYYYmmDD(message.dateFrom);
+					var dateTo = fromMMddYYYYtoYYYYmmDD(message.dateTo);
+					console.log("eseguo query con dateFrom = " + dateFrom + " dateTo = " + dateTo);
+					dataCollector.getIntervalHistoryCall(extFrom,dateFrom,dateTo,function(callResults){
+						dataCollector.getIntervalHistorySms(extFrom,dateFrom,dateTo,function(smsResults){
+							dataCollector.getIntervalHistoryCallNotes(extFrom,dateFrom,dateTo,function(callNotesResults){
+								var mess = new ResponseMessage(client.id, "interval_history", '');
+								mess.callResults = createHistoryCallResponse(callResults);
+								mess.smsResults = smsResults;
+								mess.callNotesResults = callNotesResults;
+								client.emit('message',mess);
+								logger.debug("RESP 'interval_history' (call [" + callResults.length + "] - sms ["+smsResults.length+"] entries) has been sent to [" + extFrom + "] id '" + client.id + "'");
+							});
+						});
+					});
+				} else {
+					logger.info("check 'History' permission for [" + extFrom + "] FAILED !");
+					client.emit('message',new ResponseMessage(client.id, "error_interval_history", ""));
+					logger.debug("RESP 'error_interval_history' has been sent to [" + extFrom + "] id '" + client.id + "'");
+				}
+			break;
 			case actions.CHECK_CALL_AUDIO_FILE:
 				// check if there are some audio file with particular uniqueid
 				var uniqueid = message.uniqueid;
@@ -4202,8 +4226,7 @@ function sendAllClientAckCalloutFromCti(extFrom){
 }
 
 /* This function create the response for the client with the history call
- * that the client has been requested.
- */
+ * that the client has been requested */
 function createHistoryCallResponse(results){
 	var res = [];
 
@@ -4246,8 +4269,12 @@ function createHistoryCallResponse(results){
 	}
 	return res;
 }
-
-// Format date from gg/mm/yyyy to yyyy-mm-dd
+// Format date from mm/dd/yyyy to yyyy-mm-dd
+function fromMMddYYYYtoYYYYmmDD(datestr){
+	var ar = datestr.split('/');
+	return ar[2]+'-'+ar[0]+'-'+ar[1];
+}
+// Format date from dd/mm/yyyy to yyyy-mm-dd
 function formatDate(date){
 	var ar = date.split('/');	
 	var result = ar[2] + "-";
