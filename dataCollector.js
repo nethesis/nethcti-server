@@ -50,18 +50,18 @@ exports.DataCollector = function(){
 	initQueries();
 	this.getContactsPhonebook = function(name, cb){ return getContactsPhonebook(name, cb); }
 	this.getCustomerCard = function(ext, type, cb) { return getCustomerCard(ext, type, cb); }
-	this.getDayHistoryCall = function(ext, date, cb) { return getDayHistoryCall(ext, date, cb); }
-	this.getDayHistorySms = function(ext, date, cb) { return getDayHistorySms(ext, date, cb); }
-	this.getDayHistoryCallNotes = function(ext, date, cb) { return getDayHistoryCallNotes(ext, date, cb); }
-	this.getCurrentWeekHistoryCall = function(ext, cb) { return getCurrentWeekHistoryCall(ext, cb); }
-	this.getCurrentWeekHistorySms = function(ext, cb) { return getCurrentWeekHistorySms(ext, cb); }
-	this.getCurrentWeekHistoryCallNotes = function(ext, cb) { return getCurrentWeekHistoryCallNotes(ext, cb); }
-	this.getCurrentMonthHistoryCall = function(ext, cb) { return getCurrentMonthHistoryCall(ext, cb); }
-	this.getCurrentMonthHistorySms = function(ext, cb) { return getCurrentMonthHistorySms(ext, cb); }
-	this.getCurrentMonthHistoryCallNotes = function(ext, cb) { return getCurrentMonthHistoryCallNotes(ext, cb); }
-	this.getIntervalHistoryCall = function(ext,dateFrom,dateTo,cb){ return getIntervalHistoryCall(ext,dateFrom,dateTo,cb); }
-	this.getIntervalHistorySms = function(ext,dateFrom,dateTo,cb){ return getIntervalHistorySms(ext,dateFrom,dateTo,cb); }
-	this.getIntervalHistoryCallNotes = function(ext,dateFrom,dateTo,cb){ return getIntervalHistoryCallNotes(ext,dateFrom,dateTo,cb); }
+	this.getDayHistoryCall = function(ext,date,caller,cb) { return getDayHistoryCall(ext,date,caller,cb); }
+	this.getDayHistorySms = function(ext, date, caller, cb) { return getDayHistorySms(ext, date, caller, cb); }
+	this.getDayHistoryCallNotes = function(ext, date, caller, cb) { return getDayHistoryCallNotes(ext, date, caller, cb); }
+	this.getCurrentWeekHistoryCall = function(ext, caller, cb) { return getCurrentWeekHistoryCall(ext, caller, cb); }
+	this.getCurrentWeekHistorySms = function(ext, caller, cb) { return getCurrentWeekHistorySms(ext, caller, cb); }
+	this.getCurrentWeekHistoryCallNotes = function(ext, caller, cb) { return getCurrentWeekHistoryCallNotes(ext, caller, cb); }
+	this.getCurrentMonthHistoryCall = function(ext, caller, cb) { return getCurrentMonthHistoryCall(ext, caller, cb); }
+	this.getCurrentMonthHistorySms = function(ext, caller, cb) { return getCurrentMonthHistorySms(ext, caller, cb); }
+	this.getCurrentMonthHistoryCallNotes = function(ext, caller, cb) { return getCurrentMonthHistoryCallNotes(ext, caller, cb); }
+	this.getIntervalHistoryCall = function(ext,dateFrom,dateTo,caller,cb){ return getIntervalHistoryCall(ext,dateFrom,dateTo,caller,cb); }
+	this.getIntervalHistorySms = function(ext,dateFrom,dateTo,caller,cb){ return getIntervalHistorySms(ext,dateFrom,dateTo,caller,cb); }
+	this.getIntervalHistoryCallNotes = function(ext,dateFrom,dateTo,caller,cb){ return getIntervalHistoryCallNotes(ext,dateFrom,dateTo,caller,cb); }
 	this.addController = function(contr) { addController(contr) }
 	this.setLogger = function(logfile,level) { log4js.addAppender(log4js.fileAppender(logfile), '[DataCollector]'); logger.setLevel(level); }
 	this.checkAudioUid = function(uid, filename, cb) { return checkAudioUid(uid, filename, cb); }
@@ -143,63 +143,70 @@ function saveCallNote(note,extension,pub,expiration,expFormatVal,num,cb){
 		cb(results);
 	});
 }
-function getIntervalHistorySms(ext,dateFrom,dateTo,cb){
+function getIntervalHistorySms(ext,dateFrom,dateTo,caller,cb){
 	var objQuery = queries[SMS];
-	objQuery.query = "SELECT id, sender, destination, text, date_format(date,'%d/%m/%Y') AS date, date_format(date,'%H:%i:%S') AS time, status FROM "+DB_TABLE_SMS+" WHERE ( (sender LIKE '"+ext+"') AND (DATE(date)>='"+dateFrom+"' AND DATE(date)<='"+dateTo+"'))";
+	caller = caller.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
+	objQuery.query = "SELECT id, sender, destination, text, date_format(date,'%d/%m/%Y') AS date, date_format(date,'%H:%i:%S') AS time, status FROM "+DB_TABLE_SMS+" WHERE ( (sender LIKE '"+ext+"') AND (DATE(date)>='"+dateFrom+"' AND DATE(date)<='"+dateTo+"') AND destination like '"+caller+"' )";
 	if(objQuery!==undefined){
 		executeSQLQuery(SMS, objQuery, function(results){
 			cb(results);
 		});
 	}
 }
-function getIntervalHistoryCallNotes(ext,dateFrom,dateTo,cb){
+function getIntervalHistoryCallNotes(ext,dateFrom,dateTo,caller,cb){
 	var objQuery = queries[CALL_NOTES];
-	objQuery.query = "SELECT * from "+DB_TABLE_CALLNOTES+" WHERE extension="+ext+" AND (DATE(date)>='"+dateFrom+"' AND DATE(date)<='"+dateTo+"')";
+	caller = caller.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
+	objQuery.query = "SELECT * from "+DB_TABLE_CALLNOTES+" WHERE extension="+ext+" AND (DATE(date)>='"+dateFrom+"' AND DATE(date)<='"+dateTo+"') AND number like '"+caller+"'";
 	if(objQuery!==undefined){
 		executeSQLQuery(CALL_NOTES, objQuery, function(results){
 			cb(results);
 		});
 	}
 }
-function getCurrentMonthHistoryCallNotes(ext, cb){
+function getCurrentMonthHistoryCallNotes(ext, caller, cb){
 	var objQuery = queries[CALL_NOTES];
-	objQuery.query = "SELECT * from "+DB_TABLE_CALLNOTES+" WHERE extension="+ext+" AND (DATE(date)>=(DATE_SUB(CURDATE(), INTERVAL DAYOFMONTH(CURDATE())-1 DAY)))";
+	caller = caller.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
+	objQuery.query = "SELECT * from "+DB_TABLE_CALLNOTES+" WHERE extension="+ext+" AND (DATE(date)>=(DATE_SUB(CURDATE(), INTERVAL DAYOFMONTH(CURDATE())-1 DAY))) AND number like '"+caller+"'";
 	if(objQuery!==undefined){
 		executeSQLQuery(CALL_NOTES, objQuery, function(results){
 			cb(results);
 		});
 	}
 }
-function getCurrentMonthHistorySms(ext, cb){
+function getCurrentMonthHistorySms(ext, caller, cb){
 	var objQuery = queries[SMS];
-	objQuery.query = "SELECT id, sender, destination, text, date_format(date,'%d/%m/%Y') AS date, date_format(date,'%H:%i:%S') AS time, status FROM "+DB_TABLE_SMS+" WHERE ( (sender LIKE '"+ext+"') AND (DATE(date)>=(DATE_SUB(CURDATE(), INTERVAL DAYOFMONTH(CURDATE())-1 DAY)))  )";
+	caller = caller.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
+	objQuery.query = "SELECT id, sender, destination, text, date_format(date,'%d/%m/%Y') AS date, date_format(date,'%H:%i:%S') AS time, status FROM "+DB_TABLE_SMS+" WHERE ( (sender LIKE '"+ext+"') AND (DATE(date)>=(DATE_SUB(CURDATE(), INTERVAL DAYOFMONTH(CURDATE())-1 DAY))) AND destination like '"+caller+"'  )";
 	if(objQuery!==undefined){
 		executeSQLQuery(SMS, objQuery, function(results){
 			cb(results);
 		});
 	}
 }
-function getCurrentWeekHistoryCallNotes(ext, cb){
+function getCurrentWeekHistoryCallNotes(ext, caller, cb){
 	var objQuery = queries[CALL_NOTES];
-	objQuery.query = "SELECT * from "+DB_TABLE_CALLNOTES+" WHERE extension="+ext+" AND (DATE(date)>=(DATE_SUB(CURDATE(), INTERVAL DAYOFWEEK(CURDATE())-2 DAY)))";
+	caller = caller.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
+	objQuery.query = "SELECT * from "+DB_TABLE_CALLNOTES+" WHERE extension="+ext+" AND (DATE(date)>=(DATE_SUB(CURDATE(), INTERVAL DAYOFWEEK(CURDATE())-2 DAY))) AND number like '"+caller+"'";
 	if(objQuery!==undefined){
 		executeSQLQuery(CALL_NOTES, objQuery, function(results){
 			cb(results);
 		});
 	}
 }
-function getCurrentWeekHistorySms(ext, cb){
+function getCurrentWeekHistorySms(ext, caller, cb){
 	var objQuery = queries[SMS];
-	objQuery.query = "SELECT id, sender, destination, text, date_format(date,'%d/%m/%Y') AS date, date_format(date,'%H:%i:%S') AS time, status FROM "+DB_TABLE_SMS+" WHERE ( (sender LIKE '"+ext+"') AND (DATE(date)>=(DATE_SUB(CURDATE(), INTERVAL DAYOFWEEK(CURDATE())-2 DAY)))  )";
+	caller = caller.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
+	objQuery.query = "SELECT id, sender, destination, text, date_format(date,'%d/%m/%Y') AS date, date_format(date,'%H:%i:%S') AS time, status FROM "+DB_TABLE_SMS+" WHERE ( (sender LIKE '"+ext+"') AND (DATE(date)>=(DATE_SUB(CURDATE(), INTERVAL DAYOFWEEK(CURDATE())-2 DAY))) AND destination like '"+caller+"'  )";
 	if(objQuery!==undefined){
 		executeSQLQuery(SMS, objQuery, function(results){
 			cb(results);
 		});
 	}
 }
-function getDayHistoryCallNotes(ext, date, cb){
+function getDayHistoryCallNotes(ext, date, caller, cb){
 	var objQuery = queries[CALL_NOTES];
-	objQuery.query = "SELECT * from "+DB_TABLE_CALLNOTES+" WHERE extension="+ext+" AND DATE(date)='"+date+"'";
+	caller = caller.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
+	objQuery.query = "SELECT * from "+DB_TABLE_CALLNOTES+" WHERE extension="+ext+" AND DATE(date)='"+date+"' AND number like '"+caller+"'";
 	if(objQuery!==undefined){
 	        executeSQLQuery(CALL_NOTES, objQuery, function(results){
 			cb(results);
@@ -207,9 +214,11 @@ function getDayHistoryCallNotes(ext, date, cb){
 	}
 	return undefined;
 }
-function getDayHistorySms(ext, date, cb){
+function getDayHistorySms(ext, date, caller, cb){
 	var objQuery = queries[SMS];
-	objQuery.query = "SELECT id, sender, destination, text, date_format(date,'%d/%m/%Y') AS date, date_format(date,'%H:%i:%S') AS time, status FROM "+DB_TABLE_SMS+" WHERE (sender LIKE '"+ext+"' && DATE(date)='"+date+"')";
+	caller = caller.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
+	objQuery.query = "SELECT id, sender, destination, text, date_format(date,'%d/%m/%Y') AS date, date_format(date,'%H:%i:%S') AS time, status FROM "+DB_TABLE_SMS+
+	" WHERE (sender LIKE '"+ext+"' AND DATE(date)='"+date+"' AND destination like '"+caller+"')";
 	if(objQuery!==undefined){
 	        executeSQLQuery(SMS, objQuery, function(results){
 			var objQuery = queries[SMS];
@@ -411,11 +420,12 @@ function initQueries(){
 	initDBConnections();
 }
 // Return the history of calling between specified interval time
-getIntervalHistoryCall = function(ext,dateFrom,dateTo,cb){
+getIntervalHistoryCall = function(ext,dateFrom,dateTo,caller,cb){
 	var objQuery = queries[INTERVAL_HISTORY_CALL];
 	if(objQuery!=undefined){
 		var copyObjQuery = Object.create(objQuery);
-		copyObjQuery.query = copyObjQuery.query.replace(/\$EXTEN/g, ext).replace(/\$DATE_FROM/g,dateFrom).replace(/\$DATE_TO/g,dateTo);
+		caller = caller.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
+		copyObjQuery.query = copyObjQuery.query.replace(/\$EXTEN/g, ext).replace(/\$DATE_FROM/g,dateFrom).replace(/\$DATE_TO/g,dateTo).replace(/\$CALLER/g,caller);
 		console.log("query = " + copyObjQuery.query);
 		executeSQLQuery(INTERVAL_HISTORY_CALL, copyObjQuery, function(results){
 			cb(results);
@@ -424,13 +434,14 @@ getIntervalHistoryCall = function(ext,dateFrom,dateTo,cb){
 	return undefined;
 }
 // Return the history of calling of the current month.
-getCurrentMonthHistoryCall = function(ext, cb){
+getCurrentMonthHistoryCall = function(ext, caller, cb){
 	var objQuery = queries[CURRENT_MONTH_HISTORY_CALL];
         if(objQuery!=undefined){
                 // copy object
                 var copyObjQuery = Object.create(objQuery);
+		caller = caller.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
                 // substitue template field in query
-                copyObjQuery.query = copyObjQuery.query.replace(/\$EXTEN/g, ext);
+                copyObjQuery.query = copyObjQuery.query.replace(/\$EXTEN/g, ext).replace(/\$CALLER/g, caller);
                 // execute current sql query
                 executeSQLQuery(CURRENT_MONTH_HISTORY_CALL, copyObjQuery, function(results){
                         cb(results);
@@ -441,13 +452,14 @@ getCurrentMonthHistoryCall = function(ext, cb){
 
 
 // Return the history of calling of the current week
-getCurrentWeekHistoryCall = function(ext, cb){
+getCurrentWeekHistoryCall = function(ext, caller, cb){
 	var objQuery = queries[CURRENT_WEEK_HISTORY_CALL];
         if(objQuery!=undefined){
                 // copy object
                 var copyObjQuery = Object.create(objQuery);
+		caller = caller.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
                 // substitue template field in query
-                copyObjQuery.query = copyObjQuery.query.replace(/\$EXTEN/g, ext);
+                copyObjQuery.query = copyObjQuery.query.replace(/\$EXTEN/g, ext).replace(/\$CALLER/g, caller);
                 // execute current sql query
                 executeSQLQuery(CURRENT_WEEK_HISTORY_CALL, copyObjQuery, function(results){
                         cb(results);
@@ -458,14 +470,14 @@ getCurrentWeekHistoryCall = function(ext, cb){
 
 
 // Return the history of calling of one day.
-getDayHistoryCall = function(ext, date, cb){
+getDayHistoryCall = function(ext, date, caller, cb){
 	var objQuery = queries[DAY_HISTORY_CALL];
         if(objQuery!=undefined){
                 // copy object
                 var copyObjQuery = Object.create(objQuery);
+		caller = caller.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
                 // substitue template field in query
-                copyObjQuery.query = copyObjQuery.query.replace(/\$EXTEN/g, ext);
-                copyObjQuery.query = copyObjQuery.query.replace(/\$DATE/g, date);
+                copyObjQuery.query = copyObjQuery.query.replace(/\$EXTEN/g, ext).replace(/\$DATE/g, date).replace(/\$CALLER/g, caller);
                 // execute current sql query
                 executeSQLQuery(DAY_HISTORY_CALL, copyObjQuery, function(results){
                         cb(results);
