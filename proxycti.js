@@ -3520,9 +3520,13 @@ io.sockets.on('connection', function(client){
 					logger.debug("check 'dayHistory' permission for [" + extFrom + "] OK: get day history ...");
 					// format date for query sql
 					var dateFormat = formatDate(message.date);					
-                                        dataCollector.getDayHistoryCall(extFrom, dateFormat, function(callResults){ // get day history call
-						dataCollector.getDayHistorySms(extFrom, dateFormat, function(smsResults){ // get day history sms
-							dataCollector.getDayHistoryCallNotes(extFrom, dateFormat, function(callNotesResults){
+					var caller = message.caller;
+					if(caller===''){
+						caller = '%'; // match any field
+					}
+                                        dataCollector.getDayHistoryCall(extFrom,dateFormat,caller,function(callResults){ // get day history call
+						dataCollector.getDayHistorySms(extFrom, dateFormat, caller, function(smsResults){ // get day history sms
+							dataCollector.getDayHistoryCallNotes(extFrom, dateFormat, caller, function(callNotesResults){
 	                                                	var mess = new ResponseMessage(client.id, "day_history", "received day history");
 		                                                mess.callResults = createHistoryCallResponse(callResults);
 								mess.smsResults = smsResults;
@@ -3544,9 +3548,13 @@ io.sockets.on('connection', function(client){
                                 if(res){
 					logger.debug("check 'currentWeekHistory' permission for [" + extFrom + "] OK: get current week history ...");
                                         // execute query to search contact in phonebook
-                                        dataCollector.getCurrentWeekHistoryCall(extFrom, function(callResults){
-						dataCollector.getCurrentWeekHistorySms(extFrom, function(smsResults){
-							dataCollector.getCurrentWeekHistoryCallNotes(extFrom, function(callNotesResults){
+					var caller = message.caller;
+					if(caller===''){
+						caller = '%'; // match any field
+					}
+                                        dataCollector.getCurrentWeekHistoryCall(extFrom, caller, function(callResults){
+						dataCollector.getCurrentWeekHistorySms(extFrom, caller, function(smsResults){
+							dataCollector.getCurrentWeekHistoryCallNotes(extFrom, caller, function(callNotesResults){
 	                                                	var mess = new ResponseMessage(client.id, "current_week_history", "received current week history");
 								mess.callResults = createHistoryCallResponse(callResults);
 								mess.smsResults = smsResults;
@@ -3568,9 +3576,13 @@ io.sockets.on('connection', function(client){
                                 if(res){
 					logger.info("check 'currentMonthHistory' permission for [" + extFrom + "] OK: get current month history...");
                                         // execute query to search contact in phonebook
-                                        dataCollector.getCurrentMonthHistoryCall(extFrom, function(callResults){
-						dataCollector.getCurrentMonthHistorySms(extFrom, function(smsResults){
-							dataCollector.getCurrentMonthHistoryCallNotes(extFrom, function(callNotesResults){
+					var caller = message.caller;
+					if(caller===''){
+						caller = '%'; // match any field
+					}
+                                        dataCollector.getCurrentMonthHistoryCall(extFrom, caller, function(callResults){
+						dataCollector.getCurrentMonthHistorySms(extFrom, caller, function(smsResults){
+							dataCollector.getCurrentMonthHistoryCallNotes(extFrom, caller, function(callNotesResults){
 		                                                var mess = new ResponseMessage(client.id, "current_month_history", "received current month history");
 								mess.callResults = createHistoryCallResponse(callResults);
 								mess.smsResults = smsResults;
@@ -3592,10 +3604,13 @@ io.sockets.on('connection', function(client){
 					logger.info("check 'History' permission for [" + extFrom + "] OK: get interval history...");
 					var dateFrom = fromMMddYYYYtoYYYYmmDD(message.dateFrom);
 					var dateTo = fromMMddYYYYtoYYYYmmDD(message.dateTo);
-					console.log("eseguo query con dateFrom = " + dateFrom + " dateTo = " + dateTo);
-					dataCollector.getIntervalHistoryCall(extFrom,dateFrom,dateTo,function(callResults){
-						dataCollector.getIntervalHistorySms(extFrom,dateFrom,dateTo,function(smsResults){
-							dataCollector.getIntervalHistoryCallNotes(extFrom,dateFrom,dateTo,function(callNotesResults){
+					var caller = message.caller;
+					if(caller===''){
+						caller = '%'; // match any field
+					}
+					dataCollector.getIntervalHistoryCall(extFrom,dateFrom,dateTo,caller,function(callResults){
+						dataCollector.getIntervalHistorySms(extFrom,dateFrom,dateTo,caller,function(smsResults){
+							dataCollector.getIntervalHistoryCallNotes(extFrom,dateFrom,dateTo,caller,function(callNotesResults){
 								var mess = new ResponseMessage(client.id, "interval_history", '');
 								mess.callResults = createHistoryCallResponse(callResults);
 								mess.smsResults = smsResults;
