@@ -7,89 +7,91 @@ switch(args[0]){
 		var content = args[1];
 		content===undefined ? help() : '';
 		console.log("PRIMA");
-		dataCollector.getContactsPhonebook(content,cbPhonebook);
+		dataCollector.getContactsPhonebook(content,printResult);
 		console.log("DOPO");
 	break;
 	case 'cc':
 		var typecc = args[1];
 		var content = args[2];
 		(typecc===undefined || content===undefined) ? help() : '';
-		dataCollector.getCustomerCard(content,typecc,cbCC);
+		dataCollector.getCustomerCard(content,typecc,printResult);
 	break;
 	case 'hist_call_day':
 		var ext = args[1];
 		var datex = args[2];
 		(ext===undefined || datex===undefined) ? help() : '';
-		dataCollector.getDayHistoryCall(ext,datex,cbHistCall);
+		dataCollector.getDayHistoryCall(ext,datex,printResult);
 	break;
-	case 'hist_call_curr_week':
+	case 'hist_call_currweek':
 		var ext = args[1];
 		ext===undefined ? help() : '';
-		dataCollector.getCurrentWeekHistoryCall(ext,cbHistCall);
+		dataCollector.getCurrentWeekHistoryCall(ext,printResult);
 	break;
-	case 'hist_call_curr_month':
+	case 'hist_call_currmonth':
 		var ext = args[1];
 		ext===undefined ? help() : '';
-		dataCollector.getCurrentMonthHistoryCall(ext,cbHistCallCurrMonth);
+		dataCollector.getCurrentMonthHistoryCall(ext,printResult);
+	break;
+	case 'hist_call_interval':
+		var ext = args[1];
+		var dateFrom = args[2];
+		var dateTo = args[3];
+		(ext===undefined || dateFrom===undefined || dateTo===undefined) ? help() : '';
+		dataCollector.getIntervalHistoryCall(ext,dateFrom,dateTo,printResult);
 	break;
 	case 'hist_sms_day':
 		var ext = args[1];
 		var datex = args[2];
 		(ext===undefined || datex===undefined) ? help() : '';
-		dataCollector.getDayHistorySms(ext,datex,cbHistSms);
+		dataCollector.getDayHistorySms(ext,datex,printResult);
 	break;
-	case 'hist_sms_curr_week':
+	case 'hist_sms_currweek':
 		var ext = args[1];
 		ext===undefined ? help() : '';
-		dataCollector.getCurrentWeekHistorySms(ext,cbHistSms);
+		dataCollector.getCurrentWeekHistorySms(ext,printResult);
 	break;
-	case 'hist_sms_curr_month':
+	case 'hist_sms_currmonth':
 		var ext = args[1];
 		ext===undefined ? help() : '';
-		dataCollector.getCurrentMonthHistorySms(ext,cbHistSms);
+		dataCollector.getCurrentMonthHistorySms(ext,printResult);
+	break;
+	case 'hist_sms_interval':
+		var ext = args[1];
+	        var dateFrom = args[2];
+	        var dateTo = args[3];
+                (ext===undefined || dateFrom===undefined || dateTo===undefined) ? help() : '';
+		dataCollector.getIntervalHistorySms(ext,dateFrom,dateTo,printResult);
 	break;
 	case 'hist_callnotes_day':
 		var ext = args[1];
 		var datex = args[2];
 		(ext===undefined || datex===undefined) ? help() : '';
-		dataCollector.getDayHistoryCallNotes(ext,datex,cbHistCallNotes);
+		dataCollector.getDayHistoryCallNotes(ext,datex,printResult);
 	break;
-	case 'hist_callnotes_curr_week':
+	case 'hist_callnotes_currweek':
 		var ext = args[1];
 		ext===undefined ? help() : '';
-		dataCollector.getCurrentWeekHistoryCallNotes(ext,cbHistCallNotes);
+		dataCollector.getCurrentWeekHistoryCallNotes(ext,printResult);
 	break;
-	case 'hist_callnotes_curr_month':
+	case 'hist_callnotes_currmonth':
 		var ext = args[1];
 		ext===undefined ? help() : '';
-		dataCollector.getCurrentMonthHistoryCallNotes(ext,cbHistCallNotes);
+		dataCollector.getCurrentMonthHistoryCallNotes(ext,printResult);
+	break;
+	case 'hist_callnotes_interval':
+		var ext = args[1];
+                var dateFrom = args[2];
+                var dateTo = args[3];
+                (ext===undefined || dateFrom===undefined || dateTo===undefined) ? help() : '';
+		dataCollector.getIntervalHistoryCallNotes(ext,dateFrom,dateTo,printResult);
 	break;
 	case 'ini':
 		var queries = dataCollector.getQueries();
-		printObj(queries,'ini file:',true);
+		printObj(queries,'ini file:',false);
 	break;
 	default:
 		help();
 	break;
-}
-function cbHistCall(result){
-	printArr(result,'Results:',true);
-}
-function cbHistCallCurrMonth(result){
-	printArr(result,'Results:',false);
-	helpExit();
-}
-function cbHistSms(result){
-	printArr(result,'Results:',true);
-}
-function cbHistCallNotes(result){
-	printArr(result,'Results:',true);
-}
-function cbCC(result){
-	printArr(result,'Results:',true);
-}
-function cbPhonebook(result){
-	printArr(result,'Results:',true);
 }
 function helpExit(){
 	console.log("CTRL+C to exit");
@@ -101,6 +103,11 @@ function printObj(obj,title,exit){
 	if(exit){
 		process.exit(0);
 	}
+	helpExit();
+}
+function printResult(result){
+	printArr(result,'Results:',false);
+	helpExit();
 }
 function printArr(arr,title,exit){
 	console.log(title);
@@ -136,8 +143,11 @@ function help(){
 	console.log("\thist_call_currmonth EXTENSION");
 	console.log("\t\tview history calls of the EXTENSION for current month");
 	console.log("\n");
+	console.log("\thist_call_interval EXTENSION DATE_FROM DATE_TO");
+	console.log("\t\tview history calls of the EXTENSION for specified interval of date (yyyy/mm/dd)");
+	console.log("\n");
 	console.log("\thist_sms_day EXTENSION DATE");
-	console.log("\t\tview history sms of the EXTENSION for specified DATE (yyyy/mm/gg)");
+	console.log("\t\tview history sms of the EXTENSION for specified DATE (yyyy/mm/dd)");
 	console.log("\n");
 	console.log("\thist_sms_currweek EXTENSION");
 	console.log("\t\tview history sms of the EXTENSION for current week");
@@ -145,14 +155,20 @@ function help(){
 	console.log("\thist_sms_currmonth EXTENSION");
 	console.log("\t\tview history sms of the EXTENSION for current month");
 	console.log("\n");
+	console.log("\thist_sms_interval EXTENSION DATE_FROM DATE_TO");
+	console.log("\t\tview history sms of the EXTENSION for specified interval of date (yyyy/mm/dd)");
+	console.log("\n");
 	console.log("\thist_callnotes_day EXTENSION DATE");
-	console.log("\t\tview history call notes of the EXTENSION for specified DATE (yyyy/mm/gg)");
+	console.log("\t\tview history call notes of the EXTENSION for specified DATE (yyyy/mm/dd)");
 	console.log("\n");
 	console.log("\thist_callnotes_currweek EXTENSION");
 	console.log("\t\tview history call notes of the EXTENSION for current week");
 	console.log("\n");
 	console.log("\thist_callnotes_currmonth EXTENSION");
 	console.log("\t\tview history call notes of the EXTENSION for current month");
+	console.log("\n");
+	console.log("\thist_callnotes_interval EXTENSION DATE_FROM DATE_TO");
+	console.log("\t\tview history call notes of the EXTENSION for specified interval of date (yyyy/mm/dd)");
 	console.log("EXAMPLE\n\t" + allargs[0] + " " + cmd + " phonebook net");
 	console.log("\t" + allargs[0] + " " + cmd + " cc default net");
 	process.exit(0);
