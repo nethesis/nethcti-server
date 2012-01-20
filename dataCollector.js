@@ -13,7 +13,6 @@ const CURRENT_MONTH_HISTORY_CALL = "current_month_history_call";
 const INTERVAL_HISTORY_CALL = "interval_history_call";
 const SMS = "sms";
 const CALL_NOTES = "call_notes";
-const CALL_RESERVATION = "call_reservation";
 const DB_TABLE_SMS = 'sms_history';
 const DB_TABLE_CALLNOTES = 'call_notes';
 const CHAT_ASSOCIATION = 'chat_association';
@@ -67,11 +66,10 @@ exports.DataCollector = function(){
 	this.checkAudioUid = function(uid, filename, cb) { return checkAudioUid(uid, filename, cb); }
 	this.registerSmsSuccess = function(sender, destination, text, cb){ registerSmsSuccess(sender, destination, text, cb); }
 	this.registerSmsFailed = function(sender, destination, text, cb){ registerSmsFailed(sender, destination, text, cb); }
-	this.saveCallNote = function(note,extension,pub,expiration,expFormatVal,num,cb){ saveCallNote(note,extension,pub,expiration,expFormatVal,num,cb); }
-	this.modifyCallNote = function(note,pub,expiration,expFormatVal,entryId,cb){ modifyCallNote(note,pub,expiration,expFormatVal,entryId,cb); }
+	this.saveCallNote = function(note,extension,pub,expiration,expFormatVal,num,reservation,cb){ saveCallNote(note,extension,pub,expiration,expFormatVal,num,reservation,cb); }
+	this.modifyCallNote = function(note,pub,expiration,expFormatVal,entryId,reservation,cb){ modifyCallNote(note,pub,expiration,expFormatVal,entryId,reservation,cb); }
 	this.getCallNotes = function(num,cb){ getCallNotes(num,cb); }
-	this.saveCallReservation = function(ext,num,expiration,expFormatVal,cb){ saveCallReservation(ext,num,expiration,expFormatVal,cb); }
-	this.isCallReserved = function(num,cb){ isCallReserved(num,cb); }
+	this.getExtCallReserved = function(num,cb){ getExtCallReserved(num,cb); }
 	this.getChatAssociation = function(cb){ getChatAssociation(cb); }
 	this.insertAndUpdateChatAssociation = function(extFrom,bareJid,cb){ insertAndUpdateChatAssociation(extFrom,bareJid,cb); }
 	this.deleteCallNote = function(id,cb) { deleteCallNote(id,cb); }
@@ -100,18 +98,11 @@ function getChatAssociation(cb){
                 cb(results);
         });
 }
-function isCallReserved(num,cb){
-	var objQuery = queries[CALL_RESERVATION];
-	objQuery.query = "select * from call_reservation where number='"+num+"';";
-	executeSQLQuery(CALL_RESERVATION, objQuery, function(results){
-		cb(results);
-	});
-}
-// if already exist a reservation call for number num, update the entry
-function saveCallReservation(ext, num, expiration, expFormatVal, cb){
-	var objQuery = queries[CALL_RESERVATION];
-	objQuery.query = "INSERT INTO call_reservation (extension,number,expiration) VALUES ('"+ext+"','"+num+"',DATE_ADD(now(), INTERVAL "+expiration+" "+expFormatVal+")) ON DUPLICATE KEY UPDATE extension="+ext+", date=now(), expiration=DATE_ADD(now(), INTERVAL "+expiration+" "+expFormatVal+");";
-	executeSQLQuery(CALL_RESERVATION, objQuery, function(results){
+// Return extensions that has reserved the call and the reservation date
+function getExtCallReserved(num,cb){
+	var objQuery = queries[CALL_NOTES];
+	objQuery.query = "SELECT date_format(date,'%d/%m/%Y') AS date, date_format(date,'%H:%i:%S') AS time, extension FROM call_notes WHERE (reservation=1 AND expiration>now())";
+	executeSQLQuery(CALL_NOTES,objQuery,function(results){
 		cb(results);
 	});
 }
@@ -122,9 +113,9 @@ function getCallNotes(num,cb){
 		cb(results);
        	});
 }
-function modifyCallNote(note,pub,expiration,expFormatVal,entryId,cb){
+function modifyCallNote(note,pub,expiration,expFormatVal,entryId,reservation,cb){
 	var objQuery = queries[CALL_NOTES];
-	objQuery.query = "UPDATE call_notes SET text='"+note+"',public="+pub+",expiration=DATE_ADD(now(),INTERVAL "+expiration+" "+expFormatVal+") where id="+entryId+";";
+	objQuery.query = "UPDATE call_notes SET text='"+note+"',public="+pub+",expiration=DATE_ADD(now(),INTERVAL "+expiration+" "+expFormatVal+"),reservation="+reservation+" where id="+entryId;
 	executeSQLQuery(CALL_NOTES, objQuery, function(results){
 		cb(results);
 	});
@@ -136,9 +127,9 @@ function deleteCallNote(id,cb){
 		cb(results);
 	});
 }
-function saveCallNote(note,extension,pub,expiration,expFormatVal,num,cb){
+function saveCallNote(note,extension,pub,expiration,expFormatVal,num,reservation,cb){
 	var objQuery = queries[CALL_NOTES];
-	objQuery.query = "INSERT INTO call_notes (text,extension,number,public,expiration) VALUES ('"+note+"','"+extension+"','"+num+"',"+pub+",DATE_ADD(now(), INTERVAL "+expiration+" "+expFormatVal+"));";
+	objQuery.query = "INSERT INTO call_notes (text,extension,number,public,expiration,reservation) VALUES ('"+note+"','"+extension+"','"+num+"',"+pub+",DATE_ADD(now(), INTERVAL "+expiration+" "+expFormatVal+"),"+reservation+")";
 	executeSQLQuery(CALL_NOTES, objQuery, function(results){
 		cb(results);
 	});
@@ -399,15 +390,6 @@ function initQueries(){
 		dbname: 'nethcti',
 		query: ''
 	};
-	this.queries[CALL_RESERVATION] = {
-		dbhost: 'localhost',
-		dbport: '/var/lib/mysql/mysql.sock',
-		dbtype: 'mysql',
-		dbuser: 'smsuser',
-		dbpassword: 'smspass',
-		dbname: 'nethcti',
-		query: ''
-	};
 	this.queries[CHAT_ASSOCIATION] = {
 		dbhost: 'localhost',
 		dbport: '/var/lib/mysql/mysql.sock',
@@ -426,7 +408,6 @@ getIntervalHistoryCall = function(ext,dateFrom,dateTo,num,cb){
 		var copyObjQuery = Object.create(objQuery);
 		num = num.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
 		copyObjQuery.query = copyObjQuery.query.replace(/\$EXTEN/g, ext).replace(/\$DATE_FROM/g,dateFrom).replace(/\$DATE_TO/g,dateTo).replace(/\$NUM/g,num);
-		console.log("query = " + copyObjQuery.query);
 		executeSQLQuery(INTERVAL_HISTORY_CALL, copyObjQuery, function(results){
 			cb(results);
 		});
