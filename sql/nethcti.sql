@@ -25,21 +25,10 @@ CREATE TABLE IF NOT EXISTS `call_notes` (
   `number` varchar(50) default NULL,
   `public` tinyint(1) default 0,
   `expiration` timestamp default 0,
+  `reservation` tinyint(1) default 0,
   KEY `index_extension` (`extension`),
   KEY `index_number` (`number`),
   PRIMARY KEY  (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
-CREATE TABLE IF NOT EXISTS `call_reservation` (
-  `id` int(11) NOT NULL auto_increment,
-  `date` timestamp NOT NULL default CURRENT_TIMESTAMP,
-  `extension` varchar(50) NOT NULL,
-  `number` varchar(50) NOT NULL,
-  PRIMARY KEY  (`id`),
-  UNIQUE KEY `number` (`number`),
-  UNIQUE KEY `number_2` (`number`),
-  KEY `index_extension` (`extension`),
-  KEY `index_number` (`number`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS `chat_association` (
