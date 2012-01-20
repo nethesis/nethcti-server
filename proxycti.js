@@ -749,7 +749,7 @@ am.addListener('dialing', function(headers) {
 	else if(from==undefined && modop.isChannelIntern(headers.channel))
 		from = headers.calleridnum;
 	logger.debug("Dialing from '" + from + "' -> '" + to + "'");
-	// advise the client that receive the call
+	// advise client that receive the call
 	if(to!==undefined && to!=='' && modop.isExtPresent(to) && modop.isExtInterno(to)){
 		// check the permission of the user to receive the call
                 if(!profiler.checkActionCallInPermit(to)){
@@ -820,9 +820,6 @@ am.addListener('dialing', function(headers) {
 			var internTypeExt = modop.getInternTypeExtFromChannel(headers.destination);
 			modop.addDialingUniqueidInternWithTypeExt(internTypeExt, trueDestUniqueid, chStat[trueDestUniqueid]);
 			logger.debug("added dialingUniqueid '" + trueDestUniqueid + "' to interTypeExt '" + internTypeExt + "'");
-	        	//updateAllClientsForOpWithExt(to) 
-			// commented because send newState to all clients with the status set to 'up'. However there
-			// will be a newState event with the status ringing and with the right dialExt 
 		}	
 	}
 })
@@ -866,7 +863,6 @@ function setResponseWithCurrentCallInfoCC(c,from,to,response){
 		typesCCObj[typesCC[i]] = '';
 	}
         if(Object.keys(ccArr).length>0){
-
 		var tempTypeName = '';
 		for(var key in cc_templates){
 			tempTypeName = key.split('.')[0].split('_')[3];
@@ -1842,17 +1838,15 @@ am.addListener('userevent', function(headers){
 			});
 		}
 		// check if there is a booked call
-		dataCollector.isCallReserved(callerFromOutside,function(results){
+		dataCollector.getExtCallReserved(callerFromOutside,function(results){
 			if(results.length>0){
-				currentCallInInfo[callerFromOutside].reservation = {value: true, ext: results[0].extension};
+				currentCallInInfo[callerFromOutside].reservation = {value: true, results: results};
 			} else {
 				currentCallInInfo[callerFromOutside].reservation = {value: false};
 			}
 		});
 	}
-	// end of the second case
 });
-
 
 /* This event is necessary to add information to parked members of what extension is parked on it.
  * Example of 'ParkedCall' event is:
@@ -2516,7 +2510,6 @@ io.sockets.on('connection', function(client){
 	                                                } else {
 	                                                        customerCardResult.push(cc);
 	                                                }
-
 	                                                if(customerCardResult.length===typesCC.length){
                                         			var key = '';
 			                                        var ccHtml = '';
@@ -2544,12 +2537,19 @@ io.sockets.on('connection', function(client){
 				}
 			break;
 			case actions.MODIFY_NOTE_OF_CALL:
-				dataCollector.modifyCallNote(message.note,message.pub,message.expiration,message.expFormatVal,message.entryId,function(){
+				var note = message.note;
+				var pub = message.pub;
+				var expiration = message.expiration;
+				var expFormatVal = message.expFormatVal;
+				var entryId = message.entryId;
+				var reservation = message.nextCallReservation;
+				dataCollector.modifyCallNote(note,pub,expiration,expFormatVal,entryId,reservation,function(){
 					logger.debug('call note from [' + extFrom + '] for number \'' + message.num + '\' has been modified into database');
 					var respMsg = new ResponseMessage(client.id, 'ack_modify_callnote', '');
 					respMsg.note = message.note;
 					respMsg.pub = message.pub;
 					respMsg.entryId = message.entryId;
+					respMsg.reservation = message.nextCallReservation;
 					var d = new Date();
 					var newdate = new Date(d);
 					if(message.expFormatVal==='DAY') {
@@ -2567,11 +2567,6 @@ io.sockets.on('connection', function(client){
                                         client.emit('message',respMsg);
                                         logger.debug("RESP 'ack_modify_callnote' has been sent to [" + extFrom + "] id '" + client.id + "'");	
 				});
-				if(message.nextCallReservation){
-					dataCollector.saveCallReservation(extFrom,message.num,function(){
-						logger.debug('call reservation from [' + extFrom + '] for number \'' + message.num + '\' has been saved into database');
-					});
-				}
 			break;
 			case actions.DELETE_CALL_NOTE:
 				dataCollector.deleteCallNote(message.id,function(){
@@ -2582,17 +2577,22 @@ io.sockets.on('connection', function(client){
 				});
 			break;
 			case actions.SAVE_NOTE_OF_CALL:
-				dataCollector.saveCallNote(message.note,extFrom,message.pub,message.expiration,message.expFormatVal,message.num,function(){
-					logger.debug('call note from [' + extFrom + '] for number \'' + message.num + '\' has been saved into database');
+				var note = message.note;
+				var pub = message.pub;
+				var expiration = message.expiration;
+				var expFormatVal = message.expFormatVal;
+				var num = message.num;
+				var reservation = message.nextCallReservation;
+				if(note===undefined || pub===undefined || expiration===undefined || expFormatVal===undefined || num===undefined || reservation===undefined){
+					logger.error('bad argument to save call note!');
+					return;
+				}
+				dataCollector.saveCallNote(note,extFrom,pub,expiration,expFormatVal,num,reservation,function(){ // save call note
+					logger.debug('call note from [' + extFrom + '] for number \'' + message.num + '\' has been saved into DB');
 					var respMsg = new ResponseMessage(client.id, 'ack_save_callnote', '');
 					client.emit('message',respMsg);
 					logger.debug("RESP 'ack_save_callnote' has been sent to [" + extFrom + "] id '" + client.id + "'");
 				});
-				if(message.nextCallReservation){
-					dataCollector.saveCallReservation(extFrom,message.num,function(){
-						logger.debug('call reservation from [' + extFrom + '] for number \'' + message.num + '\' has been saved into database');
-					});
-				}
 			break;
 			case actions.CF_VM_PARKING:
 				var redirectTo = message.redirectToExt;
@@ -3520,13 +3520,13 @@ io.sockets.on('connection', function(client){
 					logger.debug("check 'dayHistory' permission for [" + extFrom + "] OK: get day history ...");
 					// format date for query sql
 					var dateFormat = formatDate(message.date);					
-					var caller = message.caller;
-					if(caller===''){
-						caller = '%'; // match any field
+					var num = message.num;
+					if(num===''){
+						num = '%'; // match any field
 					}
-                                        dataCollector.getDayHistoryCall(extFrom,dateFormat,caller,function(callResults){ // get day history call
-						dataCollector.getDayHistorySms(extFrom, dateFormat, caller, function(smsResults){ // get day history sms
-							dataCollector.getDayHistoryCallNotes(extFrom, dateFormat, caller, function(callNotesResults){
+                                        dataCollector.getDayHistoryCall(extFrom,dateFormat,num,function(callResults){ // get day history call
+						dataCollector.getDayHistorySms(extFrom, dateFormat, num, function(smsResults){ // get day history sms
+							dataCollector.getDayHistoryCallNotes(extFrom, dateFormat, num, function(callNotesResults){
 	                                                	var mess = new ResponseMessage(client.id, "day_history", "received day history");
 		                                                mess.callResults = createHistoryCallResponse(callResults);
 								mess.smsResults = smsResults;
@@ -3548,13 +3548,13 @@ io.sockets.on('connection', function(client){
                                 if(res){
 					logger.debug("check 'currentWeekHistory' permission for [" + extFrom + "] OK: get current week history ...");
                                         // execute query to search contact in phonebook
-					var caller = message.caller;
-					if(caller===''){
-						caller = '%'; // match any field
+					var num = message.num;
+					if(num===''){
+						num = '%'; // match any field
 					}
-                                        dataCollector.getCurrentWeekHistoryCall(extFrom, caller, function(callResults){
-						dataCollector.getCurrentWeekHistorySms(extFrom, caller, function(smsResults){
-							dataCollector.getCurrentWeekHistoryCallNotes(extFrom, caller, function(callNotesResults){
+                                        dataCollector.getCurrentWeekHistoryCall(extFrom, num, function(callResults){
+						dataCollector.getCurrentWeekHistorySms(extFrom, num, function(smsResults){
+							dataCollector.getCurrentWeekHistoryCallNotes(extFrom, num, function(callNotesResults){
 	                                                	var mess = new ResponseMessage(client.id, "current_week_history", "received current week history");
 								mess.callResults = createHistoryCallResponse(callResults);
 								mess.smsResults = smsResults;
@@ -3576,13 +3576,13 @@ io.sockets.on('connection', function(client){
                                 if(res){
 					logger.info("check 'currentMonthHistory' permission for [" + extFrom + "] OK: get current month history...");
                                         // execute query to search contact in phonebook
-					var caller = message.caller;
-					if(caller===''){
-						caller = '%'; // match any field
+					var num = message.num;
+					if(num===''){
+						num = '%'; // match any field
 					}
-                                        dataCollector.getCurrentMonthHistoryCall(extFrom, caller, function(callResults){
-						dataCollector.getCurrentMonthHistorySms(extFrom, caller, function(smsResults){
-							dataCollector.getCurrentMonthHistoryCallNotes(extFrom, caller, function(callNotesResults){
+                                        dataCollector.getCurrentMonthHistoryCall(extFrom, num, function(callResults){
+						dataCollector.getCurrentMonthHistorySms(extFrom, num, function(smsResults){
+							dataCollector.getCurrentMonthHistoryCallNotes(extFrom, num, function(callNotesResults){
 		                                                var mess = new ResponseMessage(client.id, "current_month_history", "received current month history");
 								mess.callResults = createHistoryCallResponse(callResults);
 								mess.smsResults = smsResults;
@@ -3604,13 +3604,13 @@ io.sockets.on('connection', function(client){
 					logger.info("check 'History' permission for [" + extFrom + "] OK: get interval history...");
 					var dateFrom = fromMMddYYYYtoYYYYmmDD(message.dateFrom);
 					var dateTo = fromMMddYYYYtoYYYYmmDD(message.dateTo);
-					var caller = message.caller;
-					if(caller===''){
-						caller = '%'; // match any field
+					var num = message.num;
+					if(num===''){
+						num = '%'; // match any field
 					}
-					dataCollector.getIntervalHistoryCall(extFrom,dateFrom,dateTo,caller,function(callResults){
-						dataCollector.getIntervalHistorySms(extFrom,dateFrom,dateTo,caller,function(smsResults){
-							dataCollector.getIntervalHistoryCallNotes(extFrom,dateFrom,dateTo,caller,function(callNotesResults){
+					dataCollector.getIntervalHistoryCall(extFrom,dateFrom,dateTo,num,function(callResults){
+						dataCollector.getIntervalHistorySms(extFrom,dateFrom,dateTo,num,function(smsResults){
+							dataCollector.getIntervalHistoryCallNotes(extFrom,dateFrom,dateTo,num,function(callNotesResults){
 								var mess = new ResponseMessage(client.id, "interval_history", '');
 								mess.callResults = createHistoryCallResponse(callResults);
 								mess.smsResults = smsResults;
