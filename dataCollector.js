@@ -74,6 +74,7 @@ exports.DataCollector = function(){
 	this.insertAndUpdateChatAssociation = function(extFrom,bareJid,cb){ insertAndUpdateChatAssociation(extFrom,bareJid,cb); }
 	this.deleteCallNote = function(id,cb) { deleteCallNote(id,cb); }
 	this.getQueries = function(){ return getQueries(); }
+	this.getAllNotesForNum = function(ext,num,cb){ getAllNotesForNum(ext,num,cb); } 
 }
 function getQueries(){
 	return queries;
@@ -152,6 +153,16 @@ function getIntervalHistoryCallNotes(ext,dateFrom,dateTo,num,cb){
 		executeSQLQuery(CALL_NOTES, objQuery, function(results){
 			cb(results);
 		});
+	}
+}
+function getAllNotesForNum(ext,num,cb){
+	var objQuery = queries[CALL_NOTES];
+	num = num.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
+	objQuery.query = "SELECT * from "+DB_TABLE_CALLNOTES+" WHERE ((extension='"+ext+"' AND number like '"+num+"') OR (number like '"+num+"' AND public=1)) AND expiration>now()";
+	if(objQuery!==undefined){
+		executeSQLQuery(CALL_NOTES, objQuery, function(results){
+	                cb(results);
+                });
 	}
 }
 function getCurrentMonthHistoryCallNotes(ext, num, cb){
