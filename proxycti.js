@@ -2328,6 +2328,7 @@ io.sockets.on('connection', function(client){
 			GET_QUEUE_STATUS:	'get_queue_status',
 			GET_VOICEMAIL_LIST: 	'get_voicemail_list',
 			DELETE_VOICEMAIL: 	'del_voicemail',
+			GET_ALL_NOTES_FOR_NUM:	'get_all_notes_for_num',
 			GET_PRIORITY_QUEUE_STATUS:	'get_priority_queue_status',
 			SEARCH_CONTACT_PHONEBOOK:	'search_contact_phonebook',
 			GET_PEER_LIST_COMPLETE_OP: 	'get_peer_list_complete_op',
@@ -2442,6 +2443,15 @@ io.sockets.on('connection', function(client){
 							}
                         			}
                 			}
+				});
+			break;
+			case actions.GET_ALL_NOTES_FOR_NUM:
+				dataCollector.getAllNotesForNum(extFrom,message.num,function(results){
+					var respMsg = new ResponseMessage(client.id, "resp_get_all_notes_for_num", '');
+					respMsg.allNotes = results;
+					respMsg.num = message.num;
+					client.emit('message',respMsg);
+					logger.debug("RESP 'resp_get_all_notes_for_num' has been sent to [" + extFrom + "] id '" + client.id + "'");
 				});
 			break;
 			case actions.GET_CALL_NOTES:
@@ -2572,6 +2582,7 @@ io.sockets.on('connection', function(client){
 				dataCollector.deleteCallNote(message.id,function(){
 					logger.debug('call note [id=' + message.id + '] has been deleted from database');
 					var respMsg = new ResponseMessage(client.id, 'ack_delete_callnote', '');
+					respMsg.entryid = message.id;
 					client.emit('message',respMsg);
 					logger.debug("RESP 'ack_delete_callnote' has been sent to [" + extFrom + "] id '" + client.id + "'");
 				});
