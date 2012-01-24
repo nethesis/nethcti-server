@@ -148,7 +148,7 @@ function getIntervalHistorySms(ext,dateFrom,dateTo,num,cb){
 function getIntervalHistoryCallNotes(ext,dateFrom,dateTo,num,cb){
 	var objQuery = queries[CALL_NOTES];
 	num = num.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
-	objQuery.query = "SELECT * from "+DB_TABLE_CALLNOTES+" WHERE (extension="+ext+" OR (number like '"+num+"' AND public=1)) AND (DATE(date)>='"+dateFrom+"' AND DATE(date)<='"+dateTo+"') AND expiration>now()";
+	objQuery.query = "SELECT * from "+DB_TABLE_CALLNOTES+" WHERE ((extension="+ext+" AND number like '"+num+"') OR (number like '"+num+"' AND public=1)) AND (DATE(date)>='"+dateFrom+"' AND DATE(date)<='"+dateTo+"') AND expiration>now()";
 	if(objQuery!==undefined){
 		executeSQLQuery(CALL_NOTES, objQuery, function(results){
 			cb(results);
@@ -168,7 +168,7 @@ function getAllNotesForNum(ext,num,cb){
 function getCurrentMonthHistoryCallNotes(ext, num, cb){
 	var objQuery = queries[CALL_NOTES];
 	num = num.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
-	objQuery.query = "SELECT * from "+DB_TABLE_CALLNOTES+" WHERE (extension='"+ext+"' OR (number like '"+num+"' AND public=1)) AND (DATE(date)>=(DATE_SUB(CURDATE(), INTERVAL DAYOFMONTH(CURDATE())-1 DAY))) AND expiration>now()";
+	objQuery.query = "SELECT * from "+DB_TABLE_CALLNOTES+" WHERE ((extension='"+ext+"' AND number like '"+num+"') OR (number like '"+num+"' AND public=1)) AND (DATE(date)>=(DATE_SUB(CURDATE(), INTERVAL DAYOFMONTH(CURDATE())-1 DAY))) AND expiration>now()";
 	if(objQuery!==undefined){
 		executeSQLQuery(CALL_NOTES, objQuery, function(results){
 			cb(results);
@@ -188,7 +188,7 @@ function getCurrentMonthHistorySms(ext, num, cb){
 function getCurrentWeekHistoryCallNotes(ext, num, cb){
 	var objQuery = queries[CALL_NOTES];
 	num = num.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
-	objQuery.query = "SELECT * from "+DB_TABLE_CALLNOTES+" WHERE (extension='"+ext+"' OR (number like '"+num+"' AND public=1)) AND (DATE(date)>=(DATE_SUB(CURDATE(), INTERVAL DAYOFWEEK(CURDATE())-2 DAY))) AND expiration>now()";
+	objQuery.query = "SELECT * from "+DB_TABLE_CALLNOTES+" WHERE ((extension='"+ext+"' AND number like '"+num+"') OR (number like '"+num+"' AND public=1)) AND (DATE(date)>=(DATE_SUB(CURDATE(), INTERVAL DAYOFWEEK(CURDATE())-2 DAY))) AND expiration>now()";
 	if(objQuery!==undefined){
 		executeSQLQuery(CALL_NOTES, objQuery, function(results){
 			cb(results);
@@ -208,7 +208,7 @@ function getCurrentWeekHistorySms(ext, num, cb){
 function getDayHistoryCallNotes(ext, date, num, cb){
 	var objQuery = queries[CALL_NOTES];
 	num = num.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
-	objQuery.query = "SELECT * from "+DB_TABLE_CALLNOTES+" WHERE (extension='"+ext+"' OR (number like '"+num+"' AND public=1)) AND DATE(date)='"+date+"' AND expiration>now()";
+	objQuery.query = "SELECT * from "+DB_TABLE_CALLNOTES+" WHERE ((extension='"+ext+"' AND number like '"+num+"') OR (number like '"+num+"' AND public=1)) AND DATE(date)='"+date+"' AND expiration>now()";
 	if(objQuery!==undefined){
 	        executeSQLQuery(CALL_NOTES, objQuery, function(results){
 			cb(results);
