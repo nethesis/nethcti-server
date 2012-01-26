@@ -8,29 +8,37 @@ The prefix is managed by proxycti server. It is present in the file name (ex. 27
 
 **/
 
-
-
 define("SMS_DIR","/usr/lib/node/proxycti/sms");
-
 define("SERVER","localhost");
-define("DB","smsdb");
+define("DB","nethcti");
 define("USER","smsuser");
 define("PASS","smspass");
 
 $smsdata = parse_ini_file ('/usr/lib/node/proxycti/config/sms.ini');
-if ($smsdata['type'] != 'portech')
+if ($smsdata['type'] != 'portech'){
 	exit(0);
+}
 $xhost = $smsdata['url'];
 $xusername = $smsdata['user'];
 $xpassword = $smsdata['password'];
-
 $lock = SMS_DIR."/"."lock";
 
-if (file_exists($lock))
+if (file_exists($lock)){
    exit(1);
+}
 
-mysql_connect(SERVER,USER,PASS);
-mysql_select_db(DB);
+$res = mysql_connect(SERVER,USER,PASS);
+if(!$res){
+	echo "error: mysql connection failed\n";
+	exit(0);
+}
+
+$res = mysql_select_db(DB);
+if(!$res){
+	echo "error selecting db '" . DB . "'\n";
+	exit(0);
+}
+
 if ($handle = opendir(SMS_DIR)) 
 {
     file_put_contents($lock,getmypid());
@@ -70,7 +78,6 @@ function send_sms($tomobile,$xbody,$xhost,$xusername,$xpassword,$lock)
 		unlink($lock);
                 die;
         }
-
         sleep(2);
         $cmd = "$xusername\r";
         fputs($fp, $cmd, strlen($cmd));
