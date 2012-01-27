@@ -19,6 +19,7 @@ var log4js = require('./lib/log4js-node/lib/log4js')();
 const PROXY_CONFIG_FILENAME = "config/proxycti.ini";
 const SMS_CONFIG_FILENAME = "config/sms.ini";
 const CHAT_ASSOC_FILE = "./store/chat-assoc";
+const FILE_LOGIN_LOG = './store/login.log';
 const AST_CALL_AUDIO_DIR = "/var/spool/asterisk/monitor";
 const SMS_DIR = "sms";
 const CALL_PREFIX = "CTI->";
@@ -122,6 +123,11 @@ log4js.clearAppenders();
 log4js.addAppender(log4js.fileAppender(logfile), '[ProxyCTI]');
 var logger = log4js.getLogger('[ProxyCTI]');
 logger.setLevel(loglevel);
+
+// initialize login log file
+log4js.addAppender(log4js.fileAppender(FILE_LOGIN_LOG),'login');
+var login_logger = log4js.getLogger('login');
+login_logger.setLevel('DEBUG');
 
 // START
 logger.warn("Starting server...");
@@ -498,8 +504,8 @@ am.addListener('newstate', function(headers){
 	/* check if the newstate is relative to a call that come from queue. In this case (CASE C), 
  	 * discard this newState event */
 	if( headers.channel.indexOf('Local/')!=-1 && headers.channel.indexOf('@from-internal-')!=-1 && ( headers.channel.indexOf(';1')!=-1 || headers.channel.indexOf(';2')!=-1 ) ){
-		logger.warn("discard 'newState' event: is relative to '" + headers.channel + "'")
-		return
+		logger.debug("discard 'newState' event because it's relative to channel '" + headers.channel + "'");
+		return;
 	}
 	var typeext = headers.channel.split('-')[0]
 	if( modop.isChannelTrunk(headers.channel) ){ // newstate is relative to a trunk
@@ -705,8 +711,8 @@ am.addListener('dialing', function(headers) {
 	 * From documentation, dialstatus can be:
 	 CHANUNAVAIL | CONGESTION | BUSY | NOANSWER | ANSWER | CANCEL | HANGUP */
 	if( headers.destuniqueid==undefined && headers.dialstatus!=undefined ){
-		logger.warn("discard 'dialing' event: headers.destuniqueid = " + headers.destuniqueid + " and headers.dialstatus = " + headers.dialstatus)
-		return
+		logger.warn("discard 'dialing' event because dial status is '" + headers.dialstatus + "'");
+		return;
 	}
 	// to
 	// dialstring can be: ...dialstring: '272@from-internal' }'
@@ -2492,59 +2498,47 @@ io.sockets.on('connection', function(client){
 					logger.debug("RESP 'resp_get_vcard_cc' has been sent to [" + extFrom + "] id '" + client.id + "'");
 					return;
 				}
-				//for(var i=0, num; num=nums[i]; i++){
                                 var from = nums[0];
                                 var customerCardResult = [];
                                 var obj = {};
-
-			
-				var typesCCObj = {};
-			        for(var i=0; i<typesCC.length; i++){
-			                typesCCObj[typesCC[i]] = '';
-			        }
-				if(currentCallInInfo[from]!==undefined){ // check if there is info about the contact in cache (of the current call)
-					setResponseWithCurrentCallInfoCC(client,from,extFrom,response);
-					client.emit('message',response);
-                                        logger.debug("RESP 'resp_get_vcard_cc' has been sent to [" + extFrom + "] id '" + client.id + "' with relative customer card");
-				} else { // construct the response because there isn't into the case
-			                for(i=0; i<typesCC.length; i++){
-		                                var name = typesCC[i];
-	                                        dataCollector.getCustomerCard(from, typesCC[i], function(cc, name) {
-        	                                        if(cc!==undefined){
-	                                                        obj = {};
-	                                                        for(var item in cc){
-	                                                                cc[item].server_address = "http://" + hostname + ":" + port;
-	                                                        }
-	                                                        obj[name] = cc;
-	                                                        customerCardResult.push(obj);
-	                                                } else {
-	                                                        customerCardResult.push(cc);
-	                                                }
-	                                                if(customerCardResult.length===typesCC.length){
-                                        			var key = '';
-			                                        var ccHtml = '';
-								var tempObj = {};
-			                                        for(var w=0, cc; cc=customerCardResult[w]; w++){
-                        			                        key = Object.keys(cc)[0];
-                                                			ccHtml = createCustomerCardHTML(cc,key,from);
-									tempObj[key] = ccHtml;
-                                        			}
-								var tempTypeName = '';
-								var str = '';
-								for(var key in cc_templates){
-									tempTypeName = key.split('.')[0].split('_')[3];
-									if(tempObj[tempTypeName]!==undefined){
-										str += tempObj[tempTypeName];
-									}
-
+		                for(i=0; i<typesCC.length; i++){
+	                                var name = typesCC[i];
+                                        dataCollector.getCustomerCard(from, typesCC[i], function(cc, name) { // cc = [{},...]
+						cc = undefined;
+       	                                        if(cc!==undefined){
+                                                        obj = {};
+                                                        for(var item in cc){
+                                                                cc[item].server_address = "http://" + hostname + ":" + port;
+                                                        }
+                                                        obj[name] = cc; // obj = { default: [{},...], call: [{},...],...}
+	                                         	customerCardResult.push(obj);
+	                                         } else {
+						 	customerCardResult.push(cc);
+	                                         }
+	                                         if(customerCardResult.length===typesCC.length){
+                                        		var key = '';
+			                                var ccHtml = '';
+							var tempObj = {};
+			                                for(var w=0, cc; cc=customerCardResult[w]; w++){
+                        			                key = Object.keys(cc)[0];
+                                                		ccHtml = createCustomerCardHTML(cc,key,from);
+								tempObj[key] = ccHtml;
+                                        		}
+							var tempTypeName = '';
+							var str = '';
+							for(var key in cc_templates){
+								tempTypeName = key.split('.')[0].split('_')[3];
+								if(tempObj[tempTypeName]!==undefined){
+									str += tempObj[tempTypeName];
 								}
-								response.customerCard = str;
-								client.emit('message',response);
-                                                                logger.debug("RESP 'resp_get_vcard_cc' has been sent to [" + extFrom + "] id '" + client.id + "' with relative customer card");
-	                                                }
-                                        	});
-	                                }
-				}
+							}
+							response.customerCard = str;
+							client.emit('message',response);
+                                                	logger.debug("RESP 'resp_get_vcard_cc' has been sent to [" + extFrom + "] id '" + client.id + "' with relative customer card");
+	                                	}
+                                	});
+	                        }
+				
 			break;
 			case actions.MODIFY_NOTE_OF_CALL:
 				var note = message.note;
@@ -2702,9 +2696,12 @@ io.sockets.on('connection', function(client){
 					respMsg.streamingSettings = profiler.getStreamingSettings(extFrom);
 					client.emit('message',respMsg);
 					logger.debug("RESP 'ack_login' has been sent to [" + extFrom + "] id '" + client.id + "'");
+					var ver = message.ver;
+					ver===undefined ? ver = '<1.1' : '';
+					login_logger.debug(extFrom + ' ' + ipAddrClient + ' ' + ver);
   				}
   				else{ // the user is not authenticated
-  					logger.warn("AUTH FAILED: [" + extFrom + "] with secret '" + message.secret + "'");
+  					logger.warn("login AUTH FAILED: [" + extFrom + "] with secret '" + message.secret + "'");
   					client.emit('message',new ResponseMessage(client.id, "error_login", "Sorry, authentication failed !"));
   					logger.debug("RESP 'error_login' has been sent to [" + extFrom + "] id '" + client.id + "'");
   				}
