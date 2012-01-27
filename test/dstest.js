@@ -6,9 +6,7 @@ switch(args[0]){
 	case 'phonebook':
 		var content = args[1];
 		content===undefined ? help() : '';
-		console.log("PRIMA");
 		dataCollector.getContactsPhonebook(content,printResult);
-		console.log("DOPO");
 	break;
 	case 'cc':
 		var typecc = args[1];
