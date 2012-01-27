@@ -373,8 +373,10 @@ function initConn(objQuery, key){
                	var db = new odbc.Database();
                 var connect_str = "DRIVER={FreeTDS};SERVER=" + objQuery.dbhost + ";UID=" + objQuery.dbuser + ";PWD=" + objQuery.dbpassword + ";DATABASE=" + objQuery.dbname;
                 db.open(connect_str, function(err) {
-			logger.error("ERROR connect to DB mssql");
-			logger.error(sys.inspect(err));
+			if(err){
+				logger.error("ERROR connect to DB mssql");
+				logger.error(sys.inspect(err));
+			}
                 });
 		dbConnections[key] = db;
         }
