@@ -16,6 +16,8 @@ var pathreq = require('path');
 var ejs = require('./lib/ejs/ejs.js');
 var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
 var log4js = require('./lib/log4js-node/lib/log4js')();
+var formidable = require('./lib/node-formidable');
+var util = require('util');
 const PROXY_CONFIG_FILENAME = "config/proxycti.ini";
 const SMS_CONFIG_FILENAME = "config/sms.ini";
 const CHAT_ASSOC_FILE = "./store/chat-assoc";
@@ -2062,6 +2064,24 @@ server = http.createServer(function(req, res){
 	var params = parsed_url.query;
 	logger.debug("received request HTTP: path = " + path + " params = " + sys.inspect(params));
 	switch (path){
+	    case '/uploadVmCustomMsg':
+	    	var extFrom = params.extFrom;
+		var form = new formidable.IncomingForm();
+		form.on('fileBegin',function(name,file){
+			file.path = '/var/spool/asterisk/voicemail/default/'+extFrom+'/'+file.name;
+		});
+		form.parse(req, function(err, fields, files) {
+			if(err){
+				logger.error('error in uploadVmCustomMsg. err: ' + sys.inspect(err) + ' fields: ' + sys.inspect(fields));
+				send404(res);
+			} else {
+				logger.debug('file '+files.filename.path+' has been saved');
+				res.writeHead(200, {'content-type': 'text/html'});
+				res.write('received upload:\n\n');
+				res.end();
+			}
+		});
+	    break;
 	    case '/':
     		path = "/index.html";
 	    	fs.readFile(__dirname + path, function(err, data){
@@ -2179,11 +2199,11 @@ server = http.createServer(function(req, res){
 				        res.write(data, 'utf8');
 				        res.end();
 				    });
-    			}
-    			else
+    			} else {
 		    		send404(res);
+			}
     		});
-  	}	//switch
+  	}
 });	
 
 
@@ -4401,9 +4421,6 @@ function printLoggedClients(){
 /*
  * end of section relative to functions
  *************************************************************************************/
-
-
-
 
 // capture any uncaught exceptions
 process.on('uncaughtException', function(err){
