@@ -2354,6 +2354,7 @@ io.sockets.on('connection', function(client){
 			GET_QUEUE_STATUS:	'get_queue_status',
 			GET_VOICEMAIL_LIST: 	'get_voicemail_list',
 			DELETE_VOICEMAIL: 	'del_voicemail',
+			SPEAK_INTERCOM:		'speak_intercom',
 			GET_ALL_NOTES_FOR_NUM:	'get_all_notes_for_num',
 			GET_PRIORITY_QUEUE_STATUS:	'get_priority_queue_status',
 			SEARCH_CONTACT_PHONEBOOK:	'search_contact_phonebook',
@@ -2361,7 +2362,7 @@ io.sockets.on('connection', function(client){
 			REDIRECT_VOICEMAIL_FROM_OP: 	'redirect_voicemail_from_op',
 			GET_CURRENT_WEEK_HISTORY:  	'get_current_week_history',
 			GET_CURRENT_MONTH_HISTORY:	'get_current_month_history',
-				DELETE_AUDIO_RECORDING_CALL:	'delete_audio_recording_call'
+			DELETE_AUDIO_RECORDING_CALL:	'delete_audio_recording_call'
 		}
   		logger.debug("ACTION received: from id '" + client.id + "' message " + sys.inspect(message));	
   		switch(action){
@@ -2853,6 +2854,10 @@ io.sockets.on('connection', function(client){
 				respMessage.list = list;
 				client.emit('message',respMessage);
                                 logger.debug("RESP 'ack_all_vm_status' has been sent to [" + extFrom + "] id '" + client.id + "'");
+			break;
+			case actions.SPEAK_INTERCOM:
+				var extToCall = message.exten;
+				callout(extFrom,extToCall);
 			break;
 	  		case actions.CALLOUT:
 	  			if(clients[extFrom]===undefined){ // check if the client is logged in
