@@ -1730,7 +1730,12 @@ am.addListener('peerstatus', function(headers) {
  * when the call come from the outside:
 { event: 'UserEvent',
   privilege: 'user,all',
-  userevent: 'CAllIN|Data; 3405567088' } */
+  userevent: 'CAllIN|Data; 3405567088' } 
+  *
+{ event: 'UserEvent',
+  privilege: 'user,all',
+  userevent: 'Agentlogin',
+  agent: '202' } */
 am.addListener('userevent', function(headers){
 	logger.debug("EVENT 'UserEvent': headers = " + sys.inspect(headers))
 	// Manage first case: the event is generated from the phone og the user
@@ -1807,7 +1812,7 @@ am.addListener('userevent', function(headers){
 	} // end of the first case
 	// Manage secon case: the event is generated from the arrive of an outside call
 	var userevent = headers.userevent;
-	if(userevent!==undefined && userevent.indexOf('CAllIN')!==undefined){
+	if(userevent!==undefined && userevent.indexOf('CAllIN')!==-1){
 		var callerFromOutside = userevent.split(';')[1];
 		callerFromOutside = callerFromOutside.replace(/[" "]/g,"");
 		currentCallInInfo[callerFromOutside] = {}; // init current data info of the caller
