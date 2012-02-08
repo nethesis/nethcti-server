@@ -20,7 +20,6 @@ var formidable = require('./lib/node-formidable');
 var util = require('util');
 const PROXY_CONFIG_FILENAME = "config/proxycti.ini";
 const SMS_CONFIG_FILENAME = "config/sms.ini";
-const CHAT_ASSOC_FILE = "./store/chat-assoc";
 const FILE_LOGIN_LOG = './store/login.log';
 const AST_CALL_AUDIO_DIR = "/var/spool/asterisk/monitor";
 const SMS_DIR = "sms";
@@ -1823,7 +1822,7 @@ am.addListener('userevent', function(headers){
 		currentCallInInfo[callerFromOutside].cc = customerCardResult;
 		for(var i=0, type; type=allTypesCC[i]; i++){
 			dataCollector.getCustomerCard(callerFromOutside, type, function(cc, name) {
-				if(cc!==undefined){
+			        if(cc!==undefined){
 					obj = {};
 					for(var item in cc){
                                       		cc[item].server_address = "http://" + hostname + ":" + port;
@@ -1833,23 +1832,24 @@ am.addListener('userevent', function(headers){
 				} else {
 					customerCardResult.push(cc);
 				}
-				if(customerCardResult.length===allTypesCC.length){ // ex. customerCardResult = [ { default: [ [Object] ] }, { calls: [ [Object] ] } ]
-					currentCallInInfo[callerFromOutside].cc = {};
-					var key = '';
-					var ccHtml = '';
-					for(var w=0, cc; cc=customerCardResult[w]; w++){
-						key = Object.keys(cc)[0];
-						ccHtml = createCustomerCardHTML(cc,key,callerFromOutside);
-						currentCallInInfo[callerFromOutside].cc[key] = ccHtml;
-					}
-				}
+                                // check because hangup event can occure before
+				if(customerCardResult.length===allTypesCC.length && currentCallInInfo[callerFromOutside]!==undefined){ // ex. customerCardResult = [ { default: [ [Object] ] }, { calls: [ [Object] ] } ]
+                                    currentCallInInfo[callerFromOutside].cc = {};
+                                    var key = '';
+        			    var ccHtml = '';
+        			    for(var w=0, cc; cc=customerCardResult[w]; w++){
+        			        key = Object.keys(cc)[0];
+        				ccHtml = createCustomerCardHTML(cc,key,callerFromOutside);
+        				currentCallInInfo[callerFromOutside].cc[key] = ccHtml;
+        			    }
+                                }
 			});
 		}
 		// check if there is a booked call
 		dataCollector.getExtCallReserved(callerFromOutside,function(results){
-			if(results.length>0){
+			if(results.length>0 && currentCallInInfo[callerFromOutside]!==undefined){
 				currentCallInInfo[callerFromOutside].reservation = {value: true, results: results};
-			} else {
+			} else if(currentCallInInfo[callerFromOutside]!==undefined){
 				currentCallInInfo[callerFromOutside].reservation = {value: false};
 			}
 		});
