@@ -2527,10 +2527,35 @@ io.sockets.on('connection', function(client){
                                 var from = nums[0];
                                 var customerCardResult = [];
                                 var obj = {};
+                                var idTimeout = setTimeout(function(){ // execute only if the DB results is not complete
+					logger.warn('result for "get_vcard_cc" is not complete: only ' + sys.inspect(customerCardResult));
+					var key = '';
+                                        var ccHtml = '';
+                                        var tempObj = {};
+                                        for(var w=0, cc; cc=customerCardResult[w]; w++){
+                                        	key = Object.keys(cc)[0];
+                                                ccHtml = createCustomerCardHTML(cc,key,from);
+                                                tempObj[key] = ccHtml;
+                                        }
+                                        var tempTypeName = '';
+                                        var str = '';
+                                        for(var key in cc_templates){
+                                        	tempTypeName = key.split('.')[0].split('_')[3];
+                                                if(tempObj[tempTypeName]!==undefined){
+                                                	str += tempObj[tempTypeName];
+                                                }
+                                        }
+                                        response.customerCard = str;
+                                        client.emit('message',response);
+                                        logger.debug("RESP 'resp_get_vcard_cc' has been sent to [" + extFrom + "] id '" + client.id + "' with relative customer card");	
+                                },5000);
 		                for(i=0; i<typesCC.length; i++){
 	                                var name = typesCC[i];
+                                        logger.debug('getCustomerCard('+from+','+typesCC[i]+',function(cc,name)');
                                         dataCollector.getCustomerCard(from, typesCC[i], function(cc, name) { // cc = [{},...]
-						cc = undefined;
+                                                logger.debug("idTimeout = " + sys.inspect(idTimeout));
+                                                logger.debug("GET_VCARD_CC: cc = " + sys.inspect(cc));
+                                                logger.debug("GET_VCARD_CC: name = " + name);
        	                                        if(cc!==undefined){
                                                         obj = {};
                                                         for(var item in cc){
@@ -2539,9 +2564,11 @@ io.sockets.on('connection', function(client){
                                                         obj[name] = cc; // obj = { default: [{},...], call: [{},...],...}
 	                                         	customerCardResult.push(obj);
 	                                         } else {
-						 	customerCardResult.push(cc);
+                                                        customerCardResult.push(cc);
 	                                         }
+                                                 logger.debug('GET_VCARD_CC: customerCardResult.length = ' + customerCardResult.length);
 	                                         if(customerCardResult.length===typesCC.length){
+							clearTimeout(idTimeout); // cancel security function timeout
                                         		var key = '';
 			                                var ccHtml = '';
 							var tempObj = {};
@@ -2564,7 +2591,6 @@ io.sockets.on('connection', function(client){
 	                                	}
                                 	});
 	                        }
-				
 			break;
 			case actions.MODIFY_NOTE_OF_CALL:
 				var note = message.note;
