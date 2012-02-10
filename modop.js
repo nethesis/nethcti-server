@@ -274,15 +274,17 @@ function updateHangupUniqueidInternWithTypeExt(typeExt, uniqueid){
 	if(extStatusForOp[typeExt].tab===INTERNO)
 		extStatusForOp[typeExt].lastHangupUniqueid = uniqueid
 }
-function getInternTypeExtFromChannel(ch){
-	for(key in extStatusForOp)
-		if(ch.indexOf(key)!=-1 && extStatusForOp[key].tab===INTERNO)
-			return key
+function getInternTypeExtFromChannel(ch){ // ch is like SIP/205-00000275
+	var typeExt = ch.split('-')[0]; // typeExt is like SIP/205
+	if(extStatusForOp[typeExt]!==undefined && extStatusForOp[typeExt].tab===INTERNO){
+		return typeExt;
+	}
 }
-function getExtInternFromChannel(ch){
-	for(key in extStatusForOp)
-		if(ch.indexOf(key)!=-1 && extStatusForOp[key].tab===INTERNO)
-			return extStatusForOp[key].Extension
+function getExtInternFromChannel(ch){ // ch is like SIP/209-0000000f
+	var typeExt = ch.split('-')[0]; // typeExt is like SIP/209
+	if(extStatusForOp[typeExt]!==undefined && extStatusForOp[typeExt].tab===INTERNO){
+		return extStatusForOp[typeExt].Extension;
+	}
 }
 function isExtGroup(ext){
 	for(key in extStatusForOp){
@@ -392,19 +394,19 @@ function updateTrunkStatusWithChannel(ch, stat){
 		}
 	}
 }
-function isChannelIntern(ch){
-	for(key in extStatusForOp){
-		if( ch.indexOf(key)!=-1 && extStatusForOp[key].tab===INTERNO)
-			return true
+function isChannelIntern(ch){ // ch is like SIP/2001-0000067e
+	var typeExt = ch.split('-')[0]; // typeExt is like SIP/2001
+	if(extStatusForOp[typeExt]!==undefined && extStatusForOp[typeExt].tab===INTERNO){
+		return true;
 	}
-	return false
+	return false;
 }
-function isChannelTrunk(ch){
-	for(key in extStatusForOp){
-		if( ch.indexOf(key)!=-1 && extStatusForOp[key].tab=='fasci' )
-			return true
+function isChannelTrunk(ch){ // ch like SIP/2001-0000eaf
+	var typeExt = ch.split('-')[0]; // typeExt like SIP/2001
+	if(extStatusForOp[typeExt]!==undefined && extStatusForOp[typeExt].tab==='fasci'){
+		return true;
 	}
-	return false
+	return false;
 }
 function isTypeExtFascio(typeext){ 
 	if(extStatusForOp[typeext]!==undefined && extStatusForOp[typeext].tab==='fasci') return true;
@@ -460,15 +462,20 @@ function addActiveLinkExt(ext, ch1, ch2){
 }
 
 function isTypeExtPresent(typeext){
-	if(extStatusForOp[typeext]!=undefined) return true;
+	if(extStatusForOp[typeext]!==undefined){
+		return true;
+	}
 	return false;
 }
 
 function isExtPresent(ext){
-	for(key in extStatusForOp){
-                if(key.indexOf(ext)!=-1)
+	var temp = '';
+	for(var key in extStatusForOp){
+		temp = key.split('/')[1];
+		if(temp===ext){
 			return true;
-        }
+		}
+	}
 	return false;
 }
 
@@ -566,8 +573,10 @@ function getExtStatusWithExt(ext){
 
 // example of 'ext' is: 500
 function updateExtStatusForOpWithExt(ext, status){
-	for(key in extStatusForOp){
-		if(key.indexOf(ext)!=-1){	
+	var temp = '';
+	for(var key in extStatusForOp){
+		temp = key.split('/')[1];
+		if(temp===ext){
 			extStatusForOp[key].lastStatus = extStatusForOp[key].status;
 			extStatusForOp[key].status = status;
 		}
