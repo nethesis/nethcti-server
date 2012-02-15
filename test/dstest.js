@@ -2,7 +2,10 @@ var datareq = require("../dataCollector.js");
 var allargs = process.argv;
 var args = allargs.splice(2);
 var dataCollector = new datareq.DataCollector();
-switch(args[0]){
+const TIMEOUT = 3000;
+console.log("Connecting...");
+setTimeout(function(){
+    switch(args[0]){
 	case 'phonebook':
 		var content = args[1];
 		content===undefined ? help() : '';
@@ -114,7 +117,8 @@ switch(args[0]){
 	default:
 		help();
 	break;
-}
+    }
+},TIMEOUT);
 function helpExit(){
 	console.log("CTRL+C to exit");
 }
