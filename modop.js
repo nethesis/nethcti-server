@@ -1117,5 +1117,11 @@ function initExtStatusForOp(){
   trunks: { show: 'yes' },
   queues: { show: 'yes' },
   parking: { show: 'si' } } */
-function initTabOp(){ tabOp = iniparser.parseSync(FILE_TAB_OP) }
+function initTabOp(){
+	if(!pathreq.existsSync(FILE_TAB_OP)){
+		logger.error('configuration file for operator panel tabs not exists');
+		process.exit(0);
+	}
+	tabOp = iniparser.parseSync(FILE_TAB_OP);
+}
 inherits(exports.Modop, EventEmitter)
