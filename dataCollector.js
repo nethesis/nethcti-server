@@ -1,4 +1,5 @@
 var fs = require("fs");
+var path = require('path');
 var sys = require("sys");
 var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
 var mysql = require('./lib/node-mysql');
@@ -359,6 +360,12 @@ function initDBConnections(){
 
 // This function initialize one connection
 function initConn(objQuery, key){
+	logger.debug('initialize DB connection to \''+key+'\'');
+	if(objQuery.dbtype===undefined || objQuery.dbhost===undefined || objQuery.dbuser===undefined || objQuery.dbpassword===undefined || objQuery.dbname===undefined ||
+		objQuery.query===undefined || objQuery.dbport===undefined){
+		logger.error('error in configuration file of queries for \''+key+'\'');
+		return;
+	}
 	if(objQuery.dbtype=="mysql"){
 		var client = new mysql.Client();
                 client.host = objQuery.dbhost;
@@ -384,6 +391,10 @@ function initConn(objQuery, key){
 
 // Initialize all the queries that can be executed and relative connection to database
 function initQueries(){
+	if(!path.existsSync(DATACOLLECTOR_CONFIG_FILENAME)){
+		logger.error('configuration file \''+DATACOLLECTOR_CONFIG_FILENAME+'\' not exists');
+		process.exit(0);
+	}
         this.queries = iniparser.parseSync(DATACOLLECTOR_CONFIG_FILENAME);
 	this.queries[SMS] = {
 		dbhost: 'localhost',
@@ -489,6 +500,12 @@ getCustomerCard = function(ext, type, cb){
                 var copyObjQuery = Object.create(objQuery);
                 // substitue template field in query
 		ext = ext.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
+		if(copyObjQuery.query===undefined){
+			logger.error('query of \''+section+'\' is empty');
+			cb(undefined);
+			return;
+		
+		}
                 copyObjQuery.query = copyObjQuery.query.replace(/\$EXTEN/g, ext);
                 // execute current sql query
                 executeNamedSQLQuery(section, copyObjQuery, type, function(results, type){
@@ -505,12 +522,19 @@ function getContactsPhonebook(name, cb){
 	if(objQuery!=undefined){
                 var copyObjQuery = Object.create(objQuery); // copy object
 		name = name.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
+		if(copyObjQuery.query===undefined){
+			logger.error('query for \''+PHONEBOOK+'\' not exists');
+			cb(undefined);
+			return;
+		}
                 copyObjQuery.query = copyObjQuery.query.replace(/\$NAME_TO_REPLACE/g, name); // substitue template field in query
 		executeSQLQuery(PHONEBOOK, copyObjQuery, function(results){
 			cb(results);
 		});
+	} else {
+		logger.error('error in query configuration file for \''+PHONEBOOK+'\'');
+		cb(undefined);
 	}
-	return undefined;
 }
 /* Execute one sql query. This function must have 
  * a callback function as second parameter because the asynchronous nature of
@@ -519,15 +543,18 @@ function getContactsPhonebook(name, cb){
 function executeSQLQuery(type, objQuery, cb){
 	// get already opened connection
 	var conn = dbConnections[type];
-        var query = objQuery.query + ";";
-	logger.debug('execute SQL query: ' + query);
-	conn.query(query, function (err, results, fields) {
-        	if (err) {
-        		logger.error("ERROR in execute " + objQuery.dbtype + " query");
-	                logger.error(sys.inspect(err));
-	        }
-	        cb(results);
-        });
+	if(conn!==undefined){
+	        var query = objQuery.query + ";";
+		logger.debug('execute SQL query: ' + query);
+		conn.query(query, function (err, results, fields) {
+	        	if (err) {
+	        		logger.error("ERROR in execute " + objQuery.dbtype + " query: " + err.message);
+		        }
+			cb(results);
+	        });
+	} else {
+		logger.error('connection for query \''+type+'\' is ' + conn);
+	}
 }
 /* Execute name one sql query. This function must have 
  * a callback function as second parameter because the asynchronous nature of
@@ -536,13 +563,16 @@ function executeSQLQuery(type, objQuery, cb){
 function executeNamedSQLQuery(type, objQuery, name, cb){
         // get already opened connection
         var conn = dbConnections[type];
-        var query = objQuery.query + ";";
-	logger.debug('execute SQL query: ' + query);
-        conn.query(query, function (err, results, fields) {
-                if (err) {
-                        logger.error("ERROR in execute " + objQuery.dbtype + " query");
-                        logger.error(sys.inspect(err));
-                }
-                cb(results, name);
-        });
+	if(conn!==undefined){
+	        var query = objQuery.query + ";";
+		logger.debug('execute SQL query: ' + query);
+	        conn.query(query, function (err, results, fields) {
+	                if (err) {
+	                        logger.error("ERROR in execute " + objQuery.dbtype + " query: " + err.message);
+	                }
+		        cb(results, name);
+	        });
+	} else {
+		logger.error('connection for query \''+type+'\' is ' + conn);
+	}
 }
