@@ -2567,7 +2567,6 @@ io.sockets.on('connection', function(client){
 	                                var name = typesCC[i];
                                         logger.debug('getCustomerCard('+from+','+typesCC[i]+',function(cc,name)');
                                         dataCollector.getCustomerCard(from, typesCC[i], function(cc, name) { // cc = [{},...]
-                                                logger.debug("idTimeout = " + sys.inspect(idTimeout));
                                                 logger.debug("GET_VCARD_CC: cc = " + sys.inspect(cc));
                                                 logger.debug("GET_VCARD_CC: name = " + name);
        	                                        if(cc!==undefined){
@@ -3061,11 +3060,13 @@ io.sockets.on('connection', function(client){
 	  				// execute query to search contact in phonebook
 	  				var namex = message.namex;
 					dataCollector.getContactsPhonebook(namex, function(results){
-	  					var resultHTML = createResultSearchContactsPhonebook(results);
-	  					var mess = new ResponseMessage(client.id, "search_contacts_results", "received phonebook contacts");
-	  					mess.resultHTML = resultHTML;
-	  					client.emit('message',mess);
-	  					logger.debug("RESP 'search_contacts_results' has been sent to [" + extFrom + "] id '" + client.id + "'");
+						if(results!==undefined){
+		  					var resultHTML = createResultSearchContactsPhonebook(results);
+		  					var mess = new ResponseMessage(client.id, "search_contacts_results", "received phonebook contacts");
+		  					mess.resultHTML = resultHTML;
+		  					client.emit('message',mess);
+		  					logger.debug("RESP 'search_contacts_results' has been sent to [" + extFrom + "] id '" + client.id + "'");
+						}
 	  				});
 	  			}
 	  			else{
