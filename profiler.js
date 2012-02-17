@@ -1,4 +1,5 @@
 var fs = require("fs")
+var path = require('path');
 var sys = require("sys")
 var iniparser = require("./lib/node-iniparser/lib/node-iniparser")
 var log4js = require('./lib/log4js-node/lib/log4js')()
@@ -178,8 +179,12 @@ function checkActionPermit(exten, action){
                 return false;
 	}
 }
-// Initialize the profiles of all extensions by means the reading of the config file.
+// Initialize the profiles of all extensions the reading of the config file.
 function initProfiles(){
+	if(!path.existsSync(PROFILER_CONFIG_FILENAME)){
+		logger.error('configuration file of profiles not exists');
+		process.exit(0);
+	}
 	this.actions = {}
 	this.actions = iniparser.parseSync(PROFILER_CONFIG_FILENAME) 
 }
