@@ -92,9 +92,17 @@ readAllTemplate();
 
 // initialize parameters for this server and for asterisk server
 initServerAndAsteriskParameters();
-initSmsParameters();
 function initSmsParameters(){
-	sms_conf = iniparser.parseSync(SMS_CONFIG_FILENAME);
+	if(!pathreq.existsSync(SMS_CONFIG_FILENAME)){
+		logger.warn('configuration file \''+SMS_CONFIG_FILENAME+'\' not exists');
+		sms_conf['SMS'] = {};
+	} else {
+		sms_conf = iniparser.parseSync(SMS_CONFIG_FILENAME);
+	}
+	if(sms_conf['SMS']===undefined){
+		logger.warn('check \''+SMS_CONFIG_FILENAME+'\'');
+		sms_conf['SMS'] = {};
+	}
 }
 // Initialize some configuration parameters
 function initServerAndAsteriskParameters(){
@@ -144,6 +152,8 @@ login_logger.setLevel('DEBUG');
 
 // START
 logger.warn("Starting server...");
+
+initSmsParameters();
 
 // Add object modules
 var profiler = new proReq.Profiler();
@@ -3952,10 +3962,18 @@ io.sockets.on('connection', function(client){
 					var destNum = message.destNum;
 					var text = message.text;
 					var prefix = sms_conf['SMS'].prefix;
+					if(prefix===undefined){
+						logger.warn('send sms: \'prefix\' not exists in configuration file: set to empty');
+						prefix = '';
+					}
 					if(prefix!=="" && destNum.length<=10 && destNum.substring(0,1)==='3'){
 						destNum = prefix + destNum;
 					}
 					if(sms_conf["SMS"].type==="web"){ // WEB
+						if(sms_conf['SMS'].method===undefined){
+							logger.error('send sms: \'method\' not exists in configuration file');
+							return;
+						}
 						var meth = sms_conf['SMS'].method.toUpperCase();
 						if(meth!=='GET' && meth!=='POST'){
 							logger.error('wrong method "'+meth+'" to send sms: check configuration');
@@ -3968,6 +3986,10 @@ io.sockets.on('connection', function(client){
 							var pwdEscape = _urlEscape(pwd);
 							var destNumEscape = _urlEscape(destNum);
 							var textEscape = _urlEscape(text);
+							if(sms_conf['SMS'].url===undefined){
+								logger.error('send sms: \'url\' not exists in configuration file');
+								return;
+							}
 							var httpurl = sms_conf['SMS'].url.replace("$USER",userEscape).replace("$PASSWORD",pwdEscape).replace("$NUMBER",destNumEscape).replace("$TEXT",textEscape);
 							var parsed_url = url.parse(httpurl, true);
 							var porturl = 80;
