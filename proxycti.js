@@ -96,13 +96,20 @@ initSmsParameters();
 function initSmsParameters(){
 	sms_conf = iniparser.parseSync(SMS_CONFIG_FILENAME);
 }
-/* Initialize some configuration parameters
-server_conf = 
-{ ASTERISK: { user: 'vtiger', pass: 'vtiger', host: 'localhost' },
-  SERVER_PROXY: { hostname: 'amaduzzi', port: '8080', version: '0.2' } } */
+// Initialize some configuration parameters
 function initServerAndAsteriskParameters(){
+	if(!pathreq.existsSync(PROXY_CONFIG_FILENAME)){
+		console.error('ERROR: configuration file \''+PROXY_CONFIG_FILENAME+'\' for server not exists');
+		process.exit(0);
+	}
 	server_conf = iniparser.parseSync(PROXY_CONFIG_FILENAME);
-	version = server_conf.SERVER_PROXY.version;
+	if(server_conf.ASTERISK===undefined || server_conf.SERVER_PROXY===undefined || 
+		server_conf.ASTERISK.user===undefined || server_conf.ASTERISK.pass===undefined || server_conf.ASTERISK.host===undefined ||
+		server_conf.SERVER_PROXY.hostname===undefined || server_conf.SERVER_PROXY.port===undefined || 
+		server_conf.SERVER_PROXY.logfile===undefined || server_conf.SERVER_PROXY.loglevel===undefined || server_conf.SERVER_PROXY.prefix===undefined){
+		console.error('ERROR in configuration file \''+PROXY_CONFIG_FILENAME+'\'');
+		process.exit(0);
+	}
 	asterisk_user = server_conf.ASTERISK.user;
 	asterisk_pass = server_conf.ASTERISK.pass;
 	asterisk_host = server_conf.ASTERISK.host;
@@ -115,6 +122,11 @@ function initServerAndAsteriskParameters(){
 	loglevel = server_conf.SERVER_PROXY.loglevel;
 	if(loglevel == undefined) {
 		loglevel = "INFO";
+	}
+	if(server_conf.SERVER_CHAT===undefined || server_conf.SERVER_CHAT.url===undefined){
+		console.log('WARNING: section [SERVER_CHAT] or its \'url\' not exists in configuration file \''+PROXY_CONFIG_FILENAME+'\'');
+		server_conf.SERVER_CHAT = {};
+		server_conf.SERVER_CHAT.url = '';
 	}
 }
 
@@ -2036,7 +2048,6 @@ function returnOperatorPanelToClient(){
                 clientToReturnExtStatusForOp.emit('message', mess);
                 logger.debug("RESP 'ack_get_peer_list_complete_op' has been sent to [" + extToReturnExtStatusForOp + "] id '" + clientToReturnExtStatusForOp.id + "'")
         } else {
-	//else if(profiler.checkActionOpBasePermit(extToReturnExtStatusForOp)) {
                 var msgstr = "received extStatusForOp to create operator panel"
                 var mess = new ResponseMessage(clientToReturnExtStatusForOp.id, "ack_get_peer_list_complete_op", msgstr)
                 mess.extStatusForOp = modop.getExtStatusForOp()
@@ -2050,14 +2061,6 @@ function returnOperatorPanelToClient(){
                 clientToReturnExtStatusForOp.emit('message',mess);
                 logger.debug("RESP 'ack_get_peer_list_complete_op' has been sent to [" + extToReturnExtStatusForOp + "] id '" + clientToReturnExtStatusForOp.id + "'")
         }
-	/*
-	else{
-                var msgstr = "Sorry but you haven't the permission of view the operator panel"
-                var mess = new ResponseMessage(clientToReturnExtStatusForOp.id, "error_get_peer_list_complete_op", msgstr)
-                clientToReturnExtStatusForOp.emit('message',mess);
-                logger.debug("RESP 'error_get_peer_list_complete_op' has been sent to [" + extToReturnExtStatusForOp + "] id '" + clientToReturnExtStatusForOp.id + "'")
-        }
-	*/
 }
 
 
@@ -3717,8 +3720,7 @@ io.sockets.on('connection', function(client){
 				extToReturnExtStatusForOp = extFrom;
 				clientToReturnExtStatusForOp = client;
 				/* send 'ParkedCalls' action to asterisk to update timeout information of parked calls in 'extStatusForOp'.
-				 * When 'ParkedCallsComplete' event is emitted, the server return 'extStatusForOp' to the client.
-				 * create action for asterisk server */
+				 * When 'ParkedCallsComplete' event is emitted, the server return 'extStatusForOp' to the client */
                                 var actParkedCalls = {Action: 'ParkedCalls'};
 				try{
 	                                am.send(actParkedCalls, function (resp) {
