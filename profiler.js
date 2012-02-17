@@ -182,7 +182,7 @@ function checkActionPermit(exten, action){
 // Initialize the profiles of all extensions the reading of the config file.
 function initProfiles(){
 	if(!path.existsSync(PROFILER_CONFIG_FILENAME)){
-		logger.error('configuration file of profiles not exists');
+		logger.error('configuration file \''+PROFILER_CONFIG_FILENAME+'\' not exists');
 		process.exit(0);
 	}
 	this.actions = {}
@@ -191,5 +191,9 @@ function initProfiles(){
 // Initialize all streaming settings 
 function initStreamingSettings(){
 	this.streamingSettings = {};
-	this.streamingSettings = iniparser.parseSync(STREAMING_SETTINGS_FILENAME);
+	if(!path.existsSync(STREAMING_SETTINGS_FILENAME)){
+		logger.warn('configuration file \''+STREAMING_SETTINGS_FILENAME+'\' not exists');
+	} else {
+		this.streamingSettings = iniparser.parseSync(STREAMING_SETTINGS_FILENAME);
+	}
 }
