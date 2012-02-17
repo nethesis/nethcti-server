@@ -1075,6 +1075,8 @@ function initExtStatusForOp(){
 	if(pathreq.existsSync(FILE_FASCI_INI)){
 		tempFasciIni = iniparser.parseSync(FILE_FASCI_INI)
 		initTrunkWithFasciIni(tempFasciIni)
+	} else {
+		logger.warn('configuration file \''+FILE_FASCI_INI+'\' not exists');
 	}
 	// init trunk
 	initCallConnectedCountForTrunk()
