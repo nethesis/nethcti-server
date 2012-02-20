@@ -63,7 +63,7 @@ function readAllTemplate(){
 	var est = '';
 	var filepath = '';
 	var dirpath = '';
-	for(key in template_cc_dir){
+	for(var key in template_cc_dir){
 		dirpath = template_cc_dir[key];
 		temp = fs.readdirSync(dirpath);
 		for(var x=0; x<temp.length; x++){
@@ -867,6 +867,9 @@ function setResponseWithCurrentCallInfoCC(c,from,to,response){
                 response.reservation = currentCallInInfo[from].reservation;
         }
         var result = [];
+	if(callNotes===undefined){
+		callNotes = [];
+	}
         for(var w=0, callnote; callnote=callNotes[w]; w++){
         	if(callnote.pub || callnote.extension===to){
                 	result.push(callnote);
