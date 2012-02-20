@@ -2381,7 +2381,6 @@ io.sockets.on('connection', function(client){
 			GET_PRIORITY_QUEUE_STATUS:	'get_priority_queue_status',
 			SEARCH_CONTACT_PHONEBOOK:	'search_contact_phonebook',
 			GET_PEER_LIST_COMPLETE_OP: 	'get_peer_list_complete_op',
-			REDIRECT_VOICEMAIL_FROM_OP: 	'redirect_voicemail_from_op',
 			GET_CURRENT_WEEK_HISTORY:  	'get_current_week_history',
 			GET_CURRENT_MONTH_HISTORY:	'get_current_month_history',
 			DELETE_AUDIO_RECORDING_CALL:	'delete_audio_recording_call'
@@ -3917,46 +3916,6 @@ io.sockets.on('connection', function(client){
 				try{
 	                                am.send(actRedirVoicemail, function(){
 						logger.debug("'actRedirVoicemail' " + sys.inspect(actRedirVoicemail) + " has been sent to AST");
-	                                });
-				} catch(err) {logger.warn("no connection to asterisk: "+err);}
-                        break;
-			case actions.REDIRECT_VOICEMAIL_FROM_OP:
-				var callFrom = message.callFrom
-				var callTo = message.callTo
-				var redirectToExt = message.redirectToExt
-				var ch
-				for(key in chStat){
-					var tempChannel = chStat[key].channel
-					if(modop.isChannelIntern(tempChannel)){
-						var tempExt = modop.getExtInternFromChannel(tempChannel)
-						if(tempExt==callFrom && chStat[key].dialExt==callTo){
-							ch = tempChannel
-							break
-						}
-					} else if(modop.isChannelTrunk(tempChannel)){
-						var dialExtUniqueid = chStat[key].dialExtUniqueid
-						var tempExt = modop.getExtInternFromChannel(chStat[dialExtUniqueid].channel)
-						if(chStat[key].calleridnum==callFrom && tempExt==callTo){
-							ch = tempChannel
-							break
-						}
-					}
-					else if(chStat[key].channel.indexOf('callFrom')!=-1 && chStat[key].dialExt==callTo){
-						ch = chStat[key].channel
-						break
-					}
-				}
-				// create action to spy channel
-                                var actionRedirectVoicemailToExt = {
-                                        Action: 'Redirect',
-                                        Channel: ch,
-                                        Context: 'ext-local',
-                                        Exten: 'vmu' + redirectToExt,
-                                        Priority: 1
-                                }
-				try{
-	                                am.send(actionRedirectVoicemailToExt, function(){
-	                                        logger.debug("'actionRedirectVoicemailToExt' " + sys.inspect(actionRedirectVoicemailToExt) + " has been sent to AST");
 	                                });
 				} catch(err) {logger.warn("no connection to asterisk: "+err);}
                         break;
