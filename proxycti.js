@@ -2088,19 +2088,35 @@ server = http.createServer(function(req, res){
 	switch (path){
 	    case '/uploadVmCustomMsg':
 	    	var extFrom = params.extFrom;
+		var namefile = params.name;
 		var form = new formidable.IncomingForm();
 		form.on('fileBegin',function(name,file){
-			file.path = '/var/spool/asterisk/voicemail/default/'+extFrom+'/'+file.name;
+			file.path = '/var/spool/asterisk/voicemail/default/'+extFrom+'/'+namefile+'.wav';
 		});
 		form.parse(req, function(err, fields, files) {
 			if(err){
-				logger.error('error in uploadVmCustomMsg. err: ' + sys.inspect(err) + ' fields: ' + sys.inspect(fields));
+				logger.error('error in uploadVmCustomMsg err: ' + sys.inspect(err) + ' fields: ' + sys.inspect(fields));
 				send404(res);
+				var mess = new ResponseMessage(client.id, "error_custom_vm_msg_upload",'');
+                                mess.name = namefile;
+                                client.emit('message',mess);
+                                logger.debug("RESP 'error_custom_vm_msg_upload' has been sent to [" + extFrom + "] IP: '" + ipAddrClient + "'");
 			} else {
-				logger.debug('file '+files.filename.path+' has been saved');
 				res.writeHead(200, {'content-type': 'text/html'});
 				res.write('received upload:\n\n');
 				res.end();
+				var client = clients[extFrom];
+				if(client!==undefined){
+		                        var ipAddrClient = client.handshake.address.address;
+					logger.debug('file '+namefile+'.wav has been saved');
+					var mess = new ResponseMessage(client.id, "ack_custom_vm_msg_upload",'');
+                                        mess.name = namefile;
+                                        client.emit('message',mess);
+                                        logger.debug("RESP 'ack_custom_vm_msg_upload' has been sent to [" + extFrom + "] IP: '" + ipAddrClient + "'");
+				} else {
+					logger.error('error in uploadVmCustomMsg err: ' + sys.inspect(err) + ' fields: ' + sys.inspect(fields));
+		                        send404(res);
+				}
 			}
 		});
 	    break;
@@ -2136,6 +2152,33 @@ server = http.createServer(function(req, res){
 		}).on('error',function(err){
 			logger.error('error on request screenshot of streaming frame: ' + urlToGet);
 			logger.error(err.message);
+		});
+	    break;
+	    case '/getCustomVoicemailMsg':
+		var name = params.name;
+		var active = params.active;
+		var extFrom = params.extFrom;
+		var filename = name + '.wav';
+		var filepath = voicemail.getFilepathCustomMessage(filename,extFrom);
+		if(active==='false'){ // if the voicemail custom message is inactive, the end of it's name is '.inactive'
+			filepath = filepath + '.inactive';
+		}
+		logger.debug(extFrom + " has request to listen custom voicemail message " + filepath);
+		pathreq.exists(filepath, function(exists){
+			if(exists){
+				var typefile = 'audio/x-wav';
+				fs.readFile(filepath, function(err, data){
+					if(err){
+                                                return send404(res);
+                                        }
+					res.writeHead(200, {'Content-Type': typefile, 'Content-disposition': 'attachment; filename='+filename});
+                                        res.write(data, 'utf8');
+                                        res.end();
+				});
+			} else {
+				logger.error("requested custom voicemail message '" + filepath + "' not found");
+				send404(res);
+			}
 		});
 	    break;
 	    case '/getVoicemailAudioFile':
@@ -2329,6 +2372,7 @@ io.sockets.on('connection', function(client){
 			PARK: 	'park',
 			PARKCH: 'parkch',
 			PICKUP: 'pickup',
+			PICKUP_CH: 'pickup_ch',
 			DND_ON: 'dnd_on',
                 	DND_OFF:'dnd_off',
 			CW_ON: 	'cw_on',
@@ -2378,6 +2422,10 @@ io.sockets.on('connection', function(client){
 			DELETE_VOICEMAIL: 	'del_voicemail',
 			SPEAK_INTERCOM:		'speak_intercom',
 			GET_ALL_NOTES_FOR_NUM:	'get_all_notes_for_num',
+			ENABLE_VM_CUSTOM_MSG:	'enable_vm_custom_msg',
+			DISABLE_VM_CUSTOM_MSG:	'disable_vm_custom_msg',
+			DELETE_VM_CUSTOM_MSG:	'delete_vm_custom_msg',
+			RECORD_VM_CUSTOM_MSG:	'record_vm_custom_msg',
 			GET_PRIORITY_QUEUE_STATUS:	'get_priority_queue_status',
 			SEARCH_CONTACT_PHONEBOOK:	'search_contact_phonebook',
 			GET_PEER_LIST_COMPLETE_OP: 	'get_peer_list_complete_op',
@@ -2387,6 +2435,88 @@ io.sockets.on('connection', function(client){
 		}
   		logger.debug("ACTION received: from id '" + client.id + "' message " + sys.inspect(message));	
   		switch(action){
+			case actions.DELETE_VM_CUSTOM_MSG:
+				var name = message.name;
+				var filename = name + '.wav';
+                                var res = voicemail.deleteCustomMessage(filename,extFrom);
+				if(res){
+                                        var respMsg = new ResponseMessage(client.id, "ack_delete_vm_custom_msg", '');
+                                        respMsg.name = name;
+                                        client.emit('message',respMsg);
+                                        logger.debug("RESP 'ack_delete_vm_custom_msg' has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                } else {
+                                        var respMsg = new ResponseMessage(client.id, "error_delete_vm_custom_msg", '');
+                                        respMsg.name = name;
+                                        client.emit('message',respMsg);
+                                        logger.debug("RESP 'error_delete_vm_custom_msg' has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                }
+			break;
+			case actions.DISABLE_VM_CUSTOM_MSG:
+				var name = message.name;
+				var filename = name + '.wav';
+				var res = voicemail.disactivateCustomMessage(filename,extFrom);
+				if(res){
+                                        var respMsg = new ResponseMessage(client.id, "ack_disable_vm_custom_msg", '');
+					respMsg.name = name;
+                                        client.emit('message',respMsg);
+                                        logger.debug("RESP 'ack_disable_vm_custom_msg' has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                } else {
+                                        var respMsg = new ResponseMessage(client.id, "error_disable_vm_custom_msg", '');
+					respMsg.name = name;
+                                        client.emit('message',respMsg);
+                                        logger.debug("RESP 'error_disable_vm_custom_msg' has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                }
+			break;
+			case actions.ENABLE_VM_CUSTOM_MSG:
+				var name = message.name;
+				var filename = name + '.wav';
+				var res = voicemail.activateCustomMessage(filename,extFrom);
+				if(res){
+					var respMsg = new ResponseMessage(client.id, "ack_enable_vm_custom_msg", '');
+					respMsg.name = name;
+					client.emit('message',respMsg);
+					logger.debug("RESP 'ack_enable_vm_custom_msg' has been sent to [" + extFrom + "] id '" + client.id + "'");
+				} else {
+                                	var respMsg = new ResponseMessage(client.id, "error_enable_vm_custom_msg", '');
+					respMsg.name = name;
+                                        client.emit('message',respMsg);
+                                        logger.debug("RESP 'error_enable_vm_custom_msg' has been sent to [" + extFrom + "] id '" + client.id + "'");
+				}
+			break;
+			case actions.RECORD_VM_CUSTOM_MSG:
+				var name = message.name;
+				var filename = name + '.wav';
+				var filepath = voicemail.getFilepathCustomMessage(filename,extFrom);
+				voicemail.deleteCustomMessage(filename,extFrom);
+				if(profiler.checkActionVoicemailPermit(extFrom)){
+					var action = {
+						Action: 'Originate',
+						Channel: 'SIP/' + extFrom,
+						Context: 'from-internal',
+						Callerid: 'REC <'+extFrom+'>',
+						Application: 'Record',
+						Data: filepath+',,,k'
+					};
+					try {
+						am.send(action,function(){
+							logger.debug('\'action\' ' + sys.inspect(action) + ' has been sent to AST');
+							var client = clients[extFrom];
+							if(client!==undefined){
+								var respMsg = new ResponseMessage(client.id, "ack_record_vm_custom_msg", '');
+								respMsg.name = name;
+                                                                client.emit('message',respMsg);
+                                                                logger.debug("RESP 'ack_record_vm_custom_msg' has been sent to [" + extFrom + "] id '" + client.id + "'");
+							} else {
+                                                                logger.debug("don't send 'ack_record_vm_custom_msg' to client, because it isn't present: the call was originated from outside of the cti");
+                                                        }
+						});
+					} catch(err){
+						logger.error("doing recording of voicemail custom message: " + err.message);
+					}
+				} else {
+					logger.warn('['+extFrom+'] hasn\'t the permission to recording custom voicemail message of type ' + name);
+				}
+			break;
 			case actions.OPEN_CALL_STREAMING:
 				var name = message.name;
 				if(profiler.checkStreamingPermission(name,extFrom)){
@@ -2759,6 +2889,10 @@ io.sockets.on('connection', function(client){
 							respMsg.authVoicemail = 'auth-vm-failed';
 						}
 						respMsg.existVoicemail = (res && resVm);
+						if(respMsg.existVoicemail){
+							var obj = voicemail.getCustomMessages(extFrom);
+							respMsg.customVmMsg = obj;
+						}
 					}
 					respMsg.streamingSettings = profiler.getStreamingSettings(extFrom);
 					client.emit('message',respMsg);
@@ -3823,8 +3957,6 @@ io.sockets.on('connection', function(client){
 			break;
 			case actions.PARKING_PICKUP:
 				var extFrom = message.extFrom;
-				var callToPickup = message.callToPickup;
-				var extHasParked = message.extHasParked;
 				var uniqueid = message.uniqueid;
 				var ch='';
 				ch = chStat[uniqueid].channel;
@@ -3841,41 +3973,23 @@ io.sockets.on('connection', function(client){
 	                                });
 				} catch(err) {logger.warn("no connection to asterisk: " +err);}
 			break;
-			case actions.PICKUP:
-				logger.debug("key of chStat = " + Object.keys(chStat).length)
-                                var callerExt = message.callerExt
-				var callTo = message.callTo
-                        	var channel = ''
-				for(key in chStat){
-					var tempCh = chStat[key].channel
-					if(modop.isChannelIntern(tempCh)){
-						var tempExt = modop.getExtInternFromChannel(tempCh)
-						if(tempExt==callerExt && chStat[key].dialExt==callTo){
-							channel = tempCh
-							break
-						}
-					} else if(modop.isChannelTrunk(tempCh) && chStat[key].dialExtUniqueid!=undefined){
-						var dialExtUniqueid = chStat[key].dialExtUniqueid
-						var tempExt = modop.getExtInternFromChannel(chStat[dialExtUniqueid].channel)
-						if(chStat[key].calleridnum==callerExt && tempExt==callTo){
-							channel = tempCh
-							break
-						}
-					}
-				}
-                                var actionPickup = {
-                                       Action: 'Redirect',
-                                       Channel: channel,
-                                       Context: 'from-internal',
-                                       Exten: extFrom,
-                                       Priority: 1
+			case actions.PICKUP_CH:
+				var chToPickup = message.chToPickup;
+				var actionPickup = {
+					Action: 'Redirect',
+					Channel: chToPickup,
+					Context: 'from-internal',
+					Exten: extFrom,
+					Priority: 1
 				};
 				try{
-	                                am.send(actionPickup, function(){
+					am.send(actionPickup,function(){
 						logger.debug("'actionPickup' " + sys.inspect(actionPickup) + " has been sent to AST");
-	                                });
-				} catch(err) {logger.warn("no connection to asterisk: "+err);}
-                        break;
+					});
+				} catch(err){
+					logger.warn('no connection to asterisk: ' + sys.inspect(err));
+				}
+			break;
 			case actions.SPY_LISTEN_SPEAK:
 				var extToSpy = message.extToSpy
                                 var callDialExtToSpy = message.callDialExtToSpy
