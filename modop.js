@@ -429,13 +429,14 @@ function addController(contr){
 	controller = contr;
 }
 function isExtInterno(ext){
-	for(key in extStatusForOp){
-		if(key.indexOf(ext)!=-1){
-			if(extStatusForOp[key].tab===INTERNO)
-				return true
-		}
+	var temp = '';
+	for(var key in extStatusForOp){
+		temp = key.split('/')[1];
+		if(temp===ext && extStatusForOp[key].tab===INTERNO){
+			return true;
+		}	
 	}
-	return false
+	return false;
 }
 function setCurrentActiveLink(ext, ch){
 	for(key in extStatusForOp)
