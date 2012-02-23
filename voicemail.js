@@ -1,9 +1,11 @@
 var fs = require("fs");
+var pathreq = require('path');
 var sys = require("sys");
 var path = require("path");
 var nethesis_io = require('./nethesis_io');
 var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
 var log4js = require('./lib/log4js-node/lib/log4js')();
+var child_process = require('child_process');
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF) */
 var logger = log4js.getLogger('[voicemail]');
@@ -12,6 +14,7 @@ const OLD_DIR = "Old";
 const NEW_DIR = "INBOX";
 const PERSONAL_DIR = "Family";
 const DEFAULT_AUDIO_EXT = "wav";
+const INACTIVE_EXT = 'inactive';
 /* contains the list of voicemail for each extension. The key is the extension (ex. 271)
  * and the value is an array of objects. Each object has keys and values for one recording */
 var _voicemailList = {};
@@ -20,14 +23,161 @@ exports.Voicemail = function(){
 	_init();
 	this.getVoicemailList = function(ext) { return _getVoicemailList(ext); }
 	this.getFilepath = function(filename,type,ext){ return _getFilepath(filename,type,ext); }
+	this.getFilepathCustomMessage = function(filename,ext){ return _getFilepathCustomMessage(filename,ext); }
 	this.delVoicemail = function(filename,type,ext){ return _delVoicemail(filename,type,ext); }
 	this.updateVoicemailList = function(dirpath){ _updateVoicemailList(dirpath); }
 	this.getCountVoicemailNewx = function(ext){ return _getCountVoicemailNewx(ext); }
+	this.getCustomMessages = function(ext){ return _getCustomMessages(ext); }
+	this.activateCustomMessage = function(filename,ext){ return _activateCustomMessage(filename,ext); }
+	this.disactivateCustomMessage = function(filename,ext){ return _disactivateCustomMessage(filename,ext); }
+	this.deleteCustomMessage = function(filename,ext){ return _deleteCustomMessage(filename,ext); }
+	//this.copyCustomVmMsgAsWAV = function(ext,filename,cb){ _copyCustomVmMsgAsWAV(ext,filename,cb); }
 	this.setLogger = function(logfile,level){
 		log4js.addAppender(log4js.fileAppender(logfile), '[voicemail]');
 		logger.setLevel(level);
 		_setLibLogger(logfile,level); // set also the library logger
 	}
+}
+/*
+function _copyCustomVmMsgAsWAV(ext,filename,cb){
+	var filepath1 = DIR_PATH_VM + '/' + ext + '/' + filename + '.wav';
+	var filepath2 = DIR_PATH_VM + '/' + ext + '/' + filename + '.WAV';
+	var res = child_process.spawn('cp',[filepath1,filepath2]);
+	res.on('exit',function(code){
+		cb(code);
+	});
+}
+*/
+function _deleteCustomMessage(filename,ext){
+	var name = path.basename(filename,'.wav');
+	var filename2 = name + '.WAV';
+	var filepath1 = DIR_PATH_VM + '/' + ext + '/' + filename;
+	var filepath2 = DIR_PATH_VM + '/' + ext + '/' + filename2;
+	if(!path.existsSync(filepath1)){
+		filepath1 += '.' + INACTIVE_EXT;
+	}
+	if(!path.existsSync(filepath2)){
+		filepath2 += '.' + INACTIVE_EXT;
+	}
+	try{
+		if(path.existsSync(filepath1)){
+			fs.unlinkSync(filepath1);
+		}
+		if(path.existsSync(filepath2)){
+			fs.unlinkSync(filepath2);
+		}
+		logger.debug('deleted voicemail custom message '+filename+' for extension ' + ext);
+		return true;
+	} catch(err){
+		logger.error('deleting custom voicemail message ' + filename + ' for extension ' + ext + ' fail: ' + err.message);
+		return false;
+	}
+}
+function _disactivateCustomMessage(filename,ext){
+        var name = path.basename(filename,'.wav');
+        var filepath1 = DIR_PATH_VM + '/' + ext + '/' + filename;
+        var newFilepath1 = DIR_PATH_VM + '/' + ext + '/' + filename + '.'+ INACTIVE_EXT;
+        var filename2 = name + '.WAV';
+        var filepath2 = DIR_PATH_VM + '/' + ext + '/' + filename2;
+        try{
+                fs.renameSync(filepath1,newFilepath1);
+		if(path.existsSync(filepath2)){
+			fs.unlinkSync(filepath2);
+			logger.debug('removed ' + filepath2);
+		}
+                logger.debug('disactivated voicemail custom message: ' + filename + ' for extension ' + ext);
+                return true;
+        } catch(err){
+                logger.error('disactivating voicemail custom message ' + filename + ' for extension ' + ext + ' fail: ' + err.message);
+                return false;
+        }
+}
+function _activateCustomMessage(filename,ext){
+	var filepath1 = DIR_PATH_VM + '/' + ext + '/' + filename + '.'+INACTIVE_EXT;
+	var newFilepath1 = DIR_PATH_VM + '/' + ext + '/' + filename;
+	try{
+		fs.renameSync(filepath1,newFilepath1);
+		logger.debug('activated voicemail custom message: ' + filename + ' for extension ' + ext);
+		return true;
+	} catch(err){
+		logger.error('activating voicemail custom message ' + filename + ' for extension ' + ext + ' fail: ' + err.message);
+		return false;
+	}
+}
+// Return an object containing voicemail custom message properties
+// Key is the type of message (ex. busy) and value is the properties
+function _getCustomMessages(ext){
+        const DEFAULT_PATH = '/var/spool/asterisk/voicemail/default/';
+        var obj = {};
+        var path = DEFAULT_PATH+ext;
+        if(pathreq.existsSync(path)){
+                path = path + '/';
+                // temp
+                var pathFile1 = path + 'temp.wav';
+                //var pathFile2 = path + 'temp.WAV';
+                var pathFile3 = path + 'temp.wav.'+INACTIVE_EXT;
+                //var pathFile4 = path + 'temp.WAV.'+INACTIVE_EXT;
+                var present = false;
+                var active = false;
+                if(pathreq.existsSync(pathFile1)){
+                        present = true;
+                        active = true;
+                } else if(pathreq.existsSync(pathFile3)){
+                        present = true;
+                }
+                obj['temp'] = {};
+                obj['temp'].isPresent = present;
+                obj['temp'].isActive = active;
+                // unavailable
+                pathFile1 = path + 'unavail.wav';
+                //pathFile2 = path + 'unavail.WAV';
+                pathFile3 = path + 'unavail.wav.'+INACTIVE_EXT;
+                //pathFile4 = path + 'unavail.WAV.'+INACTIVE_EXT;
+                present = false;
+                active = false;
+                if(pathreq.existsSync(pathFile1)){
+                        present = true;
+                        active = true;
+                } else if(pathreq.existsSync(pathFile3)){
+                        present = true;
+                }
+                obj['unavail'] = {};
+		obj['unavail'].isPresent = present;
+                obj['unavail'].isActive = active;
+                // busy
+                pathFile1 = path + 'busy.wav';
+                //pathFile2 = path + 'busy.WAV';
+                pathFile3 = path + 'busy.wav.'+INACTIVE_EXT;
+                //pathFile4 = path + 'busy.WAV.'+INACTIVE_EXT;
+                present = false;
+                active = false;
+                if(pathreq.existsSync(pathFile1)){
+                        present = true;
+                        active = true;
+                } else if(pathreq.existsSync(pathFile3)){
+                        present = true;
+                }
+                obj['busy'] = {};
+                obj['busy'].isPresent = present;
+                obj['busy'].isActive = active;
+                // greetings
+                pathFile1 = path + 'greet.wav';
+                //pathFile2 = path + 'greet.WAV';
+                pathFile3 = path + 'greet.wav.'+INACTIVE_EXT;
+                //pathFile4 = path + 'greet.WAV.'+INACTIVE_EXT;
+                present = false;
+                active = false;
+                if(pathreq.existsSync(pathFile1)){
+                        present = true;
+                        active = true;
+                } else if(pathreq.existsSync(pathFile3)){
+                        present = true;
+                }
+                obj['greet'] = {};
+                obj['greet'].isPresent = present;
+                obj['greet'].isActive = active;
+        }
+        return obj;
 }
 function _getCountVoicemailNewx(ext){
 	return _voicemailList[ext].newx.length;
@@ -65,6 +215,10 @@ function _getDirpathType(type,ext){
                 break;
 	}
 	return path.join(DIR_PATH_VM,ext,typedir);
+}
+// Return path of the custom message
+function _getFilepathCustomMessage(filename,ext){
+	return DIR_PATH_VM + '/' + ext + '/' + filename; 
 }
 // return path of voicemail file
 function _getFilepath(filename,type,ext){
