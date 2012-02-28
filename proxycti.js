@@ -2089,6 +2089,7 @@ server = http.createServer(function(req, res){
 	    case '/uploadVmCustomMsg':
 	    	var extFrom = params.extFrom;
 		var namefile = params.name;
+		voicemail.deleteCustomMessageInactive(namefile+'.wav',extFrom); // if present delete inactive voicemail custom message
 		var form = new formidable.IncomingForm();
 		form.on('fileBegin',function(name,file){
 			file.path = '/var/spool/asterisk/voicemail/default/'+extFrom+'/'+namefile+'.wav';
@@ -2108,7 +2109,7 @@ server = http.createServer(function(req, res){
 				var client = clients[extFrom];
 				if(client!==undefined){
 		                        var ipAddrClient = client.handshake.address.address;
-					logger.debug('file '+namefile+'.wav has been saved');
+					logger.debug('file '+namefile+'.wav has been saved for extension ' + extFrom);
 					var mess = new ResponseMessage(client.id, "ack_custom_vm_msg_upload",'');
                                         mess.name = namefile;
                                         client.emit('message',mess);
