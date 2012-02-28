@@ -31,6 +31,7 @@ exports.Voicemail = function(){
 	this.activateCustomMessage = function(filename,ext){ return _activateCustomMessage(filename,ext); }
 	this.disactivateCustomMessage = function(filename,ext){ return _disactivateCustomMessage(filename,ext); }
 	this.deleteCustomMessage = function(filename,ext){ return _deleteCustomMessage(filename,ext); }
+	this.deleteCustomMessageInactive = function(filename,ext){ return _deleteCustomMessageInactive(filename,ext); }
 	//this.copyCustomVmMsgAsWAV = function(ext,filename,cb){ _copyCustomVmMsgAsWAV(ext,filename,cb); }
 	this.setLogger = function(logfile,level){
 		log4js.addAppender(log4js.fileAppender(logfile), '[voicemail]');
@@ -48,6 +49,18 @@ function _copyCustomVmMsgAsWAV(ext,filename,cb){
 	});
 }
 */
+// Delete inactive custom message (NAME.wav.inactive)
+function _deleteCustomMessageInactive(filename,ext){
+	var filepath = DIR_PATH_VM + '/' + ext + '/' + filename + '.' + INACTIVE_EXT;
+	if(path.existsSync(filepath)){
+		fs.unlinkSync(filepath);
+		logger.debug('deleted inactive custom message: ' + filepath);
+		return true;
+	}
+	logger.warn('inactive custom message not exists: ' + filepath);
+	return false;
+}
+// Delete file wav and WAV, active and inactive
 function _deleteCustomMessage(filename,ext){
 	var name = path.basename(filename,'.wav');
 	var filename2 = name + '.WAV';
