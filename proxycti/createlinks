@@ -13,6 +13,7 @@ service_link_enhanced('proxycti', 'K02', '0');
 templates2events("/usr/lib/node/proxycti/config/proxycti.ini", qw(proxycti-update bootstrap-console-save));
 templates2events("/etc/asterisk/manager.conf", qw(proxycti-update));
 templates2events("/etc/crontab", qw(proxycti-update));
+templates2events("/etc/logrotate.d/nethcti",qw(proxycti-update));
 
 for my $event (qw(pre-backup))
 {
