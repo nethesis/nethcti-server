@@ -1,0 +1,6 @@
+/usr/lib/node/proxycti/store/login.log \{
+        missingok
+        rotate 5
+        notifempty
+        weekly
+\}
