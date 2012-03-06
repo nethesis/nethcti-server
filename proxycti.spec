@@ -1,5 +1,5 @@
 Name:		proxycti
-Version:	1.0.9
+Version:	1.0.11
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI	
 
@@ -29,6 +29,8 @@ mkdir -p root/var/lib/asterisk/bin
 mkdir -p root/var/spool/asterisk/monitor
 mkdir -p root/home/e-smith/proxycti/template/
 mkdir -p root/usr/lib/node/proxycti/sms
+mkdir -p root/usr/lib/node/proxycti/store
+mkdir -p root/home/asterisk/
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -40,6 +42,8 @@ rm -rf $RPM_BUILD_ROOT
 --dir /var/lib/asterisk 'attr(0775,asterisk,asterisk)' \
 --dir /usr/lib/node/proxycti/config 'attr(0775,asterisk,asterisk)' \
 --dir /usr/lib/node/proxycti/sms 'attr(0775,asterisk,asterisk)' \
+--dir /usr/lib/node/proxycti/store 'attr(0775,asterisk,asterisk)' \
+--dir /home/asterisk 'attr(0700,asterisk,asterisk)' \
 --dir /var/lib/asterisk/bin 'attr(0775,asterisk,asterisk)' $RPM_BUILD_ROOT > %{name}-%{version}-filelist
 
 
@@ -59,14 +63,23 @@ rm -rf $RPM_BUILD_ROOT
 
 # crate sms db
 ln -s /usr/lib/node/proxycti/sql/nethcti.sql /etc/e-smith/sql/init/10cti.sql
+ln -s /usr/lib/node/proxycti/sql/update.sql /etc/e-smith/sql/init/20cti_update.sql
 /sbin/e-smith/service mysql.init start
 
 /sbin/e-smith/signal-event %{name}-update || exit 0
 
 
 %changelog
+* Mon Jan 16 2012 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.0.11-1nh
+- Add DEBUG log to dataCollector when execute sql query.
+- Bug #760: escape of characters ' and " in phonebook query.
+- Removed build directory in node-odbc module.
+- Removed test directory: old test.
+- Add 'Starting server...' line in the log file at startup of proxycti as warning message.
+- Bug #759: added check for permission lack in config/profiles.ini.
+
 * Thu Jan 12 2012 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.0.9-1nh
-* Bug #751: fix callout whene there are limitation in outbound routes
+- Bug #751: fix callout whene there are limitation in outbound routes
 
 * Thu Jan 12 2012 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.0.8-1nh
 - Do not scan error response when send SMS with other service than smshosting and response status code is 200.
