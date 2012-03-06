@@ -21,8 +21,11 @@ LOGFILE=/var/log/forever_$prog.log
 lockfile=/var/lock/subsys/$prog
 
 start() {
+    /bin/chown asterisk:asterisk $LOGFILE 
+    /bin/chown asterisk:asterisk $lockfile
+    /bin/chown asterisk:asterisk /var/log/asterisk/proxycti.log
     echo -n $"Starting $prog: "
-    daemon "cd $dirname; $helper start -a -l $LOGFILE -o $LOGFILE -e $LOGFILE $prog"
+    daemon  --user asterisk "cd $dirname; $helper start -a -l $LOGFILE -o $LOGFILE -e $LOGFILE $prog"
     retval=$?
     echo
     [ $retval -eq 0 ] && touch $lockfile
