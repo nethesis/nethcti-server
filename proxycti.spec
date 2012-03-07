@@ -1,5 +1,5 @@
 Name:		proxycti
-Version:	1.0.11
+Version:	1.1.0
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI	
 
@@ -13,7 +13,7 @@ BuildRequires:	e-smith-devtools
 Requires:	nodejs
 Requires:	node-forever
 Requires:	smeserver-ejabberd
-Requires:       nethcti-module
+Requires:       nethcti-module >= 1.1.0
 AutoReq:	no
 
 %description
@@ -30,7 +30,6 @@ mkdir -p root/var/spool/asterisk/monitor
 mkdir -p root/home/e-smith/proxycti/template/
 mkdir -p root/usr/lib/node/proxycti/sms
 mkdir -p root/usr/lib/node/proxycti/store
-mkdir -p root/home/asterisk/
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -38,12 +37,12 @@ rm -rf $RPM_BUILD_ROOT
 /sbin/e-smith/genfilelist \
 --file /etc/rc.d/init.d/proxycti 'attr(0755,asterisk,asterisk)' \
 --file /usr/lib/node/proxycti/script/sendsms.php 'attr(0755,asterisk,asterisk)' \
+--file /usr/lib/node/proxycti/sql/update.sh 'attr(0755,asterisk,asterisk)' \
 --dir /var/spool/asterisk/monitor 'attr(0775,asterisk,asterisk)' \
 --dir /var/lib/asterisk 'attr(0775,asterisk,asterisk)' \
 --dir /usr/lib/node/proxycti/config 'attr(0775,asterisk,asterisk)' \
 --dir /usr/lib/node/proxycti/sms 'attr(0775,asterisk,asterisk)' \
 --dir /usr/lib/node/proxycti/store 'attr(0775,asterisk,asterisk)' \
---dir /home/asterisk 'attr(0700,asterisk,asterisk)' \
 --dir /var/lib/asterisk/bin 'attr(0775,asterisk,asterisk)' $RPM_BUILD_ROOT > %{name}-%{version}-filelist
 
 
@@ -58,18 +57,31 @@ rm -rf $RPM_BUILD_ROOT
 
 %doc
 
+%pre
+# HACK: stop before service before install. Needed for upgrading from 1.0 to 1.1. 
+# After installation, restart proxy with asterisk user
+/sbin/e-smith/service proxycti stop >&/dev/null || exit 0
+
 %post
 /etc/e-smith/events/actions/initialize-default-databases
 
 # crate sms db
 ln -s /usr/lib/node/proxycti/sql/nethcti.sql /etc/e-smith/sql/init/10cti.sql
-ln -s /usr/lib/node/proxycti/sql/update.sql /etc/e-smith/sql/init/20cti_update.sql
+ln -s /usr/lib/node/proxycti/sql/update.sh /etc/e-smith/sql/init/20cti_update
 /sbin/e-smith/service mysql.init start
 
 /sbin/e-smith/signal-event %{name}-update || exit 0
 
 
 %changelog
+* Tue Mar 06 2012  Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.1.0-1nh
+- Add SMS profile
+- Handle missing sections in configuration files
+- Add a timeout to customer card retrieving
+- Log uset access in login.log
+- Add test script for db configuration
+- Added support to open command for gate/door streaming
+
 * Mon Jan 16 2012 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.0.11-1nh
 - Add DEBUG log to dataCollector when execute sql query.
 - Bug #760: escape of characters ' and " in phonebook query.
