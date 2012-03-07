@@ -103,14 +103,14 @@ function getChatAssociation(cb){
 // Return extensions that has reserved the call and the reservation date
 function getExtCallReserved(num,cb){
 	var objQuery = queries[CALL_NOTES];
-	objQuery.query = "SELECT date_format(date,'%d/%m/%Y') AS date, date_format(date,'%H:%i:%S') AS time, extension FROM call_notes WHERE (reservation=1 AND expiration>now())";
+	objQuery.query = "SELECT date_format(date,'%d/%m/%Y') AS date, date_format(date,'%H:%i:%S') AS time, extension FROM call_notes WHERE (number="+num+" AND reservation=1 AND expiration>now())";
 	executeSQLQuery(CALL_NOTES,objQuery,function(results){
 		cb(results);
 	});
 }
 function getCallNotes(num,cb){
 	var objQuery = queries[CALL_NOTES];
-	objQuery.query = "select * from call_notes where number='"+num+"' AND expiration>now();";
+	objQuery.query = "select * from call_notes where number='"+num+"' AND expiration>now()";
 	executeSQLQuery(CALL_NOTES, objQuery, function(results){
 		cb(results);
        	});
