@@ -1836,54 +1836,63 @@ am.addListener('userevent', function(headers){
 	                updateAllClientsForOpWithTypeExt(ext)
 		}
 	} // end of the first case
-	// Manage secon case: the event is generated from the arrive of an outside call
+	// Manage second case: the event is generated from the arrive of an outside call
 	var userevent = headers.userevent;
 	if(userevent!==undefined && userevent.indexOf('CAllIN')!==-1){
 		var callerFromOutside = userevent.split(';')[1];
 		callerFromOutside = callerFromOutside.replace(/[" "]/g,"");
-		currentCallInInfo[callerFromOutside] = {}; // init current data info of the caller
-		// get call notes for the caller
-		dataCollector.getCallNotes(callerFromOutside,function(results){
-			currentCallInInfo[callerFromOutside].callNotes = results;
-		});
-		// get all customer cards for the caller
-		var allTypesCC = profiler.getAllTypesCustomerCard(); // array
-		var obj = {};
-		var customerCardResult = [];
-		currentCallInInfo[callerFromOutside].cc = customerCardResult;
-		for(var i=0, type; type=allTypesCC[i]; i++){
-			dataCollector.getCustomerCard(callerFromOutside, type, function(cc, name) {
-			        if(cc!==undefined){
-					obj = {};
-					for(var item in cc){
-                                      		cc[item].server_address = "http://" + hostname + ":" + port;
-                                        }
-					obj[name] = cc;
-					customerCardResult.push(obj);
-				} else {
-					customerCardResult.push(cc);
-				}
-                                // check because hangup event can occure before
-				if(customerCardResult.length===allTypesCC.length && currentCallInInfo[callerFromOutside]!==undefined){ // ex. customerCardResult = [ { default: [ [Object] ] }, { calls: [ [Object] ] } ]
-                                    currentCallInInfo[callerFromOutside].cc = {};
-                                    var key = '';
-        			    var ccHtml = '';
-        			    for(var w=0, cc; cc=customerCardResult[w]; w++){
-        			        key = Object.keys(cc)[0];
-        				ccHtml = createCustomerCardHTML(cc,key,callerFromOutside);
-        				currentCallInInfo[callerFromOutside].cc[key] = ccHtml;
-        			    }
-                                }
-			});
-		}
-		// check if there is a booked call
-		dataCollector.getExtCallReserved(callerFromOutside,function(results){
-			if(results.length>0 && currentCallInInfo[callerFromOutside]!==undefined){
-				currentCallInInfo[callerFromOutside].reservation = {value: true, results: results};
-			} else if(currentCallInInfo[callerFromOutside]!==undefined){
-				currentCallInInfo[callerFromOutside].reservation = {value: false};
+		if(callerFromOutside!=='' && callerFromOutside!==undefined && callerFromOutside!==null){
+			currentCallInInfo[callerFromOutside] = {}; // init current data info of the caller
+			// get call notes for the caller
+			(function(callerFromOutside){ // closure
+			    dataCollector.getCallNotes(callerFromOutside,function(results){
+				currentCallInInfo[callerFromOutside].callNotes = results;
+			    });
+			}(callerFromOutside)); // closure
+			// get all customer cards for the caller
+			var allTypesCC = profiler.getAllTypesCustomerCard(); // array
+			var obj = {};
+			var customerCardResult = [];
+			for(var i=0, type; type=allTypesCC[i]; i++){
+			    (function(callerFromOutside,type){ // closure
+				dataCollector.getCustomerCard(callerFromOutside, type, function(cc, name) {
+				        if(cc!==undefined){
+						obj = {};
+						for(var item in cc){
+	                                      		cc[item].server_address = "http://" + hostname + ":" + port;
+	                                        }
+						obj[name] = cc;
+						customerCardResult.push(obj);
+					} else {
+						customerCardResult.push(cc);
+					}
+	                                // check because hangup event can occure before
+					if(customerCardResult.length===allTypesCC.length && currentCallInInfo[callerFromOutside]!==undefined){ // ex. customerCardResult = [ { default: [ [Object] ] }, { calls: [ [Object] ] } ]
+	                                    currentCallInInfo[callerFromOutside].cc = {};
+	                                    var key = '';
+	        			    var ccHtml = '';
+	        			    for(var w=0, cc; cc=customerCardResult[w]; w++){
+	        			        key = Object.keys(cc)[0];
+	        				ccHtml = createCustomerCardHTML(cc,key,callerFromOutside);
+	        				currentCallInInfo[callerFromOutside].cc[key] = ccHtml;
+	        			    }
+	                                }
+				});
+			    }(callerFromOutside,type)); // closure
 			}
-		});
+			// check if there is a booked call
+			(function(callerFromOutside){ // closure
+			    dataCollector.getExtCallReserved(callerFromOutside,function(results){
+				if(results.length>0 && currentCallInInfo[callerFromOutside]!==undefined){
+					currentCallInInfo[callerFromOutside].reservation = {value: true, results: results};
+				} else if(currentCallInInfo[callerFromOutside]!==undefined){
+					currentCallInInfo[callerFromOutside].reservation = {value: false};
+				}
+			    });
+			}(callerFromOutside)); // closure
+		} else {
+			logger.warn('UserEvent: ' + sys.inspect(headers));
+		}
 	}
 });
 
