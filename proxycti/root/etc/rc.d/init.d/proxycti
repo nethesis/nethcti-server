@@ -24,7 +24,7 @@ start() {
     /bin/chown asterisk:asterisk $LOGFILE 2>/dev/null
     /bin/chown asterisk:asterisk /var/log/asterisk/proxycti.log 2>/dev/null
     echo -n $"Starting $prog: "
-    daemon  --user asterisk "cd $dirname; $helper start -a -l $LOGFILE -o $LOGFILE -e $LOGFILE -p /var/log/asterisk $prog"
+    daemon  --user asterisk "cd $dirname; $helper start -a -l $LOGFILE -o $LOGFILE -e $LOGFILE -p /var/run/asterisk $prog"
     retval=$?
     echo
     [ $retval -eq 0 ] && touch $lockfile
@@ -33,7 +33,7 @@ start() {
 
 stop() {
     echo -n $"Stopping $prog: "
-    cd $dirname; $helper stop -p /var/log/asterisk $prog
+    daemon  --user asterisk "cd $dirname; $helper stop -p /var/run/asterisk $prog"
     retval=$?
     echo
     [ $retval -eq 0 ] && rm -f $lockfile
