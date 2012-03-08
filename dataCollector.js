@@ -108,6 +108,7 @@ function getExtCallReserved(num,cb){
 		cb(results);
 	});
 }
+// Execute callback with all call notes for number that aren't expired
 function getCallNotes(num,cb){
 	var objQuery = queries[CALL_NOTES];
 	objQuery.query = "select * from call_notes where (number='"+num+"' AND expiration>now())";
