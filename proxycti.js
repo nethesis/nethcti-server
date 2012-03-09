@@ -2587,9 +2587,10 @@ io.sockets.on('connection', function(client){
 			break;
 			case actions.RECORD_VM_CUSTOM_MSG:
 				var name = message.name;
+				var vm = message.vm;
 				var filename = name + '.wav';
-				var filepath = voicemail.getFilepathCustomMessage(filename,extFrom);
-				voicemail.deleteCustomMessage(filename,extFrom);
+				var filepath = voicemail.getFilepathCustomMessage(filename,vm);
+				voicemail.deleteCustomMessage(filename,vm);
 				if(profiler.checkActionVoicemailPermit(extFrom)){
 					var action = {
 						Action: 'Originate',
