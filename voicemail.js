@@ -79,10 +79,10 @@ function _deleteCustomMessage(filename,ext){
 		if(path.existsSync(filepath2)){
 			fs.unlinkSync(filepath2);
 		}
-		logger.debug('deleted voicemail custom message '+filename+' for extension ' + ext);
+		logger.debug('deleted voicemail custom message '+filename+' for vm ' + ext);
 		return true;
 	} catch(err){
-		logger.error('deleting custom voicemail message ' + filename + ' for extension ' + ext + ' fail: ' + err.message);
+		logger.error('deleting custom voicemail message ' + filename + ' for vm ' + ext + ' fail: ' + err.message);
 		return false;
 	}
 }
