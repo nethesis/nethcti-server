@@ -3394,7 +3394,7 @@ io.sockets.on('connection', function(client){
 				}
 				else{
 					logger.debug("check 'record' permission for [" + extFrom + "] FAILED !");
-			  		client.emit('message',new ResponseMessage(client.id, "error_record", "Sorry: you don't have permission to record call !"));
+			  		client.emit('message',new ResponseMessage(client.id, "error_record", ""));
 			  		logger.debug("RESP 'error_record' has been sent to [" + extFrom + "] id '" + client.id + "'");
 	  			}	
 	  		break;
