@@ -2524,6 +2524,7 @@ io.sockets.on('connection', function(client){
 			ENABLE_VM_CUSTOM_MSG:	'enable_vm_custom_msg',
 			DISABLE_VM_CUSTOM_MSG:	'disable_vm_custom_msg',
 			DELETE_VM_CUSTOM_MSG:	'delete_vm_custom_msg',
+			GET_VM_CUSTOM_MSG:	'get_vm_custom_msg',
 			RECORD_VM_CUSTOM_MSG:	'record_vm_custom_msg',
 			GET_PRIORITY_QUEUE_STATUS:	'get_priority_queue_status',
 			SEARCH_CONTACT_PHONEBOOK:	'search_contact_phonebook',
@@ -2946,6 +2947,14 @@ io.sockets.on('connection', function(client){
   					logger.debug("RESP 'error_login' has been sent to [" + extFrom + "] id '" + client.id + "'");
   				}
 	  		break;
+			case actions.GET_VM_CUSTOM_MSG:
+				var respMsg = new ResponseMessage(client.id,"resp_get_vm_custom_msg","");
+				var vm = message.vm;
+				var obj = voicemail.getCustomMessages(vm);
+				respMsg.customVmMsg = obj;
+				client.emit('message',respMsg);
+				logger.debug("RESP 'resp_get_vm_custom_msg' has been sent to [" + extFrom + "] id '" + client.id + "'");
+			break;
 	  		case actions.CHECK_DND_STATUS:
 	  			var cmd = "database get DND " + extFrom;
 			  	var actionCheckDNDStatus = {
