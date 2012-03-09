@@ -2922,7 +2922,7 @@ io.sockets.on('connection', function(client){
 						}
 						respMsg.existVoicemail = (res && resVm);
 						if(respMsg.existVoicemail){
-							var obj = voicemail.getCustomMessages(extFrom);
+							var obj = voicemail.getCustomMessages(vm);
 							respMsg.customVmMsg = obj;
 						}
 					}
