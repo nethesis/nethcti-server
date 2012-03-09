@@ -2183,11 +2183,13 @@ server = http.createServer(function(req, res){
 	switch (path){
 	    case '/uploadVmCustomMsg':
 	    	var extFrom = params.extFrom;
+		logger.debug('received http request of action /uploadVmCustomMsg from ' + extFrom);
 		var namefile = params.name;
+		var vm = params.vm;
 		voicemail.deleteCustomMessageInactive(namefile+'.wav',extFrom); // if present delete inactive voicemail custom message
 		var form = new formidable.IncomingForm();
 		form.on('fileBegin',function(name,file){
-			file.path = '/var/spool/asterisk/voicemail/default/'+extFrom+'/'+namefile+'.wav';
+			file.path = '/var/spool/asterisk/voicemail/default/'+vm+'/'+namefile+'.wav';
 		});
 		form.parse(req, function(err, fields, files) {
 			if(err){
