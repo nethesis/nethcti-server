@@ -2256,8 +2256,9 @@ server = http.createServer(function(req, res){
 		var name = params.name;
 		var active = params.active;
 		var extFrom = params.extFrom;
+		var vm = params.vm;
 		var filename = name + '.wav';
-		var filepath = voicemail.getFilepathCustomMessage(filename,extFrom);
+		var filepath = voicemail.getFilepathCustomMessage(filename,vm);
 		if(active==='false'){ // if the voicemail custom message is inactive, the end of it's name is '.inactive'
 			filepath = filepath + '.inactive';
 		}
