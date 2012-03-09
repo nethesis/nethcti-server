@@ -2536,8 +2536,9 @@ io.sockets.on('connection', function(client){
   		switch(action){
 			case actions.DELETE_VM_CUSTOM_MSG:
 				var name = message.name;
+				var vm = message.vm;
 				var filename = name + '.wav';
-                                var res = voicemail.deleteCustomMessage(filename,extFrom);
+                                var res = voicemail.deleteCustomMessage(filename,vm);
 				if(res){
                                         var respMsg = new ResponseMessage(client.id, "ack_delete_vm_custom_msg", '');
                                         respMsg.name = name;
@@ -2547,7 +2548,7 @@ io.sockets.on('connection', function(client){
                                         var respMsg = new ResponseMessage(client.id, "error_delete_vm_custom_msg", '');
                                         respMsg.name = name;
                                         client.emit('message',respMsg);
-                                        logger.debug("RESP 'error_delete_vm_custom_msg' has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                        logger.warn("RESP 'error_delete_vm_custom_msg' has been sent to [" + extFrom + "] id '" + client.id + "'");
                                 }
 			break;
 			case actions.DISABLE_VM_CUSTOM_MSG:
