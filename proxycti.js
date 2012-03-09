@@ -2552,8 +2552,9 @@ io.sockets.on('connection', function(client){
 			break;
 			case actions.DISABLE_VM_CUSTOM_MSG:
 				var name = message.name;
+				var vm = message.vm;
 				var filename = name + '.wav';
-				var res = voicemail.disactivateCustomMessage(filename,extFrom);
+				var res = voicemail.disactivateCustomMessage(filename,vm);
 				if(res){
                                         var respMsg = new ResponseMessage(client.id, "ack_disable_vm_custom_msg", '');
 					respMsg.name = name;
@@ -2568,8 +2569,9 @@ io.sockets.on('connection', function(client){
 			break;
 			case actions.ENABLE_VM_CUSTOM_MSG:
 				var name = message.name;
+				var vm = message.vm;
 				var filename = name + '.wav';
-				var res = voicemail.activateCustomMessage(filename,extFrom);
+				var res = voicemail.activateCustomMessage(filename,vm);
 				if(res){
 					var respMsg = new ResponseMessage(client.id, "ack_enable_vm_custom_msg", '');
 					respMsg.name = name;
