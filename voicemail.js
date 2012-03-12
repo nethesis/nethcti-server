@@ -79,10 +79,10 @@ function _deleteCustomMessage(filename,ext){
 		if(path.existsSync(filepath2)){
 			fs.unlinkSync(filepath2);
 		}
-		logger.debug('deleted voicemail custom message '+filename+' for extension ' + ext);
+		logger.debug('deleted voicemail custom message '+filename+' for vm ' + ext);
 		return true;
 	} catch(err){
-		logger.error('deleting custom voicemail message ' + filename + ' for extension ' + ext + ' fail: ' + err.message);
+		logger.error('deleting custom voicemail message ' + filename + ' for vm ' + ext + ' fail: ' + err.message);
 		return false;
 	}
 }
@@ -120,7 +120,7 @@ function _activateCustomMessage(filename,ext){
 // Return an object containing voicemail custom message properties
 // Key is the type of message (ex. busy) and value is the properties
 function _getCustomMessages(ext){
-        const DEFAULT_PATH = '/var/spool/asterisk/voicemail/default/';
+	const DEFAULT_PATH = '/var/spool/asterisk/voicemail/default/';
         var obj = {};
         var path = DEFAULT_PATH+ext;
         if(pathreq.existsSync(path)){
@@ -189,7 +189,9 @@ function _getCustomMessages(ext){
                 obj['greet'] = {};
                 obj['greet'].isPresent = present;
                 obj['greet'].isActive = active;
-        }
+        } else {
+		logger.warn(path + " not exists (getCustomMessages)");
+	}
         return obj;
 }
 function _getCountVoicemailNewx(ext){
