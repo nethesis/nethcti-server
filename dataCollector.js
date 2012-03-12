@@ -368,13 +368,12 @@ function initConn(objQuery, key){
 		return;
 	}
 	if(objQuery.dbtype=="mysql"){
-		var client = new mysql.Client();
+		var client = new mysql.createClient();
                 client.host = objQuery.dbhost;
                 client.port = objQuery.dbport;
                 client.user = objQuery.dbuser;
                 client.password = objQuery.dbpassword;
 		client.database = objQuery.dbname;
-	        client.connect();
 		dbConnections[key] = client;
 	}
         else if(objQuery.dbtype=="mssql"){
