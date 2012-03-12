@@ -495,7 +495,7 @@ getDayHistoryCall = function(ext, date, num, cb){
 getCustomerCard = function(ext, type, cb){
 	var section = CUSTOMER_CARD + "_" + type;
 	var objQuery = queries[section];
-        if(objQuery!=undefined){
+        if(objQuery!==undefined){
 		// copy object
                 var copyObjQuery = Object.create(objQuery);
                 // substitue template field in query
@@ -512,8 +512,8 @@ getCustomerCard = function(ext, type, cb){
                         cb(results, type);
                 });
         } else {
-		logger.error('no query for section \'' + section + '\'')
-		cb(undefined)
+		logger.error('no query for section \'' + section + '\'');
+		cb(undefined);
 	}
 }
 // Search in the database all phonebook contacts that match the given name
