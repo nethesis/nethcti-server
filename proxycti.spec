@@ -1,5 +1,5 @@
 Name:		proxycti
-Version:	1.1.0
+Version:	1.1.1
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI	
 
@@ -74,6 +74,10 @@ ln -s /usr/lib/node/proxycti/sql/update.sh /etc/e-smith/sql/init/20cti_update
 
 
 %changelog
+* Mon Mar 12 2012  Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.1.1-1nh
+- Customer card bug fix
+- Load customer card only on client request
+
 * Tue Mar 06 2012  Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.1.0-1nh
 - Add SMS profile
 - Handle missing sections in configuration files
