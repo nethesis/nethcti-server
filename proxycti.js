@@ -2300,7 +2300,8 @@ server = http.createServer(function(req, res){
 		var filename = params.filename;
 		var typevm = params.type;
 		var extFrom = params.extFrom;
-		var filepath = voicemail.getFilepath(filename,typevm,extFrom);
+		var vm = params.vm;
+		var filepath = voicemail.getFilepath(filename,typevm,vm);
 	    	logger.debug(extFrom + " has request to listen voicemail " + filepath);
 		pathreq.exists(filepath, function(exists){
 			if(exists){
