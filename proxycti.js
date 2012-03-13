@@ -31,6 +31,7 @@ const DIAL_FROM = 1;
 const DIAL_TO = 0;
 const N_AST_RECON = 3; // number of reconnection attempts to asterisk when fail connection
 const DELAY_AST_RECON = 8000; // delay between two reconnection attempts to asterisk
+const TIMEOUT_GET_VCARD_CC = 4000; // when GET_VCARD_CC request is not returned
 var cc_templates = {}; // key is filename of the template and value is its content
 var template_cc_dir = { // directories of all templates (customer card, vcard, ...)
 	PROXY: './template',
@@ -901,7 +902,7 @@ function setResponseWithInfoCCFor(c,from,to,response,type){
        	}
         response.callNotes = result; // add call notes to the response
         var ccArr = {};
-        if(globContainerToUse[from].cc!==undefined){
+        if(globContainerToUse[from]!==undefined && globContainerToUse[from].cc!==undefined){
         	ccArr = globContainerToUse[from].cc; // customer card calculated for GET_VCARD_CC request
         }
 	if(type==='getvcardcc'){ // attach customer card only if GET_VCARD_CC request
@@ -1907,6 +1908,19 @@ function getCustomerCardInfoFor(num,typeRequest,client,extFrom,response){
 	var obj = {};
 	var customerCardResult = [];
     	if(typeRequest==='getvcardcc'){ // fill globInfoCC
+		var idTimeoutGetVCardCC = setTimeout(function(){
+			logger.error('timeout reached: get vcard cc by ' + extFrom + ' for num ' + num + ': ' + sys.inspect(globInfoCC[num]));
+			if(client!==undefined && extFrom!==undefined && response!==undefined){
+	                        setResponseWithInfoCCByGetVCardCC(client,num,extFrom,response);
+                                client.emit('message',response);
+                                logger.debug("RESP 'resp_get_vcard_cc' has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                emptyInfoCCByGetVCardCC(num);
+                                logger.debug("empty globInfoCC for number " + num);
+                        } else {
+	                        logger.error("something goes wrong on fill customer card info for number " + num +
+        	                        ": client or extFrom or response is undefined");
+                        }
+		},TIMEOUT_GET_VCARD_CC);
 		// get customer cards
 		for(var i=0, type; type=allTypesCC[i]; i++){
 		    (function(num,type){ // closure
@@ -1945,6 +1959,8 @@ function getCustomerCardInfoFor(num,typeRequest,client,extFrom,response){
 							} else if(globalContainerToFill[num]!==undefined){
 								globalContainerToFill[num].reservation = {value: false};
 							}
+							// remove security timeout for send response to the client
+							clearTimeout(idTimeoutGetVCardCC);
 							// if request come from GET_VCARD_CC request return response to the client
 							if(client!==undefined && extFrom!==undefined && response!==undefined){
 								setResponseWithInfoCCByGetVCardCC(client,num,extFrom,response);
@@ -1953,7 +1969,7 @@ function getCustomerCardInfoFor(num,typeRequest,client,extFrom,response){
 			                                        emptyInfoCCByGetVCardCC(num);
 								logger.debug("empty globInfoCC for number " + num);
 							} else {
-								logger.error("something goes wrong on fill currentCallInInfo for number " + num +
+								logger.error("something goes wrong on fill customer card info for number " + num +
 									": client or extFrom or response is undefined");
 							}
 						});
@@ -2767,7 +2783,6 @@ io.sockets.on('connection', function(client){
 				} else {
 					logger.debug("customer card permission for [" + extFrom + "] OK");
 	                                var from = nums[0];
-					from = undefined;
 					if(from!==undefined){ // there is one number to search
 						returnCCToClient(from,client,extFrom,response);
 					} else { // no number to search
