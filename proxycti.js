@@ -2676,7 +2676,8 @@ io.sockets.on('connection', function(client){
 				if(resPermit){
 					var filename = message.filename;
 					var type = message.type;
-					var res = voicemail.delVoicemail(filename,type,extFrom);
+					var vm = message.vm;
+					var res = voicemail.delVoicemail(filename,type,vm);
 					if(res){
 						var respMsg = new ResponseMessage(client.id, "ack_del_voicemail", '');
 						respMsg.filename = filename;
