@@ -4085,11 +4085,12 @@ io.sockets.on('connection', function(client){
                                 var extTo = message.extTo;
 				var callFromExt = message.callFromExt;
 				var ch = message.destCh;
+				var vm = message.vm;
 				var actRedirVoicemail = { 
 					Action: 'Redirect',
 					Channel: ch,
 					Context: 'ext-local',
-					Exten: 'vmu' + extTo,
+					Exten: 'vmu' + vm,
 					Priority: 1
 				}
 				try{
