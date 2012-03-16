@@ -154,11 +154,11 @@ function help(){
 	console.log("\tini");
 	console.log("\t\tprint configuration file used by dataCollector");
 	console.log("\n");
-	console.log("\tphonebook EXTENSION");
-	console.log("\t\tview result of phonebook query for user specified as EXTENSION");
+	console.log("\tphonebook NAME");
+	console.log("\t\tview result of phonebook query for specified NAME");
 	console.log("\n");
-	console.log("\tcc TYPE EXTENSION");
-	console.log("\t\tview customer card of type TYPE for user EXTENSION");
+	console.log("\tcc TYPE NUMBER");
+	console.log("\t\tview customer card of type TYPE for caller number NUMBER");
 	console.log("\n");
 	console.log("\thist_call_day EXTENSION DATE [CALLER]");
 	console.log("\t\tview history calls of the EXTENSION for specified DATE (yyyy/mm/gg) and from caller");
