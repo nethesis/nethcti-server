@@ -169,7 +169,7 @@ controller.setLogger(logfile,loglevel);
 
 var voicemail = new voicemailReq.Voicemail();
 voicemail.setLogger(logfile,loglevel);
-
+voicemail.init();
 
 var modop = new modopReq.Modop();
 modop.setLogger(logfile,loglevel);
