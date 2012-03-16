@@ -8,7 +8,7 @@ var log4js = require('./lib/log4js-node/lib/log4js')();
 var child_process = require('child_process');
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF) */
-var logger = log4js.getLogger('[voicemail]');
+var logger = log4js.getLogger('[Voicemail]');
 const DIR_PATH_VM = "/var/spool/asterisk/voicemail/default";
 const OLD_DIR = "Old";
 const NEW_DIR = "INBOX";
@@ -20,7 +20,7 @@ const INACTIVE_EXT = 'inactive';
 var _voicemailList = {};
 // Constructor 
 exports.Voicemail = function(){
-	_init();
+	this.init = function(){ _init(); }
 	this.getVoicemailList = function(ext) { return _getVoicemailList(ext); }
 	this.getFilepath = function(filename,type,ext){ return _getFilepath(filename,type,ext); }
 	this.getFilepathCustomMessage = function(filename,ext){ return _getFilepathCustomMessage(filename,ext); }
@@ -34,7 +34,7 @@ exports.Voicemail = function(){
 	this.deleteCustomMessageInactive = function(filename,ext){ return _deleteCustomMessageInactive(filename,ext); }
 	//this.copyCustomVmMsgAsWAV = function(ext,filename,cb){ _copyCustomVmMsgAsWAV(ext,filename,cb); }
 	this.setLogger = function(logfile,level){
-		log4js.addAppender(log4js.fileAppender(logfile), '[voicemail]');
+		log4js.addAppender(log4js.fileAppender(logfile), '[Voicemail]');
 		logger.setLevel(level);
 		_setLibLogger(logfile,level); // set also the library logger
 	}
@@ -240,21 +240,29 @@ function _getFilepath(filename,type,ext){
 	var dirpathType = _getDirpathType(type,ext);
 	return path.join(dirpathType,filename) + "." + DEFAULT_AUDIO_EXT;
 }
-// return the voicemail list of one extension
+// Return the voicemail list of one extension
 function _getVoicemailList(ext){
+	if(_voicemailList[ext]===undefined){ // when /var/spool/asterisk/voicemail/default directory not exists
+		logger.debug('voicemail list of ext ' + ext + ' is undefined');
+		return { newx: [], old: [], personal: [] };
+	}
 	return _voicemailList[ext];
 }
 // initialize _voicemailList
 function _init(){
-	var files = fs.readdirSync(DIR_PATH_VM);
-	var filepath = '';
-	var sta = undefined;
-	for(var i=0; i<files.length; i++){
-		filepath = path.join(DIR_PATH_VM, files[i]);
-		sta = fs.statSync(filepath);
-		if(sta.isDirectory()){
-			_readVoicemailExtension(filepath,files[i]); // read directory of one extension
+	if(path.existsSync(DIR_PATH_VM)){
+		var files = fs.readdirSync(DIR_PATH_VM);
+		var filepath = '';
+		var sta = undefined;
+		for(var i=0; i<files.length; i++){
+			filepath = path.join(DIR_PATH_VM, files[i]);
+			sta = fs.statSync(filepath);
+			if(sta.isDirectory()){
+				_readVoicemailExtension(filepath,files[i]); // read directory of one extension
+			}
 		}
+	} else {
+		logger.warn(DIR_PATH_VM + ' not exists');
 	}
 }
 // initialize all types of voicemail of one extension
