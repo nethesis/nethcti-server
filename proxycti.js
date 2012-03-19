@@ -4503,6 +4503,8 @@ function createHistoryCallResponse(results){
 		temp.clid = currRes.clid;
 		temp.src = currRes.src;
 		temp.dst = currRes.dst;
+		temp.channel = currRes.channel;
+		temp.dstchannel = currRes.dstchannel;
 		temp.duration = currRes.duration;
 		temp.billsec = currRes.billsec;
 		temp.disposition = currRes.disposition;
