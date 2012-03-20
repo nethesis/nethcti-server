@@ -254,42 +254,68 @@ createAudioFileList();
  * In this last case, the function attempt to find uniqueid field (third field of filename) in 'cdr' table of 'asteriskcdrdb' db.
  * This request is asynchronous. In the case of unknown  format of audio file, one warning log is added to log file */
 function createAudioFileList(){
+	logger.debug('start creation of audio file list present in ' + AST_CALL_AUDIO_DIR);
 	audioFileList = {};
         var temp = fs.readdirSync(AST_CALL_AUDIO_DIR);
         var uid = undefined;
         var filename = undefined;
 	var asyncReq = false;
-        for(i=0; i<temp.length; i++){
+	var countUnknown = 0;
+	var listUniqueIdQuery = [];
+	var tempAssocQueryUniqueId = {};
+        for(var i=0; i<temp.length; i++){
 		asyncReq = false; // tell if the filename need an asynchronous request to db
                 uid = undefined;
                 filename = temp[i];
-                if(filename.substring(0,5)===START_AUDIO_FILE){
+                if(filename.substring(0,5)===START_AUDIO_FILE){ // filename start with 'auto-'
                         uid = filename.split("-")[5];
-                } else if(filename.substring(0,3)==="OUT" || filename.substring(0,2)==="IN"){
+                } else if(filename.substring(0,3)==="OUT" || filename.substring(0,2)==="IN"){ // filename start with 'OUT' or 'IN'
                         uid = filename.split("-")[3];
                         uid = uid.split(".")[0] + "." + uid.split(".")[1];
-                } else if(uid===undefined && filename.split("-")[2]!==undefined){ // made asynchronous request
-                        uid=filename.split("-")[2];
-                        uid=uid.split(".")[0]+"."+uid.split(".")[1];
-                        dataCollector.checkAudioUid(uid, filename, function(res, fname, uniqueid){
-				if(res.length===0){
-					logger.warn("audio filename not in 'cdr' db: uniqueid \"" + uniqueid + "\" of filename " + fname);
-				} else {
-					logger.debug("audio filename present: uniqueid \"" + uniqueid + "\" of filename " + fname);
-					audioFileList[uniqueid] = fname;
-				}
-                        });
-			asyncReq = true; // set asyncReq to not consider uid below
-                }
-                if(uid!==undefined && asyncReq===false){
-			logger.debug("add know audio filename: uid \"" + uid + "\" of filename " + filename);
+                } else if(uid===undefined) { // filename unknown: try to search in DB 'cdr'
+			if(filename.split('-')[3]!==undefined && filename.split('-')[3].indexOf('.wav')!==-1){ // g203-20120306-080207-1331017327.24998.wav
+				uid = filename.split("-")[3];
+                                uid = uid.split(".")[0]+"."+uid.split(".")[1];
+			} else if(filename.split('-')[2]!==undefined && filename.split('-')[2].indexOf('.wav')!==-1){ // 20110113-200833-1294945713.508.wav
+				uid = filename.split("-")[2];
+				uid = uid.split(".")[0]+"."+uid.split(".")[1];
+			}
+			if(uid!==undefined){
+				listUniqueIdQuery.push(uid);
+				tempAssocQueryUniqueId[uid] = filename;
+				asyncReq = true; // set asyncReq to not consider uid below
+			}
+		}
+                if(uid!==undefined && asyncReq===false) {
+			//logger.debug("add know audio filename: uid \"" + uid + "\" of filename " + filename);
                         audioFileList[uid] = temp[i];
-                }else if(asyncReq===false){
-			logger.warn("format of audio filename unknown: \"" + filename + "\" in " + AST_CALL_AUDIO_DIR + " directory");
-		} else{
-			logger.debug("unknown format of audio filename \"" + filename + "\": attempt to find it in db 'cdr' with async request...");
+                } else if(asyncReq===false) {
+			//logger.warn("format of audio filename unknown: \"" + filename + "\" in " + AST_CALL_AUDIO_DIR + " directory");
+			countUnknown++;
+		} else {
+			//logger.debug("unknown format of audio filename \"" + filename + "\": attempt to find it in db 'cdr' with async request...");
 		}
         }
+	logger.debug("recognized audio file record: "  + Object.keys(audioFileList).length);
+	logger.debug("unknown audio file record (discarded): "  + countUnknown);
+	if(listUniqueIdQuery.length>0){
+		logger.debug("uniqueid audio file record to test presence in DB: " + listUniqueIdQuery.length);
+		dataCollector.checkListAudioUid(listUniqueIdQuery, function(res){ // res = [ { uniqueid: '1273513626.12' },{ uniqueid: '1273513834.18' },...]
+			logger.debug("uniquid audio file record present in DB: " + res.length);
+			var utemp = '';
+			var ftemp = '';
+			for(var i=0; i<res.length; i++){
+				utemp = res[i].uniqueid;
+				ftemp = tempAssocQueryUniqueId[utemp];
+				audioFileList[utemp] = ftemp;
+			}
+		});
+	}
+	logger.debug("total audio file record checked from " + AST_CALL_AUDIO_DIR + ": " + i);
+	setTimeout(function(){
+		logger.debug('audio file record in memory: ' + Object.keys(audioFileList).length);
+		logger.debug('end of creation audio file list');
+	},5000);
 }
 
 // initialize chatAssociation global variable
