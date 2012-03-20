@@ -65,6 +65,7 @@ exports.DataCollector = function(){
 	this.addController = function(contr) { addController(contr) }
 	this.setLogger = function(logfile,level) { log4js.addAppender(log4js.fileAppender(logfile), '[DataCollector]'); logger.setLevel(level); }
 	this.checkAudioUid = function(uid, filename, cb) { return checkAudioUid(uid, filename, cb); }
+	this.checkListAudioUid = function(arruid, cb) { return checkListAudioUid(arruid, cb); }
 	this.registerSmsSuccess = function(sender, destination, text, cb){ registerSmsSuccess(sender, destination, text, cb); }
 	this.registerSmsFailed = function(sender, destination, text, cb){ registerSmsFailed(sender, destination, text, cb); }
 	this.saveCallNote = function(note,extension,pub,expiration,expFormatVal,num,reservation,cb){ saveCallNote(note,extension,pub,expiration,expFormatVal,num,reservation,cb); }
@@ -262,6 +263,22 @@ function registerSmsFailed(sender, destination, text, cb){
 		});
 	}
 	return undefined;
+}
+// Return all uniqueid present in cdr that has been passed as array argument
+function checkListAudioUid(arruid,cb){
+	var objQuery = queries[DAY_HISTORY_CALL];
+	if(objQuery!==undefined){
+		var strListUniqueid = '';
+		for(var i=0; i<arruid.length; i++){
+			strListUniqueid += "'" + arruid[i] + "',";
+		}
+		strListUniqueid = strListUniqueid.substring(0,strListUniqueid.length-1);
+		var copyObjQuery = Object.create(objQuery);
+		copyObjQuery.query = "SELECT uniqueid FROM cdr WHERE uniqueid in (" + strListUniqueid + ") AND disposition=\"ANSWERED\""; // substitute query
+		executeSQLQuery(DAY_HISTORY_CALL, copyObjQuery, function(results){
+			cb(results);
+		});
+	}
 }
 /* check if the uniqueid 'uid' is present in 'cdr' table of 'asteriskcdrdb' database
  * return true if it is present, false otherwise */
