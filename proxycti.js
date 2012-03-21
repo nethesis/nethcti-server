@@ -1455,8 +1455,11 @@ am.addListener('callconnected', function(headers) {
 		logger.info("discard 'callConnected' event: it isn't present in chStat. The cause can be the start of this server during the asterisk functioning")
 		return
 	}
+	var d = new Date();
 	chStat[tempUniqueid1].destCh = headers.channel2;
+	chStat[tempUniqueid1].startDate = d;
 	chStat[tempUniqueid2].destCh = headers.channel1;
+	chStat[tempUniqueid2].startDate = d;
 	/* when redirect:
 	chStat = { '1308664818.896': { channel: 'AsyncGoto/SIP/270-000002df' },
 	  '1308664819.897': 
