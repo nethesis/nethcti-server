@@ -56,7 +56,6 @@ var ResponseMessage = function(clientSessionId, typeMessage, respMessage){
 	this.respMessage = respMessage;
 }
 var currentCallInInfo = {}; // the info (callNotes, Customer Card...) for the current caller
-var globInfoCC = {}; // the info (callNotes, Customer Card...) for the get vcard cc request
 var chatAssociation = {}; // association between extensions and their chat user
 
 function readAllTemplate(){
@@ -816,7 +815,24 @@ am.addListener('dialing', function(headers) {
 		var c = clients[to];
 		if(c!==undefined){
 			var response = new ResponseMessage(c.id, "dialing", headers.calleridname);
-			setResponseWithCurrentCallInfoCC(c,from,to,response);
+		        response.from = from;
+		        response.to = to;
+		        var callNotesCalc = [];
+		        if(currentCallInInfo[from]!==undefined){
+		                callNotesCalc = currentCallInInfo[from].callNotes; // call notes calculated in 'UserEvent' event
+		                response.reservation = currentCallInInfo[from].reservation; // add call reservation to the response
+		        }
+		        var result = [];
+		        if(callNotesCalc===undefined){
+				callNotesCalc = [];
+		        }
+		        // adds only call notes for which the user has permission (public or own)
+		        for(var w=0, callnote; callnote=callNotesCalc[w]; w++){
+		                if(callnote.public || callnote.extension===to){
+		                        result.push(callnote);
+		                }
+		        }
+		        response.callNotes = result; // add call notes to the response
 			response.dialCh = headers.destination;
 			c.emit('message',response);
                         logger.debug("RESP 'dialing' has been sent to [" + to + "] id '" + c.id + "'");
@@ -881,12 +897,6 @@ am.addListener('dialing', function(headers) {
 	}
 })
 
-// Remove specified key from global variable 'globInfoCC' used for GET_VCARD_CC request
-function emptyInfoCCByGetVCardCC(num){
-	delete globInfoCC[num];
-	logger.debug('deleted globInfoCC['+num+']');
-}
-
 // set response with informations (customer card, call notes, ... ) of current caller
 function setResponseWithCurrentCallInfoCC(c,from,to,response){
 	if(currentCallInInfo[from]!==undefined){
@@ -897,24 +907,13 @@ function setResponseWithCurrentCallInfoCC(c,from,to,response){
 		logger.warn('currentCallInInfo for number ' + from + ' is undefined');
 	}
 }
-function setResponseWithInfoCCByGetVCardCC(c,from,to,response){
-	return setResponseWithInfoCCFor(c,from,to,response,'getvcardcc');
-}
-// Set the response to return to the client with the results 
-// of which the user has permissions
-function setResponseWithInfoCCFor(c,from,to,response,type){
-	var globContainerToUse = undefined;
-	if(type==='userevent'){
-		globContainerToUse = currentCallInInfo;
-	} else if(type==='getvcardcc'){
-		globContainerToUse = globInfoCC;
-	}
+function setResponseWithInfoCCByGetVCardCC(c,from,to,response,containerInfo){
         response.from = from;
         response.to = to;
         var callNotes = [];
-        if(globContainerToUse[from]!==undefined){
-        	callNotes = globContainerToUse[from].callNotes; // call notes calculated in 'UserEvent' event
-                response.reservation = globContainerToUse[from].reservation; // add call reservation to the response
+        if(containerInfo[from]!==undefined){
+        	callNotes = containerInfo[from].callNotes;
+                response.reservation = containerInfo[from].reservation;
         }
         var result = [];
 	if(callNotes===undefined){
@@ -928,38 +927,33 @@ function setResponseWithInfoCCFor(c,from,to,response,type){
        	}
         response.callNotes = result; // add call notes to the response
         var ccArr = {};
-        if(globContainerToUse[from]!==undefined && globContainerToUse[from].cc!==undefined){
-        	ccArr = globContainerToUse[from].cc; // customer card calculated for GET_VCARD_CC request
+        if(containerInfo[from]!==undefined && containerInfo[from].cc!==undefined){
+        	ccArr = containerInfo[from].cc; // customer card calculated for GET_VCARD_CC request
         }
-	if(type==='getvcardcc'){ // attach customer card only if GET_VCARD_CC request
-	        var typesCC = profiler.getTypesCustomerCardPermit(to); // customer card permission of the user
-	        logger.debug("[" + to + "] is able to view customer card of types: " + sys.inspect(typesCC));
-	        if(typesCC.length===0){ // hasn't the customer card permission
-	                logger.debug("check permission to view Customer Card for [" + to + "] FAILED !");
-	                response.customerCard = "";
-	                response.noPermission = '';
-	                c.emit('message',response);
-	                logger.debug("RESP 'dialing' has been sent to [" + to + "] id '" + c.id + "'");
-	                return;
-	        }
-		// construct all customer card for which the user has permission
-	        var str = '';
-		var typesCCObj = {};
-		for(var i=0; i<typesCC.length; i++){
-			typesCCObj[typesCC[i]] = '';
-		}
-	        if(Object.keys(ccArr).length>0){
-			var tempTypeName = '';
-			for(var key in cc_templates){
-				tempTypeName = key.split('.')[0].split('_')[3];
-				if(typesCCObj[tempTypeName]!==undefined){
-					str += ccArr[tempTypeName];
-				}
-			}
-	        }
-	        response.customerCard = str; // add customer card to the response
+        var typesCC = profiler.getTypesCustomerCardPermit(to); // customer card permission of the user
+        logger.debug("[" + to + "] is able to view customer card of types: " + sys.inspect(typesCC));
+        if(typesCC.length===0){ // hasn't the customer card permission
+                logger.debug("check permission to view Customer Card for [" + to + "] FAILED !");
+                response.customerCard = "";
+                response.noPermission = '';
+                return;
+        }
+	// construct all customer card for which the user has permission
+        var str = '';
+	var typesCCObj = {};
+	for(var i=0; i<typesCC.length; i++){
+		typesCCObj[typesCC[i]] = '';
 	}
-        return response;
+        if(Object.keys(ccArr).length>0){
+		var tempTypeName = '';
+		for(var key in cc_templates){
+			tempTypeName = key.split('.')[0].split('_')[3];
+			if(typesCCObj[tempTypeName]!==undefined){
+				str += ccArr[tempTypeName];
+			}
+		}
+        }
+	response.customerCard = str; // add customer card to the response
 }
 
 
@@ -1907,123 +1901,101 @@ am.addListener('userevent', function(headers){
 	}
 });
 
-// It is called from 'UserEvent' event when the call come from outside
+// It is called from 'UserEvent' event when the call come from outside to fill 'currentCallInInfo'
 function fillCurrentCallInInfo(num){
 	if(currentCallInInfo[num]===undefined){
-		getCustomerCardInfoFor(num,'userevent');
+		currentCallInInfo[num] = {};
+		logger.debug("fill currentCallInInfo with call notes and call reservation for number " + num);
+                dataCollector.getCallNotes(num,function(results){ // get call notes
+                        logger.debug(results.length + " call notes for number " + num);
+                        currentCallInInfo[num].callNotes = results; // add call notes to global variable
+                        dataCollector.getExtCallReserved(num,function(results){ // get call reservation
+                                logger.debug(results.length + " call reservation for number " + num);
+                                if(results.length>0 && currentCallInInfo[num]!==undefined){
+                                        currentCallInInfo[num].reservation = {value: true, results: results};
+                                } else if(currentCallInInfo[num]!==undefined){
+                                        currentCallInInfo[num].reservation = {value: false};
+                                }
+                        });
+                });
 	} else {
 		logger.warn('skip fillCurrentCallInInfo because currentCallInInfo['+num+'] != undefined');
 	}
 }
+
+
+
 // Return customer card, call notes and call reservation to client.
 // It is called from GET_VCARD_CC request
 function returnCCToClient(num,client,extFrom,response){
-	getCustomerCardInfoFor(num,'getvcardcc',client,extFrom,response);
-}
-
-// Fill 'currentCallInInfo' when the request come from the 'UserEvent' eventi or
-// fill 'globInfoCC' when the request come from the GET_VCARD_CC request. The info
-// is the customer card, call notes and call reservation
-function getCustomerCardInfoFor(num,typeRequest,client,extFrom,response){
-	var globalContainerToFill = undefined;
-	if(typeRequest==='userevent'){ // use currentCallInInfo
-		globalContainerToFill = currentCallInInfo;
-	} else if(typeRequest==='getvcardcc'){ // use globInfoCC
-		globalContainerToFill = globInfoCC;
-	}
-	globalContainerToFill[num] = {}; // init current data info of the caller
+	var ccToFill = {};
+	ccToFill[num] = {}; // init current data info of the caller
 	// do query for cc, call notes and call reservation 
 	var allTypesCC = profiler.getAllTypesCustomerCard(); // array
-	var obj = {};
 	var customerCardResult = [];
-    	if(typeRequest==='getvcardcc'){ // fill globInfoCC
-		var idTimeoutGetVCardCC = setTimeout(function(){
-			logger.error('timeout reached: get vcard cc by ' + extFrom + ' for num ' + num + ': ' + sys.inspect(globInfoCC[num]));
-			if(client!==undefined && extFrom!==undefined && response!==undefined){
-	                        setResponseWithInfoCCByGetVCardCC(client,num,extFrom,response);
-                                client.emit('message',response);
-                                logger.debug("RESP 'resp_get_vcard_cc' has been sent to [" + extFrom + "] id '" + client.id + "'");
-                                emptyInfoCCByGetVCardCC(num);
-                                logger.debug("empty globInfoCC for number " + num);
-                        } else {
-	                        logger.error("something goes wrong on fill customer card info for number " + num +
-        	                        ": client or extFrom or response is undefined");
-                        }
-		},TIMEOUT_GET_VCARD_CC);
-		// get customer cards
-		for(var i=0, type; type=allTypesCC[i]; i++){
-		    (function(num,type){ // closure
-			dataCollector.getCustomerCard(num, type, function(cc, name) { // get one cc of specified type
-			        if(cc!==undefined){ // insert also server address into query results
-					obj = {};
-					for(var item in cc){
-		                       		cc[item].server_address = "http://" + hostname + ":" + port;
-		                        }
-					obj[name] = cc;
-					customerCardResult.push(obj);
-				} else {
-					customerCardResult.push(cc);
-				}
-		                // check because hangup event can occure before and so currentCallInInfo is empty (in the case of UserEvent)
-				// add customer card html to global variable
-				if(customerCardResult.length===allTypesCC.length && globalContainerToFill[num]!==undefined){ // ex. customerCardResult = [ { default: [ [Object] ] }, { calls: [ [Object] ] } ]
-		        	        globalContainerToFill[num].cc = {};
-		                        var key = '';
-		        		var ccHtml = '';
-		        		for(var w=0, cc; cc=customerCardResult[w]; w++){
-		       			        key = Object.keys(cc)[0];
-		      				ccHtml = createCustomerCardHTML(cc,key,num);
-		       				globalContainerToFill[num].cc[key] = ccHtml;
-					}
-					// get call notes
-				    	dataCollector.getCallNotes(num,function(results){
-						logger.debug(results.length + " call notes for number " + num);
-						globalContainerToFill[num].callNotes = results; // add call notes to global variable
-						// get call reservation
-				    		dataCollector.getExtCallReserved(num,function(results){
-							logger.debug(results.length + " call reservation for number " + num);
-							// add call reservation to global variable
-							if(results.length>0 && globalContainerToFill[num]!==undefined){
-								globalContainerToFill[num].reservation = {value: true, results: results};
-							} else if(globalContainerToFill[num]!==undefined){
-								globalContainerToFill[num].reservation = {value: false};
-							}
-							// remove security timeout for send response to the client
-							clearTimeout(idTimeoutGetVCardCC);
-							// if request come from GET_VCARD_CC request return response to the client
-							if(client!==undefined && extFrom!==undefined && response!==undefined){
-								setResponseWithInfoCCByGetVCardCC(client,num,extFrom,response);
-			                                        client.emit('message',response);
-			                                        logger.debug("RESP 'resp_get_vcard_cc' has been sent to [" + extFrom + "] id '" + client.id + "'");
-			                                        emptyInfoCCByGetVCardCC(num);
-								logger.debug("empty globInfoCC for number " + num);
-							} else {
-								logger.error("something goes wrong on fill customer card info for number " + num +
-									": client or extFrom or response is undefined");
-							}
-						});
-					});
-		                }
-			});
-		    }(num,type)); // closure
-		}
-	} else if(typeRequest==='userevent'){ // fill currentCallInInfo with call notes and call reservation (no customer card)
-		logger.debug("fill currentCallInInfo with call notes and call reservation fro number " + num);
-		// get call notes
-	        dataCollector.getCallNotes(num,function(results){
-			logger.debug(results.length + " call notes for number " + num);
-		        globalContainerToFill[num].callNotes = results; // add call notes to global variable
-	        	// get call reservation
-	                dataCollector.getExtCallReserved(num,function(results){
-				logger.debug(results.length + " call reservation for number " + num);
-	                	// add call reservation to global variable
-	                        if(results.length>0 && globalContainerToFill[num]!==undefined){
-	                        	globalContainerToFill[num].reservation = {value: true, results: results};
-	                        } else if(globalContainerToFill[num]!==undefined){
-	                        	globalContainerToFill[num].reservation = {value: false};
+	var idTimeoutGetVCardCC = setTimeout(function(){
+		logger.error('timeout reached: get vcard cc by ' + extFrom + ' for num ' + num + ': ' + sys.inspect(ccToFill[num]));
+		if(client!==undefined && extFrom!==undefined && response!==undefined){
+                        setResponseWithInfoCCByGetVCardCC(client,num,extFrom,response,ccToFill);
+                        client.emit('message',response);
+                        logger.debug("RESP 'resp_get_vcard_cc' has been sent to [" + extFrom + "] id '" + client.id + "'");
+                } else {
+	                logger.error("something goes wrong on fill customer card info for number " + num +
+       	                ": client or extFrom or response is undefined");
+                }
+	},TIMEOUT_GET_VCARD_CC);
+	// get customer cards
+	for(var i=0, type; type=allTypesCC[i]; i++){
+	    (function(numPassed,typePassed,idTimeoutGetVCardCCPassed,clientPassed){ // closure
+		dataCollector.getCustomerCard(numPassed, typePassed, function(cc, name) { // get one cc of specified type
+		        if(cc!==undefined){ // insert also server address into query results
+				var obj = {};
+				for(var item in cc){
+	                       		cc[item].server_address = "http://" + hostname + ":" + port;
 	                        }
-        	      	});
-	   	});
+				obj[name] = cc;
+				customerCardResult.push(obj);
+			} else {
+				customerCardResult.push(cc);
+			}
+			if(customerCardResult.length===allTypesCC.length && ccToFill[numPassed]!==undefined){ // ex. customerCardResult = [ { default: [ [Object] ] }, { calls: [ [Object] ] } ]
+	        	        ccToFill[numPassed].cc = {};
+	                        var key = '';
+	        		var ccHtml = '';
+	        		for(var w=0, cc; cc=customerCardResult[w]; w++){
+	       			        key = Object.keys(cc)[0];
+	      				ccHtml = createCustomerCardHTML(cc,key,numPassed);
+	       				ccToFill[numPassed].cc[key] = ccHtml;
+				}
+				// get call notes
+			    	dataCollector.getCallNotes(numPassed,function(results){
+					logger.debug(results.length + " call notes for number " + numPassed);
+					ccToFill[numPassed].callNotes = results; // add call notes to global variable
+					// get call reservation
+			    		dataCollector.getExtCallReserved(numPassed,function(resu){
+						logger.debug(resu.length + " call reservation for number " + numPassed);
+						// add call reservation to global variable
+						if(resu.length>0 && ccToFill[numPassed]!==undefined){
+							ccToFill[numPassed].reservation = {value: true, results: resu};
+						} else if(ccToFill[numPassed]!==undefined){
+							ccToFill[numPassed].reservation = {value: false};
+						}
+						// if request come from GET_VCARD_CC request return response to the client
+						if(clientPassed!==undefined && extFrom!==undefined && response!==undefined){
+							setResponseWithInfoCCByGetVCardCC(clientPassed,numPassed,extFrom,response,ccToFill);
+		                                        clientPassed.emit('message',response);
+							// remove security timeout for send response to the client
+							clearTimeout(idTimeoutGetVCardCCPassed);
+		                                        logger.debug("RESP 'resp_get_vcard_cc' has been sent to [" + extFrom + "] id '" + clientPassed.id + "'");
+						} else {
+							logger.error("something goes wrong on fill customer card info for number " + numPassed +
+								": client or extFrom or response is undefined");
+						}
+					});
+				});
+	                }
+		});
+	    }(num,type,idTimeoutGetVCardCC,client)); // closure
 	}
 }
 
