@@ -84,58 +84,93 @@ function getQueries(){
 // delete all entries that contains extFrom or bareJid. Then insert new chat association extFrom=bareJid
 function insertAndUpdateChatAssociation(extFrom,bareJid,cb){
 	var objQuery = queries[CHAT_ASSOCIATION];
+	bareJid = bareJid.replace(/'/g, "\\\'").replace(/"/g, "\\\"");
 	// delete all entries
-	objQuery.query = "delete from chat_association where extension='"+extFrom+"' OR bare_jid='"+bareJid+"';";
+	objQuery.query = "delete from chat_association where extension='"+extFrom+"' OR bare_jid='"+bareJid+"'";
 	executeSQLQuery(CHAT_ASSOCIATION, objQuery, function(results){
 	});
 	// insert new chat association
-	objQuery.query = "insert into chat_association (extension,bare_jid) values ('"+extFrom+"','"+bareJid+"');";
+	objQuery.query = "insert into chat_association (extension,bare_jid) values ('"+extFrom+"','"+bareJid+"')";
 	executeSQLQuery(CHAT_ASSOCIATION, objQuery, function(results){
-                cb(results);
+                try {
+			cb(results);
+		} catch(err){
+                        logger.error("insert and update chat association from " + extFrom + " for barejid " + bareJid + ": "  + err.stack);
+                }
         });
 }
 function getChatAssociation(cb){
 	var objQuery = queries[CHAT_ASSOCIATION];
-	objQuery.query = "select * from chat_association;";
+	objQuery.query = "select * from chat_association";
         executeSQLQuery(CHAT_ASSOCIATION, objQuery, function(results){
-                cb(results);
+                try {
+			cb(results);
+		} catch(err){
+                        logger.error("get chat association: "  + err.stack);
+                }
         });
 }
 // Return extensions that has reserved the call and the reservation date
 function getExtCallReserved(num,cb){
 	var objQuery = queries[CALL_NOTES];
+	num = num.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
 	objQuery.query = "SELECT date_format(date,'%d/%m/%Y') AS date, date_format(date,'%H:%i:%S') AS time, extension FROM call_notes WHERE (number='"+num+"' AND reservation=1 AND expiration>now())";
 	executeSQLQuery(CALL_NOTES,objQuery,function(results){
-		cb(results);
+		try {
+			cb(results);
+		} catch(err){
+                        logger.error("get ext call reservation for num " + num + ": "  + err.stack);
+                }
 	});
 }
 // Execute callback with all call notes for number that aren't expired
 function getCallNotes(num,cb){
 	var objQuery = queries[CALL_NOTES];
+	num = num.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
 	objQuery.query = "select * from call_notes where (number='"+num+"' AND expiration>now())";
 	executeSQLQuery(CALL_NOTES, objQuery, function(results){
-		cb(results);
+		try {
+			cb(results);
+		} catch(err){
+			logger.error("get call notes for num " + num + ": "  + err.stack);
+		}
        	});
 }
 function modifyCallNote(note,pub,expiration,expFormatVal,entryId,reservation,cb){
 	var objQuery = queries[CALL_NOTES];
+	note = note.replace(/'/g, "\\\'").replace(/"/g, "\\\"");
 	objQuery.query = "UPDATE call_notes SET text='"+note+"',public="+pub+",expiration=DATE_ADD(now(),INTERVAL "+expiration+" "+expFormatVal+"),reservation="+reservation+" where id="+entryId;
 	executeSQLQuery(CALL_NOTES, objQuery, function(results){
-		cb(results);
+		try {
+			cb(results);
+		} catch(err) {
+                        logger.error("modify call note for entryId " + entryId + ": "  + err.stack);
+                }
 	});
 }
 function deleteCallNote(id,cb){
 	var objQuery = queries[CALL_NOTES];
+	id = id.replace(/'/g, "\\\'").replace(/"/g, "\\\"");
 	objQuery.query = "delete from " + CALL_NOTES + " where id='"+id+"';";
 	executeSQLQuery(CALL_NOTES, objQuery, function(results){
-		cb(results);
+		try {
+			cb(results);
+		} catch(err) {
+                        logger.error("delete call note id " + id + ": "  + err.stack);
+                }
 	});
 }
 function saveCallNote(note,extension,pub,expiration,expFormatVal,num,reservation,cb){
 	var objQuery = queries[CALL_NOTES];
+	note = note.replace(/'/g, "\\\'").replace(/"/g, "\\\"");
+	num = num.replace(/'/g, "\\\'").replace(/"/g, "\\\"");
 	objQuery.query = "INSERT INTO call_notes (text,extension,number,public,expiration,reservation) VALUES ('"+note+"','"+extension+"','"+num+"',"+pub+",DATE_ADD(now(), INTERVAL "+expiration+" "+expFormatVal+"),"+reservation+")";
 	executeSQLQuery(CALL_NOTES, objQuery, function(results){
-		cb(results);
+		try {
+			cb(results);
+		} catch(err) {
+	                logger.error("save call note for num " + num + ": "  + err.stack);
+                }
 	});
 }
 function getIntervalHistorySms(ext,dateFrom,dateTo,num,cb){
@@ -144,7 +179,11 @@ function getIntervalHistorySms(ext,dateFrom,dateTo,num,cb){
 	objQuery.query = "SELECT id, sender, destination, text, date_format(date,'%d/%m/%Y') AS date, date_format(date,'%H:%i:%S') AS time, status FROM "+DB_TABLE_SMS+" WHERE ( (sender LIKE '"+ext+"') AND (DATE(date)>='"+dateFrom+"' AND DATE(date)<='"+dateTo+"') AND destination like '"+num+"' )";
 	if(objQuery!==undefined){
 		executeSQLQuery(SMS, objQuery, function(results){
-			cb(results);
+			try {
+				cb(results);
+			} catch(err) {
+                                logger.error("get interval history sms ("+dateFrom+" - "+dateTo+") for ext " + ext + " of num " + num + ": "  + err.stack);
+                        }
 		});
 	}
 }
@@ -154,7 +193,11 @@ function getIntervalHistoryCallNotes(ext,dateFrom,dateTo,num,cb){
 	objQuery.query = "SELECT * from "+DB_TABLE_CALLNOTES+" WHERE ((extension="+ext+" AND number like '"+num+"') OR (number like '"+num+"' AND public=1)) AND (DATE(date)>='"+dateFrom+"' AND DATE(date)<='"+dateTo+"') AND expiration>now()";
 	if(objQuery!==undefined){
 		executeSQLQuery(CALL_NOTES, objQuery, function(results){
-			cb(results);
+			try {
+				cb(results);
+			} catch(err) {
+                                logger.error("get interval history call notes ("+dateFrom+" - "+dateTo+") for ext " + ext + " of num " + num + ": "  + err.stack);
+                        }
 		});
 	}
 }
@@ -164,7 +207,11 @@ function getAllNotesForNum(ext,num,cb){
 	objQuery.query = "SELECT * from "+DB_TABLE_CALLNOTES+" WHERE ((extension='"+ext+"' AND number like '"+num+"') OR (number like '"+num+"' AND public=1)) AND expiration>now()";
 	if(objQuery!==undefined){
 		executeSQLQuery(CALL_NOTES, objQuery, function(results){
-	                cb(results);
+	                try {
+				cb(results);
+			} catch(err) {
+                                logger.error("get all notes for ext " + ext + " for num " + num + ": "  + err.stack);
+                        }
                 });
 	}
 }
@@ -174,7 +221,11 @@ function getCurrentMonthHistoryCallNotes(ext, num, cb){
 	objQuery.query = "SELECT * from "+DB_TABLE_CALLNOTES+" WHERE ((extension='"+ext+"' AND number like '"+num+"') OR (number like '"+num+"' AND public=1)) AND (DATE(date)>=(DATE_SUB(CURDATE(), INTERVAL DAYOFMONTH(CURDATE())-1 DAY))) AND expiration>now()";
 	if(objQuery!==undefined){
 		executeSQLQuery(CALL_NOTES, objQuery, function(results){
-			cb(results);
+			try {
+				cb(results);
+			} catch(err) {
+                                logger.error("get current month history call notes for ext " + ext + " of num " + num + ": "  + err.stack);
+                        }
 		});
 	}
 }
@@ -184,7 +235,11 @@ function getCurrentMonthHistorySms(ext, num, cb){
 	objQuery.query = "SELECT id, sender, destination, text, date_format(date,'%d/%m/%Y') AS date, date_format(date,'%H:%i:%S') AS time, status FROM "+DB_TABLE_SMS+" WHERE ( (sender LIKE '"+ext+"') AND (DATE(date)>=(DATE_SUB(CURDATE(), INTERVAL DAYOFMONTH(CURDATE())-1 DAY))) AND destination like '"+num+"'  )";
 	if(objQuery!==undefined){
 		executeSQLQuery(SMS, objQuery, function(results){
-			cb(results);
+			try {
+				cb(results);
+			} catch(err) {
+                                logger.error("get current month history sms for ext " + ext + " of num " + num + ": "  + err.stack);
+                        }
 		});
 	}
 }
@@ -194,7 +249,11 @@ function getCurrentWeekHistoryCallNotes(ext, num, cb){
 	objQuery.query = "SELECT * from "+DB_TABLE_CALLNOTES+" WHERE ((extension='"+ext+"' AND number like '"+num+"') OR (number like '"+num+"' AND public=1)) AND (DATE(date)>=(DATE_SUB(CURDATE(), INTERVAL DAYOFWEEK(CURDATE())-2 DAY))) AND expiration>now()";
 	if(objQuery!==undefined){
 		executeSQLQuery(CALL_NOTES, objQuery, function(results){
-			cb(results);
+			try {
+				cb(results);
+			} catch(err) {
+                                logger.error("get current week history call notes for ext " + ext + " of num " + num + ": "  + err.stack);
+                        }
 		});
 	}
 }
@@ -204,7 +263,11 @@ function getCurrentWeekHistorySms(ext, num, cb){
 	objQuery.query = "SELECT id, sender, destination, text, date_format(date,'%d/%m/%Y') AS date, date_format(date,'%H:%i:%S') AS time, status FROM "+DB_TABLE_SMS+" WHERE ( (sender LIKE '"+ext+"') AND (DATE(date)>=(DATE_SUB(CURDATE(), INTERVAL DAYOFWEEK(CURDATE())-2 DAY))) AND destination like '"+num+"'  )";
 	if(objQuery!==undefined){
 		executeSQLQuery(SMS, objQuery, function(results){
-			cb(results);
+			try {
+				cb(results);
+			} catch(err) {
+                                logger.error("get current week history sms for ext " + ext + " of num " + num + ": "  + err.stack);
+                        }
 		});
 	}
 }
@@ -214,7 +277,11 @@ function getDayHistoryCallNotes(ext, date, num, cb){
 	objQuery.query = "SELECT * from "+DB_TABLE_CALLNOTES+" WHERE ((extension='"+ext+"' AND number like '"+num+"') OR (number like '"+num+"' AND public=1)) AND DATE(date)='"+date+"' AND expiration>now()";
 	if(objQuery!==undefined){
 	        executeSQLQuery(CALL_NOTES, objQuery, function(results){
-			cb(results);
+			try {
+				cb(results);
+			} catch(err) {
+                                logger.error("get day history call notes for ext " + ext + " of num " + num + ": "  + err.stack);
+                        }
 		});
 	}
 	return undefined;
@@ -227,7 +294,11 @@ function getDayHistorySms(ext, date, num, cb){
 	if(objQuery!==undefined){
 	        executeSQLQuery(SMS, objQuery, function(results){
 			var objQuery = queries[SMS];
-			cb(results);
+			try {
+				cb(results);
+			} catch(err) {
+	                        logger.error("get day history sms for ext " + ext + " of num " + num + ": "  + err.stack);
+                	}
 		});
 	}
 	return undefined;
@@ -243,7 +314,11 @@ function registerSmsSuccess(sender, destination, text, cb){
 				logger.error("ERROR in execute query: " + que);
 				logger.error(sys.inspect(err));
 			}
-			cb(results);
+			try {
+				cb(results);
+			} catch(err) {
+                                logger.error("register sms succcess from " + sender + " to " + destination + ": "  + err.stack);
+                        }
 		});
 	}
 	return undefined;
@@ -259,7 +334,11 @@ function registerSmsFailed(sender, destination, text, cb){
 				logger.error("ERROR in execute query: " + que);
 				logger.error(sys.inspect(err));
 			}
-			cb(results);
+			try {
+				cb(results);
+			} catch(err) {
+                                logger.error("register sms failed from " + sender + " to " + destination + ": "  + err.stack);
+                        }
 		});
 	}
 	return undefined;
@@ -269,14 +348,21 @@ function checkListAudioUid(arruid,cb){
 	var objQuery = queries[DAY_HISTORY_CALL];
 	if(objQuery!==undefined){
 		var strListUniqueid = '';
+		var tempUid = '';
 		for(var i=0; i<arruid.length; i++){
-			strListUniqueid += "'" + arruid[i] + "',";
+			tempUid = arruid[i];
+			tempUid = tempUid.replace(/'/g, "\\\'").replace(/"/g, "\\\"");
+			strListUniqueid += "'" + tempUid + "',";
 		}
 		strListUniqueid = strListUniqueid.substring(0,strListUniqueid.length-1);
 		var copyObjQuery = Object.create(objQuery);
-		copyObjQuery.query = "SELECT uniqueid FROM cdr WHERE uniqueid in (" + strListUniqueid + ") AND disposition=\"ANSWERED\""; // substitute query
+		copyObjQuery.query = "SELECT uniqueid FROM cdr WHERE uniqueid in (" + strListUniqueid + ") AND disposition=\"ANSWERED\"";
 		executeSQLQuery(DAY_HISTORY_CALL, copyObjQuery, function(results){
-			cb(results);
+			try {
+				cb(results);
+			} catch(err) {
+				logger.error("check list audio uid (" + arruid.length + " elements): " + err.stack);
+			}
 		});
 	}
 }
@@ -284,11 +370,16 @@ function checkListAudioUid(arruid,cb){
  * return true if it is present, false otherwise */
 function checkAudioUid(uid, filename, cb){
 	var objQuery = queries[DAY_HISTORY_CALL];
+	uid = uid.replace(/'/g, "\\\'").replace(/"/g, "\\\"");
         if(objQuery!==undefined){
                 var copyObjQuery = Object.create(objQuery); // copy object
                 copyObjQuery.query = "SELECT * FROM cdr WHERE uniqueid=\""+uid+"\" AND disposition=\"ANSWERED\""; // substitute query
                 executeSQLQuery(DAY_HISTORY_CALL, copyObjQuery, function(results){ // execute current sql query
-                        cb(results, filename, uid);
+                        try {
+				cb(results, filename, uid);
+			} catch(err) {
+				logger.error("check audio uid " + uid + ": " + err.stack);
+			}
                 });
         }
 }
@@ -450,7 +541,11 @@ getIntervalHistoryCall = function(ext,dateFrom,dateTo,num,cb){
 		num = num.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
 		copyObjQuery.query = copyObjQuery.query.replace(/\$EXTEN/g, ext).replace(/\$DATE_FROM/g,dateFrom).replace(/\$DATE_TO/g,dateTo).replace(/\$NUM/g,num);
 		executeSQLQuery(INTERVAL_HISTORY_CALL, copyObjQuery, function(results){
-			cb(results);
+			try {
+				cb(results);
+			} catch(err) {
+                                logger.error("get interval history call ("+dateFrom+" - "+dateTo+") for ext " + ext + " of num " + num + ": "  + err.stack);
+                        }
 		});
 	}
 	return undefined;
@@ -466,7 +561,11 @@ getCurrentMonthHistoryCall = function(ext, num, cb){
                 copyObjQuery.query = copyObjQuery.query.replace(/\$EXTEN/g, ext).replace(/\$NUM/g, num);
                 // execute current sql query
                 executeSQLQuery(CURRENT_MONTH_HISTORY_CALL, copyObjQuery, function(results){
-                        cb(results);
+                        try {
+				cb(results);
+			} catch(err) {
+                                logger.error("get current month history call for ext " + ext + " of num " + num + ": "  + err.stack);
+                        }
                 });
         }
         return undefined;
@@ -484,7 +583,11 @@ getCurrentWeekHistoryCall = function(ext, num, cb){
                 copyObjQuery.query = copyObjQuery.query.replace(/\$EXTEN/g, ext).replace(/\$NUM/g, num);
                 // execute current sql query
                 executeSQLQuery(CURRENT_WEEK_HISTORY_CALL, copyObjQuery, function(results){
-                        cb(results);
+                        try {
+				cb(results);
+			} catch(err) {
+                                logger.error("get current week history call for ext " + ext + " of num " + num + ": "  + err.stack);
+                        }
                 });
         }
         return undefined;
@@ -502,7 +605,11 @@ getDayHistoryCall = function(ext, date, num, cb){
                 copyObjQuery.query = copyObjQuery.query.replace(/\$EXTEN/g, ext).replace(/\$DATE/g, date).replace(/\$NUM/g, num);
                 // execute current sql query
                 executeSQLQuery(DAY_HISTORY_CALL, copyObjQuery, function(results){
-                        cb(results);
+                        try {
+				cb(results);
+			} catch(err) {
+	                        logger.error("get day history call for ext " + ext + " of num " + num + ": "  + err.stack);
+                	}
                 });
         }
         return undefined;
@@ -519,38 +626,65 @@ getCustomerCard = function(ext, type, cb){
 		ext = ext.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
 		if(copyObjQuery.query===undefined){
 			logger.error('query of \''+section+'\' is empty');
-			cb(undefined);
+			try {
+				cb(undefined);
+			} catch(err) {
+	                        logger.error("get customer card for num " + ext + " of type " + type + ": "  + err.stack);
+                	}
 			return;
 		
 		}
                 copyObjQuery.query = copyObjQuery.query.replace(/\$EXTEN/g, ext);
                 // execute current sql query
                 executeNamedSQLQuery(section, copyObjQuery, type, function(results, type){
-                        cb(results, type);
+                        try {
+				cb(results, type);
+			} catch(err) {
+                                logger.error("get customer card for num " + ext + " of type " + type + ": "  + err.stack);
+                        }
                 });
         } else {
 		logger.error('no query for section \'' + section + '\'');
-		cb(undefined);
+		try {
+			cb(undefined);
+		} catch(err) {
+                        logger.error("get customer card for num " + ext + " of type " + type + ": "  + err.stack);
+                }
 	}
 }
 // Search in the database all phonebook contacts that match the given name
 function getContactsPhonebook(name, cb){
 	var objQuery = queries[PHONEBOOK];
-	if(objQuery!=undefined){
+	if(objQuery!==undefined){
                 var copyObjQuery = Object.create(objQuery); // copy object
 		name = name.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
 		if(copyObjQuery.query===undefined){
 			logger.error('query for \''+PHONEBOOK+'\' not exists');
-			cb(undefined);
+			try {
+				cb(undefined);
+			} catch(err) {
+                	        logger.error("get contacts phonebook for name " + name + ": "  + err.stack);
+        	                console.log("get contacts phonebook for name " + name + ": "  + err.stack);
+	                }
 			return;
 		}
                 copyObjQuery.query = copyObjQuery.query.replace(/\$NAME_TO_REPLACE/g, name); // substitue template field in query
 		executeSQLQuery(PHONEBOOK, copyObjQuery, function(results){
-			cb(results);
+			try {
+				cb(results);
+			} catch(err) {
+                                logger.error("get contacts phonebook for name " + name + ": "  + err.stack);
+                                console.log("get contacts phonebook for name " + name + ": "  + err.stack);
+                        }
 		});
 	} else {
 		logger.error('error in query configuration file for \''+PHONEBOOK+'\'');
-		cb(undefined);
+		try {	
+			cb(undefined);
+		} catch(err) {
+                       logger.error("get contacts phonebook for name " + name + ": "  + err.stack);
+ 	               console.log("get contacts phonebook for name " + name + ": "  + err.stack);
+                }
 	}
 }
 /* Execute one sql query. This function must have 
