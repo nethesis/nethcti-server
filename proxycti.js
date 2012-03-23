@@ -949,7 +949,12 @@ function setResponseWithInfoCCByGetVCardCC(c,from,to,response,containerInfo){
 		for(var key in cc_templates){
 			tempTypeName = key.split('.')[0].split('_')[3];
 			if(typesCCObj[tempTypeName]!==undefined){
-				str += ccArr[tempTypeName];
+				if(ccArr[tempTypeName]!==undefined){
+					str += ccArr[tempTypeName];
+				} else {
+					str += '';
+					logger.error('customer card for num ' + from + ' of type ' + tempTypeName + ' not exist in setResponseWithInfoCCByGetVCardCC');
+				}
 			}
 		}
         }
@@ -1938,12 +1943,13 @@ function returnCCToClient(num,client,extFrom,response){
 		if(client!==undefined && extFrom!==undefined && response!==undefined){
                         setResponseWithInfoCCByGetVCardCC(client,num,extFrom,response,ccToFill);
                         client.emit('message',response);
-                        logger.debug("RESP 'resp_get_vcard_cc' has been sent to [" + extFrom + "] id '" + client.id + "'");
+                        logger.warn("RESP 'resp_get_vcard_cc' has been sent to [" + extFrom + "] id '" + client.id + "'");
                 } else {
 	                logger.error("something goes wrong on fill customer card info for number " + num +
        	                ": client or extFrom or response is undefined");
                 }
 	},TIMEOUT_GET_VCARD_CC);
+	ccToFill[num].cc =  {};
 	// get customer cards
 	for(var i=0, type; type=allTypesCC[i]; i++){
 	    (function(numPassed,typePassed,idTimeoutGetVCardCCPassed,clientPassed){ // closure
@@ -1955,18 +1961,14 @@ function returnCCToClient(num,client,extFrom,response){
 	                        }
 				obj[name] = cc;
 				customerCardResult.push(obj);
+				var ccHtml = createCustomerCardHTML(obj,name,numPassed);
+				ccToFill[numPassed].cc[name] =  ccHtml;
 			} else {
 				customerCardResult.push(cc);
+				ccToFill[numPassed].cc[name] = '';
+				logger.error('some error in getCustomerCard of type ' + typePassed + ' for num ' + numPassed + ': cc is undefined');
 			}
 			if(customerCardResult.length===allTypesCC.length && ccToFill[numPassed]!==undefined){ // ex. customerCardResult = [ { default: [ [Object] ] }, { calls: [ [Object] ] } ]
-	        	        ccToFill[numPassed].cc = {};
-	                        var key = '';
-	        		var ccHtml = '';
-	        		for(var w=0, cc; cc=customerCardResult[w]; w++){
-	       			        key = Object.keys(cc)[0];
-	      				ccHtml = createCustomerCardHTML(cc,key,numPassed);
-	       				ccToFill[numPassed].cc[key] = ccHtml;
-				}
 				// get call notes
 			    	dataCollector.getCallNotes(numPassed,function(results){
 					logger.debug(results.length + " call notes for number " + numPassed);
