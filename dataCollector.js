@@ -664,7 +664,6 @@ function getContactsPhonebook(name, cb){
 				cb(undefined);
 			} catch(err) {
                 	        logger.error("get contacts phonebook for name " + name + ": "  + err.stack);
-        	                console.log("get contacts phonebook for name " + name + ": "  + err.stack);
 	                }
 			return;
 		}
@@ -674,7 +673,6 @@ function getContactsPhonebook(name, cb){
 				cb(results);
 			} catch(err) {
                                 logger.error("get contacts phonebook for name " + name + ": "  + err.stack);
-                                console.log("get contacts phonebook for name " + name + ": "  + err.stack);
                         }
 		});
 	} else {
@@ -683,7 +681,6 @@ function getContactsPhonebook(name, cb){
 			cb(undefined);
 		} catch(err) {
                        logger.error("get contacts phonebook for name " + name + ": "  + err.stack);
- 	               console.log("get contacts phonebook for name " + name + ": "  + err.stack);
                 }
 	}
 }
