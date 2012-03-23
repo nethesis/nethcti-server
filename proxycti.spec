@@ -1,5 +1,5 @@
 Name:		proxycti
-Version:	1.1.1
+Version:	1.1.2
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI	
 
@@ -74,6 +74,13 @@ ln -s /usr/lib/node/proxycti/sql/update.sh /etc/e-smith/sql/init/20cti_update
 
 
 %changelog
+* Fri Mar 23 2012  Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.1.2-1nh
+- Do not crash if '/var/spool/asterisk/voicemail/default' does not exists (#869)
+- Better customer card error handling
+- Fix #892, #898, #859, #902
+- Update documentation
+
+
 * Mon Mar 12 2012  Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.1.1-1nh
 - Customer card bug fix
 - Load customer card only on client request
