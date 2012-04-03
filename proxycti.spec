@@ -76,6 +76,7 @@ ln -s /usr/lib/node/proxycti/sql/update.sh /etc/e-smith/sql/init/20cti_update
 %changelog
 * Tue Apr 03 2012  Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.1.3-1nh
 - Fix #970: manage recording audio file splitted in 'in' and 'out': mix them into only one file
+- Restart proxycti after logrotate
 
 * Fri Mar 23 2012  Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.1.2-1nh
 - Do not crash if '/var/spool/asterisk/voicemail/default' does not exists (#869)
