@@ -3,4 +3,13 @@
         rotate 5
         notifempty
         weekly
+	copytruncate
+\}
+
+/var/log/asterisk/proxycti.log \{
+        missingok
+        rotate 5
+        notifempty
+        weekly
+	copytruncate
 \}
