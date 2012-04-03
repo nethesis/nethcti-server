@@ -20,6 +20,8 @@ for my $event (qw(pre-backup))
     event_link("proxycti-backup", $event, "89");
 }
 
+$event = 'logrotate'
+safe_symlink("restart", "root/etc/e-smith/events/$event/services2adjust/proxycti");
 
 $event = "proxycti-update";
 event_link("proxycti-configure", $event, 10);
