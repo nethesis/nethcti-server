@@ -1,5 +1,6 @@
 var ast = require('./asterisk');
 var net = require('net');
+var execreq = require('child_process').exec;
 var dataReq = require("./dataCollector.js");
 var proReq = require("./profiler.js");
 var authReq = require("./authenticator.js");
@@ -178,7 +179,7 @@ controller.addDir(AST_CALL_AUDIO_DIR);
 controller.addListener('change_dir', function(dir){
 	logger.debug("EVENT 'chang_dir' by controller relative to directory '"+dir+"'");
 	if(dir==AST_CALL_AUDIO_DIR){
-		logger.info("update audio file list");
+		logger.debug("update audio file list");
 		createAudioFileList();
 	}
 });
@@ -266,8 +267,11 @@ function createAudioFileList(){
 		asyncReq = false; // tell if the filename need an asynchronous request to db
                 uid = undefined;
                 filename = temp[i];
-                if(filename.substring(0,5)===START_AUDIO_FILE){ // filename start with 'auto-'
+                if(filename.substring(0,5)===START_AUDIO_FILE){ // filename start with 'auto-' auto-273-271-20120402-152324-1333373001.34-out.wav or auto-273-271-20120402-152324-1333373001.34.wav
                         uid = filename.split("-")[5];
+			if(uid.substring(uid.length-4,uid.length)==='.wav'){ // audio file mix is prensent so there is auto-273-271-20120402-152324-1333373001.34.wav without 'in' or 'out' tag
+				uid = uid.substring(0,uid.length-4);
+			}
                 } else if(filename.substring(0,3)==="OUT" || filename.substring(0,2)==="IN"){ // filename start with 'OUT' or 'IN'
                         uid = filename.split("-")[3];
                         uid = uid.split(".")[0] + "." + uid.split(".")[1];
@@ -3369,6 +3373,7 @@ io.sockets.on('connection', function(client){
 					var hhmmss = hh + "" + mm + "" + ss;
 	  				var filename = START_AUDIO_FILE + message.callFromExt + "-" + message.callToExt + "-" + yyyyMMdd + "-" + hhmmss + "-" + uniqueid; 
 	  				// create record action for asterisk server
+					// 2 file: in and out
 			  		var actionRecord = {
 						Action: 'Monitor',
 						Channel: channel,
@@ -3910,25 +3915,65 @@ io.sockets.on('connection', function(client){
 				}
 			break;
 			case actions.CHECK_CALL_AUDIO_FILE:
-				// check if there are some audio file with particular uniqueid
-				var uniqueid = message.uniqueid;
-				var audioFiles = [];
-				fs.readdir(AST_CALL_AUDIO_DIR, function(err, files){					
-					if(err){
-						logger.error('ERROR reading \'' + AST_CALL_AUDIO_DIR + '\': ' + sys.inspect(err));
-						return;
+				try{
+					// check if there are some audio file with particular uniqueid
+					var uniqueid = message.uniqueid;
+					if(audioFileList[uniqueid]!==undefined){
+						var filename = audioFileList[uniqueid];
+						var dir = filename.split('-');
+	                                        dir = dir[dir.length-1];
+						var name = filename.substring(0,filename.length-dir.length-1);
+						var filepathIn = pathreq.join(AST_CALL_AUDIO_DIR, name + "-in.wav");
+						var filepathOut = pathreq.join(AST_CALL_AUDIO_DIR, name + "-out.wav");
+						if(pathreq.existsSync(filepathIn) && pathreq.existsSync(filepathOut)){
+							var filenamemix = name + '.wav';
+	                                                var filepathmix = pathreq.join(AST_CALL_AUDIO_DIR,filenamemix);
+	                                                var tool = 'soxmix';
+	                                                var cmd = tool + " " + filepathIn + " " + filepathOut + " " + filepathmix;
+	                                                logger.debug("try to create audio file mix " + filepathmix);
+	                                                var childcmd = execreq(cmd,function(err,stdout,stderr){
+	  	                                              if(err){
+	        	                                              logger.error("create audio file mix with command " + tool + ": " + err.stack);
+	                                                      }
+	                                                });
+							(function(pMix,fMix,pIn,pOut,cl,child,ext){
+	                                                	child.on('exit',function(){
+		                                                	if(pathreq.existsSync(pMix)){ // check existance of created audio file mix
+		        	                                                logger.debug("audio file mix created succesfully: " + pMix);
+										// delete 'in' and 'out' file
+										try{
+											fs.unlinkSync(pIn);
+											fs.unlinkSync(pOut);
+											logger.debug("deleted audio file " + pIn + " and " + pOut + " during creation of audio mix file");
+										} catch(err) {
+											logger.error("deleting audio file " + pIn + " or " + pOut + " during creation of audio mix file: " + err.stack);
+										}
+		                                                                var audioFiles = [];
+		                                                                audioFiles.push(fMix);
+		                                                                var mess = new ResponseMessage(cl.id, "audio_file_call_list", "received list of audio file of call");
+		                                                                mess.results = audioFiles;
+		                                                                cl.emit('message',mess);
+		                                                                logger.debug("RESP 'audio_file_call_list' (" + audioFiles.length + " files) has been sent to [" + ext + "] id '" + cl.id + "'");
+		                                                        } else {
+			                                                        logger.error("audio file mix " + pMix + " doesn't exist after its creation attempt");
+		                                                        }
+		                                                });
+							}(filepathmix,filenamemix,filepathIn,filepathOut,client,childcmd,extFrom));
+	                                        } else {
+							var audioFiles = [];
+	                                                audioFiles.push(filename);
+							var mess = new ResponseMessage(client.id, "audio_file_call_list", "received list of audio file of call");
+							mess.results = audioFiles;
+							client.emit('message',mess);
+							logger.debug("RESP 'audio_file_call_list' (" + audioFiles.length + " files) has been sent to [" + extFrom + "] id '" + client.id + "'");
+		                                }
+					} else {
+						logger.error("received check call audio file for uniqueid " + uniqueid + " not present in audioFileList");
 					}
-					for(i=0; i<files.length; i++){
-						if( (files[i].indexOf(uniqueid))!=-1 ){
-							audioFiles.push(files[i]);
-						}
-					}	
-					var mess = new ResponseMessage(client.id, "audio_file_call_list", "received list of audio file of call");
-	                                mess.results = audioFiles;
-	                                client.emit('message',mess);
-	                                logger.debug("RESP 'audio_file_call_list' (" + audioFiles.length + " files) has been sent to [" + extFrom + "] id '" + client.id + "'");
-				});	
-                        break;
+				} catch(err){
+					logger.error("in check_call_audio_file: " + err.stack);	
+				}
+	                break;
 			case actions.GET_PEER_LIST_COMPLETE_OP:
 				/* Set the global variables 'extToReturnExtStatusForOp' and 'clientToReturnExtStatusForOp' because 
 				 * 'extStatusForOp' is returned to the client when the event 'ParkedCallsComplete' is emitted */
