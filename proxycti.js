@@ -1943,7 +1943,7 @@ function returnCCToClient(num,client,extFrom,response){
 	var allTypesCC = profiler.getAllTypesCustomerCard(); // array
 	var customerCardResult = [];
 	var idTimeoutGetVCardCC = setTimeout(function(){
-		logger.error('timeout reached: get vcard cc by ' + extFrom + ' for num ' + num + ': ' + sys.inspect(ccToFill[num]));
+		logger.error('timeout reached: get vcard cc by ' + extFrom + ' for num ' + num + ': ' + sys.inspect(Object.keys(ccToFill[num])));
 		if(client!==undefined && extFrom!==undefined && response!==undefined){
                         setResponseWithInfoCCByGetVCardCC(client,num,extFrom,response,ccToFill);
                         client.emit('message',response);
