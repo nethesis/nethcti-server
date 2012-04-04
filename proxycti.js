@@ -4543,20 +4543,12 @@ function createHistoryCallResponse(results){
     uniqueid: '1303810692.18',
     userfield: '' },
     ...] */
-	for(i=0; i<results.length; i++){		
+	for(var i=0; i<results.length; i++){
 		var currRes = results[i];
 		var temp = {};
-		temp.date = currRes.date;
-		temp.time = currRes.time;
-		temp.clid = currRes.clid;
-		temp.src = currRes.src;
-		temp.dst = currRes.dst;
-		temp.channel = currRes.channel;
-		temp.dstchannel = currRes.dstchannel;
-		temp.duration = currRes.duration;
-		temp.billsec = currRes.billsec;
-		temp.disposition = currRes.disposition;
-		temp.uniqueid = currRes.uniqueid;
+		for(var key in currRes){
+			temp[key] = currRes[key];
+		}
 		if(audioFileList[currRes.uniqueid]!==undefined){
 			temp.recording = true;
 		} else {
