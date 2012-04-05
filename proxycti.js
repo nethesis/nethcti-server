@@ -2528,6 +2528,8 @@ io.sockets.on('connection', function(client){
 			PARKING_PICKUP: 'parking_pickup',
 			GET_CALL_NOTES:	'get_call_notes',
 			HANGUP_UNIQUEID:'hangup_uniqueid',
+			START_RECORD_CHANNEL:	'start_record_channel',
+			STOP_RECORD_CHANNEL:	'stop_record_channel',
 			SPY_LISTEN_SPEAK:   	'spy_listen_speak',
 			SAVE_NOTE_OF_CALL:	'save_note_of_call',
 			DELETE_CALL_NOTE:	'delete_call_note',
@@ -3283,6 +3285,90 @@ io.sockets.on('connection', function(client){
   					logger.debug("RESP 'error_search_contacts' has been sent to [" + extFrom + "] id '" + client.id + "'");
 	  			}
 	  		break;
+			case actions.START_RECORD_CHANNEL:
+				try {
+					if(profiler.checkActionRecordPermit(extFrom)){
+						logger.debug("check 'record' permission for [" + extFrom + "] OK: record...");
+						var callFromExt = message.callFromExt;
+						var callToExt = message.callToExt;
+						var fromuid = message.fromuid;
+						var destuid = message.destuid;
+						var uidForName = '';
+						if(fromuid!==''){
+							uidForName = fromuid;
+						} else {
+							uidForName = destuid;
+						}
+						// create filename
+	                                        var d = new Date();
+	                                        var yyyy = d.getFullYear();
+	                                        var mm = (d.getUTCMonth()+1); if(mm<10) mm = '0' + mm;
+	                                        var dd = d.getUTCDate();      if(dd<10) dd = '0' + dd;
+	                                        var yyyyMMdd = yyyy + "" + mm + "" + dd;
+	                                        var hh = d.getHours(); if(hh<10) hh = '0' + hh;
+	                                        var mm = d.getMinutes(); if(mm<10) mm = '0' + mm;
+						var ss = d.getSeconds(); if(ss<10) ss = '0' + ss;
+	                                        var hhmmss = hh + "" + mm + "" + ss;
+	                                        var filename = START_AUDIO_FILE + callFromExt + "-" + callToExt + "-" + yyyyMMdd + "-" + hhmmss + "-" + uidForName;
+	                                        // create record action for asterisk server - 2 file: in and out
+						var ch = message.chToRecord;
+	                                        var actionRecord = {
+	                                                Action: 'Monitor',
+	                                                Channel: ch,
+	                                                File: filename,
+	                                                Mix: 1
+	                                        };
+						var callFromTypeExt = 'SIP/' + callFromExt;
+	                                        var callToTypeExt = 'SIP/' + callToExt;
+						try{
+	                                                am.send(actionRecord, function () {
+								try{
+		                                                        logger.debug("'actionRecord' " + sys.inspect(actionRecord) + " has been sent to AST");
+		                                                        var msg = new ResponseMessage(client.id,'ack_record','');
+		                                                        msg.extRecord = callFromExt;
+		                                                        client.emit('message',msg);
+		                                                        logger.debug("RESP 'ack_record' has been sent to [" + extFrom + "] id '" + client.id + "'");
+									// update info
+									if(fromuid!='' && chStat[fromuid]!==undefined){
+			                                                        chStat[fromuid].record = 1;
+			                                                        if(modop.isTypeExtPresent(callFromTypeExt)){
+			                                                                if(modop.hasInternCallConnectedUniqueidWithTypeExt(callFromTypeExt,fromuid)){
+			                                                                        modop.updateCallConnectedUniqueidInternWithTypeExt(callFromTypeExt,fromuid,chStat[fromuid]);
+			                                                                }
+			                                                                if(modop.hasInternDialingUniqueidWithTypeExt(callFromTypeExt,fromuid)){
+			                                                                        modop.updateDialingUniqueidInternWithTypeExt(callFromTypeExt,fromuid,chStat[fromuid]);
+			                                                                }
+			                                                                updateAllClientsForOpWithTypeExt(callFromTypeExt);
+			                                                        }
+									}
+									if(destuid!=='' && chStat[destuid]!==undefined){
+			                                                        chStat[destuid].record = 1;
+			                                                        if(modop.isTypeExtPresent(callToTypeExt)){
+			                                                                if(modop.hasInternCallConnectedUniqueidWithTypeExt(callToTypeExt,destuid)){
+			                                                                        modop.updateCallConnectedUniqueidInternWithTypeExt(callToTypeExt,destuid,chStat[destuid]);
+			                                                                }
+			                                                                if(modop.hasInternDialingUniqueidWithTypeExt(callToTypeExt,destuid)){
+			                                                                        modop.updateDialingUniqueidInternWithTypeExt(callToTypeExt,destuid,chStat[destuid]);
+			                                                                }
+			                                                                updateAllClientsForOpWithTypeExt(callToTypeExt);
+			                                                        }
+									}
+								} catch(err){
+									logger.error("callback of action record: " + err.stack);
+								}
+							});
+						} catch(err) {
+                	                                logger.error("no connection to asterisk in start record channel request: " + err.stack);
+        	                                }
+					} else {
+	                                        logger.debug("check 'record' permission for [" + extFrom + "] FAILED !");
+	                                        client.emit('message',new ResponseMessage(client.id, "error_record", ""));
+	                                        logger.debug("RESP 'error_record' has been sent to [" + extFrom + "] id '" + client.id + "'");
+	                                }
+				} catch(err) {
+					logger.error("in start record channel: " + err.stack);
+				}
+			break;
 	  		case actions.RECORD:
 	  			// check if the user has the permission of dial out
 				if(profiler.checkActionRecordPermit(extFrom)){
@@ -3423,6 +3509,60 @@ io.sockets.on('connection', function(client){
 			  		logger.debug("RESP 'error_record' has been sent to [" + extFrom + "] id '" + client.id + "'");
 	  			}	
 	  		break;
+			case actions.STOP_RECORD_CHANNEL:
+				try{
+					var chToStopRecord = message.chToStopRecord;
+					var actionStopRecord = {
+	                                        Action: 'StopMonitor',
+	                                        Channel: chToStopRecord
+	                                };
+					var fromuid = message.fromuid;
+					var destuid = message.destuid;
+					var callFromTypeExt = 'SIP/' + message.callFromExt;
+					var callToTypeExt = 'SIP/' + message.callToExt;
+					try {	
+						am.send(actionStopRecord, function () {
+							try {
+								logger.debug("'actionStopRecord' " + sys.inspect(actionStopRecord) + " has been sent to AST");
+								var msg = new ResponseMessage(client.id, 'ack_stoprecord', '');
+		                                                client.emit('message',msg,'');
+		                                                logger.debug("RESP 'ack_stoprecord' has been sent to [" + extFrom + "] id " + client.id);
+								// update info
+								if(fromuid!=='' && chStat[fromuid]!==undefined){
+			                                                chStat[fromuid].record = 0;
+			                                                if(modop.isTypeExtPresent(callFromTypeExt)){
+			                                                        if(modop.hasInternCallConnectedUniqueidWithTypeExt(callFromTypeExt,fromuid)){
+			                                                                modop.updateCallConnectedUniqueidInternWithTypeExt(callFromTypeExt, fromuid, chStat[fromuid]);
+			                                                        }
+			                                                        if(modop.hasInternDialingUniqueidWithTypeExt(callFromTypeExt,fromuid)){
+			                                                                modop.updateDialingUniqueidInternWithTypeExt(callFromTypeExt,fromuid,chStat[fromuid]);
+			                                                        }
+			                                                        updateAllClientsForOpWithTypeExt(callFromTypeExt);
+		        	                                        }
+								}
+								if(destuid!=='' && chStat[destuid]!==undefined){
+				                                        chStat[destuid].record = 0;
+			                                                if(modop.isTypeExtPresent(callToTypeExt)){
+			                                                        if(modop.hasInternCallConnectedUniqueidWithTypeExt(callToTypeExt,destuid)){
+			                                                                modop.updateCallConnectedUniqueidInternWithTypeExt(callToTypeExt, destuid, chStat[destuid]);
+			                                                        }
+			                                                        if(modop.hasInternDialingUniqueidWithTypeExt(callToTypeExt,destuid)){
+			                                                                modop.updateDialingUniqueidInternWithTypeExt(callToTypeExt,destuid,chStat[destuid]);
+			                                                        }
+			                                                        updateAllClientsForOpWithTypeExt(callToTypeExt);
+			                                                }
+								}
+							} catch(err) {
+								logger.error("in callback of stop record action: " + err.stack);
+							}
+						});
+					} catch(err) {
+	                                        logger.error("no connection to asterisk in stop record request: " + err.stack);
+	                        	}
+				} catch(err) {
+					logger.error('in stop record channel request: ' + err.stack);
+				}
+			break;
 	  		case actions.STOP_RECORD:
   				// get channel
   				var channel = ''
