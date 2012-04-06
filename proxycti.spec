@@ -1,5 +1,5 @@
 Name:		proxycti
-Version:	1.1.4
+Version:	1.1.5
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI	
 
@@ -13,7 +13,7 @@ BuildRequires:	e-smith-devtools
 Requires:	nodejs
 Requires:	node-forever
 Requires:	smeserver-ejabberd
-Requires:       nethcti-module >= 1.1.2
+Requires:       nethcti-module >= 1.1.3
 AutoReq:	no
 
 %description
@@ -74,6 +74,9 @@ ln -s /usr/lib/node/proxycti/sql/update.sh /etc/e-smith/sql/init/20cti_update
 
 
 %changelog
+* Fri Apr 05 2012  Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.1.5-1nh
+- Bug #1000: add two functions to manage start/stop recording using channel.
+
 * Wed Apr 04 2012  Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.1.4-1nh
 - Fix #986: Add 'dcontext' field to results of the history
 
