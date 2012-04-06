@@ -1461,8 +1461,10 @@ am.addListener('callconnected', function(headers) {
 	var d = new Date();
 	chStat[tempUniqueid1].destCh = headers.channel2;
 	chStat[tempUniqueid1].startDate = d;
+	chStat[tempUniqueid1].otheruid = headers.uniqueid2;
 	chStat[tempUniqueid2].destCh = headers.channel1;
 	chStat[tempUniqueid2].startDate = d;
+	chStat[tempUniqueid2].otheruid = headers.uniqueid1;
 	/* when redirect:
 	chStat = { '1308664818.896': { channel: 'AsyncGoto/SIP/270-000002df' },
 	  '1308664819.897': 
@@ -3293,12 +3295,7 @@ io.sockets.on('connection', function(client){
 						var callToExt = message.callToExt;
 						var fromuid = message.fromuid;
 						var destuid = message.destuid;
-						var uidForName = '';
-						if(fromuid!==''){
-							uidForName = fromuid;
-						} else {
-							uidForName = destuid;
-						}
+						var uidForFilename = message.uidForFilename;
 						// create filename
 	                                        var d = new Date();
 	                                        var yyyy = d.getFullYear();
@@ -3309,7 +3306,7 @@ io.sockets.on('connection', function(client){
 	                                        var mm = d.getMinutes(); if(mm<10) mm = '0' + mm;
 						var ss = d.getSeconds(); if(ss<10) ss = '0' + ss;
 	                                        var hhmmss = hh + "" + mm + "" + ss;
-	                                        var filename = START_AUDIO_FILE + callFromExt + "-" + callToExt + "-" + yyyyMMdd + "-" + hhmmss + "-" + uidForName;
+	                                        var filename = START_AUDIO_FILE + callFromExt + "-" + callToExt + "-" + yyyyMMdd + "-" + hhmmss + "-" + uidForFilename;
 	                                        // create record action for asterisk server - 2 file: in and out
 						var ch = message.chToRecord;
 	                                        var actionRecord = {
