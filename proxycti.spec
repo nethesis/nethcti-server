@@ -1,5 +1,5 @@
 Name:		proxycti
-Version:	1.1.5
+Version:	1.1.6
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI	
 
@@ -74,6 +74,9 @@ ln -s /usr/lib/node/proxycti/sql/update.sh /etc/e-smith/sql/init/20cti_update
 
 
 %changelog
+* Tue Apr 10 2012  Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.1.6-1nh
+- Bug #1009: discard audio filename starting with 'auto-' and without well-know format. 
+
 * Fri Apr 05 2012  Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.1.5-1nh
 - Bug #1000: add two functions to manage start/stop recording using channel.
 
