@@ -254,6 +254,7 @@ createAudioFileList();
  * In this last case, the function attempt to find uniqueid field (third field of filename) in 'cdr' table of 'asteriskcdrdb' db.
  * This request is asynchronous. In the case of unknown  format of audio file, one warning log is added to log file */
 function createAudioFileList(){
+    try {
 	logger.debug('start creation of audio file list present in ' + AST_CALL_AUDIO_DIR);
 	audioFileList = {};
         var temp = fs.readdirSync(AST_CALL_AUDIO_DIR);
@@ -264,17 +265,20 @@ function createAudioFileList(){
 	var listUniqueIdQuery = [];
 	var tempAssocQueryUniqueId = {};
         for(var i=0; i<temp.length; i++){
+	    try{
 		asyncReq = false; // tell if the filename need an asynchronous request to db
                 uid = undefined;
                 filename = temp[i];
                 if(filename.substring(0,5)===START_AUDIO_FILE){ // filename start with 'auto-' auto-273-271-20120402-152324-1333373001.34-out.wav or auto-273-271-20120402-152324-1333373001.34.wav
                         uid = filename.split("-")[5];
-			if(uid.substring(uid.length-4,uid.length)==='.wav'){ // audio file mix is prensent so there is auto-273-271-20120402-152324-1333373001.34.wav without 'in' or 'out' tag
+			if(uid!==undefined && uid.substring(uid.length-4,uid.length)==='.wav'){ // audio file mix is prensent so there is auto-273-271-20120402-152324-1333373001.34.wav without 'in' or 'out' tag
 				uid = uid.substring(0,uid.length-4);
 			}
                 } else if(filename.substring(0,3)==="OUT" || filename.substring(0,2)==="IN"){ // filename start with 'OUT' or 'IN'
                         uid = filename.split("-")[3];
-                        uid = uid.split(".")[0] + "." + uid.split(".")[1];
+			if(uid!==undefined){
+	                        uid = uid.split(".")[0] + "." + uid.split(".")[1];
+			}
                 } else if(uid===undefined) { // filename unknown: try to search in DB 'cdr'
 			if(filename.split('-')[3]!==undefined && filename.split('-')[3].indexOf('.wav')!==-1){ // g203-20120306-080207-1331017327.24998.wav
 				uid = filename.split("-")[3];
@@ -298,6 +302,9 @@ function createAudioFileList(){
 		} else {
 			//logger.debug("unknown format of audio filename \"" + filename + "\": attempt to find it in db 'cdr' with async request...");
 		}
+	    } catch(err){
+		logger.error("cycle of createAudioFileList: " + err.stack);
+    	    }
         }
 	logger.debug("recognized audio file record: "  + Object.keys(audioFileList).length);
 	logger.debug("unknown audio file record (discarded): "  + countUnknown);
@@ -319,6 +326,9 @@ function createAudioFileList(){
 		logger.debug('audio file record in memory: ' + Object.keys(audioFileList).length);
 		logger.debug('end of creation audio file list');
 	},5000);
+    } catch(err) {
+	logger.error(err.stack);
+    }
 }
 
 // initialize chatAssociation global variable
