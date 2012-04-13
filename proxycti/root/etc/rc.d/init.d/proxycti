@@ -21,6 +21,7 @@ LOGFILE=/var/log/forever_$prog.log
 lockfile=/var/lock/subsys/$prog
 
 start() {
+    /bin/touch $LOGFILE 2>/dev/null
     /bin/chown asterisk:asterisk $LOGFILE 2>/dev/null
     /bin/chown asterisk:asterisk /var/log/asterisk/proxycti.log 2>/dev/null
     echo -n $"Starting $prog: "
