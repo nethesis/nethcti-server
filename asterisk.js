@@ -199,6 +199,9 @@ exports.AsteriskManager = function (newconfig) {
         else if (config.version == '1.6')
         {
              switch (headers.event) {
+		case "UnParkedCall":
+			self.emit('unparkedcalls', headers);
+		break;
 		/* Added by Alessandro
 		 * This event is used to obtain all channels ant their status. 
 		 * It is emitted after "Action: CoreShowChannels" command*/

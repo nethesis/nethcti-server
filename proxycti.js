@@ -599,6 +599,29 @@ EVENT 'NewCallerid': headers '{ event: 'NewCallerid',
 am.addListener('newcallerid', function(headers){
 	logger.debug("EVENT 'NewCallerid': headers '" + sys.inspect(headers) +  "'")	
 })
+
+/*
+{ event: 'UnParkedCall',
+  privilege: 'call,all',
+  exten: '71',
+  channel: 'SIP/271-000000c6',
+  from: 'SIP/270-000000c8',
+  calleridnum: '271',
+  calleridname: 'Alessandrotest2' }
+*/
+am.addListener('unparkedcalls', function(headers) {
+	try {
+		var t_ext;
+		logger.debug("EVENT 'UnParkedCalls': headers " + sys.inspect(headers));
+		t_ext = 'PARK' + headers.exten;
+		modop.updateEndParkExtStatus(t_ext);
+		updateAllClientsForOpWithTypeExt(t_ext);
+	} catch (err) {
+		logger.error('Error in UnParkedCalls event: ' + err.message);
+		logger.error(err.stack);
+	}
+});
+
 /* call come from soft phone
 EVENT 'Dialing': headers '{ event: 'Dial',
   privilege: 'call,all',
@@ -1592,6 +1615,16 @@ am.addListener('callconnected', function(headers) {
 
 		// add uniqueid of intern 'headers.channel1' to intern itself, if it isn't already been added
 		var internTypeExt = modop.getInternTypeExtFromChannel(headers.channel1)
+
+		// when an extension take a parked call with only the telephone, dialing event never fired. So
+		// here add dialDirection and dialExt properties
+		if (chStat[tempUniqueid1].dialDirection === undefined &&
+			chStat[tempUniqueid1].dialExt === undefined &&
+			headers.callerid2 !== undefined) {
+
+			chStat[tempUniqueid1].dialDirection = 0; // incoming call for channel 2
+			chStat[tempUniqueid1].dialExt = headers.callerid2;
+		}
 		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt, tempUniqueid1)){
 			modop.removeDialingUniqueidInternWithTypeExt(internTypeExt, tempUniqueid1);
 			logger.debug("removed dialingUniqueid '" + tempUniqueid1 + "' from internTypeExt '" + internTypeExt + "'");
@@ -1602,6 +1635,7 @@ am.addListener('callconnected', function(headers) {
 			logger.debug("added callConnectedUniqueid '" + tempUniqueid1 + "' into intern '" + internTypeExt + "'");
 		} else
 			logger.debug("callConnectedUniqueid '" + tempUniqueid1 + "' has already present into intern '" + internTypeExt  + "'");
+
 		updateAllClientsForOpWithTypeExt(internTypeExt);
 	}
 
@@ -1630,6 +1664,7 @@ am.addListener('callconnected', function(headers) {
 
 		// add uniqueid of intern 'headers.channel2' to intern itself, if it isn't already been added
 		var internTypeExt = modop.getInternTypeExtFromChannel(headers.channel2)
+
 		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt, tempUniqueid2)){
 			modop.removeDialingUniqueidInternWithTypeExt(internTypeExt, tempUniqueid2);
 			logger.debug("removed dialingUniqueid '" + tempUniqueid2 + "' from internTypeExt '" + internTypeExt + "'");
@@ -1640,6 +1675,7 @@ am.addListener('callconnected', function(headers) {
 			logger.debug("added callConnectedUniqueid '" + tempUniqueid2 + "' into intern '" + internTypeExt + "'");
 		} else
 			logger.debug("callConnectedUniqueid '" + tempUniqueid2 + "' has already present into intern '" + internTypeExt  + "'");
+
 		updateAllClientsForOpWithTypeExt(internTypeExt);
 	}
 

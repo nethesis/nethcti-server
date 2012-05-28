@@ -492,6 +492,8 @@ function updateVMCountWithExt(ext,count){
 function updateEndParkExtStatus(parking){
 	delete extStatusForOp[parking].parkedCall;
 	delete extStatusForOp[parking].parkFrom;
+	delete extStatusForOp[parking].parkedUniqueid;
+	delete extStatusForOp[parking].timeout;
 }
 
 function updateParkExtStatus(parking, uniqueid, extParked, parkFrom, timeout){
