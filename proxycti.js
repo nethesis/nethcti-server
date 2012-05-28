@@ -1622,6 +1622,7 @@ am.addListener('callconnected', function(headers) {
 			chStat[tempUniqueid1].dialExt === undefined &&
 			headers.callerid2 !== undefined) {
 
+			logger.debug('add caller info: probably take parked call through the phone');
 			chStat[tempUniqueid1].dialDirection = 0; // incoming call for channel 2
 			chStat[tempUniqueid1].dialExt = headers.callerid2;
 		}
@@ -1702,6 +1703,17 @@ am.addListener('callconnected', function(headers) {
 	if(modop.isChannelIntern(headers.channel1) && modop.isChannelIntern(headers.channel2)){
 		// channel 1
 		var internTypeExt1 = modop.getInternTypeExtFromChannel(headers.channel1);
+		// when an extension take a parked call with only the telephone, dialing event never fired. So
+                // here add dialDirection and dialExt properties
+                if (chStat[tempUniqueid1].dialDirection === undefined &&
+                        chStat[tempUniqueid1].dialExt === undefined &&
+                        headers.callerid2 !== undefined) {
+
+			logger.debug('add caller info: probably take parked call through the phone');
+                        chStat[tempUniqueid1].dialDirection = 0; // incoming call for channel 2
+                        chStat[tempUniqueid1].dialExt = headers.callerid2;
+                }
+
 		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt1, tempUniqueid1)){
 			modop.removeDialingUniqueidInternWithTypeExt(internTypeExt1, tempUniqueid1);
 			logger.debug("removed dialingUniqueid '" + tempUniqueid1 + "' from internTypeExt '" + internTypeExt1 + "'");
