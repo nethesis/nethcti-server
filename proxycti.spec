@@ -1,5 +1,5 @@
 Name:		proxycti
-Version:	1.1.6
+Version:	1.1.7
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI	
 
@@ -74,6 +74,12 @@ ln -s /usr/lib/node/proxycti/sql/update.sh /etc/e-smith/sql/init/20cti_update
 
 
 %changelog
+* Thu May 31 2012  Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.1.7-1nh
+- Bug #1163: when an extension pick up parked call through the telephone, operator panel correctly update parking box.
+
+* Fri Apr 13 2012  Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.1.6-2nh
+- Create forever log before starting: avoid problems on fresh install
+
 * Tue Apr 10 2012  Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.1.6-1nh
 - Bug #1009: discard audio filename starting with 'auto-' and without well-know format. 
 
