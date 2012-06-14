@@ -486,7 +486,7 @@ function initConn(objQuery, key){
 	}
         else if(objQuery.dbtype=="mssql"){
                	var db = new odbc.Database();
-                var connect_str = "DRIVER={FreeTDS};SERVER=" + objQuery.dbhost + ";UID=" + objQuery.dbuser + ";PWD=" + objQuery.dbpassword + ";DATABASE=" + objQuery.dbname;
+		var connect_str = "DRIVER={FreeTDS};SERVER=" + objQuery.dbhost + ";PORT=" + objQuery.dbport + ";UID=" + objQuery.dbuser + ";PWD=" + objQuery.dbpassword + ";DATABASE=" + objQuery.dbname;
                 db.open(connect_str, function(err) {
 			if(err){
 				logger.error("ERROR connect to DB mssql");
