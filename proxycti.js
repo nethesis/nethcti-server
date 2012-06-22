@@ -372,6 +372,7 @@ am.addListener('servererror', function(err) {
 	logger.error("EVENT 'ServerError', connection attempt to asterisk server failed: (" + err + ")");
 	recon_ast();
 });
+
 /* EVENT 'NewChannel': headers = { event: 'Newchannel',
   privilege: 'call,all',
   channel: 'SIP/270-000001bb',
@@ -421,6 +422,135 @@ am.addListener('newchannel', function(headers){
 		channel: headers.channel
 	}
 })
+
+// Raised for example with unattended transfer call
+/*
+EVENT 'Transfer': headers = { event: 'Transfer',
+  privilege: 'call,all',
+  transfermethod: 'SIP',
+  transfertype: 'Attended',
+  channel: 'SIP/271-000001ac',
+  uniqueid: '1339677719.547',
+  sipcallid: '68c435bc48aae90a0386ccf32323134f@192.168.5.233',
+  targetchannel: 'SIP/271-000001ad',
+  targetuniqueid: '1339677724.548' }
+*/
+am.addListener('transfer', function (headers) {
+    try {
+	logger.debug("EVENT 'Transfer': headers = " + sys.inspect(headers));
+        if (headers.transfertype === 'Attended') {
+            var touid = headers.targetuniqueid;
+            var tyextToUpdate = modop.transferAttended(headers, chStat[touid]);
+            updateAllClientsArrTypeExt(tyextToUpdate);
+        }
+    } catch(err) {
+        logger.error('Transfer event: ' + err.stack);
+    }
+});
+
+// arr is an array contains type ext to be updated to all clients
+function updateAllClientsArrTypeExt(arr) {
+    try {
+        var i;
+        for (i in arr) {
+            updateAllClientsForOpWithTypeExt(arr[i]);
+        }
+    } catch(err) {
+        logger.error('updateAllClientsArrTypeExt: ' + err.stack);
+    }
+}
+
+// Raised for example with unattended transfer call
+/*
+EVENT 'Masquerade': headers = { event: 'Masquerade',
+  privilege: 'call,all',
+  clone: 'SIP/272-000001ab',
+  clonestate: 'Up',
+  original: 'SIP/271-000001ad',
+  originalstate: 'Up' }
+am.addListener('masquerade', function (headers) {
+	logger.debug("EVENT 'Masquerade': headers = " + sys.inspect(headers));
+});
+*/
+
+// Raised for example with unattended transfer call
+/*
+EVENT 'Rename': headers = { event: 'Rename',
+  privilege: 'call,all',
+  channel: 'SIP/272-000001ab',
+  newname: 'SIP/272-000001ab<MASQ>',
+  uniqueid: '1339677718.546' }
+*
+EVENT 'Rename': headers = { event: 'Rename',
+  privilege: 'call,all',
+  channel: 'SIP/271-000001ad',
+  newname: 'SIP/272-000001ab',
+  uniqueid: '1339677724.548' }
+*
+EVENT 'Rename': headers = { event: 'Rename',
+  privilege: 'call,all',
+  channel: 'SIP/272-000001ab<MASQ>',
+  newname: 'SIP/271-000001ad<ZOMBIE>',
+  uniqueid: '1339677718.546' }
+*/
+am.addListener('rename', function (headers) {
+    try {
+        logger.debug("EVENT 'Rename': headers = " + sys.inspect(headers));
+	var oldch = headers.channel;
+	var newch = headers.newname;
+        var huid = headers.uniqueid;
+
+        if (oldch.substr(-6) !== '<MASQ>' && oldch.substr(-8) !== '<ZOMBIE>' &&
+            newch.substr(-6) !== '<MASQ>' && newch.substr(-8) !== '<ZOMBIE>') {
+
+            var newuid = chStat[huid].otheruid;
+            var newStateCaller, newUidCaller, uniq;
+            for (uniq in chStat) {
+                if (chStat[uniq].channel === newch) {
+                    newStateCaller = chStat[uniq];
+                    newUidCaller = uniq;
+                }
+            }
+            var tyextToUpdate = modop.renameTransfAttended(headers, newuid, chStat[newuid], chStat[huid], newStateCaller, newUidCaller);
+            updateAllClientsArrTypeExt(tyextToUpdate);
+            var extFrom = modop.getExtInternFromChannel(newch);
+            updateCurrentCCCalledTypeExt(extFrom, chStat[newuid].calleridnum);
+            var extTo = modop.getExtInternFromChannel(chStat[huid].destCh);
+            updateCurrentCCCallerTypeExt(extTo, newStateCaller.calleridnum);
+        }
+    } catch(err) {
+        logger.error('Rename event: ' + err.stack);
+    }
+});
+
+function updateCurrentCCCallerTypeExt(ext, from) {
+    try {
+        if (clients.hasOwnProperty(ext)) {
+            var client = clients[ext];
+            var response = new ResponseMessage(client.id, "update_cc_from_attended", '');
+            response.from = from;
+            client.emit('message',response);
+            logger.debug("RESP 'update_cc_from_attended' has been sent to client [" + key + "] id '" + client.id + "'");
+        }
+    } catch(err) {
+        logger.error('updateCurrentCCCallerTypeExt: ' + err.stack);
+    }
+}
+
+// update one extension with new call connected destination (after attended transfer)
+function updateCurrentCCCalledTypeExt(ext, to) {
+    try {
+        if (clients.hasOwnProperty(ext)) {
+            var client = clients[ext];
+            var response = new ResponseMessage(client.id, "update_cc_dest_attended", '');
+            response.to = to;
+            client.emit('message',response);
+            logger.debug("RESP 'update_cc_dest_attended' has been sent to client [" + key + "] id '" + client.id + "'");
+        }
+    } catch(err) {
+        logger.error('updateCurrentCCCalledTypeExt: ' + err.stack);
+    }
+}
 
 am.addListener('queuestatuscomplete',function(headers){
         logger.debug("EVENT 'QueueStatusComplete': headers = " + sys.inspect(headers));

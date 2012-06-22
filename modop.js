@@ -133,7 +133,94 @@ exports.Modop = function(){
 	this.getQueueStatus = function(){ return getQueueStatus(); }
 	this.vmExist = function(vmext) { return vmExist(vmext); }
 	this.getNameIntern = function(typeext){ return getNameIntern(typeext); }
+        this.transferAttended = function (headers, state) { return transferAttended(headers, state); }
+        this.renameTransfAttended = function (headers, newuid, state, hideState, newStateCaller, newUidCaller) { return renameTransfAttended(headers, newuid, state, hideState, newStateCaller, newUidCaller); }
 }
+
+function renameTransfAttended(headers, newuid, state, hideState, newStateCaller, newUidCaller) {
+    try {
+        var tyextToUpdate = [];
+        var oldch = headers.channel;
+        var newch = headers.newname;
+        var huid = headers.uniqueid;
+        var tyext, cc, uid;
+        for (tyext in extStatusForOp) {
+            cc = extStatusForOp[tyext].callConnectedUniqueid;
+
+            for (uid in cc) {
+                if (cc[uid].otheruid === huid && cc[uid].channel === newch) {
+                    cc[uid].otheruid = newuid;
+                    cc[uid].dialExt = state.calleridnum;
+                    cc[uid].dialCh = state.channel;
+                    cc[uid].destCh = state.channel;
+                    tyextToUpdate.push(tyext);
+                } else if (cc[uid].otheruid === huid && cc[uid].channel === hideState.destCh) {
+                    cc[uid].otheruid = newUidCaller;
+                    cc[uid].dialExt = newStateCaller.calleridnum;
+                    cc[uid].dialCh = newch;
+                    cc[uid].destCh = newch;
+                    tyextToUpdate.push(tyext);
+                }
+            }
+        }
+        return tyextToUpdate;
+    } catch (err) {
+        logger.error('renameTransfAttended: ' + err.stack);
+        return tyextToUpdate;
+    }
+}
+
+function transferAttended(headers, state) {
+    try {
+        var tyextToUpdate = [];
+        var fromuid = headers.uniqueid;
+        var touid = headers.targetuniqueid;
+        var ch = headers.channel;
+        var targetCh = headers.targetchannel;
+        var tyext, cc, uidi, changed;
+        for (tyext in extStatusForOp) {
+
+            cc = extStatusForOp[tyext].callConnectedUniqueid;
+            for (uid in cc) {
+                changed = false;
+                // substitute fromuid with touid in already call connected uid
+                if (uid === fromuid) {
+                    extStatusForOp[tyext].callConnectedCount--;
+                    delete cc[uid];
+                    cc[touid] = state;
+                    tyextToUpdate.push(tyext);
+                    continue;
+                }
+                // substitute fromuid with touid in otheruid key of already cc
+                if (cc[uid].otheruid === fromuid) {
+                    cc[uid].otheruid = touid;
+                    changed = true;
+                }
+                // substitute channels present in call connected
+                if (cc[uid].channel === ch) {
+                    cc[uid].channel = targetCh;
+                    changed = true;
+                }
+                if (cc[uid].dialCh === ch) {
+                    cc[uid].dialCh = targetCh;
+                    changed = true;
+                }
+                if(cc[uid].destCh === ch) {
+                    cc[uid].destCh = targetCh;
+                    changed = true;
+                }
+                if (changed === true) {
+                    tyextToUpdate.push(tyext);
+                }
+            }
+        }
+        return tyextToUpdate;
+    } catch (err) {
+        logger.error('transferAttended: ' + err.stack);
+        return tyextToUpdate;
+    }
+}
+
 function getNameIntern(typeext){
 	if(extStatusForOp[typeext]!==undefined && extStatusForOp[typeext].tab===INTERNO){
 		return (extStatusForOp[typeext].Label).replace(/"/g,'');

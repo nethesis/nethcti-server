@@ -199,6 +199,17 @@ exports.AsteriskManager = function (newconfig) {
         else if (config.version == '1.6')
         {
              switch (headers.event) {
+		case "Rename":
+			self.emit('rename', headers);
+		break;
+                /*
+		case "Masquerade":
+			self.emit('masquerade', headers);
+		break;
+                */
+		case "Transfer":
+			self.emit('transfer', headers);
+		break;
 		case "UnParkedCall":
 			self.emit('unparkedcalls', headers);
 		break;
