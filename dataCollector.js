@@ -77,6 +77,7 @@ exports.DataCollector = function(){
 	this.deleteCallNote = function(id,cb) { deleteCallNote(id,cb); }
 	this.getQueries = function(){ return getQueries(); }
 	this.getAllNotesForNum = function(ext,num,cb){ getAllNotesForNum(ext,num,cb); } 
+        this.query = function (type, query, cb) { _query(type, query, cb); }
 }
 function getQueries(){
 	return queries;
@@ -684,11 +685,23 @@ function getContactsPhonebook(name, cb){
                 }
 	}
 }
+
+function _query(type, query, cb) {
+    try {
+        var obj = queries[type];
+        obj.query = query;
+        executeSQLQuery(type, obj, cb);
+    } catch (err) {
+        logger.error(err.stack);
+    }
+}
+
 /* Execute one sql query. This function must have 
  * a callback function as second parameter because the asynchronous nature of
  * mysql query function. Otherwise it is possibile that the function return before
  * the completion of sql query operation */
 function executeSQLQuery(type, objQuery, cb){
+    try {
 	// get already opened connection
 	var conn = dbConnections[type];
 	if(conn!==undefined){
@@ -696,13 +709,16 @@ function executeSQLQuery(type, objQuery, cb){
 		logger.debug('execute SQL query: ' + query);
 		conn.query(query, function (err, results, fields) {
 	        	if (err) {
-	        		logger.error("ERROR in execute " + objQuery.dbtype + " query: " + err.message);
+	        		logger.error("ERROR in execute " + objQuery.dbtype + " query: " + err.stack);
 		        }
 			cb(results);
 	        });
 	} else {
 		logger.error('connection for query \''+type+'\' is ' + conn);
 	}
+    } catch (err) {
+        logger.error(err.stack);
+    }
 }
 /* Execute name one sql query. This function must have 
  * a callback function as second parameter because the asynchronous nature of

@@ -5,6 +5,8 @@ var dataReq = require("./dataCollector.js");
 var proReq = require("./profiler.js");
 var authReq = require("./authenticator.js");
 var contrReq = require("./controller.js");
+var routerReq = require("./router.js");
+var nethCtiPhonebookReq = require('./nethCtiPhonebook.js');
 var modopReq = require("./modop.js");
 var voicemailReq = require("./voicemail.js");
 var http = require('http');
@@ -166,6 +168,13 @@ var authenticator = new authReq.Authenticator();
 authenticator.setLogger(logfile,loglevel);
 var controller = new contrReq.Controller(); // check changing in audio directory
 controller.setLogger(logfile,loglevel);
+
+var nethCtiPhonebook = new nethCtiPhonebookReq.nethCtiPhonebook();
+nethCtiPhonebook.setLogger(logfile,loglevel);
+nethCtiPhonebook.setDataCollector(dataCollector);
+var router = new routerReq.Router(); // check changing in audio directory
+router.setLogger(logfile,loglevel);
+router.addModule('nethCtiPhonebook', nethCtiPhonebook);
 
 var voicemail = new voicemailReq.Voicemail();
 voicemail.setLogger(logfile,loglevel);
@@ -2385,14 +2394,28 @@ function returnOperatorPanelToClient(){
 }
 
 
+
 /*******************************************************************************
  * Section relative to HTTP server
  */
 server = http.createServer(function(req, res){
+    if (req.method === 'POST') {
+	logger.debug("HTTP POST request: path = " + url.parse(req.url).pathname);
+        var body = "";
+        req.setEncoding("utf8");
+        req.on("data", function (data) {
+            body += data;
+        });
+        req.on("end", function () {
+            var path = url.parse(req.url).pathname;
+            var params = querystring.parse(body);
+            router.route(path, params, res);
+        });
+    } else {
 	var parsed_url = url.parse(req.url,true);
 	var path = parsed_url.pathname;
 	var params = parsed_url.query;
-	logger.debug("received request HTTP: path = " + path + " params = " + sys.inspect(params));
+	logger.debug("HTTP GET request: path = " + path + " params = " + sys.inspect(params));
 	switch (path){
 	    case '/uploadVmCustomMsg':
 	    	var extFrom = params.extFrom;
@@ -2582,6 +2605,7 @@ server = http.createServer(function(req, res){
 			}
     		});
   	}
+    }
 });	
 
 
