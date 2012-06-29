@@ -159,6 +159,7 @@ function renameTransfAttended(headers, newuid, state, hideState, newStateCaller,
                     cc[uid].dialExt = newStateCaller.calleridnum;
                     cc[uid].dialCh = newch;
                     cc[uid].destCh = newch;
+                    cc[uid].rec_uniqueid = state.rec_uniqueid;
                     tyextToUpdate.push(tyext);
                 }
             }

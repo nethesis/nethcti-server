@@ -520,6 +520,7 @@ am.addListener('rename', function (headers) {
                     newUidCaller = uniq;
                 }
             }
+            chStat[newuid]['rec_uniqueid'] = headers.uniqueid;
             var tyextToUpdate = modop.renameTransfAttended(headers, newuid, chStat[newuid], chStat[huid], newStateCaller, newUidCaller);
             updateAllClientsArrTypeExt(tyextToUpdate);
             var extFrom = modop.getExtInternFromChannel(newch);
