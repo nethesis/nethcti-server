@@ -501,6 +501,7 @@ am.addListener('rename', function (headers) {
         var huid = headers.uniqueid;
 
         if (oldch.substr(-6) !== '<MASQ>' && oldch.substr(-8) !== '<ZOMBIE>' &&
+            oldch.substring(0, 10) !== 'AsyncGoto/' &&
             newch.substr(-6) !== '<MASQ>' && newch.substr(-8) !== '<ZOMBIE>') {
 
             var newuid = chStat[huid].otheruid;
