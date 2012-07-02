@@ -4271,6 +4271,7 @@ io.sockets.on('connection', function(client){
 										try{
 											fs.unlinkSync(pIn);
 											fs.unlinkSync(pOut);
+                                                                                        audioFileList[uniqueid] = filenamemix;
 											logger.debug("deleted audio file " + pIn + " and " + pOut + " during creation of audio mix file");
 										} catch(err) {
 											logger.error("deleting audio file " + pIn + " or " + pOut + " during creation of audio mix file: " + err.stack);
