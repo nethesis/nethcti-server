@@ -169,12 +169,6 @@ authenticator.setLogger(logfile,loglevel);
 var controller = new contrReq.Controller(); // check changing in audio directory
 controller.setLogger(logfile,loglevel);
 
-var nethCtiPhonebook = new nethCtiPhonebookReq.nethCtiPhonebook();
-nethCtiPhonebook.setLogger(logfile,loglevel);
-nethCtiPhonebook.setDataCollector(dataCollector);
-var router = new routerReq.Router(); // check changing in audio directory
-router.setLogger(logfile,loglevel);
-router.addModule('nethCtiPhonebook', nethCtiPhonebook);
 
 var voicemail = new voicemailReq.Voicemail();
 voicemail.setLogger(logfile,loglevel);
@@ -183,6 +177,15 @@ voicemail.init();
 var modop = new modopReq.Modop();
 modop.setLogger(logfile,loglevel);
 modop.addController(controller)
+
+var nethCtiPhonebook = new nethCtiPhonebookReq.nethCtiPhonebook();
+nethCtiPhonebook.setLogger(logfile,loglevel);
+nethCtiPhonebook.setDataCollector(dataCollector);
+nethCtiPhonebook.setModop(modop);
+var router = new routerReq.Router(); // check changing in audio directory
+router.setLogger(logfile,loglevel);
+router.addModule('nethCtiPhonebook', nethCtiPhonebook);
+
 logger.debug('added object modules: \'Profiler\', \'DataCollector\', \'Authenticator\', \'Modop\' and \'Controller\'')
 controller.addDir(AST_CALL_AUDIO_DIR);
 controller.addListener('change_dir', function(dir){
