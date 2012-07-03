@@ -1,5 +1,5 @@
 Name:		proxycti
-Version:	1.1.7
+Version:	1.1.10
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI	
 
@@ -74,6 +74,17 @@ ln -s /usr/lib/node/proxycti/sql/update.sh /etc/e-smith/sql/init/20cti_update
 
 
 %changelog
+* Tue Jul 03 2012  Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.1.10-1nh
+- Conrrect recording visualization in history
+
+* Fri Jun 29 2012  Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.1.9-1nh
+- Private release
+- Show recording in history #1223
+
+* Fri Jun 29 2012  Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.1.8-1nh
+- Private release
+- Fix call record on consultative transfer
+
 * Thu May 31 2012  Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.1.7-1nh
 - Bug #1163: when an extension pick up parked call through the telephone, operator panel correctly update parking box.
 
