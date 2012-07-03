@@ -513,6 +513,7 @@ am.addListener('rename', function (headers) {
         var huid = headers.uniqueid;
 
         if (oldch.substr(-6) !== '<MASQ>' && oldch.substr(-8) !== '<ZOMBIE>' &&
+            oldch.substring(0, 10) !== 'AsyncGoto/' &&
             newch.substr(-6) !== '<MASQ>' && newch.substr(-8) !== '<ZOMBIE>') {
 
             var newuid = chStat[huid].otheruid;
@@ -4297,6 +4298,7 @@ io.sockets.on('connection', function(client){
 										try{
 											fs.unlinkSync(pIn);
 											fs.unlinkSync(pOut);
+                                                                                        audioFileList[uniqueid] = filenamemix;
 											logger.debug("deleted audio file " + pIn + " and " + pOut + " during creation of audio mix file");
 										} catch(err) {
 											logger.error("deleting audio file " + pIn + " or " + pOut + " during creation of audio mix file: " + err.stack);
