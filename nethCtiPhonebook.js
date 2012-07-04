@@ -70,9 +70,6 @@ function _getSpeeddialContacts(params, res) {
 
 function _newNethCTIContact(params, res) {
     try {
-        if (params.extension.indexOf('/') === -1) {
-            params.extension = modop;
-        }
         var fields_name = '';
         var values = '';
         var key;
