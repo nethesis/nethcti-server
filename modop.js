@@ -148,7 +148,7 @@ function _getAllExtPhoneName() {
                 name = extStatusForOp[tyext].Label;
                 name = name.replace(/"/g, '');
                 name = name.split(':')[1].trim();
-                obj.push({ 'name': name, 'extension': ext});
+                obj.push({ 'name': name, 'extension': ext, 'tyext': tyext});
             }
         }
         return obj;
