@@ -3483,19 +3483,39 @@ io.sockets.on('connection', function(client){
 	  			}
 	  		break;
 	  		case actions.SEARCH_CONTACT_PHONEBOOK:
+                            try {
 	  			// check if the user has the permission to search contact in phonebook
 	  			if(profiler.checkActionPhonebookPermit(extFrom)){
 					logger.debug("check 'searchContactPhonebook' permission for [" + extFrom + "] OK: search...");
 	  				// execute query to search contact in phonebook
 	  				var namex = message.namex;
 					dataCollector.getContactsPhonebook(namex, function(results){
-						if(results!==undefined){
-		  					var resultHTML = createResultSearchContactsPhonebook(results);
-		  					var mess = new ResponseMessage(client.id, "search_contacts_results", "received phonebook contacts");
-		  					mess.resultHTML = resultHTML;
-		  					client.emit('message',mess);
-		  					logger.debug("RESP 'search_contacts_results' has been sent to [" + extFrom + "] id '" + client.id + "'");
-						}
+                                            try {
+                                                nethCtiPhonebook.searchContacts(namex, function (res) {
+                                                    try {
+                                                        if (results !== undefined && res !== undefined) {
+                                                            var i;
+                                                            for (i = 0; i < res.length; i++) {
+                                                                res[i]['db_source'] = 'cti_phonebook';
+                                                                results.push(res[i]);
+                                                            }
+    		  					    var resultHTML = createResultSearchContactsPhonebook(results);
+       		  					    var mess = new ResponseMessage(client.id, "search_contacts_results", "received phonebook contacts");
+    		  					    mess.resultHTML = resultHTML;
+    		  					    client.emit('message',mess);
+    		  					    logger.debug("RESP 'search_contacts_results' has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                                        }
+                                                    } catch (err) {
+                                                        logger.error("search in central phonebook: " + err.stack);
+                                                        client.emit('message',new ResponseMessage(client.id, "exception_search_contacts", ""));
+                                                        logger.debug("RESP 'exception_search_contacts' has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                                    }
+                                                });
+                                            } catch (err) {
+                                                logger.error("search in central phonebook: " + err.stack);
+                                                client.emit('message',new ResponseMessage(client.id, "exception_search_contacts", ""));
+                                                logger.debug("RESP 'exception_search_contacts' has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                            }
 	  				});
 	  			}
 	  			else{
@@ -3503,6 +3523,9 @@ io.sockets.on('connection', function(client){
   					client.emit('message',new ResponseMessage(client.id, "error_search_contacts", ""));
   					logger.debug("RESP 'error_search_contacts' has been sent to [" + extFrom + "] id '" + client.id + "'");
 	  			}
+                            } catch (err) {
+                                logger.error("SEARCH_CONTACT_PHONEBOOK: " + err.stack);
+                            }
 	  		break;
 			case actions.START_RECORD_CHANNEL:
 				try {
