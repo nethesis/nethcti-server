@@ -1,5 +1,6 @@
 var sys = require('sys');
 var path = require('path');
+var fs = require('fs');
 var log4js = require('./lib/log4js-node/lib/log4js')();
 
 const DB_NAME = 'cti_phonebook';
@@ -12,10 +13,12 @@ exports.nethCtiPhonebook = function () {
     this.handle = function (cmd, params, res) { _handle(cmd, params, res); }
     this.setDataCollector = function (dc) { _setDataCollector(dc); }
     this.setModop = function (md) { _setModop(md); }
+    this.searchContacts = function (name, cb) { _searchContacts(name, cb); }
 }
 
 var _functs = {
     'newNethCTIContact': _newNethCTIContact,
+    'deleteNethCTIContact': _deleteNethCTIContact,
     'getSpeeddialContacts': _getSpeeddialContacts,
     'getAllExtensionsContacts': _getAllExtensionsContacts
 }
@@ -58,10 +61,60 @@ function _getSpeeddialContacts(params, res) {
         var ext = params.ext;
         var query = 'SELECT * FROM ' + DB_NAME + ' WHERE type="speeddial" AND owner_id="' + ext + '"';
         dataCollector.query(DB_NAME, query, function (result) {
+
+            // add info about the avatar image presence
+            var i, path_img, id;
+            for (i = 0; i < result.length; i++) {
+                id = result[i].id;
+                path_img = path.join('/avatar', result[i].id + '.png');
+                if (path.existsSync(path_img) === true) {
+                    result[i].avatar = true;
+                } else {
+                    result[i].avatar = false;
+                }
+            }
+
+            // send results
             logger.debug('send speed dial contacts');
             res.writeHead(200, {'Content-Type': 'text/html'});
             res.write(JSON.stringify(result));
             res.end();
+        });
+    } catch(err) {
+        logger.error(err.stack);
+    }
+}
+
+function _deleteNethCTIContact(params, res) {
+    try {
+        var id = params.id;
+        var query = 'DELETE FROM ' + DB_NAME + ' WHERE id="' + id + '"';
+        dataCollector.query(DB_NAME, query, function (result) {
+            try {
+                if (result !== undefined && result.affectedRows === 1) {
+                    logger.debug('cti phonebook contact [id = ' + id + '] has been deleted');
+                    var resp = {
+                        'num': '1',
+                        'id': id,
+                        'success': true
+                    };
+                    res.writeHead(200, {'Content-type': 'text/html'});
+                    res.write(JSON.stringify(resp));
+                    res.end();
+                } else {
+                    logger.error('deleting cti phonebook contact [id = ' + id + ']');
+                    var resp = {
+                        'num': '0',
+                        'id': id,
+                        'success': false
+                    };
+                    res.writeHead(200, {'Content-type': 'text/html'});
+                    res.write(JSON.stringify(resp));
+                    res.end();
+                }
+            } catch (err) {
+                logger.error(err.stack);
+            }
         });
     } catch(err) {
         logger.error(err.stack);
@@ -96,4 +149,11 @@ function _newNethCTIContact(params, res) {
     } catch(err) {
        logger.error(err.stack);
     }
+}
+
+function _searchContacts(name, cb) {
+    var query = 'SELECT * FROM ' + DB_NAME + ' WHERE name LIKE "%' + name + '%" OR company LIKE "%' + name + '%" OR workphone LIKE "%' + name + '%" OR homephone LIKE "%' + name + '%" OR cellphone LIKE "%' + name + '%" ORDER BY NAME ASC, company ASC';
+    dataCollector.query(DB_NAME, query, function (result) {
+        cb(result);
+    });
 }
