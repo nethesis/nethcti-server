@@ -17,6 +17,7 @@ exports.nethCtiPhonebook = function () {
 }
 
 var _functs = {
+    'getNethCTIContact': _getNethCTIContact,
     'newNethCTIContact': _newNethCTIContact,
     'deleteNethCTIContact': _deleteNethCTIContact,
     'getSpeeddialContacts': _getSpeeddialContacts,
@@ -79,6 +80,37 @@ function _getSpeeddialContacts(params, res) {
             res.writeHead(200, {'Content-Type': 'text/html'});
             res.write(JSON.stringify(result));
             res.end();
+        });
+    } catch(err) {
+        logger.error(err.stack);
+    }
+}
+
+function _getNethCTIContact(params, res) {
+    try {
+        var id = params.id;
+        var query = 'SELECT * FROM ' + DB_NAME + ' WHERE id="' + id + '"';
+        dataCollector.query(DB_NAME, query, function (result) {
+            try {
+                console.log(result);
+                if (result !== undefined) {
+                    logger.debug('cti phonebook contact [id = ' + id + '] has been retrieved');
+                    res.writeHead(200, {'Content-type': 'text/html'});
+                    res.write(JSON.stringify(result));
+                    res.end();
+                } else {
+                    logger.error('no result searching cti phonebook contact [id = ' + id + ']');
+                    var resp = {
+                        'id': id,
+                        'success': false
+                    };
+                    res.writeHead(200, {'Content-type': 'text/html'});
+                    res.write(JSON.stringify(resp));
+                    res.end();
+                }
+            } catch (err) {
+                logger.error(err.stack);
+            }
         });
     } catch(err) {
         logger.error(err.stack);
