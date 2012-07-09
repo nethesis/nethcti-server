@@ -1,5 +1,5 @@
 Name:		proxycti
-Version:	1.1.10
+Version:	1.1.11
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI	
 
@@ -74,6 +74,9 @@ ln -s /usr/lib/node/proxycti/sql/update.sh /etc/e-smith/sql/init/20cti_update
 
 
 %changelog
+* Mon Jul 09 2012  Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.1.11-1nh
+- Try to fix issues for #1223
+
 * Tue Jul 03 2012  Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.1.10-1nh
 - Conrrect recording visualization in history
 
