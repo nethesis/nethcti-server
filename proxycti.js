@@ -3491,7 +3491,7 @@ io.sockets.on('connection', function(client){
 	  				var namex = message.namex;
 					dataCollector.getContactsPhonebook(namex, function(results){
                                             try {
-                                                nethCtiPhonebook.searchContacts(namex, function (res) {
+                                                nethCtiPhonebook.searchContacts(namex, extFrom, function (res) {
                                                     try {
                                                         if (results !== undefined && res !== undefined) {
                                                             var i;
@@ -3499,9 +3499,9 @@ io.sockets.on('connection', function(client){
                                                                 res[i]['db_source'] = 'cti_phonebook';
                                                                 results.push(res[i]);
                                                             }
-    		  					    var resultHTML = createResultSearchContactsPhonebook(results);
        		  					    var mess = new ResponseMessage(client.id, "search_contacts_results", "received phonebook contacts");
-    		  					    mess.resultHTML = resultHTML;
+                                                            mess.results = results;
+                                                            mess.extFrom = extFrom;
     		  					    client.emit('message',mess);
     		  					    logger.debug("RESP 'search_contacts_results' has been sent to [" + extFrom + "] id '" + client.id + "'");
                                                         }
