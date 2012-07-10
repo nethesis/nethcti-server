@@ -5013,29 +5013,6 @@ createCustomerCardHTML = function(cc,type,from){ // ex. cc = { default: [ [Objec
 	return htmlResult;
 }
 
-
-
-/* Create the html code for viewing result of searching contacts in phonebook.
- * It read template html file and personalize it with the parameter results. */
-function createResultSearchContactsPhonebook(results){
-	var HTMLresult = '';
-	var currentUser = '';
-	var temp = '';
-	var template = '';
-	for(var i=0; i<results.length; i++){
-		currentUser = results[i];
-		currentUser.server_address = "http://" + hostname + ":" + port;
-	}
-	HTMLresult = ejs.render(cc_templates["decorator_vcard.ejs"],{ 
-			locals: {
-				results: results
-			}
-		}
-	);
-	return HTMLresult;
-}
-
-//
 function printLoggedClients(){
 	logger.debug("logged in clients:");
 	for(key in clients)
