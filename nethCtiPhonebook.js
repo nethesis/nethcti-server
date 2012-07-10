@@ -13,12 +13,13 @@ exports.nethCtiPhonebook = function () {
     this.handle = function (cmd, params, res) { _handle(cmd, params, res); }
     this.setDataCollector = function (dc) { _setDataCollector(dc); }
     this.setModop = function (md) { _setModop(md); }
-    this.searchContacts = function (name, cb) { _searchContacts(name, cb); }
+    this.searchContacts = function (name, extFrom, cb) { _searchContacts(name, extFrom, cb); }
 }
 
 var _functs = {
     'getNethCTIContact': _getNethCTIContact,
     'newNethCTIContact': _newNethCTIContact,
+    'modifyNethCTIContact': _modifyNethCTIContact,
     'deleteNethCTIContact': _deleteNethCTIContact,
     'getSpeeddialContacts': _getSpeeddialContacts,
     'getAllExtensionsContacts': _getAllExtensionsContacts
@@ -92,7 +93,6 @@ function _getNethCTIContact(params, res) {
         var query = 'SELECT * FROM ' + DB_NAME + ' WHERE id="' + id + '"';
         dataCollector.query(DB_NAME, query, function (result) {
             try {
-                console.log(result);
                 if (result !== undefined) {
                     logger.debug('cti phonebook contact [id = ' + id + '] has been retrieved');
                     res.writeHead(200, {'Content-type': 'text/html'});
@@ -153,6 +153,37 @@ function _deleteNethCTIContact(params, res) {
     }
 }
 
+function _modifyNethCTIContact(params, res) {
+    try {
+        var id = params.id;
+        delete params.id;
+        var fields_values = '';
+        var key;
+        for (key in params) {
+            fields_values += key + '="' + params[key] + '", ';
+        }
+        fields_values = fields_values.substring(0, fields_values.length - 2); // remove final comma
+        var query = 'UPDATE ' + DB_NAME + ' SET ' + fields_values + ' WHERE id="' + id + '"';
+        dataCollector.query(DB_NAME, query, function (result) {
+            if (result !== undefined && result.affectedRows === 1) {
+                logger.debug('cti phonebook contact (contact name: ' + params.name + ') has been modified with success');
+                var resp = { 'success': true };
+                res.writeHead(200, {'content-type': 'text/html'});
+                res.write(JSON.stringify(resp));
+                res.end();
+            } else {
+                logger.error('adding new cti phonebook contact (contact name: ' + params.name + ')');
+                var resp = { 'success': false };
+                res.writeHead(404);
+                res.write(JSON.stringify(resp));
+                res.end();
+            }
+        });
+    } catch(err) {
+       logger.error(err.stack);
+    }
+}
+
 function _newNethCTIContact(params, res) {
     try {
         var fields_name = '';
@@ -183,8 +214,8 @@ function _newNethCTIContact(params, res) {
     }
 }
 
-function _searchContacts(name, cb) {
-    var query = 'SELECT * FROM ' + DB_NAME + ' WHERE name LIKE "%' + name + '%" OR company LIKE "%' + name + '%" OR workphone LIKE "%' + name + '%" OR homephone LIKE "%' + name + '%" OR cellphone LIKE "%' + name + '%" ORDER BY NAME ASC, company ASC';
+function _searchContacts(name, extFrom, cb) {
+    var query = 'SELECT * FROM ' + DB_NAME + ' WHERE (owner_id="' + extFrom + '" OR type="public") AND (name LIKE "%' + name + '%" OR company LIKE "%' + name + '%" OR workphone LIKE "%' + name + '%" OR homephone LIKE "%' + name + '%" OR cellphone LIKE "%' + name + '%") ORDER BY NAME ASC, company ASC';
     dataCollector.query(DB_NAME, query, function (result) {
         cb(result);
     });
