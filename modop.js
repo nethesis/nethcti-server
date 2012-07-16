@@ -208,7 +208,9 @@ function transferAttended(headers, state) {
                 if (uid === fromuid) {
                     if (cc[uid] !== undefined) {
                         delete cc[uid];
-                        extStatusForOp[tyext].callConnectedCount = extStatusForOp[tyext].callConnectedCount - 1;
+                        if (extStatusForOp[tyext].callConnectedCount > 0 ) {
+                            extStatusForOp[tyext].callConnectedCount = extStatusForOp[tyext].callConnectedCount - 1;
+                        }
                     }
                     cc[touid] = state;
                     tyextToUpdate.push(tyext);
