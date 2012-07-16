@@ -2,8 +2,9 @@ var fs = require("fs");
 var sys = require("sys");
 var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
 var log4js = require('./lib/log4js-node/lib/log4js')();
-const AUTHENTICATOR_CONFIG_FILENAME = "/etc/asterisk/sip_additional.conf";
-const VOICEMAIL_AUTH_FILENAME = "/etc/asterisk/voicemail_additionals.conf";
+var AUTHENTICATOR_CONFIG_FILENAME = "/etc/asterisk/sip_additional.conf";
+var VOICEMAIL_AUTH_FILENAME = "/etc/asterisk/voicemail_additionals.conf";
+var AUTH_IAX_FILEPATH = '/etc/asterisk/iax_additional.conf'; 
 
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF)
@@ -77,6 +78,11 @@ function initVoicemailAuthProfiles(){
  */
 function initProfiles(){
         this.userAuthProfiles = iniparser.parseSync(AUTHENTICATOR_CONFIG_FILENAME);
+        var iaxAuthProfiles = iniparser.parseSync(AUTH_IAX_FILEPATH);
+        for (var key in iaxAuthProfiles) {
+            this.userAuthProfiles[key] = iaxAuthProfiles[key];
+        }
+
 	initVoicemailAuthProfiles();
 }
 
