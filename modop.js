@@ -327,7 +327,21 @@ function addQueueWaitingCaller(channel,calleridnum,calleridname,waitingTime,queu
 	}
 }
 function setUserBareJid(ext,bareJid){
-	extStatusForOp['SIP/'+ext].bareJid = bareJid;
+    try {
+        var tyext;
+        for (var key in extStatusForOp) {
+            if (extStatusForOp[key].Extension === ext) {
+                tyext = key;
+                break;
+            }
+        }
+        if (tyext !== undefined) {
+            extStatusForOp[tyext].bareJid = bareJid;
+            logger.debug('set bareJid = ' + bareJid + ' for ' + tyext);
+        }
+    } catch (err) {
+        logger.error('ext = ' + ext + ' bareJid = ' + bareJid + ': ' + err.stack);
+    }
 }
 function getParkedUniqueid(parking){ return extStatusForOp['PARK'+parking].parkedUniqueid;}
 function removeUniqueidCallFromQueue(uniqueid){
