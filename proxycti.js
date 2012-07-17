@@ -2000,7 +2000,7 @@ am.addListener('peerstatus', function(headers) {
 	 * from 'unregistered', then the event is ignored. In this way, when the calling is in progress, the arrive of
 	 * this event with status 'registered' don't change the status of the extension. */
 	if(statusEvent=='registered' && currStatus!='unregistered'){
-		logger.debug("EVENT 'PeerStatus' ignored. Status of [" + headers.peer + "] is already different from 'unregistered'");
+		//logger.debug("EVENT 'PeerStatus' ignored. Status of [" + headers.peer + "] is already different from 'unregistered'");
 		return;
 	}
 	logger.debug("EVENT 'PeerStatus': " + sys.inspect(headers));
@@ -3154,6 +3154,7 @@ io.sockets.on('connection', function(client){
 					var respMsg = new ResponseMessage(client.id, "ack_login", "Login succesfully");
 					respMsg.ext = extFrom;
 					respMsg.secret = message.secret;
+                                        respMsg.tyext = modop.getTypeExtFromExt(extFrom);
 					var keys = Object.keys(sms_conf.SMS);
 					respMsg.permissions = profiler.getAllPermissions(extFrom);
 					if(keys.length===0 || sms_conf.SMS.type===undefined || sms_conf.SMS.type===''){
@@ -3759,8 +3760,8 @@ io.sockets.on('connection', function(client){
 	                                };
 					var fromuid = message.fromuid;
 					var destuid = message.destuid;
-					var callFromTypeExt = 'SIP/' + message.callFromExt;
-					var callToTypeExt = 'SIP/' + message.callToExt;
+					var callFromTypeExt = modop.getTypeExtFromExt(message.callFromExt);
+					var callToTypeExt = modop.getTypeExtFromExt(message.callToExt);
 					try {	
 						am.send(actionStopRecord, function () {
 							try {

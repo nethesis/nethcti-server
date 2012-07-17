@@ -136,6 +136,19 @@ exports.Modop = function(){
         this.transferAttended = function (headers, state) { return transferAttended(headers, state); }
         this.renameTransfAttended = function (headers, newuid, state, hideState, newStateCaller, newUidCaller) { return renameTransfAttended(headers, newuid, state, hideState, newStateCaller, newUidCaller); }
         this.getAllExtPhoneName = function () { return _getAllExtPhoneName(); }
+        this.getTypeExtFromExt = function (ext) { return _getTypeExtFromExt(ext); }
+}
+
+function _getTypeExtFromExt(ext) {
+    try {
+        for (var key in extStatusForOp) {
+            if (extStatusForOp[key].Extension === ext) {
+                return key;
+            }
+        }
+    } catch (err) {
+        logger.error('ext = ' + ext + ': ' + err.stack);
+    }
 }
 
 function _getAllExtPhoneName() {
