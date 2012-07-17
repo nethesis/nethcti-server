@@ -3123,9 +3123,13 @@ io.sockets.on('connection', function(client){
                                 }
 			break;
 			case actions.STORE_CHAT_ASSOC:
+                            try {
 				var userBareJid = message.userBareJid;
 				modop.setUserBareJid(extFrom, userBareJid);
 				storeChatAssociation(extFrom, userBareJid);
+                            } catch (err) {
+                                logger.error('extFrom = ' + extFrom + ', barejid = ' + message.userBareJid + ': ' + err.stack);
+                            }
 			break;
   			case actions.LOGIN:
 	  			if(authenticator.authenticateUser(extFrom, message.secret)){  // the user is authenticated
