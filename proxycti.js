@@ -212,7 +212,8 @@ controller.addListener('change_vm_dir', function(dir){ // ex dir: '/var/spool/as
 	                oldmessages: '0' } */
 	                var newMsgCount = resp.newmessages
 		        modop.updateVMCountWithExt(ext,resp.newmessages)
-			updateAllClientsForOpWithTypeExt("SIP/"+ext);
+                        var tyext = modop.getTypeExtFromExt(ext);
+			updateAllClientsForOpWithTypeExt(tyext);
 		});
 	} catch(err) {
 	        logger.warn("no connection to asterisk: "+err);
@@ -2069,7 +2070,8 @@ am.addListener('userevent', function(headers){
 				modop.updateExtDNDStatusWithExt(ext, "off")
 			else if(value=="attivo")
 				modop.updateExtDNDStatusWithExt(ext, "on")
-	                updateAllClientsForOpWithTypeExt("SIP/"+ext);
+                        var tyext = modop.getTypeExtFromExt(ext);
+	                updateAllClientsForOpWithTypeExt(tyext);
 		}
 		else if(family=='cf'){
 			logger.info("[" + ext + "] '" + family + " " + value + "'");
@@ -2325,10 +2327,15 @@ am.addListener('parkedcallscomplete', function(){
   new: '1',
   old: '0' } */
 am.addListener('messagewaiting', function(headers){
+    try {
 	logger.debug("EVENT 'MessageWaiting': new voicemail for [" + headers.mailbox + "]; the number is: " + headers.new);
 	var ext = headers.mailbox.split('@')[0];
 	modop.updateVMCountWithExt(ext,headers.new);
-	updateAllClientsForOpWithTypeExt("SIP/"+ext);
+        var tyext = modop.getTypeExtFromExt(ext);
+	updateAllClientsForOpWithTypeExt(tyext);
+    } catch (err) {
+        logger.error(err.stack);
+    }
 });
 
 logger.info("connection to asterisk server...");
@@ -2633,9 +2640,10 @@ function callout(extFrom, to, res){
 	if(profiler.checkActionCallOutPermit(extFrom)){ // check if the user has the permission of dial out
 		logger.debug("check 'callOut' permission for [" + extFrom + "] OK: execute calling...");
                 // create call action for asterisk server
+                var tyext = modop.getTypeExtFromExt(extFrom);
                 var actionCall = {
 			Action: 'Originate',
-                        Channel: 'SIP/' + extFrom,
+                        Channel: tyext,
 			Exten: to,
                         Context: 'from-internal',
                         Priority: 1,
@@ -2837,10 +2845,11 @@ io.sockets.on('connection', function(client){
 				var filename = name + '.wav';
 				var filepath = voicemail.getFilepathCustomMessage(filename,vm);
 				voicemail.deleteCustomMessage(filename,vm);
+                                var tyext = modop.getTypeExtFromExt(extFrom);
 				if(profiler.checkActionVoicemailPermit(extFrom)){
 					var action = {
 						Action: 'Originate',
-						Channel: 'SIP/' + extFrom,
+						Channel: tyext,
 						Context: 'from-internal',
 						Callerid: 'REC <'+extFrom+'>',
 						Application: 'Record',
@@ -2871,9 +2880,10 @@ io.sockets.on('connection', function(client){
 				if(profiler.checkStreamingPermission(name,extFrom)){
 					var cmd = message.cmd;
 					var exten = message.exten;
+                                        var tyext = modop.getTypeExtFromExt(exten);
 					var actionOpen = {
 			                        Action: 'Originate',
-			                        Channel: 'SIP/' + exten,
+			                        Channel: tyext,
                         			Context: 'from-internal',
 						Application: 'SendDTMF',
 						Data: 'w'+cmd
@@ -3560,8 +3570,8 @@ io.sockets.on('connection', function(client){
 	                                                File: filename,
 	                                                Mix: 1
 	                                        };
-						var callFromTypeExt = 'SIP/' + callFromExt;
-	                                        var callToTypeExt = 'SIP/' + callToExt;
+                                                var callFromTypeExt = modop.getTypeExtFromExt(callFromExt);
+                                                var callToTypeExt = modop.getTypeExtFromExt(callToExt);
 						try{
 	                                                am.send(actionRecord, function () {
 								try{
@@ -3932,7 +3942,8 @@ io.sockets.on('connection', function(client){
 						client.emit('message',new ResponseMessage(client.id, 'ack_dnd_on', msgstr));
 						logger.debug("'actionDNDon' " + sys.inspect(actionDNDon) + " has been sent to AST\nRESP 'ack_dnd_on' has been sent to [" + extFrom + "] id '" + client.id + "'\n"+msgstr);
 						modop.updateExtDNDStatusWithExt(extFrom, 'on');
-						updateAllClientsForOpWithTypeExt("SIP/"+extFrom);
+                                                var tyext = modop.getTypeExtFromExt(extFrom);
+						updateAllClientsForOpWithTypeExt(tyext);
 					});
 				} catch(err) {
                                         logger.warn("no connection to asterisk: "+err);
@@ -3950,7 +3961,8 @@ io.sockets.on('connection', function(client){
 						client.emit('message',new ResponseMessage(client.id, 'ack_dnd_off', msgstr));
 						logger.debug("'actionDNDoff' " + sys.inspect(actionDNDoff) + " has been sent to AST\nRESP 'ack_dnd_off' has been sent to [" + extFrom + "] id '" + client.id + "'\n"+msgstr);
 	                                        modop.updateExtDNDStatusWithExt(extFrom, 'off');
-	                                        updateAllClientsForOpWithTypeExt("SIP/"+extFrom);
+                                                var tyext = modop.getTypeExtFromExt(extFrom);
+	                                        updateAllClientsForOpWithTypeExt(tyext);
 					});
 				} catch(err) {
                                         logger.warn("no connection to asterisk: "+err);
@@ -4003,7 +4015,8 @@ io.sockets.on('connection', function(client){
                                                 client.emit('message',response);
                                                 logger.debug("'actCFVMOn' " + sys.inspect(actCFVMOn) + " has been sent to AST\nRESP 'ack_cfvm_on' has been sent to [" + extFrom + "] id '" + client.id + "'"+msgstr);
 						modop.updateExtCFVMStatusWithExt(extFrom, 'on', vmext);
-                                                updateAllClientsForOpWithTypeExt("SIP/"+extFrom);
+                                                var tyext = modop.getTypeExtFromExt(extFrom);
+                                                updateAllClientsForOpWithTypeExt(tyext);
                                         });
                                 } catch(err) {logger.warn("no connection to asterisk: " + err);}	
 			break;
@@ -4051,7 +4064,8 @@ io.sockets.on('connection', function(client){
                                                 client.emit('message',new ResponseMessage(client.id, 'ack_cfvm_off', msgstr));
                                                 logger.debug("'actCFVMOff' " + sys.inspect(actCFVMOff) + " has been sent to AST\nRESP 'ack_cfvm_off' has been sent to [" + extFrom + "] id '" + client.id + "'\n"+msgstr);
 						modop.updateExtCFVMStatusWithExt(extFrom, 'off');
-                                                updateAllClientsForOpWithTypeExt("SIP/"+extFrom);
+                                                var tyext = modop.getTypeExtFromExt(extFrom);
+                                                updateAllClientsForOpWithTypeExt(tyext);
                                         });
                                 } catch(err) {logger.warn("no connection to asterisk: " +err);}
 			break;
@@ -4101,7 +4115,8 @@ io.sockets.on('connection', function(client){
 						client.emit('message',response)
 						logger.debug("'actionCFon' " + sys.inspect(actionCFon) + " has been sent to AST\nRESP 'ack_cf_on' has been sent to [" + extFrom + "] id '" + client.id + "'"+msgstr);
 	                                        modop.updateExtCFStatusWithExt(extFrom, 'on', extTo);
-	                                        updateAllClientsForOpWithTypeExt("SIP/"+extFrom);
+                                                var tyext = modop.getTypeExtFromExt(extFrom);
+	                                        updateAllClientsForOpWithTypeExt(tyext);
 					});
 				} catch(err) {logger.warn("no connection to asterisk: " + err);}
 	  		break;
@@ -4151,7 +4166,8 @@ io.sockets.on('connection', function(client){
 						client.emit('message',new ResponseMessage(client.id, 'ack_cf_off', msgstr));
 						logger.debug("'actionCFoff' " + sys.inspect(actionCFoff) + " has been sent to AST\nRESP 'ack_cf_off' has been sent to [" + extFrom + "] id '" + client.id + "'\n"+msgstr);
 	                                        modop.updateExtCFStatusWithExt(extFrom, 'off');
-	                                        updateAllClientsForOpWithTypeExt("SIP/"+extFrom);
+                                                var tyext = modop.getTypeExtFromExt(extFrom);
+	                                        updateAllClientsForOpWithTypeExt(tyext);
 					});
 				} catch(err) {logger.warn("no connection to asterisk: " +err);}
 	  		break;
@@ -4438,9 +4454,10 @@ io.sockets.on('connection', function(client){
 					}
 				}
 				// create action to spy channel
+                                var tyext = modop.getTypeExtFromExt(extFrom);
 				var actionSpyListen = {
 					Action: 'Originate',
-					Channel: 'SIP/' + extFrom,
+					Channel: tyext,
 					Application: 'ChanSpy',
 					Data: channelToSpy,
 					Callerid: SPY_PREFIX + extToSpy
@@ -4499,9 +4516,10 @@ io.sockets.on('connection', function(client){
                                         }
                                 }
                                 // create action to spy channel
+                                var tyext = modop.getTypeExtFromExt(extFrom);
                                 var actionSpyListenSpeak = {
                                         Action: 'Originate',
-                                        Channel: 'SIP/' + extFrom,
+                                        Channel: tyext,
                                         Application: 'ChanSpy',
                                         Data: channelToSpy + ',w',
                                         Callerid: SPY_PREFIX + extToSpy
@@ -4994,8 +5012,10 @@ getCCTemplate = function(type){
 createCustomerCardHTML = function(cc,type,from){ // ex. cc = { default: [ [Object] ] } or { calls: [ [Object] ] }
 	if(type==='calls'){
 		var arr = cc.calls;
+                var tyext;
 		for(var i=0, call; call=arr[i]; i++){
-			res = modop.getNameIntern('SIP/'+call.dst);
+                        tyext = modop.getTypeExtFromExt(call.dst);
+			res = modop.getNameIntern(tyext);
 			if(res!==undefined){
 				cc.calls[i].dst = res;
 			}
