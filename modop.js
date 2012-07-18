@@ -190,6 +190,9 @@ function transferAttended(headers, state) {
                         delete cc[uid];
                         if (extStatusForOp[tyext].callConnectedCount > 0 ) {
                             extStatusForOp[tyext].callConnectedCount = extStatusForOp[tyext].callConnectedCount - 1;
+                            logger.debug('decremented callConnectedCount = ' + extStatusForOp[tyext].callConnectedCount);
+                        } else {
+                            logger.debug('no decrementation of callConnectedCount = ' + extStatusForOp[tyext].callConnectedCount);
                         }
                     }
                     cc[touid] = state;
@@ -386,10 +389,19 @@ function isExtGroup(ext){
 	return false
 }
 function removeCallConnectedUniqueidInternWithTypeExt(typeExt, uniqueid){
-	if(extStatusForOp[typeExt].tab===INTERNO){
-		delete extStatusForOp[typeExt].callConnectedUniqueid[uniqueid]
-		extStatusForOp[typeExt].callConnectedCount--
+    try {
+	if(extStatusForOp[typeExt].tab===INTERNO && extStatusForOp[typeExt].callConnectedUniqueid[uniqueid] !== undefined){
+		delete extStatusForOp[typeExt].callConnectedUniqueid[uniqueid];
+                if (extStatusForOp[typeExt].callConnectedCount > 0) {
+                    extStatusForOp[typeExt].callConnectedCount = extStatusForOp[typeExt].callConnectedCount - 1;
+                    logger.debug('decremented extStatusForOp[' + typeExt + '].callConnectedCount = ' + extStatusForOp[typeExt].callConnectedCount);
+                } else {
+                    logger.debug('no decrementation for extStatusForOp[' + typeExt + '].callConnectedCount = ' + extStatusForOp[typeExt].callConnectedCount);
+                }
 	}
+    } catch (err) {
+        logger.error('typeExt = ' + typeExt + ' uniqueid = ' + uniqueid + ': ' + err.stack);
+    }
 }
 function removeDialingUniqueidTrunkWithTypeExt(typeExt, uniqueid){
 	if(extStatusForOp[typeExt].tab=='fasci'){
@@ -397,10 +409,19 @@ function removeDialingUniqueidTrunkWithTypeExt(typeExt, uniqueid){
 	}
 }
 function removeCallConnectedUniqueidTrunkWithTypeExt(typeExt, uniqueid){
-	if(extStatusForOp[typeExt].tab=='fasci'){
-		delete extStatusForOp[typeExt].callConnectedUniqueid[uniqueid]
-		extStatusForOp[typeExt].callConnectedCount--
+    try {
+	if(extStatusForOp[typeExt].tab=='fasci' && extStatusForOp[typeExt].callConnectedUniqueid[uniqueid] !== undefined) {
+		delete extStatusForOp[typeExt].callConnectedUniqueid[uniqueid];
+                if (extStatusForOp[typeExt].callConnectedCount > 0) {
+                    extStatusForOp[typeExt].callConnectedCount = extStatusForOp[typeExt].callConnectedCount - 1;
+                    logger.debug('decremented extStatusForOp[' + typeExt + '].callConnectedCount = ' + extStatusForOp[typeExt].callConnectedCount);
+                } else {
+                    logger.debug('no decrementation for extStatusForOp[' + typeExt + '].callConnectedCount = ' + extStatusForOp[typeExt].callConnectedCount);
+                }
 	}
+    } catch (err) {
+        logger.error('typeExt = ' + typeExt + ' uniqueid = ' + uniqueid + ': ' + err.stack);
+    }
 }
 // return typeext if the passed channel is a trunk
 function getTrunkTypeExtFromChannel(ch){
@@ -409,11 +430,16 @@ function getTrunkTypeExtFromChannel(ch){
 			return key
 }
 function addCallConnectedUniqueidInternWithTypeExt(typeExt, uniqueid, chValue){
+    try {
 	if(extStatusForOp[typeExt].tab===INTERNO){
-		extStatusForOp[typeExt].callConnectedUniqueid[uniqueid] = chValue
-		extStatusForOp[typeExt].callConnectedCount++
-		extStatusForOp[typeExt].lastCallConnectedUniqueid = uniqueid
+		extStatusForOp[typeExt].callConnectedUniqueid[uniqueid] = chValue;
+		extStatusForOp[typeExt].callConnectedCount = extStatusForOp[typeExt].callConnectedCount + 1;
+                logger.debug('incremented extStatusForOp[' + typeExt + '].callConnectedCount = ' + extStatusForOp[typeExt].callConnectedCount);
+		extStatusForOp[typeExt].lastCallConnectedUniqueid = uniqueid;
 	}
+    } catch (err) {
+       logger.error('typeExt = ' + typeExt + ', uniqueid = ' + uniqueid + ', chValue = ' + chValue + ': ' + err.stack);
+    }
 }
 function updateCallConnectedUniqueidInternWithTypeExt(typeExt, uniqueid, chValue){
 	if(extStatusForOp[typeExt].tab===INTERNO)
@@ -434,20 +460,29 @@ function addDialingUniqueidTrunkWithTypeExt(typeExt, uniqueid, chValue){
 /* add uniqueid of channel to trunk identified by 'typeExt'. Uniqueid and channel is relative to
  * received 'CallConnected' event */
 function addCallConnectedUniqueidTrunkWithTypeExt(typeExt, uniqueid, chValue){
+    try {
 	if( extStatusForOp[typeExt].tab=='fasci' ){
-		extStatusForOp[typeExt].callConnectedUniqueid[uniqueid] = chValue
-		extStatusForOp[typeExt].callConnectedCount++
+		extStatusForOp[typeExt].callConnectedUniqueid[uniqueid] = chValue;
+		extStatusForOp[typeExt].callConnectedCount = extStatusForOp[typeExt].callConnectedCount + 1;
+                logger.debug('incremented extStatusForOp[' + typeExt + '].callConnectedCount = ' + extStatusForOp[typeExt].callConnectedCount);
 	}
+    } catch (err) {
+       logger.error('typeExt = ' + typeExt + ', uniqueid = ' + uniqueid + ', chValue = ' + chValue + ': ' + err.stack);
+    }
 }
 /* add uniqueid of channel to trunk identified by channel 'ch'. Uniqueid and channel is relative to
  * received 'CallConnected' event */
 function addCallConnectedUniqueidTrunkWithChannel(ch, uniqueid){
+    try {
 	for(key in extStatusForOp){
 		if( ch.indexOf(key)!=-1 && extStatusForOp[key].tab=='fasci' ){
-			extStatusForOp[key].callConnectedUniqueid[uniqueid] = ''
-			extStatusForOp[key].callConnectedCount++
+			extStatusForOp[key].callConnectedUniqueid[uniqueid] = '';
+			extStatusForOp[key].callConnectedCount = extStatusForOp[key].callConnectedCount + 1;
 		}
 	}
+    } catch (err) {
+        logger.error('ch = ' + ch + ', uniqueid = ' + uniqueid + ': ' + err.stack);
+    }
 }
 function hasInternDialingUniqueidWithTypeExt(typeExt, uniqueid){
 	if(extStatusForOp[typeExt].tab===INTERNO && extStatusForOp[typeExt].dialingUniqueid[uniqueid]!=undefined ) return true
