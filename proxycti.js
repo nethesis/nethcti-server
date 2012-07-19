@@ -1505,6 +1505,7 @@ am.addListener('hangup', function(headers) {
 	                var msg = "Call has hung up. Reason: " + headers.causetxt + "  (Code: " + headers.cause + ")"
 	                var resp = new ResponseMessage(c.id, "hangup", msg)
 	                resp.code = headers.cause
+                        resp.channel = headers.channel;
 	                c.emit('message',resp);
 	                logger.debug("RESP 'hangup' has been sent to [" + ext + "] id '" + c.id + "'")
 	        }
