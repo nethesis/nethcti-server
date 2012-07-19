@@ -193,6 +193,7 @@ function transferAttended(headers, state) {
                             logger.debug('decremented callConnectedCount = ' + extStatusForOp[tyext].callConnectedCount);
                         } else {
                             logger.debug('no decrementation of callConnectedCount = ' + extStatusForOp[tyext].callConnectedCount);
+                            extStatusForOp[tyext].callConnectedUniqueid = {};
                         }
                     }
                     cc[touid] = state;
@@ -397,6 +398,7 @@ function removeCallConnectedUniqueidInternWithTypeExt(typeExt, uniqueid){
                     logger.debug('decremented extStatusForOp[' + typeExt + '].callConnectedCount = ' + extStatusForOp[typeExt].callConnectedCount);
                 } else {
                     logger.debug('no decrementation for extStatusForOp[' + typeExt + '].callConnectedCount = ' + extStatusForOp[typeExt].callConnectedCount);
+                    extStatusForOp[typeExt].callConnectedUniqueid = {};
                 }
 	}
     } catch (err) {
@@ -417,6 +419,7 @@ function removeCallConnectedUniqueidTrunkWithTypeExt(typeExt, uniqueid){
                     logger.debug('decremented extStatusForOp[' + typeExt + '].callConnectedCount = ' + extStatusForOp[typeExt].callConnectedCount);
                 } else {
                     logger.debug('no decrementation for extStatusForOp[' + typeExt + '].callConnectedCount = ' + extStatusForOp[typeExt].callConnectedCount);
+                    extStatusForOp[typeExt].callConnectedUniqueid = {};
                 }
 	}
     } catch (err) {
