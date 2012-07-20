@@ -190,9 +190,9 @@ function transferAttended(headers, state) {
                         delete cc[uid];
                         if (extStatusForOp[tyext].callConnectedCount > 0 ) {
                             extStatusForOp[tyext].callConnectedCount = extStatusForOp[tyext].callConnectedCount - 1;
-                            logger.debug('decremented callConnectedCount = ' + extStatusForOp[tyext].callConnectedCount);
+                            logger.debug("transferAttended: decremented extStatusForOp[" + tyext + "].callConnectedCount = " + extStatusForOp[tyext].callConnectedCount);
                         } else {
-                            logger.debug('no decrementation of callConnectedCount = ' + extStatusForOp[tyext].callConnectedCount);
+                            logger.debug('no decrementation because callConnectedCount is already ' + extStatusForOp[tyext].callConnectedCount);
                             extStatusForOp[tyext].callConnectedUniqueid = {};
                         }
                     }
@@ -481,6 +481,7 @@ function addCallConnectedUniqueidTrunkWithChannel(ch, uniqueid){
 		if( ch.indexOf(key)!=-1 && extStatusForOp[key].tab=='fasci' ){
 			extStatusForOp[key].callConnectedUniqueid[uniqueid] = '';
 			extStatusForOp[key].callConnectedCount = extStatusForOp[key].callConnectedCount + 1;
+                        logger.debug('incremented extStatusForOp[' + key + '].callConnectedCount = ' + extStatusForOp[key].callConnectedCount);
 		}
 	}
     } catch (err) {
