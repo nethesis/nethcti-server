@@ -78,7 +78,20 @@ exports.DataCollector = function(){
 	this.getQueries = function(){ return getQueries(); }
 	this.getAllNotesForNum = function(ext,num,cb){ getAllNotesForNum(ext,num,cb); } 
         this.query = function (type, query, cb) { _query(type, query, cb); }
+        this.getAllContactsByNum = function (num, numToSearch, cb) { _getAllContactsByNum(num, numToSearch, cb); }
 }
+
+function _getAllContactsByNum(num, numToSearch, cb) {
+    try {
+        var query = 'SELECT * FROM ' + PHONEBOOK + ' WHERE (homephone="' + numToSearch + '" OR workphone="' + numToSearch + '" OR cellphone="' + numToSearch + '")';
+        _query(PHONEBOOK, query, function (result) {
+            cb(result, num);
+        });
+    } catch (err) {
+        logger.error('num = ' + num + ', numToSearch = ' + numToSearch + ': ' + err.stack);
+    }
+}
+
 function getQueries(){
 	return queries;
 }

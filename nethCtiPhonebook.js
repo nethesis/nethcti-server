@@ -14,6 +14,7 @@ exports.nethCtiPhonebook = function () {
     this.setDataCollector = function (dc) { _setDataCollector(dc); }
     this.setModop = function (md) { _setModop(md); }
     this.searchContacts = function (name, extFrom, cb) { _searchContacts(name, extFrom, cb); }
+    this.getAllContactsByNum = function (num, numToSearch, cb) { _getAllContactsByNum(num, numToSearch, cb); }
 }
 
 var _functs = {
@@ -219,4 +220,15 @@ function _searchContacts(name, extFrom, cb) {
     dataCollector.query(DB_NAME, query, function (result) {
         cb(result);
     });
+}
+
+function _getAllContactsByNum(num, numToSearch, cb) {
+    try {
+        var query = 'SELECT * FROM ' + DB_NAME + ' WHERE (homephone="' + numToSearch + '" OR workphone="' + numToSearch + '" OR cellphone="' + numToSearch + '")';
+        dataCollector.query(DB_NAME, query, function (result) {
+            cb(result, num);
+        });
+    } catch (err) {
+        logger.error('num = ' + num + ', numToSearch = ' + numToSearch + ': ' + err.stack);
+    }
 }

@@ -1016,6 +1016,13 @@ am.addListener('dialing', function(headers) {
 		        }
 		        response.callNotes = result; // add call notes to the response
 			response.dialCh = headers.destination;
+                        if (currentCallInInfo[from].ctiPrivate[to] !== undefined) {
+                            response.info = currentCallInInfo[from].ctiPrivate[to];
+                        } else if (currentCallInInfo[from].ctiPublic !== undefined) {
+                            response.info = currentCallInInfo[from].ctiPublic;
+                        } else if (currentCallInInfo[from].centralPhonebook !== undefined) {
+                            response.info = currentCallInInfo[from].centralPhonebook;
+                        }
 			c.emit('message',response);
                         logger.debug("RESP 'dialing' has been sent to [" + to + "] id '" + c.id + "'");
                 }
@@ -2025,6 +2032,7 @@ am.addListener('peerstatus', function(headers) {
 { event: 'UserEvent',
   privilege: 'user,all',
   userevent: 'CAllIN|Data; 3405567088' } 
+  userevent: 'CAllIN,Data:3405567088' } 
   *
 { event: 'UserEvent',
   privilege: 'user,all',
@@ -2120,6 +2128,7 @@ am.addListener('userevent', function(headers){
 
 // It is called from 'UserEvent' event when the call come from outside to fill 'currentCallInInfo'
 function fillCurrentCallInInfo(num){
+    try {
 	if(currentCallInInfo[num]===undefined){
 		currentCallInInfo[num] = {};
 		logger.debug("fill currentCallInInfo with call notes and call reservation for number " + num);
@@ -2133,11 +2142,43 @@ function fillCurrentCallInInfo(num){
                                 } else if(currentCallInInfo[num]!==undefined){
                                         currentCallInInfo[num].reservation = {value: false};
                                 }
+                                // query to add contact information
+                                var numToSearch = num;
+                                if (numToSearch.substring(0, 3) === '+39') {
+                                    numToSearch = numToSearch.substring(3, numToSearch.length);
+                                }
+                                nethCtiPhonebook.getAllContactsByNum(num, numToSearch, function (results, num) {
+                                    currentCallInInfo[num].ctiPrivate = {};
+                                    currentCallInInfo[num].ctiPublic = undefined;
+                                    currentCallInInfo[num].centralPhonebook = {};
+                                    var i, el;
+                                    for (i = 0; i < results.length; i++) {
+                                        el = results[i];
+                                        if (el.type === 'private' || el.type === 'speeddial') {
+                                            currentCallInInfo[num].ctiPrivate[el.owner_id] = el;
+                                        }
+                                    }
+                                    for (i = 0; i < results.length; i++) {
+                                        el = results[i];
+                                        if (el.type === 'public') {
+                                            currentCallInInfo[num].ctiPublic = el;
+                                            break;
+                                        }
+                                    }
+                                    if (currentCallInInfo[num].ctiPublic !== undefined) {
+                                        dataCollector.getAllContactsByNum(num, numToSearch, function (results, num) {
+                                            currentCallInInfo[num].centralPhonebook = results[0];
+                                        });
+                                    }
+                                });
                         });
                 });
 	} else {
 		logger.warn('skip fillCurrentCallInInfo because currentCallInInfo['+num+'] != undefined');
 	}
+    } catch (err) {
+        logger.error('fillCurrentCallInInfo num = ' + num + ': ' + err.stack);
+    }
 }
 
 
