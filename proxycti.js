@@ -1942,6 +1942,7 @@ am.addListener('callconnected', function(headers) {
                 response.from = from
                 response.to = to
 		response.destCh = headers.channel1;
+		response.ch2 = headers.channel2;
                 c.emit('message',response);
                 logger.debug("RESP 'callconnected' has been sent to [" + to + "] id '" + c.id + "'")
         }	
