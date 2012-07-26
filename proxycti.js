@@ -2807,6 +2807,7 @@ io.sockets.on('connection', function(client){
 			GET_ALL_VM_STATUS:  	'get_all_vm_status',
 			REDIRECT_VOICEMAIL: 	'redirect_voicemail',
 			GET_DAY_HISTORY:  	'get_day_history',
+			GET_DAY_SWITCHBOARD:  	'getDaySwitchboard',
 			STORE_CHAT_ASSOC:	'store_chat_association',
 			CHECK_CALL_AUDIO_FILE: 	'check_call_audio_file',
 			CF_UNCOND_FROM_PARKING: 'cf_uncond_from_parking',
@@ -2826,7 +2827,9 @@ io.sockets.on('connection', function(client){
 			SEARCH_CONTACT_PHONEBOOK:	'search_contact_phonebook',
 			GET_PEER_LIST_COMPLETE_OP: 	'get_peer_list_complete_op',
 			GET_CURRENT_WEEK_HISTORY:  	'get_current_week_history',
+			GET_CURRENT_WEEK_SWITCHBOARD:  	'getCurrentWeekSwitchboard',
 			GET_CURRENT_MONTH_HISTORY:	'get_current_month_history',
+			GET_CURRENT_MONTH_SWITCHBOARD:	'getCurrentMonthSwitchboard',
 			DELETE_AUDIO_RECORDING_CALL:	'delete_audio_recording_call'
 		}
   		logger.debug("ACTION received: from id '" + client.id + "' message " + sys.inspect(message));	
@@ -4242,6 +4245,37 @@ io.sockets.on('connection', function(client){
 	                                        logger.debug("RESP 'ack_cfb_off' has been sent to [" + extFrom + "] id '" + client.id + "'\n"+msgstr);
 	                                });
 				} catch(err) {logger.warn("no connection to asterisk: " +err);}
+                        break;
+                        case actions.GET_DAY_SWITCHBOARD:
+                            try {
+                                var auth = profiler.checkActionSwitchboardHistoryPermit(extFrom);
+                                if (auth === true) {
+                                    logger.debug("check 'daySwitchboard' permission for [" + extFrom + "] OK: get day switchboard ...");
+                                    var dateFormat = formatDate(message.date);
+                                    var num = message.num;
+                                    if (num === '') {
+                                        num = '%'; // match any field
+                                    }
+                                    dataCollector.getDaySwitchboardCall(extFrom, dateFormat, num, function (callResults) {
+                                        dataCollector.getDaySwitchboardSms(extFrom, dateFormat, num, function (smsResults) {
+                                            dataCollector.getDaySwitchboardCallNotes(extFrom, dateFormat, num, function (callNotesResults) {
+                                                var mess = new ResponseMessage(client.id, 'day_switchboard', '');
+                                                mess.callResults = createHistoryCallResponse(callResults);
+                                                mess.smsResults = smsResults;
+                                                mess.callNotesResults = callNotesResults;
+                                                client.emit('message', mess);
+                                                logger.debug("RESP 'day_switchboard' (call [" + callResults.length + "] - sms [" + smsResults.length +"] entries) has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                            });
+                                        });
+                                    });
+                                } else {
+                                        logger.info("check 'switchboard_history' permission for [" + extFrom + "] FAILED !");
+                                        client.emit('message', new ResponseMessage(client.id, "error_day_switchboard", ""));
+                                        logger.debug("RESP 'error_day_switchboard' has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                }
+                            } catch (err) {
+                                logger.error('message = ' + sys.inspect(message) + ': ' + err.stack);
+                            }
                         break;
 			case actions.GET_DAY_HISTORY:
 				var res = profiler.checkActionHistoryCallPermit(extFrom);

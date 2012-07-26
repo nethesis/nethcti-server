@@ -20,6 +20,7 @@ const CHAT = "CHAT";
 const PHONE_SERVICE = "PHONE_SERVICE";
 const VOICEMAIL = "VOICEMAIL";
 const STREAMING = "STREAMING";
+var _SWITCHBOARD_HISTORY = 'SWITCHBOARD_HISTORY';
 const ALL = "all"
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF) */
@@ -52,6 +53,7 @@ controller = null
 exports.Profiler = function(){
 	initProfiles();
 	initStreamingSettings();
+	this.checkActionSwitchboardHistoryPermit = function (ext) { return checkActionPermit(ext, _SWITCHBOARD_HISTORY); }
 	this.checkActionCallOutPermit = function(exten){ return checkActionPermit(exten, CALL_OUT) }
 	this.checkActionCallInPermit = function(exten){ return checkActionPermit(exten, CALL_IN) }
 	this.checkActionPhonebookPermit = function(exten){ return checkActionPermit(exten, PHONEBOOK) }
@@ -96,6 +98,7 @@ function getStreamingSettings(exten){
 }
 function getAllPermissions(exten){
 	var obj = {};
+	obj.switchboardHistory = checkActionPermit(exten, _SWITCHBOARD_HISTORY);
 	obj.phonebook = checkActionPermit(exten, PHONEBOOK);
 	obj.history_call = checkActionPermit(exten, HISTORY_CALL);
 	obj.op_plus = checkActionPermit(exten, OP_PLUS);
