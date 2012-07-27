@@ -2823,6 +2823,7 @@ io.sockets.on('connection', function(client){
 			DELETE_VM_CUSTOM_MSG:	'delete_vm_custom_msg',
 			GET_VM_CUSTOM_MSG:	'get_vm_custom_msg',
 			RECORD_VM_CUSTOM_MSG:	'record_vm_custom_msg',
+			GET_INTERVAL_SWITCHBOARD:	'get_interval_switchboard',
 			GET_PRIORITY_QUEUE_STATUS:	'get_priority_queue_status',
 			SEARCH_CONTACT_PHONEBOOK:	'search_contact_phonebook',
 			GET_PEER_LIST_COMPLETE_OP: 	'get_peer_list_complete_op',
@@ -4421,6 +4422,38 @@ io.sockets.on('connection', function(client){
                                         logger.debug("RESP 'error_current_month_history' has been sent to [" + extFrom + "] id '" + client.id + "'");
                                 }
                         break;
+			case actions.GET_INTERVAL_SWITCHBOARD:
+                            try {
+				var auth = profiler.checkActionHistoryCallPermit(extFrom);
+				if (auth) {
+					logger.info("check 'Switchboard' permission for [" + extFrom + "] OK: get interval switchboard...");
+					var dateFrom = fromMMddYYYYtoYYYYmmDD(message.dateFrom);
+					var dateTo = fromMMddYYYYtoYYYYmmDD(message.dateTo);
+					var num = message.num;
+					if (num === '') {
+						num = '%'; // match any field
+					}
+					dataCollector.getIntervalSwitchboardCall(extFrom, dateFrom, dateTo, num, function (callResults) {
+						dataCollector.getIntervalSwitchboardSms(extFrom, dateFrom, dateTo, num, function (smsResults) {
+							dataCollector.getIntervalSwitchboardCallNotes(extFrom, dateFrom, dateTo, num, function (callNotesResults) {
+								var mess = new ResponseMessage(client.id, "interval_switchboard", '');
+								mess.callResults = createHistoryCallResponse(callResults);
+								mess.smsResults = smsResults;
+								mess.callNotesResults = callNotesResults;
+								client.emit('message',mess);
+								logger.debug("RESP 'interval_switchboard' (call [" + callResults.length + "] - sms ["+smsResults.length+"] entries) has been sent to [" + extFrom + "] id '" + client.id + "'");
+							});
+						});
+					});
+				} else {
+					logger.info("check 'Switchboard' permission for [" + extFrom + "] FAILED !");
+					client.emit('message', new ResponseMessage(client.id, "error_interval_switchboard", ""));
+					logger.debug("RESP 'error_interval_switchboard' has been sent to [" + extFrom + "] id '" + client.id + "'");
+				}
+                            } catch (err) {
+                                logger.error('message = ' + sys.inspect(message) + ': ' + err.stack);
+                            }
+			break;
 			case actions.GET_INTERVAL_HISTORY:
 				var res = profiler.checkActionHistoryCallPermit(extFrom);
 				if(res){

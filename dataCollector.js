@@ -12,6 +12,7 @@ const DAY_HISTORY_CALL = "day_history_call";
 var DAY_SWITCHBOARD_CALL = "day_switchboard_call";
 var CURRENT_WEEK_SWITCHBOARD_CALL = 'current_week_switchboard_call';
 var CURRENT_MONTH_SWITCHBOARD_CALL = 'current_month_switchboard_call';
+var INTERVAL_SWITCHBOARD_CALL = "interval_switchboard_call";
 const CURRENT_WEEK_HISTORY_CALL = "current_week_history_call";
 const CURRENT_MONTH_HISTORY_CALL = "current_month_history_call";
 const INTERVAL_HISTORY_CALL = "interval_history_call";
@@ -72,8 +73,11 @@ exports.DataCollector = function(){
 	this.getCurrentMonthHistoryCallNotes = function(ext, num, cb) { return getCurrentMonthHistoryCallNotes(ext, num, cb); }
 	this.getCurrentMonthSwitchboardCallNotes = function (ext, num, cb) { return _getCurrentMonthSwitchboardCallNotes(ext, num, cb); }
 	this.getIntervalHistoryCall = function(ext,dateFrom,dateTo,num,cb){ return getIntervalHistoryCall(ext,dateFrom,dateTo,num,cb); }
+	this.getIntervalSwitchboardCall = function (ext, dateFrom, dateTo, num, cb) { return _getIntervalSwitchboardCall(ext, dateFrom, dateTo, num, cb); }
 	this.getIntervalHistorySms = function(ext,dateFrom,dateTo,num,cb){ return getIntervalHistorySms(ext,dateFrom,dateTo,num,cb); }
+	this.getIntervalSwitchboardSms = function (ext, dateFrom, dateTo, num, cb) { return _getIntervalSwitchboardSms(ext, dateFrom, dateTo, num, cb); }
 	this.getIntervalHistoryCallNotes = function(ext,dateFrom,dateTo,num,cb){ return getIntervalHistoryCallNotes(ext,dateFrom,dateTo,num,cb); }
+	this.getIntervalSwitchboardCallNotes = function (ext, dateFrom, dateTo, num, cb){ return _getIntervalSwitchboardCallNotes(ext,dateFrom,dateTo,num,cb); }
 	this.addController = function(contr) { addController(contr) }
 	this.setLogger = function(logfile,level) { log4js.addAppender(log4js.fileAppender(logfile), '[DataCollector]'); logger.setLevel(level); }
 	this.checkAudioUid = function(uid, filename, cb) { return checkAudioUid(uid, filename, cb); }
@@ -199,6 +203,26 @@ function saveCallNote(note,extension,pub,expiration,expFormatVal,num,reservation
                 }
 	});
 }
+
+function _getIntervalSwitchboardSms(ext, dateFrom, dateTo, num, cb) {
+    try {
+	var objQuery = queries[SMS];
+	num = num.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
+	objQuery.query = "SELECT id, sender, destination, text, date_format(date,'%d/%m/%Y') AS date, date_format(date,'%H:%i:%S') AS time, status FROM "+DB_TABLE_SMS+" WHERE ( (DATE(date)>='" + dateFrom + "' AND DATE(date)<='" + dateTo + "') AND destination like '" + num + "')";
+	if (objQuery !== undefined) {
+		executeSQLQuery(SMS, objQuery, function (results) {
+			try {
+				cb(results);
+			} catch(err) {
+                                logger.error("dateFrom = " + dateFrom + ", dateTo = " + dateTo + ", ext = " + ext + ", num = " + num + ": "  + err.stack);
+                        }
+		});
+	}
+    } catch(err) {
+        logger.error("dateFrom = " + dateFrom + ", dateTo = " + dateTo + ", ext = " + ext + ", num = " + num + ": "  + err.stack);
+    }
+}
+
 function getIntervalHistorySms(ext,dateFrom,dateTo,num,cb){
 	var objQuery = queries[SMS];
 	num = num.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
@@ -212,6 +236,24 @@ function getIntervalHistorySms(ext,dateFrom,dateTo,num,cb){
                         }
 		});
 	}
+}
+function _getIntervalSwitchboardCallNotes(ext,dateFrom,dateTo,num,cb){
+    try {
+	var objQuery = queries[CALL_NOTES];
+	num = num.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
+	objQuery.query = "SELECT * from "+DB_TABLE_CALLNOTES+" WHERE ((DATE(date)>='"+dateFrom+"' AND DATE(date)<='"+dateTo+"') AND expiration>now())";
+	if(objQuery!==undefined){
+		executeSQLQuery(CALL_NOTES, objQuery, function(results){
+			try {
+				cb(results);
+			} catch(err) {
+                                logger.error("dateFrom = " + dateFrom + ", dateTo = " + dateTo + ", ext = " + ext + ", num = " + num + ": "  + err.stack);
+                        }
+		});
+        }
+    } catch (err) {
+        logger.error("dateFrom = " + dateFrom + ", dateTo = " + dateTo + ", ext = " + ext + ", num = " + num + ": "  + err.stack);
+    }
 }
 function getIntervalHistoryCallNotes(ext,dateFrom,dateTo,num,cb){
 	var objQuery = queries[CALL_NOTES];
@@ -680,6 +722,27 @@ function initQueries(){
 	};
 	initDBConnections();
 }
+
+_getIntervalSwitchboardCall = function(ext, dateFrom, dateTo, num, cb) {
+    try {
+        var objQuery = queries[INTERVAL_SWITCHBOARD_CALL];
+        if (objQuery !== undefined) {
+            var copyObjQuery = Object.create(objQuery);
+            num = num.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
+            copyObjQuery.query = copyObjQuery.query.replace(/\$EXTEN/g, ext).replace(/\$DATE_FROM/g,dateFrom).replace(/\$DATE_TO/g,dateTo).replace(/\$NUM/g,num);
+            executeSQLQuery(INTERVAL_SWITCHBOARD_CALL, copyObjQuery, function (results) {
+                try {
+                    cb(results);
+                } catch(err) {
+                    logger.error("dateFrom = " + dateFrom + ", dateTo = " + dateTo + ", ext = " + ext + ", num = " + num + ": "  + err.stack);
+                }
+            });
+        }
+    } catch (err) {
+        logger.error("dateFrom = " + dateFrom + ", dateTo = " + dateTo + ", ext = " + ext + ", num = " + num + ": "  + err.stack);
+    }
+}
+
 // Return the history of calling between specified interval time
 getIntervalHistoryCall = function(ext,dateFrom,dateTo,num,cb){
 	var objQuery = queries[INTERVAL_HISTORY_CALL];
