@@ -217,7 +217,9 @@ function _getIntervalSwitchboardSms(ext, dateFrom, dateTo, num, cb) {
                                 logger.error("dateFrom = " + dateFrom + ", dateTo = " + dateTo + ", ext = " + ext + ", num = " + num + ": "  + err.stack);
                         }
 		});
-	}
+	} else {
+            logger.warn('no query for [' + SMS + ']');
+        }
     } catch(err) {
         logger.error("dateFrom = " + dateFrom + ", dateTo = " + dateTo + ", ext = " + ext + ", num = " + num + ": "  + err.stack);
     }
@@ -235,7 +237,9 @@ function getIntervalHistorySms(ext,dateFrom,dateTo,num,cb){
                                 logger.error("get interval history sms ("+dateFrom+" - "+dateTo+") for ext " + ext + " of num " + num + ": "  + err.stack);
                         }
 		});
-	}
+	} else {
+            logger.warn('no query for [' + SMS + ']');
+        }
 }
 function _getIntervalSwitchboardCallNotes(ext,dateFrom,dateTo,num,cb){
     try {
@@ -250,6 +254,8 @@ function _getIntervalSwitchboardCallNotes(ext,dateFrom,dateTo,num,cb){
                                 logger.error("dateFrom = " + dateFrom + ", dateTo = " + dateTo + ", ext = " + ext + ", num = " + num + ": "  + err.stack);
                         }
 		});
+        } else {
+            logger.warn('no query for [' + CALL_NOTES + ']');
         }
     } catch (err) {
         logger.error("dateFrom = " + dateFrom + ", dateTo = " + dateTo + ", ext = " + ext + ", num = " + num + ": "  + err.stack);
@@ -267,7 +273,9 @@ function getIntervalHistoryCallNotes(ext,dateFrom,dateTo,num,cb){
                                 logger.error("get interval history call notes ("+dateFrom+" - "+dateTo+") for ext " + ext + " of num " + num + ": "  + err.stack);
                         }
 		});
-	}
+	} else {
+            logger.warn('no query for [' + CALL_NOTES + ']');
+        }
 }
 function getAllNotesForNum(ext,num,cb){
 	var objQuery = queries[CALL_NOTES];
@@ -281,7 +289,9 @@ function getAllNotesForNum(ext,num,cb){
                                 logger.error("get all notes for ext " + ext + " for num " + num + ": "  + err.stack);
                         }
                 });
-	}
+	} else {
+            logger.warn('no query for [' + CALL_NOTES + ']');
+        }
 }
 
 function _getCurrentMonthSwitchboardCallNotes(ext, num, cb) {
@@ -297,6 +307,8 @@ function _getCurrentMonthSwitchboardCallNotes(ext, num, cb) {
                     logger.error("ext = " + ext + ", num = " + num + ": "  + err.stack);
                 }
             });
+        } else {
+            logger.warn('no query for [' + CALL_NOTES + ']');
         }
     } catch (err) {
         logger.error("ext = " + ext + ", num = " + num + ": "  + err.stack);
@@ -315,7 +327,9 @@ function getCurrentMonthHistoryCallNotes(ext, num, cb){
                                 logger.error("get current month history call notes for ext " + ext + " of num " + num + ": "  + err.stack);
                         }
 		});
-	}
+	} else {
+            logger.warn('no query for [' + CALL_NOTES + ']');
+        }
 }
 
 function _getCurrentMonthSwitchboardSms(ext, num, cb) {
@@ -331,6 +345,8 @@ function _getCurrentMonthSwitchboardSms(ext, num, cb) {
                                 logger.error("get current month history sms for ext " + ext + " of num " + num + ": "  + err.stack);
                         }
                 });
+        } else {
+            logger.warn('no query for [' + SMS + ']');
         }
     } catch (err) {
         logger.error("ext = " + ext + ", num = " + num + ": "  + err.stack);
@@ -349,7 +365,9 @@ function getCurrentMonthHistorySms(ext, num, cb){
                                 logger.error("get current month history sms for ext " + ext + " of num " + num + ": "  + err.stack);
                         }
 		});
-	}
+	} else {
+            logger.warn('no query for [' + SMS + ']');
+        }
 }
 
 function _getCurrentWeekSwitchboardCallNotes(ext, num, cb) {
@@ -365,6 +383,8 @@ function _getCurrentWeekSwitchboardCallNotes(ext, num, cb) {
                     logger.error("ext = " + ext + ", num = " + num + ": "  + err.stack);
                 }
             });
+        } else {
+            logger.warn('no query for [' + CALL_NOTES + ']');
         }
     } catch (err) {
         logger.error("ext = " + ext + ", num = " + num + ": "  + err.stack);
@@ -383,7 +403,9 @@ function getCurrentWeekHistoryCallNotes(ext, num, cb){
                                 logger.error("get current week history call notes for ext " + ext + " of num " + num + ": "  + err.stack);
                         }
 		});
-	}
+	} else {
+            logger.warn('no query for [' + CALL_NOTES + ']');
+        }
 }
 
 function _getCurrentWeekSwitchboardSms(ext, num, cb) {
@@ -399,6 +421,8 @@ function _getCurrentWeekSwitchboardSms(ext, num, cb) {
                     logger.error("ext = " + ext + ", num = " + num + ": "  + err.stack);
                 }
             });
+        } else {
+            logger.warn('no query for [' + SMS + ']');
         }
     } catch (err) {
         logger.error("ext = " + ext + ", num = " + num + ": "  + err.stack);
@@ -417,7 +441,9 @@ function getCurrentWeekHistorySms(ext, num, cb){
                                 logger.error("get current week history sms for ext " + ext + " of num " + num + ": "  + err.stack);
                         }
 		});
-	}
+	} else {
+            logger.warn('no query for [' + SMS + ']');
+        }
 }
 
 function _getDaySwitchboardCallNotes(ext, date, num, cb) {
@@ -433,6 +459,8 @@ function _getDaySwitchboardCallNotes(ext, date, num, cb) {
                     logger.error("ext = " + ext + ", date = " + date + ", num = " + num + ": "  + err.stack);
                 }
             });
+        } else {
+            logger.warn('no query for [' + CALL_NOTES + ']');
         }
     } catch(err) {
         logger.error("ext = " + ext + ", date = " + date + ", num = " + num + ": "  + err.stack);
@@ -451,7 +479,9 @@ function getDayHistoryCallNotes(ext, date, num, cb){
                                 logger.error("get day history call notes for ext " + ext + " of num " + num + ": "  + err.stack);
                         }
 		});
-	}
+	} else {
+            logger.warn('no query for [' + CALL_NOTES + ']');
+        }
 	return undefined;
 }
 
@@ -469,6 +499,8 @@ function _getDaySwitchboardSms(ext, date, num, cb) {
                     logger.error("ext = " + ext + ", date = " + date + ", num = " + num + ": "  + err.stack);
                 }
             });
+        } else {
+            logger.warn('no query for [' + SMS + ']');
         }
     } catch (err) {
         logger.error("ext = " + ext + ", date = " + date + ", num = " + num + ": "  + err.stack);
@@ -489,7 +521,9 @@ function getDayHistorySms(ext, date, num, cb){
 	                        logger.error("get day history sms for ext " + ext + " of num " + num + ": "  + err.stack);
                 	}
 		});
-	}
+	} else {
+            logger.warn('no query for [' + SMS + ']');
+        }
 	return undefined;
 }
 function registerSmsSuccess(sender, destination, text, cb){
@@ -509,7 +543,9 @@ function registerSmsSuccess(sender, destination, text, cb){
                                 logger.error("register sms succcess from " + sender + " to " + destination + ": "  + err.stack);
                         }
 		});
-	}
+	} else {
+            logger.warn('no query for [' + SMS + ']');
+        }
 	return undefined;
 }
 function registerSmsFailed(sender, destination, text, cb){
@@ -529,7 +565,9 @@ function registerSmsFailed(sender, destination, text, cb){
                                 logger.error("register sms failed from " + sender + " to " + destination + ": "  + err.stack);
                         }
 		});
-	}
+	} else {
+            logger.warn('no query for [' + SMS + ']');
+        }
 	return undefined;
 }
 // Return all uniqueid present in cdr that has been passed as array argument
@@ -553,7 +591,9 @@ function checkListAudioUid(arruid,cb){
 				logger.error("check list audio uid (" + arruid.length + " elements): " + err.stack);
 			}
 		});
-	}
+	} else {
+            logger.warn('no query for [' + DAY_HISTORY_CALL + ']');
+        }
 }
 /* check if the uniqueid 'uid' is present in 'cdr' table of 'asteriskcdrdb' database
  * return true if it is present, false otherwise */
@@ -570,6 +610,8 @@ function checkAudioUid(uid, filename, cb){
 				logger.error("check audio uid " + uid + ": " + err.stack);
 			}
                 });
+        } else {
+            logger.warn('no query for [' + DAY_HISTORY_CALL + ']');
         }
 }
 // add controller to manage changin in configuration file
@@ -737,6 +779,8 @@ _getIntervalSwitchboardCall = function(ext, dateFrom, dateTo, num, cb) {
                     logger.error("dateFrom = " + dateFrom + ", dateTo = " + dateTo + ", ext = " + ext + ", num = " + num + ": "  + err.stack);
                 }
             });
+        } else {
+            logger.warn('no query for [' + INTERVAL_SWITCHBOARD_CALL + ']');
         }
     } catch (err) {
         logger.error("dateFrom = " + dateFrom + ", dateTo = " + dateTo + ", ext = " + ext + ", num = " + num + ": "  + err.stack);
@@ -757,7 +801,9 @@ getIntervalHistoryCall = function(ext,dateFrom,dateTo,num,cb){
                                 logger.error("get interval history call ("+dateFrom+" - "+dateTo+") for ext " + ext + " of num " + num + ": "  + err.stack);
                         }
 		});
-	}
+	} else {
+            logger.warn('no query for [' + INTERVAL_HISTORY_CALL + ']');
+        }
 	return undefined;
 }
 
@@ -775,6 +821,8 @@ _getCurrentMonthSwitchboardCall = function (ext, num, cb) {
                     logger.error("get current month history call for ext " + ext + " of num " + num + ": "  + err.stack);
                 }
             });
+        } else {
+            logger.warn('no query for [' + CURRENT_MONTH_SWITCHBOARD_CALL + ']');
         }
     } catch (err) {
         logger.error("ext = " + ext + ", num = " + num + ": "  + err.stack);
@@ -798,6 +846,8 @@ getCurrentMonthHistoryCall = function(ext, num, cb){
                                 logger.error("get current month history call for ext " + ext + " of num " + num + ": "  + err.stack);
                         }
                 });
+        } else {
+            logger.warn('no query for [' + CURRENT_MONTH_HISTORY_CALL + ']');
         }
         return undefined;
 }
@@ -816,6 +866,8 @@ _getCurrentWeekSwitchboardCall = function (ext, num, cb) {
                     logger.error("ext = " + ext + ", num = " + num + ": "  + err.stack);
                 }
             });
+        } else {
+            logger.warn('no query for [' + CURRENT_WEEK_SWITCHBOARD_CALL + ']');
         }
     } catch (err) {
         logger.error("ext = " + ext + ", num = " + num + ": "  + err.stack);
@@ -839,6 +891,8 @@ getCurrentWeekHistoryCall = function(ext, num, cb){
                                 logger.error("get current week history call for ext " + ext + " of num " + num + ": "  + err.stack);
                         }
                 });
+        } else {
+            logger.warn('no query for [' + CURRENT_WEEK_HISTORY_CALL + ']');
         }
         return undefined;
 }
@@ -857,6 +911,8 @@ _getDaySwitchboardCall = function (ext, date, num, cb) {
                     logger.error("ext = " + ext + ", date = " + date + ", num = " + num + ": "  + err.stack);
                 }
             });
+        } else {
+            logger.warn('no query for [' + DAY_SWITCHBOARD_CALL + ']');
         }
     } catch (err) {
         logger.error("ext = " + ext + ", date = " + date + ", num = " + num + ": "  + err.stack);
@@ -880,6 +936,8 @@ getDayHistoryCall = function(ext, date, num, cb){
 	                        logger.error("get day history call for ext " + ext + " of num " + num + ": "  + err.stack);
                 	}
                 });
+        } else {
+            logger.warn('no query for [' + DAY_HISTORY_CALL + ']');
         }
         return undefined;
 }
