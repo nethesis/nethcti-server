@@ -10,6 +10,8 @@ const PHONEBOOK = "phonebook";
 const CUSTOMER_CARD = "customer_card";
 const DAY_HISTORY_CALL = "day_history_call";
 var DAY_SWITCHBOARD_CALL = "day_switchboard_call";
+var CURRENT_WEEK_SWITCHBOARD_CALL = 'current_week_switchboard_call';
+var CURRENT_MONTH_SWITCHBOARD_CALL = 'current_month_switchboard_call';
 const CURRENT_WEEK_HISTORY_CALL = "current_week_history_call";
 const CURRENT_MONTH_HISTORY_CALL = "current_month_history_call";
 const INTERVAL_HISTORY_CALL = "interval_history_call";
@@ -58,11 +60,17 @@ exports.DataCollector = function(){
 	this.getDayHistoryCallNotes = function(ext, date, num, cb) { return getDayHistoryCallNotes(ext, date, num, cb); }
 	this.getDaySwitchboardCallNotes = function(ext, date, num, cb) { return _getDaySwitchboardCallNotes(ext, date, num, cb); }
 	this.getCurrentWeekHistoryCall = function(ext, num, cb) { return getCurrentWeekHistoryCall(ext, num, cb); }
+	this.getCurrentWeekSwitchboardCall = function(ext, num, cb) { return _getCurrentWeekSwitchboardCall(ext, num, cb); }
 	this.getCurrentWeekHistorySms = function(ext, num, cb) { return getCurrentWeekHistorySms(ext, num, cb); }
+	this.getCurrentWeekSwitchboardSms = function(ext, num, cb) { return _getCurrentWeekSwitchboardSms(ext, num, cb); }
 	this.getCurrentWeekHistoryCallNotes = function(ext, num, cb) { return getCurrentWeekHistoryCallNotes(ext, num, cb); }
+	this.getCurrentWeekSwitchboardCallNotes = function (ext, num, cb) { return getCurrentWeekHistoryCallNotes(ext, num, cb); }
 	this.getCurrentMonthHistoryCall = function(ext, num, cb) { return getCurrentMonthHistoryCall(ext, num, cb); }
+	this.getCurrentMonthSwitchboardCall = function(ext, num, cb) { return _getCurrentMonthSwitchboardCall(ext, num, cb); }
 	this.getCurrentMonthHistorySms = function(ext, num, cb) { return getCurrentMonthHistorySms(ext, num, cb); }
+	this.getCurrentMonthSwitchboardSms = function (ext, num, cb) { return _getCurrentMonthSwitchboardSms(ext, num, cb); }
 	this.getCurrentMonthHistoryCallNotes = function(ext, num, cb) { return getCurrentMonthHistoryCallNotes(ext, num, cb); }
+	this.getCurrentMonthSwitchboardCallNotes = function (ext, num, cb) { return _getCurrentMonthSwitchboardCallNotes(ext, num, cb); }
 	this.getIntervalHistoryCall = function(ext,dateFrom,dateTo,num,cb){ return getIntervalHistoryCall(ext,dateFrom,dateTo,num,cb); }
 	this.getIntervalHistorySms = function(ext,dateFrom,dateTo,num,cb){ return getIntervalHistorySms(ext,dateFrom,dateTo,num,cb); }
 	this.getIntervalHistoryCallNotes = function(ext,dateFrom,dateTo,num,cb){ return getIntervalHistoryCallNotes(ext,dateFrom,dateTo,num,cb); }
@@ -233,6 +241,26 @@ function getAllNotesForNum(ext,num,cb){
                 });
 	}
 }
+
+function _getCurrentMonthSwitchboardCallNotes(ext, num, cb) {
+    try {
+        var objQuery = queries[CALL_NOTES];
+        num = num.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
+        objQuery.query = "SELECT * from " + DB_TABLE_CALLNOTES + " WHERE ((DATE(date)>=(DATE_SUB(CURDATE(), INTERVAL DAYOFMONTH(CURDATE())-1 DAY))) AND expiration>now())";
+        if (objQuery !== undefined) {
+            executeSQLQuery(CALL_NOTES, objQuery, function (results) {
+                try {
+                    cb(results);
+                } catch(err) {
+                    logger.error("ext = " + ext + ", num = " + num + ": "  + err.stack);
+                }
+            });
+        }
+    } catch (err) {
+        logger.error("ext = " + ext + ", num = " + num + ": "  + err.stack);
+    } 
+}
+
 function getCurrentMonthHistoryCallNotes(ext, num, cb){
 	var objQuery = queries[CALL_NOTES];
 	num = num.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
@@ -247,6 +275,26 @@ function getCurrentMonthHistoryCallNotes(ext, num, cb){
 		});
 	}
 }
+
+function _getCurrentMonthSwitchboardSms(ext, num, cb) {
+    try {
+        var objQuery = queries[SMS];
+        num = num.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
+        objQuery.query = "SELECT id, sender, destination, text, date_format(date,'%d/%m/%Y') AS date, date_format(date,'%H:%i:%S') AS time, status FROM " + DB_TABLE_SMS + " WHERE ( (DATE(date)>=(DATE_SUB(CURDATE(), INTERVAL DAYOFMONTH(CURDATE())-1 DAY))) AND destination like '" + num + "')";
+        if (objQuery !== undefined) {
+                executeSQLQuery(SMS, objQuery, function (results) {
+                        try {
+                                cb(results);
+                        } catch(err) {
+                                logger.error("get current month history sms for ext " + ext + " of num " + num + ": "  + err.stack);
+                        }
+                });
+        }
+    } catch (err) {
+        logger.error("ext = " + ext + ", num = " + num + ": "  + err.stack);
+    }
+}
+
 function getCurrentMonthHistorySms(ext, num, cb){
 	var objQuery = queries[SMS];
 	num = num.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
@@ -261,6 +309,26 @@ function getCurrentMonthHistorySms(ext, num, cb){
 		});
 	}
 }
+
+function _getCurrentWeekSwitchboardCallNotes(ext, num, cb) {
+    try {
+        var objQuery = queries[CALL_NOTES];
+        num = num.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
+        objQuery.query = "SELECT * from " + DB_TABLE_CALLNOTES + " WHERE ((DATE(date)>=(DATE_SUB(CURDATE(), INTERVAL DAYOFWEEK(CURDATE())-2 DAY))) AND expiration>now())";
+        if (objQuery !== undefined) {
+            executeSQLQuery(CALL_NOTES, objQuery, function (results) {
+                try {
+                    cb(results);
+                } catch (err) {
+                    logger.error("ext = " + ext + ", num = " + num + ": "  + err.stack);
+                }
+            });
+        }
+    } catch (err) {
+        logger.error("ext = " + ext + ", num = " + num + ": "  + err.stack);
+    }
+}
+
 function getCurrentWeekHistoryCallNotes(ext, num, cb){
 	var objQuery = queries[CALL_NOTES];
 	num = num.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
@@ -275,6 +343,26 @@ function getCurrentWeekHistoryCallNotes(ext, num, cb){
 		});
 	}
 }
+
+function _getCurrentWeekSwitchboardSms(ext, num, cb) {
+    try {
+        var objQuery = queries[SMS];
+        num = num.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
+        objQuery.query = "SELECT id, sender, destination, text, date_format(date,'%d/%m/%Y') AS date, date_format(date,'%H:%i:%S') AS time, status FROM " + DB_TABLE_SMS + " WHERE ( (DATE(date)>=(DATE_SUB(CURDATE(), INTERVAL DAYOFWEEK(CURDATE())-2 DAY))) AND destination like '" + num + "')";
+        if (objQuery !== undefined) {
+            executeSQLQuery(SMS, objQuery, function(results){
+                try {
+                    cb(results);
+                } catch (err) {
+                    logger.error("ext = " + ext + ", num = " + num + ": "  + err.stack);
+                }
+            });
+        }
+    } catch (err) {
+        logger.error("ext = " + ext + ", num = " + num + ": "  + err.stack);
+    }
+}
+
 function getCurrentWeekHistorySms(ext, num, cb){
 	var objQuery = queries[SMS];
 	num = num.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
@@ -609,6 +697,27 @@ getIntervalHistoryCall = function(ext,dateFrom,dateTo,num,cb){
 	}
 	return undefined;
 }
+
+_getCurrentMonthSwitchboardCall = function (ext, num, cb) {
+    try {
+        var objQuery = queries[CURRENT_MONTH_SWITCHBOARD_CALL];
+        if (objQuery !== undefined) {
+            var copyObjQuery = Object.create(objQuery);
+            num = num.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
+            copyObjQuery.query = copyObjQuery.query.replace(/\$EXTEN/g, ext).replace(/\$NUM/g, num);
+            executeSQLQuery(CURRENT_MONTH_SWITCHBOARD_CALL, copyObjQuery, function (results) {
+                try {
+                    cb(results);
+                } catch (err) {
+                    logger.error("get current month history call for ext " + ext + " of num " + num + ": "  + err.stack);
+                }
+            });
+        }
+    } catch (err) {
+        logger.error("ext = " + ext + ", num = " + num + ": "  + err.stack);
+    }
+}
+
 // Return the history of calling of the current month.
 getCurrentMonthHistoryCall = function(ext, num, cb){
 	var objQuery = queries[CURRENT_MONTH_HISTORY_CALL];
@@ -630,6 +739,25 @@ getCurrentMonthHistoryCall = function(ext, num, cb){
         return undefined;
 }
 
+_getCurrentWeekSwitchboardCall = function (ext, num, cb) {
+    try {
+        var objQuery = queries[CURRENT_WEEK_SWITCHBOARD_CALL];
+        if (objQuery !== undefined) {
+            var copyObjQuery = Object.create(objQuery);
+            num = num.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
+            copyObjQuery.query = copyObjQuery.query.replace(/\$EXTEN/g, ext).replace(/\$NUM/g, num);
+            executeSQLQuery(CURRENT_WEEK_HISTORY_CALL, copyObjQuery, function (results) {
+                try {
+                    cb(results);
+                } catch(err) {
+                    logger.error("ext = " + ext + ", num = " + num + ": "  + err.stack);
+                }
+            });
+        }
+    } catch (err) {
+        logger.error("ext = " + ext + ", num = " + num + ": "  + err.stack);
+    }
+}
 
 // Return the history of calling of the current week
 getCurrentWeekHistoryCall = function(ext, num, cb){

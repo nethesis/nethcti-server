@@ -4305,6 +4305,36 @@ io.sockets.on('connection', function(client){
                                         logger.debug("RESP 'error_day_history' has been sent to [" + extFrom + "] id '" + client.id + "'");
                                 }
                         break;
+                        case actions.GET_CURRENT_WEEK_SWITCHBOARD:
+                            try {
+                                var auth = profiler.checkActionSwitchboardHistoryPermit(extFrom);
+                                if (auth === true) {
+                                    logger.debug("check 'currentWeekSwitchboard' permission for [" + extFrom + "] OK: get day switchboard ...");
+                                    var num = message.num;
+                                    if (num === '') {
+                                        num = '%'; // match any field
+                                    }
+                                    dataCollector.getCurrentWeekSwitchboardCall(extFrom, num, function (callResults) {
+                                        dataCollector.getCurrentWeekSwitchboardSms(extFrom, num, function (smsResults) {
+                                            dataCollector.getCurrentWeekSwitchboardCallNotes(extFrom, num, function (callNotesResults) {
+                                                var mess = new ResponseMessage(client.id, 'current_week_switchboard', '');
+                                                mess.callResults = createHistoryCallResponse(callResults);
+                                                mess.smsResults = smsResults;
+                                                mess.callNotesResults = callNotesResults;
+                                                client.emit('message', mess);
+                                                logger.debug("RESP 'current_week_switchboard' (call [" + callResults.length + "] - sms [" + smsResults.length +"] entries) has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                            });
+                                        });
+                                    });
+                                } else {
+                                        logger.info("check 'switchboard_history' permission for [" + extFrom + "] FAILED !");
+                                        client.emit('message', new ResponseMessage(client.id, "error_current_week_switchboard", ""));
+                                        logger.debug("RESP 'error_current_week_switchboard' has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                }
+                            } catch (err) {
+                                logger.error('message = ' + sys.inspect(message) + ': ' + err.stack);
+                            }
+                        break;
 			case actions.GET_CURRENT_WEEK_HISTORY:
                                 // check if the user has the permission to get history of calling
 				var res = profiler.checkActionHistoryCallPermit(extFrom);
@@ -4332,6 +4362,36 @@ io.sockets.on('connection', function(client){
                                         client.emit('message',new ResponseMessage(client.id, "error_current_week_history", ""));
                                         logger.debug("RESP 'error_current_week_history' has been sent to [" + extFrom + "] id '" + client.id + "'");
                                 }
+                        break;
+			case actions.GET_CURRENT_MONTH_SWITCHBOARD:
+                            try {
+                                var auth = profiler.checkActionSwitchboardHistoryPermit(extFrom);
+                                if (auth === true) {
+                                    logger.debug("check 'currentMonthSwitchboard' permission for [" + extFrom + "] OK: get day switchboard ...");
+                                    var num = message.num;
+                                    if (num === '') {
+                                        num = '%'; // match any field
+                                    }
+                                    dataCollector.getCurrentMonthSwitchboardCall(extFrom, num, function (callResults) {
+                                        dataCollector.getCurrentMonthSwitchboardSms(extFrom, num, function (smsResults) {
+                                            dataCollector.getCurrentMonthSwitchboardCallNotes(extFrom, num, function (callNotesResults) {
+                                                var mess = new ResponseMessage(client.id, 'current_month_switchboard', '');
+                                                mess.callResults = createHistoryCallResponse(callResults);
+                                                mess.smsResults = smsResults;
+                                                mess.callNotesResults = callNotesResults;
+                                                client.emit('message', mess);
+                                                logger.debug("RESP 'current_month_switchboard' (call [" + callResults.length + "] - sms [" + smsResults.length +"] entries) has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                            });
+                                        });
+                                    });
+                                } else {
+                                        logger.info("check 'switchboard_history' permission for [" + extFrom + "] FAILED !");
+                                        client.emit('message', new ResponseMessage(client.id, "error_current_month_switchboard", ""));
+                                        logger.debug("RESP 'error_current_month_switchboard' has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                }
+                            } catch (err) {
+                                logger.error('message = ' + sys.inspect(message) + ': ' + err.stack);
+                            }
                         break;
 			case actions.GET_CURRENT_MONTH_HISTORY:
                                 // check if the user has the permission to get history of calling
