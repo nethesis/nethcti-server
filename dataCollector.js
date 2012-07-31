@@ -18,6 +18,7 @@ const CURRENT_MONTH_HISTORY_CALL = "current_month_history_call";
 const INTERVAL_HISTORY_CALL = "interval_history_call";
 const SMS = "sms";
 const CALL_NOTES = "call_notes";
+var POSTIT = "postit";
 const DB_TABLE_SMS = 'sms_history';
 const DB_TABLE_CALLNOTES = 'call_notes';
 const CHAT_ASSOCIATION = 'chat_association';
@@ -59,32 +60,40 @@ exports.DataCollector = function(){
 	this.getDayHistorySms = function(ext, date, num, cb) { return getDayHistorySms(ext, date, num, cb); }
 	this.getDaySwitchboardSms = function(ext, date, num, cb) { return _getDaySwitchboardSms(ext, date, num, cb); }
 	this.getDayHistoryCallNotes = function(ext, date, num, cb) { return getDayHistoryCallNotes(ext, date, num, cb); }
+	this.getDayPostit = function(ext, date, cb) { return _getDayPostit(ext, date, cb); }
 	this.getDaySwitchboardCallNotes = function(ext, date, num, cb) { return _getDaySwitchboardCallNotes(ext, date, num, cb); }
+	this.getDaySwitchboardPostit = function (ext, date, cb) { return _getDaySwitchboardPostit(ext, date, cb); }
 	this.getCurrentWeekHistoryCall = function(ext, num, cb) { return getCurrentWeekHistoryCall(ext, num, cb); }
 	this.getCurrentWeekSwitchboardCall = function(ext, num, cb) { return _getCurrentWeekSwitchboardCall(ext, num, cb); }
 	this.getCurrentWeekHistorySms = function(ext, num, cb) { return getCurrentWeekHistorySms(ext, num, cb); }
 	this.getCurrentWeekSwitchboardSms = function(ext, num, cb) { return _getCurrentWeekSwitchboardSms(ext, num, cb); }
 	this.getCurrentWeekHistoryCallNotes = function(ext, num, cb) { return getCurrentWeekHistoryCallNotes(ext, num, cb); }
-	this.getCurrentWeekSwitchboardCallNotes = function (ext, num, cb) { return getCurrentWeekHistoryCallNotes(ext, num, cb); }
+	this.getCurrentWeekPostit = function(ext, cb) { return _getCurrentWeekPostit(ext, cb); }
+	this.getCurrentWeekSwitchboardCallNotes = function (ext, num, cb) { return _getCurrentWeekSwitchboardCallNotes(ext, num, cb); }
+	this.getCurrentWeekSwitchboardPostit = function (ext, cb) { return _getCurrentWeekSwitchboardPostit(ext, cb); }
 	this.getCurrentMonthHistoryCall = function(ext, num, cb) { return getCurrentMonthHistoryCall(ext, num, cb); }
 	this.getCurrentMonthSwitchboardCall = function(ext, num, cb) { return _getCurrentMonthSwitchboardCall(ext, num, cb); }
 	this.getCurrentMonthHistorySms = function(ext, num, cb) { return getCurrentMonthHistorySms(ext, num, cb); }
 	this.getCurrentMonthSwitchboardSms = function (ext, num, cb) { return _getCurrentMonthSwitchboardSms(ext, num, cb); }
 	this.getCurrentMonthHistoryCallNotes = function(ext, num, cb) { return getCurrentMonthHistoryCallNotes(ext, num, cb); }
+	this.getCurrentMonthPostit = function(ext, cb) { return _getCurrentMonthPostit(ext, cb); }
 	this.getCurrentMonthSwitchboardCallNotes = function (ext, num, cb) { return _getCurrentMonthSwitchboardCallNotes(ext, num, cb); }
+	this.getCurrentMonthSwitchboardPostit = function (ext, cb) { return _getCurrentMonthSwitchboardPostit(ext, cb); }
 	this.getIntervalHistoryCall = function(ext,dateFrom,dateTo,num,cb){ return getIntervalHistoryCall(ext,dateFrom,dateTo,num,cb); }
 	this.getIntervalSwitchboardCall = function (ext, dateFrom, dateTo, num, cb) { return _getIntervalSwitchboardCall(ext, dateFrom, dateTo, num, cb); }
 	this.getIntervalHistorySms = function(ext,dateFrom,dateTo,num,cb){ return getIntervalHistorySms(ext,dateFrom,dateTo,num,cb); }
 	this.getIntervalSwitchboardSms = function (ext, dateFrom, dateTo, num, cb) { return _getIntervalSwitchboardSms(ext, dateFrom, dateTo, num, cb); }
 	this.getIntervalHistoryCallNotes = function(ext,dateFrom,dateTo,num,cb){ return getIntervalHistoryCallNotes(ext,dateFrom,dateTo,num,cb); }
+	this.getIntervalPostit = function (ext, dateFrom, dateTo, cb) { return _getIntervalPostit(ext, dateFrom, dateTo, cb); }
 	this.getIntervalSwitchboardCallNotes = function (ext, dateFrom, dateTo, num, cb){ return _getIntervalSwitchboardCallNotes(ext,dateFrom,dateTo,num,cb); }
+	this.getIntervalSwitchboardPostit = function (ext, dateFrom, dateTo, cb){ _getIntervalSwitchboardPostit(ext, dateFrom, dateTo, cb); }
 	this.addController = function(contr) { addController(contr) }
 	this.setLogger = function(logfile,level) { log4js.addAppender(log4js.fileAppender(logfile), '[DataCollector]'); logger.setLevel(level); }
 	this.checkAudioUid = function(uid, filename, cb) { return checkAudioUid(uid, filename, cb); }
 	this.checkListAudioUid = function(arruid, cb) { return checkListAudioUid(arruid, cb); }
 	this.registerSmsSuccess = function(sender, destination, text, cb){ registerSmsSuccess(sender, destination, text, cb); }
 	this.registerSmsFailed = function(sender, destination, text, cb){ registerSmsFailed(sender, destination, text, cb); }
-	this.saveCallNote = function(note,extension,pub,expiration,expFormatVal,num,reservation,cb){ saveCallNote(note,extension,pub,expiration,expFormatVal,num,reservation,cb); }
+	this.saveCallNote = function (obj,cb) { saveCallNote(obj,cb); }
 	this.modifyCallNote = function(note,pub,expiration,expFormatVal,entryId,reservation,cb){ modifyCallNote(note,pub,expiration,expFormatVal,entryId,reservation,cb); }
 	this.getCallNotes = function(num,cb){ getCallNotes(num,cb); }
 	this.getExtCallReserved = function(num,cb){ getExtCallReserved(num,cb); }
@@ -95,6 +104,7 @@ exports.DataCollector = function(){
 	this.getAllNotesForNum = function(ext,num,cb){ getAllNotesForNum(ext,num,cb); } 
         this.query = function (type, query, cb) { _query(type, query, cb); }
         this.getAllContactsByNum = function (num, numToSearch, cb) { _getAllContactsByNum(num, numToSearch, cb); }
+        this.savePostit = function (obj, cb) { _savePostit(obj, cb); }
 }
 
 function _getAllContactsByNum(num, numToSearch, cb) {
@@ -190,18 +200,52 @@ function deleteCallNote(id,cb){
                 }
 	});
 }
-function saveCallNote(note,extension,pub,expiration,expFormatVal,num,reservation,cb){
+
+function _savePostit(obj, cb) {
+    try {
+        var note = obj.note;
+        var assigned = obj.assigned;
+        var extFrom = obj.extFrom;
+        var objQuery = queries[POSTIT];
+        note = note.replace(/'/g, "\\\'").replace(/"/g, "\\\"");
+        objQuery.query = 'INSERT INTO ' + POSTIT + ' (owner, text, assigned, status) VALUES ("' + extFrom + '", "' + note + '", "' + assigned + '", "0")';
+        executeSQLQuery(CALL_NOTES, objQuery, function (results) {
+            try {
+                cb(results);
+            } catch(err) {
+                logger.error('obj = ' + sys.inspect(obj) + ': ' + err.stack);
+            }
+        });
+    } catch (err) {
+        logger.error('obj = ' + sys.inspect(obj) + ': ' + err.stack);
+    }
+}
+
+function saveCallNote(message, cb) {
+    try {
+        var note = message.note;
+        var extension = message.extFrom;
+        var pub = message.pub;
+        var expiration = message.expiration;
+        var expFormatVal = message.expFormatVal;
+        var num = message.num;
+        var reservation = message.nextCallReservation;
 	var objQuery = queries[CALL_NOTES];
 	note = note.replace(/'/g, "\\\'").replace(/"/g, "\\\"");
 	num = num.replace(/'/g, "\\\'").replace(/"/g, "\\\"");
-	objQuery.query = "INSERT INTO call_notes (text,extension,number,public,expiration,reservation) VALUES ('"+note+"','"+extension+"','"+num+"',"+pub+",DATE_ADD(now(), INTERVAL "+expiration+" "+expFormatVal+"),"+reservation+")";
+	objQuery.query = 'INSERT INTO call_notes (text, extension, number, public, expiration, reservation) VALUES ("' + 
+            note + '", "' + extension + '", "' + num + '", "' + pub + '", DATE_ADD(now(), INTERVAL ' + expiration + ' ' + 
+            expFormatVal + '), "' + reservation + '")';
 	executeSQLQuery(CALL_NOTES, objQuery, function(results){
 		try {
 			cb(results);
 		} catch(err) {
-	                logger.error("save call note for num " + num + ": "  + err.stack);
+                    logger.error('note = ' + note + ', extension = ' + extension + ', pub = ' + pub + ', expiration = ' + expiration + ', expFormatVal = ' + expFormatVal + ', num = ' + num + ', reservation = ' + reservation + ', assigns = ' + sys.insepct(assigns) + ': ' + err.stack);
                 }
 	});
+    } catch (err) {
+        logger.error('note = ' + note + ', extension = ' + extension + ', pub = ' + pub + ', expiration = ' + expiration + ', expFormatVal = ' + expFormatVal + ', num = ' + num + ', reservation = ' + reservation + ', assigns = ' + sys.inspect(assigns) + ': ' + err.stack);
+    }
 }
 
 function _getIntervalSwitchboardSms(ext, dateFrom, dateTo, num, cb) {
@@ -241,6 +285,27 @@ function getIntervalHistorySms(ext,dateFrom,dateTo,num,cb){
             logger.warn('no query for [' + SMS + ']');
         }
 }
+
+function _getIntervalSwitchboardPostit(ext, dateFrom, dateTo, cb) {
+    try {
+	var objQuery = queries[POSTIT];
+	objQuery.query = 'SELECT * FROM ' + POSTIT + ' WHERE (DATE(date)>="' + dateFrom + '" AND DATE(date)<="' + dateTo + '")';
+	if (objQuery !== undefined) {
+		executeSQLQuery(POSTIT, objQuery, function(results){
+			try {
+				cb(results);
+			} catch(err) {
+                                logger.error("dateFrom = " + dateFrom + ", dateTo = " + dateTo + ", ext = " + ext + ": "  + err.stack);
+                        }
+		});
+        } else {
+            logger.warn('no query for [' + POSTIT + ']');
+        }
+    } catch (err) {
+        logger.error("dateFrom = " + dateFrom + ", dateTo = " + dateTo + ", ext = " + ext + ": "  + err.stack);
+    }
+}
+
 function _getIntervalSwitchboardCallNotes(ext,dateFrom,dateTo,num,cb){
     try {
 	var objQuery = queries[CALL_NOTES];
@@ -261,6 +326,27 @@ function _getIntervalSwitchboardCallNotes(ext,dateFrom,dateTo,num,cb){
         logger.error("dateFrom = " + dateFrom + ", dateTo = " + dateTo + ", ext = " + ext + ", num = " + num + ": "  + err.stack);
     }
 }
+
+function _getIntervalPostit(ext, dateFrom, dateTo, cb) {
+    try {
+        var objQuery = queries[POSTIT];
+        objQuery.query = 'SELECT * FROM ' + POSTIT + ' WHERE ((owner="' + ext + '" OR assigned="' + ext + '") AND (DATE(date)>="' + dateFrom + '" AND DATE(date)<="' + dateTo + '"))';
+        if (objQuery !== undefined) {
+            executeSQLQuery(POSTIT, objQuery, function (results) {
+                try {
+                    cb(results);
+                } catch(err) {
+                    logger.error("ext = " + ext + ", dateFrom = " + dateFrom + ", dateTo = " + dateTo + ": "  + err.stack);
+                }
+            });
+        } else {
+            logger.warn('no query for [' + POSTIT + ']');
+        }
+    } catch (err) {
+        logger.error("ext = " + ext + ", dateFrom = " + dateFrom + ", dateTo = " + dateTo + ": "  + err.stack);
+    }
+}
+
 function getIntervalHistoryCallNotes(ext,dateFrom,dateTo,num,cb){
 	var objQuery = queries[CALL_NOTES];
 	num = num.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
@@ -294,6 +380,26 @@ function getAllNotesForNum(ext,num,cb){
         }
 }
 
+function _getCurrentMonthSwitchboardPostit(ext, cb) {
+    try {
+        var objQuery = queries[POSTIT];
+        objQuery.query = 'SELECT * FROM ' + POSTIT + ' WHERE (DATE(date)>=(DATE_SUB(CURDATE(), INTERVAL DAYOFMONTH(CURDATE())-1 DAY)))';
+        if (objQuery !== undefined) {
+            executeSQLQuery(POSTIT, objQuery, function (results) {
+                try {
+                    cb(results);
+                } catch(err) {
+                    logger.error("ext = " + ext + ": "  + err.stack);
+                }
+            });
+        } else {
+            logger.warn('no query for [' + POSTIT + ']');
+        }
+    } catch (err) {
+        logger.error("ext = " + ext + ": "  + err.stack);
+    } 
+}
+
 function _getCurrentMonthSwitchboardCallNotes(ext, num, cb) {
     try {
         var objQuery = queries[CALL_NOTES];
@@ -313,6 +419,26 @@ function _getCurrentMonthSwitchboardCallNotes(ext, num, cb) {
     } catch (err) {
         logger.error("ext = " + ext + ", num = " + num + ": "  + err.stack);
     } 
+}
+
+function _getCurrentMonthPostit(ext, cb) {
+    try {
+        var objQuery = queries[POSTIT];
+        objQuery.query = 'SELECT * FROM ' + POSTIT + ' WHERE ((owner="' + ext + '" OR assigned="' + ext + '") AND (DATE(date)>=(DATE_SUB(CURDATE(), INTERVAL DAYOFMONTH(CURDATE())-1 DAY))))';
+        if (objQuery !== undefined) {
+            executeSQLQuery(POSTIT, objQuery, function (results) {
+                try {
+                    cb(results);
+                } catch (err) {
+                    logger.error('ext = ' + ext + ': ' + err.stack);
+                }
+            });
+        } else {
+            logger.warn('no query for [' + POSTIT + ']');
+        } 
+    } catch (err) {
+        logger.error('ext = ' + ext + ': ' + err.stack);
+    }
 }
 
 function getCurrentMonthHistoryCallNotes(ext, num, cb){
@@ -370,6 +496,26 @@ function getCurrentMonthHistorySms(ext, num, cb){
         }
 }
 
+function _getCurrentWeekSwitchboardPostit(ext, cb) {
+    try {
+        var objQuery = queries[POSTIT];
+        objQuery.query = 'SELECT * FROM ' + POSTIT + ' WHERE (DATE(date)>=(DATE_SUB(CURDATE(), INTERVAL DAYOFWEEK(CURDATE())-2 DAY)))';
+        if (objQuery !== undefined) {
+            executeSQLQuery(POSTIT, objQuery, function (results) {
+                try {
+                    cb(results);
+                } catch (err) {
+                    logger.error("ext = " + ext + ": "  + err.stack);
+                }
+            });
+        } else {
+            logger.warn('no query for [' + POSTIT + ']');
+        }
+    } catch (err) {
+        logger.error("ext = " + ext + ": "  + err.stack);
+    }
+}
+
 function _getCurrentWeekSwitchboardCallNotes(ext, num, cb) {
     try {
         var objQuery = queries[CALL_NOTES];
@@ -388,6 +534,27 @@ function _getCurrentWeekSwitchboardCallNotes(ext, num, cb) {
         }
     } catch (err) {
         logger.error("ext = " + ext + ", num = " + num + ": "  + err.stack);
+    }
+}
+
+
+function _getCurrentWeekPostit(ext, cb) {
+    try {
+        var objQuery = queries[POSTIT];
+        objQuery.query = 'SELECT * FROM ' + POSTIT + ' WHERE ((owner="' + ext + '" OR assigned="' + ext + '") AND (DATE(date)>=(DATE_SUB(CURDATE(), INTERVAL DAYOFWEEK(CURDATE())-2 DAY))))';
+        if (objQuery !== undefined) {
+            executeSQLQuery(POSTIT, objQuery, function(results){
+                try {
+                    cb(results);
+                } catch(err) {
+                    logger.error("ext = " + ext + ": "  + err.stack);
+                }
+            });
+        } else {
+            logger.warn('no query for [' + POSTIT + ']');
+        }
+    } catch(err) {
+        logger.error("ext = " + ext + ": "  + err.stack);
     }
 }
 
@@ -446,6 +613,27 @@ function getCurrentWeekHistorySms(ext, num, cb){
         }
 }
 
+
+function _getDaySwitchboardPostit(ext, date, cb) {
+    try {
+        var objQuery = queries[POSTIT];
+        objQuery.query = 'SELECT * FROM ' + POSTIT + ' WHERE (DATE(date)="' + date + '")';
+        if (objQuery !== undefined) {
+            executeSQLQuery(POSTIT, objQuery, function (results) {
+                try {
+                    cb(results);
+                } catch(err) {
+                    logger.error("ext = " + ext + ", date = " + date + ": "  + err.stack);
+                }
+            });
+        } else {
+            logger.warn('no query for [' + POSTIT + ']');
+        }
+    } catch(err) {
+        logger.error("ext = " + ext + ", date = " + date + ": "  + err.stack);
+    }
+}
+
 function _getDaySwitchboardCallNotes(ext, date, num, cb) {
     try {
         var objQuery = queries[CALL_NOTES];
@@ -466,6 +654,28 @@ function _getDaySwitchboardCallNotes(ext, date, num, cb) {
         logger.error("ext = " + ext + ", date = " + date + ", num = " + num + ": "  + err.stack);
     }
 }
+
+function _getDayPostit(ext, date, cb) {
+    try {
+        var objQuery = queries[POSTIT];
+        objQuery.query = 'SELECT * FROM ' + POSTIT + ' WHERE ((owner="' + ext + '" OR assigned="' + ext + '") AND (DATE(date)="' + date + '"))';
+        var res = (objQuery !== undefined);
+        if (objQuery !== undefined) {
+            executeSQLQuery(POSTIT, objQuery, function (results) {
+                try {
+                    cb(results);
+                } catch(err) {
+                    logger.warn('no query for [' + POSTIT + ']');
+                }
+            });
+        } else {
+            logger.warn('no query for [' + POSTIT + ']');
+        }
+    } catch (err) {
+        logger.error('ext = ' + ext + ', date = ' + date + ': ' + err.stack);
+    }
+}
+
 
 function getDayHistoryCallNotes(ext, date, num, cb){
 	var objQuery = queries[CALL_NOTES];
@@ -736,6 +946,15 @@ function initQueries(){
 	}
         this.queries = iniparser.parseSync(DATACOLLECTOR_CONFIG_FILENAME);
 	this.queries[SMS] = {
+		dbhost: 'localhost',
+		dbport: '/var/lib/mysql/mysql.sock',
+		dbtype: 'mysql',
+		dbuser: 'smsuser',
+		dbpassword: 'smspass',
+		dbname: 'nethcti',
+		query: ''
+	};
+	this.queries[POSTIT] = {
 		dbhost: 'localhost',
 		dbport: '/var/lib/mysql/mysql.sock',
 		dbtype: 'mysql',

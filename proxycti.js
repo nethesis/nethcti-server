@@ -2798,6 +2798,7 @@ io.sockets.on('connection', function(client){
 			PARKING_PICKUP: 'parking_pickup',
 			GET_CALL_NOTES:	'get_call_notes',
 			HANGUP_UNIQUEID:'hangup_uniqueid',
+			SAVE_POSTIT:	'savePostit',
 			START_RECORD_CHANNEL:	'start_record_channel',
 			STOP_RECORD_CHANNEL:	'stop_record_channel',
 			SPY_LISTEN_SPEAK:   	'spy_listen_speak',
@@ -3040,6 +3041,7 @@ io.sockets.on('connection', function(client){
 				});
 			break;
 			case actions.GET_CALL_NOTES:
+                            try {
 				dataCollector.getCallNotes(message.num,function(results){ // get call notes for the caller (from)
 					var owner = '',
 						pub = false,
@@ -3055,6 +3057,9 @@ io.sockets.on('connection', function(client){
                                         client.emit('message',respMsg);
                                         logger.debug("RESP 'resp_get_call_notes' has been sent to [" + extFrom + "] id '" + client.id + "'");
 				});
+                            } catch (err) {
+                                logger.error('message = ' + sys.inspect(message) + ': ' + err.stack);
+                            }
 			break;
 			case actions.GET_VCARD_CC: // return customer card for each num in nums array
 				var nums = message.nums;
@@ -3120,23 +3125,50 @@ io.sockets.on('connection', function(client){
 					logger.debug("RESP 'ack_delete_callnote' has been sent to [" + extFrom + "] id '" + client.id + "'");
 				});
 			break;
+                        case actions.SAVE_POSTIT:
+                            try {
+                                var note = message.note;
+                                var assigned = message.assigned;
+                                if (note === undefined || assigned === undefined) {
+                                    logger.error('bad argument to save post-it!');
+                                    return;
+                                }
+                                dataCollector.savePostit(message, function () {
+                                    try {
+                                       logger.debug('post-it from [' + extFrom + '] assigned to ' + message.assigned + ' has been saved into DB');
+                                        var respMsg = new ResponseMessage(client.id, 'ack_save_postit', '');
+                                        client.emit('message', respMsg);
+                                        logger.debug("RESP 'ack_save_postit' has been sent to [" + extFrom + "] id '" + client.id + "'"); 
+                                    } catch (err) {
+                                        logger.error('message = ' + sys.inspect(message) + ': ' + err.stack);
+                                    }
+                                });
+                            } catch (err) {
+                                logger.error('message = ' + sys.inspect(message) + ': ' + err.stack);
+                            }
+                        break;
 			case actions.SAVE_NOTE_OF_CALL:
+                            try {
 				var note = message.note;
 				var pub = message.pub;
 				var expiration = message.expiration;
 				var expFormatVal = message.expFormatVal;
 				var num = message.num;
 				var reservation = message.nextCallReservation;
-				if(note===undefined || pub===undefined || expiration===undefined || expFormatVal===undefined || num===undefined || reservation===undefined){
+				if (note === undefined || pub === undefined || expiration === undefined || expFormatVal === undefined ||
+                                    num === undefined || reservation === undefined) {
 					logger.error('bad argument to save call note!');
 					return;
 				}
-				dataCollector.saveCallNote(note,extFrom,pub,expiration,expFormatVal,num,reservation,function(){ // save call note
+				dataCollector.saveCallNote(message, function () {
 					logger.debug('call note from [' + extFrom + '] for number \'' + message.num + '\' has been saved into DB');
 					var respMsg = new ResponseMessage(client.id, 'ack_save_callnote', '');
-					client.emit('message',respMsg);
+					client.emit('message', respMsg);
 					logger.debug("RESP 'ack_save_callnote' has been sent to [" + extFrom + "] id '" + client.id + "'");
 				});
+                            } catch (err) {
+                                logger.error('message = ' + sys.inspect(message) + ': ' + err.stack);
+                            }
 			break;
 			case actions.CF_VM_PARKING:
 				var redirectTo = message.redirectToExt;
@@ -4260,12 +4292,15 @@ io.sockets.on('connection', function(client){
                                     dataCollector.getDaySwitchboardCall(extFrom, dateFormat, num, function (callResults) {
                                         dataCollector.getDaySwitchboardSms(extFrom, dateFormat, num, function (smsResults) {
                                             dataCollector.getDaySwitchboardCallNotes(extFrom, dateFormat, num, function (callNotesResults) {
-                                                var mess = new ResponseMessage(client.id, 'day_switchboard', '');
-                                                mess.callResults = createHistoryCallResponse(callResults);
-                                                mess.smsResults = smsResults;
-                                                mess.callNotesResults = callNotesResults;
-                                                client.emit('message', mess);
-                                                logger.debug("RESP 'day_switchboard' (call [" + callResults.length + "] - sms [" + smsResults.length +"] entries) has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                                dataCollector.getDaySwitchboardPostit(extFrom, dateFormat, function (postitResults) {
+                                                    var mess = new ResponseMessage(client.id, 'day_switchboard', '');
+                                                    mess.callResults = createHistoryCallResponse(callResults);
+                                                    mess.smsResults = smsResults;
+                                                    mess.callNotesResults = callNotesResults;
+                                                    mess.postitResults = postitResults;
+                                                    client.emit('message', mess);
+                                                    logger.debug("RESP 'day_switchboard' (call [" + callResults.length + "] - sms [" + smsResults.length +"] entries) has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                                });
                                             });
                                         });
                                     });
@@ -4291,12 +4326,15 @@ io.sockets.on('connection', function(client){
                                         dataCollector.getDayHistoryCall(extFrom,dateFormat,num,function(callResults){ // get day history call
 						dataCollector.getDayHistorySms(extFrom, dateFormat, num, function(smsResults){ // get day history sms
 							dataCollector.getDayHistoryCallNotes(extFrom, dateFormat, num, function(callNotesResults){
-	                                                	var mess = new ResponseMessage(client.id, "day_history", "received day history");
+                                                            dataCollector.getDayPostit(extFrom, dateFormat, function (postitResults) {
+                                                                var mess = new ResponseMessage(client.id, "day_history", "received day history");
 		                                                mess.callResults = createHistoryCallResponse(callResults);
 								mess.smsResults = smsResults;
 								mess.callNotesResults = callNotesResults;
+                                                                mess.postitResults = postitResults;
 		                                                client.emit('message',mess);
 		                                                logger.debug("RESP 'day_history' (call [" + callResults.length + "] - sms [" + smsResults.length +"] entries) has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                                            });
 							});
 						});
                                         });
@@ -4318,12 +4356,15 @@ io.sockets.on('connection', function(client){
                                     dataCollector.getCurrentWeekSwitchboardCall(extFrom, num, function (callResults) {
                                         dataCollector.getCurrentWeekSwitchboardSms(extFrom, num, function (smsResults) {
                                             dataCollector.getCurrentWeekSwitchboardCallNotes(extFrom, num, function (callNotesResults) {
-                                                var mess = new ResponseMessage(client.id, 'current_week_switchboard', '');
-                                                mess.callResults = createHistoryCallResponse(callResults);
-                                                mess.smsResults = smsResults;
-                                                mess.callNotesResults = callNotesResults;
-                                                client.emit('message', mess);
-                                                logger.debug("RESP 'current_week_switchboard' (call [" + callResults.length + "] - sms [" + smsResults.length +"] entries) has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                                dataCollector.getCurrentWeekSwitchboardPostit(extFrom, function (postitResults) {
+                                                    var mess = new ResponseMessage(client.id, 'current_week_switchboard', '');
+                                                    mess.callResults = createHistoryCallResponse(callResults);
+                                                    mess.smsResults = smsResults;
+                                                    mess.callNotesResults = callNotesResults;
+                                                    mess.postitResults = postitResults;
+                                                    client.emit('message', mess);
+                                                    logger.debug("RESP 'current_week_switchboard' (call [" + callResults.length + "] - sms [" + smsResults.length +"] entries) has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                                });
                                             });
                                         });
                                     });
@@ -4349,12 +4390,15 @@ io.sockets.on('connection', function(client){
                                         dataCollector.getCurrentWeekHistoryCall(extFrom, num, function(callResults){
 						dataCollector.getCurrentWeekHistorySms(extFrom, num, function(smsResults){
 							dataCollector.getCurrentWeekHistoryCallNotes(extFrom, num, function(callNotesResults){
+                                                            dataCollector.getCurrentWeekPostit(extFrom, function (postitResults) {
 	                                                	var mess = new ResponseMessage(client.id, "current_week_history", "received current week history");
 								mess.callResults = createHistoryCallResponse(callResults);
 								mess.smsResults = smsResults;
 								mess.callNotesResults = callNotesResults;
+                                                                mess.postitResults = postitResults;
 		                                                client.emit('message',mess);
 		                                                logger.debug("RESP 'current_week_history' (call [" + callResults.length + "] - sms ["+smsResults.length+"] entries) has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                                            });
 							});
 						});
                                         });
@@ -4376,12 +4420,15 @@ io.sockets.on('connection', function(client){
                                     dataCollector.getCurrentMonthSwitchboardCall(extFrom, num, function (callResults) {
                                         dataCollector.getCurrentMonthSwitchboardSms(extFrom, num, function (smsResults) {
                                             dataCollector.getCurrentMonthSwitchboardCallNotes(extFrom, num, function (callNotesResults) {
-                                                var mess = new ResponseMessage(client.id, 'current_month_switchboard', '');
-                                                mess.callResults = createHistoryCallResponse(callResults);
-                                                mess.smsResults = smsResults;
-                                                mess.callNotesResults = callNotesResults;
-                                                client.emit('message', mess);
-                                                logger.debug("RESP 'current_month_switchboard' (call [" + callResults.length + "] - sms [" + smsResults.length +"] entries) has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                                dataCollector.getCurrentMonthSwitchboardPostit(extFrom, function (postitResults) {
+                                                    var mess = new ResponseMessage(client.id, 'current_month_switchboard', '');
+                                                    mess.callResults = createHistoryCallResponse(callResults);
+                                                    mess.smsResults = smsResults;
+                                                    mess.callNotesResults = callNotesResults;
+                                                    mess.postitResults = postitResults;
+                                                    client.emit('message', mess);
+                                                    logger.debug("RESP 'current_month_switchboard' (call [" + callResults.length + "] - sms [" + smsResults.length +"] entries) has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                                });
                                             });
                                         });
                                     });
@@ -4407,12 +4454,15 @@ io.sockets.on('connection', function(client){
                                         dataCollector.getCurrentMonthHistoryCall(extFrom, num, function(callResults){
 						dataCollector.getCurrentMonthHistorySms(extFrom, num, function(smsResults){
 							dataCollector.getCurrentMonthHistoryCallNotes(extFrom, num, function(callNotesResults){
+                                                            dataCollector.getCurrentMonthPostit(extFrom, function (postitResults) {
 		                                                var mess = new ResponseMessage(client.id, "current_month_history", "received current month history");
 								mess.callResults = createHistoryCallResponse(callResults);
 								mess.smsResults = smsResults;
 								mess.callNotesResults = callNotesResults;
+                                                                mess.postitResults = postitResults;
 		                                                client.emit('message',mess);
 		                                                logger.debug("RESP 'current_month_history' (call [" + callResults.length + "] - sms ["+smsResults.length+"] entries) has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                                            });
 							});
 						});
                                         });
@@ -4436,12 +4486,15 @@ io.sockets.on('connection', function(client){
 					dataCollector.getIntervalSwitchboardCall(extFrom, dateFrom, dateTo, num, function (callResults) {
 						dataCollector.getIntervalSwitchboardSms(extFrom, dateFrom, dateTo, num, function (smsResults) {
 							dataCollector.getIntervalSwitchboardCallNotes(extFrom, dateFrom, dateTo, num, function (callNotesResults) {
+                                                            dataCollector.getIntervalSwitchboardPostit(extFrom, dateFrom, dateTo, function (postitResults) {
 								var mess = new ResponseMessage(client.id, "interval_switchboard", '');
 								mess.callResults = createHistoryCallResponse(callResults);
 								mess.smsResults = smsResults;
 								mess.callNotesResults = callNotesResults;
+                                                                mess.postitResults = postitResults;
 								client.emit('message',mess);
 								logger.debug("RESP 'interval_switchboard' (call [" + callResults.length + "] - sms ["+smsResults.length+"] entries) has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                                            });
 							});
 						});
 					});
@@ -4467,12 +4520,15 @@ io.sockets.on('connection', function(client){
 					dataCollector.getIntervalHistoryCall(extFrom,dateFrom,dateTo,num,function(callResults){
 						dataCollector.getIntervalHistorySms(extFrom,dateFrom,dateTo,num,function(smsResults){
 							dataCollector.getIntervalHistoryCallNotes(extFrom,dateFrom,dateTo,num,function(callNotesResults){
+                                                            dataCollector.getIntervalPostit(extFrom, dateFrom, dateTo, function (postitResults) {
 								var mess = new ResponseMessage(client.id, "interval_history", '');
 								mess.callResults = createHistoryCallResponse(callResults);
 								mess.smsResults = smsResults;
 								mess.callNotesResults = callNotesResults;
+                                                                mess.postitResults = postitResults;
 								client.emit('message',mess);
 								logger.debug("RESP 'interval_history' (call [" + callResults.length + "] - sms ["+smsResults.length+"] entries) has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                                            });
 							});
 						});
 					});
