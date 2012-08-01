@@ -2,6 +2,7 @@ var ast = require('./asterisk');
 var net = require('net');
 var execreq = require('child_process').exec;
 var dataReq = require("./dataCollector.js");
+var notificationManagerReq = require("./notificationManager.js");
 var proReq = require("./profiler.js");
 var authReq = require("./authenticator.js");
 var contrReq = require("./controller.js");
@@ -169,7 +170,6 @@ authenticator.setLogger(logfile,loglevel);
 var controller = new contrReq.Controller(); // check changing in audio directory
 controller.setLogger(logfile,loglevel);
 
-
 var voicemail = new voicemailReq.Voicemail();
 voicemail.setLogger(logfile,loglevel);
 voicemail.init();
@@ -182,9 +182,14 @@ var nethCtiPhonebook = new nethCtiPhonebookReq.nethCtiPhonebook();
 nethCtiPhonebook.setLogger(logfile,loglevel);
 nethCtiPhonebook.setDataCollector(dataCollector);
 nethCtiPhonebook.setModop(modop);
+
 var router = new routerReq.Router(); // check changing in audio directory
 router.setLogger(logfile,loglevel);
 router.addModule('nethCtiPhonebook', nethCtiPhonebook);
+
+var notificationManager = new notificationManagerReq.NotificationManager();
+notificationManager.setLogger(logfile,loglevel);
+notificationManager.setDataCollector(dataCollector);
 
 logger.debug('added object modules: \'Profiler\', \'DataCollector\', \'Authenticator\', \'Modop\' and \'Controller\'')
 controller.addDir(AST_CALL_AUDIO_DIR);
@@ -2799,6 +2804,7 @@ io.sockets.on('connection', function(client){
 			GET_CALL_NOTES:	'get_call_notes',
 			HANGUP_UNIQUEID:'hangup_uniqueid',
 			SAVE_POSTIT:	'savePostit',
+                        GET_POSTIT:     'getPostit',
 			START_RECORD_CHANNEL:	'start_record_channel',
 			STOP_RECORD_CHANNEL:	'stop_record_channel',
 			SPY_LISTEN_SPEAK:   	'spy_listen_speak',
@@ -3125,6 +3131,24 @@ io.sockets.on('connection', function(client){
 					logger.debug("RESP 'ack_delete_callnote' has been sent to [" + extFrom + "] id '" + client.id + "'");
 				});
 			break;
+                        case actions.GET_POSTIT:
+                            try {
+                                var id = message.id;
+                                dataCollector.getPostit(id, function (postit) {
+                                    try {
+                                        logger.debug('[' + extFrom + '] has request post-it id ' + id);
+                                        var respMsg = new ResponseMessage(client.id, 'ack_get_postit', '');
+                                        respMsg.postit = postit[0]; 
+                                        client.emit('message', respMsg);
+                                        logger.debug("RESP 'ack_get_postit' has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                    } catch (err) {
+                                        logger.error('message = ' + sys.inspect(message) + ': ' + err.stack);
+                                    }
+                                });
+                            } catch (err) {
+                                logger.error('message = ' + sys.inspect(message) + ': ' + err.stack);
+                            }
+                        break;
                         case actions.SAVE_POSTIT:
                             try {
                                 var note = message.note;
@@ -3135,10 +3159,11 @@ io.sockets.on('connection', function(client){
                                 }
                                 dataCollector.savePostit(message, function () {
                                     try {
-                                       logger.debug('post-it from [' + extFrom + '] assigned to ' + message.assigned + ' has been saved into DB');
+                                        logger.debug('post-it from [' + extFrom + '] assigned to ' + message.assigned + ' has been saved into DB');
                                         var respMsg = new ResponseMessage(client.id, 'ack_save_postit', '');
                                         client.emit('message', respMsg);
-                                        logger.debug("RESP 'ack_save_postit' has been sent to [" + extFrom + "] id '" + client.id + "'"); 
+                                        logger.debug("RESP 'ack_save_postit' has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                        notificationManager.updateUnreadNotificationsList();
                                     } catch (err) {
                                         logger.error('message = ' + sys.inspect(message) + ': ' + err.stack);
                                     }
@@ -3273,6 +3298,8 @@ io.sockets.on('connection', function(client){
 							respMsg.customVmMsg = obj;
 						}
 					}
+                                        var notifications = notificationManager.getNotificationsByExt(extFrom);
+                                        respMsg.notifications = notifications;
 					respMsg.streamingSettings = profiler.getStreamingSettings(extFrom);
 					client.emit('message',respMsg);
 					logger.debug("RESP 'ack_login' has been sent to [" + extFrom + "] id '" + client.id + "'");
