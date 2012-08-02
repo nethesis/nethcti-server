@@ -2805,6 +2805,7 @@ io.sockets.on('connection', function(client){
 			HANGUP_UNIQUEID:'hangup_uniqueid',
 			SAVE_POSTIT:	'savePostit',
                         GET_POSTIT:     'getPostit',
+                        SET_READ_POSTIT:        'setReadPostit',
 			START_RECORD_CHANNEL:	'start_record_channel',
 			STOP_RECORD_CHANNEL:	'stop_record_channel',
 			SPY_LISTEN_SPEAK:   	'spy_listen_speak',
@@ -3131,6 +3132,29 @@ io.sockets.on('connection', function(client){
 					logger.debug("RESP 'ack_delete_callnote' has been sent to [" + extFrom + "] id '" + client.id + "'");
 				});
 			break;
+                        case actions.SET_READ_POSTIT:
+                            try {
+                                var id = message.id;
+                                dataCollector.setReadPostit(id, function (result) {
+                                    try {
+                                        logger.debug('set ' + id + ' post-it to status read: request from ' + extFrom);
+                                        var res = { success: false, id: id }
+                                        if (result.affectedRows === 1) {
+                                            res.success = true;
+                                            notificationManager.updateUnreadNotificationsList();
+                                        }
+                                        var respMsg = new ResponseMessage(client.id, 'ack_set_read_postit', '');
+                                        respMsg.res = res;
+                                        client.emit('message', respMsg);
+                                        logger.debug("RESP 'ack_set_read_postit' has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                    } catch (err) {
+                                        logger.error('message = ' + sys.inspect(message) + ': ' + err.stack);
+                                    }                                                                                                                
+                                });
+                            } catch (err) {
+                                logger.error('message = ' + sys.inspect(message) + ': ' + err.stack);
+                            }
+                        break;
                         case actions.GET_POSTIT:
                             try {
                                 var id = message.id;
