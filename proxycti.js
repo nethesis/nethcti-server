@@ -2804,6 +2804,7 @@ io.sockets.on('connection', function(client){
 			GET_CALL_NOTES:	'get_call_notes',
 			HANGUP_UNIQUEID:'hangup_uniqueid',
 			SAVE_POSTIT:	'savePostit',
+                        DELETE_POSTIT:  'deletePostit',
                         GET_POSTIT:     'getPostit',
                         SET_READ_POSTIT:        'setReadPostit',
 			START_RECORD_CHANNEL:	'start_record_channel',
@@ -3185,9 +3186,55 @@ io.sockets.on('connection', function(client){
                                     try {
                                         logger.debug('[' + extFrom + '] has request post-it id ' + id);
                                         var respMsg = new ResponseMessage(client.id, 'ack_get_postit', '');
-                                        respMsg.postit = postit[0]; 
+                                        respMsg.postit = postit[0];
+                                        respMsg.id = id;
                                         client.emit('message', respMsg);
                                         logger.debug("RESP 'ack_get_postit' has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                    } catch (err) {
+                                        logger.error('message = ' + sys.inspect(message) + ': ' + err.stack);
+                                    }
+                                });
+                            } catch (err) {
+                                logger.error('message = ' + sys.inspect(message) + ': ' + err.stack);
+                            }
+                        break;
+                        case actions.DELETE_POSTIT:
+                            try {
+                                var id = message.id;
+                                dataCollector.getPostit(id, function (postit) {
+                                    try {
+                                        postit = postit[0];
+                                        if (postit.owner === extFrom) {
+                                            dataCollector.deletePostit(id, function (result) {
+                                                try {
+                                                    if (result.affectedRows === 1) {
+                                                        var res = { success: true, id: id };
+                                                        logger.debug('deleted post-it ' + id + ' from [' + extFrom + ']');
+                                                        var respMsg = new ResponseMessage(client.id, 'ack_delete_postit', '');
+                                                        respMsg.res = res;
+                                                        client.emit('message', respMsg);
+                                                        notificationManager.updateUnreadNotificationsList();
+                                                        logger.debug("RESP 'ack_delete_postit' has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                                    } else {
+                                                        var res = { success: false };
+                                                        logger.error('not deleted post-it ' + id + ' from [' + extFrom + ']');
+                                                        var respMsg = new ResponseMessage(client.id, 'ack_delete_postit', '');
+                                                        respMsg.res = res;
+                                                        client.emit('message', respMsg);
+                                                        logger.debug("RESP 'ack_delete_postit' has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                                    }
+                                                } catch (err) {
+                                                   logger.error('message = ' + sys.inspect(message) + ': ' + err.stack);
+                                                }
+                                            });
+                                        } else {
+                                            logger.warn(extFrom + ' try to delete post-it of ' + postit.owner);
+                                            var res = { success: false };
+                                            var respMsg = new ResponseMessage(client.id, 'ack_delete_postit', '');
+                                            respMsg.res = res;
+                                            client.emit('message', respMsg);
+                                            logger.debug("RESP 'ack_delete_postit' has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                        }
                                     } catch (err) {
                                         logger.error('message = ' + sys.inspect(message) + ': ' + err.stack);
                                     }

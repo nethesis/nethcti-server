@@ -108,6 +108,7 @@ exports.DataCollector = function(){
         this.getAllUnreadPostit = function (cb) { _getAllUnreadPostit(cb); }
         this.getPostit = function (id, cb) { _getPostit(id, cb); }
         this.setReadPostit = function (id, cb) { _setReadPostit(id, cb); }
+        this.deletePostit = function (id, cb) { _deletePostit(id, cb); }
 }
 
 function _getAllContactsByNum(num, numToSearch, cb) {
@@ -202,6 +203,26 @@ function deleteCallNote(id,cb){
                         logger.error("delete call note id " + id + ": "  + err.stack);
                 }
 	});
+}
+
+function _deletePostit(id, cb) {
+    try {
+        var objQuery = queries[POSTIT];
+        objQuery.query = 'DELETE FROM ' + POSTIT + ' WHERE id="' + id + '"';
+        if (objQuery !== undefined) {
+            executeSQLQuery(POSTIT, objQuery, function (results) {
+                try {
+                    cb(results);
+                } catch(err) {
+                    logger.warn('no query for [' + POSTIT + ']');
+                }
+            });
+        } else {
+            logger.warn('no query for [' + POSTIT + ']');
+        } 
+    } catch (err) {
+        logger.error('id = ' + id + ': ' + err.stack);
+    }
 }
 
 function _setReadPostit(id, cb) {
