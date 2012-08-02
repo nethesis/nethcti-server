@@ -2818,6 +2818,7 @@ io.sockets.on('connection', function(client){
 			GET_DAY_SWITCHBOARD:  	'getDaySwitchboard',
 			STORE_CHAT_ASSOC:	'store_chat_association',
 			CHECK_CALL_AUDIO_FILE: 	'check_call_audio_file',
+                        GET_ALL_NOTIFICATIONS:  'getAllNotifications',
 			CF_UNCOND_FROM_PARKING: 'cf_uncond_from_parking',
 			GET_INTERVAL_HISTORY:	'get_interval_history',
 			OPEN_CALL_STREAMING:	'open_call_streaming',
@@ -3141,7 +3142,17 @@ io.sockets.on('connection', function(client){
                                         var res = { success: false, id: id }
                                         if (result.affectedRows === 1) {
                                             res.success = true;
-                                            notificationManager.updateUnreadNotificationsList();
+                                            notificationManager.updateUnreadNotificationsListForExt(message.assigned, function(not) {
+                                                try {
+                                                    var clientAssigned = clients[message.assigned];
+                                                    var respMsg = new ResponseMessage(clientAssigned.id, 'update_notifications', '');
+                                                    respMsg.notifications = not;
+                                                    clientAssigned.emit('message', respMsg);
+                                                    logger.debug("RESP 'update_notifications' has been sent to [" + message.assigned + "] id '" + clientAssigned.id + "'");
+                                                } catch (err) {
+                                                    logger.error('message = ' + sys.inspect(message) + ': ' + err.stack);
+                                                }
+                                            });
                                         }
                                         var respMsg = new ResponseMessage(client.id, 'ack_set_read_postit', '');
                                         respMsg.res = res;
@@ -3153,6 +3164,18 @@ io.sockets.on('connection', function(client){
                                 });
                             } catch (err) {
                                 logger.error('message = ' + sys.inspect(message) + ': ' + err.stack);
+                            }
+                        break;
+                        case actions.GET_ALL_NOTIFICATIONS:
+                            try {
+                                logger.debug('[' + extFrom + '] has request all notifications');
+                                var not = notificationManager.getNotificationsByExt(extFrom);
+                                var respMsg = new ResponseMessage(client.id, 'ack_get_all_notifications', '');
+                                respMsg.notifications = not;
+                                client.emit('message', respMsg);
+                                logger.debug("RESP 'ack_get_all_notifications' has been sent to [" + extFrom + "] id '" + client.id + "'");
+                            } catch (err) {
+                              logger.error('message = ' + sys.inspect(message) + ': ' + err.stack);
                             }
                         break;
                         case actions.GET_POSTIT:
@@ -3181,13 +3204,29 @@ io.sockets.on('connection', function(client){
                                     logger.error('bad argument to save post-it!');
                                     return;
                                 }
-                                dataCollector.savePostit(message, function () {
+                                dataCollector.savePostit(message, function (result) {
                                     try {
                                         logger.debug('post-it from [' + extFrom + '] assigned to ' + message.assigned + ' has been saved into DB');
+                                        var res = { success: false };
+                                        if (result.affectedRows > 0) {
+                                            res.success = true;
+                                            res.id = result.insertId;
+                                            notificationManager.updateUnreadNotificationsListForExt(message.assigned, function (not) {
+                                                try {
+                                                    var clientAssigned = clients[message.assigned];
+                                                    var respMsg = new ResponseMessage(clientAssigned.id, 'update_notifications', '');
+                                                    respMsg.notifications = not;
+                                                    clientAssigned.emit('message', respMsg);
+                                                    logger.debug("RESP 'update_notifications' has been sent to [" + message.assigned + "] id '" + clientAssigned.id + "'");
+                                                } catch (err) {
+                                                    logger.error('message = ' + sys.inspect(message) + ': ' + err.stack);
+                                                }
+                                            });
+                                        }
                                         var respMsg = new ResponseMessage(client.id, 'ack_save_postit', '');
+                                        respMsg.res = res;
                                         client.emit('message', respMsg);
                                         logger.debug("RESP 'ack_save_postit' has been sent to [" + extFrom + "] id '" + client.id + "'");
-                                        notificationManager.updateUnreadNotificationsList();
                                     } catch (err) {
                                         logger.error('message = ' + sys.inspect(message) + ': ' + err.stack);
                                     }
