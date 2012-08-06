@@ -2841,7 +2841,8 @@ io.sockets.on('connection', function(client){
 			GET_CURRENT_WEEK_SWITCHBOARD:  	'getCurrentWeekSwitchboard',
 			GET_CURRENT_MONTH_HISTORY:	'get_current_month_history',
 			GET_CURRENT_MONTH_SWITCHBOARD:	'getCurrentMonthSwitchboard',
-			DELETE_AUDIO_RECORDING_CALL:	'delete_audio_recording_call'
+			DELETE_AUDIO_RECORDING_CALL:	'delete_audio_recording_call',
+			SEARCH_CONTACT_PHONEBOOK_STARTS_WITH:	'search_contact_phonebook_startsWith'
 		}
   		logger.debug("ACTION received: from id '" + client.id + "' message " + sys.inspect(message));	
   		switch(action){
@@ -3712,6 +3713,48 @@ io.sockets.on('connection', function(client){
 			  		client.emit('message',new ResponseMessage(client.id, "error_redirect", "Sorry: you don't have permission to redirect !"));
 			  		logger.debug("RESP 'error_redirect' has been sent to [" + extFrom + "] id '" + client.id + "'");
 	  			}
+	  		break;
+	  		case actions.SEARCH_CONTACT_PHONEBOOK_STARTS_WITH:
+                            try {
+	  			if (profiler.checkActionPhonebookPermit(extFrom)) {
+					logger.debug("check 'searchContactPhonebookStartsWith' permission for [" + extFrom + "] OK: search...");
+	  				var namex = message.namex;
+					dataCollector.getContactsPhonebookStartsWith(namex, function (results) {
+                                            try {
+                                                nethCtiPhonebook.searchContactsStartsWith(namex, extFrom, function (res) {
+                                                    try {
+                                                        if (results !== undefined && res !== undefined) {
+                                                            var i;
+                                                            for (i = 0; i < res.length; i++) {
+                                                                res[i]['db_source'] = 'cti_phonebook';
+                                                                results.push(res[i]);
+                                                            }
+       		  					    var mess = new ResponseMessage(client.id, "search_contacts_results", "received phonebook contacts");
+                                                            mess.results = results;
+                                                            mess.extFrom = extFrom;
+    		  					    client.emit('message',mess);
+    		  					    logger.debug("RESP 'search_contacts_results' has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                                        }
+                                                    } catch (err) {
+                                                        logger.error("search in central phonebook: " + err.stack);
+                                                        client.emit('message',new ResponseMessage(client.id, "exception_search_contacts", ""));
+                                                        logger.debug("RESP 'exception_search_contacts' has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                                    }
+                                                });
+                                            } catch (err) {
+                                                logger.error("search in central phonebook: " + err.stack);
+                                                client.emit('message',new ResponseMessage(client.id, "exception_search_contacts", ""));
+                                                logger.debug("RESP 'exception_search_contacts' has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                            }
+	  				});
+	  			} else {
+					logger.debug("check 'searchContactPhonebook' permission for [" + extFrom + "] FAILED !");
+  					client.emit('message',new ResponseMessage(client.id, "error_search_contacts", ""));
+  					logger.debug("RESP 'error_search_contacts' has been sent to [" + extFrom + "] id '" + client.id + "'");
+	  			}
+                            } catch (err) {
+                                logger.error("SEARCH_CONTACT_PHONEBOOK: " + err.stack);
+                            }
 	  		break;
 	  		case actions.SEARCH_CONTACT_PHONEBOOK:
                             try {

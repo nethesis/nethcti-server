@@ -54,6 +54,7 @@ dbConnections = {};
 exports.DataCollector = function(){
 	initQueries();
 	this.getContactsPhonebook = function(name, cb){ return getContactsPhonebook(name, cb); }
+	this.getContactsPhonebookStartsWith = function (name, cb){ return _getContactsPhonebookStartsWith(name, cb); }
 	this.getCustomerCard = function(ext, type, cb) { return getCustomerCard(ext, type, cb); }
 	this.getDayHistoryCall = function(ext,date,num,cb) { return getDayHistoryCall(ext,date,num,cb); }
 	this.getDaySwitchboardCall = function (ext, date, num, cb) { return _getDaySwitchboardCall(ext, date, num, cb); }
@@ -1281,6 +1282,44 @@ getCustomerCard = function(ext, type, cb){
                 }
 	}
 }
+
+function _getContactsPhonebookStartsWith(name, cb) {
+    try {
+	var objQuery = queries[PHONEBOOK];
+	if (objQuery !== undefined) {
+                var copyObjQuery = Object.create(objQuery);
+		name = name.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
+		if (copyObjQuery.query === undefined) {
+			logger.error('query for \'' + PHONEBOOK + '\' not exists');
+			try {
+				cb(undefined);
+			} catch(err) {
+                	        logger.error("get contacts phonebook for name " + name + ": "  + err.stack);
+	                }
+			return;
+		}
+                copyObjQuery.query = 'SELECT * FROM phonebook WHERE (name LIKE "%$NAME_TO_REPLACE%" OR company LIKE "%$NAME_TO_REPLACE%") ORDER BY name ASC, company ASC';
+                copyObjQuery.query = copyObjQuery.query.replace(/\%$NAME_TO_REPLACE/g, name); // substitue template field in query
+		executeSQLQuery(PHONEBOOK, copyObjQuery, function (results) {
+			try {
+				cb(results);
+			} catch(err) {
+                                logger.error("get contacts phonebook for name " + name + ": "  + err.stack);
+                        }
+		});
+	} else {
+		logger.error('error in query configuration file for \'' + PHONEBOOK + '\'');
+		try {	
+			cb(undefined);
+		} catch(err) {
+                       logger.error("get contacts phonebook for name " + name + ": "  + err.stack);
+                }
+	}
+    }  catch(err) {
+        logger.error("name = " + name + ": "  + err.stack);
+    }
+}
+
 // Search in the database all phonebook contacts that match the given name
 function getContactsPhonebook(name, cb){
 	var objQuery = queries[PHONEBOOK];

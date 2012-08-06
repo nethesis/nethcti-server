@@ -14,6 +14,7 @@ exports.nethCtiPhonebook = function () {
     this.setDataCollector = function (dc) { _setDataCollector(dc); }
     this.setModop = function (md) { _setModop(md); }
     this.searchContacts = function (name, extFrom, cb) { _searchContacts(name, extFrom, cb); }
+    this.searchContactsStartsWith = function (name, extFrom, cb) { _searchContactsStartsWith(name, extFrom, cb); }
     this.getAllContactsByNum = function (num, numToSearch, cb) { _getAllContactsByNum(num, numToSearch, cb); }
 }
 
@@ -212,6 +213,17 @@ function _newNethCTIContact(params, res) {
         });
     } catch(err) {
        logger.error(err.stack);
+    }
+}
+
+function _searchContactsStartsWith(name, extFrom, cb) {
+    try {
+        var query = 'SELECT * FROM ' + DB_NAME + ' WHERE (owner_id="' + extFrom + '" OR type="public") AND (name LIKE "' + name + '%" OR company LIKE "' + name + '%") ORDER BY NAME ASC, company ASC';
+        dataCollector.query(DB_NAME, query, function (result) {
+            cb(result);
+        });
+    } catch (err) {
+        logger.error('name = ' + name + ' extFrom = ' + extFrom + ': ' + err.stack);
     }
 }
 
