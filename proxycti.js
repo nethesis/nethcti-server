@@ -1021,11 +1021,15 @@ am.addListener('dialing', function(headers) {
 		        }
 		        response.callNotes = result; // add call notes to the response
 			response.dialCh = headers.destination;
-                        if (currentCallInInfo[from].ctiPrivate[to] !== undefined) {
+                        if (currentCallInInfo[from] !== undefined &&
+                            currentCallInInfo[from].ctiPrivate !== undefined &&
+                            currentCallInInfo[from].ctiPrivate[to] !== undefined) {
+
                             response.info = currentCallInInfo[from].ctiPrivate[to];
-                        } else if (currentCallInInfo[from].ctiPublic !== undefined) {
+
+                        } else if (currentCallInInfo[from] !== undefined && currentCallInInfo[from].ctiPublic !== undefined) {
                             response.info = currentCallInInfo[from].ctiPublic;
-                        } else if (currentCallInInfo[from].centralPhonebook !== undefined) {
+                        } else if (currentCallInInfo[from] !== undefined && currentCallInInfo[from].centralPhonebook !== undefined) {
                             response.info = currentCallInInfo[from].centralPhonebook;
                         }
 			c.emit('message',response);
