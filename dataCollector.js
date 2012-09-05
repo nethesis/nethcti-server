@@ -22,6 +22,7 @@ var POSTIT = "postit";
 const DB_TABLE_SMS = 'sms_history';
 const DB_TABLE_CALLNOTES = 'call_notes';
 const CHAT_ASSOCIATION = 'chat_association';
+var EXTENSION_INFO = 'extension_info';
 
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF) */
@@ -110,6 +111,21 @@ exports.DataCollector = function(){
         this.getPostit = function (id, cb) { _getPostit(id, cb); }
         this.setReadPostit = function (id, cb) { _setReadPostit(id, cb); }
         this.deletePostit = function (id, cb) { _deletePostit(id, cb); }
+        this.storeNotificationCellphoneAndEmail = function (ext, cellphone, email, cb) { _storeNotificationCellphoneAndEmail(ext, cellphone, email, cb); }
+}
+
+function _storeNotificationCellphoneAndEmail(ext, cellphone, email, cb) {
+    try {
+        cellphone = cellphone.replace(/'/g, "\\\'").replace(/"/g, "\\\"");
+        email = email.replace(/'/g, "\\\'").replace(/"/g, "\\\"");
+        var query = 'INSERT INTO extension_info (extension, notif_cellphone, notif_email) values ("' + ext + '", "' + cellphone + '", "' + email + '") ' +
+                    'ON DUPLICATE KEY UPDATE notif_cellphone="' + cellphone + '", notif_email="' + email + '"';
+        _query(EXTENSION_INFO, query, function (result) {
+            cb(result);
+        });
+    } catch (err) {
+       logger.error('num = ' + num + ', numToSearch = ' + numToSearch + ': ' + err.stack);
+    }
 }
 
 function _getAllContactsByNum(num, numToSearch, cb) {
@@ -1057,6 +1073,15 @@ function initQueries(){
 		query: ''
 	};
 	this.queries[CHAT_ASSOCIATION] = {
+		dbhost: 'localhost',
+		dbport: '/var/lib/mysql/mysql.sock',
+		dbtype: 'mysql',
+		dbuser: 'smsuser',
+		dbpassword: 'smspass',
+		dbname: 'nethcti',
+		query: ''
+	};
+	this.queries[EXTENSION_INFO] = {
 		dbhost: 'localhost',
 		dbport: '/var/lib/mysql/mysql.sock',
 		dbtype: 'mysql',

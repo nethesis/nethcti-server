@@ -15,6 +15,21 @@ exports.NotificationManager = function(){
     this.updateUnreadNotificationsList = function () { _updateUnreadNotificationsList(); }
     this.getNotificationsByExt = function (ext) { return _getNotificationsByExt(ext); }
     this.updateUnreadNotificationsListForExt = function (ext, cb) { _updateUnreadNotificationsListForExt(ext, cb); }
+    this.storeNotificationCellphoneAndEmail = function (ext, cellphone, email, cb) { _storeNotificationCellphoneAndEmail(ext, cellphone, email, cb); }
+}
+
+function _storeNotificationCellphoneAndEmail(ext, cellphone, email, cb) {
+    try {
+        if (cellphone === undefined) {
+            cellphone = '';
+        }
+        if (email === undefined) {
+            email = '';
+        }
+       _dataCollector.storeNotificationCellphoneAndEmail(ext, cellphone, email, cb);
+    } catch (err) {
+       logger.error('ext = ' + ext + ', cellphone = ' + cellphone + ', email = ' + email + ': ' + err.stack);
+    }
 }
 
 function _getNotificationsByExt(ext) {
