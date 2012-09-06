@@ -3414,18 +3414,27 @@ io.sockets.on('connection', function(client){
 						}
 					}
 
-                                        var notificationCellphone = message.notificationsCellphone;
-                                        var notificationEmail = message.notificationsEmail;
-                                        notificationManager.storeNotificationCellphoneAndEmail(extFrom, notificationCellphone, notificationEmail, function (result) {
+                                        var notificationsInfo = {
+                                            notificationsCellphone: message.notificationsCellphone,
+                                            notificationsEmail: message.notificationsEmail,
+                                            notificationsChatCell: message.notificationsChatCell,
+                                            notificationsChatEmail: message.notificationsChatEmail,
+                                            notificationsVoicemailCell: message.notificationsVoicemailCell,
+                                            notificationsVoicemailEmail: message.notificationsVoicemailEmail,
+                                            notificationsNoteCell: message.notificationsNoteCell,
+                                            notificationsNoteEmail: message.notificationsNoteEmail
+                                        }
+
+                                        notificationManager.storeNotificationCellphoneAndEmail(extFrom, notificationsInfo, function (result) {
                                             try {
+                                                console.log(result);
                                                 if (result.affectedRows > 0) {
-                                                    logger.debug('succesfully stored notification cellphone (' + notificationCellphone + ') and email (' + notificationEmail + ') for ext ' + extFrom);
+                                                    logger.debug('succesfully stored notification settings for ext ' + extFrom);
                                                 } else {
-                                                    logger.warn('problem storing notification cellphone (' + notificationCellphone + ') and email (' + notificationEmail + ') for ext ' + extFrom);
+                                                    logger.warn('problem storing notification settings for ' + extFrom + ': ' + sys.inspect(notificationsInfo));
                                                 }
                                             } catch (err) {
-                                                logger.error('storing notification cellphone (' + notificationCellphone + ') and email (' + notificationEmail + ') for ext ' + extFrom +
-                                                    ': ' + err.stack);
+                                                logger.error('problem storing notification settings for ' + extFrom + ': ' + sys.inspect(notificationsInfo));
                                             }
                                         });
 

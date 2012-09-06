@@ -111,20 +111,35 @@ exports.DataCollector = function(){
         this.getPostit = function (id, cb) { _getPostit(id, cb); }
         this.setReadPostit = function (id, cb) { _setReadPostit(id, cb); }
         this.deletePostit = function (id, cb) { _deletePostit(id, cb); }
-        this.storeNotificationCellphoneAndEmail = function (ext, cellphone, email, cb) { _storeNotificationCellphoneAndEmail(ext, cellphone, email, cb); }
+        this.storeNotificationCellphoneAndEmail = function (ext, notificationsInfo, cb) { _storeNotificationCellphoneAndEmail(ext, notificationsInfo, cb); }
 }
 
-function _storeNotificationCellphoneAndEmail(ext, cellphone, email, cb) {
+function _storeNotificationCellphoneAndEmail(ext, notificationsInfo, cb) {
     try {
-        cellphone = cellphone.replace(/'/g, "\\\'").replace(/"/g, "\\\"");
-        email = email.replace(/'/g, "\\\'").replace(/"/g, "\\\"");
-        var query = 'INSERT INTO extension_info (extension, notif_cellphone, notif_email) values ("' + ext + '", "' + cellphone + '", "' + email + '") ' +
-                    'ON DUPLICATE KEY UPDATE notif_cellphone="' + cellphone + '", notif_email="' + email + '"';
+        var notificationsCellphone = notificationsInfo.notificationsCellphone.replace(/'/g, "\\\'").replace(/"/g, "\\\"");
+        var notificationsEmail = notificationsInfo.notificationsEmail.replace(/'/g, "\\\'").replace(/"/g, "\\\"");
+        var notificationsChatCell = notificationsInfo.notificationsChatCell;
+        var notificationsChatEmail = notificationsInfo.notificationsChatEmail;
+        var notificationsVoicemailCell = notificationsInfo.notificationsVoicemailCell;
+        var notificationsVoicemailEmail = notificationsInfo.notificationsVoicemailEmail;
+        var notificationsNoteCell = notificationsInfo.notificationsNoteCell;
+        var notificationsNoteEmail = notificationsInfo.notificationsNoteEmail;
+
+        var query = 'INSERT INTO extension_info (extension, notif_cellphone, notif_email, notif_chat_cellphone, ' +
+                    'notif_chat_email, notif_voicemail_cellphone, notif_voicemail_email, notif_note_cellphone, ' +
+                    'notif_note_email) values ("' + ext + '", "' + notificationsCellphone + '", "' + notificationsEmail + '", ' +
+                    '"' + notificationsChatCell + '", "' + notificationsChatEmail + '", "' + notificationsVoicemailCell + '", ' +
+                    '"' + notificationsVoicemailEmail + '", "' + notificationsNoteCell + '", "' + notificationsNoteEmail + '") ' +
+                    'ON DUPLICATE KEY UPDATE notif_cellphone="' + notificationsCellphone + '", notif_email="' + notificationsEmail + '", ' +
+                    'notif_chat_cellphone="' + notificationsChatCell + '", notif_chat_email="' + notificationsChatEmail+ '", ' +
+                    'notif_voicemail_cellphone="' + notificationsVoicemailCell + '", notif_voicemail_email="' + notificationsVoicemailEmail + '", ' +
+                    'notif_note_cellphone="' + notificationsNoteCell + '", notif_note_email="' + notificationsNoteEmail + '"';
+
         _query(EXTENSION_INFO, query, function (result) {
             cb(result);
         });
     } catch (err) {
-       logger.error('num = ' + num + ', numToSearch = ' + numToSearch + ': ' + err.stack);
+       logger.error('ext = ' + ext + ', notificationsInfo = ' + sys.inspect(notificationsInfo) + ': ' + err.stack);
     }
 }
 

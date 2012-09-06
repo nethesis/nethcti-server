@@ -15,18 +15,23 @@ exports.NotificationManager = function(){
     this.updateUnreadNotificationsList = function () { _updateUnreadNotificationsList(); }
     this.getNotificationsByExt = function (ext) { return _getNotificationsByExt(ext); }
     this.updateUnreadNotificationsListForExt = function (ext, cb) { _updateUnreadNotificationsListForExt(ext, cb); }
-    this.storeNotificationCellphoneAndEmail = function (ext, cellphone, email, cb) { _storeNotificationCellphoneAndEmail(ext, cellphone, email, cb); }
+    this.storeNotificationCellphoneAndEmail = function (ext, notificationsInfo, cb) { _storeNotificationCellphoneAndEmail(ext, notificationsInfo, cb); }
 }
 
-function _storeNotificationCellphoneAndEmail(ext, cellphone, email, cb) {
+function _storeNotificationCellphoneAndEmail(ext, notificationsInfo, cb) {
     try {
-        if (cellphone === undefined) {
-            cellphone = '';
-        }
-        if (email === undefined) {
-            email = '';
-        }
-       _dataCollector.storeNotificationCellphoneAndEmail(ext, cellphone, email, cb);
+        var DEFAULT_VALUE = 'never';
+        if (notificationsInfo.notificationsCellphone === undefined) { notificationsInfo.notificationsCellphone = ''; }
+        if (notificationsInfo.notificationsEmail === undefined) { notificationsInfo.notificationsEmail = ''; }
+        if (notificationsInfo.notificationsChatCell === undefined) { notificationsInfo.notificationsChatCell = DEFAULT_VALUE; }
+        if (notificationsInfo.notificationsChatEmail === undefined) { notificationsInfo.notificationsChatEmail = DEFAULT_VALUE; }
+        if (notificationsInfo.notificationsVoicemailCell === undefined) { notificationsInfo.notificationsVoicemailCell = DEFAULT_VALUE; }
+        if (notificationsInfo.notificationsVoicemailEmail === undefined) { notificationsInfo.notificationsVoicemailEmail = DEFAULT_VALUE; }
+        if (notificationsInfo.notificationsNoteCell === undefined) { notificationsInfo.notificationsNoteCell = DEFAULT_VALUE; }
+        if (notificationsInfo.notificationsNoteEmail === undefined) { notificationsInfo.notificationsNoteEmail = DEFAULT_VALUE; }
+
+       _dataCollector.storeNotificationCellphoneAndEmail(ext, notificationsInfo, cb);
+
     } catch (err) {
        logger.error('ext = ' + ext + ', cellphone = ' + cellphone + ', email = ' + email + ': ' + err.stack);
     }
