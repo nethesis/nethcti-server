@@ -112,6 +112,34 @@ exports.DataCollector = function(){
         this.setReadPostit = function (id, cb) { _setReadPostit(id, cb); }
         this.deletePostit = function (id, cb) { _deletePostit(id, cb); }
         this.storeNotificationCellphoneAndEmail = function (ext, notificationsInfo, cb) { _storeNotificationCellphoneAndEmail(ext, notificationsInfo, cb); }
+        this.updateCellphoneNotificationsModalityForAll = function (ext, value, cb) { _updateCellphoneNotificationsModalityForAll(ext, value, cb); }
+        this.updateEmailNotificationsModalityForAll = function (ext, value, cb) { _updateEmailNotificationsModalityForAll(ext, value, cb); }
+}
+
+function _updateEmailNotificationsModalityForAll(ext, value, cb) {
+    try {
+        var query = 'UPDATE extension_info SET notif_chat_email="' + value + '", notif_voicemail_email="' + value + '", ' +
+                    'notif_note_email="' + value + '" WHERE extension="' + ext + '"';
+
+        _query(EXTENSION_INFO, query, function (result) {
+           cb(result);
+        });
+    } catch (err) {
+        logger.error('ext = ' + ext + ', value = ' + value + ': ' + err.stack);
+    }
+}
+
+function _updateCellphoneNotificationsModalityForAll(ext, value, cb) {
+    try {
+        var query = 'UPDATE extension_info SET notif_chat_cellphone="' + value + '", notif_voicemail_cellphone="' + value + '", ' +
+                    'notif_note_cellphone="' + value + '" WHERE extension="' + ext + '"';
+
+        _query(EXTENSION_INFO, query, function (result) {
+           cb(result);
+        });
+    } catch (err) {
+        logger.error('ext = ' + ext + ', value = ' + value + ': ' + err.stack);
+    }
 }
 
 function _storeNotificationCellphoneAndEmail(ext, notificationsInfo, cb) {

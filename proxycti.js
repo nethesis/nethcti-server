@@ -2846,6 +2846,8 @@ io.sockets.on('connection', function(client){
 			GET_CURRENT_MONTH_HISTORY:	'get_current_month_history',
 			GET_CURRENT_MONTH_SWITCHBOARD:	'getCurrentMonthSwitchboard',
 			DELETE_AUDIO_RECORDING_CALL:	'delete_audio_recording_call',
+                        UPDATE_EMAIL_NOTIF_MOD_FORALL:  'updateEmailNotificationsModalityForAll',
+                        UPDATE_CELLPHONE_NOTIF_MOD_FORALL:  'updateCellphoneNotificationsModalityForAll',
 			SEARCH_CONTACT_PHONEBOOK_STARTS_WITH:	'search_contact_phonebook_startsWith'
 		}
   		logger.debug("ACTION received: from id '" + client.id + "' message " + sys.inspect(message));	
@@ -3360,6 +3362,44 @@ io.sockets.on('connection', function(client){
                                 logger.error('extFrom = ' + extFrom + ', barejid = ' + message.userBareJid + ': ' + err.stack);
                             }
 			break;
+                        case actions.UPDATE_CELLPHONE_NOTIF_MOD_FORALL:
+                            try {
+                                var value = message.value;
+
+                                notificationManager.updateCellphoneNotificationsModalityForAll(extFrom, value, function (result) {
+                                    try {
+                                        if (result.affectedRows > 0) {
+                                            logger.debug('succesfully update cellphone notification settings for ext ' + extFrom);
+                                        } else {
+                                            logger.warn('problem updating cellphone notification settings for ' + extFrom + ' with value = ' + value);
+                                        }
+                                    } catch (err) {
+                                       logger.error('problem updating cellphone notification settings for ' + extFrom + ' with value = ' + value);
+                                    }
+                                });
+                            } catch (err) {
+                               logger.error('extFrom = ' + extFrom + ', message = ' + sys.inspect(message) + ': ' + err.stack);
+                            }
+                        break;
+                        case actions.UPDATE_EMAIL_NOTIF_MOD_FORALL:
+                            try {
+                                var value = message.value;
+
+                                notificationManager.updateEmailNotificationsModalityForAll(extFrom, value, function (result) {
+                                    try {
+                                        if (result.affectedRows > 0) {
+                                            logger.debug('succesfully update email notification settings for ext ' + extFrom);
+                                        } else {
+                                            logger.warn('problem updating email notification settings for ' + extFrom + ' with value = ' + value);
+                                        }
+                                    } catch (err) {
+                                       logger.error('problem updating email notification settings for ' + extFrom + ' with value = ' + value);
+                                    }
+                                });
+                            } catch (err) {
+                               logger.error('extFrom = ' + extFrom + ', message = ' + sys.inspect(message) + ': ' + err.stack);
+                            }
+                        break;
   			case actions.LOGIN:
 	  			if(authenticator.authenticateUser(extFrom, message.secret)){  // the user is authenticated
   					// if the user is already logged in, a new session is created and the old is closed
@@ -3427,7 +3467,6 @@ io.sockets.on('connection', function(client){
 
                                         notificationManager.storeNotificationCellphoneAndEmail(extFrom, notificationsInfo, function (result) {
                                             try {
-                                                console.log(result);
                                                 if (result.affectedRows > 0) {
                                                     logger.debug('succesfully stored notification settings for ext ' + extFrom);
                                                 } else {

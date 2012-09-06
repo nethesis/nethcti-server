@@ -16,6 +16,24 @@ exports.NotificationManager = function(){
     this.getNotificationsByExt = function (ext) { return _getNotificationsByExt(ext); }
     this.updateUnreadNotificationsListForExt = function (ext, cb) { _updateUnreadNotificationsListForExt(ext, cb); }
     this.storeNotificationCellphoneAndEmail = function (ext, notificationsInfo, cb) { _storeNotificationCellphoneAndEmail(ext, notificationsInfo, cb); }
+    this.updateCellphoneNotificationsModalityForAll = function (ext, value, cb) { _updateCellphoneNotificationsModalityForAll(ext, value, cb); }
+    this.updateEmailNotificationsModalityForAll = function (ext, value, cb) { _updateEmailNotificationsModalityForAll(ext, value, cb); }
+}
+
+function _updateEmailNotificationsModalityForAll(ext, value, cb) {
+    try {
+        _dataCollector.updateEmailNotificationsModalityForAll(ext, value, cb);
+    } catch (err) {
+        logger.error('ext = ' + ext + ', value = ' + value + ': ' + err.stack);
+    }
+}
+
+function _updateCellphoneNotificationsModalityForAll(ext, value, cb) {
+    try {
+        _dataCollector.updateCellphoneNotificationsModalityForAll(ext, value, cb);
+    } catch (err) {
+        logger.error('ext = ' + ext + ', value = ' + value + ': ' + err.stack);
+    }
 }
 
 function _storeNotificationCellphoneAndEmail(ext, notificationsInfo, cb) {
