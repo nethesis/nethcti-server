@@ -114,6 +114,18 @@ exports.DataCollector = function(){
         this.storeNotificationCellphoneAndEmail = function (ext, notificationsInfo, cb) { _storeNotificationCellphoneAndEmail(ext, notificationsInfo, cb); }
         this.updateCellphoneNotificationsModalityForAll = function (ext, value, cb) { _updateCellphoneNotificationsModalityForAll(ext, value, cb); }
         this.updateEmailNotificationsModalityForAll = function (ext, value, cb) { _updateEmailNotificationsModalityForAll(ext, value, cb); }
+        this.getEmailNotificationModalityVoicemail = function (ext, cb) { _getEmailNotificationModalityVoicemail(ext, cb); }
+}
+
+function _getEmailNotificationModalityVoicemail(ext, cb) {
+    try {
+        var query = 'SELECT extension, notif_email, notif_voicemail_email FROM ' + EXTENSION_INFO + ' WHERE extension="' + ext + '"';
+        _query(EXTENSION_INFO, query, function (result) {
+            cb(result);
+        });
+    } catch (err) {
+        logger.error('ext = ' + ext + ', value = ' + value + ': ' + err.stack);
+    }
 }
 
 function _updateEmailNotificationsModalityForAll(ext, value, cb) {

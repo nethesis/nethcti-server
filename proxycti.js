@@ -207,6 +207,7 @@ controller.addListener('change_vm_dir', function(dir){ // ex dir: '/var/spool/as
 		Action: 'MailboxCount',
 		Mailbox: ext
         }
+
 	try{
 	        am.send(actionMailboxCount, function (resp) {
 			/* resp = { response: 'Success',
@@ -223,19 +224,26 @@ controller.addListener('change_vm_dir', function(dir){ // ex dir: '/var/spool/as
 	} catch(err) {
 	        logger.warn("no connection to asterisk: "+err);
 	}
+
+        var oldcount = voicemail.getCountVoicemailNewx(ext);
+
 	// send info of new voicemail to all clients
 	voicemail.updateVoicemailList(dir); // update voicemail list of the extension obtained from dir
 	var count = voicemail.getCountVoicemailNewx(ext);
-	logger.debug("broadcast 'new_voicemail' info message for [" + ext + "] with " + count + " voicemail to all clients");
-	var c = undefined;
-	var response = undefined;
-	for(key in clients){
+        if (oldcount < count) {
+            logger.debug("broadcast 'new_voicemail' info message for [" + ext + "] with " + count + " voicemail to all clients");
+	    var c = undefined;
+	    var response = undefined;
+	    
+            for(key in clients){
                 c = clients[key];
 		response = new ResponseMessage(c.id, "new_voicemail", '');
         	response.extVoicemail = ext;
 		response.countVoicemailNewx = count;
                 c.emit('message',response);
                 logger.debug("RESP 'new_voicemail' has been sent to client [" + key + "] id '" + c.id + "'");
+            }
+            notificationManager.notifyNewVoicemailToUser(ext);
         }
 });
 /*
@@ -3369,12 +3377,21 @@ io.sockets.on('connection', function(client){
                                 notificationManager.updateCellphoneNotificationsModalityForAll(extFrom, value, function (result) {
                                     try {
                                         if (result.affectedRows > 0) {
-                                            logger.debug('succesfully update cellphone notification settings for ext ' + extFrom);
+                                            var respMsg = new ResponseMessage(client.id, "ack_updateCellphoneNotificationsModalityForAll", "");
+                                            respMsg.cellphoneNotificationsModalityForAll = value;
+                                            client.emit('message', respMsg);
+                                            logger.debug("RESP 'ack_updateCellphoneNotificationsModalityForAll' has been sent to [" + extFrom + "] id '" + client.id + "'");
                                         } else {
+                                            var respMsg = new ResponseMessage(client.id, "error_updateCellphoneNotificationsModalityForAll", "");
+                                            client.emit('message', respMsg);
+                                            logger.warn("RESP 'error_updateCellphoneNotificationsModalityForAll' has been sent to [" + extFrom + "] id '" + client.id + "'");
                                             logger.warn('problem updating cellphone notification settings for ' + extFrom + ' with value = ' + value);
                                         }
                                     } catch (err) {
-                                       logger.error('problem updating cellphone notification settings for ' + extFrom + ' with value = ' + value);
+                                        var respMsg = new ResponseMessage(client.id, "error_updateCellphoneNotificationsModalityForAll", "");
+                                        client.emit('message', respMsg);
+                                        logger.error("RESP 'error_updateCellphoneNotificationsModalityForAll' has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                        logger.error('problem updating cellphone notification settings for ' + extFrom + ' with value = ' + value);
                                     }
                                 });
                             } catch (err) {
@@ -3388,12 +3405,21 @@ io.sockets.on('connection', function(client){
                                 notificationManager.updateEmailNotificationsModalityForAll(extFrom, value, function (result) {
                                     try {
                                         if (result.affectedRows > 0) {
-                                            logger.debug('succesfully update email notification settings for ext ' + extFrom);
+                                            var respMsg = new ResponseMessage(client.id, "ack_updateEmailNotificationsModalityForAll", "");
+                                            respMsg.emailNotificationsModalityForAll = value;
+                                            client.emit('message', respMsg);
+                                            logger.debug("RESP 'ack_updateEmailNotificationsModalityForAll' has been sent to [" + extFrom + "] id '" + client.id + "'");
                                         } else {
+                                            var respMsg = new ResponseMessage(client.id, "error_updateEmailNotificationsModalityForAll", "");
+                                            client.emit('message', respMsg);
+                                            logger.warn("RESP 'error_updateEmailNotificationsModalityForAll' has been sent to [" + extFrom + "] id '" + client.id + "'");
                                             logger.warn('problem updating email notification settings for ' + extFrom + ' with value = ' + value);
                                         }
                                     } catch (err) {
-                                       logger.error('problem updating email notification settings for ' + extFrom + ' with value = ' + value);
+                                        var respMsg = new ResponseMessage(client.id, "error_updateEmailNotificationsModalityForAll", "");
+                                        client.emit('message', respMsg);
+                                        logger.error("RESP 'error_updateEmailNotificationsModalityForAll' has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                        logger.error('problem updating email notification settings for ' + extFrom + ' with value = ' + value);
                                     }
                                 });
                             } catch (err) {

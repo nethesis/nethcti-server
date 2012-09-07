@@ -1,16 +1,27 @@
 var fs = require("fs")
 var path = require('path');
 var sys = require("sys")
+var mail = require('./mailModule');
 var iniparser = require("./lib/node-iniparser/lib/node-iniparser")
 var log4js = require('./lib/log4js-node/lib/log4js')()
 var logger = log4js.getLogger('[NotificationManager]');
 var _dataCollector;
 var _unreadNotifications;
 var _defaultEmptyNotifications = { unreadPostit: [] };
+var _mailModule;
+var _notifModality = {
+    never: 'never',
+    always: 'always',
+    onrequest: 'onrequest'
+};
 
 // Constructor
 exports.NotificationManager = function(){
-    this.setLogger = function(logfile,level) { log4js.addAppender(log4js.fileAppender(logfile), '[NotificationManager]'); logger.setLevel(level); }
+    _initModule();
+    this.setLogger = function(logfile,level) {
+        log4js.addAppender(log4js.fileAppender(logfile), '[NotificationManager]'); logger.setLevel(level);
+        _mailModule.setLogger(logfile, loglevel);
+    }
     this.setDataCollector = function (dc) { _setDataCollector(dc); }
     this.updateUnreadNotificationsList = function () { _updateUnreadNotificationsList(); }
     this.getNotificationsByExt = function (ext) { return _getNotificationsByExt(ext); }
@@ -18,6 +29,56 @@ exports.NotificationManager = function(){
     this.storeNotificationCellphoneAndEmail = function (ext, notificationsInfo, cb) { _storeNotificationCellphoneAndEmail(ext, notificationsInfo, cb); }
     this.updateCellphoneNotificationsModalityForAll = function (ext, value, cb) { _updateCellphoneNotificationsModalityForAll(ext, value, cb); }
     this.updateEmailNotificationsModalityForAll = function (ext, value, cb) { _updateEmailNotificationsModalityForAll(ext, value, cb); }
+    this.notifyNewVoicemailToUser = function (ext) { _notifyNewVoicemailToUser(ext); }
+}
+
+function _notifyNewVoicemailToUser(ext) {
+    try {
+        _dataCollector.getEmailNotificationModalityVoicemail(ext, function (result) {
+            if (result.length === 0) {
+                logger.debug('no entry in DB for extension ' + ext + ' to notify new voicemail');
+            } else {
+                var entry = result[0];
+                var modality = entry.notif_voicemail_email;
+                if (modality === _notifModality.always || modality === _notifModality.onrequest) {
+                    var toAddr = entry.notif_email;
+                    _sendEmailNotificationVoicemail(toAddr, ext);
+                } else if (modality === _notifModality.never) {
+                    logger.debug('voicemail notification modality for ' + ext + ' is "' + modality + '": so don\'t notify');
+                } else {
+                    logger.warn('notification modality ' + modality + ' to notify new voicemail to ' + ext + ' not recognized');
+                }
+            }
+        });
+    } catch (err) {
+        logger.error(err.stack);
+    }
+}
+
+function _initModule() {
+    try {
+        _mailModule = new mail.MailModule();
+    } catch (err) {
+        logger.error(err.stack);
+    }
+}
+
+function _sendEmailNotificationVoicemail(toAddress, extVoicemail, cb) {
+    try {
+        var subject = 'NethCTI - You have new voicemail message';
+        var body = 'NethCTI notification.\n\n' +
+                   'You have received new message in your voicemail ' + extVoicemail;
+
+        _mailModule.sendCtiMailFromLocal(toAddress, subject, body, function (error, response) {
+            if (error) {
+                logger.error(error);
+            } else {
+                logger.debug("e-mail notification for new voicemail has been sent succesfully to " + toAddress + " for voicemail " + extVoicemail);
+            }
+        }); 
+    } catch (err) {
+        logger.error('toAddress = ' + toAddress + ', extVoicemail = ' + extVoicemail + ': ' + err.stack);
+    }                
 }
 
 function _updateEmailNotificationsModalityForAll(ext, value, cb) {
@@ -38,7 +99,7 @@ function _updateCellphoneNotificationsModalityForAll(ext, value, cb) {
 
 function _storeNotificationCellphoneAndEmail(ext, notificationsInfo, cb) {
     try {
-        var DEFAULT_VALUE = 'never';
+        var DEFAULT_VALUE = _notifModality.never;
         if (notificationsInfo.notificationsCellphone === undefined) { notificationsInfo.notificationsCellphone = ''; }
         if (notificationsInfo.notificationsEmail === undefined) { notificationsInfo.notificationsEmail = ''; }
         if (notificationsInfo.notificationsChatCell === undefined) { notificationsInfo.notificationsChatCell = DEFAULT_VALUE; }
