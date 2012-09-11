@@ -115,6 +115,42 @@ exports.DataCollector = function(){
         this.updateCellphoneNotificationsModalityForAll = function (ext, value, cb) { _updateCellphoneNotificationsModalityForAll(ext, value, cb); }
         this.updateEmailNotificationsModalityForAll = function (ext, value, cb) { _updateEmailNotificationsModalityForAll(ext, value, cb); }
         this.getEmailNotificationModalityVoicemail = function (ext, cb) { _getEmailNotificationModalityVoicemail(ext, cb); }
+        this.getNotificationModalityVoicemail = function (ext, cb) { _getNotificationModalityVoicemail(ext, cb); }
+        this.getNotificationModalityNote = function (ext, cb) { _getNotificationModalityNote(ext, cb); }
+        this.getCellphoneNotificationsModalityForAll = function (ext, cb) { _getCellphoneNotificationsModalityForAll(ext, cb); }
+}
+
+function _getCellphoneNotificationsModalityForAll(ext, cb) {
+    try {
+        var query = 'SELECT notif_note_cellphone from ' + EXTENSION_INFO + ' WHERE extension="' + ext + '"';
+        _query(EXTENSION_INFO, query, function (result) {
+            cb(result);
+        });
+    } catch (err) {
+        logger.error('ext = ' + ext + ', value = ' + value + ': ' + err.stack);
+    }
+}
+
+function _getNotificationModalityNote(ext, cb) {
+    try {
+        var query = 'SELECT extension, notif_email, notif_cellphone, notif_note_email, notif_note_cellphone FROM ' + EXTENSION_INFO + ' WHERE extension="' + ext + '"';
+        _query(EXTENSION_INFO, query, function (result) {
+            cb(result);
+        });
+    } catch (err) {
+        logger.error('ext = ' + ext + ', value = ' + value + ': ' + err.stack);
+    }
+}
+
+function _getNotificationModalityVoicemail(ext, cb) {
+    try {
+        var query = 'SELECT extension, notif_email, notif_cellphone, notif_voicemail_email, notif_voicemail_cellphone FROM ' + EXTENSION_INFO + ' WHERE extension="' + ext + '"';
+        _query(EXTENSION_INFO, query, function (result) {
+            cb(result);
+        });
+    } catch (err) {
+        logger.error('ext = ' + ext + ', value = ' + value + ': ' + err.stack);
+    }
 }
 
 function _getEmailNotificationModalityVoicemail(ext, cb) {
@@ -130,7 +166,7 @@ function _getEmailNotificationModalityVoicemail(ext, cb) {
 
 function _updateEmailNotificationsModalityForAll(ext, value, cb) {
     try {
-        var query = 'UPDATE extension_info SET notif_chat_email="' + value + '", notif_voicemail_email="' + value + '", ' +
+        var query = 'UPDATE extension_info SET notif_voicemail_email="' + value + '", ' +
                     'notif_note_email="' + value + '" WHERE extension="' + ext + '"';
 
         _query(EXTENSION_INFO, query, function (result) {
@@ -143,7 +179,7 @@ function _updateEmailNotificationsModalityForAll(ext, value, cb) {
 
 function _updateCellphoneNotificationsModalityForAll(ext, value, cb) {
     try {
-        var query = 'UPDATE extension_info SET notif_chat_cellphone="' + value + '", notif_voicemail_cellphone="' + value + '", ' +
+        var query = 'UPDATE extension_info SET notif_voicemail_cellphone="' + value + '", ' +
                     'notif_note_cellphone="' + value + '" WHERE extension="' + ext + '"';
 
         _query(EXTENSION_INFO, query, function (result) {
@@ -158,20 +194,17 @@ function _storeNotificationCellphoneAndEmail(ext, notificationsInfo, cb) {
     try {
         var notificationsCellphone = notificationsInfo.notificationsCellphone.replace(/'/g, "\\\'").replace(/"/g, "\\\"");
         var notificationsEmail = notificationsInfo.notificationsEmail.replace(/'/g, "\\\'").replace(/"/g, "\\\"");
-        var notificationsChatCell = notificationsInfo.notificationsChatCell;
-        var notificationsChatEmail = notificationsInfo.notificationsChatEmail;
         var notificationsVoicemailCell = notificationsInfo.notificationsVoicemailCell;
         var notificationsVoicemailEmail = notificationsInfo.notificationsVoicemailEmail;
         var notificationsNoteCell = notificationsInfo.notificationsNoteCell;
         var notificationsNoteEmail = notificationsInfo.notificationsNoteEmail;
 
-        var query = 'INSERT INTO extension_info (extension, notif_cellphone, notif_email, notif_chat_cellphone, ' +
-                    'notif_chat_email, notif_voicemail_cellphone, notif_voicemail_email, notif_note_cellphone, ' +
+        var query = 'INSERT INTO extension_info (extension, notif_cellphone, notif_email, ' +
+                    'notif_voicemail_cellphone, notif_voicemail_email, notif_note_cellphone, ' +
                     'notif_note_email) values ("' + ext + '", "' + notificationsCellphone + '", "' + notificationsEmail + '", ' +
-                    '"' + notificationsChatCell + '", "' + notificationsChatEmail + '", "' + notificationsVoicemailCell + '", ' +
+                    '"' + notificationsVoicemailCell + '", ' +
                     '"' + notificationsVoicemailEmail + '", "' + notificationsNoteCell + '", "' + notificationsNoteEmail + '") ' +
                     'ON DUPLICATE KEY UPDATE notif_cellphone="' + notificationsCellphone + '", notif_email="' + notificationsEmail + '", ' +
-                    'notif_chat_cellphone="' + notificationsChatCell + '", notif_chat_email="' + notificationsChatEmail+ '", ' +
                     'notif_voicemail_cellphone="' + notificationsVoicemailCell + '", notif_voicemail_email="' + notificationsVoicemailEmail + '", ' +
                     'notif_note_cellphone="' + notificationsNoteCell + '", notif_note_email="' + notificationsNoteEmail + '"';
 
