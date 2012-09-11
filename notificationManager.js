@@ -8,7 +8,7 @@ var logger = log4js.getLogger('[NotificationManager]');
 var _dataCollector;
 var _unreadNotifications;
 var _defaultEmptyNotifications = { unreadPostit: [] };
-var _mailModule;
+var _mailModule, _sms;
 var _notifModality = {
     never: 'never',
     always: 'always',
@@ -23,6 +23,7 @@ exports.NotificationManager = function(){
         _mailModule.setLogger(logfile, loglevel);
     }
     this.setDataCollector = function (dc) { _setDataCollector(dc); }
+    this.setSmsModule = function (module) { _setSmsModule(module); }
     this.updateUnreadNotificationsList = function () { _updateUnreadNotificationsList(); }
     this.getNotificationsByExt = function (ext) { return _getNotificationsByExt(ext); }
     this.updateUnreadNotificationsListForExt = function (ext, cb) { _updateUnreadNotificationsListForExt(ext, cb); }
@@ -30,23 +31,90 @@ exports.NotificationManager = function(){
     this.updateCellphoneNotificationsModalityForAll = function (ext, value, cb) { _updateCellphoneNotificationsModalityForAll(ext, value, cb); }
     this.updateEmailNotificationsModalityForAll = function (ext, value, cb) { _updateEmailNotificationsModalityForAll(ext, value, cb); }
     this.notifyNewVoicemailToUser = function (ext) { _notifyNewVoicemailToUser(ext); }
+    this.notifyNewPostitToUser = function (ext, note) { _notifyNewPostitToUser(ext, note); }
+    this.getCellphoneNotificationsModalityForAll = function (ext, cb) { _getCellphoneNotificationsModalityForAll(ext, cb); }
+}
+
+function _getCellphoneNotificationsModalityForAll(ext, cb) {
+    try {
+        _dataCollector.getCellphoneNotificationsModalityForAll(ext, cb);
+    } catch (err) {
+        logger.error(err.stack);
+    }
+}
+
+function _setSmsModule(module) {
+    try {
+        _sms = module;
+    } catch (err) {
+        logger.error(err.stack);
+    }
+}
+
+function _notifyNewPostitToUser(ext, note) {
+    try {
+        _dataCollector.getNotificationModalityNote(ext, function (result) {
+            if (result.length === 0) {
+                logger.debug('no entry in DB for extension ' + ext + ' to notify new postit');
+            } else {
+                var entry = result[0];
+                var modalityEmail = entry.notif_note_email;
+                var modalityCellphone = entry.notif_note_cellphone;
+
+                // check to send notification via SMS
+                if (modalityCellphone === _notifModality.always || modalityCellphone === _notifModality.onrequest) {
+                    var phoneNumber = entry.notif_cellphone;
+                    _sendCellphoneSmsNotificationNote(phoneNumber, ext, note);
+                } else if (modalityCellphone === _notifModality.never) {
+                    logger.debug('postit notification modality cellphone for "' + ext + '" is "' + modalityCellphone + '": so don\'t notify');
+                } else {
+                    logger.warn('notification modality cellphone "' + modalityCellphone + '" to notify new postit to "' + ext + '" not recognized');
+                }
+
+                // check to send notification via e-mail
+                if (modalityEmail === _notifModality.always || modalityEmail === _notifModality.onrequest) {
+                    var toAddr = entry.notif_email;
+                    _sendEmailNotificationNote(toAddr, ext, note);
+                } else if (modalityEmail === _notifModality.never) {
+                    logger.debug('postit notification modality e-mail for "' + ext + '" is "' + modalityEmail + '": so don\'t notify');
+                } else {
+                    logger.warn('notification modality e-mail "' + modalityEmail + '" to notify new postit to "' + ext + '" not recognized');
+                }
+            }
+        });
+    } catch (err) {
+        logger.error(err.stack);
+    }
 }
 
 function _notifyNewVoicemailToUser(ext) {
     try {
-        _dataCollector.getEmailNotificationModalityVoicemail(ext, function (result) {
+        _dataCollector.getNotificationModalityVoicemail(ext, function (result) {
             if (result.length === 0) {
                 logger.debug('no entry in DB for extension ' + ext + ' to notify new voicemail');
             } else {
                 var entry = result[0];
-                var modality = entry.notif_voicemail_email;
-                if (modality === _notifModality.always || modality === _notifModality.onrequest) {
+                var modalityEmail = entry.notif_voicemail_email;
+                var modalityCellphone = entry.notif_voicemail_cellphone;
+
+                // check to send notification via SMS
+                if (modalityCellphone === _notifModality.always || modalityCellphone === _notifModality.onrequest) {
+                    var phoneNumber = entry.notif_cellphone;
+                    _sendCellphoneSmsNotificationVoicemail(phoneNumber, ext);
+                } else if (modalityCellphone === _notifModality.never) {
+                    logger.debug('voicemail notification modality cellphone for "' + ext + '" is "' + modalityCellphone + '": so don\'t notify');
+                } else {
+                    logger.warn('notification modality cellphone "' + modalityCellphone + '" to notify new voicemail to "' + ext + '" not recognized');
+                }
+
+                // check to send notification via e-mail
+                if (modalityEmail === _notifModality.always || modalityEmail === _notifModality.onrequest) {
                     var toAddr = entry.notif_email;
                     _sendEmailNotificationVoicemail(toAddr, ext);
-                } else if (modality === _notifModality.never) {
-                    logger.debug('voicemail notification modality for ' + ext + ' is "' + modality + '": so don\'t notify');
+                } else if (modalityEmail === _notifModality.never) {
+                    logger.debug('voicemail notification modality e-mail for "' + ext + '" is "' + modalityEmail + '": so don\'t notify');
                 } else {
-                    logger.warn('notification modality ' + modality + ' to notify new voicemail to ' + ext + ' not recognized');
+                    logger.warn('notification modality e-mail "' + modalityEmail + '" to notify new voicemail to "' + ext + '" not recognized');
                 }
             }
         });
@@ -63,11 +131,56 @@ function _initModule() {
     }
 }
 
+function _sendCellphoneSmsNotificationNote(phoneNumber, ext, note) {
+    try {
+        var prologue = new Date().toLocaleString() + '. New POST-IT from "' + ext + '" - ';
+        var prologue = 'NethCTI - New POST-IT from "' + ext + '" - ' + new Date().toLocaleString() + ' - Message: ';
+        var rest = 256 - prologue.length - 4;
+        var body = '';
+        if (note.length > rest) {
+            body = prologue + note.substring(0, rest) + '...';
+        } else {
+            body = prologue + note;
+        }
+        _sms.sendSms(phoneNumber, body);
+    } catch (err) {
+        logger.error(err.stack);
+    }
+}
+
+function _sendCellphoneSmsNotificationVoicemail(phoneNumber, extVoicemail, cb) {
+    try {
+        var body = 'NethCTI - You have received new message in voicemail "' + extVoicemail + '" - ' + new Date().toLocaleString();
+       _sms.sendSms(phoneNumber, body);
+    } catch (err) {
+        logger.error(err.stack);
+    }
+}
+
+function _sendEmailNotificationNote(toAddress, ext, note) {
+    try {
+        var subject = 'NethCTI - New POST-IT from "' + ext;
+        var body = 'New POST-IT from "' + ext + '".\n\n' +
+                   'Date: ' + new Date().toLocaleString() + '\n' +
+                   'Message:\n' + note;
+
+        _mailModule.sendCtiMailFromLocal(toAddress, subject, body, function (error, response) {
+            if (error) {
+                logger.error(error);
+            } else {
+                logger.debug("e-mail notification for new POST-IT from " + ext + " has been sent succesfully to " + toAddress);
+            }
+        }); 
+    } catch (err) {
+        logger.error('toAddress = ' + toAddress + ', ext = ' + ext + ': ' + err.stack);
+    }                
+}
+
 function _sendEmailNotificationVoicemail(toAddress, extVoicemail, cb) {
     try {
-        var subject = 'NethCTI - You have new voicemail message';
-        var body = 'NethCTI notification.\n\n' +
-                   'You have received new message in your voicemail ' + extVoicemail;
+        var subject = 'NethCTI - New message in voicemail "' + extVoicemail + '"';
+        var body = 'You have received new message in voicemail "' + extVoicemail + '"\n' +
+                   'Date: ' + new Date().toLocaleString();
 
         _mailModule.sendCtiMailFromLocal(toAddress, subject, body, function (error, response) {
             if (error) {
@@ -102,8 +215,6 @@ function _storeNotificationCellphoneAndEmail(ext, notificationsInfo, cb) {
         var DEFAULT_VALUE = _notifModality.never;
         if (notificationsInfo.notificationsCellphone === undefined) { notificationsInfo.notificationsCellphone = ''; }
         if (notificationsInfo.notificationsEmail === undefined) { notificationsInfo.notificationsEmail = ''; }
-        if (notificationsInfo.notificationsChatCell === undefined) { notificationsInfo.notificationsChatCell = DEFAULT_VALUE; }
-        if (notificationsInfo.notificationsChatEmail === undefined) { notificationsInfo.notificationsChatEmail = DEFAULT_VALUE; }
         if (notificationsInfo.notificationsVoicemailCell === undefined) { notificationsInfo.notificationsVoicemailCell = DEFAULT_VALUE; }
         if (notificationsInfo.notificationsVoicemailEmail === undefined) { notificationsInfo.notificationsVoicemailEmail = DEFAULT_VALUE; }
         if (notificationsInfo.notificationsNoteCell === undefined) { notificationsInfo.notificationsNoteCell = DEFAULT_VALUE; }

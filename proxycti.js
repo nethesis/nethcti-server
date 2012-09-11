@@ -3,11 +3,14 @@ var net = require('net');
 var execreq = require('child_process').exec;
 var dataReq = require("./dataCollector.js");
 var notificationManagerReq = require("./notificationManager.js");
+var smsReq = require("./smsModule.js");
 var proReq = require("./profiler.js");
 var authReq = require("./authenticator.js");
 var contrReq = require("./controller.js");
 var routerReq = require("./router.js");
 var nethCtiPhonebookReq = require('./nethCtiPhonebook.js');
+var responseMessageReq = require('./responseMessage.js');
+var ResponseMessage = responseMessageReq.ResponseMessage;
 var modopReq = require("./modop.js");
 var voicemailReq = require("./voicemail.js");
 var http = require('http');
@@ -26,7 +29,6 @@ const PROXY_CONFIG_FILENAME = "config/proxycti.ini";
 const SMS_CONFIG_FILENAME = "config/sms.ini";
 const FILE_LOGIN_LOG = './store/login.log';
 const AST_CALL_AUDIO_DIR = "/var/spool/asterisk/monitor";
-const SMS_DIR = "sms";
 const CALL_PREFIX = "CTI->";
 const SPY_PREFIX = "SPY-";
 const REDIRECT_VM_PREFIX = "REDIR_VM-";
@@ -53,12 +55,6 @@ var clients = {};
 var chStat = {}; // object that contains the 'uniqueid' as a key
 var server_conf = {}; // configuration content of the file config/proxycti.ini
 var sms_conf = {}; // configuration content of the file config/sms.ini
-// This object is the response that this server pass to the clients.
-var ResponseMessage = function(clientSessionId, typeMessage, respMessage){
-	this.clientSessionId = clientSessionId;
-	this.typeMessage = typeMessage;
-	this.respMessage = respMessage;
-}
 var currentCallInInfo = {}; // the info (callNotes, Customer Card...) for the current caller
 var chatAssociation = {}; // association between extensions and their chat user
 
@@ -187,9 +183,15 @@ var router = new routerReq.Router(); // check changing in audio directory
 router.setLogger(logfile,loglevel);
 router.addModule('nethCtiPhonebook', nethCtiPhonebook);
 
+var smsModule = new smsReq.Sms();
+smsModule.setLogger(logfile,loglevel);
+smsModule.setSmsConf(sms_conf);
+smsModule.setDataCollector(dataCollector);
+
 var notificationManager = new notificationManagerReq.NotificationManager();
 notificationManager.setLogger(logfile,loglevel);
 notificationManager.setDataCollector(dataCollector);
+notificationManager.setSmsModule(smsModule);
 
 logger.debug('added object modules: \'Profiler\', \'DataCollector\', \'Authenticator\', \'Modop\' and \'Controller\'')
 controller.addDir(AST_CALL_AUDIO_DIR);
@@ -246,6 +248,7 @@ controller.addListener('change_vm_dir', function(dir){ // ex dir: '/var/spool/as
             notificationManager.notifyNewVoicemailToUser(ext);
         }
 });
+
 /*
 controller.addListener('change_vm_personal_dir', function(dir){
 	logger.debug("event 'change_vm_personal_dir'");
@@ -3160,11 +3163,13 @@ io.sockets.on('connection', function(client){
                                             res.success = true;
                                             notificationManager.updateUnreadNotificationsListForExt(message.assigned, function(not) {
                                                 try {
-                                                    var clientAssigned = clients[message.assigned];
+                                                    /*
+                                                    var clientAssigned = clients[message.extFrom];
                                                     var respMsg = new ResponseMessage(clientAssigned.id, 'update_notifications', '');
                                                     respMsg.notifications = not;
                                                     clientAssigned.emit('message', respMsg);
                                                     logger.debug("RESP 'update_notifications' has been sent to [" + message.assigned + "] id '" + clientAssigned.id + "'");
+                                                    */
                                                 } catch (err) {
                                                     logger.error('message = ' + sys.inspect(message) + ': ' + err.stack);
                                                 }
@@ -3276,10 +3281,14 @@ io.sockets.on('connection', function(client){
                                             notificationManager.updateUnreadNotificationsListForExt(message.assigned, function (not) {
                                                 try {
                                                     var clientAssigned = clients[message.assigned];
-                                                    var respMsg = new ResponseMessage(clientAssigned.id, 'update_notifications', '');
-                                                    respMsg.notifications = not;
-                                                    clientAssigned.emit('message', respMsg);
-                                                    logger.debug("RESP 'update_notifications' has been sent to [" + message.assigned + "] id '" + clientAssigned.id + "'");
+                                                    if (clientAssigned !== undefined) {
+                                                        var respMsg = new ResponseMessage(clientAssigned.id, 'update_notifications', '');
+                                                        respMsg.notifications = not;
+                                                        clientAssigned.emit('message', respMsg);
+                                                        logger.debug("RESP 'update_notifications' has been sent to [" + message.assigned + "] id '" + clientAssigned.id + "'");
+                                                    }// else {
+                                                    notificationManager.notifyNewPostitToUser(extFrom, note);
+                                                    //}
                                                 } catch (err) {
                                                     logger.error('message = ' + sys.inspect(message) + ': ' + err.stack);
                                                 }
@@ -3483,8 +3492,6 @@ io.sockets.on('connection', function(client){
                                         var notificationsInfo = {
                                             notificationsCellphone: message.notificationsCellphone,
                                             notificationsEmail: message.notificationsEmail,
-                                            notificationsChatCell: message.notificationsChatCell,
-                                            notificationsChatEmail: message.notificationsChatEmail,
                                             notificationsVoicemailCell: message.notificationsVoicemailCell,
                                             notificationsVoicemailEmail: message.notificationsVoicemailEmail,
                                             notificationsNoteCell: message.notificationsNoteCell,
@@ -5050,219 +5057,9 @@ io.sockets.on('connection', function(client){
                         break;
 			case actions.SEND_SMS:
 				if(profiler.checkActionSmsPermit(extFrom)){
-					const SMSHOSTING_URL = 'smshosting';
 					var destNum = message.destNum;
 					var text = message.text;
-					var prefix = sms_conf['SMS'].prefix;
-					if(prefix===undefined){
-						logger.warn('send sms: \'prefix\' not exists in configuration file: set to empty');
-						prefix = '';
-					}
-					if(prefix!=="" && destNum.length<=10 && destNum.substring(0,1)==='3'){
-						destNum = prefix + destNum;
-					}
-					if(sms_conf["SMS"].type==="web"){ // WEB
-						if(sms_conf['SMS'].method===undefined){
-							logger.error('send sms: \'method\' not exists in configuration file');
-							return;
-						}
-						var meth = sms_conf['SMS'].method.toUpperCase();
-						if(meth!=='GET' && meth!=='POST'){
-							logger.error('wrong method "'+meth+'" to send sms: check configuration');
-							return;
-						}
-						if(meth==='GET'){
-							var user = sms_conf['SMS'].user;
-							var pwd = sms_conf['SMS'].password;
-							var userEscape = _urlEscape(user);
-							var pwdEscape = _urlEscape(pwd);
-							var destNumEscape = _urlEscape(destNum);
-							var textEscape = _urlEscape(text);
-							if(sms_conf['SMS'].url===undefined){
-								logger.error('send sms: \'url\' not exists in configuration file');
-								return;
-							}
-							var httpurl = sms_conf['SMS'].url.replace("$USER",userEscape).replace("$PASSWORD",pwdEscape).replace("$NUMBER",destNumEscape).replace("$TEXT",textEscape);
-							var parsed_url = url.parse(httpurl, true);
-							var porturl = 80;
-							if(parsed_url.port!==undefined){
-								porturl = parsed_url.port;
-							}
-							var options = {
-								host: parsed_url.hostname,
-								port: porturl,
-								path: parsed_url.pathname+parsed_url.search,
-								method: meth
-							};	
-							logger.debug("send GET sms with options = " + sys.inspect(options));
-							var request = http.request(options, function(res){ // http request
-								if(res.statusCode===200){ // HTTP answer is ok, but check also respCode
-									res.setEncoding('utf8');
-									var respCode = '';
-									res.on("data", function(chunk){ // get response code
-										var temp = chunk.split("<CODICE>");
-										for(var i=0, el; el=temp[i]; i++){
-											if(el.indexOf("</CODICE>")!==-1){
-												respCode = el.split("</CODICE>")[0];
-											}
-										}
-										if(respCode==="HTTP_00" || parsed_url.hostname.indexOf(SMSHOSTING_URL)===-1){ // all ok, the sms was sent
-											logger.debug("sms was sent: " + extFrom + " -> " + destNum);
-											// add entry in DB
-											dataCollector.registerSmsSuccess(extFrom, destNum, text, function(res){
-				                                                        	// send ack to client
-					                                                        var mess = new ResponseMessage(client.id, "ack_send_web_sms", '');
-					                                                        client.emit('message',mess);
-												logger.debug("add entry success into sms database");
-				                                                        	logger.debug("RESP 'ack_send_web_sms' has been sent to [" + extFrom + "] id '" + client.id + "'");
-											});
-										} else { // there was an error
-											logger.error("error in sms sending from " + extFrom + " -> " + destNum + ": check config parameters. respCode = " + respCode);
-											// add entry in DB
-											dataCollector.registerSmsFailed(extFrom, destNum, text, function(res){
-												// send error to client
-			                                        	                	var mess = new ResponseMessage(client.id, "error_send_web_sms", '');
-												mess.respCode = respCode;
-				        	                                                client.emit('message',mess);
-												logger.debug("add entry of fail into sms database");
-				                	                                        logger.debug("RESP 'error_send_web_sms' has been sent to [" + extFrom + "] id '" + client.id + "'");
-											});
-										}
-									});
-								} else { // error in HTTP answer
-									logger.error("error in sms sending from " + extFrom + " -> " + destNum + ": check config parameters. statusCode = " + res.statusCode);
-									var statusCode = res.statusCode;
-									// add entry in DB
-			                                                dataCollector.registerSmsFailed(extFrom, destNum, text, function(res){
-				                                        	// send error to client
-		        			                             	var mess = new ResponseMessage(client.id, "error_send_web_sms", '');
-		                        	                                mess.statusCode = statusCode;
-		                                	                        client.emit('message',mess);
-		                                                        	logger.debug("add entry of fail into sms database");
-			                                                        logger.debug("RESP 'error_send_web_sms' has been sent to [" + extFrom + "] id '" + client.id + "'");
-			                                                });	
-								}
-							});
-							request.on("error", function(e){ // there was an error
-								logger.error("error in sms sending from " + extFrom + " -> " + destNum + ": check config parameters. Error: " + e.message);
-								// add entry in DB
-								dataCollector.registerSmsFailed(extFrom, destNum, text, function(res){
-									// send error to client
-	                	                                       	var mess = new ResponseMessage(client.id, "error_send_web_sms", '');
-	                        	                        	client.emit('message',mess);
-									logger.debug("add entry of fail into sms database");
-		                        			        logger.debug("RESP 'error_send_web_sms' has been sent to [" + extFrom + "] id '" + client.id + "'");
-								});
-							});
-							request.end(); // send request
-						} else if(meth==='POST'){
-							var user = sms_conf['SMS'].user;
-	        	                                var pwd = sms_conf['SMS'].password;
-							var userEscape = _urlEscape(user);
-							var pwdEscape = _urlEscape(pwd);
-							var destNumEscape = _urlEscape(destNum);
-							var textEscape = _urlEscape(text);
-	                	                        var httpurl = sms_conf['SMS'].url.replace("$USER",userEscape).replace("$PASSWORD",pwdEscape).replace("$NUMBER",destNumEscape).replace("$TEXT",textEscape);
-                                	        	var parsed_url = url.parse(httpurl, true);
-	                                	        var porturl = 80;
-	                                        	if(parsed_url.port!==undefined){
-		                                                porturl = parsed_url.port;
-		                                        }
-							post_data = querystring.stringify(parsed_url.query);
-							var options = {
-		                                                host: parsed_url.hostname,
-		                                                port: porturl,
-	        	                                        path: parsed_url.pathname,
-	                	                                method: meth,
-								headers: {  
-									'Content-Type': 'application/x-www-form-urlencoded',  
-								        'Content-Length': post_data.length  
-								} 
-		                                        };
-							logger.debug("send sms with options = " + sys.inspect(options) + " and post_data = " + post_data);
-							var request = http.request(options, function(res){ // http request
-								res.setEncoding('utf8');
-								if(res.statusCode===200){
-									var respCode = '';
-									res.on('data', function (chunk) {
-										var temp = chunk.split("<CODICE>");
-										// code of the response
-										for(var i=0, el; el=temp[i]; i++){
-											if(el.indexOf("</CODICE>")!==-1){
-												respCode = el.split("</CODICE>")[0];
-											}
-										}
-										if(respCode==="HTTP_00" || parsed_url.hostname.indexOf(SMSHOSTING_URL)===-1){ // all ok, the sms was sent
-											logger.debug("sms was sent: " + extFrom + " -> " + destNum);
-		                                	                                // add entry in DB
-		                                        	                        dataCollector.registerSmsSuccess(extFrom, destNum, text, function(res){
-		                                                	                	// send ack to client
-		                                                        	                var mess = new ResponseMessage(client.id, "ack_send_web_sms", '');
-		                                                                	        client.emit('message',mess);
-			                                                                        logger.debug("add entry success into sms database");
-			                                                                        logger.debug("RESP 'ack_send_web_sms' has been sent to [" + extFrom + "] id '" + client.id + "'");
-			                                                                });
-										} else { // there was an error
-											// add entry in DB
-											dataCollector.registerSmsFailed(extFrom, destNum, text, function(res){
-												// send error to client
-												var mess = new ResponseMessage(client.id, "error_send_web_sms", '');
-												mess.respCode = respCode;
-												client.emit('message',mess);
-												logger.debug("add entry of fail into sms database");
-											});
-										}
-									});
-								} else { // error in HTTP answer
-									logger.error("error in sms sending from " + extFrom + " -> " + destNum + ": check config parameters. statusCode = " + res.statusCode);
-	                                	                        var statusCode = res.statusCode;
-	                                        	                // add entry in DB
-	                                                	        dataCollector.registerSmsFailed(extFrom, destNum, text, function(res){
-	                                                        	        // send error to client
-	                                                                	var mess = new ResponseMessage(client.id, "error_send_web_sms", '');
-		                                                                mess.statusCode = statusCode;
-        		                                                        client.emit('message',mess);
-                		                                                logger.debug("add entry of fail into sms database");
-                        		                                        logger.debug("RESP 'error_send_web_sms' has been sent to [" + extFrom + "] id '" + client.id + "'");
-                                		                        });
-								}
-							});
-							request.write(post_data);
-							request.end();
-						}
-						logger.debug("HTTP [" + meth + "] request for sending SMS from " + extFrom + " -> " + destNum + " was sent to: " + parsed_url.host);
-					} else if(sms_conf["SMS"].type==="portech"){ // PORTECH
-						var pathori = SMS_DIR+'/'+extFrom+'-'+destNum;
-						var smsFilepath = SMS_DIR+'/'+extFrom+'-'+destNum;
-						var res = true;
-						var index = 1;
-						while(res){ // check if the file already exist: if exist it modify file name
-							try{
-								fs.statSync(smsFilepath);
-								smsFilepath = pathori+'-'+index;
-								index++;
-							} catch(e){
-								res=false;
-							}
-						}
-						fs.writeFile(smsFilepath, text, function(err){
-							if(err){
-								logger.error(err + ': there was a problem in creation of sms file "' + smsFilepath + '"');
-								// send error to client
-		                                        	var mess = new ResponseMessage(client.id, "error_send_sms", '');
-		                                        	client.emit('message',mess);
-		                                        	logger.debug("RESP 'error_send_sms' has been sent to [" + extFrom + "] id '" + client.id + "'");
-							} else{
-								logger.debug('created sms file "' + smsFilepath + '"');
-								// send ack to client
-		                                        	var mess = new ResponseMessage(client.id, "ack_send_sms", '');
-		                                        	client.emit('message',mess);
-	        	                                	logger.debug("RESP 'ack_send_sms' has been sent to [" + extFrom + "] id '" + client.id + "'");
-							}
-						});
-					} else {
-						logger.error("sms type in server configuration is: " + sms_conf["SMS"].type);
-					}
+                                        smsModule.sendSmsAndResponse(extFrom, destNum, text, client);
 				} else { // the user hasn't the permission to send sms
 					logger.warn("[" + extFrom + "] doesn't have permission to send SMS!");
 				}
@@ -5296,10 +5093,6 @@ io.sockets.on('connection', function(client){
 /************************************************************************************************
  * Section relative to functions
  */
-function _urlEscape(url){
-	url = escape(url);
-	return url.replace(/[*]/g, "%2A").replace(/[@]/g, "%40").replace(/[-]/g, "%2D").replace(/[_]/g, "%5F").replace(/[+]/g, "%2B").replace(/[.]/g, "%2E").replace(/[/]/g, "%2F");
-}
 // Update chat assocation in 'chatAssociation' and in DB and then return 'chatAssociation' to all clients
 function storeChatAssociation(extFrom, bareJid){
 	// if the 'extFrom=bareJid' is already present in chatAssociation, then it don't do anything
