@@ -2858,7 +2858,9 @@ io.sockets.on('connection', function(client){
 			GET_CURRENT_MONTH_SWITCHBOARD:	'getCurrentMonthSwitchboard',
 			DELETE_AUDIO_RECORDING_CALL:	'delete_audio_recording_call',
                         UPDATE_EMAIL_NOTIF_MOD_FORALL:  'updateEmailNotificationsModalityForAll',
+                        SAVE_NOTIFICATIONS_SETTINGS:    'saveNotificationsSettings',
                         UPDATE_CELLPHONE_NOTIF_MOD_FORALL:  'updateCellphoneNotificationsModalityForAll',
+                        REQ_POSTIT_NOTIF_SETTINGS_FOR_ALL_EXT:  'requestPostitNotificationsSettingsForAllExt',
 			SEARCH_CONTACT_PHONEBOOK_STARTS_WITH:	'search_contact_phonebook_startsWith'
 		}
   		logger.debug("ACTION received: from id '" + client.id + "' message " + sys.inspect(message));	
@@ -3267,6 +3269,7 @@ io.sockets.on('connection', function(client){
                             try {
                                 var note = message.note;
                                 var assigned = message.assigned;
+                                var notifSettings = message.notifSettings;
                                 if (note === undefined || assigned === undefined) {
                                     logger.error('bad argument to save post-it!');
                                     return;
@@ -3286,9 +3289,9 @@ io.sockets.on('connection', function(client){
                                                         respMsg.notifications = not;
                                                         clientAssigned.emit('message', respMsg);
                                                         logger.debug("RESP 'update_notifications' has been sent to [" + message.assigned + "] id '" + clientAssigned.id + "'");
-                                                    }// else {
-                                                    notificationManager.notifyNewPostitToUser(extFrom, note);
-                                                    //}
+                                                    } else {
+                                                        notificationManager.notifyNewPostitToUser(message.assigned, note, notifSettings);
+                                                    }
                                                 } catch (err) {
                                                     logger.error('message = ' + sys.inspect(message) + ': ' + err.stack);
                                                 }
@@ -3407,6 +3410,50 @@ io.sockets.on('connection', function(client){
                                logger.error('extFrom = ' + extFrom + ', message = ' + sys.inspect(message) + ': ' + err.stack);
                             }
                         break;
+                        case actions.REQ_POSTIT_NOTIF_SETTINGS_FOR_ALL_EXT:
+                            try {
+                                notificationManager.getPostitNotificationsSettingsForAllExt(function (result) {
+                                    try {
+                                        var i, tempext;
+                                        var settings = {};
+                                        for (i = 0; i < result.length; i++) {
+                                            tempext = result[i].extension;
+                                            settings[tempext] = result[i];
+                                        }
+                                        var respMsg = new ResponseMessage(client.id, 'ack_getPostitNotificationsSettingsForAllExt', '');
+                                        respMsg.settings = settings;
+                                        client.emit('message', respMsg);
+                                        logger.debug("RESP 'ack_getPostitNotificationsSettingsForAllExt' has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                    } catch (err) {
+                                        logger.error('extFrom = ' + extFrom + ', message = ' + sys.inspect(message) + ': ' + err.stack);
+                                    }
+                                });
+                            } catch (err) {
+                                logger.error('extFrom = ' + extFrom + ', message = ' + sys.inspect(message) + ': ' + err.stack);
+                            }
+                        break;
+                        case actions.SAVE_NOTIFICATIONS_SETTINGS:
+                            try {
+                                notificationManager.saveNotificationsSettings(extFrom, message.settings, function (result) {
+                                    try {
+                                        if (result.affectedRows > 0) {
+                                            var respMsg = new ResponseMessage(client.id, 'ack_saveNotificationsSettings', '');
+                                            respMsg.settings = message.settings;
+                                            client.emit('message', respMsg);
+                                            logger.debug("RESP 'ack_saveNotificationsSettings' has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                        } else {
+                                            var respMsg = new ResponseMessage(client.id, 'error_saveNotificationsSettings', '');
+                                            client.emit('message', respMsg);
+                                            logger.warn("RESP 'error_saveNotificationsSettings' has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                        }
+                                    } catch (err) {
+                                        logger.error('extFrom = ' + extFrom + ', message = ' + sys.inspect(message) + ': ' + err.stack);
+                                    }
+                                });
+                            } catch (err) {
+                              logger.error('extFrom = ' + extFrom + ', message = ' + sys.inspect(message) + ': ' + err.stack);
+                            }
+                        break;
                         case actions.UPDATE_EMAIL_NOTIF_MOD_FORALL:
                             try {
                                 var value = message.value;
@@ -3488,28 +3535,6 @@ io.sockets.on('connection', function(client){
 							respMsg.customVmMsg = obj;
 						}
 					}
-
-                                        var notificationsInfo = {
-                                            notificationsCellphone: message.notificationsCellphone,
-                                            notificationsEmail: message.notificationsEmail,
-                                            notificationsVoicemailCell: message.notificationsVoicemailCell,
-                                            notificationsVoicemailEmail: message.notificationsVoicemailEmail,
-                                            notificationsNoteCell: message.notificationsNoteCell,
-                                            notificationsNoteEmail: message.notificationsNoteEmail
-                                        }
-
-                                        notificationManager.storeNotificationCellphoneAndEmail(extFrom, notificationsInfo, function (result) {
-                                            try {
-                                                if (result.affectedRows > 0) {
-                                                    logger.debug('succesfully stored notification settings for ext ' + extFrom);
-                                                } else {
-                                                    logger.warn('problem storing notification settings for ' + extFrom + ': ' + sys.inspect(notificationsInfo));
-                                                }
-                                            } catch (err) {
-                                                logger.error('problem storing notification settings for ' + extFrom + ': ' + sys.inspect(notificationsInfo));
-                                            }
-                                        });
-
                                         var notifications = notificationManager.getNotificationsByExt(extFrom);
                                         respMsg.notifications = notifications;
 					respMsg.streamingSettings = profiler.getStreamingSettings(extFrom);
@@ -3518,6 +3543,16 @@ io.sockets.on('connection', function(client){
 					var ver = message.ver;
 					ver===undefined ? ver = '<1.1' : '';
 					login_logger.debug(extFrom + ' ' + ipAddrClient + ' ' + ver);
+                                        notificationManager.getNotificationsSettings(extFrom, function (result) {
+                                            try {
+                                                var respMsg = new ResponseMessage(client.id, 'notifications_settings', '');
+                                                respMsg.settings = result[0];
+                                                client.emit('message', respMsg);
+                                                logger.debug("RESP 'notifications_settings' has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                            } catch (err) {
+                                                logger.error(err.stack);
+                                            }
+                                        });
   				}
   				else{ // the user is not authenticated
   					logger.warn("login AUTH FAILED: [" + extFrom + "] with secret '" + message.secret + "'");

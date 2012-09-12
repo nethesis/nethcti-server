@@ -31,8 +31,35 @@ exports.NotificationManager = function(){
     this.updateCellphoneNotificationsModalityForAll = function (ext, value, cb) { _updateCellphoneNotificationsModalityForAll(ext, value, cb); }
     this.updateEmailNotificationsModalityForAll = function (ext, value, cb) { _updateEmailNotificationsModalityForAll(ext, value, cb); }
     this.notifyNewVoicemailToUser = function (ext) { _notifyNewVoicemailToUser(ext); }
-    this.notifyNewPostitToUser = function (ext, note) { _notifyNewPostitToUser(ext, note); }
+    this.notifyNewPostitToUser = function (ext, note, clientNotifSettings) { _notifyNewPostitToUser(ext, note, clientNotifSettings); }
     this.getCellphoneNotificationsModalityForAll = function (ext, cb) { _getCellphoneNotificationsModalityForAll(ext, cb); }
+    this.saveNotificationsSettings = function (ext, settings, cb) { _saveNotificationsSettings(ext, settings, cb); }
+    this.getNotificationsSettings = function (ext, cb) { _getNotificationsSettings(ext, cb); }
+    this.getPostitNotificationsSettingsForAllExt = function (cb) { _getPostitNotificationsSettingsForAllExt(cb); }
+}
+
+function _getPostitNotificationsSettingsForAllExt(cb) {
+    try {
+        _dataCollector.getPostitNotificationsSettingsForAllExt(cb);
+    } catch (err) {
+       logger.error(err.stack);
+    }
+}
+
+function _getNotificationsSettings(ext, cb) {
+    try {
+        _dataCollector.getNotificationsSettings(ext, cb);
+    } catch (err) {
+        logger.error(err.stack);
+    }
+}
+
+function _saveNotificationsSettings(ext, settings, cb) {
+    try {
+        _dataCollector.saveNotificationsSettings(ext, settings, cb);
+    } catch (err) {
+        logger.error(err.stack);
+    }
 }
 
 function _getCellphoneNotificationsModalityForAll(ext, cb) {
@@ -51,7 +78,7 @@ function _setSmsModule(module) {
     }
 }
 
-function _notifyNewPostitToUser(ext, note) {
+function _notifyNewPostitToUser(ext, note, clientNotifSettings) {
     try {
         _dataCollector.getNotificationModalityNote(ext, function (result) {
             if (result.length === 0) {
@@ -60,11 +87,18 @@ function _notifyNewPostitToUser(ext, note) {
                 var entry = result[0];
                 var modalityEmail = entry.notif_note_email;
                 var modalityCellphone = entry.notif_note_cellphone;
+                var phoneNumber = entry.notif_cellphone;
+                var toAddr = entry.notif_email;
 
                 // check to send notification via SMS
-                if (modalityCellphone === _notifModality.always || modalityCellphone === _notifModality.onrequest) {
-                    var phoneNumber = entry.notif_cellphone;
+                if (modalityCellphone === _notifModality.always) {
                     _sendCellphoneSmsNotificationNote(phoneNumber, ext, note);
+                } else if (modalityCellphone === _notifModality.onrequest &&
+                           clientNotifSettings.postitNotifCellphoneModality === _notifModality.onrequest &&
+                           clientNotifSettings.postitNotifCellphoneValue === true) { 
+                
+                    _sendCellphoneSmsNotificationNote(phoneNumber, ext, note);
+
                 } else if (modalityCellphone === _notifModality.never) {
                     logger.debug('postit notification modality cellphone for "' + ext + '" is "' + modalityCellphone + '": so don\'t notify');
                 } else {
@@ -72,9 +106,15 @@ function _notifyNewPostitToUser(ext, note) {
                 }
 
                 // check to send notification via e-mail
-                if (modalityEmail === _notifModality.always || modalityEmail === _notifModality.onrequest) {
-                    var toAddr = entry.notif_email;
+                if (modalityEmail === _notifModality.always) {
                     _sendEmailNotificationNote(toAddr, ext, note);
+
+                } else if (modalityEmail === _notifModality.onrequest &&
+                           clientNotifSettings.postitNotifEmailModality === _notifModality.onrequest &&
+                           clientNotifSettings.postitNotifEmailValue === true) {
+
+                    _sendEmailNotificationNote(toAddr, ext, note);
+                
                 } else if (modalityEmail === _notifModality.never) {
                     logger.debug('postit notification modality e-mail for "' + ext + '" is "' + modalityEmail + '": so don\'t notify');
                 } else {
