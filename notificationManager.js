@@ -102,7 +102,7 @@ function _notifyNewPostitToUser(ext, note, clientNotifSettings) {
                 } else if (modalityCellphone === _notifModality.never) {
                     logger.debug('postit notification modality cellphone for "' + ext + '" is "' + modalityCellphone + '": so don\'t notify');
                 } else {
-                    logger.warn('notification modality cellphone "' + modalityCellphone + '" to notify new postit to "' + ext + '" not recognized');
+                    logger.warn('notification modality cellphone "' + modalityCellphone + '" to notify new postit to "' + ext + '": don\'t notify');
                 }
 
                 // check to send notification via e-mail
@@ -118,7 +118,7 @@ function _notifyNewPostitToUser(ext, note, clientNotifSettings) {
                 } else if (modalityEmail === _notifModality.never) {
                     logger.debug('postit notification modality e-mail for "' + ext + '" is "' + modalityEmail + '": so don\'t notify');
                 } else {
-                    logger.warn('notification modality e-mail "' + modalityEmail + '" to notify new postit to "' + ext + '" not recognized');
+                    logger.warn('notification modality e-mail "' + modalityEmail + '" to notify new postit to "' + ext + '": don\'t notify');
                 }
             }
         });

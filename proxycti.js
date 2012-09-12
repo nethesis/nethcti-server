@@ -3061,13 +3061,36 @@ io.sockets.on('connection', function(client){
 				});
 			break;
 			case actions.GET_ALL_NOTES_FOR_NUM:
-				dataCollector.getAllNotesForNum(extFrom,message.num,function(results){
-					var respMsg = new ResponseMessage(client.id, "resp_get_all_notes_for_num", '');
-					respMsg.allNotes = results;
-					respMsg.num = message.num;
-					client.emit('message',respMsg);
-					logger.debug("RESP 'resp_get_all_notes_for_num' has been sent to [" + extFrom + "] id '" + client.id + "'");
+                            try {
+				dataCollector.getAllNotesForNum(extFrom, message.num, function (results) {
+                                    try {
+                                        notificationManager.getPostitNotificationsSettingsForAllExt(function (resultSet) {
+
+                                            try {
+                                                var i, tempext;
+                                                var settings = {};
+                                                for (i = 0; i < resultSet.length; i++) {
+                                                    tempext = resultSet[i].extension;
+                                                    settings[tempext] = resultSet[i];
+                                                }
+					        var respMsg = new ResponseMessage(client.id, "resp_get_all_notes_for_num", '');
+        					respMsg.allNotes = results;
+                                                respMsg.notifySettings = settings;
+        					respMsg.num = message.num;
+        					client.emit('message',respMsg);
+        					logger.debug("RESP 'resp_get_all_notes_for_num' has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                                
+                                            } catch (err) {
+                                                logger.error('extFrom = ' + extFrom + ', message = ' + sys.inspect(message) + ', resultSet = ' + sys.inspect(resultSet) + ': ' + err.stack);
+                                            }
+                                        });
+                                    } catch (err) {
+                                       logger.error('message = ' + sys.inspect(message) + ', results = ' + sys.inspect(results) + ': ' + err.stack);
+                                    }
 				});
+                            } catch (err) {
+                                logger.error('message = ' + sys.inspect(message) + ': ' + err.stack);
+                            }
 			break;
 			case actions.GET_CALL_NOTES:
                             try {
