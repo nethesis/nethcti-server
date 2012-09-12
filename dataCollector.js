@@ -118,6 +118,60 @@ exports.DataCollector = function(){
         this.getNotificationModalityVoicemail = function (ext, cb) { _getNotificationModalityVoicemail(ext, cb); }
         this.getNotificationModalityNote = function (ext, cb) { _getNotificationModalityNote(ext, cb); }
         this.getCellphoneNotificationsModalityForAll = function (ext, cb) { _getCellphoneNotificationsModalityForAll(ext, cb); }
+        this.saveNotificationsSettings = function (ext, settings, cb) { _saveNotificationsSettings(ext, settings, cb); }
+        this.getNotificationsSettings = function (ext, cb) { _getNotificationsSettings(ext, cb); }
+        this.getPostitNotificationsSettingsForAllExt = function (cb) { _getPostitNotificationsSettingsForAllExt(cb); }
+}
+
+function _getPostitNotificationsSettingsForAllExt(cb) {
+    try {
+        var query = 'SELECT extension, notif_note_cellphone, notif_note_email FROM ' + EXTENSION_INFO;
+        _query(EXTENSION_INFO, query, function (result) {
+            cb(result);
+        });
+    } catch (err) {
+        logger.error('ext = ' + ext + ': ' + err.stack);
+    }
+}
+
+function _getNotificationsSettings(ext, cb) {
+    try {
+        // make query
+        var query = 'SELECT * FROM ' + EXTENSION_INFO + ' WHERE extension="' + ext + '"';
+        // do query
+        _query(EXTENSION_INFO, query, function (result) {
+            cb(result);
+        });
+    } catch (err) {
+        logger.error('ext = ' + ext + ': ' + err.stack);
+    }
+}
+
+function _saveNotificationsSettings(ext, settings, cb) {
+    try  {
+        // get values
+        var notificationsCellphone = settings.notif_cellphone.replace(/'/g, "\\\'").replace(/"/g, "\\\"");
+        var notificationsEmail = settings.notif_email.replace(/'/g, "\\\'").replace(/"/g, "\\\"");
+        var notificationCellphonePostit = settings.notif_note_cellphone;
+        var notificationEmailPostit = settings.notif_note_email;
+        var notificationCellphoneVoicemail = settings.notif_voicemail_cellphone;
+        var notificationEmailVoicemail = settings.notif_voicemail_email;
+        // make query
+        var query = 'INSERT INTO extension_info (extension, notif_cellphone, notif_email, ' +
+                    'notif_voicemail_cellphone, notif_voicemail_email, notif_note_cellphone, ' +
+                    'notif_note_email) values ("' + ext + '", "' + notificationsCellphone + '", "' + notificationsEmail + '", ' +
+                    '"' + notificationCellphoneVoicemail + '", ' +
+                    '"' + notificationEmailVoicemail + '", "' + notificationCellphonePostit + '", "' + notificationEmailPostit + '") ' +
+                    'ON DUPLICATE KEY UPDATE notif_cellphone="' + notificationsCellphone + '", notif_email="' + notificationsEmail + '", ' +
+                    'notif_voicemail_cellphone="' + notificationCellphoneVoicemail + '", notif_voicemail_email="' + notificationEmailVoicemail + '", ' +
+                    'notif_note_cellphone="' + notificationCellphonePostit + '", notif_note_email="' + notificationEmailPostit + '"';
+        // do query
+        _query(EXTENSION_INFO, query, function (result) {
+            cb(result);
+        });
+    } catch (err) {
+        logger.error('ext = ' + ext + ', settings = ' + sys.inspect(settings) + ': ' + err.stack);
+    }
 }
 
 function _getCellphoneNotificationsModalityForAll(ext, cb) {
