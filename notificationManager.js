@@ -91,13 +91,18 @@ function _notifyNewPostitToUser(ext, note, clientNotifSettings) {
                 var toAddr = entry.notif_email;
 
                 // check to send notification via SMS
-                if (modalityCellphone === _notifModality.always) {
-                    _sendCellphoneSmsNotificationNote(phoneNumber, ext, note);
-                } else if (modalityCellphone === _notifModality.onrequest &&
-                           clientNotifSettings.postitNotifCellphoneModality === _notifModality.onrequest &&
-                           clientNotifSettings.postitNotifCellphoneValue === true) { 
-                
-                    _sendCellphoneSmsNotificationNote(phoneNumber, ext, note);
+                if ( ( modalityCellphone === _notifModality.always ) ||
+                     (
+                        modalityCellphone === _notifModality.onrequest &&
+                        clientNotifSettings.postitNotifCellphoneModality === _notifModality.onrequest &&
+                        clientNotifSettings.postitNotifCellphoneValue === true
+                     ) ) {
+
+                    if (phoneNumber !== undefined && phoneNumber !== '') {
+                        _sendCellphoneSmsNotificationNote(phoneNumber, ext, note);
+                    } else {
+                        logger.debug('no cellphone number to notify new post-it for extension ' + ext + ': don\'t notify');
+                    }
 
                 } else if (modalityCellphone === _notifModality.never) {
                     logger.debug('postit notification modality cellphone for "' + ext + '" is "' + modalityCellphone + '": so don\'t notify');
@@ -106,15 +111,19 @@ function _notifyNewPostitToUser(ext, note, clientNotifSettings) {
                 }
 
                 // check to send notification via e-mail
-                if (modalityEmail === _notifModality.always) {
-                    _sendEmailNotificationNote(toAddr, ext, note);
+                if ( ( modalityEmail === _notifModality.always ) ||
+                     (
+                        modalityEmail === _notifModality.onrequest &&
+                        clientNotifSettings.postitNotifEmailModality === _notifModality.onrequest &&
+                        clientNotifSettings.postitNotifEmailValue === true
+                     ) ) {
 
-                } else if (modalityEmail === _notifModality.onrequest &&
-                           clientNotifSettings.postitNotifEmailModality === _notifModality.onrequest &&
-                           clientNotifSettings.postitNotifEmailValue === true) {
+                    if (toAddr !== undefined && toAddr !== '') {
+                        _sendEmailNotificationNote(toAddr, ext, note);
+                    } else {
+                        logger.debug('no e-mail to notify new post-it for extension ' + ext + ': don\'t notify');
+                    }
 
-                    _sendEmailNotificationNote(toAddr, ext, note);
-                
                 } else if (modalityEmail === _notifModality.never) {
                     logger.debug('postit notification modality e-mail for "' + ext + '" is "' + modalityEmail + '": so don\'t notify');
                 } else {
@@ -140,7 +149,11 @@ function _notifyNewVoicemailToUser(vm, ext) {
                 // check to send notification via SMS
                 if (modalityCellphone === _notifModality.always || modalityCellphone === _notifModality.onrequest) {
                     var phoneNumber = entry.notif_cellphone;
-                    _sendCellphoneSmsNotificationVoicemail(phoneNumber, vm, ext);
+                    if (phoneNumber !== undefined && phoneNumber !== '') {
+                        _sendCellphoneSmsNotificationVoicemail(phoneNumber, vm, ext);
+                    } else {
+                        logger.debug('no cellphone number to notify new voicemail for extension ' + ext + ': don\'t notify');
+                    }
                 } else if (modalityCellphone === _notifModality.never) {
                     logger.debug('voicemail notification modality cellphone for "' + ext + '" is "' + modalityCellphone + '": so don\'t notify');
                 } else {
@@ -150,7 +163,11 @@ function _notifyNewVoicemailToUser(vm, ext) {
                 // check to send notification via e-mail
                 if (modalityEmail === _notifModality.always || modalityEmail === _notifModality.onrequest) {
                     var toAddr = entry.notif_email;
-                    _sendEmailNotificationVoicemail(toAddr, vm, ext);
+                    if (toAddr !== undefined && toAddr !== '') {
+                        _sendEmailNotificationVoicemail(toAddr, vm, ext);
+                    } else {
+                        logger.debug('no e-mail to notify new voicemail for extension ' + ext + ': don\'t notify');
+                    }
                 } else if (modalityEmail === _notifModality.never) {
                     logger.debug('voicemail notification modality e-mail for "' + ext + '" is "' + modalityEmail + '": so don\'t notify');
                 } else {
