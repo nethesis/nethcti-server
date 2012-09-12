@@ -245,9 +245,30 @@ controller.addListener('change_vm_dir', function(dir){ // ex dir: '/var/spool/as
                 c.emit('message',response);
                 logger.debug("RESP 'new_voicemail' has been sent to client [" + key + "] id '" + c.id + "'");
             }
-            notificationManager.notifyNewVoicemailToUser(ext);
+            
+            // send notifications to all extensions that use voicemail ext
+            _notifyAllOfflineExtensionForNewVoicemail(ext);
         }
 });
+
+function _notifyAllOfflineExtensionForNewVoicemail(vm) {
+    try {
+            var extStatusForOp = modop.getExtStatusForOp();
+            var tempext, voicemailUsed;
+            for (var tyext in extStatusForOp) {
+                if (extStatusForOp[tyext].tab === 'interno') {
+                    tempext = extStatusForOp[tyext].Extension;
+                    voicemailUsed = extStatusForOp[tyext].voicemailUsed;
+
+                    if (voicemailUsed !== undefined && voicemailUsed === vm && clients[tempext] === undefined) {
+                        notificationManager.notifyNewVoicemailToUser(vm, tempext);
+                    }
+                }
+            }
+    } catch (err) {
+        logger.error(err.stack);
+    }
+}
 
 /*
 controller.addListener('change_vm_personal_dir', function(dir){
@@ -3556,6 +3577,8 @@ io.sockets.on('connection', function(client){
 						if(respMsg.existVoicemail){
 							var obj = voicemail.getCustomMessages(vm);
 							respMsg.customVmMsg = obj;
+                                                        //clients[extFrom].voicemailUsed = vm;
+                                                        modop.setVoicemailUsedByExt(respMsg.tyext, vm);
 						}
 					}
                                         var notifications = notificationManager.getNotificationsByExt(extFrom);

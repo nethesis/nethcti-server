@@ -137,6 +137,17 @@ exports.Modop = function(){
         this.renameTransfAttended = function (headers, newuid, state, hideState, newStateCaller, newUidCaller) { return renameTransfAttended(headers, newuid, state, hideState, newStateCaller, newUidCaller); }
         this.getAllExtPhoneName = function () { return _getAllExtPhoneName(); }
         this.getTypeExtFromExt = function (ext) { return _getTypeExtFromExt(ext); }
+        this.setVoicemailUsedByExt = function (tyext, vm) { _setVoicemailUsedByExt(tyext, vm); }
+}
+
+function _setVoicemailUsedByExt(tyext, vm) {
+    try {
+        if (extStatusForOp[tyext] !== undefined) {
+            extStatusForOp[tyext].voicemailUsed = vm;
+        }
+    } catch (err) {
+        logger.error('ext = ' + ext + ': ' + err.stack);
+    }
 }
 
 function _getTypeExtFromExt(ext) {

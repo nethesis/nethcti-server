@@ -30,7 +30,7 @@ exports.NotificationManager = function(){
     this.storeNotificationCellphoneAndEmail = function (ext, notificationsInfo, cb) { _storeNotificationCellphoneAndEmail(ext, notificationsInfo, cb); }
     this.updateCellphoneNotificationsModalityForAll = function (ext, value, cb) { _updateCellphoneNotificationsModalityForAll(ext, value, cb); }
     this.updateEmailNotificationsModalityForAll = function (ext, value, cb) { _updateEmailNotificationsModalityForAll(ext, value, cb); }
-    this.notifyNewVoicemailToUser = function (ext) { _notifyNewVoicemailToUser(ext); }
+    this.notifyNewVoicemailToUser = function (vm, ext) { _notifyNewVoicemailToUser(vm, ext); }
     this.notifyNewPostitToUser = function (ext, note, clientNotifSettings) { _notifyNewPostitToUser(ext, note, clientNotifSettings); }
     this.getCellphoneNotificationsModalityForAll = function (ext, cb) { _getCellphoneNotificationsModalityForAll(ext, cb); }
     this.saveNotificationsSettings = function (ext, settings, cb) { _saveNotificationsSettings(ext, settings, cb); }
@@ -127,7 +127,7 @@ function _notifyNewPostitToUser(ext, note, clientNotifSettings) {
     }
 }
 
-function _notifyNewVoicemailToUser(ext) {
+function _notifyNewVoicemailToUser(vm, ext) {
     try {
         _dataCollector.getNotificationModalityVoicemail(ext, function (result) {
             if (result.length === 0) {
@@ -140,7 +140,7 @@ function _notifyNewVoicemailToUser(ext) {
                 // check to send notification via SMS
                 if (modalityCellphone === _notifModality.always || modalityCellphone === _notifModality.onrequest) {
                     var phoneNumber = entry.notif_cellphone;
-                    _sendCellphoneSmsNotificationVoicemail(phoneNumber, ext);
+                    _sendCellphoneSmsNotificationVoicemail(phoneNumber, vm, ext);
                 } else if (modalityCellphone === _notifModality.never) {
                     logger.debug('voicemail notification modality cellphone for "' + ext + '" is "' + modalityCellphone + '": so don\'t notify');
                 } else {
@@ -150,7 +150,7 @@ function _notifyNewVoicemailToUser(ext) {
                 // check to send notification via e-mail
                 if (modalityEmail === _notifModality.always || modalityEmail === _notifModality.onrequest) {
                     var toAddr = entry.notif_email;
-                    _sendEmailNotificationVoicemail(toAddr, ext);
+                    _sendEmailNotificationVoicemail(toAddr, vm, ext);
                 } else if (modalityEmail === _notifModality.never) {
                     logger.debug('voicemail notification modality e-mail for "' + ext + '" is "' + modalityEmail + '": so don\'t notify');
                 } else {
@@ -188,9 +188,9 @@ function _sendCellphoneSmsNotificationNote(phoneNumber, ext, note) {
     }
 }
 
-function _sendCellphoneSmsNotificationVoicemail(phoneNumber, extVoicemail, cb) {
+function _sendCellphoneSmsNotificationVoicemail(phoneNumber, vm, ext) {
     try {
-        var body = 'NethCTI - You have received new message in voicemail "' + extVoicemail + '" - ' + new Date().toLocaleString();
+        var body = 'NethCTI - You [' + ext + '] have received new message in voicemail "' + vm + '" - ' + new Date().toLocaleString();
        _sms.sendSms(phoneNumber, body);
     } catch (err) {
         logger.error(err.stack);
@@ -216,21 +216,21 @@ function _sendEmailNotificationNote(toAddress, ext, note) {
     }                
 }
 
-function _sendEmailNotificationVoicemail(toAddress, extVoicemail, cb) {
+function _sendEmailNotificationVoicemail(toAddress, vm, ext) {
     try {
-        var subject = 'NethCTI - New message in voicemail "' + extVoicemail + '"';
-        var body = 'You have received new message in voicemail "' + extVoicemail + '"\n' +
+        var subject = 'NethCTI - New message in voicemail "' + vm + '"';
+        var body = 'You [' + ext + '] have received new message in voicemail "' + vm + '"\n' +
                    'Date: ' + new Date().toLocaleString();
 
         _mailModule.sendCtiMailFromLocal(toAddress, subject, body, function (error, response) {
             if (error) {
                 logger.error(error);
             } else {
-                logger.debug("e-mail notification for new voicemail has been sent succesfully to " + toAddress + " for voicemail " + extVoicemail);
+                logger.debug("e-mail notification for new voicemail has been sent succesfully to " + toAddress + " for voicemail " + vm);
             }
         }); 
     } catch (err) {
-        logger.error('toAddress = ' + toAddress + ', extVoicemail = ' + extVoicemail + ': ' + err.stack);
+        logger.error('toAddress = ' + toAddress + ', extVoicemail = ' + vm + ': ' + err.stack);
     }                
 }
 
