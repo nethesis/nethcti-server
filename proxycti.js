@@ -2882,6 +2882,7 @@ io.sockets.on('connection', function(client){
                         SAVE_NOTIFICATIONS_SETTINGS:    'saveNotificationsSettings',
                         UPDATE_CELLPHONE_NOTIF_MOD_FORALL:  'updateCellphoneNotificationsModalityForAll',
                         REQ_POSTIT_NOTIF_SETTINGS_FOR_ALL_EXT:  'requestPostitNotificationsSettingsForAllExt',
+                        REQ_POSTIT_NOTIF_SETTINGS_BY_EXT:  'requestPostitNotificationsSettingsByExt',
 			SEARCH_CONTACT_PHONEBOOK_STARTS_WITH:	'search_contact_phonebook_startsWith'
 		}
   		logger.debug("ACTION received: from id '" + client.id + "' message " + sys.inspect(message));	
@@ -3452,6 +3453,24 @@ io.sockets.on('connection', function(client){
                                 });
                             } catch (err) {
                                logger.error('extFrom = ' + extFrom + ', message = ' + sys.inspect(message) + ': ' + err.stack);
+                            }
+                        break;
+                        case actions.REQ_POSTIT_NOTIF_SETTINGS_BY_EXT:
+                            try {
+                                var byext = message.byext;
+                                notificationManager.getPostitNotificationsSettingsByExt(byext, function (result) {
+                                    try {
+                                        var respMsg = new ResponseMessage(client.id, 'ack_requestPostitNotificationsSettingsByExt', '');
+                                        respMsg.byext = byext;
+                                        respMsg.settings = result[0];
+                                        client.emit('message', respMsg);
+                                        logger.debug("RESP 'ack_requestPostitNotificationsSettingsByExt' has been sent to [" + extFrom + "] id '" + client.id + "'");
+                                    } catch (err) {
+                                        logger.error('extFrom = ' + extFrom + ', message = ' + sys.inspect(message) + ': ' + err.stack);
+                                    }
+                                });
+                            } catch (err) {
+                                logger.error('extFrom = ' + extFrom + ', message = ' + sys.inspect(message) + ': ' + err.stack);
                             }
                         break;
                         case actions.REQ_POSTIT_NOTIF_SETTINGS_FOR_ALL_EXT:
