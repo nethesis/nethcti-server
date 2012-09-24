@@ -2842,11 +2842,6 @@ io.sockets.on('connection', function(client){
 			CFUVM_OFF:	'cfuvm_off',
 			CFBVM_ON:	'cfbvm_on',
 			CFBVM_OFF:	'cfbvm_off',
-			CHECK_DND_STATUS:	'check_dnd_status',
-			CHECK_CW_STATUS:    	'check_cw_status',
-			CHECK_CF_STATUS:	'check_cf_status',
-			CHECK_CFU_STATUS:	'check_cfu_status',
-			CHECK_CFB_STATUS:	'check_cfb_status',
 			HANGUPCH:	'hangupch',
 			REDIRECT:   	'redirect',
 			SEND_SMS:	'send_sms',
@@ -2861,6 +2856,13 @@ io.sockets.on('connection', function(client){
 			SAVE_POSTIT:	'savePostit',
                         DELETE_POSTIT:  'deletePostit',
                         GET_POSTIT:     'getPostit',
+                        CFTOCELLPHONE_ON:       'cfToCellphone_on',
+                        CFTOCELLPHONE_OFF:       'cfToCellphone_off',
+			CHECK_DND_STATUS:	'check_dnd_status',
+			CHECK_CW_STATUS:    	'check_cw_status',
+			CHECK_CF_STATUS:	'check_cf_status',
+			CHECK_CFU_STATUS:	'check_cfu_status',
+			CHECK_CFB_STATUS:	'check_cfb_status',
                         SET_READ_POSTIT:        'setReadPostit',
 			START_RECORD_CHANNEL:	'start_record_channel',
 			STOP_RECORD_CHANNEL:	'stop_record_channel',
@@ -4587,7 +4589,50 @@ io.sockets.on('connection', function(client){
                                 } catch(err) {logger.warn("no connection to asterisk: " +err);}
 			break;
 
-
+                        case actions.CFTOCELLPHONE_ON:
+                            try {
+                                var num = message.num;
+                                if (num !== undefined) {
+                                    
+                                    var cmd = "database put CF " + extFrom + " " + num;
+                                    var actionCFon = {
+                                        Action: 'command',
+                                        Command: cmd
+                                    };
+                                    am.send(actionCFon, function () {
+                                        var response = new ResponseMessage(client.id, 'ack_cfToCellphone_on', '');
+                                        response.num = num;
+                                        client.emit('message', response);
+                                        logger.debug("'actionCFon' " + sys.inspect(actionCFon) + " has been sent to AST\nRESP 'ack_cfToCellphone_on' has been sent to [" + extFrom + "] id '" + client.id);
+                                        modop.updateExtCFStatusWithExt(extFrom, 'on', num);
+                                        var tyext = modop.getTypeExtFromExt(extFrom);
+                                        updateAllClientsForOpWithTypeExt(tyext);
+                                    });
+                                } else {
+                                    logger.warn('activate cf to cellphone failed: num is ' + num);
+                                }
+                            } catch (err) {
+                                logger.error(err.stack);
+                            }
+                        break;
+                        case actions.CFTOCELLPHONE_OFF:
+                            try {
+                                var cmd = "database del CF " + extFrom;
+                                var actionCFoff = {
+                                        Action: 'command',
+                                        Command: cmd
+                                };
+                                am.send(actionCFoff, function () {
+                                    client.emit('message', new ResponseMessage(client.id, 'ack_cfToCellphone_off', ''));
+                                    logger.debug("'actionCFoff' " + sys.inspect(actionCFoff) + " has been sent to AST\nRESP 'ack_cfToCellphone_off' has been sent to [" + extFrom + "] id '" + client.id);
+                                    modop.updateExtCFStatusWithExt(extFrom, 'off');
+                                    var tyext = modop.getTypeExtFromExt(extFrom);
+                                    updateAllClientsForOpWithTypeExt(tyext);
+                                });
+                            } catch (err) {
+                                logger.error(err.stack);
+                            }
+                        break;
 
 	  		case actions.CF_ON:
 	  			var extTo = message.extTo;
