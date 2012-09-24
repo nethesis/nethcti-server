@@ -138,6 +138,30 @@ exports.Modop = function(){
         this.getAllExtPhoneName = function () { return _getAllExtPhoneName(); }
         this.getTypeExtFromExt = function (ext) { return _getTypeExtFromExt(ext); }
         this.setVoicemailUsedByExt = function (tyext, vm) { _setVoicemailUsedByExt(tyext, vm); }
+        this.addNotifCellphoneToExtStatusForOp = function (notifSettingsCellphone) { _addNotifCellphoneToExtStatusForOp(notifSettingsCellphone); }
+}
+
+function _addNotifCellphoneToExtStatusForOp(notifSettingsCellphone) {
+    try {
+        var i;
+        var settings = {};
+        for (i = 0; i < notifSettingsCellphone.length; i++) {
+            settings[notifSettingsCellphone[i].extension] = notifSettingsCellphone[i];
+        }
+
+        var key, tempext;
+        for (key in extStatusForOp) {
+            if (extStatusForOp[key].tab === 'interno') {
+                tempext = extStatusForOp[key].Extension;
+
+                if (settings[tempext] !== undefined) {
+                    extStatusForOp[key].notifCellphone = settings[tempext].notif_cellphone;
+                }
+            }
+        }
+    } catch (err) {
+        logger.error(err.stack);
+    }
 }
 
 function _setVoicemailUsedByExt(tyext, vm) {
@@ -146,7 +170,7 @@ function _setVoicemailUsedByExt(tyext, vm) {
             extStatusForOp[tyext].voicemailUsed = vm;
         }
     } catch (err) {
-        logger.error('ext = ' + ext + ': ' + err.stack);
+        logger.error(err.stack);
     }
 }
 

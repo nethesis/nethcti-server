@@ -397,11 +397,30 @@ dataCollector.getChatAssociation(function(results){
 am = new ast.AsteriskManager({user: asterisk_user, password: asterisk_pass, host: asterisk_host});
 logger.debug('created asterisk manager');
 
+function _addNotifCellphoneToAllExtInfo() {
+    try {
+        notificationManager.getNotifCellphoneForAllExt(function (results) {
+            try {
+                modop.addNotifCellphoneToExtStatusForOp(results);
+            } catch (err) {
+               logger.error(err.stack);
+            }
+        });
+    } catch (err) {
+        logger.error(err.stack);
+    }
+}
+
 am.addListener("serverlogin", function(){
+    try {
 	logger.debug("EVENT 'ServerLogin': asterisk logged in successfully");
 	modop.addAsteriskManager(am); // Add asterisk manager to modop
 	modop.initExtStatusForOp();
 	counter_ast_recon=0;
+        _addNotifCellphoneToAllExtInfo();
+    } catch (err) {
+        logger.error(err.stack);
+    }
 });
 am.addListener("serverloginfailed", function(){
 	logger.error("EVENT 'ServerLoginFailed': asterisk login failed (check the config file)");
@@ -3504,6 +3523,16 @@ io.sockets.on('connection', function(client){
                                             respMsg.settings = message.settings;
                                             client.emit('message', respMsg);
                                             logger.debug("RESP 'ack_saveNotificationsSettings' has been sent to [" + extFrom + "] id '" + client.id + "'");
+
+                                            notificationManager.getNotifCellphoneForAllExt(function (results) {
+                                                try {
+                                                    modop.addNotifCellphoneToExtStatusForOp(results);
+                                                    var tyext = modop.getTypeExtFromExt(extFrom);
+                                                    updateAllClientsForOpWithTypeExt(tyext);
+                                                } catch (err) {
+                                                    logger.error(err.stack);
+                                                }
+                                            });
                                         } else {
                                             var respMsg = new ResponseMessage(client.id, 'error_saveNotificationsSettings', '');
                                             client.emit('message', respMsg);

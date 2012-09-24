@@ -37,6 +37,15 @@ exports.NotificationManager = function(){
     this.getNotificationsSettings = function (ext, cb) { _getNotificationsSettings(ext, cb); }
     this.getPostitNotificationsSettingsForAllExt = function (cb) { _getPostitNotificationsSettingsForAllExt(cb); }
     this.getPostitNotificationsSettingsByExt = function (byext, cb) { _getPostitNotificationsSettingsByExt(byext, cb); }
+    this.getNotifCellphoneForAllExt = function (cb) { _getNotifCellphoneForAllExt(cb); }
+}
+
+function _getNotifCellphoneForAllExt(cb) {
+    try {
+        _dataCollector.getNotifCellphoneForAllExt(cb);
+    } catch (err) {
+        logger.error(err.stack);
+    }
 }
 
 function _getPostitNotificationsSettingsByExt(byext, cb) {
