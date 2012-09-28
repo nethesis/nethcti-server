@@ -1489,8 +1489,8 @@ function _getContactsPhonebookStartsWith(name, cb) {
 	                }
 			return;
 		}
-                copyObjQuery.query = 'SELECT * FROM phonebook WHERE (name LIKE "%$NAME_TO_REPLACE%" OR company LIKE "%$NAME_TO_REPLACE%") ORDER BY name ASC, company ASC';
-                copyObjQuery.query = copyObjQuery.query.replace(/\%$NAME_TO_REPLACE/g, name); // substitue template field in query
+                copyObjQuery.query = 'SELECT * FROM phonebook WHERE (name LIKE "$NAME_TO_REPLACE%" OR company LIKE "$NAME_TO_REPLACE%") ORDER BY name ASC, company ASC';
+                copyObjQuery.query = copyObjQuery.query.replace(/\$NAME_TO_REPLACE/g, name); // substitue template field in query
 		executeSQLQuery(PHONEBOOK, copyObjQuery, function (results) {
 			try {
 				cb(results);
