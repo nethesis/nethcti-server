@@ -300,6 +300,7 @@ function _resetVoicemailList(type,extension){
 }
 // initialize voicemail present into 'dir' directory of extension 'extension'
 function _readVoicemailDir(dir,dirpath,extension){
+    try {
 	_resetVoicemailList(dir,extension); // reset voicemail list before update it
 	var files = fs.readdirSync(dirpath);
 	var filename = '';
@@ -328,4 +329,7 @@ function _readVoicemailDir(dir,dirpath,extension){
 			}
 		}
 	}
+    } catch (err) {
+        logger.error(err.stack);
+    }
 }
