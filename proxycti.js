@@ -203,6 +203,7 @@ controller.addListener('change_dir', function(dir){
 	}
 });
 controller.addListener('change_vm_dir', function(dir){ // ex dir: '/var/spool/asterisk/voicemail/default/272/INBOX'
+    try {
 	logger.debug("event 'change_vm_dir'");
         var ext = dir.split('/')[6]
         var actionMailboxCount = {
@@ -232,6 +233,7 @@ controller.addListener('change_vm_dir', function(dir){ // ex dir: '/var/spool/as
 	// send info of new voicemail to all clients
 	voicemail.updateVoicemailList(dir); // update voicemail list of the extension obtained from dir
 	var count = voicemail.getCountVoicemailNewx(ext);
+
         if (oldcount < count) {
             logger.debug("broadcast 'new_voicemail' info message for [" + ext + "] with " + count + " voicemail to all clients");
 	    var c = undefined;
@@ -249,6 +251,10 @@ controller.addListener('change_vm_dir', function(dir){ // ex dir: '/var/spool/as
             // send notifications to all extensions that use voicemail ext
             _notifyAllOfflineExtensionForNewVoicemail(ext);
         }
+
+    } catch (err) {
+        logger.error(err.stack);
+    }
 });
 
 function _notifyAllOfflineExtensionForNewVoicemail(vm) {
