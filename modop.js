@@ -946,7 +946,8 @@ function addListenerToAm(){
 			extStatusForOp[typeext].voicemailCount = newMsgCount;
                 });
 		// if the ext is an 'interno' then add to controller the directory of voicemail to controll
-		if(isExtInterno(ext)){
+		if(isExtInterno(ext) && extStatusForOp[typeext] !== undefined && extStatusForOp[typeext].Voicemail_Monitor === 'yes'){
+
 			var pathDir = VM_PATH_BASE + '/' + ext + '/INBOX'
 			pathreq.exists(pathDir, function(exists){
 				if(exists){
@@ -964,7 +965,7 @@ function addListenerToAm(){
 				}
 			});
 		}
-	});	
+	});
 
 	/* This event is triggered when 'PeerEntry' event is emitted for each user registered in asterisk.
 	 * So, the initialization of 'extStatusForOp' can be completed */
