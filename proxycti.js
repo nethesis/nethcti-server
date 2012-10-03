@@ -2520,7 +2520,12 @@ function returnOperatorPanelToClient(){
  * Section relative to HTTP server
  */
 server = http.createServer(function(req, res){
-    if (req.method === 'POST') {
+
+    var parsed_url = url.parse(req.url, true);
+    var path = parsed_url.pathname;
+    var params = parsed_url.query;
+
+    if (req.method === 'POST' && path !== '/uploadVmCustomMsg') {
 	logger.debug("HTTP POST request: path = " + url.parse(req.url).pathname);
         var body = "";
         req.setEncoding("utf8");
@@ -2533,9 +2538,6 @@ server = http.createServer(function(req, res){
             router.route(path, params, res);
         });
     } else {
-	var parsed_url = url.parse(req.url,true);
-	var path = parsed_url.pathname;
-	var params = parsed_url.query;
 	logger.debug("HTTP GET request: path = " + path + " params = " + sys.inspect(params));
 	switch (path){
 	    case '/uploadVmCustomMsg':
