@@ -2519,218 +2519,202 @@ function returnOperatorPanelToClient(){
 /*******************************************************************************
  * Section relative to HTTP server
  */
-server = http.createServer(function(req, res){
+
+var node_static = require('./lib/node-static/lib/node-static');
+var fileStatic = new (node_static.Server)('.', { cache: 3600, headers: {'X-Powered-by': 'node-static'} });
+var fileStaticRoot = new (node_static.Server)('/', { cache: 3600, headers: {'X-Powered-by': 'node-static'} });
+server = http.createServer(function (req, res) {
 
     var parsed_url = url.parse(req.url, true);
     var path = parsed_url.pathname;
     var params = parsed_url.query;
+    var extFrom = params.extFrom;
 
     if (req.method === 'POST' && path !== '/uploadVmCustomMsg') {
-	logger.debug("HTTP POST request: path = " + url.parse(req.url).pathname);
+
+        logger.debug("HTTP POST request: path = " + url.parse(req.url).pathname);
         var body = "";
         req.setEncoding("utf8");
+
         req.on("data", function (data) {
             body += data;
         });
+
         req.on("end", function () {
-            var path = url.parse(req.url).pathname;
             var params = querystring.parse(body);
+            var path = url.parse(req.url).pathname;
             router.route(path, params, res);
         });
+
     } else {
-	logger.debug("HTTP GET request: path = " + path + " params = " + sys.inspect(params));
-	switch (path){
-	    case '/uploadVmCustomMsg':
-	    	var extFrom = params.extFrom;
-		logger.debug('received http request of action /uploadVmCustomMsg from ' + extFrom);
-		var namefile = params.name;
-		var vm = params.vm;
-		voicemail.deleteCustomMessageInactive(namefile+'.wav',extFrom); // if present delete inactive voicemail custom message
-		var form = new formidable.IncomingForm();
-		form.on('fileBegin',function(name,file){
-			file.path = '/var/spool/asterisk/voicemail/default/'+vm+'/'+namefile+'.wav';
-		});
-		form.parse(req, function(err, fields, files) {
-			if(err){
-				logger.error('error in uploadVmCustomMsg err: ' + sys.inspect(err) + ' fields: ' + sys.inspect(fields));
-				send404(res);
-				var mess = new ResponseMessage(client.id, "error_custom_vm_msg_upload",'');
+        
+        logger.debug("HTTP GET request: path = " + path + " params = " + sys.inspect(params));
+
+            if (path === '/uploadVmCustomMsg') {
+                var extFrom = params.extFrom;
+                logger.debug('received http request of action /uploadVmCustomMsg from ' + extFrom);
+                var namefile = params.name;
+                var vm = params.vm;
+                voicemail.deleteCustomMessageInactive(namefile+'.wav',extFrom); // if present delete inactive voicemail custom message
+                var form = new formidable.IncomingForm();
+                form.on('fileBegin',function(name,file){
+                        file.path = '/var/spool/asterisk/voicemail/default/'+vm+'/'+namefile+'.wav';
+                });
+                form.parse(req, function(err, fields, files) {
+                        if(err){
+                                logger.error('error in uploadVmCustomMsg err: ' + sys.inspect(err) + ' fields: ' + sys.inspect(fields));
+                                send404(res);
+                                var mess = new ResponseMessage(client.id, "error_custom_vm_msg_upload",'');
                                 mess.name = namefile;
                                 client.emit('message',mess);
                                 logger.debug("RESP 'error_custom_vm_msg_upload' has been sent to [" + extFrom + "] IP: '" + ipAddrClient + "'");
-			} else {
-				res.writeHead(200, {'content-type': 'text/html'});
-				res.write('received upload:\n\n');
-				res.end();
-				var client = clients[extFrom];
-				if(client!==undefined){
-		                        var ipAddrClient = client.handshake.address.address;
-					logger.debug('file '+namefile+'.wav has been saved for extension ' + extFrom);
-					var mess = new ResponseMessage(client.id, "ack_custom_vm_msg_upload",'');
+                        } else {
+                                res.writeHead(200, {'content-type': 'text/html'});
+                                res.write('received upload:\n\n');
+                                res.end();
+                                var client = clients[extFrom];
+                                if(client!==undefined){
+                                        var ipAddrClient = client.handshake.address.address;
+                                        logger.debug('file '+namefile+'.wav has been saved for extension ' + extFrom);
+                                        var mess = new ResponseMessage(client.id, "ack_custom_vm_msg_upload",'');
                                         mess.name = namefile;
                                         client.emit('message',mess);
                                         logger.debug("RESP 'ack_custom_vm_msg_upload' has been sent to [" + extFrom + "] IP: '" + ipAddrClient + "'");
-				} else {
-					logger.error('error in uploadVmCustomMsg err: ' + sys.inspect(err) + ' fields: ' + sys.inspect(fields));
-		                        send404(res);
-				}
-			}
-		});
-	    break;
-	    case '/':
-    		path = "/index.html";
-	    	fs.readFile(__dirname + path, function(err, data){
-			if (err) return send404(res);
-		        res.writeHead(200, {'Content-Type': 'text/html'});
-			res.write(data, 'utf8');
-			res.end();
-    	  	});
-	    break;
-	    case '/getStreamingFrameImageFile':
-		var name = params.name;
-		var urlToGet = params.url;
-		var urlToGetParsed = url.parse(urlToGet);
-		var portToGet = '80';
-		if(urlToGetParsed.port!==undefined){
-			portToGet = urlToGetParsed.port;
-		}
-		var options = {
-			host: urlToGetParsed.hostname,
-			port: portToGet,
-			path: urlToGetParsed.pathname
-		}
-		http.get(options, function(response){
-			res.writeHead(200, {'Content-type': 'application/octect-stream', 'Content-disposition': 'attachment; filename='+name+'.jpg'});
-			response.on('data', function(data){
-				res.write(data, 'utf8');
-			}).on('end',function(){
-				res.end();
-			});
-		}).on('error',function(err){
-			logger.error('error on request screenshot of streaming frame: ' + urlToGet);
-			logger.error(err.message);
-		});
-	    break;
-	    case '/getCustomVoicemailMsg':
-		var name = params.name;
-		var active = params.active;
-		var extFrom = params.extFrom;
-		var vm = params.vm;
-		var filename = name + '.wav';
-		var filepath = voicemail.getFilepathCustomMessage(filename,vm);
-		if(active==='false'){ // if the voicemail custom message is inactive, the end of it's name is '.inactive'
-			filepath = filepath + '.inactive';
-		}
-		logger.debug(extFrom + " has request to listen custom voicemail message " + filepath);
-		pathreq.exists(filepath, function(exists){
-			if(exists){
-				var typefile = 'audio/x-wav';
-				fs.readFile(filepath, function(err, data){
-					if(err){
-                                                return send404(res);
-                                        }
-					res.writeHead(200, {'Content-Type': typefile, 'Content-disposition': 'attachment; filename='+filename});
-                                        res.write(data, 'utf8');
-                                        res.end();
-				});
-			} else {
-				logger.error("requested custom voicemail message '" + filepath + "' not found");
-				send404(res);
-			}
-		});
-	    break;
-	    case '/getVoicemailAudioFile':
-		var filename = params.filename;
-		var typevm = params.type;
-		var extFrom = params.extFrom;
-		var vm = params.vm;
-		var filepath = voicemail.getFilepath(filename,typevm,vm);
-	    	logger.debug(extFrom + " has request to listen voicemail " + filepath);
-		pathreq.exists(filepath, function(exists){
-			if(exists){
-				var fileExt = pathreq.extname(filepath);
-				var typefile = '';
-				if(params.down==='0'){
-					typefile = 'application/octect-stream'; // this is to force download of voicemail file
-				} else if(fileExt.toLowerCase()==='.wav'){
-					typefile = 'audio/x-wav';
-				} else if(fileExt==='.mp3'){
-					typefile = 'audio/mpeg';
-				} else if(fileExt==='.ogg'){
-					typefile = 'application/ogg';
-				}
-				fs.readFile(filepath, function(err, data){
-					if(err){
-						return send404(res);
-					}
-					res.writeHead(200, {'Content-Type': typefile, 'Content-disposition': 'attachment; filename='+(filename+fileExt)});
-					res.write(data, 'utf8');
-					res.end();
-				});
-			} else {
-				logger.error("requested voicemail audio file '" + filepath + "' not found");
-				send404(res);
-			}
-		});
-	    break;
-	    case '/getCallAudioFile':
-		var filename = params.file;
-		var extFrom = params.extFrom;
-		// check if the requested file exists
-                var tempPath = AST_CALL_AUDIO_DIR + "/" + filename;
-                pathreq.exists(tempPath, function(exists){
-                        if(exists){
-                                // check the extension of the file
+                                } else {
+                                        logger.error('error in uploadVmCustomMsg err: ' + sys.inspect(err) + ' fields: ' + sys.inspect(fields));
+                                        send404(res);
+                                }
+                        }
+                });
+        
+            } else if (path === '/getCustomVoicemailMsg') {
+                var name = params.name;
+                var active = params.active;
+                var vm = params.vm;
+                var filename = name + '.wav';
+                var filepath = voicemail.getFilepathCustomMessage(filename, vm);
+                if (active === 'false') { // if the voicemail custom message is inactive, the end of it's name is '.inactive'
+                    filepath = filepath + '.inactive';
+                }
+                logger.debug(extFrom + " has request to listen custom voicemail message " + filepath);
+
+                pathreq.exists(filepath, function (exists) {
+                    if (exists) {
+                        fileStaticRoot.serveFile(filepath, 200, {}, req, res);
+                    } else {
+                        logger.error("requested custom voicemail message '" + filepath + "' not found");
+                        send404(res);
+                    }
+                });
+
+            } else if (path === '/getStreamingFrameImageFile') {
+                var name = params.name;
+                var urlToGet = params.url;
+                var urlToGetParsed = url.parse(urlToGet);
+                var portToGet = '80';
+                if (urlToGetParsed.port !== undefined) {
+                    portToGet = urlToGetParsed.port;
+                }
+                var options = {
+                    host: urlToGetParsed.hostname,
+                    port: portToGet,
+                    path: urlToGetParsed.pathname
+                }
+                http.get(options, function(response){
+                    res.writeHead(200, {
+                        'Content-type': 'application/octect-stream',
+                        'Content-disposition': 'attachment; filename=' + name + '.jpg'
+                    });
+                    response.on('data', function(data){
+                        res.write(data, 'utf8');
+                    }).on('end',function(){
+                        res.end();
+                    });
+                }).on('error',function(err){
+                        logger.error('error on request screenshot of streaming frame: ' + urlToGet);
+                        logger.error(err.message);
+                }); 
+
+            } else if (path === '/getCallAudioFile') {
+                var filename = params.file;
+                // check if the requested file exists
+                var tempPath = AST_CALL_AUDIO_DIR + '/' + filename;
+                pathreq.exists(tempPath, function (exists) {
+                        if (exists) {
+                            if (params.down === '0') { // request download file
                                 var fileExt = pathreq.extname(tempPath);
-                                var type;
-				if(params.down==0) type='application/octect-stream'; // this is to force download of audio file
-                                else if(fileExt.toLowerCase()=='.wav') type = 'audio/x-wav';
-                                else if(fileExt=='.mp3') type = 'audio/mpeg';
-                                else if(fileExt=='.ogg') type = 'application/ogg';
-                                fs.readFile(tempPath, function(err, data){
-                                        if (err) return send404(res);
-                                        res.writeHead(200, {'Content-Type': type, 'Content-disposition': 'attachment; filename='+(filename)});
+                                var type = 'application/octect-stream'; // this is to force download of audio file
+                                fs.readFile(tempPath, function (err, data) {
+                                        if (err) {
+                                            return send404(res);
+                                        }
+                                        res.writeHead(200, {
+                                            'Content-Type': type,
+                                            'Content-disposition': 'attachment; filename=' + (filename)
+                                        });
                                         res.write(data, 'utf8');
                                         res.end();
                                 });
+                            } else {
+                                fileStaticRoot.serveFile(tempPath, 200, {}, req, res);
+                            }
+                        } else {
+                            logger.error("requested call audio file '" + filename + "' not found");
+                            send404(res);
                         }
-                        else{
-				logger.error("requested call audio file '" + filename + "' not found");
+                });
+
+            } else if (path === '/getVoicemailAudioFile') {
+                var filename = params.filename;
+                var typevm = params.type;
+                var vm = params.vm;
+                var filepath = voicemail.getFilepath(filename,typevm,vm);
+                logger.debug(extFrom + " has request to listen voicemail " + filepath);
+                pathreq.exists(filepath, function(exists){
+                        if(exists){
+                            if (params.down === '0') {
+                                var typefile = 'application/octect-stream';
+                                fs.readFile(filepath, function (err, data) {
+                                    if (err) {
+                                        return send404(res);
+                                    }
+                                    res.writeHead(200, {'Content-Type': typefile, 'Content-disposition': 'attachment; filename='+(filename+fileExt)});
+                                    res.write(data, 'utf8');
+                                    res.end();
+                                });
+                            } else {
+                                fileStaticRoot.serveFile(filepath, 200, {}, req, res);
+                            }
+                        } else {
+                                logger.error("requested voicemail audio file '" + filepath + "' not found");
                                 send404(res);
                         }
                 });
-	    break;
-	    case '/call':
-		logger.debug("received request of 'click2call' through HTTP request");
-		var ext = params.ext;
-		var to = params.to;
-		callout(ext, to, res);
-	    break;
-	    default: 
-    		// check if the requested file exists
-    		var tempPath = __dirname + path;
-    		pathreq.exists(tempPath, function(exists){
-    			if(exists){
-    				// check the extension of the file
-    				var fileExt = pathreq.extname(tempPath);
-    				var type;
-    				if(fileExt=='.js') type = 'text/javascript';
-    				else if(fileExt=='.html' || fileExt=='htm') type = 'text/html';
-    				else if(fileExt=='.css') type = 'text/css';
-    				fs.readFile(tempPath, function(err, data){
-				        if (err) return send404(res);
-				        res.writeHead(200, {'Content-Type': type});
-				        res.write(data, 'utf8');
-				        res.end();
-				    });
-    			} else {
-		    		send404(res);
-			}
-    		});
-  	}
-    }
-});	
 
+            } else if (path === '/call') {
+                logger.debug("received request of 'click2call' through HTTP request");
+                var ext = params.ext;
+                var to = params.to;
+                callout(ext, to, res);
+                
+            } else {
+
+                fileStatic.serve(req, res, function (err, result) {
+                    if (err && (err.status === 404)) {
+                        logger.error(err);
+                        console.log(err);
+                        res.writeHead(err.status, err.headers);
+                        res.end();
+                    }
+                });
+
+            }
+
+
+
+    }
+
+});
 
 send404 = function(res){
   res.writeHead(404);
