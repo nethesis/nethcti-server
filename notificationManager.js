@@ -1,3 +1,4 @@
+var ejs = require('./lib/ejs/ejs.js');
 var fs = require("fs")
 var path = require('path');
 var sys = require("sys")
@@ -9,6 +10,7 @@ var _dataCollector;
 var _unreadNotifications;
 var _defaultEmptyNotifications = { unreadPostit: [] };
 var _mailModule, _sms;
+var _notificationTemplates = {};
 var _notifModality = {
     never: 'never',
     always: 'always',
@@ -38,6 +40,15 @@ exports.NotificationManager = function(){
     this.getPostitNotificationsSettingsForAllExt = function (cb) { _getPostitNotificationsSettingsForAllExt(cb); }
     this.getPostitNotificationsSettingsByExt = function (byext, cb) { _getPostitNotificationsSettingsByExt(byext, cb); }
     this.getNotifCellphoneForAllExt = function (cb) { _getNotifCellphoneForAllExt(cb); }
+    this.setNotificationTemplates = function (notification_templates) { _setNotificationTemplates(notification_templates); }
+}
+
+function _setNotificationTemplates(notification_templates) {
+    try {
+        _notificationTemplates = notification_templates;
+    } catch (err) {
+        logger.error(err.stack);
+    }
 }
 
 function _getNotifCellphoneForAllExt(cb) {
@@ -208,14 +219,23 @@ function _initModule() {
 
 function _sendCellphoneSmsNotificationNote(phoneNumber, ext, note) {
     try {
-        var prologue = new Date().toLocaleString() + '. New POST-IT from "' + ext + '" - ';
-        var prologue = 'NethCTI - New POST-IT from "' + ext + '" - ' + new Date().toLocaleString() + ' - Message: ';
-        var rest = 256 - prologue.length - 4;
-        var body = '';
-        if (note.length > rest) {
-            body = prologue + note.substring(0, rest) + '...';
+        if (_notificationTemplates['notification_postit_sms.ejs'] !== undefined) {
+            var localsObj = {};
+            var obj = {
+                ext: ext,
+                date: new Date().toLocaleString(),
+                postit: escape(note)
+            };
+            localsObj.locals = obj;
+            body = ejs.render(_notificationTemplates['notification_postit_sms.ejs'], localsObj);
+            body = unescape(body);
         } else {
-            body = prologue + note;
+            body = 'NethCTI - New POST-IT from "' + ext + '" - ' + new Date().toLocaleString() + ' - Message: ' + note;
+        }
+        body = body.trim();
+
+        if (body.length > 160) {
+            body = body.substring(0, 156) + '...';
         }
         _sms.sendSms(phoneNumber, body);
     } catch (err) {
@@ -225,8 +245,20 @@ function _sendCellphoneSmsNotificationNote(phoneNumber, ext, note) {
 
 function _sendCellphoneSmsNotificationVoicemail(phoneNumber, vm, ext) {
     try {
-        var body = 'NethCTI - You [' + ext + '] have received new message in voicemail "' + vm + '" - ' + new Date().toLocaleString();
-       _sms.sendSms(phoneNumber, body);
+        var body = '';
+        if (_notificationTemplates['notification_voicemail_sms.ejs'] !== undefined) {
+            var localsObj = {};
+            var obj = {
+                ext: ext,
+                vm : vm,
+                date: new Date().toLocaleString()
+            };
+            localsObj.locals = obj;
+            body = ejs.render(_notificationTemplates['notification_voicemail_sms.ejs'], localsObj);
+        } else {
+            var body = 'NethCTI - You [' + ext + '] have received new message in voicemail "' + vm + '" - ' + new Date().toLocaleString();
+        }
+        _sms.sendSms(phoneNumber, body);
     } catch (err) {
         logger.error(err.stack);
     }
@@ -234,10 +266,37 @@ function _sendCellphoneSmsNotificationVoicemail(phoneNumber, vm, ext) {
 
 function _sendEmailNotificationNote(toAddress, ext, note) {
     try {
-        var subject = 'NethCTI - New POST-IT from "' + ext;
-        var body = 'New POST-IT from "' + ext + '".\n\n' +
-                   'Date: ' + new Date().toLocaleString() + '\n' +
-                   'Message:\n' + note;
+
+        var subject = '';
+        var body = '';
+        var content = '';
+
+        if (_notificationTemplates['notification_voicemail_mail.ejs'] !== undefined) {
+            var localsObj = {};
+            var obj = {
+                ext: ext,
+                postit: escape(note),
+                date: new Date().toLocaleString(),
+                subject: true,
+                body: false
+            };
+            localsObj.locals = obj;
+
+            // get subject
+            subject = ejs.render(_notificationTemplates['notification_postit_mail.ejs'], localsObj).trim();
+
+            // get body
+            localsObj.locals.subject = false;
+            localsObj.locals.body = true;
+            body = ejs.render(_notificationTemplates['notification_postit_mail.ejs'], localsObj).trim();
+            body = unescape(body);
+
+        } else {
+            var subject = 'NethCTI - New POST-IT from "' + ext;
+            var body    = 'New POST-IT from "' + ext + '".\n\n' +
+                          'Date: ' + new Date().toLocaleString() + '\n' +
+                          'Message:\n' + note;
+        }
 
         _mailModule.sendCtiMailFromLocal(toAddress, subject, body, function (error, response) {
             if (error) {
@@ -245,7 +304,8 @@ function _sendEmailNotificationNote(toAddress, ext, note) {
             } else {
                 logger.debug("e-mail notification for new POST-IT from " + ext + " has been sent succesfully to " + toAddress);
             }
-        }); 
+        });
+
     } catch (err) {
         logger.error('toAddress = ' + toAddress + ', ext = ' + ext + ': ' + err.stack);
     }                
@@ -253,9 +313,35 @@ function _sendEmailNotificationNote(toAddress, ext, note) {
 
 function _sendEmailNotificationVoicemail(toAddress, vm, ext) {
     try {
-        var subject = 'NethCTI - New message in voicemail "' + vm + '"';
-        var body = 'You [' + ext + '] have received new message in voicemail "' + vm + '"\n' +
-                   'Date: ' + new Date().toLocaleString();
+
+        var subject = '';
+        var body = '';
+        var content = '';
+
+        if (_notificationTemplates['notification_voicemail_mail.ejs'] !== undefined) {
+            var localsObj = {};
+            var obj = {
+                ext: ext,
+                vm : vm,
+                date: new Date().toLocaleString(),
+                subject: true,
+                body: false
+            };
+            localsObj.locals = obj;
+
+            // get subject
+            subject = ejs.render(_notificationTemplates['notification_voicemail_mail.ejs'], localsObj).trim();
+
+            // get body
+            localsObj.locals.subject = false;
+            localsObj.locals.body = true;
+            body = ejs.render(_notificationTemplates['notification_voicemail_mail.ejs'], localsObj).trim();
+
+        } else {
+            var subject = 'NethCTI - New message in voicemail "' + vm + '"';
+            var body = 'You [' + ext + '] have received new message in voicemail "' + vm + '"\n' +
+                       'Date: ' + new Date().toLocaleString();
+        }
 
         _mailModule.sendCtiMailFromLocal(toAddress, subject, body, function (error, response) {
             if (error) {

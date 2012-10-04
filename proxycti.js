@@ -39,6 +39,7 @@ const N_AST_RECON = 3; // number of reconnection attempts to asterisk when fail 
 const DELAY_AST_RECON = 8000; // delay between two reconnection attempts to asterisk
 const TIMEOUT_GET_VCARD_CC = 4000; // when GET_VCARD_CC request is not returned
 var cc_templates = {}; // key is filename of the template and value is its content
+var notification_templates = {};
 var template_cc_dir = { // directories of all templates (customer card, vcard, ...)
 	PROXY: './template',
 	ESMITH: '/home/e-smith/proxycti/template'
@@ -86,7 +87,12 @@ function readAllTemplate(){
 		fpath = files[filename];
 		// read file content
 		content = fs.readFileSync(fpath,'UTF-8');
-		cc_templates[filename] = content;
+                if (filename.substring(0, 13) === 'decorator_cc_') {                
+        	    cc_templates[filename] = content;
+                
+                } else if (filename.substring(0, 13) === 'notification_') {
+                    notification_templates[filename] = content;
+                }
 	}
 }
 readAllTemplate();
@@ -192,6 +198,7 @@ var notificationManager = new notificationManagerReq.NotificationManager();
 notificationManager.setLogger(logfile,loglevel);
 notificationManager.setDataCollector(dataCollector);
 notificationManager.setSmsModule(smsModule);
+notificationManager.setNotificationTemplates(notification_templates);
 
 logger.debug('added object modules: \'Profiler\', \'DataCollector\', \'Authenticator\', \'Modop\' and \'Controller\'')
 controller.addDir(AST_CALL_AUDIO_DIR);
@@ -2702,7 +2709,6 @@ server = http.createServer(function (req, res) {
                 fileStatic.serve(req, res, function (err, result) {
                     if (err && (err.status === 404)) {
                         logger.error(err);
-                        console.log(err);
                         res.writeHead(err.status, err.headers);
                         res.end();
                     }
