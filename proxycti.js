@@ -454,6 +454,85 @@ am.addListener('servererror', function(err) {
 	recon_ast();
 });
 
+
+/* EVENT 'Cdr': { event: 'Cdr',
+  privilege: 'cdr,all',
+  accountcode: '',
+  source: '273',
+  destination: '20',
+  destinationcontext: 'from-internal',
+  callerid: '"273" <273>',
+  channel: 'SIP/273-00000008',
+  destinationchannel: 'SIP/20-00000009',
+  lastapplication: 'Dial',
+  lastdata: 'SIP/20,"",twW',
+  starttime: '2012-04-12 11:33:04',
+  answertime: '2012-04-12 11:33:07',
+  endtime: '2012-04-12 11:33:08',
+  duration: '4',
+  billableseconds: '1',
+  disposition: 'ANSWERED',
+  amaflags: 'DOCUMENTATION',
+  uniqueid: '1334223184.8',
+  userfield: '' } */
+if (server_conf.CDR_EVENT !== undefined &&
+    server_conf.CDR_EVENT.script !== undefined &&
+    server_conf.CDR_EVENT.script !== '' &&
+    server_conf.CDR_EVENT.timeout !== undefined &&
+    server_conf.CDR_EVENT.timeout !== '') {
+
+    try {
+
+        var timeout = server_conf.CDR_EVENT.timeout;
+        var script = server_conf.CDR_EVENT.script;
+        // check
+        if (isNaN(timeout) === true) {
+            logger.warn('wrong "timeout" key in [CDR_EVENT] of proxycti.ini');
+            return;
+        } else {
+            timeout = parseInt(timeout) * 1000;
+        }
+
+        if (pathreq.existsSync(script) === false) {
+            logger.warn(script + ' specified in [CDR_EVENT] of proxycti.ini doesn\'t exist');
+            return;
+        }
+
+        // add listener
+        am.addListener('cdr', function (headers) {
+            try {
+                logger.debug("EVENT 'Cdr'");
+
+                var SEP = ' ';
+                var cmd = script + SEP ;
+                var tempval = '';
+                for (var key in headers) {
+                    tempval = headers[key];
+                    tempval = tempval.replace(/\'/g,'\'\\\'\''); // for bash escape of single quote (')
+                    tempval = "'" + tempval + "'";
+                    cmd += tempval + SEP;
+                }
+                cmd = cmd.trim();
+
+                logger.debug("executing script " + script + ' with timeout ' + timeout + '...');
+                execreq(cmd, {timeout: timeout}, function (error, stdout, stderr) {
+                    if (error !== null) {
+                        logger.error('...executing script "' + script + '": ' + error);
+                    } else {
+                        logger.debug('...executing script "' + script + '" done succesfully');
+                    }
+                });
+
+            } catch (err) {
+                logger.error(err.stack);
+            }
+        });
+        logger.debug('added listener for "Cdr" events');
+    } catch (err) {
+        logger.error(err.stack);
+    }
+}
+
 /* EVENT 'NewChannel': headers = { event: 'Newchannel',
   privilege: 'call,all',
   channel: 'SIP/270-000001bb',

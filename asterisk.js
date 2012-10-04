@@ -330,6 +330,7 @@ exports.AsteriskManager = function (newconfig) {
 	        break;
 
 	        case "Cdr": // call data record. contains a ton of useful info about the call (whether it was successful or not) that recently ended
+                    self.emit('cdr', headers);
 	        break;
 
 	        case "Newstate": //look for a peer status change
