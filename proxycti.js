@@ -27,7 +27,6 @@ var formidable = require('./lib/node-formidable');
 var util = require('util');
 const PROXY_CONFIG_FILENAME = "config/proxycti.ini";
 const SMS_CONFIG_FILENAME = "config/sms.ini";
-const FILE_LOGIN_LOG = '/var/log/asterisk/login.log';
 const AST_CALL_AUDIO_DIR = "/var/spool/asterisk/monitor";
 const CALL_PREFIX = "CTI->";
 const SPY_PREFIX = "SPY-";
@@ -153,7 +152,7 @@ var logger = log4js.getLogger('[ProxyCTI]');
 logger.setLevel(loglevel);
 
 // initialize login log file
-log4js.addAppender(log4js.fileAppender(FILE_LOGIN_LOG),'login');
+log4js.addAppender(log4js.fileAppender(server_conf.SERVER_PROXY.loginlog_file), 'login');
 var login_logger = log4js.getLogger('login');
 login_logger.setLevel('DEBUG');
 
