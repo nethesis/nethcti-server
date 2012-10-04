@@ -483,51 +483,55 @@ if (server_conf.CDR_EVENT !== undefined &&
 
     try {
 
+        var addListener = true;
         var timeout = server_conf.CDR_EVENT.timeout;
         var script = server_conf.CDR_EVENT.script;
+
         // check
         if (isNaN(timeout) === true) {
             logger.warn('wrong "timeout" key in [CDR_EVENT] of proxycti.ini');
-            return;
+            addListener = false;
         } else {
             timeout = parseInt(timeout) * 1000;
         }
 
         if (pathreq.existsSync(script) === false) {
             logger.warn(script + ' specified in [CDR_EVENT] of proxycti.ini doesn\'t exist');
-            return;
+            addListener = false;
         }
 
-        // add listener
-        am.addListener('cdr', function (headers) {
-            try {
-                logger.debug("EVENT 'Cdr'");
-
-                var SEP = ' ';
-                var cmd = script + SEP ;
-                var tempval = '';
-                for (var key in headers) {
-                    tempval = headers[key];
-                    tempval = tempval.replace(/\'/g,'\'\\\'\''); // for bash escape of single quote (')
-                    tempval = "'" + tempval + "'";
-                    cmd += tempval + SEP;
-                }
-                cmd = cmd.trim();
-
-                logger.debug("executing script " + script + ' with timeout ' + timeout + '...');
-                execreq(cmd, {timeout: timeout}, function (error, stdout, stderr) {
-                    if (error !== null) {
-                        logger.error('...executing script "' + script + '": ' + error);
-                    } else {
-                        logger.debug('...executing script "' + script + '" done succesfully');
+        if (addListener === true) {
+            // add listener
+            am.addListener('cdr', function (headers) {
+                try {
+                    logger.debug("EVENT 'Cdr'");
+    
+                    var SEP = ' ';
+                    var cmd = script + SEP ;
+                    var tempval = '';
+                    for (var key in headers) {
+                        tempval = headers[key];
+                        tempval = tempval.replace(/\'/g,'\'\\\'\''); // for bash escape of single quote (')
+                        tempval = "'" + tempval + "'";
+                        cmd += tempval + SEP;
                     }
-                });
-
-            } catch (err) {
-                logger.error(err.stack);
-            }
-        });
-        logger.debug('added listener for "Cdr" events');
+                    cmd = cmd.trim();
+    
+                    logger.debug("executing script " + script + ' with timeout ' + timeout + '...');
+                    execreq(cmd, {timeout: timeout}, function (error, stdout, stderr) {
+                        if (error !== null) {
+                            logger.error('...executing script "' + script + '": ' + error);
+                        } else {
+                            logger.debug('...executing script "' + script + '" done succesfully');
+                        }
+                    });
+    
+                } catch (err) {
+                    logger.error(err.stack);
+                }
+            });
+            logger.debug('added listener for "Cdr" events');
+        }
     } catch (err) {
         logger.error(err.stack);
     }
