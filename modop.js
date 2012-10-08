@@ -139,6 +139,18 @@ exports.Modop = function(){
         this.getTypeExtFromExt = function (ext) { return _getTypeExtFromExt(ext); }
         this.setVoicemailUsedByExt = function (tyext, vm) { _setVoicemailUsedByExt(tyext, vm); }
         this.addNotifCellphoneToExtStatusForOp = function (notifSettingsCellphone) { _addNotifCellphoneToExtStatusForOp(notifSettingsCellphone); }
+        this.updateExtIPAddressForOpWithTypeExt = function (tyext, ip) { _updateExtIPAddressForOpWithTypeExt(tyext, ip); }
+}
+
+function _updateExtIPAddressForOpWithTypeExt(tyext, ip) {
+    try {
+        if (ip === '') {
+            ip = '-none-';
+        }
+        extStatusForOp[tyext].ip = ip;
+    } catch (err) {
+        logger.error(err.stack);
+    }
 }
 
 function _addNotifCellphoneToExtStatusForOp(notifSettingsCellphone) {
@@ -884,14 +896,14 @@ function addListenerToAm(){
 		 * there aren't any key with 'IAX2/something/something', because 'extStatusForOp' is initially created considering 
 		 * 'nethcti.ini' file generated from perl script and in this file there are more IAX2 entries as 'IAX2/something' and not
 		 * 'IAX2/something/something'. So this line of code consider only the first part: 'IAX2/something' */
-		if(headers.channeltype=='IAX2'){
+		if (headers.channeltype === 'IAX2') {
 			ext = headers.objectname.split("/")[0];
 		}
 	        var typeext = headers.channeltype + "/" + ext;
 		// set status	
 		updateExtStatusForOpWithTypeExt(typeext, status);
-		if(extStatusForOp[typeext]==undefined){
-			logger.warn("extStatusForOp[" + typeext + "] is undefined: " + extStatusForOp[typeext])
+		if (extStatusForOp[typeext] === undefined) {
+			logger.warn("extStatusForOp[" + typeext + "] is undefined: " + extStatusForOp[typeext]);
 		} else {
 			extStatusForOp[typeext].chType = headers.channeltype;
 			extStatusForOp[typeext].ip = headers.ipaddress;

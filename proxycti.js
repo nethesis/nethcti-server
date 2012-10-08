@@ -2159,18 +2159,48 @@ am.addListener('callreport', function(report) {
   peer: 'SIP/504',
   peerstatus: 'Registered' } */
 am.addListener('peerstatus', function(headers) {
+    try {
+	logger.debug("EVENT 'PeerStatus': " + sys.inspect(headers));
 	var statusEvent = headers.peerstatus.toLowerCase();
 	var currStatus = modop.getExtStatusWithTypeExt(headers.peer).status;
+        var tyext = headers.peer;
+
+        if (tyext.indexOf('/') !== -1) {
+            var ext = tyext.split('/')[1];
+    
+            // update ip address
+            if (statusEvent === 'registered' || currStatus !== 'unregistered') {
+
+                var action = {
+                    Action: 'SIPShowPeer',
+                    Peer: ext
+                };
+
+                am.send(action, function (resp) {
+                    try {
+                        logger.debug("'actionSIPShowPeer' " + sys.inspect(action) + " has been sent to AST");
+                        var ip = resp.addressip;
+                        modop.updateExtIPAddressForOpWithTypeExt(tyext, ip);
+                        updateAllClientsForOpWithTypeExt(tyext);
+                    } catch (err) {
+                        logger.error(err.stack);
+                    }
+                });
+            }
+        }
+
 	/* if the status of the event is 'registered' and current status of peer is different 
 	 * from 'unregistered', then the event is ignored. In this way, when the calling is in progress, the arrive of
 	 * this event with status 'registered' don't change the status of the extension. */
-	if(statusEvent=='registered' && currStatus!='unregistered'){
+        if (statusEvent === 'registered' && currStatus !== 'unregistered') {
 		//logger.debug("EVENT 'PeerStatus' ignored. Status of [" + headers.peer + "] is already different from 'unregistered'");
 		return;
 	}
-	logger.debug("EVENT 'PeerStatus': " + sys.inspect(headers));
 	modop.updateExtStatusForOpWithTypeExt(headers.peer, headers.peerstatus.toLowerCase());
 	updateAllClientsForOpWithTypeExt(headers.peer);
+    } catch (err) {
+        logger.error(err.stack);
+    }
 });
 
 /* This event is generated, by the phone of the user and when the 
