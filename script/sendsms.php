@@ -21,6 +21,7 @@ if ($smsdata['type'] != 'portech'){
 $xhost = $smsdata['url'];
 $xusername = $smsdata['user'];
 $xpassword = $smsdata['password'];
+$simnumber = $smsdata['simnumber'];
 $lock = SMS_DIR."/"."lock";
 
 if (file_exists($lock)){
@@ -50,7 +51,7 @@ if ($handle = opendir(SMS_DIR))
 	$sender = $tmp[0];
 	// the prefix is managed by proxycti server. It is present in the file name (ex. 271-00393331234567)
 	$destination = $tmp[1];
-	$res = send_sms($destination,$xbody,$xhost,$xusername,$xpassword,$lock);
+	$res = send_sms($destination,$xbody,$xhost,$xusername,$xpassword,$lock,$simnumber);
 	if($res!=''){
 		unlink(SMS_DIR.'/'.$file);
 		$xbody = mysql_real_escape_string($xbody);
@@ -72,7 +73,7 @@ mysql_close();
 unlink($lock);
 exit(0);
 
-function send_sms($tomobile,$xbody,$xhost,$xusername,$xpassword,$lock)
+function send_sms($tomobile,$xbody,$xhost,$xusername,$xpassword,$lock,$simnumber)
 {
         $myoutput = "";
         $fp = fsockopen("$xhost", 23, $errno, $errstr, 30);
@@ -91,11 +92,17 @@ function send_sms($tomobile,$xbody,$xhost,$xusername,$xpassword,$lock)
         fputs($fp, $cmd, strlen($cmd));
         sleep(1);
 
+
         $cmd = "module\r"; //inserire il numero sim
         fputs($fp, $cmd, strlen($cmd));
         sleep(2);
 
-        $cmd = "ate1\r";
+	//$simnumber è il numero di sim definito nella configurazione
+	//se $simnumber = 1 => invio con la sim #1, se $simnumber=2 prendo una sim random, da 1 a 2 
+	if ($simnumber > 1) $simtouse = 1;
+	else $simtouse = rand (1,$simnumber);
+	//ate1 = SIM1, ate2 = SIM2  ...
+	$cmd = "ate".$simtouse."\r";
         fputs($fp, $cmd, strlen($cmd));
         sleep(1);
 
