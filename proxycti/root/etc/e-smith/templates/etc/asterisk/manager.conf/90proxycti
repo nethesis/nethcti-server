@@ -8,6 +8,6 @@ permit=127.0.0.1/255.255.255.0
     my ($network, $broadcast) =  esmith::util::computeNetworkAndBroadcast ($LocalIP, $LocalNetmask);
     $OUT.="permit=$network/$LocalNetmask"
 }
-read = system,call,log,verbose,command,agent,user,originate
-write = system,call,log,verbose,command,agent,user,originate
+read = system,call,log,verbose,command,agent,user,originate,cdr
+write = system,call,log,verbose,command,agent,user,originate,cdr
 
