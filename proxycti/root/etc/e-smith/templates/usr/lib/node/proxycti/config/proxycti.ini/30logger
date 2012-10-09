@@ -1,2 +1,3 @@
 logfile=/var/log/asterisk/proxycti.log
+loginlog_file=/var/log/asterisk/login.log
 loglevel=WARN
