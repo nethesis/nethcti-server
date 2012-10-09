@@ -1,5 +1,5 @@
 Name:		proxycti
-Version:	1.1.12
+Version:	1.1.99
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI	
 
@@ -27,7 +27,6 @@ Nodejs Asterisk proxy used for NethCTI
 perl -w createlinks
 mkdir -p root/var/lib/asterisk/bin
 mkdir -p root/var/spool/asterisk/monitor
-mkdir -p root/home/e-smith/proxycti/template/
 mkdir -p root/usr/lib/node/proxycti/sms
 mkdir -p root/usr/lib/node/proxycti/store
 
@@ -54,6 +53,10 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,asterisk,asterisk,-)
 %config(noreplace) /usr/lib/node/proxycti/config/*
 %config(noreplace) /usr/lib/node/proxycti/images/logo.png
+%config(noreplace) /home/e-smith/proxycti/template/notification_postit_sms.ejs
+%config(noreplace) /home/e-smith/proxycti/template/notification_postit_mail.ejs
+%config(noreplace) /home/e-smith/proxycti/template/notification_voicemail_sms.ejs
+%config(noreplace) /home/e-smith/proxycti/template/notification_voicemail_mail.ejs
 
 %doc
 
@@ -74,6 +77,39 @@ ln -s /usr/lib/node/proxycti/sql/update.sh /etc/e-smith/sql/init/20cti_update
 
 
 %changelog
+* Tue Oct 09 2012  Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.1.99-1nh
+- Bug #1199: fix support for custom extensions.
+- Bug #1223: fix call recording when attended transfer call.
+- Bug #1230: fix the visualization of connected calls in the queues of the operator panel.
+- Bug #1236: fix phone status in chat users.
+- Bug #1258: fix listen voicemail.
+- Bug #1267: fix visualization of date dialog into the history search page.
+- Bug #1270: bring management call box into the front.
+- Bug #1300: remove redirect input text: use the extensions list into a dialog box.
+- Bug #1332: move history search methods into page itself.
+- Bug #1367: removed automatic closing of chat notification popup.
+- Bug #1390: in the operator panel, view number extension and name correctly in the same row.
+- Feature #632 (linked to feature #631): add source indication into search contact results.
+- Feature #685: removed timeout popup option: now call popup close when hangup the call.
+- Feature #741: alphabetical ordering of extensions into the operator panel.
+- Feature #776: added more caller information into the call notification popup.
+- Feature #1036: new option to view certain number of queue members into the operator panel.
+- Feature #1106: add new open button into the streaming notification popup.
+- Feature #1235: redesign of search contacts feature and add scroll bar.
+- Feature #1237: new local NethCTI phonebook and speed dial contacts.
+- Feature #1290: added IAX login support.
+- Feature #1293: redesign of chat service.
+- Feature #1305/#1318: added new chat & voicemail icon notification in the header of the page.
+- Feature #1338: added new service "Assigns note to..." (also know as POST-IT).
+- Feature #1350: choose speed dial and write custom number into dialog of unconditional call forwarding after click redirect in call box.
+- Feature #1353: added new service switchboard report with new extension profile in the server.
+- Feature #1385: added new notification bar for POST-IT, chat and voicemail messages.
+- Feature #1389: added new service last ten calls.
+- Feature #1404: choose portech sim to send sms
+- Feature #1442: added new button for call forward to cellphone.
+- Feature #1424: new actions to create POST-IT and send SMS from the operator panel extensions.
+- Feature #1440: new actions to create POST-IT and send SMS in the speed dial extensions.
+
 * Fri Jul 20 2012  Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.1.12-1nh
 - Try to fix issues for #1223, again
 
