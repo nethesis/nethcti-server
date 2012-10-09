@@ -37,3 +37,30 @@ CREATE TABLE IF NOT EXISTS `chat_association` (
   PRIMARY KEY  (`extension`),
   UNIQUE KEY `ext_jid` (`extension`,`bare_jid`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `postit` (
+  `id` int(11) NOT NULL auto_increment,
+  `date` timestamp NOT NULL default CURRENT_TIMESTAMP,
+  `text` varchar(255) default NULL,
+  `owner` varchar(50) default NULL,
+  `assigned` varchar(50) default NULL,
+  `status` tinyint(1) default '0',
+  PRIMARY KEY  (`id`),
+  KEY `index_owner` (`owner`),
+  KEY `index_assigned` (`assigned`),
+  KEY `index_status` (`status`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `extension_info` (
+  `extension` varchar(50) NOT NULL,
+  `notif_cellphone` varchar(50) default '',
+  `notif_email` varchar(50) default '',
+  `notif_voicemail_cellphone` varchar(20) default '',
+  `notif_voicemail_email` varchar(20) default '',
+  `notif_note_cellphone` varchar(20) default '',
+  `notif_note_email` varchar(20) default '',
+  PRIMARY KEY  (`extension`),
+  UNIQUE KEY `extension` (`extension`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+
