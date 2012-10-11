@@ -64,7 +64,16 @@ function readAllTemplate(){
 	var est = '';
 	var filepath = '';
 	var dirpath = '';
-	for(var key in template_cc_dir){
+        for (var i = 0; i < 2; i++) {
+                var key = '';
+                // first read PROXY dir and then ESMITH. So templates in ESMITH dir overwrite templates
+                // in PROXY dir with the same filename
+                if (i === 0) {
+                    key = 'PROXY';
+                } else {
+                    key = 'ESMITH';
+                }
+
 		dirpath = template_cc_dir[key];
 		temp = fs.readdirSync(dirpath);
 		for(var x=0; x<temp.length; x++){
@@ -75,6 +84,7 @@ function readAllTemplate(){
 			}
 		}
 	}
+
 	// order 
 	var filesArr = Object.keys(files);
 	filesArr.sort();
@@ -88,7 +98,6 @@ function readAllTemplate(){
 		content = fs.readFileSync(fpath,'UTF-8');
                 if (filename.substring(0, 13) === 'decorator_cc_') {                
         	    cc_templates[filename] = content;
-                
                 } else if (filename.substring(0, 13) === 'notification_') {
                     notification_templates[filename] = content;
                 }
