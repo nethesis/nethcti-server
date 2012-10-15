@@ -1,5 +1,5 @@
 Name:		proxycti
-Version:	1.1.99
+Version:	1.1.991
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI	
 
@@ -27,6 +27,7 @@ Nodejs Asterisk proxy used for NethCTI
 perl -w createlinks
 mkdir -p root/var/lib/asterisk/bin
 mkdir -p root/var/spool/asterisk/monitor
+mkdir -p root/home/e-smith/proxycti/template/
 mkdir -p root/usr/lib/node/proxycti/sms
 mkdir -p root/usr/lib/node/proxycti/store
 
@@ -53,10 +54,6 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,asterisk,asterisk,-)
 %config(noreplace) /usr/lib/node/proxycti/config/*
 %config(noreplace) /usr/lib/node/proxycti/images/logo.png
-%config(noreplace) /home/e-smith/proxycti/template/notification_postit_sms.ejs
-%config(noreplace) /home/e-smith/proxycti/template/notification_postit_mail.ejs
-%config(noreplace) /home/e-smith/proxycti/template/notification_voicemail_sms.ejs
-%config(noreplace) /home/e-smith/proxycti/template/notification_voicemail_mail.ejs
 
 %doc
 
@@ -77,6 +74,9 @@ ln -s /usr/lib/node/proxycti/sql/update.sh /etc/e-smith/sql/init/20cti_update
 
 
 %changelog
+* Tue Oct 15 2012  Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.1.991-1nh
+- Move default notification templates to /usr/lib/node/proxycti/template
+
 * Tue Oct 09 2012  Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.1.99-1nh
 - Bug #1199: fix support for custom extensions.
 - Bug #1223: fix call recording when attended transfer call.
