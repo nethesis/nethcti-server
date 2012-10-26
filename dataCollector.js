@@ -481,7 +481,7 @@ function saveCallNote(message, cb) {
 	note = note.replace(/'/g, "\\\'").replace(/"/g, "\\\"");
 	num = num.replace(/'/g, "\\\'").replace(/"/g, "\\\"");
 	objQuery.query = 'INSERT INTO call_notes (text, extension, number, public, expiration, reservation) VALUES ("' + 
-            note + '", "' + extension + '", "' + num + '", "' + pub + '", DATE_ADD(now(), INTERVAL ' + expiration + ' ' + 
+            note + '", "' + extension + '", "' + num + '", ' + pub + ', DATE_ADD(now(), INTERVAL ' + expiration + ' ' + 
             expFormatVal + '), "' + reservation + '")';
 	executeSQLQuery(CALL_NOTES, objQuery, function(results){
 		try {
