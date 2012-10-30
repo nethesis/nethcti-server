@@ -1,5 +1,5 @@
 Name:		proxycti
-Version:	1.1.991
+Version:	1.1.992
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI	
 
@@ -74,6 +74,9 @@ ln -s /usr/lib/node/proxycti/sql/update.sh /etc/e-smith/sql/init/20cti_update
 
 
 %changelog
+* Tue Oct 30 2012  Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.1.992-1nh
+- Fix query to save call notes
+
 * Tue Oct 15 2012  Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.1.991-1nh
 - Move default notification templates to /usr/lib/node/proxycti/template
 
