@@ -1,5 +1,5 @@
 Name:		proxycti
-Version:	1.1.992
+Version:	1.2.0
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI	
 
@@ -13,7 +13,7 @@ BuildRequires:	e-smith-devtools
 Requires:	nodejs
 Requires:	node-forever
 Requires:	smeserver-ejabberd
-Requires:       nethcti-module >= 1.1.3
+Requires:       nethcti-module >= 1.2.0
 AutoReq:	no
 
 %description
@@ -74,6 +74,9 @@ ln -s /usr/lib/node/proxycti/sql/update.sh /etc/e-smith/sql/init/20cti_update
 
 
 %changelog
+* Mon Nov 05 2012  Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.2.0-1nh
+- Bump to public release 1.2.0
+
 * Tue Oct 30 2012  Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.1.992-1nh
 - Fix query to save call notes
 
