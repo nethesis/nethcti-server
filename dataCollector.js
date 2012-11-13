@@ -123,6 +123,20 @@ exports.DataCollector = function(){
         this.getPostitNotificationsSettingsForAllExt = function (cb) { _getPostitNotificationsSettingsForAllExt(cb); }
         this.getPostitNotificationsSettingsByExt = function (byext, cb) { _getPostitNotificationsSettingsByExt(byext, cb); }
         this.getNotifCellphoneForAllExt = function (cb) { _getNotifCellphoneForAllExt(cb); }
+        this.saveClick2CallModeByExt = function (ext, c2c_mode, cb) { _saveClick2CallModeByExt(ext, c2c_mode, cb); }
+}
+
+// save click to call modality for specified extension
+function _saveClick2CallModeByExt(ext, c2c_mode, cb) {
+    try {
+        var query = 'INSERT INTO extension_info (extension, click2call_mode) VALUES ("' + ext + '", "' + c2c_mode + '") ' +
+                    'ON DUPLICATE KEY UPDATE click2call_mode="' + c2c_mode + '"';
+        _query(EXTENSION_INFO, query, function (result) {
+            cb(result);
+        });
+    } catch (err) {
+        logger.error('ext = ' + ext + ', c2c_mode = ' + c2c_mode + ': ' + err.stack);
+    }
 }
 
 function _getNotifCellphoneForAllExt(cb) {

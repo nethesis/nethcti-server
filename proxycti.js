@@ -3696,6 +3696,7 @@ io.sockets.on('connection', function(client){
                             }
                         break;
   			case actions.LOGIN:
+                            try {
 	  			if(authenticator.authenticateUser(extFrom, message.secret)){  // the user is authenticated
   					// if the user is already logged in, a new session is created and the old is closed
   					if(testAlreadyLoggedExten(extFrom)){
@@ -3768,12 +3769,32 @@ io.sockets.on('connection', function(client){
                                                 logger.error(err.stack);
                                             }
                                         });
+
+                                        // save click to call modality for the extension
+                                        var c2c_mode = message.click2call_mode;
+                                        if (c2c_mode !== undefined) {
+
+                                            dataCollector.saveClick2CallModeByExt(extFrom, c2c_mode, function (result) {
+                                                try {
+                                                    if (result.affectedRows > 0) {
+                                                        logger.debug('click2call modality for [' + extFrom + '] has been saved');
+                                                    } else {
+                                                        logger.warn('error in saving click2call mode for [' + extFrom + ']');
+                                                    }
+                                                } catch (err) {
+                                                    logger.error('saving click2call mode: ' + err.stack);
+                                                }
+                                            });
+                                        }
   				}
   				else{ // the user is not authenticated
   					logger.warn("login AUTH FAILED: [" + extFrom + "] with secret '" + message.secret + "'");
   					client.emit('message',new ResponseMessage(client.id, "error_login", "Sorry, authentication failed !"));
   					logger.debug("RESP 'error_login' has been sent to [" + extFrom + "] id '" + client.id + "'");
   				}
+                            } catch (err) {
+                                logger.error('extFrom = ' + extFrom + ', message = ' + sys.inspect(message) + ': ' + err.stack);
+                            }
 	  		break;
 			case actions.GET_VM_CUSTOM_MSG:
 				var respMsg = new ResponseMessage(client.id,"resp_get_vm_custom_msg","");
