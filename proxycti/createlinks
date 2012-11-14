@@ -27,4 +27,4 @@ event_link("proxycti-configure", $event, 10);
 event_link("asterisk-reload", $event, "20");
 safe_symlink("restart", "root/etc/e-smith/events/$event/services2adjust/proxycti");
 
-safe_symlink("/var/log/asterisk/login.log","/usr/lib/node/proxycti/store/login.log");
+safe_symlink("/var/log/asterisk/login.log","root/usr/lib/node/proxycti/store/login.log");
