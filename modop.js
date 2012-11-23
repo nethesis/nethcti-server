@@ -140,6 +140,18 @@ exports.Modop = function(){
         this.setVoicemailUsedByExt = function (tyext, vm) { _setVoicemailUsedByExt(tyext, vm); }
         this.addNotifCellphoneToExtStatusForOp = function (notifSettingsCellphone) { _addNotifCellphoneToExtStatusForOp(notifSettingsCellphone); }
         this.updateExtIPAddressForOpWithTypeExt = function (tyext, ip) { _updateExtIPAddressForOpWithTypeExt(tyext, ip); }
+        this.getPhoneIPFromTypeExt = function (tyext) { return _getPhoneIPFromTypeExt(tyext); }
+}
+
+function _getPhoneIPFromTypeExt(tyext) {
+    try {
+        if (tyext !== undefined && extStatusForOp !== undefined && extStatusForOp[tyext] !== undefined) {
+            var ip = extStatusForOp[tyext].ip;
+            return ip;
+        }
+    } catch (err) {
+        logger.error(err.stack);
+    }
 }
 
 function _updateExtIPAddressForOpWithTypeExt(tyext, ip) {

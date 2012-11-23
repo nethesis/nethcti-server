@@ -124,6 +124,19 @@ exports.DataCollector = function(){
         this.getPostitNotificationsSettingsByExt = function (byext, cb) { _getPostitNotificationsSettingsByExt(byext, cb); }
         this.getNotifCellphoneForAllExt = function (cb) { _getNotifCellphoneForAllExt(cb); }
         this.saveClick2CallModeByExt = function (ext, c2c_mode, cb) { _saveClick2CallModeByExt(ext, c2c_mode, cb); }
+        this.getClick2CallModeByExt = function (ext, cb) { _getClick2CallModeByExt(ext, cb); }
+}
+
+// execute function on click2call_mode field
+function _getClick2CallModeByExt(ext, cb) {
+    try {
+        var query = 'SELECT click2call_mode FROM ' + EXTENSION_INFO + ' WHERE extension="' + ext + '"';
+        _query(EXTENSION_INFO, query, function (result) {
+            cb(result);
+        });
+    } catch (err) {
+        logger.error('ext = ' + ext + ': ' + err.stack);
+    }
 }
 
 // save click to call modality for specified extension
