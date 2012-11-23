@@ -2825,6 +2825,112 @@ server = http.createServer(function (req, res) {
                 var to = params.to;
                 callout(ext, to, res);
                 
+            } else if (path === '/click2call') { // called from windows script
+
+                try {
+                    var ext = params.ext;
+                    var to = params.to;
+                    var pwd = params.pwd;
+
+                    // check parameters
+                    if (ext === undefined || ext === '' || to === undefined || to === '' || pwd === undefined) {
+                        throw new Error('wrong parameters in click2call HTTP GET request');
+                    }
+
+                    // check authentication
+                    if (authenticateUser(ext, pwd) === true) {
+                        logger.debug('[' + ext + '] authentication for click2call OK');
+
+                        dataCollector.getClick2CallModeByExt(ext, function (c2c_mode) {
+
+                            try {
+                                var click2call_mode = 'manual'; // default value if it's not prensent into the DB 'extension_info'
+                                if (c2c_mode.length > 0) { // there is a result from DB 'extension_info'
+                                    var click2call_mode = c2c_mode[0].click2call_mode;
+                                }
+
+                                if (click2call_mode === 'manual') { // do call through asterisk
+                                    callout(ext, to, res);
+
+                                } else { // do call through http get directed to the phone
+
+                                    // try to replace parameters. If the click2call url is custom, some parameters
+                                    // could not be present
+                                    var tyext = modop.getTypeExtFromExt(ext);
+                                    var ip = modop.getPhoneIPFromTypeExt(tyext);
+                                    var server = server_conf.SERVER_PROXY.hostname;
+                                    var parameters = {
+                                        ip_phone: '<IP_PHONE>',
+                                        call_to:  '<CALL_TO>',
+                                        from_ext: '<FROM_EXT>',
+                                        server:   '<SERVER>'
+                                    };
+                                    var values = {
+                                        ip_phone: ip,
+                                        call_to:  to,
+                                        from_ext: ext,
+                                        server:   server
+                                    }
+                                    for (var key in parameters) {
+                                        if (click2call_mode.indexOf(parameters[key]) !== -1) {
+                                            click2call_mode = click2call_mode.replace(parameters[key], values[key]);
+                                        }
+                                    }
+                                    // get parameters from calculated 'click2call_mode' for HTTP GET request
+                                    var parsed_click2call_mode = url.parse(click2call_mode);
+                                    // get 'real_port' because when c2c url is custom, the port could be present
+                                    var real_port = 80;
+                                    if (parsed_click2call_mode.port !== undefined) {
+                                        real_port = parsed_click2call_mode.port;
+                                    }
+                                    var real_path = parsed_click2call_mode.pathname + parsed_click2call_mode.search;
+                                    var options = {
+                                        host: parsed_click2call_mode.hostname,
+                                        port: real_port,
+                                        path: real_path
+                                    };
+                                    logger.debug('try to make HTTP GET request for click2call: ' + sys.inspect(options));
+                                    // make http GET request
+                                    http.get(options, function (response_click2call) {
+                                        try {
+                                            logger.debug("click2call HTTP GET response_click2call.statusCode = " + response_click2call.statusCode);
+                                            if (response_click2call.statusCode !== 200) {
+                                                logger.warn('error in HTTP GET request for click2call by extension [' + ext + ']');
+                                                send404(res);
+                                            } else {
+                                                logger.debug('HTTP GET request for click2call by extension [' + ext + '] succesfully');
+                                                res.writeHead(200, { 'Content-Type': 'text/plain' });
+                                                res.end();
+                                            }
+                                        } catch (err) {
+                                            logger.error(err.stack);
+                                        }
+
+                                    }).on('error', function (err) {
+                                        try {
+                                            logger.warn('error in HTTP GET request for click2call by extension [' + ext + ']');
+                                            send404(res);
+                                        } catch (err) {
+                                            logger.error(err.stack);
+                                        }
+                                    });
+                                }
+                            } catch (err) {
+                                logger.warn(err.stack);
+                                send404(res);
+                            }
+                        });
+
+                    } else {
+                        logger.warn('authentication failed for click to call from [' + ext + ']');
+                        send404(res);
+                    }
+
+                } catch (err) {
+                    logger.error(err.stack);
+                    send404(res);
+                }
+
             } else {
 
                 fileStatic.serve(req, res, function (err, result) {
@@ -2834,13 +2940,8 @@ server = http.createServer(function (req, res) {
                         res.end();
                     }
                 });
-
             }
-
-
-
     }
-
 });
 
 send404 = function(res){
@@ -3696,6 +3797,7 @@ io.sockets.on('connection', function(client){
                             }
                         break;
   			case actions.LOGIN:
+                            try {
 	  			if(authenticator.authenticateUser(extFrom, message.secret)){  // the user is authenticated
   					// if the user is already logged in, a new session is created and the old is closed
   					if(testAlreadyLoggedExten(extFrom)){
@@ -3768,12 +3870,32 @@ io.sockets.on('connection', function(client){
                                                 logger.error(err.stack);
                                             }
                                         });
+
+                                        // save click to call modality for the extension
+                                        var c2c_mode = message.click2call_mode;
+                                        if (c2c_mode !== undefined) {
+
+                                            dataCollector.saveClick2CallModeByExt(extFrom, c2c_mode, function (result) {
+                                                try {
+                                                    if (result.affectedRows > 0) {
+                                                        logger.debug('click2call modality for [' + extFrom + '] has been saved');
+                                                    } else {
+                                                        logger.warn('error in saving click2call mode for [' + extFrom + ']');
+                                                    }
+                                                } catch (err) {
+                                                    logger.error('saving click2call mode: ' + err.stack);
+                                                }
+                                            });
+                                        }
   				}
   				else{ // the user is not authenticated
   					logger.warn("login AUTH FAILED: [" + extFrom + "] with secret '" + message.secret + "'");
   					client.emit('message',new ResponseMessage(client.id, "error_login", "Sorry, authentication failed !"));
   					logger.debug("RESP 'error_login' has been sent to [" + extFrom + "] id '" + client.id + "'");
   				}
+                            } catch (err) {
+                                logger.error('extFrom = ' + extFrom + ', message = ' + sys.inspect(message) + ': ' + err.stack);
+                            }
 	  		break;
 			case actions.GET_VM_CUSTOM_MSG:
 				var respMsg = new ResponseMessage(client.id,"resp_get_vm_custom_msg","");
