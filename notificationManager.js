@@ -33,7 +33,7 @@ exports.NotificationManager = function(){
     this.updateCellphoneNotificationsModalityForAll = function (ext, value, cb) { _updateCellphoneNotificationsModalityForAll(ext, value, cb); }
     this.updateEmailNotificationsModalityForAll = function (ext, value, cb) { _updateEmailNotificationsModalityForAll(ext, value, cb); }
     this.notifyNewVoicemailToUser = function (vm, ext) { _notifyNewVoicemailToUser(vm, ext); }
-    this.notifyNewPostitToUser = function (ext, note, clientNotifSettings) { _notifyNewPostitToUser(ext, note, clientNotifSettings); }
+    this.notifyNewPostitToUser = function (from, ext, note, clientNotifSettings) { _notifyNewPostitToUser(from, ext, note, clientNotifSettings); }
     this.getCellphoneNotificationsModalityForAll = function (ext, cb) { _getCellphoneNotificationsModalityForAll(ext, cb); }
     this.saveNotificationsSettings = function (ext, settings, cb) { _saveNotificationsSettings(ext, settings, cb); }
     this.getNotificationsSettings = function (ext, cb) { _getNotificationsSettings(ext, cb); }
@@ -107,7 +107,7 @@ function _setSmsModule(module) {
     }
 }
 
-function _notifyNewPostitToUser(ext, note, clientNotifSettings) {
+function _notifyNewPostitToUser(from, ext, note, clientNotifSettings) {
     try {
         _dataCollector.getNotificationModalityNote(ext, function (result) {
             if (result.length === 0) {
@@ -128,7 +128,7 @@ function _notifyNewPostitToUser(ext, note, clientNotifSettings) {
                      ) ) {
 
                     if (phoneNumber !== undefined && phoneNumber !== '') {
-                        _sendCellphoneSmsNotificationNote(phoneNumber, ext, note);
+                        _sendCellphoneSmsNotificationNote(phoneNumber, from, ext, note);
                     } else {
                         logger.debug('no cellphone number to notify new post-it for extension ' + ext + ': don\'t notify');
                     }
@@ -148,7 +148,7 @@ function _notifyNewPostitToUser(ext, note, clientNotifSettings) {
                      ) ) {
 
                     if (toAddr !== undefined && toAddr !== '') {
-                        _sendEmailNotificationNote(toAddr, ext, note);
+                        _sendEmailNotificationNote(toAddr, from, ext, note);
                     } else {
                         logger.debug('no e-mail to notify new post-it for extension ' + ext + ': don\'t notify');
                     }
@@ -217,11 +217,12 @@ function _initModule() {
     }
 }
 
-function _sendCellphoneSmsNotificationNote(phoneNumber, ext, note) {
+function _sendCellphoneSmsNotificationNote(phoneNumber, from, ext, note) {
     try {
         if (_notificationTemplates['notification_postit_sms.ejs'] !== undefined) {
             var localsObj = {};
             var obj = {
+                from: from,
                 ext: ext,
                 date: new Date().toLocaleString(),
                 postit: escape(note)
@@ -230,7 +231,7 @@ function _sendCellphoneSmsNotificationNote(phoneNumber, ext, note) {
             body = ejs.render(_notificationTemplates['notification_postit_sms.ejs'], localsObj);
             body = unescape(body);
         } else {
-            body = 'NethCTI - New POST-IT from "' + ext + '" - ' + new Date().toLocaleString() + ' - Message: ' + note;
+            body = 'NethCTI - New POST-IT from "' + from + '" - ' + new Date().toLocaleString() + ' - Message: ' + note;
         }
         body = body.trim();
 
@@ -264,7 +265,7 @@ function _sendCellphoneSmsNotificationVoicemail(phoneNumber, vm, ext) {
     }
 }
 
-function _sendEmailNotificationNote(toAddress, ext, note) {
+function _sendEmailNotificationNote(toAddress, from, ext, note) {
     try {
 
         var subject = '';
@@ -274,6 +275,7 @@ function _sendEmailNotificationNote(toAddress, ext, note) {
         if (_notificationTemplates['notification_voicemail_mail.ejs'] !== undefined) {
             var localsObj = {};
             var obj = {
+                from: from,
                 ext: ext,
                 postit: escape(note),
                 date: new Date().toLocaleString(),
@@ -292,8 +294,8 @@ function _sendEmailNotificationNote(toAddress, ext, note) {
             body = unescape(body);
 
         } else {
-            var subject = 'NethCTI - New POST-IT from "' + ext;
-            var body    = 'New POST-IT from "' + ext + '".\n\n' +
+            var subject = 'NethCTI - New POST-IT from "' + from + '" for you (' + ext + ')';
+            var body    = 'New POST-IT from "' + from + '" for you (' + ext + ').\n\n' +
                           'Date: ' + new Date().toLocaleString() + '\n' +
                           'Message:\n' + note;
         }
@@ -302,7 +304,7 @@ function _sendEmailNotificationNote(toAddress, ext, note) {
             if (error) {
                 logger.error(error);
             } else {
-                logger.debug("e-mail notification for new POST-IT from " + ext + " has been sent succesfully to " + toAddress);
+                logger.debug('e-mail notification for new POST-IT from "' + from + '" for "' + ext + '" has been sent succesfully to ' + toAddress);
             }
         });
 

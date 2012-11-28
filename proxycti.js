@@ -3576,7 +3576,7 @@ io.sockets.on('connection', function(client){
                                                         clientAssigned.emit('message', respMsg);
                                                         logger.debug("RESP 'update_notifications' has been sent to [" + message.assigned + "] id '" + clientAssigned.id + "'");
                                                     } else {
-                                                        notificationManager.notifyNewPostitToUser(message.assigned, note, notifSettings);
+                                                        notificationManager.notifyNewPostitToUser(extFrom, message.assigned, note, notifSettings);
                                                     }
                                                 } catch (err) {
                                                     logger.error('message = ' + sys.inspect(message) + ': ' + err.stack);
