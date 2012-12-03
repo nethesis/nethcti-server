@@ -1176,16 +1176,18 @@ am.addListener('dialing', function(headers) {
 		        }
 		        response.callNotes = result; // add call notes to the response
 			response.dialCh = headers.destination;
+
                         if (currentCallInInfo[from] !== undefined &&
                             currentCallInInfo[from].ctiPrivate !== undefined &&
                             currentCallInInfo[from].ctiPrivate[to] !== undefined) {
 
                             response.info = currentCallInInfo[from].ctiPrivate[to];
 
-                        } else if (currentCallInInfo[from] !== undefined && currentCallInInfo[from].ctiPublic !== undefined) {
-                            response.info = currentCallInInfo[from].ctiPublic;
                         } else if (currentCallInInfo[from] !== undefined && currentCallInInfo[from].centralPhonebook !== undefined) {
                             response.info = currentCallInInfo[from].centralPhonebook;
+
+                        } else if (currentCallInInfo[from] !== undefined && currentCallInInfo[from].ctiPublic !== undefined) {
+                            response.info = currentCallInInfo[from].ctiPublic;
                         }
 			c.emit('message',response);
                         logger.debug("RESP 'dialing' has been sent to [" + to + "] id '" + c.id + "'");
