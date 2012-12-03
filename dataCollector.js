@@ -1574,8 +1574,9 @@ function getContactsPhonebook(name, cb){
 function _query(type, query, cb) {
     try {
         var obj = queries[type];
-        obj.query = query;
-        executeSQLQuery(type, obj, cb);
+        var copyObjQuery = Object.create(obj);
+        copyObjQuery.query = query;
+        executeSQLQuery(type, copyObjQuery, cb);
     } catch (err) {
         logger.error(err.stack);
     }
