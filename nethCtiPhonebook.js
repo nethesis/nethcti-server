@@ -218,6 +218,7 @@ function _newNethCTIContact(params, res) {
 
 function _searchContactsStartsWith(name, extFrom, cb) {
     try {
+        name = name.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
         var query = 'SELECT * FROM ' + DB_NAME + ' WHERE (owner_id="' + extFrom + '" OR type="public") AND (name LIKE "' + name + '%" OR company LIKE "' + name + '%") ORDER BY NAME ASC, company ASC';
         dataCollector.query(DB_NAME, query, function (result) {
             cb(result);
@@ -228,14 +229,20 @@ function _searchContactsStartsWith(name, extFrom, cb) {
 }
 
 function _searchContacts(name, extFrom, cb) {
-    var query = 'SELECT * FROM ' + DB_NAME + ' WHERE (owner_id="' + extFrom + '" OR type="public") AND (name LIKE "%' + name + '%" OR company LIKE "%' + name + '%" OR workphone LIKE "%' + name + '%" OR homephone LIKE "%' + name + '%" OR cellphone LIKE "%' + name + '%") ORDER BY NAME ASC, company ASC';
-    dataCollector.query(DB_NAME, query, function (result) {
-        cb(result);
-    });
+    try {
+        name = name.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
+        var query = 'SELECT * FROM ' + DB_NAME + ' WHERE (owner_id="' + extFrom + '" OR type="public") AND (name LIKE "%' + name + '%" OR company LIKE "%' + name + '%" OR workphone LIKE "%' + name + '%" OR homephone LIKE "%' + name + '%" OR cellphone LIKE "%' + name + '%") ORDER BY NAME ASC, company ASC';
+        dataCollector.query(DB_NAME, query, function (result) {
+            cb(result);
+        });
+    } catch (err) {
+        logger.error('name = ' + name + ' extFrom = ' + extFrom + ': ' + err.stack);
+    }
 }
 
 function _getAllContactsByNum(num, numToSearch, cb) {
     try {
+        numToSearch = numToSearch.replace(/'/g, "\\\'").replace(/"/g, "\\\""); // escape of chars ' and "
         var query = 'SELECT * FROM ' + DB_NAME + ' WHERE (homephone="' + numToSearch + '" OR workphone="' + numToSearch + '" OR cellphone="' + numToSearch + '")';
         dataCollector.query(DB_NAME, query, function (result) {
             cb(result, num);
