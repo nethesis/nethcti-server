@@ -22,6 +22,7 @@ const STOP_RECORD = 0;
 const VM_PATH_BASE = '/var/spool/asterisk/voicemail/default'
 const QUEUE_NAME = 'code';
 const INTERNO = 'interno';
+var dataCollector;
 /* logger that write in output console and file
  * the level is (ALL) TRACE, DEBUG, INFO, WARN, ERROR, FATAL (OFF) */
 var logger = log4js.getLogger('[Modop]');
@@ -141,6 +142,16 @@ exports.Modop = function(){
         this.addNotifCellphoneToExtStatusForOp = function (notifSettingsCellphone) { _addNotifCellphoneToExtStatusForOp(notifSettingsCellphone); }
         this.updateExtIPAddressForOpWithTypeExt = function (tyext, ip) { _updateExtIPAddressForOpWithTypeExt(tyext, ip); }
         this.getPhoneIPFromTypeExt = function (tyext) { return _getPhoneIPFromTypeExt(tyext); }
+        this.setDataCollector = function (dc) { _setDataCollector(dc); }
+}
+
+function _setDataCollector(dc) {
+    try {
+        dataCollector = dc;
+        logger.debug("dataCollector added");
+    } catch (err) {
+        logger.error(err.stack);
+    }
 }
 
 function _getPhoneIPFromTypeExt(tyext) {
@@ -994,7 +1005,31 @@ function addListenerToAm(){
 	/* This event is triggered when 'PeerEntry' event is emitted for each user registered in asterisk.
 	 * So, the initialization of 'extStatusForOp' can be completed */
 	am.addListener('peerlistcomplete', function(){
+            try {
 	        logger.debug("PeerListComplete event");
+                // initialize extensions in the extStatusForOp with their last voicemail used
+                logger.debug('start initialize extensions in the extStatusForOp with their last voicemail used...');
+                dataCollector.getVoicemailUsedByExtensions(function (results) {
+                    try {
+                        var tyext;
+                        for (var i = 0, l = results.length; i < l; i++) {
+
+                            if (results[i].extension === undefined || results[i].voicemail_used === undefined) {
+                                continue;
+                            }
+                            tyext = _getTypeExtFromExt(results[i].extension);
+                            if (extStatusForOp[tyext] !== undefined) {
+                                extStatusForOp[tyext].voicemailUsed = results[i].voicemail_used;
+                            }
+                        }
+                        logger.debug('...end initialized extensions in the extStatusForOp with their last voicemail used');
+                    } catch (err) {
+                        logger.error(err.stack);
+                    }
+                });
+            } catch (err) {
+                logger.error(err.stack);
+            }
 	});
 
 	/* This event is necessary to add information of queue membership to extension status

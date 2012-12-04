@@ -126,6 +126,22 @@ exports.DataCollector = function(){
         this.saveClick2CallModeByExt = function (ext, c2c_mode, cb) { _saveClick2CallModeByExt(ext, c2c_mode, cb); }
         this.getClick2CallModeByExt = function (ext, cb) { _getClick2CallModeByExt(ext, cb); }
         this.storeVoicemailUsedByExt = function (ext, vm) { _storeVoicemailUsedByExt(ext, vm); }
+        this.getVoicemailUsedByExtensions = function (cb) { _getVoicemailUsedByExtensions(cb); }
+}
+
+function _getVoicemailUsedByExtensions(cb) {
+    try {
+        var query = 'SELECT extension, voicemail_used FROM ' + EXTENSION_INFO + ' WHERE voicemail_used!=""';
+        _query(EXTENSION_INFO, query, function (result) {
+            try {
+                cb(result);
+            } catch (err) {
+                logger.error(err.stack);
+            }
+        });
+    } catch (err) {
+        logger.error(err.stack);
+    }
 }
 
 // store voicemail used by extension into the cti db

@@ -187,6 +187,7 @@ voicemail.init();
 var modop = new modopReq.Modop();
 modop.setLogger(logfile,loglevel);
 modop.addController(controller)
+modop.setDataCollector(dataCollector);
 
 var nethCtiPhonebook = new nethCtiPhonebookReq.nethCtiPhonebook();
 nethCtiPhonebook.setLogger(logfile,loglevel);
