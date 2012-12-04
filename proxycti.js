@@ -3850,10 +3850,18 @@ io.sockets.on('connection', function(client){
 						if(respMsg.existVoicemail){
 							var obj = voicemail.getCustomMessages(vm);
 							respMsg.customVmMsg = obj;
-                                                        //clients[extFrom].voicemailUsed = vm;
                                                         modop.setVoicemailUsedByExt(respMsg.tyext, vm);
-						}
-					}
+                                                        // store voicemail used into the cti db
+                                                        dataCollector.storeVoicemailUsedByExt(extFrom, vm);
+						} else {
+                                                        // empty voicemail used into the cti db
+                                                        dataCollector.storeVoicemailUsedByExt(extFrom, '');
+                                                }
+					} else {
+                                            logger.warn('on "' + extFrom + '" login voicemail is undefined');
+                                            // empty voicemail used into the cti db
+                                            dataCollector.storeVoicemailUsedByExt(extFrom, '');
+                                        }
                                         var notifications = notificationManager.getNotificationsByExt(extFrom);
                                         respMsg.notifications = notifications;
 					respMsg.streamingSettings = profiler.getStreamingSettings(extFrom);

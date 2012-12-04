@@ -125,6 +125,29 @@ exports.DataCollector = function(){
         this.getNotifCellphoneForAllExt = function (cb) { _getNotifCellphoneForAllExt(cb); }
         this.saveClick2CallModeByExt = function (ext, c2c_mode, cb) { _saveClick2CallModeByExt(ext, c2c_mode, cb); }
         this.getClick2CallModeByExt = function (ext, cb) { _getClick2CallModeByExt(ext, cb); }
+        this.storeVoicemailUsedByExt = function (ext, vm) { _storeVoicemailUsedByExt(ext, vm); }
+}
+
+// store voicemail used by extension into the cti db
+function _storeVoicemailUsedByExt(ext, vm) {
+    try {
+        vm = vm.replace(/'/g, "\\\'").replace(/"/g, "\\\"");
+        var query = 'INSERT INTO ' + EXTENSION_INFO + ' (extension, voicemail_used) VALUES ("' + ext + '", "' + vm + '") ' +
+                    'ON DUPLICATE KEY UPDATE voicemail_used="' + vm + '"';
+        _query(EXTENSION_INFO, query, function (result) {
+            try {
+                if (result.affectedRows > 0) {
+                    logger.debug('succesfully stored vm "' + vm + '" used by ext "' + ext + '"');
+                } else {
+                    logger.warn('storing voicemail "' + vm + '" used by "' + ext + '"');
+                }
+            } catch (err) {
+                logger.error(err.stack);
+            }
+        });
+    } catch (err) {
+        logger.error(err.stack);
+    }
 }
 
 // execute function on click2call_mode field
