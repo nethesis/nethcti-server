@@ -1,5 +1,5 @@
 Name:		proxycti
-Version:	1.2.0
+Version:	1.2.1
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI	
 
@@ -74,6 +74,13 @@ ln -s /usr/lib/node/proxycti/sql/update.sh /etc/e-smith/sql/init/20cti_update
 
 
 %changelog
+* Wed Dec 05 2012 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.2.1-1nh
+- Feature #1568: new sending sms test script (script/test_sendsms.php)
+- Feature #1569: add support for click2call http request (used by NethCTI Windows Click2Call)
+- Bug #1441: store last voicemail used by extensions into the "extension_info" table. This is for notifications of new voicemail messages.
+- Bug #1570: e-mail POST-IT notification view wrong source extension.
+- Bug #1581: fix phonebook search crash after receive call from number present into cti phonebook.
+
 * Mon Nov 05 2012  Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.2.0-1nh
 - Bump to public release 1.2.0
 
