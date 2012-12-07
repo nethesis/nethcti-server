@@ -3,7 +3,7 @@ var sys = require("sys");
 var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
 var log4js = require('./lib/log4js-node/lib/log4js')();
 var AUTHENTICATOR_CONFIG_FILENAME = "/etc/asterisk/sip_additional.conf";
-var VOICEMAIL_AUTH_FILENAME = "/etc/asterisk/voicemail_additionals.conf";
+var VOICEMAIL_AUTH_FILENAME = "/etc/asterisk/voicemail_additional.conf";
 var AUTH_IAX_FILEPATH = '/etc/asterisk/iax_additional.conf'; 
 
 /* logger that write in output console and file
