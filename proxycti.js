@@ -873,7 +873,7 @@ am.addListener('newstate', function(headers){
 	// update for OP
 	/* check if the newstate is relative to a call that come from queue. In this case (CASE C), 
  	 * discard this newState event */
-	if( headers.channel.indexOf('Local/')!=-1 && headers.channel.indexOf('@from-internal-')!=-1 && ( headers.channel.indexOf(';1')!=-1 || headers.channel.indexOf(';2')!=-1 ) ){
+	if( headers.channel.indexOf('Local/')!=-1 && headers.channel.indexOf('@from-queue-')!=-1 && ( headers.channel.indexOf(';1')!=-1 || headers.channel.indexOf(';2')!=-1 ) ){
 		logger.debug("discard 'newState' event because it's relative to channel '" + headers.channel + "'");
 		return;
 	}
@@ -1119,7 +1119,7 @@ am.addListener('dialing', function(headers) {
 			}
 		}
 		chStat[headers.destuniqueid].dialExt = to
-	} else if(headers.destination.indexOf('Local/')!==-1 && headers.destination.indexOf('@from-internal')!==-1){ // destination: 'Local/272@from-internal-b9a8;1',
+	} else if(headers.destination.indexOf('Local/')!==-1 && headers.destination.indexOf('@from-queue')!==-1){ // destination: 'Local/272@from-internal-b9a8;1',
 		to = to.split('@')[0];
 	}
 
@@ -1139,7 +1139,7 @@ am.addListener('dialing', function(headers) {
 		from = chStat[trueUniqueid].calleridnum
 	}
 	// in this case the call come from queue
-	if(from==undefined && headers.channel.indexOf('Local/')!=-1 && headers.channel.indexOf('@from-internal-')!=-1 )
+	if(from==undefined && headers.channel.indexOf('Local/')!=-1 && headers.channel.indexOf('@from-queue-')!=-1 )
 		from = headers.calleridnum;
 	else if( from==undefined && modop.isChannelTrunk(headers.channel) ) // callin through a trunk (CASE B)
 		from = headers.calleridnum;
@@ -1228,7 +1228,7 @@ am.addListener('dialing', function(headers) {
 	// update for OP
 	if(from!=undefined && to!=undefined){
 		// check if the call come from queue. In this case, the caller (272) has already been update in AgentCalled event
-		if(headers.channel.indexOf('Local/')==-1 && headers.channel.indexOf('@from-internal-')==-1 && headers.channel.indexOf(';2')==-1){ 
+		if(headers.channel.indexOf('Local/')==-1 && headers.channel.indexOf('@from-queue-')==-1 && headers.channel.indexOf(';2')==-1){ 
 			/* check also !modop.isChannelTrunk(headers.channel)  because (CASE H): 
 			 * headers.calleridnum come from trunk, that is remote location but is equal to local intern (namesake) */
 			if(modop.isExtPresent(from) && modop.isChannelIntern(headers.channel) && !modop.isChannelTrunk(headers.channel) ){
@@ -1550,7 +1550,7 @@ am.addListener('hangup', function(headers) {
 		return;
 	}
 
-	if(headers.channel.indexOf('Local/')!=-1 && headers.channel.indexOf('@from-internal-')!=-1 && (headers.channel.indexOf(';1')!=-1 || headers.channel.indexOf(';2')!=-1 ) ){
+	if(headers.channel.indexOf('Local/')!=-1 && headers.channel.indexOf('@from-queue-')!=-1 && (headers.channel.indexOf(';1')!=-1 || headers.channel.indexOf(';2')!=-1 ) ){
 		logger.debug("discard 'hangup' event: relative to queue. Delete it from chStat");
 		delete chStat[trueUniqueid];
 		logger.debug("keys of chStat = " + Object.keys(chStat).length);
@@ -1872,7 +1872,7 @@ am.addListener('callconnected', function(headers) {
 	     calleridname: 'device' },
 	  '1308813225.11191': { channel: 'SIP/2001-000014bf' } } */
 	// check if the callconnected is between internal and intermediate node created by asterisk when the call pass through a queue
-	if( headers.callerid1==headers.callerid2 && headers.channel2.indexOf('Local/')!=-1 && headers.channel2.indexOf('@from-internal-')!=-1 && headers.channel2.indexOf(';1')!=-1  ){ // (CASE E)
+	if( headers.callerid1==headers.callerid2 && headers.channel2.indexOf('Local/')!=-1 && headers.channel2.indexOf('@from-queue-')!=-1 && headers.channel2.indexOf(';1')!=-1  ){ // (CASE E)
 		// add uniquedid
 		if( modop.isChannelTrunk(headers.channel1) ){ // (CASE D)
 			chStat[tempUniqueid1].dialDirection = DIAL_TO;
@@ -2001,7 +2001,7 @@ am.addListener('callconnected', function(headers) {
 	}
 
 	// the call is for queue and this is the part from intermediate node ...;2 and the intern
-	if( headers.channel1.indexOf('Local/')!=-1 && headers.channel1.indexOf('@from-internal-')!=-1 && headers.channel1.indexOf(';2')!=-1  ){
+	if( headers.channel1.indexOf('Local/')!=-1 && headers.channel1.indexOf('@from-queue-')!=-1 && headers.channel1.indexOf(';2')!=-1  ){
 		var internTypeExt = modop.getInternTypeExtFromChannel(headers.channel2)
 		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt, tempUniqueid2)){
 			modop.removeDialingUniqueidInternWithTypeExt(internTypeExt, tempUniqueid2);
@@ -2064,7 +2064,7 @@ am.addListener('callconnected', function(headers) {
 	var to = undefined;
 
 	// the call has been redirect through two extensions
-	if(modop.isChannelIntern(headers.channel1) && headers.channel2.indexOf('Local/')!==-1 && headers.channel2.indexOf('@from-internal-')!==-1 && headers.channel2.indexOf(';1')!==-1){
+	if(modop.isChannelIntern(headers.channel1) && headers.channel2.indexOf('Local/')!==-1 && headers.channel2.indexOf('@from-queue-')!==-1 && headers.channel2.indexOf(';1')!==-1){
 		var internTypeExt1 = modop.getInternTypeExtFromChannel(headers.channel1);
 		if(modop.hasInternDialingUniqueidWithTypeExt(internTypeExt1, tempUniqueid1)){
                         modop.removeDialingUniqueidInternWithTypeExt(internTypeExt1, tempUniqueid1);
@@ -4411,7 +4411,7 @@ io.sockets.on('connection', function(client){
 									channel = tempCh
 									uniqueid = key
 								}
-							} else if(tempCh.indexOf('Local/')!=-1 && tempCh.indexOf('@from-internal-')!=-1 && tempCh.indexOf(';2')!=-1){
+							} else if(tempCh.indexOf('Local/')!=-1 && tempCh.indexOf('@from-queue-')!=-1 && tempCh.indexOf(';2')!=-1){
 								var tempExt = modop.getExtFromQueueChannel(tempCh)
 								var dialExtUniqueid = chStat[key].dialExtUniqueid
 								if(tempExt==callToExt && chStat[dialExtUniqueid]!=undefined && chStat[dialExtUniqueid].dialExt==callFromExt){
@@ -4605,7 +4605,7 @@ io.sockets.on('connection', function(client){
                                                         	channel = tempCh
                                                                 uniqueid = key
                                                         }
-                                               	} else if(tempCh.indexOf('Local/')!=-1 && tempCh.indexOf('@from-internal-')!=-1 && tempCh.indexOf(';2')!=-1){
+                                               	} else if(tempCh.indexOf('Local/')!=-1 && tempCh.indexOf('@from-queue-')!=-1 && tempCh.indexOf(';2')!=-1){
                                                         var tempExt = modop.getExtFromQueueChannel(tempCh)
                                                         var dialExtUniqueid = chStat[key].dialExtUniqueid
                                                         if(tempExt==callToExt && chStat[dialExtUniqueid]!=undefined && chStat[dialExtUniqueid].dialExt==callFromExt){
