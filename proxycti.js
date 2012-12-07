@@ -2226,15 +2226,22 @@ am.addListener('peerstatus', function(headers) {
   extra: 'Family: DND^Value: Attivo^' }
  *
  * when the call come from the outside:
+ * with ast 1.6
 { event: 'UserEvent',
   privilege: 'user,all',
   userevent: 'CAllIN|Data; 3405567088' } 
-  userevent: 'CAllIN,Data:3405567088' } 
   *
 { event: 'UserEvent',
   privilege: 'user,all',
   userevent: 'Agentlogin',
-  agent: '202' } */
+  agent: '202' }
+  *
+  * with asterisk 11:
+{ event: 'UserEvent',
+  privilege: 'user,all',
+  userevent: 'CAllIN',
+  uniqueid: '1354889176.420',
+  data: '+3934011223344' } */
 am.addListener('userevent', function(headers){
     try {
 	logger.debug("EVENT 'UserEvent': headers = " + sys.inspect(headers))
@@ -2313,10 +2320,10 @@ am.addListener('userevent', function(headers){
 	} // end of the first case
 	// Manage second case: the event is generated from the arrive of an outside call
 	var userevent = headers.userevent;
-	if(userevent!==undefined && userevent.indexOf('CAllIN|Data;')!==-1){
-		var callerFromOutside = userevent.split(';')[1];
+	if (userevent !== undefined && userevent.indexOf('CAllIN') !== -1) {
+                var callerFromOutside = headers.data;
 		callerFromOutside = callerFromOutside.replace(/[" "]/g,"");
-		if(callerFromOutside!=='' && callerFromOutside!==undefined && callerFromOutside!==null){
+		if (callerFromOutside !== '' && callerFromOutside !== undefined && callerFromOutside !== null) {
 			fillCurrentCallInInfo(callerFromOutside);
 		} else {
 			logger.warn('Cannot fill currentCallInInfo for UserEvent: ' + sys.inspect(headers));
