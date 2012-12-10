@@ -2366,11 +2366,9 @@ function fillCurrentCallInInfo(num){
                                             break;
                                         }
                                     }
-                                    if (currentCallInInfo[num].ctiPublic !== undefined) {
-                                        dataCollector.getAllContactsByNum(num, numToSearch, function (results, num) {
-                                            currentCallInInfo[num].centralPhonebook = results[0];
-                                        });
-                                    }
+                                    dataCollector.getAllContactsByNum(num, numToSearch, function (results, num) {
+                                        currentCallInInfo[num].centralPhonebook = results[0];
+                                    });
                                 });
                         });
                 });
