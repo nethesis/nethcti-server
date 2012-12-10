@@ -2236,6 +2236,7 @@ am.addListener('peerstatus', function(headers) {
   userevent: 'Agentlogin',
   agent: '202' } */
 am.addListener('userevent', function(headers){
+    try {
 	logger.debug("EVENT 'UserEvent': headers = " + sys.inspect(headers))
 	// Manage first case: the event is generated from the phone og the user
 	if(headers.channel!==undefined && headers.extra!==undefined){
@@ -2321,6 +2322,9 @@ am.addListener('userevent', function(headers){
 			logger.warn('Cannot fill currentCallInInfo for UserEvent: ' + sys.inspect(headers));
 		}
 	}
+    } catch (err) {
+        logger.error(err.stack);
+    }
 });
 
 // It is called from 'UserEvent' event when the call come from outside to fill 'currentCallInInfo'
