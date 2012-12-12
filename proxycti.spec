@@ -1,5 +1,5 @@
 Name:		proxycti
-Version:	1.2.1
+Version:	1.2.2
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI	
 
@@ -74,6 +74,9 @@ ln -s /usr/lib/node/proxycti/sql/update.sh /etc/e-smith/sql/init/20cti_update
 
 
 %changelog
+* Wed Dec 12 2012 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.2.2-1nh
+- On 'UserEvent', always search contact informations in phonebook
+
 * Wed Dec 05 2012 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.2.1-1nh
 - Feature #1568: new sending sms test script (script/test_sendsms.php)
 - Feature #1569: add support for click2call http request (used by NethCTI Windows Click2Call)
