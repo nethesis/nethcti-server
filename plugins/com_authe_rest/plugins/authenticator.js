@@ -10,13 +10,11 @@ var utilcti = require('../../../utilcti.js');
         tempGrants: {}
     };
 
-    (function init() {
-        _priv.authori = new authreq.Authenticator();
-    })();
+    _priv.authori = new authreq.Authenticator();
 
     var authenticator = {
 
-        routes : {
+        api: {
             'root': 'authenticator',
             'get' : [''],
             'post': ['auth/:user', 'auth/:user/:token'],
@@ -25,17 +23,14 @@ var utilcti = require('../../../utilcti.js');
         },
 
         auth: function (req, res, next) {
-
 	    try {
-
                 var user = req.params.user;
                 var token = req.params.token ? req.params.token : undefined;
 
 		// send 401 response with nonce
                 if (!token) {
-
 		    var pwd = _priv.authori.getPasswordUser(user);
-
+		    
 		    // generate nonce
 		    var nonce = utilcti.nonce();
 
@@ -55,13 +50,12 @@ var utilcti = require('../../../utilcti.js');
 	            send401Nonce(res, nonce);
 
                 } else { // check authentication http header
-                
 		    // check presence of temporary grants
 		    if (!_priv.tempGrants[user]) {
 		        res.send({ result: false });
 		        return;
 		    }
-                
+
 		    // get temporary token grant
 		    var tokenGrant = _priv.tempGrants[user].token;
 
@@ -70,7 +64,7 @@ var utilcti = require('../../../utilcti.js');
 		        res.send({ result: false });
 		        return;
 		    }
-		
+
 		    // check expiration
 		    if (new Date().getTime() > _priv.tempGrants[user].expires) {
 		        res.send({ result: false });
@@ -79,19 +73,15 @@ var utilcti = require('../../../utilcti.js');
 
 		    // update expiration
 		    _priv.tempGrants[user].expires = new Date().getTime() + _priv.EXPIRES;
-
 		    res.send({ result: true });
 	        }
-
 	    } catch (err) {
 		console.log(err.stack);
 	    }
 	}
     }
-   
-    exports.routes = authenticator.routes;
+    exports.api = authenticator.api;
     exports.auth = authenticator.auth;
-
 })();
 
 function send401Nonce(resp, nonce) {
