@@ -1,21 +1,19 @@
 var http = require('http');
 var querystring = require('querystring');
-var histreq = require('../dataCollector.js');
+var histreq = require('../ori/dataCollector.js');
 var utilcti = require('../../../utilcti.js');
 
 (function(){
 
     var _priv = {
-        dcori: undefined // original dataCollector
+        dcori: undefined
     };
 
-    (function init() {
-        _priv.dcori = new histreq.DataCollector();
-    })();
+    _priv.dcori = new histreq.DataCollector();
 
     var history = {
 
-        routes : {
+        api : {
             'root': 'history',
             'get' : [
 		'interval/:ext/:datefrom/:dateto',
@@ -27,11 +25,8 @@ var utilcti = require('../../../utilcti.js');
         },
 
         interval: function (req, res, next) {
-
 	    try {
-		console.log(req.params);
 		var filter = req.params.filter === undefined ? '%' : req.params.filter;
-		console.log("filter = " + filter);
 
 		// check http header
                 if (!req.headers.authorization) {
@@ -53,9 +48,7 @@ var utilcti = require('../../../utilcti.js');
                 };
 
                 var postReq = http.request(options, function (postResp) {
-                
                     postResp.setEncoding('utf8');
-    
                     postResp.on('data', function (str) {
                         obj = JSON.parse(str);
 
@@ -85,6 +78,6 @@ var utilcti = require('../../../utilcti.js');
         }
     }
    
-    exports.routes = history.routes;
+    exports.api = history.api;
     exports.interval = history.interval;
 })();
