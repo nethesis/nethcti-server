@@ -1,10 +1,10 @@
 var fs = require("fs");
 var path = require('path');
 var sys = require("sys");
-var iniparser = require("./lib/node-iniparser/lib/node-iniparser");
-var mysql = require('./lib/node-mysql');
+var iniparser = require("iniparser");
+var mysql = require('mysql');
 // var odbc = require("./lib/node-odbc/odbc");
-var log4js = require('./lib/log4js-node/lib/log4js')();
+var log4js = require('log4js');
 //const DATACOLLECTOR_CONFIG_FILENAME = "./config/dataprofiles.ini";
 const DATACOLLECTOR_CONFIG_FILENAME = "./plugins/com_hist_rest/config/dataprofiles.ini";
 const PHONEBOOK = "phonebook";
