@@ -1,0 +1,8 @@
+{
+    "name": "history",
+    "main": "history.js",
+    "plugin": {
+	"consumes": [],
+	"provides": []
+    }
+}

@@ -1,0 +1,8 @@
+{
+    "name": "authe",
+    "main": "authe.js",
+    "plugin": {
+	"consumes": [],
+	"provides": []
+    }
+}
