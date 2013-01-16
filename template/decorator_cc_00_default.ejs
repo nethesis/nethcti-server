@@ -30,14 +30,37 @@
 		<div class='numbers'>
                 <% if(results[i].workphone){ %>
                         <div class='label tr'>
-				<span class='value td'><img src="<%= results[i].server_address %>/template/images/phone.png" title='Telefono Ufficio' alt='Telefono Ufficio'/></span> <span class='td'><a href='#' class='click2call' data-prefix='<%= results[i].prefix %>'><%= results[i].workphone %></a> <a href='#'></a></span>
+				<span class='value td'>
+                                    <img src="<%= results[i].server_address %>/template/images/phone.png" title='Telefono Ufficio' alt='Telefono Ufficio' class='cc_click2call cursorPointer' data-num='<%= results[i].workphone %>'/>
+                                </span>
+                                <span class='td'>
+                                    <a href='#' data-prefix='<%= results[i].prefix %>'><%= results[i].workphone %></a>
+                                    <a href='#'></a>
+                                </span>
 			</div>
                 <% } %>
 		<% if(results[i].cellphone) { %>
-                        <div class='label tr'><span class='value td'><img src="<%= results[i].server_address %>/template/images/mobile.png" title='Cellulare' alt='Cellulare'/></span> <span class='value td'><img src="<%= results[i].server_address %>/template/images/sms.png" class="click2sms cursorPointer" title='Invia SMS' data-num='<%= results[i].cellphone %>' alt='SMS'/></span><span class='td'><a href='#' class='click2call' data-prefix='<%= results[i].prefix %>'><%= results[i].cellphone %></a></span></div>
+                        <div class='label tr'>
+                            <span class='value td'>
+                                <img src="<%= results[i].server_address %>/template/images/mobile.png" title='Cellulare' alt='Cellulare' class='cc_click2call cursorPointer' data-num='<%= results[i].cellphone %>'/>
+                            </span>
+                            <span class='value td'>
+                                <img src="<%= results[i].server_address %>/template/images/sms.png" class="click2sms cursorPointer" title='Invia SMS' data-num='<%= results[i].cellphone %>' alt='SMS'/>
+                            </span>
+                            <span class='td'>
+                                <a href='#' data-prefix='<%= results[i].prefix %>'><%= results[i].cellphone %></a>
+                            </span>
+                        </div>
                 <% } %>
 		<% if(results[i].homephone) { %>
-                       <div class='label tr'><span class='value td'><img src="<%= results[i].server_address %>/template/images/phone.png" title='Telefono Casa' alt='Telefono Casa'/></span> <span class='td'><a href='#' class='click2call' data-prefix='<%= results[i].prefix %>'><%= results[i].homephone %></a></a></span></div>
+                        <div class='label tr'>
+                            <span class='value td'>
+                                <img src="<%= results[i].server_address %>/template/images/phone.png" title='Telefono Casa' alt='Telefono Casa' class='cc_click2call cursorPointer' data-num='<%= results[i].homephone %>'/>
+                            </span>
+                            <span class='td'>
+                                <a href='#' data-prefix='<%= results[i].prefix %>'><%= results[i].homephone %></a>
+                            </span>
+                        </div>
                 <% } %>
 		<% if(results[i].fax) { %>
                         <div class='label tr'><span class='value td'><img src="<%= results[i].server_address %>/template/images/fax.png" title='Fax' alt='Fax'/></span> <span class='td'><a href='#' class='click2fax'><%= results[i].fax %></a></span></div>

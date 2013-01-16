@@ -31,10 +31,11 @@
   text-decoration: none;
   color: black;
   font-weight: normal;
+  cursor: default;
 }
 
 .contactsVCard a:hover {
-  text-decoration: underline;
+  text-decoration: none;
   color: black;
   font-weight: normal;
 }
