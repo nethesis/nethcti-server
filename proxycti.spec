@@ -1,5 +1,5 @@
 Name:		proxycti
-Version:	1.2.2
+Version:	1.2.3
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI	
 
@@ -74,6 +74,9 @@ ln -s /usr/lib/node/proxycti/sql/update.sh /etc/e-smith/sql/init/20cti_update
 
 
 %changelog
+* Thu Nov 13 2013  Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.2.3-1nh
+- Bug #1627: uniform click2call over icons into the phonebook results and customer cards. 
+
 * Wed Dec 12 2012 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.2.2-1nh
 - On 'UserEvent', always search contact informations in phonebook
 
