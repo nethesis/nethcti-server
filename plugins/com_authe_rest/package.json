@@ -1,6 +1,7 @@
 {
     "name": "authe",
     "main": "authe.js",
+    "private": true,
     "plugin": {
 	"consumes": [],
 	"provides": []
