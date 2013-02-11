@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 var architect = require('architect');
 
 var config = [
