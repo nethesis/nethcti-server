@@ -1,0 +1,9 @@
+{
+    "name": "ast_proxy",
+    "main": "ast_proxy.js",
+    "private": true,
+    "plugin": {
+        "consumes": [],
+        "provides": []
+    }
+}
