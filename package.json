@@ -4,11 +4,12 @@
     "version": "2.0.0",
     "private": true,
     "dependencies": {
-	"architect": "0.1.8",
-	"jsplugs": "0.1.0",
-	"iniparser": "1.0.5",
-	"log4js": "0.5.6",
-	"mysql": "0.9.5"
+	"mysql":        "0.9.5",
+	"log4js":       "0.5.6",
+	"jsplugs":      "0.1.0",
+	"iniparser":    "1.0.5",
+	"architect":    "0.1.8",
+        "asterisk-ami": "0.0.8"
     },
     "engines": {
 	"node": "0.8.16"
