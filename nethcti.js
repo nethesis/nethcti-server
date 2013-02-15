@@ -3,6 +3,7 @@ var architect = require('architect');
 
 var config = [
     { packagePath: "./plugins/ast_proxy", iniPath: '/etc/nethcti/asterisk.ini' },
+    { packagePath: "./plugins/nethcti", },
     { packagePath: "./plugins/com_authe_rest" },
     { packagePath: "./plugins/com_hist_rest" }
 ];
@@ -12,5 +13,5 @@ architect.createApp(app, function () {
 });
 process.on('uncaughtException', function (err) {
     console.log('UncaughtException !!!');
-    console.log(err);
+    console.log(err.stack);
 });
