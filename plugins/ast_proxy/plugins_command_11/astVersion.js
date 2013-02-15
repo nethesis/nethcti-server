@@ -1,5 +1,5 @@
 // Manage command to get the asterisk version
-var action = require('../action_11.js');
+var action = require('../action.js');
 
 (function() {
 

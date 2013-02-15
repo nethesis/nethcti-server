@@ -1,6 +1,6 @@
 // Manage command to get the DND status of an extension
  
-var action = require('../action_11.js');
+var action = require('../action.js');
 
 (function() {
 
