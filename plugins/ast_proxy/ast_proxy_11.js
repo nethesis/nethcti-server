@@ -1,16 +1,13 @@
+// It is the asterisk proxy
 var ast          = require('asterisk-ami');
-var action       = require('./action_11');
+var action       = require('./action');
+var pluginsCmd   = require('jsplugs')().require('./plugins/ast_proxy/plugins_command_11');
 var iniparser    = require('iniparser');
 var EventEmitter = require('events').EventEmitter;
 
 var am;       // asterisk manage
 var map = {}; // key: ActionID, value: cb
 var emitter = new EventEmitter();
-
-exports.on = on;
-exports.start = start;
-exports.astVersion = astVersion;
-exports.listSipPeers = listSipPeers;
 
 function start(options) {
     try {
@@ -59,24 +56,13 @@ function start(options) {
 // receive response or event from asterisk
 function onData(data) {
     try {
+        // get ActionId and action name
         var actionid = data.actionid;
-        var act = action.getActionName(actionid);
+        var cmd = action.getActionName(actionid); // may be undefined
 
-        // check callback presence
-        if (map[actionid] && typeof map[actionid] === 'function' ) {
-            
-            // check action type
-            if (act === action.actionName.astVersion) {
-                map[actionid](data.asteriskversion);
-
-            } else {
-                map[actionid](data);
-            }
-        }
-
-        // remove map association ActionId-callback
-        if (map[actionid]) {
-            delete map[actionid];
+        // check command plugin presence
+        if (pluginsCmd[cmd]) {
+            pluginsCmd[cmd].data(data);
         }
 
     } catch (err) {
@@ -90,33 +76,20 @@ function on(event, listener) {
     catch (err) { console.log(err.stack); }
 }
 
-// add map association ActionId-callback
-function addMapAssoc(id, cb) {
+// request data from asterisk
+function get(obj, cb) {
     try {
-        if (cb && typeof cb === 'function') { map[id] = cb; }
+        if (pluginsCmd[obj.command]) {
+            pluginsCmd[obj.command].execute(am, obj, cb);
+        } else {
+            console.log('no plugin for command ' + obj.command);
+        }
     } catch (err) {
         console.log(err.stack);
     }
 }
 
-// send action to know asterisk version
-function astVersion(cb) {
-    try {
-        var act = action.astVersion();
-        addMapAssoc(act.ActionId, cb);
-        am.send(act);
-    } catch (err) {
-        console.log(err.stack);
-    }
-}
-
-// send action to get all sip peers
-function listSipPeers(cb) {
-    try {
-        var act = action.listSipPeers();
-        addMapAssoc(act.ActionId, cb);
-        am.send(act);
-    } catch (err) {
-        console.log(err.stack);
-    }
-}
+// exports methods
+exports.on = on;
+exports.start = start;
+exports.get = get;
