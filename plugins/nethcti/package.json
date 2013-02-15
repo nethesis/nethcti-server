@@ -1,0 +1,9 @@
+{
+    "name": "nethcti",
+    "main": "nethcti.js",
+    "private": true,
+    "plugin": {
+        "consumes": ["astProxy"],
+        "provides": []
+    }
+}
