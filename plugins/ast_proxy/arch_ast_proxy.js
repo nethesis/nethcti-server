@@ -1,14 +1,13 @@
-var astProxy11 = require('./ast_proxy_11');
+var astProxy = require('./ast_proxy');
 
 module.exports = function (options, imports, register) {
 
-    astProxy11.start(options);
+    astProxy.start(options);
 
     register(null, {
         astProxy: {
-            on: astProxy11.on,
-            astVersion: astProxy11.astVersion,
-            listSipPeers: astProxy11.listSipPeers
+            on: astProxy.on,
+            get: astProxy.get
         }
     });
 }
