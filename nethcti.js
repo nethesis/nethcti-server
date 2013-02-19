@@ -2,8 +2,9 @@
 var architect = require('architect');
 
 var config = [
-    { packagePath: "./plugins/ast_proxy", iniPath: '/etc/nethcti/asterisk.ini' },
-    { packagePath: "./plugins/nethcti", },
+    { packagePath: "./plugins/logger" },
+    { packagePath: "./plugins/nethcti" },
+    { packagePath: "./plugins/ast_proxy" },
     { packagePath: "./plugins/com_authe_rest" },
     { packagePath: "./plugins/com_hist_rest" }
 ];
