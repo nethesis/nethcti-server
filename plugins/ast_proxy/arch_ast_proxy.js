@@ -4,7 +4,10 @@ var astProxy = require('./ast_proxy');
 
 module.exports = function (options, imports, register) {
     
+    var logger = imports.logger;
+
     try {
+        astProxy.setLogger(logger);
         astProxy.config('/etc/nethcti/asterisk.ini');
         astProxy.start();
     } catch (err) {

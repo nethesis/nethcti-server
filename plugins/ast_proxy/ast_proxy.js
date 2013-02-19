@@ -20,6 +20,16 @@ var pluginsCmd   = require('jsplugs')().require('./plugins/ast_proxy/plugins_com
 var EventEmitter = require('events').EventEmitter;
 
 /**
+* The logger. It must have at least three methods: _info, warn and error._
+*
+* @property logger
+* @type object
+* @private
+* @default console
+*/
+var logger = console;
+
+/**
 * The asterisk manager.
 *
 * @property am
@@ -76,8 +86,8 @@ function config(config) {
                && config.user
                && config.pass) {
 
-        if (!config.port) { console.log("port non ce"); config.port = '5038'; }
-        if (!config.host) { console.log("host non ce"); config.host = 'localhost'; }
+        if (!config.port) { config.port = '5038'; }
+        if (!config.host) { config.host = 'localhost'; }
 
         astConf = {
             host:     config.host,
@@ -102,7 +112,7 @@ function start() {
 
         // initialize the asterisk manager
         am = new ast(astConf);
-        console.log('initialized asterisk manager');
+        logger.info('initialized asterisk manager');
 
         // add event listeners to asterisk manager
         am.on('ami_data',              onData);
@@ -111,19 +121,19 @@ function start() {
         am.on('ami_socket_close',      amiSocketClose);
         am.on('ami_socket_timeout',    amiSocketTimeout);
         am.on('ami_socket_unwritable', amiSocketUnwritable);
-        console.log('added event listeners to asterisk manager');
+        logger.info('added event listeners to asterisk manager');
 
         // connect to asterisk
         try {
             am.connect(function () {
-                console.log('asterisk connected');
+                logger.info('asterisk connected');
             });
         } catch (err) {
-            console.log(err);
+            logger.error(err);
         }
 
     } catch (err) {
-        console.log(err.stack);
+        logger.error(err.stack);
     }
 }
 
@@ -135,7 +145,7 @@ function start() {
 * @private
 */
 function amiSocketEnd() {
-    console.log('asterisk socket disconnected');
+    logger.warn('asterisk socket disconnected');
 }
 
 /**
@@ -147,7 +157,7 @@ function amiSocketEnd() {
 * @private
 */
 function amiSocketTimeout() {
-    console.log('asterisk socket timeout');
+    logger.warn('asterisk socket timeout');
 }
 
 /**
@@ -161,9 +171,7 @@ function amiSocketTimeout() {
 * transmission error
 */
 function amiSocketClose(had_error) {
-    console.log('asterisk socket close');
-    console.log(typeof had_error);
-    console.log(had_error);
+    logger.warn('asterisk socket close - had_error: ' + had_error);
 }
 
 /**
@@ -174,7 +182,7 @@ function amiSocketClose(had_error) {
 * @private
 */
 function amiSocketUnwritable() {
-    console.log('asterisk socket unwritable');
+    logger.error('asterisk socket unwritable');
 }
 
 /**
@@ -187,8 +195,8 @@ function amiSocketUnwritable() {
 * @param {object} err The error object
 */
 function amiSocketError(err) {
-    try { console.log(err.stack); }
-    catch (err) { console.log(err.stack); }
+    try { logger.error(err.stack); }
+    catch (err) { logger.error(err.stack); }
 }
 
 /**
@@ -215,7 +223,7 @@ function onData(data) {
         }
 
     } catch (err) {
-        console.log(err.stack);
+        logger.error(err.stack);
     }
 }
 
@@ -249,10 +257,10 @@ function get(obj, cb) {
             pluginsCmd[obj.command].execute(am, obj, cb);
 
         } else {
-            console.log('no plugin for command ' + obj.command);
+            logger.info('no plugin for command ' + obj.command);
         }
     } catch (err) {
-        console.log(err.stack);
+        logger.error(err.stack);
     }
 }
 
@@ -266,11 +274,24 @@ function get(obj, cb) {
 */
 function on(type, cb) {
     try { return emitter.on(type, cb); }
-    catch (err) { console.log(err.stack); }
+    catch (err) { logger.error(err.stack); }
+}
+
+/**
+* Set the logger to be used.
+*
+* @method setLogger
+* @param {object} log The logger object. It must have at least
+* three methods: _info, warn and error_
+* @static
+*/
+function setLogger(log) {
+    logger = log;
 }
 
 // public interface
-exports.on = on;
-exports.config = config;
-exports.start = start;
-exports.get = get;
+exports.on        = on;
+exports.get       = get;
+exports.start     = start;
+exports.config    = config;
+exports.setLogger = setLogger;
