@@ -1,4 +1,12 @@
 /**
+* The asterisk proxy module provides a standard interface to use with
+* different version of asterisk server. It provides funcionality to execute
+* actions and to receive events informations.
+*
+* @module ast_proxy
+*/
+
+/**
 * Asterisk proxy with standard interface to use.
 *
 * @class ast_proxy
