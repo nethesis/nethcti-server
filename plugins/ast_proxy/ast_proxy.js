@@ -268,7 +268,7 @@ function get(obj, cb) {
             pluginsCmd[obj.command].execute(am, obj, cb);
 
         } else {
-            logger.info(IDLOG, 'no plugin for command ' + obj.command);
+            logger.warn(IDLOG, 'no plugin for command ' + obj.command);
         }
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -304,8 +304,34 @@ function setLogger(log) {
             && typeof log.error === 'function') {
 
             logger = log;
+
+            // set the logger for all command plugins
+            setAllPluginsCmdLogger(log);
+
         } else {
             throw new Error('wrong logger object');
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Call _setLogger_ function for all command plugins.
+*
+* @method setAllPluginsCmdLogger
+* @private
+* @param log The logger object.
+* @type {object}
+*/
+function setAllPluginsCmdLogger(log) {
+    try {
+        var key;
+        for (key in pluginsCmd) {
+
+            if (typeof pluginsCmd[key].setLogger === 'function') {
+                pluginsCmd[key].setLogger(log);
+            }
         }
     } catch (err) {
         logger.error(IDLOG, err.stack);
