@@ -20,6 +20,18 @@ var pluginsCmd   = require('jsplugs')().require('./plugins/ast_proxy/plugins_com
 var EventEmitter = require('events').EventEmitter;
 
 /**
+* The module identifier used by logger.
+*
+* @property IDLOG
+* @type string
+* @private
+* @final
+* @readOnly
+* @default [ast_proxy]
+*/
+var IDLOG = '[ast_proxy]';
+
+/**
 * The logger. It must have at least three methods: _info, warn and error._
 *
 * @property logger
@@ -109,10 +121,9 @@ function config(config) {
 */
 function start() {
     try {
-
         // initialize the asterisk manager
         am = new ast(astConf);
-        logger.info('initialized asterisk manager');
+        logger.info(IDLOG, 'initialized asterisk manager');
 
         // add event listeners to asterisk manager
         am.on('ami_data',              onData);
@@ -121,19 +132,19 @@ function start() {
         am.on('ami_socket_close',      amiSocketClose);
         am.on('ami_socket_timeout',    amiSocketTimeout);
         am.on('ami_socket_unwritable', amiSocketUnwritable);
-        logger.info('added event listeners to asterisk manager');
+        logger.info(IDLOG, 'added event listeners to asterisk manager');
 
         // connect to asterisk
         try {
             am.connect(function () {
-                logger.info('asterisk connected');
+                logger.info(IDLOG, 'asterisk connected');
             });
         } catch (err) {
-            logger.error(err);
+            logger.error(IDLOG, err.stack);
         }
 
     } catch (err) {
-        logger.error(err.stack);
+        logger.error(IDLOG, err.stack);
     }
 }
 
@@ -145,7 +156,7 @@ function start() {
 * @private
 */
 function amiSocketEnd() {
-    logger.warn('asterisk socket disconnected');
+    logger.warn(IDLOG, 'asterisk socket disconnected');
 }
 
 /**
@@ -157,7 +168,7 @@ function amiSocketEnd() {
 * @private
 */
 function amiSocketTimeout() {
-    logger.warn('asterisk socket timeout');
+    logger.warn(IDLOG, 'asterisk socket timeout');
 }
 
 /**
@@ -171,7 +182,7 @@ function amiSocketTimeout() {
 * transmission error
 */
 function amiSocketClose(had_error) {
-    logger.warn('asterisk socket close - had_error: ' + had_error);
+    logger.warn(IDLOG, 'asterisk socket close - had_error: ' + had_error);
 }
 
 /**
@@ -182,7 +193,7 @@ function amiSocketClose(had_error) {
 * @private
 */
 function amiSocketUnwritable() {
-    logger.error('asterisk socket unwritable');
+    logger.error(IDLOG, 'asterisk socket unwritable');
 }
 
 /**
@@ -195,8 +206,8 @@ function amiSocketUnwritable() {
 * @param {object} err The error object
 */
 function amiSocketError(err) {
-    try { logger.error(err.stack); }
-    catch (err) { logger.error(err.stack); }
+    try { logger.error(IDLOG, err.stack); }
+    catch (err) { logger.error(IDLOG, err.stack); }
 }
 
 /**
@@ -223,7 +234,7 @@ function onData(data) {
         }
 
     } catch (err) {
-        logger.error(err.stack);
+        logger.error(IDLOG, err.stack);
     }
 }
 
@@ -257,10 +268,10 @@ function get(obj, cb) {
             pluginsCmd[obj.command].execute(am, obj, cb);
 
         } else {
-            logger.info('no plugin for command ' + obj.command);
+            logger.info(IDLOG, 'no plugin for command ' + obj.command);
         }
     } catch (err) {
-        logger.error(err.stack);
+        logger.error(IDLOG, err.stack);
     }
 }
 
@@ -274,7 +285,7 @@ function get(obj, cb) {
 */
 function on(type, cb) {
     try { return emitter.on(type, cb); }
-    catch (err) { logger.error(err.stack); }
+    catch (err) { logger.error(IDLOG, err.stack); }
 }
 
 /**
@@ -282,11 +293,23 @@ function on(type, cb) {
 *
 * @method setLogger
 * @param {object} log The logger object. It must have at least
-* three methods: _info, warn and error_
+* three methods: _info, warn and error_ as console object.
 * @static
 */
 function setLogger(log) {
-    logger = log;
+    try {
+        if (typeof log === 'object'
+            && typeof log.info  === 'function'
+            && typeof log.warn  === 'function'
+            && typeof log.error === 'function') {
+
+            logger = log;
+        } else {
+            throw new Error('wrong logger object');
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
 }
 
 // public interface
