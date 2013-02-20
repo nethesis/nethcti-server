@@ -1,9 +1,9 @@
 {
     "name": "authe",
-    "main": "authe.js",
+    "main": "arch_authe.js",
     "private": true,
     "plugin": {
-	"consumes": [],
+	"consumes": ["logger"],
 	"provides": []
     }
 }
