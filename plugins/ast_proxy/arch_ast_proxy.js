@@ -1,5 +1,5 @@
 /**
-* The architect component that starts the asterisk proxy.
+* The architect component that exposes _ast\_proxy_ module.
 *
 * @class arch_ast_proxy
 */
@@ -7,16 +7,6 @@ var astProxy = require('./ast_proxy');
 
 module.exports = function (options, imports, register) {
     
-    var logger = imports.logger;
-
-    try {
-        astProxy.setLogger(logger);
-        astProxy.config('/etc/nethcti/asterisk.ini');
-        astProxy.start();
-    } catch (err) {
-        console.log(err.stack);
-    }
-
     // public interface for other architect components
     register(null, {
         astProxy: {
@@ -43,4 +33,13 @@ module.exports = function (options, imports, register) {
             get: astProxy.get
         }
     });
+
+    var logger = imports.logger;
+    try {
+        astProxy.setLogger(logger);
+        astProxy.config('/etc/nethcti/asterisk.ini');
+        astProxy.start();
+    } catch (err) {
+        console.log(err.stack);
+    }
 }
