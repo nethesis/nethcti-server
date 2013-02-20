@@ -4,8 +4,30 @@
 var action = require('../action');
 var Extension = require('../extension').Extension;
 
+/**
+* The module identifier used by logger.
+*
+* @property IDLOG
+* @type string
+* @private
+* @final
+* @readOnly
+* @default [listSipPeers]
+*/
+var IDLOG = '[listSipPeers]';
+
 (function() {
     try {
+        /**
+        * The logger. It must have at least three methods: _info, warn and error._
+        *
+        * @property logger
+        * @type object
+        * @private
+        * @default console
+        */
+        var logger = console;
+
         /**
         * Map associations between ActionID and callback to execute at the end
         * of the command
@@ -58,7 +80,7 @@ var Extension = require('../extension').Extension;
                     am.send(act);
 
                 } catch (err) {
-                    console.log(err.stack);
+                    logger.error(IDLOG, err.stack);
                 }
             },
 
@@ -88,16 +110,41 @@ var Extension = require('../extension').Extension;
                     }
 
                 } catch (err) {
-                    console.log(err.stack);
+                    logger.error(IDLOG, err.stack);
+                }
+            },
+
+            /**
+            * Set the logger to be used.
+            *
+            * @method setLogger
+            * @param {object} log The logger object. It must have at least
+            * three methods: _info, warn and error_
+            * @static
+            */
+            setLogger: function (log) {
+                try {
+                    if (typeof log === 'object'
+                        && typeof log.info  === 'function'
+                        && typeof log.warn  === 'function'
+                        && typeof log.error === 'function') {
+
+                        logger = log;
+                    } else {
+                        throw new Error('wrong logger object');
+                    }
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
                 }
             }
         };
 
         // public interface
-        exports.execute = listSipPeers.execute;
-        exports.data = listSipPeers.data;
+        exports.data      = listSipPeers.data;
+        exports.execute   = listSipPeers.execute;
+        exports.setLogger = listSipPeers.setLogger;
 
     } catch (err) {
-        console.log(err.stack);
+        logger.error(IDLOG, err.stack);
     }
 })();
