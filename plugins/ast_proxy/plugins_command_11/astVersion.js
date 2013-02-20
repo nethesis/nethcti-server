@@ -103,7 +103,7 @@ var IDLOG = '[astVersion]';
             },
 
             /**
-            * Set the logger to be used. Same as _ast\_proxy.setLogger._
+            * Set the logger to be used.
             *
             * @method setLogger
             * @param {object} log The logger object. It must have at least
@@ -128,8 +128,9 @@ var IDLOG = '[astVersion]';
         };
 
         // public interface
-        exports.execute = astVersion.execute;
-        exports.data = astVersion.data;
+        exports.data      = astVersion.data;
+        exports.execute   = astVersion.execute;
+        exports.setLogger = astVersion.setLogger;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
