@@ -6,8 +6,30 @@
 */
 var action = require('../action');
 
+/**
+* The module identifier used by logger.
+*
+* @property IDLOG
+* @type string
+* @private
+* @final
+* @readOnly
+* @default [astVersion]
+*/
+var IDLOG = '[astVersion]';
+
 (function() {
     try {
+        /**
+        * The logger. It must have at least three methods: _info, warn and error._
+        *
+        * @property logger
+        * @type object
+        * @private
+        * @default console
+        */
+        var logger = console;
+
         /**
         * Map associations between ActionID and callback to execute at the end
         * of the command
@@ -50,7 +72,7 @@ var action = require('../action');
                     am.send(act);
 
                 } catch (err) {
-                    console.log(err.stack);
+                    logger.error(IDLOG, err.stack);
                 }
             },
 
@@ -76,7 +98,31 @@ var action = require('../action');
                     delete map[data.actionid];
 
                 } catch (err) {
-                    console.log(err.stack);
+                    logger.error(IDLOG, err.stack);
+                }
+            },
+
+            /**
+            * Set the logger to be used. Same as _ast\_proxy.setLogger._
+            *
+            * @method setLogger
+            * @param {object} log The logger object. It must have at least
+            * three methods: _info, warn and error_
+            * @static
+            */
+            setLogger: function (log) {
+                try {
+                    if (typeof log === 'object'
+                        && typeof log.info  === 'function'
+                        && typeof log.warn  === 'function'
+                        && typeof log.error === 'function') {
+
+                        logger = log;
+                    } else {
+                        throw new Error('wrong logger object');
+                    }
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
                 }
             }
         };
@@ -86,6 +132,6 @@ var action = require('../action');
         exports.data = astVersion.data;
 
     } catch (err) {
-        console.log(err.stack);
+        logger.error(IDLOG, err.stack);
     }
 })();
