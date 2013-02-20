@@ -276,19 +276,6 @@ function get(obj, cb) {
 }
 
 /**
-* Subscribe a callback function to a custom event fired by this object.
-*
-* @method on
-* @param {string} type The name of the event
-* @param {function} cb The callback to execute in response to the event
-* @return {object} A subscription handle capable of detaching that subscription
-*/
-function on(type, cb) {
-    try { return emitter.on(type, cb); }
-    catch (err) { logger.error(IDLOG, err.stack); }
-}
-
-/**
 * Set the logger to be used.
 *
 * @method setLogger
@@ -339,7 +326,15 @@ function setAllPluginsCmdLogger(log) {
 }
 
 // public interface
-exports.on        = on;
+/**
+* Subscribe a callback function to a custom event fired by this object. Same as nodejs _events.EventEmitter.on._
+*
+* @method on
+* @param {string} type The name of the event
+* @param {function} cb The callback to execute in response to the event
+* @return {object} A subscription handle capable of detaching that subscription
+*/
+exports.on        = emitter.on;
 exports.get       = get;
 exports.start     = start;
 exports.config    = config;
