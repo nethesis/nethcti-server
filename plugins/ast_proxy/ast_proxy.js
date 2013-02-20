@@ -1,6 +1,6 @@
 /**
 * The asterisk proxy module provides a standard interface to use with
-* different version of asterisk server. It provides funcionality to execute
+* different version of asterisk server. It provides functions to execute
 * actions and to receive events informations.
 *
 * @module ast_proxy
@@ -229,8 +229,13 @@ function onData(data) {
         var cmd = action.getActionName(actionid);
 
         // check command plugin presence
-        if (pluginsCmd[cmd]) {
+        if (pluginsCmd[cmd]
+            && typeof pluginsCmd[cmd].data === 'function') {
+
             pluginsCmd[cmd].data(data);
+
+        } else {
+            logger.warn(IDLOG, 'no plugin for received data with ActionID: ' + actionid);
         }
 
     } catch (err) {
@@ -262,7 +267,6 @@ function onData(data) {
 function get(obj, cb) {
     try {
         if (pluginsCmd[obj.command]
-            && pluginsCmd[obj.command].execute
             && typeof pluginsCmd[obj.command].execute === 'function') {
 
             pluginsCmd[obj.command].execute(am, obj, cb);
