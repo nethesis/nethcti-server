@@ -8,8 +8,7 @@ var config = [
     { packagePath: "./plugins/logger" },
     { packagePath: "./plugins/nethcti" },
     { packagePath: "./plugins/ast_proxy" },
-    { packagePath: "./plugins/com_authe_rest" },
-    { packagePath: "./plugins/com_hist_rest" }
+    { packagePath: "./plugins/authe" }
 ];
 
 var app = architect.resolveConfig(config, __dirname);
