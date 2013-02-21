@@ -13,7 +13,7 @@ var astProxy = require('./ast_proxy');
 * @private
 * @final
 * @readOnly
-* @default [authe]
+* @default [arch_ast_proxy]
 */
 var IDLOG = '[arch_ast_proxy]';
 
