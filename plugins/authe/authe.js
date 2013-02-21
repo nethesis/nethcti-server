@@ -313,7 +313,6 @@ function isAutoUpdateTokenExpires() {
 // public interface
 exports.authe       = authe;
 exports.config      = config;
-exports.getToken    = getToken;
 exports.setLogger   = setLogger;
 exports.removeGrant = removeGrant;
 exports.isAutoUpdateTokenExpires = isAutoUpdateTokenExpires;
