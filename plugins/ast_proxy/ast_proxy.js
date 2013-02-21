@@ -20,7 +20,7 @@ var pluginsCmd   = require('jsplugs')().require('./plugins/ast_proxy/plugins_com
 var EventEmitter = require('events').EventEmitter;
 
 /**
-* The module identifier used by logger.
+* The module identifier used by the logger.
 *
 * @property IDLOG
 * @type string

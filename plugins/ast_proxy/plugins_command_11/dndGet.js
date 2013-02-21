@@ -4,7 +4,7 @@
 var action = require('../action');
 
 /**
-* The module identifier used by logger.
+* The module identifier used by the logger.
 *
 * @property IDLOG
 * @type string
