@@ -1,9 +1,9 @@
 {
-    "name": "authe",
-    "main": "arch_authe.js",
+    "name": "com_authe_rest",
+    "main": "arch_com_authe_rest.js",
     "private": true,
     "plugin": {
-	"consumes": ["logger"],
+	"consumes": ["logger", "authe"],
 	"provides": []
     }
 }
