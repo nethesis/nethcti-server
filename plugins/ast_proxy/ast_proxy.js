@@ -295,6 +295,7 @@ function setLogger(log) {
             && typeof log.error === 'function') {
 
             logger = log;
+            logger.info(IDLOG, 'new logger has been set');
 
             // set the logger for all command plugins
             setAllPluginsCmdLogger(log);
