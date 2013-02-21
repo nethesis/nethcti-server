@@ -6,9 +6,10 @@ var architect = require('architect');
 // architect components
 var config = [
     { packagePath: "./plugins/logger" },
-    { packagePath: "./plugins/nethcti" },
+    { packagePath: "./plugins/authe" },
+    { packagePath: "./plugins/com_authe_rest" },
     { packagePath: "./plugins/ast_proxy" },
-    { packagePath: "./plugins/authe" }
+    { packagePath: "./plugins/nethcti" }
 ];
 
 var app = architect.resolveConfig(config, __dirname);
