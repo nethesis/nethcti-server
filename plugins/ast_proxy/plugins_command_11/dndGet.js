@@ -95,11 +95,12 @@ var IDLOG = '[dndGet]';
                 try {
                     // check callback and info presence and execute it
                     if (map[data.actionid]
-                        && data.event === 'DBGetResponse'
-                        && data.key === exten
-                        && data.val === 'YES' ) {
+                        && data.val
+                        && data.key    === exten
+                        && data.event  === 'DBGetResponse'
+                        && data.family === 'DND') {
 
-                        map[data.actionid]({ dnd: 'yes' });
+                        map[data.actionid]({ dnd: data.val.toLowerCase() });
                         delete map[data.actionid]; // remove association ActionID-callback
 
                     } else if (map[data.actionid] && data.response === 'Error') {
