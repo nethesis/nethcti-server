@@ -36,16 +36,16 @@ module.exports = function (options, imports, register) {
             on: astProxy.on,
 
             /**
-            * It's the _get_ method provided by _ast\_proxy_ module.
+            * It's the _doCmd_ method provided by _ast\_proxy_ module.
             *
-            * @method get
+            * @method doCmd
             * @param {object} obj The object with the command name to execute and optional parameters
             *   @param {string} obj.command The command name to execute. A plugin command file with the
             *   same name must be present into the appropriate directory
             *   @param [obj.parameters] 0..n The parameters that can be used into the command plugin
             * @param {function} cb The callback
             */
-            get: astProxy.get
+            doCmd: astProxy.doCmd
         }
     });
 

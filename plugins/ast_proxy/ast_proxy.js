@@ -252,18 +252,18 @@ function onData(data) {
 * _astVersion.js_ plugin must be present.
 *
 *
-* @method get
+* @method doCmd
 * @param {object} obj The object with the command name to execute and optional parameters
 *   @param {string} obj.command The command name to execute. A plugin command file with the
 *   same name must be present into the appropriate directory
 *   @param [obj.parameters] 0..n The parameters that can be used into the command plugin
 * @param {function} cb The callback
 * @example
-* get({ command: 'astVersion' }, function (res) {
+* doCmd({ command: 'astVersion' }, function (res) {
 *     console.log(res);
 * });
 */
-function get(obj, cb) {
+function doCmd(obj, cb) {
     try {
         if (pluginsCmd[obj.command]
             && typeof pluginsCmd[obj.command].execute === 'function') {
@@ -340,7 +340,7 @@ function setAllPluginsCmdLogger(log) {
 * @return {object} A subscription handle capable of detaching that subscription
 */
 exports.on        = emitter.on;
-exports.get       = get;
+exports.doCmd     = doCmd;
 exports.start     = start;
 exports.config    = config;
 exports.setLogger = setLogger;
