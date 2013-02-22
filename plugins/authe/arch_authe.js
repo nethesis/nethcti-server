@@ -32,7 +32,7 @@ module.exports = function (options, imports, register) {
             * @method authe
             * @param {string} accessKeyId The access key used to retrieve secret key and token.
             * @param {string} token The token to be checked.
-            * @return {boolean} It's true if the user has been authenticated succesfully.
+            * @return {boolean} It's true if the user has been successfully authenticated.
             */
             authe: authe.authe,
 

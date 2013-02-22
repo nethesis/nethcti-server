@@ -154,7 +154,7 @@ function newToken(accessKeyId, nonce) {
     try {
         // check parameters
         if (typeof accessKeyId !== 'string'
-            || typeof accessKeyId !== 'nonce') {
+            || typeof nonce !== 'string') {
 
             throw new Error('wrong parameters');
         }
@@ -313,6 +313,7 @@ function isAutoUpdateTokenExpires() {
 // public interface
 exports.authe       = authe;
 exports.config      = config;
+exports.getNonce    = getNonce;
 exports.setLogger   = setLogger;
 exports.removeGrant = removeGrant;
 exports.isAutoUpdateTokenExpires = isAutoUpdateTokenExpires;
