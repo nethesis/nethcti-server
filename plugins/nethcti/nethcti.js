@@ -53,6 +53,15 @@ var astProxy;
 function start() {
     try {
 
+        setTimeout(function () {
+
+            astProxy.get({ command: 'cfbGet', exten: '214' }, function (resp) {
+                console.log("resp");
+                console.log(resp);
+            });
+
+        }, 1000);
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
