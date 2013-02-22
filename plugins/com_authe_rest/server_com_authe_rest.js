@@ -13,7 +13,7 @@
 */
 var util = require('util');
 var restify = require('restify');
-var plugins = require('jsplugs')().require('./plugins/com_authe_rest/plugins');
+var plugins = require('jsplugs')().require('./plugins/com_authe_rest/plugins_rest');
 
 /**
 * The module identifier used by the logger.
@@ -107,12 +107,12 @@ function setAllRestPluginsLogger(log) {
 */
 function execute(req, res, next) {
     try {
-        var tmp = req.url.split('/');
-        var p = tmp[1];
+        var tmp  = req.url.split('/');
+        var p    = tmp[1];
         var name = tmp[2];
 
-        logger.info(IDLOG, 'execute: %s.%s(%s)', p , name, util.inspect(req.params, true));
-        plugins[p][name].apply( plugins[p], [req, res, next]);
+        logger.info(IDLOG, 'execute: ' + p + '.' + name);
+        plugins[p][name].apply(plugins[p], [req, res, next]);
         return next();
 
     } catch (err) {
@@ -124,10 +124,25 @@ function execute(req, res, next) {
 * Start the REST server.
 *
 * @method start
+* @param {object} compAuthe The authentication architect component _arch\_authe_
+* to be used by REST plugins.
 * @static
 */
-function start() {
+function start(compAuthe) {
     try {
+        // check parameter
+        if (typeof compAuthe !== 'object'
+            || typeof compAuthe.getNonce !== 'function'
+            || typeof compAuthe.authe !== 'function') {
+
+            throw new Error('wrong parameter');
+        }
+
+        var p, root, get, post, k;
+
+        // set authentication architect component to all REST plugins
+        for (p in plugins) { plugins[p].setCompAuthe(compAuthe); }
+
         /**
         * The REST server.
         *
@@ -143,7 +158,6 @@ function start() {
         server.use(restify.bodyParser());
 
         // load plugins
-        var p, root, get, post, k;
         for (p in plugins) {
             get  = plugins[p].api['get'];
             root = plugins[p].api['root'];
@@ -161,8 +175,9 @@ function start() {
             }
         }
 
+        // start the REST server
         server.listen(PORT, function () {
-            logger.info(IDLOG, '%s listening at %s', server.name, server.url);
+            logger.info(IDLOG, server.name + ' listening at ' + server.url);
         });
 
     } catch (err) {
