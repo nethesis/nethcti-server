@@ -111,6 +111,7 @@ function config(config) {
     } else {
         throw new TypeError('wrong parameters');
     }
+    logger.info(IDLOG, 'successfully configured');
 }
 
 /**
@@ -269,6 +270,7 @@ function get(obj, cb) {
         if (pluginsCmd[obj.command]
             && typeof pluginsCmd[obj.command].execute === 'function') {
 
+            logger.info(IDLOG, 'execute ' + obj.command + '.execute');
             pluginsCmd[obj.command].execute(am, obj, cb);
 
         } else {
