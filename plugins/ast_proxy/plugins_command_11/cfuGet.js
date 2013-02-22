@@ -38,7 +38,7 @@ var IDLOG = '[cfuGet]';
         var map = {};
 
         /**
-        * Extension number to be verified for call forward status on busy.
+        * Extension number to be verified for call forward status by no answer. 
         *
         * @property exten
         * @type {string}
@@ -47,7 +47,7 @@ var IDLOG = '[cfuGet]';
         var exten;
 
         /**
-        * Command plugin to get the call forward status on busy of an extension.
+        * Command plugin to get the call forward status by no answer of an extension.
         *
         * @class cfuGet
         * @static
