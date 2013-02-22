@@ -235,8 +235,6 @@ function onData(data) {
 
             pluginsCmd[cmd].data(data);
 
-        } else {
-            logger.warn(IDLOG, 'no plugin for received data with ActionID: ' + actionid);
         }
 
     } catch (err) {
