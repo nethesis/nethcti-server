@@ -154,7 +154,7 @@ function _storeVoicemailUsedByExt(ext, vm) {
         _query(EXTENSION_INFO, query, function (result) {
             try {
                 if (result.affectedRows > 0) {
-                    logger.debug('succesfully stored vm "' + vm + '" used by ext "' + ext + '"');
+                    logger.debug('successfully stored vm "' + vm + '" used by ext "' + ext + '"');
                 } else {
                     logger.warn('storing voicemail "' + vm + '" used by "' + ext + '"');
                 }
