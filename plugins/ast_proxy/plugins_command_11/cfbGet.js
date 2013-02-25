@@ -68,7 +68,7 @@ var IDLOG = '[cfbGet]';
                     // set exten used in data function
                     exten = args.exten;
 
-                    // action to get asterisk version
+                    // action for asterisk
                     var act = { Action: 'DBGet', Family: 'CFB', Key: args.exten };
 
                     // set the action identifier

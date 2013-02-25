@@ -67,7 +67,7 @@ var IDLOG = '[listSipPeers]';
             */
             execute: function (am, args, cb) {
                 try {
-                    // action to get asterisk version
+                    // action for asterisk
                     var act = { Action: 'SIPpeers' };
                     
                     // set the action identifier

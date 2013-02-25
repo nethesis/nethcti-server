@@ -59,7 +59,7 @@ var IDLOG = '[astVersion]';
             */
             execute: function (am, args, cb) {
                 try {
-                    // action to get asterisk version
+                    // action for asterisk
                     var act = { Action: 'CoreSettings' };
                     
                     // set the action identifier
