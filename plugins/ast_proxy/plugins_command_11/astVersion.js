@@ -41,7 +41,7 @@ var IDLOG = '[astVersion]';
         var map = {};
 
         /**
-        * Command plugin to get asterisk version
+        * Command plugin to get the asterisk version
         *
         * @class astVersion
         * @static
