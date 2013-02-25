@@ -258,10 +258,16 @@ function onData(data) {
 *   same name must be present into the appropriate directory
 *   @param [obj.parameters] 0..n The parameters that can be used into the command plugin
 * @param {function} cb The callback
-* @example
-* doCmd({ command: 'astVersion' }, function (res) {
-*     console.log(res);
-* });
+*
+*     @example
+*
+*     doCmd({ command: 'astVersion' }, function (res) {
+*         console.log(res);
+*     });
+*
+*     doCmd({ command: 'dndGet', exten: '214' }, function (res) {
+*         console.log(res);
+*     });
 */
 function doCmd(obj, cb) {
     try {
