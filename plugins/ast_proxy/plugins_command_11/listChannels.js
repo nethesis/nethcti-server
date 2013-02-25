@@ -16,17 +16,6 @@ var Channel = require('../channel').Channel;
 */
 var IDLOG = '[listChannels]';
 
-/*
-enum ast_channel_state {
-        AST_STATE_DOWN,                 /*!< Channel is down and available */
-//        AST_STATE_RESERVED,             /*!< Channel is down, but reserved */
- //       AST_STATE_OFFHOOK,              /*!< Channel is off hook */
-  //      AST_STATE_DIALING,              /*!< Digits (or equivalent) have been dialed */
-   //     AST_STATE_RING,                 /*!< Line is ringing */
-    //    AST_STATE_RINGING,              /*!< Remote end is ringing */
-     //   AST_STATE_UP,                   /*!< Line is up */
-      //  AST_STATE_BUSY,
-
 (function() {
     try {
         /**
@@ -107,8 +96,6 @@ enum ast_channel_state {
             */
             data: function (data) {
                 try {
-                    console.log(data);
-                    
                     // store new channel object
                     if (data.event === 'CoreShowChannel'
                         && data.calleridnum) {
