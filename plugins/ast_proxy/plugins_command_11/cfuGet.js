@@ -29,7 +29,7 @@ var IDLOG = '[cfuGet]';
 
         /**
         * Map associations between ActionID and callback to execute at the end
-        * of the command
+        * of the command.
         *
         * @property map
         * @type {object}
@@ -55,7 +55,7 @@ var IDLOG = '[cfuGet]';
         var cfuGet = {
 
             /**
-            * Execute asterisk action to get the asterisk version.
+            * Execute asterisk action to get the call forward status by no answer.
             * 
             * @method execute
             * @param {object} am Asterisk manager to send the action
@@ -87,7 +87,7 @@ var IDLOG = '[cfuGet]';
 
             /**
             * It's called from _ast_proxy_ component for each data received
-            * from asterisk and relative to this command
+            * from asterisk and relative to this command.
             *
             * @method data
             * @param {object} data The asterisk data for the current command

@@ -29,7 +29,7 @@ var IDLOG = '[dndSet]';
 
         /**
         * Map associations between ActionID and callback to execute at the end
-        * of the command
+        * of the command.
         *
         * @property map
         * @type {object}
@@ -38,7 +38,7 @@ var IDLOG = '[dndSet]';
         var map = {};
 
         /**
-        * Command plugin to get DND status of an extension.
+        * Command plugin to set the DND status of an extension.
         *
         * @class dndSet
         * @static
@@ -46,7 +46,7 @@ var IDLOG = '[dndSet]';
         var dndSet = {
 
             /**
-            * Execute asterisk action to get the asterisk version.
+            * Execute asterisk action to set the DND status.
             * 
             * @method execute
             * @param {object} am Asterisk manager to send the action
@@ -79,7 +79,7 @@ var IDLOG = '[dndSet]';
 
             /**
             * It's called from _ast_proxy_ component for each data received
-            * from asterisk and relative to this command
+            * from asterisk and relative to this command.
             *
             * @method data
             * @param {object} data The asterisk data for the current command

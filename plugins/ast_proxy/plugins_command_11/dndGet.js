@@ -55,7 +55,7 @@ var IDLOG = '[dndGet]';
         var dndGet = {
 
             /**
-            * Execute asterisk action to get the asterisk version.
+            * Execute asterisk action to get the DND status.
             * 
             * @method execute
             * @param {object} am Asterisk manager to send the action
@@ -87,7 +87,7 @@ var IDLOG = '[dndGet]';
 
             /**
             * It's called from _ast_proxy_ component for each data received
-            * from asterisk and relative to this command
+            * from asterisk and relative to this command.
             *
             * @method data
             * @param {object} data The asterisk data for the current command
