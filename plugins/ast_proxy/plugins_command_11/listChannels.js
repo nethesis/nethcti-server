@@ -1,0 +1,176 @@
+/**
+* @submodule plugins_command_11
+*/
+var action    = require('../action');
+var Channel = require('../channel').Channel;
+
+/**
+* The module identifier used by the logger.
+*
+* @property IDLOG
+* @type string
+* @private
+* @final
+* @readOnly
+* @default [listChannels]
+*/
+var IDLOG = '[listChannels]';
+
+/*
+enum ast_channel_state {
+        AST_STATE_DOWN,                 /*!< Channel is down and available */
+//        AST_STATE_RESERVED,             /*!< Channel is down, but reserved */
+ //       AST_STATE_OFFHOOK,              /*!< Channel is off hook */
+  //      AST_STATE_DIALING,              /*!< Digits (or equivalent) have been dialed */
+   //     AST_STATE_RING,                 /*!< Line is ringing */
+    //    AST_STATE_RINGING,              /*!< Remote end is ringing */
+     //   AST_STATE_UP,                   /*!< Line is up */
+      //  AST_STATE_BUSY,
+
+(function() {
+    try {
+        /**
+        * The logger. It must have at least three methods: _info, warn and error._
+        *
+        * @property logger
+        * @type object
+        * @private
+        * @default console
+        */
+        var logger = console;
+
+        /**
+        * Map associations between ActionID and callback to execute at the end
+        * of the command.
+        *
+        * @property map
+        * @type {object}
+        * @private
+        */
+        var map = {};
+
+        /**
+        * List of all channels. The key is the extension and the value is
+        * a Channel object.
+        *
+        * @property list
+        * @type {object}
+        * @private
+        */
+        var list = {};
+
+        /**
+        * Command plugin to get the list of all channels.
+        *
+        * @class listChannels
+        * @static
+        */
+        var listChannels = {
+
+            /**
+            * Execute asterisk action to get the list of all channels.
+            * 
+            * @method execute
+            * @param {object} am Asterisk manager to send the action
+            * @param {object} args The object contains optional parameters
+            * passed to _get_ method of the ast_proxy component 
+            * @param {function} cb The callback function called at the end
+            * of the command
+            * @static
+            */
+            execute: function (am, args, cb) {
+                try {
+                    // action for asterisk
+                    var act = { Action: 'CoreShowChannels' };
+                    
+                    // set the action identifier
+                    act.ActionID = action.getActionId('listChannels');
+
+                    // add association ActionID-callback
+                    map[act.ActionID] = cb;
+
+                    // send action to asterisk
+                    am.send(act);
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                }
+            },
+
+            /**
+            * It's called from _ast_proxy_ component for each data received
+            * from asterisk and relative to this command.
+            *
+            * @method data
+            * @param {object} data The asterisk data for the current command.
+            * @static
+            */
+            data: function (data) {
+                try {
+                    console.log(data);
+                    
+                    // store new channel object
+                    if (data.event === 'CoreShowChannel'
+                        && data.calleridnum) {
+
+                        if (!list[data.calleridnum]) { list[data.calleridnum] = []; }
+                        var obj = {
+                            channel:          data.channel,
+                            duration:         data.duration,
+                            callerNum:        data.calleridnum,
+                            callerName:       data.calleridname,
+                            bridgedNum:       data.connectedlinenum,
+                            bridgedName:      data.connectedlinename,
+                            bridgedChannel:   data.bridgedchannel,
+                            channelStateDesc: data.channelstatedesc
+                        };
+                        list[data.calleridnum].push(new Channel(obj));
+
+                    } else if (map[data.actionid] && data.event === 'CoreShowChannelsComplete') {
+                        map[data.actionid](list); // callback execution
+                    }
+
+                    if (data.event === 'CoreShowChannelsComplete') {
+                        list = {}; // empty list
+                        delete map[data.actionid]; // remove association ActionID-callback
+                    }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                }
+            },
+
+            /**
+            * Set the logger to be used.
+            *
+            * @method setLogger
+            * @param {object} log The logger object. It must have at least
+            * three methods: _info, warn and error_
+            * @static
+            */
+            setLogger: function (log) {
+                try {
+                    if (typeof log === 'object'
+                        && typeof log.info  === 'function'
+                        && typeof log.warn  === 'function'
+                        && typeof log.error === 'function') {
+
+                        logger = log;
+                    } else {
+                        throw new Error('wrong logger object');
+                    }
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                }
+            }
+        };
+
+        // public interface
+        exports.data      = listChannels.data;
+        exports.execute   = listChannels.execute;
+        exports.setLogger = listChannels.setLogger;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+})();
