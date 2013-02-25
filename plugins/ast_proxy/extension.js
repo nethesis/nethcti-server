@@ -1,14 +1,27 @@
 /**
 * Abstraction of an extension.
 *
+* **It can throw exceptions.**
+*
 * @class Extension
+* @param {string} extension The extension number
+* @param {string} channelType The channel type, SIP, IAX, ...
 * @constructor
+* @return {object} The extension object.
 */
 exports.Extension = function (extension, channelType) {
+    // check parameters
+    if (typeof extension !== 'string'
+        || typeof channelType !== 'string') {
+
+        throw new Error('wrong parameters');
+    }
+
     /**
     * The Extension number.
     *
-    * @property {string}
+    * @property exten
+    * @type {string}
     * @required
     * @private
     */
@@ -17,7 +30,8 @@ exports.Extension = function (extension, channelType) {
     /**
     * The channel type.
     *
-    * @property {string}
+    * @property chanType
+    * @type {string}
     * @required
     * @private
     */

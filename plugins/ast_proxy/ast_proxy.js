@@ -69,7 +69,9 @@ var emitter = new EventEmitter();
 var astConf = {};
 
 /**
-* Set configuration to use by telnet asterisk connection. **The method can throw an Exception.**
+* Set configuration to use by telnet asterisk connection.
+*
+* **The method can throw an Exception.**
 *
 * @method config
 * @param {string|object} config The configuration to be used
