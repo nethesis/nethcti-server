@@ -65,7 +65,9 @@ var IDLOG = '[cfuGet]';
             */
             execute: function (am, args, cb) {
                 try {
+                    // set exten used in data function
                     exten = args.exten;
+
                     // action to get asterisk version
                     var act = { Action: 'DBGet', Family: 'CFU', Key: args.exten };
 
