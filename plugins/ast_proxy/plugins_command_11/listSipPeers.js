@@ -96,7 +96,6 @@ var IDLOG = '[listSipPeers]';
             */
             data: function (data) {
                 try {
-
                     // store new Extension object
                     // data.objectname is extension number, e.g., 214
                     if (data.event === 'PeerEntry' && data.objectname && data.channeltype) {
