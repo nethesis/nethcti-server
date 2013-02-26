@@ -51,7 +51,7 @@ var IDLOG = '[dndSet]';
             * @method execute
             * @param {object} am Asterisk manager to send the action
             * @param {object} args The object contains optional parameters
-            * passed to _get_ method of the ast_proxy component 
+            * passed to _doCmd_ method of the ast_proxy component
             * @param {function} cb The callback function called at the end
             * of the command
             * @static
