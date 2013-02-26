@@ -11,7 +11,7 @@
 *   @param {string} channel.bridgedNum The connected number
 *   @param {string} channel.bridgedName The connected name
 *   @param {string} channel.bridgedChannel The connected asterisk channel
-*   @param {string} channel.channelStateDesc The status description of the asterisk channel
+*   @param {string} channel.channelStatus The status description of the asterisk channel
 * @return {object} The channel object.
 * @constructor
 */
@@ -24,7 +24,7 @@ exports.Channel = function (obj) {
         || !obj.bridgedNum
         || !obj.bridgedName
         || !obj.bridgedChannel
-        || !obj.channelStateDesc) {
+        || !obj.channelStatus) {
 
         throw new Error('wrong parameter');
     }
@@ -95,11 +95,11 @@ exports.Channel = function (obj) {
     /**
     * The status description of the asterisk channel.
     *
-    * @property {string} channelStateDesc
+    * @property {string} channelStatus
     * @required
     * @private
     */
-    var channelStateDesc = obj.channelStateDesc;
+    var channelStatus = obj.channelStatus;
 
     /**
     * Return the channel identifier.
@@ -160,10 +160,10 @@ exports.Channel = function (obj) {
     /**
     * Return the channel status description.
     *
-    * @method getChannelStateDesc
+    * @method getChannelStatus
     * @return {string} The channel status description.
     */
-    function getChannelStateDesc() { return channelStateDesc; }
+    function getChannelStatus() { return channelStatus; }
 
     /**
     * Return the readable string of the extension.
@@ -181,7 +181,7 @@ exports.Channel = function (obj) {
         getCallerName:       getCallerName,
         getBridgedNum:       getBridgedNum,
         getBridgedName:      getBridgedName,
-        getBridgedChannel:   getBridgedChannel,
-        getChannelStateDesc: getChannelStateDesc
+        getChannelStatus:    getChannelStatus,
+        getBridgedChannel:   getBridgedChannel
     };
 }
