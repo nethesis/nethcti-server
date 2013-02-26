@@ -99,7 +99,6 @@ var IDLOG = '[sipDetails]';
             * @static
             */
             data: function (data) {
-                console.log(data);
                 try {
                     // check callback and info presence and execute it
                     if (map[data.actionid]
