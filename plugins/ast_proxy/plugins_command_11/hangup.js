@@ -88,7 +88,6 @@ var IDLOG = '[hangup]';
             */
             data: function (data) {
                 try {
-                    console.log(data);
                     // check callback and info presence and execute it
                     if (map[data.actionid]
                         && data.response === 'Success') {
