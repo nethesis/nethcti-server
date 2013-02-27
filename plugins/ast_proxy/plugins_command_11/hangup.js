@@ -93,14 +93,17 @@ var IDLOG = '[hangup]';
                         && data.response === 'Success') {
 
                         map[data.actionid]({ result: true });
-                        delete map[data.actionid]; // remove association ActionID-callback
 
                     } else if (map[data.actionid]
+                               && data.message
                                && data.response === 'Error') {
 
                         map[data.actionid]({ result: false, cause: data.message });
-                        delete map[data.actionid]; // remove association ActionID-callback
+
+                    } else {
+                        map[data.actionid]({ result: false });
                     }
+                    delete map[data.actionid]; // remove association ActionID-callback
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
