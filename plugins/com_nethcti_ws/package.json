@@ -1,0 +1,9 @@
+{
+    "name": "com_nethcti_ws",
+    "main": "arch_com_nethcti_ws.js",
+    "private": true,
+    "plugin": {
+        "consumes": ["authe", "astProxy", "logger"],
+        "provides": []
+    }
+}

@@ -1,10 +1,10 @@
 /**
-* nethcti architect component that starts nethcti module.
+* aaaaaaaaaaaaaaaaaaaaaaaaa.
 *
-* @class arch_nethcti
-* @module nethcti
+* @class arch_com_nethcti_ws
+* @module com_nethcti_ws
 */
-var nethcti = require('./nethcti');
+var comNethctiWs = require('./com_nethcti_ws');
 
 /**
 * The module identifier used by the logger.
@@ -14,9 +14,9 @@ var nethcti = require('./nethcti');
 * @private
 * @final
 * @readOnly
-* @default [arch_nethcti]
+* @default [arch_com_nethcti_ws]
 */
-var IDLOG = '[arch_nethcti]';
+var IDLOG = '[arch_com_nethcti_ws]';
 
 module.exports = function (options, imports, register) {
     
@@ -24,13 +24,15 @@ module.exports = function (options, imports, register) {
 
     try {
         var logger   = console;
+        var authe    = imports.authe;
         var astProxy = imports.astProxy;
 
         if (imports.logger) { logger = imports.logger; }
 
-        nethcti.setLogger(logger);
-        nethcti.setAstProxy(astProxy);
-        nethcti.start();
+        comNethctiWs.setLogger(logger);
+        comNethctiWs.setAstProxy(astProxy);
+        comNethctiWs.setAuthe(authe);
+        comNethctiWs.start();
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }

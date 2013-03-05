@@ -9,7 +9,7 @@ var config = [
     { packagePath: "./plugins/authe" },
     { packagePath: "./plugins/com_authe_rest" },
     { packagePath: "./plugins/ast_proxy" },
-    { packagePath: "./plugins/nethcti" }
+    { packagePath: "./plugins/com_nethcti_ws" }
 ];
 
 var app = architect.resolveConfig(config, __dirname);
