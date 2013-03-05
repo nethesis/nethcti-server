@@ -354,16 +354,25 @@ function setAllPluginsCmdLogger(log) {
     }
 }
 
-// public interface
 /**
-* Subscribe a callback function to a custom event fired by this object. Same as nodejs _events.EventEmitter.on._
+* Subscribe a callback function to a custom event fired by this object.
+* It's the same of nodejs _events.EventEmitter.on._
 *
 * @method on
 * @param {string} type The name of the event
 * @param {function} cb The callback to execute in response to the event
-* @return {object} A subscription handle capable of detaching that subscription
+* @return {object} A subscription handle capable of detaching that subscription.
 */
-exports.on        = emitter.on;
+function on(type, cb) {
+    try {
+        return emitter.on(type, cb);
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+// public interface
+exports.on        = on;
 exports.doCmd     = doCmd;
 exports.start     = start;
 exports.config    = config;
