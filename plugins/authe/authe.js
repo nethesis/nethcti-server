@@ -161,7 +161,7 @@ function newToken(accessKeyId, nonce) {
 
         // generate token HMAC-SHA1
         var tohash = accessKeyId + ':' + creds[accessKeyId] + ':' + nonce;
-        var token  =  crypto.createHmac('sha1', creds[accessKeyId]).update(tohash).digest('hex');
+        var token  = crypto.createHmac('sha1', creds[accessKeyId]).update(tohash).digest('hex');
 
         // store token
         grants[accessKeyId] = {
@@ -207,7 +207,7 @@ function getNonce(accessKeyId) {
 
 /**
 * Authenticate the user through checking the token with the one 
-* that must be present in the _grants_ object. The _getToken_ method
+* that must be present in the _grants_ object. The _getNonce_ method
 * must be used before this.
 *
 * @method authe
@@ -223,7 +223,7 @@ function authe(accessKeyId, token) {
         }
 
         if (!creds[accessKeyId] // the user's credentials don't exist
-            || !grants[accessKeyId]) { // the token permission don't exist
+            || !grants[accessKeyId]) { // the permission token don't exist
 
             logger.warn(IDLOG, 'authe failed for accessKeyId: "' + accessKeyId + '": no cred or grant');
             return false;

@@ -1,5 +1,5 @@
 /**
-* The architect component that starts _server_com_authe_rest_ module.
+* The architect component that starts _server\_com\_authe\_rest_ module.
 *
 * @class arch_com_authe_rest
 * @module com_authe_rest
