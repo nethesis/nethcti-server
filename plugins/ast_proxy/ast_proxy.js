@@ -51,7 +51,7 @@ var logger = console;
 var am;
 
 /**
-* Event emitter
+* The event emitter.
 *
 * @property emitter
 * @type object
@@ -231,12 +231,28 @@ function onData(data) {
         var actionid = data.actionid;
         var cmd = action.getActionName(actionid);
 
-        // check command plugin presence
+        // check command plugin presence.
+        // This event is generated in response to a command request.
+        // It passes the event handler to the appropriate plugin.
         if (pluginsCmd[cmd]
             && typeof pluginsCmd[cmd].data === 'function') {
 
             pluginsCmd[cmd].data(data);
 
+        } else {
+
+            console.log('\n\nEVENTO di ASTERISK non cercato!');
+            console.log("DATA:");
+            console.log(data);
+            console.log("actionid = " + actionid + " cmd = " + cmd);
+
+            if (data.event === 'PeerStatus') {
+                console.log("emetto evento PeerStatus");
+                emitter.emit(data.event, data);
+
+            } else if (data.event === 'ExtensionStatus') {
+                console.log("questo è uno ExtensionStatus");
+            }
         }
 
     } catch (err) {
