@@ -51,6 +51,13 @@ var IDLOG = '[listChannels]';
         /**
         * Command plugin to get the list of all channels.
         *
+        * Use it with _ast\_proxy_ module as follow:
+        *
+        *     ast_proxy.doCmd({ command: 'listChannels' }, function (res) {
+        *         // some code
+        *     });
+        *
+        *
         * @class listChannels
         * @static
         */

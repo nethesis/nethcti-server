@@ -49,6 +49,13 @@ var IDLOG = '[dndGet]';
         /**
         * Command plugin to get DND status of an extension.
         *
+        * Use it with _ast\_proxy_ module as follow:
+        *
+        *     ast_proxy.doCmd({ command: 'dndGet', exten: '214' }, function (res) {
+        *         // some code
+        *     });
+        *
+        *
         * @class dndGet
         * @static
         */

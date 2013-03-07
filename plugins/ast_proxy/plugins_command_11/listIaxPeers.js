@@ -51,6 +51,13 @@ var IDLOG = '[listIaxPeers]';
         /**
         * Command plugin to get the list of all IAX peers.
         *
+        * Use it with _ast\_proxy_ module as follow:
+        *
+        *     ast_proxy.doCmd({ command: 'listIaxPeers' }, function (res) {
+        *         // some code
+        *     });
+        *
+        *
         * @class listIaxPeers
         * @static
         */

@@ -52,6 +52,13 @@ var FILE_EXT = 'wav';
         /**
         * Command plugin to stop the recording of a call.
         *
+        * Use it with _ast\_proxy_ module as follow:
+        *
+        *     ast_proxy.doCmd({ command: 'stopRecordCall', channel: 'SIP/214-00000' }, function (res) {
+        *         // some code
+        *     });
+        *
+        *
         * @class stopRecordCall
         * @static
         */

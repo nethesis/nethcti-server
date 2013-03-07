@@ -40,6 +40,13 @@ var IDLOG = '[dndSet]';
         /**
         * Command plugin to set the DND status of an extension.
         *
+        * Use it with _ast\_proxy_ module as follow:
+        *
+        *     ast_proxy.doCmd({ command: 'dndSet', exten: '214', val: '12345' }, function (res) {
+        *         // some code
+        *     });
+        *
+        *
         * @class dndSet
         * @static
         */

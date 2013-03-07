@@ -40,6 +40,12 @@ var IDLOG = '[cfbSet]';
         /**
         * Command plugin to set the CF status on busy of an extension.
         *
+        * Use it with _ast\_proxy_ module as follow:
+        *
+        *     ast_proxy.doCmd({ command: 'cfbSet', exten: '214', val: '12345' }, function (res) {
+        *         // some code
+        *     });
+        *
         * @class cfbSet
         * @static
         */

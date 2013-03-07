@@ -40,6 +40,13 @@ var IDLOG = '[hangup]';
         /**
         * Command plugin to hangup a call.
         *
+        * Use it with _ast\_proxy_ module as follow:
+        *
+        *     ast_proxy.doCmd({ command: 'hangup', channel: 'SIP/214-00000' }, function (res) {
+        *         // some code
+        *     });
+        *
+        *
         * @class hangup
         * @static
         */

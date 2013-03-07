@@ -41,7 +41,13 @@ var IDLOG = '[astVersion]';
         var map = {};
 
         /**
-        * Command plugin to get the asterisk version
+        * Command plugin to get the asterisk version.
+        *
+        * Use it with _ast\_proxy_ module as follow:
+        *
+        *     ast_proxy.doCmd({ command: 'astVersion' }, function (res) {
+        *         // some code
+        *     });
         *
         * @class astVersion
         * @static

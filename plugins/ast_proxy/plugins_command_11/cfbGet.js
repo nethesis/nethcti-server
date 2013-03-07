@@ -49,6 +49,12 @@ var IDLOG = '[cfbGet]';
         /**
         * Command plugin to get the call forward status on busy of an extension.
         *
+        * Use it with _ast\_proxy_ module as follow:
+        *
+        *     ast_proxy.doCmd({ command: 'cfbGet', exten: '214' }, function (res) {
+        *         // some code
+        *     });
+        *
         * @class cfbGet
         * @static
         */

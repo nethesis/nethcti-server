@@ -40,6 +40,13 @@ var IDLOG = '[cfuSet]';
         /**
         * Command plugin to set the CF status by no answer of an extension.
         *
+        * Use it with _ast\_proxy_ module as follow:
+        *
+        *     ast_proxy.doCmd({ command: 'cfuSet', exten: '214', val: '12345' }, function (res) {
+        *         // some code
+        *     });
+        *
+        *
         * @class cfuSet
         * @static
         */

@@ -103,6 +103,13 @@ var FAIL_REASON = {
         /**
         * Command plugin to originate a new call.
         *
+        * Use it with _ast\_proxy_ module as follow:
+        *
+        *     ast_proxy.doCmd({ command: 'call', chanType: 'SIP', exten: '214', to: '12345' }, function (res) {
+        *         // some code
+        *     });
+        *
+        *
         * @class call
         * @static
         */

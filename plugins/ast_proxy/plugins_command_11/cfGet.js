@@ -49,6 +49,12 @@ var IDLOG = '[cfGet]';
         /**
         * Command plugin to get the call forward status of an extension.
         *
+        * Use it with _ast\_proxy_ module as follow:
+        *
+        *     ast_proxy.doCmd({ command: 'cfGet', exten: '214' }, function (res) {
+        *         // some code
+        *     });
+        *
         * @class cfGet
         * @static
         */
