@@ -52,6 +52,12 @@ var IDLOG = '[sipDetails]';
         /**
         * Command plugin to get the details of a SIP extension.
         *
+        * Use it with _ast\_proxy_ module as follow:
+        *
+        *     ast_proxy.doCmd({ command: 'sipDetails', exten: '214' }, function (res) {
+        *         // some code
+        *     });
+        *
         * @class sipDetails
         * @static
         */
@@ -125,14 +131,16 @@ var IDLOG = '[sipDetails]';
                         
                         // execute callback
                         map[data.actionid]({
-                            ip: ip,
-                            name: name,
-                            port: port,
                             result: true,
-                            exten: data.objectname,
-                            chantype: data.channeltype,
-                            status: data.status.toLowerCase(),
-                            sipuseragent: data.sipuseragent
+                            exten: {
+                                ip: ip,
+                                name: name,
+                                port: port,
+                                exten: data.objectname,
+                                chantype: data.channeltype,
+                                status: data.status.toLowerCase(),
+                                sipuseragent: data.sipuseragent
+                            }
                         });
 
                     } else if (map[data.actionid]
