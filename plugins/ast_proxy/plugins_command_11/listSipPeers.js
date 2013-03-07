@@ -39,14 +39,13 @@ var IDLOG = '[listSipPeers]';
         var map = {};
 
         /**
-        * List of all sip extensions. The key is the extension number and the value
-        * is an Extension object.
+        * List of all sip extension numbers.
         *
         * @property list
-        * @type {object}
+        * @type {array}
         * @private
         */
-        var list = {};
+        var list = [];
 
         /**
         * Command plugin to get the list of all SIP peers.
@@ -106,14 +105,14 @@ var IDLOG = '[listSipPeers]';
                     // store new Extension object
                     // data.objectname is extension number, e.g., 214
                     if (data.event === 'PeerEntry' && data.objectname && data.channeltype) {
-                        list[data.objectname] = new Extension(data.objectname, data.channeltype);
+                        list.push(data.objectname);
 
                     } else if (map[data.actionid] && data.event === 'PeerlistComplete') {
                         map[data.actionid](list); // callback execution
                     }
 
                     if (data.event === 'PeerlistComplete') {
-                        list = {}; // empty list
+                        list = []; // empties the list
                         delete map[data.actionid]; // remove association ActionID-callback
                     }
 
