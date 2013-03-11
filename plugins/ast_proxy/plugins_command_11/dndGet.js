@@ -28,15 +28,6 @@ var IDLOG = '[dndGet]';
         var logger = console;
 
         /**
-        * Extension number to be verified for DND status.
-        *
-        * @property exten
-        * @type {string}
-        * @private
-        */
-        var exten;
-
-        /**
         * Map associations between ActionID and callback to execute at the end
         * of the command
         *
@@ -74,9 +65,6 @@ var IDLOG = '[dndGet]';
             */
             execute: function (am, args, cb) {
                 try {
-                    // set exten used in data function
-                    exten = args.exten;
-
                     // action for asterisk
                     var act = { Action: 'DBGet', Family: 'DND', Key: args.exten };
                     
@@ -107,7 +95,6 @@ var IDLOG = '[dndGet]';
                     // check callback and info presence and execute it
                     if (map[data.actionid]
                         && data.val
-                        && data.key    === exten
                         && data.event  === 'DBGetResponse'
                         && data.family === 'DND') {
 

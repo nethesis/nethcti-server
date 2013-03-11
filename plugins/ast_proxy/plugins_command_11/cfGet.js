@@ -38,15 +38,6 @@ var IDLOG = '[cfGet]';
         var map = {};
 
         /**
-        * Extension number to be verified for call forward status.
-        *
-        * @property exten
-        * @type {string}
-        * @private
-        */
-        var exten;
-
-        /**
         * Command plugin to get the call forward status of an extension.
         *
         * Use it with _ast\_proxy_ module as follow:
@@ -73,9 +64,6 @@ var IDLOG = '[cfGet]';
             */
             execute: function (am, args, cb) {
                 try {
-                    // set exten used in data function
-                    exten = args.exten;
-
                     // action for asterisk
                     var act = { Action: 'DBGet', Family: 'CF', Key: args.exten };
 
@@ -106,7 +94,6 @@ var IDLOG = '[cfGet]';
                     // check callback and info presence and execute it
                     if (map[data.actionid] && data.event === 'DBGetResponse'
                         && data.family === 'CF'
-                        && data.key === exten
                         && data.val) {
 
                         map[data.actionid]({ cf: 'yes', cfExten: data.val });
