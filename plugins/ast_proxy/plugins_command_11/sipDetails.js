@@ -31,15 +31,6 @@ var IDLOG = '[sipDetails]';
         var logger = console;
 
         /**
-        * Extension number to be verified for SIP details.
-        *
-        * @property exten
-        * @type {string}
-        * @private
-        */
-        var exten;
-
-        /**
         * Map associations between ActionID and callback to execute at the end
         * of the command
         *
@@ -76,9 +67,6 @@ var IDLOG = '[sipDetails]';
             */
             execute: function (am, args, cb) {
                 try {
-                    // set exten used in data function
-                    exten = args.exten;
-
                     // action for asterisk
                     var act = { Action: 'SIPshowpeer', Peer: args.exten };
                     
@@ -108,8 +96,7 @@ var IDLOG = '[sipDetails]';
                 try {
                     // check callback and info presence and execute it
                     if (map[data.actionid]
-                        && data.response   === 'Success'
-                        && data.objectname === exten) {
+                        && data.response   === 'Success') {
 
                         // fix the ip address if it's null
                         var ip   = data.addressip   === '(null)' ? '' : data.addressip;
