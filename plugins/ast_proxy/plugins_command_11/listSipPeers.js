@@ -2,7 +2,6 @@
 * @submodule plugins_command_11
 */
 var action    = require('../action');
-var Extension = require('../extension').Extension;
 
 /**
 * The module identifier used by the logger.
