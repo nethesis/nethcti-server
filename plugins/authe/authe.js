@@ -110,7 +110,7 @@ function setLogger(log) {
 /**
 * Set configuration to use and initialize the user credentials.
 *
-* The method can throw an Exception.**
+* **The method can throw an Exception.**
 *
 * @method config
 * @param {string} path Credentials ini file path. The file must
