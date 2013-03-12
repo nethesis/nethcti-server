@@ -104,7 +104,7 @@ var IDLOG = '[listSipPeers]';
                     // store new Extension object
                     // data.objectname is extension number, e.g., 214
                     if (data.event === 'PeerEntry' && data.objectname && data.channeltype) {
-                        list.push(data.objectname);
+                        list.push({ ext: data.objectname, chanType: data.channeltype });
 
                     } else if (map[data.actionid] && data.event === 'PeerlistComplete') {
                         map[data.actionid](list); // callback execution
