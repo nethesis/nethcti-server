@@ -359,6 +359,9 @@ function setLogger(log) {
             logger = log;
             logger.info(IDLOG, 'new logger has been set');
 
+            // set the logger for the proxy logic
+            proxyLogic.setLogger(log);
+
             // set the logger for all plugins
             setAllPluginsCmdLogger(log);
             setAllPluginsEventLogger(log);
