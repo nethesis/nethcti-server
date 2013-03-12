@@ -18,6 +18,15 @@ var Extension = require('../extension').Extension;
 */
 var IDLOG = '[peerstatus]';
 
+/**
+* The asterisk proxy.
+*
+* @property astProxy
+* @type object
+* @private
+*/
+var astProxy;
+
 (function() {
     try {
         /**
@@ -39,13 +48,13 @@ var IDLOG = '[peerstatus]';
         var peerstatus = {
             /**
             * It's called from _ast_proxy_ component for each data received
-            * from asterisk and relative to this command
+            * from asterisk and relative to this command.
             *
             * @method data
             * @param {object} data The asterisk data for the current command
             * @static
             */
-            data: function (data, astProxy) {
+            data: function (data) {
                 try {
                     console.log(data);
                     var exten = data.peer.split('/')[1];
@@ -78,11 +87,31 @@ var IDLOG = '[peerstatus]';
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
                 }
+            },
+
+            /**
+            * Store the asterisk proxy to visit.
+            *
+            * @method visit
+            * @param {object} ap The asterisk proxy module.
+            */
+            visit: function (ap) {
+                try {
+                    // check parameter
+                    if (!ap || typeof ap !== 'object') {
+                        throw new Error('wrong parameter');
+                    }
+                    astProxy = ap;
+                    logger.info(IDLOG, 'set the asterisk proxy to visit');
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                }
             }
         };
 
         // public interface
         exports.data      = peerstatus.data;
+        exports.visit     = peerstatus.visit;
         exports.setLogger = peerstatus.setLogger;
 
     } catch (err) {

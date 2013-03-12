@@ -12,12 +12,14 @@
 * @class ast_proxy
 * @static
 */
-var fs           = require('fs');
-var ast          = require('asterisk-ami');
-var action       = require('./action');
-var iniparser    = require('iniparser');
-var pluginsCmd   = require('jsplugs')().require('./plugins/ast_proxy/plugins_command_11');
-var EventEmitter = require('events').EventEmitter;
+var fs                = require('fs');
+var ast               = require('asterisk-ami');
+var action            = require('./action');
+var iniparser         = require('iniparser');
+var pluginsCmd        = require('jsplugs')().require('./plugins/ast_proxy/plugins_command_11');
+var proxyLogic        = require('./proxy_logic_11');
+var pluginsEvent      = require('jsplugs')().require('./plugins/ast_proxy/plugins_event_11');
+var EventEmitter      = require('events').EventEmitter;
 
 /**
 * The module identifier used by the logger.
@@ -40,6 +42,15 @@ var IDLOG = '[ast_proxy]';
 * @default console
 */
 var logger = console;
+
+/**
+* It's this module.
+*
+* @property self
+* @type {object}
+* @private
+*/
+var self = this;
 
 /**
 * The asterisk manager.
@@ -67,6 +78,31 @@ var emitter = new EventEmitter();
 * @private
 */
 var astConf = {};
+
+/**
+* Sets the component's visitors.
+*
+* @method accept
+* @private
+*/
+(function accept() {
+    try {
+        // set the visitor for proxy logic component passing
+        // itself as a parameter
+        proxyLogic.visit(self);
+
+        // set the visitor for all event plugins
+        var ev;
+        for (ev in pluginsEvent) {
+            if (typeof pluginsEvent[ev].visit === 'function') {
+                pluginsEvent[ev].visit(self);
+            }
+        }
+        logger.info(IDLOG, 'set the asterisk proxy visitors');
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}());
 
 /**
 * Set configuration to use by telnet asterisk connection.
@@ -231,30 +267,32 @@ function onData(data) {
         var actionid = data.actionid;
         var cmd = action.getActionName(actionid);
 
-        // check command plugin presence.
-        // This event is generated in response to a command request.
-        // It passes the event handler to the appropriate plugin.
+        // check the command plugin presence. This event is generated in
+        // response to a command request. It passes the event handler to
+        // the appropriate command plugin.
         if (pluginsCmd[cmd]
             && typeof pluginsCmd[cmd].data === 'function') {
 
             pluginsCmd[cmd].data(data);
 
-        } else {
+        } else if (data.event) { // check if data is an event
 
-            console.log('\n\nEVENTO di ASTERISK non cercato!');
-            console.log("DATA:");
-            console.log(data);
-            console.log("actionid = " + actionid + " cmd = " + cmd);
+            var ev = data.event.toLowerCase();
+            // check the event plugin presence. This event is an asterisk
+            // event generated in response to some action. It passes the
+            // event handler to the appropriate event plugin.
+            if (pluginsEvent[ev]
+                && typeof pluginsEvent[ev].data === 'function') {
 
-            if (data.event === 'PeerStatus') {
-                console.log("emetto evento PeerStatus");
-                emitter.emit(data.event, data);
+                pluginsEvent[ev].data(data);
 
-            } else if (data.event === 'ExtensionStatus') {
-                console.log("questo è uno ExtensionStatus");
+            } else if (ev === 'fullybooted') { // the asterisk connection is ready
+                logger.info(IDLOG, 'ast_proxy is ready');
+                console.log("proxyLogic");
+                console.log(proxyLogic);
+                proxyLogic.start();
             }
         }
-
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -304,7 +342,7 @@ function doCmd(obj, cb) {
 }
 
 /**
-* Set the logger to be used.
+* Sets the logger to be used.
 *
 * @method setLogger
 * @param {object} log The logger object. It must have at least
@@ -321,11 +359,34 @@ function setLogger(log) {
             logger = log;
             logger.info(IDLOG, 'new logger has been set');
 
-            // set the logger for all command plugins
+            // set the logger for all plugins
             setAllPluginsCmdLogger(log);
+            setAllPluginsEventLogger(log);
 
         } else {
             throw new Error('wrong logger object');
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Call _setLogger_ function for all event plugins.
+*
+* @method setAllPluginsEventLogger
+* @private
+* @param log The logger object.
+* @type {object}
+*/
+function setAllPluginsEventLogger(log) {
+    try {
+        var key;
+        for (key in pluginsEvent) {
+
+            if (typeof pluginsEvent[key].setLogger === 'function') {
+                pluginsEvent[key].setLogger(log);
+            }
         }
     } catch (err) {
         logger.error(IDLOG, err.stack);
