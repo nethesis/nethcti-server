@@ -15,14 +15,11 @@
 * @constructor
 * @return {object} The extension object.
 */
-exports.Extension = function (obj) {
-    // check parameter
-    if (!obj || obj.sipuseragent === undefined
-        || obj.ip    === undefined || obj.port     === undefined
-        || obj.name  === undefined || obj.status   === undefined
-        || obj.exten === undefined || obj.chantype === undefined ) {
+exports.Extension = function (ext, chType) {
+    // check the parameters
+    if (!ext || !chType || typeof ext !== 'string' || typeof chType !== 'string') {
 
-        throw new Error('wrong parameter');
+        throw new Error('wrong parameters');
     }
 
     /**
@@ -33,7 +30,7 @@ exports.Extension = function (obj) {
     * @required
     * @private
     */
-    var exten = obj.exten;
+    var exten = ext;
 
     /**
     * The ip address of the device.
@@ -42,7 +39,7 @@ exports.Extension = function (obj) {
     * @type {string}
     * @private
     */
-    var ip = obj.ip;
+    var ip;
 
     /**
     * The port of the device.
@@ -51,7 +48,7 @@ exports.Extension = function (obj) {
     * @type {string}
     * @private
     */
-    var port = obj.port;
+    var port;
 
     /**
     * The channel type.
@@ -61,7 +58,7 @@ exports.Extension = function (obj) {
     * @required
     * @private
     */
-    var chanType = obj.chantype;
+    var chanType = chType;
 
     /**
     * The sip user agent.
@@ -71,18 +68,7 @@ exports.Extension = function (obj) {
     * @required
     * @private
     */
-    var sipuseragent = obj.sipuseragent;
-
-    /**
-    * The Extension status enumeration.
-    *
-    * @property STATUS_ENUM
-    * @type {object}
-    * @private
-    * @final
-    * @default ONLINE | OFFLINE
-    */
-    var STATUS_ENUM = { ONLINE: 'online', OFFLINE: 'offline' };
+    var sipuseragent;
 
     /**
     * The Extension status.
@@ -91,7 +77,7 @@ exports.Extension = function (obj) {
     * @type {string}
     * @private
     */
-    var status = obj.status;
+    var status;
 
     /**
     * Return the extension number.
@@ -131,10 +117,103 @@ exports.Extension = function (obj) {
     */
     function setOffline() { status = STATUS_ENUM.OFFLINE; }
 
+    /**
+    * Check if the extension in online.
+    *
+    * @method isOnline
+    * @return {boolean} True if the extension is online, false otherwise.
+    */
+    function isOnline() {
+        if (status === STATUS_ENUM.ONLINE) { return true; }
+        else { return false; }
+    }
+
+    /**
+    * Set the extension ip address.
+    *
+    * @method setIp
+    * @param {string} ipAddr The ip address
+    */
+    function setIp(ipAddr) { ip = ipAddr; }
+
+    /**
+    * Set the extension ip port.
+    *
+    * @method setPort
+    * @param {string} ipPort The ip port
+    */
+    function setPort(ipPort) { port = ipPort; }
+
+    /**
+    * Set the extension name.
+    *
+    * @method setName
+    * @param {string} extName The extension name
+    */
+    function setName(extName) { name = extName; }
+
+    /**
+    * Set the extension sip user agent.
+    *
+    * @method setSipUserAgent
+    * @param {string} ua The extension sip user agent
+    */
+    function setSipUserAgent(ua) { sipuseragent = ua; }
+
+    /**
+    * Set the extension status.
+    *
+    * @method setStatus
+    * @param {string} extStatus The extension status must be one
+    * of _STATUS\_ENUM_ property.
+    *
+    * **It can throw exception**.
+    */
+    function setStatus(extStatus) {
+        var key;
+        for (key in STATUS_ENUM) {
+            if (extStatus == STATUS_ENUM[key]) {
+                status = extStatus
+                return true;
+            }
+        }
+        throw new Error('wrong parameter extStatus');
+    }
+
     // public interface
     return {
-        getExten: getExten,
-        toString: toString,
-        chanType: getChanType
+        setIp:           setIp,
+        setName:         setName,
+        setPort:         setPort,
+        getExten:        getExten,
+        toString:        toString,
+        chanType:        getChanType,
+        setStatus:       setStatus,
+        setOnline:       setOnline,
+        setOffline:      setOffline,
+        isOnline:        isOnline,
+        setSipUserAgent: setSipUserAgent
     };
 }
+
+/**
+* The Extension status enumeration.
+*
+* @property STATUS_ENUM
+* @type {object}
+* @private
+* @final
+* @default ONLINE | OFFLINE
+*/
+var STATUS_ENUM = { ONLINE: 'online', OFFLINE: 'offline' };
+
+/**
+* The Extension status enumeration. It's the same of
+* private _STATUS\_ENUM_.
+*
+* @property EXT_STATUS_ENUM
+* @type {object}
+* @final
+* @default ONLINE | OFFLINE
+*/
+exports.EXTEN_STATUS_ENUM = STATUS_ENUM;
