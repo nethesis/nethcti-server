@@ -41,12 +41,10 @@ var IDLOG = '[listParkings]';
         * List of all parkings.
         *
         * @property list
-        * @type {array}
+        * @type {object}
         * @private
         */
-        var list = [];
-        console.log("ABC");
-        console.log(list);
+        var list = {};
 
         /**
         * Command plugin to get the list of all parkings.
@@ -104,39 +102,21 @@ var IDLOG = '[listParkings]';
             data: function (data) {
                 try {
                     if (data.event === 'Parkinglot' && data.startexten && data.stopexten && data.timeout) {
-                        console.log(map);
                         var i;
                         // create the parking list
-                        for (i = data.startexten; i <= data.stopexten; i++) { list.push({ parking: i }); }
+                        for (i = parseInt(data.startexten); i <= parseInt(data.stopexten); i++) { list[i] = '' + i + '' };
 
+                    } else if (data.event === 'ParkinglotsComplete') {
                         // invoke all callback in the 'map' object, because the current
                         // event 'Parkinglot' doesn't have the 'ActionID' key. So, it isn't
                         // possible to associate the event with the correct callback that
                         // has executed the command
                         var k;
-                        for (k in map) {
-                            map[k](list);
-                        }
-                    }
+                        for (k in map) { map[k](list); }
 
-/*
-                    // store new queue information object
-                    // data.queue is the queue number, e.g., 401
-                    if (data
-                        && data.queue
-                        && data.queue !== 'default' // discard queue with 'default' number
-                        && data.event === 'QueueSummary') {
-                        list.push({ queue: data.queue });
-
-                    } else if (map[data.actionid] && data.event === 'QueueSummaryComplete') {
-                        map[data.actionid](list); // callback execution
+                        map = {};  // delete all callback functions
+                        list = {}; // empty the list
                     }
-
-                    if (data.event === 'QueueSummaryComplete') {
-                        list = []; // empties the list
-                        delete map[data.actionid]; // remove association ActionID-callback
-                    }
-                    */
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
