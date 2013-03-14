@@ -102,6 +102,15 @@ exports.Channel = function (obj) {
     var channelStatus = obj.channelStatus;
 
     /**
+    * The type of the channel can be source or destination.
+    *
+    * @property {string} type
+    * @required
+    * @private
+    */
+    var type;
+
+    /**
     * Return the channel identifier.
     *
     * @method getChannel
@@ -173,9 +182,18 @@ exports.Channel = function (obj) {
     */
     function toString() { return 'Channel ' + channel; }
 
+    /**
+    * Check if the channel is the source.
+    *
+    * @method isSource
+    * @return {boolean} Return true if the channel is the source, false otherwise.
+    */
+    function isSource() { type = 'source'; }
+
     // public interface
     return {
         toString:            toString,
+        isSource:            isSource,
         getChannel:          getChannel,
         getCallerNum:        getCallerNum,
         getCallerName:       getCallerName,
