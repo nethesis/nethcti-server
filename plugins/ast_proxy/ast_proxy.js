@@ -34,6 +34,20 @@ var EventEmitter      = require('events').EventEmitter;
 var IDLOG = '[ast_proxy]';
 
 /**
+* It's the path of the ini file created by perl script.
+* It contains the categorization of all peers: extensions,
+* groups, trunks, parks and queues.
+*
+* @property INI_PATH_AST_STRUCT
+* @type string
+* @private
+* @final
+* @readOnly
+* @default []
+*/
+var INI_PATH_STRUCT = '/etc/nethcti/structure.ini';
+
+/**
 * The logger. It must have at least three methods: _info, warn and error._
 *
 * @property logger
@@ -275,6 +289,18 @@ function onData(data) {
 
             pluginsCmd[cmd].data(data);
 
+        }
+        // this is a particular case: 'listParkings' command plugin cause
+        // an event 'Parkinglot' without the relative 'ActionID' key. So
+        // it passes the event to the 'listParking' command plugin, because
+        // it isn't possible to associate the event with the correct command
+        // plugin, without the 'ActionID'
+        else if (data.event === 'Parkinglot'
+                 && pluginsCmd['listParkings']
+                 && typeof pluginsCmd['listParkings'].data === 'function') {
+
+            pluginsCmd['listParkings'].data(data);
+
         } else if (data.event) { // check if data is an event
 
             var ev = data.event.toLowerCase();
@@ -290,7 +316,7 @@ function onData(data) {
                 logger.info(IDLOG, 'ast_proxy is ready');
                 console.log("proxyLogic");
                 console.log(proxyLogic);
-                proxyLogic.start();
+                proxyLogic.start(INI_PATH_STRUCT);
             }
         }
     } catch (err) {
