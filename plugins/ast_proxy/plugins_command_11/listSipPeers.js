@@ -101,16 +101,16 @@ var IDLOG = '[listSipPeers]';
             */
             data: function (data) {
                 try {
-                    // store new Extension object
-                    // data.objectname is extension number, e.g., 214
-                    if (data.event === 'PeerEntry' && data.objectname && data.channeltype) {
-                        list.push({ ext: data.objectname, chanType: data.channeltype });
+                    // store new extension information object
+                    // data.objectname is the extension number, e.g., 214
+                    if (data && data.event === 'PeerEntry' && data.objectname && data.channeltype) {
+                        list.push({ ext: data.objectname });
 
-                    } else if (map[data.actionid] && data.event === 'PeerlistComplete') {
+                    } else if (map[data.actionid] && data && data.event === 'PeerlistComplete') {
                         map[data.actionid](list); // callback execution
                     }
 
-                    if (data.event === 'PeerlistComplete') {
+                    if (data && data.event === 'PeerlistComplete') {
                         list = []; // empties the list
                         delete map[data.actionid]; // remove association ActionID-callback
                     }
