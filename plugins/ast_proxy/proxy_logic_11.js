@@ -7,6 +7,7 @@
 */
 var Channel           = require('./channel').Channel;
 var Extension         = require('./extension').Extension;
+var iniparser         = require('iniparser');
 var EXTEN_STATUS_ENUM = require('./extension').EXTEN_STATUS_ENUM;
 
 /**
@@ -51,21 +52,56 @@ var astProxy;
 var extensions = {};
 
 /**
-* Extension status provided by asterisk.
+* Adapter from asterisk extension status to status for _Extension_
+* object.
 *
-* @property AST_EXTEN_STATUS
+* @property EXTEN_STATUS_ADAPTER
 * @type {object}
 * @readOnly
 * @private
 */
-var AST_EXTEN_STATUS = {
-    LAGGED:       'lagged',
-    UNKNOWN:      'unknown',
-    REACHABLE:    'reachable',
-    REGISTERED:   'registered',
-    UNMONITORED:  'unmonitored',
-    UNREACHABLE:  'unreachable',
-    UNREGISTERED: 'unregistered'
+var EXTEN_STATUS_ADAPTER = {
+    '0':  'online',       // Idle
+    '1':  'busy',         // In Use
+    '2':  'dnd',          // Busy
+    '4':  'offline',      // Unavailable
+    '8':  'ringing',      // Ringing
+    '9':  'busy_ringing', // In Use & Ringing
+    '16': 'onhold'        // On Hold
+}
+
+/**
+* It's the validated content of the asterisk structure ini
+* file created by the perl script.
+*
+* @property struct
+* @type {object}
+* @readOnly
+* @private
+*/
+var struct;
+
+/**
+* These are the key names used into the asterisk structure
+* file created by the perl script.
+*
+* @property INI_STRUCT
+* @type {object}
+* @readOnly
+* @private
+*/
+var INI_STRUCT = {
+    TYPE: {
+        PARK:  'park',
+        EXTEN: 'extension',
+        QUEUE: 'queue',
+        TRUNK: 'trunk',
+        GROUP: 'group'
+    },
+    TECH: {
+        SIP: 'sip',
+        IAX: 'iax'
+    }
 };
 
 /**
@@ -90,7 +126,6 @@ function setLogger(log) {
             throw new Error('wrong logger object');
         }
     } catch (err) {
-        console.log("\n\n\n");
         logger.error(IDLOG, err.stack);
     }
 }
@@ -115,65 +150,220 @@ function visit(ap) {
 }
 
 /**
+* Validates all sip extensions of the structure ini file.
+*
+* @method sipExtenStructValidation
+* @param {array} resp The response received from the command.
+* @private
+*/
+function sipExtenStructValidation(resp) {
+    try {
+        // creates temporary object used to rapid check the
+        // existence of an extension into the asterisk
+        var siplist = {};
+        var i;
+        for (i = 0; i < resp.length; i++) { siplist[resp[i].ext] = ''; }
+
+        // cycles in all elements of the structure ini file to validate
+        var k;
+        for (k in struct) {
+
+            // validates all sip extensions
+            if (struct[k].tech    === INI_STRUCT.TECH.SIP
+                && struct[k].type === INI_STRUCT.TYPE.EXTEN) {
+
+                // current extension of the structure ini file isn't present
+                // into the asterisk. So remove it from the structure ini file
+                if (siplist[struct[k].extension] === undefined) {
+
+                    delete struct[k];
+                    logger.warn(IDLOG, 'inconsistency between ini structure file and asterisk for ' + k);
+                }
+            }
+        }
+        logger.info(IDLOG, 'all sip extensions have been validated');
+
+        initializeSipExten();
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+function initializeSipExten() {
+    try {
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Validates all iax extensions of the structure ini file.
+*
+* @method iaxExtenStructValidation
+* @param {array} resp The response received from the command.
+* @private
+*/
+function iaxExtenStructValidation(resp) {
+    try {
+        // creates temporary object used to rapid check the
+        // existence of an extension into the asterisk
+        var iaxlist = {};
+        var i;
+        for (i = 0; i < resp.length; i++) { iaxlist[resp[i].ext] = ''; }
+
+        // cycles in all elements of the structure ini file to validate
+        var k;
+        for (k in struct) {
+
+            // validates all sip extensions
+            if (struct[k].tech    === INI_STRUCT.TECH.IAX
+                && struct[k].type === INI_STRUCT.TYPE.EXTEN) {
+
+                // current extension of the structure ini file isn't present
+                // into the asterisk. So remove it from the structure ini file
+                if (iaxlist[struct[k].extension] === undefined) {
+
+                    delete struct[k];
+                    logger.warn(IDLOG, 'inconsistency between ini structure file and asterisk for ' + k);
+                }
+            }
+        }
+        logger.info(IDLOG, 'all iax extensions have been validated');
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Validates all queues of the structure ini file.
+*
+* @method queueStructValidation
+* @param {array} resp The response received from the command.
+* @private
+*/
+function queueStructValidation(resp) {
+    try {
+        // creates temporary object used to rapid check the
+        // existence of a queue into the asterisk
+        var qlist = {};
+        var i;
+        for (i = 0; i < resp.length; i++) { qlist[resp[i].queue] = ''; }
+
+        // cycles in all elements of the structure ini file to validate
+        var k;
+        for (k in struct) {
+
+            // validates all queues
+            if (struct[k].type === INI_STRUCT.TYPE.QUEUE) {
+
+                // current queue of the structure ini file isn't present
+                // into the asterisk. So remove it from the structure ini file
+                if (qlist[struct[k].queue] === undefined) {
+
+                    delete struct[k];
+                    logger.warn(IDLOG, 'inconsistency between ini structure file and asterisk for ' + k);
+                }
+            }
+        }
+        logger.info(IDLOG, 'all queues have been validated');
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Validates all parkings of the structure ini file.
+*
+* @method parkStructValidation
+* @param {array} resp The response received from the command.
+* @private
+*/
+function parkStructValidation(resp) {
+    try {
+        // creates temporary object used to rapid check the
+        // existence of a park into the asterisk
+        var parklist = {};
+        var i;
+        for (i = 0; i < resp.length; i++) { parklist[resp[i].parking] = ''; }
+
+        // cycles in all elements of the structure ini file to validate
+        var k;
+        for (k in struct) {
+
+            // validates all parkings
+            if (struct[k].type === INI_STRUCT.TYPE.PARK) {
+
+                // current parking of the structure ini file isn't present
+                // into the asterisk. So remove it from the structure ini file
+                if (parklist[struct[k].extension] === undefined) {
+
+                    delete struct[k];
+                    logger.warn(IDLOG, 'inconsistency between ini structure file and asterisk for ' + k + ' or parkings is disabled');
+                }
+            }
+        }
+        logger.info(IDLOG, 'all parkings have been validated');
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Validates the asterisk structure of ini file created by the perl script.
+* Ini file items that aren't present in the asterisk, will be removed from
+* _struct_ property.
+*
+* @method structValidation
+* @private
+*/
+function structValidation() {
+    try {
+        logger.info(IDLOG, 'start asterisk structure ini file validation');
+        // validates all queues
+        astProxy.doCmd({ command: 'listQueues'   }, queueStructValidation);
+        // validates all parkings
+        astProxy.doCmd({ command: 'listParkings' }, parkStructValidation);
+        // validates all sip extensions
+        astProxy.doCmd({ command: 'listSipPeers' }, sipExtenStructValidation);
+        // validates all iax extensions
+        astProxy.doCmd({ command: 'listIaxPeers' }, iaxExtenStructValidation);
+
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * It's called when the asterisk connection is fully booted.
 *
 * @method start
 * @static
 */
-function start() {
+function start(inipath) {
     try {
-        console.log("start: doCmd listSipPeers");
-        astProxy.doCmd({ command: 'listSipPeers' }, listSipPeers);
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
+        // check paramter
+        if (typeof inipath !== 'string') { throw new Error('wrong parameter'); }
 
-function listSipPeers(list) {
-    try {
-        var i, exten;
-        for (i = 0; i < list.length; i++) {
-            var exten = new Extension(list[i].ext, list[i].chanType);
-            extensions[exten.getExten()] = exten;
-            console.log('creato nuovo exten e messo in memoria ' + exten.getExten());
-
-            console.log("doCmd sipDetails of created exten = " + exten.getExten());
-            astProxy.doCmd({ command: 'sipDetails', exten: exten.getExten() }, sipDetails);
-        }
-
-        console.log("request listChannels");
-        astProxy.doCmd({ command: 'listChannels' }, listChannels);
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-function listChannels(list) {
-    try {
-        console.log("listChannels list=");
-        console.log(list);
-
-        var ext, channels;
-        for (ext in list) {
-            ch = new Channel(list[ext]);
-            console.log(ch);
-        }
-
-
+        // parse the ini file
+        struct = iniparser.parseSync(inipath);
+        // validates the content of the ini file
+        structValidation();
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
 }
 
-function sipDetails(data) {
+function sipDetails(resp) {
     try {
-        console.log("sipDetails data=");
-        console.log(data);
-        if (data.result === true) {
+        // check parameter
+        if (!resp || resp.result === undefined) { throw new Error('wrong parameter'); }
 
-            // adapt received data to set the extension informations
-            var data = extenAdapter(data.exten);
+        if (resp.result === true) {
+
+            // extract extension object from the response
+            var data = resp.exten;
 
             // set the extension informations
             extensions[data.exten].setIp(data.ip);
@@ -181,43 +371,11 @@ function sipDetails(data) {
             extensions[data.exten].setName(data.name);
             extensions[data.exten].setSipUserAgent(data.sipuseragent);
             extensions[data.exten].setIp(data.ip);
-            extensions[data.exten].setStatus(data.status);
+            logger.info(IDLOG, 'set sip detail informations for ext ' + data.exten);
 
         } else {
-            console.log("some error could happened");
-            if (data.message) { console.log(data.message); }
+            logger.warn(IDLOG, 'sip details ' + (resp.message !== undefined ? resp.message : ''));
         }
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Adapts the data received from the asterisk event to
-* a format suitable to create an _Extension_ object.
-*
-* @method extenAdapter
-* @param {object} data The data object to be adapted.
-* @return {object} The adapted data object.
-*/
-function extenAdapter(data) {
-    try {
-        // check the parameter
-        if (!data || !data.status) {
-            throw new Error('wrong parameter');
-        }
-
-        // change the status key
-        if (data.status    === AST_EXTEN_STATUS.LAGGED
-            || data.status === AST_EXTEN_STATUS.REACHABLE
-            || data.status === AST_EXTEN_STATUS.REGISTERED) {
-
-            data.status = EXTEN_STATUS_ENUM.ONLINE;
-
-        } else {
-            data.status = EXTEN_STATUS_ENUM.OFFLINE;
-        }
-        return data;
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
