@@ -2,7 +2,6 @@
 * @submodule plugins_command_11
 */
 var action    = require('../action');
-var Extension = require('../extension').Extension;
 
 /**
 * The module identifier used by the logger.
@@ -39,14 +38,13 @@ var IDLOG = '[listIaxPeers]';
         var map = {};
 
         /**
-        * List of all IAX extensions. The key is the extension number and the value
-        * is an Extension object.
+        * List of all IAX extensions.
         *
         * @property list
-        * @type {object}
+        * @type {array}
         * @private
         */
-        var list = {};
+        var list = [];
 
         /**
         * Command plugin to get the list of all IAX peers.
@@ -106,14 +104,14 @@ var IDLOG = '[listIaxPeers]';
                     // store new Extension object
                     // data.objectname is extension number, e.g., 214
                     if (data.event === 'PeerEntry' && data.objectname && data.channeltype) {
-                        list[data.objectname] = new Extension(data.objectname, data.channeltype);
+                        list.push({ ext: data.objectname });
 
                     } else if (map[data.actionid] && data.event === 'PeerlistComplete') {
                         map[data.actionid](list); // callback execution
                     }
 
                     if (data.event === 'PeerlistComplete') {
-                        list = {}; // empty list
+                        list = []; // empty list
                         delete map[data.actionid]; // remove association ActionID-callback
                     }
 
