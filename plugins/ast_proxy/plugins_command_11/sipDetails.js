@@ -1,7 +1,4 @@
 /**
-* Provides commands to execute in asterisk.
-* 
-* @module ast_proxy
 * @submodule plugins_command_11
 */
 var action = require('../action');
@@ -96,19 +93,19 @@ var IDLOG = '[sipDetails]';
                 try {
                     // check callback and info presence and execute it
                     if (map[data.actionid]
-                        && data.response   === 'Success') {
+                        && data.response === 'Success') {
 
                         // fix the ip address if it's null
-                        var ip   = data.addressip   === '(null)' ? '' : data.addressip;
+                        var ip = data.addressip === '(null)' ? '' : data.addressip;
 
                         // fix the port address if it's null
-                        var port = data.addressport === '0'      ? '' : data.addressport;
+                        var port = data.addressport === '0' ? '' : data.addressport;
 
                         // cleans the name
                         // removes extension number if it's present
                         // e.g. '"User" <214>' becomes 'User'
                         var name;
-                        if (data.callerid.indexOf('<') !== -1
+                        if (data.callerid.indexOf('<')    !== -1
                             && data.callerid.indexOf('>') !== -1) {
 
                             name = data.callerid.split('<')[0];
@@ -120,12 +117,11 @@ var IDLOG = '[sipDetails]';
                         map[data.actionid]({
                             result: true,
                             exten: {
-                                ip: ip,
-                                name: name,
-                                port: port,
-                                exten: data.objectname,
-                                chantype: data.channeltype,
-                                status: data.status.toLowerCase(),
+                                ip:           ip,
+                                name:         name,
+                                port:         port,
+                                exten:        data.objectname,
+                                chantype:     data.channeltype,
                                 sipuseragent: data.sipuseragent
                             }
                         });
