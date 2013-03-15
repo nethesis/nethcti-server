@@ -104,7 +104,11 @@ var IDLOG = '[listIaxPeers]';
                     // store new Extension object
                     // data.objectname is extension number, e.g., 214
                     if (data.event === 'PeerEntry' && data.objectname && data.channeltype) {
-                        list.push({ ext: data.objectname });
+                        list.push({
+                            ip:   data.ipaddress === '(null)' ? '' : data.ipaddress,
+                            ext:  data.objectname,
+                            port: data.port === '0' ? '' : data.port
+                        });
 
                     } else if (map[data.actionid] && data.event === 'PeerlistComplete') {
                         map[data.actionid](list); // callback execution
