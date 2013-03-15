@@ -27,8 +27,8 @@ var SEP = '_';
 * The value is: id + _ + timestamp
 */
 function getActionId(id) {
-    if (id) { return id + SEP + (new Date()).getTime(); }
-    return (new Date()).getTime();
+    if (id) { return id + SEP + (new Date()).getTime() + SEP + Math.floor(Math.random() * 10000); }
+    return (new Date()).getTime() + SEP + Math.floor(Math.random() * 10000);
 }
 
 /**
