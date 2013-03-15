@@ -18,13 +18,14 @@
 exports.Channel = function (obj) {
     // check parameter
     if (!obj.channel 
+        || !obj.type
         || !obj.duration
         || !obj.callerNum
         || !obj.callerName
         || !obj.bridgedNum
         || !obj.bridgedName
-        || !obj.bridgedChannel
-        || !obj.channelStatus) {
+        || !obj.channelStatus
+        || obj.bridgedChannel === undefined) {
 
         throw new Error('wrong parameter');
     }
@@ -108,7 +109,7 @@ exports.Channel = function (obj) {
     * @required
     * @private
     */
-    var type;
+    var type = obj.type;
 
     /**
     * Return the channel identifier.
@@ -188,7 +189,10 @@ exports.Channel = function (obj) {
     * @method isSource
     * @return {boolean} Return true if the channel is the source, false otherwise.
     */
-    function isSource() { type = 'source'; }
+    function isSource() {
+        if (type === TYPE.SOURCE) { return true; }
+        return false;
+    }
 
     // public interface
     return {
@@ -203,3 +207,23 @@ exports.Channel = function (obj) {
         getBridgedChannel:   getBridgedChannel
     };
 }
+
+/**
+* The possible values for channel type.
+*
+* @property {object} TYPE
+* @private
+* @default DESTINATION | SOURCE
+*/
+var TYPE = {
+    DEST:   'dest',
+    SOURCE: 'source'
+};
+
+/**
+* The possible values for channel type.
+*
+* @property {object} CHAN_TYPE
+* @default Has the same values as private TYPE property.
+*/
+exports.CHAN_TYPE = TYPE;
