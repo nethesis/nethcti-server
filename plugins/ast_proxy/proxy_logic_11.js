@@ -183,19 +183,13 @@ function sipExtenStructValidation(resp) {
         }
         logger.info(IDLOG, 'all sip extensions have been validated');
 
+        // initialize all sip extensions as 'Extension' objects into the 'extensions' object
         initializeSipExten();
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
 }
 
-function initializeSipExten() {
-    try {
-
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
 
 /**
 * Validates all iax extensions of the structure ini file.
@@ -230,6 +224,9 @@ function iaxExtenStructValidation(resp) {
             }
         }
         logger.info(IDLOG, 'all iax extensions have been validated');
+
+        // initialize all iax extensions as 'Extension' objects into the 'extensions' object
+        initializeIaxExten();
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -281,12 +278,6 @@ function queueStructValidation(resp) {
 */
 function parkStructValidation(resp) {
     try {
-        // creates temporary object used to rapid check the
-        // existence of a park into the asterisk
-        var parklist = {};
-        var i;
-        for (i = 0; i < resp.length; i++) { parklist[resp[i].parking] = ''; }
-
         // cycles in all elements of the structure ini file to validate
         var k;
         for (k in struct) {
@@ -296,7 +287,7 @@ function parkStructValidation(resp) {
 
                 // current parking of the structure ini file isn't present
                 // into the asterisk. So remove it from the structure ini file
-                if (parklist[struct[k].extension] === undefined) {
+                if (resp[struct[k].extension] === undefined) {
 
                     delete struct[k];
                     logger.warn(IDLOG, 'inconsistency between ini structure file and asterisk for ' + k + ' or parkings is disabled');
@@ -355,7 +346,90 @@ function start(inipath) {
     }
 }
 
-function sipDetails(resp) {
+/**
+* Initialize all iax extensions as _Extension_ object into the
+* _extensions_ property.
+*
+* @method initializeIaxExten
+* @private
+*/
+function initializeIaxExten() {
+    try {
+        var k, exten;
+        for (k in struct) {
+
+            if (struct[k].type    === INI_STRUCT.TYPE.EXTEN
+                && struct[k].tech === INI_STRUCT.TECH.IAX) { // all iax extensions
+
+                exten = new Extension(struct[k].extension, struct[k].tech);
+                extensions[exten.getExten()] = exten;
+                extensions[exten.getExten()].setName(struct[k].label);
+            }
+        }
+
+        // request iax details for all extensions
+        astProxy.doCmd({ command: 'listIaxPeers' }, listIaxPeers);
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the details for all iax extension object.
+*
+* @method listIaxPeers
+* @private
+*/
+function listIaxPeers(resp) {
+    try {
+        // check parameter
+        if (!resp) { throw new Error('wrong parameter'); }
+
+        var i;
+        for (i = 0; i < resp.length; i++) {
+
+            extensions[resp[i].ext].setIp(resp[i].ip);
+            extensions[resp[i].ext].setPort(resp[i].port);
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Initialize all sip extensions as _Extension_ object into the
+* _extensions_ property.
+*
+* @method initializeSipExten
+* @private
+*/
+function initializeSipExten() {
+    try {
+        var k, exten;
+        for (k in struct) {
+
+            if (struct[k].type    === INI_STRUCT.TYPE.EXTEN
+                && struct[k].tech === INI_STRUCT.TECH.SIP) { // all sip extensions
+
+                exten = new Extension(struct[k].extension, struct[k].tech);
+                extensions[exten.getExten()] = exten;
+
+                // request sip details for current extension
+                astProxy.doCmd({ command: 'sipDetails', exten: exten.getExten() }, extSipDetails);
+            }
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the details for the sip extension object.
+*
+* @method extSipDetails
+* @private
+*/
+function extSipDetails(resp) {
     try {
         // check parameter
         if (!resp || resp.result === undefined) { throw new Error('wrong parameter'); }
