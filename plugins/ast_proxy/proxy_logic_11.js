@@ -229,7 +229,8 @@ function iaxExtenStructValidation(resp) {
         logger.info(IDLOG, 'all iax extensions have been validated');
 
         // initialize all iax extensions as 'Extension' objects into the 'extensions' object
-        initializeIaxExten();
+        // initializeIaxExten();
+        setTimeout(initializeIaxExten, 2000);
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -369,9 +370,9 @@ function initializeIaxExten() {
                 extensions[exten.getExten()].setName(struct[k].label);
             }
         }
-
         // request iax details for all extensions
         astProxy.doCmd({ command: 'listIaxPeers' }, listIaxPeers);
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -395,6 +396,9 @@ function listIaxPeers(resp) {
             extensions[resp[i].ext].setPort(resp[i].port);
             logger.info(IDLOG, 'set iax details for ext ' + resp.exten);
         }
+        // request all channels
+        astProxy.doCmd({ command: 'listChannels' }, listChannels);
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -470,7 +474,7 @@ function extSipDetails(resp) {
 * the extensions.
 *
 * @method listChannels
-* @param {object} resp The list of the channels
+* @param {object} resp The channel list.
 * @private
 */
 function listChannels(resp) {
@@ -479,7 +483,7 @@ function listChannels(resp) {
         if (!resp) { throw new Error('wrong parameter'); }
 
         var ch, ext, chid, conv, chSource, chDest, chBridged;
-        // cycle in all channels received
+        // cycle in all received channels
         for (chid in resp) {
 
             chDest    = undefined;
@@ -509,9 +513,10 @@ function listChannels(resp) {
 
             // add the created conversation to the extension
             ext = resp[chid].callerNum;
-            extensions[ext].addConversation(conv);
-            logger.info('added new conversation ' + conv.getId() + ' to exten ' + ext);
-
+            if (extensions[ext]) {
+                extensions[ext].addConversation(conv);
+                logger.info('the conversation ' + conv.getId() + ' has been added to exten ' + ext);
+            }
         }
     } catch (err) {
         logger.error(IDLOG, err.stack);
