@@ -108,20 +108,6 @@ exports.Extension = function (ext, chType) {
     function getChanType() { return chanType; }
 
     /**
-    * Set the extension status to online.
-    *
-    * @method setOnline
-    */
-    function setOnline() { status = STATUS_ENUM.ONLINE; }
-
-    /**
-    * Set the extension status to online.
-    *
-    * @method setOffline
-    */
-    function setOffline() { status = STATUS_ENUM.OFFLINE; }
-
-    /**
     * Check if the extension in online.
     *
     * @method isOnline
@@ -174,12 +160,9 @@ exports.Extension = function (ext, chType) {
     * **It can throw exception**.
     */
     function setStatus(extStatus) {
-        var key;
-        for (key in STATUS_ENUM) {
-            if (extStatus == STATUS_ENUM[key]) {
-                status = extStatus
-                return true;
-            }
+        if (STATUS_ENUM[extStatus.toUpperCase()]) {
+            status = extStatus;
+            return true;
         }
         throw new Error('wrong parameter extStatus');
     }
@@ -212,8 +195,6 @@ exports.Extension = function (ext, chType) {
         toString:        toString,
         chanType:        getChanType,
         setStatus:       setStatus,
-        setOnline:       setOnline,
-        setOffline:      setOffline,
         addConversation: addConversation,
         setSipUserAgent: setSipUserAgent
     };
@@ -226,9 +207,17 @@ exports.Extension = function (ext, chType) {
 * @type {object}
 * @private
 * @final
-* @default ONLINE | OFFLINE
+* @default DND | BUSY | ONLINE | ONHOLD | OFFLINE | RINGING | BUSY_RINGING
 */
-var STATUS_ENUM = { ONLINE: 'online', OFFLINE: 'offline' };
+var STATUS_ENUM = {
+    DND:          'dnd',         // Busy
+    BUSY:         'busy',        // In Use
+    ONLINE:       'online',      // Idle
+    ONHOLD:       'onhold',
+    OFFLINE:      'offline',     // Unavailable
+    RINGING:      'ringing',     // Ringing
+    BUSY_RINGING: 'busy_ringing' // In Use & Ringin
+};
 
 /**
 * The Extension status enumeration. It's the same of
