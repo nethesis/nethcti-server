@@ -106,7 +106,6 @@ var IDLOG = '[listChannels]';
                     if (data.event === 'CoreShowChannel'
                         && data.calleridnum) {
 
-                        if (!list[data.channel]) { list[data.channel] = []; }
                         var type = calculateChType(data);
 
                         var obj = {
@@ -120,7 +119,7 @@ var IDLOG = '[listChannels]';
                             channelStatus:    data.channelstatedesc,
                             bridgedChannel:   data.bridgedchannel
                         };
-                        list[data.channel].push(obj);
+                        list[data.channel] = obj;
 
                     } else if (map[data.actionid] && data.event === 'CoreShowChannelsComplete') {
                         map[data.actionid](list); // callback execution
