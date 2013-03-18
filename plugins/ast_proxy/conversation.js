@@ -9,7 +9,9 @@
 */
 exports.Conversation = function (sourceChan, destChan) {
     // check parameters
-    if (typeof sourceChan !== 'object') { throw new Error('wrong parameters'); }
+    if (typeof sourceChan !== 'object' && typeof destChan !== 'object') {
+        throw new Error('wrong parameters');
+    }
 
     /**
     * The source channel.
@@ -36,7 +38,10 @@ exports.Conversation = function (sourceChan, destChan) {
     * @type {string}
     * @private
     */
-    var id = chSource.getChannel() + '>' + chDest.getChannel();
+    var id;
+    if (chSource && chDest) { id = chSource.getChannel() + '>' + chDest.getChannel(); }
+    else if ( chSource && !chDest) { id = chSource.getChannel() + '>'; }
+    else if (!chSource &&  chDest) { id = '>' + chDest.getChannel(); }
 
     /**
     * Return the source channel.
@@ -73,6 +78,7 @@ exports.Conversation = function (sourceChan, destChan) {
     // public interface
     return {
         getId:                 getId,
+        toString:              toString,
         getSourceChannel:      getSourceChannel,
         getDestinationChannel: getDestinationChannel
     };
