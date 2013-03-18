@@ -185,18 +185,36 @@ exports.Extension = function (ext, chType) {
         conversations[conv.getId()] = conv;
     }
 
+    /**
+    * Return the conversation number.
+    *
+    * @method conversationCount
+    * @return {number} The conversation number.
+    */
+    function conversationCount() { return Object.keys(conversations).length; }
+
+    /**
+    * Return the conversation list.
+    *
+    * @method getConversations
+    * @return {object} All conversations of the extension.
+    */
+    function getConversations() { return conversations; }
+
     // public interface
     return {
-        setIp:           setIp,
-        setName:         setName,
-        setPort:         setPort,
-        isOnline:        isOnline,
-        getExten:        getExten,
-        toString:        toString,
-        chanType:        getChanType,
-        setStatus:       setStatus,
-        addConversation: addConversation,
-        setSipUserAgent: setSipUserAgent
+        setIp:             setIp,
+        setName:           setName,
+        setPort:           setPort,
+        isOnline:          isOnline,
+        getExten:          getExten,
+        toString:          toString,
+        chanType:          getChanType,
+        setStatus:         setStatus,
+        addConversation:   addConversation,
+        setSipUserAgent:   setSipUserAgent,
+        getConversations:  getConversations,
+        conversationCount: conversationCount
     };
 }
 
