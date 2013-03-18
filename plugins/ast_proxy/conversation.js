@@ -9,9 +9,7 @@
 */
 exports.Conversation = function (sourceChan, destChan) {
     // check parameters
-    if (typeof sourceChan !== 'object' || typeof destChan !== 'object') {
-        throw new Error('wrong parameters');
-    }
+    if (typeof sourceChan !== 'object') { throw new Error('wrong parameters'); }
 
     /**
     * The source channel.
@@ -74,6 +72,7 @@ exports.Conversation = function (sourceChan, destChan) {
 
     // public interface
     return {
+        getId:                 getId,
         getSourceChannel:      getSourceChannel,
         getDestinationChannel: getDestinationChannel
     };
