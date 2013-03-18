@@ -4,14 +4,8 @@
 * **It can throw exceptions.**
 *
 * @class Extension
-* @param {object} obj The object with all informations about extension
-*   @param {string} obj.name The name of the extension
-*   @param {string} obj.ip The ip address of the device
-*   @param {string} obj.port The port of the device
-*   @param {string} obj.exten The extension number
-*   @param {string} obj.chantype The channel type, SIP, IAX, ...
-*   @param {string} obj.status The status
-*   @param {string} obj.sipuseragent The user agent of the extension
+* @param {string} ext The extension number
+* @param {string} chType The channel type, e.g. sip, iax
 * @constructor
 * @return {object} The extension object.
 */
@@ -78,6 +72,16 @@ exports.Extension = function (ext, chType) {
     * @private
     */
     var status;
+
+    /**
+    * The user conversations. The key is the conversation identifier
+    * and the value is the _conversation_ object.
+    *
+    * @property conversations
+    * @type {object}
+    * @private
+    */
+    var conversations = {};
 
     /**
     * Return the extension number.
@@ -180,18 +184,37 @@ exports.Extension = function (ext, chType) {
         throw new Error('wrong parameter extStatus');
     }
 
+    /**
+    * Set an extension conversation.
+    *
+    * @method addConversation
+    * @param {object} conv The _conversation_ object.
+    *
+    * **It can throw exception**.
+    */
+    function addConversation(conv) {
+        // check parameter
+        if (!conv || typeof conv !== 'object') { throw new Error('wrong parameter'); }
+
+        if (conversations[conv.getId()]) {
+            throw new Error('conversation ' + conv.getId() + ' already present for extension ' + getExten());
+        }
+        conversations[conv.getId()] = conv;
+    }
+
     // public interface
     return {
         setIp:           setIp,
         setName:         setName,
         setPort:         setPort,
+        isOnline:        isOnline,
         getExten:        getExten,
         toString:        toString,
         chanType:        getChanType,
         setStatus:       setStatus,
         setOnline:       setOnline,
         setOffline:      setOffline,
-        isOnline:        isOnline,
+        addConversation: addConversation,
         setSipUserAgent: setSipUserAgent
     };
 }
