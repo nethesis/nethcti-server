@@ -112,10 +112,16 @@ var IDLOG = '[extenStatus]';
                         map[data.actionid]({ result: false, message: data.message });
 
                     } else if (map[data.actionid]
+                               && data.exten
                                && data.status === '-1') { // extension not found
 
-                        map[data.actionid]({ result: false, message: 'Extension not found' });
+                        map[data.actionid]({ result: false, message: 'Extension not found', exten: data.exten });
+
+                    } else if (map[data.actionid]) {
+
+                        map[data.actionid]({ result: false });
                     }
+
 
                     // remove association ActionID-callback
                     delete map[data.actionid];
