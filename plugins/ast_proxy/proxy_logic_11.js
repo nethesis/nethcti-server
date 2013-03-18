@@ -62,13 +62,13 @@ var extensions = {};
 * @private
 */
 var EXTEN_STATUS_ADAPTER = {
-    '0':  'online',       // Idle
-    '1':  'busy',         // In Use
-    '2':  'dnd',          // Busy
-    '4':  'offline',      // Unavailable
-    '8':  'ringing',      // Ringing
-    '9':  'busy_ringing', // In Use & Ringing
-    '16': 'onhold'        // On Hold
+    '0':  EXTEN_STATUS_ENUM.ONLINE,       // Idle
+    '1':  EXTEN_STATUS_ENUM.BUSY,         // In Use
+    '2':  EXTEN_STATUS_ENUM.DND,          // Busy
+    '4':  EXTEN_STATUS_ENUM.OFFLINE,      // Unavailable
+    '8':  EXTEN_STATUS_ENUM.RINGING,      // Ringing
+    '9':  EXTEN_STATUS_ENUM.BUSY_RINGING, // In Use & Ringing
+    '16': EXTEN_STATUS_ENUM.ONHOLD        // On Hold
 }
 
 /**
@@ -420,10 +420,14 @@ function initializeSipExten() {
 
                 // request sip details for current extension
                 astProxy.doCmd({ command: 'sipDetails', exten: exten.getExten() }, extSipDetails);
+
+                // request the extension status
+                astProxy.doCmd({ command: 'extenStatus', exten: exten.getExten() }, extenStatus);
             }
         }
         // request all channels
         astProxy.doCmd({ command: 'listChannels' }, listChannels);
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -509,6 +513,24 @@ function listChannels(resp) {
             logger.info('added new conversation ' + conv.getId() + ' to exten ' + ext);
 
         }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the extension status received.
+*
+* @method extenStatus
+* @param {object} resp The received response object
+* @private
+*/
+function extenStatus(resp) {
+    try {
+        var status = EXTEN_STATUS_ADAPTER[resp.status];
+        extensions[resp.exten].setStatus(status);
+        logger.info(IDLOG, 'sets status ' + status + ' for extension ' + resp.exten);
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
