@@ -6,8 +6,9 @@
 * @static
 */
 var Channel           = require('./channel').Channel;
-var Extension         = require('./extension').Extension;
 var iniparser         = require('iniparser');
+var Extension         = require('./extension').Extension;
+var Conversation      = require('./conversation').Conversation;
 var EXTEN_STATUS_ENUM = require('./extension').EXTEN_STATUS_ENUM;
 
 /**
@@ -150,7 +151,8 @@ function visit(ap) {
 }
 
 /**
-* Validates all sip extensions of the structure ini file.
+* Validates all sip extensions of the structure ini file and
+* initialize sip _Extension_ objects.
 *
 * @method sipExtenStructValidation
 * @param {array} resp The response received from the command.
@@ -192,7 +194,8 @@ function sipExtenStructValidation(resp) {
 
 
 /**
-* Validates all iax extensions of the structure ini file.
+* Validates all iax extensions of the structure ini file and
+* initialize iax _Extension_ objects.
 *
 * @method iaxExtenStructValidation
 * @param {array} resp The response received from the command.
@@ -390,6 +393,7 @@ function listIaxPeers(resp) {
 
             extensions[resp[i].ext].setIp(resp[i].ip);
             extensions[resp[i].ext].setPort(resp[i].port);
+            logger.info(IDLOG, 'set iax details for ext ' + resp.exten);
         }
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -418,6 +422,8 @@ function initializeSipExten() {
                 astProxy.doCmd({ command: 'sipDetails', exten: exten.getExten() }, extSipDetails);
             }
         }
+        // request all channels
+        astProxy.doCmd({ command: 'listChannels' }, listChannels);
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -445,10 +451,63 @@ function extSipDetails(resp) {
             extensions[data.exten].setName(data.name);
             extensions[data.exten].setSipUserAgent(data.sipuseragent);
             extensions[data.exten].setIp(data.ip);
-            logger.info(IDLOG, 'set sip detail informations for ext ' + data.exten);
+            logger.info(IDLOG, 'set sip details for ext ' + data.exten);
 
         } else {
             logger.warn(IDLOG, 'sip details ' + (resp.message !== undefined ? resp.message : ''));
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Creates the _conversation_ objects and add them to
+* the extensions.
+*
+* @method listChannels
+* @param {object} resp The list of the channels
+* @private
+*/
+function listChannels(resp) {
+    try {
+        // check parameter
+        if (!resp) { throw new Error('wrong parameter'); }
+
+        var ch, ext, chid, conv, chSource, chDest, chBridged;
+        // cycle in all channels received
+        for (chid in resp) {
+
+            chDest    = undefined;
+            chSource  = undefined;
+            chBridged = undefined;
+
+            // creates the source and destination channels
+            ch = new Channel(resp[chid]);
+            if (ch.isSource()) {
+
+                chSource = ch;
+                chBridged = resp[chid].bridgedChannel;
+                if (resp[chBridged]) { // the call is connected
+                    chDest = new Channel(resp[chBridged]);
+                }
+
+            } else {
+
+                chDest = ch;
+                chBridged = resp[chid].bridgedChannel;
+                if (resp[chBridged]) { // the call is connected
+                    chSource = new Channel(resp[chBridged]);
+                }
+            }
+            // create a new conversation
+            conv = new Conversation(chSource, chDest);
+
+            // add the created conversation to the extension
+            ext = resp[chid].callerNum;
+            extensions[ext].addConversation(conv);
+            logger.info('added new conversation ' + conv.getId() + ' to exten ' + ext);
+
         }
     } catch (err) {
         logger.error(IDLOG, err.stack);
