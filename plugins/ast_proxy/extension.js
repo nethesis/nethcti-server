@@ -168,20 +168,16 @@ exports.Extension = function (ext, chType) {
     }
 
     /**
-    * Set an extension conversation.
+    * Sets the conversation. If it already exists it will be overwritten.
     *
     * @method addConversation
     * @param {object} conv The _conversation_ object.
-    *
-    * **It can throw exception**.
     */
     function addConversation(conv) {
         // check parameter
         if (!conv || typeof conv !== 'object') { throw new Error('wrong parameter'); }
 
-        if (conversations[conv.getId()]) {
-            throw new Error('conversation ' + conv.getId() + ' already present for extension ' + getExten());
-        }
+        // add the conversation. If it already exists it will be overwritten
         conversations[conv.getId()] = conv;
     }
 
