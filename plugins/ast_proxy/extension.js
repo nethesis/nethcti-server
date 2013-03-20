@@ -168,6 +168,14 @@ exports.Extension = function (ext, chType) {
     }
 
     /**
+    * Get the extension status.
+    *
+    * @method getStatus
+    * @return {string} The extension status.
+    */
+    function getStatus(extStatus) { return status; }
+
+    /**
     * Sets the conversation. If it already exists it will be overwritten.
     *
     * @method addConversation
@@ -197,20 +205,30 @@ exports.Extension = function (ext, chType) {
     */
     function getConversations() { return conversations; }
 
+    /**
+    * Removes the specified conversation.
+    *
+    * @method removeConversation
+    * @param {string} The conversation identifier
+    */
+    function removeConversation(convid) { delete conversations[convid]; }
+
     // public interface
     return {
-        setIp:             setIp,
-        setName:           setName,
-        setPort:           setPort,
-        isOnline:          isOnline,
-        getExten:          getExten,
-        toString:          toString,
-        chanType:          getChanType,
-        setStatus:         setStatus,
-        addConversation:   addConversation,
-        setSipUserAgent:   setSipUserAgent,
-        getConversations:  getConversations,
-        conversationCount: conversationCount
+        setIp:              setIp,
+        setName:            setName,
+        setPort:            setPort,
+        isOnline:           isOnline,
+        getExten:           getExten,
+        toString:           toString,
+        chanType:           getChanType,
+        setStatus:          setStatus,
+        getStatus:          getStatus,
+        addConversation:    addConversation,
+        setSipUserAgent:    setSipUserAgent,
+        getConversations:   getConversations,
+        conversationCount:  conversationCount,
+        removeConversation: removeConversation
     };
 }
 
