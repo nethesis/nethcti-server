@@ -10,6 +10,7 @@ var iniparser         = require('iniparser');
 var Extension         = require('./extension').Extension;
 var Conversation      = require('./conversation').Conversation;
 var EXTEN_STATUS_ENUM = require('./extension').EXTEN_STATUS_ENUM;
+var EventEmitter = require('events').EventEmitter;
 
 /**
 * The module identifier used by the logger.
@@ -32,6 +33,15 @@ var IDLOG = '[proxy_logic_11]';
 * @default console
 */
 var logger = console;
+
+/**
+* The event emitter.
+*
+* @property emitter
+* @type object
+* @private
+*/
+var emitter = new EventEmitter();
 
 /**
 * The asterisk proxy.
@@ -229,8 +239,7 @@ function iaxExtenStructValidation(resp) {
         logger.info(IDLOG, 'all iax extensions have been validated');
 
         // initialize all iax extensions as 'Extension' objects into the 'extensions' object
-        // initializeIaxExten();
-        setTimeout(initializeIaxExten, 2000);
+        initializeIaxExten();
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -394,7 +403,7 @@ function listIaxPeers(resp) {
 
             extensions[resp[i].ext].setIp(resp[i].ip);
             extensions[resp[i].ext].setPort(resp[i].port);
-            logger.info(IDLOG, 'set iax details for ext ' + resp.exten);
+            logger.info(IDLOG, 'set iax details for ext ' + resp[i].ext);
         }
         // request all channels
         astProxy.doCmd({ command: 'listChannels' }, listChannels);
@@ -486,34 +495,35 @@ function listChannels(resp) {
         // cycle in all received channels
         for (chid in resp) {
 
-            chDest    = undefined;
-            chSource  = undefined;
-            chBridged = undefined;
-
-            // creates the source and destination channels
-            ch = new Channel(resp[chid]);
-            if (ch.isSource()) {
-
-                chSource = ch;
-                chBridged = resp[chid].bridgedChannel;
-                if (resp[chBridged]) { // the call is connected
-                    chDest = new Channel(resp[chBridged]);
-                }
-
-            } else {
-
-                chDest = ch;
-                chBridged = resp[chid].bridgedChannel;
-                if (resp[chBridged]) { // the call is connected
-                    chSource = new Channel(resp[chBridged]);
-                }
-            }
-            // create a new conversation
-            conv = new Conversation(chSource, chDest);
-
-            // add the created conversation to the extension
-            ext = resp[chid].callerNum;
             if (extensions[ext]) {
+
+                chDest    = undefined;
+                chSource  = undefined;
+                chBridged = undefined;
+
+                // creates the source and destination channels
+                ch = new Channel(resp[chid]);
+                if (ch.isSource()) {
+
+                    chSource = ch;
+                    chBridged = resp[chid].bridgedChannel;
+                    if (resp[chBridged]) { // the call is connected
+                        chDest = new Channel(resp[chBridged]);
+                    }
+
+                } else {
+
+                    chDest = ch;
+                    chBridged = resp[chid].bridgedChannel;
+                    if (resp[chBridged]) { // the call is connected
+                        chSource = new Channel(resp[chBridged]);
+                    }
+                }
+                // create a new conversation
+                conv = new Conversation(chSource, chDest);
+
+                // add the created conversation to the extension
+                ext = resp[chid].callerNum;
                 extensions[ext].addConversation(conv);
                 logger.info('the conversation ' + conv.getId() + ' has been added to exten ' + ext);
             }
@@ -541,7 +551,75 @@ function extenStatus(resp) {
     }
 }
 
+/**
+* Remove the conversation from an extension.
+*
+* @method hangupConversation
+* @param {object} obj
+* @param {string} obj.ext The extension number
+* @param {string} obj.channel The channel identifier
+*/
+function hangupConversation(obj) {
+    try {
+        // check parameter
+        if (!obj
+            || typeof obj.ch  !== 'string'
+            || typeof obj.ext !== 'string') {
+
+            throw new Error('wrong parameter');
+        }
+
+        var ch  = obj.ch;
+        var ext = obj.ext;
+
+        // check extension presence
+        if (extensions[ext]) {
+
+            // search conversation to remove by channel
+            var convs = extensions[ext].getConversations();
+            var convid;
+            for (convid in convs) {
+
+                if (convid.indexOf(ch) !== -1 // the conversation id contains the channel id
+                    && ( // additional check
+                        convs[convid].getDestinationChannel().getChannel() === ch
+                        || convs[convid].getSourceChannel().getChannel()   === ch
+                    )) {
+
+                    extensions[ext].removeConversation(convid);
+                    astProxy.emit('extenChanged', extensions[ext]);
+                    logger.info(IDLOG, 'removed conversation ' + convid + ' from extension ' + ext);
+                    return;
+                }
+            }
+        }
+        logger.info(IDLOG, 'conversation to delete not found for extension ' + ext);
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Subscribe a callback function to a custom event fired by this object.
+* It's the same of nodejs _events.EventEmitter.on._
+*
+* @method on
+* @param {string} type The name of the event
+* @param {function} cb The callback to execute in response to the event
+* @return {object} A subscription handle capable of detaching that subscription.
+*/
+function on(type, cb) {
+    try {
+        return emitter.on(type, cb);
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
 // public interface
-exports.start     = start;
-exports.visit     = visit;
-exports.setLogger = setLogger;
+exports.on                 = on;
+exports.start              = start;
+exports.visit              = visit;
+exports.setLogger          = setLogger;
+exports.extensions         = extensions;
+exports.hangupConversation = hangupConversation;
