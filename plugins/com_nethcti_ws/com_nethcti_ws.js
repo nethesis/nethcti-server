@@ -146,6 +146,10 @@ function setAstProxyListeners() {
             throw new Error('wrong astProxy object');
         }
 
+        // an extension has changed
+        astProxy.on('extenChanged', function (data) {
+        });
+
     } catch (err) {
        logger.error(IDLOG, err.stack);
     }
@@ -191,9 +195,8 @@ function connHdlr(socket) {
         logger.info(IDLOG, 'new connection from ' + getWebsocketEndpoint(socket));
 
         // set the listeners for the new socket connection
-        socket.on('login',      function (data) { loginHdlr(socket, data);   });
-        //socket.on('message',    function (data) { messageHdlr(socket, data); });
-        socket.on('disconnect', function (data) { disconnHdlr(socket);       });
+        socket.on('login',      function (data) { loginHdlr(socket, data); });
+        socket.on('disconnect', function (data) { disconnHdlr(socket);     });
         logger.info(IDLOG, 'listeners for new socket connection have been set');
 
     } catch (err) {
@@ -238,9 +241,11 @@ function loginHdlr(socket, obj) {
             if (authe.authe(obj.user, obj.token)) { // user successfully authenticated
                 logger.info(IDLOG, 'user ' + obj.user + ' successfully authenticated from ' + getWebsocketEndpoint(socket));
                 addWebsocket(obj.user, socket);
+                sendAutheSuccess(socket);
 
             } else { // authentication failed
                 logger.warn(IDLOG, 'authentication failed for user ' + obj.user + ' from ' + getWebsocketEndpoint(socket));
+                send401(socket); // send 401 unauthorized response to the client
                 socket.disconnect();
             }
 
@@ -253,34 +258,6 @@ function loginHdlr(socket, obj) {
         logger.error(IDLOG, err.stack);
     }
 }
-
-/* request of command from a client
-function messageHdlr(socket, data) {
-    try {
-        // the user is not authenticated
-        if (!data || !data.user || !data.token || !authe.authe(data.user, data.token)) {
-
-            if (data && data.user) {
-                logger.warn(IDLOG, 'received request message from unauthorized user ' + data.user + ' ' + getWebsocketEndpoint(socket));
-            } else {
-                logger.warn(IDLOG, 'received request message from unauthorized user ' + getWebsocketEndpoint(socket));
-            }
-            send401(socket);     // send unauthorized response
-            socket.disconnect(); // close the socket
-
-        } else { // the user is authenticated, then manage the message
-
-            if (!data.command) { throw new Error('wrong parameter'); }
-            else {
-                logger.info(IDLOG, 'messageHdlr for command ' + data.command + ' is to implement');
-            }
-        }
-
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-*/
 
 /**
 * Websocket disconnection handler.
@@ -349,8 +326,7 @@ function addWebsocket(user, socket) {
 function send401Nonce(socket, nonce) {
     try {
         socket.emit('401', { message: 'unauthorized access', nonce: nonce });
-        logger.info(IDLOG, 'send 401 unauthorized with nonce to ' +
-                    getWebsocketEndpoint(socket));
+        logger.info(IDLOG, 'send 401 unauthorized with nonce to ' + getWebsocketEndpoint(socket));
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -371,6 +347,23 @@ function send401(socket) {
         logger.error(IDLOG, err.stack);
     }
 }
+
+/**
+* Send authorized successfully response through websocket.
+*
+* @method sendAutheSuccess
+* @param {object} socket The client websocket
+* @private
+*/
+function sendAutheSuccess(socket) {
+    try {
+        socket.emit('authe_ok', { message: 'authorized successfully' });
+        logger.warn(IDLOG, 'send authorized successfully to ' + getWebsocketEndpoint(socket));
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
 
 // public interface
 exports.start       = start;
