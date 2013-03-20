@@ -444,7 +444,7 @@ function setAllPluginsCmdLogger(log) {
 
 /**
 * Subscribe a callback function to a custom event fired by this object.
-* It's the same of nodejs _events.EventEmitter.on._
+* It's the same of nodejs _events.EventEmitter.on_ method.
 *
 * @method on
 * @param {string} type The name of the event
@@ -459,9 +459,26 @@ function on(type, cb) {
     }
 }
 
+/**
+* Emit an event. It's the same of nodejs _events.EventEmitter.emit_ method.
+*
+* @method emit
+* @param {string} ev The name of the event
+* @param {object} data The object to be emitted
+*/
+function emit(ev, data) {
+    try {
+        emitter.emit(ev, data);
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
 // public interface
-exports.on        = on;
-exports.doCmd     = doCmd;
-exports.start     = start;
-exports.config    = config;
-exports.setLogger = setLogger;
+exports.on         = on;
+exports.emit       = emit;
+exports.doCmd      = doCmd;
+exports.start      = start;
+exports.config     = config;
+exports.setLogger  = setLogger;
+exports.proxyLogic = proxyLogic;
