@@ -127,12 +127,28 @@ exports.Extension = function (ext, chType) {
     function setIp(ipAddr) { ip = ipAddr; }
 
     /**
+    * Get the extension ip address.
+    *
+    * @method getIp
+    * @return {string} The ip address.
+    */
+    function getIp(ipAddr) { return ip; }
+
+    /**
     * Set the extension ip port.
     *
     * @method setPort
     * @param {string} ipPort The ip port
     */
     function setPort(ipPort) { port = ipPort; }
+
+    /**
+    * Get the extension ip port.
+    *
+    * @method getPort
+    * @return {string} The ip port.
+    */
+    function getPort(ipPort) { return port; }
 
     /**
     * Set the extension name.
@@ -213,11 +229,38 @@ exports.Extension = function (ext, chType) {
     */
     function removeConversation(convid) { delete conversations[convid]; }
 
+    /**
+    * Returns an object literal representation of the object
+    * without any methods.
+    *
+    * @method marshallObjLiteral
+    * @return {object} The object literal representation of the object.
+    */
+    function marshallObjLiteral() {
+        var convs = {};
+        var convid;
+
+        // conversations marshalling
+        for (convid in conversations) { convs[convid] = conversations[convid].marshallObjLiteral(); }
+
+        return {
+            ip:            ip,
+            port:          port,
+            exten:         exten,
+            status:        status,
+            chanType:      chanType,
+            sipuseragent:  sipuseragent,
+            conversations: convs
+        }
+    }
+
     // public interface
     return {
         setIp:              setIp,
+        getIp:              getIp,
         setName:            setName,
         setPort:            setPort,
+        getPort:            getPort,
         isOnline:           isOnline,
         getExten:           getExten,
         toString:           toString,
@@ -228,6 +271,7 @@ exports.Extension = function (ext, chType) {
         setSipUserAgent:    setSipUserAgent,
         getConversations:   getConversations,
         conversationCount:  conversationCount,
+        marshallObjLiteral: marshallObjLiteral,
         removeConversation: removeConversation
     };
 }
