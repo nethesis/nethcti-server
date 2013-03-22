@@ -495,6 +495,8 @@ function listChannels(resp) {
         // cycle in all received channels
         for (chid in resp) {
 
+            ext = resp[chid].callerNum;
+
             if (extensions[ext]) {
 
                 chDest    = undefined;
@@ -523,7 +525,6 @@ function listChannels(resp) {
                 conv = new Conversation(chSource, chDest);
 
                 // add the created conversation to the extension
-                ext = resp[chid].callerNum;
                 extensions[ext].addConversation(conv);
                 logger.info('the conversation ' + conv.getId() + ' has been added to exten ' + ext);
             }
@@ -616,10 +617,25 @@ function on(type, cb) {
     }
 }
 
+/**
+* Return the extension list.
+*
+* @method getExtensions
+* @return {object} The _extensions_ object.
+*/
+function getExtensions() {
+    try {
+        return extensions;
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
 // public interface
 exports.on                 = on;
 exports.start              = start;
 exports.visit              = visit;
 exports.setLogger          = setLogger;
 exports.extensions         = extensions;
+exports.getExtensions      = getExtensions;
 exports.hangupConversation = hangupConversation;
