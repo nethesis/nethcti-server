@@ -194,17 +194,40 @@ exports.Channel = function (obj) {
         return false;
     }
 
+    /**
+    * Returns an object literal representation of the object
+    * without any methods.
+    *
+    * @method marshallObjLiteral
+    * @return {object} The object literal representation of the object.
+    */
+    function marshallObjLiteral() {
+        return {
+            type:           type,
+            channel:        channel,
+            duration:       duration,
+            callerNum:      callerNum,
+            callerName:     callerName,
+            bridgedNum:     bridgedNum,
+            bridgedName:    bridgedName,
+            channelStatus:  channelStatus,
+            bridgedChannel: bridgedChannel
+        };
+    }
+
     // public interface
     return {
         toString:            toString,
         isSource:            isSource,
         getChannel:          getChannel,
+        getDuration:         getDuration,
         getCallerNum:        getCallerNum,
         getCallerName:       getCallerName,
         getBridgedNum:       getBridgedNum,
         getBridgedName:      getBridgedName,
         getChannelStatus:    getChannelStatus,
-        getBridgedChannel:   getBridgedChannel
+        getBridgedChannel:   getBridgedChannel,
+        marshallObjLiteral:  marshallObjLiteral
     };
 }
 
