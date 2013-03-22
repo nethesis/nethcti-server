@@ -475,10 +475,11 @@ function emit(ev, data) {
 }
 
 // public interface
-exports.on         = on;
-exports.emit       = emit;
-exports.doCmd      = doCmd;
-exports.start      = start;
-exports.config     = config;
-exports.setLogger  = setLogger;
-exports.proxyLogic = proxyLogic;
+exports.on            = on;
+exports.emit          = emit;
+exports.doCmd         = doCmd;
+exports.start         = start;
+exports.config        = config;
+exports.setLogger     = setLogger;
+exports.proxyLogic    = proxyLogic;
+exports.getExtensions = proxyLogic.getExtensions;
