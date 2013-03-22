@@ -75,11 +75,27 @@ exports.Conversation = function (sourceChan, destChan) {
     */
     function getId() { return id; }
 
+    /**
+    * Returns an object literal representation of the object
+    * without any methods.
+    *
+    * @method marshallObjLiteral
+    * @return {object} The object literal representation of the object.
+    */
+    function marshallObjLiteral() {
+        return {
+            id:       id,
+            chDest:   chDest.marshallObjLiteral(),
+            chSource: chSource.marshallObjLiteral()
+        };
+    }
+
     // public interface
     return {
         getId:                 getId,
         toString:              toString,
         getSourceChannel:      getSourceChannel,
+        marshallObjLiteral:    marshallObjLiteral,
         getDestinationChannel: getDestinationChannel
     };
 }
