@@ -45,7 +45,15 @@ module.exports = function (options, imports, register) {
             *   @param [obj.parameters] 0..n The parameters that can be used into the command plugin
             * @param {function} cb The callback
             */
-            doCmd: astProxy.doCmd
+            doCmd: astProxy.doCmd,
+
+            /**
+            * It's the _getExtensions_ method provided by _ast\_proxy_ module.
+            *
+            * @method getExtensions
+            * @return {object} The extension list.
+            */
+            getExtensions: astProxy.getExtensions
         }
     });
 
