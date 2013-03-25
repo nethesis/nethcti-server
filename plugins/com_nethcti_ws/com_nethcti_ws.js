@@ -181,7 +181,7 @@ function setAstProxyListeners() {
 */
 function extenChanged(exten) {
     try {
-        logger.info(IDLOG, 'received EVENT "extenChanged" for extension ' + exten.getExten());
+        logger.info(IDLOG, 'received event extenChanged for extension ' + exten.getExten());
         server.sockets.in('op').emit('extenUpdate', exten.marshallObjLiteral());
     } catch (err) {
         logger.error(IDLOG, err.stack);
