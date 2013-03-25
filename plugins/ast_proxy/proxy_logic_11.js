@@ -573,6 +573,8 @@ function hangupConversation(obj) {
         var ch  = obj.ch;
         var ext = obj.ext;
 
+        logger.info(IDLOG, 'hangup conversation for exten ' + ext + ' channel ' + ch);
+
         // check extension presence
         if (extensions[ext]) {
 
@@ -588,8 +590,9 @@ function hangupConversation(obj) {
                     )) {
 
                     extensions[ext].removeConversation(convid);
-                    astProxy.emit('extenChanged', extensions[ext]);
                     logger.info(IDLOG, 'removed conversation ' + convid + ' from extension ' + ext);
+                    astProxy.emit('extenChanged', extensions[ext]);
+                    logger.info(IDLOG, 'emitted event extenChanged for extension ' + ext);
                     return;
                 }
             }
@@ -636,6 +639,5 @@ exports.on                 = on;
 exports.start              = start;
 exports.visit              = visit;
 exports.setLogger          = setLogger;
-exports.extensions         = extensions;
 exports.getExtensions      = getExtensions;
 exports.hangupConversation = hangupConversation;
