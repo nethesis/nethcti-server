@@ -49,6 +49,15 @@ var PORT = 8181;
 var logger = console;
 
 /**
+* The websocket server.
+*
+* @property server
+* @type {object}
+* @private
+*/
+var server;
+
+/**
 * The asterisk proxy.
 *
 * @property astProxy
@@ -67,14 +76,15 @@ var astProxy;
 var authe;
 
 /**
-* Contains all websocket of the authenticated clients. The key is
-* the user and the value is the websocket.
+* Contains all websocket identifiers of authenticated clients.
+* The key is the websocket identifier and the value is the username.
+* It's used for fast authentication for each request.
 *
-* @property ws
+* @property wsid
 * @type object
 * @private
 */
-var ws = {};
+var wsid = {};
 
 /**
 * Set the logger to be used.
@@ -137,6 +147,12 @@ function setAstProxy(ap) {
     }
 }
 
+/**
+* Sets the event listeners for the asterisk proxy component.
+*
+* @method setAstProxyListeners
+* @private
+*/
 function setAstProxyListeners() {
     try {
         // check astProxy object
@@ -147,11 +163,28 @@ function setAstProxyListeners() {
         }
 
         // an extension has changed
-        astProxy.on('extenChanged', function (data) {
-        });
+        astProxy.on('extenChanged', extenChanged);
 
     } catch (err) {
        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Handler for the _extenChanged_ event emitted by _ast\_proxy_
+* component. Something has changed in the extension, so notifies
+* all interested clients.
+*
+* @method extenChanged
+* @param {object} exten The extension object
+* @private
+*/
+function extenChanged(exten) {
+    try {
+        logger.info(IDLOG, 'received EVENT "extenChanged" for extension ' + exten.getExten());
+        server.sockets.in('op').emit('extenUpdate', exten.marshallObjLiteral());
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
     }
 }
 
@@ -172,7 +205,7 @@ function start() {
         };
 
         // websocket server
-        var server = io.listen(PORT, options);
+        server = io.listen(PORT, options);
 
         // set the websocket server listener
         server.on('connection', connHdlr);
@@ -195,8 +228,9 @@ function connHdlr(socket) {
         logger.info(IDLOG, 'new connection from ' + getWebsocketEndpoint(socket));
 
         // set the listeners for the new socket connection
-        socket.on('login',      function (data) { loginHdlr(socket, data); });
-        socket.on('disconnect', function (data) { disconnHdlr(socket);     });
+        socket.on('login',      function (data) { loginHdlr(socket, data);     });
+        socket.on('challenge',  function (data) { challengeHdlr(socket, data); });
+        socket.on('disconnect', function (data) { disconnHdlr(socket);         });
         logger.info(IDLOG, 'listeners for new socket connection have been set');
 
     } catch (err) {
@@ -222,6 +256,31 @@ function getWebsocketEndpoint(socket) {
 }
 
 /**
+* Websocket challenge handler for login operation.
+*
+* @method challengeHdlr
+* @param {object} socket The client websocket
+* @param {object} obj The data passed by the client. It must contain
+* the user information
+* @private
+*/
+function challengeHdlr(socket, obj) {
+    try {
+        if (socket && obj && obj.user) { // send 401 with nonce
+            logger.info(IDLOG, 'login challenge request from ' + obj.user + ' ' + getWebsocketEndpoint(socket));
+            send401Nonce(socket, authe.getNonce(obj.user));
+
+        } else {
+            logger.warn(IDLOG, 'bad authentication challenge request from ' + getWebsocketEndpoint(socket));
+            send401(socket); // send 401 unauthorized response to the client
+            socket.disconnect();
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Websocket login handler.
 *
 * @method loginHdlr
@@ -231,26 +290,35 @@ function getWebsocketEndpoint(socket) {
 */
 function loginHdlr(socket, obj) {
     try {
-        if (obj && obj.user && !obj.token) { // send 401 with nonce
-
-            logger.info(IDLOG, 'login request from ' + obj.user + ' ' + getWebsocketEndpoint(socket));
-            send401Nonce(socket, authe.getNonce(obj.user));
-
-        } else if (obj && obj.user && obj.token) { // check authentication
+        if (socket && obj && obj.user && obj.token) { // check parameters
 
             if (authe.authe(obj.user, obj.token)) { // user successfully authenticated
-                logger.info(IDLOG, 'user ' + obj.user + ' successfully authenticated from ' + getWebsocketEndpoint(socket));
-                addWebsocket(obj.user, socket);
+
+                logger.info(IDLOG, 'user ' + obj.user + ' successfully authenticated from ' + getWebsocketEndpoint(socket) +
+                                   ' with id ' + socket.id);
+
+                // add websocket id for future fast authentication for each request from the clients
+                addWebsocketId(obj.user, socket.id);
+
+                // sets extension property to the client socket
+                socket.set('extension', obj.user, function () {
+                    logger.info(IDLOG, 'setted extension property ' + obj.user + ' to socket ' + socket.id);
+                });
+
+                // send authenticated successfully response
                 sendAutheSuccess(socket);
 
+                socket.join('room');
+
             } else { // authentication failed
-                logger.warn(IDLOG, 'authentication failed for user ' + obj.user + ' from ' + getWebsocketEndpoint(socket));
+                logger.warn(IDLOG, 'authentication failed for user ' + obj.user + ' from ' + getWebsocketEndpoint(socket) +
+                                   ' with id ' + socket.id);
                 send401(socket); // send 401 unauthorized response to the client
                 socket.disconnect();
             }
 
         } else { // bad authentication request
-            logger.warn(IDLOG, 'bad authentication request from ' + getWebsocketEndpoint(socket));
+            logger.warn(IDLOG, 'bad authentication login request from ' + getWebsocketEndpoint(socket));
             send401(socket); // send 401 unauthorized response to the client
             socket.disconnect();
         }
@@ -269,46 +337,45 @@ function loginHdlr(socket, obj) {
 function disconnHdlr(socket) {
     try {
         logger.info(IDLOG, 'client websocket disconnected ' + getWebsocketEndpoint(socket));
-        removeWebsocket(socket);
+        removeWebsocketId(socket.id);
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
 }
 
 /**
-* Removes the client websocket from private object _ws_.
+* Removes the client websocket identifier from the private object _wsid_.
 *
-* @method removeWebsocket
-* @param {object} socket The client websocket
+* @method removeWebsocketId
+* @param {string} socketId The client websocket identifier
 * private
 */
-function removeWebsocket(socket) {
+function removeWebsocketId(socketId) {
     try {
-        var key;
-        for (key in ws) {
-            if (socket.id === ws[key].id) { // match is made by socket.id
-                delete ws[key];
-                logger.info(IDLOG, 'removed client websocket for user ' + key);
-                return;
-            }
+        if (wsid[socketId]) {
+            logger.info(IDLOG, 'remove client websocket ' + socketId + ' for the user ' + wsid[socketId]);
         }
+        delete wsid[socketId];
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
 }
 
 /**
-* Adds the client websocket to private object _ws_.
+* Adds the client websocket identifier into the
+* private object _wsid_.
 *
-* @method addWebsocket
+* @method addWebsocketId
 * @param {string} user The user used as key
-* @param {object} socket The client websocket to add in memory
+* @param {string} socketId The client websocket identifier to store in the memory
 * private
 */
-function addWebsocket(user, socket) {
+function addWebsocketId(user, socketId) {
     try {
-        ws[user] = socket;
-        logger.info(IDLOG, 'added client websocket for user ' + user + ' ' + getWebsocketEndpoint(socket));
+        wsid[socketId] = user;
+        logger.info(IDLOG, 'added client websocket identifier ' + socketId + ' for user ' + user);
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -358,15 +425,37 @@ function send401(socket) {
 function sendAutheSuccess(socket) {
     try {
         socket.emit('authe_ok', { message: 'authorized successfully' });
-        logger.warn(IDLOG, 'send authorized successfully to ' + getWebsocketEndpoint(socket));
+        socket.get('extension', function (err, name) {
+            logger.warn(IDLOG, 'send authorized successfully to ' + name + ' ' + getWebsocketEndpoint(socket) + ' with id ' + socket.id);
+        });
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
 }
 
+/**
+* Returns an object literal representation of all extensions
+* without any methods.
+*
+* @method marshallExtensionsObjLiteral
+* @return {object} The object literal representation of all extensions without any methods.
+*/
+function marshallExtensionsObjLiteral() {
+    try {
+        var extensions = astProxy.getExtensions();
+        var eliteral = {};
+        var ext;
+        for (ext in extensions) { eliteral[ext] = extensions[ext].marshallObjLiteral(); }
+        return eliteral;
+
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
 
 // public interface
 exports.start       = start;
 exports.setAuthe    = setAuthe;
 exports.setLogger   = setLogger;
 exports.setAstProxy = setAstProxy;
+exports.marshallExtensionsObjLiteral = marshallExtensionsObjLiteral;
