@@ -25,6 +25,14 @@ var EventEmitter = require('events').EventEmitter;
 var IDLOG = '[proxy_logic_11]';
 
 /**
+* Fired when something changed in an extension.
+*
+* @event extension
+* @param {object} msg The extension object
+*/
+var EVT_EXTEN_CHANGED = 'extenChanged';
+
+/**
 * The logger. It must have at least three methods: _info, warn and error._
 *
 * @property logger
@@ -450,6 +458,7 @@ function initializeSipExten() {
 * Sets the details for the sip extension object.
 *
 * @method extSipDetails
+* @param {object} resp The extension informations object
 * @private
 */
 function extSipDetails(resp) {
@@ -473,6 +482,27 @@ function extSipDetails(resp) {
         } else {
             logger.warn(IDLOG, 'sip details ' + (resp.message !== undefined ? resp.message : ''));
         }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Update extension information and emit _EVT\_EXTEN\_CHANGED_ event.
+*
+* @method updateExtSipDetails
+* @param {object} resp The extension informations object
+* @private
+*/
+function updateExtSipDetails(resp) {
+    try {
+        // set extension informations
+        extSipDetails(resp);
+
+        // emit the event
+        astProxy.emit(EVT_EXTEN_CHANGED, extensions[resp.exten.exten]);
+        logger.info(IDLOG, 'emitted event ' + EVT_EXTEN_CHANGED + ' for extension ' + resp.exten.exten);
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -553,7 +583,8 @@ function extenStatus(resp) {
 }
 
 /**
-* Remove the conversation from an extension.
+* Remove the conversation from an extension and emit
+* _EVT\_EXTEN\_CHANGED_ event.
 *
 * @method hangupConversation
 * @param {object} obj
@@ -591,8 +622,8 @@ function hangupConversation(obj) {
 
                     extensions[ext].removeConversation(convid);
                     logger.info(IDLOG, 'removed conversation ' + convid + ' from extension ' + ext);
-                    astProxy.emit('extenChanged', extensions[ext]);
-                    logger.info(IDLOG, 'emitted event extenChanged for extension ' + ext);
+                    astProxy.emit(EVT_EXTEN_CHANGED, extensions[ext]);
+                    logger.info(IDLOG, 'emitted event ' + EVT_EXTEN_CHANGED + ' for extension ' + ext);
                     return;
                 }
             }
@@ -634,6 +665,35 @@ function getExtensions() {
     }
 }
 
+/**
+* Updates the extension status and any other information except
+* the channel list.
+*
+* @method extenStatusChanged
+* @param {string} exten The extension number
+* @param {string} statusCode The numeric status code as arrived from asterisk
+* @private
+*/
+function extenStatusChanged(exten, statusCode) {
+    try {
+        // check parameters
+        if (typeof exten !== 'string' && typeof statusCode !== 'string') {
+            throw new Error('wrong parameters');
+        }
+
+        // request sip details for current extension
+        extensions[exten].setStatus(EXTEN_STATUS_ADAPTER[statusCode]);
+        logger.info(IDLOG, 'set status ' + EXTEN_STATUS_ADAPTER[statusCode] + ' for extension ' + exten);
+
+        // update extension informations. This is because when the extension becomes
+        // offline/online ip, port and other informations needs to be updated
+        astProxy.doCmd({ command: 'sipDetails', exten: exten }, updateExtSipDetails);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
 // public interface
 exports.on                 = on;
 exports.start              = start;
@@ -641,3 +701,4 @@ exports.visit              = visit;
 exports.setLogger          = setLogger;
 exports.getExtensions      = getExtensions;
 exports.hangupConversation = hangupConversation;
+exports.extenStatusChanged = extenStatusChanged;
