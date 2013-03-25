@@ -2,7 +2,7 @@
 * ................................
 * 
 * @module ast_proxy
-* @submodule plugins_command_11
+* @submodule plugins_event_11
 */
 var Extension = require('../extension').Extension;
 
