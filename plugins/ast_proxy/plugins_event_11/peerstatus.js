@@ -56,7 +56,6 @@ var astProxy;
             */
             data: function (data) {
                 try {
-                    console.log(data);
                     var exten = data.peer.split('/')[1];
                     astProxy.doCmd({ command: 'sipDetails', exten: exten }, sipDetails);
 
