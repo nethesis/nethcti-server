@@ -121,6 +121,7 @@ var CAUSE = {
                         && data.connectedlinenum
                         && data.event === 'Hangup') {
 
+                        logger.info(IDLOG, 'received event ' + data.event);
                         astProxy.proxyLogic.hangupConversation({ ext: data.calleridnum, ch: data.channel, cause: CAUSE[data.cause] });
 
                     } else {
