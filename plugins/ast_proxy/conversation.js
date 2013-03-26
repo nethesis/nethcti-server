@@ -76,8 +76,9 @@ exports.Conversation = function (sourceChan, destChan) {
     function getId() { return id; }
 
     /**
-    * Returns an object literal representation of the object
-    * without any methods.
+    * Returns an object literal representation of the object without
+    * any methods. If the conversation isn't connected, one between
+    * the source channel and destination channel can be undefined.
     *
     * @method marshallObjLiteral
     * @return {object} The object literal representation of the object.
@@ -85,8 +86,8 @@ exports.Conversation = function (sourceChan, destChan) {
     function marshallObjLiteral() {
         return {
             id:       id,
-            chDest:   chDest.marshallObjLiteral(),
-            chSource: chSource.marshallObjLiteral()
+            chDest:   chDest   ? chDest.marshallObjLiteral()   : undefined,
+            chSource: chSource ? chSource.marshallObjLiteral() : undefined
         };
     }
 
