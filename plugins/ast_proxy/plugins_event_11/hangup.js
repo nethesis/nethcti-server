@@ -105,7 +105,7 @@ var CAUSE = {
         */
         var hangup = {
             /**
-            * It's called from _ast_proxy_ component for each hangup event
+            * It's called from _ast\_proxy_ component for each hangup event
             * received from the asterisk.
             *
             * @method data
