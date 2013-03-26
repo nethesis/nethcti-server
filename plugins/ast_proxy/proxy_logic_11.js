@@ -596,9 +596,11 @@ function hangupConversation(obj) {
             for (convid in convs) {
 
                 if (convid.indexOf(ch) !== -1 // the conversation id contains the channel id
-                    && ( // additional check
-                        convs[convid].getDestinationChannel().getChannel() === ch
-                        || convs[convid].getSourceChannel().getChannel()   === ch
+                    && // additional check
+                    (
+                        (convs[convid].getDestinationChannel() && convs[convid].getDestinationChannel().getChannel() === ch)
+                        ||
+                        (convs[convid].getSourceChannel() && convs[convid].getSourceChannel().getChannel()   === ch)
                     )) {
 
                     extensions[ext].removeConversation(convid);
@@ -610,6 +612,7 @@ function hangupConversation(obj) {
             }
         }
         logger.info(IDLOG, 'conversation to delete not found for extension ' + ext);
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
