@@ -39,7 +39,7 @@ var IDLOG = '[extenChannels]';
         var map = {};
 
         /**
-        * List of all extension's channels. The key is the channel identifie
+        * List of all the channels of the extension. The key is the channel identifie
         * and the value is the _Channel_ object.
         *
         * @property list
@@ -49,7 +49,7 @@ var IDLOG = '[extenChannels]';
         var list = {};
 
         /**
-        * Command plugin to get the list of all extension's channels.
+        * Command plugin to get the list of all the channels of the extension.
         *
         * Use it with _ast\_proxy_ module as follow:
         *
@@ -64,7 +64,7 @@ var IDLOG = '[extenChannels]';
         var extenChannels = {
 
             /**
-            * Execute asterisk action to get the list of all extension's channels.
+            * Execute asterisk action to get the list of all the channels of the extension.
             * 
             * @method execute
             * @param {object} am Asterisk manager to send the action
