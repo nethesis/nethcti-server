@@ -395,7 +395,7 @@ function listIaxPeers(resp) {
         }
         // request all channels
         logger.info(IDLOG, 'requests the channel list to initialize iax extensions');
-        astProxy.doCmd({ command: 'listChannels' }, listChannels);
+        astProxy.doCmd({ command: 'listChannels' }, updateConversationsForAllExten);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -429,7 +429,7 @@ function initializeSipExten() {
         }
         // request all channels
         logger.info(IDLOG, 'requests the channel list to initialize sip extensions');
-        astProxy.doCmd({ command: 'listChannels' }, listChannels);
+        astProxy.doCmd({ command: 'listChannels' }, updateConversationsForAllExten);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -491,56 +491,131 @@ function updateExtSipDetails(resp) {
 }
 
 /**
-* Creates the _conversation_ objects and add them to
-* the extensions.
+* Updates the conversations for all extensions.
 *
-* @method listChannels
-* @param {object} resp The channel list.
+* @method updateConversationsForAllExten
+* @param {object} resp The channel list as received by the _listChannels_ command plugin.
 * @private
 */
-function listChannels(resp) {
+function updateConversationsForAllExten(resp) {
     try {
         // check parameter
         if (!resp) { throw new Error('wrong parameter'); }
 
-        var ch, ext, chid, conv, chSource, chDest, chBridged;
+        // removes all conversations of all extensions
+        var ext;
+        for (ext in extensions) { extensions[ext].removeAllConversations(); }
+
         // cycle in all received channels
+        var chid;
         for (chid in resp) {
 
             ext = resp[chid].callerNum;
 
-            if (extensions[ext]) {
-
-                chDest    = undefined;
-                chSource  = undefined;
-                chBridged = undefined;
-
-                // creates the source and destination channels
-                ch = new Channel(resp[chid]);
-                if (ch.isSource()) {
-
-                    chSource = ch;
-                    chBridged = resp[chid].bridgedChannel;
-                    if (resp[chBridged]) { // the call is connected
-                        chDest = new Channel(resp[chBridged]);
-                    }
-
-                } else {
-
-                    chDest = ch;
-                    chBridged = resp[chid].bridgedChannel;
-                    if (resp[chBridged]) { // the call is connected
-                        chSource = new Channel(resp[chBridged]);
-                    }
-                }
-                // create a new conversation
-                conv = new Conversation(chSource, chDest);
-
-                // add the created conversation to the extension
-                extensions[ext].addConversation(conv);
-                logger.info('the conversation ' + conv.getId() + ' has been added to exten ' + ext);
-            }
+            // add new conversation to the extension through the current channel object
+            if (extensions[ext]) { addConversationToExten(ext, resp, chid); }
         }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Update the conversations of the extension.
+*
+* @method updateExtenConversations
+* @param {string} exten The extension number
+* @param {object} resp The object received by the _listChannels_ command plugin
+* @private
+*/
+function updateExtenConversations(exten, resp) {
+    try {
+        // check parameters
+        if (typeof exten !== 'string' || !resp) { throw new Error('wrong parameters'); }
+
+        // check if the extension exists, otherwise there is some error
+        if (extensions[exten]) {
+
+            // reset all conversations of the extension
+            extensions[exten].removeAllConversations();
+            logger.info(IDLOG, 'reset all conversations of the extension ' + exten);
+
+            // cycle in all received channels
+            var ext, chid;
+            for (chid in resp) {
+
+                // current extension of the channel
+                ext = resp[chid].callerNum;
+
+                // add conversation if the current extension is of interest
+                if (ext === exten) { addConversationToExten(ext, resp, chid); }
+            }
+
+            // emit the event
+            astProxy.emit(EVT_EXTEN_CHANGED, extensions[exten]);
+            logger.info(IDLOG, 'emitted event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
+
+        } else {
+            logger.warn(IDLOG, 'try to update channel list of the non existent extension ' + exten);
+        }
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Add new conversation to the extension.
+*
+* @method addConversationToExten
+* @param {string} exten The extension number
+* @param {object} resp The channel list object received by the _listChannels_ command plugin
+* @param {string} chid The channel identifier
+* @private
+*/
+function addConversationToExten(exten, resp, chid) {
+    try {
+        // check parameters
+        if (typeof exten !== 'string'
+            || typeof resp !== 'object'
+            || typeof chid !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        if (extensions[exten]) {
+
+            var chDest, chSource, chBridged;
+
+            // creates the source and destination channels
+            var ch = new Channel(resp[chid]);
+            if (ch.isSource()) {
+
+                chSource = ch;
+                chBridged = resp[chid].bridgedChannel;
+                if (resp[chBridged]) { // the call is connected
+                    chDest = new Channel(resp[chBridged]);
+                }
+
+            } else {
+
+                chDest = ch;
+                chBridged = resp[chid].bridgedChannel;
+                if (resp[chBridged]) { // the call is connected
+                    chSource = new Channel(resp[chBridged]);
+                }
+            }
+            // create a new conversation
+            var conv = new Conversation(chSource, chDest);
+
+            // add the created conversation to the extension
+            extensions[exten].addConversation(conv);
+            logger.info('the conversation ' + conv.getId() + ' has been added to exten ' + exten);
+
+        } else {
+            logger.warn(IDLOG, 'try to add new conversation to a non existent extensions ' + exten);
+        }
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -672,6 +747,12 @@ function extenStatusChanged(exten, status) {
         // update extension informations. This is because when the extension becomes
         // offline/online ip, port and other informations needs to be updated
         astProxy.doCmd({ command: 'sipDetails', exten: exten }, updateExtSipDetails);
+
+        // request all channels
+        logger.info(IDLOG, 'requests the channel list to update the extension ' + exten);
+        astProxy.doCmd({ command: 'listChannels' }, function (resp) {
+            updateExtenConversations(exten, resp);
+        });
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
