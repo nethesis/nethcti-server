@@ -71,15 +71,15 @@ var astProxy;
 var extensions = {};
 
 /**
-* Adapter from asterisk extension status to status for _Extension_
-* object.
+* Adapter from asterisk extension status code to status string
+* for _Extension_ object.
 *
-* @property EXTEN_STATUS_ADAPTER
+* @property AST_EXTEN_STATUS_2_STR_ADAPTER
 * @type {object}
 * @readOnly
 * @private
 */
-var EXTEN_STATUS_ADAPTER = {
+var AST_EXTEN_STATUS_2_STR_ADAPTER = {
     '0':  EXTEN_STATUS_ENUM.ONLINE,       // Idle
     '1':  EXTEN_STATUS_ENUM.BUSY,         // In Use
     '2':  EXTEN_STATUS_ENUM.DND,          // Busy
@@ -573,7 +573,7 @@ function listChannels(resp) {
 */
 function extenStatus(resp) {
     try {
-        var status = EXTEN_STATUS_ADAPTER[resp.status];
+        var status = AST_EXTEN_STATUS_2_STR_ADAPTER[resp.status];
         extensions[resp.exten].setStatus(status);
         logger.info(IDLOG, 'sets status ' + status + ' for extension ' + resp.exten);
 
@@ -682,8 +682,8 @@ function extenStatusChanged(exten, statusCode) {
         }
 
         // request sip details for current extension
-        extensions[exten].setStatus(EXTEN_STATUS_ADAPTER[statusCode]);
-        logger.info(IDLOG, 'set status ' + EXTEN_STATUS_ADAPTER[statusCode] + ' for extension ' + exten);
+        extensions[exten].setStatus(AST_EXTEN_STATUS_2_STR_ADAPTER[statusCode]);
+        logger.info(IDLOG, 'set status ' + AST_EXTEN_STATUS_2_STR_ADAPTER[statusCode] + ' for extension ' + exten);
 
         // update extension informations. This is because when the extension becomes
         // offline/online ip, port and other informations needs to be updated
