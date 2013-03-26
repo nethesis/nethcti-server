@@ -1,9 +1,8 @@
 /**
-* ................................
-* 
 * @module ast_proxy
 * @submodule plugins_event_11
 */
+var AST_EXTEN_STATUS_2_STR_ADAPTER = require('../exten_status_adapter_11.js').AST_EXTEN_STATUS_2_STR_ADAPTER;
 
 /**
 * The module identifier used by the logger.
@@ -39,18 +38,18 @@ var astProxy;
         var logger = console;
 
         /**
-        * Command plugin to get the asterisk version.............
+        * The plugin that handles the ExtensionStatus event.
         *
-        * @class peerstatus
+        * @class extensionStatus
         * @static
         */
         var extensionStatus = {
             /**
-            * It's called from _ast_proxy_ component for each data received
-            * from asterisk and relative to this command.
+            * It's called from _ast\_proxy_ component for each
+            * ExtensionStatus event received from the asterisk.
             *
             * @method data
-            * @param {object} data The asterisk data for the current command
+            * @param {object} data The asterisk event data
             * @static
             */
             data: function (data) {
@@ -60,7 +59,7 @@ var astProxy;
                         && data.event === 'ExtensionStatus') {
 
                         logger.info(IDLOG, 'received event ' + data.event);
-                        astProxy.proxyLogic.extenStatusChanged(data.exten, data.status);
+                        astProxy.proxyLogic.extenStatusChanged(data.exten, AST_EXTEN_STATUS_2_STR_ADAPTER[data.status]);
 
                     } else {
                         logger.warn(IDLOG, 'ExtensionStatus event not recognized');
