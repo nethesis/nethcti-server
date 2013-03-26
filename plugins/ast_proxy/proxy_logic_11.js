@@ -639,61 +639,6 @@ function extenStatus(resp) {
 }
 
 /**
-* Remove the conversation from an extension and emit
-* _EVT\_EXTEN\_CHANGED_ event.
-*
-* @method hangupConversation
-* @param {object} obj
-* @param {string} obj.ext The extension number
-* @param {string} obj.channel The channel identifier
-*/
-function hangupConversation(obj) {
-    try {
-        // check parameter
-        if (!obj
-            || typeof obj.ch  !== 'string'
-            || typeof obj.ext !== 'string') {
-
-            throw new Error('wrong parameter');
-        }
-
-        var ch  = obj.ch;
-        var ext = obj.ext;
-
-        logger.info(IDLOG, 'hangup conversation for exten ' + ext + ' channel ' + ch);
-
-        // check extension presence
-        if (extensions[ext]) {
-
-            // search conversation to remove by channel
-            var convs = extensions[ext].getConversations();
-            var convid;
-            for (convid in convs) {
-
-                if (convid.indexOf(ch) !== -1 // the conversation id contains the channel id
-                    && // additional check
-                    (
-                        (convs[convid].getDestinationChannel() && convs[convid].getDestinationChannel().getChannel() === ch)
-                        ||
-                        (convs[convid].getSourceChannel() && convs[convid].getSourceChannel().getChannel()   === ch)
-                    )) {
-
-                    extensions[ext].removeConversation(convid);
-                    logger.info(IDLOG, 'removed conversation ' + convid + ' from extension ' + ext);
-                    astProxy.emit(EVT_EXTEN_CHANGED, extensions[ext]);
-                    logger.info(IDLOG, 'emitted event ' + EVT_EXTEN_CHANGED + ' for extension ' + ext);
-                    return;
-                }
-            }
-        }
-        logger.info(IDLOG, 'conversation to delete not found for extension ' + ext);
-
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
 * Subscribe a callback function to a custom event fired by this object.
 * It's the same of nodejs _events.EventEmitter.on._
 *
@@ -765,5 +710,4 @@ exports.start              = start;
 exports.visit              = visit;
 exports.setLogger          = setLogger;
 exports.getExtensions      = getExtensions;
-exports.hangupConversation = hangupConversation;
 exports.extenStatusChanged = extenStatusChanged;
