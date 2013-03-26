@@ -663,7 +663,7 @@ function extenStatusChanged(exten, status) {
         }
 
         // request sip details for current extension
-        extensions[exten].setStatus(statusCode);
+        extensions[exten].setStatus(status);
         logger.info(IDLOG, 'set status ' + status + ' for extension ' + exten);
 
         // update extension informations. This is because when the extension becomes
