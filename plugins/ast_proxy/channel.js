@@ -19,12 +19,12 @@ exports.Channel = function (obj) {
     // check parameter
     if (!obj.channel 
         || !obj.type
+        || !obj.status
         || !obj.duration
         || !obj.callerNum
         || !obj.callerName
         || !obj.bridgedNum
         || !obj.bridgedName
-        || !obj.channelStatus
         || obj.bridgedChannel === undefined) {
 
         throw new Error('wrong parameter');
