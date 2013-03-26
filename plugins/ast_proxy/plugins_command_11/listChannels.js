@@ -39,8 +39,8 @@ var IDLOG = '[listChannels]';
         var map = {};
 
         /**
-        * List of all channels. The key is the extension and the value is
-        * a Channel object.
+        * List of all channels. The key is the channel identifier
+        * and the value is the _Channel_ object.
         *
         * @property list
         * @type {object}
@@ -199,12 +199,16 @@ function calculateChType(data) {
                 type = 'source';
             }
 
-        } else if (data.channelstatedesc.toLowerCase() === 'ringing') {
+        } else if (data.channelstate === '5') { // ringing
             type = 'destination';
 
-        } else if (data.channelstatedesc.toLowerCase() === 'ring') {
+        } else if (data.channelstate === '4') { // ring
             type = 'source';
+
+        } else {
+            type = 'unknown';
         }
+
         return type;
 
     } catch (err) {
