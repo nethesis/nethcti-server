@@ -230,6 +230,13 @@ exports.Extension = function (ext, chType) {
     function removeConversation(convid) { delete conversations[convid]; }
 
     /**
+    * Removes all conversations.
+    *
+    * @method removeAllConversations
+    */
+    function removeAllConversations() { conversations = {}; }
+
+    /**
     * Returns an object literal representation of the object
     * without any methods.
     *
@@ -256,23 +263,24 @@ exports.Extension = function (ext, chType) {
 
     // public interface
     return {
-        setIp:              setIp,
-        getIp:              getIp,
-        setName:            setName,
-        setPort:            setPort,
-        getPort:            getPort,
-        isOnline:           isOnline,
-        getExten:           getExten,
-        toString:           toString,
-        chanType:           getChanType,
-        setStatus:          setStatus,
-        getStatus:          getStatus,
-        addConversation:    addConversation,
-        setSipUserAgent:    setSipUserAgent,
-        getConversations:   getConversations,
-        conversationCount:  conversationCount,
-        marshallObjLiteral: marshallObjLiteral,
-        removeConversation: removeConversation
+        setIp:     setIp,
+        getIp:     getIp,
+        setName:   setName,
+        setPort:   setPort,
+        getPort:   getPort,
+        isOnline:  isOnline,
+        getExten:  getExten,
+        toString:  toString,
+        chanType:  getChanType,
+        setStatus: setStatus,
+        getStatus: getStatus,
+        addConversation:        addConversation,
+        setSipUserAgent:        setSipUserAgent,
+        getConversations:       getConversations,
+        conversationCount:      conversationCount,
+        marshallObjLiteral:     marshallObjLiteral,
+        removeConversation:     removeConversation,
+        removeAllConversations: removeAllConversations
     };
 }
 
