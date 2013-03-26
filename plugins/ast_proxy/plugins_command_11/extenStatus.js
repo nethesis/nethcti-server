@@ -2,6 +2,7 @@
 * @submodule plugins_command_11
 */
 var action = require('../action');
+var AST_EXTEN_STATUS_2_STR_ADAPTER = require('../exten_status_adapter_11.js').AST_EXTEN_STATUS_2_STR_ADAPTER;
 
 /**
 * The module identifier used by the logger.
@@ -95,14 +96,14 @@ var IDLOG = '[extenStatus]';
                     // check callback and info presence and execute it
                     if (map[data.actionid]
                         && data.exten
-                        && data.status    !== '-1' // extension not found
-                        && data.response  === 'Success') {
+                        && data.status   !== '-1' // extension not found
+                        && data.response === 'Success') {
 
                         // execute callback
                         map[data.actionid]({
                             exten:  data.exten,
                             result: true,
-                            status: data.status
+                            status: AST_EXTEN_STATUS_2_STR_ADAPTER[data.status]
                         });
 
                     } else if (map[data.actionid]
