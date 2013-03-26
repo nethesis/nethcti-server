@@ -5,11 +5,10 @@
 * @class proxy_logic_11
 * @static
 */
-var Channel           = require('./channel').Channel;
-var iniparser         = require('iniparser');
-var Extension         = require('./extension').Extension;
-var Conversation      = require('./conversation').Conversation;
-var EXTEN_STATUS_ENUM = require('./extension').EXTEN_STATUS_ENUM;
+var Channel      = require('./channel').Channel;
+var iniparser    = require('iniparser');
+var Extension    = require('./extension').Extension;
+var Conversation = require('./conversation').Conversation;
 var EventEmitter = require('events').EventEmitter;
 
 /**
@@ -69,25 +68,6 @@ var astProxy;
 * @private
 */
 var extensions = {};
-
-/**
-* Adapter from asterisk extension status code to status string
-* for _Extension_ object.
-*
-* @property AST_EXTEN_STATUS_2_STR_ADAPTER
-* @type {object}
-* @readOnly
-* @private
-*/
-var AST_EXTEN_STATUS_2_STR_ADAPTER = {
-    '0':  EXTEN_STATUS_ENUM.ONLINE,       // Idle
-    '1':  EXTEN_STATUS_ENUM.BUSY,         // In Use
-    '2':  EXTEN_STATUS_ENUM.DND,          // Busy
-    '4':  EXTEN_STATUS_ENUM.OFFLINE,      // Unavailable
-    '8':  EXTEN_STATUS_ENUM.RINGING,      // Ringing
-    '9':  EXTEN_STATUS_ENUM.BUSY_RINGING, // In Use & Ringing
-    '16': EXTEN_STATUS_ENUM.ONHOLD        // On Hold
-}
 
 /**
 * It's the validated content of the asterisk structure ini
@@ -414,6 +394,7 @@ function listIaxPeers(resp) {
             logger.info(IDLOG, 'set iax details for ext ' + resp[i].ext);
         }
         // request all channels
+        logger.info(IDLOG, 'requests the channel list to initialize iax extensions');
         astProxy.doCmd({ command: 'listChannels' }, listChannels);
 
     } catch (err) {
@@ -447,6 +428,7 @@ function initializeSipExten() {
             }
         }
         // request all channels
+        logger.info(IDLOG, 'requests the channel list to initialize sip extensions');
         astProxy.doCmd({ command: 'listChannels' }, listChannels);
 
     } catch (err) {
@@ -573,9 +555,8 @@ function listChannels(resp) {
 */
 function extenStatus(resp) {
     try {
-        var status = AST_EXTEN_STATUS_2_STR_ADAPTER[resp.status];
-        extensions[resp.exten].setStatus(status);
-        logger.info(IDLOG, 'sets status ' + status + ' for extension ' + resp.exten);
+        extensions[resp.exten].setStatus(resp.status);
+        logger.info(IDLOG, 'sets status ' + resp.status + ' for extension ' + resp.exten);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -674,16 +655,16 @@ function getExtensions() {
 * @param {string} statusCode The numeric status code as arrived from asterisk
 * @private
 */
-function extenStatusChanged(exten, statusCode) {
+function extenStatusChanged(exten, status) {
     try {
         // check parameters
-        if (typeof exten !== 'string' && typeof statusCode !== 'string') {
+        if (typeof exten !== 'string' && typeof status !== 'string') {
             throw new Error('wrong parameters');
         }
 
         // request sip details for current extension
-        extensions[exten].setStatus(AST_EXTEN_STATUS_2_STR_ADAPTER[statusCode]);
-        logger.info(IDLOG, 'set status ' + AST_EXTEN_STATUS_2_STR_ADAPTER[statusCode] + ' for extension ' + exten);
+        extensions[exten].setStatus(statusCode);
+        logger.info(IDLOG, 'set status ' + status + ' for extension ' + exten);
 
         // update extension informations. This is because when the extension becomes
         // offline/online ip, port and other informations needs to be updated

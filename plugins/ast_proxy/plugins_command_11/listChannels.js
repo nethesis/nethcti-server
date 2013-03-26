@@ -1,7 +1,8 @@
 /**
 * @submodule plugins_command_11
 */
-var action    = require('../action');
+var action = require('../action');
+var AST_CHANNEL_STATE_2_STRING_ADAPTER = require('../channel_status_adapter_11').AST_CHANNEL_STATE_2_STRING_ADAPTER;
 
 /**
 * The module identifier used by the logger.
@@ -110,13 +111,13 @@ var IDLOG = '[listChannels]';
 
                         var obj = {
                             type:             type,
+                            status:           AST_CHANNEL_STATE_2_STRING_ADAPTER[data.channelstate],
                             channel:          data.channel,
                             duration:         data.duration,
                             callerNum:        data.calleridnum,
                             callerName:       data.calleridname,
                             bridgedNum:       data.connectedlinenum,
                             bridgedName:      data.connectedlinename,
-                            channelStatus:    data.channelstatedesc,
                             bridgedChannel:   data.bridgedchannel
                         };
                         list[data.channel] = obj;
