@@ -48,12 +48,12 @@ module.exports = function (options, imports, register) {
             doCmd: astProxy.doCmd,
 
             /**
-            * It's the _getExtensions_ method provided by _ast\_proxy_ module.
+            * It's the _getExtensions_ method provided by _ast\_proxy.proxyLogic_.
             *
             * @method getExtensions
             * @return {object} The extension list.
             */
-            getExtensions: astProxy.getExtensions
+            getExtensions: astProxy.proxyLogic.getExtensions
         }
     });
 

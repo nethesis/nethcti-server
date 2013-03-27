@@ -482,10 +482,3 @@ exports.start         = start;
 exports.config        = config;
 exports.setLogger     = setLogger;
 exports.proxyLogic    = proxyLogic;
-/**
-* It's the _getExtensions_ method provided by _proxy\_logic\_11_ module.
-*
-* @method getExtensions
-* @return {object} The extension list.
-*/
-exports.getExtensions = proxyLogic.getExtensions;
