@@ -53,7 +53,14 @@ module.exports = function (options, imports, register) {
             * @method getExtensions
             * @return {object} The extension list.
             */
-            getExtensions: astProxy.proxyLogic.getExtensions
+            getExtensions: astProxy.proxyLogic.getExtensions,
+
+            /**
+            * It's the _hangupConversation_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method hangupConversation
+            */
+            hangupConversation: astProxy.proxyLogic.hangupConversation
         }
     });
 
