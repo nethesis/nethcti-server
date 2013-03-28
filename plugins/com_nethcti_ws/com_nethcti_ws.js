@@ -182,7 +182,7 @@ function setAstProxyListeners() {
 function extenChanged(exten) {
     try {
         logger.info(IDLOG, 'received event extenChanged for extension ' + exten.getExten());
-        server.sockets.in('op').emit('extenUpdate', exten.marshallObjLiteral());
+        server.sockets.in('room').emit('exten_update', exten.marshallObjLiteral());
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -229,10 +229,92 @@ function connHdlr(socket) {
 
         // set the listeners for the new socket connection
         socket.on('login',      function (data) { loginHdlr(socket, data);     });
+        socket.on('message',    function (data) { dispatchMsg(socket, data);   });
         socket.on('challenge',  function (data) { challengeHdlr(socket, data); });
         socket.on('disconnect', function (data) { disconnHdlr(socket);         });
         logger.info(IDLOG, 'listeners for new socket connection have been set');
 
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Dispatch the received message from the client.
+*
+* @method dispatchMsg
+* @param {object} socket The client websocket
+* @param {object} data The data with the conversation identifier
+* @private
+*/
+function dispatchMsg(socket, data) {
+    try {
+        // checks the client authentication. It controls the websocket
+        // identifier presence in the _wsid_ object.
+        if (wsid[socket.id]) { // the client is authenticated
+
+            // check parameters
+            if (typeof socket !== 'object') { throw new Error('wrong parameter'); }
+            if (typeof data   !== 'object'
+                || typeof data.command !== 'string') {
+
+                badRequest(socket);
+
+            } else {
+
+                if (data.command === 'hangup') { hangup(socket, data); }
+            }
+
+        } else {
+            logger.warn(IDLOG, 'received message from unauthenticated client ' + getWebsocketEndpoint(socket));
+            unauthorized(socket);
+        }
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Hangup the conversation of the extension using the asterisk proxy component.
+*
+* @method hangup
+* @param {object} socket The client websocket
+* @param {object} data The data with the conversation identifier
+*   @param {string} data.endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
+*   @param {string} data.id The endpoint identifier (e.g. the extension number)
+*   @param {string} data.convid The conversation identifier
+* @private
+*/
+function hangup(socket, data) {
+    try {
+        // check parameter
+        if (typeof socket !== 'object') { throw new Error('wrong parameter'); }
+        if (typeof data   !== 'object'
+            || typeof data.id           !== 'string'
+            || typeof data.convid       !== 'string'
+            || typeof data.endpointType !== 'string') {
+
+            badRequest(socket);
+
+        } else {
+            astProxy.hangupConversation(data.endpointType, data.id, data.convid);
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Send response to the client for bad request received.
+*
+* @method badRequest
+* @param {object} socket The client websocket.
+*/
+function badRequest(socket) {
+    try {
+        socket.emit('bad_request');
+        logger.warn('received bad request from ' + getWebsocketEndpoint(socket));
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -272,9 +354,25 @@ function challengeHdlr(socket, obj) {
 
         } else {
             logger.warn(IDLOG, 'bad authentication challenge request from ' + getWebsocketEndpoint(socket));
-            send401(socket); // send 401 unauthorized response to the client
-            socket.disconnect();
+            unauthorized(socket);
         }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Manage unauthorized access. It send 401 unauthorized response
+* to the client and disconnect the websocket.
+*
+* @method unauthorized
+* @param {object} socket The client websocket
+* @private
+*/
+function unauthorized(socket) {
+    try {
+        send401(socket); // send 401 unauthorized response to the client
+        socket.disconnect();
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -309,18 +407,17 @@ function loginHdlr(socket, obj) {
                 sendAutheSuccess(socket);
 
                 socket.join('room');
+                server.sockets.in('room').emit('extensions', marshallExtensionsObjLiteral());
 
             } else { // authentication failed
                 logger.warn(IDLOG, 'authentication failed for user ' + obj.user + ' from ' + getWebsocketEndpoint(socket) +
                                    ' with id ' + socket.id);
-                send401(socket); // send 401 unauthorized response to the client
-                socket.disconnect();
+                unauthorized(socket);
             }
 
         } else { // bad authentication request
             logger.warn(IDLOG, 'bad authentication login request from ' + getWebsocketEndpoint(socket));
-            send401(socket); // send 401 unauthorized response to the client
-            socket.disconnect();
+            unauthorized(socket);
         }
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -353,18 +450,17 @@ function disconnHdlr(socket) {
 function removeWebsocketId(socketId) {
     try {
         if (wsid[socketId]) {
-            logger.info(IDLOG, 'remove client websocket ' + socketId + ' for the user ' + wsid[socketId]);
+            delete wsid[socketId];
+            logger.info(IDLOG, 'removed client websocket ' + socketId + ' for the user ' + wsid[socketId]);
         }
-        delete wsid[socketId];
-
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
 }
 
 /**
-* Adds the client websocket identifier into the
-* private object _wsid_.
+* Adds the client websocket identifier into the private
+* object _wsid_. If it already exists it will be overwritten.
 *
 * @method addWebsocketId
 * @param {string} user The user used as key
