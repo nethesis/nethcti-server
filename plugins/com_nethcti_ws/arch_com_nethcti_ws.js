@@ -24,7 +24,7 @@ module.exports = function (options, imports, register) {
 
     try {
         var logger   = console;
-        var authe    = imports.authe;
+        var authe    = imports.authentication;
         var astProxy = imports.astProxy;
 
         if (imports.logger) { logger = imports.logger; }

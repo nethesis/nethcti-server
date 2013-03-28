@@ -57,7 +57,7 @@ function setLogger(log) {
 * Set authentication architect component used by authentication.
 *
 * @method setCompAuthe
-* @param {object} ca The authentication architect component _arch\_authe_.
+* @param {object} ca The authentication architect component _arch\_authentication_.
 */
 function setCompAuthe(ca) {
     try {
@@ -179,7 +179,7 @@ function sendHttp401(resp) {
                         var nonce = compAuthe.getNonce(accessKeyId);
                         sendHttp401Nonce(res, nonce);
 
-                    } else if (compAuthe.authe(accessKeyId, token)) { // authentication ok
+                    } else if (compAuthe.authenticate(accessKeyId, token)) { // authentication ok
                         logger.info(IDLOG, 'response with successfully authentication');
                         res.send({ result: true });
 

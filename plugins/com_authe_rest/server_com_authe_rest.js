@@ -1,6 +1,6 @@
 /**
 * Provides the REST server for authentication functions using
-* _authe_ component.
+* _authentication_ component.
 *
 * @module com_authe_rest
 * @main com_authe_rest
@@ -124,7 +124,7 @@ function execute(req, res, next) {
 * Start the REST server.
 *
 * @method start
-* @param {object} compAuthe The authentication architect component _arch\_authe_
+* @param {object} compAuthe The authentication architect component _arch\_authentication_
 * to be used by REST plugins.
 * @static
 */
@@ -133,7 +133,7 @@ function start(compAuthe) {
         // check parameter
         if (typeof compAuthe !== 'object'
             || typeof compAuthe.getNonce !== 'function'
-            || typeof compAuthe.authe !== 'function') {
+            || typeof compAuthe.authenticate !== 'function') {
 
             throw new Error('wrong parameter');
         }

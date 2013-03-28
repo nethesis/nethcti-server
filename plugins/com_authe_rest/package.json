@@ -3,7 +3,7 @@
     "main": "arch_com_authe_rest.js",
     "private": true,
     "plugin": {
-	"consumes": ["logger", "authe"],
+	"consumes": ["logger", "authentication"],
 	"provides": []
     }
 }
