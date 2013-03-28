@@ -1,9 +1,0 @@
-{
-    "name": "authe",
-    "main": "arch_authe.js",
-    "private": true,
-    "plugin": {
-        "consumes": ["logger"],
-        "provides": ["authe"]
-    }
-}

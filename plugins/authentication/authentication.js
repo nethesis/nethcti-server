@@ -2,14 +2,14 @@
 * Provides the authentication functions. Once the user has taken
 * the nonce, he must create the token and use it to authenticate.
 *
-* @module authe
-* @main authe
+* @module authentication
+* @main authentication
 */
 
 /**
 * Provides the authentication functions.
 *
-* @class authe
+* @class authentication
 * @static
 */
 var fs        = require('fs');
@@ -24,9 +24,9 @@ var iniparser = require('iniparser');
 * @private
 * @final
 * @readOnly
-* @default [authe]
+* @default [authentication]
 */
-var IDLOG = '[authe]';
+var IDLOG = '[authentication]';
 
 /**
 * The logger. It must have at least three methods: _info, warn and error._
@@ -210,12 +210,12 @@ function getNonce(accessKeyId) {
 * that must be present in the _grants_ object. The _getNonce_ method
 * must be used before this.
 *
-* @method authe
+* @method authenticate
 * @param {string} accessKeyId The access key used to retrieve secret key and token.
 * @param {string} token The token to be checked.
 * @return {boolean} It's true if the user has been authenticated succesfully.
 */
-function authe(accessKeyId, token) {
+function authenticate(accessKeyId, token) {
     try {
         // check parameters
         if (typeof accessKeyId !== 'string' || typeof token !== 'string') {
@@ -225,13 +225,13 @@ function authe(accessKeyId, token) {
         if (!creds[accessKeyId] // the user's credentials don't exist
             || !grants[accessKeyId]) { // the permission token don't exist
 
-            logger.warn(IDLOG, 'authe failed for accessKeyId: "' + accessKeyId + '": no cred or grant');
+            logger.warn(IDLOG, 'authentication failed for accessKeyId: "' + accessKeyId + '": no cred or grant');
             return false;
         }
 
         // check the equality of the tokens
         if (grants[accessKeyId].token !== token) {
-            logger.warn(IDLOG, 'authe failed for accessKeyId "' + accessKeyId + '": wrong token');
+            logger.warn(IDLOG, 'authentication failed for accessKeyId "' + accessKeyId + '": wrong token');
             return false;
         }
 
@@ -311,9 +311,9 @@ function isAutoUpdateTokenExpires() {
 }
 
 // public interface
-exports.authe       = authe;
-exports.config      = config;
-exports.getNonce    = getNonce;
-exports.setLogger   = setLogger;
-exports.removeGrant = removeGrant;
+exports.config       = config;
+exports.getNonce     = getNonce;
+exports.setLogger    = setLogger;
+exports.removeGrant  = removeGrant;
+exports.authenticate = authenticate;
 exports.isAutoUpdateTokenExpires = isAutoUpdateTokenExpires;
