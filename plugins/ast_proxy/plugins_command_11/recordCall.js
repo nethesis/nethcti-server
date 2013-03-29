@@ -121,7 +121,7 @@ var FILE_EXT = 'wav';
                         map[data.actionid]({ result: false, cause: data.message });
 
                     } else {
-                        map[data.actionid]({ result: false});
+                        map[data.actionid]({ result: false });
                     }
                     delete map[data.actionid]; // remove association ActionID-callback
 

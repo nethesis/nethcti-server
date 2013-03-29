@@ -60,7 +60,14 @@ module.exports = function (options, imports, register) {
             *
             * @method hangupConversation
             */
-            hangupConversation: astProxy.proxyLogic.hangupConversation
+            hangupConversation: astProxy.proxyLogic.hangupConversation,
+
+            /**
+            * It's the _recordConversation_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method recordConversation
+            */
+            recordConversation: astProxy.proxyLogic.recordConversation,
         }
     });
 

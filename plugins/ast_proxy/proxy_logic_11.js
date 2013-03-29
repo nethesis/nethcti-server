@@ -705,65 +705,90 @@ function extenStatusChanged(exten, status) {
 }
 
 /**
+* Return a channel of the conversation of the specified extension. If the source
+* channel is present it will be returned, otherwise the destination channel will
+* be returned.
+*
+* @method getExtenChannelConversation
+* @param {string} exten The extension number
+* @param {string} convid The conversation identifier
+* @return {string} The channel identifier or undefined value if it's not present.
+* @private
+*/
+function getExtenChannelConversation(exten, convid) {
+    try {
+        // check the extension existence
+        if (!extensions[exten]) { return undefined; }
+
+        var convs = extensions[exten].getConversations();
+
+        if (!convs) { return; }
+
+        // get the conversation to hangup by conversation identifier
+        var conv = convs[convid];
+
+        if (!conv) { return; }
+
+        // get the channel to hangup, because source or destination
+        // channel is undefined when call is not connected
+        var chDest   = conv.getDestinationChannel();
+        var chSource = conv.getSourceChannel();
+        var ch;
+
+        if (chSource)    { return chSource.getChannel(); }
+        else if (chDest) { return chDest.getChannel();   }
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Hangup the conversation of the endpoint.
 *
 * @method hangupConversation
-* @param {string} type The type of the endpoint (e.g. extension, queue, parking, trunk...)
-* @param {string} id The endpoint identifier (e.g. the extension number)
+* @param {string} endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
+* @param {string} endpointId The endpoint identifier (e.g. the extension number)
 * @param {string} convid The conversation identifier
+* @param {function} cb The callback function
 */
-function hangupConversation(type, id, convid) {
+function hangupConversation(endpointType, endpointId, convid, cb) {
     try {
         // check parameters
-        if (typeof id !== 'string'
-            || typeof type   !== 'string'
-            || typeof convid !== 'string') {
+        if (typeof convid !== 'string'
+            || typeof endpointId   !== 'string'
+            || typeof endpointType !== 'string') {
 
             throw new Error('wrong parameters');
         }
 
         // check the endpoint existence
-        if (type === 'extension' && extensions[id]) {
+        if (endpointType === 'extension' && extensions[endpointId]) {
 
-            var convs = extensions[id].getConversations();
+            // get the channel to hangup
+            var ch = getExtenChannelConversation(endpointId, convid);
 
-            if (!convs) {
-                logger.warn(IDLOG, 'no conversation to hangup with id ' + convid + ' of exten ' + id);
-                return;
-            }
-
-            // get the conversation to hangup by conversation identifier
-            var conv = convs[convid];
-
-            if (!conv) {
-                logger.warn(IDLOG, 'no conversation to hangup with id ' + convid + ' of exten ' + id);
-                return;
-            }
-
-            // get the channel to hangup, because source or destination
-            // channel is undefined when call is not connected
-            var chSource = conv.getSourceChannel();
-            var chDest = conv.getDestinationChannel();
-            var hangupCh;
-
-            if (chSource)    { hangupCh = chSource.getChannel(); }
-            else if (chDest) { hangupCh = chDest.getChannel();   }
-
-            if (hangupCh) {
+            if (ch) {
                 // execute the hangup
-                logger.info(IDLOG, 'execute hangup of the channel ' + hangupCh + ' of exten ' + id);
-                astProxy.doCmd({ command: 'hangup', channel: hangupCh }, hangupCb);
+                logger.info(IDLOG, 'execute hangup of the channel ' + ch + ' of exten ' + endpointId);
+                astProxy.doCmd({ command: 'hangup', channel: ch }, function (resp) {
+                    cb(resp);
+                    hangupCb(resp);
+                });
 
             } else {
-                logger.warn(IDLOG, 'no channel to hangup of conversation ' + convid + ' of exten ' + id);
+                logger.warn(IDLOG, 'no channel to hangup of conversation ' + convid + ' of exten ' + endpointId);
+                cb();
             }
 
         } else {
-            logger.warn(IDLOG, 'try to hangup conversation for the non existent endpoint ' + type);
+            logger.warn(IDLOG, 'try to hangup conversation for the non existent endpoint ' + endpointType);
+            cb();
         }
 
     } catch (err) {
-       logger.error(IDLOG, err.stack);
+        cb();
+        logger.error(IDLOG, err.stack);
     }
 }
 
@@ -787,6 +812,76 @@ function hangupCb(resp) {
     }
 }
 
+/**
+* Start the recording of the conversation.
+*
+* @method recordConversation
+* @param {string} endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
+* @param {string} endpointId The endpoint identifier (e.g. the extension number)
+* @param {string} convid The conversation identifier
+* @param {function} cb The callback function
+*/
+function recordConversation(endpointType, endpointId, convid, cb) {
+    try {
+        // check parameters
+        if (typeof convid !== 'string'
+            || typeof endpointId   !== 'string'
+            || typeof endpointType !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // check the endpoint existence
+        if (endpointType === 'extension' && extensions[endpointId]) {
+
+            // get the channel to hangup
+            var ch = getExtenChannelConversation(endpointId, convid);
+
+            if (ch) {
+                // start the recording
+                logger.info(IDLOG, 'execute the record of the channel ' + ch + ' of exten ' + endpointId);
+                astProxy.doCmd({ command: 'recordCall', channel: ch }, function (resp) {
+                    cb(resp);
+                    recordCb(resp);
+                });
+
+            } else {
+                logger.warn(IDLOG, 'no channel to record of conversation ' + convid + ' of exten ' + endpointId);
+                cb();
+            }
+
+        } else {
+            logger.warn(IDLOG, 'try to record conversation for the non existent endpoint ' + endpointType);
+            cb();
+        }
+
+    } catch (err) {
+        cb();
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* This is the callback of the record command plugin.
+*
+* @method recordCb
+* @param {object} resp The response object of the operation
+* @private
+*/
+function recordCb(resp) {
+    try {
+        if (typeof resp === 'object' && resp.result === true) {
+            logger.info(IDLOG, 'record channel started succesfully');
+
+        } else {
+            logger.warn(IDLOG, 'record channel failed' + (resp.cause ? (': ' + resp.cause) : '') );
+        }
+
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
 // public interface
 exports.on                 = on;
 exports.start              = start;
@@ -795,3 +890,4 @@ exports.setLogger          = setLogger;
 exports.getExtensions      = getExtensions;
 exports.extenStatusChanged = extenStatusChanged;
 exports.hangupConversation = hangupConversation;
+exports.recordConversation = recordConversation;

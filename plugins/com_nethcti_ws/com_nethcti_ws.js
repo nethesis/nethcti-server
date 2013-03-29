@@ -256,13 +256,15 @@ function dispatchMsg(socket, data) {
             // check parameters
             if (typeof socket !== 'object') { throw new Error('wrong parameter'); }
             if (typeof data   !== 'object'
-                || typeof data.command !== 'string') {
+                || typeof data.command   !== 'string'
+                || typeof data.messageId !== 'string') {
 
                 badRequest(socket);
 
             } else {
-
-                if (data.command === 'hangup') { hangup(socket, data); }
+                // dispatch
+                if (data.command === 'hangup')            { hangup(socket, data);      }
+                if (data.command === 'start_record_call') { startRecord(socket, data); }
             }
 
         } else {
@@ -276,13 +278,56 @@ function dispatchMsg(socket, data) {
 }
 
 /**
+* Start the recording of the conversation of the extension using the asterisk proxy component.
+*
+* @method startRecord
+* @param {object} socket The client websocket
+* @param {object} data The data with the conversation identifier
+*   @param {string} data.messageId The message identifier
+*   @param {string} data.endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
+*   @param {string} data.endpointId The endpoint identifier (e.g. the extension number)
+*   @param {string} data.convid The conversation identifier
+* @private
+*/
+function startRecord(socket, data) {
+    try {
+        // check parameter
+        if (typeof socket !== 'object') { throw new Error('wrong parameter'); }
+        if (typeof data   !== 'object'
+            || typeof data.convid       !== 'string'
+            || typeof data.messageId    !== 'string'
+            || typeof data.endpointId   !== 'string'
+            || typeof data.endpointType !== 'string') {
+
+            badRequest(socket);
+
+        } else {
+
+            astProxy.recordConversation(data.endpointType, data.endpointId, data.convid, function (resp) {
+                if (typeof resp === 'object' && resp.result === true) {
+                    sendAck(socket, data.messageId);
+                    logger.info(IDLOG, 'sent record ack for message ' + data.messageId + ' to ' + getWebsocketEndpoint(socket));
+
+                } else {
+                    sendError(socket, data.messageId);
+                    logger.warn(IDLOG, 'sent record error for message ' + data.messageId + ' to ' + getWebsocketEndpoint(socket));
+                }
+            });
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Hangup the conversation of the extension using the asterisk proxy component.
 *
 * @method hangup
 * @param {object} socket The client websocket
 * @param {object} data The data with the conversation identifier
+*   @param {string} data.messageId The message identifier
 *   @param {string} data.endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
-*   @param {string} data.id The endpoint identifier (e.g. the extension number)
+*   @param {string} data.endpointId The endpoint identifier (e.g. the extension number)
 *   @param {string} data.convid The conversation identifier
 * @private
 */
@@ -291,15 +336,56 @@ function hangup(socket, data) {
         // check parameter
         if (typeof socket !== 'object') { throw new Error('wrong parameter'); }
         if (typeof data   !== 'object'
-            || typeof data.id           !== 'string'
             || typeof data.convid       !== 'string'
+            || typeof data.messageId    !== 'string'
+            || typeof data.endpointId   !== 'string'
             || typeof data.endpointType !== 'string') {
 
             badRequest(socket);
 
         } else {
-            astProxy.hangupConversation(data.endpointType, data.id, data.convid);
+
+            astProxy.hangupConversation(data.endpointType, data.endpointId, data.convid, function (resp) {
+                if (typeof resp === 'object' && resp.result === true) {
+                    sendAck(socket, data.messageId);
+                    logger.info(IDLOG, 'sent hangup ack for message ' + data.messageId + ' to ' + getWebsocketEndpoint(socket));
+
+                } else {
+                    sendError(socket, data.messageId);
+                    logger.warn(IDLOG, 'sent hangup error for message ' + data.messageId + ' to ' + getWebsocketEndpoint(socket));
+                }
+            });
         }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Send the error result to the client for the specified message.
+*
+* @method sendError
+* @param {object} socket The client websocket
+* @param {string} messageId The message identifier
+*/
+function sendError(socket, messageId) {
+    try {
+        socket.emit('error', { messageId: messageId });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Send the ack result to the client for the specified message.
+*
+* @method sendAck
+* @param {object} socket The client websocket
+* @param {string} messageId The message identifier
+*/
+function sendAck(socket, messageId) {
+    try {
+        socket.emit('ack', { messageId: messageId });
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -390,7 +476,7 @@ function loginHdlr(socket, obj) {
     try {
         if (socket && obj && obj.user && obj.token) { // check parameters
 
-            if (authe.authe(obj.user, obj.token)) { // user successfully authenticated
+            if (authe.authenticate(obj.user, obj.token)) { // user successfully authenticated
 
                 logger.info(IDLOG, 'user ' + obj.user + ' successfully authenticated from ' + getWebsocketEndpoint(socket) +
                                    ' with id ' + socket.id);
