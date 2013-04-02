@@ -705,9 +705,46 @@ function extenStatusChanged(exten, status) {
 }
 
 /**
+* Return the source channel of the conversation of the specified extension.
+* If the source channel isn't present, undefined will be returned. It is
+* useful for those operation in which the channel type is important. For example
+* the start and stop record call must be executed on the same channel.
+*
+* @method getExtenSourceChannelConversation
+* @param {string} exten The extension number
+* @param {string} convid The conversation identifier
+* @return {string} The channel identifier or undefined value if it's not present.
+* @private
+*/
+function getExtenSourceChannelConversation(exten, convid) {
+    try {
+        // check the extension existence
+        if (!extensions[exten]) { return; }
+
+        var convs = extensions[exten].getConversations();
+
+        if (!convs) { return; }
+
+        // get the conversation to hangup by conversation identifier
+        var conv = convs[convid];
+
+        if (!conv) { return; }
+
+        var chSource = conv.getSourceChannel();
+        var ch;
+
+        if (chSource) { return chSource.getChannel(); }
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Return a channel of the conversation of the specified extension. If the source
 * channel is present it will be returned, otherwise the destination channel will
-* be returned.
+* be returned. It is useful for those operation in which the channel type is not
+* important (e.g. the hangup operation).
 *
 * @method getExtenChannelConversation
 * @param {string} exten The extension number
@@ -729,8 +766,6 @@ function getExtenChannelConversation(exten, convid) {
 
         if (!conv) { return; }
 
-        // get the channel to hangup, because source or destination
-        // channel is undefined when call is not connected
         var chDest   = conv.getDestinationChannel();
         var chSource = conv.getSourceChannel();
         var ch;
@@ -813,6 +848,55 @@ function hangupCb(resp) {
 }
 
 /**
+* Stop the recording of the conversation.
+*
+* @method stopRecordConversation
+* @param {string} endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
+* @param {string} endpointId The endpoint identifier (e.g. the extension number)
+* @param {string} convid The conversation identifier
+* @param {function} cb The callback function
+*/
+function stopRecordConversation(endpointType, endpointId, convid, cb) {
+    try {
+        // check parameters
+        if (typeof convid !== 'string'
+            || typeof endpointId   !== 'string'
+            || typeof endpointType !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // check the endpoint existence
+        if (endpointType === 'extension' && extensions[endpointId]) {
+
+            // get the channel to hangup
+            var ch = getExtenSourceChannelConversation(endpointId, convid);
+
+            if (ch) {
+                // start the recording
+                logger.info(IDLOG, 'execute the stop record of the channel ' + ch + ' of exten ' + endpointId);
+                astProxy.doCmd({ command: 'stopRecordCall', channel: ch }, function (resp) {
+                    cb(resp);
+                    stopRecordCb(resp);
+                });
+
+            } else {
+                logger.warn(IDLOG, 'no channel to stop record of conversation ' + convid + ' of exten ' + endpointId);
+                cb();
+            }
+
+        } else {
+            logger.warn(IDLOG, 'try to stop record conversation for the non existent endpoint ' + endpointType);
+            cb();
+        }
+
+    } catch (err) {
+        cb();
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Start the recording of the conversation.
 *
 * @method recordConversation
@@ -835,7 +919,7 @@ function recordConversation(endpointType, endpointId, convid, cb) {
         if (endpointType === 'extension' && extensions[endpointId]) {
 
             // get the channel to hangup
-            var ch = getExtenChannelConversation(endpointId, convid);
+            var ch = getExtenSourceChannelConversation(endpointId, convid);
 
             if (ch) {
                 // start the recording
@@ -862,7 +946,28 @@ function recordConversation(endpointType, endpointId, convid, cb) {
 }
 
 /**
-* This is the callback of the record command plugin.
+* This is the callback of the stop record call command plugin.
+*
+* @method stopRecordCb
+* @param {object} resp The response object of the operation
+* @private
+*/
+function stopRecordCb(resp) {
+    try {
+        if (typeof resp === 'object' && resp.result === true) {
+            logger.info(IDLOG, 'stop record channel started succesfully');
+
+        } else {
+            logger.warn(IDLOG, 'stop record channel failed' + (resp.cause ? (': ' + resp.cause) : '') );
+        }
+
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* This is the callback of the record call command plugin.
 *
 * @method recordCb
 * @param {object} resp The response object of the operation
@@ -891,3 +996,4 @@ exports.getExtensions      = getExtensions;
 exports.extenStatusChanged = extenStatusChanged;
 exports.hangupConversation = hangupConversation;
 exports.recordConversation = recordConversation;
+exports.stopRecordConversation = stopRecordConversation;

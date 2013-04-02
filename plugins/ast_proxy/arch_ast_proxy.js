@@ -68,6 +68,13 @@ module.exports = function (options, imports, register) {
             * @method recordConversation
             */
             recordConversation: astProxy.proxyLogic.recordConversation,
+
+            /**
+            * It's the _stopRecordConversation_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method stopRecordConversation
+            */
+            stopRecordConversation: astProxy.proxyLogic.stopRecordConversation
         }
     });
 
