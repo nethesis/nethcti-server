@@ -136,14 +136,6 @@ exports.Channel = function (obj) {
     function getUniqueId() { return uniqueid; }
 
     /**
-    * Return the time elapsed since the channel creation.
-    *
-    * @method getDuration
-    * @return {string} The elapsed time.
-    */
-    function getDuration() { return duration; }
-
-    /**
     * Return the caller number.
     *
     * @method getCallerNum
@@ -192,6 +184,14 @@ exports.Channel = function (obj) {
     function getChannelStatus() { return channelStatus; }
 
     /**
+    * Return the channel time creation from Jan 1, 1970.
+    *
+    * @method getStartTime
+    * @return {number} The channel creation time from Jan 1, 1970.
+    */
+    function getStartTime() { return startTime; }
+
+    /**
     * Return the readable string of the extension.
     *
     * @method toString
@@ -221,7 +221,7 @@ exports.Channel = function (obj) {
         return {
             type:           type,
             channel:        channel,
-            duration:       duration,
+            startTime:      startTime,
             callerNum:      callerNum,
             callerName:     callerName,
             bridgedNum:     bridgedNum,
@@ -237,7 +237,7 @@ exports.Channel = function (obj) {
         isSource:            isSource,
         getChannel:          getChannel,
         getUniqueId:         getUniqueId,
-        getDuration:         getDuration,
+        getStartTime:        getStartTime,
         getCallerNum:        getCallerNum,
         getCallerName:       getCallerName,
         getBridgedNum:       getBridgedNum,
