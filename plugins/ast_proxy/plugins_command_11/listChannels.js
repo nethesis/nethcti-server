@@ -113,6 +113,7 @@ var IDLOG = '[listChannels]';
                             type:             type,
                             status:           AST_CHANNEL_STATE_2_STRING_ADAPTER[data.channelstate],
                             channel:          data.channel,
+                            uniqueid:         data.uniqueid,
                             duration:         data.duration,
                             callerNum:        data.calleridnum,
                             callerName:       data.calleridname,
