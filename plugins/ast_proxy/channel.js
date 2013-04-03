@@ -21,6 +21,7 @@ exports.Channel = function (obj) {
         || obj.type           === undefined
         || obj.status         === undefined
         || obj.duration       === undefined
+        || obj.uniqueid       === undefined
         || obj.callerNum      === undefined
         || obj.callerName     === undefined
         || obj.bridgedNum     === undefined
@@ -38,6 +39,15 @@ exports.Channel = function (obj) {
     * @private
     */
     var channel = obj.channel;
+
+    /**
+    * The unique identifier.
+    *
+    * @property {string} uniqueid
+    * @required
+    * @private
+    */
+    var uniqueid = obj.uniqueid;
 
     /**
     * The time since channel creation.
@@ -118,6 +128,14 @@ exports.Channel = function (obj) {
     * @return {string} The channel identifier.
     */
     function getChannel() { return channel; }
+
+    /**
+    * Return the unique identifier.
+    *
+    * @method getUniqueId
+    * @return {string} The unique identifier.
+    */
+    function getUniqueId() { return uniqueid; }
 
     /**
     * Return the time elapsed since the channel creation.
@@ -220,6 +238,7 @@ exports.Channel = function (obj) {
         toString:            toString,
         isSource:            isSource,
         getChannel:          getChannel,
+        getUniqueId:         getUniqueId,
         getDuration:         getDuration,
         getCallerNum:        getCallerNum,
         getCallerName:       getCallerName,
