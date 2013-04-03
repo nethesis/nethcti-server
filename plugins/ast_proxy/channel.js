@@ -20,7 +20,6 @@ exports.Channel = function (obj) {
     if (obj.channel           === undefined
         || obj.type           === undefined
         || obj.status         === undefined
-        || obj.duration       === undefined
         || obj.uniqueid       === undefined
         || obj.callerNum      === undefined
         || obj.callerName     === undefined
@@ -50,13 +49,12 @@ exports.Channel = function (obj) {
     var uniqueid = obj.uniqueid;
 
     /**
-    * The time since channel creation.
+    * The creation time in milliseconds from Jan 1, 1970.
     *
-    * @property {string} duration
-    * @required
+    * @property {number} startTime
     * @private
     */
-    var duration = obj.duration;
+    var startTime = parseInt(obj.uniqueid.split('.')[0]) * 1000;
 
     /**
     * The caller number.
