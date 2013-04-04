@@ -222,6 +222,15 @@ exports.Extension = function (ext, chType) {
     function getAllConversations() { return conversations; }
 
     /**
+    * Return the specified conversation.
+    *
+    * @method getConversation
+    * @param {string} convid The conversation identifier
+    * @return {object} The specified conversation.
+    */
+    function getConversation(convid) { return conversations[convid]; }
+
+    /**
     * Removes the specified conversation.
     *
     * @method removeConversation
@@ -276,6 +285,7 @@ exports.Extension = function (ext, chType) {
         getStatus: getStatus,
         addConversation:        addConversation,
         setSipUserAgent:        setSipUserAgent,
+        getConversation:        getConversation,
         conversationCount:      conversationCount,
         marshallObjLiteral:     marshallObjLiteral,
         removeConversation:     removeConversation,
