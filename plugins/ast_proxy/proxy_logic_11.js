@@ -85,7 +85,9 @@ var struct;
 * Store the recording information about conversations. The key
 * is the conversation identifier and the value is an empty string.
 * The presence of the key means that the conversation is recording,
-* otherwise not.
+* otherwise not. It's necessary because asterisk hasn't the recording
+* informations. So, when conversation list is refreshed, it is used to
+* set recording status to a conversation.
 *
 * @property recordingConv
 * @type {object}
@@ -620,10 +622,17 @@ function addConversationToExten(exten, resp, chid) {
             }
             // create a new conversation
             var conv = new Conversation(chSource, chDest);
+            var convid = conv.getId();
+
+            // if the conversation is recording, sets its recording status
+            if (recordingConv[convid] !== undefined) {
+                conv.setRecording(true);
+                logger.info(IDLOG, 'set recording status to conversation ' + convid);
+            }
 
             // add the created conversation to the extension
             extensions[exten].addConversation(conv);
-            logger.info('the conversation ' + conv.getId() + ' has been added to exten ' + exten);
+            logger.info('the conversation ' + convid + ' has been added to exten ' + exten);
 
         } else {
             logger.warn(IDLOG, 'try to add new conversation to a non existent extensions ' + exten);
@@ -775,12 +784,8 @@ function getExtenSourceChannelConversation(exten, convid) {
         // check the extension existence
         if (!extensions[exten]) { return; }
 
-        var convs = extensions[exten].getConversations();
-
-        if (!convs) { return; }
-
-        // get the conversation to hangup by conversation identifier
-        var conv = convs[convid];
+        // get the conversation
+        var conv = extensions[exten].getConversation(convid);
 
         if (!conv) { return; }
 
@@ -834,12 +839,8 @@ function getExtenIdChannelConversation(exten, convid) {
         // check the extension existence
         if (!extensions[exten]) { return undefined; }
 
-        var convs = extensions[exten].getConversations();
-
-        if (!convs) { return; }
-
-        // get the conversation to hangup by conversation identifier
-        var conv = convs[convid];
+        // get the conversation
+        var conv = extensions[exten].getConversation(convid);
 
         if (!conv) { return; }
 
@@ -957,7 +958,7 @@ function stopRecordConversation(endpointType, endpointId, convid, cb) {
                 logger.info(IDLOG, 'execute the stop record of the channel ' + chid + ' of exten ' + endpointId);
                 astProxy.doCmd({ command: 'stopRecordCall', channel: chid }, function (resp) {
                     cb(resp);
-                    stopRecordCb(resp, convid);
+                    stopRecordCallCb(resp, convid);
                 });
 
             } else {
@@ -1014,7 +1015,7 @@ function recordConversation(endpointType, endpointId, convid, cb) {
                 logger.info(IDLOG, 'execute the record of the channel ' + chid + ' of exten ' + endpointId);
                 astProxy.doCmd({ command: 'recordCall', channel: chid, filepath: filepath }, function (resp) {
                     cb(resp);
-                    recordCb(resp, convid);
+                    recordCallCb(resp, convid);
                 });
 
             } else {
@@ -1083,19 +1084,22 @@ function getRecordConversationFilepath(chSource) {
 
 /**
 * This is the callback of the stop record call command plugin.
+* Reset the record status of the conversations.
 *
-* @method stopRecordCb
+* @method stopRecordCallCb
 * @param {object} resp The response object of the operation
 * @param {string} convid The conversation identifier
 * @private
 */
-function stopRecordCb(resp, convid) {
+function stopRecordCallCb(resp, convid) {
     try {
         if (typeof resp === 'object' && resp.result === true) {
             logger.info(IDLOG, 'stop record channel started succesfully');
 
             // remove the recording status of the conversation
             delete recordingConv[convid];
+            // reset the recording status of all conversations with specified convid
+            setRecordStatusConversations(convid, false);
 
         } else {
             logger.warn(IDLOG, 'stop record channel failed' + (resp.cause ? (': ' + resp.cause) : '') );
@@ -1108,28 +1112,73 @@ function stopRecordCb(resp, convid) {
 
 /**
 * This is the callback of the record call command plugin.
+* Sets the recording status of the conversations.
 *
-* @method recordCb
+* @method recordCallCb
 * @param {object} resp The response object of the operation
 * @param {string} convid The conversation identifier
 * @private
 */
-function recordCb(resp, convid) {
+function recordCallCb(resp, convid) {
     try {
+        // the operation was succesfully
         if (typeof resp === 'object' && resp.result === true) {
             logger.info(IDLOG, 'record channel started succesfully');
 
-            // set the recording status of the conversation
+            // set the recording status of the conversation to memory
             recordingConv[convid] = '';
+            // set the recording status of all conversations with specified convid
+            setRecordStatusConversations(convid, true);
 
         } else {
             logger.warn(IDLOG, 'record channel failed' + (resp.cause ? (': ' + resp.cause) : '') );
         }
-
     } catch (err) {
        logger.error(IDLOG, err.stack);
     }
 }
+
+/**
+* Sets the recording status of all the conversations with the specified convid.
+*
+* @method setRecordStatusConversations
+* @param {string} convid The conversation identifier
+* @param {boolean} value The value to be set
+* @private
+*/
+function setRecordStatusConversations(convid, value) {
+    try {
+        // check parameters
+        if (typeof convid !== 'string' || typeof value !== 'boolean') { throw new Error('wrong parameters'); }
+
+        // set the recording status of all the conversations with the specified convid
+        var exten, convs, cid;
+        for (exten in extensions) { // cycle in all extensions
+
+            // get all the conversations of the current extension
+            convs = extensions[exten].getAllConversations();
+            if (convs) {
+
+                // cycle in all conversations
+                for (cid in convs) {
+                    // if the current conversation identifier is the
+                    // same of that specified, set its recording status
+                    if (cid === convid) {
+                        convs[convid].setRecording(value);
+                        logger.info(IDLOG, 'set recording status ' + value + ' to conversation ' + convid);
+
+                        // emit the event
+                        astProxy.emit(EVT_EXTEN_CHANGED, extensions[exten]);
+                        logger.info(IDLOG, 'emitted event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
+                    }
+                }
+            }
+        }
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
 
 // public interface
 exports.on                 = on;
