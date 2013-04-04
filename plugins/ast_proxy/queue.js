@@ -41,6 +41,31 @@ exports.Queue = function (queueNum) {
     var avgHoldTime;
 
     /**
+    * The average talk time.
+    *
+    * @property avgTalkTime
+    * @type {string}
+    * @private
+    */
+    var avgTalkTime;
+
+    /**
+    * Return the average talk time.
+    *
+    * @method getAvgTalkTime
+    * @return {string} The average talk time.
+    */
+    function getAvgTalkTime() { return avgTalkTime; }
+
+    /**
+    * Set the average talk time.
+    *
+    * @method setAvgTalkTime
+    * @param {string} time The time in seconds.
+    */
+    function setAvgTalkTime(time) { avgTalkTime = time; }
+
+    /**
     * Return the average hold time.
     *
     * @method getAvgHoldTime
@@ -99,7 +124,8 @@ exports.Queue = function (queueNum) {
         return {
             name:        name,
             queue:       queue,
-            avgHoldTime: svgHoldTime
+            avgHoldTime: avgHoldTime,
+            avgTalkTime: avgTalkTime
         }
     }
 
@@ -111,6 +137,8 @@ exports.Queue = function (queueNum) {
         toString:  toString,
         getAvgHoldTime: getAvgHoldTime,
         setAvgHoldTime: setAvgHoldTime,
+        getAvgTalkTime: getAvgTalkTime,
+        setAvgTalkTime: setAvgTalkTime,
         marshallObjLiteral: marshallObjLiteral
     };
 }
