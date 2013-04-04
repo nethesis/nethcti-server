@@ -407,6 +407,9 @@ function listIaxPeers(resp) {
             extensions[resp[i].ext].setIp(resp[i].ip);
             extensions[resp[i].ext].setPort(resp[i].port);
             logger.info(IDLOG, 'set iax details for ext ' + resp[i].ext);
+
+            // request the extension status
+            astProxy.doCmd({ command: 'extenStatus', exten: resp[i].ext }, extenStatus);
         }
         // request all channels
         logger.info(IDLOG, 'requests the channel list to initialize iax extensions');
