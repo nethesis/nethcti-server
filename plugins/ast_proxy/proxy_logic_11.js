@@ -697,9 +697,50 @@ function extenStatusChanged(exten, status) {
         // request all channels
         logger.info(IDLOG, 'requests the channel list to update the extension ' + exten);
         astProxy.doCmd({ command: 'listChannels' }, function (resp) {
+            // update the conversations of the extension
             updateExtenConversations(exten, resp);
         });
 
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* If the involved numbers are extensions, it updates their converextensions.
+*
+* @method conversationConnected
+* @param {string} num1 One of the two connected numbers
+* @param {string} num2 The other of the two connected numbers
+*/
+function conversationConnected(num1, num2) {
+    try {
+        // check parameters
+        if (typeof num1 !== 'string' || typeof num2 !== 'string') {
+            throw new Error('wrong parameters');
+        }
+
+        // check if num1 is an extension
+        if (extensions[num1]) {
+
+            // request all channels
+            logger.info(IDLOG, 'requests the channel list to update the extension ' + num1);
+            astProxy.doCmd({ command: 'listChannels' }, function (resp) {
+                // update the conversations of the extension
+                updateExtenConversations(num1, resp);
+            });
+        }
+
+        // check if num2 is an extension
+        if (extensions[num2]) {
+
+            // request all channels
+            logger.info(IDLOG, 'requests the channel list to update the extension ' + num2);
+            astProxy.doCmd({ command: 'listChannels' }, function (resp) {
+                // update the conversations of the extension
+                updateExtenConversations(num2, resp);
+            });
+        }
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -1072,4 +1113,5 @@ exports.getExtensions      = getExtensions;
 exports.extenStatusChanged = extenStatusChanged;
 exports.hangupConversation = hangupConversation;
 exports.recordConversation = recordConversation;
+exports.conversationConnected  = conversationConnected;
 exports.stopRecordConversation = stopRecordConversation;
