@@ -5,6 +5,7 @@
 * @class proxy_logic_11
 * @static
 */
+var path         = require('path');
 var Channel      = require('./channel').Channel;
 var iniparser    = require('iniparser');
 var Extension    = require('./extension').Extension;
@@ -741,6 +742,29 @@ function getExtenSourceChannelConversation(exten, convid) {
 }
 
 /**
+* Return the identifier of the source channel of the conversation of the specified
+* extension. If the source channel isn't present, undefined will be returned. It is
+* useful for those operation in which the channel type is important. For example
+* the start and stop record call must be executed on the same channel.
+*
+* @method getExtenIdSourceChannelConversation
+* @param {string} exten The extension number
+* @param {string} convid The conversation identifier
+* @return {object} The identifier of the source channel or undefined value if it's not present.
+* @private
+*/
+function getExtenIdSourceChannelConversation(exten, convid) {
+    try {
+        // get the source channel
+        var ch = getExtenSourceChannelConversation(exten, convid);
+        if (ch) { return ch.getChannel(); }
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Return a channel identifier of the conversation of the specified extension. If the
 * source channel is present it will returned its id, otherwise the destination channel
 * id will be returned. It is useful for those operation in which the channel type is not
@@ -870,11 +894,9 @@ function stopRecordConversation(endpointType, endpointId, convid, cb) {
         if (endpointType === 'extension' && extensions[endpointId]) {
 
             // get the channel to hangup
-            var ch = getExtenSourceChannelConversation(endpointId, convid);
+            var chid = getExtenIdSourceChannelConversation(endpointId, convid);
 
-            if (ch) {
-                var chid = ch.getChannel();
-
+            if (chid) {
                 // start the recording
                 logger.info(IDLOG, 'execute the stop record of the channel ' + chid + ' of exten ' + endpointId);
                 astProxy.doCmd({ command: 'stopRecordCall', channel: chid }, function (resp) {
@@ -924,11 +946,13 @@ function recordConversation(endpointType, endpointId, convid, cb) {
             var ch = getExtenSourceChannelConversation(endpointId, convid);
 
             if (ch) {
-                var chid = ch.getChannel();
+
+                var chid = ch.getChannel(); // the channel identifier
+                var filepath = getRecordConversationFilepath(ch);
 
                 // start the recording
                 logger.info(IDLOG, 'execute the record of the channel ' + chid + ' of exten ' + endpointId);
-                astProxy.doCmd({ command: 'recordCall', channel: chid }, function (resp) {
+                astProxy.doCmd({ command: 'recordCall', channel: chid, filepath: filepath }, function (resp) {
                     cb(resp);
                     recordCb(resp);
                 });
@@ -945,6 +969,54 @@ function recordConversation(endpointType, endpointId, convid, cb) {
 
     } catch (err) {
         cb();
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Returns the file path to be used to record the conversation.
+*
+* @method getRecordConversationFilepath
+* @param {object} chSource The source channel
+* @return {string} The filepath to be used to record the conversation.
+*/
+function getRecordConversationFilepath(chSource) {
+    try {
+        // check parameter
+        if (typeof chSource.getUniqueId !== 'function'
+            || typeof chSource.getCallerNum  !== 'function'
+            || typeof chSource.getBridgedNum !== 'function') {
+
+            throw new Error('wrong parameter');
+        }
+
+        var SEP = '-';
+        var EXT = '.wav';
+        var PRE = 'nethcti';
+        var d = new Date(chSource.getStartTime());
+
+        // get date and time components
+        var yyyy = d.getFullYear() + '';
+        var mon  = d.getMonth()   < 10 ? ('0' + (d.getMonth() + 1)) : (d.getMonth() + 1) + '';
+        var dd   = d.getDate()    < 10 ? ('0' + d.getDate())        : d.getDate() + '';
+        var hh   = d.getHours()   < 10 ? ('0' + d.getHours())       : d.getHours() + '';
+        var min  = d.getMinutes() < 10 ? ('0' + d.getMinutes())     : d.getMinutes() + '';
+        var ss   = d.getSeconds() < 10 ? ('0' + d.getSeconds())     : d.getSeconds() + '';
+
+        // the dest and the source are so calculated because the channel is the source channel
+        var dest     = chSource.getBridgedNum();
+        var source   = chSource.getCallerNum();
+        var uniqueid = chSource.getUniqueId();
+        var date = yyyy + mon + dd;
+        var time = hh   + min + ss;
+
+        // construct the filename
+        var filename = PRE + SEP + dest + SEP + source + SEP + date + SEP + time + SEP + uniqueid + EXT;
+
+        // return the filepath
+        return path.join(yyyy, mon, dd, filename);
+
+    } catch (err) {
         logger.error(IDLOG, err.stack);
     }
 }
