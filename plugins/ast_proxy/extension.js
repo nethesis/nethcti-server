@@ -27,6 +27,16 @@ exports.Extension = function (ext, chType) {
     var exten = ext;
 
     /**
+    * The Extension name.
+    *
+    * @property name
+    * @type {string}
+    * @required
+    * @private
+    */
+    var name = '';
+
+    /**
     * The ip address of the device.
     *
     * @property ip
@@ -159,6 +169,14 @@ exports.Extension = function (ext, chType) {
     function setName(extName) { name = extName; }
 
     /**
+    * Return the extension name.
+    *
+    * @method getName
+    * @return {string} The extension name.
+    */
+    function getName() { return name; }
+
+    /**
     * Set the extension sip user agent.
     *
     * @method setSipUserAgent
@@ -262,6 +280,7 @@ exports.Extension = function (ext, chType) {
         return {
             ip:            ip,
             port:          port,
+            name:          name,
             exten:         exten,
             status:        status,
             chanType:      chanType,
@@ -274,6 +293,7 @@ exports.Extension = function (ext, chType) {
     return {
         setIp:     setIp,
         getIp:     getIp,
+        getName:   getName,
         setName:   setName,
         setPort:   setPort,
         getPort:   getPort,
