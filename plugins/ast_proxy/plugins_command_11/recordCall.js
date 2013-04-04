@@ -50,11 +50,13 @@ var FILE_EXT = 'wav';
         var map = {};
 
         /**
-        * Command plugin to record a call.
+        * Command plugin to record a call. If the record file already exists,
+        * it will not be overwritten but appended. The default directory of the
+        * recordings is /var/spool/asterisk/monitor.
         *
         * Use it with _ast\_proxy_ module as follow:
         *
-        *     ast_proxy.doCmd({ command: 'recordCall', channel: 'SIP/214-00000' }, function (res) {
+        *     ast_proxy.doCmd({ command: 'recordCall', channel: 'SIP/214-00000', filepath: '2013/04/06/nethcti-214-209-20130406-120406-1365062949.146.wav' }, function (res) {
         *         // some code
         *     });
         *
@@ -65,7 +67,8 @@ var FILE_EXT = 'wav';
         var recordCall = {
 
             /**
-            * Execute asterisk action to record a call.
+            * Execute asterisk action to record a call. If the record file
+            * already exists, it will not be overwritten but appended.
             * 
             * @method execute
             * @param {object} am Asterisk manager to send the action
@@ -79,9 +82,10 @@ var FILE_EXT = 'wav';
                 try {
                     // action for asterisk
                     var act = {
-                        Action: 'MixMonitor',
+                        Action:  'MixMonitor',
                         Channel: args.channel,
-                        File: args.channel.replace(/[\/]/g,'-') + '.' + FILE_EXT
+                        File:    args.filepath,
+                        options: 'a' // append if the file already exists
                     };
                     
                     // set the action identifier
