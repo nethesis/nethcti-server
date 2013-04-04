@@ -216,10 +216,10 @@ exports.Extension = function (ext, chType) {
     /**
     * Return the conversation list.
     *
-    * @method getConversations
+    * @method getAllConversations
     * @return {object} All conversations of the extension.
     */
-    function getConversations() { return conversations; }
+    function getAllConversations() { return conversations; }
 
     /**
     * Removes the specified conversation.
@@ -276,10 +276,10 @@ exports.Extension = function (ext, chType) {
         getStatus: getStatus,
         addConversation:        addConversation,
         setSipUserAgent:        setSipUserAgent,
-        getConversations:       getConversations,
         conversationCount:      conversationCount,
         marshallObjLiteral:     marshallObjLiteral,
         removeConversation:     removeConversation,
+        getAllConversations:    getAllConversations,
         removeAllConversations: removeAllConversations
     };
 }
