@@ -82,6 +82,18 @@ var extensions = {};
 var struct;
 
 /**
+* Store the recording information about conversations. The key
+* is the conversation identifier and the value is an empty string.
+* The presence of the key means that the conversation is recording,
+* otherwise not.
+*
+* @property recordingConv
+* @type {object}
+* @private
+*/
+var recordingConv = {};
+
+/**
 * These are the key names used into the asterisk structure
 * file created by the perl script.
 *
@@ -937,12 +949,15 @@ function stopRecordConversation(endpointType, endpointId, convid, cb) {
             // get the channel to hangup
             var chid = getExtenIdSourceChannelConversation(endpointId, convid);
 
-            if (chid) {
+            if (recordingConv[convid] === undefined) {
+                logger.info(IDLOG, 'the conversation ' + convid + ' is not recording');
+
+            } else if (chid) {
                 // start the recording
                 logger.info(IDLOG, 'execute the stop record of the channel ' + chid + ' of exten ' + endpointId);
                 astProxy.doCmd({ command: 'stopRecordCall', channel: chid }, function (resp) {
                     cb(resp);
-                    stopRecordCb(resp);
+                    stopRecordCb(resp, convid);
                 });
 
             } else {
@@ -986,7 +1001,11 @@ function recordConversation(endpointType, endpointId, convid, cb) {
             // get the channel to hangup
             var ch = getExtenSourceChannelConversation(endpointId, convid);
 
-            if (ch) {
+            // check if the conversation is already recording
+            if (recordingConv[convid] !== undefined) {
+                logger.info(IDLOG, 'the conversation ' + convid + ' is already recording');
+
+            } else if (ch) {
 
                 var chid = ch.getChannel(); // the channel identifier
                 var filepath = getRecordConversationFilepath(ch);
@@ -995,7 +1014,7 @@ function recordConversation(endpointType, endpointId, convid, cb) {
                 logger.info(IDLOG, 'execute the record of the channel ' + chid + ' of exten ' + endpointId);
                 astProxy.doCmd({ command: 'recordCall', channel: chid, filepath: filepath }, function (resp) {
                     cb(resp);
-                    recordCb(resp);
+                    recordCb(resp, convid);
                 });
 
             } else {
@@ -1067,12 +1086,16 @@ function getRecordConversationFilepath(chSource) {
 *
 * @method stopRecordCb
 * @param {object} resp The response object of the operation
+* @param {string} convid The conversation identifier
 * @private
 */
-function stopRecordCb(resp) {
+function stopRecordCb(resp, convid) {
     try {
         if (typeof resp === 'object' && resp.result === true) {
             logger.info(IDLOG, 'stop record channel started succesfully');
+
+            // remove the recording status of the conversation
+            delete recordingConv[convid];
 
         } else {
             logger.warn(IDLOG, 'stop record channel failed' + (resp.cause ? (': ' + resp.cause) : '') );
@@ -1088,12 +1111,16 @@ function stopRecordCb(resp) {
 *
 * @method recordCb
 * @param {object} resp The response object of the operation
+* @param {string} convid The conversation identifier
 * @private
 */
-function recordCb(resp) {
+function recordCb(resp, convid) {
     try {
         if (typeof resp === 'object' && resp.result === true) {
             logger.info(IDLOG, 'record channel started succesfully');
+
+            // set the recording status of the conversation
+            recordingConv[convid] = '';
 
         } else {
             logger.warn(IDLOG, 'record channel failed' + (resp.cause ? (': ' + resp.cause) : '') );
