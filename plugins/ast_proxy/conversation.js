@@ -32,6 +32,15 @@ exports.Conversation = function (sourceChan, destChan) {
     var chDest = destChan;
 
     /**
+    * The recordig status.
+    *
+    * @property recording
+    * @type {boolean}
+    * @private
+    */
+    var recording = false;
+
+    /**
     * The conversation identifier.
     *
     * @property id
@@ -76,6 +85,27 @@ exports.Conversation = function (sourceChan, destChan) {
     function getId() { return id; }
 
     /**
+    * Return the recording status.
+    *
+    * @method isRecording
+    * @return {booelan} true if the conversation is recording, false otherwise.
+    */
+    function isRecording { return recording; }
+
+    /**
+    * Set the recording status.
+    *
+    * **It can throw an Exception.**
+    *
+    * @method setRecording
+    * @param {boolean} value The value for the recording status.
+    */
+    function setRecording(value) {
+        if (typeof value !== 'boolean') { throw new Error('wrong parameter'); }
+        recording = value;
+    }
+
+    /**
     * Returns an object literal representation of the object without
     * any methods. If the conversation isn't connected, one between
     * the source channel and destination channel can be null.
@@ -85,9 +115,10 @@ exports.Conversation = function (sourceChan, destChan) {
     */
     function marshallObjLiteral() {
         return {
-            id:       id,
-            chDest:   chDest   ? chDest.marshallObjLiteral()   : null,
-            chSource: chSource ? chSource.marshallObjLiteral() : null
+            id:        id,
+            chDest:    chDest   ? chDest.marshallObjLiteral()   : null,
+            chSource:  chSource ? chSource.marshallObjLiteral() : null,
+            recording: recording
         };
     }
 
@@ -95,6 +126,8 @@ exports.Conversation = function (sourceChan, destChan) {
     return {
         getId:                 getId,
         toString:              toString,
+        isRecording:           isRecording,
+        setRecording:          setRecording,
         getSourceChannel:      getSourceChannel,
         marshallObjLiteral:    marshallObjLiteral,
         getDestinationChannel: getDestinationChannel
