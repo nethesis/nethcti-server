@@ -27,10 +27,34 @@ exports.Queue = function (queueNum) {
     *
     * @property name
     * @type {string}
-    * @required
     * @private
     */
     var name = '';
+
+    /**
+    * The average hold time.
+    *
+    * @property avgHoldTime
+    * @type {string}
+    * @private
+    */
+    var avgHoldTime;
+
+    /**
+    * Return the average hold time.
+    *
+    * @method getAvgHoldTime
+    * @return {string} The average hold time.
+    */
+    function getAvgHoldTime() { return avgHoldTime; }
+
+    /**
+    * Set the average hold time.
+    *
+    * @method setAvgHoldTime
+    * @param {string} time The time in seconds.
+    */
+    function setAvgHoldTime(time) { avgHoldTime = time; }
 
     /**
     * Set the queue name.
@@ -73,8 +97,9 @@ exports.Queue = function (queueNum) {
     */
     function marshallObjLiteral() {
         return {
-            name:  name,
-            queue: queue
+            name:        name,
+            queue:       queue,
+            avgHoldTime: svgHoldTime
         }
     }
 
@@ -84,6 +109,8 @@ exports.Queue = function (queueNum) {
         getName:   getName,
         getQueue:  getQueue,
         toString:  toString,
+        getAvgHoldTime: getAvgHoldTime,
+        setAvgHoldTime: setAvgHoldTime,
         marshallObjLiteral: marshallObjLiteral
     };
 }
