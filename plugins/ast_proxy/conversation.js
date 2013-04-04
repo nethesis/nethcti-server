@@ -90,7 +90,7 @@ exports.Conversation = function (sourceChan, destChan) {
     * @method isRecording
     * @return {booelan} true if the conversation is recording, false otherwise.
     */
-    function isRecording { return recording; }
+    function isRecording() { return recording; }
 
     /**
     * Set the recording status.
