@@ -272,10 +272,9 @@ exports.Extension = function (ext, chType) {
     function toJSON() {
 
         var jsonConvs = {};
-
         var convid;
 
-        // conversations marshaling
+        // JSON representation of the conversations
         for (convid in conversations) { jsonConvs[convid] = conversations[convid].toJSON(); }
 
         return {
