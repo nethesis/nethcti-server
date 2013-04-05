@@ -270,11 +270,13 @@ exports.Extension = function (ext, chType) {
     * @return {object} The JSON representation of the object.
     */
     function toJSON() {
-        var convs = {};
+
+        var jsonConvs = {};
+
         var convid;
 
         // conversations marshaling
-        for (convid in conversations) { convs[convid] = conversations[convid].toJSON(); }
+        for (convid in conversations) { jsonConvs[convid] = conversations[convid].toJSON(); }
 
         return {
             ip:            ip,
@@ -284,7 +286,7 @@ exports.Extension = function (ext, chType) {
             status:        status,
             chanType:      chanType,
             sipuseragent:  sipuseragent,
-            conversations: convs
+            conversations: jsonConvs
         }
     }
 
