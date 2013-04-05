@@ -6,9 +6,11 @@
 * @static
 */
 var path         = require('path');
+var Queue        = require('./queue').Queue;
 var Channel      = require('./channel').Channel;
 var iniparser    = require('iniparser');
 var Extension    = require('./extension').Extension;
+var QueueMember  = require('./queueMember').QueueMember;
 var Conversation = require('./conversation').Conversation;
 var EventEmitter = require('events').EventEmitter;
 
@@ -69,6 +71,16 @@ var astProxy;
 * @private
 */
 var extensions = {};
+
+/**
+* All queues. The key is the queue number and the value
+* is the _Queue_ object.
+*
+* @property queues
+* @type object
+* @private
+*/
+var queues = {};
 
 /**
 * It's the validated content of the asterisk structure ini
@@ -280,6 +292,9 @@ function queueStructValidation(resp) {
             }
         }
         logger.info(IDLOG, 'all queues have been validated');
+
+        // initialize all queus as 'Queue' objects into the 'queues' object
+        initializeQueues();
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -414,6 +429,97 @@ function listIaxPeers(resp) {
         // request all channels
         logger.info(IDLOG, 'requests the channel list to initialize iax extensions');
         astProxy.doCmd({ command: 'listChannels' }, updateConversationsForAllExten);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Initialize all queues as _Queue_ object into the _queues_ property.
+*
+* @method initializeQueues
+* @private
+*/
+function initializeQueues() {
+    try {
+        var k, q
+        for (k in struct) {
+
+            if (struct[k].type === INI_STRUCT.TYPE.QUEUE) { // cycle in all queues
+
+                q = new Queue(struct[k].queue);
+                q.setName(struct[k].label);
+
+                // store the new queue object
+                queues[q.getQueue()] = q;
+
+                // request details for the current queue
+                astProxy.doCmd({ command: 'queueDetails', queue: q.getQueue() }, queueDetails);
+            }
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the details for queue object. The details include the members.
+*
+* @method queueDetails
+* @param {object} resp The queue informations object
+* @private
+*/
+function queueDetails(resp) {
+    try {
+        // check the parameter
+        if (typeof resp !== 'object'
+            || resp.queue               === undefined || resp.members             === undefined
+            || resp.holdtime            === undefined || resp.talktime            === undefined
+            || resp.completedCallsCount === undefined || resp.abandonedCallsCount === undefined) {
+
+            throw new Error('wrong parameter');
+        }
+
+        var q = resp.queue; // the queue number
+
+        // set the queue data
+        queues[q].setAvgHoldTime(resp.holdtime);
+        queues[q].setAvgTalkTime(resp.talktime);
+        queues[q].setCompletedCallsCount(resp.completedCallsCount);
+        queues[q].setAbandonedCallsCount(resp.abandonedCallsCount);
+
+        // set all queue members
+        var m, member;
+        for (m in resp.members) {
+
+            // create new queue member object
+            member = new QueueMember(resp.members[m].member);
+            member.setName(resp.members[m].name);
+            member.setType(resp.members[m].type);
+            member.setCallsTakenCount(resp.members[m].callsTakenCount);
+            member.setLastCallTimestamp(resp.members[m].lastCallTimestamp);
+
+            // add the member to its queue
+            queues[q].addMember(member);
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Returns the JSON representation of the all extensions.
+*
+* @method getJSONExtensions
+* @return {object} The JSON representation of the all extensions.
+*/
+function getJSONExtensions() {
+    try {
+        var eliteral = {};
+        var ext;
+        for (ext in extensions) { eliteral[ext] = extensions[ext].toJSON(); }
+        return eliteral;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -1189,8 +1295,9 @@ exports.start              = start;
 exports.visit              = visit;
 exports.setLogger          = setLogger;
 exports.getExtensions      = getExtensions;
+exports.getJSONExtensions  = getJSONExtensions;
 exports.extenStatusChanged = extenStatusChanged;
 exports.hangupConversation = hangupConversation;
 exports.recordConversation = recordConversation;
-exports.conversationConnected  = conversationConnected;
-exports.stopRecordConversation = stopRecordConversation;
+exports.conversationConnected   = conversationConnected;
+exports.stopRecordConversation  = stopRecordConversation;
