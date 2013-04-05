@@ -217,9 +217,17 @@ exports.Queue = function (queueNum) {
     * @return {object} The JSON representation of the object.
     */
     function toJSON() {
+
+        var jsonMembers = {};
+        var m;
+
+        // JSON representation of the members
+        for (m in members) { jsonMembers[m] = members[m].toJSON(); }
+
         return {
             name:                name,
             queue:               queue,
+            members:             jsonMmembers,
             avgHoldTime:         avgHoldTime,
             avgTalkTime:         avgTalkTime,
             completedCallsCount: completedCallsCount,
