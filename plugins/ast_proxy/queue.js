@@ -75,7 +75,15 @@ exports.Queue = function (queueNum) {
     * @type {object}
     * @private
     */
-    var members;
+    var members = {};
+
+    /**
+    * Returns all the members.
+    *
+    * @method getAllMembers
+    * @return {object} All the members.
+    */
+    function getAllMembers() { return members; }
 
     /**
     * Adds the queue member to the private _members_ object property.
@@ -88,7 +96,7 @@ exports.Queue = function (queueNum) {
     */
     function addMember(m) {
         // check the parameter
-        if (typeof m !== object) { throw new Error('wrong parameter'); }
+        if (typeof m !== 'object') { throw new Error('wrong parameter'); }
         members[m.getMember()] = m;
     }
 
@@ -228,6 +236,7 @@ exports.Queue = function (queueNum) {
         toString:       toString,
         addMember:      addMember,
         removeMember:   removeMember,
+        getAllMembers:  getAllMembers,
         getAvgHoldTime: getAvgHoldTime,
         setAvgHoldTime: setAvgHoldTime,
         getAvgTalkTime: getAvgTalkTime,
