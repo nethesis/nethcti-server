@@ -112,12 +112,12 @@ var IDLOG = '[queueDetails]';
 
                         // create queue details object
                         list[data.actionid] = {
-                            queue:     data.queue,
-                            members:    {},
-                            holdtime:  data.holdtime,
-                            talktime:  data.talktime,
-                            completed: data.completed,
-                            abandoned: data.abandoned
+                            queue:               data.queue,
+                            members:             {},
+                            holdtime:            data.holdtime,
+                            talktime:            data.talktime,
+                            completedCallsCount: data.completed,
+                            abandonedCallsCount: data.abandoned
                         };
 
                     // store member information object. This
@@ -134,7 +134,7 @@ var IDLOG = '[queueDetails]';
                             name:              data.name,
                             type:              data.membership, // it can be 'static', 'dynamic' or 'realtime'
                             member:            member,
-                            callsTaken:        data.callstaken, // the number of the taken calls
+                            callsTakenCount:   data.callstaken, // the number of the taken calls
                             lastCallTimestamp: data.lastcall    // timestamp of the last call received by the member
                         };
 
