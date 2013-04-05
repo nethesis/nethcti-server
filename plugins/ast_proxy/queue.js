@@ -50,6 +50,56 @@ exports.Queue = function (queueNum) {
     var avgTalkTime;
 
     /**
+    * The number of completed calls.
+    *
+    * @property completedCallsCount
+    * @type {number}
+    * @private
+    */
+    var completedCallsCount;
+
+    /**
+    * The number of abandoned calls.
+    *
+    * @property abandonedCallsCount
+    * @type {number}
+    * @private
+    */
+    var abandonedCallsCount;
+
+    /**
+    * Return the number of completed calls.
+    *
+    * @method getCompletedCallsCount
+    * @return {number} The number of completed calls.
+    */
+    function getCompletedCallsCount() { return completedCallsCount; }
+
+    /**
+    * Set the number of completed calls.
+    *
+    * @method setCompletedCallsCount
+    * @param {number} num The number of completed calls.
+    */
+    function setCompletedCallsCount(num) { completedCallsCount = num; }
+
+    /**
+    * Return the number of abandoned calls.
+    *
+    * @method getAbandonedCallsCount
+    * @return {number} The number of abandoned calls.
+    */
+    function getAbandonedCallsCount() { return abandonedCallsCount; }
+
+    /**
+    * Set the number of abandoned calls.
+    *
+    * @method setAbandonedCallsCount
+    * @param {number} num The number of abandoned calls.
+    */
+    function setAbandonedCallsCount(num) { abandonedCallsCount = num; }
+
+    /**
     * Return the average talk time.
     *
     * @method getAvgTalkTime
@@ -122,23 +172,29 @@ exports.Queue = function (queueNum) {
     */
     function marshallObjLiteral() {
         return {
-            name:        name,
-            queue:       queue,
-            avgHoldTime: avgHoldTime,
-            avgTalkTime: avgTalkTime
+            name:                name,
+            queue:               queue,
+            avgHoldTime:         avgHoldTime,
+            avgTalkTime:         avgTalkTime,
+            completedCallsCount: completedCallsCount,
+            abandonedCallsCount: abandonedCallsCount
         }
     }
 
     // public interface
     return {
-        setName:   setName,
-        getName:   getName,
-        getQueue:  getQueue,
-        toString:  toString,
+        setName:        setName,
+        getName:        getName,
+        getQueue:       getQueue,
+        toString:       toString,
         getAvgHoldTime: getAvgHoldTime,
         setAvgHoldTime: setAvgHoldTime,
         getAvgTalkTime: getAvgTalkTime,
         setAvgTalkTime: setAvgTalkTime,
-        marshallObjLiteral: marshallObjLiteral
+        marshallObjLiteral:     marshallObjLiteral,
+        getCompletedCallsCount: getCompletedCallsCount,
+        setCompletedCallsCount: setCompletedCallsCount,
+        getAbandonedCallsCount: getAbandonedCallsCount,
+        setAbandonedCallsCount: setAbandonedCallsCount
     };
 }
