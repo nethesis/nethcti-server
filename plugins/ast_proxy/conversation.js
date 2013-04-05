@@ -110,14 +110,14 @@ exports.Conversation = function (sourceChan, destChan) {
     * any methods. If the conversation isn't connected, one between
     * the source channel and destination channel can be null.
     *
-    * @method marshallObjLiteral
+    * @method marshalObjLiteral
     * @return {object} The object literal representation of the object.
     */
-    function marshallObjLiteral() {
+    function marshalObjLiteral() {
         return {
             id:        id,
-            chDest:    chDest   ? chDest.marshallObjLiteral()   : null,
-            chSource:  chSource ? chSource.marshallObjLiteral() : null,
+            chDest:    chDest   ? chDest.marshalObjLiteral()   : null,
+            chSource:  chSource ? chSource.marshalObjLiteral() : null,
             recording: recording
         };
     }
@@ -129,7 +129,7 @@ exports.Conversation = function (sourceChan, destChan) {
         isRecording:           isRecording,
         setRecording:          setRecording,
         getSourceChannel:      getSourceChannel,
-        marshallObjLiteral:    marshallObjLiteral,
+        marshalObjLiteral:     marshalObjLiteral,
         getDestinationChannel: getDestinationChannel
     };
 }

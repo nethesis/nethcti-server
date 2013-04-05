@@ -267,15 +267,15 @@ exports.Extension = function (ext, chType) {
     * Returns an object literal representation of the object
     * without any methods.
     *
-    * @method marshallObjLiteral
+    * @method marshalObjLiteral
     * @return {object} The object literal representation of the object.
     */
-    function marshallObjLiteral() {
+    function marshalObjLiteral() {
         var convs = {};
         var convid;
 
-        // conversations marshalling
-        for (convid in conversations) { convs[convid] = conversations[convid].marshallObjLiteral(); }
+        // conversations marshaling
+        for (convid in conversations) { convs[convid] = conversations[convid].marshalObjLiteral(); }
 
         return {
             ip:            ip,
@@ -307,7 +307,7 @@ exports.Extension = function (ext, chType) {
         setSipUserAgent:        setSipUserAgent,
         getConversation:        getConversation,
         conversationCount:      conversationCount,
-        marshallObjLiteral:     marshallObjLiteral,
+        marshalObjLiteral:      marshalObjLiteral,
         removeConversation:     removeConversation,
         getAllConversations:    getAllConversations,
         removeAllConversations: removeAllConversations

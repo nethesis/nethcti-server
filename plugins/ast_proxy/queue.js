@@ -214,10 +214,10 @@ exports.Queue = function (queueNum) {
     * Returns an object literal representation of the object
     * without any methods.
     *
-    * @method marshallObjLiteral
+    * @method marshalObjLiteral
     * @return {object} The object literal representation of the object.
     */
-    function marshallObjLiteral() {
+    function marshalObjLiteral() {
         return {
             name:                name,
             queue:               queue,
@@ -235,13 +235,13 @@ exports.Queue = function (queueNum) {
         getQueue:       getQueue,
         toString:       toString,
         addMember:      addMember,
-        removeMember:   removeMember,
-        getAllMembers:  getAllMembers,
-        getAvgHoldTime: getAvgHoldTime,
-        setAvgHoldTime: setAvgHoldTime,
-        getAvgTalkTime: getAvgTalkTime,
-        setAvgTalkTime: setAvgTalkTime,
-        marshallObjLiteral:     marshallObjLiteral,
+        removeMember:           removeMember,
+        getAllMembers:          getAllMembers,
+        getAvgHoldTime:         getAvgHoldTime,
+        setAvgHoldTime:         setAvgHoldTime,
+        getAvgTalkTime:         getAvgTalkTime,
+        setAvgTalkTime:         setAvgTalkTime,
+        marshalObjLiteral:      marshalObjLiteral,
         getCompletedCallsCount: getCompletedCallsCount,
         setCompletedCallsCount: setCompletedCallsCount,
         getAbandonedCallsCount: getAbandonedCallsCount,

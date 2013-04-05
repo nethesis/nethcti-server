@@ -214,10 +214,10 @@ exports.Channel = function (obj) {
     * Returns an object literal representation of the object
     * without any methods.
     *
-    * @method marshallObjLiteral
+    * @method marshalObjLiteral
     * @return {object} The object literal representation of the object.
     */
-    function marshallObjLiteral() {
+    function marshalObjLiteral() {
         return {
             type:           type,
             channel:        channel,
@@ -244,7 +244,7 @@ exports.Channel = function (obj) {
         getBridgedName:      getBridgedName,
         getChannelStatus:    getChannelStatus,
         getBridgedChannel:   getBridgedChannel,
-        marshallObjLiteral:  marshallObjLiteral
+        marshalObjLiteral:   marshalObjLiteral
     };
 }
 

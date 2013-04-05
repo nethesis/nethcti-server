@@ -142,10 +142,10 @@ exports.QueueMember = function (memberNum) {
     * Returns an object literal representation of the object
     * without any methods.
     *
-    * @method marshallObjLiteral
+    * @method marshalObjLiteral
     * @return {object} The object literal representation of the object.
     */
-    function marshallObjLiteral() {
+    function marshalObjLiteral() {
         return {
             type:              type,
             name:              name,
@@ -163,6 +163,7 @@ exports.QueueMember = function (memberNum) {
         setType:              setType,
         toString:             toString,
         getMember:            getMember,
+        marshalObjLiteral:    marshalObjLiteral,
         setCallsTakenCount:   setCallsTakenCount,
         getCallsTakenCount:   getCallsTakenCount,
         setLastCallTimestamp: setLastCallTimestamp,
