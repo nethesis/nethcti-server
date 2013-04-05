@@ -68,6 +68,45 @@ exports.Queue = function (queueNum) {
     var abandonedCallsCount;
 
     /**
+    * The members of the queue. The key is the member number and
+    * the value is a _QueueMember_ object.
+    *
+    * @property members
+    * @type {object}
+    * @private
+    */
+    var members;
+
+    /**
+    * Adds the queue member to the private _members_ object property.
+    * If the queue member already exists, it will be overwritten.
+    *
+    * **It can throw an Exception.**
+    *
+    * @method addMember
+    * @param {object} m A _QueueMember_ object.
+    */
+    function addMember(m) {
+        // check the parameter
+        if (typeof m !== object) { throw new Error('wrong parameter'); }
+        members[m.getMember()] = m;
+    }
+
+    /**
+    * Removes the queue member from the private _members_ object property.
+    *
+    * **It can throw an Exception.**
+    *
+    * @method removeMember
+    * @param {string} m The queue member number identifier.
+    */
+    function removeMember(m) {
+        // check the parameter
+        if (typeof m !== 'string') { throw new Error('wrong parameter'); }
+        delete members[m];
+    }
+
+    /**
     * Return the number of completed calls.
     *
     * @method getCompletedCallsCount
@@ -187,6 +226,8 @@ exports.Queue = function (queueNum) {
         getName:        getName,
         getQueue:       getQueue,
         toString:       toString,
+        addMember:      addMember,
+        removeMember:   removeMember,
         getAvgHoldTime: getAvgHoldTime,
         setAvgHoldTime: setAvgHoldTime,
         getAvgTalkTime: getAvgTalkTime,
