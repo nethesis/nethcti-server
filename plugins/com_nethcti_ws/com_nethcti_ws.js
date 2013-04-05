@@ -536,7 +536,7 @@ function loginHdlr(socket, obj) {
                 sendAutheSuccess(socket);
 
                 socket.join('room');
-                server.sockets.in('room').emit('extensions', astProxy.getMarshalledExtensions());
+                server.sockets.in('room').emit('extensions', astProxy.getJSONExtensions());
 
             } else { // authentication failed
                 logger.warn(IDLOG, 'authentication failed for user ' + obj.user + ' from ' + getWebsocketEndpoint(socket) +

@@ -74,7 +74,14 @@ module.exports = function (options, imports, register) {
             *
             * @method stopRecordConversation
             */
-            stopRecordConversation: astProxy.proxyLogic.stopRecordConversation
+            stopRecordConversation: astProxy.proxyLogic.stopRecordConversation,
+
+            /**
+            * It's the _getJSONExtensions_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method getJSONExtensions
+            */
+            getJSONExtensions: astProxy.proxyLogic.getJSONExtensions
         }
     });
 
