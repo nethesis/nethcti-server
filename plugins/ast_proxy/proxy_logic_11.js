@@ -509,6 +509,24 @@ function queueDetails(resp) {
 }
 
 /**
+* Returns the JSON representation of all queues.
+*
+* @method getJSONQueues
+* @return {object} The JSON representation of all queues.
+*/
+function getJSONQueues() {
+    try {
+        var qliteral = {};
+        var q;
+        for (q in queues) { qliteral[q] = queues[q].toJSON(); }
+        return qliteral;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Returns the JSON representation of the all extensions.
 *
 * @method getJSONExtensions
@@ -1294,6 +1312,7 @@ exports.on                 = on;
 exports.start              = start;
 exports.visit              = visit;
 exports.setLogger          = setLogger;
+exports.getJSONQueues      = getJSONQueues;
 exports.getExtensions      = getExtensions;
 exports.getJSONExtensions  = getJSONExtensions;
 exports.extenStatusChanged = extenStatusChanged;

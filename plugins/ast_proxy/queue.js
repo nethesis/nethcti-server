@@ -227,7 +227,7 @@ exports.Queue = function (queueNum) {
         return {
             name:                name,
             queue:               queue,
-            members:             jsonMmembers,
+            members:             jsonMembers,
             avgHoldTime:         avgHoldTime,
             avgTalkTime:         avgTalkTime,
             completedCallsCount: completedCallsCount,
