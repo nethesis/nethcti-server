@@ -264,18 +264,17 @@ exports.Extension = function (ext, chType) {
     function removeAllConversations() { conversations = {}; }
 
     /**
-    * Returns an object literal representation of the object
-    * without any methods.
+    * Returns the JSON representation of the object.
     *
-    * @method marshalObjLiteral
-    * @return {object} The object literal representation of the object.
+    * @method toJSON
+    * @return {object} The JSON representation of the object.
     */
-    function marshalObjLiteral() {
+    function toJSON() {
         var convs = {};
         var convid;
 
         // conversations marshaling
-        for (convid in conversations) { convs[convid] = conversations[convid].marshalObjLiteral(); }
+        for (convid in conversations) { convs[convid] = conversations[convid].toJSON(); }
 
         return {
             ip:            ip,
@@ -293,6 +292,7 @@ exports.Extension = function (ext, chType) {
     return {
         setIp:     setIp,
         getIp:     getIp,
+        toJSON:    toJSON,
         getName:   getName,
         setName:   setName,
         setPort:   setPort,
@@ -307,7 +307,6 @@ exports.Extension = function (ext, chType) {
         setSipUserAgent:        setSipUserAgent,
         getConversation:        getConversation,
         conversationCount:      conversationCount,
-        marshalObjLiteral:      marshalObjLiteral,
         removeConversation:     removeConversation,
         getAllConversations:    getAllConversations,
         removeAllConversations: removeAllConversations

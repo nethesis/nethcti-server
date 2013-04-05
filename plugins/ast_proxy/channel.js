@@ -211,13 +211,12 @@ exports.Channel = function (obj) {
     }
 
     /**
-    * Returns an object literal representation of the object
-    * without any methods.
+    * Returns the JSON representation of the object.
     *
-    * @method marshalObjLiteral
-    * @return {object} The object literal representation of the object.
+    * @method toJSON
+    * @return {object} The JSON representation of the object.
     */
-    function marshalObjLiteral() {
+    function toJSON() {
         return {
             type:           type,
             channel:        channel,
@@ -233,6 +232,7 @@ exports.Channel = function (obj) {
 
     // public interface
     return {
+        toJSON:              toJSON,
         toString:            toString,
         isSource:            isSource,
         getChannel:          getChannel,
@@ -244,7 +244,6 @@ exports.Channel = function (obj) {
         getBridgedName:      getBridgedName,
         getChannelStatus:    getChannelStatus,
         getBridgedChannel:   getBridgedChannel,
-        marshalObjLiteral:   marshalObjLiteral
     };
 }
 

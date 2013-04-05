@@ -182,7 +182,7 @@ function setAstProxyListeners() {
 function extenChanged(exten) {
     try {
         logger.info(IDLOG, 'received event extenChanged for extension ' + exten.getExten());
-        server.sockets.in('room').emit('exten_update', exten.marshalObjLiteral());
+        server.sockets.in('room').emit('exten_update', exten.toJSON());
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -536,7 +536,7 @@ function loginHdlr(socket, obj) {
                 sendAutheSuccess(socket);
 
                 socket.join('room');
-                server.sockets.in('room').emit('extensions', marshalExtensionsObjLiteral());
+                server.sockets.in('room').emit('extensions', astProxy.getMarshalledExtensions());
 
             } else { // authentication failed
                 logger.warn(IDLOG, 'authentication failed for user ' + obj.user + ' from ' + getWebsocketEndpoint(socket) +
@@ -658,29 +658,8 @@ function sendAutheSuccess(socket) {
     }
 }
 
-/**
-* Returns an object literal representation of all extensions
-* without any methods.
-*
-* @method marshalExtensionsObjLiteral
-* @return {object} The object literal representation of all extensions without any methods.
-*/
-function marshalExtensionsObjLiteral() {
-    try {
-        var extensions = astProxy.getExtensions();
-        var eliteral = {};
-        var ext;
-        for (ext in extensions) { eliteral[ext] = extensions[ext].marshalObjLiteral(); }
-        return eliteral;
-
-    } catch (err) {
-       logger.error(IDLOG, err.stack);
-    }
-}
-
 // public interface
 exports.start       = start;
 exports.setAuthe    = setAuthe;
 exports.setLogger   = setLogger;
 exports.setAstProxy = setAstProxy;
-exports.marshalExtensionsObjLiteral = marshalExtensionsObjLiteral;

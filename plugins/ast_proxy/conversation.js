@@ -106,18 +106,17 @@ exports.Conversation = function (sourceChan, destChan) {
     }
 
     /**
-    * Returns an object literal representation of the object without
-    * any methods. If the conversation isn't connected, one between
-    * the source channel and destination channel can be null.
+    * Returns the JSON representation of the object. If the conversation isn't
+    * connected, one between the source channel and the destination channel can be null.
     *
-    * @method marshalObjLiteral
-    * @return {object} The object literal representation of the object.
+    * @method toJSON
+    * @return {object} The JSON representation of the object.
     */
-    function marshalObjLiteral() {
+    function toJSON() {
         return {
             id:        id,
-            chDest:    chDest   ? chDest.marshalObjLiteral()   : null,
-            chSource:  chSource ? chSource.marshalObjLiteral() : null,
+            chDest:    chDest   ? chDest.toJSON()   : null,
+            chSource:  chSource ? chSource.toJSON() : null,
             recording: recording
         };
     }
@@ -125,11 +124,11 @@ exports.Conversation = function (sourceChan, destChan) {
     // public interface
     return {
         getId:                 getId,
+        toJSON:                toJSON,
         toString:              toString,
         isRecording:           isRecording,
         setRecording:          setRecording,
         getSourceChannel:      getSourceChannel,
-        marshalObjLiteral:     marshalObjLiteral,
         getDestinationChannel: getDestinationChannel
     };
 }

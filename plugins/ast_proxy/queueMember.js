@@ -139,13 +139,12 @@ exports.QueueMember = function (memberNum) {
     function toString() { return 'Queue member: ' + getMember(); }
 
     /**
-    * Returns an object literal representation of the object
-    * without any methods.
+    * Returns the JSON representation of the object.
     *
-    * @method marshalObjLiteral
-    * @return {object} The object literal representation of the object.
+    * @method toJSON
+    * @return {object} The JSON representation of the object.
     */
-    function marshalObjLiteral() {
+    function toJSON() {
         return {
             type:              type,
             name:              name,
@@ -157,13 +156,13 @@ exports.QueueMember = function (memberNum) {
 
     // public interface
     return {
+        toJSON:               toJSON,
         setName:              setName,
         getName:              getName,
         getType:              getType,
         setType:              setType,
         toString:             toString,
         getMember:            getMember,
-        marshalObjLiteral:    marshalObjLiteral,
         setCallsTakenCount:   setCallsTakenCount,
         getCallsTakenCount:   getCallsTakenCount,
         setLastCallTimestamp: setLastCallTimestamp,
