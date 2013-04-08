@@ -964,27 +964,30 @@ function extenStatusChanged(exten, status) {
             throw new Error('wrong parameters');
         }
 
-        // request sip details for current extension
-        extensions[exten].setStatus(status);
-        logger.info(IDLOG, 'set status ' + status + ' for extension ' + exten);
+        if (extensions[exten]) { // the exten is an extension
 
-        // update extension informations. This is because when the extension becomes
-        // offline/online ip, port and other informations needs to be updated
-        if (extensions[exten].chanType() === 'sip') {
+            // request sip details for current extension
+            extensions[exten].setStatus(status);
+            logger.info(IDLOG, 'set status ' + status + ' for extension ' + exten);
 
-            astProxy.doCmd({ command: 'sipDetails', exten: exten }, updateExtSipDetails);
+            // update extension informations. This is because when the extension becomes
+            // offline/online ip, port and other informations needs to be updated
+            if (extensions[exten].chanType() === 'sip') {
 
-        } else if (extensions[exten].chanType() === 'iax') {
+                astProxy.doCmd({ command: 'sipDetails', exten: exten }, updateExtSipDetails);
 
-            astProxy.doCmd({ command: 'iaxDetails', exten: exten }, updateExtIaxDetails);
+            } else if (extensions[exten].chanType() === 'iax') {
+
+                astProxy.doCmd({ command: 'iaxDetails', exten: exten }, updateExtIaxDetails);
+            }
+
+            // request all channels
+            logger.info(IDLOG, 'requests the channel list to update the extension ' + exten);
+            astProxy.doCmd({ command: 'listChannels' }, function (resp) {
+                // update the conversations of the extension
+                updateExtenConversations(exten, resp);
+            });
         }
-
-        // request all channels
-        logger.info(IDLOG, 'requests the channel list to update the extension ' + exten);
-        astProxy.doCmd({ command: 'listChannels' }, function (resp) {
-            // update the conversations of the extension
-            updateExtenConversations(exten, resp);
-        });
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
