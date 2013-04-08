@@ -242,9 +242,9 @@ function iaxExtenStructValidation(resp) {
     try {
         // creates temporary object used to rapid check the
         // existence of an extension into the asterisk
-        var iaxlist = {};
         var i;
-        for (i = 0; i < resp.length; i++) { iaxlist[resp[i].ext] = ''; }
+        var iaxlist = {};
+        for (i = 0; i < resp.length; i++) { iaxlist[resp[i].exten] = ''; }
 
         // cycles in all elements of the structure ini file to validate
         var k;
@@ -266,7 +266,7 @@ function iaxExtenStructValidation(resp) {
         logger.info(IDLOG, 'all iax extensions have been validated');
 
         // initialize all iax extensions as 'Extension' objects into the 'extensions' object
-        initializeIaxExten();
+        initializeIaxExten(resp);
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -397,11 +397,12 @@ function start(inipath) {
 * _extensions_ property.
 *
 * @method initializeIaxExten
+* @param {object} resp The response of the _listIaxPeers_ command plugin.
 * @private
 */
-function initializeIaxExten() {
+function initializeIaxExten(resp) {
     try {
-        var k, exten;
+        var i, k, exten;
         for (k in struct) {
 
             if (struct[k].type    === INI_STRUCT.TYPE.EXTEN
@@ -412,8 +413,21 @@ function initializeIaxExten() {
                 extensions[exten.getExten()].setName(struct[k].label);
             }
         }
-        // request iax details for all extensions
-        astProxy.doCmd({ command: 'listIaxPeers' }, listIaxPeers);
+
+        // set iax informations
+        for (i = 0; i < resp.length; i++) {
+
+            extensions[resp[i].exten].setIp(resp[i].ip);
+            extensions[resp[i].exten].setPort(resp[i].port);
+            logger.info(IDLOG, 'set iax details for ext ' + resp[i].exten);
+
+            // request the extension status
+            astProxy.doCmd({ command: 'extenStatus', exten: resp[i].exten }, extenStatus);
+        }
+
+        // request all channels
+        logger.info(IDLOG, 'requests the channel list to initialize iax extensions');
+        astProxy.doCmd({ command: 'listChannels' }, updateConversationsForAllExten);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -441,6 +455,7 @@ function listIaxPeers(resp) {
             // request the extension status
             astProxy.doCmd({ command: 'extenStatus', exten: resp[i].ext }, extenStatus);
         }
+
         // request all channels
         logger.info(IDLOG, 'requests the channel list to initialize iax extensions');
         astProxy.doCmd({ command: 'listChannels' }, updateConversationsForAllExten);
@@ -672,12 +687,55 @@ function extSipDetails(resp) {
             extensions[data.exten].setPort(data.port);
             extensions[data.exten].setName(data.name);
             extensions[data.exten].setSipUserAgent(data.sipuseragent);
-            extensions[data.exten].setIp(data.ip);
             logger.info(IDLOG, 'set sip details for ext ' + data.exten);
 
         } else {
             logger.warn(IDLOG, 'sip details ' + (resp.message !== undefined ? resp.message : ''));
         }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Update iax extension information and emit _EVT\_EXTEN\_CHANGED_ event.
+*
+* @method updateExtIaxDetails
+* @param {object} resp The iax extension informations object
+* @private
+*/
+function updateExtIaxDetails(resp) {
+    try {
+        // set extension informations
+        extIaxDetails(resp);
+
+        // emit the event
+        astProxy.emit(EVT_EXTEN_CHANGED, extensions[resp.exten]);
+        logger.info(IDLOG, 'emitted event ' + EVT_EXTEN_CHANGED + ' for iax extension ' + resp.exten);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the details for the iax extension object.
+*
+* @method extIaxDetails
+* @param {object} resp The extension informations object
+* @private
+*/
+function extIaxDetails(resp) {
+    try {
+        // check parameter
+        if (typeof resp !== 'object') { throw new Error('wrong parameter'); }
+
+        // set the extension informations
+        extensions[resp.exten].setIp(resp.ip);
+        extensions[resp.exten].setPort(resp.port);
+        extensions[resp.exten].setIp(resp.ip);
+        logger.info(IDLOG, 'set iax details for ext ' + resp.exten);
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -697,7 +755,7 @@ function updateExtSipDetails(resp) {
 
         // emit the event
         astProxy.emit(EVT_EXTEN_CHANGED, extensions[resp.exten.exten]);
-        logger.info(IDLOG, 'emitted event ' + EVT_EXTEN_CHANGED + ' for extension ' + resp.exten.exten);
+        logger.info(IDLOG, 'emitted event ' + EVT_EXTEN_CHANGED + ' for sip extension ' + resp.exten.exten);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -912,7 +970,14 @@ function extenStatusChanged(exten, status) {
 
         // update extension informations. This is because when the extension becomes
         // offline/online ip, port and other informations needs to be updated
-        astProxy.doCmd({ command: 'sipDetails', exten: exten }, updateExtSipDetails);
+        if (extensions[exten].chanType() === 'sip') {
+
+            astProxy.doCmd({ command: 'sipDetails', exten: exten }, updateExtSipDetails);
+
+        } else if (extensions[exten].chanType() === 'iax') {
+
+            astProxy.doCmd({ command: 'iaxDetails', exten: exten }, updateExtIaxDetails);
+        }
 
         // request all channels
         logger.info(IDLOG, 'requests the channel list to update the extension ' + exten);
