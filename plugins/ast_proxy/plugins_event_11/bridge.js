@@ -61,8 +61,6 @@ var astProxy;
                         logger.info(IDLOG, 'received event ' + data.event);
                         astProxy.proxyLogic.conversationConnected(data.callerid1, data.callerid2);
 
-                    } else {
-                        logger.warn(IDLOG, 'Bridge event not recognized');
                     }
 
                 } catch (err) {
