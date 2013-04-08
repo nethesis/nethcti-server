@@ -1,4 +1,4 @@
-/**
+/*
 * This is the asterisk proxy logic linked to version 11
 * of the asterisk server.
 *
@@ -8,6 +8,7 @@
 var path         = require('path');
 var Queue        = require('./queue').Queue;
 var Channel      = require('./channel').Channel;
+var Parking      = require('./parking').Parking;
 var iniparser    = require('iniparser');
 var Extension    = require('./extension').Extension;
 var QueueMember  = require('./queueMember').QueueMember;
@@ -81,6 +82,16 @@ var extensions = {};
 * @private
 */
 var queues = {};
+
+/**
+* All parkings. The key is the parkings number and the value
+* is the _Parking_ object.
+*
+* @property parkings
+* @type object
+* @private
+*/
+var parkings = {};
 
 /**
 * It's the validated content of the asterisk structure ini
@@ -326,6 +337,9 @@ function parkStructValidation(resp) {
             }
         }
         logger.info(IDLOG, 'all parkings have been validated');
+
+        // initialize all parkings as 'Parking' objects into the 'parkings' object
+        initializeParkings();
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -436,6 +450,54 @@ function listIaxPeers(resp) {
 }
 
 /**
+* Initialize all parkings as _Parking_ object into the _parkings_ property.
+*
+* @method initializeParkings
+* @private
+*/
+function initializeParkings() {
+    try {
+        var k, p;
+        for (k in struct) {
+
+            if (struct[k].type === INI_STRUCT.TYPE.PARK) { // cycle in all parkings
+                // new parking object
+                p = new Parking(struct[k].extension);
+                p.setName(struct[k].label);
+                // store it
+                parkings[p.getParking()] = p;
+            }
+        }
+
+        // request all parked channels
+        astProxy.doCmd({ command: 'listParkedChannels' }, parkedChannels);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+function parkedChannels(resp) {
+    try {
+
+        if (resp.result === true) {
+            
+            var p;
+            for (p in resp.parkedChannels) {
+                
+                // something set
+
+            }
+
+        } else {
+            logger.warn(IDLOG, 'getting parked channels');
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Initialize all queues as _Queue_ object into the _queues_ property.
 *
 * @method initializeQueues
@@ -443,7 +505,7 @@ function listIaxPeers(resp) {
 */
 function initializeQueues() {
     try {
-        var k, q
+        var k, q;
         for (k in struct) {
 
             if (struct[k].type === INI_STRUCT.TYPE.QUEUE) { // cycle in all queues
