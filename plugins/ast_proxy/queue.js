@@ -78,6 +78,16 @@ exports.Queue = function (queueNum) {
     var members = {};
 
     /**
+    * The waiting callers of the queue. The key is the channel and
+    * the value is a _QueueWaitingCaller_ object.
+    *
+    * @property waitingCallers
+    * @type {object}
+    * @private
+    */
+    var waitingCallers = {};
+
+    /**
     * Returns all the members.
     *
     * @method getAllMembers
@@ -98,6 +108,21 @@ exports.Queue = function (queueNum) {
         // check the parameter
         if (typeof m !== 'object') { throw new Error('wrong parameter'); }
         members[m.getMember()] = m;
+    }
+
+    /**
+    * Adds the queue waiting caller to the private _waitingCaller_ object property.
+    * If the waiting caller already exists, it will be overwritten.
+    *
+    * **It can throw an Exception.**
+    *
+    * @method addWaitingCaller
+    * @param {object} wCaller A _QueueWaitingCaller_ object.
+    */
+    function addWaitingCaller(wCaller) {
+        // check the parameter
+        if (typeof wCaller !== 'object') { throw new Error('wrong parameter'); }
+        waitingCaller[wCaller.getChannel()] = wCaller;
     }
 
     /**
@@ -218,11 +243,15 @@ exports.Queue = function (queueNum) {
     */
     function toJSON() {
 
-        var jsonMembers = {};
-        var m;
+        var k;
+        var jsonMembers  = {};
+        var jsonWCallers = {};
 
         // JSON representation of the members
-        for (m in members) { jsonMembers[m] = members[m].toJSON(); }
+        for (k in members) { jsonMembers[k] = members[k].toJSON(); }
+
+        // JSON representation of waiting callers
+        for (k in waitingCallers) { jsonWCallers[k] = waitingCallers[k].toJSON(); }
 
         return {
             name:                name,
@@ -230,6 +259,7 @@ exports.Queue = function (queueNum) {
             members:             jsonMembers,
             avgHoldTime:         avgHoldTime,
             avgTalkTime:         avgTalkTime,
+            waitingCallers:      jsonWCallers,
             completedCallsCount: completedCallsCount,
             abandonedCallsCount: abandonedCallsCount
         }
@@ -249,6 +279,7 @@ exports.Queue = function (queueNum) {
         setAvgHoldTime:         setAvgHoldTime,
         getAvgTalkTime:         getAvgTalkTime,
         setAvgTalkTime:         setAvgTalkTime,
+        addWaitingCaller:       addWaitingCaller,
         getCompletedCallsCount: getCompletedCallsCount,
         setCompletedCallsCount: setCompletedCallsCount,
         getAbandonedCallsCount: getAbandonedCallsCount,
