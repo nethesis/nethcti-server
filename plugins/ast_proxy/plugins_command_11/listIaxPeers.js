@@ -1,7 +1,7 @@
 /**
 * @submodule plugins_command_11
 */
-var action    = require('../action');
+var action = require('../action');
 
 /**
 * The module identifier used by the logger.
@@ -105,9 +105,9 @@ var IDLOG = '[listIaxPeers]';
                     // data.objectname is extension number, e.g., 214
                     if (data.event === 'PeerEntry' && data.objectname && data.channeltype) {
                         list.push({
-                            ip:   data.ipaddress === '(null)' ? '' : data.ipaddress,
-                            ext:  data.objectname,
-                            port: data.port === '0' ? '' : data.port
+                            ip:    data.ipaddress === '(null)' ? '' : data.ipaddress,
+                            port:  data.port      === '0'      ? '' : data.port,
+                            exten: data.objectname
                         });
 
                     } else if (map[data.actionid] && data.event === 'PeerlistComplete') {
