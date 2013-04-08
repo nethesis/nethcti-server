@@ -14,6 +14,7 @@ var Extension    = require('./extension').Extension;
 var QueueMember  = require('./queueMember').QueueMember;
 var Conversation = require('./conversation').Conversation;
 var EventEmitter = require('events').EventEmitter;
+var QueueWaitingCaller = require('./queueWaitingCaller').QueueWaitingCaller;
 
 /**
 * The module identifier used by the logger.
@@ -526,7 +527,8 @@ function initializeQueues() {
 }
 
 /**
-* Sets the details for queue object. The details include the members.
+* Sets the details for queue object. The details include the members and
+* the waiting callers.
 *
 * @method queueDetails
 * @param {object} resp The queue informations object
@@ -565,6 +567,14 @@ function queueDetails(resp) {
             // add the member to its queue
             queues[q].addMember(member);
         }
+
+        // set all waiting callers
+        var ch, wCaller;
+        for (ch in resp.waitingCallers) {
+            wCaller = new QueueWaitingCaller(resp.waitingCallers[ch]);
+            queues[q].addWaitingCaller(wCaller);
+        }
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }

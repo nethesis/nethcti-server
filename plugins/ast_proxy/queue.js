@@ -96,6 +96,14 @@ exports.Queue = function (queueNum) {
     function getAllMembers() { return members; }
 
     /**
+    * Returns all the waiting callers.
+    *
+    * @method getAllWaitingCallers
+    * @return {object} All the waiting callers.
+    */
+    function getAllWaitingCallers() { return waitingCallers; }
+
+    /**
     * Adds the queue member to the private _members_ object property.
     * If the queue member already exists, it will be overwritten.
     *
@@ -122,7 +130,21 @@ exports.Queue = function (queueNum) {
     function addWaitingCaller(wCaller) {
         // check the parameter
         if (typeof wCaller !== 'object') { throw new Error('wrong parameter'); }
-        waitingCaller[wCaller.getChannel()] = wCaller;
+        waitingCallers[wCaller.getChannel()] = wCaller;
+    }
+
+    /**
+    * Removes the waiting caller from the private _waitingCallers_ object property.
+    *
+    * **It can throw an Exception.**
+    *
+    * @method removeWaitingCaller
+    * @param {string} channel The channel identifier.
+    */
+    function removeWaitingCaller(channel) {
+        // check the parameter
+        if (typeof channel !== 'string') { throw new Error('wrong parameter'); }
+        delete waitingCallers[channel];
     }
 
     /**
@@ -280,6 +302,8 @@ exports.Queue = function (queueNum) {
         getAvgTalkTime:         getAvgTalkTime,
         setAvgTalkTime:         setAvgTalkTime,
         addWaitingCaller:       addWaitingCaller,
+        removeWaitingCaller:    removeWaitingCaller,
+        getAllWaitingCallers:   getAllWaitingCallers,
         getCompletedCallsCount: getCompletedCallsCount,
         setCompletedCallsCount: setCompletedCallsCount,
         getAbandonedCallsCount: getAbandonedCallsCount,
