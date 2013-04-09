@@ -1,4 +1,4 @@
-/*
+/**
 * This is the asterisk proxy logic linked to version 11
 * of the asterisk server.
 *
@@ -32,10 +32,18 @@ var IDLOG = '[proxy_logic_11]';
 /**
 * Fired when something changed in an extension.
 *
-* @event extension
+* @event extenChanged
 * @param {object} msg The extension object
 */
 var EVT_EXTEN_CHANGED = 'extenChanged';
+
+/**
+* Fired when something changed in a parking.
+*
+* @event parkingChanged
+* @param {object} msg The parking object
+*/
+var EVT_PARKING_CHANGED = 'parkingChanged';
 
 /**
 * The logger. It must have at least three methods: _info, warn and error._
@@ -96,9 +104,10 @@ var queues = {};
 var parkings = {};
 
 /**
-* It is used to store parked channels to be used in conjunction
+* It is used to store the parked channels to be used in conjunction
 * with "listChannels" command plugin to get the number and name
-* of the parked channels.
+* of the parked channels. The key is the parking number and the value
+* is an object with the parked channel informations.
 *
 * @property parkedChannels
 * @type object
@@ -524,7 +533,7 @@ function listParkedChannels(resp) {
             parkedChannels = resp.parkedChannels;
 
             // request all channels to get the caller number information for each parked channel
-            astProxy.doCmd({ command: 'listChannels' }, updateParkedCallerForAllParking);
+            astProxy.doCmd({ command: 'listChannels' }, updateParkedCallerForAllParkings);
 
         } else {
             logger.warn(IDLOG, 'getting parked channels');
@@ -535,34 +544,139 @@ function listParkedChannels(resp) {
 }
 
 /**
+* Updates specified parking key of the _parkedChannels_ property with the
+* object received from _listParkedChannels_ command plugin.
+*
+* @method updateParkedChannelOfOneParking
+* @param {string} parking The parking identifier
+* @param {resp} The response object received from _listParkedChannels_ command plugin
+* @private
+*/
+function updateParkedChannelOfOneParking(parking, resp) {
+    try {
+        // check the parameters
+        if (typeof resp !== 'object' || typeof parking !== 'string') {
+            throw new Error('wrong parameters');
+        }
+
+        if (resp.result === true) {
+
+            // check if the response contains a parked channel for the specified parking
+            // It it's not present, the parking is free
+            if (typeof resp.parkedChannels[parking] === 'object') {
+
+                // update the parked channel of the parking
+                parkedChannels[parking] = resp.parkedChannels[parking];
+
+                // request all channels to get the caller number information of
+                // the parked channel of the specified parking
+                logger.info(IDLOG, 'request all channels to update parked caller informations for parking ' + parking);
+                astProxy.doCmd({ command: 'listChannels' }, function (resp) {
+                    // update the parked caller of one parking in "parkings" object list
+                    updateParkedCallerOfOneParking(parking, resp);
+                });
+
+            // there isn't a parked caller for the parking
+            } else {
+                // remove the parked channel from the memory
+                delete parkedChannels[parking];
+                logger.info(IDLOG, 'removed parked channel from parkedChannels for parking ' + parking);
+                // remove the parked caller from the parking object
+                parkings[parking].removeParkedCaller();
+                logger.info(IDLOG, 'removed parked caller from parking ' + parking);
+
+                // emit the event
+                astProxy.emit(EVT_PARKING_CHANGED, parkings[parking]);
+                logger.info(IDLOG, 'emitted event ' + EVT_PARKING_CHANGED + ' for parking ' + parking);
+            }
+
+        } else {
+            logger.warn(IDLOG, 'in update parked caller for parking ' + parking);
+        }
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Update the parked caller of the specified parking.
+*
+* @method updateParkedCallerOfOneParking
+* @param {string} parking The parking identifier
+* @param {object} resp The response received from the _listChannels_ command plugin
+* @private
+*/
+function updateParkedCallerOfOneParking(parking, resp) {
+    try {
+        // check parameters
+        if (typeof parking !== 'string' || typeof resp !== 'object') {
+            throw new Error('wrong parameters');
+        }
+
+        // check if the parking exists, otherwise there is some error
+        if (parkings[parking]) {
+
+            // get the parked channel of the specified parking
+            var ch = parkedChannels[parking].channel;
+
+            if (resp[ch]) { // the channel exists
+
+                // add the caller number information to the response
+                // received from the "listParkedChannels" command plugin
+                parkedChannels[parking].callerNum = resp[ch].callerNum;
+                // add the caller name information for the same reason
+                parkedChannels[parking].callerName = resp[ch].callerName;
+
+                // create and store a new parked call object
+                pCall = new ParkedCaller(parkedChannels[parking]);
+                parkings[parking].addParkedCaller(pCall);
+                logger.info(IDLOG, 'updated parked call ' + pCall.getNumber() + ' to parking ' + parking);
+
+                // emit the event
+                astProxy.emit(EVT_PARKING_CHANGED, parkings[parking]);
+                logger.info(IDLOG, 'emitted event ' + EVT_PARKING_CHANGED + ' for parking ' + parking);
+            }
+
+        } else {
+            logger.warn(IDLOG, 'try to update parked caller of the non existent parking ' + parking);
+        }
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Updates all parking lost with their relative parked calls,
 * if they are present.
 *
-* @method updateParkedCallerForAllParking
+* @method updateParkedCallerForAllParkings
 * @param {object} resp The object received from the "listChannels" command plugin
 * @private
 */
-function updateParkedCallerForAllParking(resp) {
+function updateParkedCallerForAllParkings(resp) {
     try {
         // cycle in all channels received from "listChannel" command plugin.
         // If a channel is present in "parkedChannels", then it is a parked
         // channel and so add it to relative parking
-        var ch, pNum;
-        for (ch in parkedChannels) {
+        var p, ch, pNum;
+        for (p in parkedChannels) {
 
-            if (resp[ch]) { // the channel is parked
+            ch = parkedChannels[p].channel;
 
-                // add the caller number information to answer response
+            if (resp[ch]) { // the channel exists
+
+                // add the caller number information to the response
                 // received from the "listParkedChannels" command plugin
-                parkedChannels[ch].callerNum = resp[ch].callerNum;
+                parkedChannels[p].callerNum = resp[ch].callerNum;
                 // add the caller name information for the same reason
-                parkedChannels[ch].callerName = resp[ch].callerName;
+                parkedChannels[p].callerName = resp[ch].callerName;
 
                 // create and store a new parked call object
-                pCall = new ParkedCaller(parkedChannels[ch]);
-                pNum = parkedChannels[ch].parking;
-                parkings[pNum].addParkedCall(pCall);
-                logger.info(IDLOG, 'added parked call ' + pCall.getNumber() + ' to parking ' + pNum);
+                pCall = new ParkedCaller(parkedChannels[p]);
+                parkings[p].addParkedCaller(pCall);
+                logger.info(IDLOG, 'added parked call ' + pCall.getNumber() + ' to parking ' + p);
             }
         }
     } catch (err) {
@@ -1027,7 +1141,8 @@ function getExtensions() {
 
 /**
 * Updates the extension status and any other information except
-* the channel list.
+* the channel list. To update the channel list it request all channels
+* to analize through "listChannels" command plugin.
 *
 * @method extenStatusChanged
 * @param {string} exten The extension number
@@ -1063,6 +1178,17 @@ function extenStatusChanged(exten, status) {
             astProxy.doCmd({ command: 'listChannels' }, function (resp) {
                 // update the conversations of the extension
                 updateExtenConversations(exten, resp);
+            });
+
+        } else if (parkings[exten]) { // the exten is a parking
+
+            var parking = exten; // to better understand the code
+
+            // request all parked channels
+            logger.info(IDLOG, 'requests all parked channels to update the parking ' + parking);
+            astProxy.doCmd({ command: 'listParkedChannels' }, function (resp) {
+                // update the parked channel of one parking in "parkedChannels"
+                updateParkedChannelOfOneParking(parking, resp);
             });
         }
 
@@ -1522,7 +1648,6 @@ function setRecordStatusConversations(convid, value) {
        logger.error(IDLOG, err.stack);
     }
 }
-
 
 // public interface
 exports.on                 = on;

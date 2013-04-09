@@ -32,29 +32,36 @@ exports.Parking = function (parkingNum) {
     var name = '';
 
     /**
-    * The parked call. Only one call at time can be parked in a parking.
+    * The parked caller. Only one caller at time can be parked in a parking.
     *
-    * @property parkedCall
+    * @property parkedCaller
     * @type {object}
     * @private
     */
-    var parkedCall;
+    var parkedCaller;
 
     /**
-    * Adds a parked call.
+    * Adds a parked caller.
     *
-    * @method addParkedCall
-    * @param {object} pCall The parked call object.
+    * @method addParkedCaller
+    * @param {object} pCall The parked caller object.
     */
-    function addParkedCall(pCall) { parkedCall = pCall; }
+    function addParkedCaller(pCall) { parkedCaller = pCall; }
 
     /**
-    * Returns the parked call.
+    * Returns the parked caller.
     *
-    * @method getParkedCall
-    * @return {object} The parked call.
+    * @method getParkedCaller
+    * @return {object} The parked caller.
     */
-    function getParkedCall() { return parkedCall; }
+    function getParkedCaller() { return parkedCaller; }
+
+    /**
+    * Remove parked caller.
+    *
+    * @method removeParkedCaller
+    */
+    function removeParkedCaller() { parkedCaller = undefined; }
 
     /**
     * Set the parking name.
@@ -96,20 +103,21 @@ exports.Parking = function (parkingNum) {
     */
     function toJSON() {
         return {
-            name:       name,
-            parking:    parking,
-            parkedCall: parkedCall ? parkedCall.toJSON() : {}
+            name:         name,
+            parking:      parking,
+            parkedCaller: parkedCaller ? parkedCaller.toJSON() : {}
         }
     }
 
     // public interface
     return {
-        toJSON:        toJSON,
-        setName:       setName,
-        getName:       getName,
-        toString:      toString,
-        getParking:    getParking,
-        addParkedCall: addParkedCall,
-        getParkedCall: getParkedCall
+        toJSON:             toJSON,
+        setName:            setName,
+        getName:            getName,
+        toString:           toString,
+        getParking:         getParking,
+        addParkedCaller:    addParkedCaller,
+        getParkedCaller:    getParkedCaller,
+        removeParkedCaller: removeParkedCaller
     };
 }

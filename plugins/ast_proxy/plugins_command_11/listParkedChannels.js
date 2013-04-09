@@ -132,7 +132,7 @@ var IDLOG = '[listParkedChannels]';
                                 ch   = rowArr[1]; // the parked channel
                                 park = rowArr[0]; // the parking number
 
-                                // calculate timeout as timestamp from now
+                                // calculate timeout as timestamp from now. It is the countdown timestamp
                                 timeout = rowArr[rowArr.length - 1]; // e.g. timeout = 41s
                                 timeout = timeout.substring(0, timeout.length - 1); // remove 's' of seconds
                                 timeout = parseInt(timeout);
@@ -140,10 +140,10 @@ var IDLOG = '[listParkedChannels]';
                                 d.setSeconds(d.getSeconds() + timeout);
                                 timeout = d.getTime();
 
-                                list[ch] = {};
-                                list[ch].channel = ch;
-                                list[ch].parking = park;
-                                list[ch].timeout = timeout;
+                                list[park] = {};
+                                list[park].channel = ch;
+                                list[park].parking = park;
+                                list[park].timeout = timeout;
                             }
                         }
                         
