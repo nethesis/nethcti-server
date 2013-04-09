@@ -49,6 +49,14 @@ exports.Parking = function (parkingNum) {
     function addParkedCall(pCall) { parkedCall = pCall; }
 
     /**
+    * Returns the parked call.
+    *
+    * @method getParkedCall
+    * @return {object} The parked call.
+    */
+    function getParkedCall() { return parkedCall; }
+
+    /**
     * Set the parking name.
     *
     * @method setName
@@ -101,6 +109,7 @@ exports.Parking = function (parkingNum) {
         getName:       getName,
         toString:      toString,
         getParking:    getParking,
-        addParkedCall: addParkedCall
+        addParkedCall: addParkedCall,
+        getParkedCall: getParkedCall
     };
 }

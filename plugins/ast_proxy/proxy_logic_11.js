@@ -12,8 +12,9 @@ var Parking      = require('./parking').Parking;
 var iniparser    = require('iniparser');
 var Extension    = require('./extension').Extension;
 var QueueMember  = require('./queueMember').QueueMember;
-var Conversation = require('./conversation').Conversation;
 var EventEmitter = require('events').EventEmitter;
+var ParkedCaller = require('./parkedCaller').ParkedCaller;
+var Conversation = require('./conversation').Conversation;
 var QueueWaitingCaller = require('./queueWaitingCaller').QueueWaitingCaller;
 
 /**
@@ -93,6 +94,17 @@ var queues = {};
 * @private
 */
 var parkings = {};
+
+/**
+* It is used to store parked channels to be used in conjunction
+* with "listChannels" command plugin to get the number and name
+* of the parked channels.
+*
+* @property parkedChannels
+* @type object
+* @private
+*/
+var parkedChannels = {};
 
 /**
 * It's the validated content of the asterisk structure ini
@@ -486,27 +498,72 @@ function initializeParkings() {
         }
 
         // request all parked channels
-        astProxy.doCmd({ command: 'listParkedChannels' }, parkedChannels);
+        astProxy.doCmd({ command: 'listParkedChannels' }, listParkedChannels);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
 }
 
-function parkedChannels(resp) {
+/**
+* Store parked channels in memory and launch "listChannel" command plugin
+* to get the number and the name of each parked channels.
+*
+* @method listParkedChannels
+* @param {object} resp The reponse object received from the "listParkedChannels" command plugin
+* @private
+*/
+function listParkedChannels(resp) {
     try {
+        // check the parameter
+        if (typeof resp !== 'object') { throw new Error('wrong parameter'); }
 
-        if (resp.result === true) {
-            
-            var p;
-            for (p in resp.parkedChannels) {
-                
-                // something set
+        if (resp && resp.result === true) {
 
-            }
+            // store parked channels in global variable "parkedChannels"
+            parkedChannels = resp.parkedChannels;
+
+            // request all channels to get the caller number information for each parked channel
+            astProxy.doCmd({ command: 'listChannels' }, updateParkedCallerForAllParking);
 
         } else {
             logger.warn(IDLOG, 'getting parked channels');
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Updates all parking lost with their relative parked calls,
+* if they are present.
+*
+* @method updateParkedCallerForAllParking
+* @param {object} resp The object received from the "listChannels" command plugin
+* @private
+*/
+function updateParkedCallerForAllParking(resp) {
+    try {
+        // cycle in all channels received from "listChannel" command plugin.
+        // If a channel is present in "parkedChannels", then it is a parked
+        // channel and so add it to relative parking
+        var ch, pNum;
+        for (ch in resp) {
+
+            if (parkedChannels[ch]) { // the channel is parked
+
+                // add the caller number information to answer response
+                // received from the "listParkedChannels" command plugin
+                parkedChannels[ch].callerNum = resp[ch].callerNum;
+                // add the caller name information for the same reason
+                parkedChannels[ch].callerName = resp[ch].callerName;
+
+                // create and store a new parked call object
+                pCall = new ParkedCaller(parkedChannels[ch]);
+                pNum = parkedChannels[ch].parking;
+                parkings[pNum].addParkedCall(pCall);
+                logger.info(IDLOG, 'added parked call ' + pCall.getNumber() + ' to parking ' + pNum);
+            }
         }
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -581,6 +638,7 @@ function queueDetails(resp) {
 
             // add the member to its queue
             queues[q].addMember(member);
+            logger.info(IDLOG, 'added member ' + member.getMember() + ' to queue ' + q);
         }
 
         // set all waiting callers
@@ -588,6 +646,7 @@ function queueDetails(resp) {
         for (ch in resp.waitingCallers) {
             wCaller = new QueueWaitingCaller(resp.waitingCallers[ch]);
             queues[q].addWaitingCaller(wCaller);
+            logger.info(IDLOG, 'added waiting caller ' + wCaller.getName() + ' to queue ' + wCaller.getQueue());
         }
 
     } catch (err) {

@@ -140,10 +140,10 @@ var IDLOG = '[listParkedChannels]';
                                 d.setSeconds(d.getSeconds() + timeout);
                                 timeout = d.getTime();
 
-                                list[park] = {};
-                                list[park].channel = ch;
-                                list[park].timeout = timeout;
-
+                                list[ch] = {};
+                                list[ch].channel = ch;
+                                list[ch].parking = park;
+                                list[ch].timeout = timeout;
                             }
                         }
                         
