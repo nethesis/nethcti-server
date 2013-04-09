@@ -72,6 +72,60 @@ exports.ParkedCaller = function (data) {
     var timeout = data.timeout;
 
     /**
+    * The number of the extension that has parked the caller. Can be
+    * empty on the initial startup of the server for those calls that
+    * have already been parked.
+    *
+    * @property parkedByNum
+    * @type {string}
+    * @private
+    */
+    var parkedByNum = '';
+
+    /**
+    * The name of the extension that has parked the caller. Can be
+    * empty on the initial startup of the server for those calls that
+    * have already been parked.
+    *
+    * @property parkedByName
+    * @type {string}
+    * @private
+    */
+    var parkedByName = '';
+
+    /**
+    * Return the number of the extension that has parked the caller.
+    *
+    * @method getParkedByNum
+    * @return {string} The number of the extension that has parked the caller.
+    */
+    function getParkedByNum() { return parkedByNum; }
+
+    /**
+    * Sets the number of the extension that has parked the caller.
+    *
+    * @method setParkedByNum
+    * @param {string} num The number of the extension that has parked the caller.
+    */
+    function setParkedByNum(num) { parkedByNum = num; }
+
+    /**
+    * Return the name of the extension that has parked the caller.
+    *
+    * @method getParkedByName
+    * @return {string} The name of the extension that has parked the caller.
+    */
+    function getParkedByName() { return parkedByName; }
+
+    /**
+    * Sets the name of the extension that has parked the caller.
+    *
+    * @method setParkedByName
+    * @param {string} name The name of the extension that has parked the caller.
+    */
+    function setParkedByName(name) { parkedByName = name; }
+
+    /**
     * Return the timestamp of the timeout.
     *
     * @method getTimeout
@@ -127,11 +181,13 @@ exports.ParkedCaller = function (data) {
     */
     function toJSON() {
         return {
-            num:     num,
-            name:    name,
-            parking: parking,
-            channel: channel,
-            timeout: timeout
+            num:          num,
+            name:         name,
+            parking:      parking,
+            channel:      channel,
+            timeout:      timeout,
+            parkedByNum:  parkedByNum,
+            parkedByName: parkedByName
         }
     }
 
@@ -143,6 +199,10 @@ exports.ParkedCaller = function (data) {
         getNumber:   getNumber,
         getTimeout:  getTimeout,
         getChannel:  getChannel,
-        getParking:  getParking
+        getParking:  getParking,
+        setParkedByNum: setParkedByNum,
+        getParkedByNum: getParkedByNum,
+        setParkedByName: setParkedByName,
+        getParkedByName: getParkedByName
     };
 }
