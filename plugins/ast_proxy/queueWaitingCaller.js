@@ -134,7 +134,7 @@ exports.QueueWaitingCaller = function (data) {
     * @method toString
     * @return {string} The readable description of the waiting caller
     */
-    function toString() { return 'Waiting caller: ' + getNumber() + ' in the queue ' + getQueue() }
+    function toString() { return 'Waiting caller: ' + getNumber() + ' in the queue ' + getQueue(); }
 
     /**
     * Returns the JSON representation of the object.
