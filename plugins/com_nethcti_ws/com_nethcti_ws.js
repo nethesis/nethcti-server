@@ -536,7 +536,8 @@ function loginHdlr(socket, obj) {
                 sendAutheSuccess(socket);
 
                 socket.join('room');
-                server.sockets.in('room').emit('queues', astProxy.getJSONQueues());
+                server.sockets.in('room').emit('queues',     astProxy.getJSONQueues());
+                server.sockets.in('room').emit('parkings',   astProxy.getJSONParkings());
                 server.sockets.in('room').emit('extensions', astProxy.getJSONExtensions());
 
             } else { // authentication failed

@@ -673,6 +673,24 @@ function getJSONQueues() {
 }
 
 /**
+* Returns the JSON representation of all parkings.
+*
+* @method getJSONParkings
+* @return {object} The JSON representation of all parkings.
+*/
+function getJSONParkings() {
+    try {
+        var p;
+        var pliteral = {};
+        for (p in parkings) { pliteral[p] = parkings[p].toJSON(); }
+        return pliteral;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Returns the JSON representation of the all extensions.
 *
 * @method getJSONExtensions
@@ -1511,8 +1529,9 @@ exports.on                 = on;
 exports.start              = start;
 exports.visit              = visit;
 exports.setLogger          = setLogger;
-exports.getJSONQueues      = getJSONQueues;
 exports.getExtensions      = getExtensions;
+exports.getJSONQueues      = getJSONQueues;
+exports.getJSONParkings    = getJSONParkings;
 exports.getJSONExtensions  = getJSONExtensions;
 exports.extenStatusChanged = extenStatusChanged;
 exports.hangupConversation = hangupConversation;

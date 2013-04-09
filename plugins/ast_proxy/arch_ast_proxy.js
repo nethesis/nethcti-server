@@ -88,7 +88,14 @@ module.exports = function (options, imports, register) {
             *
             * @method getJSONQueues
             */
-            getJSONQueues: astProxy.proxyLogic.getJSONQueues
+            getJSONQueues: astProxy.proxyLogic.getJSONQueues,
+
+            /**
+            * It's the _getJSONParkings_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method getJSONParkings
+            */
+            getJSONParkings: astProxy.proxyLogic.getJSONParkings
         }
     });
 

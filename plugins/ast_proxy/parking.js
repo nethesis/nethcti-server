@@ -98,7 +98,7 @@ exports.Parking = function (parkingNum) {
         return {
             name:       name,
             parking:    parking,
-            parkedCall: parkedCall.toJSON()
+            parkedCall: parkedCall ? parkedCall.toJSON() : {}
         }
     }
 
