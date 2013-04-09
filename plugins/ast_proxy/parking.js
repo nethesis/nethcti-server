@@ -32,6 +32,23 @@ exports.Parking = function (parkingNum) {
     var name = '';
 
     /**
+    * The parked call. Only one call at time can be parked in a parking.
+    *
+    * @property parkedCall
+    * @type {object}
+    * @private
+    */
+    var parkedCall;
+
+    /**
+    * Adds a parked call.
+    *
+    * @method addParkedCall
+    * @param {object} pCall The parked call object.
+    */
+    function addParkedCall(pCall) { parkedCall = pCall; }
+
+    /**
     * Set the parking name.
     *
     * @method setName
@@ -71,17 +88,19 @@ exports.Parking = function (parkingNum) {
     */
     function toJSON() {
         return {
-            name:                name,
-            parking:             parking,
+            name:       name,
+            parking:    parking,
+            parkedCall: parkedCall.toJSON()
         }
     }
 
     // public interface
     return {
-        toJSON:     toJSON,
-        setName:    setName,
-        getName:    getName,
-        toString:   toString,
-        getParking: getParking
+        toJSON:        toJSON,
+        setName:       setName,
+        getName:       getName,
+        toString:      toString,
+        getParking:    getParking,
+        addParkedCall: addParkedCall
     };
 }
