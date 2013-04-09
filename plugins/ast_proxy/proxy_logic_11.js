@@ -548,9 +548,9 @@ function updateParkedCallerForAllParking(resp) {
         // If a channel is present in "parkedChannels", then it is a parked
         // channel and so add it to relative parking
         var ch, pNum;
-        for (ch in resp) {
+        for (ch in parkedChannels) {
 
-            if (parkedChannels[ch]) { // the channel is parked
+            if (resp[ch]) { // the channel is parked
 
                 // add the caller number information to answer response
                 // received from the "listParkedChannels" command plugin
