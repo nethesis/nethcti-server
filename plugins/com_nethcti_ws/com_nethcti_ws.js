@@ -652,7 +652,7 @@ function sendAutheSuccess(socket) {
     try {
         socket.emit('authe_ok', { message: 'authorized successfully' });
         socket.get('extension', function (err, name) {
-            logger.warn(IDLOG, 'send authorized successfully to ' + name + ' ' + getWebsocketEndpoint(socket) + ' with id ' + socket.id);
+            logger.info(IDLOG, 'send authorized successfully to ' + name + ' ' + getWebsocketEndpoint(socket) + ' with id ' + socket.id);
         });
     } catch (err) {
         logger.error(IDLOG, err.stack);
