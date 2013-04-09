@@ -162,8 +162,8 @@ function setAstProxyListeners() {
             throw new Error('wrong astProxy object');
         }
 
-        // an extension has changed
-        astProxy.on('extenChanged', extenChanged);
+        astProxy.on('extenChanged',   extenChanged);   // an extension has changed
+        astProxy.on('parkingChanged', parkingChanged); // a parking has changed
 
     } catch (err) {
        logger.error(IDLOG, err.stack);
@@ -183,6 +183,24 @@ function extenChanged(exten) {
     try {
         logger.info(IDLOG, 'received event extenChanged for extension ' + exten.getExten());
         server.sockets.in('room').emit('exten_update', exten.toJSON());
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Handler for the _parkingChanged_ event emitted by _ast\_proxy_
+* component. Something has changed in the parking, so notifies
+* all interested clients.
+*
+* @method parkingChanged
+* @param {object} parking The parking object
+* @private
+*/
+function parkingChanged(parking) {
+    try {
+        logger.info(IDLOG, 'received event parkingChanged for parking ' + parking.getParking());
+        server.sockets.in('room').emit('parking_update', parking.toJSON());
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
