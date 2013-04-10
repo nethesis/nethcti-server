@@ -145,12 +145,12 @@ var IDLOG = '[queueDetails]';
 
                         // add the informations about a waiting caller
                         list[data.actionid].waitingCallers[data.channel] = {
-                            wait:         parseInt(data.wait),
-                            queue:        data.queue,
-                            channel:      data.channel,
-                            position:     data.position,
-                            calleridnum:  data.calleridnum,
-                            calleridname: data.calleridname
+                            wait:       parseInt(data.wait),
+                            queue:      data.queue,
+                            channel:    data.channel,
+                            position:   data.position,
+                            callerNum:  data.calleridnum,
+                            callerName: data.calleridname
                         };
 
                     // all events has been received

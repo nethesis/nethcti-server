@@ -60,12 +60,12 @@ var astProxy;
 
                         logger.info(IDLOG, 'received event ' + data.event);
                         astProxy.proxyLogic.newQueueWaitingCaller({
-                            queue:              data.queue,
-                            channel:            data.channel,
-                            position:           data.position,
-                            callerNum:          data.calleridnum,
-                            callerName:         data.calleridname,
-                            queueChannelsCount: data.count         // the total number of channels in the queue
+                            wait:       0,                // because the channel has joined the queue now
+                            queue:      data.queue,
+                            channel:    data.channel,
+                            position:   data.position,
+                            callerNum:  data.calleridnum,
+                            callerName: data.calleridname
                         });
                     }
                 } catch (err) {

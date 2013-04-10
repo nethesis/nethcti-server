@@ -95,7 +95,14 @@ module.exports = function (options, imports, register) {
             *
             * @method getJSONParkings
             */
-            getJSONParkings: astProxy.proxyLogic.getJSONParkings
+            getJSONParkings: astProxy.proxyLogic.getJSONParkings,
+
+            /**
+            * It's the _newQueueWaitingCaller_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method newQueueWaitingCaller
+            */
+            newQueueWaitingCaller: astProxy.proxyLogic.newQueueWaitingCaller
         }
     });
 

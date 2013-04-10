@@ -163,6 +163,7 @@ function setAstProxyListeners() {
         }
 
         astProxy.on('extenChanged',   extenChanged);   // an extension has changed
+        astProxy.on('queueChanged',   queueChanged);   // a queue has changed
         astProxy.on('parkingChanged', parkingChanged); // a parking has changed
 
     } catch (err) {
@@ -183,6 +184,24 @@ function extenChanged(exten) {
     try {
         logger.info(IDLOG, 'received event extenChanged for extension ' + exten.getExten());
         server.sockets.in('room').emit('exten_update', exten.toJSON());
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Handler for the _queueChanged_ event emitted by _ast\_proxy_
+* component. Something has changed in the queue, so notifies
+* all interested clients.
+*
+* @method queueChanged
+* @param {object} queue The queue object
+* @private
+*/
+function queueChanged(queue) {
+    try {
+        logger.info(IDLOG, 'received event queueChanged for queue ' + queue.getQueue());
+        server.sockets.in('room').emit('queue_update', queue.toJSON());
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }

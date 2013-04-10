@@ -15,12 +15,12 @@
 exports.QueueWaitingCaller = function (data) {
     // check the parameter
     if (!data
-        || typeof data.wait         !== 'number'
-        || typeof data.queue        !== 'string'
-        || typeof data.channel      !== 'string'
-        || typeof data.position     !== 'string'
-        || typeof data.calleridnum  !== 'string'
-        || typeof data.calleridname !== 'string') {
+        || typeof data.wait       !== 'number'
+        || typeof data.queue      !== 'string'
+        || typeof data.channel    !== 'string'
+        || typeof data.position   !== 'string'
+        || typeof data.callerNum  !== 'string'
+        || typeof data.callerName !== 'string') {
 
         throw new Error('wrong parameter');
     }

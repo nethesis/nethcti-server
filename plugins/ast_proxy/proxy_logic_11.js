@@ -46,6 +46,14 @@ var EVT_EXTEN_CHANGED = 'extenChanged';
 var EVT_PARKING_CHANGED = 'parkingChanged';
 
 /**
+* Fired when something changed in a queue.
+*
+* @event queueChanged
+* @param {object} msg The queue object
+*/
+var EVT_QUEUE_CHANGED = 'queueChanged';
+
+/**
 * The logger. It must have at least three methods: _info, warn and error._
 *
 * @property logger
@@ -1080,7 +1088,7 @@ function addConversationToExten(exten, resp, chid) {
 
             // add the created conversation to the extension
             extensions[exten].addConversation(conv);
-            logger.info('the conversation ' + convid + ' has been added to exten ' + exten);
+            logger.info(IDLOG, 'the conversation ' + convid + ' has been added to exten ' + exten);
 
         } else {
             logger.warn(IDLOG, 'try to add new conversation to a non existent extensions ' + exten);
@@ -1198,7 +1206,33 @@ function extenStatusChanged(exten, status) {
 }
 
 /**
-* If the involved numbers are extensions, it updates their converextensions.
+* Adds a new waiting caller to a queue.
+*
+* @method newQueueWaitingCaller
+* @param {object} data The response object received from the event plugin _join_.
+*/
+function newQueueWaitingCaller(data) {
+    try {
+        // check parameter
+        if (typeof data !== 'object') { throw new Error('wrong parameter'); }
+
+        // create new waiting caller and add it to relative queue
+        var wCaller = new QueueWaitingCaller(data);
+        var q = wCaller.getQueue();
+        queues[q].addWaitingCaller(wCaller);
+        logger.info(IDLOG, 'added new queue waiting caller ' + wCaller.getNumber() + ' to queue ' + q);
+
+        // emit the event
+        astProxy.emit(EVT_QUEUE_CHANGED, queues[q]);
+        logger.info(IDLOG, 'emitted event ' + EVT_QUEUE_CHANGED + ' for queue ' + q);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* If the involved numbers are extensions, it updates their conversations.
 *
 * @method conversationConnected
 * @param {string} num1 One of the two connected numbers
@@ -1661,5 +1695,6 @@ exports.getJSONExtensions  = getJSONExtensions;
 exports.extenStatusChanged = extenStatusChanged;
 exports.hangupConversation = hangupConversation;
 exports.recordConversation = recordConversation;
+exports.newQueueWaitingCaller   = newQueueWaitingCaller;
 exports.conversationConnected   = conversationConnected;
 exports.stopRecordConversation  = stopRecordConversation;
