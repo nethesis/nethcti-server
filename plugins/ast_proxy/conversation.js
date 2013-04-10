@@ -109,6 +109,13 @@ exports.Conversation = function (sourceChan, destChan) {
     * Returns the JSON representation of the object. If the conversation isn't
     * connected, one between the source channel and the destination channel can be null.
     *
+    *     {
+    *         id:        "SIP/214-000002f4>SIP/209-000002f5",
+    *         chDest:    Channel.toJSON(),                    // the source channel of the call
+    *         chSource:  Channel.toJSON(),                    // the destination channel of the call
+    *         recording: false                                // it's true if the conversation is recording, false otherwise
+    *     }
+    *
     * @method toJSON
     * @return {object} The JSON representation of the object.
     */

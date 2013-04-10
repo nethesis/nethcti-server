@@ -18,7 +18,7 @@ exports.QueueWaitingCaller = function (data) {
         || typeof data.wait         !== 'number'
         || typeof data.queue        !== 'string'
         || typeof data.channel      !== 'string'
-        || typeof data.position     !== 'number'
+        || typeof data.position     !== 'string'
         || typeof data.calleridnum  !== 'string'
         || typeof data.calleridname !== 'string') {
 
@@ -124,7 +124,7 @@ exports.QueueWaitingCaller = function (data) {
     * Return the position in the queue.
     *
     * @method getPosition
-    * @return {number} The position in the queue.
+    * @return {String} The position in the queue.
     */
     function getPosition() { return position; }
 
@@ -139,16 +139,25 @@ exports.QueueWaitingCaller = function (data) {
     /**
     * Returns the JSON representation of the object.
     *
+    *     {
+    *         num:      "214",
+    *         name:     "Alessandro",
+    *         queue:    "401",
+    *         channel:  "IAX2/214-2273",
+    *         waiting:  1365590637976,   // the timestamp of the starting waiting time
+    *         position: "1"              // the position in the queue
+    *     }
+    *
     * @method toJSON
     * @return {object} The JSON representation of the object.
     */
     function toJSON() {
         return {
-            num: num,
-            name: name,
-            queue: queue,
-            waiting: waiting,
-            channel: channel,
+            num:      num,
+            name:     name,
+            queue:    queue,
+            waiting:  waiting,
+            channel:  channel,
             position: position
         }
     }

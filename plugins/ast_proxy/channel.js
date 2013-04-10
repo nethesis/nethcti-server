@@ -213,6 +213,17 @@ exports.Channel = function (obj) {
     /**
     * Returns the JSON representation of the object.
     *
+    *     {
+    *         type:           "destination",      // the channel type: it can be "destination" or "source"
+    *         channel:        "SIP/214-0000034f"  // the channel identifier
+    *         callerNum:      "214"
+    *         startTime:      1365600403000       // the starting call timestamp
+    *         callerName:     "sip214ale"
+    *         bridgedNum:     "221"               // the number of the connected caller/called
+    *         bridgedName:    "sip221ale"         // the name of the connected caller/called
+    *         bridgedChannel: "SIP/221-0000034e", // the connected channel identifier
+    *     }
+    *
     * @method toJSON
     * @return {object} The JSON representation of the object.
     */

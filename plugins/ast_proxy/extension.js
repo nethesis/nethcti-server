@@ -266,6 +266,16 @@ exports.Extension = function (ext, chType) {
     /**
     * Returns the JSON representation of the object.
     *
+    *     {
+    *         ip:           "192.168.5.163",
+    *         port:         "5062",
+    *         name:         "Alessandro",
+    *         exten:        "214",
+    *         status:       "online",                       // the status can be: "dnd", "busy", "online", "onhold", "offline", "ringing", "busy_ringing"
+    *         sipuseragent: "Twinkle/1.4.2",
+    *         conversations: { Conversation.toJSON(), ... } // the keys is the conversation identifiers
+    *     }
+    *
     * @method toJSON
     * @return {object} The JSON representation of the object.
     */

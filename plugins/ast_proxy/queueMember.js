@@ -69,10 +69,17 @@ exports.QueueMember = function (memberNum) {
     /**
     * Set the timestamp of the last taken call.
     *
+    * **It can throw an Exception**.
+    *
     * @method setLastCallTimestamp
     * @param {number} num The timestamp number.
     */
-    function setLastCallTimestamp(num) { lastCallTimestamp = num; }
+    function setLastCallTimestamp(num) {
+        // check the parameter
+        if (typeof num !== 'number') { throw new Error('wrong parameter'); }
+
+        lastCallTimestamp = num;
+    }
 
     /**
     * Return the number of the taken calls.
@@ -140,6 +147,14 @@ exports.QueueMember = function (memberNum) {
 
     /**
     * Returns the JSON representation of the object.
+    *
+    *     {
+    *         type:              "static",
+    *         name:              "Alessandro",
+    *         member:            "214",
+    *         callsTakenCount:   "0",          // the number of taken calls
+    *         lastCallTimestamp: 1365590191    // the timestamp of the last taken call
+    *     }
     *
     * @method toJSON
     * @return {object} The JSON representation of the object.
