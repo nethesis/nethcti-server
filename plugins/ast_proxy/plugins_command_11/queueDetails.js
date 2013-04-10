@@ -133,27 +133,22 @@ var IDLOG = '[queueDetails]';
                         // add the member information object
                         list[data.actionid].members[member] = {
                             name:              data.name,
-                            type:              data.membership, // it can be 'static', 'dynamic' or 'realtime'
+                            type:              data.membership,        // it can be 'static', 'dynamic' or 'realtime'
                             member:            member,
-                            callsTakenCount:   data.callstaken, // the number of the taken calls
-                            lastCallTimestamp: data.lastcall    // timestamp of the last call received by the member
+                            callsTakenCount:   data.callstaken,        // the number of the taken calls
+                            lastCallTimestamp: parseInt(data.lastcall) // timestamp of the last call received by the member
                         };
 
                     } else if (data.wait            && data.queue
                                && data.position     && data.calleridnum
                                && data.calleridname && data.event === 'QueueEntry') { // the event for each waiting call
 
-                        // calculate initial waiting timestamp
-                        var d = new Date();
-                        d.setSeconds(d.getSeconds() - parseInt(data.wait));
-                        var waitingTime = d.getTime();
-
                         // add the informations about a waiting caller
                         list[data.actionid].waitingCallers[data.channel] = {
-                            wait:         waitingTime,
+                            wait:         parseInt(data.wait),
                             queue:        data.queue,
                             channel:      data.channel,
-                            position:     parseInt(data.position),
+                            position:     data.position,
                             calleridnum:  data.calleridnum,
                             calleridname: data.calleridname
                         };
