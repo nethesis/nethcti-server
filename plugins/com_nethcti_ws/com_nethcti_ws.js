@@ -183,7 +183,7 @@ function setAstProxyListeners() {
 function extenChanged(exten) {
     try {
         logger.info(IDLOG, 'received event extenChanged for extension ' + exten.getExten());
-        server.sockets.in('room').emit('exten_update', exten.toJSON());
+        server.sockets.in('room').emit('extenUpdate', exten.toJSON());
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -201,7 +201,7 @@ function extenChanged(exten) {
 function queueChanged(queue) {
     try {
         logger.info(IDLOG, 'received event queueChanged for queue ' + queue.getQueue());
-        server.sockets.in('room').emit('queue_update', queue.toJSON());
+        server.sockets.in('room').emit('queueUpdate', queue.toJSON());
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -219,7 +219,7 @@ function queueChanged(queue) {
 function parkingChanged(parking) {
     try {
         logger.info(IDLOG, 'received event parkingChanged for parking ' + parking.getParking());
-        server.sockets.in('room').emit('parking_update', parking.toJSON());
+        server.sockets.in('room').emit('parkingUpdate', parking.toJSON());
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
