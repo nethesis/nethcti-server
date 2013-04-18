@@ -850,15 +850,81 @@ function initializeSipExten() {
 
                 // request sip details for current extension
                 astProxy.doCmd({ command: 'sipDetails', exten: exten.getExten() }, extSipDetails);
-
                 // request the extension status
                 astProxy.doCmd({ command: 'extenStatus', exten: exten.getExten() }, extenStatus);
+                // get the dnd status
+                astProxy.doCmd({ command: 'dndGet', exten: exten.getExten() }, setDndStatus);
+                // get the call forward status
+                astProxy.doCmd({ command: 'cfGet', exten: exten.getExten() }, setCfStatus);
             }
         }
         // request all channels
         logger.info(IDLOG, 'requests the channel list to initialize sip extensions');
         astProxy.doCmd({ command: 'listChannels' }, updateConversationsForAllExten);
 
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Set the call forward status of the extension.
+*
+* @method setCfStatus
+* @param {object} resp The response object of the _cfGet_ command plugin.
+* @private
+*/
+function setCfStatus(resp) {
+    try {
+        // check parameter
+        if (typeof resp !== 'object' || typeof resp.exten !== 'string') { throw new Error('wrong parameter'); }
+
+        if (extensions[resp.exten]) { // the extension exists
+
+            if (resp.cf === 'yes') {
+                extensions[resp.exten].setCf(resp.cfExten);
+                logger.info(IDLOG, 'set extension ' + resp.exten + ' cf enable to ' + resp.cfExten);
+
+            } else {
+                extensions[resp.exten].disableCf();
+                logger.info(IDLOG, 'set extension ' + resp.exten + ' cf disable');
+            }
+
+        } else {
+            logger.warn(IDLOG, 'request cf for not existing extension ' + resp.exten);
+        }
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Set the don't disturb status of the extension.
+*
+* @method setDndStatus
+* @param {object} resp The response object of the _dndGet_ command plugin.
+* @private
+*/
+function setDndStatus(resp) {
+    try {
+        // check parameter
+        if (typeof resp !== 'object' || typeof resp.exten !== 'string') { throw new Error('wrong parameter'); }
+
+        if (extensions[resp.exten]) { // the extension exists
+
+            if (resp.dnd === 'yes') {
+                extensions[resp.exten].setDnd(true);
+                logger.info(IDLOG, 'set extension ' + resp.exten + ' dnd true');
+
+            } else {
+                extensions[resp.exten].setDnd(false);
+                logger.info(IDLOG, 'set extension ' + resp.exten + ' dnd false');
+            }
+
+        } else {
+            logger.warn(IDLOG, 'request dnd for not existing extension ' + resp.exten);
+        }
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
