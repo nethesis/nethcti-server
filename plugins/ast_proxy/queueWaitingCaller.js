@@ -5,8 +5,8 @@
 *
 * @class QueueWaitingCaller
 * @param {object} data The caller information object
-*   @param {string} data.calleridnum The caller number
-*   @param {string} data.calleridname The caller name
+*   @param {string} data.callerNum The caller number
+*   @param {string} data.callerName The caller name
 *   @param {string} data.position The caller position in the queue
 *   @param {string} data.wait The timestamp of the elapsed time in wht queue
 * @constructor
@@ -33,7 +33,7 @@ exports.QueueWaitingCaller = function (data) {
     * @required
     * @private
     */
-    var num = data.calleridnum;
+    var num = data.callerNum;
 
     /**
     * The caller name.
@@ -42,7 +42,7 @@ exports.QueueWaitingCaller = function (data) {
     * @type {string}
     * @private
     */
-    var name = data.calleridname;
+    var name = data.callerName;
 
     /**
     * The queue in which the caller waiting.
