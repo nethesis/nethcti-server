@@ -46,6 +46,15 @@ exports.Extension = function (ext, chType) {
     var ip;
 
     /**
+    * The don't disturb status.
+    *
+    * @property dnd
+    * @type {boolean}
+    * @private
+    */
+    var dnd;
+
+    /**
     * The port of the device.
     *
     * @property port
@@ -264,10 +273,27 @@ exports.Extension = function (ext, chType) {
     function removeAllConversations() { conversations = {}; }
 
     /**
+    * Set the don't disturb status.
+    *
+    * @method setDnd
+    * @param {boolean} value The status of the don't disturb. True if it's activated, false otherwise.
+    */
+    function setDnd(value) { dnd = value; }
+
+    /**
+    * Get the don't disturb status.
+    *
+    * @method getDnd
+    * @return {boolean} The don't disturb status. True if it's activated, false otherwise.
+    */
+    function getDnd(value) { return dnd; }
+
+    /**
     * Returns the JSON representation of the object.
     *
     *     {
     *         ip:           "192.168.5.163",
+    *         dnd:          false,                          // it's true if the don't disturb is active
     *         port:         "5062",
     *         name:         "Alessandro",
     *         exten:        "214",
@@ -289,6 +315,7 @@ exports.Extension = function (ext, chType) {
 
         return {
             ip:            ip,
+            dnd:           dnd,
             port:          port,
             name:          name,
             exten:         exten,
@@ -304,6 +331,8 @@ exports.Extension = function (ext, chType) {
         setIp:     setIp,
         getIp:     getIp,
         toJSON:    toJSON,
+        setDnd:    setDnd,
+        getDnd:    getDnd,
         getName:   getName,
         setName:   setName,
         setPort:   setPort,
