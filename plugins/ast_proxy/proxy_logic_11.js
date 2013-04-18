@@ -1206,6 +1206,36 @@ function extenStatusChanged(exten, status) {
 }
 
 /**
+* Remove a waiting caller from a queue.
+*
+* @method removeQueueWaitingCaller
+* @param {object} data The response object received from the event plugin _leave_.
+*/
+function removeQueueWaitingCaller(data) {
+    try {
+        // check parameter
+        if (typeof data !== 'object'
+            || typeof data.queue   !== 'string'
+            || typeof data.channel !== 'string') {
+
+            throw new Error('wrong parameter');
+        }
+
+        var q = data.queue;
+
+        queues[q].removeWaitingCaller(data.channel);
+        logger.info(IDLOG, 'removed queue waiting caller ' + data.channel + ' from queue ' + q);
+
+        // emit the event
+        astProxy.emit(EVT_QUEUE_CHANGED, queues[q]);
+        logger.info(IDLOG, 'emitted event ' + EVT_QUEUE_CHANGED + ' for queue ' + q);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Adds a new waiting caller to a queue.
 *
 * @method newQueueWaitingCaller
@@ -1695,6 +1725,7 @@ exports.getJSONExtensions  = getJSONExtensions;
 exports.extenStatusChanged = extenStatusChanged;
 exports.hangupConversation = hangupConversation;
 exports.recordConversation = recordConversation;
-exports.newQueueWaitingCaller   = newQueueWaitingCaller;
-exports.conversationConnected   = conversationConnected;
-exports.stopRecordConversation  = stopRecordConversation;
+exports.newQueueWaitingCaller    = newQueueWaitingCaller;
+exports.conversationConnected    = conversationConnected;
+exports.stopRecordConversation   = stopRecordConversation;
+exports.removeQueueWaitingCaller = removeQueueWaitingCaller;

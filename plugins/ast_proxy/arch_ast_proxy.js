@@ -102,7 +102,14 @@ module.exports = function (options, imports, register) {
             *
             * @method newQueueWaitingCaller
             */
-            newQueueWaitingCaller: astProxy.proxyLogic.newQueueWaitingCaller
+            newQueueWaitingCaller: astProxy.proxyLogic.newQueueWaitingCaller,
+
+            /**
+            * It's the _removeQueueWaitingCaller_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method removeQueueWaitingCaller
+            */
+            removeQueueWaitingCaller: astProxy.proxyLogic.removeQueueWaitingCaller
         }
     });
 
