@@ -69,7 +69,7 @@ var IDLOG = '[dndGet]';
                     var act = { Action: 'DBGet', Family: 'DND', Key: args.exten };
                     
                     // set the action identifier
-                    act.ActionID = action.getActionId('dndGet');
+                    act.ActionID = action.getActionId('dndGet_' + args.exten);
 
                     // add association ActionID-callback
                     map[act.ActionID] = cb;
@@ -92,17 +92,20 @@ var IDLOG = '[dndGet]';
             */
             data: function (data) {
                 try {
+                    // get the extension number from the action id
+                    var exten = data.actionid.split('_')[1];
+
                     // check callback and info presence and execute it
                     if (map[data.actionid]
                         && data.val
                         && data.event  === 'DBGetResponse'
                         && data.family === 'DND') {
 
-                        map[data.actionid]({ dnd: data.val.toLowerCase() });
+                        map[data.actionid]({ exten: exten, dnd: data.val.toLowerCase() });
                         delete map[data.actionid]; // remove association ActionID-callback
 
                     } else if (map[data.actionid] && data.response === 'Error') {
-                        map[data.actionid]({ dnd: 'no' });
+                        map[data.actionid]({ exten: exten, dnd: 'no' });
                         delete map[data.actionid]; // remove association ActionID-callback
                     }
 

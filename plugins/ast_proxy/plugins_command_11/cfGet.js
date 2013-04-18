@@ -68,7 +68,7 @@ var IDLOG = '[cfGet]';
                     var act = { Action: 'DBGet', Family: 'CF', Key: args.exten };
 
                     // set the action identifier
-                    act.ActionID = action.getActionId('cfGet');
+                    act.ActionID = action.getActionId('cfGet_' + args.exten);
 
                     // add association ActionID-callback
                     map[act.ActionID] = cb;
@@ -91,16 +91,19 @@ var IDLOG = '[cfGet]';
             */
             data: function (data) {
                 try {
+                    // get the extension number from the action id
+                    var exten = data.actionid.split('_')[1];
+
                     // check callback and info presence and execute it
                     if (map[data.actionid] && data.event === 'DBGetResponse'
                         && data.family === 'CF'
                         && data.val) {
 
-                        map[data.actionid]({ cf: 'yes', cfExten: data.val });
+                        map[data.actionid]({ exten: exten, cf: 'yes', cfExten: data.val });
                         delete map[data.actionid]; // remove association ActionID-callback
 
                     } else if (map[data.actionid] && data.response === 'Error') {
-                        map[data.actionid]({ cf: 'no' });
+                        map[data.actionid]({ exten: exten, cf: 'no' });
                         delete map[data.actionid]; // remove association ActionID-callback
                     }
 
