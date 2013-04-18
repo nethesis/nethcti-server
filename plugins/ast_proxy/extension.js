@@ -55,6 +55,15 @@ exports.Extension = function (ext, chType) {
     var dnd;
 
     /**
+    * The call forward status.
+    *
+    * @property cf
+    * @type {string}
+    * @private
+    */
+    var cf;
+
+    /**
     * The port of the device.
     *
     * @property port
@@ -286,13 +295,37 @@ exports.Extension = function (ext, chType) {
     * @method getDnd
     * @return {boolean} The don't disturb status. True if it's activated, false otherwise.
     */
-    function getDnd(value) { return dnd; }
+    function getDnd() { return dnd; }
+
+    /**
+    * Set the call forward number.
+    *
+    * @method setCf
+    * @param {string} value The number to set the call forward.
+    */
+    function setCf(value) { cf = value; }
+
+    /**
+    * Get the call forward status.
+    *
+    * @method getCf
+    * @return {string} The number of the call forward. Return an empty string if it's disable.
+    */
+    function getCf() { return cf; }
+
+    /**
+    * Disable the call forward status.
+    *
+    * @method disableCf
+    */
+    function disableCf() { cf = ''; }
 
     /**
     * Returns the JSON representation of the object.
     *
     *     {
     *         ip:           "192.168.5.163",
+    *         cf:           "221",                          // the call forward status. If it's disabled, it is an empty string
     *         dnd:          false,                          // it's true if the don't disturb is active
     *         port:         "5062",
     *         name:         "Alessandro",
@@ -315,6 +348,7 @@ exports.Extension = function (ext, chType) {
 
         return {
             ip:            ip,
+            cf:            cf,
             dnd:           dnd,
             port:          port,
             name:          name,
@@ -328,6 +362,8 @@ exports.Extension = function (ext, chType) {
 
     // public interface
     return {
+        setCf:     setCf,
+        getCf:     getCf,
         setIp:     setIp,
         getIp:     getIp,
         toJSON:    toJSON,
@@ -341,6 +377,7 @@ exports.Extension = function (ext, chType) {
         getExten:  getExten,
         toString:  toString,
         chanType:  getChanType,
+        disableCf: disableCf,
         setStatus: setStatus,
         getStatus: getStatus,
         addConversation:        addConversation,
