@@ -63,13 +63,26 @@ exports.QueueWaitingCaller = function (data) {
     var channel = data.channel;
 
     /**
-    * The waiting timestamp.
+    * The waiting time in seconds.
     *
     * @property waiting
     * @type {number}
     * @private
     */
     var waiting = data.wait;
+
+    /**
+    * The timestamp of the starting waiting time. It's necessary to update
+    * waiting time in seconds when necessary.
+    *
+    * @property waitingTime
+    * @type {number}
+    * @private
+    */
+    var waitingTime;
+    var d = new Date();
+    d.setSeconds(d.getSeconds() - waiting);
+    waitingTime = d.getTime();
 
     /**
     * The position in the queue.
@@ -121,6 +134,17 @@ exports.QueueWaitingCaller = function (data) {
     function getWaiting() { return waiting; }
 
     /**
+    * Update the waiting time in seconds.
+    *
+    * @method updateWaiting
+    */
+    function updateWaiting() {
+        var d = new Date();
+        var diff = d.getTime() - waitingTime;
+        waiting = Math.floor(diff / 1000);
+    }
+
+    /**
     * Return the position in the queue.
     *
     * @method getPosition
@@ -164,13 +188,14 @@ exports.QueueWaitingCaller = function (data) {
 
     // public interface
     return {
-        toJSON:      toJSON,
-        getName:     getName,
-        getQueue:    getQueue,
-        toString:    toString,
-        getNumber:   getNumber,
-        getChannel:  getChannel,
-        getWaiting:  getWaiting,
-        getPosition: getPosition
+        toJSON:        toJSON,
+        getName:       getName,
+        getQueue:      getQueue,
+        toString:      toString,
+        getNumber:     getNumber,
+        getChannel:    getChannel,
+        getWaiting:    getWaiting,
+        getPosition:   getPosition,
+        updateWaiting: updateWaiting
     };
 }

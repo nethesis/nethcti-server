@@ -148,6 +148,16 @@ exports.Queue = function (queueNum) {
     }
 
     /**
+    * Update the waiting time of all waiting callers of all queues.
+    *
+    * @method updateWaitingTimeOfWaitingCallers
+    */
+    function updateWaitingTimeOfWaitingCallers() {
+        var wc;
+        for (wc in waitingCallers) { waitingCallers[wc].updateWaiting(); }
+    }
+
+    /**
     * Removes the queue member from the private _members_ object property.
     *
     * **It can throw an Exception.**
@@ -275,6 +285,8 @@ exports.Queue = function (queueNum) {
     * @return {object} The JSON representation of the object.
     */
     function toJSON() {
+
+        updateWaitingTimeOfWaitingCallers();
 
         var k;
         var jsonMembers  = {};
