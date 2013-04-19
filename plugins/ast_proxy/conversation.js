@@ -41,6 +41,25 @@ exports.Conversation = function (sourceChan, destChan) {
     var recording = false;
 
     /**
+    * The timestamp of the starting time. This is necessary to
+    * update the duration value.
+    *
+    * @property startime
+    * @type {number}
+    * @private
+    */
+    var startime = chSource.getStartTime();
+
+    /**
+    * The duration of the conversation in seconds.
+    *
+    * @property duration
+    * @type {number}
+    * @private
+    */
+    var duration;
+
+    /**
     * The conversation identifier.
     *
     * @property id
@@ -106,6 +125,29 @@ exports.Conversation = function (sourceChan, destChan) {
     }
 
     /**
+    * Return the duration of the conversation.
+    *
+    * @method getDuration
+    * @return {number} The conversation duration expressed in seconds.
+    */
+    function getDuration() {
+        updateDuration();
+        return duration;
+    }
+
+    /**
+    * Update the duration in seconds.
+    *
+    * @method updateDuration
+    * @private
+    */
+    function updateDuration() {
+        var d = new Date();
+        var diff = d.getTime() - startime;
+        duration = Math.floor(diff / 1000);
+    }
+
+    /**
     * Returns the JSON representation of the object. If the conversation isn't
     * connected, one between the source channel and the destination channel can be null.
     *
@@ -120,10 +162,14 @@ exports.Conversation = function (sourceChan, destChan) {
     * @return {object} The JSON representation of the object.
     */
     function toJSON() {
+
+        updateDuration();
+
         return {
             id:        id,
             chDest:    chDest   ? chDest.toJSON()   : null,
             chSource:  chSource ? chSource.toJSON() : null,
+            duration:  duration,
             recording: recording
         };
     }
@@ -133,6 +179,7 @@ exports.Conversation = function (sourceChan, destChan) {
         getId:                 getId,
         toJSON:                toJSON,
         toString:              toString,
+        getDuration:           getDuration,
         isRecording:           isRecording,
         setRecording:          setRecording,
         getSourceChannel:      getSourceChannel,
