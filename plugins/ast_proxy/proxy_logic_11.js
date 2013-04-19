@@ -1049,8 +1049,15 @@ function updateConversationsForAllExten(resp) {
 
             ext = resp[chid].callerNum;
 
-            // add new conversation to the extension through the current channel object
-            if (extensions[ext]) { addConversationToExten(ext, resp, chid); }
+            // add new conversation to the extension. Queue channel is not considered,
+            // otherwise an extension has also wrong conversation (e.g. 214 has the
+            // conversation SIP/221-00000592>Local/221@from-queue-000009dc;2)
+            if (chid.indexOf('Local')    === -1
+                && chid.indexOf('@from') === -1
+                && extensions[ext]) { // the extension exists
+
+                addConversationToExten(ext, resp, chid);
+            }
         }
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -1084,8 +1091,15 @@ function updateExtenConversations(exten, resp) {
                 // current extension of the channel
                 ext = resp[chid].callerNum;
 
-                // add conversation if the current extension is of interest
-                if (ext === exten) { addConversationToExten(ext, resp, chid); }
+                // add new conversation to the extension. Queue channel is not considered,
+                // otherwise an extension has also wrong conversation (e.g. 214 has the
+                // conversation SIP/221-00000592>Local/221@from-queue-000009dc;2)
+                if (chid.indexOf('Local')    === -1
+                    && chid.indexOf('@from') === -1
+                    && ext === exten) { // the current extension is of interest
+
+                    addConversationToExten(ext, resp, chid);
+                }
             }
 
             // emit the event
