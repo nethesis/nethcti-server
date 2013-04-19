@@ -63,8 +63,7 @@ exports.ParkedCaller = function (data) {
     var parking = data.parking;
 
     /**
-    * The timestamp of the timeout. It is the countdown to exit
-    * from the parking.
+    * The timeout in seconds to exit from the parking.
     *
     * @property timeout
     * @type {number}
@@ -73,12 +72,39 @@ exports.ParkedCaller = function (data) {
     var timeout = data.timeout;
 
     /**
+    * The timestamp of the timeout. It is the countdown to exit
+    * from the parking. It's necessary to update timeout.
+    *
+    * @property timestampTimeout
+    * @type {number}
+    * @private
+    */
+    var timestampTimeout;
+    var d = new Date();
+    d.setSeconds(d.getSeconds() + timeout);
+    timestampTimeout = d.getTime();
+
+    /**
     * Return the timestamp of the timeout.
     *
     * @method getTimeout
     * @return {number} The timestamp of the timeout.
     */
-    function getTimeout() { return timeout; }
+    function getTimeout() {
+        updateTimeout();
+        return timeout;
+    }
+
+    /**
+    * Update the timeout in seconds.
+    *
+    * @method updateTimeout
+    */
+    function updateTimeout() {
+        var d = new Date();
+        var diff = timestampTimeout - d.getTime();
+        timeout = Math.floor(diff / 1000);
+    }
 
     /**
     * Return the number of the parking.
@@ -127,6 +153,9 @@ exports.ParkedCaller = function (data) {
     * @return {object} The JSON representation of the object.
     */
     function toJSON() {
+
+        updateTimeout();
+
         return {
             num:          num,
             name:         name,

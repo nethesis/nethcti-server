@@ -136,9 +136,6 @@ var IDLOG = '[listParkedChannels]';
                                 timeout = rowArr[rowArr.length - 1]; // e.g. timeout = 41s
                                 timeout = timeout.substring(0, timeout.length - 1); // remove 's' of seconds
                                 timeout = parseInt(timeout);
-                                d = new Date();
-                                d.setSeconds(d.getSeconds() + timeout);
-                                timeout = d.getTime();
 
                                 list[park] = {};
                                 list[park].channel = ch;
