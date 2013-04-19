@@ -171,7 +171,7 @@ exports.QueueWaitingCaller = function (data) {
     *         name:     "Alessandro",
     *         queue:    "401",
     *         channel:  "IAX2/214-2273",
-    *         waiting:  1365590637976,   // the timestamp of the starting waiting time
+    *         waiting:  18,              // the waiting time in seconds
     *         position: "1"              // the position in the queue
     *     }
     *
@@ -179,6 +179,9 @@ exports.QueueWaitingCaller = function (data) {
     * @return {object} The JSON representation of the object.
     */
     function toJSON() {
+
+        updateWaiting();
+
         return {
             num:      num,
             name:     name,
