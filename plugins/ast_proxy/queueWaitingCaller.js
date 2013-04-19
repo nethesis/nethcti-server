@@ -131,7 +131,10 @@ exports.QueueWaitingCaller = function (data) {
     * @method getWaiting
     * @return {string} The timestamp of value of the time waited.
     */
-    function getWaiting() { return waiting; }
+    function getWaiting() {
+        updateWaiting();
+        return waiting;
+    }
 
     /**
     * Update the waiting time in seconds.
