@@ -149,6 +149,14 @@ exports.ParkedCaller = function (data) {
     /**
     * Returns the JSON representation of the object.
     *
+    *     {
+    *         num:     "221",              // the number of the parked channel
+    *         name:    "Alessandro",       // the name of the parked channel
+    *         parking: "71",               // the parking identifier
+    *         channel: "SIP/214-00000573", // the asterisk channel
+    *         timeout: "40"                // seconds to exit from parking
+    *     }
+    *
     * @method toJSON
     * @return {object} The JSON representation of the object.
     */
