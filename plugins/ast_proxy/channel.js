@@ -231,7 +231,6 @@ exports.Channel = function (obj) {
         return {
             type:           type,
             channel:        channel,
-            startTime:      startTime,
             callerNum:      callerNum,
             callerName:     callerName,
             bridgedNum:     bridgedNum,
