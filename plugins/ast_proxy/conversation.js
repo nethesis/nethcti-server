@@ -48,7 +48,7 @@ exports.Conversation = function (sourceChan, destChan) {
     * @type {number}
     * @private
     */
-    var startime = chSource.getStartTime();
+    var startime = chSource ? chSource.getStartTime() : chDest.getStartTime();
 
     /**
     * The duration of the conversation in seconds.
