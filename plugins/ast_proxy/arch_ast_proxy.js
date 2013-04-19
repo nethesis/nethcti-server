@@ -77,6 +77,13 @@ module.exports = function (options, imports, register) {
             stopRecordConversation: astProxy.proxyLogic.stopRecordConversation,
 
             /**
+            * It's the _parkConversation_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method parkConversation
+            */
+            parkConversation: astProxy.proxyLogic.parkConversation,
+
+            /**
             * It's the _getJSONExtensions_ method provided by _ast\_proxy.proxyLogic_.
             *
             * @method getJSONExtensions

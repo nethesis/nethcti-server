@@ -183,6 +183,7 @@ function setAstProxyListeners() {
 function extenChanged(exten) {
     try {
         logger.info(IDLOG, 'received event extenChanged for extension ' + exten.getExten());
+        logger.info(IDLOG, 'emit event extenUpdate for extension ' + exten.getExten() + ' to websockets');
         server.sockets.in('room').emit('extenUpdate', exten.toJSON());
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -201,6 +202,7 @@ function extenChanged(exten) {
 function queueChanged(queue) {
     try {
         logger.info(IDLOG, 'received event queueChanged for queue ' + queue.getQueue());
+        logger.info(IDLOG, 'emit event queueUpdate for queue ' + queue.getQueue() + ' to websockets');
         server.sockets.in('room').emit('queueUpdate', queue.toJSON());
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -219,6 +221,7 @@ function queueChanged(queue) {
 function parkingChanged(parking) {
     try {
         logger.info(IDLOG, 'received event parkingChanged for parking ' + parking.getParking());
+        logger.info(IDLOG, 'emit event parkingUpdate for parking ' + parking.getParking() + ' to websockets');
         server.sockets.in('room').emit('parkingUpdate', parking.toJSON());
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -292,17 +295,20 @@ function dispatchMsg(socket, data) {
 
             // check parameters
             if (typeof socket !== 'object') { throw new Error('wrong parameter'); }
-            if (typeof data   !== 'object'
-                || typeof data.command   !== 'string'
-                || typeof data.messageId !== 'string') {
+            if (typeof data   !== 'object' || typeof data.command !== 'string') {
 
                 badRequest(socket);
 
             } else {
+
+                // get the sender identifier
+                var sender = wsid[socket.id];
+
                 // dispatch
-                if (data.command === 'hangup')            { hangup(socket, data);      }
-                if (data.command === 'stop_record_call')  { stopRecordCall(socket, data);  }
-                if (data.command === 'start_record_call') { startRecordCall(socket, data); }
+                if (data.command === 'parkConv')        { parkConv(socket, data, sender); }
+                if (data.command === 'hangupConv')      { hangupConv(socket, data);       }
+                if (data.command === 'stopRecordConv')  { stopRecordConv(socket, data);   }
+                if (data.command === 'startRecordConv') { startRecordConv(socket, data);  }
             }
 
         } else {
@@ -316,24 +322,63 @@ function dispatchMsg(socket, data) {
 }
 
 /**
-* Stop the recording of the conversation of the extension using the asterisk proxy component.
+* Park the conversation of the sender using the asterisk proxy component.
 *
-* @method stopRecordCall
+* @method parkConv
 * @param {object} socket The client websocket
 * @param {object} data The data with the conversation identifier
-*   @param {string} data.messageId The message identifier
 *   @param {string} data.endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
 *   @param {string} data.endpointId The endpoint identifier (e.g. the extension number)
 *   @param {string} data.convid The conversation identifier
+* @param {string} sender The sender of the operation (e.g. the extension number)
 * @private
 */
-function stopRecordCall(socket, data) {
+function parkConv(socket, data, sender) {
     try {
         // check parameter
         if (typeof socket !== 'object') { throw new Error('wrong parameter'); }
         if (typeof data   !== 'object'
             || typeof data.convid       !== 'string'
-            || typeof data.messageId    !== 'string'
+            || typeof data.endpointId   !== 'string'
+            || typeof data.endpointType !== 'string') {
+
+            badRequest(socket);
+
+        } else {
+
+            astProxy.parkConversation(data.endpointType, data.endpointId, data.convid, sender, function (resp) {
+                if (typeof resp === 'object' && resp.result === true) {
+                    sendAck(socket, { command: 'parkConv' });
+                    logger.info(IDLOG, 'sent ack park conversation to ' + getWebsocketEndpoint(socket));
+
+                } else {
+                    sendError(socket, { command: 'parkConv' });
+                    logger.warn(IDLOG, 'sent error park conversation to ' + getWebsocketEndpoint(socket));
+                }
+            });
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Stop the recording of the conversation of the extension using the asterisk proxy component.
+*
+* @method stopRecordConv
+* @param {object} socket The client websocket
+* @param {object} data The data with the conversation identifier
+*   @param {string} data.endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
+*   @param {string} data.endpointId The endpoint identifier (e.g. the extension number)
+*   @param {string} data.convid The conversation identifier
+* @private
+*/
+function stopRecordConv(socket, data) {
+    try {
+        // check parameter
+        if (typeof socket !== 'object') { throw new Error('wrong parameter'); }
+        if (typeof data   !== 'object'
+            || typeof data.convid       !== 'string'
             || typeof data.endpointId   !== 'string'
             || typeof data.endpointType !== 'string') {
 
@@ -343,12 +388,12 @@ function stopRecordCall(socket, data) {
 
             astProxy.stopRecordConversation(data.endpointType, data.endpointId, data.convid, function (resp) {
                 if (typeof resp === 'object' && resp.result === true) {
-                    sendAck(socket, data.messageId);
-                    logger.info(IDLOG, 'sent stop record call ack for message ' + data.messageId + ' to ' + getWebsocketEndpoint(socket));
+                    sendAck(socket, { command: 'stopRecordConv' });
+                    logger.info(IDLOG, 'sent ack stop record conversation to ' + getWebsocketEndpoint(socket));
 
                 } else {
-                    sendError(socket, data.messageId);
-                    logger.warn(IDLOG, 'sent stop record call error for message ' + data.messageId + ' to ' + getWebsocketEndpoint(socket));
+                    sendError(socket, { command: 'stopRecordConv' });
+                    logger.warn(IDLOG, 'sent error stop record conversation to ' + getWebsocketEndpoint(socket));
                 }
             });
         }
@@ -360,22 +405,20 @@ function stopRecordCall(socket, data) {
 /**
 * Start the recording of the conversation of the extension using the asterisk proxy component.
 *
-* @method startRecordCall
+* @method startRecordConv
 * @param {object} socket The client websocket
 * @param {object} data The data with the conversation identifier
-*   @param {string} data.messageId The message identifier
 *   @param {string} data.endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
 *   @param {string} data.endpointId The endpoint identifier (e.g. the extension number)
 *   @param {string} data.convid The conversation identifier
 * @private
 */
-function startRecordCall(socket, data) {
+function startRecordConv(socket, data) {
     try {
         // check parameter
         if (typeof socket !== 'object') { throw new Error('wrong parameter'); }
         if (typeof data   !== 'object'
             || typeof data.convid       !== 'string'
-            || typeof data.messageId    !== 'string'
             || typeof data.endpointId   !== 'string'
             || typeof data.endpointType !== 'string') {
 
@@ -385,12 +428,12 @@ function startRecordCall(socket, data) {
 
             astProxy.recordConversation(data.endpointType, data.endpointId, data.convid, function (resp) {
                 if (typeof resp === 'object' && resp.result === true) {
-                    sendAck(socket, data.messageId);
-                    logger.info(IDLOG, 'sent record call ack for message ' + data.messageId + ' to ' + getWebsocketEndpoint(socket));
+                    sendAck(socket, { command: 'startRecordConv' });
+                    logger.info(IDLOG, 'sent ack record conversation to ' + getWebsocketEndpoint(socket));
 
                 } else {
-                    sendError(socket, data.messageId);
-                    logger.warn(IDLOG, 'sent record call error for message ' + data.messageId + ' to ' + getWebsocketEndpoint(socket));
+                    sendError(socket, { command: 'startRecordConv' });
+                    logger.warn(IDLOG, 'sent error record conversation to ' + getWebsocketEndpoint(socket));
                 }
             });
         }
@@ -402,22 +445,20 @@ function startRecordCall(socket, data) {
 /**
 * Hangup the conversation of the extension using the asterisk proxy component.
 *
-* @method hangup
+* @method hangupConv
 * @param {object} socket The client websocket
 * @param {object} data The data with the conversation identifier
-*   @param {string} data.messageId The message identifier
 *   @param {string} data.endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
 *   @param {string} data.endpointId The endpoint identifier (e.g. the extension number)
 *   @param {string} data.convid The conversation identifier
 * @private
 */
-function hangup(socket, data) {
+function hangupConv(socket, data) {
     try {
         // check parameter
         if (typeof socket !== 'object') { throw new Error('wrong parameter'); }
         if (typeof data   !== 'object'
             || typeof data.convid       !== 'string'
-            || typeof data.messageId    !== 'string'
             || typeof data.endpointId   !== 'string'
             || typeof data.endpointType !== 'string') {
 
@@ -427,12 +468,12 @@ function hangup(socket, data) {
 
             astProxy.hangupConversation(data.endpointType, data.endpointId, data.convid, function (resp) {
                 if (typeof resp === 'object' && resp.result === true) {
-                    sendAck(socket, data.messageId);
-                    logger.info(IDLOG, 'sent hangup ack for message ' + data.messageId + ' to ' + getWebsocketEndpoint(socket));
+                    sendAck(socket, { command: 'hangupConv' });
+                    logger.info(IDLOG, 'sent ack hangup conversation to ' + getWebsocketEndpoint(socket));
 
                 } else {
-                    sendError(socket, data.messageId);
-                    logger.warn(IDLOG, 'sent hangup error for message ' + data.messageId + ' to ' + getWebsocketEndpoint(socket));
+                    sendError(socket, { command: 'hangupConv' });
+                    logger.warn(IDLOG, 'sent error hangup conversation to ' + getWebsocketEndpoint(socket));
                 }
             });
         }
@@ -442,15 +483,21 @@ function hangup(socket, data) {
 }
 
 /**
-* Send the error result to the client for the specified message.
+* Send the error result to the client.
+*
+* **It can throw an Exception.**
 *
 * @method sendError
 * @param {object} socket The client websocket
-* @param {string} messageId The message identifier
+* @param {string} [obj] The object to send
 */
-function sendError(socket, messageId) {
+function sendError(socket, obj) {
     try {
-        socket.emit('error', { messageId: messageId });
+        // check parameter
+        if (obj === undefined) { obj = {}; }
+        if (typeof obj !== 'object') { throw new Error('wrong parameter'); }
+
+        socket.emit('error', obj);
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -459,13 +506,19 @@ function sendError(socket, messageId) {
 /**
 * Send the ack result to the client for the specified message.
 *
+* **It can throw an Exception.**
+*
 * @method sendAck
 * @param {object} socket The client websocket
-* @param {string} messageId The message identifier
+* @param {string} [obj] The object to send
 */
-function sendAck(socket, messageId) {
+function sendAck(socket, obj) {
     try {
-        socket.emit('ack', { messageId: messageId });
+        // check parameter
+        if (obj === undefined) { obj = {}; }
+        if (typeof obj !== 'object') { throw new Error('wrong parameter'); }
+
+        socket.emit('ack', obj);
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -573,8 +626,13 @@ function loginHdlr(socket, obj) {
                 sendAutheSuccess(socket);
 
                 socket.join('room');
-                server.sockets.in('room').emit('queues',     astProxy.getJSONQueues());
-                server.sockets.in('room').emit('parkings',   astProxy.getJSONParkings());
+                logger.info(IDLOG, 'emit event queues to websockets');
+                server.sockets.in('room').emit('queues', astProxy.getJSONQueues());
+
+                logger.info(IDLOG, 'emit event parkings to websockets');
+                server.sockets.in('room').emit('parkings', astProxy.getJSONParkings());
+
+                logger.info(IDLOG, 'emit event extensions to websockets');
                 server.sockets.in('room').emit('extensions', astProxy.getJSONExtensions());
 
             } else { // authentication failed

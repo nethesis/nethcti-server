@@ -1486,7 +1486,7 @@ function hangupConversation(endpointType, endpointId, convid, cb) {
                 logger.info(IDLOG, 'execute hangup of the channel ' + ch + ' of exten ' + endpointId);
                 astProxy.doCmd({ command: 'hangup', channel: ch }, function (resp) {
                     cb(resp);
-                    hangupCb(resp);
+                    hangupConvCb(resp);
                 });
 
             } else {
@@ -1506,19 +1506,100 @@ function hangupConversation(endpointType, endpointId, convid, cb) {
 }
 
 /**
-* This is the callback of the hangup command plugin.
+* This is the callback of the _parkChannel_ command plugin.
 *
-* @method hangupCb
+* @method parkConvCb
 * @param {object} resp The response object of the operation
 * @private
 */
-function hangupCb(resp) {
+function parkConvCb(resp) {
+    try {
+        if (typeof resp === 'object' && resp.result === true) {
+            logger.info(IDLOG, 'park channel succesfully');
+
+        } else {
+            logger.warn(IDLOG, 'park channel failed' + (resp.cause ? (': ' + resp.cause) : '') );
+        }
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* This is the callback of the hangup command plugin.
+*
+* @method hangupConvCb
+* @param {object} resp The response object of the operation
+* @private
+*/
+function hangupConvCb(resp) {
     try {
         if (typeof resp === 'object' && resp.result === true) {
             logger.info(IDLOG, 'hangup channel succesfully');
 
         } else {
             logger.warn(IDLOG, 'hangup channel failed' + (resp.cause ? (': ' + resp.cause) : '') );
+        }
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Park the conversation.
+*
+* @method parkConversation
+* @param {string} endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
+* @param {string} endpointId The endpoint identifier (e.g. the extension number)
+* @param {string} convid The conversation identifier
+* @param {string} sender The identity sender of the park operation (e.g. the extension number)
+* @param {function} cb The callback function
+*/
+function parkConversation(endpointType, endpointId, convid, sender, cb) {
+    try {
+        // check parameters
+        if (typeof convid !== 'string'
+            || typeof sender       !== 'string'
+            || typeof endpointId   !== 'string'
+            || typeof endpointType !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // check the endpoint existence
+        if (endpointType === 'extension' && extensions[endpointId]) {
+
+            var convs      = extensions[endpointId].getAllConversations();
+            var conv       = convs[convid];
+            var chSource   = conv.getSourceChannel();
+            var callerNum  = chSource.getCallerNum();
+            var bridgedNum = chSource.getBridgedNum();
+
+            // check if the sender of the request is an intermediary of the conversation.
+            // This is because only caller or called can park the conversation
+            if (callerNum !== sender && bridgedNum !== sender) {
+                logger.warn(IDLOG, 'sender extension ' + sender + ' not allowed to park another conversation ' + convid);
+                cb();
+                return;
+            }
+
+            var chToPark = callerNum === sender ? chSource.getBridgedChannel() : chSource.getChannel();
+            // channel to return once elapsed the parking timeout
+            var chToReturn = callerNum === sender ? chSource.getChannel() : chSource.getBridgedChannel();
+
+            if (chToPark !== undefined && chToReturn !== undefined) {
+
+                // park the channel
+                logger.info(IDLOG, 'execute the park of the channel ' + chToPark + ' of exten ' + endpointId);
+                astProxy.doCmd({ command: 'parkChannel', chToPark: chToPark, chToReturn: chToReturn }, function (resp) {
+                    cb(resp);
+                    parkConvCb(resp, convid);
+                });
+
+            } else {
+                logger.error(IDLOG, 'getting the channel to park ' + chToPark);
+                cb();
+            }
         }
     } catch (err) {
        logger.error(IDLOG, err.stack);
@@ -1787,6 +1868,7 @@ exports.setLogger          = setLogger;
 exports.getExtensions      = getExtensions;
 exports.getJSONQueues      = getJSONQueues;
 exports.getJSONParkings    = getJSONParkings;
+exports.parkConversation   = parkConversation;
 exports.getJSONExtensions  = getJSONExtensions;
 exports.extenStatusChanged = extenStatusChanged;
 exports.hangupConversation = hangupConversation;
