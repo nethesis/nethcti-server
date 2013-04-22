@@ -348,14 +348,7 @@ function parkConv(socket, data, sender) {
         } else {
 
             astProxy.parkConversation(data.endpointType, data.endpointId, data.convid, sender, function (resp) {
-                if (typeof resp === 'object' && resp.result === true) {
-                    sendAck(socket, { command: 'parkConv' });
-                    logger.info(IDLOG, 'sent ack park conversation to ' + getWebsocketEndpoint(socket));
-
-                } else {
-                    sendError(socket, { command: 'parkConv' });
-                    logger.warn(IDLOG, 'sent error park conversation to ' + getWebsocketEndpoint(socket));
-                }
+                responseToClient(socket, 'parkConv', resp);
             });
         }
     } catch (err) {
@@ -388,14 +381,7 @@ function stopRecordConv(socket, data) {
         } else {
 
             astProxy.stopRecordConversation(data.endpointType, data.endpointId, data.convid, function (resp) {
-                if (typeof resp === 'object' && resp.result === true) {
-                    sendAck(socket, { command: 'stopRecordConv' });
-                    logger.info(IDLOG, 'sent ack stop record conversation to ' + getWebsocketEndpoint(socket));
-
-                } else {
-                    sendError(socket, { command: 'stopRecordConv' });
-                    logger.warn(IDLOG, 'sent error stop record conversation to ' + getWebsocketEndpoint(socket));
-                }
+                responseToClient(socket, 'stopRecordConv', resp);
             });
         }
     } catch (err) {
@@ -428,14 +414,7 @@ function startRecordConv(socket, data) {
         } else {
 
             astProxy.recordConversation(data.endpointType, data.endpointId, data.convid, function (resp) {
-                if (typeof resp === 'object' && resp.result === true) {
-                    sendAck(socket, { command: 'startRecordConv' });
-                    logger.info(IDLOG, 'sent ack record conversation to ' + getWebsocketEndpoint(socket));
-
-                } else {
-                    sendError(socket, { command: 'startRecordConv' });
-                    logger.warn(IDLOG, 'sent error record conversation to ' + getWebsocketEndpoint(socket));
-                }
+                responseToClient(socket, 'startRecordConv', resp);
             });
         }
     } catch (err) {
@@ -526,14 +505,7 @@ function hangupConv(socket, data) {
         } else {
 
             astProxy.hangupConversation(data.endpointType, data.endpointId, data.convid, function (resp) {
-                if (typeof resp === 'object' && resp.result === true) {
-                    sendAck(socket, { command: 'hangupConv' });
-                    logger.info(IDLOG, 'sent ack hangup conversation to ' + getWebsocketEndpoint(socket));
-
-                } else {
-                    sendError(socket, { command: 'hangupConv' });
-                    logger.warn(IDLOG, 'sent error hangup conversation to ' + getWebsocketEndpoint(socket));
-                }
+                responseToClient(socket, 'hangupConv', resp);
             });
         }
     } catch (err) {
