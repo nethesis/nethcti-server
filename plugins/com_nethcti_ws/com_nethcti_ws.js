@@ -307,6 +307,7 @@ function dispatchMsg(socket, data) {
                 // dispatch
                 if (data.command === 'call')            { call(socket, data);                 }
                 if (data.command === 'parkConv')        { parkConv(socket, data, sender);     }
+                if (data.command === 'pickupConv')      { pickupConv(socket, data, sender);   }
                 if (data.command === 'hangupConv')      { hangupConv(socket, data);           }
                 if (data.command === 'redirectConv')    { redirectConv(socket, data, sender); }
                 if (data.command === 'stopRecordConv')  { stopRecordConv(socket, data);       }
@@ -324,6 +325,41 @@ function dispatchMsg(socket, data) {
 }
 
 /**
+* Pickup a conversation.
+*
+* @method pickupConv
+* @param {object} socket The client websocket
+* @param {object} data The data with the conversation identifier
+*   @param {string} data.endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
+*   @param {string} data.endpointId The endpoint identifier (e.g. the extension number)
+*   @param {string} data.convid The conversation identifier
+* @param {string} sender The sender of the operation (e.g. the extension number)
+* @private
+*/
+function pickupConv(socket, data, sender) {
+    try {
+        // check parameter
+        if (typeof socket !== 'object') { throw new Error('wrong parameter'); }
+        if (typeof data   !== 'object'
+            || typeof sender            !== 'string'
+            || typeof data.convid       !== 'string'
+            || typeof data.endpointId   !== 'string'
+            || typeof data.endpointType !== 'string') {
+
+            badRequest(socket);
+
+        } else {
+
+            astProxy.pickupConversation(data.endpointType, data.endpointId, data.convid, sender, function (resp) {
+                responseToClient(socket, 'pickupConv', resp);
+            });
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Make a new call.
 *
 * @method call
@@ -332,7 +368,6 @@ function dispatchMsg(socket, data) {
 *   @param {string} data.endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
 *   @param {string} data.endpointId The endpoint identifier (e.g. the extension number)
 *   @param {string} data.number The destination number to be called
-* @param {string} sender The sender of the operation (e.g. the extension number)
 * @private
 */
 function call(socket, data) {

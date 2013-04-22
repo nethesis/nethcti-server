@@ -1507,6 +1507,54 @@ function call(endpointType, endpointId, to, cb) {
 }
 
 /**
+* Pickup a conversation.
+*
+* @method pickupConversation
+* @param {string} endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
+* @param {string} endpointId The endpoint identifier (e.g. the extension number)
+* @param {string} convid The conversation identifier
+* @param {string} sender The sender of the operation
+* @param {function} cb The callback function
+*/
+function pickupConversation(endpointType, endpointId, convid, sender, cb) {
+    try {
+        // check parameters
+        if (typeof convid !== 'string'
+            || typeof cb           !== 'function'
+            || typeof sender       !== 'string'
+            || typeof endpointId   !== 'string'
+            || typeof endpointType !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // check the endpoint existence
+        if (endpointType === 'extension' && extensions[endpointId]) {
+
+            var convs = extensions[endpointId].getAllConversations();
+            var conv  = convs[convid];
+            var ch    = conv.getDestinationChannel().getChannel();
+
+            if (ch !== undefined) {
+
+                // the pickup operation is made by redirect operation
+                logger.info(IDLOG, 'execute the pickup of the channel ' + ch + ' of exten ' + endpointId);
+                astProxy.doCmd({ command: 'redirectChannel', chToRedirect: ch, to: sender }, function (resp) {
+                    cb(resp);
+                    redirectConvCb(resp, convid);
+                });
+
+            } else {
+                logger.error(IDLOG, 'getting the channel to pickup ' + ch);
+                cb();
+            }
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Hangup the conversation of the endpoint.
 *
 * @method hangupConversation
@@ -2030,6 +2078,7 @@ exports.getJSONExtensions  = getJSONExtensions;
 exports.extenStatusChanged = extenStatusChanged;
 exports.hangupConversation = hangupConversation;
 exports.recordConversation = recordConversation;
+exports.pickupConversation = pickupConversation;
 exports.redirectConversation     = redirectConversation;
 exports.newQueueWaitingCaller    = newQueueWaitingCaller;
 exports.conversationConnected    = conversationConnected;
