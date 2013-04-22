@@ -91,6 +91,13 @@ module.exports = function (options, imports, register) {
             redirectConversation: astProxy.proxyLogic.redirectConversation,
 
             /**
+            * It's the _call_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method call
+            */
+            call: astProxy.proxyLogic.call,
+
+            /**
             * It's the _getJSONExtensions_ method provided by _ast\_proxy.proxyLogic_.
             *
             * @method getJSONExtensions

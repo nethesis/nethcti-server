@@ -1471,6 +1471,42 @@ function getExtenIdChannelConversation(exten, convid) {
 }
 
 /**
+* Make a new call.
+*
+* @method call
+* @param {string} endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
+* @param {string} endpointId The endpoint identifier (e.g. the extension number)
+* @param {string} to The destination number
+* @param {function} cb The callback function
+*/
+function call(endpointType, endpointId, to, cb) {
+    try {
+        // check parameters
+        if (typeof cb !== 'function'
+            || typeof to           !== 'string'
+            || typeof endpointId   !== 'string'
+            || typeof endpointType !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // check the endpoint existence
+        if (endpointType === 'extension' && extensions[endpointId]) {
+
+            var chType = extensions[endpointId].chanType();
+
+            logger.info(IDLOG, 'execute call from ' + endpointId + ' to ' + to);
+            astProxy.doCmd({ command: 'call', chanType: chType, exten: endpointId, to: to }, function (resp) {
+                cb(resp);
+                callCb(resp);
+            });
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Hangup the conversation of the endpoint.
 *
 * @method hangupConversation
@@ -1554,6 +1590,26 @@ function parkConvCb(resp) {
 
         } else {
             logger.warn(IDLOG, 'park channel failed' + (resp.cause ? (': ' + resp.cause) : '') );
+        }
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* This is the callback of the call command plugin.
+*
+* @method callCb
+* @param {object} resp The response object of the operation
+* @private
+*/
+function callCb(resp) {
+    try {
+        if (typeof resp === 'object' && resp.result === true) {
+            logger.info(IDLOG, 'call succesfully');
+
+        } else {
+            logger.warn(IDLOG, 'call failed' + (resp.cause ? (': ' + resp.cause) : '') );
         }
     } catch (err) {
        logger.error(IDLOG, err.stack);
@@ -1962,6 +2018,7 @@ function setRecordStatusConversations(convid, value) {
 
 // public interface
 exports.on                 = on;
+exports.call               = call;
 exports.start              = start;
 exports.visit              = visit;
 exports.setLogger          = setLogger;

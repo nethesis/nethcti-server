@@ -43,6 +43,7 @@ var PRE_CALLERID = 'CTI->';
 * @private
 */
 var FAIL_REASON = {
+    0:  'FAILURE',
     1:  'AST_CONTROL_HANGUP',          // Other end has hungup
     2:  'AST_CONTROL_RING',            // Local ring
     3:  'AST_CONTROL_RINGING',         // Remote end is ringing
@@ -105,7 +106,7 @@ var FAIL_REASON = {
         *
         * Use it with _ast\_proxy_ module as follow:
         *
-        *     ast_proxy.doCmd({ command: 'call', chanType: 'SIP', exten: '214', to: '12345' }, function (res) {
+        *     ast_proxy.doCmd({ command: 'call', chanType: 'sip', exten: '214', to: '12345' }, function (res) {
         *         // some code
         *     });
         *
@@ -130,15 +131,15 @@ var FAIL_REASON = {
                 try {
                     // action for asterisk
                     var act = {
-                        Action: 'Originate',
-                        Channel: args.chanType + '/' + args.exten,
-                        Exten: args.to,
-                        Context: 'from-internal',
+                        Action:   'Originate',
+                        Channel:  args.chanType + '/' + args.exten,                // extension to be used
+                        Context:  'from-internal',
                         Priority: 1,
-                        Timeout: CALL_TIMEOUT,
                         CallerID: PRE_CALLERID + args.to + '<' + args.exten + '>',
-                        Account: args.to,
-                        Async: true
+                        Timeout:  CALL_TIMEOUT,
+                        Account:  args.to,
+                        Exten:    args.to,                                         // the number to be called
+                        Async:    true
                     };
                     
                     // set the action identifier
