@@ -159,7 +159,7 @@ var recordingConv = {};
 */
 var INI_STRUCT = {
     TYPE: {
-        PARK:  'park',
+        PARK:  'parking',
         EXTEN: 'extension',
         QUEUE: 'queue',
         TRUNK: 'trunk',
