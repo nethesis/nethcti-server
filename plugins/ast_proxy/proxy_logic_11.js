@@ -1627,8 +1627,7 @@ function redirectConversation(endpointType, endpointId, convid, to, sender, cb) 
 
                 // redirect the channel
                 logger.info(IDLOG, 'execute the redirect of the channel ' + chToRedirect + ' of exten ' + endpointId);
-                //astProxy.doCmd({ command: 'redirectChannel', chToRedirect: chToRedirect, to: to }, function (resp) {
-                astProxy.doCmd({ command: 'redirectChannel', chToRedirect: 'SIP/2111-00000', to: to }, function (resp) {
+                astProxy.doCmd({ command: 'redirectChannel', chToRedirect: chToRedirect, to: to }, function (resp) {
                     cb(resp);
                     redirectConvCb(resp, convid);
                 });
