@@ -84,6 +84,13 @@ module.exports = function (options, imports, register) {
             parkConversation: astProxy.proxyLogic.parkConversation,
 
             /**
+            * It's the _redirectConversation_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method redirectConversation
+            */
+            redirectConversation: astProxy.proxyLogic.redirectConversation,
+
+            /**
             * It's the _getJSONExtensions_ method provided by _ast\_proxy.proxyLogic_.
             *
             * @method getJSONExtensions

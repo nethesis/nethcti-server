@@ -305,10 +305,11 @@ function dispatchMsg(socket, data) {
                 var sender = wsid[socket.id];
 
                 // dispatch
-                if (data.command === 'parkConv')        { parkConv(socket, data, sender); }
-                if (data.command === 'hangupConv')      { hangupConv(socket, data);       }
-                if (data.command === 'stopRecordConv')  { stopRecordConv(socket, data);   }
-                if (data.command === 'startRecordConv') { startRecordConv(socket, data);  }
+                if (data.command === 'parkConv')        { parkConv(socket, data, sender);     }
+                if (data.command === 'hangupConv')      { hangupConv(socket, data);           }
+                if (data.command === 'redirectConv')    { redirectConv(socket, data, sender); }
+                if (data.command === 'stopRecordConv')  { stopRecordConv(socket, data);       }
+                if (data.command === 'startRecordConv') { startRecordConv(socket, data);      }
             }
 
         } else {
@@ -436,6 +437,64 @@ function startRecordConv(socket, data) {
                     logger.warn(IDLOG, 'sent error record conversation to ' + getWebsocketEndpoint(socket));
                 }
             });
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Redirect the conversation of the extension using the asterisk proxy component.
+*
+* @method redirectConv
+* @param {object} socket The client websocket
+* @param {object} data The data with the conversation identifier
+*   @param {string} data.endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
+*   @param {string} data.endpointId The endpoint identifier (e.g. the extension number)
+*   @param {string} data.convid The conversation identifier
+*   @param {string} data.to The destination number to redirect the conversation
+* @private
+*/
+function redirectConv(socket, data, sender) {
+    try {
+        // check parameter
+        if (typeof socket !== 'object') { throw new Error('wrong parameter'); }
+        if (typeof data   !== 'object'
+            || typeof data.to           !== 'string'
+            || typeof data.convid       !== 'string'
+            || typeof data.endpointId   !== 'string'
+            || typeof data.endpointType !== 'string') {
+
+            badRequest(socket);
+
+        } else {
+
+            astProxy.redirectConversation(data.endpointType, data.endpointId, data.convid, data.to, sender, function (resp) {
+                responseToClient(socket, 'redirectConv', resp);
+            });
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Send a response to the client.
+*
+* @method responseToClient
+* @param {object} socket The client websocket
+* @param {string} command The name of the command
+* @param {object} resp The response received from the asterisk proxy operation execution
+*/
+function responseToClient(socket, command, resp) {
+    try {
+        if (typeof resp === 'object' && resp.result === true) {
+            sendAck(socket, { command: command });
+            logger.info(IDLOG, 'sent ack ' + command + ' to ' + getWebsocketEndpoint(socket));
+
+        } else {
+            sendError(socket, { command: command });
+            logger.warn(IDLOG, 'sent error ' + command + ' to ' + getWebsocketEndpoint(socket));
         }
     } catch (err) {
         logger.error(IDLOG, err.stack);

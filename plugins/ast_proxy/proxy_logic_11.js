@@ -1483,6 +1483,7 @@ function hangupConversation(endpointType, endpointId, convid, cb) {
     try {
         // check parameters
         if (typeof convid !== 'string'
+            || typeof cb           !== 'function'
             || typeof endpointId   !== 'string'
             || typeof endpointType !== 'string') {
 
@@ -1516,6 +1517,26 @@ function hangupConversation(endpointType, endpointId, convid, cb) {
     } catch (err) {
         cb();
         logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* This is the callback of the _redirectChannel_ command plugin.
+*
+* @method redirectConvCb
+* @param {object} resp The response object of the operation
+* @private
+*/
+function redirectConvCb(resp) {
+    try {
+        if (typeof resp === 'object' && resp.result === true) {
+            logger.info(IDLOG, 'redirect channel succesfully');
+
+        } else {
+            logger.warn(IDLOG, 'redirect channel failed' + (resp.cause ? (': ' + resp.cause) : '') );
+        }
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
     }
 }
 
@@ -1560,19 +1581,83 @@ function hangupConvCb(resp) {
 }
 
 /**
+* Redirect the conversation.
+*
+* @method redirectConversation
+* @param {string} endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
+* @param {string} endpointId The endpoint identifier (e.g. the extension number)
+* @param {string} convid The conversation identifier
+* @param {string} sender The sender of the redierct operation (e.g. the extension number)
+* @param {string} to The destination number to redirect the conversation
+* @param {function} cb The callback function
+*/
+function redirectConversation(endpointType, endpointId, convid, to, sender, cb) {
+    try {
+        // check parameters
+        if (typeof convid !== 'string'
+            || typeof cb           !== 'function'
+            || typeof to           !== 'string'
+            || typeof sender       !== 'string'
+            || typeof endpointId   !== 'string'
+            || typeof endpointType !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // check the endpoint existence
+        if (endpointType === 'extension' && extensions[endpointId]) {
+
+            var convs      = extensions[endpointId].getAllConversations();
+            var conv       = convs[convid];
+            var chSource   = conv.getSourceChannel();
+            var callerNum  = chSource.getCallerNum();
+            var bridgedNum = chSource.getBridgedNum();
+
+            // check if the sender of the request is an intermediary of the conversation.
+            // This is because only caller or called can redirect the conversation
+            if (callerNum !== sender && bridgedNum !== sender) {
+                logger.warn(IDLOG, 'sender extension ' + sender + ' not allowed to redirect another conversation ' + convid);
+                cb();
+                return;
+            }
+
+            var chToRedirect = callerNum === sender ? chSource.getBridgedChannel() : chSource.getChannel();
+
+            if (chToRedirect !== undefined) {
+
+                // redirect the channel
+                logger.info(IDLOG, 'execute the redirect of the channel ' + chToRedirect + ' of exten ' + endpointId);
+                //astProxy.doCmd({ command: 'redirectChannel', chToRedirect: chToRedirect, to: to }, function (resp) {
+                astProxy.doCmd({ command: 'redirectChannel', chToRedirect: 'SIP/2111-00000', to: to }, function (resp) {
+                    cb(resp);
+                    redirectConvCb(resp, convid);
+                });
+
+            } else {
+                logger.error(IDLOG, 'getting the channel to redirect ' + chToRedirect);
+                cb();
+            }
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Park the conversation.
 *
 * @method parkConversation
 * @param {string} endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
 * @param {string} endpointId The endpoint identifier (e.g. the extension number)
 * @param {string} convid The conversation identifier
-* @param {string} sender The identity sender of the park operation (e.g. the extension number)
+* @param {string} sender The sender of the park operation (e.g. the extension number)
 * @param {function} cb The callback function
 */
 function parkConversation(endpointType, endpointId, convid, sender, cb) {
     try {
         // check parameters
         if (typeof convid !== 'string'
+            || typeof cb           !== 'function'
             || typeof sender       !== 'string'
             || typeof endpointId   !== 'string'
             || typeof endpointType !== 'string') {
@@ -1633,6 +1718,7 @@ function stopRecordConversation(endpointType, endpointId, convid, cb) {
     try {
         // check parameters
         if (typeof convid !== 'string'
+            || typeof cb           !== 'function'
             || typeof endpointId   !== 'string'
             || typeof endpointType !== 'string') {
 
@@ -1685,6 +1771,7 @@ function recordConversation(endpointType, endpointId, convid, cb) {
     try {
         // check parameters
         if (typeof convid !== 'string'
+            || typeof cb           !== 'function'
             || typeof endpointId   !== 'string'
             || typeof endpointType !== 'string') {
 
@@ -1887,6 +1974,7 @@ exports.getJSONExtensions  = getJSONExtensions;
 exports.extenStatusChanged = extenStatusChanged;
 exports.hangupConversation = hangupConversation;
 exports.recordConversation = recordConversation;
+exports.redirectConversation     = redirectConversation;
 exports.newQueueWaitingCaller    = newQueueWaitingCaller;
 exports.conversationConnected    = conversationConnected;
 exports.stopRecordConversation   = stopRecordConversation;
