@@ -105,6 +105,13 @@ module.exports = function (options, imports, register) {
             pickupConversation: astProxy.proxyLogic.pickupConversation,
 
             /**
+            * It's the _pickupParking_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method pickupParking
+            */
+            pickupParking: astProxy.proxyLogic.pickupParking,
+
+            /**
             * It's the _getJSONExtensions_ method provided by _ast\_proxy.proxyLogic_.
             *
             * @method getJSONExtensions

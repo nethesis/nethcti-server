@@ -1507,6 +1507,44 @@ function call(endpointType, endpointId, to, cb) {
 }
 
 /**
+* Pickup a parked caller.
+*
+* @method pickupParking
+* @param {string} parking The number of the parking
+* @param {string} sender The sender of the operation
+* @param {function} cb The callback function
+*/
+function pickupParking(parking, sender, cb) {
+    try {
+        // check parameters
+        if (typeof parking   !== 'string'
+            || typeof cb     !== 'function'
+            || typeof sender !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        var ch = parkings[parking].getParkedCaller().getChannel();
+
+        if (ch !== undefined) {
+
+            // the pickup operation is made by redirect operation
+            logger.info(IDLOG, 'execute the pickup of the channel ' + ch + ' of parking ' + parking);
+            astProxy.doCmd({ command: 'redirectChannel', chToRedirect: ch, to: sender }, function (resp) {
+               cb(resp);
+               redirectConvCb(resp, convid);
+            });
+
+        } else {
+            logger.error(IDLOG, 'getting the channel to pickup ' + ch);
+            cb();
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Pickup a conversation.
 *
 * @method pickupConversation
@@ -2071,6 +2109,7 @@ exports.start              = start;
 exports.visit              = visit;
 exports.setLogger          = setLogger;
 exports.getExtensions      = getExtensions;
+exports.pickupParking      = pickupParking;
 exports.getJSONQueues      = getJSONQueues;
 exports.getJSONParkings    = getJSONParkings;
 exports.parkConversation   = parkConversation;

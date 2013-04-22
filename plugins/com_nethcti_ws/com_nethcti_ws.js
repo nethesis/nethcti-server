@@ -305,13 +305,14 @@ function dispatchMsg(socket, data) {
                 var sender = wsid[socket.id];
 
                 // dispatch
-                if (data.command === 'call')            { call(socket, data);                 }
-                if (data.command === 'parkConv')        { parkConv(socket, data, sender);     }
-                if (data.command === 'pickupConv')      { pickupConv(socket, data, sender);   }
-                if (data.command === 'hangupConv')      { hangupConv(socket, data);           }
-                if (data.command === 'redirectConv')    { redirectConv(socket, data, sender); }
-                if (data.command === 'stopRecordConv')  { stopRecordConv(socket, data);       }
-                if (data.command === 'startRecordConv') { startRecordConv(socket, data);      }
+                if (data.command === 'call')            { call(socket, data);                  }
+                if (data.command === 'parkConv')        { parkConv(socket, data, sender);      }
+                if (data.command === 'pickupConv')      { pickupConv(socket, data, sender);    }
+                if (data.command === 'hangupConv')      { hangupConv(socket, data);            }
+                if (data.command === 'redirectConv')    { redirectConv(socket, data, sender);  }
+                if (data.command === 'pickupParking')   { pickupParking(socket, data, sender); }
+                if (data.command === 'stopRecordConv')  { stopRecordConv(socket, data);        }
+                if (data.command === 'startRecordConv') { startRecordConv(socket, data);       }
             }
 
         } else {
@@ -319,6 +320,37 @@ function dispatchMsg(socket, data) {
             unauthorized(socket);
         }
 
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Pickup a parked caller.
+*
+* @method pickupParking
+* @param {object} socket The client websocket
+* @param {object} data The data with the conversation identifier
+*   @param {string} data.parking The number of the parking
+* @param {string} sender The sender of the operation (e.g. the extension number)
+* @private
+*/
+function pickupParking(socket, data, sender) {
+    try {
+        // check parameter
+        if (typeof socket !== 'object') { throw new Error('wrong parameter'); }
+        if (typeof data   !== 'object'
+            || typeof sender       !== 'string'
+            || typeof data.parking !== 'string') {
+
+            badRequest(socket);
+
+        } else {
+
+            astProxy.pickupParking(data.parking, sender, function (resp) {
+                responseToClient(socket, 'pickupParking', resp);
+            });
+        }
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
