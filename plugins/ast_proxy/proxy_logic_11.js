@@ -1551,15 +1551,17 @@ function pickupParking(parking, sender, cb) {
 * @param {string} endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
 * @param {string} endpointId The endpoint identifier (e.g. the extension number)
 * @param {string} convid The conversation identifier
-* @param {string} sender The sender of the operation
+* @param {string} destType The endpoint type that pickup the conversation
+* @param {string} destId The endpoint identifier that pickup the conversation
 * @param {function} cb The callback function
 */
-function pickupConversation(endpointType, endpointId, convid, sender, cb) {
+function pickupConversation(endpointType, endpointId, convid, destType, destId, cb) {
     try {
         // check parameters
         if (typeof convid !== 'string'
             || typeof cb           !== 'function'
-            || typeof sender       !== 'string'
+            || typeof destId       !== 'string'
+            || typeof destType     !== 'string'
             || typeof endpointId   !== 'string'
             || typeof endpointType !== 'string') {
 
@@ -1571,13 +1573,13 @@ function pickupConversation(endpointType, endpointId, convid, sender, cb) {
 
             var convs = extensions[endpointId].getAllConversations();
             var conv  = convs[convid];
-            var ch    = conv.getDestinationChannel().getChannel();
+            var ch    = conv.getSourceChannel().getChannel();
 
             if (ch !== undefined) {
 
                 // the pickup operation is made by redirect operation
                 logger.info(IDLOG, 'execute the pickup of the channel ' + ch + ' of exten ' + endpointId);
-                astProxy.doCmd({ command: 'redirectChannel', chToRedirect: ch, to: sender }, function (resp) {
+                astProxy.doCmd({ command: 'redirectChannel', chToRedirect: ch, to: destId }, function (resp) {
                     cb(resp);
                     redirectConvCb(resp, convid);
                 });
