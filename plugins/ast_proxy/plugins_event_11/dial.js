@@ -11,9 +11,9 @@
 * @private
 * @final
 * @readOnly
-* @default [join]
+* @default [dial]
 */
-var IDLOG = '[join]';
+var IDLOG = '[dial]';
 
 /**
 * The asterisk proxy.
@@ -37,15 +37,15 @@ var astProxy;
         var logger = console;
 
         /**
-        * The plugin that handles the Join event raised when a channel joins a queue.
+        * The plugin that handles the Dial event.
         *
-        * @class join
+        * @class dial
         * @static
         */
-        var join = {
+        var dial = {
             /**
             * It's called from _ast\_proxy_ component for each
-            * Join event received from the asterisk.
+            * Dial event received from the asterisk.
             *
             * @method data
             * @param {object} data The asterisk event data
@@ -53,19 +53,17 @@ var astProxy;
             */
             data: function (data) {
                 try {
-                    if (data.channel
-                        && data.count    && data.calleridnum
-                        && data.queue    && data.calleridname
-                        && data.position && data.event === 'Join') {
+                    if (data.subevent === 'Begin'
+                        && data.channel     && data.calleridnum
+                        && data.destination && data.connectedlinenum
+                        && data.event === 'Dial') {
 
                         logger.info(IDLOG, 'received event ' + data.event);
-                        astProxy.proxyLogic.evtNewQueueWaitingCaller({
-                            wait:       0,                // because the channel has joined the queue now
-                            queue:      data.queue,
-                            channel:    data.channel,
-                            position:   data.position,
-                            callerNum:  data.calleridnum,
-                            callerName: data.calleridname
+                        astProxy.proxyLogic.evtConversationDialing({
+                            chDest:           data.destination,
+                            chSource:         data.channel,
+                            callerNum:        data.calleridnum,
+                            dialingNum:       data.connectedlinenum
                         });
                     }
                 } catch (err) {
@@ -118,9 +116,9 @@ var astProxy;
         };
 
         // public interface
-        exports.data      = join.data;
-        exports.visit     = join.visit;
-        exports.setLogger = join.setLogger;
+        exports.data      = dial.data;
+        exports.visit     = dial.visit;
+        exports.setLogger = dial.setLogger;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);

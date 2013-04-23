@@ -57,7 +57,7 @@ var astProxy;
                         && data.position && data.event === 'Leave') {
 
                         logger.info(IDLOG, 'received event ' + data.event);
-                        astProxy.proxyLogic.removeQueueWaitingCaller({
+                        astProxy.proxyLogic.evtRemoveQueueWaitingCaller({
                             queue:      data.queue,
                             channel:    data.channel,
                             position:   data.position,

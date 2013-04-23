@@ -59,7 +59,7 @@ var astProxy;
                         && data.event       === 'Bridge') {
 
                         logger.info(IDLOG, 'received event ' + data.event);
-                        astProxy.proxyLogic.conversationConnected(data.callerid1, data.callerid2);
+                        astProxy.proxyLogic.evtConversationConnected(data.callerid1, data.callerid2);
 
                     }
 

@@ -1232,12 +1232,12 @@ function getExtensions() {
 * the channel list. To update the channel list it request all channels
 * to analize through "listChannels" command plugin.
 *
-* @method extenStatusChanged
+* @method evtExtenStatusChanged
 * @param {string} exten The extension number
 * @param {string} statusCode The numeric status code as arrived from asterisk
 * @private
 */
-function extenStatusChanged(exten, status) {
+function evtExtenStatusChanged(exten, status) {
     try {
         // check parameters
         if (typeof exten !== 'string' && typeof status !== 'string') {
@@ -1261,13 +1261,6 @@ function extenStatusChanged(exten, status) {
                 astProxy.doCmd({ command: 'iaxDetails', exten: exten }, updateExtIaxDetails);
             }
 
-            // request all channels
-            logger.info(IDLOG, 'requests the channel list to update the extension ' + exten);
-            astProxy.doCmd({ command: 'listChannels' }, function (resp) {
-                // update the conversations of the extension
-                updateExtenConversations(exten, resp);
-            });
-
         } else if (parkings[exten]) { // the exten is a parking
 
             var parking = exten; // to better understand the code
@@ -1288,10 +1281,10 @@ function extenStatusChanged(exten, status) {
 /**
 * Remove a waiting caller from a queue.
 *
-* @method removeQueueWaitingCaller
+* @method evtRemoveQueueWaitingCaller
 * @param {object} data The response object received from the event plugin _leave_.
 */
-function removeQueueWaitingCaller(data) {
+function evtRemoveQueueWaitingCaller(data) {
     try {
         // check parameter
         if (typeof data !== 'object'
@@ -1318,10 +1311,10 @@ function removeQueueWaitingCaller(data) {
 /**
 * Adds a new waiting caller to a queue.
 *
-* @method newQueueWaitingCaller
+* @method evtNewQueueWaitingCaller
 * @param {object} data The response object received from the event plugin _join_.
 */
-function newQueueWaitingCaller(data) {
+function evtNewQueueWaitingCaller(data) {
     try {
         // check parameter
         if (typeof data !== 'object') { throw new Error('wrong parameter'); }
@@ -1344,11 +1337,47 @@ function newQueueWaitingCaller(data) {
 /**
 * If the involved numbers are extensions, it updates their conversations.
 *
-* @method conversationConnected
+* @method evtConversationDialing
+* @param {object} data The data received from the _dial_ event plugin
+*/
+function evtConversationDialing(data) {
+    try {
+        // check parameter
+        if (typeof data !== 'object'
+            && typeof data.chDest      !== 'string'
+            && typeof data.chSource    !== 'string'
+            && typeof data.callerNum   !== 'string'
+            && typeof data.dialingNum  !== 'string') {
+
+            throw new Error('wrong parameter');
+        }
+
+        // when dialing each channel received from listChannels command
+        // plugin hasn't the information about the bridgedChannel. So add
+        // it in the following manner
+        astProxy.doCmd({ command: 'listChannels' }, function (resp) {
+
+            resp[data.chDest].bridgedChannel   = data.chSource;
+            resp[data.chSource].bridgedChannel = data.chDest;
+
+            // update the conversations of the extensions
+            if (extensions[data.callerNum])  { updateExtenConversations(data.callerNum,  resp); }
+            if (extensions[data.dialingNum]) { updateExtenConversations(data.dialingNum, resp); }
+        });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* If the involved numbers are extensions, it updates their conversations.
+*
+* @method evtConversationConnected
 * @param {string} num1 One of the two connected numbers
 * @param {string} num2 The other of the two connected numbers
 */
-function conversationConnected(num1, num2) {
+function evtConversationConnected(num1, num2) {
     try {
         // check parameters
         if (typeof num1 !== 'string' || typeof num2 !== 'string') {
@@ -1589,6 +1618,39 @@ function pickupConversation(endpointType, endpointId, convid, destType, destId, 
                 cb();
             }
         }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* It's called when an Hangup event is raised from the asterisk. It is
+* called from the _hangup_ event plugin.
+*
+* @method evtHangupConversation
+* @param {object} data The data received from _hangup_ event plugin
+*/
+function evtHangupConversation(data) {
+    try {
+        // check parameter
+        if (typeof data !== 'object'
+            || typeof data.channel   !== 'string'
+            || typeof data.callerNum !== 'string') {
+
+            throw new Error('wrong parameter');
+        }
+
+        // check the extension existence
+        if (extensions[data.callerNum]) {
+
+            // request all channel list and update channels of extension
+            astProxy.doCmd({ command: 'listChannels' }, function (resp) {
+
+                // update the conversations of the extension
+                updateExtenConversations(data.callerNum, resp);
+            });
+        }
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -2116,12 +2178,14 @@ exports.getJSONQueues      = getJSONQueues;
 exports.getJSONParkings    = getJSONParkings;
 exports.parkConversation   = parkConversation;
 exports.getJSONExtensions  = getJSONExtensions;
-exports.extenStatusChanged = extenStatusChanged;
 exports.hangupConversation = hangupConversation;
 exports.recordConversation = recordConversation;
 exports.pickupConversation = pickupConversation;
-exports.redirectConversation     = redirectConversation;
-exports.newQueueWaitingCaller    = newQueueWaitingCaller;
-exports.conversationConnected    = conversationConnected;
-exports.stopRecordConversation   = stopRecordConversation;
-exports.removeQueueWaitingCaller = removeQueueWaitingCaller;
+exports.redirectConversation        = redirectConversation;
+exports.evtHangupConversation       = evtHangupConversation;
+exports.evtExtenStatusChanged       = evtExtenStatusChanged;
+exports.stopRecordConversation      = stopRecordConversation;
+exports.evtConversationDialing      = evtConversationDialing;
+exports.evtNewQueueWaitingCaller    = evtNewQueueWaitingCaller;
+exports.evtConversationConnected    = evtConversationConnected;
+exports.evtRemoveQueueWaitingCaller = evtRemoveQueueWaitingCaller;

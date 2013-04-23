@@ -59,7 +59,7 @@ var astProxy;
                         && data.event === 'ExtensionStatus') {
 
                         logger.info(IDLOG, 'received event ' + data.event);
-                        astProxy.proxyLogic.extenStatusChanged(data.exten, AST_EXTEN_STATUS_2_STR_ADAPTER[data.status]);
+                        astProxy.proxyLogic.evtExtenStatusChanged(data.exten, AST_EXTEN_STATUS_2_STR_ADAPTER[data.status]);
 
                     } else {
                         logger.warn(IDLOG, 'ExtensionStatus event not recognized');
