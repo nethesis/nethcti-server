@@ -114,8 +114,6 @@ var CAUSE = {
             */
             data: function (data) {
                 try {
-                    console.log("\nHAANGUP");
-                    console.log(data);
                     if (data
                         && data.calleridnum && data.channel
                         && data.cause       && data.event === 'Hangup') {
