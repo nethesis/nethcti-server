@@ -310,7 +310,7 @@ function dispatchMsg(socket, data) {
                 if (data.command === 'pickupConv')      { pickupConv(socket, data);            }
                 if (data.command === 'hangupConv')      { hangupConv(socket, data);            }
                 if (data.command === 'redirectConv')    { redirectConv(socket, data, sender);  }
-                if (data.command === 'pickupParking')   { pickupParking(socket, data, sender); }
+                if (data.command === 'pickupParking')   { pickupParking(socket, data);         }
                 if (data.command === 'stopRecordConv')  { stopRecordConv(socket, data);        }
                 if (data.command === 'startRecordConv') { startRecordConv(socket, data);       }
             }
@@ -340,14 +340,15 @@ function pickupParking(socket, data, sender) {
         // check parameter
         if (typeof socket !== 'object') { throw new Error('wrong parameter'); }
         if (typeof data   !== 'object'
-            || typeof sender       !== 'string'
-            || typeof data.parking !== 'string') {
+            || typeof data.destId   !== 'string'
+            || typeof data.parking  !== 'string'
+            || typeof data.destType !== 'string') {
 
             badRequest(socket);
 
         } else {
 
-            astProxy.pickupParking(data.parking, sender, function (resp) {
+            astProxy.pickupParking(data.parking, data.destType, data.destId, function (resp) {
                 responseToClient(socket, 'pickupParking', resp);
             });
         }
