@@ -1540,32 +1540,34 @@ function call(endpointType, endpointId, to, cb) {
 *
 * @method pickupParking
 * @param {string} parking The number of the parking
-* @param {string} sender The sender of the operation
+* @param {string} destType The endpoint type that pickup the conversation
+* @param {string} destId The endpoint identifier that pickup the conversation
 * @param {function} cb The callback function
 */
-function pickupParking(parking, sender, cb) {
+function pickupParking(parking, destType, destId, cb) {
     try {
         // check parameters
-        if (typeof parking   !== 'string'
-            || typeof cb     !== 'function'
-            || typeof sender !== 'string') {
+        if (typeof cb          !== 'function'
+            || typeof destId   !== 'string'
+            || typeof parking  !== 'string'
+            || typeof destType !== 'string') {
 
             throw new Error('wrong parameters');
         }
 
         var ch = parkings[parking].getParkedCaller().getChannel();
 
-        if (ch !== undefined) {
+        if (destType === 'extension' && extensions[destId] && ch !== undefined) {
 
             // the pickup operation is made by redirect operation
-            logger.info(IDLOG, 'execute the pickup of the channel ' + ch + ' of parking ' + parking);
-            astProxy.doCmd({ command: 'redirectChannel', chToRedirect: ch, to: sender }, function (resp) {
+            logger.info(IDLOG, 'pickup from ' + destType + ' ' + destId + ' of the channel ' + ch + ' of parking ' + parking);
+            astProxy.doCmd({ command: 'redirectChannel', chToRedirect: ch, to: destId }, function (resp) {
                cb(resp);
-               redirectConvCb(resp, convid);
+               redirectConvCb(resp);
             });
 
         } else {
-            logger.error(IDLOG, 'getting the channel to pickup ' + ch);
+            logger.error(IDLOG, 'during pickup from ' + destType + ' ' + destId + ' of parking ' + parking);
             cb();
         }
     } catch (err) {
@@ -1607,14 +1609,14 @@ function pickupConversation(endpointType, endpointId, convid, destType, destId, 
             if (ch !== undefined) {
 
                 // the pickup operation is made by redirect operation
-                logger.info(IDLOG, 'pickup from ' + destId + ' of the channel ' + ch + ' of ' + endpointType + ' ' + endpointId);
+                logger.info(IDLOG, 'pickup from ' + destType + ' ' + destId + ' of the channel ' + ch + ' of ' + endpointType + ' ' + endpointId);
                 astProxy.doCmd({ command: 'redirectChannel', chToRedirect: ch, to: destId }, function (resp) {
                     cb(resp);
-                    redirectConvCb(resp, convid);
+                    redirectConvCb(resp);
                 });
 
             } else {
-                logger.error(IDLOG, 'getting the channel to pickup ' + ch);
+                logger.error(IDLOG, 'during pickup conversation of the channel ' + ch);
                 cb();
             }
         }
@@ -1835,7 +1837,7 @@ function redirectConversation(endpointType, endpointId, convid, to, sender, cb) 
                 logger.info(IDLOG, 'execute the redirect of the channel ' + chToRedirect + ' of exten ' + endpointId);
                 astProxy.doCmd({ command: 'redirectChannel', chToRedirect: chToRedirect, to: to }, function (resp) {
                     cb(resp);
-                    redirectConvCb(resp, convid);
+                    redirectConvCb(resp);
                 });
 
             } else {
