@@ -1602,21 +1602,32 @@ function pickupConversation(endpointType, endpointId, convid, destType, destId, 
         // check the endpoint existence
         if (endpointType === 'extension' && extensions[endpointId]) {
 
+            var chToRedirect;
             var convs = extensions[endpointId].getAllConversations();
             var conv  = convs[convid];
-            var ch    = conv.getSourceChannel().getChannel();
+            var ch    = conv.getSourceChannel();
+            var callerNum  = ch.getCallerNum();
+            var bridgedNum = ch.getBridgedNum();
 
-            if (ch !== undefined) {
+            // get the channel to redirect
+            if (callerNum === endpointId) {
+                chToRedirect = ch.getBridgedChannel();
+
+            } else if (bridgedNum === endpointId) {
+                chToRedirect = ch.getChannel();
+            }
+
+            if (chToRedirect !== undefined) {
 
                 // the pickup operation is made by redirect operation
-                logger.info(IDLOG, 'pickup from ' + destType + ' ' + destId + ' of the channel ' + ch + ' of ' + endpointType + ' ' + endpointId);
-                astProxy.doCmd({ command: 'redirectChannel', chToRedirect: ch, to: destId }, function (resp) {
+                logger.info(IDLOG, 'pickup from ' + destType + ' ' + destId + ' of the channel ' + chToRedirect + ' of ' + endpointType + ' ' + endpointId);
+                astProxy.doCmd({ command: 'redirectChannel', chToRedirect: chToRedirect, to: destId }, function (resp) {
                     cb(resp);
                     redirectConvCb(resp);
                 });
 
             } else {
-                logger.error(IDLOG, 'during pickup conversation of the channel ' + ch);
+                logger.error(IDLOG, 'during pickup conversation of the channel ' + chToRedirect);
                 cb();
             }
         }
