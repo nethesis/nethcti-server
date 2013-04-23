@@ -1607,7 +1607,7 @@ function pickupConversation(endpointType, endpointId, convid, destType, destId, 
             if (ch !== undefined) {
 
                 // the pickup operation is made by redirect operation
-                logger.info(IDLOG, 'execute the pickup of the channel ' + ch + ' of exten ' + endpointId);
+                logger.info(IDLOG, 'pickup from ' + destId + ' of the channel ' + ch + ' of ' + endpointType + ' ' + endpointId);
                 astProxy.doCmd({ command: 'redirectChannel', chToRedirect: ch, to: destId }, function (resp) {
                     cb(resp);
                     redirectConvCb(resp, convid);
