@@ -87,7 +87,6 @@ var IDLOG = '[spyListen]';
                     
                     // set the action identifier
                     act.ActionID = action.getActionId('spyListen');
-                    console.log(act);
 
                     // add association ActionID-callback
                     map[act.ActionID] = cb;
