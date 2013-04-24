@@ -314,6 +314,7 @@ function dispatchMsg(socket, data) {
                 if (data.command === 'pickupParking')      { pickupParking(socket, data);      }
                 if (data.command === 'stopRecordConv')     { stopRecordConv(socket, data);     }
                 if (data.command === 'startRecordConv')    { startRecordConv(socket, data);    }
+                if (data.command === 'startSpySpeakConv')  { startSpySpeakConv(socket, data);  }
                 if (data.command === 'startSpyListenConv') { startSpyListenConv(socket, data); }
             }
 
@@ -322,6 +323,43 @@ function dispatchMsg(socket, data) {
             unauthorized(socket);
         }
 
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Start the spy of the conversation with speaking.
+*
+* @method startSpySpeakConv
+* @param {object} socket The client websocket
+* @param {object} data The data with the conversation identifier
+*   @param {string} data.convid The conversation identifier
+*   @param {string} data.endpointId The endpoint identifier that has the conversation to spy
+*   @param {string} data.endpointType The type of the endpoint that has the conversation to spy
+*   @param {string} data.destType The endpoint type that spy the conversation
+*   @param {string} data.destId The endpoint identifier that spy the conversation
+* @private
+*/
+function startSpySpeakConv(socket, data) {
+    try {
+        // check parameter
+        if (typeof socket !== 'object') { throw new Error('wrong parameter'); }
+        if (typeof data   !== 'object'
+            || typeof data.destId       !== 'string'
+            || typeof data.convid       !== 'string'
+            || typeof data.destType     !== 'string'
+            || typeof data.endpointId   !== 'string'
+            || typeof data.endpointType !== 'string') {
+
+            badRequest(socket);
+
+        } else {
+
+            astProxy.startSpySpeakConversation(data.endpointType, data.endpointId, data.convid, data.destType, data.destId, function (resp) {
+                responseToClient(socket, 'startSpySpeakConv', resp);
+            });
+        }
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }

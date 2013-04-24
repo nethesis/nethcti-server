@@ -1802,6 +1802,26 @@ function callCb(resp) {
 }
 
 /**
+* This is the callback of the spy command plugin with speaking.
+*
+* @method startSpySpeakConvCb
+* @param {object} resp The response object of the operation
+* @private
+*/
+function startSpySpeakConvCb(resp) {
+    try {
+        if (typeof resp === 'object' && resp.result === true) {
+            logger.info(IDLOG, 'start spy channel with speaking succesfully');
+
+        } else {
+            logger.warn(IDLOG, 'start spy channel with speaking failed' + (resp.cause ? (': ' + resp.cause) : '') );
+        }
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * This is the callback of the spy command plugin with only listening.
 *
 * @method startSpyListenConvCb
@@ -2011,9 +2031,62 @@ function stopRecordConversation(endpointType, endpointId, convid, cb) {
 }
 
 /**
+* Start the spy of the conversation with speaking.
+*
+* @method startSpySpeakConversation
+* @param {string} convid The conversation identifier
+* @param {string} endpointId The endpoint identifier that has the conversation to spy
+* @param {string} endpointType The type of the endpoint that has the conversation to spy
+* @param {string} destType The endpoint type that spy the conversation
+* @param {string} destId The endpoint identifier that spy the conversation
+* @param {function} cb The callback function
+*/
+function startSpySpeakConversation(endpointType, endpointId, convid, destType, destId, cb) {
+    try {
+        // check parameters
+        if (typeof convid !== 'string'
+            || typeof cb           !== 'function'
+            || typeof destId       !== 'string'
+            || typeof destType     !== 'string'
+            || typeof endpointId   !== 'string'
+            || typeof endpointType !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // check the endpoint and dest
+        if (endpointType === 'extension' && extensions[endpointId] // the extension to spy exists
+            && destType  === 'extension' && extensions[destId]) {  // the extension that want to spy exists
+
+            var convs       = extensions[endpointId].getAllConversations();
+            var conv        = convs[convid];
+            var chSource    = conv.getSourceChannel();
+            var callerNum   = chSource.getCallerNum();
+            var chToSpy     = callerNum === endpointId ? chSource.getChannel() : chSource.getBridgedChannel();
+            var spyChanType = extensions[destId].getChanType();
+            var spierId     = spyChanType + '/' + destId;
+
+            // start to spy
+            logger.info(IDLOG, 'execute the spy with only listening from ' + destId + ' of the channel ' + chToSpy + ' of exten ' + endpointId);
+            astProxy.doCmd({ command: 'spySpeak', spierId: spierId, spiedId: endpointId, chToSpy: chToSpy }, function (resp) {
+                cb(resp);
+                startSpySpeakConvCb(resp, convid);
+            });
+
+        } else {
+            logger.warn(IDLOG, 'try to record conversation for the non existent endpoint ' + endpointType);
+            cb();
+        }
+    } catch (err) {
+        cb();
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Start the spy of the conversation with only listening.
 *
-* @method startRecordConversation
+* @method startSpyListenConversation
 * @param {string} convid The conversation identifier
 * @param {string} endpointId The endpoint identifier that has the conversation to spy
 * @param {string} endpointType The type of the endpoint that has the conversation to spy
@@ -2289,5 +2362,6 @@ exports.evtSpyStartConversation     = evtSpyStartConversation;
 exports.startRecordConversation     = startRecordConversation;
 exports.evtNewQueueWaitingCaller    = evtNewQueueWaitingCaller;
 exports.evtConversationConnected    = evtConversationConnected;
+exports.startSpySpeakConversation   = startSpySpeakConversation;
 exports.startSpyListenConversation  = startSpyListenConversation;
 exports.evtRemoveQueueWaitingCaller = evtRemoveQueueWaitingCaller;
