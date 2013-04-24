@@ -63,11 +63,11 @@ module.exports = function (options, imports, register) {
             hangupConversation: astProxy.proxyLogic.hangupConversation,
 
             /**
-            * It's the _recordConversation_ method provided by _ast\_proxy.proxyLogic_.
+            * It's the _startRecordConversation_ method provided by _ast\_proxy.proxyLogic_.
             *
-            * @method recordConversation
+            * @method startRecordConversation
             */
-            recordConversation: astProxy.proxyLogic.recordConversation,
+            startRecordConversation: astProxy.proxyLogic.startRecordConversation,
 
             /**
             * It's the _stopRecordConversation_ method provided by _ast\_proxy.proxyLogic_.
@@ -110,6 +110,13 @@ module.exports = function (options, imports, register) {
             * @method pickupParking
             */
             pickupParking: astProxy.proxyLogic.pickupParking,
+
+            /**
+            * It's the _startSpyListenConversation_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method startSpyListenConversation
+            */
+            startSpyListenConversation: astProxy.proxyLogic.startSpyListenConversation,
 
             /**
             * It's the _getJSONExtensions_ method provided by _ast\_proxy.proxyLogic_.

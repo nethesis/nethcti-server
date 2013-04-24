@@ -305,14 +305,15 @@ function dispatchMsg(socket, data) {
                 var sender = wsid[socket.id];
 
                 // dispatch
-                if (data.command === 'call')            { call(socket, data);             }
-                if (data.command === 'parkConv')        { parkConv(socket, data, sender); }
-                if (data.command === 'pickupConv')      { pickupConv(socket, data);       }
-                if (data.command === 'hangupConv')      { hangupConv(socket, data);       }
-                if (data.command === 'redirectConv')    { redirectConv(socket, data);     }
-                if (data.command === 'pickupParking')   { pickupParking(socket, data);    }
-                if (data.command === 'stopRecordConv')  { stopRecordConv(socket, data);   }
-                if (data.command === 'startRecordConv') { startRecordConv(socket, data);  }
+                if (data.command === 'call')               { call(socket, data);              }
+                if (data.command === 'parkConv')           { parkConv(socket, data, sender);  }
+                if (data.command === 'pickupConv')         { pickupConv(socket, data);        }
+                if (data.command === 'hangupConv')         { hangupConv(socket, data);        }
+                if (data.command === 'redirectConv')       { redirectConv(socket, data);      }
+                if (data.command === 'pickupParking')      { pickupParking(socket, data);     }
+                if (data.command === 'stopRecordConv')     { stopRecordConv(socket, data);    }
+                if (data.command === 'startRecordConv')    { startRecordConv(socket, data);   }
+                if (data.command === 'startSpyListenConv') { startSpyListenConv(socket, data); }
             }
 
         } else {
@@ -320,6 +321,43 @@ function dispatchMsg(socket, data) {
             unauthorized(socket);
         }
 
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Start the spy of the conversation with only listening.
+*
+* @method startSpyListenConv
+* @param {object} socket The client websocket
+* @param {object} data The data with the conversation identifier
+*   @param {string} data.convid The conversation identifier
+*   @param {string} data.endpointId The endpoint identifier that has the conversation to spy
+*   @param {string} data.endpointType The type of the endpoint that has the conversation to spy
+*   @param {string} data.destType The endpoint type that spy the conversation
+*   @param {string} data.destId The endpoint identifier that spy the conversation
+* @private
+*/
+function startSpyListenConv(socket, data) {
+    try {
+        // check parameter
+        if (typeof socket !== 'object') { throw new Error('wrong parameter'); }
+        if (typeof data   !== 'object'
+            || typeof data.destId       !== 'string'
+            || typeof data.convid       !== 'string'
+            || typeof data.destType     !== 'string'
+            || typeof data.endpointId   !== 'string'
+            || typeof data.endpointType !== 'string') {
+
+            badRequest(socket);
+
+        } else {
+
+            astProxy.startSpyListenConversation(data.endpointType, data.endpointId, data.convid, data.destType, data.destId, function (resp) {
+                responseToClient(socket, 'startSpyListenConv', resp);
+            });
+        }
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -518,7 +556,7 @@ function startRecordConv(socket, data) {
 
         } else {
 
-            astProxy.recordConversation(data.endpointType, data.endpointId, data.convid, function (resp) {
+            astProxy.startRecordConversation(data.endpointType, data.endpointId, data.convid, function (resp) {
                 responseToClient(socket, 'startRecordConv', resp);
             });
         }

@@ -1252,11 +1252,11 @@ function evtExtenStatusChanged(exten, status) {
 
             // update extension informations. This is because when the extension becomes
             // offline/online ip, port and other informations needs to be updated
-            if (extensions[exten].chanType() === 'sip') {
+            if (extensions[exten].getChanType() === 'sip') {
 
                 astProxy.doCmd({ command: 'sipDetails', exten: exten }, updateExtSipDetails);
 
-            } else if (extensions[exten].chanType() === 'iax') {
+            } else if (extensions[exten].getChanType() === 'iax') {
 
                 astProxy.doCmd({ command: 'iaxDetails', exten: exten }, updateExtIaxDetails);
             }
@@ -1522,7 +1522,7 @@ function call(endpointType, endpointId, to, cb) {
         // check the endpoint existence
         if (endpointType === 'extension' && extensions[endpointId]) {
 
-            var chType = extensions[endpointId].chanType();
+            var chType = extensions[endpointId].getChanType();
 
             logger.info(IDLOG, 'execute call from ' + endpointId + ' to ' + to);
             astProxy.doCmd({ command: 'call', chanType: chType, exten: endpointId, to: to }, function (resp) {
@@ -1780,6 +1780,26 @@ function callCb(resp) {
 }
 
 /**
+* This is the callback of the spy command plugin with only listening.
+*
+* @method startSpyListenConvCb
+* @param {object} resp The response object of the operation
+* @private
+*/
+function startSpyListenConvCb(resp) {
+    try {
+        if (typeof resp === 'object' && resp.result === true) {
+            logger.info(IDLOG, 'start spy channel with only listening succesfully');
+
+        } else {
+            logger.warn(IDLOG, 'start spy channel with only listening failed' + (resp.cause ? (': ' + resp.cause) : '') );
+        }
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * This is the callback of the hangup command plugin.
 *
 * @method hangupConvCb
@@ -1969,15 +1989,68 @@ function stopRecordConversation(endpointType, endpointId, convid, cb) {
 }
 
 /**
+* Start the spy of the conversation with only listening.
+*
+* @method startRecordConversation
+* @param {string} convid The conversation identifier
+* @param {string} endpointId The endpoint identifier that has the conversation to spy
+* @param {string} endpointType The type of the endpoint that has the conversation to spy
+* @param {string} destType The endpoint type that spy the conversation
+* @param {string} destId The endpoint identifier that spy the conversation
+* @param {function} cb The callback function
+*/
+function startSpyListenConversation(endpointType, endpointId, convid, destType, destId, cb) {
+    try {
+        // check parameters
+        if (typeof convid !== 'string'
+            || typeof cb           !== 'function'
+            || typeof destId       !== 'string'
+            || typeof destType     !== 'string'
+            || typeof endpointId   !== 'string'
+            || typeof endpointType !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // check the endpoint and dest
+        if (endpointType === 'extension' && extensions[endpointId] // the extension to spy exists
+            && destType  === 'extension' && extensions[destId]) {  // the extension that want to spy exists
+
+            var convs       = extensions[endpointId].getAllConversations();
+            var conv        = convs[convid];
+            var chSource    = conv.getSourceChannel();
+            var callerNum   = chSource.getCallerNum();
+            var chToSpy     = callerNum === endpointId ? chSource.getChannel() : chSource.getBridgedChannel();
+            var spyChanType = extensions[destId].getChanType();
+            var spyId       = spyChanType + '/' + destId;
+
+            // start to spy
+            logger.info(IDLOG, 'execute the spy with only listening from ' + destId + ' of the channel ' + chToSpy + ' of exten ' + endpointId);
+            astProxy.doCmd({ command: 'spyListen', spyId: spyId, spiedId: endpointId, chToSpy: chToSpy }, function (resp) {
+                cb(resp);
+                startSpyListenConvCb(resp, convid);
+            });
+
+        } else {
+            logger.warn(IDLOG, 'try to record conversation for the non existent endpoint ' + endpointType);
+            cb();
+        }
+    } catch (err) {
+        cb();
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Start the recording of the conversation.
 *
-* @method recordConversation
+* @method startRecordConversation
 * @param {string} endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
 * @param {string} endpointId The endpoint identifier (e.g. the extension number)
 * @param {string} convid The conversation identifier
 * @param {function} cb The callback function
 */
-function recordConversation(endpointType, endpointId, convid, cb) {
+function startRecordConversation(endpointType, endpointId, convid, cb) {
     try {
         // check parameters
         if (typeof convid !== 'string'
@@ -2184,13 +2257,14 @@ exports.getJSONParkings    = getJSONParkings;
 exports.parkConversation   = parkConversation;
 exports.getJSONExtensions  = getJSONExtensions;
 exports.hangupConversation = hangupConversation;
-exports.recordConversation = recordConversation;
 exports.pickupConversation = pickupConversation;
 exports.redirectConversation        = redirectConversation;
 exports.evtHangupConversation       = evtHangupConversation;
 exports.evtExtenStatusChanged       = evtExtenStatusChanged;
 exports.stopRecordConversation      = stopRecordConversation;
 exports.evtConversationDialing      = evtConversationDialing;
+exports.startRecordConversation     = startRecordConversation;
 exports.evtNewQueueWaitingCaller    = evtNewQueueWaitingCaller;
 exports.evtConversationConnected    = evtConversationConnected;
+exports.startSpyListenConversation  = startSpyListenConversation;
 exports.evtRemoveQueueWaitingCaller = evtRemoveQueueWaitingCaller;
