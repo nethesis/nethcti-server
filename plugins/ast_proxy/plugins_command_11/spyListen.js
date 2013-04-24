@@ -53,7 +53,7 @@ var IDLOG = '[spyListen]';
         *
         * Use it with _ast\_proxy_ module as follow:
         *
-        *     ast_proxy.doCmd({ command: 'spyListen', spyId: 'SIP/214', spiedId: '220', chToSpy: 'SIP/220-0000003f',  }, function (res) {
+        *     ast_proxy.doCmd({ command: 'spyListen', spierId: 'SIP/214', spiedId: '220', chToSpy: 'SIP/220-0000003f',  }, function (res) {
         *         // some code
         *     });
         *
@@ -80,7 +80,7 @@ var IDLOG = '[spyListen]';
                     var act = {
                         Data:        args.chToSpy,
                         Action:      'Originate',
-                        Channel:     args.spyId,
+                        Channel:     args.spierId,
                         Callerid:    PREFIX + args.spiedId,
                         Application: 'ChanSpy'
                     };

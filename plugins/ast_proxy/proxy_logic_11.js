@@ -1335,6 +1335,28 @@ function evtNewQueueWaitingCaller(data) {
 }
 
 /**
+* If the involved spier is an extensions, it updates its conversations.
+*
+* @method evtSpyStartConversation
+* @param {object} data The data received from the __ event plugin
+*/
+function evtSpyStartConversation(data) {
+    try {
+        // check parameter
+        if (typeof data !== 'object' && typeof data.spierId !== 'string') { throw new Error('wrong parameter'); }
+
+        astProxy.doCmd({ command: 'listChannels' }, function (resp) {
+
+            // update the conversations of the spier
+            if (extensions[data.spierId]) { updateExtenConversations(data.spierId,  resp); }
+        });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * If the involved numbers are extensions, it updates their conversations.
 *
 * @method evtConversationDialing
@@ -1344,10 +1366,10 @@ function evtConversationDialing(data) {
     try {
         // check parameter
         if (typeof data !== 'object'
-            && typeof data.chDest      !== 'string'
-            && typeof data.chSource    !== 'string'
-            && typeof data.callerNum   !== 'string'
-            && typeof data.dialingNum  !== 'string') {
+            && typeof data.chDest     !== 'string'
+            && typeof data.chSource   !== 'string'
+            && typeof data.callerNum  !== 'string'
+            && typeof data.dialingNum !== 'string') {
 
             throw new Error('wrong parameter');
         }
@@ -2022,11 +2044,11 @@ function startSpyListenConversation(endpointType, endpointId, convid, destType, 
             var callerNum   = chSource.getCallerNum();
             var chToSpy     = callerNum === endpointId ? chSource.getChannel() : chSource.getBridgedChannel();
             var spyChanType = extensions[destId].getChanType();
-            var spyId       = spyChanType + '/' + destId;
+            var spierId     = spyChanType + '/' + destId;
 
             // start to spy
             logger.info(IDLOG, 'execute the spy with only listening from ' + destId + ' of the channel ' + chToSpy + ' of exten ' + endpointId);
-            astProxy.doCmd({ command: 'spyListen', spyId: spyId, spiedId: endpointId, chToSpy: chToSpy }, function (resp) {
+            astProxy.doCmd({ command: 'spyListen', spierId: spierId, spiedId: endpointId, chToSpy: chToSpy }, function (resp) {
                 cb(resp);
                 startSpyListenConvCb(resp, convid);
             });
@@ -2263,6 +2285,7 @@ exports.evtHangupConversation       = evtHangupConversation;
 exports.evtExtenStatusChanged       = evtExtenStatusChanged;
 exports.stopRecordConversation      = stopRecordConversation;
 exports.evtConversationDialing      = evtConversationDialing;
+exports.evtSpyStartConversation     = evtSpyStartConversation;
 exports.startRecordConversation     = startRecordConversation;
 exports.evtNewQueueWaitingCaller    = evtNewQueueWaitingCaller;
 exports.evtConversationConnected    = evtConversationConnected;

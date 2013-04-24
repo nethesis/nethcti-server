@@ -305,14 +305,15 @@ function dispatchMsg(socket, data) {
                 var sender = wsid[socket.id];
 
                 // dispatch
-                if (data.command === 'call')               { call(socket, data);              }
-                if (data.command === 'parkConv')           { parkConv(socket, data, sender);  }
-                if (data.command === 'pickupConv')         { pickupConv(socket, data);        }
-                if (data.command === 'hangupConv')         { hangupConv(socket, data);        }
-                if (data.command === 'redirectConv')       { redirectConv(socket, data);      }
-                if (data.command === 'pickupParking')      { pickupParking(socket, data);     }
-                if (data.command === 'stopRecordConv')     { stopRecordConv(socket, data);    }
-                if (data.command === 'startRecordConv')    { startRecordConv(socket, data);   }
+                if (data.command === 'call')               { call(socket, data);               }
+                if (data.command === 'parkConv')           { parkConv(socket, data, sender);   }
+                if (data.command === 'pickupConv')         { pickupConv(socket, data);         }
+                if (data.command === 'hangupConv')         { hangupConv(socket, data);         }
+                if (data.command === 'stopSpyConv')        { stopSpyConv(socket, data);        }
+                if (data.command === 'redirectConv')       { redirectConv(socket, data);       }
+                if (data.command === 'pickupParking')      { pickupParking(socket, data);      }
+                if (data.command === 'stopRecordConv')     { stopRecordConv(socket, data);     }
+                if (data.command === 'startRecordConv')    { startRecordConv(socket, data);    }
                 if (data.command === 'startSpyListenConv') { startSpyListenConv(socket, data); }
             }
 
@@ -618,6 +619,39 @@ function responseToClient(socket, command, resp) {
         } else {
             sendError(socket, { command: command });
             logger.warn(IDLOG, 'sent error ' + command + ' to ' + getWebsocketEndpoint(socket));
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Stop spy the conversation using the asterisk proxy component.
+*
+* @method stopSpyConv
+* @param {object} socket The client websocket
+* @param {object} data The data with the conversation identifier
+*   @param {string} data.endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
+*   @param {string} data.endpointId The endpoint identifier (e.g. the extension number)
+*   @param {string} data.convid The conversation identifier
+* @private
+*/
+function stopSpyConv(socket, data) {
+    try {
+        // check parameter
+        if (typeof socket !== 'object') { throw new Error('wrong parameter'); }
+        if (typeof data   !== 'object'
+            || typeof data.convid       !== 'string'
+            || typeof data.endpointId   !== 'string'
+            || typeof data.endpointType !== 'string') {
+
+            badRequest(socket);
+
+        } else {
+
+            astProxy.hangupConversation(data.endpointType, data.endpointId, data.convid, function (resp) {
+                responseToClient(socket, 'stopSpyConv', resp);
+            });
         }
     } catch (err) {
         logger.error(IDLOG, err.stack);
