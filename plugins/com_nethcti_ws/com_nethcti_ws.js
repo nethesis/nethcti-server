@@ -305,14 +305,14 @@ function dispatchMsg(socket, data) {
                 var sender = wsid[socket.id];
 
                 // dispatch
-                if (data.command === 'call')            { call(socket, data);                  }
-                if (data.command === 'parkConv')        { parkConv(socket, data, sender);      }
-                if (data.command === 'pickupConv')      { pickupConv(socket, data);            }
-                if (data.command === 'hangupConv')      { hangupConv(socket, data);            }
-                if (data.command === 'redirectConv')    { redirectConv(socket, data, sender);  }
-                if (data.command === 'pickupParking')   { pickupParking(socket, data);         }
-                if (data.command === 'stopRecordConv')  { stopRecordConv(socket, data);        }
-                if (data.command === 'startRecordConv') { startRecordConv(socket, data);       }
+                if (data.command === 'call')            { call(socket, data);             }
+                if (data.command === 'parkConv')        { parkConv(socket, data, sender); }
+                if (data.command === 'pickupConv')      { pickupConv(socket, data);       }
+                if (data.command === 'hangupConv')      { hangupConv(socket, data);       }
+                if (data.command === 'redirectConv')    { redirectConv(socket, data);     }
+                if (data.command === 'pickupParking')   { pickupParking(socket, data);    }
+                if (data.command === 'stopRecordConv')  { stopRecordConv(socket, data);   }
+                if (data.command === 'startRecordConv') { startRecordConv(socket, data);  }
             }
 
         } else {
@@ -537,9 +537,10 @@ function startRecordConv(socket, data) {
 *   @param {string} data.endpointId The endpoint identifier (e.g. the extension number)
 *   @param {string} data.convid The conversation identifier
 *   @param {string} data.to The destination number to redirect the conversation
+*   @param {string} data.senderId The identifier of the applicant of the redirect operation (e.g. the extension number)
 * @private
 */
-function redirectConv(socket, data, sender) {
+function redirectConv(socket, data) {
     try {
         // check parameter
         if (typeof socket !== 'object') { throw new Error('wrong parameter'); }
@@ -553,7 +554,7 @@ function redirectConv(socket, data, sender) {
 
         } else {
 
-            astProxy.redirectConversation(data.endpointType, data.endpointId, data.convid, data.to, sender, function (resp) {
+            astProxy.redirectConversation(data.endpointType, data.endpointId, data.convid, data.to, function (resp) {
                 responseToClient(socket, 'redirectConv', resp);
             });
         }

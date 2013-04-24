@@ -1806,17 +1806,15 @@ function hangupConvCb(resp) {
 * @param {string} endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
 * @param {string} endpointId The endpoint identifier (e.g. the extension number)
 * @param {string} convid The conversation identifier
-* @param {string} sender The sender of the redierct operation (e.g. the extension number)
 * @param {string} to The destination number to redirect the conversation
 * @param {function} cb The callback function
 */
-function redirectConversation(endpointType, endpointId, convid, to, sender, cb) {
+function redirectConversation(endpointType, endpointId, convid, to, cb) {
     try {
         // check parameters
         if (typeof convid !== 'string'
             || typeof cb           !== 'function'
             || typeof to           !== 'string'
-            || typeof sender       !== 'string'
             || typeof endpointId   !== 'string'
             || typeof endpointType !== 'string') {
 
@@ -1832,20 +1830,14 @@ function redirectConversation(endpointType, endpointId, convid, to, sender, cb) 
             var callerNum  = chSource.getCallerNum();
             var bridgedNum = chSource.getBridgedNum();
 
-            // check if the sender of the request is an intermediary of the conversation.
-            // This is because only caller or called can redirect the conversation
-            if (callerNum !== sender && bridgedNum !== sender) {
-                logger.warn(IDLOG, 'sender extension ' + sender + ' not allowed to redirect another conversation ' + convid);
-                cb();
-                return;
-            }
-
-            var chToRedirect = callerNum === sender ? chSource.getBridgedChannel() : chSource.getChannel();
+            // redirect is only possible on own calls. So when the endpointId is the caller, the
+            // channel to redirect is the destination channel. It's the source channel otherwise
+            var chToRedirect = endpointId === chSource.getCallerNum() ? chSource.getBridgedChannel() : chSource.getChannel();
 
             if (chToRedirect !== undefined) {
 
                 // redirect the channel
-                logger.info(IDLOG, 'execute the redirect of the channel ' + chToRedirect + ' of exten ' + endpointId);
+                logger.info(IDLOG, 'redirect of the channel ' + chToRedirect + ' of exten ' + endpointId + ' to ' + to);
                 astProxy.doCmd({ command: 'redirectChannel', chToRedirect: chToRedirect, to: to }, function (resp) {
                     cb(resp);
                     redirectConvCb(resp);
