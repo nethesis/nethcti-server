@@ -1589,7 +1589,7 @@ function pickupParking(parking, destType, destId, cb) {
             });
 
         } else {
-            logger.error(IDLOG, 'during pickup from ' + destType + ' ' + destId + ' of parking ' + parking);
+            logger.error(IDLOG, 'pickup parking from ' + destType + ' ' + destId + ' of parking ' + parking);
             cb();
         }
     } catch (err) {
@@ -1622,7 +1622,8 @@ function pickupConversation(endpointType, endpointId, convid, destType, destId, 
         }
 
         // check the endpoint existence
-        if (endpointType === 'extension' && extensions[endpointId]) {
+        if (endpointType === 'extension' && extensions[endpointId]
+            && destType  === 'extension' && extensions[destId]) {
 
             var chToRedirect;
             var convs = extensions[endpointId].getAllConversations();
@@ -1649,7 +1650,7 @@ function pickupConversation(endpointType, endpointId, convid, destType, destId, 
                 });
 
             } else {
-                logger.error(IDLOG, 'during pickup conversation of the channel ' + chToRedirect);
+                logger.error(IDLOG, 'pickup conversation of ' + endpointType + ' ' + endpointId + ' from ' + destType + ' ' + destId);
                 cb();
             }
         }
@@ -2074,7 +2075,7 @@ function startSpySpeakConversation(endpointType, endpointId, convid, destType, d
             });
 
         } else {
-            logger.warn(IDLOG, 'try to record conversation for the non existent endpoint ' + endpointType);
+            logger.warn(IDLOG, 'spy speak conversation of ' + endpointType + ' ' + endpointId + ' from ' + destType + ' ' + destId);
             cb();
         }
     } catch (err) {
@@ -2127,7 +2128,7 @@ function startSpyListenConversation(endpointType, endpointId, convid, destType, 
             });
 
         } else {
-            logger.warn(IDLOG, 'try to record conversation for the non existent endpoint ' + endpointType);
+            logger.warn(IDLOG, 'spy listen conversation of ' + endpointType + ' ' + endpointId + ' from ' + destType + ' ' + destId);
             cb();
         }
     } catch (err) {
