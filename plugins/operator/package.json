@@ -1,0 +1,9 @@
+{
+    "name": "operator",
+    "main": "arch_operator.js",
+    "private": true,
+    "plugin": {
+        "consumes": ["logger"],
+        "provides": ["operator"]
+    }
+}

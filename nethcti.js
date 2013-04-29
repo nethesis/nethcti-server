@@ -7,6 +7,7 @@ try{
     // architect components
     var config = [
         { packagePath: "./plugins/logger" },
+        { packagePath: "./plugins/operator" },
         { packagePath: "./plugins/authentication" },
         { packagePath: "./plugins/com_authe_rest" },
         { packagePath: "./plugins/ast_proxy" },
