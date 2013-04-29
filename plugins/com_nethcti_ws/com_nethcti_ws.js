@@ -360,7 +360,7 @@ function dispatchMsg(socket, data) {
 *
 * @method getOperatorGroups
 * @param {object} socket The client websocket
-* @return {object} The list of groups of extensions.
+* @return {object} The list of the groups of extensions.
 */
 function getOperatorGroups(socket) {
     try {
@@ -387,6 +387,7 @@ function getOperatorGroups(socket) {
 *   @param {string} data.destType The endpoint type that spy the conversation
 *   @param {string} data.destId The endpoint identifier that spy the conversation
 * @private
+* @return {object} An synchronous aknowledgment or error response with the name of the command.
 */
 function startSpySpeakConv(socket, data) {
     try {
@@ -424,6 +425,7 @@ function startSpySpeakConv(socket, data) {
 *   @param {string} data.destType The endpoint type that spy the conversation
 *   @param {string} data.destId The endpoint identifier that spy the conversation
 * @private
+* @return {object} An synchronous aknowledgment or error response with the name of the command.
 */
 function startSpyListenConv(socket, data) {
     try {
@@ -458,6 +460,7 @@ function startSpyListenConv(socket, data) {
 *   @param {string} data.parking The number of the parking
 * @param {string} sender The sender of the operation (e.g. the extension number)
 * @private
+* @return {object} An synchronous aknowledgment or error response with the name of the command.
 */
 function pickupParking(socket, data, sender) {
     try {
@@ -493,6 +496,7 @@ function pickupParking(socket, data, sender) {
 *   @param {string} data.destType The endpoint type that pickup the conversation
 *   @param {string} data.destId The endpoint identifier that pickup the conversation
 * @private
+* @return {object} An synchronous aknowledgment or error response with the name of the command.
 */
 function pickupConv(socket, data) {
     try {
@@ -528,6 +532,7 @@ function pickupConv(socket, data) {
 *   @param {string} data.endpointId The endpoint identifier (e.g. the extension number)
 *   @param {string} data.number The destination number to be called
 * @private
+* @return {object} An synchronous aknowledgment or error response with the name of the command.
 */
 function call(socket, data) {
     try {
@@ -562,6 +567,7 @@ function call(socket, data) {
 *   @param {string} data.convid The conversation identifier
 * @param {string} sender The sender of the operation (e.g. the extension number)
 * @private
+* @return {object} An synchronous aknowledgment or error response with the name of the command.
 */
 function parkConv(socket, data, sender) {
     try {
@@ -595,6 +601,7 @@ function parkConv(socket, data, sender) {
 *   @param {string} data.endpointId The endpoint identifier (e.g. the extension number)
 *   @param {string} data.convid The conversation identifier
 * @private
+* @return {object} An synchronous aknowledgment or error response with the name of the command.
 */
 function stopRecordConv(socket, data) {
     try {
@@ -628,6 +635,7 @@ function stopRecordConv(socket, data) {
 *   @param {string} data.endpointId The endpoint identifier (e.g. the extension number)
 *   @param {string} data.convid The conversation identifier
 * @private
+* @return {object} An synchronous aknowledgment or error response with the name of the command.
 */
 function startRecordConv(socket, data) {
     try {
@@ -663,6 +671,7 @@ function startRecordConv(socket, data) {
 *   @param {string} data.to The destination number to redirect the conversation
 *   @param {string} data.senderId The identifier of the applicant of the redirect operation (e.g. the extension number)
 * @private
+* @return {object} An synchronous aknowledgment or error response with the name of the command.
 */
 function redirectConv(socket, data) {
     try {
@@ -688,7 +697,8 @@ function redirectConv(socket, data) {
 }
 
 /**
-* Send a response to the client.
+* Send a response to the client. The response can be
+* an acknowledgment or an error.
 *
 * @method responseToClient
 * @param {object} socket The client websocket
@@ -720,6 +730,7 @@ function responseToClient(socket, command, resp) {
 *   @param {string} data.endpointId The endpoint identifier (e.g. the extension number)
 *   @param {string} data.convid The conversation identifier
 * @private
+* @return {object} An synchronous aknowledgment or error response with the name of the command.
 */
 function stopSpyConv(socket, data) {
     try {
@@ -753,6 +764,7 @@ function stopSpyConv(socket, data) {
 *   @param {string} data.endpointId The endpoint identifier (e.g. the extension number)
 *   @param {string} data.convid The conversation identifier
 * @private
+* @return {object} An synchronous aknowledgment or error response with the name of the command.
 */
 function hangupConv(socket, data) {
     try {
