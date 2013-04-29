@@ -26,12 +26,14 @@ module.exports = function (options, imports, register) {
         var logger   = console;
         var authe    = imports.authentication;
         var astProxy = imports.astProxy;
+        var operator = imports.operator;
 
         if (imports.logger) { logger = imports.logger; }
 
         comNethctiWs.setLogger(logger);
-        comNethctiWs.setAstProxy(astProxy);
         comNethctiWs.setAuthe(authe);
+        comNethctiWs.setAstProxy(astProxy);
+        comNethctiWs.setOperator(operator);
         comNethctiWs.start();
     } catch (err) {
         logger.error(IDLOG, err.stack);

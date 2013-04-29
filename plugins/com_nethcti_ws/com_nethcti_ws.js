@@ -76,6 +76,15 @@ var astProxy;
 var authe;
 
 /**
+* The operator module.
+*
+* @property operator
+* @type object
+* @private
+*/
+var operator;
+
+/**
 * Contains all websocket identifiers of authenticated clients.
 * The key is the websocket identifier and the value is the username.
 * It's used for fast authentication for each request.
@@ -124,6 +133,23 @@ function setAuthe(autheMod) {
             throw new Error('wrong authentication object');
         }
         authe = autheMod;
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Set the operator to be used by the module.
+*
+* @method setOperator
+* @param {object} op The operator.
+*/
+function setOperator(op) {
+    try {
+        if (typeof op !== 'object') {
+            throw new Error('wrong operator object');
+        }
+        operator = op;
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -314,6 +340,7 @@ function dispatchMsg(socket, data) {
                 if (data.command === 'pickupParking')      { pickupParking(socket, data);      }
                 if (data.command === 'stopRecordConv')     { stopRecordConv(socket, data);     }
                 if (data.command === 'startRecordConv')    { startRecordConv(socket, data);    }
+                if (data.command === 'getOperatorGroups')  { getOperatorGroups(socket);        }
                 if (data.command === 'startSpySpeakConv')  { startSpySpeakConv(socket, data);  }
                 if (data.command === 'startSpyListenConv') { startSpyListenConv(socket, data); }
             }
@@ -322,6 +349,26 @@ function dispatchMsg(socket, data) {
             logger.warn(IDLOG, 'received message from unauthenticated client ' + getWebsocketEndpoint(socket));
             unauthorized(socket);
         }
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Return the list of the groups of extensions defined by the administrator.
+*
+* @method getOperatorGroups
+* @param {object} socket The client websocket
+* @return {object} The list of groups of extensions.
+*/
+function getOperatorGroups(socket) {
+    try {
+        // check parameter
+        if (typeof socket !== 'object') { throw new Error('wrong parameter'); }
+
+        socket.emit('operatorGroups', operator.getGroups());
+        logger.info(IDLOG, 'sent operatorGroups response to ' + getWebsocketEndpoint(socket));
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -882,6 +929,9 @@ function loginHdlr(socket, obj) {
                 logger.info(IDLOG, 'emit event extensions to websockets');
                 server.sockets.in('room').emit('extensions', astProxy.getJSONExtensions());
 
+                logger.info(IDLOG, 'emit event operatorGroups to websockets');
+                server.sockets.in('room').emit('operatorGroups', operator.getGroups());
+
             } else { // authentication failed
                 logger.warn(IDLOG, 'authentication failed for user ' + obj.user + ' from ' + getWebsocketEndpoint(socket) +
                                    ' with id ' + socket.id);
@@ -1007,3 +1057,4 @@ exports.start       = start;
 exports.setAuthe    = setAuthe;
 exports.setLogger   = setLogger;
 exports.setAstProxy = setAstProxy;
+exports.setOperator = setOperator;
