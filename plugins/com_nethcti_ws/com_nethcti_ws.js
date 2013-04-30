@@ -121,11 +121,25 @@ function setLogger(log) {
 }
 
 /**
+* Set the post-it module to be used.
+*
+* @method setPostit
+* @param {object} pit The post-it module.
+*/
+function setPostit(pit) {
+    try {
+        if (typeof pit !== 'object') { throw new Error('wrong postit object'); }
+        postit = pit;
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Set the authentication module to be used.
 *
 * @method setAuthe
-* @param autheMod
-* @type object The authentication module.
+* @param {object} autheMod The authentication module.
 */
 function setAuthe(autheMod) {
     try {
@@ -330,19 +344,23 @@ function dispatchMsg(socket, data) {
                 // get the sender identifier
                 var sender = wsid[socket.id];
 
+                logger.info(IDLOG, 'request command ' + data.command);
+
                 // dispatch
-                if (data.command === 'call')               { call(socket, data);               }
-                if (data.command === 'parkConv')           { parkConv(socket, data, sender);   }
-                if (data.command === 'pickupConv')         { pickupConv(socket, data);         }
-                if (data.command === 'hangupConv')         { hangupConv(socket, data);         }
-                if (data.command === 'stopSpyConv')        { stopSpyConv(socket, data);        }
-                if (data.command === 'redirectConv')       { redirectConv(socket, data);       }
-                if (data.command === 'pickupParking')      { pickupParking(socket, data);      }
-                if (data.command === 'stopRecordConv')     { stopRecordConv(socket, data);     }
-                if (data.command === 'startRecordConv')    { startRecordConv(socket, data);    }
-                if (data.command === 'getOperatorGroups')  { getOperatorGroups(socket);        }
-                if (data.command === 'startSpySpeakConv')  { startSpySpeakConv(socket, data);  }
-                if (data.command === 'startSpyListenConv') { startSpyListenConv(socket, data); }
+                if (data.command === 'call')                    { call(socket, data);               }
+                else if (data.command === 'parkConv')           { parkConv(socket, data, sender);   }
+                else if (data.command === 'newPostit')          { newPostit(socket, data, sender);  }
+                else if (data.command === 'pickupConv')         { pickupConv(socket, data);         }
+                else if (data.command === 'hangupConv')         { hangupConv(socket, data);         }
+                else if (data.command === 'stopSpyConv')        { stopSpyConv(socket, data);        }
+                else if (data.command === 'redirectConv')       { redirectConv(socket, data);       }
+                else if (data.command === 'pickupParking')      { pickupParking(socket, data);      }
+                else if (data.command === 'stopRecordConv')     { stopRecordConv(socket, data);     }
+                else if (data.command === 'startRecordConv')    { startRecordConv(socket, data);    }
+                else if (data.command === 'getOperatorGroups')  { getOperatorGroups(socket);        }
+                else if (data.command === 'startSpySpeakConv')  { startSpySpeakConv(socket, data);  }
+                else if (data.command === 'startSpyListenConv') { startSpyListenConv(socket, data); }
+                else { logger.warn(IDLOG, 'request unknown command ' + data.command);
             }
 
         } else {
@@ -350,6 +368,44 @@ function dispatchMsg(socket, data) {
             unauthorized(socket);
         }
 
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Store new post-it message.
+*
+* @method newPostit
+* @param {object} socket The client websocket
+* @param {object} data The data with the conversation identifier
+*   @param {string} data.text The text of the post-it
+*   @param {string} data.recipient The recipient user
+* @param {string} sender The sender of the operation (e.g. the extension number or the username)
+* @private
+* @return {object} An synchronous aknowledgment or error response with the name of the command.
+*/
+function newPostit(socket, data, sender) {
+    try {
+        // check parameter
+        if (typeof socket !== 'object') { throw new Error('wrong parameter'); }
+        if (typeof data   !== 'object'
+            || typeof sender         !== 'string'
+            || typeof data.text      !== 'string'
+            || typeof data.recipient !== 'string') {
+
+            badRequest(socket);
+
+        } else {
+
+            postit.save({
+                text:      data.text,
+                creator:   sender,
+                recipient: data.recipient
+            }, function (resp) {
+                console.log("newPostit by com_nethcti_ws");
+            });
+        }
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -1067,6 +1123,7 @@ function sendAutheSuccess(socket) {
 // public interface
 exports.start       = start;
 exports.setAuthe    = setAuthe;
+exports.setPostit   = setPostit;
 exports.setLogger   = setLogger;
 exports.setAstProxy = setAstProxy;
 exports.setOperator = setOperator;

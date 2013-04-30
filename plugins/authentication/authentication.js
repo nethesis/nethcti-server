@@ -38,7 +38,6 @@ var IDLOG = '[authentication]';
 */
 var logger = console;
 
-
 /**
 * Contains the credentials of all extensions. The keys
 * correspond to extension number and the values to passwords.

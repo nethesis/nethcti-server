@@ -3,7 +3,13 @@
     "main": "arch_com_nethcti_ws.js",
     "private": true,
     "plugin": {
-        "consumes": ["authentication", "astProxy", "logger", "operator"],
+        "consumes": [
+            "postit",
+            "logger",
+            "astProxy",
+            "operator",
+            "authentication"
+        ],
         "provides": []
     }
 }
