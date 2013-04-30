@@ -6,11 +6,13 @@ var architect = require('architect');
 try{
     // architect components
     var config = [
-        { packagePath: "./plugins/logger" },
-        { packagePath: "./plugins/operator" },
+        { packagePath: "./plugins/logger"         },
+        { packagePath: "./plugins/dbconn"         },
+        { packagePath: "./plugins/postit"         },
+        { packagePath: "./plugins/operator"       },
         { packagePath: "./plugins/authentication" },
         { packagePath: "./plugins/com_authe_rest" },
-        { packagePath: "./plugins/ast_proxy" },
+        { packagePath: "./plugins/ast_proxy"      },
         { packagePath: "./plugins/com_nethcti_ws" }
     ];
 
