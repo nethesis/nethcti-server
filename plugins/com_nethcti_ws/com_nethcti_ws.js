@@ -360,7 +360,7 @@ function dispatchMsg(socket, data) {
                 else if (data.command === 'getOperatorGroups')  { getOperatorGroups(socket);        }
                 else if (data.command === 'startSpySpeakConv')  { startSpySpeakConv(socket, data);  }
                 else if (data.command === 'startSpyListenConv') { startSpyListenConv(socket, data); }
-                else { logger.warn(IDLOG, 'request unknown command ' + data.command);
+                else { logger.warn(IDLOG, 'request unknown command ' + data.command); }
             }
 
         } else {
