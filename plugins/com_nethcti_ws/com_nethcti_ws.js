@@ -85,6 +85,15 @@ var authe;
 var operator;
 
 /**
+* The postit module.
+*
+* @property postitMod
+* @type object
+* @private
+*/
+var postitMod;
+
+/**
 * Contains all websocket identifiers of authenticated clients.
 * The key is the websocket identifier and the value is the username.
 * It's used for fast authentication for each request.
@@ -129,7 +138,7 @@ function setLogger(log) {
 function setPostit(pit) {
     try {
         if (typeof pit !== 'object') { throw new Error('wrong postit object'); }
-        postit = pit;
+        postitMod = pit;
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -398,12 +407,22 @@ function newPostit(socket, data, sender) {
 
         } else {
 
-            postit.save({
+            postitMod.save({
                 text:      data.text,
                 creator:   sender,
                 recipient: data.recipient
-            }, function (resp) {
-                console.log("newPostit by com_nethcti_ws");
+
+            }, function (err) {
+                var command = 'newPostit';
+
+                if (err) {
+                    sendError(socket, { command: command });
+                    logger.warn(IDLOG, 'sent error ' + command + ' to ' + getWebsocketEndpoint(socket));
+
+                } else {
+                    sendAck(socket, { command: command });
+                    logger.info(IDLOG, 'sent ack ' + command + ' to ' + getWebsocketEndpoint(socket));
+                }
             });
         }
     } catch (err) {

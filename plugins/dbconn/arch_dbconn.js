@@ -14,9 +14,9 @@ var dbconn = require('./dbconn');
 * @private
 * @final
 * @readOnly
-* @default [dbconn]
+* @default [arch_dbconn]
 */
-var IDLOG = '[dbconn]';
+var IDLOG = '[arch_dbconn]';
 
 module.exports = function (options, imports, register) {
     
@@ -26,6 +26,12 @@ module.exports = function (options, imports, register) {
     // public interface for other architect components
     register(null, {
         dbconn: {
+            /**
+            * It's the _savePostit_ method provided by _dbconn_ module.
+            *
+            * @method savePostit
+            */
+            savePostit: dbconn.savePostit
         }
     });
 
@@ -34,6 +40,7 @@ module.exports = function (options, imports, register) {
         dbconn.config({
             file: ['/etc/nethcti/dbstatic.ini', '/etc/nethcti/dbdynamic.ini']
         });
+        dbconn.start();
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }

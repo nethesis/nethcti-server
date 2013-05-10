@@ -38,6 +38,30 @@ var IDLOG = '[dbconn]';
 var logger = console;
 
 /**
+* The default database file socket.
+*
+* @property DB_FILE_SOCK
+* @type string
+* @private
+* @default "/var/lib/mysql/mysql.sock"
+*/
+var DB_FILE_SOCK = '/var/lib/mysql/mysql.sock';
+
+/**
+* The section names of the ini files that contains database
+* connection informations.
+*
+* @property INI_SECTION
+* @type object
+* @private
+* @default { POSTIT: "postit" }
+*/
+var INI_SECTION = {
+    POSTIT: 'postit'
+};
+
+
+/**
 * The configurations to be used by database connections.
 *
 * @property config
@@ -46,6 +70,26 @@ var logger = console;
 * @default {}
 */
 var dbConfig = {};
+
+/**
+* The database connections.
+*
+* @property dbConns
+* @type object
+* @private
+* @default {}
+*/
+var dbConns = {};
+
+/**
+* It contains the sequelize models.
+*
+* @property models
+* @type object
+* @private
+* @default {}
+*/
+var models = {};
 
 /**
 * Set the logger to be used.
@@ -109,43 +153,118 @@ function config(obj) {
                 }
             }
         }
-
-        test();
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
 }
 
-function test() {
+/*
+* Start the execution of the module.
+*
+* @method start
+*/
+function start() {
+    try {
+        initConnections();
+        logger.info(IDLOG, 'database connections initialized');
+
+        importModels();
+        logger.info(IDLOG, 'sequelize models imported');
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Save new post-it in the database.
+*
+* @method savePostit
+* @param {string} creator The creator name of the post-it
+* @param {string} text The message text
+* @param {string} recipient The recipient of the message
+* @param {function} cb The callback function
+*/
+function savePostit(creator, text, recipient, cb) {
+    try {
+        // get the sequelize model already loaded
+        var postit = models[INI_SECTION.POSTIT].build({
+            text:      text,
+            creator:   creator,
+            recipient: recipient
+        });
+
+        // save the model into the database
+        postit.save()
+        .success(function () { // the save was successful
+            logger.info(IDLOG, 'postit saved successfully');
+            cb(null);
+
+        }).error(function (err) { // manage the error
+            logger.error(IDLOG, 'saving postig: ' + err.toString());
+            cb(err.toString());
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Load all sequelize models that are present in the
+* default directory as a file, one for each model.
+*
+* @method importModels
+* @private
+*/
+function importModels() {
+    try {
+        var k;
+        for (k in dbConns) {
+
+            if (k === INI_SECTION.POSTIT && dbConns[k]) {
+                models[k] = dbConns[k].import(__dirname + '/sequelize_models/' + INI_SECTION.POSTIT);
+            }
+        }
+        logger.info(IDLOG, 'all sequelize models have been imported');
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Initialize all database connections.
+*
+* @method initConnections
+* @private
+*/
+function initConnections() {
     try {
 
-        var k;
+        var k, sequelize;
         for (k in dbConfig) {
-            console.log("k: " + k);
-            console.log(dbConfig[k]);
 
             if (dbConfig[k].dbtype === 'mysql') {
 
-                var sequelize = new Sequelize('asteriskcdrdb', 'asteriskuser', 'LMvtzQNrX', {
-                    dialect: 'mysql',
-                    port: '/var/lib/mysql/mysql.sock',
-                    host     : 'localhost'
+                var sequelize = new Sequelize(dbConfig[k].dbname, dbConfig[k].dbuser, dbConfig[k].dbpassword, {
+                    port:    DB_FILE_SOCK,
+                    host:    dbConfig[k].dbhost,
+                    define:  {
+                        charset:         'utf8',
+                        timestamps:      false,
+                        freezeTableName: true
+                    },
+                    dialect: dbConfig[k].dbtype
                 });
 
-                sequelize.query("SELECT count(*) FROM asteriskcdrdb.cdr").success(function(myTableRows) {
-                    console.log(myTableRows);
-                });
-
+                dbConns[k] = sequelize;
             }
-
-            return;
         }
-
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
 }
 
 // public interface
-exports.config    = config;
-exports.setLogger = setLogger;
+exports.start      = start;
+exports.config     = config;
+exports.setLogger  = setLogger;
+exports.savePostit = savePostit;

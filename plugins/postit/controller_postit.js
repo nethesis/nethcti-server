@@ -70,16 +70,16 @@ function setLogger(log) {
 }
 
 /**
-* 
+* Save the the post-it data into the database using dbconn module.
 *
 * @method save
 * @param {object} data
 *   @param {string} data.recipient The recipient of the post-it
 *   @param {string} data.creator The creator of the post-it
 *   @param {string} data.text The text of the message
-* @return ..........................-----------------____________________
+* @param {function} cb The callback function
 */
-function save(data) {
+function save(data, cb) {
     try {
         // check parameter
         if (typeof data            !== 'object' || typeof data.text      !== 'string'
@@ -88,7 +88,9 @@ function save(data) {
             throw new Error('wrong parameter');
         }
 
-        console.log("\n save by controller_postit module");
+        logger.info(IDLOG, 'save postit by means dbconn module');
+        dbconn.savePostit(data.creator, data.text, data.recipient, cb);
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
