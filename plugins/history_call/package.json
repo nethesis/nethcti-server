@@ -1,9 +1,0 @@
-{
-    "name": "history_call",
-    "main": "arch_history_call.js",
-    "private": true,
-    "plugin": {
-        "consumes": ["logger", "dbconn"],
-        "provides": ["historyCall"]
-    }
-}
