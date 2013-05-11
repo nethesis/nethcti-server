@@ -60,10 +60,10 @@ var astProxy;
 
                         logger.info(IDLOG, 'received event ' + data.event);
                         astProxy.proxyLogic.evtConversationDialing({
-                            chDest:           data.destination,
-                            chSource:         data.channel,
-                            callerNum:        data.calleridnum,
-                            dialingNum:       data.connectedlinenum
+                            chDest:     data.destination,
+                            chSource:   data.channel,
+                            callerNum:  data.calleridnum,
+                            dialingNum: data.connectedlinenum
                         });
                     }
                 } catch (err) {
