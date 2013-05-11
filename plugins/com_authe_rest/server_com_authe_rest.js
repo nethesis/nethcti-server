@@ -11,7 +11,6 @@
 *
 * @class server_com_authe_rest
 */
-var util = require('util');
 var restify = require('restify');
 var plugins = require('jsplugs')().require('./plugins/com_authe_rest/plugins_rest');
 
