@@ -38,7 +38,14 @@ module.exports = function (options, imports, register) {
             *
             * @method getPhonebookContacts
             */
-            getPhonebookContacts: dbconn.getPhonebookContacts
+            getPhonebookContacts: dbconn.getPhonebookContacts,
+
+            /**
+            * It's the _getHistoryCallInterval_ method provided by _dbconn_ module.
+            *
+            * @method getHistoryCallInterval
+            */
+            getHistoryCallInterval: dbconn.getHistoryCallInterval
         }
     });
 
