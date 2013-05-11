@@ -57,7 +57,8 @@ var DB_FILE_SOCK = '/var/lib/mysql/mysql.sock';
 * @default { POSTIT: "postit" }
 */
 var INI_SECTION = {
-    POSTIT: 'postit'
+    POSTIT:    'postit',
+    PHONEBOOK: 'phonebook'
 };
 
 
@@ -74,12 +75,12 @@ var dbConfig = {};
 /**
 * The database connections.
 *
-* @property dbConns
+* @property dbConn
 * @type object
 * @private
 * @default {}
 */
-var dbConns = {};
+var dbConn = {};
 
 /**
 * It contains the sequelize models.
@@ -220,11 +221,8 @@ function savePostit(creator, text, recipient, cb) {
 function importModels() {
     try {
         var k;
-        for (k in dbConns) {
-
-            if (k === INI_SECTION.POSTIT && dbConns[k]) {
-                models[k] = dbConns[k].import(__dirname + '/sequelize_models/' + INI_SECTION.POSTIT);
-            }
+        for (k in dbConn) {
+            models[k] = dbConn[k].import(__dirname + '/sequelize_models/' + k);
         }
         logger.info(IDLOG, 'all sequelize models have been imported');
     } catch (err) {
@@ -240,7 +238,6 @@ function importModels() {
 */
 function initConnections() {
     try {
-
         var k, sequelize;
         for (k in dbConfig) {
 
@@ -257,7 +254,8 @@ function initConnections() {
                     dialect: dbConfig[k].dbtype
                 });
 
-                dbConns[k] = sequelize;
+                dbConn[k] = sequelize;
+                logger.info(IDLOG, 'initialized db connection with ' + dbConfig[k].dbtype + ' ' + dbConfig[k].dbname + ' ' + dbConfig[k].dbhost + ':' + DB_FILE_SOCK);
             }
         }
     } catch (err) {
@@ -265,8 +263,59 @@ function initConnections() {
     }
 }
 
+/**
+* Gets the phonebook contacts. It search in the centralized address
+* book and search in the fields _name, company, workphone, homephone_ and
+* _cellphone_. It orders the results by name and company ascending. The
+* centralized address book is the mysql _phonebook.phonebook_.
+*
+* @method getPhonebookContacts
+* @param {string} term The term to search. It can be a name or a number
+* @param {function} cb The callback function
+*/
+function getPhonebookContacts(term, cb) {
+    try {
+        // check parameters
+        if (typeof term !== 'string' || typeof cb !== 'function') {
+
+            throw new Error('wrong parameters');
+        }
+
+        models[INI_SECTION.PHONEBOOK].findAll({
+            where: [
+                'name LIKE ? ' +
+                'OR company LIKE ? ' +
+                'OR workphone LIKE ? ' +
+                'OR homephone LIKE ? ' +
+                'OR cellphone LIKE ?',
+                term, term, term, term, term
+            ],
+            order: 'name ASC, company ASC'
+
+        }).success(function (results) {
+
+            // extract results to return in the callback function
+            var i;
+            for (i = 0; i < results.length; i++) {
+                results[i] = results[i].selectedValues;
+            }
+
+            logger.info(IDLOG, results.length + ' results by searching centralized phonebook contacts for ' + term);
+            cb(null, results);
+
+        }).error(function (err) { // manage the error
+
+            logger.error(IDLOG, 'searching centralized phonebook contacts for ' + term + ': ' + err.toString());
+            cb(err.toString());
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
 // public interface
-exports.start      = start;
-exports.config     = config;
-exports.setLogger  = setLogger;
-exports.savePostit = savePostit;
+exports.start                = start;
+exports.config               = config;
+exports.setLogger            = setLogger;
+exports.savePostit           = savePostit;
+exports.getPhonebookContacts = getPhonebookContacts;

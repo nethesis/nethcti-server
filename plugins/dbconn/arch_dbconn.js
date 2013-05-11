@@ -31,7 +31,14 @@ module.exports = function (options, imports, register) {
             *
             * @method savePostit
             */
-            savePostit: dbconn.savePostit
+            savePostit: dbconn.savePostit,
+
+            /**
+            * It's the _getPhonebookContacts_ method provided by _dbconn_ module.
+            *
+            * @method getPhonebookContacts
+            */
+            getPhonebookContacts: dbconn.getPhonebookContacts
         }
     });
 

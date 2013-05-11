@@ -35,6 +35,15 @@ var IDLOG = '[phonebook]';
 var logger = console;
 
 /**
+* The dbconn module.
+*
+* @property dbconn
+* @type object
+* @private
+*/
+var dbconn;
+
+/**
 * Set the logger to be used.
 *
 * @method setLogger
@@ -60,5 +69,49 @@ function setLogger(log) {
     }
 }
 
+/**
+* Gets the centralized phonebook contacts.
+*
+* @method getPhonebookContacts
+* @param {string} term The term to search. It can be a name or a number
+* @param {function} cb The callback function
+*/
+function getPhonebookContacts(term, cb) {
+    try {
+        // check parameters
+        if (typeof term !== 'string' || typeof cb !== 'function') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // add '%' to search all terms with any number of characters, even zero characters
+        term = '%' + term + '%';
+
+        logger.info(IDLOG, 'search centralized phonebook contacts by means dbconn module');
+        dbconn.getPhonebookContacts(term, cb);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Set the module to be used for database functionalities.
+*
+* @method setDbconn
+* @param {object} dbConnMod The dbconn module.
+*/
+function setDbconn(dbconnMod) {
+    try {
+        // check parameter
+        if (typeof dbconnMod !== 'object') { throw new Error('wrong dbconn object'); }
+        dbconn = dbconnMod;
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
 // public interface
-exports.setLogger = setLogger;
+exports.setLogger            = setLogger;
+exports.setDbconn            = setDbconn;
+exports.getPhonebookContacts = getPhonebookContacts;

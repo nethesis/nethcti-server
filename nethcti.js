@@ -9,6 +9,7 @@ try{
         { packagePath: "./plugins/logger"         },
         { packagePath: "./plugins/dbconn"         },
         { packagePath: "./plugins/postit"         },
+        { packagePath: "./plugins/phonebook"      },
         { packagePath: "./plugins/operator"       },
         { packagePath: "./plugins/authentication" },
         { packagePath: "./plugins/com_authe_rest" },

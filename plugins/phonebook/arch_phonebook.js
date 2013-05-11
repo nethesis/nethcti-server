@@ -27,16 +27,19 @@ module.exports = function (options, imports, register) {
     register(null, {
         phonebook: {
             /**
-            * It's the _........_ method provided by _phonebook_ module.
+            * It's the _getPhonebookContacts_ method provided by _phonebook_ module.
             *
-            * @method .........
+            * @method getPhonebookContacts
             */
-            //........: phonebook.........
+            getPhonebookContacts: phonebook.getPhonebookContacts
         }
     });
 
     try {
+        var dbconn = imports.dbconn;
+
         phonebook.setLogger(logger);
+        phonebook.setDbconn(dbconn);
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
