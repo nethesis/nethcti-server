@@ -170,6 +170,7 @@ function start() {
 
         importModels();
         logger.info(IDLOG, 'sequelize models imported');
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -209,8 +210,9 @@ function savePostit(creator, text, recipient, cb) {
 }
 
 /**
-* Load all sequelize models that are present in the
-* default directory as a file, one for each model.
+* Load all sequelize models that are present in the default
+* directory as a file, one for each model. This method must
+* be called after _initConnections_ method.
 *
 * @method importModels
 * @private
