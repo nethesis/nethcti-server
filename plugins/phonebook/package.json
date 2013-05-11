@@ -1,0 +1,9 @@
+{
+    "name": "phonebook",
+    "main": "arch_phonebook.js",
+    "private": true,
+    "plugin": {
+        "consumes": ["logger"],
+        "provides": ["phonebook"]
+    }
+}
