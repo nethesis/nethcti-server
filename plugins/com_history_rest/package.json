@@ -1,0 +1,9 @@
+{
+    "name": "com_history_rest",
+    "main": "arch_com_history_rest.js",
+    "private": true,
+    "plugin": {
+        "consumes": [ "logger", "history" ],
+        "provides": []
+    }
+}
