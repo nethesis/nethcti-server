@@ -24,11 +24,11 @@ module.exports = function (options, imports, register) {
     register(null, {
         postit: {
             /**
-            * It's the _save_ method provided by _controller\_postit_ module.
+            * It's the _newPostit_ method provided by _controller\_postit_ module.
             *
-            * @method save
+            * @method newPostit
             */
-            save: controllerPostit.save
+            newPostit: controllerPostit.newPostit
         }
     });
 

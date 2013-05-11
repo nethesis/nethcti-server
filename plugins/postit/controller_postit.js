@@ -70,6 +70,32 @@ function setLogger(log) {
 }
 
 /**
+* New post-it is created and saved.
+*
+* @method newPostit
+* @param {object} data
+*   @param {string} data.recipient The recipient of the post-it
+*   @param {string} data.creator The creator of the post-it
+*   @param {string} data.text The text of the message
+* @param {function} cb The callback function
+*/
+function newPostit(data, cb) {
+    try {
+        // check parameter
+        if (typeof data            !== 'object' || typeof data.text      !== 'string'
+            || typeof data.creator !== 'string' || typeof data.recipient !== 'string') {
+
+            throw new Error('wrong parameter');
+        }
+
+        save(data, cb);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Save the the post-it data into the database using dbconn module.
 *
 * @method save
@@ -113,6 +139,6 @@ function setDbconn(dbconnMod) {
 }
 
 // public interface
-exports.save      = save;
+exports.newPostit = newPostit;
 exports.setLogger = setLogger;
 exports.setDbconn = setDbconn;
