@@ -7,14 +7,16 @@ try{
     // architect components
     var config = [
         { packagePath: "./plugins/logger"             },
+        { packagePath: "./plugins/authentication"     },
         { packagePath: "./plugins/dbconn"             },
+        { packagePath: "./plugins/ast_proxy"          },
         { packagePath: "./plugins/postit"             },
+        { packagePath: "./plugins/history"            },
         { packagePath: "./plugins/phonebook"          },
         { packagePath: "./plugins/operator"           },
-        { packagePath: "./plugins/authentication"     },
         { packagePath: "./plugins/com_authe_rest"     },
         { packagePath: "./plugins/com_phonebook_rest" },
-        { packagePath: "./plugins/ast_proxy"          },
+        { packagePath: "./plugins/com_history_rest"   },
         { packagePath: "./plugins/com_nethcti_ws"     }
     ];
 

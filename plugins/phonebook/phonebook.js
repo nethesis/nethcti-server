@@ -84,9 +84,6 @@ function getPhonebookContacts(term, cb) {
             throw new Error('wrong parameters');
         }
 
-        // add '%' to search all terms with any number of characters, even zero characters
-        term = '%' + term + '%';
-
         logger.info(IDLOG, 'search centralized phonebook contacts by means dbconn module');
         dbconn.getPhonebookContacts(term, cb);
 

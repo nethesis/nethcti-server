@@ -13,9 +13,9 @@
 * @private
 * @final
 * @readOnly
-* @default [plugins_rest/phonebook]
+* @default [plugins_rest/pphonebook]
 */
-var IDLOG = '[plugins_rest/phonebook]';
+var IDLOG = '[plugins_rest/pphonebook]';
 
 /**
 * The phonebook architect component used for phonebook functions.
@@ -144,7 +144,7 @@ function sendHttp500(resp, err) {
                 * @property get
                 * @type {array}
                 *
-                *   @param {string} search/:term To get the centralized phonbook contacts
+                *   @param {string} search/:term To get the centralized phonebook contacts
                 */
                 'get' : [ 'search/:term' ],
                 'post': [],
