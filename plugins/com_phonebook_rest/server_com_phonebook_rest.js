@@ -1,15 +1,15 @@
 /**
-* Provides the REST server for authentication functions using
-* _authentication_ component.
+* Provides the REST server for phonebook functions using
+* _phonebook_ component.
 *
-* @module com_authe_rest
-* @main com_authe_rest
+* @module com_phonebook_rest
+* @main com_phonebook_rest
 */
 
 /**
 * Provides the REST server.
 *
-* @class server_com_authe_rest
+* @class server_com_phonebook_rest
 */
 var restify = require('restify');
 var plugins = require('jsplugs')().require('./plugins/com_authe_rest/plugins_rest');
@@ -22,9 +22,9 @@ var plugins = require('jsplugs')().require('./plugins/com_authe_rest/plugins_res
 * @private
 * @final
 * @readOnly
-* @default [server_com_authe_rest]
+* @default [server_com_phonebook_rest]
 */
-var IDLOG = '[server_com_authe_rest]';
+var IDLOG = '[server_com_phonebook_rest]';
 
 /**
 * The logger. It must have at least three methods: _info, warn and error._
@@ -42,9 +42,9 @@ var logger = console;
 * @property PORT
 * @type number
 * @private
-* @default 9000
+* @default 9001
 */
-var PORT = 9000;
+var PORT = 9001;
 
 /**
 * Set the logger to be used.
@@ -120,27 +120,35 @@ function execute(req, res, next) {
 }
 
 /**
+* Set the phonebook architect component to be used by REST plugins.
+*
+* @method setCompPhonebook
+* @param {object} compPhonebook The architect phonebook component
+* @static
+*/
+function setCompPhonebook(compPhonebook) {
+    try {
+        // check parameter
+        if (typeof compPhonebook !== 'object') { throw new Error('wrong parameter'); }
+
+        var p;
+        // set phonebook architect component to all REST plugins
+        for (p in plugins) { plugins[p].setCompPhonebook(compPhonebook); }
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Start the REST server.
 *
 * @method start
-* @param {object} compAuthe The authentication architect component _arch\_authentication_
-* to be used by REST plugins.
 * @static
 */
-function start(compAuthe) {
+function start() {
     try {
-        // check parameter
-        if (typeof compAuthe !== 'object'
-            || typeof compAuthe.getNonce !== 'function'
-            || typeof compAuthe.authenticate !== 'function') {
-
-            throw new Error('wrong parameter');
-        }
-
         var p, root, get, post, k;
-
-        // set authentication architect component to all REST plugins
-        for (p in plugins) { plugins[p].setCompAuthe(compAuthe); }
 
         /**
         * The REST server.
