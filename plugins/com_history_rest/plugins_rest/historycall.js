@@ -177,7 +177,6 @@ function sendHttp500(resp, err) {
             */
             interval: function (req, res, next) {
                 try {
-                    // use the history component
                     var obj = {
                         to:    req.params.to,
                         from:  req.params.from,
@@ -187,6 +186,7 @@ function sendHttp500(resp, err) {
                     // add filter parameter if it has been specified
                     if (req.params.filter) { obj.filter = req.params.filter; }
 
+                    // use the history component
                     var data = compHistory.getHistoryCallInterval(obj, function (err, results) {
 
                         if (err) { sendHttp500(res, err.toString()); }
