@@ -6,15 +6,16 @@ var architect = require('architect');
 try{
     // architect components
     var config = [
-        { packagePath: "./plugins/logger"         },
-        { packagePath: "./plugins/dbconn"         },
-        { packagePath: "./plugins/postit"         },
-        { packagePath: "./plugins/phonebook"      },
-        { packagePath: "./plugins/operator"       },
-        { packagePath: "./plugins/authentication" },
-        { packagePath: "./plugins/com_authe_rest" },
-        { packagePath: "./plugins/ast_proxy"      },
-        { packagePath: "./plugins/com_nethcti_ws" }
+        { packagePath: "./plugins/logger"             },
+        { packagePath: "./plugins/dbconn"             },
+        { packagePath: "./plugins/postit"             },
+        { packagePath: "./plugins/phonebook"          },
+        { packagePath: "./plugins/operator"           },
+        { packagePath: "./plugins/authentication"     },
+        { packagePath: "./plugins/com_authe_rest"     },
+        { packagePath: "./plugins/com_phonebook_rest" },
+        { packagePath: "./plugins/ast_proxy"          },
+        { packagePath: "./plugins/com_nethcti_ws"     }
     ];
 
     var app = architect.resolveConfig(config, __dirname);
