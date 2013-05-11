@@ -1,12 +1,12 @@
 /**
-* Provides the database functions.
+* Provides the phonebook functions.
 *
 * @module phonebook
 * @main phonebook
 */
 
 /**
-* Provides the database functionalities.
+* Provides the phonebook functionalities.
 *
 * @class phonebook
 * @static
