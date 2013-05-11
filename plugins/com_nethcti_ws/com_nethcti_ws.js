@@ -407,7 +407,7 @@ function newPostit(socket, data, sender) {
 
         } else {
 
-            postitMod.save({
+            postitMod.newPostit({
                 text:      data.text,
                 creator:   sender,
                 recipient: data.recipient
