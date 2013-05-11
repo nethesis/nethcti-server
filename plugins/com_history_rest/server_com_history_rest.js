@@ -173,7 +173,7 @@ function start() {
             var k;
             // add routing functions
             for (k in get) {
-                logger.info(IDLOG, '\n\nBinding GET: /' + root + '/' + get[k]);
+                logger.info(IDLOG, 'Binding GET: /' + root + '/' + get[k]);
                 server.get('/' + root + '/' + get[k], execute);
             }
             for (k in post) {
