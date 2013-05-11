@@ -106,6 +106,7 @@ function setDbconn(dbconnMod) {
         // check parameter
         if (typeof dbconnMod !== 'object') { throw new Error('wrong dbconn object'); }
         dbconn = dbconnMod;
+        logger.info(IDLOG, 'set dbconn module');
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
