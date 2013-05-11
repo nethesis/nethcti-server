@@ -4,7 +4,7 @@
 * @class arch_history
 * @module history
 */
-var historyCall = require('./history');
+var history = require('./history');
 
 /**
 * The module identifier used by the logger.
@@ -27,11 +27,11 @@ module.exports = function (options, imports, register) {
     register(null, {
         history: {
             /**
-            * It's the _...._ method provided by _history_ module.
+            * It's the _getHistoryCallInterval_ method provided by _history_ module.
             *
-            * @method ....
+            * @method getHistoryCallInterval
             */
-            ...: phonebook....
+            getHistoryCallInterval: history.getHistoryCallInterval
         }
     });
 

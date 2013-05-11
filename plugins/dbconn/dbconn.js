@@ -266,8 +266,9 @@ function initConnections() {
 /**
 * Gets the phonebook contacts. It search in the centralized address
 * book and search in the fields _name, company, workphone, homephone_ and
-* _cellphone_. It orders the results by name and company ascending. The
-* centralized address book is the mysql _phonebook.phonebook_.
+* _cellphone_. It orders the results by _name_ and _company_ ascending.
+* The specified term is wrapped with '%' character. The centralized
+* address book is the mysql _phonebook.phonebook_.
 *
 * @method getPhonebookContacts
 * @param {string} term The term to search. It can be a name or a number
@@ -280,6 +281,9 @@ function getPhonebookContacts(term, cb) {
 
             throw new Error('wrong parameters');
         }
+
+        // add '%' to search all terms with any number of characters, even zero characters
+        term = '%' + term + '%';
 
         models[INI_SECTION.PHONEBOOK].findAll({
             where: [
@@ -386,8 +390,9 @@ function getHistoryCallInterval(data, cb) {
 }
 
 // public interface
-exports.start                = start;
-exports.config               = config;
-exports.setLogger            = setLogger;
-exports.savePostit           = savePostit;
-exports.getPhonebookContacts = getPhonebookContacts;
+exports.start                  = start;
+exports.config                 = config;
+exports.setLogger              = setLogger;
+exports.savePostit             = savePostit;
+exports.getPhonebookContacts   = getPhonebookContacts;
+exports.getHistoryCallInterval = getHistoryCallInterval;

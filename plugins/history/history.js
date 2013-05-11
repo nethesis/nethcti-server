@@ -86,6 +86,41 @@ function setDbconn(dbconnMod) {
     }
 }
 
+/**
+* Get the history call of the specified extension into the interval time.
+* It can be possible to filter the results.
+*
+* @method getHistoryCallInterval
+* @param {object} data
+*   @param {string} data.exten The extension involved in the research
+*   @param {string} data.from The starting date of the interval in the YYYYMMDD format (e.g. 20130521)
+*   @param {string} data.to The ending date of the interval in the YYYYMMDD format (e.g. 20130528)
+*   @param {string} [data.filter] The filter to be used
+* @param {function} cb The callback function
+*/
+function getHistoryCallInterval(data, cb) {
+    try {
+        // check parameters
+        if (    typeof data        !== 'object'
+            ||  typeof cb          !== 'function'
+            ||  typeof data.to     !== 'string'
+            ||  typeof data.from   !== 'string'
+            ||  typeof data.exten  !== 'string'
+            || (typeof data.filter !== 'string' && data.filter !== undefined)) {
+
+            throw new Error('wrong parameters');
+        }
+
+        logger.info(IDLOG, 'search history call between ' + data.from + ' to ' + data.to + ' for ' +
+                           'exten ' + data.exten + ' and filter ' + (data.filter ? data.filter : '""'));
+        dbconn.getHistoryCallInterval(data, cb);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
 // public interface
-exports.setLogger = setLogger;
-exports.setDbconn = setDbconn;
+exports.setLogger              = setLogger;
+exports.setDbconn              = setDbconn;
+exports.getHistoryCallInterval = getHistoryCallInterval;
