@@ -12,7 +12,7 @@
 * @class server_com_phonebook_rest
 */
 var restify = require('restify');
-var plugins = require('jsplugs')().require('./plugins/com_authe_rest/plugins_rest');
+var plugins = require('jsplugs')().require('./plugins/com_phonebook_rest/plugins_rest');
 
 /**
 * The module identifier used by the logger.
@@ -193,5 +193,6 @@ function start() {
 }
 
 // public interface
-exports.start     = start;
-exports.setLogger = setLogger;
+exports.start            = start;
+exports.setLogger        = setLogger;
+exports.setCompPhonebook = setCompPhonebook;
