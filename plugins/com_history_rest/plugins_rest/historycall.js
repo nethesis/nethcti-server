@@ -125,16 +125,26 @@ function sendHttp500(resp, err) {
         /**
         * REST plugin that provides history functions through the following REST API:
         *
-        *     interval/:from/:to/:exten
+        *     interval/:exten/:from/:to
         *
         * Return the history call between _"from"_ date to _"to"_ date for the extension _"exten"_.
         * Dates must be expressed in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
         *
-        *     interval/:from/:to/:exteni/:filter
+        *     interval/:exten/:from/:to/:filter
         *
         * Return the history call between _"from"_ date to _"to"_ date for the extension _"exten"_
         * filtering by _"filter"_. Dates must be expressed in YYYYMMDD format. If an error occurs an
         * HTTP 500 response is returned.
+        *
+        *     day/:exten/:day
+        *
+        * Return the history call of the day _"day"_ and extension _"exten"_. Date must be expressed
+        * in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
+        *
+        *     day/:exten/:day/:filter
+        *
+        * Return the history call of the day _"day"_ and extension _"exten"_ filtering by _"filter"_.
+        * Date must be expressed in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
         *
         * @class historycall
         * @static
@@ -151,14 +161,21 @@ function sendHttp500(resp, err) {
                 * @property get
                 * @type {array}
                 *
-                *   @param {string} interval/:exten/:from/:to To get the history call between _"from"_ date to _"to"_ date. The date
-                *                                             must be expressed in YYYYMMDD format
-                *   @param {string} interval/:exten/:from/:to/:filter To get the history call between _"from"_ date to _"to"_ date 
-                *                                                     filtering by filter. The date must be expressed in YYYYMMDD format
+                *   @param {string} interval/:exten/:from/:to To get the history call between _"from"_ date to _"to"_ date.
+                *                                             The date must be expressed in YYYYMMDD format
+                *   @param {string} interval/:exten/:from/:to/:filter To get the history call between _"from"_ date to _"to"_
+                *                                                     date filtering by filter. The date must be expressed in
+                *                                                     YYYYMMDD format
+                *   @param {string} day/:exten/:day To get the history call of the day and extension. The date must be expressed
+                *                                   in YYYYMMDD format
+                *   @param {string} day/:exten/:day/:filter To get the history call of the day and extension filtering by filter.
+                *                                           The date must be expressed in YYYYMMDD format
                 */
                 'get' : [
                     'interval/:exten/:from/:to',
-                    'interval/:exten/:from/:to/:filter'
+                    'interval/:exten/:from/:to/:filter',
+                    'day/:exten/:day',
+                    'day/:exten/:day/:filter'
                 ],
                 'post': [],
                 'head': [],
@@ -166,11 +183,12 @@ function sendHttp500(resp, err) {
             },
 
             /**
-            * Search the address book contacts in the cetnralized phonebook for the following REST API:
+            * Search the history call for the specified interval, extension and optional filter by the following REST api:
             *
-            *     search/:term
+            *     interval/:exten/:from/:to
+            *     interval/:exten/:from/:to/:filter
             *
-            * @method search
+            * @method interval
             * @param {object} req The client request.
             * @param {object} res The client response.
             * @param {function} next Function to run the next handler in the chain.
@@ -200,9 +218,33 @@ function sendHttp500(resp, err) {
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
                 }
+            },
+
+            /**
+            * Search the history call for the specified day, extension and optional filter by the following REST api:
+            *
+            *     day/:exten/:day
+            *     day/:exten/:day/:filter
+            *
+            * @method day
+            * @param {object} req The client request.
+            * @param {object} res The client response.
+            * @param {function} next Function to run the next handler in the chain.
+            *
+            * It uses _interval_ function.
+            */
+            day: function (req, res, next) {
+                try {
+                    req.params.to = req.params.day;
+                    req.params.from = req.params.day;
+                    this.interval(req, res, next);
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                }
             }
         }
         exports.api            = historycall.api;
+        exports.day            = historycall.day;
         exports.interval       = historycall.interval;
         exports.setLogger      = setLogger;
         exports.setCompHistory = setCompHistory;
