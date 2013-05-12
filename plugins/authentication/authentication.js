@@ -141,7 +141,8 @@ function config(path) {
 
 /**
 * Creates an HMAC-SHA1 token to be used in the authentication and store it
-* into the private _grants_ object.
+* into the private _grants_ object. The _accessKeyId_ must be present into
+* the _creds_ property.
 *
 * @method newToken
 * @param {string} accessKeyId The key used to get the secret key and to store
@@ -152,8 +153,7 @@ function config(path) {
 function newToken(accessKeyId, nonce) {
     try {
         // check parameters
-        if (typeof accessKeyId !== 'string'
-            || typeof nonce !== 'string') {
+        if (typeof accessKeyId !== 'string' || typeof nonce !== 'string') {
 
             throw new Error('wrong parameters');
         }
