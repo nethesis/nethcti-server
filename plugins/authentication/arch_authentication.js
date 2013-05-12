@@ -59,7 +59,15 @@ module.exports = function (options, imports, register) {
             * @method isAutoUpdateTokenExpires
             * @return {boolean} True if the automatic update is active.
             */
-            isAutoUpdateTokenExpires: authentication.isAutoUpdateTokenExpires
+            isAutoUpdateTokenExpires: authentication.isAutoUpdateTokenExpires,
+
+            /**
+            * It's the _accountExists_ method provided by _authentication_ module.
+            *
+            * @method accountExists
+            * @return {boolean} True if the account exists.
+            */
+            accountExists: authentication.accountExists
         }
     });
 

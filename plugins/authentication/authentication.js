@@ -309,10 +309,31 @@ function isAutoUpdateTokenExpires() {
     catch (err) { logger.error(IDLOG, err.stack); }
 }
 
+/**
+* Check if the account exists.
+*
+* @method accountExists
+* @param {string} accessKeyId The user to check the account existence
+* @return {boolean} True if the account exists.
+*/
+function accountExists(accessKeyId) {
+    try {
+        if (creds[accessKeyId] !== undefined) {
+            return true;
+
+        } else {
+            return false;
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
 // public interface
-exports.config       = config;
-exports.getNonce     = getNonce;
-exports.setLogger    = setLogger;
-exports.removeGrant  = removeGrant;
-exports.authenticate = authenticate;
+exports.config        = config;
+exports.getNonce      = getNonce;
+exports.setLogger     = setLogger;
+exports.removeGrant   = removeGrant;
+exports.authenticate  = authenticate;
+exports.accountExists = accountExists
 exports.isAutoUpdateTokenExpires = isAutoUpdateTokenExpires;

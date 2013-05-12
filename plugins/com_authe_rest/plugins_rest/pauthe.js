@@ -173,6 +173,13 @@ function sendHttp401(resp) {
                 try {
                     // get parameters
                     var accessKeyId = req.params.accessKeyId;
+
+                    // checks the existence of the account for the accessKeyId
+                    if (compAuthe.accountExists(accessKeyId) !== true) {
+                        sendHttp401(res); // authentication failed
+                        return;
+                    }
+
                     var token = req.params.token ? req.params.token : undefined;
 
                     if (!token) { // send 401 response with nonce into the http header
