@@ -125,23 +125,23 @@ function sendHttp500(resp, err) {
         /**
         * REST plugin that provides history functions through the following REST API:
         *
-        *     interval/:exten/:from/:to
+        *     historycall/interval/:exten/:from/:to
         *
         * Return the history call between _"from"_ date to _"to"_ date for the extension _"exten"_.
         * Dates must be expressed in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
         *
-        *     interval/:exten/:from/:to/:filter
+        *     historycall/interval/:exten/:from/:to/:filter
         *
         * Return the history call between _"from"_ date to _"to"_ date for the extension _"exten"_
         * filtering by _"filter"_. Dates must be expressed in YYYYMMDD format. If an error occurs an
         * HTTP 500 response is returned.
         *
-        *     day/:exten/:day
+        *     historycall/day/:exten/:day
         *
         * Return the history call of the day _"day"_ and extension _"exten"_. Date must be expressed
         * in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
         *
-        *     day/:exten/:day/:filter
+        *     historycall/day/:exten/:day/:filter
         *
         * Return the history call of the day _"day"_ and extension _"exten"_ filtering by _"filter"_.
         * Date must be expressed in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.

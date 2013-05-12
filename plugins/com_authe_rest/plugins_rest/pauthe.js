@@ -14,9 +14,9 @@ var crypto = require('crypto');
 * @private
 * @final
 * @readOnly
-* @default [plugins_rest/authe]
+* @default [plugins_rest/pauthe]
 */
-var IDLOG = '[plugins_rest/authe]';
+var IDLOG = '[plugins_rest/pauthe]';
 
 /**
 * The authentication architect component used for authentication.
@@ -119,12 +119,12 @@ function sendHttp401(resp) {
         /**
         * REST plugin that provides authentication functions through the following REST API:
         *
-        *     authe/:accessKeyId
+        *     pauthe/authe/:accessKeyId
         *
         * The client receive an HTTP 401 response with an HMAC-SHA1 _nonce_ in the WWW-Authenticate header.
         * The _nonce_ is used to construct the token for the authentication.
         *
-        *     authe/:accessKeyId/:token
+        *     pauthe/authe/:accessKeyId/:token
         *
         * The client requested an authentication with the created _token._
         *

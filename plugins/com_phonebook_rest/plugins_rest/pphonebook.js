@@ -125,7 +125,7 @@ function sendHttp500(resp, err) {
         /**
         * REST plugin that provides phonebook functions through the following REST API:
         *
-        *     search/:term
+        *     pphonebook/search/:term
         *
         * The client receive all phonebook contacts found or a HTTP 500 response.
         *
