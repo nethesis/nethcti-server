@@ -123,24 +123,11 @@ function execute(req, res, next) {
 * Start the REST server.
 *
 * @method start
-* @param {object} compAuthe The authentication architect component _arch\_authentication_
-* to be used by REST plugins.
 * @static
 */
-function start(compAuthe) {
+function start() {
     try {
-        // check parameter
-        if (typeof compAuthe !== 'object'
-            || typeof compAuthe.getNonce !== 'function'
-            || typeof compAuthe.authenticate !== 'function') {
-
-            throw new Error('wrong parameter');
-        }
-
         var p, root, get, post, k;
-
-        // set authentication architect component to all REST plugins
-        for (p in plugins) { plugins[p].setCompAuthe(compAuthe); }
 
         /**
         * The REST server.
@@ -184,6 +171,28 @@ function start(compAuthe) {
     }
 }
 
+/**
+* Set the authentication architect component to be used by REST plugins.
+*
+* @method setCompAuthentication
+* @param {object} compAuthentication The architect authentication component
+* @static
+*/
+function setCompAuthentication(compAuthentication) {
+    try {
+        // check parameter
+        if (typeof compAuthentication !== 'object') { throw new Error('wrong parameter'); }
+
+        var p;
+        // set authentication architect component to all REST plugins
+        for (p in plugins) { plugins[p].setCompAuthentication(compAuthentication); }
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
 // public interface
-exports.start     = start;
-exports.setLogger = setLogger;
+exports.start                 = start;
+exports.setLogger             = setLogger;
+exports.setCompAuthentication = setCompAuthentication;

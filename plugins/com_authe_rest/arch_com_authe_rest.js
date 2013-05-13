@@ -27,7 +27,8 @@ module.exports = function (options, imports, register) {
 
     try {
         serverRest.setLogger(logger);
-        serverRest.start(imports.authentication);
+        serverRest.setCompAuthentication(imports.authentication);
+        serverRest.start();
     } catch (err) {
        logger.error(IDLOG, err.stack);
     }

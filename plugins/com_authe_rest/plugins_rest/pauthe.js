@@ -56,10 +56,10 @@ function setLogger(log) {
 /**
 * Set authentication architect component used by authentication.
 *
-* @method setCompAuthe
+* @method setCompAuthentication
 * @param {object} ca The authentication architect component _arch\_authentication_.
 */
-function setCompAuthe(ca) {
+function setCompAuthentication(ca) {
     try {
         compAuthe = ca;
         logger.info(IDLOG, 'set authentication architect component');
@@ -198,10 +198,10 @@ function sendHttp401(resp) {
                 }
             }
         }
-        exports.api          = pauthe.api;
-        exports.authe        = pauthe.authe;
-        exports.setLogger    = setLogger;
-        exports.setCompAuthe = setCompAuthe;
+        exports.api                   = pauthe.api;
+        exports.authe                 = pauthe.authe;
+        exports.setLogger             = setLogger;
+        exports.setCompAuthentication = setCompAuthentication;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
