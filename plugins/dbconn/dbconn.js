@@ -48,13 +48,29 @@ var logger = console;
 var DB_FILE_SOCK = '/var/lib/mysql/mysql.sock';
 
 /**
+* The prefix for all customer card name.
+*
+* @property CUSTOMER_CARD
+* @type {object}
+* @private
+* @default { PREFIX_NAME: 'customer_card_' }
+*/
+var CUSTOMER_CARD = {
+    PREFIX_NAME: 'customer_card_'
+};
+
+/**
 * The section names of the ini files that contains database
 * connection informations.
 *
 * @property INI_SECTION
-* @type object
+* @type {object}
 * @private
-* @default { POSTIT: "postit" }
+* @default {
+    POSTIT:       'postit',
+    PHONEBOOK:    'phonebook',
+    HISTORY_CALL: 'history_call'
+}
 */
 var INI_SECTION = {
     POSTIT:       'postit',
@@ -220,9 +236,13 @@ function savePostit(creator, text, recipient, cb) {
 */
 function importModels() {
     try {
-        var k;
+        var k, path;
         for (k in dbConn) {
-            models[k] = dbConn[k].import(__dirname + '/sequelize_models/' + k);
+            path = __dirname + '/sequelize_models/' + k;
+            if (fs.existsSync(path + '.js') === true) {
+                models[k] = dbConn[k].import(path);
+                logger.info(IDLOG, 'loaded sequelize model ' + path);
+            }
         }
         logger.info(IDLOG, 'all sequelize models have been imported');
     } catch (err) {
@@ -388,6 +408,59 @@ function getHistoryCallInterval(data, cb) {
 
             logger.error(IDLOG, 'searching history call interval between ' + data.from + ' to ' + data.to +
                                 ' for exten ' + data.exten + ' and filter ' + data.filter + ': ' + err.toString());
+            cb(err.toString());
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Get the customer card of the specified type. It search the results into the
+* database specified into the section of one of the _/etc/nethcti/dbstatic.ini_
+* or _/etc/nethcti/dbdynamic.ini_ files.
+*
+* @method getCustomerCard
+* @param {string} type The type of the customer card to retrieve
+* @param {string} num The phone number used to search in _channel_ and _dstchannel_ mysql
+*                     fields. It is used to filter. It is preceded by '%' character
+* @param {function} cb The callback function
+*/
+function getCustomerCard(type, num, cb) {
+    try {
+        // check parameters
+        if (typeof type   !== 'string'
+            || typeof num !== 'string'
+            || typeof cb  !== 'function') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // construct the section name of the ini file that contains
+        // the information of the customer card
+        type = CUSTOMER_CARD.PREFIX_NAME + type;
+
+        // check the connection presence
+        if (dbConn[type] === undefined) {
+            logger.warn(IDLOG, 'no db connection getting customer card ' + type + ' for num ' + num);
+            return;
+        }
+
+        // escape of the number
+        num = dbConn[type].constructor.Utils.escape(num); // e.g. num = '123456'
+        num = num.substring(1, num.length - 1); // remove external quote e.g. num = 123456
+
+        // replace the key of the query with paramter
+        var query = dbConfig[type].query.replace(/\$TERM/g, num);
+
+        dbConn[type].query(query).success(function (results) {
+
+            logger.info(IDLOG, results.length + ' results by searching ' + type + ' by num ' + num);
+            cb(null, results);
+
+        }).error(function (err) { // manage the error
+
+            logger.error(IDLOG, 'searching ' + type + ' by num ' + num + ': ' + err.toString());
             cb(err.toString());
         });
     } catch (err) {
