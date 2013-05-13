@@ -4,7 +4,6 @@
     "version": "2.0.0",
     "private": true,
     "dependencies": {
-	"mysql":        "0.9.5",
 	"log4js":       "0.5.6",
 	"jsplugs":      "0.1.0",
         "winston":      "0.6.2",
