@@ -117,6 +117,8 @@ function sendHttp401(resp) {
         var logger = console;
 
         /**
+        * Listen on port 9000
+        *
         * REST plugin that provides authentication functions through the following REST API:
         *
         *     pauthe/authe/:accessKeyId

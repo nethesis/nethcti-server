@@ -123,6 +123,8 @@ function sendHttp500(resp, err) {
         var logger = console;
 
         /**
+        * Listen on port 9001
+        *
         * REST plugin that provides phonebook functions through the following REST API:
         *
         *     pphonebook/search/:term

@@ -123,6 +123,8 @@ function sendHttp500(resp, err) {
         var logger = console;
 
         /**
+        * Listen on port 9002
+        *
         * REST plugin that provides history functions through the following REST API:
         *
         *     historycall/interval/:exten/:from/:to

@@ -123,6 +123,8 @@ function sendHttp500(resp, err) {
         var logger = console;
 
         /**
+        * Listen on port 9003
+        *
         * REST plugin that provides customer card functions through the following REST API:
         *
         *     custcard/getbynum/:number

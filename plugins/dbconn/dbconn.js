@@ -377,6 +377,7 @@ function getHistoryCallInterval(data, cb) {
             data.exten = '%' + data.exten + '%';
         }
 
+        // search
         models[INI_SECTION.HISTORY_CALL].findAll({
             where: [
                 '(channel LIKE ? OR dstchannel LIKE ?) AND' +
