@@ -48,11 +48,11 @@ module.exports = function (options, imports, register) {
             getHistoryCallInterval: dbconn.getHistoryCallInterval,
 
             /**
-            * It's the _getCustomerCard_ method provided by _dbconn_ module.
+            * It's the _getCustomerCardByNum_ method provided by _dbconn_ module.
             *
-            * @method getCustomerCard
+            * @method getCustomerCardByNum
             */
-            getCustomerCard: dbconn.getCustomerCard
+            getCustomerCardByNum: dbconn.getCustomerCardByNum
         }
     });
 

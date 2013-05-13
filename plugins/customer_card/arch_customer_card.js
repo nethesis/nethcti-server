@@ -27,11 +27,11 @@ module.exports = function (options, imports, register) {
     register(null, {
         customerCard: {
             /**
-            * It's the _..._ method provided by _customer_card_ module.
+            * It's the _getCustomerCardByNum_ method provided by _customer\_card_ module.
             *
-            * @method ...
+            * @method getCustomerCardByNum
             */
-            //...: customerCard....
+            getCustomerCardByNum: customerCard.getCustomerCardByNum
         }
     });
 

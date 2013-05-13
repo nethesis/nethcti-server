@@ -420,13 +420,13 @@ function getHistoryCallInterval(data, cb) {
 * database specified into the section of one of the _/etc/nethcti/dbstatic.ini_
 * or _/etc/nethcti/dbdynamic.ini_ files.
 *
-* @method getCustomerCard
+* @method getCustomerCardByNum
 * @param {string} type The type of the customer card to retrieve
 * @param {string} num The phone number used to search in _channel_ and _dstchannel_ mysql
 *                     fields. It is used to filter. It is preceded by '%' character
 * @param {function} cb The callback function
 */
-function getCustomerCard(type, num, cb) {
+function getCustomerCardByNum(type, num, cb) {
     try {
         // check parameters
         if (typeof type   !== 'string'
@@ -474,4 +474,5 @@ exports.config                 = config;
 exports.setLogger              = setLogger;
 exports.savePostit             = savePostit;
 exports.getPhonebookContacts   = getPhonebookContacts;
+exports.getCustomerCardByNum   = getCustomerCardByNum;
 exports.getHistoryCallInterval = getHistoryCallInterval;

@@ -24,7 +24,7 @@ var IDLOG = '[plugins_rest/custcard]';
 * @type object
 * @private
 */
-var compPhonebook;
+var compCustomerCard;
 
 /**
 * Set the logger to be used.
@@ -153,7 +153,7 @@ function sendHttp500(resp, err) {
             },
 
             /**
-            * Search the customer card by number for the following REST API:
+            * Search the customer card by number with the following REST API:
             *
             *     getbynum/:number
             *
@@ -165,16 +165,13 @@ function sendHttp500(resp, err) {
             getbynum: function (req, res, next) {
                 try {
 
-                    console.log("\n\neccoci");
-                    console.log(req.params);
-                    return;
-                    // use phonebook component
-                    compPhonebook.getPhonebookContacts(req.params.term, function (err, results) {
+                    // use customer card component
+                    compCustomerCard.getCustomerCardByNum('214', req.params.number, function (err, results) {
 
                         if (err) { sendHttp500(res, err.toString()); }
 
                         else {
-                            logger.info(IDLOG, 'send ' + results.length + ' results searching ' + req.params.term + ' in centralized phonebook');
+                            logger.info(IDLOG, 'send ' + results.length + ' results searching customer card by number ' + req.params.number);
                             res.send(200, results);
                         }
                     });

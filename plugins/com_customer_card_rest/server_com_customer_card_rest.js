@@ -12,7 +12,7 @@
 * @class server_com_customer_card_rest
 */
 var restify = require('restify');
-var plugins = require('jsplugs')().require('./plugins/com_phonebook_rest/plugins_rest');
+var plugins = require('jsplugs')().require('./plugins/com_customer_card_rest/plugins_rest');
 
 /**
 * The module identifier used by the logger.

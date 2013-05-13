@@ -86,6 +86,31 @@ function setDbconn(dbconnMod) {
     }
 }
 
+/**
+* Gets the enabled customer cards by number.
+*
+* @method getCustomerCardByNum
+* @param {string} user The username of the client that has made the request
+* @param {string} num The number to search the customer cards.
+* @param {function} cb The callback function
+*/
+function getCustomerCardByNum(user, num, cb) {
+    try {
+        // check parameters
+        if (typeof num !== 'string' || typeof cb !== 'function') {
+
+            throw new Error('wrong parameters');
+        }
+
+        logger.info(IDLOG, 'search customer card by number ' + num + ' by means dbconn module');
+        dbconn.getCustomerCardByNum('identity', num, cb);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
 // public interface
-exports.setLogger = setLogger;
-exports.setDbconn = setDbconn;
+exports.setLogger            = setLogger;
+exports.setDbconn            = setDbconn;
+exports.getCustomerCardByNum = getCustomerCardByNum;
