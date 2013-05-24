@@ -1,4 +1,9 @@
 {
-   my $prefix = $proxycti{prefix} || "";
+   my $prefix = "";
+
+   if (defined $proxycti{prefix} && $proxycti{prefix} eq "0") {
+      $prefix = "0";
+   }
+
    $OUT.="prefix=$prefix";
 }
