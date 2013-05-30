@@ -29,6 +29,15 @@ exports.User = function (name) {
     var username = name;
 
     /**
+    * The user authorizations.
+    *
+    * @property authorizations
+    * @private
+    * @default {}
+    */
+    var authorizations = {};
+
+    /**
     * The extension endpoints of the user. The keys are the endpoint
     * identifier and the value is the endpoint object.
     *
@@ -87,6 +96,14 @@ exports.User = function (name) {
     function getUsername() { return username; }
 
     /**
+    * Return all the user authorizations.
+    *
+    * @method getAllAuthorizations
+    * @return {object} All the user authorizations.
+    */
+    function getAllAuthorizations() { return authorizations; }
+
+    /**
     * Add an endpoint. Actually the _obj_ object passed is
     * empty, but it maybe used in the future. The function
     * assumes that the specified endpoint type is valid. 
@@ -136,6 +153,36 @@ exports.User = function (name) {
     }
 
     /**
+    * Sets an authorization.
+    *
+    * @method setAuthorization
+    * @param {string} type The type of the authorization
+    * @param {string|array} value The value of the autorization. It can be "true" or "false"
+    *                              or an array of value as in the case of customer card or
+    *                              streaming authorizations.
+    */
+    function setAuthorization(type, value) {
+        // check parameters
+        if (typeof type !== 'string' || value === undefined) {
+            throw new Error('wrong parameters');
+        }
+
+        if (value === 'true') {
+            authorizations[type] = true;
+
+        } else if (value === 'false') {
+            authorizations[type] = false;
+
+        } else {
+            authorizations[type] = {};
+            var i;
+            for (i = 0; i < value.length; i++) {
+                authorizations[type][value[i]] = true;
+            }
+        }
+    }
+
+    /**
     * Return the readable string of the user.
     *
     * @method toString
@@ -161,9 +208,11 @@ exports.User = function (name) {
 
     // public interface
     return {
-        toJSON:      toJSON,
-        toString:    toString,
-        getUsername: getUsername,
-        addEndpoint: addEndpoint
+        toJSON:               toJSON,
+        toString:             toString,
+        getUsername:          getUsername,
+        addEndpoint:          addEndpoint,
+        setAuthorization:     setAuthorization,
+        getAllAuthorizations: getAllAuthorizations
     };
 }
