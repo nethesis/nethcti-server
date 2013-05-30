@@ -1,0 +1,9 @@
+{
+    "name": "authorization",
+    "main": "arch_authorization.js",
+    "private": true,
+    "plugin": {
+        "consumes": ["logger", "user"],
+        "provides": ["authorization"]
+    }
+}

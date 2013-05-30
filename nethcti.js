@@ -7,6 +7,8 @@ try{
     // architect components
     var config = [
         { packagePath: "./plugins/logger"                 },
+        { packagePath: "./plugins/user"                   },
+        { packagePath: "./plugins/authorization"          },
         { packagePath: "./plugins/authentication"         },
         { packagePath: "./plugins/dbconn"                 },
         { packagePath: "./plugins/ast_proxy"              },
