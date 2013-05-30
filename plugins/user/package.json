@@ -1,0 +1,9 @@
+{
+    "name": "user",
+    "main": "arch_controller_user.js",
+    "private": true,
+    "plugin": {
+        "consumes": ["logger"],
+        "provides": ["user"]
+    }
+}
