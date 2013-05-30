@@ -46,10 +46,10 @@ exports.Postit = function (msg, creat, rec) {
     var recipient = rec;
 
     /**
-    * Return the readable string of the extension.
+    * Return the readable string of the post-it.
     *
     * @method toString
-    * @return {string} The readable description of the extension
+    * @return {string} The readable description of the post-it
     */
     function toString() { return 'post-it by ' + creator + ' to recipient ' + recipient; }
 
