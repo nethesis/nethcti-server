@@ -24,11 +24,21 @@ module.exports = function (options, imports, register) {
     register(null, {
         user: {
             /**
-            * It's the _.._ method provided by _controller\_user_ module.
+            * It's the _on_ method provided by _controller\_user_ module.
             *
-            * @method ...
+            * @method on
+            * @param {string} type The name of the event
+            * @param {function} cb The callback to execute in response to the event
+            * @return {object} A subscription handle capable of detaching that subscription
             */
-            //..: controllerUser...
+            on: controllerUser.on,
+
+            /**
+            * It's the _setAuthorizationToUser_ method provided by _controller\_user_ module.
+            *
+            * @method setAuthorizationToUser
+            */
+            setAuthorization: controllerUser.setAuthorization
         }
     });
 
@@ -37,7 +47,7 @@ module.exports = function (options, imports, register) {
         if (imports.logger) { logger = imports.logger; }
 
         controllerUser.setLogger(logger);
-        controllerUser.config({ type: 'file', path: '/etc/nethcti/user.json' });
+        controllerUser.config({ type: 'file', path: '/etc/nethcti/users.json' });
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
