@@ -1,10 +1,9 @@
 /**
-* Provides authentication functions through REST API.
+* Provides authentication functions through HTTPS REST API.
 *
 * @module com_authe_rest
 * @submodule plugins_rest
 */
-var crypto = require('crypto');
 
 /**
 * The module identifier used by the logger.
@@ -17,6 +16,16 @@ var crypto = require('crypto');
 * @default [plugins_rest/pauthe]
 */
 var IDLOG = '[plugins_rest/pauthe]';
+
+/**
+* The logger. It must have at least three methods: _info, warn and error._
+*
+* @property logger
+* @type object
+* @private
+* @default console
+*/
+var logger = console;
 
 /**
 * The authentication architect component used for authentication.
@@ -32,7 +41,7 @@ var compAuthe;
 *
 * @method setLogger
 * @param {object} log The logger object. It must have at least
-* three methods: _info, warn and error_ as console object.
+*                     three methods: _info, warn and error_ as console object.
 * @static
 */
 function setLogger(log) {
@@ -54,7 +63,7 @@ function setLogger(log) {
 }
 
 /**
-* Set authentication architect component used by authentication.
+* Set the authentication architect component used by authentication.
 *
 * @method setCompAuthentication
 * @param {object} ca The authentication architect component _arch\_authentication_.
@@ -107,28 +116,15 @@ function sendHttp401(resp) {
 (function(){
     try {
         /**
-        * The logger. It must have at least three methods: _info, warn and error._
-        *
-        * @property logger
-        * @type object
-        * @private
-        * @default console
-        */
-        var logger = console;
-
-        /**
-        * Listen on port 9000
+        * Listen on port 9000.
         *
         * REST plugin that provides authentication functions through the following REST API:
         *
-        *     pauthe/authe/:accessKeyId
+        *     pauthe/authenticate/:username/:password
         *
-        * The client receive an HTTP 401 response with an HMAC-SHA1 _nonce_ in the WWW-Authenticate header.
-        * The _nonce_ is used to construct the token for the authentication.
-        *
-        *     pauthe/authe/:accessKeyId/:token
-        *
-        * The client requested an authentication with the created _token._
+        * If the user is successfully authenticated, he receives an HTTP 401 response with an
+        * HMAC-SHA1 _nonce_ in the WWW-Authenticate header. The _nonce_ is then used by the client
+        * to construct the token for the next authentications.
         *
         * @class pauthe
         * @static
@@ -145,16 +141,13 @@ function sendHttp401(resp) {
                 * @property post
                 * @type {array}
                 *
-                *   @param {string} authe/:accessKeyId To get an HTTP 401 response
-                *   with _nonce_ in WWW-Authenticate header. The nonce is used to
-                *   construct the token for the authentication.
-                *
-                *   @param {string} authe/:accessKeyId/:token Authenticate with
-                *   created _token._
+                *   @param {string} authenticate/:username/:password Authenticate with username
+                *       and password and if it goes well the client receive an HTTP 401 response
+                *       with _nonce_ in WWW-Authenticate header. The nonce is used to construct
+                *       the token for the next authentications.
                 */
                 'post': [
-                    'authe/:accessKeyId',
-                    'authe/:accessKeyId/:token'
+                    'authenticate/:username/:password'
                 ],
                 'head': [],
                 'del' : []
@@ -163,46 +156,42 @@ function sendHttp401(resp) {
             /**
             * Provides the authentication functions for the following REST API:
             *
-            *     authe/:accessKeyId
-            *     authe/:accessKeyId/:token
+            *     authenticate/:username/:password
             *
-            * @method authe
+            * @method authenticate
             * @param {object} req The client request.
             * @param {object} res The client response.
             * @param {function} next Function to run the next handler in the chain.
             */
-            authe: function (req, res, next) {
+            authenticate: function (req, res, next) {
                 try {
-                    // get parameters
-                    var accessKeyId = req.params.accessKeyId;
+                    var username = req.params.username;
+                    var password = req.params.password;
 
-                    // checks the existence of the account for the accessKeyId
-                    if (compAuthe.accountExists(accessKeyId) !== true) {
-                        sendHttp401(res); // authentication failed
-                        return;
-                    }
+                    compAuthe.authenticate(username, password, function (err) {
+                        try {
+                            if (err) {
+                                logger.warn(IDLOG, 'authentication failed for user "' + username + '"');
+                                sendHttp401(res);
+                                return;
 
-                    var token = req.params.token ? req.params.token : undefined;
-
-                    if (!token) { // send 401 response with nonce into the http header
-                        var nonce = compAuthe.getNonce(accessKeyId);
-                        sendHttp401Nonce(res, nonce);
-
-                    } else if (compAuthe.authenticate(accessKeyId, token)) { // authentication ok
-                        logger.info(IDLOG, 'response with successfully authentication');
-                        res.send({ result: true });
-
-                    } else { // authentication failed
-                        sendHttp401(res);
-                    }
+                            } else {
+                                logger.info(IDLOG, 'user "' + username + '" has been successfully authenticated');
+                                var nonce = compAuthe.getNonce(username, password);
+                                sendHttp401Nonce(res, nonce);
+                            }
+                        } catch (err) {
+                            logger.error(IDLOG, err.stack);
+                        }
+                    });
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
                 }
             }
         }
         exports.api                   = pauthe.api;
-        exports.authe                 = pauthe.authe;
         exports.setLogger             = setLogger;
+        exports.authenticate          = pauthe.authenticate;
         exports.setCompAuthentication = setCompAuthentication;
 
     } catch (err) {

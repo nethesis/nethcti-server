@@ -4,7 +4,7 @@
 * @class arch_authentication
 * @module authentication
 */
-var authentication = require('./authentication');
+var authentication = require('./authenticationLDAP');
 
 /**
 * The module identifier used by the logger.
@@ -27,12 +27,12 @@ module.exports = function (options, imports, register) {
     register(null, {
         authentication: {
             /**
-            * It's the _authenticate_ method provided by _authenticaion_ module.
+            * It's the _authenticate_ method provided by _authentication_ module.
             *
             * @method authenticate
-            * @param {string} accessKeyId The access key used to retrieve secret key and token.
-            * @param {string} token The token to be checked.
-            * @return {boolean} It's true if the user has been successfully authenticated.
+            * @param {string} accessKeyId The access key used to authenticate, e.g. the username
+            * @param {string} password The password of the account
+            * @param {function} cb The callback function
             */
             authenticate: authentication.authenticate,
 
@@ -40,7 +40,8 @@ module.exports = function (options, imports, register) {
             * It's the _getNonce_ method provided by _authentication_ module.
             *
             * @method getNonce
-            * @param {string} accessKeyId The access key used to create the token.
+            * @param {string} accessKeyId The access key identifier used to create the token.
+            * @param {string} password The password of the account
             * @return {string} The SHA1 nonce.
             */
             getNonce: authentication.getNonce,
@@ -59,22 +60,13 @@ module.exports = function (options, imports, register) {
             * @method isAutoUpdateTokenExpires
             * @return {boolean} True if the automatic update is active.
             */
-            isAutoUpdateTokenExpires: authentication.isAutoUpdateTokenExpires,
-
-            /**
-            * It's the _accountExists_ method provided by _authentication_ module.
-            *
-            * @method accountExists
-            * @return {boolean} True if the account exists.
-            */
-            accountExists: authentication.accountExists
+            isAutoUpdateTokenExpires: authentication.isAutoUpdateTokenExpires
         }
     });
 
     try {
         authentication.setLogger(logger);
-        authentication.config('/etc/asterisk/sip_additional.conf');
-        authentication.config('/etc/asterisk/iax_additional.conf');
+        authentication.config('/etc/nethcti/authentication.ini');
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }

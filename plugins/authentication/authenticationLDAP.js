@@ -1,18 +1,18 @@
 /**
-* Provides the authentication functions. Once the user has taken
-* the nonce, he must create the token and use it to authenticate.
+* Provides the authentication functions by LDAP.
 *
 * @module authentication
 * @main authentication
 */
 
 /**
-* Provides the authentication functions.
+* Provides the authentication functions by LDAP.
 *
-* @class authentication
+* @class authenticationLDAP
 * @static
 */
 var fs        = require('fs');
+var ldap      = require('ldapjs');
 var crypto    = require('crypto');
 var iniparser = require('iniparser');
 
@@ -24,9 +24,9 @@ var iniparser = require('iniparser');
 * @private
 * @final
 * @readOnly
-* @default [authentication]
+* @default [authenticationLDAP]
 */
-var IDLOG = '[authentication]';
+var IDLOG = '[authenticationLDAP]';
 
 /**
 * The logger. It must have at least three methods: _info, warn and error._
@@ -39,14 +39,49 @@ var IDLOG = '[authentication]';
 var logger = console;
 
 /**
-* Contains the credentials of all extensions. The keys
-* correspond to extension number and the values to passwords.
+* The LDAP organizational unit.
 *
-* @property creds
+* @property ou
+* @type {string}
+* @private
+*/
+var ou;
+
+/**
+* The LDAP domain component 1. E.g. ...nethesis...
+*
+* @property dc1
+* @type {string}
+* @private
+*/
+var dc1;
+
+/**
+* The LDAP domain component 2. E.g. ...it
+*
+* @property dc2
+* @type {string}
+* @private
+*/
+var dc2;
+
+/**
+* The LDAP client.
+*
+* @property client
 * @type {object}
 * @private
 */
-var creds = {};
+var client;
+
+/**
+* The server address.
+*
+* @property server
+* @type {string}
+* @private
+*/
+var server;
 
 /**
 * The token expiration expressed in milliseconds.
@@ -107,36 +142,44 @@ function setLogger(log) {
 }
 
 /**
-* Set configuration to use and initialize the user credentials.
+* It reads the authentication configuration file and initialize
+* the LDAP client.
 *
 * **The method can throw an Exception.**
 *
 * @method config
-* @param {string} path Credentials ini file path. The file must
-* have the extension number as section and a secret key for each
-* section.
+* @param {string} path The configuration file
 */
 function config(path) {
     // check parameter
-    if (typeof path === 'string') {
+    if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
 
-        // check file presence
-        if (!fs.existsSync(path)) { throw new Error(path + ' not exists'); }
+    // check file presence
+    if (!fs.existsSync(path)) { throw new Error(path + ' not exists'); }
 
-        // read credential file
-        var ini = iniparser.parseSync(path);
-        var key;
+    // read configuration file
+    var ini = iniparser.parseSync(path);
 
-        // initialize credentials
-        for (key in ini) {
-            creds[key] = ini[key].secret;
-        }
+    // check the file content
+    if (ini.AUTHENTICATION.type !== 'ldap'
+        || ini.AUTHENTICATION.ou     === undefined || ini.AUTHENTICATION.ou     === ''
+        || ini.AUTHENTICATION.dc1    === undefined || ini.AUTHENTICATION.dc1    === ''
+        || ini.AUTHENTICATION.dc2    === undefined || ini.AUTHENTICATION.dc2    === ''
+        || ini.AUTHENTICATION.server === undefined || ini.AUTHENTICATION.server === '') {
 
-        logger.info(IDLOG, 'configuration ok');
-
-    } else {
-        throw new TypeError('wrong parameter');
+        throw new Error('wrong LDAP configuration file ' + path);
     }
+    ou     = ini.AUTHENTICATION.ou;
+    dc1    = ini.AUTHENTICATION.dc1;
+    dc2    = ini.AUTHENTICATION.dc2;
+    server = ini.AUTHENTICATION.server;
+
+    // create ldap client
+    client = ldap.createClient({
+        url: 'ldap://' + server
+    });
+    logger.info(IDLOG, 'LDAP client created');
+    logger.info(IDLOG, 'LDAP configuration by file ' + path + ' ended');
 }
 
 /**
@@ -145,22 +188,24 @@ function config(path) {
 * the _creds_ property.
 *
 * @method newToken
-* @param {string} accessKeyId The key used to get the secret key and to store
-* the grant.
+* @param {string} accessKeyId The access key identifier, e.g. the username
+* @param {string} password The password of the account
 * @param {string} nonce Used to create the HMAC-SHA1 token.
 * @private
 */
-function newToken(accessKeyId, nonce) {
+function newToken(accessKeyId, password, nonce) {
     try {
         // check parameters
-        if (typeof accessKeyId !== 'string' || typeof nonce !== 'string') {
+        if (typeof accessKeyId !== 'string'
+            || typeof nonce    !== 'string'
+            || typeof password !== 'string') {
 
             throw new Error('wrong parameters');
         }
 
         // generate token HMAC-SHA1
-        var tohash = accessKeyId + ':' + creds[accessKeyId] + ':' + nonce;
-        var token  = crypto.createHmac('sha1', creds[accessKeyId]).update(tohash).digest('hex');
+        var tohash = accessKeyId + ':' + password + ':' + nonce;
+        var token  = crypto.createHmac('sha1', password).update(tohash).digest('hex');
 
         // store token
         grants[accessKeyId] = {
@@ -180,21 +225,24 @@ function newToken(accessKeyId, nonce) {
 * Creates an SHA1 nonce to be used in the authentication.
 *
 * @method getNonce
-* @param {string} accessKeyId The access key used to create the token.
+* @param {string} accessKeyId The access key identifier used to create the token.
+* @param {string} password The password of the account
 * @return {string} The SHA1 nonce.
 */
-function getNonce(accessKeyId) {
+function getNonce(accessKeyId, password) {
     try {
-        // check parameter
-        if (typeof accessKeyId !== 'string') { throw new Error('wrong parameter'); }
+        // check parameters
+        if (typeof accessKeyId !== 'string' || typeof password !== 'string') {
+            throw new Error('wrong parameters');
+        }
 
         // generate SHA1 nonce
         var random = crypto.randomBytes(256) + (new Date()).getTime();
         var shasum = crypto.createHash('sha1');
-        var nonce = shasum.update(random).digest('hex');
+        var nonce  = shasum.update(random).digest('hex');
 
         // create new token
-        newToken(accessKeyId, nonce);
+        newToken(accessKeyId, password, nonce);
 
         logger.info(IDLOG, 'nonce has been generated for accessKeyId ' + accessKeyId);
         return nonce;
@@ -205,48 +253,58 @@ function getNonce(accessKeyId) {
 }
 
 /**
-* Authenticate the user through checking the token with the one 
-* that must be present in the _grants_ object. The _getNonce_ method
-* must be used before this.
+* Authenticate the user by LDAP bind operation. 
 *
 * @method authenticate
-* @param {string} accessKeyId The access key used to retrieve secret key and token.
-* @param {string} token The token to be checked.
-* @return {boolean} It's true if the user has been authenticated succesfully.
+* @param {string} accessKeyId The access key used to authenticate, e.g. the username
+* @param {string} password The password of the account
+* @param {function} cb The callback function
 */
-function authenticate(accessKeyId, token) {
+function authenticate(accessKeydId, password, cb) {
     try {
         // check parameters
-        if (typeof accessKeyId !== 'string' || typeof token !== 'string') {
+        if (typeof cb !== 'function'
+            || typeof password     !== 'string'
+            || typeof accessKeydId !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+        var dn = 'uid=' + accessKeydId + ',ou=' + ou + ',dc=' + dc1 + ',dc=' + dc2;
+
+        // ldap authentication
+        client.bind(dn, password, function (err, result) {
+            bindCb(accessKeydId, err, result, cb);
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* It's the callback of ldap bind operation.
+*
+* @method bindCb
+* @param {string} accessKeydId The access key used for authentication
+* @param {object} err The error response. If the bind is successfull it is null
+* @param {object} result The result of the bind operation
+* @param {function} cb The callback function
+* @private
+*/
+function bindCb(accessKeydId, err, result, cb) {
+    try {
+        // check parameters
+        if(typeof accessKeydId !== 'string' || typeof cb !== 'function') {
             throw new Error('wrong parameters');
         }
 
-        if (!creds[accessKeyId] // the user's credentials don't exist
-            || !grants[accessKeyId]) { // the permission token don't exist
+        if (err) {
+            logger.warn(IDLOG, 'authentication failed for user "' + accessKeydId + '"');
+            cb(err);
 
-            logger.warn(IDLOG, 'authentication failed for accessKeyId: "' + accessKeyId + '": no cred or grant');
-            return false;
+        } else {
+            logger.info(IDLOG, 'user "' + accessKeydId + '" has been successfully authenticated');
+            cb(null);
         }
-
-        // check the equality of the tokens
-        if (grants[accessKeyId].token !== token) {
-            logger.warn(IDLOG, 'authentication failed for accessKeyId "' + accessKeyId + '": wrong token');
-            return false;
-        }
-
-        // check the expiration of the token
-        if ((new Date()).getTime() > grants[accessKeyId].expires) {
-            removeGrant(accessKeyId); // remove the grant
-            logger.info(IDLOG, 'the token has expired for accessKeyId ' + accessKeyId);
-            return false;
-        }
-
-        // check whether update token expiration value
-        if (autoUpdateTokenExpires) { updateTokenExpires(accessKeyId); }
-
-        logger.info(IDLOG, 'accessKeyId "' + accessKeyId + '" has been successfully authenticated');
-        return true;
-
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -268,15 +326,13 @@ function removeGrant(accessKeyId) {
             delete grants[accessKeyId];
             logger.info(IDLOG, 'removed grant for accessKeyId ' + accessKeyId);
         }
-
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
 }
 
 /**
-* Update the expiration of the token relative to the
-* passed access key.
+* Update the expiration of the token relative to the access key.
 *
 * @method updateTokenExpires
 * @param {string} accessKeyId The access key relative to the token
@@ -309,31 +365,10 @@ function isAutoUpdateTokenExpires() {
     catch (err) { logger.error(IDLOG, err.stack); }
 }
 
-/**
-* Check if the account exists.
-*
-* @method accountExists
-* @param {string} accessKeyId The user to check the account existence
-* @return {boolean} True if the account exists.
-*/
-function accountExists(accessKeyId) {
-    try {
-        if (creds[accessKeyId] !== undefined) {
-            return true;
-
-        } else {
-            return false;
-        }
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
 // public interface
 exports.config        = config;
 exports.getNonce      = getNonce;
 exports.setLogger     = setLogger;
 exports.removeGrant   = removeGrant;
 exports.authenticate  = authenticate;
-exports.accountExists = accountExists
 exports.isAutoUpdateTokenExpires = isAutoUpdateTokenExpires;

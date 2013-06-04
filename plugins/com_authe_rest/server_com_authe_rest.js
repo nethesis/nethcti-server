@@ -1,5 +1,5 @@
 /**
-* Provides the REST server for authentication functions using
+* Provides the HTTPS REST server for authentication functions using
 * _authentication_ component.
 *
 * @module com_authe_rest
@@ -7,10 +7,12 @@
 */
 
 /**
-* Provides the REST server.
+* Provides the HTTPS REST server.
 *
 * @class server_com_authe_rest
 */
+var fs      = require('fs');
+var https   = require('https');
 var restify = require('restify');
 var plugins = require('jsplugs')().require('./plugins/com_authe_rest/plugins_rest');
 
@@ -37,7 +39,7 @@ var IDLOG = '[server_com_authe_rest]';
 var logger = console;
 
 /**
-* Listening port of the REST server.
+* Listening port of the HTTPS REST server.
 *
 * @property PORT
 * @type number
@@ -45,6 +47,26 @@ var logger = console;
 * @default 9000
 */
 var PORT = 9000;
+
+/**
+* The path of the certificate to be used by HTTPS server.
+*
+* @property HTTPS_CERT
+* @type string
+* @private
+* @default "/etc/pki/tls/certs/localhost.crt"
+*/
+var HTTPS_CERT = '/etc/pki/tls/certs/localhost.crt';
+
+/**
+* The path of key to be used by HTTPS server.
+*
+* @property HTTPS_KEY
+* @type string
+* @private
+* @default "/etc/pki/tls/private/localhost.key"
+*/
+var HTTPS_KEY = '/etc/pki/tls/private/localhost.key';
 
 /**
 * Set the logger to be used.
@@ -120,7 +142,7 @@ function execute(req, res, next) {
 }
 
 /**
-* Start the REST server.
+* Start the HTTPS REST server.
 *
 * @method start
 * @static
@@ -130,13 +152,17 @@ function start() {
         var p, root, get, post, k;
 
         /**
-        * The REST server.
+        * The HTTPS REST server.
         *
         * @property server
         * @type {object}
         * @private
         */
-        var server = restify.createServer();
+        var options = {
+            key:         fs.readFileSync(HTTPS_KEY),
+            certificate: fs.readFileSync(HTTPS_CERT)
+        };
+        var server = restify.createServer(options);
 
         // set the middlewares to use
         server.use(restify.acceptParser(server.acceptable));
