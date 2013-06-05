@@ -166,7 +166,40 @@ function initializeAuthorizationUsersByJSON(json) {
     }
 }
 
+/**
+* Return true if the specified user has the phonebook authorization.
+*
+* @method authorizePhonebookUser
+* @param {string} username The username
+* @return {boolean} True if the user has the phonebook authorization.
+*/
+function authorizePhonebookUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        // get phonebook authorization from the user
+        var autho = userMod.getAuthorization(username, authorizationTypes.TYPES.phonebook);
+
+        // check the type of the authorization. It must be a boolean value
+        if (typeof autho[authorizationTypes.TYPES.phonebook] === 'boolean') {
+
+            // return the phonebook authorization
+            return autho[authorizationTypes.TYPES.phonebook];
+
+        } else { // in all other case returns false for security reasons
+            return false;
+        }
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
 // public interface
 exports.config        = config;
 exports.setLogger     = setLogger;
 exports.setUserModule = setUserModule;
+exports.authorizePhonebookUser = authorizePhonebookUser;

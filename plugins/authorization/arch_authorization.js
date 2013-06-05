@@ -4,7 +4,8 @@
 * @class arch_authorization
 * @module authorization
 */
-var authorization = require('./authorization');
+var authorization      = require('./authorization');
+var authorizationTypes = require('./authorization_types');
 
 /**
 * The module identifier used by the logger.
@@ -27,13 +28,13 @@ module.exports = function (options, imports, register) {
     register(null, {
         authorization: {
             /**
-            * It's the _.._ method provided by _authorization_ module.
+            * It's the _authorizePhonebookUser_ method provided by _authorization_ module.
             *
-            * @method ..
-            ............
-            * @return {boolean} It's true if the user has been successfully authenticated.
+            * @method authorizePhonebookUser
+            * @param {string} username The username
+            * @return {boolean} True if the user has the phonebook authorization.
             */
-            //..: authorization...
+            authorizePhonebookUser: authorization.authorizePhonebookUser
         }
     });
 

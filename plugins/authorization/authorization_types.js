@@ -14,19 +14,19 @@
 * @default 
 */
 var AUTHORIZATION_TYPES = {
-    'sms':                 '',
-    'call':                '',
-    'chat':                '',
-    'privacy':             '',
-    'redirect':            '',
-    'phonebook':           '',
-    'recording':           '',
-    'voicemail':           '',
-    'streaming':           '',
-    'customer_card':       '',
-    'user_settings':       '',
-    'operator_panel':      '',
-    'switchboard_history': ''
+    'sms':                 'sms',
+    'call':                'call',
+    'chat':                'chat',
+    'privacy':             'privacy',
+    'redirect':            'redirect',
+    'phonebook':           'phonebook',
+    'recording':           'recording',
+    'voicemail':           'voicemail',
+    'streaming':           'streaming',
+    'customer_card':       'customer_card',
+    'user_settings':       'user_settings',
+    'operator_panel':      'operator_panel',
+    'switchboard_history': 'switchboard_history'
 }
 
 /**
@@ -51,4 +51,5 @@ function isValidAuthorizationType(type) {
 }
 
 // public interface
+exports.TYPES                    = AUTHORIZATION_TYPES;
 exports.isValidAuthorizationType = isValidAuthorizationType;
