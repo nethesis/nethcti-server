@@ -172,7 +172,7 @@ function config(path) {
     var json = require(path);
 
     // initialize the port of the REST server
-    if (json.history.port) {
+    if (json.history && json.history.port) {
         port = json.history.port;
 
     } else {
@@ -180,7 +180,7 @@ function config(path) {
     }
 
     // initialize the address of the REST server
-    if (json.history.address) {
+    if (json.history && json.history.address) {
         address = json.history.address;
 
     } else {

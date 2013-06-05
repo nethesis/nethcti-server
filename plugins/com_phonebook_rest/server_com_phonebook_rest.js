@@ -173,7 +173,7 @@ function config(path) {
     var json = require(path);
 
     // initialize the port of the REST server
-    if (json.phonebook.port) {
+    if (json.phonebook && json.phonebook.port) {
         port = json.phonebook.port;
 
     } else {
@@ -181,7 +181,7 @@ function config(path) {
     }
 
     // initialize the address of the REST server
-    if (json.phonebook.address) {
+    if (json.phonebook && json.phonebook.address) {
         address = json.phonebook.address;
 
     } else {
