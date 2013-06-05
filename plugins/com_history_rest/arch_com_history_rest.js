@@ -27,6 +27,7 @@ module.exports = function (options, imports, register) {
 
     try {
         serverRest.setLogger(logger);
+        serverRest.config('/etc/nethcti/rest.json');
         serverRest.setCompHistory(imports.history);
         serverRest.start();
     } catch (err) {
