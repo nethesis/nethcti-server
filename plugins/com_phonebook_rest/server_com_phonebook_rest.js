@@ -60,6 +60,15 @@ var port = "9001";
 var address = "localhost";
 
 /**
+* The architect component to be used for authorization.
+*
+* @property compAuthorization
+* @type object
+* @private
+*/
+var compAuthorization;
+
+/**
 * Set the logger to be used.
 *
 * @method setLogger
@@ -112,6 +121,23 @@ function setAllRestPluginsLogger(log) {
 }
 
 /**
+* Send HTTP 401 unauthorized response.
+*
+* @method sendHttp401
+* @param {object} resp The client response object.
+* @private
+*/
+function sendHttp401(resp) {
+    try {
+        resp.writeHead(401);
+        logger.info(IDLOG, 'send HTTP 401 response to ' + resp.connection.remoteAddress);
+        resp.end();
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Executed by all REST request. It calls the appropriate REST plugin function.
 *
 * @method execute
@@ -123,8 +149,18 @@ function execute(req, res, next) {
         var p    = tmp[1];
         var name = tmp[2];
 
-        logger.info(IDLOG, 'execute: ' + p + '.' + name);
-        plugins[p][name].apply(plugins[p], [req, res, next]);
+        // check authorization
+        var username = req.headers.authorization_user;
+        if (compAuthorization.authorizePhonebookUser(username) === true) {
+
+            logger.info(IDLOG, 'phonebook authorization successfully for user "' + username + '"');
+            logger.info(IDLOG, 'execute: ' + p + '.' + name);
+            plugins[p][name].apply(plugins[p], [req, res, next]);
+
+        } else { // authorization failed
+            logger.warn(IDLOG, 'phonebook authorization failed for user "' + username + '"!');
+            sendHttp401(res);
+        }
         return next();
 
     } catch (err) {
@@ -147,6 +183,26 @@ function setCompPhonebook(compPhonebook) {
         var p;
         // set phonebook architect component to all REST plugins
         for (p in plugins) { plugins[p].setCompPhonebook(compPhonebook); }
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Set the authorization architect component.
+*
+* @method setCompAuthorization
+* @param {object} ca The architect authorization component
+* @static
+*/
+function setCompAuthorization(ca) {
+    try {
+        // check parameter
+        if (typeof ca !== 'object') { throw new Error('wrong parameter'); }
+
+        compAuthorization = ca;
+        logger.log(IDLOG, 'authorization component has been set');
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -243,7 +299,8 @@ function start() {
 }
 
 // public interface
-exports.start            = start;
-exports.config           = config;
-exports.setLogger        = setLogger;
-exports.setCompPhonebook = setCompPhonebook;
+exports.start     = start;
+exports.config    = config;
+exports.setLogger = setLogger;
+exports.setCompPhonebook     = setCompPhonebook;
+exports.setCompAuthorization = setCompAuthorization;

@@ -243,14 +243,19 @@ function proxyRequest(req, res, proxy) {
         }
 
         // no token is present
-        if (req.headers.authentication === undefined) {
+        if (req.headers.authorization === undefined) {
             sendHttp401(res);
             return;
         }
 
         // check authentication
-        var arr = req.headers.authentication.split(':');
+        var arr = req.headers.authorization.split(':');
         if (compAuthentication.verifyToken(arr[0], arr[1]) === true) {
+
+            // add header used by the authorization module
+            req.headers.authorization_user = arr[0];
+
+            // proxy the request
             proxy.proxyRequest(req, res);
 
         } else { // authentication failed

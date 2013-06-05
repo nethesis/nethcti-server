@@ -3,7 +3,11 @@
     "main": "arch_com_phonebook_rest.js",
     "private": true,
     "plugin": {
-        "consumes": [ "logger", "phonebook" ],
+        "consumes": [
+            "logger",
+            "phonebook",
+            "authorization"
+        ],
         "provides": []
     }
 }
