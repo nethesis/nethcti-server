@@ -27,6 +27,7 @@ module.exports = function (options, imports, register) {
 
     try {
         serverRest.setLogger(logger);
+        serverRest.config('/etc/nethcti/rest.json');
         serverRest.setCompCustomerCard(imports.customerCard);
         serverRest.start();
     } catch (err) {

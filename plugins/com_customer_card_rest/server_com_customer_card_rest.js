@@ -11,6 +11,7 @@
 *
 * @class server_com_customer_card_rest
 */
+var fs      = require('fs');
 var restify = require('restify');
 var plugins = require('jsplugs')().require('./plugins/com_customer_card_rest/plugins_rest');
 
@@ -39,12 +40,23 @@ var logger = console;
 /**
 * Listening port of the REST server.
 *
-* @property PORT
-* @type number
+* @property port
+* @type string
 * @private
-* @default 9003
+* @default "9003"
 */
-var PORT = 9003;
+var port = '9003';
+
+/**
+* Listening address of the REST server. It can be customized by the
+* configuration file.
+*
+* @property address
+* @type string
+* @private
+* @default "localhost"
+*/
+var address = "localhost";
 
 /**
 * Set the logger to be used.
@@ -141,6 +153,43 @@ function setCompCustomerCard(compCustomerCard) {
 }
 
 /**
+* Configurates the REST server properties by a configuration file.
+* The file must use the JSON syntax.
+*
+* **The method can throw an Exception.**
+*
+* @method config
+* @param {string} path The path of the configuration file
+*/
+function config(path) {
+    // check parameter
+    if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
+
+    // check file presence
+    if (!fs.existsSync(path)) { throw new Error(path + ' not exists'); }
+
+    // read configuration file
+    var json = require(path);
+
+    // initialize the port of the REST server
+    if (json.customer_card && json.customer_card.port) {
+        port = json.customer_card.port;
+
+    } else {
+        logger.warn(IDLOG, 'no port has been specified in JSON file ' + path);
+    }
+
+    // initialize the address of the REST server
+    if (json.customer_card && json.customer_card.address) {
+        address = json.customer_card.address;
+
+    } else {
+        logger.warn(IDLOG, 'no address has been specified in JSON file ' + path);
+    }
+    logger.info(IDLOG, 'configuration by file ' + path + ' ended');
+}
+
+/**
 * Start the REST server.
 *
 * @method start
@@ -183,7 +232,7 @@ function start() {
         }
 
         // start the REST server
-        server.listen(PORT, function () {
+        server.listen(port, address, function () {
             logger.info(IDLOG, server.name + ' listening at ' + server.url);
         });
 
@@ -194,5 +243,6 @@ function start() {
 
 // public interface
 exports.start     = start;
+exports.config    = config;
 exports.setLogger = setLogger;
 exports.setCompCustomerCard = setCompCustomerCard;
