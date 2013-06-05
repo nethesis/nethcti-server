@@ -11,6 +11,7 @@
 	"iniparser":    "1.0.5",
 	"architect":    "0.1.8",
 	"socket.io":    "0.9.13",
+        "http-proxy":   "0.10.2",
         "asterisk-ami": "0.0.8"
     },
     "engines": {

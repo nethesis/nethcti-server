@@ -21,7 +21,8 @@ try{
         { packagePath: "./plugins/com_phonebook_rest"     },
         { packagePath: "./plugins/com_history_rest"       },
         { packagePath: "./plugins/com_customer_card_rest" },
-        { packagePath: "./plugins/com_nethcti_ws"         }
+        { packagePath: "./plugins/com_nethcti_ws"         },
+        { packagePath: "./plugins/http_proxy"             }
     ];
 
     var app = architect.resolveConfig(config, __dirname);

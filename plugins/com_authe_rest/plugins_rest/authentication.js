@@ -1,5 +1,5 @@
 /**
-* Provides authentication functions through HTTPS REST API.
+* Provides authentication functions through REST API.
 *
 * @module com_authe_rest
 * @submodule plugins_rest
@@ -13,9 +13,9 @@
 * @private
 * @final
 * @readOnly
-* @default [plugins_rest/pauthe]
+* @default [plugins_rest/authentication]
 */
-var IDLOG = '[plugins_rest/pauthe]';
+var IDLOG = '[plugins_rest/authentication]';
 
 /**
 * The logger. It must have at least three methods: _info, warn and error._
@@ -116,24 +116,22 @@ function sendHttp401(resp) {
 (function(){
     try {
         /**
-        * Listen on port 9000.
-        *
         * REST plugin that provides authentication functions through the following REST API:
         *
-        *     pauthe/authenticate/:username/:password
+        *     authentication/authenticate/:username/:password
         *
         * If the user is successfully authenticated, he receives an HTTP 401 response with an
         * HMAC-SHA1 _nonce_ in the WWW-Authenticate header. The _nonce_ is then used by the client
         * to construct the token for the next authentications.
         *
-        * @class pauthe
+        * @class plugin_rest_authentication
         * @static
         */
-        var pauthe = {
+        var authentication = {
 
             // the REST api
             api: {
-                'root': 'pauthe',
+                'root': 'authentication',
                 'get' : [''],
                 /**
                 * REST API to be requested using HTTP POST request.
@@ -189,9 +187,9 @@ function sendHttp401(resp) {
                 }
             }
         }
-        exports.api                   = pauthe.api;
+        exports.api                   = authentication.api;
         exports.setLogger             = setLogger;
-        exports.authenticate          = pauthe.authenticate;
+        exports.authenticate          = authentication.authenticate;
         exports.setCompAuthentication = setCompAuthentication;
 
     } catch (err) {

@@ -41,12 +41,22 @@ var logger = console;
 /**
 * Listening port of the HTTPS REST server.
 *
-* @property PORT
-* @type number
+* @property port
+* @type string
 * @private
-* @default 9000
+* @default "9000"
 */
-var PORT = 9000;
+var port = '9000';
+
+/**
+* Listening address of the HTTPS REST server.
+*
+* @property address
+* @type string
+* @private
+* @default "localhost"
+*/
+var address = 'localhost';
 
 /**
 * The path of the certificate to be used by HTTPS server.
@@ -188,7 +198,7 @@ function start() {
         }
 
         // start the REST server
-        server.listen(PORT, function () {
+        server.listen(port, address, function () {
             logger.info(IDLOG, server.name + ' listening at ' + server.url);
         });
 
@@ -218,7 +228,45 @@ function setCompAuthentication(compAuthentication) {
     }
 }
 
+/**
+* Configurates the REST server properties by a configuration file.
+* The file must use the JSON syntax.
+*
+* **The method can throw an Exception.**
+*
+* @method config
+* @param {string} path The path of the configuration file
+*/
+function config(path) {
+    // check parameter
+    if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
+
+    // check file presence
+    if (!fs.existsSync(path)) { throw new Error(path + ' not exists'); }
+
+    // read configuration file
+    var json = require(path);
+
+    // initialize the port of the REST server
+    if (json.authentication.port) {
+        port = json.authentication.port;
+
+    } else {
+        logger.warn(IDLOG, 'no port has been specified in JSON file ' + path);
+    }
+
+    // initialize the address of the REST server
+    if (json.authentication.address) {
+        address = json.authentication.address;
+
+    } else {
+        logger.warn(IDLOG, 'no address has been specified in JSON file ' + path);
+    }
+    logger.info(IDLOG, 'configuration by file ' + path + ' ended');
+}
+
 // public interface
 exports.start                 = start;
+exports.config                = config;
 exports.setLogger             = setLogger;
 exports.setCompAuthentication = setCompAuthentication;
