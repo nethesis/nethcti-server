@@ -13,9 +13,9 @@
 * @private
 * @final
 * @readOnly
-* @default [plugins_rest/pphonebook]
+* @default [plugins_rest/phonebook]
 */
-var IDLOG = '[plugins_rest/pphonebook]';
+var IDLOG = '[plugins_rest/phonebook]';
 
 /**
 * The phonebook architect component used for phonebook functions.
@@ -123,22 +123,20 @@ function sendHttp500(resp, err) {
         var logger = console;
 
         /**
-        * Listen on port 9001
-        *
         * REST plugin that provides phonebook functions through the following REST API:
         *
-        *     pphonebook/search/:term
+        *     phonebook/search/:term
         *
         * The client receive all phonebook contacts found or a HTTP 500 response.
         *
-        * @class pphonebook
+        * @class plugin_rest_phonebook
         * @static
         */
-        var pphonebook = {
+        var phonebook = {
 
             // the REST api
             api: {
-                'root': 'pphonebook',
+                'root': 'phonebook',
 
                 /**
                 * REST API to be requested using HTTP GET request.
@@ -181,8 +179,8 @@ function sendHttp500(resp, err) {
                 }
             }
         }
-        exports.api              = pphonebook.api;
-        exports.search           = pphonebook.search;
+        exports.api              = phonebook.api;
+        exports.search           = phonebook.search;
         exports.setLogger        = setLogger;
         exports.setCompPhonebook = setCompPhonebook;
 

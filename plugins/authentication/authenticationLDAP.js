@@ -365,10 +365,60 @@ function isAutoUpdateTokenExpires() {
     catch (err) { logger.error(IDLOG, err.stack); }
 }
 
+/**
+* Authenticate the user through checking the token with the one
+* that must be present in the _grants_ object. The _getNonce_ method
+* must be used before this.
+*
+* @method verifyToken
+* @param {string} accessKeyId The access key used to retrieve the token.
+* @param {string} token The token to be checked.
+* @return {boolean} It's true if the user has been authenticated succesfully.
+*/
+function verifyToken(accessKeyId, token) {
+    try {
+        // check parameter
+        if (typeof accessKeyId !== 'string' || typeof token !== 'string') {
+            throw new Error('wrong parameter');
+        }
+
+        // check the grant presence
+        if (!grants[accessKeyId]) {
+
+            logger.warn(IDLOG, 'authentication failed for accessKeyId: "' + accessKeyId + '": no grant is present');
+             return false;
+        }
+
+        // check the tokens equality
+        if (grants[accessKeyId].token !== token) {
+            logger.warn(IDLOG, 'authentication failed for accessKeyId "' + accessKeyId + '": wrong token');
+            return false;
+        }
+
+        // check the token expiration
+        if ((new Date()).getTime() > grants[accessKeyId].expires) {
+            removeGrant(accessKeyId); // remove the grant
+            logger.info(IDLOG, 'the token has expired for accessKeyId ' + accessKeyId);
+            return false;
+        }
+
+        // check whether update token expiration value
+        if (autoUpdateTokenExpires) { updateTokenExpires(accessKeyId); }
+
+        // authentication successfull
+        logger.info(IDLOG, 'accessKeyId "' + accessKeyId + '" has been successfully authenticated');
+        return true;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
 // public interface
 exports.config        = config;
 exports.getNonce      = getNonce;
 exports.setLogger     = setLogger;
+exports.verifyToken   = verifyToken;
 exports.removeGrant   = removeGrant;
 exports.authenticate  = authenticate;
 exports.isAutoUpdateTokenExpires = isAutoUpdateTokenExpires;

@@ -60,7 +60,15 @@ module.exports = function (options, imports, register) {
             * @method isAutoUpdateTokenExpires
             * @return {boolean} True if the automatic update is active.
             */
-            isAutoUpdateTokenExpires: authentication.isAutoUpdateTokenExpires
+            isAutoUpdateTokenExpires: authentication.isAutoUpdateTokenExpires,
+
+            /**
+            * It's the _verifyToken_ method provided by _authentication_ module.
+            *
+            * @method verifyToken
+            * @param {string} token The token to be checked.
+            */
+            verifyToken: authentication.verifyToken
         }
     });
 
