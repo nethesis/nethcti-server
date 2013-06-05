@@ -38,7 +38,14 @@ module.exports = function (options, imports, register) {
             *
             * @method setAuthorizationToUser
             */
-            setAuthorization: controllerUser.setAuthorization
+            setAuthorization: controllerUser.setAuthorization,
+
+            /**
+            * It's the _getAuthorization_ method provided by _controller\_user_ module.
+            *
+            * @method getAuthorization
+            */
+            getAuthorization: controllerUser.getAuthorization,
         }
     });
 

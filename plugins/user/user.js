@@ -183,6 +183,24 @@ exports.User = function (name) {
     }
 
     /**
+    * Gets an authorization.
+    *
+    * @method getAuthorization
+    * @param {string} type The type of the authorization
+    * @return {object} The authorization requested. The key is the passed type
+    *                  and the value is the authorization or an undefined if it
+    *                  doesn't exists.
+    */
+    function getAuthorization(type) {
+        // check parameter
+        if (typeof type !== 'string') { throw new Error('wrong parameter'); }
+
+        var obj = {};
+        obj[type] = authorizations[type];
+        return obj;
+    }
+
+    /**
     * Return the readable string of the user.
     *
     * @method toString
@@ -213,6 +231,7 @@ exports.User = function (name) {
         getUsername:          getUsername,
         addEndpoint:          addEndpoint,
         setAuthorization:     setAuthorization,
+        getAuthorization:     getAuthorization,
         getAllAuthorizations: getAllAuthorizations
     };
 }

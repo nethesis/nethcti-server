@@ -83,9 +83,6 @@ function setLogger(log) {
     }
 }
 
-
-
-
 /**
 * Set configuration to use and initialize the users. It can be possible
 * only configuration by file.
@@ -237,12 +234,39 @@ function setAuthorization(userid, typeAutho, value) {
             throw new Error('wrong parameters');
         }
 
-        if (users[userid] !== undefined) { // the user doesn't exits
+        if (users[userid] !== undefined) { // the user exists
+
             users[userid].setAuthorization(typeAutho, value);
             logger.info(IDLOG, 'authorization ' + typeAutho + ' has been set for user ' + userid);
 
         } else {
             logger.error(IDLOG, 'setting authorization of unknown user "' + userid + '"');
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Gets an authorization of the specified user.
+*
+* @method getAuthorization
+* @param {string} userid The user identifier
+* @return {object} The authorization of the user.
+*/
+function getAuthorization(userid, type) {
+    try {
+        // check parameters
+        if (typeof userid !== 'string' || typeof type !== 'string') {
+            throw new Error('wrong parameters');
+        }
+
+        if (users[userid] !== undefined) { // the user exits
+
+            return users[userid].getAuthorization(type);
+
+        } else {
+            logger.error(IDLOG, 'getting authorization "' + type + '" of unknown user "' + userid + '"');
         }
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -282,7 +306,8 @@ function on(type, cb) {
 }
 
 // public interface
-exports.on               = on;
-exports.config           = config;
-exports.setLogger        = setLogger;
-exports.setAuthorization = setAuthorization;
+exports.on                 = on;
+exports.config             = config;
+exports.setLogger          = setLogger;
+exports.setAuthorization   = setAuthorization;
+exports.getAuthorization   = getAuthorization;
