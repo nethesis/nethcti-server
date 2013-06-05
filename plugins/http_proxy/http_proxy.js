@@ -198,7 +198,6 @@ function start() {
             },
             router: router
         };
-        //httpProxy.createServer(options).listen(port);
         httpProxy.createServer(options, proxyRequest).listen(port);
         logger.info(IDLOG, 'HTTPS proxy listening on port ' + port);
 
