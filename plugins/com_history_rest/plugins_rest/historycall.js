@@ -123,8 +123,6 @@ function sendHttp500(resp, err) {
         var logger = console;
 
         /**
-        * Listen on port 9002
-        *
         * REST plugin that provides history functions through the following REST API:
         *
         *     historycall/interval/:exten/:from/:to
@@ -148,7 +146,7 @@ function sendHttp500(resp, err) {
         * Return the history call of the day _"day"_ and extension _"exten"_ filtering by _"filter"_.
         * Date must be expressed in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
         *
-        * @class historycall
+        * @class plugin_rest_historycall
         * @static
         */
         var historycall = {

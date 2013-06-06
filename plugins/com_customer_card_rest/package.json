@@ -3,7 +3,11 @@
     "main": "arch_com_customer_card_rest.js",
     "private": true,
     "plugin": {
-        "consumes": [ "logger", "customerCard" ],
+        "consumes": [
+            "logger",
+            "customerCard",
+            "authorization"
+        ],
         "provides": []
     }
 }
