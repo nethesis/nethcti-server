@@ -123,15 +123,13 @@ function sendHttp500(resp, err) {
         var logger = console;
 
         /**
-        * Listen on port 9003
-        *
         * REST plugin that provides customer card functions through the following REST API:
         *
         *     custcard/getbynum/:number
         *
         * The client receive all customer cards by number for which he's enabled or an HTTP 500 response.
         *
-        * @class custcard
+        * @class plugin_rest_custcard
         * @static
         */
         var custcard = {
@@ -166,26 +164,35 @@ function sendHttp500(resp, err) {
             */
             getbynum: function (req, res, next) {
                 try {
+                    // authorization_user header field was added in the authentication step
+                    var username = req.headers.authorization_user;
+                    var num      = req.params.number;
 
-                    // use customer card component
-                    compCustomerCard.getCustomerCardByNum('214', req.params.number, function (err, results) {
+                    logger.info(IDLOG, 'get all customer cards of the user "' + username + '" for number ' + num);
+                    compCustomerCard.getAllCustomerCards(username, num, function (err, results) {
+                        try {
 
-                        if (err) { sendHttp500(res, err.toString()); }
+                            if (err) { sendHttp500(res, err.toString()); }
+                            else {
+                                logger.info(IDLOG, 'send ' + Object.keys(results).length + ' customer cards "' + Object.keys(results).toString() + '" for user "' + username + '" searching the number ' + num + ' to ' + res.connection.remoteAddress);
+                                res.send(200, results);
+                            }
 
-                        else {
-                            logger.info(IDLOG, 'send ' + results.length + ' results searching customer card by number ' + req.params.number);
-                            res.send(200, results);
+                        } catch (err) {
+                            logger.error(IDLOG, err.stack);
+                            sendHttp500(res, err.toString());
                         }
                     });
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
+                    sendHttp500(res, err.toString());
                 }
             }
         }
-        exports.api                 = custcard.api;
-        exports.getbynum            = custcard.getbynum;
-        exports.setLogger           = setLogger;
-        exports.setCompCustomerCard = setCompCustomerCard;
+        exports.api                  = custcard.api;
+        exports.getbynum             = custcard.getbynum;
+        exports.setLogger            = setLogger;
+        exports.setCompCustomerCard  = setCompCustomerCard;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
