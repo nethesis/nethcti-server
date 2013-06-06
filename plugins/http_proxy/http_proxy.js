@@ -198,9 +198,72 @@ function start() {
             },
             router: router
         };
-        httpProxy.createServer(options, proxyRequest).listen(port);
+        var server = httpProxy.createServer(options, proxyRequest).listen(port);
         logger.info(IDLOG, 'HTTPS proxy listening on port ' + port);
 
+        // called when some error occurs in the proxy
+        server.proxy.on('proxyError', function (err, req, res) {
+            logger.error(IDLOG, getProxyLog(req) + ': ' + err);
+            sendHttp500(res, err);
+        });
+
+        // called at the start of a request
+        server.proxy.on('start', function (req, res, three) {
+            logger.info(IDLOG, 'start ' + getProxyLog(req));
+        });
+
+        // called at the end of a request
+        server.proxy.on('end', function (req, res, three) {
+            logger.info(IDLOG, 'end ' + getProxyLog(req));
+        });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Return the string to log the REST request.
+*
+* @method getProxyLog
+* @param {object} req The request object
+* @return {string} The string describing the REST request.
+* @private
+*/
+function getProxyLog(req) {
+    try {
+        return 'REST api ' + req.headers['x-forwarded-proto'] +
+               ' '      + req.method +
+               ' '      + req.url    +
+               ' [UA: ' + req.headers['user-agent'] + ']' +
+               ' from ' + req.headers['x-forwarded-for']  +
+               ' to '   + req.headers.host;
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Send HTTP 500 internal server error response.
+*
+* @method sendHttp500
+* @param {object} resp The client response object
+* @param {string} [err] The error message
+* @private
+*/
+function sendHttp500(resp, err) {
+    try {
+        var text;
+        if (err === undefined || typeof err !== 'string') {
+            text = '';
+
+        } else {
+            text = err;
+        }
+
+        resp.writeHead(500, { error: err });
+        logger.info(IDLOG, 'send HTTP 500 response to ' + resp.connection.remoteAddress);
+        resp.end();
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
