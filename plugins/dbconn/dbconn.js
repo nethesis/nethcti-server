@@ -443,7 +443,9 @@ function getCustomerCardByNum(type, num, cb) {
 
         // check the connection presence
         if (dbConn[type] === undefined) {
-            logger.warn(IDLOG, 'no db connection getting customer card ' + type + ' for num ' + num);
+            var strError = 'no db connection getting customer card ' + type + ' for num ' + num;
+            logger.warn(IDLOG, strError);
+            cb(strError);
             return;
         }
 
@@ -466,6 +468,7 @@ function getCustomerCardByNum(type, num, cb) {
         });
     } catch (err) {
         logger.error(IDLOG, err.stack);
+        cb(err.toString());
     }
 }
 
