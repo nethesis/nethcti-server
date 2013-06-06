@@ -4,6 +4,7 @@
     "version": "2.0.0",
     "private": true,
     "dependencies": {
+        "async":        "0.2.9",
 	"log4js":       "0.5.6",
 	"jsplugs":      "0.1.0",
         "winston":      "0.6.2",

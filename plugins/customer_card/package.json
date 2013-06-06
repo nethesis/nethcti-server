@@ -3,7 +3,11 @@
     "main": "arch_customer_card.js",
     "private": true,
     "plugin": {
-        "consumes": ["logger", "dbconn"],
+        "consumes": [
+            "logger",
+            "dbconn",
+            "authorization"
+        ],
         "provides": ["customerCard"]
     }
 }

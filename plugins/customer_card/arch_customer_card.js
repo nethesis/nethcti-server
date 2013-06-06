@@ -30,8 +30,21 @@ module.exports = function (options, imports, register) {
             * It's the _getCustomerCardByNum_ method provided by _customer\_card_ module.
             *
             * @method getCustomerCardByNum
+            * @param {string} ccName The name of the customer card to search
+            * @param {string} num The number used to search the customer card.
+            * @param {function} cb The callback function
             */
-            getCustomerCardByNum: customerCard.getCustomerCardByNum
+            getCustomerCardByNum: customerCard.getCustomerCardByNum,
+
+            /**
+            * It's the _getAllCustomerCards_ method provided by _customer\_card_ module.
+            *
+            * @method getAllCustomerCards
+            * @param {string} username The identifier of the user
+            * @param {string} num The number used to search the customer cards.
+            * @param {function} cb The callback function
+            */
+            getAllCustomerCards: customerCard.getAllCustomerCards
         }
     });
 
@@ -39,6 +52,7 @@ module.exports = function (options, imports, register) {
         var dbconn = imports.dbconn;
 
         customerCard.setLogger(logger);
+        customerCard.setCompAuthorization(imports.authorization);
         customerCard.setDbconn(dbconn);
     } catch (err) {
         logger.error(IDLOG, err.stack);
