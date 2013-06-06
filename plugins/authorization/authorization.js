@@ -198,8 +198,76 @@ function authorizePhonebookUser(username) {
     }
 }
 
+/**
+* Return true if the specified user has at least one customer card authorization.
+*
+* @method authorizeCustomerCardUser
+* @param {string} username The username
+* @return {boolean} True if the user has at least one customer card authorization.
+*/
+function authorizeCustomerCardUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        // get cusomter card authorization from the user
+        var autho = userMod.getAuthorization(username, authorizationTypes.TYPES.customer_card);
+
+        // analize the result
+        var objResult = autho[authorizationTypes.TYPES.customer_card];
+        var cc;
+        for (cc in objResult) {
+
+            // check the type of the authorization. It must be a boolean value
+            if (objResult[cc] === true) { return true; }
+
+        }
+        return false;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
+* Gets the name of the authorized customer cards of the user.
+*
+* @method authorizedCustomerCards
+* @param {string} username The username
+* @return {array} The list of the authorized customer cards of the user.
+*/
+function authorizedCustomerCards(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+        var arr = [];
+
+        // get cusomter card authorization from the user
+        var autho = userMod.getAuthorization(username, authorizationTypes.TYPES.customer_card);
+
+        // analize the result
+        var objResult = autho[authorizationTypes.TYPES.customer_card];
+        var cc;
+        for (cc in objResult) {
+
+            // check the authorization
+            if (objResult[cc] === true) { arr.push(cc); }
+        }
+        return arr;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns an empty array for security reasons
+        return [];
+    }
+}
+
 // public interface
 exports.config        = config;
 exports.setLogger     = setLogger;
 exports.setUserModule = setUserModule;
-exports.authorizePhonebookUser = authorizePhonebookUser;
+exports.authorizePhonebookUser    = authorizePhonebookUser;
+exports.authorizedCustomerCards   = authorizedCustomerCards;
+exports.authorizeCustomerCardUser = authorizeCustomerCardUser;

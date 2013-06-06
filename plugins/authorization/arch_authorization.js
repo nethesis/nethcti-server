@@ -34,7 +34,25 @@ module.exports = function (options, imports, register) {
             * @param {string} username The username
             * @return {boolean} True if the user has the phonebook authorization.
             */
-            authorizePhonebookUser: authorization.authorizePhonebookUser
+            authorizePhonebookUser: authorization.authorizePhonebookUser,
+
+            /**
+            * It's the _authorizeCustomerCardUser_ method provided by _authorization_ module.
+            *
+            * @method authorizeCustomerCardUser
+            * @param {string} username The username
+            * @return {boolean} True if the user has the customer card authorization.
+            */
+            authorizeCustomerCardUser: authorization.authorizeCustomerCardUser,
+
+            /**
+            * It's the _authorizedCustomerCards_ method provided by _authorization_ module.
+            *
+            * @method authorizedCustomerCards
+            * @param {string} username The username
+            * @return {array} The list of the authorized customer cards of the user.
+            */
+            authorizedCustomerCards: authorization.authorizedCustomerCards
         }
     });
 
