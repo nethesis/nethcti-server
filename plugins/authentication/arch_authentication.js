@@ -74,7 +74,7 @@ module.exports = function (options, imports, register) {
 
     try {
         authentication.setLogger(logger);
-        authentication.config('/etc/nethcti/authentication.ini');
+        authentication.config('/etc/nethcti/authentication.json');
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }

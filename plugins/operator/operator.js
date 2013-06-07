@@ -13,7 +13,6 @@
 */
 var fs        = require('fs');
 var Group     = require('./group').Group;
-var iniparser = require('iniparser');
 
 /**
 * The module identifier used by the logger.

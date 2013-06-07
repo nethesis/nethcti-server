@@ -14,7 +14,6 @@
 var fs        = require('fs');
 var ldap      = require('ldapjs');
 var crypto    = require('crypto');
-var iniparser = require('iniparser');
 
 /**
 * The module identifier used by the logger.
@@ -75,13 +74,26 @@ var dc2;
 var client;
 
 /**
-* The server address.
+* The LDAP server address. It can be customized by the configuration
+* file. The configuration file must use the JSON syntax.
 *
 * @property server
 * @type {string}
 * @private
+* @default "localhost"
 */
-var server;
+var server = 'localhost';
+
+/**
+* The LDAP server port. It can be customized by the configuration
+* file. The configuration file must use the JSON syntax.
+*
+* @property port
+* @type {string}
+* @private
+* @default "389"
+*/
+var port = '389';
 
 /**
 * The token expiration expressed in milliseconds.
@@ -143,12 +155,12 @@ function setLogger(log) {
 
 /**
 * It reads the authentication configuration file and initialize
-* the LDAP client.
+* the LDAP client. The file must use JSON syntax.
 *
 * **The method can throw an Exception.**
 *
 * @method config
-* @param {string} path The configuration file
+* @param {string} path The path of the configuration file
 */
 function config(path) {
     // check parameter
@@ -158,25 +170,28 @@ function config(path) {
     if (!fs.existsSync(path)) { throw new Error(path + ' not exists'); }
 
     // read configuration file
-    var ini = iniparser.parseSync(path);
+    var json = require(path);
 
     // check the file content
-    if (ini.AUTHENTICATION.type !== 'ldap'
-        || ini.AUTHENTICATION.ou     === undefined || ini.AUTHENTICATION.ou     === ''
-        || ini.AUTHENTICATION.dc1    === undefined || ini.AUTHENTICATION.dc1    === ''
-        || ini.AUTHENTICATION.dc2    === undefined || ini.AUTHENTICATION.dc2    === ''
-        || ini.AUTHENTICATION.server === undefined || ini.AUTHENTICATION.server === '') {
+    if (json.type   !== 'ldap'
+        || json.ou  === undefined || json.ou  === ''
+        || json.dc1 === undefined || json.dc1 === ''
+        || json.dc2 === undefined || json.dc2 === '') {
 
         throw new Error('wrong LDAP configuration file ' + path);
     }
-    ou     = ini.AUTHENTICATION.ou;
-    dc1    = ini.AUTHENTICATION.dc1;
-    dc2    = ini.AUTHENTICATION.dc2;
-    server = ini.AUTHENTICATION.server;
+
+    // customize server and port by the configuration file
+    if (json.port)   { port = json.port; }
+    if (json.server) { server = json.server; }
+
+    ou  = json.ou;
+    dc1 = json.dc1;
+    dc2 = json.dc2;
 
     // create ldap client
     client = ldap.createClient({
-        url: 'ldap://' + server
+        url: 'ldap://' + server + ':' + port
     });
     logger.info(IDLOG, 'LDAP client created');
     logger.info(IDLOG, 'LDAP configuration by file ' + path + ' ended');
