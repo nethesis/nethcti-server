@@ -442,7 +442,7 @@ function getOperatorGroups(socket) {
         // check parameter
         if (typeof socket !== 'object') { throw new Error('wrong parameter'); }
 
-        socket.emit('operatorGroups', operator.getGroups());
+        socket.emit('operatorGroups', operator.getJSONGroups());
         logger.info(IDLOG, 'sent operatorGroups response to ' + getWebsocketEndpoint(socket));
 
     } catch (err) {
@@ -1017,7 +1017,7 @@ function loginHdlr(socket, obj) {
                 server.sockets.in('room').emit('extensions', astProxy.getJSONExtensions());
 
                 logger.info(IDLOG, 'emit event operatorGroups to websockets');
-                server.sockets.in('room').emit('operatorGroups', operator.getGroups());
+                server.sockets.in('room').emit('operatorGroups', operator.getJSONGroups());
 
             } else { // authentication failed
                 logger.warn(IDLOG, 'authentication failed for user ' + obj.user + ' from ' + getWebsocketEndpoint(socket) +

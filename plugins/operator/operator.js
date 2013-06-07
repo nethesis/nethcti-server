@@ -12,6 +12,7 @@
 * @static
 */
 var fs        = require('fs');
+var Group     = require('./group').Group;
 var iniparser = require('iniparser');
 
 /**
@@ -37,7 +38,8 @@ var IDLOG = '[operator]';
 var logger = console;
 
 /**
-* The list of the groups of extensions.
+* The list of the groups of the operator panel. The keys are
+* the names of the groups and the values are the _Group_ objects.
 *
 * @property groups
 * @type object
@@ -72,43 +74,60 @@ function setLogger(log) {
 }
 
 /**
-* Set configuration to use and initialize the user credentials.
+* Configures the groups of the operator panel.
 *
 * **The method can throw an Exception.**
 *
 * @method config
-* @param {string} path Credentials ini file path. The file must
-* have the extension number as section and a secret key for each
-* section.
+* @param {string} path The file path of the configuration file. It must
+* use the JSON syntax.
 */
-function configGroups(path) {
+function config(path) {
     // check parameter
-    if (typeof path === 'string') {
+    if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
 
-        // check file presence
-        if (!fs.existsSync(path)) { throw new Error(path + ' not exists'); }
+    // check file presence
+    if (!fs.existsSync(path)) { throw new Error(path + ' not exists'); }
 
-        // read credential file
-        groups = iniparser.parseSync(path);
-        logger.info(IDLOG, path + ' has been read');
-         
-    } else {
-        throw new TypeError('wrong parameter');
+    // read groups part from the JSON file
+    var json = require(path).groups;
+
+    // create the Group objects
+    var g, newgroup;
+    for (g in json) {
+        newgroup = new Group(g);
+
+        // json[g] is an array as readed from the JSON file
+        newgroup.addExtensions(json[g]);
+        groups[g] = newgroup;
     }
+    logger.info(IDLOG, 'ended configuration by JSON file ' + path);
 }
 
 /**
-* Return the list of the groups of extensions defined by the administrator.
+* Returns the JSON representation of operator panel groups.
 *
-* @method getGroups
-* @return {boolean} Return The list of groups of extensions.
+* @method getJSONGroups
+* @return {object} The JSON representation of operator panel groups.
 */
-function getGroups() {
-    try { return groups; }
-    catch (err) { logger.error(IDLOG, err.stack); }
+function getJSONGroups() {
+    try {
+        var obj = {};
+
+        // construct the object to return
+        var g;
+        for (g in groups) {
+            obj[g] = { extensions: groups[g].getExtensionList()};
+        }
+
+        return obj;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
 }
 
 // public interface
-exports.setLogger    = setLogger;
-exports.getGroups    = getGroups;
-exports.configGroups = configGroups;
+exports.config        = config;
+exports.setLogger     = setLogger;
+exports.getJSONGroups = getJSONGroups;

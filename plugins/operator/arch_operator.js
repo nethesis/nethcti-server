@@ -27,18 +27,18 @@ module.exports = function (options, imports, register) {
     register(null, {
         operator: {
             /**
-            * It's the _getGroups_ method provided by _operator_ module.
+            * It's the _getJSONGroups_ method provided by _operator_ module.
             *
-            * @method getGroups
+            * @method getJSONGroups
             * @return {object} The list of groups of extensions.
             */
-            getGroups: operator.getGroups
+            getJSONGroups: operator.getJSONGroups
         }
     });
 
     try {
         operator.setLogger(logger);
-        operator.configGroups('/etc/nethcti/opgroups.ini');
+        operator.config('/etc/nethcti/operator.json');
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
