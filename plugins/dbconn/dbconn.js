@@ -60,10 +60,10 @@ var CUSTOMER_CARD = {
 };
 
 /**
-* The section names of the ini files that contains database
+* The key names of the JSON files that contains database
 * connection informations.
 *
-* @property INI_SECTION
+* @property JSON_KEYS
 * @type {object}
 * @private
 * @default {
@@ -72,7 +72,7 @@ var CUSTOMER_CARD = {
     HISTORY_CALL: 'history_call'
 }
 */
-var INI_SECTION = {
+var JSON_KEYS = {
     POSTIT:       'postit',
     PHONEBOOK:    'phonebook',
     HISTORY_CALL: 'history_call'
@@ -147,23 +147,23 @@ function config(obj) {
         if (typeof obj !== 'object') { throw new Error('wrong parameter'); }
 
         // configurations by means of files. The files must have the
-        // structure of the ini files. The "file" key has an array value
-        // contains the list of one or more files path
+        // JSON syntax. The "file" key has an array of values conatining
+        // the list of one or more file paths
         if (obj.file) {
 
-            var i, k, ini, path;
-            var fileList = obj.file; // the list of file path
+            var i, k, json, path;
+            var fileList = obj.file; // the list of file paths
             for (i = 0; i < fileList.length; i++) {
                 
                 path = fileList[i];
 
                 if (fs.existsSync(path)) { // check the file existence
 
-                    ini = iniparser.parseSync(path); // read the file
+                    json = require(path); // read the file
                     logger.info(IDLOG, 'configuration file ' + path + ' has been read');
 
                     // transfer the file content in the memory
-                    for (k in ini) { dbConfig[k] = ini[k]; }
+                    for (k in json) { dbConfig[k] = json[k]; }
 
                 } else {
                     logger.warn(IDLOG, 'configuration file ' + path + ' doesn\'t exists');
@@ -205,7 +205,7 @@ function start() {
 function savePostit(creator, text, recipient, cb) {
     try {
         // get the sequelize model already loaded
-        var postit = models[INI_SECTION.POSTIT].build({
+        var postit = models[JSON_KEYS.POSTIT].build({
             text:      text,
             creator:   creator,
             recipient: recipient
@@ -305,7 +305,7 @@ function getPhonebookContacts(term, cb) {
         // add '%' to search all terms with any number of characters, even zero characters
         term = '%' + term + '%';
 
-        models[INI_SECTION.PHONEBOOK].findAll({
+        models[JSON_KEYS.PHONEBOOK].findAll({
             where: [
                 'name LIKE ? ' +
                 'OR company LIKE ? ' +
@@ -378,7 +378,7 @@ function getHistoryCallInterval(data, cb) {
         }
 
         // search
-        models[INI_SECTION.HISTORY_CALL].findAll({
+        models[JSON_KEYS.HISTORY_CALL].findAll({
             where: [
                 '(channel LIKE ? OR dstchannel LIKE ?) AND' +
                 '(DATE(calldate)>=? AND DATE(calldate)<=?) AND' +
@@ -437,8 +437,7 @@ function getCustomerCardByNum(type, num, cb) {
             throw new Error('wrong parameters');
         }
 
-        // construct the section name of the ini file that contains
-        // the information of the customer card
+        // construct the name of the customer card
         type = CUSTOMER_CARD.PREFIX_NAME + type;
 
         // check the connection presence
