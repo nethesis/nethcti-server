@@ -418,8 +418,8 @@ function getHistoryCallInterval(data, cb) {
 
 /**
 * Get the customer card of the specified type. It search the results into the
-* database specified into the section of one of the _/etc/nethcti/dbstatic.ini_
-* or _/etc/nethcti/dbdynamic.ini_ files.
+* database specified into the key names of one of the _/etc/nethcti/dbstatic.json_
+* or _/etc/nethcti/dbdynamic.json_ files.
 *
 * @method getCustomerCardByNum
 * @param {string} type The type of the customer card to retrieve

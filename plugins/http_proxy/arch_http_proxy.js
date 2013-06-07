@@ -27,7 +27,7 @@ module.exports = function (options, imports, register) {
 
     try {
         httpProxy.setLogger(logger);
-        httpProxy.config('/etc/nethcti/https_proxy.json');
+        httpProxy.config('/etc/nethcti/services.json');
         httpProxy.setCompAuthentication(imports.authentication);
         httpProxy.start();
     } catch (err) {
