@@ -150,7 +150,7 @@ module.exports = function (options, imports, register) {
 
     try {
         astProxy.setLogger(logger);
-        astProxy.config('/etc/nethcti/asterisk.ini');
+        astProxy.config('/etc/nethcti/asterisk.json');
         astProxy.start();
     } catch (err) {
         logger.error(err.stack);

@@ -15,7 +15,6 @@
 var fs                = require('fs');
 var ast               = require('asterisk-ami');
 var action            = require('./action');
-var iniparser         = require('iniparser');
 var pluginsCmd        = require('jsplugs')().require('./plugins/ast_proxy/plugins_command_11');
 var proxyLogic        = require('./proxy_logic_11');
 var pluginsEvent      = require('jsplugs')().require('./plugins/ast_proxy/plugins_event_11');
@@ -85,13 +84,21 @@ var am;
 var emitter = new EventEmitter();
 
 /**
-* The asterisk connection parameters
+* The asterisk connection parameters. The default host
+* and port can be customized by the configuration file.
 *
 * @property astConf
 * @type object
 * @private
+* @default {
+    port: '5038',
+    host: 'localhost'
+}
 */
-var astConf = {};
+var astConf = {
+    port: '5038',
+    host: 'localhost'
+};
 
 /**
 * Sets the component's visitors.
@@ -126,7 +133,7 @@ var astConf = {};
 * @method config
 * @param {string|object} config The configuration to be used
 * for the telnet asterisk connection
-*   @param {string} config.path Path of the ini configuration file.
+*   @param {string} config.path Path of the JSON configuration file.
 *   The file must contain host, port, user and password key-value pairs
 *   into a single section called ASTERISK
 *   @param {object} config.object The object with host, port user and password keys
@@ -136,29 +143,39 @@ var astConf = {};
 *     @param {string} config.object.pass The password
 */
 function config(config) {
+
     if (typeof config === 'string') {
+
+        // check the file presence
         if (!fs.existsSync(config)) { throw new Error(config + ' not exists'); }
-        var ini = iniparser.parseSync(config);
-        astConf = {
-            host:     ini.ASTERISK.host,
-            port:     ini.ASTERISK.port,
-            username: ini.ASTERISK.user,
-            password: ini.ASTERISK.pass
-        };
+
+        // read the configuration file
+        var json = require(config);
+
+        // check the validity of the configuration file
+        if (typeof json.user !== 'string' || typeof json.pass !== 'string') {
+            throw new Error('wrong configuration file ' + config);
+        }
+
+        // the address and port are present in the configuration file, so
+        // overwrite default configuration address and port
+        if (json.port) { astConf.port = json.port; }
+        if (json.host) { astConf.host = json.host; }
+
+        astConf.username = json.user;
+        astConf.password = json.pass;
 
     } else if (typeof config === 'object'
                && config.user
                && config.pass) {
 
-        if (!config.port) { config.port = '5038'; }
-        if (!config.host) { config.host = 'localhost'; }
+        // the address and port are present in the configuration object, so
+        // overwrite default configuration address and port
+        if (config.port) { astConf.port = config.port; }
+        if (config.host) { astConf.host = config.host; }
 
-        astConf = {
-            host:     config.host,
-            port:     config.port,
-            username: config.user,
-            password: config.pass
-        };
+        astConf.username = config.user;
+        astConf.password = config.pass;
 
     } else {
         throw new TypeError('wrong parameters');
