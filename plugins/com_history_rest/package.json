@@ -3,7 +3,11 @@
     "main": "arch_com_history_rest.js",
     "private": true,
     "plugin": {
-        "consumes": [ "logger", "history" ],
+        "consumes": [
+            "logger",
+            "history",
+            "authorization"
+        ],
         "provides": []
     }
 }

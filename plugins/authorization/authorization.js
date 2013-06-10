@@ -209,6 +209,27 @@ function authorizePostitUser(username) {
 }
 
 /**
+* Return true if the specified user has the history authorization.
+*
+* @method authorizeHistoryUser
+* @param {string} username The username
+* @return {boolean} True if the user has the history authorization.
+*/
+function authorizeHistoryUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.history, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
 * General function to check an authorization of a user. It's used
 * by all authorization with boolean value. E.g. customer card authorization
 * doesn't use this function.
@@ -316,6 +337,7 @@ exports.config        = config;
 exports.setLogger     = setLogger;
 exports.setUserModule = setUserModule;
 exports.authorizePostitUser       = authorizePostitUser;
+exports.authorizeHistoryUser      = authorizeHistoryUser;
 exports.authorizePhonebookUser    = authorizePhonebookUser;
 exports.authorizedCustomerCards   = authorizedCustomerCards;
 exports.authorizeCustomerCardUser = authorizeCustomerCardUser;

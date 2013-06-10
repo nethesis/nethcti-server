@@ -28,6 +28,15 @@ module.exports = function (options, imports, register) {
     register(null, {
         authorization: {
             /**
+            * It's the _authorizeHistoryUser_ method provided by _authorization_ module.
+            *
+            * @method authorizeHistoryUser
+            * @param {string} username The username
+            * @return {boolean} True if the user has the history authorization.
+            */
+            authorizeHistoryUser: authorization.authorizeHistoryUser,
+
+            /**
             * It's the _authorizePhonebookUser_ method provided by _authorization_ module.
             *
             * @method authorizePhonebookUser
