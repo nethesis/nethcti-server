@@ -37,6 +37,15 @@ module.exports = function (options, imports, register) {
             authorizePhonebookUser: authorization.authorizePhonebookUser,
 
             /**
+            * It's the _authorizePostitUser_ method provided by _authorization_ module.
+            *
+            * @method authorizePostitUser
+            * @param {string} username The username
+            * @return {boolean} True if the user has the post-it authorization.
+            */
+            authorizePostitUser: authorization.authorizePostitUser,
+
+            /**
             * It's the _authorizeCustomerCardUser_ method provided by _authorization_ module.
             *
             * @method authorizeCustomerCardUser

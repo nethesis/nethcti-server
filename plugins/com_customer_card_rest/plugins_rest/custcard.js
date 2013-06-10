@@ -103,7 +103,7 @@ function sendHttp500(resp, err) {
         }
 
         resp.writeHead(500, { error: err });
-        logger.info(IDLOG, 'send HTTP 500 response to ' + resp.connection.remoteAddress);
+        logger.error(IDLOG, 'send HTTP 500 response to ' + resp.connection.remoteAddress);
         resp.end();
     } catch (err) {
         logger.error(IDLOG, err.stack);

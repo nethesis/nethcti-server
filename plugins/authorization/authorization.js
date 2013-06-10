@@ -178,14 +178,61 @@ function authorizePhonebookUser(username) {
         // check parameter
         if (typeof username !== 'string') { throw new Error('wrong parameter'); }
 
-        // get phonebook authorization from the user
-        var autho = userMod.getAuthorization(username, authorizationTypes.TYPES.phonebook);
+        return authorizeUser(authorizationTypes.TYPES.phonebook, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
+* Return true if the specified user has the post-it authorization.
+*
+* @method authorizePostitUser
+* @param {string} username The username
+* @return {boolean} True if the user has the post-it authorization.
+*/
+function authorizePostitUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.postit, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
+* General function to check an authorization of a user. It's used
+* by all authorization with boolean value. E.g. customer card authorization
+* doesn't use this function.
+*
+* @method authorizeUser
+* @param {string} type The name of the authorization as reported by _authorization\_types.js_
+* @param {string} username The username to check the authorization
+* @private
+*/
+function authorizeUser(type, username) {
+    try {
+        // check parameter
+        if (typeof type !== 'string' || typeof username !== 'string') {
+            throw new Error('wrong parameter');
+        }
+
+        // get authorization type from the user
+        var autho = userMod.getAuthorization(username, type);
 
         // check the type of the authorization. It must be a boolean value
-        if (typeof autho[authorizationTypes.TYPES.phonebook] === 'boolean') {
+        if (typeof autho[type] === 'boolean') {
 
-            // return the phonebook authorization
-            return autho[authorizationTypes.TYPES.phonebook];
+            // return the authorization
+            return autho[type];
 
         } else { // in all other case returns false for security reasons
             return false;
@@ -268,6 +315,7 @@ function authorizedCustomerCards(username) {
 exports.config        = config;
 exports.setLogger     = setLogger;
 exports.setUserModule = setUserModule;
+exports.authorizePostitUser       = authorizePostitUser;
 exports.authorizePhonebookUser    = authorizePhonebookUser;
 exports.authorizedCustomerCards   = authorizedCustomerCards;
 exports.authorizeCustomerCardUser = authorizeCustomerCardUser;

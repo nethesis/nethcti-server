@@ -17,6 +17,7 @@ var AUTHORIZATION_TYPES = {
     'sms':                 'sms',
     'call':                'call',
     'chat':                'chat',
+    'postit':              'postit',
     'privacy':             'privacy',
     'redirect':            'redirect',
     'phonebook':           'phonebook',

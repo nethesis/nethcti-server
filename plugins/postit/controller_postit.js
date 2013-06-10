@@ -1,8 +1,8 @@
 /**
 * Provides the post-it functions.
 *
-* @module controller_postit
-* @main controller_postit
+* @module postit
+* @main arch_controller_postit
 */
 
 /**

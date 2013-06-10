@@ -1,7 +1,7 @@
 /**
-* Provides phonebook functions through REST API.
+* Provides postit functions through REST API.
 *
-* @module com_phonebook_rest
+* @module com_postit_rest
 * @submodule plugins_rest
 */
 
@@ -13,18 +13,18 @@
 * @private
 * @final
 * @readOnly
-* @default [plugins_rest/phonebook]
+* @default [plugins_rest/postit]
 */
-var IDLOG = '[plugins_rest/phonebook]';
+var IDLOG = '[plugins_rest/postit]';
 
 /**
-* The phonebook architect component used for phonebook functions.
+* The postit architect component used for postit functions.
 *
-* @property compPhonebook
+* @property compPostit
 * @type object
 * @private
 */
-var compPhonebook;
+var compPostit;
 
 /**
 * Set the logger to be used.
@@ -53,15 +53,15 @@ function setLogger(log) {
 }
 
 /**
-* Set phonebook architect component used by phonebook functions.
+* Set postit architect component used by postit functions.
 *
-* @method setCompPhonebook
-* @param {object} cp The phonebook architect component.
+* @method setCompPostit
+* @param {object} cp The postit architect component.
 */
-function setCompPhonebook(cp) {
+function setCompPostit(cp) {
     try {
-        compPhonebook = cp;
-        logger.info(IDLOG, 'set phonebook architect component');
+        compPostit = cp;
+        logger.info(IDLOG, 'set postit architect component');
     } catch (err) {
        logger.error(IDLOG, err.stack);
     }
@@ -123,20 +123,20 @@ function sendHttp500(resp, err) {
         var logger = console;
 
         /**
-        * REST plugin that provides phonebook functions through the following REST API:
+        * REST plugin that provides postit functions through the following REST API:
         *
-        *     phonebook/search/:term
+        *     postit/create/:text/:recipient
         *
-        * The client receive all phonebook contacts found or a HTTP 500 response.
+        * The client crete a new post-it.
         *
-        * @class plugin_rest_phonebook
+        * @class plugin_rest_postit
         * @static
         */
-        var phonebook = {
+        var postit = {
 
             // the REST api
             api: {
-                'root': 'phonebook',
+                'root': 'postit',
 
                 /**
                 * REST API to be requested using HTTP GET request.
@@ -144,45 +144,52 @@ function sendHttp500(resp, err) {
                 * @property get
                 * @type {array}
                 *
-                *   @param {string} search/:term To get the centralized phonebook contacts
+                *   @param {string} create/:text/:recipient To create a new post-it
                 */
-                'get' : [ 'search/:term' ],
+                'get' : [ 'create/:text/:recipient' ],
                 'post': [],
                 'head': [],
                 'del' : []
             },
 
             /**
-            * Search the address book contacts in the cetnralized phonebook for the following REST API:
+            * Create a new post-it by the following REST API:
             *
-            *     search/:term
+            *     create/:text/:recipient
             *
-            * @method search
+            * @method create
             * @param {object} req The client request.
             * @param {object} res The client response.
             * @param {function} next Function to run the next handler in the chain.
             */
-            search: function (req, res, next) {
+            create: function (req, res, next) {
                 try {
-                    // use phonebook component
-                    compPhonebook.getPhonebookContacts(req.params.term, function (err, results) {
+                    var username = req.headers.authorization_user;
+
+                    var data = {
+                        text:      req.params.text,
+                        creator:   username,
+                        recipient: req.params.recipient
+                    };
+                    compPostit.newPostit(data, function (err) {
 
                         if (err) { sendHttp500(res, err.toString()); }
 
                         else {
-                            logger.info(IDLOG, 'send ' + results.length + ' results searching ' + req.params.term + ' in centralized phonebook');
-                            res.send(200, results);
+                            logger.info(IDLOG, 'new postit by "' + username + '" to "' + data.recipient + '" has been successfully crated');
+                            res.send(200);
                         }
                     });
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
+                    sendHttp500(res, err.toString());
                 }
             }
         }
-        exports.api              = phonebook.api;
-        exports.search           = phonebook.search;
-        exports.setLogger        = setLogger;
-        exports.setCompPhonebook = setCompPhonebook;
+        exports.api           = postit.api;
+        exports.create        = postit.create;
+        exports.setLogger     = setLogger;
+        exports.setCompPostit = setCompPostit;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
