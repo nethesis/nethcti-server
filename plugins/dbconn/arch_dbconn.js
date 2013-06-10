@@ -48,6 +48,13 @@ module.exports = function (options, imports, register) {
             getHistoryCallInterval: dbconn.getHistoryCallInterval,
 
             /**
+            * It's the _getHistoryPostitInterval_ method provided by _dbconn_ module.
+            *
+            * @method getHistoryPostitInterval
+            */
+            getHistoryPostitInterval: dbconn.getHistoryPostitInterval,
+
+            /**
             * It's the _getCustomerCardByNum_ method provided by _dbconn_ module.
             *
             * @method getCustomerCardByNum

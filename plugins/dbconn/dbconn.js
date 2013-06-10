@@ -417,6 +417,81 @@ function getHistoryCallInterval(data, cb) {
 }
 
 /**
+* Get the history post-it of the specified user into the interval time.
+* If the username information is omitted, the results contains the
+* history post-it of all users. Moreover, it can be possible to filter
+* the results specifying the filter. It search the results into the
+* _nethcti.postit_ database.
+*
+* @method getHistoryPostitInterval
+* @param {object} data
+*   @param {string} [data.username] The user involved in the research. It is used to filter
+*                                out the _creator_. If it is omitted the function treats it as '%' string.
+*                                The '%' matches any number of characters, even zero character.
+*   @param {string} data.from The starting date of the interval in the YYYYMMDD format (e.g. 20130521)
+*   @param {string} data.to The ending date of the interval in the YYYYMMDD format (e.g. 20130528)
+*   @param {string} [data.filter] The filter to be used in the _src, clid_ and _dst_ fields. If it is
+*                                 omitted the function treats it as '%' string
+* @param {function} cb The callback function
+*/
+function getHistoryPostitInterval(data, cb) {
+    try {
+        // check parameters
+        if (typeof data !== 'object'
+            ||  typeof cb            !== 'function'
+            ||  typeof data.to       !== 'string'
+            ||  typeof data.from     !== 'string'
+            || (typeof data.username !== 'string' && data.username !== undefined)
+            || (typeof data.filter   !== 'string' && data.filter   !== undefined)) {
+
+            throw new Error('wrong parameters');
+        }
+
+        // check optional parameters
+        if (data.filter   === undefined) { data.filter = '%';   }
+        if (data.username === undefined) { data.username = '%'; }
+
+        // search
+        models[JSON_KEYS.POSTIT].findAll({
+            where: [
+                'creator=? AND ' +
+                '(DATE(datecreation)>=? AND DATE(datecreation)<=?) AND ' +
+                '(recipient LIKE ?)',
+                data.username,
+                data.from, data.to,
+                data.filter
+            ],
+            attributes: [
+                [ 'DATE_FORMAT(datecreation, "%d/%m/%Y")', 'datecreation'],
+                [ 'DATE_FORMAT(datecreation, "%H:%i:%S")', 'timecreation'],
+                [ 'DATE_FORMAT(dateread, "%d/%m/%Y")', 'dateread'],
+                [ 'DATE_FORMAT(dateread, "%H:%i:%S")', 'timeread'],
+                'id', 'text', 'creator', 'recipient'
+            ]
+        }).success(function (results) {
+
+            // extract results to return in the callback function
+            var i;
+            for (i = 0; i < results.length; i++) {
+                results[i] = results[i].selectedValues;
+            }
+
+            logger.info(IDLOG, results.length + ' results searching history post-it interval between ' +
+                               data.from + ' to ' + data.to + ' for username "' + data.username + '" and filter ' + data.filter);
+            cb(null, results);
+
+        }).error(function (err) { // manage the error
+
+            logger.error(IDLOG, 'searching history post-it interval between ' + data.from + ' to ' + data.to +
+                                ' for username "' + data.username + '" and filter ' + data.filter + ': ' + err.toString());
+            cb(err.toString());
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Get the customer card of the specified type. It search the results into the
 * database specified into the key names of one of the _/etc/nethcti/dbstatic.json_
 * or _/etc/nethcti/dbdynamic.json_ files.
@@ -472,10 +547,11 @@ function getCustomerCardByNum(type, num, cb) {
 }
 
 // public interface
-exports.start                  = start;
-exports.config                 = config;
-exports.setLogger              = setLogger;
-exports.savePostit             = savePostit;
-exports.getPhonebookContacts   = getPhonebookContacts;
-exports.getCustomerCardByNum   = getCustomerCardByNum;
-exports.getHistoryCallInterval = getHistoryCallInterval;
+exports.start                    = start;
+exports.config                   = config;
+exports.setLogger                = setLogger;
+exports.savePostit               = savePostit;
+exports.getPhonebookContacts     = getPhonebookContacts;
+exports.getCustomerCardByNum     = getCustomerCardByNum;
+exports.getHistoryCallInterval   = getHistoryCallInterval;
+exports.getHistoryPostitInterval = getHistoryPostitInterval;

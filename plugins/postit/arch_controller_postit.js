@@ -28,7 +28,14 @@ module.exports = function (options, imports, register) {
             *
             * @method newPostit
             */
-            newPostit: controllerPostit.newPostit
+            newPostit: controllerPostit.newPostit,
+
+            /**
+            * It's the _getHistoryInterval_ method provided by _controller\_postit_ module.
+            *
+            * @method getHistoryInterval
+            */
+            getHistoryInterval: controllerPostit.getHistoryInterval
         }
     });
 
