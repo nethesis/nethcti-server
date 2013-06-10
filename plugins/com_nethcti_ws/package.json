@@ -4,7 +4,6 @@
     "private": true,
     "plugin": {
         "consumes": [
-            "postit",
             "logger",
             "astProxy",
             "operator",

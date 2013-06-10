@@ -25,7 +25,6 @@ module.exports = function (options, imports, register) {
     try {
         var logger   = console;
         var authe    = imports.authentication;
-        var postit   = imports.postit;
         var astProxy = imports.astProxy;
         var operator = imports.operator;
 
@@ -33,7 +32,6 @@ module.exports = function (options, imports, register) {
 
         comNethctiWs.setLogger(logger);
         comNethctiWs.setAuthe(authe);
-        comNethctiWs.setPostit(postit);
         comNethctiWs.setAstProxy(astProxy);
         comNethctiWs.setOperator(operator);
         comNethctiWs.start();
