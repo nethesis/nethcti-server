@@ -312,6 +312,8 @@ function proxyRequest(req, res, proxy) {
         }
 
         // check authentication
+        // arr[0] is the username
+        // arr[1] is the token
         var arr = req.headers.authorization.split(':');
         if (compAuthentication.verifyToken(arr[0], arr[1]) === true) {
 

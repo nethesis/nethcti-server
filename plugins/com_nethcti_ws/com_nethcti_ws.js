@@ -295,7 +295,6 @@ function connHdlr(socket) {
         // set the listeners for the new socket connection
         socket.on('login',      function (data) { loginHdlr(socket, data);     });
         socket.on('message',    function (data) { dispatchMsg(socket, data);   });
-        socket.on('challenge',  function (data) { challengeHdlr(socket, data); });
         socket.on('disconnect', function (data) { disconnHdlr(socket);         });
         logger.info(IDLOG, 'listeners for new socket connection have been set');
 
@@ -865,30 +864,6 @@ function getWebsocketEndpoint(socket) {
 }
 
 /**
-* Websocket challenge handler for login operation.
-*
-* @method challengeHdlr
-* @param {object} socket The client websocket
-* @param {object} obj The data passed by the client. It must contain
-* the user information
-* @private
-*/
-function challengeHdlr(socket, obj) {
-    try {
-        if (socket && obj && obj.user) { // send 401 with nonce
-            logger.info(IDLOG, 'login challenge request from ' + obj.user + ' ' + getWebsocketEndpoint(socket));
-            send401Nonce(socket, authe.getNonce(obj.user));
-
-        } else {
-            logger.warn(IDLOG, 'bad authentication challenge request from ' + getWebsocketEndpoint(socket));
-            unauthorized(socket);
-        }
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
 * Manage unauthorized access. It send 401 unauthorized response
 * to the client and disconnect the websocket.
 *
@@ -911,51 +886,58 @@ function unauthorized(socket) {
 * @method loginHdlr
 * @param {object} socket The client websocket
 * @param {object} data The data passed by the client
+*   @param {string} data.accessKeyId The username of the account
+*   @param {string} data.token The token received by the authentication REST request
 * @private
 */
 function loginHdlr(socket, obj) {
     try {
-        if (socket && obj && obj.user && obj.token) { // check parameters
+        // check parameters
+        if (typeof socket             !== 'object'
+            || typeof obj             !== 'object'
+            || typeof obj.token       !== 'string'
+            || typeof obj.accessKeyId !== 'string') {
 
-            if (authe.authenticate(obj.user, obj.token)) { // user successfully authenticated
-
-                logger.info(IDLOG, 'user ' + obj.user + ' successfully authenticated from ' + getWebsocketEndpoint(socket) +
-                                   ' with id ' + socket.id);
-
-                // add websocket id for future fast authentication for each request from the clients
-                addWebsocketId(obj.user, socket.id);
-
-                // sets extension property to the client socket
-                socket.set('extension', obj.user, function () {
-                    logger.info(IDLOG, 'setted extension property ' + obj.user + ' to socket ' + socket.id);
-                });
-
-                // send authenticated successfully response
-                sendAutheSuccess(socket);
-
-                socket.join('room');
-                logger.info(IDLOG, 'emit event queues to websockets');
-                server.sockets.in('room').emit('queues', astProxy.getJSONQueues());
-
-                logger.info(IDLOG, 'emit event parkings to websockets');
-                server.sockets.in('room').emit('parkings', astProxy.getJSONParkings());
-
-                logger.info(IDLOG, 'emit event extensions to websockets');
-                server.sockets.in('room').emit('extensions', astProxy.getJSONExtensions());
-
-                logger.info(IDLOG, 'emit event operatorGroups to websockets');
-                server.sockets.in('room').emit('operatorGroups', operator.getJSONGroups());
-
-            } else { // authentication failed
-                logger.warn(IDLOG, 'authentication failed for user ' + obj.user + ' from ' + getWebsocketEndpoint(socket) +
-                                   ' with id ' + socket.id);
-                unauthorized(socket);
-            }
-
-        } else { // bad authentication request
             logger.warn(IDLOG, 'bad authentication login request from ' + getWebsocketEndpoint(socket));
             unauthorized(socket);
+            return;
         }
+
+        if (authe.verifyToken(obj.accessKeyId, obj.token) === true) { // user successfully authenticated
+
+            logger.info(IDLOG, 'user "' + obj.accessKeyId + '" successfully authenticated from ' + getWebsocketEndpoint(socket) +
+                               ' with socket id ' + socket.id);
+
+            // add websocket id for future fast authentication for each request from the clients
+            addWebsocketId(obj.accessKeyId, socket.id);
+
+            // sets extension property to the client socket
+            socket.set('username', obj.accessKeyId, function () {
+                logger.info(IDLOG, 'setted username property ' + obj.accessKeyId + ' to socket ' + socket.id);
+            });
+
+            // send authenticated successfully response
+            sendAutheSuccess(socket);
+
+            socket.join('room');
+            logger.info(IDLOG, 'emit event queues to websockets');
+            server.sockets.in('room').emit('queues', astProxy.getJSONQueues());
+
+            logger.info(IDLOG, 'emit event parkings to websockets');
+            server.sockets.in('room').emit('parkings', astProxy.getJSONParkings());
+
+            logger.info(IDLOG, 'emit event extensions to websockets');
+            server.sockets.in('room').emit('extensions', astProxy.getJSONExtensions());
+
+            logger.info(IDLOG, 'emit event operatorGroups to websockets');
+            server.sockets.in('room').emit('operatorGroups', operator.getJSONGroups());
+
+        } else { // authentication failed
+            logger.warn(IDLOG, 'authentication failed for user "' + obj.accessKeyId + '" from ' + getWebsocketEndpoint(socket) +
+                               ' with id ' + socket.id);
+            unauthorized(socket);
+        }
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -1015,24 +997,6 @@ function addWebsocketId(user, socketId) {
 }
 
 /**
-* Send 401 unauthorized response through websocket,
-* with the nonce used by the client for authentication token.
-*
-* @method send401Nonce
-* @param {object} socket The client websocket
-* @param {string} nonce The nonce used to create the token
-* @private
-*/
-function send401Nonce(socket, nonce) {
-    try {
-        socket.emit('401', { message: 'unauthorized access', nonce: nonce });
-        logger.info(IDLOG, 'send 401 unauthorized with nonce to ' + getWebsocketEndpoint(socket));
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
 * Send 401 unauthorization response through websocket.
 *
 * @method send401
@@ -1058,7 +1022,7 @@ function send401(socket) {
 function sendAutheSuccess(socket) {
     try {
         socket.emit('authe_ok', { message: 'authorized successfully' });
-        socket.get('extension', function (err, name) {
+        socket.get('username', function (err, name) {
             logger.info(IDLOG, 'send authorized successfully to ' + name + ' ' + getWebsocketEndpoint(socket) + ' with id ' + socket.id);
         });
     } catch (err) {
