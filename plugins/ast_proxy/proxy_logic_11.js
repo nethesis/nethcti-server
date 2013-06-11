@@ -7,6 +7,7 @@
 */
 var path         = require('path');
 var Queue        = require('./queue').Queue;
+var Trunk        = require('./trunk').Trunk;
 var Channel      = require('./channel').Channel;
 var Parking      = require('./parking').Parking;
 var iniparser    = require('iniparser');
@@ -90,6 +91,16 @@ var astProxy;
 * @private
 */
 var extensions = {};
+
+/**
+* All trunks. The key is the trunk number and the value
+* is the _Trunk_ object.
+*
+* @property trunks
+* @type object
+* @private
+*/
+var trunks = {};
 
 /**
 * All queues. The key is the queue number and the value
@@ -258,6 +269,47 @@ function sipExtenStructValidation(resp) {
     }
 }
 
+/**
+* Validates all sip trunks of the structure ini file and
+* initialize sip _Trunk_ objects.
+*
+* @method sipTrunkStructValidation
+* @param {array} resp The response received from the command.
+* @private
+*/
+function sipTrunkStructValidation(resp) {
+    try {
+        // creates temporary object used to rapid check the
+        // existence of a trunk into the asterisk
+        var siplist = {};
+        var i;
+        for (i = 0; i < resp.length; i++) { siplist[resp[i].ext] = ''; }
+
+        // cycles in all elements of the structure ini file to validate
+        var k;
+        for (k in struct) {
+
+            // validates all sip trunks
+            if (struct[k].tech    === INI_STRUCT.TECH.SIP
+                && struct[k].type === INI_STRUCT.TYPE.TRUNK) {
+
+                // current trunk of the structure ini file isn't present
+                // into the asterisk. So remove it from the structure ini file
+                if (siplist[struct[k].extension] === undefined) {
+
+                    delete struct[k];
+                    logger.warn(IDLOG, 'inconsistency between ini structure file and asterisk for ' + k);
+                }
+            }
+        }
+        logger.info(IDLOG, 'all sip trunks have been validated');
+
+        // initialize all sip trunks as 'Trunk' objects into the 'trunks' property
+        initializeSipTrunk();
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
 
 /**
 * Validates all iax extensions of the structure ini file and
@@ -394,6 +446,8 @@ function structValidation() {
         astProxy.doCmd({ command: 'listSipPeers' }, sipExtenStructValidation);
         // validates all iax extensions
         astProxy.doCmd({ command: 'listIaxPeers' }, iaxExtenStructValidation);
+        // validates all SIP trunks
+        astProxy.doCmd({ command: 'listSipPeers' }, sipTrunkStructValidation);
 
     } catch (err) {
        logger.error(IDLOG, err.stack);
@@ -446,12 +500,17 @@ function initializeIaxExten(resp) {
         // set iax informations
         for (i = 0; i < resp.length; i++) {
 
-            extensions[resp[i].exten].setIp(resp[i].ip);
-            extensions[resp[i].exten].setPort(resp[i].port);
-            logger.info(IDLOG, 'set iax details for ext ' + resp[i].exten);
+            // this check is because some iax trunks can be present in the resp,
+            // so in this function trunks are not considered
+            if (extensions[resp[i].exten]) {
 
-            // request the extension status
-            astProxy.doCmd({ command: 'extenStatus', exten: resp[i].exten }, extenStatus);
+                extensions[resp[i].exten].setIp(resp[i].ip);
+                extensions[resp[i].exten].setPort(resp[i].port);
+                logger.info(IDLOG, 'set iax details for ext ' + resp[i].exten);
+
+                // request the extension status
+                astProxy.doCmd({ command: 'extenStatus', exten: resp[i].exten }, extenStatus);
+            }
         }
 
         // request all channels
@@ -868,6 +927,39 @@ function initializeSipExten() {
 }
 
 /**
+* Initialize all sip trunks as _Trunk_ object into the
+* _trunks_ property.
+*
+* @method initializeSipTrunk
+* @private
+*/
+function initializeSipTrunk() {
+    try {
+        var k, trunk;
+        for (k in struct) {
+
+            if (struct[k].type    === INI_STRUCT.TYPE.TRUNK
+                && struct[k].tech === INI_STRUCT.TECH.SIP) { // all sip trunks
+
+                trunk = new Trunk(struct[k].extension, struct[k].tech);
+                trunks[trunk.getExten()] = trunk;
+
+                // request sip details for current trunk
+                astProxy.doCmd({ command: 'sipDetails', exten: trunk.getExten() }, trunkSipDetails);
+                // request the trunk status
+                astProxy.doCmd({ command: 'extenStatus', exten: trunk.getExten() }, trunkStatus);
+            }
+        }
+        // request all channels
+        logger.info(IDLOG, 'requests the channel list to initialize sip trunks');
+        astProxy.doCmd({ command: 'listChannels' }, updateConversationsForAllTrunk);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Set the call forward status of the extension.
 *
 * @method setCfStatus
@@ -955,7 +1047,39 @@ function extSipDetails(resp) {
             logger.info(IDLOG, 'set sip details for ext ' + data.exten);
 
         } else {
-            logger.warn(IDLOG, 'sip details ' + (resp.message !== undefined ? resp.message : ''));
+            logger.warn(IDLOG, 'exten sip details ' + (resp.message !== undefined ? resp.message : ''));
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the details for the sip trunk object.
+*
+* @method trunkSipDetails
+* @param {object} resp The trunk informations object
+* @private
+*/
+function trunkSipDetails(resp) {
+    try {
+        // check parameter
+        if (!resp || resp.result === undefined) { throw new Error('wrong parameter'); }
+
+        if (resp.result === true) {
+
+            // extract extension object from the response
+            var data = resp.exten;
+
+            // set the extension informations
+            trunks[data.exten].setIp(data.ip);
+            trunks[data.exten].setPort(data.port);
+            trunks[data.exten].setName(data.name);
+            trunks[data.exten].setSipUserAgent(data.sipuseragent);
+            logger.info(IDLOG, 'set sip details for trunk ' + data.exten);
+
+        } else {
+            logger.warn(IDLOG, 'trunk sip details ' + (resp.message !== undefined ? resp.message : ''));
         }
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -1055,6 +1179,43 @@ function updateConversationsForAllExten(resp) {
             if (chid.indexOf('Local')    === -1
                 && chid.indexOf('@from') === -1
                 && extensions[ext]) { // the extension exists
+
+                addConversationToExten(ext, resp, chid);
+            }
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Updates the conversations for all trunks.
+*
+* @method updateConversationsForAllTrunk
+* @param {object} resp The channel list as received by the _listChannels_ command plugin.
+* @private
+*/
+function updateConversationsForAllTrunk(resp) {
+    try {
+        // check parameter
+        if (!resp) { throw new Error('wrong parameter'); }
+
+        // removes all conversations of all trunks
+        var trunk;
+        for (trunk in trunks) { trunks[trunk].removeAllConversations(); }
+
+        // cycle in all received channels
+        var chid;
+        for (chid in resp) {
+
+            trunk = resp[chid].callerNum;
+
+            // add new conversation to the extension. Queue channel is not considered,
+            // otherwise an extension has also wrong conversation (e.g. 214 has the
+            // conversation SIP/221-00000592>Local/221@from-queue-000009dc;2)
+            if (chid.indexOf('Local')    === -1
+                && chid.indexOf('@from') === -1
+                && trunks[ext]) { // the extension exists
 
                 addConversationToExten(ext, resp, chid);
             }
@@ -1190,6 +1351,23 @@ function extenStatus(resp) {
     try {
         extensions[resp.exten].setStatus(resp.status);
         logger.info(IDLOG, 'sets status ' + resp.status + ' for extension ' + resp.exten);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the trunk status received.
+*
+* @method trunkStatus
+* @param {object} resp The received response object
+* @private
+*/
+function trunkStatus(resp) {
+    try {
+        trunks[resp.exten].setStatus(resp.status);
+        logger.info(IDLOG, 'sets status ' + resp.status + ' for trunk ' + resp.exten);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);

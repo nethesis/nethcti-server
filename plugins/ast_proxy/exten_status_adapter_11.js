@@ -2,7 +2,7 @@
 * Provides adapter from asterisk extensions status code to 
 * status description string.
 *
-* @class ext_status_adapter_11
+* @class exten_status_adapter_11
 * @static
 */
 var EXTEN_STATUS_ENUM = require('./extension').EXTEN_STATUS_ENUM

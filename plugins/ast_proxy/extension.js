@@ -136,7 +136,7 @@ exports.Extension = function (ext, chType) {
     function getChanType() { return chanType; }
 
     /**
-    * Check if the extension in online.
+    * Check if the extension is online.
     *
     * @method isOnline
     * @return {boolean} True if the extension is online, false otherwise.
@@ -416,6 +416,6 @@ var STATUS_ENUM = {
 * @property EXT_STATUS_ENUM
 * @type {object}
 * @final
-* @default ONLINE | OFFLINE
+* @default Equal to the private property STATUS_ENUM
 */
 exports.EXTEN_STATUS_ENUM = STATUS_ENUM;
