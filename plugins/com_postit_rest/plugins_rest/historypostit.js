@@ -1,5 +1,5 @@
 /**
-* Provides postit functions through REST API.
+* Provides history postit functions through REST API.
 *
 * @module com_postit_rest
 * @submodule plugins_rest
@@ -16,6 +16,16 @@
 * @default [plugins_rest/historypostit]
 */
 var IDLOG = '[plugins_rest/historypostit]';
+
+/**
+* The logger. It must have at least three methods: _info, warn and error._
+*
+* @property logger
+* @type object
+* @private
+* @default console
+*/
+var logger = console;
 
 /**
 * The postit architect component used for postit functions.
@@ -113,23 +123,18 @@ function sendHttp500(resp, err) {
 (function(){
     try {
         /**
-        * The logger. It must have at least three methods: _info, warn and error._
-        *
-        * @property logger
-        * @type object
-        * @private
-        * @default console
-        */
-        var logger = console;
-
-        /**
         * REST plugin that provides postit functions through the following REST API:
         *
-        *     postit/create/:text/:recipient
+        *     postit/interval/:from/:to/
         *
-        * The client crete a new post-it.
+        * Return the history of the postit created in the interval time by the creator.
         *
-        * @class plugin_rest_postit
+        *     postit/interval/:from/:to/:filter
+        *
+        * Return the history of the postit created in the interval time by the creator
+        * filtering the results.
+        *
+        * @class plugin_rest_historypostit
         * @static
         */
         var historypostit = {
@@ -144,11 +149,16 @@ function sendHttp500(resp, err) {
                 * @property get
                 * @type {array}
                 *
-                *   @param {string} create/:text/:recipient To create a new post-it
+                *   @param {string} interval/:from/:to To get the history of the postit
+                *       created in the interval time by the applicant
+                *
+                *   @param {string} interval/:from/:to/:filter To get the history of the
+                *       postit created in the interval time by the applicant filtering the
+                *       results by recipient field of db table
                 */
                 'get' : [
-                    'interval/:exten/:from/:to',
-                    'interval/:exten/:from/:to/:filter'
+                    'interval/:from/:to',
+                    'interval/:from/:to/:filter'
                 ],
                 'post': [],
                 'head': [],
@@ -156,10 +166,12 @@ function sendHttp500(resp, err) {
             },
 
             /**
-            * Search the history call for the specified interval, extension and optional filter by the following REST api:
+            * Search the history of the postit created by the applicant for the
+            * specified interval time and optional filter the results by recipient,
+            * with the following REST api:
             *
-            *     interval/:exten/:from/:to
-            *     interval/:exten/:from/:to/:filter
+            *     interval/:from/:to
+            *     interval/:from/:to/:filter
             *
             * @method interval
             * @param {object} req The client request.
@@ -169,8 +181,8 @@ function sendHttp500(resp, err) {
             interval: function (req, res, next) {
                 try {
                     var obj = {
-                        to:    req.params.to,
-                        from:  req.params.from,
+                        to:       req.params.to,
+                        from:     req.params.from,
                         username: req.headers.authorization_user,
                     };
 
@@ -190,6 +202,7 @@ function sendHttp500(resp, err) {
                     });
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
+                    sendHttp500(res, err.toString());
                 }
             }
         }

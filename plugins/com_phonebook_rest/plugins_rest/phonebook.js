@@ -18,6 +18,16 @@
 var IDLOG = '[plugins_rest/phonebook]';
 
 /**
+* The logger. It must have at least three methods: _info, warn and error._
+*
+* @property logger
+* @type object
+* @private
+* @default console
+*/
+var logger = console;
+
+/**
 * The phonebook architect component used for phonebook functions.
 *
 * @property compPhonebook
@@ -112,16 +122,6 @@ function sendHttp500(resp, err) {
 
 (function(){
     try {
-        /**
-        * The logger. It must have at least three methods: _info, warn and error._
-        *
-        * @property logger
-        * @type object
-        * @private
-        * @default console
-        */
-        var logger = console;
-
         /**
         * REST plugin that provides phonebook functions through the following REST API:
         *
