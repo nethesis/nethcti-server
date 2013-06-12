@@ -1,18 +1,18 @@
 /**
-* Provides the REST server for the post-it functions.
+* Provides the REST server for the caller note functions.
 *
-* @module com_postit_rest
-* @main arch_com_postit_rest
+* @module com_caller_note_rest
+* @main arch_com_caller_note_rest
 */
 
 /**
 * Provides the REST server.
 *
-* @class server_com_postit_rest
+* @class server_com_caller_note_rest
 */
 var fs      = require('fs');
 var restify = require('restify');
-var plugins = require('jsplugs')().require('./plugins/com_postit_rest/plugins_rest');
+var plugins = require('jsplugs')().require('./plugins/com_caller_note_rest/plugins_rest');
 
 /**
 * The module identifier used by the logger.
@@ -22,9 +22,9 @@ var plugins = require('jsplugs')().require('./plugins/com_postit_rest/plugins_re
 * @private
 * @final
 * @readOnly
-* @default [server_com_postit_rest]
+* @default [server_com_caller_note_rest]
 */
-var IDLOG = '[server_com_postit_rest]';
+var IDLOG = '[server_com_caller_note_rest]';
 
 /**
 * The logger. It must have at least three methods: _info, warn and error._
@@ -43,9 +43,9 @@ var logger = console;
 * @property port
 * @type string
 * @private
-* @default "9004"
+* @default "9005"
 */
-var port = "9004";
+var port = "9005";
 
 /**
 * Listening address of the REST server. It can be customized by the
@@ -150,14 +150,14 @@ function execute(req, res, next) {
 
         // check authorization
         var username = req.headers.authorization_user;
-        if (compAuthorization.authorizePostitUser(username) === true) {
+        if (compAuthorization.authorizeCallerNoteUser(username) === true) {
 
-            logger.info(IDLOG, 'postit authorization successfully for user "' + username + '"');
+            logger.info(IDLOG, 'caller note authorization successfully for user "' + username + '"');
             logger.info(IDLOG, 'execute: ' + p + '.' + name);
             plugins[p][name].apply(plugins[p], [req, res, next]);
 
         } else { // authorization failed
-            logger.warn(IDLOG, 'postit authorization failed for user "' + username + '"!');
+            logger.warn(IDLOG, 'caller note authorization failed for user "' + username + '"!');
             sendHttp401(res);
         }
         return next();
@@ -168,20 +168,20 @@ function execute(req, res, next) {
 }
 
 /**
-* Set the post-it architect component to be used by REST plugins.
+* Set the caller note architect component to be used by REST plugins.
 *
-* @method setCompPostit
-* @param {object} compPostit The architect post-it component
+* @method setCompCallerNote
+* @param {object} compCallerNote The architect caller note component
 * @static
 */
-function setCompPostit(compPostit) {
+function setCompCallerNote(compCallerNote) {
     try {
         // check parameter
-        if (typeof compPostit !== 'object') { throw new Error('wrong parameter'); }
+        if (typeof compCallerNote !== 'object') { throw new Error('wrong parameter'); }
 
         var p;
         // set post-it architect component to all REST plugins
-        for (p in plugins) { plugins[p].setCompPostit(compPostit); }
+        for (p in plugins) { plugins[p].setCompCallerNote(compCallerNote); }
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -228,16 +228,16 @@ function config(path) {
     var json = require(path).rest;
 
     // initialize the port of the REST server
-    if (json.postit && json.postit.port) {
-        port = json.postit.port;
+    if (json.caller_note && json.caller_note.port) {
+        port = json.caller_note.port;
 
     } else {
         logger.warn(IDLOG, 'no port has been specified in JSON file ' + path);
     }
 
     // initialize the address of the REST server
-    if (json.postit && json.postit.address) {
-        address = json.postit.address;
+    if (json.caller_note && json.caller_note.address) {
+        address = json.caller_note.address;
 
     } else {
         logger.warn(IDLOG, 'no address has been specified in JSON file ' + path);
@@ -301,5 +301,5 @@ function start() {
 exports.start     = start;
 exports.config    = config;
 exports.setLogger = setLogger;
-exports.setCompPostit        = setCompPostit;
+exports.setCompCallerNote    = setCompCallerNote;
 exports.setCompAuthorization = setCompAuthorization;

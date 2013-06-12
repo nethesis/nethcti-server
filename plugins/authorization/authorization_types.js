@@ -25,6 +25,7 @@ var AUTHORIZATION_TYPES = {
     'recording':           'recording',
     'voicemail':           'voicemail',
     'streaming':           'streaming',
+    'caller_note':         'caller_note',
     'customer_card':       'customer_card',
     'user_settings':       'user_settings',
     'operator_panel':      'operator_panel',

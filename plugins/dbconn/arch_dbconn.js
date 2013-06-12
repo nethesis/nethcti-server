@@ -34,6 +34,13 @@ module.exports = function (options, imports, register) {
             savePostit: dbconn.savePostit,
 
             /**
+            * It's the _saveCallerNote_ method provided by _dbconn_ module.
+            *
+            * @method saveCallerNote
+            */
+            saveCallerNote: dbconn.saveCallerNote,
+
+            /**
             * It's the _getPhonebookContacts_ method provided by _dbconn_ module.
             *
             * @method getPhonebookContacts

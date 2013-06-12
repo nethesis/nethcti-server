@@ -69,12 +69,14 @@ var CUSTOMER_CARD = {
 * @default {
     POSTIT:       'postit',
     PHONEBOOK:    'phonebook',
+    CALLER_NOTE:  'caller_note',
     HISTORY_CALL: 'history_call'
 }
 */
 var JSON_KEYS = {
     POSTIT:       'postit',
     PHONEBOOK:    'phonebook',
+    CALLER_NOTE:  'caller_note',
     HISTORY_CALL: 'history_call'
 };
 
@@ -204,6 +206,14 @@ function start() {
 */
 function savePostit(creator, text, recipient, cb) {
     try {
+        // check parameters
+        if (typeof creator      !== 'string'
+            || typeof text      !== 'string'
+            || typeof recipient !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
         // get the sequelize model already loaded
         var postit = models[JSON_KEYS.POSTIT].build({
             text:      text,
@@ -218,7 +228,63 @@ function savePostit(creator, text, recipient, cb) {
             cb(null);
 
         }).error(function (err) { // manage the error
-            logger.error(IDLOG, 'saving postig: ' + err.toString());
+            logger.error(IDLOG, 'saving postit: ' + err.toString());
+            cb(err.toString());
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Save the the caller note in the database.
+*
+* @method saveCallerNote
+* @param {object} data
+*   @param {string} data.number The caller/called number that is associated
+*       with the note
+*   @param {string} data.creator The creator of the caller note
+*   @param {string} data.callid The identifier of the call. It can be the "uniqueid" field
+*       of the database table "asteriskcdrdb.cdr" in the asterisk scenario
+*   @param {string} data.text The text of the note
+*   @param {boolean} data.booking The reservation option. If the creator has booked
+*       the callback from the expressed number
+*   @param {boolean} data.public True if the caller note visibility is public, false otherwise
+*   @param {string} data.expiration It's the expiration date of the note. It must
+*       use the YYYYMMDD format, e.g. to express the date of "12 june 2013" you must
+*       use 20130612
+* @param {function} cb The callback function
+*/
+function saveCallerNote(data, cb) {
+    try {
+        // check parameter
+        if (typeof data            !== 'object'  || typeof data.text       !== 'string'
+            || typeof data.creator !== 'string'  || typeof data.number     !== 'string'
+            || typeof data.booking !== 'boolean' || typeof data.expiration !== 'string'
+            || typeof data.public  !== 'boolean' || typeof data.callid     !== 'string') {
+
+            throw new Error('wrong parameter');
+        }
+
+        // get the sequelize model already loaded
+        var callerNote = models[JSON_KEYS.CALLER_NOTE].build({
+            text:       data.text,
+            callid:     data.callid,
+            number:     data.number,
+            public:     data.public,
+            creator:    data.creator,
+            booking:    data.booking,
+            expiration: data.expiration
+        });
+
+        // save the model into the database
+        callerNote.save()
+        .success(function () { // the save was successful
+            logger.info(IDLOG, 'caller note saved successfully');
+            cb(null);
+
+        }).error(function (err) { // manage the error
+            logger.error(IDLOG, 'saving caller note: ' + err.toString());
             cb(err.toString());
         });
     } catch (err) {
@@ -551,6 +617,7 @@ exports.start                    = start;
 exports.config                   = config;
 exports.setLogger                = setLogger;
 exports.savePostit               = savePostit;
+exports.saveCallerNote           = saveCallerNote;
 exports.getPhonebookContacts     = getPhonebookContacts;
 exports.getCustomerCardByNum     = getCustomerCardByNum;
 exports.getHistoryCallInterval   = getHistoryCallInterval;

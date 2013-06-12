@@ -46,6 +46,15 @@ module.exports = function (options, imports, register) {
             authorizePhonebookUser: authorization.authorizePhonebookUser,
 
             /**
+            * It's the _authorizeCallerNoteUser_ method provided by _authorization_ module.
+            *
+            * @method authorizeCallerNoteUser
+            * @param {string} username The username
+            * @return {boolean} True if the user has the caller note authorization.
+            */
+            authorizeCallerNoteUser: authorization.authorizeCallerNoteUser,
+
+            /**
             * It's the _authorizePostitUser_ method provided by _authorization_ module.
             *
             * @method authorizePostitUser
