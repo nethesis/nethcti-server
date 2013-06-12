@@ -1,5 +1,5 @@
 /**
-* Provides phonebook functions through REST API.
+* Provides history call functions through REST API.
 *
 * @module com_history_rest
 * @submodule plugins_rest
@@ -16,6 +16,25 @@
 * @default [plugins_rest/historycall]
 */
 var IDLOG = '[plugins_rest/historycall]';
+
+/**
+* The logger. It must have at least three methods: _info, warn and error._
+*
+* @property logger
+* @type object
+* @private
+* @default console
+*/
+var logger = console;
+
+/**
+* The architect component to be used for authorization.
+*
+* @property compAuthorization
+* @type object
+* @private
+*/
+var compAuthorization;
 
 /**
 * The history architect component used for history functions.
@@ -56,12 +75,27 @@ function setLogger(log) {
 * Set history architect component used by history functions.
 *
 * @method setCompHistory
-* @param {object} ch The phonebook architect component.
+* @param {object} ch The history architect component.
 */
 function setCompHistory(ch) {
     try {
         compHistory = ch;
         logger.info(IDLOG, 'set history architect component');
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Set authorization architect component used by history functions.
+*
+* @method setCompAuthorization
+* @param {object} ca The authorization architect component.
+*/
+function setCompAuthorization(ca) {
+    try {
+        compAuthorization = ca;
+        logger.info(IDLOG, 'set authorization architect component');
     } catch (err) {
        logger.error(IDLOG, err.stack);
     }
@@ -113,38 +147,31 @@ function sendHttp500(resp, err) {
 (function(){
     try {
         /**
-        * The logger. It must have at least three methods: _info, warn and error._
-        *
-        * @property logger
-        * @type object
-        * @private
-        * @default console
-        */
-        var logger = console;
-
-        /**
         * REST plugin that provides history functions through the following REST API:
         *
-        *     historycall/interval/:exten/:from/:to
+        *     historycall/interval/:endpoint/:from/:to
         *
-        * Return the history call between _"from"_ date to _"to"_ date for the extension _"exten"_.
-        * Dates must be expressed in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
+        * Return the history call between _"from"_ date to _"to"_ date for the endpoint _"endpoint"_.
+        * E.g. the endpoint can be the extension number. Dates must be expressed in YYYYMMDD format.
+        * If an error occurs an HTTP 500 response is returned.
         *
-        *     historycall/interval/:exten/:from/:to/:filter
+        *     historycall/interval/:endpoint/:from/:to/:filter
         *
-        * Return the history call between _"from"_ date to _"to"_ date for the extension _"exten"_
-        * filtering by _"filter"_. Dates must be expressed in YYYYMMDD format. If an error occurs an
-        * HTTP 500 response is returned.
-        *
-        *     historycall/day/:exten/:day
-        *
-        * Return the history call of the day _"day"_ and extension _"exten"_. Date must be expressed
+        * Return the history call between _"from"_ date to _"to"_ date for the endpoint _"endpoint"_
+        * filtering by _"filter"_. E.g. the endpoint can be the extension number. Date must be expressed
         * in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
         *
-        *     historycall/day/:exten/:day/:filter
+        *     historycall/day/:endpoint/:day
         *
-        * Return the history call of the day _"day"_ and extension _"exten"_ filtering by _"filter"_.
-        * Date must be expressed in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
+        * Return the history call of the day _"day"_ and endpoint _"endpoint"_. E.g. the endpoint can be
+        * the extension number. Date must be expressed in YYYYMMDD format. If an error occurs an HTTP 500
+        * response is returned.
+        *
+        *     historycall/day/:endpoint/:day/:filter
+        *
+        * Return the history call of the day _"day"_ and endpoint _"endpoint"_ filtering by _"filter"_.
+        * E.g. the endpoint can be the extension number. Date must be expressed in YYYYMMDD format. If an
+        * error occurs an HTTP 500 response is returned.
         *
         * @class plugin_rest_historycall
         * @static
@@ -161,21 +188,23 @@ function sendHttp500(resp, err) {
                 * @property get
                 * @type {array}
                 *
-                *   @param {string} interval/:exten/:from/:to To get the history call between _"from"_ date to _"to"_ date.
-                *                                             The date must be expressed in YYYYMMDD format
-                *   @param {string} interval/:exten/:from/:to/:filter To get the history call between _"from"_ date to _"to"_
-                *                                                     date filtering by filter. The date must be expressed in
-                *                                                     YYYYMMDD format
-                *   @param {string} day/:exten/:day To get the history call of the day and extension. The date must be expressed
-                *                                   in YYYYMMDD format
-                *   @param {string} day/:exten/:day/:filter To get the history call of the day and extension filtering by filter.
-                *                                           The date must be expressed in YYYYMMDD format
+                *   @param {string} interval/:endpoint/:from/:to To get the history call between _"from"_ date to _"to"_ date.
+                *       The date must be expressed in YYYYMMDD format
+                *
+                *   @param {string} interval/:endpoint/:from/:to/:filter To get the history call between _"from"_ date to _"to"_
+                *       date filtering by filter. The date must be expressed in YYYYMMDD format
+                *
+                *   @param {string} day/:endpoint/:day To get the history call of the day and endpoint. The date must be expressed
+                *       in YYYYMMDD format
+                *
+                *   @param {string} day/:endpoint/:day/:filter To get the history call of the day and endpoint filtering by filter.
+                *       The date must be expressed in YYYYMMDD format
                 */
                 'get' : [
-                    'interval/:exten/:from/:to',
-                    'interval/:exten/:from/:to/:filter',
-                    'day/:exten/:day',
-                    'day/:exten/:day/:filter'
+                    'interval/:endpoint/:from/:to',
+                    'interval/:endpoint/:from/:to/:filter',
+                    'day/:endpoint/:day',
+                    'day/:endpoint/:day/:filter'
                 ],
                 'post': [],
                 'head': [],
@@ -183,10 +212,10 @@ function sendHttp500(resp, err) {
             },
 
             /**
-            * Search the history call for the specified interval, extension and optional filter by the following REST api:
+            * Search the history call for the specified interval, endpoint and optional filter by the following REST api:
             *
-            *     interval/:exten/:from/:to
-            *     interval/:exten/:from/:to/:filter
+            *     interval/:endpoint/:from/:to
+            *     interval/:endpoint/:from/:to/:filter
             *
             * @method interval
             * @param {object} req The client request.
@@ -195,10 +224,21 @@ function sendHttp500(resp, err) {
             */
             interval: function (req, res, next) {
                 try {
+                    // get the username from the authorization header added by authentication step
+                    var username = req.headers.authorization_user;
+
+                    // check if the endpoint in the request is an endpoint of the applicant user
+                    if (compAuthorization.authorizeHistoryUserEndpoint(username, req.params.endpoint) === false) {
+                        logger.warn(IDLOG, 'authorization history call failed for user "' + username + '": requested endpoint ' +
+                                           req.params.endpoint + ' not owned by him');
+                        sendHttp401(res);
+                        return;
+                    }
+
                     var obj = {
-                        to:    req.params.to,
-                        from:  req.params.from,
-                        exten: req.params.exten,
+                        to:       req.params.to,
+                        from:     req.params.from,
+                        endpoint: req.params.endpoint
                     };
 
                     // add filter parameter if it has been specified
@@ -211,20 +251,22 @@ function sendHttp500(resp, err) {
                         else {
                             logger.info(IDLOG, 'send ' + results.length   + ' results searching history call ' +
                                                'interval between ' + obj.from + ' to ' + obj.to + ' for ' +
-                                               'exten ' + obj.exten + ' and filter ' + (obj.filter ? obj.filter : '""'));
+                                               'endpoint ' + obj.endpoint + ' and filter ' + (obj.filter ? obj.filter : '""') +
+                                               ' to user "' + username + '"');
                             res.send(200, results);
                         }
                     });
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
+                    sendHttp500(res, err.toString());
                 }
             },
 
             /**
-            * Search the history call for the specified day, extension and optional filter by the following REST api:
+            * Search the history call for the specified day, endpoint and optional filter by the following REST api:
             *
-            *     day/:exten/:day
-            *     day/:exten/:day/:filter
+            *     day/:endpoint/:day
+            *     day/:endpoint/:day/:filter
             *
             * @method day
             * @param {object} req The client request.
@@ -240,14 +282,16 @@ function sendHttp500(resp, err) {
                     this.interval(req, res, next);
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
+                    sendHttp500(res, err.toString());
                 }
             }
         }
-        exports.api            = historycall.api;
-        exports.day            = historycall.day;
-        exports.interval       = historycall.interval;
-        exports.setLogger      = setLogger;
-        exports.setCompHistory = setCompHistory;
+        exports.api                  = historycall.api;
+        exports.day                  = historycall.day;
+        exports.interval             = historycall.interval;
+        exports.setLogger            = setLogger;
+        exports.setCompHistory       = setCompHistory;
+        exports.setCompAuthorization = setCompAuthorization;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);

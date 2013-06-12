@@ -92,7 +92,7 @@ function setDbconn(dbconnMod) {
 *
 * @method getHistoryCallInterval
 * @param {object} data
-*   @param {string} data.exten The extension involved in the research
+*   @param {string} data.endpoint The endpoint involved in the research, e.g. the extension identifier
 *   @param {string} data.from The starting date of the interval in the YYYYMMDD format (e.g. 20130521)
 *   @param {string} data.to The ending date of the interval in the YYYYMMDD format (e.g. 20130528)
 *   @param {string} [data.filter] The filter to be used
@@ -101,18 +101,18 @@ function setDbconn(dbconnMod) {
 function getHistoryCallInterval(data, cb) {
     try {
         // check parameters
-        if (    typeof data        !== 'object'
-            ||  typeof cb          !== 'function'
-            ||  typeof data.to     !== 'string'
-            ||  typeof data.from   !== 'string'
-            ||  typeof data.exten  !== 'string'
-            || (typeof data.filter !== 'string' && data.filter !== undefined)) {
+        if (    typeof data          !== 'object'
+            ||  typeof cb            !== 'function'
+            ||  typeof data.to       !== 'string'
+            ||  typeof data.from     !== 'string'
+            ||  typeof data.endpoint !== 'string'
+            || (typeof data.filter   !== 'string' && data.filter !== undefined)) {
 
             throw new Error('wrong parameters');
         }
 
         logger.info(IDLOG, 'search history call between ' + data.from + ' to ' + data.to + ' for ' +
-                           'exten ' + data.exten + ' and filter ' + (data.filter ? data.filter : '""'));
+                           'endpoint ' + data.endpoint + ' and filter ' + (data.filter ? data.filter : '""'));
         dbconn.getHistoryCallInterval(data, cb);
 
     } catch (err) {
