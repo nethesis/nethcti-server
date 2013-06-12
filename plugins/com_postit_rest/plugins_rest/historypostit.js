@@ -134,6 +134,15 @@ function sendHttp500(resp, err) {
         * Return the history of the postit created in the interval time by the creator
         * filtering the results.
         *
+        *     postit/day/:day
+        *
+        * Return the history of the postit created in the specified day by the applicant.
+        *
+        *     postit/day/:day/:filter
+        *
+        * Return the history of the postit created in the specified day by the applicant
+        * filtering the results.
+        *
         * @class plugin_rest_historypostit
         * @static
         */
@@ -154,11 +163,21 @@ function sendHttp500(resp, err) {
                 *
                 *   @param {string} interval/:from/:to/:filter To get the history of the
                 *       postit created in the interval time by the applicant filtering the
-                *       results by recipient field of db table
+                *       results by "recipient" field of db table
+                *
+                *   @param {string} day/:day To get the history of the postit created in the
+                *       specified day by the applicant. The date must be expressed in
+                *       YYYYMMDD format
+                *
+                *   @param {string} day/:day/:filter To get the history of the postit created
+                *       in the specified day by the applicant filtering the results by "recipient"
+                *       field of db table. The date must be expressed in YYYYMMDD format
                 */
                 'get' : [
                     'interval/:from/:to',
-                    'interval/:from/:to/:filter'
+                    'interval/:from/:to/:filter',
+                    'day/:day',
+                    'day/:day/:filter'
                 ],
                 'post': [],
                 'head': [],
@@ -204,9 +223,35 @@ function sendHttp500(resp, err) {
                     logger.error(IDLOG, err.stack);
                     sendHttp500(res, err.toString());
                 }
+            },
+
+            /**
+            * Search the history postit created by the applicant in the specified day and optional
+            * filter the results with the following REST api:
+            *
+            *     day/:day
+            *     day/:day/:filter
+            *
+            * @method day
+            * @param {object} req The client request.
+            * @param {object} res The client response.
+            * @param {function} next Function to run the next handler in the chain.
+            *
+            * It uses _interval_ function.
+            */
+            day: function (req, res, next) {
+                try {
+                    req.params.to = req.params.day;
+                    req.params.from = req.params.day;
+                    this.interval(req, res, next);
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    sendHttp500(res, err.toString());
+                }
             }
         }
         exports.api           = historypostit.api;
+        exports.day           = historypostit.day;
         exports.interval      = historypostit.interval;
         exports.setLogger     = setLogger;
         exports.setCompPostit = setCompPostit;

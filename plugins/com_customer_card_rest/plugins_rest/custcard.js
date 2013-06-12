@@ -18,6 +18,17 @@
 var IDLOG = '[plugins_rest/custcard]';
 
 /**
+* The logger. It must have at least three methods: _info, warn and error._
+*
+* @property logger
+* @type object
+* @private
+* @default console
+*/
+var logger = console;
+
+
+/**
 * The customer card architect component used for customer card functions.
 *
 * @property compCustomerCard
@@ -112,16 +123,6 @@ function sendHttp500(resp, err) {
 
 (function(){
     try {
-        /**
-        * The logger. It must have at least three methods: _info, warn and error._
-        *
-        * @property logger
-        * @type object
-        * @private
-        * @default console
-        */
-        var logger = console;
-
         /**
         * REST plugin that provides customer card functions through the following REST API:
         *
