@@ -1,0 +1,9 @@
+{
+    "name": "caller_note",
+    "main": "arch_controller_caller_note.js",
+    "private": true,
+    "plugin": {
+        "consumes": ["logger", "dbconn"],
+        "provides": ["callerNote"]
+    }
+}
