@@ -31,8 +31,6 @@ module.exports = function (options, imports, register) {
             * It's the _authorizeHistoryUser_ method provided by _authorization_ module.
             *
             * @method authorizeHistoryUser
-            * @param {string} username The username
-            * @return {boolean} True if the user has the history authorization.
             */
             authorizeHistoryUser: authorization.authorizeHistoryUser,
 
@@ -40,8 +38,6 @@ module.exports = function (options, imports, register) {
             * It's the _authorizePhonebookUser_ method provided by _authorization_ module.
             *
             * @method authorizePhonebookUser
-            * @param {string} username The username
-            * @return {boolean} True if the user has the phonebook authorization.
             */
             authorizePhonebookUser: authorization.authorizePhonebookUser,
 
@@ -49,8 +45,6 @@ module.exports = function (options, imports, register) {
             * It's the _authorizeCallerNoteUser_ method provided by _authorization_ module.
             *
             * @method authorizeCallerNoteUser
-            * @param {string} username The username
-            * @return {boolean} True if the user has the caller note authorization.
             */
             authorizeCallerNoteUser: authorization.authorizeCallerNoteUser,
 
@@ -58,8 +52,6 @@ module.exports = function (options, imports, register) {
             * It's the _authorizePostitUser_ method provided by _authorization_ module.
             *
             * @method authorizePostitUser
-            * @param {string} username The username
-            * @return {boolean} True if the user has the post-it authorization.
             */
             authorizePostitUser: authorization.authorizePostitUser,
 
@@ -67,8 +59,6 @@ module.exports = function (options, imports, register) {
             * It's the _authorizeCustomerCardUser_ method provided by _authorization_ module.
             *
             * @method authorizeCustomerCardUser
-            * @param {string} username The username
-            * @return {boolean} True if the user has the customer card authorization.
             */
             authorizeCustomerCardUser: authorization.authorizeCustomerCardUser,
 
@@ -76,10 +66,15 @@ module.exports = function (options, imports, register) {
             * It's the _authorizedCustomerCards_ method provided by _authorization_ module.
             *
             * @method authorizedCustomerCards
-            * @param {string} username The username
-            * @return {array} The list of the authorized customer cards of the user.
             */
-            authorizedCustomerCards: authorization.authorizedCustomerCards
+            authorizedCustomerCards: authorization.authorizedCustomerCards,
+
+            /**
+            * It's the _authorizeHistoryUserEndpoint_ method provided by _authorization_ module.
+            *
+            * @method authorizeHistoryUserEndpoint
+            */
+            authorizeHistoryUserEndpoint: authorization.authorizeHistoryUserEndpoint
         }
     });
 

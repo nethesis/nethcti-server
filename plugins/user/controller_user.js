@@ -305,9 +305,43 @@ function on(type, cb) {
     }
 }
 
+/**
+* Check if the user has an extension endpoint.
+*
+* @method hasExtensionEndpoint
+* @param {string} username The name of the user to check
+* @param {string} exten The extension identifier
+* @return {boolean} True if the user has the extension endpoint, false otherwise.
+*/
+function hasExtensionEndpoint(username, exten) {
+    try {
+        // check parameters
+        if (typeof username !== 'string' || typeof exten !== 'string') {
+            throw new Error('wrong parameters');
+        }
+
+        if (users[username] === undefined) { // the user is not present
+            throw new Error('no user "' + username + '" is present');
+        }
+
+        var ext;
+        var obj = users[username].getEndpointExtensions();
+        for (ext in obj) {
+            if (ext === exten) { return true; }
+        }
+
+        return false;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return false;
+    }
+}
+
 // public interface
-exports.on                 = on;
-exports.config             = config;
-exports.setLogger          = setLogger;
-exports.setAuthorization   = setAuthorization;
-exports.getAuthorization   = getAuthorization;
+exports.on                   = on;
+exports.config               = config;
+exports.setLogger            = setLogger;
+exports.setAuthorization     = setAuthorization;
+exports.getAuthorization     = getAuthorization;
+exports.hasExtensionEndpoint = hasExtensionEndpoint;

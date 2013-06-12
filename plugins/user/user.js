@@ -201,6 +201,14 @@ exports.User = function (name) {
     }
 
     /**
+    * Return the extension endpoint of the user.
+    *
+    * @method getEndpointExtensions
+    * @return {object} The extension endpoint.
+    */
+    function getEndpointExtensions() { return endpointExtension; }
+
+    /**
     * Return the readable string of the user.
     *
     * @method toString
@@ -226,12 +234,13 @@ exports.User = function (name) {
 
     // public interface
     return {
-        toJSON:               toJSON,
-        toString:             toString,
-        getUsername:          getUsername,
-        addEndpoint:          addEndpoint,
-        setAuthorization:     setAuthorization,
-        getAuthorization:     getAuthorization,
-        getAllAuthorizations: getAllAuthorizations
+        toJSON:                toJSON,
+        toString:              toString,
+        getUsername:           getUsername,
+        addEndpoint:           addEndpoint,
+        setAuthorization:      setAuthorization,
+        getAuthorization:      getAuthorization,
+        getAllAuthorizations:  getAllAuthorizations,
+        getEndpointExtensions: getEndpointExtensions
     };
 }

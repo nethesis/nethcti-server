@@ -46,6 +46,13 @@ module.exports = function (options, imports, register) {
             * @method getAuthorization
             */
             getAuthorization: controllerUser.getAuthorization,
+
+            /**
+            * It's the _hasExtensionEndpoint_ method provided by _controller\_user_ module.
+            *
+            * @method hasExtensionEndpoint
+            */
+            hasExtensionEndpoint: controllerUser.hasExtensionEndpoint
         }
     });
 
