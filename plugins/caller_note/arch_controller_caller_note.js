@@ -28,7 +28,14 @@ module.exports = function (options, imports, register) {
             *
             * @method newCallerNote
             */
-            newCallerNote: controllerCallerNote.newCallerNote
+            newCallerNote: controllerCallerNote.newCallerNote,
+
+            /**
+            * It's the _getHistoryInterval_ method provided by _controller\_caller\_note_ module.
+            *
+            * @method getHistoryInterval
+            */
+            getHistoryInterval: controllerCallerNote.getHistoryInterval
         }
     });
 

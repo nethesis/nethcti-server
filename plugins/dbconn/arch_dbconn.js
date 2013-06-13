@@ -66,7 +66,14 @@ module.exports = function (options, imports, register) {
             *
             * @method getCustomerCardByNum
             */
-            getCustomerCardByNum: dbconn.getCustomerCardByNum
+            getCustomerCardByNum: dbconn.getCustomerCardByNum,
+
+            /**
+            * It's the _getHistoryCallerNoteInterval_ method provided by _dbconn_ module.
+            *
+            * @method getHistoryCallerNoteInterval
+            */
+            getHistoryCallerNoteInterval: dbconn.getHistoryCallerNoteInterval
         }
     });
 

@@ -112,7 +112,7 @@ function sendHttp500(resp, err) {
         *
         * The client crete a new caller note. The visibility can be "public" or "private".
         *
-        * @class plugin_rest_caller_rest
+        * @class plugin_rest_callernote
         * @static
         */
         var callernote = {

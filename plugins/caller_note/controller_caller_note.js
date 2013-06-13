@@ -173,9 +173,7 @@ function setDbconn(dbconnMod) {
 }
 
 /**
-// to adapt...................
-// ...........................
-* Get the history of the post-it created by the user into the interval time.
+* Get the history of the caller note created by the user into the interval time.
 * It can be possible to filter the results.
 *
 * @method getHistoryInterval
@@ -186,7 +184,6 @@ function setDbconn(dbconnMod) {
 *   @param {string} [data.filter] The filter to be used
 * @param {function} cb The callback function
 */
-/*
 function getHistoryInterval(data, cb) {
     try {
         // check parameters
@@ -200,18 +197,17 @@ function getHistoryInterval(data, cb) {
             throw new Error('wrong parameters');
         }
 
-        logger.info(IDLOG, 'search history post-it between ' + data.from + ' to ' + data.to + ' for ' +
+        logger.info(IDLOG, 'search history caller note between ' + data.from + ' to ' + data.to + ' for ' +
                            'username "' + data.username + '" and filter ' + (data.filter ? data.filter : '""'));
-        dbconn.getHistoryPostitInterval(data, cb);
+        dbconn.getHistoryCallerNoteInterval(data, cb);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
 }
-*/
 
 // public interface
 exports.setLogger          = setLogger;
 exports.setDbconn          = setDbconn;
 exports.newCallerNote      = newCallerNote;
-//exports.getHistoryInterval = getHistoryInterval;
+exports.getHistoryInterval = getHistoryInterval;
