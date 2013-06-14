@@ -38,6 +38,45 @@ var IDLOG = '[authenticationLDAP]';
 var logger = console;
 
 /**
+* The types of the authentication that can be used.
+*
+* @property AUTH_TYPE
+* @type object
+* @private
+* @default {
+    "ldap": "ldap",
+    "file": "file"
+};
+*/
+var AUTH_TYPE = {
+    'ldap': 'ldap',
+    'file': 'file'
+};
+
+/**
+* The type of authentication chosen. It can be one of the
+* _AUTH\_TYPE_ properties. The authentication type is selected
+* with the configuration file. It's used to choose the correct
+* authentication method.
+*
+* @property authenticationType
+* @type string
+* @private
+* @default {}
+*/
+var authenticationType;
+
+/**
+* The user credentials used in the case of file authentication type.
+*
+* @property authFileCredentials
+* @type object
+* @private
+* @default {}
+*/
+var authFileCredentials = {};
+
+/**
 * The LDAP organizational unit.
 *
 * @property ou
@@ -154,8 +193,9 @@ function setLogger(log) {
 }
 
 /**
-* It reads the authentication configuration file and initialize
-* the LDAP client. The file must use JSON syntax.
+* It reads the authentication configuration file and call
+* the appropriate function to configure authentication by
+* LDAP or by file. The file must use JSON syntax.
 *
 * **The method can throw an Exception.**
 *
@@ -172,13 +212,84 @@ function config(path) {
     // read configuration file
     var json = require(path);
 
-    // check the file content
-    if (json.type   !== 'ldap'
-        || json.ou  === undefined || json.ou  === ''
+    if (typeof    json      !== 'object'
+        || typeof json.type !== 'string'
+        || !AUTH_TYPE[json.type]) {
+
+        throw new Error('wrong configuration file for authentication ' + path);
+    }
+
+    logger.info(IDLOG, 'configure authentication with ' + path);
+
+    // set the authentication type
+    authenticationType = json.type;
+
+    // configure LDAP authentication
+    if (json.type === AUTH_TYPE.ldap) {
+        logger.info(IDLOG, 'configure authentication with LDAP');
+        configLDAP(json.ldap);
+
+    } else if (json.type === AUTH_TYPE.file) {
+        // configure authentication with a credentials file
+        logger.info(IDLOG, 'configure authentication with credentials file');
+        configFile(json.file);
+    }
+}
+
+/**
+* Initialize the user credentials reading the file. The file must
+* use the JSON format.
+*
+* **The method can throw an Exception.**
+*
+* @method configFile
+* @param {object} json The object with the path of the file
+*   @param {string} json.path The path of the credentials file
+*/
+function configFile(json) {
+    // check the parameter
+    if (typeof  json !== 'object'
+        || json.path === undefined || json.path === '') {
+
+        throw new Error('wrong file authentication configuration');
+    }
+
+    // check file presence
+    if (!fs.existsSync(json.path)) { throw new Error(json.path + ' not exists'); }
+
+    // read configuration file
+    var cred = require(json.path);
+
+    // initialize user credentials
+    var user;
+    for (user in cred) {
+
+        if (cred[user].authentication && cred[user].authentication.password) {
+            authFileCredentials[user] = cred[user].authentication.password;
+
+        } else {
+            logger.warn(IDLOG, 'no authentication password for user "' + user + '" in ' + json.path);
+        }
+    }
+    logger.info(IDLOG, 'file authentication configuration ended');
+}
+
+/**
+* Initialize the LDAP client.
+*
+* **The method can throw an Exception.**
+*
+* @method configLDAP
+* @param {object} json The object with the LDAP parameters
+*/
+function configLDAP(json) {
+    // check the parameter
+    if (typeof json !== 'object'
+        || json.ou  === undefined
         || json.dc1 === undefined || json.dc1 === ''
         || json.dc2 === undefined || json.dc2 === '') {
 
-        throw new Error('wrong LDAP configuration file ' + path);
+        throw new Error('wrong LDAP auhtentication configuration');
     }
 
     // customize server and port by the configuration file
@@ -189,12 +300,12 @@ function config(path) {
     dc1 = json.dc1;
     dc2 = json.dc2;
 
+    var ldapurl = 'ldap://' + server + ':' + port;
+
     // create ldap client
-    client = ldap.createClient({
-        url: 'ldap://' + server + ':' + port
-    });
-    logger.info(IDLOG, 'LDAP client created');
-    logger.info(IDLOG, 'LDAP configuration by file ' + path + ' ended');
+    client = ldap.createClient({ url: ldapurl });
+    logger.info(IDLOG, 'LDAP client created to ' + ldapurl);
+    logger.info(IDLOG, 'LDAP authentication configuration ended');
 }
 
 /**
@@ -268,7 +379,7 @@ function getNonce(accessKeyId, password) {
 }
 
 /**
-* Authenticate the user by LDAP bind operation. 
+* Authenticate the user using the choosen method in the configuration step.
 *
 * @method authenticate
 * @param {string} accessKeyId The access key used to authenticate, e.g. the username
@@ -284,6 +395,76 @@ function authenticate(accessKeydId, password, cb) {
 
             throw new Error('wrong parameters');
         }
+
+        // authenticate the user by LDAP
+        if (authenticationType === AUTH_TYPE.ldap) {
+            logger.info(IDLOG, 'authenticate the user "' + accessKeydId + '" by LDAP');
+            authByLDAP(accessKeydId, password, cb);
+
+        } else if (authenticationType === AUTH_TYPE.file) {
+            // authenticate the user by credentials read from the file
+            logger.info(IDLOG, 'authenticate the user "' + accessKeydId + '" by credentials file');
+            authByFile(accessKeydId, password, cb);
+
+        } else {
+            logger.error(IDLOG, 'unknown authentication type "' + authenticationType + '"');
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Authenticate the user by the credentials read from the file.
+*
+* @method authByFile
+* @param {string} accessKeyId The access key used to authenticate, e.g. the username
+* @param {string} password The password of the account
+* @param {function} cb The callback function
+*/
+function authByFile(accessKeydId, password, cb) {
+    try {
+        // check parameters
+        if (typeof cb !== 'function'
+            || typeof password     !== 'string'
+            || typeof accessKeydId !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        if (authFileCredentials[accessKeydId] === password) {
+            logger.info(IDLOG, 'user "' + accessKeydId + '" has been authenticated successfully with file');
+            cb(null);
+
+        } else {
+            var strerr = 'file authentication failed for user "' + accessKeydId + '"';
+            logger.warn(IDLOG, strerr);
+            cb(strerr);
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb('file authentication failed for user "' + accessKeydId + '"');
+    }
+}
+
+/**
+* Authenticate the user by LDAP bind operation.
+*
+* @method authByLDAP
+* @param {string} accessKeyId The access key used to authenticate, e.g. the username
+* @param {string} password The password of the account
+* @param {function} cb The callback function
+*/
+function authByLDAP(accessKeydId, password, cb) {
+    try {
+        // check parameters
+        if (typeof cb !== 'function'
+            || typeof password     !== 'string'
+            || typeof accessKeydId !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
         var dn = 'uid=' + accessKeydId + ',ou=' + ou + ',dc=' + dc1 + ',dc=' + dc2;
 
         // ldap authentication
@@ -313,15 +494,16 @@ function bindCb(accessKeydId, err, result, cb) {
         }
 
         if (err) {
-            logger.warn(IDLOG, 'authentication failed for user "' + accessKeydId + '"');
+            logger.warn(IDLOG, 'LDAP authentication failed for user "' + accessKeydId + '"');
             cb(err);
 
         } else {
-            logger.info(IDLOG, 'user "' + accessKeydId + '" has been successfully authenticated');
+            logger.info(IDLOG, 'user "' + accessKeydId + '" has been successfully authenticated with LDAP');
             cb(null);
         }
     } catch (err) {
         logger.error(IDLOG, err.stack);
+        cb('LDAP authentication failed for user "' + accessKeydId + '"');
     }
 }
 
