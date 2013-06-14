@@ -4,7 +4,7 @@
 * @class arch_authentication
 * @module authentication
 */
-var authentication = require('./authenticationLDAP');
+var authentication = require('./authentication');
 
 /**
 * The module identifier used by the logger.
