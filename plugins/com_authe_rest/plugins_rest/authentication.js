@@ -132,11 +132,10 @@ function sendHttp401(resp) {
             // the REST api
             api: {
                 'root': 'authentication',
-                'get' : [''],
                 /**
                 * REST API to be requested using HTTP POST request.
                 *
-                * @property post
+                * @property get
                 * @type {array}
                 *
                 *   @param {string} authenticate/:username/:password Authenticate with username
@@ -144,9 +143,10 @@ function sendHttp401(resp) {
                 *       with _nonce_ in WWW-Authenticate header. The nonce is used to construct
                 *       the token for the next authentications.
                 */
-                'post': [
+                'get': [
                     'authenticate/:username/:password'
                 ],
+                'post' : [''],
                 'head': [],
                 'del' : []
             },

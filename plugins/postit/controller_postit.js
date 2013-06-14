@@ -96,7 +96,7 @@ function newPostit(data, cb) {
 }
 
 /**
-* Save the the post-it data into the database using dbconn module.
+* Save the post-it data into the database using dbconn module.
 *
 * @method save
 * @param {object} data
