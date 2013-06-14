@@ -95,6 +95,23 @@ function sendHttp401(resp) {
 }
 
 /**
+* Send HTTP 201 created response.
+*
+* @method sendHttp201
+* @param {object} resp The client response object.
+* @private
+*/
+function sendHttp201(resp) {
+    try {
+        resp.writeHead(201);
+        logger.info(IDLOG, 'send HTTP 201 response to ' + resp.connection.remoteAddress);
+        resp.end();
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Send HTTP 500 internal server error response.
 *
 * @method sendHttp500
@@ -125,9 +142,21 @@ function sendHttp500(resp, err) {
         /**
         * REST plugin that provides phonebook functions through the following REST API:
         *
+        * **GET request**
+        *
         *     phonebook/search/:term
         *
         * The client receive all phonebook contacts found or a HTTP 500 response.
+        *
+        * **POST request**
+        *
+        *     phonebook/create
+        *
+        * Create a contact in the NethCTI phonebook. The contact information must be
+        * specified in the POST request in JSON format and must contain at least the
+        * _creator_ and _type_ keys. E.g. using curl:
+        *
+        *     curl --insecure -i -X POST -d '{ "creator": "alessandro", "type": "type", ... }' https://192.168.5.224:8282/phonebook/create
         *
         * @class plugin_rest_phonebook
         * @static
@@ -147,13 +176,22 @@ function sendHttp500(resp, err) {
                 *   @param {string} search/:term To get the centralized phonebook contacts
                 */
                 'get' : [ 'search/:term' ],
-                'post': [],
+
+                /**
+                * REST API to be requested using HTTP POST request.
+                *
+                * @property post
+                * @type {array}
+                *
+                *   @param {string} create Creates a contact in the NethCTI phonebook
+                */
+                'post': [ 'create' ],
                 'head': [],
                 'del' : []
             },
 
             /**
-            * Search the address book contacts in the cetnralized phonebook for the following REST API:
+            * Search the address book contacts in the centralized phonebook for the following REST API:
             *
             *     search/:term
             *
@@ -177,10 +215,45 @@ function sendHttp500(resp, err) {
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
                 }
+            },
+
+            /**
+            * Create a contact in the NethCTI phonebook with the following REST API:
+            *
+            *     create
+            *
+            * @method create
+            * @param {object} req The client request.
+            * @param {object} res The client response.
+            * @param {function} next Function to run the next handler in the chain.
+            */
+            create: function (req, res, next) {
+                try {
+                    // extract the parameter
+                    // data is the JSON object passed by the client with an HTTP POST request
+                    var data     = JSON.parse(Object.keys(req.params)[0]);
+                    // extract the username added in the authentication step
+                    var username = req.headers.authorization_user;
+
+                    // use phonebook component
+                    compPhonebook.saveCtiPbContact(data, function (err, results) {
+
+                        if (err) { sendHttp500(res, err.toString()); }
+
+                        else {
+                            logger.info(IDLOG, 'cti phonebook contact has been created successful from the user "' + username + '"');
+                            sendHttp201(res);
+                        }
+                    });
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    sendHttp500(res, err.toString());
+                }
             }
         }
         exports.api              = phonebook.api;
         exports.search           = phonebook.search;
+        exports.create           = phonebook.create;
         exports.setLogger        = setLogger;
         exports.setCompPhonebook = setCompPhonebook;
 

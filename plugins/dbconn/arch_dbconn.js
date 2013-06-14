@@ -41,6 +41,13 @@ module.exports = function (options, imports, register) {
             saveCallerNote: dbconn.saveCallerNote,
 
             /**
+            * It's the _saveCtiPbContact_ method provided by _dbconn_ module.
+            *
+            * @method saveCtiPbContact
+            */
+            saveCtiPbContact: dbconn.saveCtiPbContact,
+
+            /**
             * It's the _getPhonebookContacts_ method provided by _dbconn_ module.
             *
             * @method getPhonebookContacts

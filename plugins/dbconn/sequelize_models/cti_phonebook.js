@@ -1,0 +1,32 @@
+module.exports = function (sequelize, DataTypes) {
+    return sequelize.define('cti_phonebook', {
+        id:             { type: DataTypes.INTEGER, autoIncrement: true },
+        owner_id:       DataTypes.STRING,
+        type:           DataTypes.STRING,
+        homeemail:      DataTypes.STRING,
+        workemail:      DataTypes.STRING,
+        homephone:      DataTypes.STRING,
+        workphone:      DataTypes.STRING,
+        cellphone:      DataTypes.STRING,
+        fax:            DataTypes.STRING,
+        title:          DataTypes.STRING,
+        company:        DataTypes.STRING,
+        notes:          DataTypes.TEXT,
+        name:           DataTypes.STRING,
+        homestreet:     DataTypes.STRING,
+        homepob:        DataTypes.STRING,
+        homecity:       DataTypes.STRING,
+        homeprovince:   DataTypes.STRING,
+        homepostalcode: DataTypes.STRING,
+        homecountry:    DataTypes.STRING,
+        workstreet:     DataTypes.STRING,
+        workpob:        DataTypes.STRING,
+        workcity:       DataTypes.STRING,
+        workprovince:   DataTypes.STRING,
+        workpostalcode: DataTypes.STRING,
+        workcountry:    DataTypes.STRING,
+        url:            DataTypes.STRING,
+        extension:      DataTypes.STRING,
+        speeddial_num:  DataTypes.STRING
+    });
+}

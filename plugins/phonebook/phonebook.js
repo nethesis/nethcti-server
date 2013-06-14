@@ -109,7 +109,64 @@ function setDbconn(dbconnMod) {
     }
 }
 
+/**
+* Save the contact in the NethCTI phonebook database using dbconn module.
+*
+* @method saveCtiPbContact
+* @param {object} data
+*   @param {string} data.creator The creator identifier of the contact
+*   @param {string} data.type The type of the contact
+*   @param {string} [data.homeemail]
+*   @param {string} [data.workemail]
+*   @param {string} [data.homephone]
+*   @param {string} [data.workphone]
+*   @param {string} [data.cellphone]
+*   @param {string} [data.fax]
+*   @param {string} [data.title]
+*   @param {string} [data.company]
+*   @param {string} [data.notes]
+*   @param {string} [data.name]
+*   @param {string} [data.homestreet]
+*   @param {string} [data.homepob]
+*   @param {string} [data.homecity]
+*   @param {string} [data.homeprovince]
+*   @param {string} [data.homepostalcode]
+*   @param {string} [data.homecountry]
+*   @param {string} [data.workstreet]
+*   @param {string} [data.workpob]
+*   @param {string} [data.workcity]
+*   @param {string} [data.workprovince]
+*   @param {string} [data.workpostalcode]
+*   @param {string} [data.workcountry]
+*   @param {string} [data.url]
+*   @param {string} [data.extension]
+*   @param {string} [data.speeddial_num]
+* @param {function} cb The callback function
+*/
+function saveCtiPbContact(data, cb) {
+    try {
+        // check parameter
+        if (typeof    data         !== 'object' || typeof cb    !== 'function'
+            || typeof data.type    !== 'string' || data.type    === ''
+            || typeof data.creator !== 'string' || data.creator === '') {
+
+            throw new Error('wrong parameter');
+        }
+
+        // adapt data to the database
+        data.owner_id = data.creator;
+
+        logger.info(IDLOG, 'save cti phonebook contact by means dbconn module');
+        dbconn.saveCtiPbContact(data, cb);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err.toString());
+    }
+}
+
 // public interface
 exports.setLogger            = setLogger;
 exports.setDbconn            = setDbconn;
+exports.saveCtiPbContact     = saveCtiPbContact;
 exports.getPhonebookContacts = getPhonebookContacts;

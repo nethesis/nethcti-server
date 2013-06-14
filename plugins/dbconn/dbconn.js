@@ -74,10 +74,11 @@ var CUSTOMER_CARD = {
 }
 */
 var JSON_KEYS = {
-    POSTIT:       'postit',
-    PHONEBOOK:    'phonebook',
-    CALLER_NOTE:  'caller_note',
-    HISTORY_CALL: 'history_call'
+    POSTIT:        'postit',
+    PHONEBOOK:     'phonebook',
+    CALLER_NOTE:   'caller_note',
+    HISTORY_CALL:  'history_call',
+    CTI_PHONEBOOK: 'cti_phonebook'
 };
 
 /**
@@ -196,6 +197,42 @@ function start() {
 }
 
 /**
+* Saves the new contact in the NethCTI phonebook that is in the
+* _nethcti.cti\_phonebook_ database table.
+*
+* @method saveCtiPbContact
+* @param {object} data All the contact information to save in the database
+* @param {function} cb The callback function
+*/
+function saveCtiPbContact(data, cb) {
+    try {
+        // check parameters
+        if (typeof    data          !== 'object' || typeof cb     !== 'function'
+            || typeof data.type     !== 'string' || data.type     === ''
+            || typeof data.owner_id !== 'string' || data.owner_id === '') {
+
+            throw new Error('wrong parameter');
+        }
+
+        // get the sequelize model already loaded
+        var contact = models[JSON_KEYS.CTI_PHONEBOOK].build(data);
+
+        // save the model into the database
+        contact.save()
+        .success(function () { // the save was successful
+            logger.info(IDLOG, 'cti phonebook contact saved successfully');
+            cb(null);
+
+        }).error(function (err) { // manage the error
+            logger.error(IDLOG, 'saving cti phonebook contact: ' + err.toString());
+            cb(err.toString());
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Save new post-it in the database.
 *
 * @method savePostit
@@ -207,9 +244,8 @@ function start() {
 function savePostit(creator, text, recipient, cb) {
     try {
         // check parameters
-        if (typeof creator      !== 'string'
-            || typeof text      !== 'string'
-            || typeof recipient !== 'string') {
+        if (typeof    creator   !== 'string' || typeof text !== 'string'
+            || typeof recipient !== 'string' || typeof cb   !== 'function') {
 
             throw new Error('wrong parameters');
         }
@@ -694,6 +730,7 @@ exports.config                       = config;
 exports.setLogger                    = setLogger;
 exports.savePostit                   = savePostit;
 exports.saveCallerNote               = saveCallerNote;
+exports.saveCtiPbContact             = saveCtiPbContact;
 exports.getPhonebookContacts         = getPhonebookContacts;
 exports.getCustomerCardByNum         = getCustomerCardByNum;
 exports.getHistoryCallInterval       = getHistoryCallInterval;
