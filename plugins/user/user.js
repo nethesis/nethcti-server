@@ -88,6 +88,37 @@ exports.User = function (name) {
     var endpointCalendar = {};
 
     /**
+    * The user configurations.
+    *
+    * @property configurations
+    * @private
+    * @default {}
+    */
+    var configurations = {};
+
+    /**
+    * Return the user configurations.
+    *
+    * @method getConfigurations
+    * @return {object} The configuration of the user
+    */
+    function getConfigurations() { return configurations; }
+
+    /**
+    * Sets the user configurations.
+    *
+    * **It can throw an Exception.**
+    *
+    * @method setConfigurations
+    * @return {object} The configuration of the user
+    */
+    function setConfigurations(c) {
+        // check parameter
+        if (typeof c !== 'object') { throw new Error('wrong parameter'); }
+        configurations = c;
+    }
+
+    /**
     * Return the name of the user.
     *
     * @method getUsername
@@ -240,6 +271,8 @@ exports.User = function (name) {
         addEndpoint:           addEndpoint,
         setAuthorization:      setAuthorization,
         getAuthorization:      getAuthorization,
+        getConfigurations:     getConfigurations,
+        setConfigurations:     setConfigurations,
         getAllAuthorizations:  getAllAuthorizations,
         getEndpointExtensions: getEndpointExtensions
     };

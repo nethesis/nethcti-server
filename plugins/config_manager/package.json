@@ -1,0 +1,12 @@
+{
+    "name": "config_manager",
+    "main": "arch_config_manager.js",
+    "private": true,
+    "plugin": {
+        "consumes": [
+            "logger",
+            "user"
+        ],
+        "provides": [ "configManager" ]
+    }
+}

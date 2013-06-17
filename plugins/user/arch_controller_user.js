@@ -48,6 +48,20 @@ module.exports = function (options, imports, register) {
             getAuthorization: controllerUser.getAuthorization,
 
             /**
+            * It's the _setConfigurations_ method provided by _controller\_user_ module.
+            *
+            * @method setConfigurations
+            */
+            setConfigurations: controllerUser.setConfigurations,
+
+            /**
+            * It's the _getConfigurations_ method provided by _controller\_user_ module.
+            *
+            * @method getConfigurations
+            */
+            getConfigurations: controllerUser.getConfigurations,
+
+            /**
             * It's the _hasExtensionEndpoint_ method provided by _controller\_user_ module.
             *
             * @method hasExtensionEndpoint

@@ -107,13 +107,21 @@ function config(data) {
 }
 
 /**
+* It's emitted when the creation of the _User_ objects is completed.
+*
+* @event users_ready
+*/
+
+/**
 * Initialize the users by file. The file must use the JSON syntax and
 * must report user/endpoint associations and authorization data.
+*
+* **It emits _"users\_ready"_ event when the user creation is completed.**
 *
 * @method configByFile
 * @param {string} path The path of the JSON file with the
 *                      user/endpoints associations and the authorization data
-* private
+* @private
 */
 function configByFile(path) {
     try {
@@ -212,6 +220,62 @@ function addEndpointsToUser(userid, endpoType, obj) {
         }
     } catch (err) {
         logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the configurations to the specified user.
+*
+* **It can throw an Exception.**
+*
+* @method setConfigurations
+* @param {string} userid The user identifier
+* @param {object} config The user configurations
+*/
+function setConfigurations(userid, config) {
+    try {
+        if (typeof userid !== 'string' || typeof config !== 'object') {
+            throw new Error('wrong parameters');
+        }
+
+        if (users[userid] !== undefined) { // the user exists
+
+            users[userid].setConfigurations(config);
+            logger.info(IDLOG, 'configurations has been set for user "' + userid + '"');
+
+        } else {
+            throw new Error('setting configurations of unknown user "' + userid + '"');
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        throw err;
+    }
+}
+
+/**
+* Gets the user configurations.
+*
+* @method getConfigurations
+* @param {string} userid The user identifier
+* @return {object} The configurations of the user or an empty object if some
+*   problem occurs.
+*/
+function getConfigurations(userid) {
+    try {
+        // check parameter
+        if (typeof userid !== 'string') { throw new Error('wrong parameter'); }
+
+        if (users[userid] !== undefined) { // the user exits
+
+            logger.info(IDLOG, 'return configurations of user "' + userid + '"');
+            return users[userid].getConfigurations();
+
+        } else {
+            throw new Error('getting configurations of unknown user "' + userid + '"');
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return {};
     }
 }
 
@@ -344,4 +408,6 @@ exports.config               = config;
 exports.setLogger            = setLogger;
 exports.setAuthorization     = setAuthorization;
 exports.getAuthorization     = getAuthorization;
+exports.getConfigurations    = getConfigurations;
+exports.setConfigurations    = setConfigurations;
 exports.hasExtensionEndpoint = hasExtensionEndpoint;
