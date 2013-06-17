@@ -137,17 +137,17 @@ function sendHttp500(resp, err) {
             // the REST api
             api: {
                 'root': 'postit',
+                'get': [],
 
                 /**
-                * REST API to be requested using HTTP GET request.
+                * REST API to be requested using HTTP POST request.
                 *
-                * @property get
+                * @property post
                 * @type {array}
                 *
                 *   @param {string} create/:text/:recipient To create a new post-it
                 */
-                'get' : [ 'create/:text/:recipient' ],
-                'post': [],
+                'post' : [ 'create/:text/:recipient' ],
                 'head': [],
                 'del' : []
             },
