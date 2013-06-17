@@ -120,17 +120,17 @@ function sendHttp500(resp, err) {
             // the REST api
             api: {
                 'root': 'callernote',
+                'get': [],
 
                 /**
-                * REST API to be requested using HTTP GET request.
+                * REST API to be requested using HTTP POST request.
                 *
-                * @property get
+                * @property post
                 * @type {array}
                 *
                 *   @param {string} create/:text/:number/:callid/:visibility/:expiration/:booking To create a new caller note
                 */
-                'get' : [ 'create/:text/:number/:callid/:visibility/:expiration/:booking' ],
-                'post': [],
+                'post' : [ 'create/:text/:number/:callid/:visibility/:expiration/:booking' ],
                 'head': [],
                 'del' : []
             },
