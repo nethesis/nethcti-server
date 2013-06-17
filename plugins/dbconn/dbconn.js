@@ -440,6 +440,60 @@ function getPhonebookContacts(term, cb) {
 }
 
 /**
+* Gets the phonebook contacts searching in the NethCTI phonebook database.
+* It search in the fields _name, company, workphone, homephone, cellphone and
+* extension_. It orders the results by _name_ and _company_ ascending. The
+* specified term is wrapped with '%' character. The NethCTI address book is the
+* mysql _nethcti.cti\_phonebook_.
+*
+* @method getCtiPbContacts
+* @param {string} term The term to search. It can be a name or a number
+* @param {function} cb The callback function
+*/
+function getCtiPbContacts(term, cb) {
+    try {
+        // check parameters
+        if (typeof term !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        // add '%' to search all terms with any number of characters, even zero characters
+        term = '%' + term + '%';
+
+        models[JSON_KEYS.CTI_PHONEBOOK].findAll({
+            where: [
+                'name LIKE ? ' +
+                'OR company LIKE ? ' +
+                'OR workphone LIKE ? ' +
+                'OR homephone LIKE ? ' +
+                'OR cellphone LIKE ? ' +
+                'OR extension LIKE ?',
+                term, term, term, term, term, term
+            ],
+            order: 'name ASC, company ASC'
+
+        }).success(function (results) {
+
+            // extract results to return in the callback function
+            var i;
+            for (i = 0; i < results.length; i++) {
+                results[i] = results[i].selectedValues;
+            }
+
+            logger.info(IDLOG, results.length + ' results by searching cti phonebook contacts for ' + term);
+            cb(null, results);
+
+        }).error(function (err) { // manage the error
+
+            logger.error(IDLOG, 'searching cti phonebook contacts for ' + term + ': ' + err.toString());
+            cb(err.toString());
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Get the history call of the specified endpoint into the interval time.
 * If the endpoint information is omitted, the results contains the
 * history call of all endpoints. Moreover, it can be possible to filter
@@ -731,6 +785,7 @@ exports.setLogger                    = setLogger;
 exports.savePostit                   = savePostit;
 exports.saveCallerNote               = saveCallerNote;
 exports.saveCtiPbContact             = saveCtiPbContact;
+exports.getCtiPbContacts             = getCtiPbContacts;
 exports.getPhonebookContacts         = getPhonebookContacts;
 exports.getCustomerCardByNum         = getCustomerCardByNum;
 exports.getHistoryCallInterval       = getHistoryCallInterval;

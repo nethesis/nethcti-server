@@ -4,6 +4,7 @@
 * @module phonebook
 * @main phonebook
 */
+var async = require('async');
 
 /**
 * Provides the phonebook functionalities.
@@ -70,7 +71,8 @@ function setLogger(log) {
 }
 
 /**
-* Gets the centralized phonebook contacts.
+* Gets the phonebook contacts searching in the centralized and
+* NethCTI phonebook database.
 *
 * @method getPhonebookContacts
 * @param {string} term The term to search. It can be a name or a number
@@ -84,11 +86,61 @@ function getPhonebookContacts(term, cb) {
             throw new Error('wrong parameters');
         }
 
-        logger.info(IDLOG, 'search centralized phonebook contacts by means dbconn module');
-        dbconn.getPhonebookContacts(term, cb);
+        // object with all results
+        var obj = {
+            'centralized': [],
+            'nethcti':     []
+        };
 
+        async.parallel([
+
+            function (callback) {
+                logger.info(IDLOG, 'search centralized phonebook contacts by means dbconn module');
+                dbconn.getPhonebookContacts(term, function (err, results) {
+                    try {
+                        if (err) { // some error in the query
+                            logger.error(IDLOG, err);
+
+                        } else { // add the result
+                            obj['centralized'] = results;
+                        }
+                        callback();
+
+                    } catch (err) {
+                        logger.error(IDLOG, err.stack);
+                        callback();
+                    }
+                });
+            },
+            function (callback) {
+                logger.info(IDLOG, 'search cti phonebook contacts by means dbconn module');
+                dbconn.getCtiPbContacts(term, function (err, results) {
+                    try {
+                        if (err) { // some error in the query
+                            logger.error(IDLOG, err);
+
+                        } else { // add the result
+                            obj['nethcti'] = results;
+                        }
+                        callback();
+
+                    } catch (err) {
+                        logger.error(IDLOG, err.stack);
+                        callback();
+                    }
+                });
+            }
+
+        ], function (err) {
+            if (err) { logger.error(IDLOG, err); }
+
+            logger.info(IDLOG, 'found ' + obj['centralized'].length + ' contacts in centralized phonebook and ' +
+                               obj['nethcti'].length + ' contacts in cti phonebook searching the term ' + term);
+            cb(err, obj);
+        });
     } catch (err) {
         logger.error(IDLOG, err.stack);
+        cb(err.toString());
     }
 }
 

@@ -208,7 +208,17 @@ function sendHttp500(resp, err) {
                         if (err) { sendHttp500(res, err.toString()); }
 
                         else {
-                            logger.info(IDLOG, 'send ' + results.length + ' results searching ' + req.params.term + ' in centralized phonebook');
+                            // construct the output log
+                            var strlog = 'send ';
+                            var pbtype;
+                            for (pbtype in results) {
+
+                                strlog += results[pbtype].length + ' ' + pbtype + ' phonebook contacts and ';
+                            }
+                            strlog = strlog.substring(0, strlog.length - 5);
+                            strlog += ' searching the term "' + req.params.term + '"';
+
+                            logger.info(IDLOG, strlog);
                             res.send(200, results);
                         }
                     });

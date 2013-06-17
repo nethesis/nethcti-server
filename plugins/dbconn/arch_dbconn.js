@@ -55,6 +55,13 @@ module.exports = function (options, imports, register) {
             getPhonebookContacts: dbconn.getPhonebookContacts,
 
             /**
+            * It's the _getCtiPbContacts_ method provided by _dbconn_ module.
+            *
+            * @method getCtiPbContacts
+            */
+            getCtiPbContacts: dbconn.getCtiPbContacts,
+
+            /**
             * It's the _getHistoryCallInterval_ method provided by _dbconn_ module.
             *
             * @method getHistoryCallInterval
