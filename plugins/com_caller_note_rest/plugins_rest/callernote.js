@@ -108,9 +108,12 @@ function sendHttp500(resp, err) {
         /**
         * REST plugin that provides caller note functions through the following REST API:
         *
-        *     callernote/create/:text/:number/:callid/:visibility/:expiration/:booking
+        *     callernote/create
         *
-        * The client crete a new caller note. The visibility can be "public" or "private".
+        * The client crete a new caller note. The request must contain the configurations object in the
+        * POST request. E.g. using curl:
+        *
+        *     curl --insecure -i -X POST -d '{ "text": "some text", "number": "123456", "callid": "1234.56", "visibility": "public | private", "expiration": "20131001", "booking": "true | false" }' https://192.168.5.224:8282/callernote/create
         *
         * @class plugin_rest_callernote
         * @static
@@ -128,19 +131,17 @@ function sendHttp500(resp, err) {
                 * @property post
                 * @type {array}
                 *
-                *   @param {string} create/:text/:number/:callid/:visibility/:expiration/:booking To create a new caller note
+                *   @param {string} create To create a new caller note
                 */
-                'post' : [ 'create/:text/:number/:callid/:visibility/:expiration/:booking' ],
-                'head': [],
-                'del' : []
+                'post' : [ 'create' ],
+                'head':  [],
+                'del' :  []
             },
 
             /**
             * Create a new caller note by the following REST API:
             *
-            *     create/:text/:number/:callid/:visibility/:expiration/:booking
-            *
-            * The visibility can be "public" or "private".
+            *     create
             *
             * @method create
             * @param {object} req The client request.
@@ -150,16 +151,9 @@ function sendHttp500(resp, err) {
             create: function (req, res, next) {
                 try {
                     var username = req.headers.authorization_user;
+                    var data = JSON.parse(Object.keys(req.params)[0]);
+                    data.creator = username;
 
-                    var data = {
-                        text:       req.params.text,
-                        callid:     req.params.callid,
-                        number:     req.params.number,
-                        creator:    username,
-                        booking:    req.params.booking,
-                        visibility: req.params.visibility,
-                        expiration: req.params.expiration
-                    };
                     compCallerNote.newCallerNote(data, function (err) {
 
                         if (err) { sendHttp500(res, err.toString()); }
