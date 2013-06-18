@@ -125,8 +125,8 @@ function config(path) {
     for (userTemp in json) {
 
         // check the configuration object of the user
-        if (json[userTemp].configurations && typeof json[userTemp].configurations === 'object') {
-            compUser.setConfigurations(userTemp, json[userTemp].configurations);
+        if (typeof json[userTemp] === 'object') {
+            compUser.setConfigurations(userTemp, json[userTemp]);
 
         } else {
             logger.error(IDLOG, 'wrong configuration for user "' + userTemp + '" in file ' + configUserPath);
