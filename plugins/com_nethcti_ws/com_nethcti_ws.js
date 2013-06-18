@@ -11,6 +11,7 @@
 * @class com_nethcti_ws
 * @static
 */
+var fs        = require('fs');
 var io        = require('socket.io');
 var iniparser = require('iniparser');
 
@@ -29,14 +30,14 @@ var IDLOG = '[com_nethcti_ws]';
 /**
 * The websocket server port.
 *
-* @property PORT
-* @type {number}
+* @property port
+* @type string
 * @private
 * @final
 * @readOnly
-* @default 8181
+* @default "8181"
 */
-var PORT = 8181;
+var port = '8181';
 
 /**
 * The logger. It must have at least three methods: _info, warn and error._
@@ -254,6 +255,36 @@ function parkingChanged(parking) {
 }
 
 /**
+* Configurates the websocket server properties by a configuration file.
+* The file must use the JSON syntax.
+*
+* **The method can throw an Exception.**
+*
+* @method config
+* @param {string} path The path of the configuration file
+*/
+function config(path) {
+    // check parameter
+    if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
+
+    // check file presence
+    if (!fs.existsSync(path)) { throw new Error(path + ' not exists'); }
+
+    // read configuration file
+    var json = require(path);
+
+    // initialize the port of the websocket server
+    if (json.websocket && json.websocket.port) {
+        port = json.websocket.port;
+
+    } else {
+        logger.warn(IDLOG, 'no port has been specified in JSON file ' + path);
+    }
+
+    logger.info(IDLOG, 'configuration by file ' + path + ' ended');
+}
+
+/**
 * Creates the server websocket.
 *
 * @method start
@@ -270,11 +301,11 @@ function start() {
         };
 
         // websocket server
-        server = io.listen(PORT, options);
+        server = io.listen(parseInt(port), options);
 
         // set the websocket server listener
         server.on('connection', connHdlr);
-        logger.info(IDLOG, 'websocket server listening on port ' + PORT);
+        logger.info(IDLOG, 'websocket server listening on port ' + port);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -1032,6 +1063,7 @@ function sendAutheSuccess(socket) {
 
 // public interface
 exports.start       = start;
+exports.config      = config;
 exports.setAuthe    = setAuthe;
 exports.setLogger   = setLogger;
 exports.setAstProxy = setAstProxy;
