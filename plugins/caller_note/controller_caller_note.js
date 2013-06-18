@@ -145,8 +145,8 @@ function save(data, cb) {
         else { data.public = false; }
 
         // set data.booking property as boolean to adapt it to dbconn module
-        if (data.booking === 'false') { data.booking = false; }
-        else { data.booking = true; }
+        if (data.booking === 'true') { data.booking = true; }
+        else { data.booking = false; }
 
         logger.info(IDLOG, 'save caller note by means dbconn module');
         dbconn.saveCallerNote(data, cb);
