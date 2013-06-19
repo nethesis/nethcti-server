@@ -5,6 +5,7 @@
     "plugin": {
         "consumes": [
             "logger",
+            "authorization",
             "configManager"
         ],
         "provides": []

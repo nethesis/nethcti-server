@@ -28,6 +28,15 @@ var IDLOG = '[plugins_rest/configmanager]';
 var logger = console;
 
 /**
+* The architect component to be used for authorization.
+*
+* @property compAuthorization
+* @type object
+* @private
+*/
+var compAuthorization;
+
+/**
 * The configuration manager architect component used for configuration functions.
 *
 * @property compConfigManager
@@ -72,6 +81,21 @@ function setCompConfigManager(cm) {
     try {
         compConfigManager = cm;
         logger.info(IDLOG, 'set configuration manager architect component');
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Set authorization architect component.
+*
+* @method setCompAuthorization
+* @param {object} ca The authorization architect component.
+*/
+function setCompAuthorization(ca) {
+    try {
+        compAuthorization = ca;
+        logger.info(IDLOG, 'set authorization architect component');
     } catch (err) {
        logger.error(IDLOG, err.stack);
     }
@@ -146,7 +170,11 @@ function sendHttp500(resp, err) {
         *
         *     configmanager/user
         *
-        * Return the configurations of the specified user.
+        * Returns the configurations of the specified user.
+        *
+        *     configmanager/chatserver
+        *
+        * Returns the server chat parameters.
         *
         * **POST request**
         *
@@ -173,8 +201,12 @@ function sendHttp500(resp, err) {
                 * @type {array}
                 *
                 *   @param {string} user To get all user configurations
+                *   @param {string} chatserver To get the server chat parameters
                 */
-                'get':   [ 'user' ],
+                'get': [
+                    'user',
+                    'chatserver'
+                ],
 
                 /**
                 * REST API to be requested using HTTP POST request.
@@ -203,7 +235,7 @@ function sendHttp500(resp, err) {
             user: function (req, res, next) {
                 try {
                     var username = req.headers.authorization_user;
-                    var results  = compConfigManager.getConfigurations(username);
+                    var results  = compConfigManager.getUserConfigurations(username);
 
                     if (typeof results !== 'object') {
                         var strerr = 'wrong configurations result for user "' + username + '"';
@@ -214,6 +246,50 @@ function sendHttp500(resp, err) {
 
                         logger.info(IDLOG, 'send configuration of user "' + username + '"');
                         res.send(200, results);
+                    }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    sendHttp500(res, err.toString());
+                }
+            },
+
+            /**
+            * Get all the server chat parameters by the following REST API:
+            *
+            *     chatserver
+            *
+            * @method chatserver
+            * @param {object} req The client request.
+            * @param {object} res The client response.
+            * @param {function} next Function to run the next handler in the chain.
+            */
+            chatserver: function (req, res, next) {
+                try {
+                    // get the username added by the previous authentication step
+                    var username = req.headers.authorization_user;
+
+                    // check the authorization for the user
+                    if (compAuthorization.authorizeChatUser(username) === true) {
+
+                        logger.info(IDLOG, 'chat authorization successfully for user "' + username + '"');
+
+                        // get the server chat configuration
+                        var results = compConfigManager.getChatConf();
+
+                        if (typeof results !== 'object') {
+                            var strerr = 'wrong server chat configuration';
+                            logger.error(IDLOG, strerr);
+                            sendHttp500(res, strerr);
+
+                        } else {
+                            logger.info(IDLOG, 'send server chat configuration to user "' + username + '"');
+                            res.send(200, results);
+                        }
+
+                    } else {
+                        logger.warn(IDLOG, 'chat authorization failed for user "' + username + '"!');
+                        sendHttp401(res);
                     }
 
                 } catch (err) {
@@ -235,9 +311,9 @@ function sendHttp500(resp, err) {
             saveuser: function (req, res, next) {
                 try {
                     var username = req.headers.authorization_user;
+                    var config   = req.params;
 
-                    var config = JSON.parse(Object.keys(req.params)[0]);
-                    compConfigManager.setConfigurations(username, config, function (err) {
+                    compConfigManager.setUserConfigurations(username, config, function (err) {
 
                         if (err) { sendHttp500(res, err.toString()); }
                         else     { sendHttp200(res); }
@@ -249,11 +325,13 @@ function sendHttp500(resp, err) {
                 }
             }
         }
-        exports.api       = configmanager.api;
-        exports.user      = configmanager.user;
-        exports.saveuser  = configmanager.saveuser;
-        exports.setLogger = setLogger;
+        exports.api                  = configmanager.api;
+        exports.user                 = configmanager.user;
+        exports.saveuser             = configmanager.saveuser;
+        exports.chatserver           = configmanager.chatserver;
+        exports.setLogger            = setLogger;
         exports.setCompConfigManager = setCompConfigManager;
+        exports.setCompAuthorization = setCompAuthorization;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);

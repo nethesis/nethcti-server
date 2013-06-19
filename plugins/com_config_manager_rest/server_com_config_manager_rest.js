@@ -111,6 +111,49 @@ function setAllRestPluginsLogger(log) {
 }
 
 /**
+* Set the authorization architect component for all REST plugins.
+*
+* @method setCompAuthorization
+* @param {object} ca The architect authorization component
+* @static
+*/
+function setCompAuthorization(ca) {
+    try {
+        // check parameter
+        if (typeof ca !== 'object') { throw new Error('wrong parameter'); }
+
+        // set the authorization for all REST plugins
+        setAllRestPluginsAuthorization(ca);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Called by _setCompAuthorization_ function for all REST plugins.
+*
+* @method setAllRestPluginsAuthorization
+* @private
+* @param ca The architect authorization component
+* @type {object}
+*/
+function setAllRestPluginsAuthorization(ca) {
+    try {
+        var key;
+        for (key in plugins) {
+
+            if (typeof plugins[key].setCompAuthorization === 'function') {
+                plugins[key].setCompAuthorization(ca);
+                logger.info(IDLOG, 'authorization component has been set for rest plugin ' + key);
+            }
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Send HTTP 401 unauthorized response.
 *
 * @method sendHttp401
@@ -264,3 +307,4 @@ exports.start                = start;
 exports.config               = config;
 exports.setLogger            = setLogger;
 exports.setCompConfigManager = setCompConfigManager;
+exports.setCompAuthorization = setCompAuthorization;

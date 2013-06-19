@@ -24,18 +24,25 @@ module.exports = function (options, imports, register) {
     register(null, {
         configManager: {
             /**
-            * It's the _getConfigurations_ method provided by _controller\_config\_manager_ module.
+            * It's the _getUserConfigurations_ method provided by _config\_manager_ module.
             *
-            * @method getConfigurations
+            * @method getUserConfigurations
             */
-            getConfigurations: configManager.getConfigurations,
+            getUserConfigurations: configManager.getUserConfigurations,
 
             /**
-            * It's the _setConfigurations_ method provided by _controller\_config\_manager_ module.
+            * It's the _setUserConfigurations_ method provided by _config\_manager_ module.
             *
-            * @method setConfigurations
+            * @method setUserConfigurations
             */
-            setConfigurations: configManager.setConfigurations
+            setUserConfigurations: configManager.setUserConfigurations,
+
+            /**
+            * It's the _getChatConf_ method provided by _config\_manager_ module.
+            *
+            * @method getChatConf
+            */
+            getChatConf: configManager.getChatConf
         }
     });
 
@@ -47,7 +54,8 @@ module.exports = function (options, imports, register) {
         imports.user.on('users_ready', function () {
             configManager.setLogger(logger);
             configManager.setCompUser(imports.user);
-            configManager.config('/etc/nethcti/configurations.json');
+            configManager.configUser('/etc/nethcti/user_config.json');
+            configManager.configChat('/etc/nethcti/chat.json');
         });
     } catch (err) {
         logger.error(IDLOG, err.stack);

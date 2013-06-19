@@ -54,6 +54,17 @@ var configUserPath;
 var compUser;
 
 /**
+* The server chat parameters. It can be customized using the JSON
+* configuration file by means _configChat_ method.
+*
+* @property chatServer
+* @type object
+* @private
+* @default { "url": "" }
+*/
+var chatServer = { 'url': '' };
+
+/**
 * Set the logger to be used.
 *
 * @method setLogger
@@ -96,15 +107,15 @@ function setCompUser(cu) {
 }
 
 /**
-* It reads the users file and set the user configurations using
-* user module.
+* It reads the configuration file and set the options in the User
+* objects using the _user_ module.
 *
 * **The method can throw an Exception.**
 *
-* @method config
+* @method configUser
 * @param {string} path The path of the configuration file
 */
-function config(path) {
+function configUser(path) {
     // check parameter
     if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
 
@@ -132,16 +143,63 @@ function config(path) {
             logger.error(IDLOG, 'wrong configuration for user "' + userTemp + '" in file ' + configUserPath);
         }
     }
+    logger.info(IDLOG, 'user configuration by file ' + path + ' ended');
+}
+
+/**
+* It reads the configuration file and set the chat options. The
+* file must use the JSON syntax.
+*
+* **The method can throw an Exception.**
+*
+* @method configChat
+* @param {string} path The path of the configuration file
+*/
+function configChat(path) {
+    // check parameter
+    if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
+
+    // check file presence
+    if (!fs.existsSync(path)) { throw new Error(path + ' not exists'); }
+
+    logger.info(IDLOG, 'configure server chat with ' + path);
+
+    // read configuration file
+    var json = require(path);
+
+    // check JSON file
+    if (typeof json !== 'object') { throw new Error('wrong JSON file ' + path); }
+
+    // configure chat url
+    if (typeof json.url === 'string') {
+        chatServer.url = json.url;
+        logger.info(IDLOG, 'configured chat URL as ' + chatServer.url);
+    }
+    logger.info(IDLOG, 'server chat configuration by file ' + path + ' ended');
+}
+
+/**
+* Return the server chat configurations.
+*
+* @method getChatConf
+* @return {object} The server chat configurations.
+*/
+function getChatConf() {
+    try {
+        return chatServer;
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
 }
 
 /**
 * Return the user configurations.
 *
-* @method getConfigurations
+* @method getUserConfigurations
 * @param {string} user The user identifier
 * @return {object} The user configurations.
 */
-function getConfigurations(user) {
+function getUserConfigurations(user) {
     try {
         // check parameter
         if (typeof user !== 'string') { throw new Error('wrong parameter'); }
@@ -160,12 +218,12 @@ function getConfigurations(user) {
 * If the update of _User_ object fail, then the file writing
 * is skipped.
 *
-* @method setConfigurations
+* @method setUserConfigurations
 * @param {string} user The user identifier
 * @param {object} config The user configurations
 * @param {function} cb The callback function
 */
-function setConfigurations(user, config, cb) {
+function setUserConfigurations(user, config, cb) {
     try {
         // check parameters
         if (typeof    user   !== 'string'
@@ -210,8 +268,10 @@ function setConfigurations(user, config, cb) {
 }
 
 // public interface
-exports.config            = config;
-exports.setLogger         = setLogger;
-exports.setCompUser       = setCompUser;
-exports.getConfigurations = getConfigurations;
-exports.setConfigurations = setConfigurations;
+exports.setLogger             = setLogger;
+exports.configUser            = configUser;
+exports.configChat            = configChat;
+exports.getChatConf           = getChatConf;
+exports.setCompUser           = setCompUser;
+exports.getUserConfigurations = getUserConfigurations;
+exports.setUserConfigurations = setUserConfigurations;

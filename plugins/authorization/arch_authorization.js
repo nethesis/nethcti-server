@@ -74,7 +74,14 @@ module.exports = function (options, imports, register) {
             *
             * @method authorizeHistoryUserEndpoint
             */
-            authorizeHistoryUserEndpoint: authorization.authorizeHistoryUserEndpoint
+            authorizeHistoryUserEndpoint: authorization.authorizeHistoryUserEndpoint,
+
+            /**
+            * It's the _authorizeChatUser_ method provided by _authorization_ module.
+            *
+            * @method
+            */
+            authorizeChatUser: authorization.authorizeChatUser
         }
     });
 

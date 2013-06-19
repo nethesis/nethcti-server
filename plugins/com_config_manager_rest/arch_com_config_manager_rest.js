@@ -28,6 +28,7 @@ module.exports = function (options, imports, register) {
     try {
         serverRest.setLogger(logger);
         serverRest.config('/etc/nethcti/services.json');
+        serverRest.setCompAuthorization(imports.authorization);
         serverRest.setCompConfigManager(imports.configManager);
         serverRest.start();
     } catch (err) {
