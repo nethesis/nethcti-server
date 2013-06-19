@@ -176,6 +176,10 @@ function sendHttp500(resp, err) {
         *
         * Returns the server chat parameters.
         *
+        *     configmanager/streamings
+        *
+        * Returns the parameters of the streaming services.
+        *
         * **POST request**
         *
         *     configmanager/saveuser
@@ -201,10 +205,12 @@ function sendHttp500(resp, err) {
                 * @type {array}
                 *
                 *   @param {string} user To get all user configurations
+                *   @param {string} streamings To get the parameters of the streaming services
                 *   @param {string} chatserver To get the server chat parameters
                 */
                 'get': [
                     'user',
+                    'streamings',
                     'chatserver'
                 ],
 
@@ -289,6 +295,50 @@ function sendHttp500(resp, err) {
 
                     } else {
                         logger.warn(IDLOG, 'chat authorization failed for user "' + username + '"!');
+                        sendHttp401(res);
+                    }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    sendHttp500(res, err.toString());
+                }
+            },
+
+            /**
+            * Get all the parameters of the streaming services by the following REST API:
+            *
+            *     streamings
+            *
+            * @method streamings
+            * @param {object} req The client request.
+            * @param {object} res The client response.
+            * @param {function} next Function to run the next handler in the chain.
+            */
+            streamings: function (req, res, next) {
+                try {
+                    // get the username added by the previous authentication step
+                    var username = req.headers.authorization_user;
+
+                    // check the authorization for the user
+                    if (compAuthorization.authorizeStreamingUser(username) === true) {
+
+                        logger.info(IDLOG, 'streaming authorization successfully for user "' + username + '"');
+
+                        // get the server chat configuration
+                        var results = compConfigManager.getStreamingConf();
+
+                        if (typeof results !== 'object') {
+                            var strerr = 'wrong streaming configurations';
+                            logger.error(IDLOG, strerr);
+                            sendHttp500(res, strerr);
+
+                        } else {
+                            logger.info(IDLOG, 'send streaming configurations to user "' + username + '"');
+                            res.send(200, results);
+                        }
+
+                    } else {
+                        logger.warn(IDLOG, 'streaming authorization failed for user "' + username + '"!');
                         sendHttp401(res);
                     }
 

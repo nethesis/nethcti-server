@@ -65,6 +65,17 @@ var compUser;
 var chatServer = { 'url': '' };
 
 /**
+* The configurations of the streaming sources. It can be customized
+* using the JSON configuration file by means _configStreaming_ method.
+*
+* @property streamings
+* @type object
+* @private
+* @default {}
+*/
+var streamings = {};
+
+/**
 * Set the logger to be used.
 *
 * @method setLogger
@@ -179,6 +190,49 @@ function configChat(path) {
 }
 
 /**
+* It reads the configuration file and set the streaming
+* configurations. The file must use the JSON syntax.
+*
+* **The method can throw an Exception.**
+*
+* @method configStreaming
+* @param {string} path The path of the configuration file
+*/
+function configStreaming(path) {
+    // check parameter
+    if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
+
+    // check file presence
+    if (!fs.existsSync(path)) { throw new Error(path + ' not exists'); }
+
+    logger.info(IDLOG, 'configure streaming with ' + path);
+
+    // read configuration file
+    var json = require(path);
+
+    // check JSON file
+    if (typeof json !== 'object') { throw new Error('wrong JSON file ' + path); }
+
+    streamings = json;
+    logger.info(IDLOG, 'configured streaming sources: ' + Object.keys(streamings));
+    logger.info(IDLOG, 'strreaming configuration by file ' + path + ' ended');
+}
+
+/**
+* It reads the configuration file and set the streaming
+*
+* @method getStreamingConf
+*/
+function getStreamingConf() {
+    try {
+        return streamings;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Return the server chat configurations.
 *
 * @method getChatConf
@@ -273,5 +327,7 @@ exports.configUser            = configUser;
 exports.configChat            = configChat;
 exports.getChatConf           = getChatConf;
 exports.setCompUser           = setCompUser;
+exports.configStreaming       = configStreaming;
+exports.getStreamingConf      = getStreamingConf;
 exports.getUserConfigurations = getUserConfigurations;
 exports.setUserConfigurations = setUserConfigurations;
