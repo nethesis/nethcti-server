@@ -342,6 +342,38 @@ function authorizeCustomerCardUser(username) {
 }
 
 /**
+* Return true if the specified user has at least one streaming authorization.
+*
+* @method authorizeStreamingUser
+* @param {string} username The username
+* @return {boolean} True if the user has at least one streaming authorization.
+*/
+function authorizeStreamingUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        // get cusomter card authorization from the user
+        var autho = userMod.getAuthorization(username, authorizationTypes.TYPES.streaming);
+
+        // analize the result
+        var objResult = autho[authorizationTypes.TYPES.streaming];
+        var stream;
+        for (stream in objResult) {
+
+            // check the type of the authorization. It must be a boolean value
+            if (objResult[stream] === true) { return true; }
+        }
+        return false;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
 * Gets the name of the authorized customer cards of the user.
 *
 * @method authorizedCustomerCards
@@ -462,6 +494,7 @@ exports.authorizePostitUser          = authorizePostitUser;
 exports.authorizeHistoryUser         = authorizeHistoryUser;
 exports.getUserAuthorizations        = getUserAuthorizations;
 exports.authorizePhonebookUser       = authorizePhonebookUser;
+exports.authorizeStreamingUser       = authorizeStreamingUser;
 exports.authorizeCallerNoteUser      = authorizeCallerNoteUser;
 exports.authorizedCustomerCards      = authorizedCustomerCards;
 exports.authorizeCustomerCardUser    = authorizeCustomerCardUser;

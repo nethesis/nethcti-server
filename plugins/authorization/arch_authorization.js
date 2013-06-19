@@ -63,6 +63,13 @@ module.exports = function (options, imports, register) {
             authorizeCustomerCardUser: authorization.authorizeCustomerCardUser,
 
             /**
+            * It's the _authorizeStreamingUser_ method provided by _authorization_ module.
+            *
+            * @method authorizeStreamingUser
+            */
+            authorizeStreamingUser: authorization.authorizeStreamingUser
+
+            /**
             * It's the _authorizedCustomerCards_ method provided by _authorization_ module.
             *
             * @method authorizedCustomerCards
