@@ -24,6 +24,7 @@ try{
         { packagePath: "./plugins/com_history_rest"        },
         { packagePath: "./plugins/com_phonebook_rest"      },
         { packagePath: "./plugins/com_caller_note_rest"    },
+        { packagePath: "./plugins/com_authorization_rest"  },
         { packagePath: "./plugins/com_customer_card_rest"  },
         { packagePath: "./plugins/com_config_manager_rest" },
         { packagePath: "./plugins/com_nethcti_ws"          },

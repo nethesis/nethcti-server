@@ -81,7 +81,14 @@ module.exports = function (options, imports, register) {
             *
             * @method
             */
-            authorizeChatUser: authorization.authorizeChatUser
+            authorizeChatUser: authorization.authorizeChatUser,
+
+            /**
+            * It's the _getUserAuthorizations_ method provided by _authorization_ module.
+            *
+            * @method getUserAuthorizations
+            */
+            getUserAuthorizations: authorization.getUserAuthorizations
         }
     });
 

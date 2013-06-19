@@ -399,6 +399,60 @@ function authorizeHistoryUserEndpoint(username, endpoint) {
     }
 }
 
+/**
+* Returns all authorizations of the user.
+*
+* @method getUserAuthorizations
+* @param {string} username The username
+* @return {object} All authorizations of the user.
+*/
+function getUserAuthorizations(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        // object to return
+        var result = {};
+
+        // cycle in all authorization types
+        var type, obj;
+        for (type in authorizationTypes.TYPES) {
+
+            // get one specific authorization of the user
+            obj = userMod.getAuthorization(username, type);
+
+            // analize the returned authorization
+            if (typeof obj === 'object') {
+
+                // authorization values can be a boolean or an object with the list
+                // of how is permitted as keys, e.g. the customer card authorizations
+                if (   (typeof obj[type] === 'boolean' && obj[type] === true)
+                    || (typeof obj[type] === 'object'  && Object.keys(obj[type]).length > 0)) {
+
+                    result[type] = true;
+
+                } else if (   (typeof obj[type] === 'boolean' && obj[type] === false)
+                           || (typeof obj[type] === 'object'  && Object.keys(obj[type]).length === 0)) {
+
+                    result[type] = false;
+
+                } else {
+                    logger.warn(IDLOG, 'wrong value for authorization "' + type + '" of the user "' + username + '"');
+                }
+
+            } else {
+                logger.warn(IDLOG, 'wrong "' + type + '" authorization result for user "' + username + '"');
+            }
+        }
+        return result;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns an empty object for security reasons
+        return {};
+    }
+}
+
 // public interface
 exports.config                       = config;
 exports.setLogger                    = setLogger;
@@ -406,6 +460,7 @@ exports.setUserModule                = setUserModule;
 exports.authorizeChatUser            = authorizeChatUser;
 exports.authorizePostitUser          = authorizePostitUser;
 exports.authorizeHistoryUser         = authorizeHistoryUser;
+exports.getUserAuthorizations        = getUserAuthorizations;
 exports.authorizePhonebookUser       = authorizePhonebookUser;
 exports.authorizeCallerNoteUser      = authorizeCallerNoteUser;
 exports.authorizedCustomerCards      = authorizedCustomerCards;

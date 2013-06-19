@@ -193,7 +193,7 @@ function execute(req, res, next) {
 }
 
 /**
-* Set the post-it architect component to be used by REST plugins.
+* Set the config manager architect component to be used by REST plugins.
 *
 * @method setCompConfigManager
 * @param {object} cm The architect configuration manager component
