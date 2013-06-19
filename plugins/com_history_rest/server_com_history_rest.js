@@ -120,7 +120,7 @@ function setAllRestPluginsLogger(log) {
 }
 
 /**
-* Call _setCompAuthorization_ function for all REST plugins.
+* Called by _setCompAuthorization_ function for all REST plugins.
 *
 * @method setAllRestPluginsAuthorization
 * @private
