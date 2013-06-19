@@ -70,11 +70,11 @@ var astProxy;
 /**
 * The authentication module.
 *
-* @property authe
+* @property compAuthe
 * @type object
 * @private
 */
-var authe;
+var compAuthe;
 
 /**
 * The operator module.
@@ -132,7 +132,7 @@ function setAuthe(autheMod) {
         if (typeof autheMod !== 'object') {
             throw new Error('wrong authentication object');
         }
-        authe = autheMod;
+        compAuthe = autheMod;
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -324,9 +324,10 @@ function connHdlr(socket) {
         logger.info(IDLOG, 'new connection from ' + getWebsocketEndpoint(socket));
 
         // set the listeners for the new socket connection
-        socket.on('login',      function (data) { loginHdlr(socket, data);     });
-        socket.on('message',    function (data) { dispatchMsg(socket, data);   });
-        socket.on('disconnect', function (data) { disconnHdlr(socket);         });
+        socket.on('login',      function (data) { loginHdlr(socket, data);   });
+        socket.on('logout',     function (data) { logoutHdlr(socket);        });
+        socket.on('message',    function (data) { dispatchMsg(socket, data); });
+        socket.on('disconnect', function (data) { disconnHdlr(socket);       });
         logger.info(IDLOG, 'listeners for new socket connection have been set');
 
     } catch (err) {
@@ -362,7 +363,7 @@ function dispatchMsg(socket, data) {
                 logger.info(IDLOG, 'request command ' + data.command);
 
                 // dispatch
-                if (data.command === 'call')                    { call(socket, data);               }
+                if      (data.command === 'call')               { call(socket, data);               }
                 else if (data.command === 'parkConv')           { parkConv(socket, data, sender);   }
                 else if (data.command === 'pickupConv')         { pickupConv(socket, data);         }
                 else if (data.command === 'hangupConv')         { hangupConv(socket, data);         }
@@ -934,7 +935,7 @@ function loginHdlr(socket, obj) {
             return;
         }
 
-        if (authe.verifyToken(obj.accessKeyId, obj.token) === true) { // user successfully authenticated
+        if (compAuthe.verifyToken(obj.accessKeyId, obj.token) === true) { // user successfully authenticated
 
             logger.info(IDLOG, 'user "' + obj.accessKeyId + '" successfully authenticated from ' + getWebsocketEndpoint(socket) +
                                ' with socket id ' + socket.id);
@@ -975,6 +976,33 @@ function loginHdlr(socket, obj) {
 }
 
 /**
+* Websocket logout handler.
+*
+* @method logoutHdlr
+* @param {object} socket The client websocket
+* @private
+*/
+function logoutHdlr(socket) {
+    try {
+        // check parameter
+        if (typeof socket !== 'object') { throw new Error('wrong parameter'); }
+
+        socket.get('username', function (err, username) {
+
+            logger.info(IDLOG, 'received logout request from user "' + username + '" ' + getWebsocketEndpoint(socket) + ' with id ' + socket.id);
+
+            compAuthe.removeGrant(username);
+
+            logger.info(IDLOG, 'send logout successfully to ' + username + ' ' + getWebsocketEndpoint(socket) + ' with id ' + socket.id);
+            socket.emit('ack_logout');
+        });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Websocket disconnection handler.
 *
 * @method disconnHdlr
@@ -1000,8 +1028,9 @@ function disconnHdlr(socket) {
 function removeWebsocketId(socketId) {
     try {
         if (wsid[socketId]) {
+            var temp = wsid[socketId];
             delete wsid[socketId];
-            logger.info(IDLOG, 'removed client websocket ' + socketId + ' for the user ' + wsid[socketId]);
+            logger.info(IDLOG, 'removed client websocket ' + socketId + ' for the user ' + temp);
         }
     } catch (err) {
         logger.error(IDLOG, err.stack);
