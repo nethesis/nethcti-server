@@ -122,7 +122,7 @@ var IDLOG = '[listVoicemail]';
                         list[data.actionid].push(obj);
 
                     } else if (map[data.actionid] && data && data.event === 'VoicemailUserEntryComplete') {
-                        map[data.actionid](list); // callback execution
+                        map[data.actionid](list[data.actionid]); // callback execution
                     }
 
                     if (data && data.event === 'VoicemailUserEntryComplete') {

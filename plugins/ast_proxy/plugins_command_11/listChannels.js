@@ -110,15 +110,15 @@ var IDLOG = '[listChannels]';
                         var type = calculateChType(data);
 
                         var obj = {
-                            type:             type,
-                            status:           AST_CHANNEL_STATE_2_STRING_ADAPTER[data.channelstate],
-                            channel:          data.channel,
-                            uniqueid:         data.uniqueid,
-                            callerNum:        data.calleridnum,
-                            callerName:       data.calleridname,
-                            bridgedNum:       data.connectedlinenum,
-                            bridgedName:      data.connectedlinename,
-                            bridgedChannel:   data.bridgedchannel
+                            type:           type,
+                            status:         AST_CHANNEL_STATE_2_STRING_ADAPTER[data.channelstate],
+                            channel:        data.channel,
+                            uniqueid:       data.uniqueid,
+                            callerNum:      data.calleridnum,
+                            callerName:     data.calleridname,
+                            bridgedNum:     data.connectedlinenum,
+                            bridgedName:    data.connectedlinename,
+                            bridgedChannel: data.bridgedchannel
                         };
                         list[data.channel] = obj;
 

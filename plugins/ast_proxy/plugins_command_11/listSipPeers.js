@@ -1,7 +1,7 @@
 /**
 * @submodule plugins_command_11
 */
-var action    = require('../action');
+var action = require('../action');
 
 /**
 * The module identifier used by the logger.
