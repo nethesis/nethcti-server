@@ -86,7 +86,7 @@ exports.Extension = function (ext, chType) {
     * The sip user agent.
     *
     * @property sipuseragent
-    * @type {string}
+    * @type string
     * @required
     * @private
     */
@@ -96,7 +96,7 @@ exports.Extension = function (ext, chType) {
     * The Extension status.
     *
     * @property status
-    * @type {string}
+    * @type string
     * @private
     */
     var status;
@@ -106,8 +106,9 @@ exports.Extension = function (ext, chType) {
     * and the value is the _conversation_ object.
     *
     * @property conversations
-    * @type {object}
+    * @type object
     * @private
+    * @default {}
     */
     var conversations = {};
 

@@ -300,8 +300,7 @@ function sendHttp401(resp) {
 function proxyRequest(req, res, proxy) {
     try {
         // check if the request is an authentication request
-        if (req.url.indexOf('/authentication/authenticate/') !== -1) {
-            req.url = escape(req.url);
+        if (req.url.indexOf('/authentication/authenticate') !== -1) {
             proxy.proxyRequest(req, res);
             return;
         }

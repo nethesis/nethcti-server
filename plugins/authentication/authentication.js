@@ -8,12 +8,12 @@
 /**
 * Provides the authentication functions by LDAP.
 *
-* @class authenticationLDAP
+* @class authentication
 * @static
 */
-var fs        = require('fs');
-var ldap      = require('ldapjs');
-var crypto    = require('crypto');
+var fs     = require('fs');
+var ldap   = require('ldapjs');
+var crypto = require('crypto');
 
 /**
 * The module identifier used by the logger.
@@ -23,9 +23,9 @@ var crypto    = require('crypto');
 * @private
 * @final
 * @readOnly
-* @default [authenticationLDAP]
+* @default [authentication]
 */
-var IDLOG = '[authenticationLDAP]';
+var IDLOG = '[authentication]';
 
 /**
 * The logger. It must have at least three methods: _info, warn and error._
@@ -381,6 +381,8 @@ function getNonce(accessKeyId, password) {
 /**
 * Authenticate the user using the choosen method in the configuration step.
 *
+* **It can throw an exception.**
+*
 * @method authenticate
 * @param {string} accessKeyId The access key used to authenticate, e.g. the username
 * @param {string} password The password of the account
@@ -411,6 +413,7 @@ function authenticate(accessKeydId, password, cb) {
         }
     } catch (err) {
         logger.error(IDLOG, err.stack);
+        throw err;
     }
 }
 

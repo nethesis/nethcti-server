@@ -118,13 +118,16 @@ function sendHttp401(resp) {
         /**
         * REST plugin that provides authentication functions through the following REST API:
         *
-        * **GET requests**
+        * **POST requests**
         *
-        *     authentication/authenticate/:username/:password
+        *     authentication/authenticate
         *
         * If the user is successfully authenticated, he receives an HTTP 401 response with an
-        * HMAC-SHA1 _nonce_ in the WWW-Authenticate header. The _nonce_ is then used by the client
-        * to construct the token for the next authentications.
+        * HMAC-SHA1 _nonce_ in the WWW-Authenticate header. The _nonce_ is then used by the
+        * client to construct the token for the next authentications. The request must contain
+        * the configurations object in the POST request. E.g. using curl:
+        *
+        *     curl --insecure -i -X POST -d '{ "username": "alessandro", "password": "somepwd" }' https://192.168.5.224:8282/authentication/authenticate
         *
         * @class plugin_rest_authentication
         * @static
@@ -134,19 +137,20 @@ function sendHttp401(resp) {
             // the REST api
             api: {
                 'root': 'authentication',
+                'get':  [],
+
                 /**
                 * REST API to be requested using HTTP POST request.
                 *
-                * @property get
+                * @property post
                 * @type {array}
                 *
-                *   @param {string} authenticate/:username/:password Authenticate with username
-                *       and password and if it goes well the client receive an HTTP 401 response
-                *       with _nonce_ in WWW-Authenticate header. The nonce is used to construct
-                *       the token for the next authentications.
+                *   @param {string} authenticate Authenticate with username and password
+                *       and if it goes well the client receive an HTTP 401 response with
+                *       _nonce_ in WWW-Authenticate header. The nonce is used to construct
+                *       the token used in the next authentications.
                 */
-                'get':   [ 'authenticate/:username/:password' ],
-                'post' : [],
+                'post' : [ 'authenticate' ],
                 'head':  [],
                 'del' :  []
             },
@@ -154,7 +158,7 @@ function sendHttp401(resp) {
             /**
             * Provides the authentication functions for the following REST API:
             *
-            *     authenticate/:username/:password
+            *     authenticate
             *
             * @method authenticate
             * @param {object} req The client request.
@@ -180,10 +184,12 @@ function sendHttp401(resp) {
                             }
                         } catch (err) {
                             logger.error(IDLOG, err.stack);
+                            sendHttp401(res);
                         }
                     });
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
+                    sendHttp401(res);
                 }
             }
         }
