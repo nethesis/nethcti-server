@@ -6,17 +6,17 @@
 * @static
 */
 var path         = require('path');
-var Queue        = require('./queue').Queue;
-var Trunk        = require('./trunk').Trunk;
-var Channel      = require('./channel').Channel;
-var Parking      = require('./parking').Parking;
+var Queue        = require('../queue').Queue;
+var Trunk        = require('../trunk').Trunk;
+var Channel      = require('../channel').Channel;
+var Parking      = require('../parking').Parking;
 var iniparser    = require('iniparser');
-var Extension    = require('./extension').Extension;
-var QueueMember  = require('./queueMember').QueueMember;
+var Extension    = require('../extension').Extension;
+var QueueMember  = require('../queueMember').QueueMember;
 var EventEmitter = require('events').EventEmitter;
-var ParkedCaller = require('./parkedCaller').ParkedCaller;
-var Conversation = require('./conversation').Conversation;
-var QueueWaitingCaller = require('./queueWaitingCaller').QueueWaitingCaller;
+var ParkedCaller = require('../parkedCaller').ParkedCaller;
+var Conversation = require('../conversation').Conversation;
+var QueueWaitingCaller = require('../queueWaitingCaller').QueueWaitingCaller;
 
 /**
 * The module identifier used by the logger.
@@ -921,6 +921,38 @@ function initializeSipExten() {
         logger.info(IDLOG, 'requests the channel list to initialize sip extensions');
         astProxy.doCmd({ command: 'listChannels' }, updateConversationsForAllExten);
 
+        // request all voicemail
+        logger.info(IDLOG, 'requests the voicemail list of all extensions');
+        astProxy.doCmd({ command: 'listVoicemail' }, updateVoicemailForAllExten);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* For each voicemail in the data, it set a _Voicemail_ object for
+* the corresponding extension if it's already created. Otherwise
+* do nothing because this function is called twice: one by sip
+* extension initialization and one by iax extension initialization.
+*
+* @method updateVoicemailForAllExten
+* @param {array} data The array elements are the voicemail information objects
+* @private
+*/
+function updateVoicemailForAllExten(data) {
+    try {
+        // check parameter
+        if (typeof data !== 'object' || !(data instanceof Array)) {
+            throw new Error('wrong parameter');
+        }
+
+        console.log("updateVoicemailForAllExten, data:", data);
+        console.log(extensions);
+        var i;
+        for (i = 0; i < data.length; i++) {
+        }
+         
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }

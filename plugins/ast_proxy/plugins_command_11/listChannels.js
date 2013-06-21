@@ -2,7 +2,7 @@
 * @submodule plugins_command_11
 */
 var action = require('../action');
-var AST_CHANNEL_STATE_2_STRING_ADAPTER = require('../channel_status_adapter_11').AST_CHANNEL_STATE_2_STRING_ADAPTER;
+var AST_CHANNEL_STATE_2_STRING_ADAPTER = require('../proxy_logic_11/channel_status_adapter_11').AST_CHANNEL_STATE_2_STRING_ADAPTER;
 
 /**
 * The module identifier used by the logger.

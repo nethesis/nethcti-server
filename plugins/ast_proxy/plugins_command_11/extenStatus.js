@@ -2,7 +2,7 @@
 * @submodule plugins_command_11
 */
 var action = require('../action');
-var AST_EXTEN_STATUS_2_STR_ADAPTER = require('../exten_status_adapter_11.js').AST_EXTEN_STATUS_2_STR_ADAPTER;
+var AST_EXTEN_STATUS_2_STR_ADAPTER = require('../proxy_logic_11/exten_status_adapter_11.js').AST_EXTEN_STATUS_2_STR_ADAPTER;
 
 /**
 * The module identifier used by the logger.

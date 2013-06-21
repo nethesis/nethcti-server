@@ -118,6 +118,8 @@ function sendHttp401(resp) {
         /**
         * REST plugin that provides authentication functions through the following REST API:
         *
+        * **GET requests**
+        *
         *     authentication/authenticate/:username/:password
         *
         * If the user is successfully authenticated, he receives an HTTP 401 response with an

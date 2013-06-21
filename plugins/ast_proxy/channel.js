@@ -59,7 +59,8 @@ exports.Channel = function (obj) {
     /**
     * The caller number.
     *
-    * @property {string} callerNum
+    * @property callerNum
+    * @type string
     * @required
     * @private
     */

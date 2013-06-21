@@ -112,7 +112,7 @@ var IDLOG = '[listVoicemail]';
                         if (!list[data.actionid]) { list[data.actionid] = []; } 
 
                         var obj = {
-                            name:             data.fullname,
+                            owner:            data.fullname,
                             email:            data.email,
                             context:          data.vmcontext,
                             voicemailbox:     data.voicemailbox,
