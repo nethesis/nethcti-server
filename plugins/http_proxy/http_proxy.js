@@ -301,6 +301,7 @@ function proxyRequest(req, res, proxy) {
     try {
         // check if the request is an authentication request
         if (req.url.indexOf('/authentication/authenticate/') !== -1) {
+            req.url = escape(req.url);
             proxy.proxyRequest(req, res);
             return;
         }
