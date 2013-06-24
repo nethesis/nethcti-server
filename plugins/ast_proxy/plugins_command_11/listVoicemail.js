@@ -109,7 +109,7 @@ var IDLOG = '[listVoicemail]';
                         && data.maxmessagecount && data.maxmessagelength) {
 
                         // initialize result only in the first event received
-                        if (!list[data.actionid]) { list[data.actionid] = []; } 
+                        if (!list[data.actionid]) { list[data.actionid] = {}; }
 
                         var obj = {
                             owner:            data.fullname,
@@ -119,7 +119,7 @@ var IDLOG = '[listVoicemail]';
                             maxMessageCount:  data.maxmessagecount,
                             maxMessageLength: data.maxmessagelength
                         };
-                        list[data.actionid].push(obj);
+                        list[data.actionid][data.voicemailbox] = obj;
 
                     } else if (map[data.actionid] && data && data.event === 'VoicemailUserEntryComplete') {
                         map[data.actionid](list[data.actionid]); // callback execution

@@ -184,7 +184,7 @@ function getAllCustomerCards(username, num, cb) {
             var objKeys = Object.keys(obj);
             logger.info(IDLOG, objKeys.length + ' customer cards "' + objKeys.toString() + '" obtained for user "' + username + '" searching num ' + num);
 
-            cb(err, obj);
+            cb(null, obj);
         });
     } catch (err) {
         logger.error(IDLOG, err.stack);
