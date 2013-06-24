@@ -12,13 +12,13 @@
 * @class ast_proxy
 * @static
 */
-var fs                = require('fs');
-var ast               = require('asterisk-ami');
-var action            = require('./action');
-var pluginsCmd        = require('jsplugs')().require('./plugins/ast_proxy/plugins_command_11');
-var proxyLogic        = require('./proxy_logic_11/proxy_logic_11');
-var pluginsEvent      = require('jsplugs')().require('./plugins/ast_proxy/plugins_event_11');
-var EventEmitter      = require('events').EventEmitter;
+var fs           = require('fs');
+var ast          = require('asterisk-ami');
+var action       = require('./action');
+var pluginsCmd   = require('jsplugs')().require('./plugins/ast_proxy/plugins_command_11');
+var proxyLogic   = require('./proxy_logic_11/proxy_logic_11');
+var pluginsEvent = require('jsplugs')().require('./plugins/ast_proxy/plugins_event_11');
+var EventEmitter = require('events').EventEmitter;
 
 /**
 * The module identifier used by the logger.
@@ -492,10 +492,10 @@ function emit(ev, data) {
 }
 
 // public interface
-exports.on            = on;
-exports.emit          = emit;
-exports.doCmd         = doCmd;
-exports.start         = start;
-exports.config        = config;
-exports.setLogger     = setLogger;
-exports.proxyLogic    = proxyLogic;
+exports.on         = on;
+exports.emit       = emit;
+exports.doCmd      = doCmd;
+exports.start      = start;
+exports.config     = config;
+exports.setLogger  = setLogger;
+exports.proxyLogic = proxyLogic;
