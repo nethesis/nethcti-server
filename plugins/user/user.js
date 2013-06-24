@@ -3,6 +3,7 @@ var EndpointJabber    = require('./endpointJabber').EndpointJabber;
 var EndpointCalendar  = require('./endpointCalendar').EndpointCalendar;
 var EndpointExtension = require('./endpointExtension').EndpointExtension;
 var EndpointCellphone = require('./endpointCellphone').EndpointCellphone;
+var EndpointVoicemail = require('./endpointVoicemail').EndpointVoicemail;
 
 /**
 * Abstraction of a user.
@@ -88,6 +89,16 @@ exports.User = function (name) {
     var endpointCalendar = {};
 
     /**
+    * The voicemail endpoints of the user. The keys are the endpoint
+    * identifier and the value is the endpoint object.
+    *
+    * @property endpointVoicemail
+    * @private
+    * @default {}
+    */
+    var endpointVoicemail = {};
+
+    /**
     * The user configurations.
     *
     * @property configurations
@@ -97,7 +108,7 @@ exports.User = function (name) {
     var configurations = {};
 
     /**
-    * Return the user configurations.
+    * Returns the user configurations.
     *
     * @method getConfigurations
     * @return {object} The configuration of the user
@@ -119,7 +130,7 @@ exports.User = function (name) {
     }
 
     /**
-    * Return the name of the user.
+    * Returns the name of the user.
     *
     * @method getUsername
     * @return {string} The username
@@ -127,7 +138,7 @@ exports.User = function (name) {
     function getUsername() { return username; }
 
     /**
-    * Return all the user authorizations.
+    * Returns all the user authorizations.
     *
     * @method getAllAuthorizations
     * @return {object} All the user authorizations.
@@ -177,6 +188,11 @@ exports.User = function (name) {
 
             newEndpoint = new EndpointCalendar(id);
             endpointCalendar[id] = newEndpoint;
+
+        } else if (type === ENDPOINT_TYPES.VOICEMAIL) {
+
+            newEndpoint = new EndpointVoicemail(id);
+            endpointVoicemail[id] = newEndpoint;
 
         } else {
             throw new Error('invalid endpoint type "' + type + '"');
@@ -232,7 +248,7 @@ exports.User = function (name) {
     }
 
     /**
-    * Return the extension endpoint of the user.
+    * Returns the extension endpoint of the user.
     *
     * @method getEndpointExtensions
     * @return {object} The extension endpoint.
@@ -240,7 +256,15 @@ exports.User = function (name) {
     function getEndpointExtensions() { return endpointExtension; }
 
     /**
-    * Return the readable string of the user.
+    * Returns the voicemail endpoint of the user.
+    *
+    * @method getEndpointVoicemails
+    * @return {object} The voicemail endpoint.
+    */
+    function getEndpointVoicemails() { return endpointVoicemail; }
+
+    /**
+    * Returns the readable string of the user.
     *
     * @method toString
     * @return {string} The readable description of the user
@@ -274,6 +298,7 @@ exports.User = function (name) {
         getConfigurations:     getConfigurations,
         setConfigurations:     setConfigurations,
         getAllAuthorizations:  getAllAuthorizations,
+        getEndpointVoicemails: getEndpointVoicemails,
         getEndpointExtensions: getEndpointExtensions
     };
 }

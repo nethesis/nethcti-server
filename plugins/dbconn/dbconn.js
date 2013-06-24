@@ -75,6 +75,7 @@ var CUSTOMER_CARD = {
 */
 var JSON_KEYS = {
     POSTIT:        'postit',
+    VOICEMAIL:     'voicemail',
     PHONEBOOK:     'phonebook',
     CALLER_NOTE:   'caller_note',
     HISTORY_CALL:  'history_call',
@@ -649,6 +650,104 @@ function getHistoryPostitInterval(data, cb) {
 }
 
 /**
+* Gets all the voice messages of a voicemail of the specified type. It search the
+* results into the _asteriskcdrdb.voicemessages_ database. The type can be "new" or "old".
+*
+* @method getVoicemailNewMsg
+* @param {string} vmId The voicemail identifier
+* @param {string} type The type of the voicemail to retrieve. It can be "new" or "old"
+* @param {function} cb The callback function
+*/
+function getVoicemailMsg(vmId, type, cb) {
+    try {
+        // check parameters
+        if (typeof vmId !== 'string' || typeof cb !== 'function'
+            || (   type !== 'old'    && type      !== 'new')) {
+
+            throw new Error('wrong parameters');
+        }
+
+        // convert the type if it's a "new" value. This is because the query search
+        // on "dir" field that is the filesystem path that can terminate with "Old"
+        // or "INBOX" values
+        if (type === 'new') { type = 'inbox'; }
+
+        // search
+        models[JSON_KEYS.VOICEMAIL].findAll({
+            where: [
+                'mailboxuser=? AND ' +
+                'LOWER(RIGHT(dir, ' + type.length + '))=?',
+                vmId, type
+            ],
+            attributes: [
+                'id', 'dir', 'callerid', 'origtime', 'duration', 'msg_id', 'mailboxuser'
+            ]
+        }).success(function (results) {
+
+            // extract results to return in the callback function
+            var i;
+            for (i = 0; i < results.length; i++) {
+                results[i] = results[i].selectedValues;
+            }
+
+            logger.info(IDLOG, results.length + ' results searching ' + type + ' voice messages of voicemail "' + vmId + '"');
+            cb(null, results);
+
+        }).error(function (err) { // manage the error
+
+            logger.error(IDLOG, 'searching ' + type + ' voice messages of voicemail "' + vmId + '"');
+            cb(err.toString());
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Gets all the new voice messages of a voicemail. It search the
+* results into the _asteriskcdrdb.voicemessages_ database.
+*
+* @method getVoicemailNewMsg
+* @param {string} vmId The voicemail identifier
+* @param {function} cb The callback function
+*/
+function getVoicemailNewMsg(vmId, cb) {
+    try {
+        // check parameters
+        if (typeof vmId !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        getVoicemailMsg(vmId, 'new', cb);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Gets all the old voice messages of a voicemail. It search the
+* results into the _asteriskcdrdb.voicemessages_ database.
+*
+* @method getVoicemailOldMsg
+* @param {string} vmId The voicemail identifier
+* @param {function} cb The callback function
+*/
+function getVoicemailOldMsg(vmId, cb) {
+    try {
+        // check parameters
+        if (typeof vmId !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        getVoicemailMsg(vmId, 'old', cb);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Get the history caller note of the specified user into the interval time.
 * If the username information is omitted, the results contains the
 * history caller note of all users. Moreover, it can be possible to filter
@@ -786,6 +885,8 @@ exports.savePostit                   = savePostit;
 exports.saveCallerNote               = saveCallerNote;
 exports.saveCtiPbContact             = saveCtiPbContact;
 exports.getCtiPbContacts             = getCtiPbContacts;
+exports.getVoicemailNewMsg           = getVoicemailNewMsg;
+exports.getVoicemailOldMsg           = getVoicemailOldMsg;
 exports.getPhonebookContacts         = getPhonebookContacts;
 exports.getCustomerCardByNum         = getCustomerCardByNum;
 exports.getHistoryCallInterval       = getHistoryCallInterval;

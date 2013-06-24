@@ -87,7 +87,21 @@ module.exports = function (options, imports, register) {
             *
             * @method getHistoryCallerNoteInterval
             */
-            getHistoryCallerNoteInterval: dbconn.getHistoryCallerNoteInterval
+            getHistoryCallerNoteInterval: dbconn.getHistoryCallerNoteInterval,
+
+            /**
+            * It's the _getVoicemailNewMsg_ method provided by _dbconn_ module.
+            *
+            * @method getVoicemailNewMsg
+            */
+            getVoicemailNewMsg: dbconn.getVoicemailNewMsg,
+
+            /**
+            * It's the _getVoicemailOldMsg_ method provided by _dbconn_ module.
+            *
+            * @method getVoicemailOldMsg
+            */
+            getVoicemailOldMsg: dbconn.getVoicemailOldMsg
         }
     });
 
