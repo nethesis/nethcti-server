@@ -311,6 +311,10 @@ function authorizeUser(type, username) {
 
         // get authorization type from the user
         var autho = userMod.getAuthorization(username, type);
+        if (autho === undefined) {
+            logger.warn(IDLOG, 'try to authorize non existent user "' + username + '" for authorization "' + type + '"');
+            return false;
+        }
 
         // check the type of the authorization. It must be a boolean value
         if (typeof autho[type] === 'boolean') {
