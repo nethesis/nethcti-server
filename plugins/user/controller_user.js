@@ -58,6 +58,21 @@ var emitter = new EventEmitter();
 var users = {};
 
 /**
+* Associations between users and voicemail. The associations are present
+* in the configuration file and are used by another component to create
+* the EndpointVoicemail object for a user. So it's neccessary to know if
+* the voicemail really exists; e.g. the voicemail module obtains the existing
+* voicemail from the asterisk proxy component and then set the user
+* EndpointVoicemail objects.
+*
+* @property tempUserVoicemailAssoc
+* @type object
+* @private
+* @default {}
+*/
+var tempUserVoicemailAssoc = {};
+
+/**
 * Set the logger to be used.
 *
 * @method setLogger
@@ -151,6 +166,16 @@ function configByFile(path) {
         // set endpoints to the users
         initializeEndpointsUsersByJSON(json);
         logger.info(IDLOG, 'configuration ended');
+
+        // set temporary association between user and voicemail. This is temporary
+        // because to create the EndpointVoicemail object for a user, it's neccessary
+        // to know if the voicemail really exists; e.g. the voicemail module obtain
+        // the existing voicemail from asterisk proxy and then set the user
+        // EndpointVoicemail objects
+        for (userid in json) { // cycle users
+
+            tempUserVoicemailAssoc[userid] = json[userid].endpoints.voicemail;
+        }
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -434,13 +459,69 @@ function getVoicemailList(username) {
     }
 }
 
+/**
+* Returns the associations between user and his voicemail as reported
+* in the configuratino file.
+*
+* @method getVoicemailAssociations
+*/
+function getVoicemailAssociations() {
+    try {
+        return tempUserVoicemailAssoc;
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Create a new _EndpointVoicemail_ object and adds it to the user object.
+*
+* @method addEndpointVoicemail
+* @param {string} userid The user identifier
+* @param {object} data The voicemail data used to create the EndpointVoicemail object
+*   @param {string} data.id The voicemail identifier
+*   @param {string} data.owner The owner name
+*   @param {string} data.context The voicemail context
+*   @param {string} data.email The email address
+*   @param {string} data.maxMessageCount Maximum number of the voice messages
+*   @param {string} data.maxMessageLength Maximum length of a voice message
+*/
+function addEndpointVoicemail(userid, data) {
+    try {
+        // check parameters
+        if (   typeof userid !== 'string'
+            || typeof data                  !== 'object' || typeof data.id              !== 'string'
+            || typeof data.owner            !== 'string' || typeof data.context         !== 'string'
+            || typeof data.email            !== 'string' || typeof data.maxMessageCount !== 'string'
+            || typeof data.maxMessageLength !== 'string' || typeof data.id              !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // check the user existence
+        if (!users[userid]) {
+            logger.warn(IDLOG, 'adding voicemail endpoint to not existing user "' + userid + '"');
+            return;
+        }
+
+        // add voicemail endpoint to the user
+        users[userid].addEndpointVoicemail(data);
+        logger.info(IDLOG, 'voicemail endpoint "' + data.id + '" has been added to the user "' + userid + '"');
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
 // public interface
-exports.on                   = on;
-exports.config               = config;
-exports.setLogger            = setLogger;
-exports.getVoicemailList     = getVoicemailList;
-exports.setAuthorization     = setAuthorization;
-exports.getAuthorization     = getAuthorization;
-exports.getConfigurations    = getConfigurations;
-exports.setConfigurations    = setConfigurations;
-exports.hasExtensionEndpoint = hasExtensionEndpoint;
+exports.on                       = on;
+exports.config                   = config;
+exports.setLogger                = setLogger;
+exports.getVoicemailList         = getVoicemailList;
+exports.setAuthorization         = setAuthorization;
+exports.getAuthorization         = getAuthorization;
+exports.getConfigurations        = getConfigurations;
+exports.setConfigurations        = setConfigurations;
+exports.addEndpointVoicemail     = addEndpointVoicemail;
+exports.hasExtensionEndpoint     = hasExtensionEndpoint;
+exports.getVoicemailAssociations = getVoicemailAssociations;
