@@ -73,7 +73,21 @@ module.exports = function (options, imports, register) {
             *
             * @method getVoicemailList
             */
-            getVoicemailList: controllerUser.getVoicemailList
+            getVoicemailList: controllerUser.getVoicemailList,
+
+            /**
+            * It's the _getVoicemailAssociations_ method provided by _controller\_user_ module.
+            *
+            * @method getVoicemailAssociations
+            */
+            getVoicemailAssociations: controllerUser.getVoicemailAssociations,
+
+            /**
+            * It's the _addEndpointVoicemail_ method provided by _controller\_user_ module.
+            *
+            * @method addEndpointVoicemail
+            */
+            addEndpointVoicemail: controllerUser.addEndpointVoicemail
         }
     });
 
