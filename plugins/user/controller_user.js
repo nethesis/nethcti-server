@@ -316,7 +316,7 @@ function setAuthorization(userid, typeAutho, value) {
 *
 * @method getAuthorization
 * @param {string} userid The user identifier
-* @return {object} The authorization of the user.
+* @return {object} The authorization of the user or undefined value if the user not exists.
 */
 function getAuthorization(userid, type) {
     try {
@@ -402,10 +402,43 @@ function hasExtensionEndpoint(username, exten) {
     }
 }
 
+/**
+* Returns the voicemail list of the user.
+*
+* @method getVoicemailList
+* @param {string} username The name of the user to check
+* @return {array} The voicemail list of the user.
+*/
+function getVoicemailList(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        // check the user presence
+        if (users[username] === undefined) {
+            throw new Error('no user "' + username + '" is present');
+        }
+
+        // get voicemail endpoints object
+        var evms = users[username].getEndpointVoicemails();
+
+        if (typeof evms !== 'object') {
+            throw new Error('wrong voicemail endpoint result for user "' + username + '"');
+        }
+
+        return Object.keys(evms);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        throw err;
+    }
+}
+
 // public interface
 exports.on                   = on;
 exports.config               = config;
 exports.setLogger            = setLogger;
+exports.getVoicemailList     = getVoicemailList;
 exports.setAuthorization     = setAuthorization;
 exports.getAuthorization     = getAuthorization;
 exports.getConfigurations    = getConfigurations;

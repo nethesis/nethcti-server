@@ -66,7 +66,14 @@ module.exports = function (options, imports, register) {
             *
             * @method hasExtensionEndpoint
             */
-            hasExtensionEndpoint: controllerUser.hasExtensionEndpoint
+            hasExtensionEndpoint: controllerUser.hasExtensionEndpoint,
+
+            /**
+            * It's the _getVoicemailList_ method provided by _controller\_user_ module.
+            *
+            * @method getVoicemailList
+            */
+            getVoicemailList: controllerUser.getVoicemailList
         }
     });
 
