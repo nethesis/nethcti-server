@@ -16,7 +16,8 @@
     'nethcti':   '',
     'calendar':  '',
     'extension': '',
-    'cellphone': ''
+    'cellphone': '',
+    'voicemail': ''
 }
 */
 var ENDPOINT_TYPES = {
@@ -24,7 +25,8 @@ var ENDPOINT_TYPES = {
     'nethcti':   '',
     'calendar':  '',
     'extension': '',
-    'cellphone': ''
+    'cellphone': '',
+    'voicemail': ''
 }
 
 /**
@@ -33,13 +35,22 @@ var ENDPOINT_TYPES = {
 * @property TYPES
 * @type {object}
 * @readOnly
+* @default {
+    JABBER:    'jabber',
+    NETHCTI:   'nethcti',
+    CALENDAR:  'calendar',
+    EXTENSION: 'extension',
+    CELLPHONE: 'cellphone',
+    VOICEMAIL: 'voicemail'
+}
 */
 var TYPES = {
     JABBER:    'jabber',
     NETHCTI:   'nethcti',
     CALENDAR:  'calendar',
     EXTENSION: 'extension',
-    CELLPHONE: 'cellphone'
+    CELLPHONE: 'cellphone',
+    VOICEMAIL: 'voicemail'
 }
 
 /**
