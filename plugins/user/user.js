@@ -146,10 +146,11 @@ exports.User = function (name) {
     function getAllAuthorizations() { return authorizations; }
 
     /**
-    * Add an endpoint. Actually the _obj_ object passed is
-    * empty, but it maybe used in the future. The function
-    * assumes that the specified endpoint type is valid. 
-    * Otherwise it throws an exception.
+    * Add an endpoint. The function assumes that the specified
+    * endpoint type is valid. Otherwise it throws an exception.
+    * This function not adds a voicemail endpoint. For this there
+    * is the _addEndpointVoicemail_ function, and it's used by
+    * another component.
     * 
     * **It can throw an Exception.**
     *
@@ -189,14 +190,42 @@ exports.User = function (name) {
             newEndpoint = new EndpointCalendar(id);
             endpointCalendar[id] = newEndpoint;
 
-        } else if (type === ENDPOINT_TYPES.VOICEMAIL) {
-
-            newEndpoint = new EndpointVoicemail(id);
-            endpointVoicemail[id] = newEndpoint;
-
-        } else {
+        } else if (type !== ENDPOINT_TYPES.VOICEMAIL) {
+            // excludes the voicemail because the voicemail associations are
+            // specified in the configuration file. The voicemail endpoints
+            // are added from other components, e.g. from the _voicemail_ module
+            // using the _addEndpointVoicemail_ method
             throw new Error('invalid endpoint type "' + type + '"');
         }
+    }
+
+    /**
+    * Adds voicemail endpoint.
+    *
+    * **It can throw an Exception.**
+    *
+    * @method addEndpointVoicemail
+    * @param {object} data
+    *   @param {string} data.id The voicemail identifier
+    *   @param {string} data.owner The owner name
+    *   @param {string} data.context The voicemail context
+    *   @param {string} data.email The email address
+    *   @param {string} data.maxMessageCount Maximum number of the voice messages
+    *   @param {string} data.maxMessageLength Maximum length of a voice message
+    */
+    function addEndpointVoicemail(data) {
+        // check parameters
+        if (   typeof data                  !== 'object' || typeof data.id              !== 'string'
+            || typeof data.owner            !== 'string' || typeof data.context         !== 'string'
+            || typeof data.email            !== 'string' || typeof data.maxMessageCount !== 'string'
+            || typeof data.maxMessageLength !== 'string' || typeof data.id              !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // add endpoint by its type
+        var newEndpoint = new EndpointVoicemail(data);
+        endpointVoicemail[data.id] = newEndpoint;
     }
 
     /**
@@ -297,6 +326,7 @@ exports.User = function (name) {
         getAuthorization:      getAuthorization,
         getConfigurations:     getConfigurations,
         setConfigurations:     setConfigurations,
+        addEndpointVoicemail:  addEndpointVoicemail,
         getAllAuthorizations:  getAllAuthorizations,
         getEndpointVoicemails: getEndpointVoicemails,
         getEndpointExtensions: getEndpointExtensions
