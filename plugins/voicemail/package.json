@@ -1,0 +1,13 @@
+{
+    "name": "voicemail",
+    "main": "arch_voicemail.js",
+    "private": true,
+    "plugin": {
+        "consumes": [
+            "user",
+            "logger",
+            "dbconn"
+        ],
+        "provides": ["voicemail"]
+    }
+}
