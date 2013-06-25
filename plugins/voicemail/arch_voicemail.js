@@ -36,9 +36,17 @@ module.exports = function (options, imports, register) {
     });
 
     try {
-        voicemail.setLogger(logger);
-        voicemail.setDbconn(imports.dbconn);
-        voicemail.setCompUser(imports.user);
+        // wait for the creation of the users
+        imports.user.on('users_ready', function () {
+            voicemail.setLogger(logger);
+            voicemail.setDbconn(imports.dbconn);
+            voicemail.setCompUser(imports.user);
+            voicemail.setCompAstProxy(imports.astProxy);
+        });
+
+        imports.astProxy.on('ready', function () {
+            voicemail.start();
+        });
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
