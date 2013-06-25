@@ -54,15 +54,6 @@ var dbconn;
 var compUser;
 
 /**
-* The architect component to be used for asterisk functions.
-*
-* @property compAstProxy
-* @type object
-* @private
-*/
-var compAstProxy;
-
-/**
 * Set the logger to be used.
 *
 * @method setLogger
@@ -101,24 +92,6 @@ function setCompUser(cu) {
         if (typeof cu !== 'object') { throw new Error('wrong parameter'); }
         compUser = cu;
         logger.log(IDLOG, 'user component has been set');
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Set the asterisk proxy architect component.
-*
-* @method setCompAstProxy
-* @param {object} ap The architect asterisk proxy component
-* @static
-*/
-function setCompAstProxy(ap) {
-    try {
-        // check parameter
-        if (typeof ap !== 'object') { throw new Error('wrong parameter'); }
-        compAstProxy = ap;
-        logger.log(IDLOG, 'asterisk proxy component has been set');
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -245,74 +218,8 @@ function setDbconn(dbconnMod) {
     }
 }
 
-/**
-* Sets voicemail endpoints for all users. To do this it use the asterisk
-* proxy component to obtain the list of existing voicemail.
-*
-* @method start
-*/
-function start() {
-    try {
-        // use the command plugin of the asterisk proxy component
-        compAstProxy.doCmd({ command: 'listVoicemail' }, setUserEndpointVoicemail);
-
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Set the voicemail endpoint for all users.
-*
-* @method setUserEndpointVoicemail
-* @param {object} results The the active voicemail in asterisk
-* @private
-*/
-function setUserEndpointVoicemail(results) {
-    try {
-        if (typeof results !== 'object') { throw new Error('wrong parameter'); }
-
-        // get the associations between user and voicemails from the user component
-        var userVm = compUser.getVoicemailAssociations();
-
-        // cycle in all user-voicemail associations and
-        // set the voicemail endpoint in the user
-        var userid, vms, vm;
-        for (userid in userVm) {
-
-            // extract the voicemails associated with the user
-            vms = userVm[userid];
-
-            // check if the voicemail association is present for the user
-            if (typeof vms === 'object') {
-
-                for (vm in vms) { // cycle in all voicemails associated with the user
-
-                    // check if the voicemail is really active in the asterisk
-                    if (results[vm]) {
-                        logger.info(IDLOG, 'add voicemail endpoint "' + vm + '" to user "' + userid + '"');
-                        compUser.addEndpointVoicemail(userid, results[vm]);
-
-                    } else {
-                        logger.error(IDLOG, 'voicemail "' + vm + '" associated with the user "' + userid + '" is not active in the asterisk');
-                    }
-                }
-
-            } else {
-                // the voicemail association is not present for the user
-                logger.warn(IDLOG, 'user "' + userid + '" does not have the voicemail association');
-            }
-
-        }
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
 // public interface
-exports.start               = start;
 exports.setLogger           = setLogger;
 exports.setDbconn           = setDbconn;
 exports.setCompUser         = setCompUser;
-exports.setCompAstProxy     = setCompAstProxy;
 exports.getAllVoiceMessages = getAllVoiceMessages;

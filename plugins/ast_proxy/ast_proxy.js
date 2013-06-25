@@ -331,10 +331,6 @@ function onData(data) {
 
             } else if (ev === 'fullybooted') { // the asterisk connection is ready
                 logger.info(IDLOG, 'ast_proxy is ready');
-                // emit "ready" event
-                logger.info(IDLOG, 'emit "ready" event');
-                emit('ready');
-
                 proxyLogic.start(INI_PATH_STRUCT);
             }
         }

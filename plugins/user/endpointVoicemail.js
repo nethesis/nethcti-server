@@ -4,25 +4,13 @@
 * **It can throw exception.**
 *
 * @class EndpointVoicemail
-* @param {object} data The voicemail data used to create the EndpointVoicemail object
-*   @param {string} data.id The voicemail identifier
-*   @param {string} data.owner The owner name
-*   @param {string} data.context The voicemail context
-*   @param {string} data.email The email address
-*   @param {string} data.maxMessageCount Maximum number of the voice messages
-*   @param {string} data.maxMessageLength Maximum length of a voice message
+* @param {object} vmid The voicemail identifier
 * @constructor
 * @return {object} The EndpointVoicemail object.
 */
-exports.EndpointVoicemail = function (data) {
+exports.EndpointVoicemail = function (vmid) {
     // check the parameter
-    if (   typeof data                  !== 'object'
-        || typeof data.owner            !== 'string' || typeof data.context         !== 'string'
-        || typeof data.email            !== 'string' || typeof data.maxMessageCount !== 'string'
-        || typeof data.maxMessageLength !== 'string' || typeof data.id              !== 'string') {
-
-        throw new Error('wrong parameter');
-    }
+    if (typeof vmid !== 'string') { throw new Error('wrong parameter'); }
 
     /**
     * The voicemail identifier.
@@ -32,7 +20,7 @@ exports.EndpointVoicemail = function (data) {
     * @required
     * @private
     */
-    var id = data.id;
+    var id = vmid;
 
     /**
     * The name of the voicemail owner.
@@ -42,7 +30,7 @@ exports.EndpointVoicemail = function (data) {
     * @required
     * @private
     */
-    var owner = data.owner;
+    var owner;
 
     /**
     * The context of the voicemail
@@ -52,7 +40,7 @@ exports.EndpointVoicemail = function (data) {
     * @required
     * @private
     */
-    var context = data.context;
+    var context;
 
     /**
     * The email of the voicemail.
@@ -61,7 +49,7 @@ exports.EndpointVoicemail = function (data) {
     * @type {string}
     * @private
     */
-    var email = data.email;
+    var email;
 
     /**
     * The maximum number of messages of the voicemail.
@@ -70,7 +58,7 @@ exports.EndpointVoicemail = function (data) {
     * @type string
     * @private
     */
-    var maxMessageCount = data.maxMessageCount;
+    var maxMessageCount;
 
     /**
     * The maximum lenght of the voicemail messages.
@@ -79,7 +67,7 @@ exports.EndpointVoicemail = function (data) {
     * @type string
     * @private
     */
-    var maxMessageLength = data.maxMessageLength;
+    var maxMessageLength;
 
     /**
     * Returns the voicemail identifier.
@@ -103,7 +91,7 @@ exports.EndpointVoicemail = function (data) {
     * @method toString
     * @return {string} The readable description of the extension
     */
-    function toString() { return 'VOICEMAIL of ' + id + ' ' + name }
+    function toString() { return 'VOICEMAIL of ' + id }
 
     /**
     * Returns the JSON representation of the object.
