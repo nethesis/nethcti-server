@@ -10,7 +10,7 @@
         "winston":      "0.6.2",
         "sequelize":    "1.7.0-alpha1",
 	"iniparser":    "1.0.5",
-	"architect":    "0.1.8",
+	"architect":    "0.1.10",
 	"socket.io":    "0.9.13",
         "http-proxy":   "0.10.2",
         "asterisk-ami": "0.1.0"
