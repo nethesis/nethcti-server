@@ -6,7 +6,8 @@
         "consumes": [
             "user",
             "logger",
-            "dbconn"
+            "dbconn",
+            "astProxy"
         ],
         "provides": ["voicemail"]
     }
