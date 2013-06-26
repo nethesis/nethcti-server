@@ -1,4 +1,4 @@
-var ENDPOINT_TYPES    = require('./endpoint_types').TYPES;
+var endpointTypes     = require('./endpoint_types');
 var EndpointJabber    = require('./endpointJabber').EndpointJabber;
 var EndpointCalendar  = require('./endpointCalendar').EndpointCalendar;
 var EndpointExtension = require('./endpointExtension').EndpointExtension;
@@ -39,64 +39,18 @@ exports.User = function (name) {
     var authorizations = {};
 
     /**
-    * The extension endpoints of the user. The keys are the endpoint
-    * identifier and the value is the endpoint object.
+    * The endpoints of the user. The keys are the endpoint types
+    * and the values are objects that contains endpoint identifiers
+    * as keys and Endpoint objects as values.
     *
-    * @property endpointExtension
+    * @property endpoints
     * @private
-    * @default {}
     */
-    var endpointExtension = {};
-
-    /**
-    * The jabber endpoints of the user. The keys are the endpoint
-    * identifier and the value is the endpoint object.
-    *
-    * @property endpointJabber
-    * @private
-    * @default {}
-    */
-    var endpointJabber = {};
-
-    /**
-    * The cellphone endpoints of the user. The keys are the endpoint
-    * identifier and the value is the endpoint object.
-    *
-    * @property endpointCellphone
-    * @private
-    * @default {}
-    */
-    var endpointCellphone = {};
-
-    /**
-    * The nethcti endpoints of the user. The keys are the endpoint
-    * identifier and the value is the endpoint object.
-    *
-    * @property endpointNethcti
-    * @private
-    * @default {}
-    */
-    var endpointNethcti = {};
-
-    /**
-    * The calendar endpoints of the user. The keys are the endpoint
-    * identifier and the value is the endpoint object.
-    *
-    * @property endpointCalendar
-    * @private
-    * @default {}
-    */
-    var endpointCalendar = {};
-
-    /**
-    * The voicemail endpoints of the user. The keys are the endpoint
-    * identifier and the value is the endpoint object.
-    *
-    * @property endpointVoicemail
-    * @private
-    * @default {}
-    */
-    var endpointVoicemail = {};
+    var endpoints = {};
+    var type;
+    for (type in endpointTypes.TYPES) {
+        endpoints[endpointTypes.TYPES[type]] = {};
+    }
 
     /**
     * The user configurations.
@@ -146,6 +100,14 @@ exports.User = function (name) {
     function getAllAuthorizations() { return authorizations; }
 
     /**
+    * Returns all endpoints of the user.
+    *
+    * @method getAllEndpoints
+    * @return {object} All the user endpoints.
+    */
+    function getAllEndpoints() { return endpoints; }
+
+    /**
     * Adds an endpoint. The function assumes that the specified
     * endpoint type is valid. Otherwise it throws an exception.
     * 
@@ -159,42 +121,22 @@ exports.User = function (name) {
     */
     function addEndpoint(type, id, data) {
         // check parameters
-        if (typeof type  !== 'string'
-            || typeof id !== 'string' || typeof data !== 'object') {
+        if (   typeof type !== 'string' || typeof data !== 'object'
+            || typeof id   !== 'string' || !endpointTypes.isValidEndpointType(type)) {
 
             throw new Error('wrong parameters');
         }
 
+        // create new endpoint object
+        var newEndpoint;
+        if      (type === endpointTypes.TYPES.JABBER)    { newEndpoint = new EndpointJabber(id);    }
+        else if (type === endpointTypes.TYPES.CALENDAR)  { newEndpoint = new EndpointCalendar(id);  }
+        else if (type === endpointTypes.TYPES.EXTENSION) { newEndpoint = new EndpointExtension(id); }
+        else if (type === endpointTypes.TYPES.CELLPHONE) { newEndpoint = new EndpointCellphone(id); }
+        else if (type === endpointTypes.TYPES.VOICEMAIL) { newEndpoint = new EndpointVoicemail(id); }
+
         // add endpoint by its type
-        var id, newEndpoint;
-        if (type === ENDPOINT_TYPES.EXTENSION) {
-
-            newEndpoint = new EndpointExtension(id);
-            endpointExtension[id] = newEndpoint;
-            
-        } else if (type === ENDPOINT_TYPES.CELLPHONE) {
-
-            newEndpoint = new EndpointCellphone(id);
-            endpointCellphone[id] = newEndpoint;
-
-        } else if (type === ENDPOINT_TYPES.JABBER) {
-
-            newEndpoint = new EndpointJabber(id);
-            endpointJabber[id] = newEndpoint;
-
-        } else if (type === ENDPOINT_TYPES.CALENDAR) {
-
-            newEndpoint = new EndpointCalendar(id);
-            endpointCalendar[id] = newEndpoint;
-
-        } else if (type === ENDPOINT_TYPES.VOICEMAIL) {
-
-            newEndpoint = new EndpointVoicemail(id);
-            endpointVoicemail[id] = newEndpoint;
-
-        } else {
-            throw new Error('invalid endpoint type "' + type + '"');
-        }
+        endpoints[type][id] = newEndpoint;
     }
 
     /**
@@ -246,22 +188,6 @@ exports.User = function (name) {
     }
 
     /**
-    * Returns the extension endpoint of the user.
-    *
-    * @method getEndpointExtensions
-    * @return {object} The extension endpoint.
-    */
-    function getEndpointExtensions() { return endpointExtension; }
-
-    /**
-    * Returns the voicemail endpoint of the user.
-    *
-    * @method getEndpointVoicemails
-    * @return {object} The voicemail endpoint.
-    */
-    function getEndpointVoicemails() { return endpointVoicemail; }
-
-    /**
     * Returns the readable string of the user.
     *
     * @method toString
@@ -291,12 +217,11 @@ exports.User = function (name) {
         toString:              toString,
         getUsername:           getUsername,
         addEndpoint:           addEndpoint,
+        getAllEndpoints:       getAllEndpoints,
         setAuthorization:      setAuthorization,
         getAuthorization:      getAuthorization,
         getConfigurations:     getConfigurations,
         setConfigurations:     setConfigurations,
-        getAllAuthorizations:  getAllAuthorizations,
-        getEndpointVoicemails: getEndpointVoicemails,
-        getEndpointExtensions: getEndpointExtensions
+        getAllAuthorizations:  getAllAuthorizations
     };
 }
