@@ -420,7 +420,8 @@ function getVoicemailList(username) {
         }
 
         // get voicemail endpoints object
-        var evms = users[username].getEndpointVoicemails();
+        var evms = users[username].getAllEndpoints();
+        evms     = evms[endpointTypes.TYPES.VOICEMAIL];
 
         if (typeof evms !== 'object') {
             throw new Error('wrong voicemail endpoint result for user "' + username + '"');
@@ -434,10 +435,34 @@ function getVoicemailList(username) {
     }
 }
 
+/**
+* Returns the endpoints of the user.
+*
+* @method getEndpointsJSON
+* @param {string} userid The user identifier
+* @return {object} The endpoints of the user in JSON format.
+*/
+function getEndpointsJSON(userid) {
+    try {
+        // check parameter
+        if (typeof userid !== 'string') { throw new Error('wrong parameter'); }
+        // check the user presence
+        if (users[userid] === undefined) { throw new Error('no user "' + userid + '" is present'); }
+
+        // get all endpoints of the user
+        return users[userid].getAllEndpointsJSON();
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        throw err;
+    }
+}
+
 // public interface
 exports.on                   = on;
 exports.config               = config;
 exports.setLogger            = setLogger;
+exports.getEndpointsJSON     = getEndpointsJSON;
 exports.getVoicemailList     = getVoicemailList;
 exports.setAuthorization     = setAuthorization;
 exports.getAuthorization     = getAuthorization;
