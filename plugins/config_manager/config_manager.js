@@ -321,6 +321,25 @@ function setUserConfigurations(user, config, cb) {
     }
 }
 
+/**
+* Return the user endpoints.
+*
+* @method getUserEndpointsJSON
+* @param {string} userid The user identifier
+* @return {object} The user endpoints in JSON format.
+*/
+function getUserEndpointsJSON(userid) {
+    try {
+        // check parameter
+        if (typeof userid !== 'string') { throw new Error('wrong parameter'); }
+
+        return compUser.getEndpointsJSON(userid);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
 // public interface
 exports.setLogger             = setLogger;
 exports.configUser            = configUser;
@@ -329,5 +348,6 @@ exports.getChatConf           = getChatConf;
 exports.setCompUser           = setCompUser;
 exports.configStreaming       = configStreaming;
 exports.getStreamingConf      = getStreamingConf;
+exports.getUserEndpointsJSON  = getUserEndpointsJSON;
 exports.getUserConfigurations = getUserConfigurations;
 exports.setUserConfigurations = setUserConfigurations;

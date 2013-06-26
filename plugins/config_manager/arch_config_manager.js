@@ -31,6 +31,13 @@ module.exports = function (options, imports, register) {
             getUserConfigurations: configManager.getUserConfigurations,
 
             /**
+            * It's the _getUserEndpoints_ method provided by _config\_manager_ module.
+            *
+            * @method getUserEndpoints
+            */
+            getUserEndpointsJSON: configManager.getUserEndpointsJSON,
+
+            /**
             * It's the _setUserConfigurations_ method provided by _config\_manager_ module.
             *
             * @method setUserConfigurations
