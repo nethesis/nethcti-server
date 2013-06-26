@@ -168,9 +168,9 @@ function sendHttp500(resp, err) {
         *
         * **GET request**
         *
-        *     configmanager/user
+        *     configmanager/userconf
         *
-        * Returns the configurations of the specified user.
+        * Returns the configurations of the user.
         *
         *     configmanager/chatserver
         *
@@ -179,6 +179,10 @@ function sendHttp500(resp, err) {
         *     configmanager/streamings
         *
         * Returns the parameters of the streaming services.
+        *
+        *     configmanager/userendpoints
+        *
+        * Returns all the user endpoints.
         *
         * **POST request**
         *
@@ -211,7 +215,8 @@ function sendHttp500(resp, err) {
                 'get': [
                     'user',
                     'streamings',
-                    'chatserver'
+                    'chatserver',
+                    'userendpoints'
                 ],
 
                 /**
@@ -231,14 +236,14 @@ function sendHttp500(resp, err) {
             /**
             * Get all user configurations by the following REST API:
             *
-            *     user
+            *     userconf
             *
-            * @method user
+            * @method userconf
             * @param {object} req The client request.
             * @param {object} res The client response.
             * @param {function} next Function to run the next handler in the chain.
             */
-            user: function (req, res, next) {
+            userconf: function (req, res, next) {
                 try {
                     var username = req.headers.authorization_user;
                     var results  = compConfigManager.getUserConfigurations(username);
@@ -251,6 +256,38 @@ function sendHttp500(resp, err) {
                     } else {
 
                         logger.info(IDLOG, 'send configuration of user "' + username + '"');
+                        res.send(200, results);
+                    }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    sendHttp500(res, err.toString());
+                }
+            },
+
+            /**
+            * Get all the user endpoints by the following REST API:
+            *
+            *     userendpoints
+            *
+            * @method userendpoints
+            * @param {object} req The client request.
+            * @param {object} res The client response.
+            * @param {function} next Function to run the next handler in the chain.
+            */
+            userendpoints: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+                    var results  = compConfigManager.getUserEndpointsJSON(username);
+
+                    if (typeof results !== 'object') {
+                        var strerr = 'wrong endpoints result for user "' + username + '"';
+                        logger.error(IDLOG, strerr);
+                        sendHttp500(res, strerr);
+
+                    } else {
+
+                        logger.info(IDLOG, 'send endpoints of user "' + username + '"');
                         res.send(200, results);
                     }
 
@@ -376,10 +413,12 @@ function sendHttp500(resp, err) {
             }
         }
         exports.api                  = configmanager.api;
-        exports.user                 = configmanager.user;
+        exports.userconf             = configmanager.userconf;
         exports.saveuser             = configmanager.saveuser;
-        exports.chatserver           = configmanager.chatserver;
         exports.setLogger            = setLogger;
+        exports.streamings           = configmanager.streamings;
+        exports.chatserver           = configmanager.chatserver;
+        exports.userendpoints        = configmanager.userendpoints;
         exports.setCompConfigManager = setCompConfigManager;
         exports.setCompAuthorization = setCompAuthorization;
 
