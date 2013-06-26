@@ -1,5 +1,6 @@
 var endpointTypes     = require('./endpoint_types');
 var EndpointJabber    = require('./endpointJabber').EndpointJabber;
+var EndpointNethcti   = require('./endpointNethcti').EndpointNethcti;
 var EndpointCalendar  = require('./endpointCalendar').EndpointCalendar;
 var EndpointExtension = require('./endpointExtension').EndpointExtension;
 var EndpointCellphone = require('./endpointCellphone').EndpointCellphone;
@@ -108,6 +109,40 @@ exports.User = function (name) {
     function getAllEndpoints() { return endpoints; }
 
     /**
+    * Returns all endpoints of the user in JSON format.
+    *
+    * **It can throw an Exception.**
+    *
+    * @method getAllEndpointsJSON
+    * @return {object} All the user endpoints in JSON format.
+    */
+    function getAllEndpointsJSON() {
+
+        var result = {}; // object to return
+        var id, type, endptTemp;
+
+        // cycle in all endpoints
+        for (type in endpointTypes.TYPES) {
+
+            // initialize object to return with endpoint type
+            result[endpointTypes.TYPES[type]] = {};
+
+            // it's all the endpoints of one type, e.g. the extension endpoints
+            endptTemp = endpoints[endpointTypes.TYPES[type]];
+
+            // cycle in all endpoints of one type, e.g. the extension endpoints
+            for (id in endptTemp) {
+                // check if the endpoint object has the toJSON function
+                if (typeof endptTemp[id].toJSON === 'function') {
+                    result[endpointTypes.TYPES[type]][id] = endptTemp[id].toJSON();
+
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
     * Adds an endpoint. The function assumes that the specified
     * endpoint type is valid. Otherwise it throws an exception.
     * 
@@ -130,6 +165,7 @@ exports.User = function (name) {
         // create new endpoint object
         var newEndpoint;
         if      (type === endpointTypes.TYPES.JABBER)    { newEndpoint = new EndpointJabber(id);    }
+        else if (type === endpointTypes.TYPES.NETHCTI)   { newEndpoint = new EndpointNethcti(id);   }
         else if (type === endpointTypes.TYPES.CALENDAR)  { newEndpoint = new EndpointCalendar(id);  }
         else if (type === endpointTypes.TYPES.EXTENSION) { newEndpoint = new EndpointExtension(id); }
         else if (type === endpointTypes.TYPES.CELLPHONE) { newEndpoint = new EndpointCellphone(id); }
@@ -222,6 +258,7 @@ exports.User = function (name) {
         getAuthorization:      getAuthorization,
         getConfigurations:     getConfigurations,
         setConfigurations:     setConfigurations,
+        getAllEndpointsJSON:   getAllEndpointsJSON,
         getAllAuthorizations:  getAllAuthorizations
     };
 }
