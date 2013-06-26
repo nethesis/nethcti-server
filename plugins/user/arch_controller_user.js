@@ -87,7 +87,14 @@ module.exports = function (options, imports, register) {
             *
             * @method addEndpointVoicemail
             */
-            addEndpointVoicemail: controllerUser.addEndpointVoicemail
+            addEndpointVoicemail: controllerUser.addEndpointVoicemail,
+
+            /**
+            * It's the _getEndpointsJSON_ method provided by _controller\_user_ module.
+            *
+            * @method getEndpointsJSON
+            */
+            getEndpointsJSON: controllerUser.getEndpointsJSON
         }
     });
 

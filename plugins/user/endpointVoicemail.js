@@ -1,5 +1,5 @@
 /**
-* Abstraction of a voicemail endpoint of an extension.
+* Abstraction of a voicemail endpoint.
 *
 * **It can throw exception.**
 *
@@ -86,10 +86,10 @@ exports.EndpointVoicemail = function (vmid) {
     function getOwner() { return owner; }
 
     /**
-    * Return the readable string description of the queue.
+    * Return the readable string description of the voicemail.
     *
     * @method toString
-    * @return {string} The readable description of the extension
+    * @return {string} The readable description of the voicemail
     */
     function toString() { return 'VOICEMAIL of ' + id }
 
