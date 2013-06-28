@@ -28,7 +28,7 @@ module.exports = function (options, imports, register) {
             *
             * @method send
             */
-            send: controllerPostit.send
+            send: mailer.send
         }
     });
 
