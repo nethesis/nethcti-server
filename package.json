@@ -13,6 +13,7 @@
 	"architect":    "0.1.10",
 	"socket.io":    "0.9.13",
         "http-proxy":   "0.10.2",
+        "nodemailer":   "0.4.4",
         "asterisk-ami": "0.1.0"
     },
     "engines": {

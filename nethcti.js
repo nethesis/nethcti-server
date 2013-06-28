@@ -11,6 +11,7 @@ try{
         { packagePath: "./plugins/authorization"           },
         { packagePath: "./plugins/authentication"          },
         { packagePath: "./plugins/dbconn"                  },
+        { packagePath: "./plugins/mailer"                  },
         { packagePath: "./plugins/ast_proxy"               },
         { packagePath: "./plugins/postit"                  },
         { packagePath: "./plugins/history"                 },
