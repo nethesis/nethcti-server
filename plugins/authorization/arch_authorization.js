@@ -35,6 +35,13 @@ module.exports = function (options, imports, register) {
             authorizeHistoryUser: authorization.authorizeHistoryUser,
 
             /**
+            * It's the _authorizeHistorySwitchUser_ method provided by _authorization_ module.
+            *
+            * @method authorizeHistorySwitchUser
+            */
+            authorizeHistorySwitchUser: authorization.authorizeHistorySwitchUser,
+
+            /**
             * It's the _authorizePhonebookUser_ method provided by _authorization_ module.
             *
             * @method authorizePhonebookUser

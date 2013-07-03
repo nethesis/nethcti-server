@@ -251,6 +251,27 @@ function authorizeHistoryUser(username) {
 }
 
 /**
+* Return true if the specified user has the switchboard history authorization.
+*
+* @method authorizeHistorySwitchUser
+* @param {string} username The username
+* @return {boolean} True if the user has the switchboard history authorization.
+*/
+function authorizeHistorySwitchUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.switchboard_history, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
 * Return true if the specified user has the caller note authorization.
 *
 * @method authorizeCallerNoteUser
@@ -524,4 +545,5 @@ exports.authorizeStreamingUser       = authorizeStreamingUser;
 exports.authorizeCallerNoteUser      = authorizeCallerNoteUser;
 exports.authorizedCustomerCards      = authorizedCustomerCards;
 exports.authorizeCustomerCardUser    = authorizeCustomerCardUser;
+exports.authorizeHistorySwitchUser   = authorizeHistorySwitchUser;
 exports.authorizeHistoryUserEndpoint = authorizeHistoryUserEndpoint;

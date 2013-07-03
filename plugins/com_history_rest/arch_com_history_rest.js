@@ -1,5 +1,5 @@
 /**
-* The architect component that starts _server\_com\_history\_call\_rest_ module.
+* The architect component that starts _server\_com\_history\_rest_ module.
 *
 * @class arch_com_history_rest
 * @module com_history_rest
