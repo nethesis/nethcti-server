@@ -42,7 +42,7 @@ var IDLOG = '[dndSet]';
         *
         * Use it with _ast\_proxy_ module as follow:
         *
-        *     ast_proxy.doCmd({ command: 'dndSet', exten: '214', val: '12345' }, function (res) {
+        *     ast_proxy.doCmd({ command: 'dndSet', exten: '214', activate: true }, function (res) {
         *         // some code
         *     });
         *
@@ -99,16 +99,16 @@ var IDLOG = '[dndSet]';
                     // check callback and info presence and execute it
                     if (map[data.actionid]
                         && (
-                            data.message     === 'Updated database successfully'
-                            || data.message  === 'Key deleted successfully'
+                            data.message    === 'Updated database successfully'
+                            || data.message === 'Key deleted successfully'
                         )
                         && data.response === 'Success') {
 
-                        map[data.actionid]({ result: true });
+                        map[data.actionid](null);
                         delete map[data.actionid]; // remove association ActionID-callback
 
                     } else if (map[data.actionid] && data.response === 'Error') {
-                        map[data.actionid]({ result: false });
+                        map[data.actionid]('error');
                         delete map[data.actionid]; // remove association ActionID-callback
                     }
 
