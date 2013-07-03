@@ -1,5 +1,5 @@
 /**
-* Provides history call functions through REST API.
+* Provides asterisk history call functions through REST API.
 *
 * @module com_history_rest
 * @submodule plugins_rest
@@ -149,6 +149,8 @@ function sendHttp500(resp, err) {
         /**
         * REST plugin that provides history functions through the following REST API:
         *
+        * **GET requests**
+        *
         *     historycall/interval/:endpoint/:from/:to
         *
         * Return the history call between _"from"_ date to _"to"_ date for the endpoint _"endpoint"_.
@@ -236,7 +238,7 @@ function sendHttp500(resp, err) {
 
                     // check if the endpoint in the request is an endpoint of the applicant user. The user
                     // can only see the history of his endpoints
-                    if (compAuthorization.authorizeHistoryUserEndpoint(username, req.params.endpoint) === false) {
+                    if (compAuthorization.verifyUserEndpointExten(username, req.params.endpoint) === false) {
 
                         logger.warn(IDLOG, 'authorization history call failed for user "' + username + '": requested endpoint ' +
                                            req.params.endpoint + ' not owned by him');

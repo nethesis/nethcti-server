@@ -91,11 +91,11 @@ module.exports = function (options, imports, register) {
             authorizedCustomerCards: authorization.authorizedCustomerCards,
 
             /**
-            * It's the _authorizeHistoryUserEndpoint_ method provided by _authorization_ module.
+            * It's the _verifyUserEndpointExten_ method provided by _authorization_ module.
             *
-            * @method authorizeHistoryUserEndpoint
+            * @method verifyUserEndpointExten
             */
-            authorizeHistoryUserEndpoint: authorization.authorizeHistoryUserEndpoint,
+            verifyUserEndpointExten: authorization.verifyUserEndpointExten,
 
             /**
             * It's the _authorizeChatUser_ method provided by _authorization_ module.

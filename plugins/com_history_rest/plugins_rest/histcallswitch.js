@@ -1,6 +1,6 @@
 /**
-* Provides the functions to get the switchboard history call of all endpoints
-* through REST API.
+* Provides the functions to get the asterisk switchboard history
+* call of all endpoints through REST API.
 *
 * @module com_history_rest
 * @submodule plugins_rest

@@ -26,6 +26,7 @@ try{
         { packagePath: "./plugins/com_postit_rest"         },
         { packagePath: "./plugins/com_history_rest"        },
         { packagePath: "./plugins/com_phonebook_rest"      },
+        { packagePath: "./plugins/com_ast_proxy_rest"      },
         { packagePath: "./plugins/com_voicemail_rest"      },
         { packagePath: "./plugins/com_caller_note_rest"    },
         { packagePath: "./plugins/com_authorization_rest"  },

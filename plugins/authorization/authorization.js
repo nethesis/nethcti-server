@@ -456,12 +456,12 @@ function authorizedCustomerCards(username) {
 * Check if the user has the authorization to view the history call of the endpoint.
 * It checks the presence of the endpoint into the extension endpoints of the user.
 *
-* @method authorizeHistoryUserEndpoint
+* @method verifyUserEndpointExten
 * @param {string} username The username
 * @param {string} endpoint The identifier of the endpoint
 * @return {boolean} True if the user is authorized to view the history call of the endpoint.
 */
-function authorizeHistoryUserEndpoint(username, endpoint) {
+function verifyUserEndpointExten(username, endpoint) {
     try {
         // check parameters
         if (typeof username !== 'string' || typeof endpoint !== 'string') {
@@ -532,18 +532,18 @@ function getUserAuthorizations(username) {
 }
 
 // public interface
-exports.config                       = config;
-exports.setLogger                    = setLogger;
-exports.setUserModule                = setUserModule;
-exports.authorizeChatUser            = authorizeChatUser;
-exports.authorizePostitUser          = authorizePostitUser;
-exports.authorizeHistoryUser         = authorizeHistoryUser;
-exports.getUserAuthorizations        = getUserAuthorizations;
-exports.authorizeVoicemailUser       = authorizeVoicemailUser;
-exports.authorizePhonebookUser       = authorizePhonebookUser;
-exports.authorizeStreamingUser       = authorizeStreamingUser;
-exports.authorizeCallerNoteUser      = authorizeCallerNoteUser;
-exports.authorizedCustomerCards      = authorizedCustomerCards;
-exports.authorizeCustomerCardUser    = authorizeCustomerCardUser;
-exports.authorizeHistorySwitchUser   = authorizeHistorySwitchUser;
-exports.authorizeHistoryUserEndpoint = authorizeHistoryUserEndpoint;
+exports.config                     = config;
+exports.setLogger                  = setLogger;
+exports.setUserModule              = setUserModule;
+exports.authorizeChatUser          = authorizeChatUser;
+exports.authorizePostitUser        = authorizePostitUser;
+exports.authorizeHistoryUser       = authorizeHistoryUser;
+exports.getUserAuthorizations      = getUserAuthorizations;
+exports.authorizeVoicemailUser     = authorizeVoicemailUser;
+exports.authorizePhonebookUser     = authorizePhonebookUser;
+exports.authorizeStreamingUser     = authorizeStreamingUser;
+exports.authorizeCallerNoteUser    = authorizeCallerNoteUser;
+exports.authorizedCustomerCards    = authorizedCustomerCards;
+exports.verifyUserEndpointExten    = verifyUserEndpointExten;
+exports.authorizeCustomerCardUser  = authorizeCustomerCardUser;
+exports.authorizeHistorySwitchUser = authorizeHistorySwitchUser;
