@@ -48,18 +48,32 @@ module.exports = function (options, imports, register) {
             saveCtiPbContact: dbconn.saveCtiPbContact,
 
             /**
-            * It's the _getPhonebookContacts_ method provided by _dbconn_ module.
+            * It's the _getPbContactsContains_ method provided by _dbconn_ module.
             *
-            * @method getPhonebookContacts
+            * @method getPbContactsContains
             */
-            getPhonebookContacts: dbconn.getPhonebookContacts,
+            getPbContactsContains: dbconn.getPbContactsContains,
 
             /**
-            * It's the _getCtiPbContacts_ method provided by _dbconn_ module.
+            * It's the _getCtiPbContactsContains_ method provided by _dbconn_ module.
             *
-            * @method getCtiPbContacts
+            * @method getCtiPbContactsContains
             */
-            getCtiPbContacts: dbconn.getCtiPbContacts,
+            getCtiPbContactsContains: dbconn.getCtiPbContactsContains,
+
+            /**
+            * It's the _getPbContactsStartsWith_ method provided by _dbconn_ module.
+            *
+            * @method getPbContactsStartsWith
+            */
+            getPbContactsStartsWith: dbconn.getPbContactsStartsWith,
+
+            /**
+            * It's the _getCtiPbContactsStartsWith_ method provided by _dbconn_ module.
+            *
+            * @method getCtiPbContactsStartsWith
+            */
+            getCtiPbContactsStartsWith: dbconn.getCtiPbContactsStartsWith,
 
             /**
             * It's the _getHistoryCallInterval_ method provided by _dbconn_ module.

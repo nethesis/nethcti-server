@@ -387,17 +387,17 @@ function initConnections() {
 }
 
 /**
-* Gets the phonebook contacts. It search in the centralized address
-* book and search in the fields _name, company, workphone, homephone_ and
-* _cellphone_. It orders the results by _name_ and _company_ ascending.
-* The specified term is wrapped with '%' character. The centralized
-* address book is the mysql _phonebook.phonebook_.
+* Gets the phonebook contacts from the centralized address book.
+* The specified term is wrapped with '%' characters, so it search any
+* occurrences of the term in the database fields.
 *
-* @method getPhonebookContacts
-* @param {string} term The term to search. It can be a name or a number
+* @method getPbContactsContains
+* @param {string} term The term to search. It can be a name or a number. It
+*   will wrapped with '%' characters to search any occurrences of the term
+*   in the database fields.
 * @param {function} cb The callback function
 */
-function getPhonebookContacts(term, cb) {
+function getPbContactsContains(term, cb) {
     try {
         // check parameters
         if (typeof term !== 'string' || typeof cb !== 'function') {
@@ -407,6 +407,61 @@ function getPhonebookContacts(term, cb) {
 
         // add '%' to search all terms with any number of characters, even zero characters
         term = '%' + term + '%';
+
+        getPhonebookContacts(term, cb);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Gets the phonebook contacts from the centralized address book.
+* At the end of the specified term is added the '%' character,
+* so it search any contacts whose names starts with the term.
+*
+* @method getPbContactsStartsWith
+* @param {string} term The term to search. It can be a name or a number. It
+*   will ended with '%' character to search any contacts with names that starts
+*   with the term.
+* @param {function} cb The callback function
+*/
+function getPbContactsStartsWith(term, cb) {
+    try {
+        // check parameters
+        if (typeof term !== 'string' || typeof cb !== 'function') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // add '%' to search all terms with any number of characters, even zero characters
+        term = term + '%';
+
+        getPhonebookContacts(term, cb);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Gets the phonebook contacts. It search in the centralized address
+* book and search in the fields _name, company, workphone, homephone_ and
+* _cellphone_. It orders the results by _name_ and _company_ ascending.
+* The centralized address book is the mysql _phonebook.phonebook_.
+*
+* @method getPhonebookContacts
+* @param {string} term The term to search. It can be a name or a number
+* @param {function} cb The callback function
+* @private
+*/
+function getPhonebookContacts(term, cb) {
+    try {
+        // check parameters
+        if (typeof term !== 'string' || typeof cb !== 'function') {
+
+            throw new Error('wrong parameters');
+        }
 
         models[JSON_KEYS.PHONEBOOK].findAll({
             where: [
@@ -442,16 +497,14 @@ function getPhonebookContacts(term, cb) {
 
 /**
 * Gets the phonebook contacts searching in the NethCTI phonebook database.
-* It search in the fields _name, company, workphone, homephone, cellphone and
-* extension_. It orders the results by _name_ and _company_ ascending. The
-* specified term is wrapped with '%' character. The NethCTI address book is the
-* mysql _nethcti.cti\_phonebook_.
+* extension_. The specified term is wrapped with '%' characters, so it search
+* any occurrences of the term in the database fields.
 *
-* @method getCtiPbContacts
+* @method getCtiPbContactsContains
 * @param {string} term The term to search. It can be a name or a number
 * @param {function} cb The callback function
 */
-function getCtiPbContacts(term, cb) {
+function getCtiPbContactsContains(term, cb) {
     try {
         // check parameters
         if (typeof term !== 'string' || typeof cb !== 'function') {
@@ -460,6 +513,58 @@ function getCtiPbContacts(term, cb) {
 
         // add '%' to search all terms with any number of characters, even zero characters
         term = '%' + term + '%';
+
+        getCtiPbContacts(term, cb);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Gets the phonebook contacts searching in the NethCTI phonebook database.
+* extension_. At the end of the specified term is added the '%' character,
+* so it search any contacts whose names starts with the term.
+*
+* @method getCtiPbContactsStartsWith
+* @param {string} term The term to search. It can be a name or a number
+* @param {function} cb The callback function
+*/
+function getCtiPbContactsStartsWith(term, cb) {
+    try {
+        // check parameters
+        if (typeof term !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        // add '%' to search all contacts whose names starts with the term
+        term = term + '%';
+
+        getCtiPbContacts(term, cb);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+
+/**
+* Gets the phonebook contacts searching in the NethCTI phonebook database.
+* It search in the fields _name, company, workphone, homephone, cellphone and
+* extension_. It orders the results by _name_ and _company_ ascending. The
+* NethCTI address book is the mysql _nethcti.cti\_phonebook_.
+*
+* @method getCtiPbContacts
+* @param {string} term The term to search. It can be a name or a number
+* @param {function} cb The callback function
+* @private
+*/
+function getCtiPbContacts(term, cb) {
+    try {
+        // check parameters
+        if (typeof term !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
 
         models[JSON_KEYS.CTI_PHONEBOOK].findAll({
             where: [
@@ -537,8 +642,8 @@ function getHistoryCallInterval(data, cb) {
         // search
         models[JSON_KEYS.HISTORY_CALL].findAll({
             where: [
-                '(channel LIKE ? OR dstchannel LIKE ?) AND' +
-                '(DATE(calldate)>=? AND DATE(calldate)<=?) AND' +
+                '(channel LIKE ? OR dstchannel LIKE ?) AND ' +
+                '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
                 '(src LIKE ? OR clid LIKE ? OR dst LIKE ?)',
                 data.endpoint, data.endpoint,
                 data.from,     data.to,
@@ -680,7 +785,8 @@ function getVoicemailMsg(vmId, type, cb) {
                 vmId, type
             ],
             attributes: [
-                'id', 'dir', 'callerid', 'origtime', 'duration', 'msg_id', 'mailboxuser'
+                [ 'origtime * 1000', 'origtime' ],
+                'id', 'dir', 'callerid', 'duration', 'msg_id', 'mailboxuser'
             ]
         }).success(function (results) {
 
@@ -793,10 +899,12 @@ function getHistoryCallerNoteInterval(data, cb) {
                 data.filter
             ],
             attributes: [
-                [ 'DATE_FORMAT(datecreation, "%d/%m/%Y")', 'datecreation'],
-                [ 'DATE_FORMAT(datecreation, "%H:%i:%S")', 'timecreation'],
-                'id',     'text',       'creator', 'number',
-                'public', 'expiration', 'booking', 'callid'
+                [ 'DATE_FORMAT(datecreation, "%d/%m/%Y")', 'datecreation'   ],
+                [ 'DATE_FORMAT(datecreation, "%H:%i:%S")', 'timecreation'   ],
+                [ 'DATE_FORMAT(expiration,   "%d/%m/%Y")', 'expirationdate' ],
+                [ 'DATE_FORMAT(expiration,   "%H:%i:%S")', 'expirationtime' ],
+                'id',     'text',    'creator', 'number',
+                'public', 'booking', 'callid'
             ]
         }).success(function (results) {
 
@@ -884,11 +992,13 @@ exports.setLogger                    = setLogger;
 exports.savePostit                   = savePostit;
 exports.saveCallerNote               = saveCallerNote;
 exports.saveCtiPbContact             = saveCtiPbContact;
-exports.getCtiPbContacts             = getCtiPbContacts;
 exports.getVoicemailNewMsg           = getVoicemailNewMsg;
 exports.getVoicemailOldMsg           = getVoicemailOldMsg;
-exports.getPhonebookContacts         = getPhonebookContacts;
 exports.getCustomerCardByNum         = getCustomerCardByNum;
+exports.getPbContactsContains        = getPbContactsContains;
 exports.getHistoryCallInterval       = getHistoryCallInterval;
+exports.getPbContactsStartsWith      = getPbContactsStartsWith;
 exports.getHistoryPostitInterval     = getHistoryPostitInterval;
+exports.getCtiPbContactsContains     = getCtiPbContactsContains;
+exports.getCtiPbContactsStartsWith   = getCtiPbContactsStartsWith;
 exports.getHistoryCallerNoteInterval = getHistoryCallerNoteInterval;
