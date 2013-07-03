@@ -31,7 +31,14 @@ module.exports = function (options, imports, register) {
             *
             * @method getHistoryCallInterval
             */
-            getHistoryCallInterval: history.getHistoryCallInterval
+            getHistoryCallInterval: history.getHistoryCallInterval,
+
+            /**
+            * It's the _getHistorySwitchCallInterval_ method provided by _history_ module.
+            *
+            * @method getHistorySwitchCallInterval
+            */
+            getHistorySwitchCallInterval: history.getHistorySwitchCallInterval
         }
     });
 
