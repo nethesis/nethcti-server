@@ -389,7 +389,8 @@ function hasExtensionEndpoint(username, exten) {
         }
 
         var ext;
-        var obj = users[username].getEndpointExtensions();
+        var obj = users[username].getAllEndpoints();
+        obj     = obj[endpointTypes.TYPES.EXTENSION];
         for (ext in obj) {
             if (ext === exten) { return true; }
         }

@@ -146,7 +146,12 @@ function sendHttp500(resp, err) {
         *
         *     phonebook/search/:term
         *
-        * The client receive all phonebook contacts found or a HTTP 500 response.
+        * The client receives all phonebook contacts found or an HTTP 500 response.
+        *
+        *     phonebook/searchstartswith/:term
+        *
+        * The client receives all phonebook contacts whose names starts with specified term,
+        * or an HTTP 500 response.
         *
         * **POST request**
         *
@@ -174,8 +179,13 @@ function sendHttp500(resp, err) {
                 * @type {array}
                 *
                 *   @param {string} search/:term To get the centralized phonebook contacts
+                *   @param {string} searchstartswith/:term To get the centralized phonebook contacts whose
+                *       name starts with the specified term
                 */
-                'get' : [ 'search/:term' ],
+                'get' : [
+                    'search/:term',
+                    'searchstartswith/:term'
+                ],
 
                 /**
                 * REST API to be requested using HTTP POST request.
@@ -191,7 +201,7 @@ function sendHttp500(resp, err) {
             },
 
             /**
-            * Search the address book contacts in the centralized phonebook for the following REST API:
+            * Search the address book contacts in the centralized and NethCTI phonebooks for the following REST API:
             *
             *     search/:term
             *
@@ -203,7 +213,7 @@ function sendHttp500(resp, err) {
             search: function (req, res, next) {
                 try {
                     // use phonebook component
-                    compPhonebook.getPhonebookContacts(req.params.term, function (err, results) {
+                    compPhonebook.getPbContactsContains(req.params.term, function (err, results) {
 
                         if (err) { sendHttp500(res, err.toString()); }
 
@@ -217,6 +227,44 @@ function sendHttp500(resp, err) {
                             }
                             strlog = strlog.substring(0, strlog.length - 5);
                             strlog += ' searching the term "' + req.params.term + '"';
+
+                            logger.info(IDLOG, strlog);
+                            res.send(200, results);
+                        }
+                    });
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                }
+            },
+
+            /**
+            * Search the address book contacts whose name starts with the specified term in the centralized and
+            * NethCTI phonebooks for the following REST API:
+            *
+            *     searchstartswith:/:term
+            *
+            * @method searchstartswith
+            * @param {object} req The client request.
+            * @param {object} res The client response.
+            * @param {function} next Function to run the next handler in the chain.
+            */
+            searchstartswith: function (req, res, next) {
+                try {
+                    // use phonebook component
+                    compPhonebook.getPbContactsStartsWith(req.params.term, function (err, results) {
+
+                        if (err) { sendHttp500(res, err.toString()); }
+
+                        else {
+                            // construct the output log
+                            var strlog = 'send ';
+                            var pbtype;
+                            for (pbtype in results) {
+
+                                strlog += results[pbtype].length + ' ' + pbtype + ' phonebook contacts and ';
+                            }
+                            strlog = strlog.substring(0, strlog.length - 5);
+                            strlog += ' searching contacts "starts with" the term "' + req.params.term + '"';
 
                             logger.info(IDLOG, strlog);
                             res.send(200, results);
@@ -265,6 +313,7 @@ function sendHttp500(resp, err) {
         exports.search           = phonebook.search;
         exports.create           = phonebook.create;
         exports.setLogger        = setLogger;
+        exports.searchstartswith = phonebook.searchstartswith;
         exports.setCompPhonebook = setCompPhonebook;
 
     } catch (err) {

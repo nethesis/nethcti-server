@@ -72,13 +72,13 @@ function setLogger(log) {
 
 /**
 * Gets the phonebook contacts searching in the centralized and
-* NethCTI phonebook database.
+* NethCTI phonebook databases.
 *
-* @method getPhonebookContacts
+* @method getPbContactsContains
 * @param {string} term The term to search. It can be a name or a number
 * @param {function} cb The callback function
 */
-function getPhonebookContacts(term, cb) {
+function getPbContactsContains(term, cb) {
     try {
         // check parameters
         if (typeof term !== 'string' || typeof cb !== 'function') {
@@ -95,8 +95,8 @@ function getPhonebookContacts(term, cb) {
         async.parallel([
 
             function (callback) {
-                logger.info(IDLOG, 'search centralized phonebook contacts by means dbconn module');
-                dbconn.getPhonebookContacts(term, function (err, results) {
+                logger.info(IDLOG, 'search centralized phonebook contacts contains term "' + term + '" by means dbconn module');
+                dbconn.getPbContactsContains(term, function (err, results) {
                     try {
                         if (err) { // some error in the query
                             logger.error(IDLOG, err);
@@ -113,8 +113,8 @@ function getPhonebookContacts(term, cb) {
                 });
             },
             function (callback) {
-                logger.info(IDLOG, 'search cti phonebook contacts by means dbconn module');
-                dbconn.getCtiPbContacts(term, function (err, results) {
+                logger.info(IDLOG, 'search cti phonebook contacts contains term "' + term + '" by means dbconn module');
+                dbconn.getCtiPbContactsContains(term, function (err, results) {
                     try {
                         if (err) { // some error in the query
                             logger.error(IDLOG, err);
@@ -135,7 +135,83 @@ function getPhonebookContacts(term, cb) {
             if (err) { logger.error(IDLOG, err); }
 
             logger.info(IDLOG, 'found ' + obj['centralized'].length + ' contacts in centralized phonebook and ' +
-                               obj['nethcti'].length + ' contacts in cti phonebook searching the term ' + term);
+                               obj['nethcti'].length + ' contacts in cti phonebook searching contacts that contains ' +
+                               'the term ' + term);
+            cb(err, obj);
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err.toString());
+    }
+}
+
+/**
+* Gets the phonebook contacts whose name starts with the specified term
+* searching in the centralized and NethCTI phonebook databases.
+*
+* @method getPbContactsStartsWith
+* @param {string} term The term to search. It can be a name or a number
+* @param {function} cb The callback function
+*/
+function getPbContactsStartsWith(term, cb) {
+    try {
+        // check parameters
+        if (typeof term !== 'string' || typeof cb !== 'function') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // object with all results
+        var obj = {
+            'centralized': [],
+            'nethcti':     []
+        };
+
+        async.parallel([
+
+            function (callback) {
+                logger.info(IDLOG, 'search centralized phonebook contacts "starts with" term "' + term + '" by means dbconn module');
+                dbconn.getPbContactsStartsWith(term, function (err, results) {
+                    try {
+                        if (err) { // some error in the query
+                            logger.error(IDLOG, err);
+
+                        } else { // add the result
+                            obj['centralized'] = results;
+                        }
+                        callback();
+
+                    } catch (err) {
+                        logger.error(IDLOG, err.stack);
+                        callback();
+                    }
+                });
+            },
+            function (callback) {
+                logger.info(IDLOG, 'search cti phonebook contacts "starts with" term "' + term + '" by means dbconn module');
+                dbconn.getCtiPbContactsStartsWith(term, function (err, results) {
+                    try {
+                        if (err) { // some error in the query
+                            logger.error(IDLOG, err);
+
+                        } else { // add the result
+                            obj['nethcti'] = results;
+                        }
+                        callback();
+
+                    } catch (err) {
+                        logger.error(IDLOG, err.stack);
+                        callback();
+                    }
+                });
+            }
+
+        ], function (err) {
+            if (err) { logger.error(IDLOG, err); }
+
+            logger.info(IDLOG, 'found ' + obj['centralized'].length + ' contacts in centralized phonebook and ' +
+                               obj['nethcti'].length + ' contacts in cti phonebook searching contacts "starts with" ' +
+                               'the term ' + term);
             cb(err, obj);
         });
     } catch (err) {
@@ -218,7 +294,8 @@ function saveCtiPbContact(data, cb) {
 }
 
 // public interface
-exports.setLogger            = setLogger;
-exports.setDbconn            = setDbconn;
-exports.saveCtiPbContact     = saveCtiPbContact;
-exports.getPhonebookContacts = getPhonebookContacts;
+exports.setLogger               = setLogger;
+exports.setDbconn               = setDbconn;
+exports.saveCtiPbContact        = saveCtiPbContact;
+exports.getPbContactsContains   = getPbContactsContains;
+exports.getPbContactsStartsWith = getPbContactsStartsWith;

@@ -27,11 +27,18 @@ module.exports = function (options, imports, register) {
     register(null, {
         phonebook: {
             /**
-            * It's the _getPhonebookContacts_ method provided by _phonebook_ module.
+            * It's the _getPbContactsContains_ method provided by _phonebook_ module.
             *
-            * @method getPhonebookContacts
+            * @method getPbContactsContains
             */
-            getPhonebookContacts: phonebook.getPhonebookContacts,
+            getPbContactsContains: phonebook.getPbContactsContains,
+
+            /**
+            * It's the _getPbContactsStartsWith_ method provided by _phonebook_ module.
+            *
+            * @method getPbContactsStartsWith
+            */
+            getPbContactsStartsWith: phonebook.getPbContactsStartsWith,
 
             /**
             * It's the _saveCtiPbContact_ method provided by _phonebook_ module.
