@@ -108,6 +108,8 @@ function sendHttp500(resp, err) {
         /**
         * REST plugin that provides caller note functions through the following REST API:
         *
+        * **POST Requests**
+        *
         *     callernote/create
         *
         * The client crete a new caller note. The request must contain the configurations object in the

@@ -287,7 +287,7 @@ function sendHttp500(resp, err) {
 
                     } else {
 
-                        logger.info(IDLOG, 'send endpoints of user "' + username + '"');
+                        logger.info(IDLOG, 'send all endpoints of user "' + username + '"');
                         res.send(200, results);
                     }
 

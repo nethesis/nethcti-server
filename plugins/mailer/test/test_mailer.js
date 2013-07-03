@@ -6,6 +6,8 @@
 */
 
 /**
+* **Temporary test**
+*
 * Test for the mailer.js file
 *
 * @class test_mailer
@@ -38,7 +40,6 @@ var args;
     }
 })();
 
-
 /**
 * Test for the send method.
 *
@@ -48,10 +49,10 @@ var args;
 function test_send() {
     try {
         var to      = args[0];
-        var text    = args[2];
+        var body    = args[2];
         var subject = args[1];
 
-        mailer.send(to, text, subject, function (err, resp) {
+        mailer.send(to, body, subject, function (err, resp) {
             try {
                 if (err) { console.log('ERROR: ' + err.stack); }
                 else     { console.log('OK: ', resp);          }
