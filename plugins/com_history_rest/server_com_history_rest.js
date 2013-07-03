@@ -56,16 +56,7 @@ var port = '9002';
 * @private
 * @default "localhost"
 */
-var address = "localhost";
-
-/**
-* The architect component to be used for authorization.
-*
-* @property compAuthorization
-* @type object
-* @private
-*/
-var compAuthorization;
+var address = 'localhost';
 
 /**
 * Set the logger to be used.
@@ -154,18 +145,9 @@ function execute(req, res, next) {
         var p    = tmp[1];
         var name = tmp[2];
 
-        // check authorization
-        var username = req.headers.authorization_user;
-        if (compAuthorization.authorizeHistoryUser(username) === true) {
+        logger.info(IDLOG, 'execute: ' + p + '.' + name);
+        plugins[p][name].apply(plugins[p], [req, res, next]);
 
-            logger.info(IDLOG, 'history authorization successfully for user "' + username + '"');
-            logger.info(IDLOG, 'execute: ' + p + '.' + name);
-            plugins[p][name].apply(plugins[p], [req, res, next]);
-
-        } else { // authorization failed
-            logger.warn(IDLOG, 'history authorization failed for user "' + username + '"!');
-            sendHttp401(res);
-        }
         return next();
 
     } catch (err) {
@@ -195,7 +177,7 @@ function setCompHistory(compHistory) {
 }
 
 /**
-* Set the authorization architect component.
+* Sets the authorization architect component for all REST plugins.
 *
 * @method setCompAuthorization
 * @param {object} ca The architect authorization component
@@ -206,11 +188,8 @@ function setCompAuthorization(ca) {
         // check parameter
         if (typeof ca !== 'object') { throw new Error('wrong parameter'); }
 
-        compAuthorization = ca;
-        logger.log(IDLOG, 'authorization component has been set');
-
         // set the authorization for all REST plugins
-        setAllRestPluginsAuthorization(compAuthorization);
+        setAllRestPluginsAuthorization(ca);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);

@@ -227,13 +227,24 @@ function sendHttp500(resp, err) {
                     // get the username from the authorization header added by authentication step
                     var username = req.headers.authorization_user;
 
-                    // check if the endpoint in the request is an endpoint of the applicant user
+                    // check the history authorization
+                    if (compAuthorization.authorizeHistoryUser(username) === false) {
+                        logger.warn(IDLOG, 'history authorization failed for user "' + username + '"!');
+                        sendHttp401(res);
+                        return;
+                    }
+
+                    // check if the endpoint in the request is an endpoint of the applicant user. The user
+                    // can only see the history of his endpoints
                     if (compAuthorization.authorizeHistoryUserEndpoint(username, req.params.endpoint) === false) {
+
                         logger.warn(IDLOG, 'authorization history call failed for user "' + username + '": requested endpoint ' +
                                            req.params.endpoint + ' not owned by him');
                         sendHttp401(res);
                         return;
                     }
+
+                    logger.info(IDLOG, 'history authorization successfully for user "' + username + '" and endpoint ' + req.params.endpoint);
 
                     var obj = {
                         to:       req.params.to,
