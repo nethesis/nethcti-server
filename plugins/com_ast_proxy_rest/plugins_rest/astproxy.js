@@ -277,7 +277,7 @@ function sendHttp500(resp, err) {
                             return;
                         }
 
-                        logger.info(IDLOG, 'dnd for extension endpoint ' + endpoint + ' has been set successfully');
+                        logger.info(IDLOG, 'dnd ' + status + ' for extension endpoint ' + endpoint + ' has been set successfully');
                         sendHttp200(res);
                     });
                 } catch (err) {
