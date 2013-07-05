@@ -96,11 +96,11 @@ var IDLOG = '[cfbGet]';
                         && data.family === 'CFB'
                         && data.val) {
 
-                        map[data.actionid]({ cfb: 'yes', cfbExten: data.val });
+                        map[data.actionid](null, { cfb: 'on', cfbExten: data.val });
                         delete map[data.actionid]; // remove association ActionID-callback
 
                     } else if (map[data.actionid] && data.response === 'Error') {
-                        map[data.actionid]({ cfb: 'no' });
+                        map[data.actionid](null, { cfb: 'off' });
                         delete map[data.actionid]; // remove association ActionID-callback
                     }
 

@@ -96,11 +96,11 @@ var IDLOG = '[cfuGet]';
                         && data.family === 'CFU'
                         && data.val) {
 
-                        map[data.actionid]({ cfu: 'yes', cfuExten: data.val });
+                        map[data.actionid](null, { cfu: 'on', cfuExten: data.val });
                         delete map[data.actionid]; // remove association ActionID-callback
 
                     } else if (map[data.actionid] && data.response === 'Error') {
-                        map[data.actionid]({ cfu: 'no' });
+                        map[data.actionid](null, { cfu: 'off' });
                         delete map[data.actionid]; // remove association ActionID-callback
                     }
 
