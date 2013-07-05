@@ -183,17 +183,123 @@ function sendHttp500(resp, err) {
     }
 }
 
+/**
+* Sets the don't disturb status of the endpoint of the user.
+*
+* @method dndset
+* @param {object} req  The request object
+* @param {object} res  The response object
+* @param {object} next
+*/
+function dndset(req, res, next) {
+    try {
+        // extract the parameters needed
+        var status   = req.params.status;
+        var endpoint = req.params.endpoint;
+        var username = req.headers.authorization_user;
+
+        // check parameters
+        if (   typeof status   !== 'string'
+            || typeof endpoint !== 'string'
+            || (status !== 'on' && status !== 'off') ) {
+
+            sendHttp400(res);
+            return;
+        }
+
+        // check if the endpoint in the request is an endpoint of the applicant user. The user
+        // can only set the dnd status of his endpoints
+        if (compAuthorization.verifyUserEndpointExten(username, req.params.endpoint) === false) {
+
+            logger.warn(IDLOG, 'authorization dnd set failed for user "' + username + '": extension ' +
+                               endpoint + ' not owned by him');
+            sendHttp401(res);
+            return;
+        }
+
+        var activate = (status === 'on') ? true : false;
+
+        compAstProxy.doCmd({ command: 'dndSet', exten: endpoint, activate: activate }, function (err, resp) {
+
+            if (err) {
+                logger.error(IDLOG, 'setting dnd for extension ' + endpoint + ' of user "' + username + '"');
+                sendHttp500(res, err.toString());
+                return;
+            }
+
+            logger.info(IDLOG, 'dnd ' + status + ' for extension ' + endpoint + ' has been set successfully');
+            sendHttp200(res);
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        sendHttp500(res, err.toString());
+    }
+}
+
+/**
+* Gets the don't disturb status of the endpoint of the user.
+*
+* @method dndget
+* @param {object} req  The request object
+* @param {object} res  The response object
+* @param {object} next
+*/
+function dndget(req, res, next) {
+    try {
+        // extract the parameters needed
+        var endpoint = req.params.endpoint;
+        var username = req.headers.authorization_user;
+
+        // check parameters
+        if (typeof endpoint !== 'string') {
+            sendHttp400(res);
+            return;
+        }
+
+        // check if the endpoint in the request is an endpoint of the applicant user. The user
+        // can only get the dnd status of his endpoints
+        if (compAuthorization.verifyUserEndpointExten(username, req.params.endpoint) === false) {
+
+            logger.warn(IDLOG, 'authorization dnd get failed for user "' + username + '": extension ' +
+                               endpoint + ' not owned by him');
+            sendHttp401(res);
+            return;
+        }
+
+        compAstProxy.doCmd({ command: 'dndGet', exten: endpoint }, function (err, resp) {
+
+            if (err) {
+                logger.error(IDLOG, 'getting dnd for extension ' + endpoint + ' of user "' + username + '"');
+                sendHttp500(res, err.toString());
+                return;
+            }
+
+            logger.info(IDLOG, 'dnd for extension endpoint ' + endpoint + ' has been get successfully: the status is ' + resp.dnd);
+            res.send(200, resp);
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        sendHttp500(res, err.toString());
+    }
+}
+
 (function(){
     try {
         /**
         * REST plugin that provides asterisk functions through the following REST API:
         *
+        * **GET requests**
+        *
+        *     astproxy/dnd/:endpoint
+        *
+        * Gets the don't disturb status of the endpoint of the user. The endpoint is
+        * the extension identifier.
+        *
         * **POST requests**
         *
         *     astproxy/dnd
         *
-        * Sets the don't disturb status of the endpoint of the user. If it's
-        * enabled then it disable it and vice versa. The request must contains
+        * Sets the don't disturb status of the endpoint of the user. The request must contains
         * the following parameters:
         *
         * * endpoint
@@ -216,7 +322,16 @@ function sendHttp500(resp, err) {
             // the REST api
             api: {
                 'root': 'astproxy',
-                'get' : [],
+
+                /**
+                * REST API to be requested using HTTP POST request.
+                *
+                * @property get
+                * @type {array}
+                *
+                *   @param {string} dnd/:endpoint Gets the don't disturb status of the endpoint of the user
+                */
+                'get' : [ 'dnd/:endpoint' ],
 
                 /**
                 * REST API to be requested using HTTP POST request.
@@ -243,43 +358,10 @@ function sendHttp500(resp, err) {
             */
             dnd: function (req, res, next) {
                 try {
-                    // extract the parameters needed
-                    var status   = req.params.status;
-                    var endpoint = req.params.endpoint;
-                    var username = req.headers.authorization_user;
+                    if      (req.method.toLowerCase() === 'get')  { dndget(req, res, next); }
+                    else if (req.method.toLowerCase() === 'post') { dndset(req, res, next); }
+                    else    { logger.warn(IDLOG, 'unknown requested method ' + req.method); }
 
-                    // check parameters
-                    if (   typeof status   !== 'string'
-                        || typeof endpoint !== 'string'
-                        || (status !== 'on' && status !== 'off') ) {
-
-                        sendHttp400(res);
-                        return;
-                    }
-
-                    // check if the endpoint in the request is an endpoint of the applicant user. The user
-                    // can only set the dnd status of his endpoints
-                    if (compAuthorization.verifyUserEndpointExten(username, req.params.endpoint) === false) {
-
-                        logger.warn(IDLOG, 'authorization dnd failed for user "' + username + '": requested dnd for extension ' +
-                                           'endpoint ' + endpoint + ' not owned by him');
-                        sendHttp401(res);
-                        return;
-                    }
-
-                    var activate = (status === 'on') ? true : false;
-
-                    compAstProxy.doCmd({ command: 'dndSet', exten: endpoint, activate: activate}, function (err, resp) {
-
-                        if (err) {
-                            logger.error(IDLOG, 'setting dnd for extension endpoint ' + endpoint + ' of user "' + username + '"');
-                            sendHttp500(res, err.toString());
-                            return;
-                        }
-
-                        logger.info(IDLOG, 'dnd ' + status + ' for extension endpoint ' + endpoint + ' has been set successfully');
-                        sendHttp200(res);
-                    });
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
                     sendHttp500(res, err.toString());

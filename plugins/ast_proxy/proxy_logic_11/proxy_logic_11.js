@@ -995,17 +995,21 @@ function setCfStatus(resp) {
 * Set the don't disturb status of the extension.
 *
 * @method setDndStatus
+* @param {object} err  The error object of the _dndGet_ command plugin.
 * @param {object} resp The response object of the _dndGet_ command plugin.
 * @private
 */
-function setDndStatus(resp) {
+function setDndStatus(err, resp) {
     try {
+        // check the error
+        if (err) { throw err; }
+
         // check parameter
         if (typeof resp !== 'object' || typeof resp.exten !== 'string') { throw new Error('wrong parameter'); }
 
         if (extensions[resp.exten]) { // the extension exists
 
-            if (resp.dnd === 'yes') {
+            if (resp.dnd === 'on') {
                 extensions[resp.exten].setDnd(true);
                 logger.info(IDLOG, 'set extension ' + resp.exten + ' dnd true');
 

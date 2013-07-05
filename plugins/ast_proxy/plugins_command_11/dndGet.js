@@ -101,11 +101,11 @@ var IDLOG = '[dndGet]';
                         && data.event  === 'DBGetResponse'
                         && data.family === 'DND') {
 
-                        map[data.actionid]({ exten: exten, dnd: data.val.toLowerCase() });
+                        map[data.actionid](null, { exten: exten, dnd: 'on' });
                         delete map[data.actionid]; // remove association ActionID-callback
 
                     } else if (map[data.actionid] && data.response === 'Error') {
-                        map[data.actionid]({ exten: exten, dnd: 'no' });
+                        map[data.actionid](null, { exten: exten, dnd: 'off' });
                         delete map[data.actionid]; // remove association ActionID-callback
                     }
 
