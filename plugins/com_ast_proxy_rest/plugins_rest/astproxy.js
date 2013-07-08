@@ -342,16 +342,16 @@ function cfget(req, res, next) {
 function cfset(req, res, next) {
     try {
         // extract the parameters needed
+        var to       = req.params.to;
         var status   = req.params.status;
-        var number   = req.params.number;
         var endpoint = req.params.endpoint;
         var username = req.headers.authorization_user;
 
         // check parameters
         if (   typeof status   !== 'string'
             || typeof endpoint !== 'string'
-            || (status !== 'on' && status !== 'off')
-            || (status === 'on' && typeof number !== 'string') ) {
+            || (status !== 'on' && status    !== 'off')
+            || (status === 'on' && typeof to !== 'string') ) {
 
             sendHttp400(res);
             return;
@@ -369,9 +369,9 @@ function cfset(req, res, next) {
 
         var activate = (status === 'on') ? true : false;
 
-        // when the "status" if off, "activate" is false and "number" can be undefined if the client hasn't specified it.
+        // when the "status" if off, "activate" is false and "to" can be undefined if the client hasn't specified it.
         // This is not important because in this case, the asterisk command plugin doesn't use "val" value
-        compAstProxy.doCmd({ command: 'cfSet', exten: endpoint, activate: activate, val: number }, function (err, resp) {
+        compAstProxy.doCmd({ command: 'cfSet', exten: endpoint, activate: activate, val: to }, function (err, resp) {
 
             if (err) {
                 logger.error(IDLOG, 'setting cf for extension ' + endpoint + ' of user "' + username + '"');
@@ -379,7 +379,7 @@ function cfset(req, res, next) {
                 return;
             }
 
-            logger.info(IDLOG, 'cf ' + status + ' to number ' + number + ' for extension ' + endpoint + ' has been set successfully');
+            logger.info(IDLOG, 'cf ' + status + ' to ' + to + ' for extension ' + endpoint + ' has been set successfully');
             sendHttp200(res);
         });
     } catch (err) {
@@ -428,11 +428,11 @@ function cfset(req, res, next) {
         *
         * * `status: (on|off)`
         * * `endpoint`
-        * * `[number]: optional when the status is off`
+        * * `[to]: optional when the status is off`
         *
         * E.g. using curl:
         *
-        *     curl --insecure -i -X POST -d '{ "endpoint": "214", "status": "on", "number": "340123456" }' https://192.168.5.224:8282/astproxy/cf
+        *     curl --insecure -i -X POST -d '{ "endpoint": "214", "status": "on", "to": "340123456" }' https://192.168.5.224:8282/astproxy/cf
         *
         * ---
         *
