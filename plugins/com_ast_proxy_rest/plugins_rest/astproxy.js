@@ -133,7 +133,7 @@ function sendHttp401(resp) {
 function sendHttp400(resp) {
     try {
         resp.writeHead(400);
-        logger.info(IDLOG, 'send HTTP 400 response to ' + resp.connection.remoteAddress);
+        logger.warn(IDLOG, 'send HTTP 400 bad request response to ' + resp.connection.remoteAddress);
         resp.end();
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -208,7 +208,7 @@ function dndset(req, res, next) {
         }
 
         // check if the endpoint in the request is an endpoint of the applicant user. The user
-        // can only set the dnd status of his endpoints
+        // can only set the don't disturb status of his endpoints
         if (compAuthorization.verifyUserEndpointExten(username, req.params.endpoint) === false) {
 
             logger.warn(IDLOG, 'authorization dnd set failed for user "' + username + '": extension ' +
@@ -257,7 +257,7 @@ function dndget(req, res, next) {
         }
 
         // check if the endpoint in the request is an endpoint of the applicant user. The user
-        // can only get the dnd status of his endpoints
+        // can only get the don't disturb status of his endpoints
         if (compAuthorization.verifyUserEndpointExten(username, req.params.endpoint) === false) {
 
             logger.warn(IDLOG, 'authorization dnd get failed for user "' + username + '": extension ' +
@@ -283,32 +283,166 @@ function dndget(req, res, next) {
     }
 }
 
+/**
+* Gets the call forward status of the endpoint of the user.
+*
+* @method cfget
+* @param {object} req  The request object
+* @param {object} res  The response object
+* @param {object} next
+*/
+function cfget(req, res, next) {
+    try {
+        // extract the parameters needed
+        var endpoint = req.params.endpoint;
+        var username = req.headers.authorization_user;
+
+        // check parameters
+        if (typeof endpoint !== 'string') {
+            sendHttp400(res);
+            return;
+        }
+
+        // check if the endpoint in the request is an endpoint of the applicant user. The user
+        // can only get the call forward status of his endpoints
+        if (compAuthorization.verifyUserEndpointExten(username, req.params.endpoint) === false) {
+
+            logger.warn(IDLOG, 'authorization cf get failed for user "' + username + '": extension ' +
+                               endpoint + ' not owned by him');
+            sendHttp401(res);
+            return;
+        }
+
+        compAstProxy.doCmd({ command: 'cfGet', exten: endpoint }, function (err, resp) {
+
+            if (err) {
+                logger.error(IDLOG, 'getting cf for extension ' + endpoint + ' of user "' + username + '"');
+                sendHttp500(res, err.toString());
+                return;
+            }
+
+            logger.info(IDLOG, 'cf for extension ' + endpoint + ' has been get successfully: the status is "' + resp.cf + '"' +
+                        (resp.to ? ' to ' + resp.to : ''));
+            res.send(200, resp);
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        sendHttp500(res, err.toString());
+    }
+}
+
+/**
+* Sets the call forward status of the endpoint of the user.
+*
+* @method cfset
+* @param {object} req  The request object
+* @param {object} res  The response object
+* @param {object} next
+*/
+function cfset(req, res, next) {
+    try {
+        // extract the parameters needed
+        var status   = req.params.status;
+        var number   = req.params.number;
+        var endpoint = req.params.endpoint;
+        var username = req.headers.authorization_user;
+
+        // check parameters
+        if (   typeof status   !== 'string'
+            || typeof endpoint !== 'string'
+            || (status !== 'on' && status !== 'off')
+            || (status === 'on' && typeof number !== 'string') ) {
+
+            sendHttp400(res);
+            return;
+        }
+
+        // check if the endpoint in the request is an endpoint of the applicant user. The user
+        // can only set the call forward status of his endpoints
+        if (compAuthorization.verifyUserEndpointExten(username, req.params.endpoint) === false) {
+
+            logger.warn(IDLOG, 'authorization cf set failed for user "' + username + '": extension ' +
+                               endpoint + ' not owned by him');
+            sendHttp401(res);
+            return;
+        }
+
+        var activate = (status === 'on') ? true : false;
+
+        // when the "status" if off, "activate" is false and "number" can be undefined if the client hasn't specified it.
+        // This is not important because in this case, the asterisk command plugin doesn't use "val" value
+        compAstProxy.doCmd({ command: 'cfSet', exten: endpoint, activate: activate, val: number }, function (err, resp) {
+
+            if (err) {
+                logger.error(IDLOG, 'setting cf for extension ' + endpoint + ' of user "' + username + '"');
+                sendHttp500(res, err.toString());
+                return;
+            }
+
+            logger.info(IDLOG, 'cf ' + status + ' to number ' + number + ' for extension ' + endpoint + ' has been set successfully');
+            sendHttp200(res);
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        sendHttp500(res, err.toString());
+    }
+}
+
 (function(){
     try {
         /**
         * REST plugin that provides asterisk functions through the following REST API:
         *
-        * **GET requests**
+        * # GET requests
         *
-        *     astproxy/dnd/:endpoint
+        * 1. [`astproxy/cf/:endpoint`](#cfget)
+        * 1. [`astproxy/dnd/:endpoint`](#dndget)
+        *
+        * ---
+        *
+        * ### <a id="cfget">**`astproxy/cf/:endpoint`**</a>
+        *
+        * Gets the call forward status of the endpoint of the user. The endpoint is
+        * the extension identifier.
+        *
+        * ---
+        *
+        * ### <a id="dndget">**`astproxy/dnd/:endpoint`**</a>
         *
         * Gets the don't disturb status of the endpoint of the user. The endpoint is
         * the extension identifier.
         *
-        * **POST requests**
+        * <br>
         *
-        *     astproxy/dnd
+        * # POST requests
+        *
+        * 1. [`astproxy/cf`](#cfpost)
+        * 1. [`astproxy/dnd`](#dndpost)
+        *
+        * ---
+        *
+        * ### <a id="cfpost">**```astproxy/cf```**</a>
+        *
+        * Sets the call forward status of the endpoint of the user. The request must contains
+        * the following parameters:
+        *
+        * * `status: (on|off)`
+        * * `endpoint`
+        * * `[number]: optional when the status is off`
+        *
+        * E.g. using curl:
+        *
+        *     curl --insecure -i -X POST -d '{ "endpoint": "214", "status": "on", "number": "340123456" }' https://192.168.5.224:8282/astproxy/cf
+        *
+        * ---
+        *
+        * ### <a id="dndpost">**`astproxy/dnd`**</a>
         *
         * Sets the don't disturb status of the endpoint of the user. The request must contains
         * the following parameters:
         *
-        * * endpoint
-        * * status
-        *
-        * The _status_ must be one of the following:
-        *
-        * * on
-        * * off
+        * * `status: (on|off)`
+        * * `endpoint`
         *
         * E.g. using curl:
         *
@@ -329,9 +463,13 @@ function dndget(req, res, next) {
                 * @property get
                 * @type {array}
                 *
+                *   @param {string} cf/:endpoint  Gets the call forward status of the endpoint of the user
                 *   @param {string} dnd/:endpoint Gets the don't disturb status of the endpoint of the user
                 */
-                'get' : [ 'dnd/:endpoint' ],
+                'get' : [
+                    'cf/:endpoint',
+                    'dnd/:endpoint'
+                ],
 
                 /**
                 * REST API to be requested using HTTP POST request.
@@ -339,19 +477,49 @@ function dndget(req, res, next) {
                 * @property post
                 * @type {array}
                 *
+                *   @param {string} cf  Sets the call forward status of the endpoint of the user
                 *   @param {string} dnd Sets the don't disturb status of the endpoint of the user
                 */
-                'post': [ 'dnd' ],
+                'post': [
+                    'cf',
+                    'dnd'
+                ],
                 'head': [],
                 'del' : []
             },
 
             /**
-            * Sets the don't disturb status of the endpoint of the user with the following REST API:
+            * Manages both GET and POST requests for call forward status of the endpoint of
+            * the user with the following REST API:
             *
-            *     dnd
+            *     GET  cf
+            *     POST cf/:endpoint
             *
-            * @method list
+            * @method cf
+            * @param {object} req The client request.
+            * @param {object} res The client response.
+            * @param {function} next Function to run the next handler in the chain.
+            */
+            cf: function (req, res, next) {
+                try {
+                    if      (req.method.toLowerCase() === 'get')  { cfget(req, res, next); }
+                    else if (req.method.toLowerCase() === 'post') { cfset(req, res, next); }
+                    else    { logger.warn(IDLOG, 'unknown requested method ' + req.method); }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    sendHttp500(res, err.toString());
+                }
+            },
+
+            /**
+            * Manages both GET and POST requests for don't disturb status of the endpoint of
+            * the user with the following REST API:
+            *
+            *     GET  dnd
+            *     POST dnd/:endpoint
+            *
+            * @method dnd
             * @param {object} req The client request.
             * @param {object} res The client response.
             * @param {function} next Function to run the next handler in the chain.
@@ -368,6 +536,7 @@ function dndget(req, res, next) {
                 }
             }
         }
+        exports.cf                   = astproxy.cf;
         exports.api                  = astproxy.api;
         exports.dnd                  = astproxy.dnd;
         exports.setLogger            = setLogger;

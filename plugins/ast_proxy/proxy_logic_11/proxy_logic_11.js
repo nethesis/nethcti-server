@@ -963,19 +963,23 @@ function initializeSipTrunk() {
 * Set the call forward status of the extension.
 *
 * @method setCfStatus
+* @param {object} err  The error object of the _cfGet_ command plugin.
 * @param {object} resp The response object of the _cfGet_ command plugin.
 * @private
 */
-function setCfStatus(resp) {
+function setCfStatus(err, resp) {
     try {
+        // check the error
+        if (err) { throw err; }
+
         // check parameter
         if (typeof resp !== 'object' || typeof resp.exten !== 'string') { throw new Error('wrong parameter'); }
 
         if (extensions[resp.exten]) { // the extension exists
 
-            if (resp.cf === 'yes') {
-                extensions[resp.exten].setCf(resp.cfExten);
-                logger.info(IDLOG, 'set extension ' + resp.exten + ' cf enable to ' + resp.cfExten);
+            if (resp.cf === 'on') {
+                extensions[resp.exten].setCf(resp.to);
+                logger.info(IDLOG, 'set extension ' + resp.exten + ' cf enable to ' + resp.to);
 
             } else {
                 extensions[resp.exten].disableCf();

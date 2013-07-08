@@ -99,7 +99,7 @@ var IDLOG = '[cfGet]';
                         && data.family === 'CF'
                         && data.val) {
 
-                        map[data.actionid](null, { exten: exten, cf: 'on', cfExten: data.val });
+                        map[data.actionid](null, { exten: exten, cf: 'on', to: data.val });
                         delete map[data.actionid]; // remove association ActionID-callback
 
                     } else if (map[data.actionid] && data.response === 'Error') {
@@ -109,6 +109,10 @@ var IDLOG = '[cfGet]';
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
+                    if (map[data.actionid]) {
+                        map[data.actionid](err);
+                        delete map[data.actionid]; // remove association ActionID-callback
+                    }
                 }
             },
 

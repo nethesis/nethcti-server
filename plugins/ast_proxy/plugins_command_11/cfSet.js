@@ -103,11 +103,11 @@ var IDLOG = '[cfSet]';
                         )
                         && data.response === 'Success') {
 
-                        map[data.actionid]({ result: true });
+                        map[data.actionid](null);
                         delete map[data.actionid]; // remove association ActionID-callback
 
                     } else if (map[data.actionid] && data.response === 'Error') {
-                        map[data.actionid]({ result: false });
+                        map[data.actionid]('error');
                         delete map[data.actionid]; // remove association ActionID-callback
                     }
 
