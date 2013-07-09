@@ -1,8 +1,9 @@
 /**
 * @submodule plugins_command_11
 */
-var action      = require('../action');
-var PREFIX_CODE = require('../proxy_logic_11/prefix_code_cf2vm').PREFIX_CODE;
+var action           = require('../action');
+var CF_TYPES         = require('../proxy_logic_11/util_call_forward_11').CF_TYPES;
+var CFVM_PREFIX_CODE = require('../proxy_logic_11/util_call_forward_11').CFVM_PREFIX_CODE;
 
 /**
 * The module identifier used by the logger.
@@ -109,7 +110,7 @@ var IDLOG = '[cfVmGet]';
                         var vm;
                         var pre;
                         var isCf2Vm = false;
-                        for (pre in PREFIX_CODE) { // cycle in each cf to voicemail prefix code
+                        for (pre in CFVM_PREFIX_CODE) { // cycle in each cf to voicemail prefix code
 
                             // check if the call forward value start with the prefix code. If it's
                             // the call forward is to voicemail
@@ -122,13 +123,13 @@ var IDLOG = '[cfVmGet]';
                             }
                         }
 
-                        if (isCf2Vm) { map[data.actionid](null, { exten: exten, cfvm: 'on', voicemail: vm }); }
-                        else         { map[data.actionid](null, { exten: exten, cfvm: 'off' });               }
+                        if (isCf2Vm) { map[data.actionid](null, { exten: exten, status: 'on',  cf_type: CF_TYPES.voicemail, to: vm }); }
+                        else         { map[data.actionid](null, { exten: exten, status: 'off', cf_type: CF_TYPES.voicemail         }); }
 
                         delete map[data.actionid]; // remove association ActionID-callback
 
                     } else if (map[data.actionid] && data.response === 'Error') {
-                        map[data.actionid](null, { exten: exten, cfvm: 'off' });
+                        map[data.actionid](null, { exten: exten, status: 'off', cf_type: CF_TYPES.voicemail });
                         delete map[data.actionid]; // remove association ActionID-callback
                     }
 

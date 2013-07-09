@@ -973,11 +973,15 @@ function setCfStatus(err, resp) {
         if (err) { throw err; }
 
         // check parameter
-        if (typeof resp !== 'object' || typeof resp.exten !== 'string') { throw new Error('wrong parameter'); }
+        if (   typeof resp       !== 'object'
+            || typeof resp.exten !== 'string' || typeof resp.status !== 'string') {
+
+            throw new Error('wrong parameter');
+        }
 
         if (extensions[resp.exten]) { // the extension exists
 
-            if (resp.cf === 'on') {
+            if (resp.status === 'on') {
                 extensions[resp.exten].setCf(resp.to);
                 logger.info(IDLOG, 'set extension ' + resp.exten + ' cf enable to ' + resp.to);
 

@@ -144,7 +144,14 @@ module.exports = function (options, imports, register) {
             *
             * @method getJSONParkings
             */
-            getJSONParkings: astProxy.proxyLogic.getJSONParkings
+            getJSONParkings: astProxy.proxyLogic.getJSONParkings,
+
+            /**
+            * It's the _CF\_TYPES_ property provided by _proxy\_logic\_11/util\_call\_forward\_11_.
+            *
+            * @method CF_TYPES
+            */
+            CF_TYPES: require('./proxy_logic_11/util_call_forward_11').CF_TYPES
         }
     });
 

@@ -5,7 +5,7 @@
 * the call forward and the call forward to voicemail use the same database
 * key (CF), but the second adds a prefix to the destination number.
 *
-* @class prefix_code_cf2vm
+* @class util_call_forward_11
 * @static
 */
 
@@ -14,7 +14,7 @@
 * asterisk database. This is because both call forward and the call
 * forward to voicemail uses the same CF property of the asterisk database.
 *
-* @property PREFIX_CODE
+* @property CFVM_PREFIX_CODE
 * @type {object}
 * @readOnly
 * @default {
@@ -22,9 +22,31 @@
     "vmu": "vmu"
 }
 */
-var PREFIX_CODE = {
+var CFVM_PREFIX_CODE = {
     '*':   '*',
     'vmu': 'vmu'
 }
 
-exports.PREFIX_CODE = PREFIX_CODE;
+/**
+* The call forward types.
+*
+* @property CF_TYPES
+* @type {object}
+* @readOnly
+* @default {
+    "busy":          "busy",
+    "voicemail":     "voicemail",
+    "unavailable":   "unavailable",
+    "unconditional": "unconditional"
+}
+*/
+var CF_TYPES = {
+    'busy':          'busy',
+    'voicemail':     'voicemail',
+    'unavailable':   'unavailable',
+    'unconditional': 'unconditional'
+};
+
+// public interface
+exports.CF_TYPES         = CF_TYPES;
+exports.CFVM_PREFIX_CODE = CFVM_PREFIX_CODE;

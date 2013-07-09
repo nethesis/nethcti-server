@@ -2,7 +2,7 @@
 * @submodule plugins_command_11
 */
 var action = require('../action');
-var PREFIX_CODE = require('../proxy_logic_11/prefix_code_cf2vm').PREFIX_CODE;
+var CFVM_PREFIX_CODE = require('../proxy_logic_11/util_call_forward_11').CFVM_PREFIX_CODE;
 
 /**
 * The module identifier used by the logger.
@@ -72,7 +72,7 @@ var IDLOG = '[cfVmSet]';
                         // well as the other type of call forward to a number. So, to distinguish them,
                         // the call forward to a voicemail adds a prefix code to the destination
                         // voicemail number
-                        var to  = PREFIX_CODE.vmu + args.val;
+                        var to  = CFVM_PREFIX_CODE.vmu + args.val;
                         var act = { Action: 'DBPut', Family: 'CF', Key: args.exten, Val: to };
 
                     } else {
@@ -106,8 +106,8 @@ var IDLOG = '[cfVmSet]';
                     // check callback and info presence and execute it
                     if (map[data.actionid]
                         && (
-                            data.message     === 'Updated database successfully'
-                            || data.message  === 'Key deleted successfully'
+                            data.message    === 'Updated database successfully'
+                            || data.message === 'Key deleted successfully'
                         )
                         && data.response === 'Success') {
 
