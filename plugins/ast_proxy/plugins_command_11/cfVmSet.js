@@ -12,9 +12,9 @@ var PREFIX_CODE = require('../proxy_logic_11/prefix_code_cf2vm').PREFIX_CODE;
 * @private
 * @final
 * @readOnly
-* @default [cfGet]
+* @default [cfVmSet]
 */
-var IDLOG = '[cfGet]';
+var IDLOG = '[cfVmSet]';
 
 (function() {
     try {
@@ -30,7 +30,7 @@ var IDLOG = '[cfGet]';
 
         /**
         * Map associations between ActionID and callback to execute at the end
-        * of the command.
+        * of the command
         *
         * @property map
         * @type {object}
@@ -39,21 +39,21 @@ var IDLOG = '[cfGet]';
         var map = {};
 
         /**
-        * Command plugin to get the call forward status of an extension.
+        * Command plugin to set the CF to voicemail status of an extension.
         *
         * Use it with _ast\_proxy_ module as follow:
         *
-        *     ast_proxy.doCmd({ command: 'cfGet', exten: '214' }, function (res) {
+        *     ast_proxy.doCmd({ command: 'cfVmSet', exten: '214', val: '214' }, function (res) {
         *         // some code
         *     });
         *
-        * @class cfGet
+        * @class cfVmSet
         * @static
         */
-        var cfGet = {
+        var cfVmSet = {
 
             /**
-            * Execute asterisk action to get the call forward status.
+            * Execute asterisk action to set the CF to voicemail status.
             * 
             * @method execute
             * @param {object} am Asterisk manager to send the action
@@ -66,10 +66,21 @@ var IDLOG = '[cfGet]';
             execute: function (am, args, cb) {
                 try {
                     // action for asterisk
-                    var act = { Action: 'DBGet', Family: 'CF', Key: args.exten };
+                    if (args.activate) {
 
+                        // call forward to voicemail sets the CF property of the asterisk database as
+                        // well as the other type of call forward to a number. So, to distinguish them,
+                        // the call forward to a voicemail adds a prefix code to the destination
+                        // voicemail number
+                        var to  = PREFIX_CODE.vmu + args.val;
+                        var act = { Action: 'DBPut', Family: 'CF', Key: args.exten, Val: to };
+
+                    } else {
+                        var act = { Action: 'DBDel', Family: 'CF', Key: args.exten };
+                    }
+                    
                     // set the action identifier
-                    act.ActionID = action.getActionId('cfGet_' + args.exten);
+                    act.ActionID = action.getActionId('cfVmSet');
 
                     // add association ActionID-callback
                     map[act.ActionID] = cb;
@@ -84,7 +95,7 @@ var IDLOG = '[cfGet]';
 
             /**
             * It's called from _ast_proxy_ component for each data received
-            * from asterisk and relative to this command.
+            * from asterisk and relative to this command
             *
             * @method data
             * @param {object} data The asterisk data for the current command
@@ -92,38 +103,19 @@ var IDLOG = '[cfGet]';
             */
             data: function (data) {
                 try {
-                    // get the extension number from the action id
-                    var exten = data.actionid.split('_')[1];
-
                     // check callback and info presence and execute it
-                    if (map[data.actionid] && data.event === 'DBGetResponse'
-                        && data.family === 'CF'
-                        && data.val) {
+                    if (map[data.actionid]
+                        && (
+                            data.message     === 'Updated database successfully'
+                            || data.message  === 'Key deleted successfully'
+                        )
+                        && data.response === 'Success') {
 
-                        // check if the destination of the call forward is a something different
-                        // from a voicemail. If it's to voicemail then the result is false. This
-                        // is because the call forward to voicemail is checked with another
-                        // command plugin. The call forward and the call forward to voicemail use
-                        // the same key database: CF, but the second adds a prefix to it
-                        var pre;
-                        var isCf2Vm = false;
-                        for (pre in PREFIX_CODE) { // cycle in each cf to voicemail prefix code
-
-                            // check if the call forward value start with the prefix code. If it's
-                            // the call forward is to voicemail
-                            if (data.val.substring(0, pre.length) === pre) {
-                                isCf2Vm = true;
-                                break;
-                            }
-                        }
-
-                        if (isCf2Vm) { map[data.actionid](null, { exten: exten, cf: 'off' });              }
-                        else         { map[data.actionid](null, { exten: exten, cf: 'on', to: data.val }); }
-
+                        map[data.actionid](null);
                         delete map[data.actionid]; // remove association ActionID-callback
 
                     } else if (map[data.actionid] && data.response === 'Error') {
-                        map[data.actionid](null, { exten: exten, cf: 'off' });
+                        map[data.actionid]('error');
                         delete map[data.actionid]; // remove association ActionID-callback
                     }
 
@@ -162,9 +154,9 @@ var IDLOG = '[cfGet]';
         };
 
         // public interface
-        exports.data      = cfGet.data;
-        exports.execute   = cfGet.execute;
-        exports.setLogger = cfGet.setLogger;
+        exports.data      = cfVmSet.data;
+        exports.execute   = cfVmSet.execute;
+        exports.setLogger = cfVmSet.setLogger;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);

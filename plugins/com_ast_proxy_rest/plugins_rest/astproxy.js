@@ -379,8 +379,121 @@ function cfset(req, res, next) {
                 return;
             }
 
-            logger.info(IDLOG, 'cf ' + status + ' to ' + to + ' for extension ' + endpoint + ' has been set successfully');
+            if (activate) {
+                logger.info(IDLOG, 'cf "' + status + '" to ' + to + ' for extension ' + endpoint + ' has been set successfully');
+            } else {
+                logger.info(IDLOG, 'cf "' + status + '" for extension ' + endpoint + ' has been set successfully');
+            }
             sendHttp200(res);
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        sendHttp500(res, err.toString());
+    }
+}
+
+/**
+* Sets the call forward to voicemail status of the endpoint of the user.
+*
+* @method cfvmset
+* @param {object} req  The request object
+* @param {object} res  The response object
+* @param {object} next
+*/
+function cfvmset(req, res, next) {
+    try {
+        // extract the parameters needed
+        var vm       = req.params.voicemail;
+        var status   = req.params.status;
+        var endpoint = req.params.endpoint;
+        var username = req.headers.authorization_user;
+
+        // check parameters
+        if (   typeof status   !== 'string'
+            || typeof endpoint !== 'string'
+            || (status !== 'on' && status    !== 'off')
+            || (status === 'on' && typeof vm !== 'string') ) {
+
+            sendHttp400(res);
+            return;
+        }
+
+        // check if the endpoint in the request is an endpoint of the applicant user. The user
+        // can only set the call forward status of his endpoints
+        if (compAuthorization.verifyUserEndpointExten(username, req.params.endpoint) === false) {
+
+            logger.warn(IDLOG, 'authorization cf to voicemail set failed for user "' + username + '": extension ' +
+                               endpoint + ' not owned by him');
+            sendHttp401(res);
+            return;
+        }
+
+        var activate = (status === 'on') ? true : false;
+
+        // when the "status" if off, "activate" is false and "vm" can be undefined if the client hasn't specified it.
+        // This is not important because in this case, the asterisk command plugin doesn't use "val" value
+        compAstProxy.doCmd({ command: 'cfVmSet', exten: endpoint, activate: activate, val: vm }, function (err, resp) {
+
+            if (err) {
+                logger.error(IDLOG, 'setting cf to voicemail for extension ' + endpoint + ' of user "' + username + '"');
+                sendHttp500(res, err.toString());
+                return;
+            }
+
+            if (activate) {
+                logger.info(IDLOG, 'cf "' + status + '" to voicemail ' + vm + ' for extension ' + endpoint + ' has been set successfully');
+            } else {
+                logger.info(IDLOG, 'cf to voicemail "' + status + '" for extension ' + endpoint + ' has been set successfully');
+            }
+            sendHttp200(res);
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        sendHttp500(res, err.toString());
+    }
+}
+
+/**
+* Gets the call forward to voicemail status of the endpoint of the user.
+*
+* @method cfget
+* @param {object} req  The request object
+* @param {object} res  The response object
+* @param {object} next
+*/
+function cfvmget(req, res, next) {
+    try {
+        // extract the parameters needed
+        var endpoint = req.params.endpoint;
+        var username = req.headers.authorization_user;
+
+        // check parameters
+        if (typeof endpoint !== 'string') {
+            sendHttp400(res);
+            return;
+        }
+
+        // check if the endpoint in the request is an endpoint of the applicant user. The user
+        // can only get the call forward status of his endpoints
+        if (compAuthorization.verifyUserEndpointExten(username, req.params.endpoint) === false) {
+
+            logger.warn(IDLOG, 'authorization cf to voicemail get failed for user "' + username + '": extension ' +
+                               endpoint + ' not owned by him');
+            sendHttp401(res);
+            return;
+        }
+
+        compAstProxy.doCmd({ command: 'cfVmGet', exten: endpoint }, function (err, resp) {
+
+            if (err) {
+                logger.error(IDLOG, 'getting cf to voicemail for extension ' + endpoint + ' of user "' + username + '"');
+                sendHttp500(res, err.toString());
+                return;
+            }
+
+            logger.info(IDLOG, 'cf to voicemail for extension ' + endpoint + ' has been get successfully: status "' + resp.cfvm + '"' +
+                        (resp.voicemail ? (' to voicemail ' + resp.voicemail) : '') );
+            res.send(200, resp);
         });
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -397,12 +510,20 @@ function cfset(req, res, next) {
         *
         * 1. [`astproxy/cf/:endpoint`](#cfget)
         * 1. [`astproxy/dnd/:endpoint`](#dndget)
+        * 1. [`astproxy/cfvm/:endpoint`](#cfvmget)
         *
         * ---
         *
         * ### <a id="cfget">**`astproxy/cf/:endpoint`**</a>
         *
         * Gets the call forward status of the endpoint of the user. The endpoint is
+        * the extension identifier.
+        *
+        * ---
+        *
+        * ### <a id="cfvmget">**`astproxy/cfvm/:endpoint`**</a>
+        *
+        * Gets the call forward to voicemail status of the endpoint of the user. The endpoint is
         * the extension identifier.
         *
         * ---
@@ -418,6 +539,7 @@ function cfset(req, res, next) {
         *
         * 1. [`astproxy/cf`](#cfpost)
         * 1. [`astproxy/dnd`](#dndpost)
+        * 1. [`astproxy/cfvm`](#cfvmpost)
         *
         * ---
         *
@@ -433,6 +555,27 @@ function cfset(req, res, next) {
         * E.g. using curl:
         *
         *     curl --insecure -i -X POST -d '{ "endpoint": "214", "status": "on", "to": "340123456" }' https://192.168.5.224:8282/astproxy/cf
+        *     curl --insecure -i -X POST -d '{ "endpoint": "214", "status": "off" }' https://192.168.5.224:8282/astproxy/cf
+        *
+        * **Note:** setting the status to off, automatically sets also the call forward to voicemail _astproxy/cfvm_ to off.
+        *
+        * ---
+        *
+        * ### <a id="cfvmpost">**```astproxy/cfvm```**</a>
+        *
+        * Sets the call forward to voicemail status of the endpoint of the user. The request must contains
+        * the following parameters:
+        *
+        * * `status: (on|off)`
+        * * `endpoint`
+        * * `[voicemail]: optional when the status is off`
+        *
+        * E.g. using curl:
+        *
+        *     curl --insecure -i -X POST -d '{ "endpoint": "214", "status": "on", "voicemail": "209" }' https://192.168.5.224:8282/astproxy/cfvm
+        *     curl --insecure -i -X POST -d '{ "endpoint": "214", "status": "off" }' https://192.168.5.224:8282/astproxy/cfvm
+        *
+        * **Note:** setting the status to off, automatically sets also the call forward _astproxy/cf_ to off.
         *
         * ---
         *
@@ -463,12 +606,14 @@ function cfset(req, res, next) {
                 * @property get
                 * @type {array}
                 *
-                *   @param {string} cf/:endpoint  Gets the call forward status of the endpoint of the user
-                *   @param {string} dnd/:endpoint Gets the don't disturb status of the endpoint of the user
+                *   @param {string} cf/:endpoint   Gets the call forward status of the endpoint of the user
+                *   @param {string} dnd/:endpoint  Gets the don't disturb status of the endpoint of the user
+                *   @param {string} cfvm/:endpoint Gets the call forward to voicemail status of the endpoint of the user
                 */
                 'get' : [
                     'cf/:endpoint',
-                    'dnd/:endpoint'
+                    'dnd/:endpoint',
+                    'cfvm/:endpoint'
                 ],
 
                 /**
@@ -477,12 +622,14 @@ function cfset(req, res, next) {
                 * @property post
                 * @type {array}
                 *
-                *   @param {string} cf  Sets the call forward status of the endpoint of the user
-                *   @param {string} dnd Sets the don't disturb status of the endpoint of the user
+                *   @param {string} cf   Sets the call forward status of the endpoint of the user
+                *   @param {string} dnd  Sets the don't disturb status of the endpoint of the user
+                *   @param {string} cfvm Sets the call forward to voicemail status of the endpoint of the user
                 */
                 'post': [
                     'cf',
-                    'dnd'
+                    'dnd',
+                    'cfvm'
                 ],
                 'head': [],
                 'del' : []
@@ -492,8 +639,8 @@ function cfset(req, res, next) {
             * Manages both GET and POST requests for call forward status of the endpoint of
             * the user with the following REST API:
             *
-            *     GET  cf
-            *     POST cf/:endpoint
+            *     GET  cf:/endpoint
+            *     POST cf
             *
             * @method cf
             * @param {object} req The client request.
@@ -504,6 +651,30 @@ function cfset(req, res, next) {
                 try {
                     if      (req.method.toLowerCase() === 'get')  { cfget(req, res, next); }
                     else if (req.method.toLowerCase() === 'post') { cfset(req, res, next); }
+                    else    { logger.warn(IDLOG, 'unknown requested method ' + req.method); }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    sendHttp500(res, err.toString());
+                }
+            },
+
+            /**
+            * Manages both GET and POST requests for call forward to voicemail status of the endpoint of
+            * the user with the following REST API:
+            *
+            *     GET  cfvm/:endpoint
+            *     POST cfvm
+            *
+            * @method cfvm
+            * @param {object} req The client request.
+            * @param {object} res The client response.
+            * @param {function} next Function to run the next handler in the chain.
+            */
+            cfvm: function (req, res, next) {
+                try {
+                    if      (req.method.toLowerCase() === 'get')  { cfvmget(req, res, next); }
+                    else if (req.method.toLowerCase() === 'post') { cfvmset(req, res, next); }
                     else    { logger.warn(IDLOG, 'unknown requested method ' + req.method); }
 
                 } catch (err) {
@@ -539,6 +710,7 @@ function cfset(req, res, next) {
         exports.cf                   = astproxy.cf;
         exports.api                  = astproxy.api;
         exports.dnd                  = astproxy.dnd;
+        exports.cfvm                 = astproxy.cfvm;
         exports.setLogger            = setLogger;
         exports.setCompAstProxy      = setCompAstProxy;
         exports.setCompAuthorization = setCompAuthorization;

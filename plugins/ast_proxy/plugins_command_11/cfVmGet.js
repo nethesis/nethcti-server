@@ -1,7 +1,7 @@
 /**
 * @submodule plugins_command_11
 */
-var action = require('../action');
+var action      = require('../action');
 var PREFIX_CODE = require('../proxy_logic_11/prefix_code_cf2vm').PREFIX_CODE;
 
 /**
@@ -12,9 +12,9 @@ var PREFIX_CODE = require('../proxy_logic_11/prefix_code_cf2vm').PREFIX_CODE;
 * @private
 * @final
 * @readOnly
-* @default [cfGet]
+* @default [cfVmGet]
 */
-var IDLOG = '[cfGet]';
+var IDLOG = '[cfVmGet]';
 
 (function() {
     try {
@@ -39,21 +39,21 @@ var IDLOG = '[cfGet]';
         var map = {};
 
         /**
-        * Command plugin to get the call forward status of an extension.
+        * Command plugin to get the call forward to voicemail status of an extension.
         *
         * Use it with _ast\_proxy_ module as follow:
         *
-        *     ast_proxy.doCmd({ command: 'cfGet', exten: '214' }, function (res) {
+        *     ast_proxy.doCmd({ command: 'cfVmGet', exten: '214' }, function (res) {
         *         // some code
         *     });
         *
-        * @class cfGet
+        * @class cfVmGet
         * @static
         */
-        var cfGet = {
+        var cfVmGet = {
 
             /**
-            * Execute asterisk action to get the call forward status.
+            * Execute asterisk action to get the call forward to voicemail status.
             * 
             * @method execute
             * @param {object} am Asterisk manager to send the action
@@ -69,7 +69,7 @@ var IDLOG = '[cfGet]';
                     var act = { Action: 'DBGet', Family: 'CF', Key: args.exten };
 
                     // set the action identifier
-                    act.ActionID = action.getActionId('cfGet_' + args.exten);
+                    act.ActionID = action.getActionId('cfVmGet_' + args.exten);
 
                     // add association ActionID-callback
                     map[act.ActionID] = cb;
@@ -100,11 +100,13 @@ var IDLOG = '[cfGet]';
                         && data.family === 'CF'
                         && data.val) {
 
-                        // check if the destination of the call forward is a something different
-                        // from a voicemail. If it's to voicemail then the result is false. This
-                        // is because the call forward to voicemail is checked with another
-                        // command plugin. The call forward and the call forward to voicemail use
-                        // the same key database: CF, but the second adds a prefix to it
+                        // check if the destination of the call forward is a voicemail.
+                        // If it's a something other, the result is false. This is
+                        // because the call forward to a number is checked with an
+                        // other command plugin. The call forward and the call forward
+                        // to voicemail use the same key database: CF, but the second adds
+                        // a prefix to it
+                        var vm;
                         var pre;
                         var isCf2Vm = false;
                         for (pre in PREFIX_CODE) { // cycle in each cf to voicemail prefix code
@@ -112,18 +114,21 @@ var IDLOG = '[cfGet]';
                             // check if the call forward value start with the prefix code. If it's
                             // the call forward is to voicemail
                             if (data.val.substring(0, pre.length) === pre) {
+
+                                // get the voicemail number subtracting the prefix code
+                                vm      = data.val.substring(pre.length, data.val.length);
                                 isCf2Vm = true;
                                 break;
                             }
                         }
 
-                        if (isCf2Vm) { map[data.actionid](null, { exten: exten, cf: 'off' });              }
-                        else         { map[data.actionid](null, { exten: exten, cf: 'on', to: data.val }); }
+                        if (isCf2Vm) { map[data.actionid](null, { exten: exten, cfvm: 'on', voicemail: vm }); }
+                        else         { map[data.actionid](null, { exten: exten, cfvm: 'off' });               }
 
                         delete map[data.actionid]; // remove association ActionID-callback
 
                     } else if (map[data.actionid] && data.response === 'Error') {
-                        map[data.actionid](null, { exten: exten, cf: 'off' });
+                        map[data.actionid](null, { exten: exten, cfvm: 'off' });
                         delete map[data.actionid]; // remove association ActionID-callback
                     }
 
@@ -162,9 +167,9 @@ var IDLOG = '[cfGet]';
         };
 
         // public interface
-        exports.data      = cfGet.data;
-        exports.execute   = cfGet.execute;
-        exports.setLogger = cfGet.setLogger;
+        exports.data      = cfVmGet.data;
+        exports.execute   = cfVmGet.execute;
+        exports.setLogger = cfVmGet.setLogger;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
