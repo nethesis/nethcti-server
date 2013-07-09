@@ -166,26 +166,46 @@ function sendHttp500(resp, err) {
         /**
         * REST plugin that provides configuration manager functions through the following REST API:
         *
-        * **GET request**
+        * # GET requests
         *
-        *     configmanager/userconf
+        * 1. [`configmanager/userconf`](#userconfget)
+        * 1. [`configmanager/chatserver`](#chatserverget)
+        * 1. [`configmanager/streamings`](#streamingsget)
+        * 1. [`configmanager/userendpoints`](#userendpointsget)
+        *
+        * ---
+        *
+        * ### <a id="userconfget">**`configmanager/userconf`**</a>
         *
         * Returns the configurations of the user.
         *
-        *     configmanager/chatserver
+        * ---
+        *
+        * ### <a id="chatserverget">**`configmanager/chatserver`**</a>
         *
         * Returns the server chat parameters.
         *
-        *     configmanager/streamings
+        * ---
+        *
+        * ### <a id="streamingsget">**`configmanager/streamings`**</a>
         *
         * Returns the parameters of the streaming services.
         *
-        *     configmanager/userendpoints
+        * ---
+        *
+        * ### <a id="userendpointsget">**`configmanager/userendpoints`**</a>
         *
         * Returns all the user endpoints.
         *
-        * **POST request**
+        * <br>
         *
+        * # POST requests
+        *
+        * 1. [`configmanager/saveuser`](#saveuserpost)
+        *
+        * ---
+        *
+        * ### <a id="saveuserpost">**`configmanager/saveuser`**</a>
         *     configmanager/saveuser
 
         * Save the user configuration. The request must contain the configurations object in the
