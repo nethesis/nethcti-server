@@ -321,10 +321,10 @@ function cfget(req, res, next) {
             cfgetVoicemail(endpoint, username, res);
 
         } else if (type === compAstProxy.CF_TYPES.busy) {
-            //cfgetBusy(req, res, next);
+            cfgetBusy(endpoint, username, res);
 
         } else if (type === compAstProxy.CF_TYPES.unavailable) {
-            //cfgetUnavailable(req, res, next);
+            //cfgetUnavailable(endpoint, username, res);
 
         } else {
 
@@ -407,6 +407,41 @@ function cfgetVoicemail(endpoint, username, res) {
 }
 
 /**
+* Gets the call forward on busy status of the endpoint of the user.
+*
+* @method cfgetBusy
+* @param {string} endpoint The extension identifier
+* @param {string} username The username
+* @param {object} res      The response object
+*/
+function cfgetBusy(endpoint, username, res) {
+    try {
+        // check parameters
+        if (   typeof endpoint !== 'string'
+            || typeof username !== 'string' || typeof res !== 'object') {
+
+            throw new Error('wrong parameters');
+        }
+
+        compAstProxy.doCmd({ command: 'cfbGet', exten: endpoint }, function (err, resp) {
+
+            if (err) {
+                logger.error(IDLOG, 'getting cf busy for extension ' + endpoint + ' of user "' + username + '"');
+                sendHttp500(res, err.toString());
+                return;
+            }
+
+            logger.info(IDLOG, 'cf busy for extension ' + endpoint + ' of user "' + username + '" has been get successfully: ' +
+                               'status "' + resp.status + '"' + (resp.to ? ' to ' + resp.to : ''));
+            res.send(200, resp);
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        sendHttp500(res, err.toString());
+    }
+}
+
+/**
 * Sets the call forward status of the endpoint of the user.
 *
 * @method cfset
@@ -453,10 +488,10 @@ function cfset(req, res, next) {
             cfsetVoicemail(endpoint, username, activate, to, res);
 
         } else if (type === compAstProxy.CF_TYPES.busy) {
-            //cfgetBusy(req, res, next);
+            cfsetBusy(endpoint, username, activate, to, res);
 
         } else if (type === compAstProxy.CF_TYPES.unavailable) {
-            //cfgetUnavailable(req, res, next);
+            //cfsetUnavailable(endpoint, username, activate, to, res);
 
         } else {
 
@@ -542,6 +577,48 @@ function cfsetVoicemail(endpoint, username, activate, to, res) {
                 logger.info(IDLOG, 'cf to voicemail "on" to ' + to + ' for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
             } else {
                 logger.info(IDLOG, 'cf to voicemail "off" for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
+            }
+            sendHttp200(res);
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        sendHttp500(res, err.toString());
+    }
+}
+
+/**
+* Sets the call forward on busy status of the endpoint of the user.
+*
+* @method cfsetBusy
+* @param {string}  endpoint The extension identifier
+* @param {string}  username The username
+* @param {boolean} activate True if the call forward to voicemail must be activated
+* @param {string}  [to]     The destination voicemail of the call forward
+* @param {object}  res      The response object
+*/
+function cfsetBusy(endpoint, username, activate, to, res) {
+    try {
+        // check parameters
+        if (   typeof endpoint !== 'string' || typeof activate !== 'boolean'
+            || typeof username !== 'string' || typeof res      !== 'object') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // when "activate" is false, "to" can be undefined if the client hasn't specified it.
+        // This is not important because in this case, the asterisk command plugin doesn't use "val" value
+        compAstProxy.doCmd({ command: 'cfbSet', exten: endpoint, activate: activate, val: to }, function (err, resp) {
+
+            if (err) {
+                logger.error(IDLOG, 'setting cf busy for extension ' + endpoint + ' of user "' + username + '"');
+                sendHttp500(res, err.toString());
+                return;
+            }
+
+            if (activate) {
+                logger.info(IDLOG, 'cf busy "on" to ' + to + ' for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
+            } else {
+                logger.info(IDLOG, 'cf busy "off" for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
             }
             sendHttp200(res);
         });
