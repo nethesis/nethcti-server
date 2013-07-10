@@ -104,16 +104,20 @@ var IDLOG = '[cfuSet]';
                         )
                         && data.response === 'Success') {
 
-                        map[data.actionid]({ result: true });
+                        map[data.actionid](null);
                         delete map[data.actionid]; // remove association ActionID-callback
 
                     } else if (map[data.actionid] && data.response === 'Error') {
-                        map[data.actionid]({ result: false });
+                        map[data.actionid]('error');
                         delete map[data.actionid]; // remove association ActionID-callback
                     }
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
+                    if (map[data.actionid]) {
+                        map[data.actionid](err);
+                        delete map[data.actionid]; // remove association ActionID-callback
+                    }
                 }
             },
 

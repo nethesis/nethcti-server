@@ -1,7 +1,8 @@
 /**
 * @submodule plugins_command_11
 */
-var action = require('../action');
+var action   = require('../action');
+var CF_TYPES = require('../proxy_logic_11/util_call_forward_11').CF_TYPES;
 
 /**
 * The module identifier used by the logger.
@@ -68,7 +69,7 @@ var IDLOG = '[cfuGet]';
                     var act = { Action: 'DBGet', Family: 'CFU', Key: args.exten };
 
                     // set the action identifier
-                    act.ActionID = action.getActionId('cfuGet');
+                    act.ActionID = action.getActionId('cfuGet_' + args.exten);
 
                     // add association ActionID-callback
                     map[act.ActionID] = cb;
@@ -91,21 +92,28 @@ var IDLOG = '[cfuGet]';
             */
             data: function (data) {
                 try {
+                    // get the extension number from the action id
+                    var exten = data.actionid.split('_')[1];
+
                     // check callback and info presence and execute it
                     if (map[data.actionid] && data.event === 'DBGetResponse'
                         && data.family === 'CFU'
                         && data.val) {
 
-                        map[data.actionid](null, { cfu: 'on', cfuExten: data.val });
+                        map[data.actionid](null, { cf_type: CF_TYPES.unavailable, exten: exten, status: 'on', to: data.val });
                         delete map[data.actionid]; // remove association ActionID-callback
 
                     } else if (map[data.actionid] && data.response === 'Error') {
-                        map[data.actionid](null, { cfu: 'off' });
+                        map[data.actionid](null, { cf_type: CF_TYPES.unavailable, exten: exten, status: 'off' });
                         delete map[data.actionid]; // remove association ActionID-callback
                     }
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
+                    if (map[data.actionid]) {
+                        map[data.actionid](err);
+                        delete map[data.actionid]; // remove association ActionID-callback
+                    }
                 }
             },
 
