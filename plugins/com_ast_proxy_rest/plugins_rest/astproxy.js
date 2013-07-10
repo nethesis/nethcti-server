@@ -755,9 +755,11 @@ function cfsetUnavailable(endpoint, username, activate, to, res) {
         *     curl --insecure -i -X POST -d '{ "endpoint": "214", "status": "on", "type": "unconditional", "to": "340123456" }' https://192.168.5.224:8282/astproxy/cf
         *     curl --insecure -i -X POST -d '{ "endpoint": "214", "status": "off", "type": "unconditional" }' https://192.168.5.224:8282/astproxy/cf
         *
-        * **Note:** setting the status to _off_ for _unconditional_ type, automatically sets to _off_
-        * also the _voicemail_ type and vice versa. This is because both of them use the same property
-        * in the asterisk server.
+        * **Note:** _unconditional_ and _voicemail_ types are mutually exclusive because both
+        * of them use the same property in the asterisk server database. So, e.g. setting the
+        * status to _off_ for _unconditional_ type, automatically set to _off_ also the _voicemail_
+        * type and vice versa. Or setting to _on_ the _unconditional_ type, automatically set to
+        * _off_ the _voicemail_ type.
         *
         * ---
         *
