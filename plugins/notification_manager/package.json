@@ -1,0 +1,9 @@
+{
+    "name": "notification_manager",
+    "main": "arch_notification_manager.js",
+    "private": true,
+    "plugin": {
+        "consumes": [ "logger" ],
+        "provides": []
+    }
+}
