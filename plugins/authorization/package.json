@@ -3,7 +3,10 @@
     "main": "arch_authorization.js",
     "private": true,
     "plugin": {
-        "consumes": ["logger", "user"],
-        "provides": ["authorization"]
+        "consumes": [
+            "user",
+            "logger"
+        ],
+        "provides": [ "authorization" ]
     }
 }

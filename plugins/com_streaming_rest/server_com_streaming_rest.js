@@ -1,18 +1,18 @@
 /**
-* Provides the REST server for the configuration manager functions.
+* Provides the REST server for the streaming functions.
 *
-* @module com_config_manager_rest
-* @main arch_com_config_manager_rest
+* @module com_streaming_rest
+* @main arch_com_streaming_rest
 */
 
 /**
 * Provides the REST server.
 *
-* @class server_com_config_manager_rest
+* @class server_com_streaming_rest
 */
 var fs      = require('fs');
 var restify = require('restify');
-var plugins = require('jsplugs')().require('./plugins/com_config_manager_rest/plugins_rest');
+var plugins = require('jsplugs')().require('./plugins/com_streaming_rest/plugins_rest');
 
 /**
 * The module identifier used by the logger.
@@ -22,9 +22,9 @@ var plugins = require('jsplugs')().require('./plugins/com_config_manager_rest/pl
 * @private
 * @final
 * @readOnly
-* @default [server_com_config_manager_rest]
+* @default [server_com_streaming_rest]
 */
-var IDLOG = '[server_com_config_manager_rest]';
+var IDLOG = '[server_com_streaming_rest]';
 
 /**
 * The logger. It must have at least three methods: _info, warn and error._
@@ -43,9 +43,9 @@ var logger = console;
 * @property port
 * @type string
 * @private
-* @default "9006"
+* @default "9011"
 */
-var port = "9006";
+var port = "9011";
 
 /**
 * Listening address of the REST server. It can be customized by the
@@ -57,6 +57,15 @@ var port = "9006";
 * @default "localhost"
 */
 var address = "localhost";
+
+/**
+* The architect component to be used for authorization.
+*
+* @property compAuthorization
+* @type object
+* @private
+*/
+var compAuthorization;
 
 /**
 * Set the logger to be used.
@@ -111,7 +120,76 @@ function setAllRestPluginsLogger(log) {
 }
 
 /**
-* Set the authorization architect component for all REST plugins.
+* Send HTTP 401 unauthorized response.
+*
+* @method sendHttp401
+* @param {object} resp The client response object.
+* @private
+*/
+function sendHttp401(resp) {
+    try {
+        resp.writeHead(401);
+        logger.info(IDLOG, 'send HTTP 401 response to ' + resp.connection.remoteAddress);
+        resp.end();
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Executed by all REST request. It calls the appropriate REST plugin function.
+*
+* @method execute
+* @private
+*/
+function execute(req, res, next) {
+    try {
+        var tmp  = req.url.split('/');
+        var p    = tmp[1];
+        var name = tmp[2];
+
+        // check authorization
+        var username = req.headers.authorization_user;
+        if (compAuthorization.authorizeStreamingUser(username) === true) {
+
+            logger.info(IDLOG, 'streaming authorization successfully for user "' + username + '"');
+            logger.info(IDLOG, 'execute: ' + p + '.' + name);
+            plugins[p][name].apply(plugins[p], [req, res, next]);
+
+        } else { // authorization failed
+            logger.warn(IDLOG, 'streaming authorization failed for user "' + username + '"!');
+            sendHttp401(res);
+        }
+        return next();
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Set the post-it architect component to be used by REST plugins.
+*
+* @method setCompStreaming
+* @param {object} compStreaming The architect post-it component
+* @static
+*/
+function setCompStreaming(compStreaming) {
+    try {
+        // check parameter
+        if (typeof compStreaming !== 'object') { throw new Error('wrong parameter'); }
+
+        var p;
+        // set post-it architect component to all REST plugins
+        for (p in plugins) { plugins[p].setCompStreaming(compStreaming); }
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Set the authorization architect component.
 *
 * @method setCompAuthorization
 * @param {object} ca The architect authorization component
@@ -121,6 +199,9 @@ function setCompAuthorization(ca) {
     try {
         // check parameter
         if (typeof ca !== 'object') { throw new Error('wrong parameter'); }
+
+        compAuthorization = ca;
+        logger.log(IDLOG, 'authorization component has been set');
 
         // set the authorization for all REST plugins
         setAllRestPluginsAuthorization(ca);
@@ -154,71 +235,6 @@ function setAllRestPluginsAuthorization(ca) {
 }
 
 /**
-* Send HTTP 401 unauthorized response.
-*
-* @method sendHttp401
-* @param {object} resp The client response object.
-* @private
-*/
-function sendHttp401(resp) {
-    try {
-        resp.writeHead(401);
-        logger.info(IDLOG, 'send HTTP 401 response to ' + resp.connection.remoteAddress);
-        resp.end();
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Executed by all REST request. It calls the appropriate REST plugin function.
-*
-* @method execute
-* @private
-*/
-function execute(req, res, next) {
-    try {
-        var tmp  = req.url.split('/');
-        var p    = tmp[1];
-        var name = tmp[2];
-
-        logger.info(IDLOG, 'execute: ' + p + '.' + name);
-        plugins[p][name].apply(plugins[p], [req, res, next]);
-
-        return next();
-
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Set the config manager architect component to be used by REST plugins.
-*
-* @method setCompConfigManager
-* @param {object} cm The architect configuration manager component
-* @static
-*/
-function setCompConfigManager(cm) {
-    try {
-        // check parameter
-        if (typeof cm !== 'object') { throw new Error('wrong parameter'); }
-
-        var p;
-        // set configuratino manager architect component to all REST plugins
-        for (p in plugins) {
-
-            if (typeof plugins[p].setCompConfigManager === 'function') {
-                plugins[p].setCompConfigManager(cm);
-            }
-        }
-
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
 * Configurates the REST server properties by a configuration file.
 * The file must use the JSON syntax.
 *
@@ -238,16 +254,16 @@ function config(path) {
     var json = require(path).rest;
 
     // initialize the port of the REST server
-    if (json.config_manager && json.config_manager.port) {
-        port = json.config_manager.port;
+    if (json.streaming && json.streaming.port) {
+        port = json.streaming.port;
 
     } else {
         logger.warn(IDLOG, 'no port has been specified in JSON file ' + path);
     }
 
     // initialize the address of the REST server
-    if (json.config_manager && json.config_manager.address) {
-        address = json.config_manager.address;
+    if (json.streaming && json.streaming.address) {
+        address = json.streaming.address;
 
     } else {
         logger.warn(IDLOG, 'no address has been specified in JSON file ' + path);
@@ -311,5 +327,5 @@ function start() {
 exports.start                = start;
 exports.config               = config;
 exports.setLogger            = setLogger;
-exports.setCompConfigManager = setCompConfigManager;
+exports.setCompStreaming     = setCompStreaming;
 exports.setCompAuthorization = setCompAuthorization;

@@ -49,14 +49,7 @@ module.exports = function (options, imports, register) {
             *
             * @method getChatConf
             */
-            getChatConf: configManager.getChatConf,
-
-            /**
-            * It's the _getStreamingConf_ method provided by _config\_manager_ module.
-            *
-            * @method getStreamingConf
-            */
-            getStreamingConf: configManager.getStreamingConf
+            getChatConf: configManager.getChatConf
         }
     });
 
@@ -68,9 +61,8 @@ module.exports = function (options, imports, register) {
         imports.user.on('users_ready', function () {
             configManager.setLogger(logger);
             configManager.setCompUser(imports.user);
-            configManager.configUser('/etc/nethcti/user_config.json');
+            configManager.configUser('/etc/nethcti/users.json');
             configManager.configChat('/etc/nethcti/chat.json');
-            configManager.configStreaming('/etc/nethcti/streaming.json');
         });
     } catch (err) {
         logger.error(IDLOG, err.stack);

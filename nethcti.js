@@ -18,6 +18,7 @@ try{
         { packagePath: "./plugins/history"                 },
         { packagePath: "./plugins/phonebook"               },
         { packagePath: "./plugins/operator"                },
+        { packagePath: "./plugins/streaming"               },
         { packagePath: "./plugins/voicemail"               },
         { packagePath: "./plugins/caller_note"             },
         { packagePath: "./plugins/config_manager"          },
@@ -26,6 +27,7 @@ try{
         { packagePath: "./plugins/com_postit_rest"         },
         { packagePath: "./plugins/com_history_rest"        },
         { packagePath: "./plugins/com_phonebook_rest"      },
+        { packagePath: "./plugins/com_streaming_rest"      },
         { packagePath: "./plugins/com_ast_proxy_rest"      },
         { packagePath: "./plugins/com_voicemail_rest"      },
         { packagePath: "./plugins/com_caller_note_rest"    },
@@ -39,7 +41,7 @@ try{
     var app = architect.resolveConfig(config, __dirname);
 
     architect.createApp(app, function (resp) {
-        console.log('nethcti architect app created');
+        console.log('cti architect app created');
     });
 
     process.on('uncaughtException', function (err) {

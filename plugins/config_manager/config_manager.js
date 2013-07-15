@@ -65,17 +65,6 @@ var compUser;
 var chatServer = { 'url': '' };
 
 /**
-* The configurations of the streaming sources. It can be customized
-* using the JSON configuration file by means _configStreaming_ method.
-*
-* @property streamings
-* @type object
-* @private
-* @default {}
-*/
-var streamings = {};
-
-/**
 * Set the logger to be used.
 *
 * @method setLogger
@@ -142,13 +131,14 @@ function configUser(path) {
     // check JSON file
     if (typeof json !== 'object') { throw new Error('wrong JSON file ' + configUserPath); }
 
-    // cycle user configurations and set User objects using user module
+    // cycle user configurations and set the configuration in the
+    // User objects using user module
     var userTemp;
     for (userTemp in json) {
 
         // check the configuration object of the user
-        if (typeof json[userTemp] === 'object') {
-            compUser.setConfigurations(userTemp, json[userTemp]);
+        if (typeof json[userTemp] === 'object' && json[userTemp].configurations === 'object') {
+            compUser.setConfigurations(userTemp, json[userTemp].configurations);
 
         } else {
             logger.error(IDLOG, 'wrong configuration for user "' + userTemp + '" in file ' + configUserPath);
@@ -187,49 +177,6 @@ function configChat(path) {
         logger.info(IDLOG, 'configured chat URL as ' + chatServer.url);
     }
     logger.info(IDLOG, 'server chat configuration by file ' + path + ' ended');
-}
-
-/**
-* It reads the configuration file and set the streaming
-* configurations. The file must use the JSON syntax.
-*
-* **The method can throw an Exception.**
-*
-* @method configStreaming
-* @param {string} path The path of the configuration file
-*/
-function configStreaming(path) {
-    // check parameter
-    if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
-
-    // check file presence
-    if (!fs.existsSync(path)) { throw new Error(path + ' not exists'); }
-
-    logger.info(IDLOG, 'configure streaming with ' + path);
-
-    // read configuration file
-    var json = require(path);
-
-    // check JSON file
-    if (typeof json !== 'object') { throw new Error('wrong JSON file ' + path); }
-
-    streamings = json;
-    logger.info(IDLOG, 'configured streaming sources: ' + Object.keys(streamings));
-    logger.info(IDLOG, 'strreaming configuration by file ' + path + ' ended');
-}
-
-/**
-* It reads the configuration file and set the streaming
-*
-* @method getStreamingConf
-*/
-function getStreamingConf() {
-    try {
-        return streamings;
-
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
 }
 
 /**
@@ -346,8 +293,6 @@ exports.configUser            = configUser;
 exports.configChat            = configChat;
 exports.getChatConf           = getChatConf;
 exports.setCompUser           = setCompUser;
-exports.configStreaming       = configStreaming;
-exports.getStreamingConf      = getStreamingConf;
 exports.getUserEndpointsJSON  = getUserEndpointsJSON;
 exports.getUserConfigurations = getUserConfigurations;
 exports.setUserConfigurations = setUserConfigurations;

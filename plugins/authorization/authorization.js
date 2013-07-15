@@ -399,7 +399,7 @@ function authorizeStreamingUser(username) {
         // check parameter
         if (typeof username !== 'string') { throw new Error('wrong parameter'); }
 
-        // get cusomter card authorization from the user
+        // get streaming authorization from the user
         var autho = userMod.getAuthorization(username, authorizationTypes.TYPES.streaming);
 
         // analize the result
@@ -416,6 +416,39 @@ function authorizeStreamingUser(username) {
         logger.error(IDLOG, err.stack);
         // in the case of exception it returns false for security reasons
         return false;
+    }
+}
+
+/**
+* Returns all the authorized streaming sources of the user.
+*
+* @method getAuthorizedStreamingSources
+* @param  {string} username The username
+* @return {object} All the authorized streaming sources.
+*/
+function getAuthorizedStreamingSources(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        // get streaming authorization from the user
+        var autho = userMod.getAuthorization(username, authorizationTypes.TYPES.streaming);
+
+        // analize the result
+        var objResult = autho[authorizationTypes.TYPES.streaming];
+        var stream;
+        var result = {}; // object to return
+        for (stream in objResult) {
+
+            // check the type of the authorization. It must be a boolean value
+            if (objResult[stream] === true) { result[stream] = true; }
+        }
+        return result;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns and empty object
+        return {};
     }
 }
 
@@ -532,18 +565,19 @@ function getUserAuthorizations(username) {
 }
 
 // public interface
-exports.config                     = config;
-exports.setLogger                  = setLogger;
-exports.setUserModule              = setUserModule;
-exports.authorizeChatUser          = authorizeChatUser;
-exports.authorizePostitUser        = authorizePostitUser;
-exports.authorizeHistoryUser       = authorizeHistoryUser;
-exports.getUserAuthorizations      = getUserAuthorizations;
-exports.authorizeVoicemailUser     = authorizeVoicemailUser;
-exports.authorizePhonebookUser     = authorizePhonebookUser;
-exports.authorizeStreamingUser     = authorizeStreamingUser;
-exports.authorizeCallerNoteUser    = authorizeCallerNoteUser;
-exports.authorizedCustomerCards    = authorizedCustomerCards;
-exports.verifyUserEndpointExten    = verifyUserEndpointExten;
-exports.authorizeCustomerCardUser  = authorizeCustomerCardUser;
-exports.authorizeHistorySwitchUser = authorizeHistorySwitchUser;
+exports.config                        = config;
+exports.setLogger                     = setLogger;
+exports.setUserModule                 = setUserModule;
+exports.authorizeChatUser             = authorizeChatUser;
+exports.authorizePostitUser           = authorizePostitUser;
+exports.authorizeHistoryUser          = authorizeHistoryUser;
+exports.getUserAuthorizations         = getUserAuthorizations;
+exports.authorizeVoicemailUser        = authorizeVoicemailUser;
+exports.authorizePhonebookUser        = authorizePhonebookUser;
+exports.authorizeStreamingUser        = authorizeStreamingUser;
+exports.authorizeCallerNoteUser       = authorizeCallerNoteUser;
+exports.authorizedCustomerCards       = authorizedCustomerCards;
+exports.verifyUserEndpointExten       = verifyUserEndpointExten;
+exports.authorizeCustomerCardUser     = authorizeCustomerCardUser;
+exports.authorizeHistorySwitchUser    = authorizeHistorySwitchUser;
+exports.getAuthorizedStreamingSources = getAuthorizedStreamingSources;

@@ -170,7 +170,6 @@ function sendHttp500(resp, err) {
         *
         * 1. [`configmanager/userconf`](#userconfget)
         * 1. [`configmanager/chatserver`](#chatserverget)
-        * 1. [`configmanager/streamings`](#streamingsget)
         * 1. [`configmanager/userendpoints`](#userendpointsget)
         *
         * ---
@@ -184,12 +183,6 @@ function sendHttp500(resp, err) {
         * ### <a id="chatserverget">**`configmanager/chatserver`**</a>
         *
         * Returns the server chat parameters.
-        *
-        * ---
-        *
-        * ### <a id="streamingsget">**`configmanager/streamings`**</a>
-        *
-        * Returns the parameters of the streaming services.
         *
         * ---
         *
@@ -228,13 +221,12 @@ function sendHttp500(resp, err) {
                 * @property get
                 * @type {array}
                 *
-                *   @param {string} user To get all user configurations
-                *   @param {string} streamings To get the parameters of the streaming services
-                *   @param {string} chatserver To get the server chat parameters
+                *   @param {string} user         To get all user configurations
+                *   @param {string} chatserver   To get the server chat parameters
+                *   @param {string} userendpoint To get all the endpoints of the user
                 */
                 'get': [
                     'user',
-                    'streamings',
                     'chatserver',
                     'userendpoints'
                 ],
@@ -362,50 +354,6 @@ function sendHttp500(resp, err) {
             },
 
             /**
-            * Get all the parameters of the streaming services by the following REST API:
-            *
-            *     streamings
-            *
-            * @method streamings
-            * @param {object} req The client request.
-            * @param {object} res The client response.
-            * @param {function} next Function to run the next handler in the chain.
-            */
-            streamings: function (req, res, next) {
-                try {
-                    // get the username added by the previous authentication step
-                    var username = req.headers.authorization_user;
-
-                    // check the authorization for the user
-                    if (compAuthorization.authorizeStreamingUser(username) === true) {
-
-                        logger.info(IDLOG, 'streaming authorization successfully for user "' + username + '"');
-
-                        // get the server chat configuration
-                        var results = compConfigManager.getStreamingConf();
-
-                        if (typeof results !== 'object') {
-                            var strerr = 'wrong streaming configurations';
-                            logger.error(IDLOG, strerr);
-                            sendHttp500(res, strerr);
-
-                        } else {
-                            logger.info(IDLOG, 'send streaming configurations to user "' + username + '"');
-                            res.send(200, results);
-                        }
-
-                    } else {
-                        logger.warn(IDLOG, 'streaming authorization failed for user "' + username + '"!');
-                        sendHttp401(res);
-                    }
-
-                } catch (err) {
-                    logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
-                }
-            },
-
-            /**
             * Save the user configurations with the following REST API:
             *
             *     saveuser
@@ -436,7 +384,6 @@ function sendHttp500(resp, err) {
         exports.userconf             = configmanager.userconf;
         exports.saveuser             = configmanager.saveuser;
         exports.setLogger            = setLogger;
-        exports.streamings           = configmanager.streamings;
         exports.chatserver           = configmanager.chatserver;
         exports.userendpoints        = configmanager.userendpoints;
         exports.setCompConfigManager = setCompConfigManager;
