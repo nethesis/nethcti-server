@@ -23,18 +23,16 @@ module.exports = function (options, imports, register) {
     register();
 
     try {
-        var logger   = console;
-        var authe    = imports.authentication;
-        var astProxy = imports.astProxy;
-        var operator = imports.operator;
+        var logger = console;
 
         if (imports.logger) { logger = imports.logger; }
 
         comNethctiWs.setLogger(logger);
         comNethctiWs.config('/etc/nethcti/services.json');
-        comNethctiWs.setAuthe(authe);
-        comNethctiWs.setAstProxy(astProxy);
-        comNethctiWs.setOperator(operator);
+        comNethctiWs.setAuthe(imports.authentication);
+        comNethctiWs.setCompUser(imports.user);
+        comNethctiWs.setAstProxy(imports.astProxy);
+        comNethctiWs.setOperator(imports.operator);
         comNethctiWs.start();
     } catch (err) {
         logger.error(IDLOG, err.stack);

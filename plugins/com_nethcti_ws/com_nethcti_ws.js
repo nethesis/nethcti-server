@@ -68,6 +68,15 @@ var server;
 var astProxy;
 
 /**
+* The user component.
+*
+* @property compUser
+* @type object
+* @private
+*/
+var compUser;
+
+/**
 * The authentication module.
 *
 * @property compAuthe
@@ -133,6 +142,21 @@ function setAuthe(autheMod) {
             throw new Error('wrong authentication object');
         }
         compAuthe = autheMod;
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the user module to be used.
+*
+* @method setCompUser
+* @param {object} cu The user module.
+*/
+function setCompUser(cu) {
+    try {
+        if (typeof cu !== 'object') { throw new Error('wrong user object'); }
+        compUser = cu;
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -594,10 +618,11 @@ function call(socket, data) {
 *
 * @method parkConv
 * @param {object} socket The client websocket
-* @param {object} data The data with the conversation identifier
+* @param {object} data   The data with the conversation identifier
 *   @param {string} data.endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
-*   @param {string} data.endpointId The endpoint identifier (e.g. the extension number)
-*   @param {string} data.convid The conversation identifier
+*   @param {string} data.endpointId   The endpoint identifier (e.g. the extension number)
+*   @param {string} data.applicantId  The endpoint identifier who requested the parking (e.g. the extension number). It is assumed that the applicant type is the same of the endpointType (e.g. extension)
+*   @param {string} data.convid       The conversation identifier
 * @param {string} sender The sender of the operation (e.g. the extension number)
 * @private
 * @return {object} An synchronous aknowledgment or error response with the name of the command.
@@ -609,15 +634,35 @@ function parkConv(socket, data, sender) {
         if (typeof data   !== 'object'
             || typeof data.convid       !== 'string'
             || typeof data.endpointId   !== 'string'
+            || typeof data.applicantId  !== 'string'
             || typeof data.endpointType !== 'string') {
 
             badRequest(socket);
+            return;
 
-        } else {
+        }
 
-            astProxy.parkConversation(data.endpointType, data.endpointId, data.convid, sender, function (resp) {
-                responseToClient(socket, 'parkConv', resp);
-            });
+        // check if the endpoint type is valid
+        if (compUser.isValidEndpointType(data.endpointType) === false) {
+            logger.warn(IDLOG, 'parking the conversation ' + data.convid + ' by user ' + sender + ': invalid endpointType ' + data.endpointType);
+            responseToClient(socket, 'parkConv', { result: false });
+            return;
+        }
+
+        // execute the operation on the basis of the endpoint type
+        if (data.endpointType === compUser.ENDPOINT_TYPES.EXTENSION) {
+
+            // check if the applicant identifier is an extension endpoint owned by the user sender
+            if (compUser.hasExtensionEndpoint(data.applicantId) === true) {
+
+                astProxy.parkConversation(data.endpointType, data.endpointId, data.convid, data.applicantId, function (resp) {
+                    responseToClient(socket, 'parkConv', resp);
+                });
+
+            } else {
+                logger.warn(IDLOG, 'parking the conversation ' + data.convid + ' by user ' + sender + ': applicantId ' + data.applicantId + ' isn\'t owned by the user');
+                responseToClient(socket, 'parkConv', { result: false });
+            }
         }
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -730,13 +775,12 @@ function redirectConv(socket, data) {
 }
 
 /**
-* Send a response to the client. The response can be
-* an acknowledgment or an error.
+* Send a response to the client. The response can be an acknowledgment or an error.
 *
 * @method responseToClient
-* @param {object} socket The client websocket
+* @param {object} socket  The client websocket
 * @param {string} command The name of the command
-* @param {object} resp The response received from the asterisk proxy operation execution
+* @param {object} resp    The response received from the asterisk proxy operation execution
 */
 function responseToClient(socket, command, resp) {
     try {
@@ -1097,3 +1141,4 @@ exports.setAuthe    = setAuthe;
 exports.setLogger   = setLogger;
 exports.setAstProxy = setAstProxy;
 exports.setOperator = setOperator;
+exports.setCompUser = setCompUser;

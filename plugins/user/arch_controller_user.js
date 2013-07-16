@@ -5,6 +5,7 @@
 * @module user
 */
 var controllerUser = require('./controller_user');
+var endpointTypes  = require('./endpoint_types');
 
 /**
 * The module identifier used by the logger.
@@ -94,7 +95,21 @@ module.exports = function (options, imports, register) {
             *
             * @method getEndpointsJSON
             */
-            getEndpointsJSON: controllerUser.getEndpointsJSON
+            getEndpointsJSON: controllerUser.getEndpointsJSON,
+
+            /**
+            * It's the _isValidEndpointType_ method provided by _endpoint\_types_ module.
+            *
+            * @method isValidEndpointType
+            */
+            isValidEndpointType: endpointTypes.isValidEndpointType,
+
+            /**
+            * It's the _ENDPOINT\_TYPES_ method provided by _endpoint\_types_ module.
+            *
+            * @method ENDPOINT_TYPES
+            */
+            ENDPOINT_TYPES: endpointTypes.TYPES
         }
     });
 

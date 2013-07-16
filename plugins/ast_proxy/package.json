@@ -3,7 +3,7 @@
     "main": "arch_ast_proxy.js",
     "private": true,
     "plugin": {
-        "consumes": [ "logger" ],
-        "provides": ["astProxy"]
+        "consumes": [ "logger"   ],
+        "provides": [ "astProxy" ]
     }
 }

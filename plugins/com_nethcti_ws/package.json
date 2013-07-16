@@ -4,6 +4,7 @@
     "private": true,
     "plugin": {
         "consumes": [
+            "user",
             "logger",
             "astProxy",
             "operator",

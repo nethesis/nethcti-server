@@ -2123,11 +2123,9 @@ function redirectConversation(endpointType, endpointId, convid, to, cb) {
 function parkConversation(endpointType, endpointId, convid, sender, cb) {
     try {
         // check parameters
-        if (typeof convid !== 'string'
-            || typeof cb           !== 'function'
-            || typeof sender       !== 'string'
-            || typeof endpointId   !== 'string'
-            || typeof endpointType !== 'string') {
+        if (   typeof convid     !== 'string'
+            || typeof cb         !== 'function' || typeof sender       !== 'string'
+            || typeof endpointId !== 'string'   || typeof endpointType !== 'string') {
 
             throw new Error('wrong parameters');
         }
