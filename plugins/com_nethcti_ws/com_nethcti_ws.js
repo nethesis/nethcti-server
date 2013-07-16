@@ -653,7 +653,7 @@ function parkConv(socket, data, sender) {
         if (data.endpointType === compUser.ENDPOINT_TYPES.EXTENSION) {
 
             // check if the applicant identifier is an extension endpoint owned by the user sender
-            if (compUser.hasExtensionEndpoint(data.applicantId) === true) {
+            if (compUser.hasExtensionEndpoint(sender, data.applicantId) === true) {
 
                 astProxy.parkConversation(data.endpointType, data.endpointId, data.convid, data.applicantId, function (resp) {
                     responseToClient(socket, 'parkConv', resp);
