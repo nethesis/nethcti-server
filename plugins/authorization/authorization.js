@@ -420,6 +420,42 @@ function authorizeStreamingUser(username) {
 }
 
 /**
+* Return true if the specified user has the authorization for the
+* specified streaming source.
+*
+* @method authorizeStreamingSourceUser
+* @param  {string} username    The username
+* @param  {string} streamingId The streaming source identifier
+* @return {boolean} True if the user has the authorization for the specified streaming source.
+*/
+function authorizeStreamingSourceUser(username, streamingId) {
+    try {
+        // check parameter
+        if (typeof username !== 'string' || typeof streamingId !== 'string') {
+            throw new Error('wrong parameter');
+        }
+
+        // get streaming authorization from the user
+        var autho = userMod.getAuthorization(username, authorizationTypes.TYPES.streaming);
+
+        // analize the result
+        var objResult = autho[authorizationTypes.TYPES.streaming];
+        var stream;
+        for (stream in objResult) {
+
+            // check the type of the authorization. It must be a boolean value
+            if (stream === streamingId && objResult[stream] === true) { return true; }
+        }
+        return false;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
 * Returns all the authorized streaming sources of the user.
 *
 * @method getAuthorizedStreamingSources
@@ -580,4 +616,5 @@ exports.authorizedCustomerCards       = authorizedCustomerCards;
 exports.verifyUserEndpointExten       = verifyUserEndpointExten;
 exports.authorizeCustomerCardUser     = authorizeCustomerCardUser;
 exports.authorizeHistorySwitchUser    = authorizeHistorySwitchUser;
+exports.authorizeStreamingSourceUser  = authorizeStreamingSourceUser;
 exports.getAuthorizedStreamingSources = getAuthorizedStreamingSources;

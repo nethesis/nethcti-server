@@ -6,6 +6,7 @@
 * @static
 */
 var path               = require('path');
+var async              = require('async');
 var Queue              = require('../queue').Queue;
 var Trunk              = require('../trunk').Trunk;
 var Channel            = require('../channel').Channel;
@@ -638,7 +639,7 @@ function updateParkedChannelOfOneParking(parking, resp) {
                 // request all channels to get the caller number information of
                 // the parked channel of the specified parking
                 logger.info(IDLOG, 'request all channels to update parked caller informations for parking ' + parking);
-                astProxy.doCmd({ command: 'listChannels' }, function (resp) {
+                astProxy.doCmd({ command: 'listChannels' }, function (err, resp) {
                     // update the parked caller of one parking in "parkings" object list
                     updateParkedCallerOfOneParking(parking, resp);
                 });
@@ -719,10 +720,11 @@ function updateParkedCallerOfOneParking(parking, resp) {
 * if they are present.
 *
 * @method updateParkedCallerForAllParkings
+* @param {object} err  The error object
 * @param {object} resp The object received from the "listChannels" command plugin
 * @private
 */
-function updateParkedCallerForAllParkings(resp) {
+function updateParkedCallerForAllParkings(err, resp) {
     try {
         // cycle in all channels received from "listChannel" command plugin.
         // If a channel is present in "parkedChannels", then it is a parked
@@ -1167,10 +1169,11 @@ function updateExtSipDetails(resp) {
 * Updates the conversations for all extensions.
 *
 * @method updateConversationsForAllExten
+* @param {object} err  The error object
 * @param {object} resp The channel list as received by the _listChannels_ command plugin.
 * @private
 */
-function updateConversationsForAllExten(resp) {
+function updateConversationsForAllExten(err, resp) {
     try {
         // check parameter
         if (!resp) { throw new Error('wrong parameter'); }
@@ -1204,10 +1207,11 @@ function updateConversationsForAllExten(resp) {
 * Updates the conversations for all trunks.
 *
 * @method updateConversationsForAllTrunk
+* @param {object} err  The error object
 * @param {object} resp The channel list as received by the _listChannels_ command plugin.
 * @private
 */
-function updateConversationsForAllTrunk(resp) {
+function updateConversationsForAllTrunk(err, resp) {
     try {
         // check parameter
         if (!resp) { throw new Error('wrong parameter'); }
@@ -1535,7 +1539,7 @@ function evtSpyStartConversation(data) {
         // check parameter
         if (typeof data !== 'object' && typeof data.spierId !== 'string') { throw new Error('wrong parameter'); }
 
-        astProxy.doCmd({ command: 'listChannels' }, function (resp) {
+        astProxy.doCmd({ command: 'listChannels' }, function (err, resp) {
 
             // update the conversations of the spier
             if (extensions[data.spierId]) { updateExtenConversations(data.spierId,  resp); }
@@ -1567,7 +1571,7 @@ function evtConversationDialing(data) {
         // when dialing each channel received from listChannels command
         // plugin hasn't the information about the bridgedChannel. So add
         // it in the following manner
-        astProxy.doCmd({ command: 'listChannels' }, function (resp) {
+        astProxy.doCmd({ command: 'listChannels' }, function (err, resp) {
 
             resp[data.chDest].bridgedChannel   = data.chSource;
             resp[data.chSource].bridgedChannel = data.chDest;
@@ -1601,7 +1605,7 @@ function evtConversationConnected(num1, num2) {
 
             // request all channels
             logger.info(IDLOG, 'requests the channel list to update the extension ' + num1);
-            astProxy.doCmd({ command: 'listChannels' }, function (resp) {
+            astProxy.doCmd({ command: 'listChannels' }, function (err, resp) {
                 // update the conversations of the extension
                 updateExtenConversations(num1, resp);
             });
@@ -1612,7 +1616,7 @@ function evtConversationConnected(num1, num2) {
 
             // request all channels
             logger.info(IDLOG, 'requests the channel list to update the extension ' + num2);
-            astProxy.doCmd({ command: 'listChannels' }, function (resp) {
+            astProxy.doCmd({ command: 'listChannels' }, function (err, resp) {
                 // update the conversations of the extension
                 updateExtenConversations(num2, resp);
             });
@@ -1870,7 +1874,7 @@ function evtHangupConversation(data) {
         if (extensions[data.callerNum]) {
 
             // request all channel list and update channels of extension
-            astProxy.doCmd({ command: 'listChannels' }, function (resp) {
+            astProxy.doCmd({ command: 'listChannels' }, function (err, resp) {
 
                 // update the conversations of the extension
                 updateExtenConversations(data.callerNum, resp);
@@ -2530,20 +2534,186 @@ function setRecordStatusConversations(convid, value) {
     }
 }
 
+/**
+* Sends the DTMF tones to the specified extension. If the extension as
+* already busy in a conversation, or it's calling, then one channel already
+* exists and then use it to play DTMF. Otherwise, if the extension is free,
+* it calls the extension and then sends the DTMF digits.
+*
+* @method sendDTMFSequence
+* @param {string}   extension The extension identifier
+* @param {boolean}  sequence The DTMF digits to send to the extension
+* @param {function} cb The callback function
+* @private
+*/
+function sendDTMFSequence(extension, sequence, cb) {
+    try {
+        // check parameters
+        if (   typeof extension !== 'string'
+            || typeof sequence  !== 'string' || typeof cb !== 'function') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // check if the extension exists
+        if (!extensions[extension]) {
+            logger.warn(IDLOG, 'sending DTMF sequence to non existing extension ' + extension);
+            cb(extension + ' not exists');
+            return;
+        }
+
+        // get the channel type (sip, iax, ...) of the extension
+        var chanType = extensions[extension].getChanType();
+
+        var tyext = chanType + '/' + extension;
+
+        // gets all the active channels. If a channel of the extension already exists then
+        // play DTMF tones on that channel, otherwise it calls the extension and then sends
+        // the DMTF tones
+        astProxy.doCmd({ command: 'listChannels' }, function (err, resp) {
+            try {
+                // cycle in all the active channels to check if there is a channel of the extension
+                var ch;
+                var chdtmf;
+                for (ch in resp) {
+
+                    // check if the channel is owned by the extension
+                    if (ch.substring(0, tyext.length).toLowerCase() === tyext) {
+                        chdtmf = ch;
+                        break;
+                    }
+                }
+
+                if (chdtmf) { sendDTMFSequenceToChannel(chdtmf, sequence, cb);            }
+                else        { callAndSendDTMFSequence(chanType, extension, sequence, cb); }
+
+            } catch (err) {
+               logger.error(IDLOG, err.stack);
+               cb(err);
+            }
+        });
+
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+       cb(err);
+    }
+}
+
+/**
+* Play sequence of DTMF digits in the specified channel.
+*
+* @method sendDTMFSequenceToChannel
+* @param {string}   channel  The channel to play DTMF tones
+* @param {string}   sequence The sequence of DTMF tones
+* @param {function} cb The callback function
+* @private
+*/
+function sendDTMFSequenceToChannel(channel, sequence, cb) {
+    try {
+        // check parameters
+        if (   typeof channel  !== 'string'
+            || typeof sequence !== 'string' || typeof cb !== 'function') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // get the array from string
+        var arrSequence = sequence.split('');
+
+        // delay between to sequential DTMF tones
+        var DTMF_DELAY = 300;
+
+        // play DTMF tone for each digits
+        async.eachSeries(arrSequence, function (digit, seriesCb) {
+
+            setTimeout(function() {
+
+                // play one DTMF digit into the specified channel
+                astProxy.doCmd({ command: 'playDTMF', channel: channel, digit: digit }, function (err) {
+
+                    if (err) {
+                        logger.error(IDLOG, 'playing DTMF digit "' + digit + '" to channel ' + channel);
+                        seriesCb(err);
+
+                    } else {
+                        logger.info(IDLOG, 'played DTMF digit "' + digit + '" to channel ' + channel + ' successfully');
+                        seriesCb();
+                    }
+                });
+
+            }, DTMF_DELAY);
+
+        }, function (err) {
+
+            if (err) {
+                logger.error(IDLOG, 'playing DTMF sequence "' + sequence + '" to channel ' + channel + ': ' + err.toString());
+                cb(err);
+            }
+            else {
+                logger.info(IDLOG, 'played DTMF sequence "' + sequence + '" to channel ' + channel + ' successfully');
+                cb(null);
+            }
+        });
+
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+       cb(err);
+    }
+}
+
+/**
+* Call and then send sequence of DTMF digits to the specified extension.
+*
+* @method callAndSendDTMFSequence
+* @param {string}   chanType  The technology of the channel (e.g. SIP, IAX, ...)
+* @param {string}   extension The extension identifier
+* @param {string}   sequence The sequence of DTMF tones
+* @param {function} cb The callback function
+* @private
+*/
+function callAndSendDTMFSequence(chanType, extension, sequence, cb) {
+    try {
+        // cehck parameters
+        if (   typeof chanType  !== 'string' || typeof cb       !== 'function'
+            || typeof extension !== 'string' || typeof sequence !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // call the extension and send DTMF sequence
+        astProxy.doCmd({ command: 'callAndSendDTMF', chanType: chanType, exten: extension, sequence: sequence }, function (err) {
+
+            if (err) {
+                logger.error(IDLOG, 'calling and sending DTMF sequence "' + sequence + '" to ' + chanType + ' ' + extension);
+                cb(err);
+
+            } else {
+                logger.info(IDLOG, 'calling and sending DTMF sequence "' + sequence + '" to ' + chanType + ' ' + extension + ' has successful'); 
+                cb();
+            }
+        });
+
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+       cb(err);
+    }
+}
+
 // public interface
-exports.on                 = on;
-exports.call               = call;
-exports.start              = start;
-exports.visit              = visit;
-exports.setLogger          = setLogger;
-exports.getExtensions      = getExtensions;
-exports.pickupParking      = pickupParking;
-exports.getJSONQueues      = getJSONQueues;
-exports.getJSONParkings    = getJSONParkings;
-exports.parkConversation   = parkConversation;
-exports.getJSONExtensions  = getJSONExtensions;
-exports.hangupConversation = hangupConversation;
-exports.pickupConversation = pickupConversation;
+exports.on                          = on;
+exports.call                        = call;
+exports.start                       = start;
+exports.visit                       = visit;
+exports.setLogger                   = setLogger;
+exports.getExtensions               = getExtensions;
+exports.pickupParking               = pickupParking;
+exports.getJSONQueues               = getJSONQueues;
+exports.getJSONParkings             = getJSONParkings;
+exports.sendDTMFSequence            = sendDTMFSequence;
+exports.parkConversation            = parkConversation;
+exports.getJSONExtensions           = getJSONExtensions;
+exports.hangupConversation          = hangupConversation;
+exports.pickupConversation          = pickupConversation;
 exports.redirectConversation        = redirectConversation;
 exports.evtHangupConversation       = evtHangupConversation;
 exports.evtExtenStatusChanged       = evtExtenStatusChanged;

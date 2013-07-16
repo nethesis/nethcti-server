@@ -46,6 +46,201 @@ var compAuthorization;
 var compAstProxy;
 
 /**
+* The configuration manager architect component used for configuration functions.
+*
+* @property compConfigManager
+* @type object
+* @private
+*/
+var compConfigManager;
+
+(function(){
+    try {
+        /**
+        * REST plugin that provides asterisk functions through the following REST API:
+        *
+        * # GET requests
+        *
+        * 1. [`astproxy/cf/:endpoint`](#cfget)
+        * 1. [`astproxy/dnd/:endpoint`](#dndget)
+        *
+        * ---
+        *
+        * ### <a id="cfget">**`astproxy/cf/:type/:endpoint`**</a>
+        *
+        * Gets the call forward status of the endpoint of the user.
+        *
+        * * `endpoint: the extension identifier`
+        * * `type: ("unconditional" | "unavailable" | "busy" | "voicemail")`
+        *
+        * ---
+        *
+        * ### <a id="dndget">**`astproxy/dnd/:endpoint`**</a>
+        *
+        * Gets the don't disturb status of the endpoint of the user. The endpoint is
+        * the extension identifier.
+        *
+        * <br>
+        *
+        * # POST requests
+        *
+        * 1. [`astproxy/cf`](#cfpost)
+        * 1. [`astproxy/dnd`](#dndpost)
+        *
+        * ---
+        *
+        * ### <a id="cfpost">**`astproxy/cf`**</a>
+        *
+        * Sets the call forward status of the endpoint of the user. The request must contains
+        * the following parameters:
+        *
+        * * `endpoint: the extension identifier`
+        * * `status: ("on" | "off")`
+        * * `type: ("unconditional" | "unavailable" | "busy" | "voicemail")`
+        * * `[to]: optional when the status is off`
+        *
+        * E.g. using curl:
+        *
+        *     curl --insecure -i -X POST -d '{ "endpoint": "214", "status": "on", "type": "unconditional", "to": "340123456" }' https://192.168.5.224:8282/astproxy/cf
+        *     curl --insecure -i -X POST -d '{ "endpoint": "214", "status": "off", "type": "unconditional" }' https://192.168.5.224:8282/astproxy/cf
+        *
+        * **Note:** _unconditional_ and _voicemail_ types are mutually exclusive because both
+        * of them use the same property in the asterisk server database. So, e.g. setting the
+        * status to _off_ for _unconditional_ type, automatically set to _off_ also the _voicemail_
+        * type and vice versa. Or setting to _on_ the _unconditional_ type, automatically set to
+        * _off_ the _voicemail_ type.
+        *
+        * ---
+        *
+        * ### <a id="dndpost">**`astproxy/dnd`**</a>
+        *
+        * Sets the don't disturb status of the endpoint of the user. The request must contains
+        * the following parameters:
+        *
+        * * `status: (on|off)`
+        * * `endpoint`
+        *
+        * E.g. using curl:
+        *
+        *     curl --insecure -i -X POST -d '{ "endpoint": "214", "status": "on" }' https://192.168.5.224:8282/astproxy/dnd
+        *
+        * @class plugin_rest_astproxy
+        * @static
+        */
+        var astproxy = {
+
+            // the REST api
+            api: {
+                'root': 'astproxy',
+
+                /**
+                * REST API to be requested using HTTP POST request.
+                *
+                * @property get
+                * @type {array}
+                *
+                *   @param {string} dnd/:endpoint      Gets the don't disturb status of the endpoint of the user
+                *   @param {string} cf/:type/:endpoint Gets the call forward status of the endpoint of the user
+                */
+                'get' : [
+                    'dnd/:endpoint',
+                    'cf/:type/:endpoint'
+                ],
+
+                /**
+                * REST API to be requested using HTTP POST request.
+                *
+                * @property post
+                * @type {array}
+                *
+                *   @param {string} cf   Sets the call forward status of the endpoint of the user
+                *   @param {string} dnd  Sets the don't disturb status of the endpoint of the user
+                */
+                'post': [
+                    'cf',
+                    'dnd'
+                ],
+                'head': [],
+                'del' : []
+            },
+
+            /**
+            * Manages both GET and POST requests for call forward status of the endpoint of
+            * the user with the following REST API:
+            *
+            *     GET  cf/:type/:endpoint
+            *     POST cf
+            *
+            * @method cf
+            * @param {object} req The client request.
+            * @param {object} res The client response.
+            * @param {function} next Function to run the next handler in the chain.
+            */
+            cf: function (req, res, next) {
+                try {
+                    if      (req.method.toLowerCase() === 'get' ) { cfget(req, res, next); }
+                    else if (req.method.toLowerCase() === 'post') { cfset(req, res, next); }
+                    else    { logger.warn(IDLOG, 'unknown requested method ' + req.method); }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    sendHttp500(res, err.toString());
+                }
+            },
+
+            /**
+            * Manages both GET and POST requests for don't disturb status of the endpoint of
+            * the user with the following REST API:
+            *
+            *     GET  dnd
+            *     POST dnd/:endpoint
+            *
+            * @method dnd
+            * @param {object} req The client request.
+            * @param {object} res The client response.
+            * @param {function} next Function to run the next handler in the chain.
+            */
+            dnd: function (req, res, next) {
+                try {
+                    if      (req.method.toLowerCase() === 'get' ) { dndget(req, res, next); }
+                    else if (req.method.toLowerCase() === 'post') { dndset(req, res, next); }
+                    else    { logger.warn(IDLOG, 'unknown requested method ' + req.method); }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    sendHttp500(res, err.toString());
+                }
+            }
+        }
+        exports.cf                   = astproxy.cf;
+        exports.api                  = astproxy.api;
+        exports.dnd                  = astproxy.dnd;
+        exports.setLogger            = setLogger;
+        exports.setCompAstProxy      = setCompAstProxy;
+        exports.setCompAuthorization = setCompAuthorization;
+        exports.setCompConfigManager = setCompConfigManager;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+})();
+
+/**
+* Set configuration manager architect component used by configuration functions.
+*
+* @method setCompConfigManager
+* @param {object} cm The configuration manager architect component.
+*/
+function setCompConfigManager(cm) {
+    try {
+        compConfigManager = cm;
+        logger.info(IDLOG, 'set configuration manager architect component');
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Set the logger to be used.
 *
 * @method setLogger
@@ -704,173 +899,3 @@ function cfsetUnavailable(endpoint, username, activate, to, res) {
         sendHttp500(res, err.toString());
     }
 }
-
-(function(){
-    try {
-        /**
-        * REST plugin that provides asterisk functions through the following REST API:
-        *
-        * # GET requests
-        *
-        * 1. [`astproxy/cf/:endpoint`](#cfget)
-        * 1. [`astproxy/dnd/:endpoint`](#dndget)
-        *
-        * ---
-        *
-        * ### <a id="cfget">**`astproxy/cf/:type/:endpoint`**</a>
-        *
-        * Gets the call forward status of the endpoint of the user.
-        *
-        * * `endpoint: the extension identifier`
-        * * `type: ("unconditional" | "unavailable" | "busy" | "voicemail")`
-        *
-        * ---
-        *
-        * ### <a id="dndget">**`astproxy/dnd/:endpoint`**</a>
-        *
-        * Gets the don't disturb status of the endpoint of the user. The endpoint is
-        * the extension identifier.
-        *
-        * <br>
-        *
-        * # POST requests
-        *
-        * 1. [`astproxy/cf`](#cfpost)
-        * 1. [`astproxy/dnd`](#dndpost)
-        *
-        * ---
-        *
-        * ### <a id="cfpost">**`astproxy/cf`**</a>
-        *
-        * Sets the call forward status of the endpoint of the user. The request must contains
-        * the following parameters:
-        *
-        * * `endpoint: the extension identifier`
-        * * `status: ("on" | "off")`
-        * * `type: ("unconditional" | "unavailable" | "busy" | "voicemail")`
-        * * `[to]: optional when the status is off`
-        *
-        * E.g. using curl:
-        *
-        *     curl --insecure -i -X POST -d '{ "endpoint": "214", "status": "on", "type": "unconditional", "to": "340123456" }' https://192.168.5.224:8282/astproxy/cf
-        *     curl --insecure -i -X POST -d '{ "endpoint": "214", "status": "off", "type": "unconditional" }' https://192.168.5.224:8282/astproxy/cf
-        *
-        * **Note:** _unconditional_ and _voicemail_ types are mutually exclusive because both
-        * of them use the same property in the asterisk server database. So, e.g. setting the
-        * status to _off_ for _unconditional_ type, automatically set to _off_ also the _voicemail_
-        * type and vice versa. Or setting to _on_ the _unconditional_ type, automatically set to
-        * _off_ the _voicemail_ type.
-        *
-        * ---
-        *
-        * ### <a id="dndpost">**`astproxy/dnd`**</a>
-        *
-        * Sets the don't disturb status of the endpoint of the user. The request must contains
-        * the following parameters:
-        *
-        * * `status: (on|off)`
-        * * `endpoint`
-        *
-        * E.g. using curl:
-        *
-        *     curl --insecure -i -X POST -d '{ "endpoint": "214", "status": "on" }' https://192.168.5.224:8282/astproxy/dnd
-        * 
-        * @class plugin_rest_astproxy
-        * @static
-        */
-        var astproxy = {
-
-            // the REST api
-            api: {
-                'root': 'astproxy',
-
-                /**
-                * REST API to be requested using HTTP POST request.
-                *
-                * @property get
-                * @type {array}
-                *
-                *   @param {string} dnd/:endpoint      Gets the don't disturb status of the endpoint of the user
-                *   @param {string} cf/:type/:endpoint Gets the call forward status of the endpoint of the user
-                */
-                'get' : [
-                    'dnd/:endpoint',
-                    'cf/:type/:endpoint'
-                ],
-
-                /**
-                * REST API to be requested using HTTP POST request.
-                *
-                * @property post
-                * @type {array}
-                *
-                *   @param {string} cf  Sets the call forward status of the endpoint of the user
-                *   @param {string} dnd Sets the don't disturb status of the endpoint of the user
-                */
-                'post': [
-                    'cf',
-                    'dnd'
-                ],
-                'head': [],
-                'del' : []
-            },
-
-            /**
-            * Manages both GET and POST requests for call forward status of the endpoint of
-            * the user with the following REST API:
-            *
-            *     GET  cf/:type/:endpoint
-            *     POST cf
-            *
-            * @method cf
-            * @param {object} req The client request.
-            * @param {object} res The client response.
-            * @param {function} next Function to run the next handler in the chain.
-            */
-            cf: function (req, res, next) {
-                try {
-                    if      (req.method.toLowerCase() === 'get' ) { cfget(req, res, next); }
-                    else if (req.method.toLowerCase() === 'post') { cfset(req, res, next); }
-                    else    { logger.warn(IDLOG, 'unknown requested method ' + req.method); }
-
-                } catch (err) {
-                    logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
-                }
-            },
-
-            /**
-            * Manages both GET and POST requests for don't disturb status of the endpoint of
-            * the user with the following REST API:
-            *
-            *     GET  dnd
-            *     POST dnd/:endpoint
-            *
-            * @method dnd
-            * @param {object} req The client request.
-            * @param {object} res The client response.
-            * @param {function} next Function to run the next handler in the chain.
-            */
-            dnd: function (req, res, next) {
-                try {
-                    if      (req.method.toLowerCase() === 'get' ) { dndget(req, res, next); }
-                    else if (req.method.toLowerCase() === 'post') { dndset(req, res, next); }
-                    else    { logger.warn(IDLOG, 'unknown requested method ' + req.method); }
-
-                } catch (err) {
-                    logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
-                }
-            }
-        }
-        exports.cf                   = astproxy.cf;
-        exports.api                  = astproxy.api;
-        exports.dnd                  = astproxy.dnd;
-        exports.setLogger            = setLogger;
-        exports.setCompAstProxy      = setCompAstProxy;
-        exports.setCompAuthorization = setCompAuthorization;
-
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-})();

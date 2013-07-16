@@ -135,6 +135,14 @@ exports.Streaming = function (data) {
     function getOpenCommand() { return cmdOpen; }
 
     /**
+    * Returns the extension associated with the streaming source.
+    *
+    * @method getExtension
+    * @return {string} The extension of the streaming source.
+    */
+    function getExtension() { return extension; }
+
+    /**
     * Return the readable string of the streaming source.
     *
     * @method toString
@@ -179,6 +187,7 @@ exports.Streaming = function (data) {
         getUrl:         getUrl,
         toJSON:         toJSON,
         toString:       toString,
+        getExtension:   getExtension,
         getOpenCommand: getOpenCommand
     };
 }

@@ -147,6 +147,13 @@ module.exports = function (options, imports, register) {
             getJSONParkings: astProxy.proxyLogic.getJSONParkings,
 
             /**
+            * It's the _sendDTMFSequence_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method sendDTMFSequence
+            */
+            sendDTMFSequence: astProxy.proxyLogic.sendDTMFSequence,
+
+            /**
             * It's the _CF\_TYPES_ property provided by _proxy\_logic\_11/util\_call\_forward\_11_.
             *
             * @method CF_TYPES

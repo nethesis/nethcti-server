@@ -123,7 +123,7 @@ var IDLOG = '[listChannels]';
                         list[data.channel] = obj;
 
                     } else if (map[data.actionid] && data.event === 'CoreShowChannelsComplete') {
-                        map[data.actionid](list); // callback execution
+                        map[data.actionid](null, list); // callback execution
                     }
 
                     if (data.event === 'CoreShowChannelsComplete') {
@@ -133,6 +133,10 @@ var IDLOG = '[listChannels]';
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
+                    if (map[data.actionid]) {
+                        map[data.actionid](err);
+                        delete map[data.actionid]; // remove association ActionID-callback
+                    }
                 }
             },
 

@@ -119,6 +119,23 @@ function sendHttp401(resp) {
 }
 
 /**
+* Send HTTP 200 ok response.
+*
+* @method sendHttp200
+* @param {object} resp The client response object.
+* @private
+*/
+function sendHttp200(resp) {
+    try {
+        resp.writeHead(200);
+        logger.info(IDLOG, 'send HTTP 200 ok response to ' + resp.connection.remoteAddress);
+        resp.end();
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Send HTTP 500 internal server error response.
 *
 * @method sendHttp500
@@ -155,6 +172,25 @@ function sendHttp500(resp, err) {
         *
         * Returns all the streaming sources.
         *
+        * <br>
+        *
+        * # POST requests
+        *
+        * 1. [`streaming/open`](#openpost)
+        *
+        * ---
+        *
+        * ### <a id="streaming/openpost">**`streaming/open`**</a>
+        *
+        * Execute the command associated with the streaming to open the associated device, e.g. a door.
+        * The request must contains the following parameters:
+        *
+        * * `id: the streaming identifier`
+        *
+        * E.g. using curl:
+        *
+        *     curl --insecure -i -X POST -d '{ "id": "door" }' https://192.168.5.224:8282/streaming/open
+        *
         * @class plugin_rest_streaming
         * @static
         */
@@ -174,7 +210,15 @@ function sendHttp500(resp, err) {
                 */
                 'get': [ 'sources' ],
 
-                'post' : [],
+                /**
+                * REST API to be requested using HTTP POST request.
+                *
+                * @property post
+                * @type {array}
+                *
+                *   @param {string} open To execute the command associated with the streaming source
+                */
+                'post' : [ 'open' ],
                 'head':  [],
                 'del' :  []
             },
@@ -219,9 +263,57 @@ function sendHttp500(resp, err) {
                     logger.error(IDLOG, err.stack);
                     sendHttp500(res, err.toString());
                 }
+            },
+
+            /**
+            * Execute the command associated with the streaming source to open
+            * the associated device, e.g. a door, with the following REST API:
+            *
+            *     open
+            *
+            * @method open
+            * @param {object} req The client request.
+            * @param {object} res The client response.
+            * @param {function} next Function to run the next handler in the chain.
+            */
+            open: function (req, res, next) {
+                try {
+                    // get the username from the authorization header
+                    var username = req.headers.authorization_user;
+
+                    // get the streaming source identifier
+                    var stream = req.params.id;
+
+                    // check if the user is authorized to use the streaming source
+                    if (compAuthorization.authorizeStreamingSourceUser(username, stream) === true) {
+
+                        logger.info(IDLOG, 'authorization for user "' + username + '" to open streaming source "' + stream + '" has been successful');
+
+                        compStreaming.open(stream, function (err) {
+
+                            if (err) {
+                                logger.error(IDLOG, 'opening streaming source "' + stream + '"');
+                                sendHttp500(res);
+
+                            } else {
+                                logger.info(IDLOG, 'opened streaming source "' + stream + '" successful');
+                                sendHttp200(res);
+                            }
+                        });
+
+                    } else {
+                        logger.warn(IDLOG, 'authorization for user "' + username + '" for open streaming source "' + stream + '" has been failed !');
+                        sendHttp401(res);
+                    }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    sendHttp500(res, err.toString());
+                }
             }
         }
         exports.api                  = streaming.api;
+        exports.open                 = streaming.open;
         exports.sources              = streaming.sources;
         exports.setLogger            = setLogger;
         exports.setCompStreaming     = setCompStreaming;

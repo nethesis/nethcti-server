@@ -28,7 +28,14 @@ module.exports = function (options, imports, register) {
             *
             * @method getAllSourcesJSON
             */
-            getAllSourcesJSON: controllerStreaming.getAllSourcesJSON
+            getAllSourcesJSON: controllerStreaming.getAllSourcesJSON,
+
+            /**
+            * It's the _open_ method provided by _controller\_streaming_ module.
+            *
+            * @method open
+            */
+            open: controllerStreaming.open
         }
     });
 
@@ -38,6 +45,7 @@ module.exports = function (options, imports, register) {
 
         controllerStreaming.setLogger(logger);
         controllerStreaming.config('/etc/nethcti/streaming.json');
+        controllerStreaming.setCompAstProxy(imports.astProxy);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);

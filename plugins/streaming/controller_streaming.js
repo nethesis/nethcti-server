@@ -49,6 +49,15 @@ var logger = console;
 var streamings = {};
 
 /**
+* The asterisk proxy component used for asterisk functions.
+*
+* @property compAstProxy
+* @type object
+* @private
+*/
+var compAstProxy;
+
+/**
 * Set the logger to be used.
 *
 * @method setLogger
@@ -71,6 +80,21 @@ function setLogger(log) {
         }
     } catch (err) {
         logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the asterisk proxy component used for asterisk functions.
+*
+* @method setCompAstProxy
+* @param {object} ap The asterisk proxy component.
+*/
+function setCompAstProxy(ap) {
+    try {
+        compAstProxy = ap;
+        logger.info(IDLOG, 'set asterisk proxy architect component');
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
     }
 }
 
@@ -144,7 +168,64 @@ function getAllSourcesJSON() {
     }
 }
 
+/**
+* Executes the command associated with the streaming source to open
+* the associated device, e.g. a door.
+*
+* @method open
+* @param {string}   streamId The streaming source identifier
+* @param {function} cb       The callback function
+*/
+function open(streamId, cb) {
+    try {
+        // check parameters
+        if (typeof streamId !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        // check if the streaming source exists
+        if (typeof streamings[streamId] !== 'object') {
+            logger.warn(IDLOG, 'opening the non existent streaming source "' + streamId + '"');
+            cb('error: streaming source "' + streamId + '" doesn\'t exist');
+            return;
+        }
+
+        // get the open command of the streaming source
+        var opencmd = streamings[streamId].getOpenCommand(streamId);
+        // get the extension associated with the streaming source
+        var exten = streamings[streamId].getExtension(streamId);
+
+        // check the extension and the open command
+        if (typeof exten !== 'string' || exten === '') {
+            logger.warn(IDLOG, 'opening streaming source "' + streamId + '" with no extension');
+        }
+        if (typeof opencmd !== 'string' || opencmd === '') {
+            logger.warn(IDLOG, 'opening streaming source "' + streamId + '" with no open command');
+        }
+
+        // sends the DTMF tones to the extension device associated
+        // with the streaming source to open it
+        compAstProxy.sendDTMFSequence(exten, opencmd, function (err) {
+
+            if (err) {
+                logger.error(IDLOG, 'sending DTMF sequence "' + opencmd + '" to extension ' + exten);
+                cb(err);
+
+            } else {
+                logger.info(IDLOG, 'sending DTMF sequence "' + opencmd + '" to extension ' + exten + ' has been successful');
+                cb(null);
+            }
+        });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
 // public interface
+exports.open              = open;
 exports.config            = config;
 exports.setLogger         = setLogger;
+exports.setCompAstProxy   = setCompAstProxy;
 exports.getAllSourcesJSON = getAllSourcesJSON;
