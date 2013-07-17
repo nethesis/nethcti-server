@@ -45,6 +45,13 @@ module.exports = function (options, imports, register) {
             setUserConfigurations: configManager.setUserConfigurations,
 
             /**
+            * It's the _setUserNotificationConf_ method provided by _config\_manager_ module.
+            *
+            * @method setUserNotificationConf
+            */
+            setUserNotificationConf: configManager.setUserNotificationConf,
+
+            /**
             * It's the _getChatConf_ method provided by _config\_manager_ module.
             *
             * @method getChatConf

@@ -257,8 +257,7 @@ function setConfigurations(userid, config) {
 *
 * @method getConfigurations
 * @param {string} userid The user identifier
-* @return {object} The configurations of the user or an empty object if some
-*   problem occurs.
+* @return {object} The configurations of the user or an empty object if some errors occurs.
 */
 function getConfigurations(userid) {
     try {

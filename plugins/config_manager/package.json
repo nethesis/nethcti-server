@@ -4,8 +4,8 @@
     "private": true,
     "plugin": {
         "consumes": [
-            "logger",
-            "user"
+            "user",
+            "logger"
         ],
         "provides": [ "configManager" ]
     }

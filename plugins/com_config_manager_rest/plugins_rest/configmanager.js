@@ -119,6 +119,23 @@ function sendHttp401(resp) {
 }
 
 /**
+* Send HTTP 400 bad request response.
+*
+* @method sendHttp400
+* @param {object} resp The client response object.
+* @private
+*/
+function sendHttp400(resp) {
+    try {
+        resp.writeHead(400);
+        logger.warn(IDLOG, 'send HTTP 400 bad request response to ' + resp.connection.remoteAddress);
+        resp.end();
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Send HTTP 200 OK response.
 *
 * @method sendHttp200
@@ -195,16 +212,31 @@ function sendHttp500(resp, err) {
         * # POST requests
         *
         * 1. [`configmanager/saveuser`](#saveuserpost)
+        * 1. [`configmanager/notification`](#notificationpost)
         *
         * ---
         *
         * ### <a id="saveuserpost">**`configmanager/saveuser`**</a>
-        *     configmanager/saveuser
-
-        * Save the user configuration. The request must contain the configurations object in the
+        *
+        * Saves the user configuration. The request must contain the configurations object in the
         * POST request. E.g. using curl:
         *
         *     curl --insecure -i -X POST -d '{ "use_gravatar": true, ... }' https://192.168.5.224:8282/configmanager/saveuser
+        *
+        * ---
+        *
+        * ### <a id="notificationpost">**`configmanager/notification`**</a>
+        *
+        * Saves a user notification configuration. The request must contain the following parameters:
+        *
+        * * `type: ("voicemail" | "postit") the notification type`
+        * * `method: ("email" | "sms") the delivery method`
+        * * `when: ("always" | "never" | "offline") the value to be set for the specified key`
+        * * `to: the destination for the method: a cellphone number or an e-mail address`
+        *
+        * E.g. using curl:
+        *
+        *     curl --insecure -i -X POST -d '{ "type": "voicemail", "method": "email", "when": "offline", "to": "a@a.it" }' https://192.168.5.224:8282/configmanager/notification
         *
         * @class plugin_rest_configmanager
         * @static
@@ -239,8 +271,12 @@ function sendHttp500(resp, err) {
                 *
                 *   @param {string} saveuser To save the user configuration. The configuration
                 *       is passed as JSON object in the POST request
+                *   @param {string} notification To save a configuration of a notification
                 */
-                'post' : [ 'saveuser' ],
+                'post' : [
+                    'saveuser',
+                    'notification'
+                ],
                 'head':  [],
                 'del' :  []
             },
@@ -378,6 +414,60 @@ function sendHttp500(resp, err) {
                     logger.error(IDLOG, err.stack);
                     sendHttp500(res, err.toString());
                 }
+            },
+
+            /**
+            * Save a user notification configuration with the following REST API:
+            *
+            *     notification
+            *
+            * @method notification
+            * @param {object} req The client request.
+            * @param {object} res The client response.
+            * @param {function} next Function to run the next handler in the chain.
+            */
+            notification: function (req, res, next) {
+                try {
+                    var to       = req.params.to;
+                    var type     = req.params.type;
+                    var when     = req.params.when;
+                    var method   = req.params.method;
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (   typeof when !== 'string' || typeof method   !== 'string'
+                        || typeof type !== 'string' || typeof username !== 'string'
+                        || typeof to   !== 'string'
+                        || (type   !== 'voicemail' && type   !== 'postit')
+                        || (method !== 'email'     && method !== 'sms')
+                        || (when   !== 'always'    && when   !== 'never' && when !== 'offline') ) {
+
+                        sendHttp400(res);
+                        return;
+                    }
+
+                    var data = {
+                        to:       to,
+                        type:     type,
+                        when:     when,
+                        method:   method,
+                        username: username
+                    };
+                    compConfigManager.setUserNotificationConf(data, function (err) {
+                        try {
+                            if (err) { sendHttp500(res, err.toString()); }
+                            else     { sendHttp200(res); }
+
+                        } catch (err) {
+                            logger.error(IDLOG, err.stack);
+                            sendHttp500(res, err.toString());
+                        }
+                    });
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    sendHttp500(res, err.toString());
+                }
             }
         }
         exports.api                  = configmanager.api;
@@ -385,6 +475,7 @@ function sendHttp500(resp, err) {
         exports.saveuser             = configmanager.saveuser;
         exports.setLogger            = setLogger;
         exports.chatserver           = configmanager.chatserver;
+        exports.notification         = configmanager.notification;
         exports.userendpoints        = configmanager.userendpoints;
         exports.setCompConfigManager = setCompConfigManager;
         exports.setCompAuthorization = setCompAuthorization;
