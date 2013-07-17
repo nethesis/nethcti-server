@@ -38,11 +38,18 @@ module.exports = function (options, imports, register) {
             getUserEndpointsJSON: configManager.getUserEndpointsJSON,
 
             /**
-            * It's the _setUserConfigurations_ method provided by _config\_manager_ module.
+            * It's the _setUserNotificationConf_ method provided by _config\_manager_ module.
             *
-            * @method setUserConfigurations
+            * @method setUserNotificationConf
             */
-            setUserConfigurations: configManager.setUserConfigurations,
+            setUserNotificationConf: configManager.setUserNotificationConf,
+
+            /**
+            * It's the _setUserClick2CallConf_ method provided by _config\_manager_ module.
+            *
+            * @method setUserClick2CallConf
+            */
+            setUserClick2CallConf: configManager.setUserClick2CallConf,
 
             /**
             * It's the _getChatConf_ method provided by _config\_manager_ module.
