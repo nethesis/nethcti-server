@@ -16,6 +16,7 @@
 }
 */
 var USER_CONFIG_KEYS = {
+    'click2call':    'click2call',
     'notifications': 'notifications'
 }
 

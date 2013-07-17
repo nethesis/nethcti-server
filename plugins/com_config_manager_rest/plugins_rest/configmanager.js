@@ -211,17 +211,28 @@ function sendHttp500(resp, err) {
         *
         * # POST requests
         *
-        * 1. [`configmanager/saveuser`](#saveuserpost)
+        * 1. [`configmanager/click2call`](#click2callpost)
         * 1. [`configmanager/notification`](#notificationpost)
         *
         * ---
         *
-        * ### <a id="saveuserpost">**`configmanager/saveuser`**</a>
+        * ### <a id="#click2callpost">**`configmanager/click2call`**</a>
         *
-        * Saves the user configuration. The request must contain the configurations object in the
-        * POST request. E.g. using curl:
+        * Saves the user configuration of the click to call. The request must contain the following parameters:
         *
-        *     curl --insecure -i -X POST -d '{ "use_gravatar": true, ... }' https://192.168.5.224:8282/configmanager/saveuser
+        * * `type: ("manual" | "automatic") the click2call type`
+        * * `[device]: ("yealink" | "snom" | "url") the device brand or the "url" string. It's needed with automatic type`
+        * * `[model]: the yealink model. It's needed with automatic type and yealink device`
+        * * `[user]: the device username. It's needed with automatic type and yealink or snom device`
+        * * `[password]: the device password. It's needed with automatic type and yealink or snom device`
+        * * `[url]: the HTTP url. It's needed with automatic type and url device`
+        *
+        * E.g. using curl:
+        *
+        *     curl --insecure -i -X POST -d '{ "type": "manual" }' https://192.168.5.224:8282/configmanager/notification
+        *     curl --insecure -i -X POST -d '{ "type": "automatic", "device": "yealink", "model": "t26", "user": "admin", "password": "admin" }' https://192.168.5.224:8282/configmanager/notification
+        *     curl --insecure -i -X POST -d '{ "type": "automatic", "device": "snom", "user": "admin", "password": "admin" }' https://192.168.5.224:8282/configmanager/notification
+        *     curl --insecure -i -X POST -d '{ "type": "automatic", "device": "url", "url": "http://<IP_PHONE>/cgi-bin/cgiServer.exx?number=<CALL_TO>&outgoing_uri=<FROM_EXT>@<SERVER>" }' https://192.168.5.224:8282/configmanager/notification
         *
         * ---
         *
@@ -269,12 +280,11 @@ function sendHttp500(resp, err) {
                 * @property post
                 * @type {array}
                 *
-                *   @param {string} saveuser To save the user configuration. The configuration
-                *       is passed as JSON object in the POST request
-                *   @param {string} notification To save a configuration of a notification
+                *   @param {string} click2callave To save the click to call mode of the user
+                *   @param {string} notification To save a user notification setting
                 */
                 'post' : [
-                    'saveuser',
+                    'click2call',
                     'notification'
                 ],
                 'head':  [],
@@ -390,33 +400,6 @@ function sendHttp500(resp, err) {
             },
 
             /**
-            * Save the user configurations with the following REST API:
-            *
-            *     saveuser
-            *
-            * @method saveuser
-            * @param {object} req The client request.
-            * @param {object} res The client response.
-            * @param {function} next Function to run the next handler in the chain.
-            */
-            saveuser: function (req, res, next) {
-                try {
-                    var username = req.headers.authorization_user;
-                    var config   = req.params;
-
-                    compConfigManager.setUserConfigurations(username, config, function (err) {
-
-                        if (err) { sendHttp500(res, err.toString()); }
-                        else     { sendHttp200(res); }
-                    });
-
-                } catch (err) {
-                    logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
-                }
-            },
-
-            /**
             * Save a user notification configuration with the following REST API:
             *
             *     notification
@@ -468,12 +451,70 @@ function sendHttp500(resp, err) {
                     logger.error(IDLOG, err.stack);
                     sendHttp500(res, err.toString());
                 }
+            },
+
+            /**
+            * Save a user click to call configuration with the following REST API:
+            *
+            *     click2call
+            *
+            * @method notification
+            * @param {object} req The client request.
+            * @param {object} res The client response.
+            * @param {function} next Function to run the next handler in the chain.
+            */
+            click2call: function (req, res, next) {
+                try {
+                    var url      = req.params.url;
+                    var type     = req.params.type;
+                    var user     = req.params.user;
+                    var model    = req.params.model;
+                    var device   = req.params.device;
+                    var password = req.params.password;
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (typeof type !== 'string'
+                        || (type !== 'automatic' && type !== 'manual')
+                        || (type === 'automatic' && typeof device !== 'string')
+                        || (type === 'automatic' && device === 'yealink' && (typeof user !== 'string' || typeof password !== 'string' || typeof model !== 'string'))
+                        || (type === 'automatic' && device === 'snom'    && (typeof user !== 'string' || typeof password !== 'string'))
+                        || (type === 'automatic' && device === 'url'     &&  typeof url  !== 'string')) {
+
+                        sendHttp400(res);
+                        return;
+                    }
+
+                    var data = {
+                        url:      url,
+                        type:     type,
+                        user:     user,
+                        model:    model,
+                        device:   device,
+                        password: password,
+                        username: username
+                    };
+                    compConfigManager.setUserClick2CallConf(data, function (err) {
+                        try {
+                            if (err) { sendHttp500(res, err.toString()); }
+                            else     { sendHttp200(res); }
+
+                        } catch (err) {
+                            logger.error(IDLOG, err.stack);
+                            sendHttp500(res, err.toString());
+                        }
+                    });
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    sendHttp500(res, err.toString());
+                }
             }
         }
         exports.api                  = configmanager.api;
         exports.userconf             = configmanager.userconf;
-        exports.saveuser             = configmanager.saveuser;
         exports.setLogger            = setLogger;
+        exports.click2call           = configmanager.click2call;
         exports.chatserver           = configmanager.chatserver;
         exports.notification         = configmanager.notification;
         exports.userendpoints        = configmanager.userendpoints;

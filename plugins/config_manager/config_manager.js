@@ -362,6 +362,74 @@ function updateAllUsersConfInJSONFile(cb) {
     }
 }
 
+/**
+* Saves the specified notification setting for the user.
+*
+* @method setUserClick2CallConf
+* @param {object} data
+*   @param {string} data.type     The click to call type
+*   @param {string} data.device   The device brand or the "url" string
+*   @param {string} data.model    The model of the device
+*   @param {string} data.user     The username of the device
+*   @param {string} data.password The password of the device
+*   @param {string} data.url      The HTTP url to use the device for click to call
+* @param {function} cb            The callback function
+*/
+function setUserClick2CallConf(data, cb) {
+    try {
+        // check parameters
+        if (typeof data   !== 'object'    || typeof cb !== 'function' || typeof data.type !== 'string'
+            || (data.type !== 'automatic' && data.type !== 'manual')
+            || (data.type === 'automatic' && typeof data.device !== 'string')
+            || (data.type === 'automatic' && data.device === 'yealink' && (typeof data.user !== 'string' || typeof data.password !== 'string' || typeof data.model !== 'string'))
+            || (data.type === 'automatic' && data.device === 'snom'    && (typeof data.user !== 'string' || typeof data.password !== 'string'))
+            || (data.type === 'automatic' && data.device === 'url'     &&  typeof data.url  !== 'string')) {
+
+            throw new Error('wrong parameter');
+        }
+
+        // get the user configuration from the User object to update it
+        var config = compUser.getConfigurations(data.username);
+
+        // update the User object. Change the specified click2call setting.
+        // This update is automatically reported in the User object because
+        // it's a reference link to it.
+        // Also the relative section of "contentJsonConfigFile" property is automatically
+        // updated, because the "configUser" function sets the user configurations to be
+        // a reference link to it.
+        logger.info(IDLOG, 'update click2call setting of user "' + data.username + '"');
+
+        config[USER_CONFIG_KEYS.click2call].type = data.type;
+
+        if (data.type === 'automatic' && data.device === 'yealink') {
+            config[USER_CONFIG_KEYS.click2call].automatic.device           = data.device;
+            config[USER_CONFIG_KEYS.click2call].automatic.yealink.user     = data.user;
+            config[USER_CONFIG_KEYS.click2call].automatic.yealink.model    = data.model;
+            config[USER_CONFIG_KEYS.click2call].automatic.yealink.password = data.password;
+
+        } else if (data.type === 'automatic' && data.device === 'snom') {
+            config[USER_CONFIG_KEYS.click2call].automatic.device        = data.device;
+            config[USER_CONFIG_KEYS.click2call].automatic.snom.user     = data.user;
+            config[USER_CONFIG_KEYS.click2call].automatic.snom.password = data.password;
+
+        } else if (data.type === 'automatic' && data.device === 'url') {
+            config[USER_CONFIG_KEYS.click2call].automatic.device = data.device;
+            config[USER_CONFIG_KEYS.click2call].automatic.url    = data.url;
+
+        } else if (data.type !== 'manual') {
+            logger.error(IDLOG, 'setting click2call setting for user "' + data.username + '"');
+        }
+
+        // update the notification settings section in the configuration file in the filesystem
+        // store the configurations of all the users. This is because the _contentJsonConfigFile_
+        // property contains all the users
+        storeAllUsersConfigurations(data.username, cb);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
 // public interface
 exports.setLogger               = setLogger;
 exports.configUser              = configUser;
@@ -370,4 +438,5 @@ exports.getChatConf             = getChatConf;
 exports.setCompUser             = setCompUser;
 exports.getUserEndpointsJSON    = getUserEndpointsJSON;
 exports.getUserConfigurations   = getUserConfigurations;
+exports.setUserClick2CallConf   = setUserClick2CallConf;
 exports.setUserNotificationConf = setUserNotificationConf;
