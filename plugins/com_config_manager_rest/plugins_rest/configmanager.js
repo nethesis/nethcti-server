@@ -185,13 +185,13 @@ function sendHttp500(resp, err) {
         *
         * # GET requests
         *
-        * 1. [`configmanager/userconf`](#userconfget)
+        * 1. [`configmanager/user`](#userget)
         * 1. [`configmanager/chatserver`](#chatserverget)
         * 1. [`configmanager/userendpoints`](#userendpointsget)
         *
         * ---
         *
-        * ### <a id="userconfget">**`configmanager/userconf`**</a>
+        * ### <a id="userget">**`configmanager/user`**</a>
         *
         * Returns the configurations of the user.
         *
@@ -301,7 +301,7 @@ function sendHttp500(resp, err) {
             * @param {object} res The client response.
             * @param {function} next Function to run the next handler in the chain.
             */
-            userconf: function (req, res, next) {
+            user: function (req, res, next) {
                 try {
                     var username = req.headers.authorization_user;
                     var results  = compConfigManager.getUserConfigurations(username);
@@ -512,7 +512,7 @@ function sendHttp500(resp, err) {
             }
         }
         exports.api                  = configmanager.api;
-        exports.userconf             = configmanager.userconf;
+        exports.user                 = configmanager.user;
         exports.setLogger            = setLogger;
         exports.click2call           = configmanager.click2call;
         exports.chatserver           = configmanager.chatserver;
