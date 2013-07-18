@@ -35,6 +35,13 @@ module.exports = function (options, imports, register) {
             authorizeHistoryUser: authorization.authorizeHistoryUser,
 
             /**
+            * It's the _authorizeOperatorPanelUser_ method provided by _authorization_ module.
+            *
+            * @method authorizeOperatorPanelUser
+            */
+            authorizeOperatorPanelUser: authorization.authorizeOperatorPanelUser,
+
+            /**
             * It's the _authorizeHistorySwitchUser_ method provided by _authorization_ module.
             *
             * @method authorizeHistorySwitchUser

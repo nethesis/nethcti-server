@@ -251,6 +251,27 @@ function authorizeHistoryUser(username) {
 }
 
 /**
+* Return true if the specified user has the operator panel authorization.
+*
+* @method authorizeOperatorPanelUser
+* @param {string} username The username
+* @return {boolean} True if the user has the operator panel authorization.
+*/
+function authorizeOperatorPanelUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.operator_panel, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
 * Return true if the specified user has the switchboard history authorization.
 *
 * @method authorizeHistorySwitchUser
@@ -615,6 +636,7 @@ exports.authorizeCallerNoteUser       = authorizeCallerNoteUser;
 exports.authorizedCustomerCards       = authorizedCustomerCards;
 exports.verifyUserEndpointExten       = verifyUserEndpointExten;
 exports.authorizeCustomerCardUser     = authorizeCustomerCardUser;
+exports.authorizeOperatorPanelUser    = authorizeOperatorPanelUser;
 exports.authorizeHistorySwitchUser    = authorizeHistorySwitchUser;
 exports.authorizeStreamingSourceUser  = authorizeStreamingSourceUser;
 exports.getAuthorizedStreamingSources = getAuthorizedStreamingSources;
