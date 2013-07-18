@@ -458,10 +458,26 @@ function getEndpointsJSON(userid) {
     }
 }
 
+/**
+* Returns the list of all the usernames.
+*
+* @method getUsernames
+* @return {array} The list of all the usernames.
+*/
+function getUsernames() {
+    try {
+        return Object.keys(users);
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return [];
+    }
+}
+
 // public interface
 exports.on                   = on;
 exports.config               = config;
 exports.setLogger            = setLogger;
+exports.getUsernames         = getUsernames;
 exports.getEndpointsJSON     = getEndpointsJSON;
 exports.getVoicemailList     = getVoicemailList;
 exports.setAuthorization     = setAuthorization;

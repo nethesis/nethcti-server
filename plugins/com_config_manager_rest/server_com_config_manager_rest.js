@@ -219,6 +219,32 @@ function setCompConfigManager(cm) {
 }
 
 /**
+* Set the user architect component to be used by REST plugins.
+*
+* @method setCompuser
+* @param {object} cu The architect user component
+* @static
+*/
+function setCompUser(cu) {
+    try {
+        // check parameter
+        if (typeof cu !== 'object') { throw new Error('wrong parameter'); }
+
+        var p;
+        // set user architect component to all REST plugins
+        for (p in plugins) {
+
+            if (typeof plugins[p].setCompUser === 'function') {
+                plugins[p].setCompUser(cu);
+            }
+        }
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Configurates the REST server properties by a configuration file.
 * The file must use the JSON syntax.
 *
@@ -311,5 +337,6 @@ function start() {
 exports.start                = start;
 exports.config               = config;
 exports.setLogger            = setLogger;
+exports.setCompUser          = setCompUser;
 exports.setCompConfigManager = setCompConfigManager;
 exports.setCompAuthorization = setCompAuthorization;

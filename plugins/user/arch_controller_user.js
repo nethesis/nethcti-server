@@ -94,7 +94,14 @@ module.exports = function (options, imports, register) {
             *
             * @method getEndpointsJSON
             */
-            getEndpointsJSON: controllerUser.getEndpointsJSON
+            getEndpointsJSON: controllerUser.getEndpointsJSON,
+
+            /**
+            * It's the _getUsernames_ method provided by _controller\_user_ module.
+            *
+            * @method getUsernames
+            */
+            getUsernames: controllerUser.getUsernames
         }
     });
 

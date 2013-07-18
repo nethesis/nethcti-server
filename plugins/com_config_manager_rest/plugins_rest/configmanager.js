@@ -37,6 +37,15 @@ var logger = console;
 var compAuthorization;
 
 /**
+* The architect component to be used for user functions.
+*
+* @property compUser
+* @type object
+* @private
+*/
+var compUser;
+
+/**
 * The configuration manager architect component used for configuration functions.
 *
 * @property compConfigManager
@@ -81,6 +90,21 @@ function setCompConfigManager(cm) {
     try {
         compConfigManager = cm;
         logger.info(IDLOG, 'set configuration manager architect component');
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Set user architect component used for user functions.
+*
+* @method setCompUser
+* @param {object} cu The user architect component.
+*/
+function setCompUser(cu) {
+    try {
+        compUser = cu;
+        logger.info(IDLOG, 'set user architect component');
     } catch (err) {
        logger.error(IDLOG, err.stack);
     }
@@ -185,15 +209,22 @@ function sendHttp500(resp, err) {
         *
         * # GET requests
         *
-        * 1. [`configmanager/user`](#userget)
+        * 1. [`configmanager/userconf`](#userconfget)
+        * 1. [`configmanager/usernames`](#usernamesget)
         * 1. [`configmanager/chatserver`](#chatserverget)
         * 1. [`configmanager/userendpoints`](#userendpointsget)
         *
         * ---
         *
-        * ### <a id="userget">**`configmanager/user`**</a>
+        * ### <a id="userconfget">**`configmanager/userconf`**</a>
         *
         * Returns the configurations of the user.
+        *
+        * ---
+        *
+        * ### <a id="usernamesget">**`configmanager/usernames`**</a>
+        *
+        * Returns the list of all the username.
         *
         * ---
         *
@@ -264,12 +295,14 @@ function sendHttp500(resp, err) {
                 * @property get
                 * @type {array}
                 *
-                *   @param {string} user         To get all user configurations
+                *   @param {string} userconf     To get all user configurations
+                *   @param {string} usernames    To get the list of all the username
                 *   @param {string} chatserver   To get the server chat parameters
                 *   @param {string} userendpoint To get all the endpoints of the user
                 */
                 'get': [
-                    'user',
+                    'userconf',
+                    'usernames',
                     'chatserver',
                     'userendpoints'
                 ],
@@ -301,7 +334,7 @@ function sendHttp500(resp, err) {
             * @param {object} res The client response.
             * @param {function} next Function to run the next handler in the chain.
             */
-            user: function (req, res, next) {
+            userconf: function (req, res, next) {
                 try {
                     var username = req.headers.authorization_user;
                     var results  = compConfigManager.getUserConfigurations(username);
@@ -316,6 +349,30 @@ function sendHttp500(resp, err) {
                         logger.info(IDLOG, 'send configuration of user "' + username + '"');
                         res.send(200, results);
                     }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    sendHttp500(res, err.toString());
+                }
+            },
+
+            /**
+            * Gets the list of all the username with the following REST API:
+            *
+            *     usernames
+            *
+            * @method userslist
+            * @param {object} req The client request.
+            * @param {object} res The client response.
+            * @param {function} next Function to run the next handler in the chain.
+            */
+            usernames: function (req, res, next) {
+                try {
+                    var username     = req.headers.authorization_user;
+                    var usernameList = compUser.getUsernames();
+
+                    logger.info(IDLOG, 'send the list of all the usernames to the user "' + username + '"');
+                    res.send(200, usernameList);
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
@@ -512,10 +569,12 @@ function sendHttp500(resp, err) {
             }
         }
         exports.api                  = configmanager.api;
-        exports.user                 = configmanager.user;
+        exports.userconf             = configmanager.userconf;
         exports.setLogger            = setLogger;
+        exports.usernames            = configmanager.usernames;
         exports.click2call           = configmanager.click2call;
         exports.chatserver           = configmanager.chatserver;
+        exports.setCompUser          = setCompUser;
         exports.notification         = configmanager.notification;
         exports.userendpoints        = configmanager.userendpoints;
         exports.setCompConfigManager = setCompConfigManager;
