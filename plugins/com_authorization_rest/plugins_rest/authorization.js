@@ -142,9 +142,13 @@ function sendHttp500(resp, err) {
         /**
         * REST plugin that provides authorization functions through the following REST API:
         *
-        * **GET request**
+        * # GET requests
         *
-        *     user
+        * 1. [`authorization/user`](#userget)
+        *
+        * ---
+        *
+        * ### <a id="userget">**`authorization/user`**</a>
         *
         * Returns the user authorizations.
         *
