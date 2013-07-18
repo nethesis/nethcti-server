@@ -63,6 +63,7 @@ var compConfigManager;
         *
         * 1. [`astproxy/cf/:endpoint`](#cfget)
         * 1. [`astproxy/dnd/:endpoint`](#dndget)
+        * 1. [`astproxy/extensions`](#extensionsget)
         *
         * ---
         *
@@ -79,6 +80,12 @@ var compConfigManager;
         *
         * Gets the don't disturb status of the endpoint of the user. The endpoint is
         * the extension identifier.
+        *
+        * ---
+        *
+        * ### <a id="extensionset">**`astproxy/extensions`**</a>
+        *
+        * Gets all the extensions with all their status informations.
         *
         * <br>
         *
@@ -139,10 +146,12 @@ var compConfigManager;
                 * @property get
                 * @type {array}
                 *
+                *   @param {string} extensions         Gets all the extensions with all their status informations
                 *   @param {string} dnd/:endpoint      Gets the don't disturb status of the endpoint of the user
                 *   @param {string} cf/:type/:endpoint Gets the call forward status of the endpoint of the user
                 */
                 'get' : [
+                    'extensions',
                     'dnd/:endpoint',
                     'cf/:type/:endpoint'
                 ],
@@ -162,6 +171,38 @@ var compConfigManager;
                 ],
                 'head': [],
                 'del' : []
+            },
+
+            /**
+            * Gets all the extensions with all their status informations with the following REST API:
+            *
+            *     GET  extensions
+            *
+            * @method extensions
+            * @param {object} req The client request.
+            * @param {object} res The client response.
+            * @param {function} next Function to run the next handler in the chain.
+            */
+            extensions: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check if the user has the operator panel authorization
+                    if (compAuthorization.authorizeOperatorPanelUser(username) !== true) {
+
+                        logger.warn(IDLOG, 'requesting extensions: authorization operator panel failed for user "' + username + '"');
+                        sendHttp401(res);
+                        return;
+                    }
+
+                    var extensions = compAstProxy.getJSONExtensions();
+                    logger.info(IDLOG, 'sent all extensions in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
+                    res.send(200, extensions);
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    sendHttp500(res, err.toString());
+                }
             },
 
             /**
@@ -216,6 +257,7 @@ var compConfigManager;
         exports.api                  = astproxy.api;
         exports.dnd                  = astproxy.dnd;
         exports.setLogger            = setLogger;
+        exports.extensions           = astproxy.extensions;
         exports.setCompAstProxy      = setCompAstProxy;
         exports.setCompAuthorization = setCompAuthorization;
         exports.setCompConfigManager = setCompConfigManager;
