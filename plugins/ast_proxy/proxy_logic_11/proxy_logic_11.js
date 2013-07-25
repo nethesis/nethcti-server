@@ -1,4 +1,11 @@
 /**
+* Provides the logic relative to asterisk 11.
+*
+* @module ast_proxy
+* @submodule proxy_logic_11
+*/
+
+/**
 * This is the asterisk proxy logic linked to version 11
 * of the asterisk server.
 *
@@ -874,7 +881,8 @@ function getJSONParkings() {
 }
 
 /**
-* Returns the JSON representation of the all extensions.
+* Returns the JSON representation of all the extensions. If some error
+* occurs it returns an empty object.
 *
 * @method getJSONExtensions
 * @return {object} The JSON representation of the all extensions.
@@ -888,6 +896,7 @@ function getJSONExtensions() {
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
+        return {};
     }
 }
 

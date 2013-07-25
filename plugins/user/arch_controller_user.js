@@ -109,7 +109,14 @@ module.exports = function (options, imports, register) {
             *
             * @method ENDPOINT_TYPES
             */
-            ENDPOINT_TYPES: endpointTypes.TYPES
+            ENDPOINT_TYPES: endpointTypes.TYPES,
+
+            /**
+            * It's the _getUsernames_ method provided by _controller\_user_ module.
+            *
+            * @method getUsernames
+            */
+            getUsernames: controllerUser.getUsernames
         }
     });
 
