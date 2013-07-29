@@ -758,7 +758,7 @@ function getHistoryPostitInterval(data, cb) {
 * Gets all the voice messages of a voicemail of the specified type. It search the
 * results into the _asteriskcdrdb.voicemessages_ database. The type can be "new" or "old".
 *
-* @method getVoicemailNewMsg
+* @method getVoicemailMsg
 * @param {string} vmId The voicemail identifier
 * @param {string} type The type of the voicemail to retrieve. It can be "new" or "old"
 * @param {function} cb The callback function
@@ -786,7 +786,8 @@ function getVoicemailMsg(vmId, type, cb) {
             ],
             attributes: [
                 [ 'origtime * 1000', 'origtime' ],
-                'id', 'dir', 'callerid', 'duration', 'msg_id', 'mailboxuser'
+                [ 'TIME_FORMAT(SEC_TO_TIME(duration), "%i:%s")', 'duration' ],
+                'id', 'dir', 'callerid', 'mailboxuser'
             ]
         }).success(function (results) {
 
@@ -797,7 +798,7 @@ function getVoicemailMsg(vmId, type, cb) {
             }
 
             logger.info(IDLOG, results.length + ' results searching ' + type + ' voice messages of voicemail "' + vmId + '"');
-            cb(null, results);
+            cb(null, vmId, results);
 
         }).error(function (err) { // manage the error
 
@@ -806,6 +807,7 @@ function getVoicemailMsg(vmId, type, cb) {
         });
     } catch (err) {
         logger.error(IDLOG, err.stack);
+        cb(err);
     }
 }
 
@@ -850,6 +852,7 @@ function getVoicemailOldMsg(vmId, cb) {
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
+        cb(err);
     }
 }
 

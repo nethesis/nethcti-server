@@ -20,5 +20,24 @@ var USER_CONFIG_KEYS = {
     'notifications': 'notifications'
 }
 
+/**
+* The list of the type of "when" send a notification.
+*
+* @property NOTIF_WHEN
+* @type {object}
+* @readOnly
+* @default {
+    "never":   "never",
+    "always":  "always",
+    "offline": "offline"
+}
+*/
+var NOTIF_WHEN = {
+    'never':   'never',
+    'always':  'always',
+    'offline': 'offline'
+}
+
 // public interface
+exports.NOTIF_WHEN       = NOTIF_WHEN;
 exports.USER_CONFIG_KEYS = USER_CONFIG_KEYS;

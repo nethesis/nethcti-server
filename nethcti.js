@@ -23,6 +23,7 @@ try{
         { packagePath: "./plugins/caller_note"             },
         { packagePath: "./plugins/config_manager"          },
         { packagePath: "./plugins/customer_card"           },
+        { packagePath: "./plugins/notification_manager"    },
         { packagePath: "./plugins/com_authe_rest"          },
         { packagePath: "./plugins/com_postit_rest"         },
         { packagePath: "./plugins/com_history_rest"        },

@@ -34,9 +34,18 @@ module.exports = function (options, imports, register) {
 
     try {
         var logger = console;
+
         if (imports.logger) { logger = imports.logger; }
 
         notificationManager.setLogger(logger);
+        notificationManager.config('/etc/nethcti/nethcti.json');
+        notificationManager.setCompSms(imports.sms);
+        notificationManager.setCompUser(imports.user);
+        notificationManager.setCompMailer(imports.mailer);
+        notificationManager.setCompVoicemail(imports.voicemail);
+        notificationManager.setCompAuthorization(imports.authorization);
+        notificationManager.setCompConfigManager(imports.configManager);
+        notificationManager.start();
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }

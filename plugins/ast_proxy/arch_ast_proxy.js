@@ -158,7 +158,35 @@ module.exports = function (options, imports, register) {
             *
             * @method CF_TYPES
             */
-            CF_TYPES: require('./proxy_logic_11/util_call_forward_11').CF_TYPES
+            CF_TYPES: require('./proxy_logic_11/util_call_forward_11').CF_TYPES,
+
+            /**
+            * It's the _EVT\_EXTEN\_CHANGED_ property provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method EVT_EXTEN_CHANGED
+            */
+            EVT_EXTEN_CHANGED: astProxy.proxyLogic.EVT_EXTEN_CHANGED,
+
+            /**
+            * It's the _EVT\_QUEUE\_CHANGED_ property provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method EVT_QUEUE_CHANGED
+            */
+            EVT_QUEUE_CHANGED: astProxy.proxyLogic.EVT_QUEUE_CHANGED,
+
+            /**
+            * It's the _EVT\_PARKING\_CHANGED_ property provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method EVT_PARKING_CHANGED
+            */
+            EVT_PARKING_CHANGED: astProxy.proxyLogic.EVT_PARKING_CHANGED,
+
+            /**
+            * It's the _EVT\_NEW\_VOICEMAIL_ property provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method EVT_NEW_VOICEMAIL
+            */
+            EVT_NEW_VOICEMAIL: astProxy.proxyLogic.EVT_NEW_VOICEMAIL
         }
     });
 

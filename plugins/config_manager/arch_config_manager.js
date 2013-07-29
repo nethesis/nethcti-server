@@ -56,7 +56,35 @@ module.exports = function (options, imports, register) {
             *
             * @method getChatConf
             */
-            getChatConf: configManager.getChatConf
+            getChatConf: configManager.getChatConf,
+
+            /**
+            * It's the _verifySendVoicemailNotificationByEmail_ method provided by _config\_manager_ module.
+            *
+            * @method verifySendVoicemailNotificationByEmail
+            */
+            verifySendVoicemailNotificationByEmail: configManager.verifySendVoicemailNotificationByEmail,
+
+            /**
+            * It's the _verifySendVoicemailNotificationBySms_ method provided by _config\_manager_ module.
+            *
+            * @method verifySendVoicemailNotificationBySms
+            */
+            verifySendVoicemailNotificationBySms: configManager.verifySendVoicemailNotificationBySms,
+
+            /**
+            * It's the _getVoicemailNotificationEmailTo_ method provided by _config\_manager_ module.
+            *
+            * @method getVoicemailNotificationEmailTo
+            */
+            getVoicemailNotificationEmailTo: configManager.getVoicemailNotificationEmailTo,
+
+            /**
+            * It's the _getVoicemailNotificationSmsTo_ method provided by _config\_manager_ module.
+            *
+            * @method getVoicemailNotificationSmsTo
+            */
+            getVoicemailNotificationSmsTo: configManager.getVoicemailNotificationSmsTo
         }
     });
 

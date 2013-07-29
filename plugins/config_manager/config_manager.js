@@ -5,6 +5,7 @@
 * @main arch_config_manager
 */
 var fs               = require('fs');
+var NOTIF_WHEN       = require('./user_config_keys').NOTIF_WHEN;
 var USER_CONFIG_KEYS = require('./user_config_keys').USER_CONFIG_KEYS;
 
 /**
@@ -160,7 +161,8 @@ function configUser(path) {
     for (userTemp in contentJsonConfigFile) {
 
         // check the configuration object of the user
-        if (typeof contentJsonConfigFile[userTemp] === 'object' && typeof contentJsonConfigFile[userTemp][CONFIG_FILE_HEAD] === 'object') {
+        if (   typeof contentJsonConfigFile[userTemp]                   === 'object'
+            && typeof contentJsonConfigFile[userTemp][CONFIG_FILE_HEAD] === 'object') {
 
             // with this operation, the configuration set in the User object is a reference link to the
             // "contentJsonConfigFile" property. So the future change in the configurations of the User
@@ -333,8 +335,8 @@ function storeAllUsersConfigurations(username, cb) {
 */
 function updateAllUsersConfInJSONFile(cb) {
     try {
-        // check parameters
-        if (typeof cb !== 'function') { throw new Error('wrong parameters'); }
+        // check parameter
+        if (typeof cb !== 'function') { throw new Error('wrong parameter'); }
 
         // updated JSON configuration file with the "contentJsonConfigFile" property. It's updated
         // changing the configuration settings of the users
@@ -430,13 +432,180 @@ function setUserClick2CallConf(data, cb) {
     }
 }
 
+/**
+* Checks the user voicemail notification configurations and returns true if he
+* wants to receives the voicemail notification by the specified delivery method.
+*
+* @method verifySendVoicemailNotification
+* @param  {string}  username       The username identifier
+* @param  {string}  deliveryMethod The delivery method, e.g. email or sms
+* @return {boolean} True if the user wants to receive the voicemail notification
+*   by the specified delivery method.
+*/
+function verifySendVoicemailNotification(username, deliveryMethod) {
+    try {
+        // check parameters
+        if (typeof username !== 'string' || typeof deliveryMethod !== 'string') {
+            throw new Error('wrong parameters');
+        }
+
+        var conf = compUser.getConfigurations(username);
+
+        // check the configurations of the user
+        if (   typeof conf                                                           !== 'object'
+            || typeof conf[USER_CONFIG_KEYS.notifications]                           !== 'object'
+            || typeof conf[USER_CONFIG_KEYS.notifications].voicemail                 !== 'object'
+            || typeof conf[USER_CONFIG_KEYS.notifications].voicemail[deliveryMethod] !== 'object') {
+
+            logger.warn(IDLOG, 'checking if send voicemail notification by "' + deliveryMethod + '" for user "' + username + '": ' +
+                               'wrong notification configurations');
+            return false;
+        }
+
+        var when = conf[USER_CONFIG_KEYS.notifications].voicemail[deliveryMethod].when;
+
+        if      (when === NOTIF_WHEN.always)  { return true;  }
+        else if (when === NOTIF_WHEN.never)   { return false; }
+        else if (when === NOTIF_WHEN.offline) {
+            // checks if the presence of all the nethcti user endpoints is offline
+            var nethctiEndpoints = compUser.getAllEndpointsNethcti(username);
+            var end;
+            var allOffline = true;
+            for (end in nethctiEndpoints) {
+                allOffline = allOffline && (nethctiEndpoints[end].getStatus() === NOTIF_WHEN.offline);
+            }
+            return allOffline;
+
+        } else {
+            logger.warn(IDLOG, 'checking if send voicemail notification by "' + deliveryMethod + '" for user "' + username + '": ' +
+                               'wrong when value "' + when + '"');
+            return false;
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return false;
+    }
+}
+
+/**
+* Checks the user voicemail notification configurations and returns true if he
+* wants to receives the voicemail notification by email.
+*
+* @method verifySendVoicemailNotificationByEmail
+* @param  {string}  username The username identifier
+* @return {boolean} True if the user wants to receive the voicemail notification by email
+*/
+function verifySendVoicemailNotificationByEmail(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return verifySendVoicemailNotification(username, 'email');
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return false;
+    }
+}
+
+/**
+* Checks the user voicemail notification configurations and returns true if he
+* wants to receives the voicemail notification by sms.
+*
+* @method verifySendVoicemailNotificationBySms
+* @param  {string}  username The username identifier
+* @return {boolean} True if the user wants to receive the voicemail notification by sms
+*/
+function verifySendVoicemailNotificationBySms(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return verifySendVoicemailNotification(username, 'sms');
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return false;
+    }
+}
+
+/**
+* Returns the destination email address for the voicemail notification of the user.
+*
+* @method getVoicemailNotificationEmailTo
+* @param  {string} username The username identifier
+* @return {string} The destination email address.
+*/
+function getVoicemailNotificationEmailTo(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        var conf = compUser.getConfigurations(username);
+
+        // check the configurations of the user
+        if (   typeof conf                                                    !== 'object'
+            || typeof conf[USER_CONFIG_KEYS.notifications]                    !== 'object'
+            || typeof conf[USER_CONFIG_KEYS.notifications].voicemail          !== 'object'
+            || typeof conf[USER_CONFIG_KEYS.notifications].voicemail.email    !== 'object'
+            || typeof conf[USER_CONFIG_KEYS.notifications].voicemail.email.to !== 'string') {
+
+            logger.warn(IDLOG, 'getting email destination for voicemail notification of user "' + username + '": wrong configurations');
+            return '';
+        }
+
+        return conf[USER_CONFIG_KEYS.notifications].voicemail.email.to;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return '';
+    }
+}
+
+/**
+* Returns the destination sms number for the voicemail notification of the user.
+*
+* @method getVoicemailNotificationSmsTo
+* @param  {string} username The username identifier
+* @return {string} The destination sms number.
+*/
+function getVoicemailNotificationSmsTo(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        var conf = compUser.getConfigurations(username);
+
+        // check the configurations of the user
+        if (   typeof conf                                                  !== 'object'
+            || typeof conf[USER_CONFIG_KEYS.notifications]                  !== 'object'
+            || typeof conf[USER_CONFIG_KEYS.notifications].voicemail        !== 'object'
+            || typeof conf[USER_CONFIG_KEYS.notifications].voicemail.sms    !== 'object'
+            || typeof conf[USER_CONFIG_KEYS.notifications].voicemail.sms.to !== 'string') {
+
+            logger.warn(IDLOG, 'getting sms destination number for voicemail notification of user "' + username + '": wrong configurations');
+            return '';
+        }
+
+        return conf[USER_CONFIG_KEYS.notifications].voicemail.sms.to;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return '';
+    }
+}
+
 // public interface
-exports.setLogger               = setLogger;
-exports.configUser              = configUser;
-exports.configChat              = configChat;
-exports.getChatConf             = getChatConf;
-exports.setCompUser             = setCompUser;
-exports.getUserEndpointsJSON    = getUserEndpointsJSON;
-exports.getUserConfigurations   = getUserConfigurations;
-exports.setUserClick2CallConf   = setUserClick2CallConf;
-exports.setUserNotificationConf = setUserNotificationConf;
+exports.setLogger                              = setLogger;
+exports.configUser                             = configUser;
+exports.configChat                             = configChat;
+exports.getChatConf                            = getChatConf;
+exports.setCompUser                            = setCompUser;
+exports.getUserEndpointsJSON                   = getUserEndpointsJSON;
+exports.getUserConfigurations                  = getUserConfigurations;
+exports.setUserClick2CallConf                  = setUserClick2CallConf;
+exports.setUserNotificationConf                = setUserNotificationConf;
+exports.getVoicemailNotificationSmsTo          = getVoicemailNotificationSmsTo;
+exports.getVoicemailNotificationEmailTo        = getVoicemailNotificationEmailTo;
+exports.verifySendVoicemailNotificationBySms   = verifySendVoicemailNotificationBySms;
+exports.verifySendVoicemailNotificationByEmail = verifySendVoicemailNotificationByEmail;

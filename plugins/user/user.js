@@ -1,3 +1,9 @@
+/**
+* Provides the user functions.
+*
+* @module user
+* @main controller_user
+*/
 var endpointTypes     = require('./endpoint_types');
 var EndpointJabber    = require('./endpointJabber').EndpointJabber;
 var EndpointNethcti   = require('./endpointNethcti').EndpointNethcti;

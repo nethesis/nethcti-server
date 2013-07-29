@@ -44,6 +44,13 @@ var IDLOG = '[proxy_logic_11]';
 * @event extenChanged
 * @param {object} msg The extension object
 */
+/**
+* The name of the extension changed event.
+*
+* @property EVT_EXTEN_CHANGED
+* @type string
+* @default "extenChanged"
+*/
 var EVT_EXTEN_CHANGED = 'extenChanged';
 
 /**
@@ -51,6 +58,13 @@ var EVT_EXTEN_CHANGED = 'extenChanged';
 *
 * @event parkingChanged
 * @param {object} msg The parking object
+*/
+/**
+* The name of the parking changed event.
+*
+* @property EVT_PARKING_CHANGED
+* @type string
+* @default "parkingChanged"
 */
 var EVT_PARKING_CHANGED = 'parkingChanged';
 
@@ -60,7 +74,29 @@ var EVT_PARKING_CHANGED = 'parkingChanged';
 * @event queueChanged
 * @param {object} msg The queue object
 */
+/**
+* The name of the queue changed event.
+*
+* @property EVT_QUEUE_CHANGED
+* @type string
+* @default "queueChanged"
+*/
 var EVT_QUEUE_CHANGED = 'queueChanged';
+
+/**
+* Fired when new voicemail message has been left.
+*
+* @event newVoicemail
+* @param {object} msg The queue object
+*/
+/**
+* The name of the new voicemail event.
+*
+* @property EVT_NEW_VOICEMAIL
+* @type string
+* @default "newVoicemail"
+*/
+var EVT_NEW_VOICEMAIL = 'newVoicemail';
 
 /**
 * The logger. It must have at least three methods: _info, warn and error._
@@ -1482,7 +1518,38 @@ function evtExtenStatusChanged(exten, status) {
 }
 
 /**
-* Remove a waiting caller from a queue.
+* New voice messages has been left. So it emits the _EVT\_NEW\_VOICEMAIL_ event.
+*
+* @method evtNewVoicemailMessage
+* @param {object} data
+*  @param {string} data.context   The context of the voicemail extension
+*  @param {string} data.countNew  The number of the new voicemail messages
+*  @param {string} data.countOld  The number of the old voicemail messages
+*  @param {string} data.voicemail The voicemail identifier who received the voice message
+* @private
+*/
+function evtNewVoicemailMessage(data) {
+    try {
+        // check parameter
+        if (   typeof data           !== 'object'
+            && typeof data.voicemail !== 'string' && typeof data.context  !== 'string'
+            && typeof data.countOld  !== 'string' && typeof data.countNew !== 'string') {
+
+            throw new Error('wrong parameter');
+        }
+
+        // emit the event
+        astProxy.emit(EVT_NEW_VOICEMAIL, data);
+        logger.info(IDLOG, 'emitted event ' + EVT_NEW_VOICEMAIL + ' in voicemail ' + data.voicemail +
+                           ' with context ' + data.context);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Removes a waiting caller from a queue and emit the _EVT\_QUEUE\_CHANGED_ event.
 *
 * @method evtRemoveQueueWaitingCaller
 * @param {object} data The response object received from the event plugin _leave_.
@@ -2721,11 +2788,16 @@ exports.getJSONParkings             = getJSONParkings;
 exports.sendDTMFSequence            = sendDTMFSequence;
 exports.parkConversation            = parkConversation;
 exports.getJSONExtensions           = getJSONExtensions;
+exports.EVT_EXTEN_CHANGED           = EVT_EXTEN_CHANGED;
+exports.EVT_QUEUE_CHANGED           = EVT_QUEUE_CHANGED;
+exports.EVT_NEW_VOICEMAIL           = EVT_NEW_VOICEMAIL;
 exports.hangupConversation          = hangupConversation;
 exports.pickupConversation          = pickupConversation;
+exports.EVT_PARKING_CHANGED         = EVT_PARKING_CHANGED;
 exports.redirectConversation        = redirectConversation;
 exports.evtHangupConversation       = evtHangupConversation;
 exports.evtExtenStatusChanged       = evtExtenStatusChanged;
+exports.evtNewVoicemailMessage      = evtNewVoicemailMessage;
 exports.stopRecordConversation      = stopRecordConversation;
 exports.evtConversationDialing      = evtConversationDialing;
 exports.evtSpyStartConversation     = evtSpyStartConversation;

@@ -4,6 +4,6 @@
     "private": true,
     "plugin": {
         "consumes": [ "logger" ],
-        "provides": ["astProxy"]
+        "provides": [ "astProxy" ]
     }
 }
