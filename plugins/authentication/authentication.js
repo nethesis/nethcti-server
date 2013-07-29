@@ -135,14 +135,15 @@ var server = 'localhost';
 var port = '389';
 
 /**
-* The token expiration expressed in milliseconds.
+* The token expiration expressed in milliseconds. It can be customized
+* with the configuration file.
 *
-* @property EXPIRES
+* @property expires
 * @type number
 * @private
-* @default 60000
+* @default 3600000 (1h)
 */
-var EXPIRES = 60000;
+var expires = 3600000;
 
 /**
 * If true, every authentication request also causes the update of the
@@ -157,7 +158,7 @@ var autoUpdateTokenExpires = true;
 
 /**
 * The temporary permissions assigned to the users. Associates each user
-* with his token. Each permission has an expiration date of _EXPIRES_
+* with his token. Each permission has an expiration date of _expires_
 * milliseconds.
 *
 * @property grants
@@ -212,8 +213,8 @@ function config(path) {
     // read configuration file
     var json = require(path);
 
-    if (typeof    json      !== 'object'
-        || typeof json.type !== 'string'
+    if (   typeof json      !== 'object'
+        || typeof json.type !== 'string' || typeof json.expiration_timeout !== 'string'
         || !AUTH_TYPE[json.type]) {
 
         throw new Error('wrong configuration file for authentication ' + path);
@@ -223,6 +224,9 @@ function config(path) {
 
     // set the authentication type
     authenticationType = json.type;
+
+    // set the expiration timeout of the token
+    expires = json.expiration_timeout * 1000;
 
     // configure LDAP authentication
     if (json.type === AUTH_TYPE.ldap) {
@@ -337,7 +341,7 @@ function newToken(accessKeyId, password, nonce) {
         grants[accessKeyId] = {
             nonce:   nonce,
             token:   token,
-            expires: (new Date()).getTime() + EXPIRES
+            expires: (new Date()).getTime() + expires
         };
 
         logger.info(IDLOG, 'new token has been generated for accessKeyId ' + accessKeyId);
@@ -545,7 +549,7 @@ function updateTokenExpires(accessKeyId) {
         if (!grants[accessKeyId]) {
             throw new Error('update token expiration failed for accessKeyId: ' + accessKeyId);
         }
-        grants[accessKeyId].expires = (new Date()).getTime() + EXPIRES;
+        grants[accessKeyId].expires = (new Date()).getTime() + expires;
         logger.info(IDLOG, 'token expiration has been updated for accessKeyId ' + accessKeyId);
 
     } catch (err) {
