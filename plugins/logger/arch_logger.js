@@ -11,20 +11,20 @@
 */
 var fs        = require('fs');
 var winston   = require('winston');
-var iniparser = require('iniparser');
 
 module.exports = function (options, imports, register) {
     try {
         /**
-        * Configuration file path.
+        * The path of the JSON configuration file.
         *
-        * @property path
+        * @property PATH
         * @type {string}
         * @private
         * @final
         * @readOnly
+        * @default "/etc/nethcti/nethcti.json"
         */
-        var PATH = '/etc/nethcti/nethcti.ini';
+        var PATH = '/etc/nethcti/nethcti.json';
 
         // check configuration file presence
         if (!fs.existsSync(PATH)) {
@@ -32,17 +32,15 @@ module.exports = function (options, imports, register) {
         }
         
         // parse the configuration file
-        var ini = iniparser.parseSync(PATH);
+        var json = require(PATH);
 
-        // check the correctness of the configuration file
-        if (!ini.NETHCTI
-            || !ini.NETHCTI.logfile
-            || !ini.NETHCTI.loglevel) {
+        // check for the correctness of the JSON configuration file
+        if (   typeof json          !== 'object'
+            || typeof json.logfile  !== 'string'
+            || typeof json.loglevel !== 'string') {
 
             throw new Error('wrong configuration file ' + PATH);
         }
-
-        ini.NETHCTI.loglevel = ini.NETHCTI.loglevel.toLowerCase();
 
         /**
         * The logger to be used by other components.
@@ -53,11 +51,11 @@ module.exports = function (options, imports, register) {
         */
         var log = new (winston.Logger)({
             transports: [
-                new (winston.transports.Console)({ level: ini.NETHCTI.loglevel }),
+                new (winston.transports.Console)({ level: json.loglevel }),
                 new (winston.transports.File)({
-                    filename: ini.NETHCTI.logfile,
-                    level: ini.NETHCTI.loglevel,
-                    json: false
+                    filename: json.logfile,
+                    level:    json.loglevel,
+                    json:     false
                 })
             ]
         });

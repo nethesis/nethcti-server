@@ -4,6 +4,7 @@
 * @class arch_controller_user
 * @module user
 */
+var endpointTypes  = require('./endpoint_types');
 var controllerUser = require('./controller_user');
 var endpointTypes  = require('./endpoint_types');
 
@@ -70,6 +71,13 @@ module.exports = function (options, imports, register) {
             hasExtensionEndpoint: controllerUser.hasExtensionEndpoint,
 
             /**
+            * It's the _hasVoicemailEndpoint_ method provided by _controller\_user_ module.
+            *
+            * @method hasVoicemailEndpoint
+            */
+            hasVoicemailEndpoint: controllerUser.hasVoicemailEndpoint,
+
+            /**
             * It's the _getVoicemailList_ method provided by _controller\_user_ module.
             *
             * @method getVoicemailList
@@ -116,7 +124,28 @@ module.exports = function (options, imports, register) {
             *
             * @method getUsernames
             */
-            getUsernames: controllerUser.getUsernames
+            getUsernames: controllerUser.getUsernames,
+
+            /**
+            * It's the _setNethctiPresence_ method provided by _controller\_user_ module.
+            *
+            * @method setNethctiPresence
+            */
+            setNethctiPresence: controllerUser.setNethctiPresence,
+
+            /**
+            * It's the _isValidEndpointNethctiStatus_ method provided by _endpoint\_types_ module.
+            *
+            * @method isValidNethctiPresence
+            */
+            isValidNethctiPresence: endpointTypes.isValidEndpointNethctiStatus,
+
+            /**
+            * It's the _getAllEndpointsNethcti_ method provided by _controller\_user_ module.
+            *
+            * @method getAllEndpointsNethcti
+            */
+            getAllEndpointsNethcti: controllerUser.getAllEndpointsNethcti
         }
     });
 

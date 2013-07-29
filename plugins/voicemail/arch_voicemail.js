@@ -27,11 +27,35 @@ module.exports = function (options, imports, register) {
     register(null, {
         voicemail: {
             /**
-            * It's the _getAllVoiceMessages_ method provided by _voicemail_ module.
+            * It's the _on_ method provided by _voicemail_ module.
             *
-            * @method getAllVoiceMessages
+            * @method on
+            * @param  {string}   type The name of the event
+            * @param  {function} cb   The callback to execute in response to the event
+            * @return {object}   A subscription handle capable of detaching that subscription
             */
-            getAllVoiceMessages: voicemail.getAllVoiceMessages
+            on: voicemail.on,
+
+            /**
+            * It's the _getAllVoiceMessagesByUser_ method provided by _voicemail_ module.
+            *
+            * @method getAllVoiceMessagesByUser
+            */
+            getAllVoiceMessagesByUser: voicemail.getAllVoiceMessagesByUser,
+
+            /**
+            * It's the _getNewVoiceMessagesByUser_ method provided by _voicemail_ module.
+            *
+            * @method getNewVoiceMessagesByUser
+            */
+            getNewVoiceMessagesByUser: voicemail.getNewVoiceMessagesByUser,
+
+            /**
+            * It's the _EVT\_NEW\_VOICEMAIL_ property provided by _voicemail_ module.
+            *
+            * @method EVT_NEW_VOICEMAIL
+            */
+            EVT_NEW_VOICEMAIL: voicemail.EVT_NEW_VOICEMAIL
         }
     });
 
@@ -41,6 +65,8 @@ module.exports = function (options, imports, register) {
             voicemail.setLogger(logger);
             voicemail.setDbconn(imports.dbconn);
             voicemail.setCompUser(imports.user);
+            voicemail.setAstProxy(imports.astProxy);
+            voicemail.start();
         });
     } catch (err) {
         logger.error(IDLOG, err.stack);

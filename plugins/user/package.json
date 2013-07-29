@@ -3,7 +3,7 @@
     "main": "arch_controller_user.js",
     "private": true,
     "plugin": {
-        "consumes": ["logger"],
-        "provides": ["user"]
+        "consumes": [ "logger" ],
+        "provides": [ "user" ]
     }
 }

@@ -1,7 +1,7 @@
 /**
 * Provides the user functions.
 *
-* @module controller_user
+* @module user
 * @main controller_user
 */
 
@@ -384,7 +384,7 @@ function hasExtensionEndpoint(username, exten) {
         }
 
         if (users[username] === undefined) { // the user is not present
-            throw new Error('no user "' + username + '" is present');
+            throw new Error('checking the user-extension endpoint association: no user "' + username + '" is present');
         }
 
         var ext;
@@ -392,6 +392,40 @@ function hasExtensionEndpoint(username, exten) {
         obj     = obj[endpointTypes.TYPES.EXTENSION];
         for (ext in obj) {
             if (ext === exten) { return true; }
+        }
+
+        return false;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return false;
+    }
+}
+
+/**
+* Check if the user has the specified voicemail endpoint.
+*
+* @method hasVoicemailEndpoint
+* @param {string} username  The name of the user to check
+* @param {string} voicemail The voicemail endpoint identifier
+* @return {boolean} True if the user has the voicemail endpoint, false otherwise.
+*/
+function hasVoicemailEndpoint(username, voicemail) {
+    try {
+        // check parameters
+        if (typeof username !== 'string' || typeof voicemail !== 'string') {
+            throw new Error('wrong parameters');
+        }
+
+        if (users[username] === undefined) { // the user is not present
+            throw new Error('checking the user-voicemail endpoint association: no user "' + username + '" is present');
+        }
+
+        var vm;
+        var obj = users[username].getAllEndpoints();
+        obj     = obj[endpointTypes.TYPES.VOICEMAIL];
+        for (vm in obj) {
+            if (vm === voicemail) { return true; }
         }
 
         return false;
@@ -473,15 +507,82 @@ function getUsernames() {
     }
 }
 
+/**
+* Sets the nethcti presence of the user.
+*
+* @method setNethctiPresence
+* @param {string} username   The username
+* @param {string} deviceType The device type used for nethcti
+* @param {string} status     The status of the nethcti presence
+*/
+function setNethctiPresence(username, deviceType, status) {
+    try {
+        // check parameters
+        if (   typeof username   !== 'string'
+            || typeof status     !== 'string'
+            || typeof deviceType !== 'string'
+            || !endpointTypes.isValidEndpointNethctiStatus(status)
+            || !endpointTypes.isValidEndpointNethctiDevice(deviceType)) {
+
+            throw new Error('wrong parameters');
+        }
+
+        // check the user existence
+        if (typeof users[username] !== 'object') {
+            logger.warn(IDLOG, 'try to set nethcti presence of non existent user "' + username + '" for device "' + deviceType + '" to value ' + status);
+            return;
+        }
+
+        // gets all endpoints, extracts the nethcti endpoint and then sets its status
+        var endpoints = users[username].getAllEndpoints();
+        endpoints[endpointTypes.TYPES.NETHCTI][deviceType].setStatus(status);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return [];
+    }
+}
+
+/**
+* Returns all the nethcti endpoints of the user.
+*
+* @method getAllEndpointsNethcti
+* @param  {string} username The username
+* @return {object} Returns all the nethcti endpoints of the user.
+*/
+function getAllEndpointsNethcti(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        // check the user existence
+        if (typeof users[username] !== 'object') {
+            logger.warn(IDLOG, 'gettings all the nethcti endpoints: the user "' + username + '" not exists');
+            return {};
+        }
+
+        // gets all endpoints, extracts the nethcti endpoint and then sets its status
+        var endpoints = users[username].getAllEndpoints();
+        return endpoints[endpointTypes.TYPES.NETHCTI];
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return {};
+    }
+}
+
 // public interface
-exports.on                   = on;
-exports.config               = config;
-exports.setLogger            = setLogger;
-exports.getUsernames         = getUsernames;
-exports.getEndpointsJSON     = getEndpointsJSON;
-exports.getVoicemailList     = getVoicemailList;
-exports.setAuthorization     = setAuthorization;
-exports.getAuthorization     = getAuthorization;
-exports.getConfigurations    = getConfigurations;
-exports.setConfigurations    = setConfigurations;
-exports.hasExtensionEndpoint = hasExtensionEndpoint;
+exports.on                     = on;
+exports.config                 = config;
+exports.setLogger              = setLogger;
+exports.getUsernames           = getUsernames;
+exports.getEndpointsJSON       = getEndpointsJSON;
+exports.getVoicemailList       = getVoicemailList;
+exports.setAuthorization       = setAuthorization;
+exports.getAuthorization       = getAuthorization;
+exports.getConfigurations      = getConfigurations;
+exports.setConfigurations      = setConfigurations;
+exports.setNethctiPresence     = setNethctiPresence;
+exports.hasExtensionEndpoint   = hasExtensionEndpoint;
+exports.hasVoicemailEndpoint   = hasVoicemailEndpoint;
+exports.getAllEndpointsNethcti = getAllEndpointsNethcti;

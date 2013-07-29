@@ -1,3 +1,5 @@
+var endpointTypes = require('./endpoint_types');
+
 /**
 * Abstraction of a NethCTI endpoint. It show the NethCTI presence
 * of a user.
@@ -24,16 +26,23 @@ exports.EndpointNethcti = function (userid) {
     var id = userid;
 
     /**
-    * The NethCTI logged in status. If it's true the user has
-    * logged in into the NethCTI.
+    * The type of the device used for nethcti.
     *
-    * @property loggedIn
-    * @type boolean
-    * @required
+    * @property deviceType
+    * @type {string}
     * @private
-    * @default false
     */
-    var loggedIn = false;
+    var deviceType;
+
+    /**
+    * The nethcti presence status.
+    *
+    * @property status
+    * @type string
+    * @private
+    * @default "offline"
+    */
+    var status = endpointTypes.ENDPOINT_NETHCTI_STATUS.offline;
 
     /**
     * Returns the user identifier.
@@ -46,10 +55,46 @@ exports.EndpointNethcti = function (userid) {
     /**
     * Returns the NethCTI logged in status of the user.
     *
-    * @method loggedIn
-    * @return {boolean} True if the user is logged in into the NethCTI.
+    * @method getStatus
+    * @return {string} The nethcti presence status.
     */
-    function loggedIn() { return loggedIn; }
+    function getStatus() { return status; }
+
+    /**
+    * Sets the nethcti endpoint status.
+    *
+    * @method setStatus
+    * @param {string} value The nethcti endpoint status
+    */
+    function setStatus(value) {
+        // check parameter
+        if (typeof value !== 'string' || !endpointTypes.isValidEndpointNethctiStatus(value)) {
+            throw new Error('wrong parameter');
+        }
+        status = value;
+    }
+
+    /**
+    * Sets the device type used for nethcti.
+    *
+    * @method setDeviceType
+    * @param {string} value The device type used for nethcti.
+    */
+    function setDeviceType(value) {
+        // check parameter
+        if (typeof value !== 'string' || !endpointTypes.isValidEndpointNethctiDevice(value)) {
+            throw new Error('wrong parameter');
+        }
+        deviceType = value;
+    }
+
+    /**
+    * Returns the type of the device used for nethcti.
+    *
+    * @method getDeviceType
+    * @return {string} The device type used for nethcti.
+    */
+    function getDeviceType() { return deviceType; }
 
     /**
     * Return the readable string description of the NethCTI endpoint.
@@ -67,15 +112,20 @@ exports.EndpointNethcti = function (userid) {
     */
     function toJSON() {
         return {
-            id:       id,
-            loggedIn: loggedIn
+            id:         id,
+            status:     status,
+            deviceType: deviceType
         }
     }
 
     // public interface
     return {
-        getId:    getId,
-        toJSON:   toJSON,
-        toString: toString
+        getId:         getId,
+        toJSON:        toJSON,
+        toString:      toString,
+        setStatus:     setStatus,
+        getStatus:     getStatus,
+        getDeviceType: getDeviceType,
+        setDeviceType: setDeviceType
     };
 }

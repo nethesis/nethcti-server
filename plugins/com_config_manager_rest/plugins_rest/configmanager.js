@@ -99,11 +99,14 @@ function setCompConfigManager(cm) {
 * Set user architect component used for user functions.
 *
 * @method setCompUser
-* @param {object} cu The user architect component.
+* @param {object} comp The user architect component.
 */
-function setCompUser(cu) {
+function setCompUser(comp) {
     try {
-        compUser = cu;
+        // check parameter
+        if (typeof comp !== 'object') { throw new Error('wrong parameter'); }
+
+        compUser = comp;
         logger.info(IDLOG, 'set user architect component');
     } catch (err) {
        logger.error(IDLOG, err.stack);
@@ -244,6 +247,7 @@ function sendHttp500(resp, err) {
         *
         * 1. [`configmanager/click2call`](#click2callpost)
         * 1. [`configmanager/notification`](#notificationpost)
+        * 1. [`configmanager/presence`](#presencepost)
         *
         * ---
         *
@@ -280,6 +284,20 @@ function sendHttp500(resp, err) {
         *
         *     curl --insecure -i -X POST -d '{ "type": "voicemail", "method": "email", "when": "offline", "to": "a@a.it" }' https://192.168.5.224:8282/configmanager/notification
         *
+        * ---
+        *
+        * ### <a id="presencepost">**`configmanager/presence`**</a>
+        *
+        * Sets the specified presence of the user. The request must contain the following parameters:
+        *
+        * * `type: ("nethcti") the type of the presence to set`
+        * * `status: ("online" | "offline" | "busy" | "away") the nethcti presence status`
+        * * `device_type: ["desktop" | "mobile"] the device type used by the user for nethcti. It's needed when type is equal to "nethcti"`
+        *
+        * E.g. using curl:
+        *
+        *     curl --insecure -i -X POST -d '{ "type": "nethcti", "device_type": "desktop", "status": "online" }' https://192.168.5.224:8282/configmanager/presence
+        *
         * @class plugin_rest_configmanager
         * @static
         */
@@ -313,10 +331,12 @@ function sendHttp500(resp, err) {
                 * @property post
                 * @type {array}
                 *
+                *   @param {string} presence      To set a presence of the user
+                *   @param {string} notification  To save a user notification setting
                 *   @param {string} click2callave To save the click to call mode of the user
-                *   @param {string} notification To save a user notification setting
                 */
                 'post' : [
+                    'presence',
                     'click2call',
                     'notification'
                 ],
@@ -566,10 +586,53 @@ function sendHttp500(resp, err) {
                     logger.error(IDLOG, err.stack);
                     sendHttp500(res, err.toString());
                 }
+            },
+
+            /**
+            * Sets the specified presence of the user with the following REST API:
+            *
+            *     presence
+            *
+            * @method presence
+            * @param {object} req The client request.
+            * @param {object} res The client response.
+            * @param {function} next Function to run the next handler in the chain.
+            */
+            presence: function (req, res, next) {
+                try {
+                    var type       = req.params.type;
+                    var status     = req.params.status;
+                    var username   = req.headers.authorization_user;
+                    var deviceType = req.headers.device_type;
+
+                    // check parameters
+                    if (typeof type !== 'string'
+                        ||     type !== 'nethcti'
+                        || !compUser.isValidNethctiPresence(status)
+                        || !compUser.isValidEndpointNethctiDevice(deviceType)) {
+
+                        sendHttp400(res);
+                        return;
+                    }
+
+                    if (type === 'nethcti') { // sets the nethcti presence of the user
+
+                        if (compUser.setNethctiPresence(username, deviceType, status) === true) {
+                            sendHttp200(res);
+                        } else {
+                            sendHttp500(res, 'some errors have occured');
+                        };
+                    }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    sendHttp500(res, err.toString());
+                }
             }
         }
         exports.api                  = configmanager.api;
         exports.userconf             = configmanager.userconf;
+        exports.presence             = configmanager.presence;
         exports.setLogger            = setLogger;
         exports.usernames            = configmanager.usernames;
         exports.click2call           = configmanager.click2call;

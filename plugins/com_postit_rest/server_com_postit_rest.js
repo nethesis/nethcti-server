@@ -298,8 +298,8 @@ function start() {
 }
 
 // public interface
-exports.start     = start;
-exports.config    = config;
-exports.setLogger = setLogger;
+exports.start                = start;
+exports.config               = config;
+exports.setLogger            = setLogger;
 exports.setCompPostit        = setCompPostit;
 exports.setCompAuthorization = setCompAuthorization;

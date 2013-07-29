@@ -61,14 +61,14 @@ var astProxy;
                         logger.info(IDLOG, 'received event ' + data.event);
 
                         // extract the informations
-                        var exten   = data.mailbox.split('@')[0];
-                        var context = data.mailbox.split('@')[1]
+                        var context   = data.mailbox.split('@')[1]
+                        var voicemail = data.mailbox.split('@')[0];
 
                         astProxy.proxyLogic.evtNewVoicemailMessage({
-                            exten:    exten,
-                            context:  context,
-                            countNew: data.new,
-                            countOld: data.old
+                            context:   context,
+                            countNew:  data.new,
+                            countOld:  data.old,
+                            voicemail: voicemail
                         });
 
                     } else {

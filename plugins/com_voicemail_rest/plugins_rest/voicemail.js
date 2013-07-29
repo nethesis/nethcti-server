@@ -170,7 +170,7 @@ function sendHttp500(resp, err) {
                     var username = req.headers.authorization_user;
 
                     // use voicemail component
-                    compVoicemail.getAllVoiceMessages(username, function (err, results) {
+                    compVoicemail.getAllVoiceMessagesByUser(username, function (err, results) {
 
                         if (err) {
                             sendHttp500(res, err.toString());
