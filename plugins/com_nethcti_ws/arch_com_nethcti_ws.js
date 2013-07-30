@@ -24,17 +24,15 @@ module.exports = function (options, imports, register) {
 
     try {
         var logger   = console;
-        var authe    = imports.authentication;
-        var astProxy = imports.astProxy;
-        var operator = imports.operator;
 
         if (imports.logger) { logger = imports.logger; }
 
         comNethctiWs.setLogger(logger);
         comNethctiWs.config('/etc/nethcti/services.json');
-        comNethctiWs.setAuthe(authe);
-        comNethctiWs.setAstProxy(astProxy);
-        comNethctiWs.setOperator(operator);
+        comNethctiWs.setAuthe(imports.authentication);
+        comNethctiWs.setAstProxy(imports.astProxy);
+        comNethctiWs.setOperator(imports.operator);
+        comNethctiWs.setCompVoicemail(imports.voicemail);
         comNethctiWs.start();
     } catch (err) {
         logger.error(IDLOG, err.stack);

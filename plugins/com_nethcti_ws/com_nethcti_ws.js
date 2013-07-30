@@ -77,6 +77,15 @@ var astProxy;
 var compAuthe;
 
 /**
+* The voicemail architect component used for voicemail functions.
+*
+* @property compVoicemail
+* @type object
+* @private
+*/
+var compVoicemail;
+
+/**
 * The operator module.
 *
 * @property operator
@@ -139,6 +148,21 @@ function setAuthe(autheMod) {
 }
 
 /**
+* Set voicemail architect component used by voicemail functions.
+*
+* @method setCompVoicemail
+* @param {object} cv The voicemail architect component.
+*/
+function setCompVoicemail(cv) {
+    try {
+        compVoicemail = cv;
+        logger.info(IDLOG, 'set voicemail architect component');
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Set the operator to be used by the module.
 *
 * @method setOperator
@@ -188,9 +212,51 @@ function setAstProxyListeners() {
             throw new Error('wrong astProxy object');
         }
 
-        astProxy.on('extenChanged',   extenChanged);   // an extension has changed
-        astProxy.on('queueChanged',   queueChanged);   // a queue has changed
-        astProxy.on('parkingChanged', parkingChanged); // a parking has changed
+        astProxy.on(astProxy.EVT_EXTEN_CHANGED,   extenChanged);   // an extension has changed
+        astProxy.on(astProxy.EVT_QUEUE_CHANGED,   queueChanged);   // a queue has changed
+        astProxy.on(astProxy.EVT_PARKING_CHANGED, parkingChanged); // a parking has changed
+
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the event listeners for the voicemail component.
+*
+* @method setVoicemailListeners
+* @private
+*/
+function setVoicemailListeners() {
+    try {
+        // check voicemail component object
+        if (!compVoicemail || typeof compVoicemail.on !== 'function') {
+            throw new Error('wrong voicemail object');
+        }
+
+        compVoicemail.on(compVoicemail.EVT_NEW_VOICEMAIL, newVoicemailListener);
+
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Manages the new voicemail event emitted by the voicemail component. It sends
+* all new voice messages of the voicemail to all users who use the voicemail.
+*
+* @method newVoicemailListener
+* @param {string} voicemail The voicemail identifier
+* @param {array}  list      The list of all new voicemail messages
+* @private
+*/
+function newVoicemailListener(voicemail, list) {
+    try {
+        // check the event data
+        if (typeof voicemail !== 'string' || list === undefined || list instanceof Array === false) {
+            throw new Error('wrong voicemails array list');
+        }
+
 
     } catch (err) {
        logger.error(IDLOG, err.stack);
@@ -285,7 +351,7 @@ function config(path) {
 }
 
 /**
-* Creates the server websocket.
+* Creates the server websocket and adds the listeners for other components.
 *
 * @method start
 */
@@ -293,6 +359,9 @@ function start() {
     try {
         // set the listener for the aterisk proxy module
         setAstProxyListeners();
+
+        // set the listener for the voicemail module
+        setVoicemailListeners();
 
         // websocket options
         var options = {
@@ -594,10 +663,10 @@ function call(socket, data) {
 *
 * @method parkConv
 * @param {object} socket The client websocket
-* @param {object} data The data with the conversation identifier
+* @param {object} data   The data with the conversation identifier
 *   @param {string} data.endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
-*   @param {string} data.endpointId The endpoint identifier (e.g. the extension number)
-*   @param {string} data.convid The conversation identifier
+*   @param {string} data.endpointId   The endpoint identifier (e.g. the extension number)
+*   @param {string} data.convid       The conversation identifier
 * @param {string} sender The sender of the operation (e.g. the extension number)
 * @private
 * @return {object} An synchronous aknowledgment or error response with the name of the command.
@@ -606,7 +675,7 @@ function parkConv(socket, data, sender) {
     try {
         // check parameter
         if (typeof socket !== 'object') { throw new Error('wrong parameter'); }
-        if (typeof data   !== 'object'
+        if (   typeof data              !== 'object' || typeof sender !== 'string'
             || typeof data.convid       !== 'string'
             || typeof data.endpointId   !== 'string'
             || typeof data.endpointType !== 'string') {
@@ -1091,9 +1160,10 @@ function sendAutheSuccess(socket) {
 }
 
 // public interface
-exports.start       = start;
-exports.config      = config;
-exports.setAuthe    = setAuthe;
-exports.setLogger   = setLogger;
-exports.setAstProxy = setAstProxy;
-exports.setOperator = setOperator;
+exports.start            = start;
+exports.config           = config;
+exports.setAuthe         = setAuthe;
+exports.setLogger        = setLogger;
+exports.setAstProxy      = setAstProxy;
+exports.setOperator      = setOperator;
+exports.setCompVoicemail = setCompVoicemail;
