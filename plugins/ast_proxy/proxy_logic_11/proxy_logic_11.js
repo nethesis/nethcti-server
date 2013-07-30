@@ -2033,26 +2033,6 @@ function redirectConvCb(resp) {
 }
 
 /**
-* This is the callback of the _parkChannel_ command plugin.
-*
-* @method parkConvCb
-* @param {object} resp The response object of the operation
-* @private
-*/
-function parkConvCb(resp) {
-    try {
-        if (typeof resp === 'object' && resp.result === true) {
-            logger.info(IDLOG, 'park channel succesfully');
-
-        } else {
-            logger.warn(IDLOG, 'park channel failed' + (resp.cause ? (': ' + resp.cause) : '') );
-        }
-    } catch (err) {
-       logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
 * This is the callback of the call command plugin.
 *
 * @method callCb
@@ -2190,20 +2170,18 @@ function redirectConversation(endpointType, endpointId, convid, to, cb) {
 * Park the conversation.
 *
 * @method parkConversation
-* @param {string} endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
-* @param {string} endpointId The endpoint identifier (e.g. the extension number)
-* @param {string} convid The conversation identifier
-* @param {string} sender The sender of the park operation (e.g. the extension number)
-* @param {function} cb The callback function
+* @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
+* @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
+* @param {string}   convid       The conversation identifier
+* @param {string}   applicantId  The applicant identifier of the park operation (e.g. the extension number)
+* @param {function} cb           The callback function
 */
-function parkConversation(endpointType, endpointId, convid, sender, cb) {
+function parkConversation(endpointType, endpointId, convid, applicantId, cb) {
     try {
         // check parameters
-        if (typeof convid !== 'string'
-            || typeof cb           !== 'function'
-            || typeof sender       !== 'string'
-            || typeof endpointId   !== 'string'
-            || typeof endpointType !== 'string') {
+        if (   typeof convid       !== 'string'
+            || typeof cb           !== 'function' || typeof endpointId   !== 'string'
+            || typeof applicantId  !== 'string'   || typeof endpointType !== 'string') {
 
             throw new Error('wrong parameters');
         }
@@ -2211,40 +2189,63 @@ function parkConversation(endpointType, endpointId, convid, sender, cb) {
         // check the endpoint existence
         if (endpointType === 'extension' && extensions[endpointId]) {
 
-            var convs      = extensions[endpointId].getAllConversations();
-            var conv       = convs[convid];
+            var convs = extensions[endpointId].getAllConversations();
+            var conv  = convs[convid];
+
+            // check the presence of the conversation
+            if (typeof conv !== 'object') {
+                var err = 'parking the conversation ' + convid + ': no conversation present in the endpointId ' + endpointId;
+                logger.warn(IDLOG, err);
+                cb(err);
+                return;
+            }
+
             var chSource   = conv.getSourceChannel();
             var callerNum  = chSource.getCallerNum();
             var bridgedNum = chSource.getBridgedNum();
 
-            // check if the sender of the request is an intermediary of the conversation.
+            // check if the applicant of the request is an intermediary of the conversation.
             // This is because only caller or called can park the conversation
-            if (callerNum !== sender && bridgedNum !== sender) {
-                logger.warn(IDLOG, 'sender extension ' + sender + ' not allowed to park another conversation ' + convid);
-                cb();
+            if (callerNum !== applicantId && bridgedNum !== applicantId) {
+                var err = 'applicant extension "' + applicantId + '" not allowed to park a conversation not owned by him ' + convid;
+                logger.warn(IDLOG, err);
+                cb(err);
                 return;
             }
 
-            var chToPark = callerNum === sender ? chSource.getBridgedChannel() : chSource.getChannel();
+            var chToPark = callerNum === applicantId ? chSource.getBridgedChannel() : chSource.getChannel();
             // channel to return once elapsed the parking timeout
-            var chToReturn = callerNum === sender ? chSource.getChannel() : chSource.getBridgedChannel();
+            var chToReturn = callerNum === applicantId ? chSource.getChannel() : chSource.getBridgedChannel();
 
             if (chToPark !== undefined && chToReturn !== undefined) {
 
                 // park the channel
                 logger.info(IDLOG, 'execute the park of the channel ' + chToPark + ' of exten ' + endpointId);
-                astProxy.doCmd({ command: 'parkChannel', chToPark: chToPark, chToReturn: chToReturn }, function (resp) {
-                    cb(resp);
-                    parkConvCb(resp, convid);
+                astProxy.doCmd({ command: 'parkChannel', chToPark: chToPark, chToReturn: chToReturn }, function (err, resp) {
+                    try {
+                        if (err) {
+                            logger.error(IDLOG, 'parking the channel ' + chToPark + ' by the applicant ' + applicantId);
+                            cb(err);
+                            return;
+                        }
+                        logger.info(IDLOG, 'channel ' + chToPark + ' has been parked successfully');
+                        cb(null);
+
+                    } catch (err) {
+                       logger.error(IDLOG, err.stack);
+                       cb(err);
+                    }
                 });
 
             } else {
-                logger.error(IDLOG, 'getting the channel to park ' + chToPark);
-                cb();
+                var err = 'getting the channel to park ' + chToPark;
+                logger.error(IDLOG, err);
+                cb(err);
             }
         }
     } catch (err) {
        logger.error(IDLOG, err.stack);
+       cb(err);
     }
 }
 
