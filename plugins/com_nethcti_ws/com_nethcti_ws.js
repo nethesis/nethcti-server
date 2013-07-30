@@ -433,7 +433,6 @@ function dispatchMsg(socket, data) {
 
                 // dispatch
                 if      (data.command === 'call')               { call(socket, data);               }
-                else if (data.command === 'parkConv')           { parkConv(socket, data, sender);   }
                 else if (data.command === 'pickupConv')         { pickupConv(socket, data);         }
                 else if (data.command === 'hangupConv')         { hangupConv(socket, data);         }
                 else if (data.command === 'stopSpyConv')        { stopSpyConv(socket, data);        }
@@ -651,41 +650,6 @@ function call(socket, data) {
 
             astProxy.call(data.endpointType, data.endpointId, data.number, function (resp) {
                 responseToClient(socket, 'call', resp);
-            });
-        }
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Park the conversation of the sender using the asterisk proxy component.
-*
-* @method parkConv
-* @param {object} socket The client websocket
-* @param {object} data   The data with the conversation identifier
-*   @param {string} data.endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
-*   @param {string} data.endpointId   The endpoint identifier (e.g. the extension number)
-*   @param {string} data.convid       The conversation identifier
-* @param {string} sender The sender of the operation (e.g. the extension number)
-* @private
-* @return {object} An synchronous aknowledgment or error response with the name of the command.
-*/
-function parkConv(socket, data, sender) {
-    try {
-        // check parameter
-        if (typeof socket !== 'object') { throw new Error('wrong parameter'); }
-        if (   typeof data              !== 'object' || typeof sender !== 'string'
-            || typeof data.convid       !== 'string'
-            || typeof data.endpointId   !== 'string'
-            || typeof data.endpointType !== 'string') {
-
-            badRequest(socket);
-
-        } else {
-
-            astProxy.parkConversation(data.endpointType, data.endpointId, data.convid, sender, function (resp) {
-                responseToClient(socket, 'parkConv', resp);
             });
         }
     } catch (err) {
