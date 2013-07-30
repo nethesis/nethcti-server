@@ -29,6 +29,7 @@ var AUTHORIZATION_TYPES = {
     'customer_card':       'customer_card',
     'user_settings':       'user_settings',
     'operator_panel':      'operator_panel',
+    'advanced_operator':   'advanced_operator',
     'switchboard_history': 'switchboard_history'
 }
 

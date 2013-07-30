@@ -1966,18 +1966,16 @@ function evtHangupConversation(data) {
 * Hangup the conversation of the endpoint.
 *
 * @method hangupConversation
-* @param {string} endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
-* @param {string} endpointId The endpoint identifier (e.g. the extension number)
-* @param {string} convid The conversation identifier
-* @param {function} cb The callback function
+* @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
+* @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
+* @param {string}   convid       The conversation identifier
+* @param {function} cb           The callback function
 */
 function hangupConversation(endpointType, endpointId, convid, cb) {
     try {
         // check parameters
-        if (typeof convid !== 'string'
-            || typeof cb           !== 'function'
-            || typeof endpointId   !== 'string'
-            || typeof endpointType !== 'string') {
+        if (   typeof convid       !== 'string' || typeof cb           !== 'function'
+            || typeof endpointId   !== 'string' || typeof endpointType !== 'string') {
 
             throw new Error('wrong parameters');
         }
@@ -1991,24 +1989,26 @@ function hangupConversation(endpointType, endpointId, convid, cb) {
             if (ch) {
                 // execute the hangup
                 logger.info(IDLOG, 'execute hangup of the channel ' + ch + ' of exten ' + endpointId);
-                astProxy.doCmd({ command: 'hangup', channel: ch }, function (resp) {
-                    cb(resp);
-                    hangupConvCb(resp);
+                astProxy.doCmd({ command: 'hangup', channel: ch }, function (err, resp) {
+                    cb(err, resp);
+                    hangupConvCb(err, resp);
                 });
 
             } else {
-                logger.warn(IDLOG, 'no channel to hangup of conversation ' + convid + ' of exten ' + endpointId);
-                cb();
+                var err = 'no channel to hangup of conversation ' + convid + ' of exten ' + endpointId;
+                logger.warn(IDLOG, err);
+                cb(err);
             }
 
         } else {
-            logger.warn(IDLOG, 'try to hangup conversation for the non existent endpoint ' + endpointType);
-            cb();
+            var err = 'try to hangup conversation for the non existent endpoint ' + endpointType + ' ' + endpointId;
+            logger.warn(IDLOG, err);
+            cb(err);
         }
 
     } catch (err) {
-        cb();
         logger.error(IDLOG, err.stack);
+        cb(err);
     }
 }
 
@@ -2096,17 +2096,15 @@ function startSpyListenConvCb(resp) {
 * This is the callback of the hangup command plugin.
 *
 * @method hangupConvCb
-* @param {object} resp The response object of the operation
+* @param {object} error The error object of the operation
+* @param {object} resp  The response object of the operation
 * @private
 */
-function hangupConvCb(resp) {
+function hangupConvCb(err, resp) {
     try {
-        if (typeof resp === 'object' && resp.result === true) {
-            logger.info(IDLOG, 'hangup channel succesfully');
+        if (err) { logger.warn(IDLOG, 'hangup channel failed' + err.toString()); }
+        else     { logger.info(IDLOG, 'hangup channel succesfully');             }
 
-        } else {
-            logger.warn(IDLOG, 'hangup channel failed' + (resp.cause ? (': ' + resp.cause) : '') );
-        }
     } catch (err) {
        logger.error(IDLOG, err.stack);
     }

@@ -94,6 +94,7 @@ var compConfigManager;
         * 1. [`astproxy/cf`](#cfpost)
         * 1. [`astproxy/dnd`](#dndpost)
         * 1. [`astproxy/park`](#parkpost)
+        * 1. [`astproxy/hangup`](#hanguppost)
         *
         * ---
         *
@@ -139,13 +140,29 @@ var compConfigManager;
         * Park a conversation. The request must contains the following parameters:
         *
         * * `convid: the conversation identifier`
-        * * `endpointType: the type of the endpoint that has the conversation to park`
         * * `endpointId: the endpoint identifier that has the conversation to park`
         * * `applicantId: the endpoint identifier who requested the parking. It is assumed that the applicant type is the same of the endpointType`
+        * * `endpointType: the type of the endpoint that has the conversation to park`
         *
         * E.g. using curl:
         *
         *     curl --insecure -i -X POST -d '{ "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "221", "applicantId": "216" }' https://192.168.5.224:8282/astproxy/park
+        *
+        * ---
+        *
+        * ### <a id="hanguppost">**`astproxy/hangup`**</a>
+        *
+        * Hangup the specified conversation. The user can hangup whatever conversation only if he has the appropriate
+        * permission, otherwise he can hangup only his conversations. The request must contains the following parameters:
+        *
+        * * `convid: the conversation identifier`
+        * * `endpointId: the endpoint identifier that has the conversation to hangup. If the user hasn't the permission of the advanced
+        *                operator the endpointId must to be its endpoint identifier.`
+        * * `endpointType: the type of the endpoint that has the conversation to hangup`
+        *
+        * E.g. using curl:
+        *
+        *     curl --insecure -i -X POST -d '{ "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "214" }' https://192.168.5.224:8282/astproxy/hangup
         *
         * @class plugin_rest_astproxy
         * @static
@@ -178,13 +195,16 @@ var compConfigManager;
                 * @property post
                 * @type {array}
                 *
-                *   @param {string} cf   Sets the call forward status of the endpoint of the user
-                *   @param {string} dnd  Sets the don't disturb status of the endpoint of the user
+                *   @param {string} cf     Sets the call forward status of the endpoint of the user
+                *   @param {string} dnd    Sets the don't disturb status of the endpoint of the user
+                *   @param {string} park   Park a conversation of the user
+                *   @param {string} hangup Hangup a conversation
                 */
                 'post': [
                     'cf',
                     'dnd',
-                    'park'
+                    'park',
+                    'hangup'
                 ],
                 'head': [],
                 'del' : []
@@ -332,12 +352,89 @@ var compConfigManager;
                     logger.error(IDLOG, err.stack);
                     sendHttp500(res, err.toString());
                 }
+            },
+
+            /**
+            * Hangup a conversation with the following REST API:
+            *
+            *     POST hangup
+            *
+            * @method hangup
+            * @param {object}   req  The client request.
+            * @param {object}   res  The client response.
+            * @param {function} next Function to run the next handler in the chain.
+            */
+            hangup: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (   typeof req.params              !== 'object'
+                        || typeof req.params.convid       !== 'string'
+                        || typeof req.params.endpointId   !== 'string'
+                        || typeof req.params.endpointType !== 'string') {
+
+                        sendHttp400(res);
+                        return;
+                    }
+
+                    if (req.params.endpointType === 'extension') {
+
+                        // check if the user has the permission to hangup the specified conversation. If he has the advanced
+                        // operator permission he can hangup whatever conversations, otherwise he can hangup only his conversations
+                        if (compAuthorization.authorizeAdvancedOperatorUser(username) === true) {
+                            logger.info(IDLOG, 'the user "' + username + '" has the advanced operator permission');
+
+                        } else {
+                            logger.info(IDLOG, 'the user "' + username + '" hasn\'t the advanced operator permission');
+
+                            // check if the endpoint of the request is owned by the user
+                            if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+
+                                logger.warn(IDLOG, 'hangup convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
+                                                   ' the ' + req.params.endpointType + ' ' + req.params.endpointId + ' isn\'t owned by the user');
+                                sendHttp401(res);
+                                return;
+
+                            } else {
+                                logger.info(IDLOG, 'the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' is owned by "' + username + '"');
+                            }
+                        }
+
+                        logger.info(IDLOG, 'the user "' + username + '" has the permission to hangup the convid ' + req.params.convid);
+
+                        compAstProxy.hangupConversation(req.params.endpointType, req.params.endpointId, req.params.convid, function (err, response) {
+                            try {
+                                if (err) {
+                                    logger.warn(IDLOG, 'hangup convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId + ' has been failed');
+                                    sendHttp500(res, err.toString());
+                                    return;
+                                }
+                                logger.info(IDLOG, 'convid ' + req.params.convid + ' has been hangup successfully by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId);
+                                sendHttp200(res);
+
+                            } catch (err) {
+                                logger.error(IDLOG, err.stack);
+                                sendHttp500(res, err.toString());
+                            }
+                        });
+
+                    } else {
+                        logger.warn(IDLOG, 'parking the conversation ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType);
+                        sendHttp400(res);
+                    }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    sendHttp500(res, err.toString());
+                }
             }
         }
         exports.cf                   = astproxy.cf;
         exports.api                  = astproxy.api;
         exports.dnd                  = astproxy.dnd;
         exports.park                 = astproxy.park;
+        exports.hangup               = astproxy.hangup;
         exports.setLogger            = setLogger;
         exports.extensions           = astproxy.extensions;
         exports.setCompAstProxy      = setCompAstProxy;

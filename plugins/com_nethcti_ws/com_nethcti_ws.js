@@ -434,7 +434,6 @@ function dispatchMsg(socket, data) {
                 // dispatch
                 if      (data.command === 'call')               { call(socket, data);               }
                 else if (data.command === 'pickupConv')         { pickupConv(socket, data);         }
-                else if (data.command === 'hangupConv')         { hangupConv(socket, data);         }
                 else if (data.command === 'stopSpyConv')        { stopSpyConv(socket, data);        }
                 else if (data.command === 'redirectConv')       { redirectConv(socket, data);       }
                 else if (data.command === 'pickupParking')      { pickupParking(socket, data);      }
@@ -811,42 +810,8 @@ function stopSpyConv(socket, data) {
 
         } else {
 
-            astProxy.hangupConversation(data.endpointType, data.endpointId, data.convid, function (resp) {
+            astProxy.hangupConversation(data.endpointType, data.endpointId, data.convid, function (err, resp) {
                 responseToClient(socket, 'stopSpyConv', resp);
-            });
-        }
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Hangup the conversation of the extension using the asterisk proxy component.
-*
-* @method hangupConv
-* @param {object} socket The client websocket
-* @param {object} data The data with the conversation identifier
-*   @param {string} data.endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
-*   @param {string} data.endpointId The endpoint identifier (e.g. the extension number)
-*   @param {string} data.convid The conversation identifier
-* @private
-* @return {object} An synchronous aknowledgment or error response with the name of the command.
-*/
-function hangupConv(socket, data) {
-    try {
-        // check parameter
-        if (typeof socket !== 'object') { throw new Error('wrong parameter'); }
-        if (typeof data   !== 'object'
-            || typeof data.convid       !== 'string'
-            || typeof data.endpointId   !== 'string'
-            || typeof data.endpointType !== 'string') {
-
-            badRequest(socket);
-
-        } else {
-
-            astProxy.hangupConversation(data.endpointType, data.endpointId, data.convid, function (resp) {
-                responseToClient(socket, 'hangupConv', resp);
             });
         }
     } catch (err) {
