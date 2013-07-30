@@ -137,7 +137,7 @@ var compConfigManager;
         *
         * ### <a id="parkpost">**`astproxy/park`**</a>
         *
-        * Park a conversation. The request must contains the following parameters:
+        * Park a conversation. The user can park only his own conversations. The request must contains the following parameters:
         *
         * * `convid: the conversation identifier`
         * * `endpointId: the endpoint identifier that has the conversation to park`
@@ -317,15 +317,17 @@ var compConfigManager;
 
                     if (req.params.endpointType === 'extension') {
 
-                        // check if the applicant of the request is owned by the user: the user
-                        // can only park a conversation that belong to him. The belonging is verfied later by the asterisk proxy component
+                        // check if the applicant of the request is owned by the user: the user can only park a conversation
+                        // that belong to him. The belonging is verfied later by the asterisk proxy component
                         if (compAuthorization.verifyUserEndpointExten(username, req.params.applicantId) === false) {
 
                             logger.warn(IDLOG, 'park of the conversation "' + req.params.convid + '" from user "' + username + '" has been failed: the applicant ' +
-                                               '"' + req.params.applicantId + '" isn\'t owned by him');
+                                                   '"' + req.params.applicantId + '" isn\'t owned by him');
                             sendHttp401(res);
                             return;
+
                         }
+                        logger.info(IDLOG, 'the applicant endpoint ' + req.params.applicantId + ' is owned by "' + username + '"');
 
                         compAstProxy.parkConversation(req.params.endpointType, req.params.endpointId, req.params.convid, req.params.applicantId, function (err, response) {
                             try {
