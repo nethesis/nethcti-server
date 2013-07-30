@@ -543,13 +543,12 @@ function authorizedCustomerCards(username) {
 }
 
 /**
-* Check if the user has the authorization to view the history call of the endpoint.
-* It checks the presence of the endpoint into the extension endpoints of the user.
+* Checks if the endpoint is owned by the specified user.
 *
 * @method verifyUserEndpointExten
-* @param {string} username The username
-* @param {string} endpoint The identifier of the endpoint
-* @return {boolean} True if the user is authorized to view the history call of the endpoint.
+* @param  {string}  username The username
+* @param  {string}  endpoint The identifier of the endpoint
+* @return {boolean} True if the endpoint is owned by the user, false otherwise.
 */
 function verifyUserEndpointExten(username, endpoint) {
     try {

@@ -93,6 +93,7 @@ var compConfigManager;
         *
         * 1. [`astproxy/cf`](#cfpost)
         * 1. [`astproxy/dnd`](#dndpost)
+        * 1. [`astproxy/park`](#parkpost)
         *
         * ---
         *
@@ -131,6 +132,21 @@ var compConfigManager;
         *
         *     curl --insecure -i -X POST -d '{ "endpoint": "214", "status": "on" }' https://192.168.5.224:8282/astproxy/dnd
         *
+        * ---
+        *
+        * ### <a id="parkpost">**`astproxy/park`**</a>
+        *
+        * Park a conversation. The request must contains the following parameters:
+        *
+        * * `convid: the conversation identifier`
+        * * `endpointType: the type of the endpoint that has the conversation to park`
+        * * `endpointId: the endpoint identifier that has the conversation to park`
+        * * `applicantId: the endpoint identifier who requested the parking. It is assumed that the applicant type is the same of the endpointType`
+        *
+        * E.g. using curl:
+        *
+        *     curl --insecure -i -X POST -d '{ "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "221", "applicantId": "216" }' https://192.168.5.224:8282/astproxy/park
+        *
         * @class plugin_rest_astproxy
         * @static
         */
@@ -167,7 +183,8 @@ var compConfigManager;
                 */
                 'post': [
                     'cf',
-                    'dnd'
+                    'dnd',
+                    'park'
                 ],
                 'head': [],
                 'del' : []
@@ -251,11 +268,76 @@ var compConfigManager;
                     logger.error(IDLOG, err.stack);
                     sendHttp500(res, err.toString());
                 }
+            },
+
+            /**
+            * Park a conversation with the following REST API:
+            *
+            *     POST park
+            *
+            * @method park
+            * @param {object}   req  The client request.
+            * @param {object}   res  The client response.
+            * @param {function} next Function to run the next handler in the chain.
+            */
+            park: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (   typeof req.params              !== 'object'
+                        || typeof req.params.convid       !== 'string'
+                        || typeof req.params.endpointId   !== 'string'
+                        || typeof req.params.applicantId  !== 'string'
+                        || typeof req.params.endpointType !== 'string') {
+
+                        sendHttp400(res);
+                        return;
+                    }
+
+                    if (req.params.endpointType === 'extension') {
+
+                        // check if the applicant of the request is owned by the user: the user
+                        // can only park a conversation that belong to him. The belonging is verfied later by the asterisk proxy component
+                        if (compAuthorization.verifyUserEndpointExten(username, req.params.applicantId) === false) {
+
+                            logger.warn(IDLOG, 'park of the conversation "' + req.params.convid + '" from user "' + username + '" has been failed: the applicant ' +
+                                               '"' + req.params.applicantId + '" isn\'t owned by him');
+                            sendHttp401(res);
+                            return;
+                        }
+
+                        compAstProxy.parkConversation(req.params.endpointType, req.params.endpointId, req.params.convid, req.params.applicantId, function (err, response) {
+                            try {
+                                if (err) {
+                                    logger.warn(IDLOG, 'parking convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.applicantId + ' has been failed');
+                                    sendHttp500(res, err.toString());
+                                    return;
+                                }
+                                logger.info(IDLOG, 'convid ' + req.params.convid + ' has been parked successfully by user "' + username + '" with ' + req.params.applicantId);
+                                sendHttp200(res);
+
+                            } catch (err) {
+                                logger.error(IDLOG, err.stack);
+                                sendHttp500(res, err.toString());
+                            }
+                        });
+
+                    } else {
+                        logger.warn(IDLOG, 'parking the conversation ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType);
+                        sendHttp400(res);
+                    }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    sendHttp500(res, err.toString());
+                }
             }
         }
         exports.cf                   = astproxy.cf;
         exports.api                  = astproxy.api;
         exports.dnd                  = astproxy.dnd;
+        exports.park                 = astproxy.park;
         exports.setLogger            = setLogger;
         exports.extensions           = astproxy.extensions;
         exports.setCompAstProxy      = setCompAstProxy;
