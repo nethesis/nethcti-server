@@ -101,7 +101,7 @@ var IDLOG = '[iaxDetails]';
                         && data.objectname && data.port && data.ipaddress
                         && data.objectname === exten) {
 
-                        map[data.actionid]({
+                        map[data.actionid](null, {
                             ip:    data.ipaddress === '(null)' ? '' : data.ipaddress,
                             port:  data.port      === '0'      ? '' : data.port,
                             exten: data.objectname
@@ -111,6 +111,10 @@ var IDLOG = '[iaxDetails]';
                     }
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
+                    if (map[data.actionid]) {
+                        map[data.actionid](err);
+                        delete map[data.actionid];
+                    }
                 }
             },
 

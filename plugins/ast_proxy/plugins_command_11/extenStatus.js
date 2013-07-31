@@ -100,9 +100,8 @@ var IDLOG = '[extenStatus]';
                         && data.response === 'Success') {
 
                         // execute callback
-                        map[data.actionid]({
+                        map[data.actionid](null, {
                             exten:  data.exten,
-                            result: true,
                             status: AST_EXTEN_STATUS_2_STR_ADAPTER[data.status]
                         });
 
@@ -110,25 +109,28 @@ var IDLOG = '[extenStatus]';
                                && data.message
                                && data.response === 'Error') { // extension not specified
 
-                        map[data.actionid]({ result: false, message: data.message });
+                        map[data.actionid](new Error(data.message));
 
                     } else if (map[data.actionid]
                                && data.exten
                                && data.status === '-1') { // extension not found
 
-                        map[data.actionid]({ result: false, message: 'Extension not found', exten: data.exten });
+                        map[data.actionid](new Error('Extension ' + data.exten + 'not found'));
 
                     } else if (map[data.actionid]) {
 
-                        map[data.actionid]({ result: false });
+                        map[data.actionid](new Error('error'));
                     }
-
 
                     // remove association ActionID-callback
                     delete map[data.actionid];
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
+                    if (map[data.actionid]) {
+                        map[data.actionid](err);
+                        delete map[data.actionid];
+                    }
                 }
             },
 

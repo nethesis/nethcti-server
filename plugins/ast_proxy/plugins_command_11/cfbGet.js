@@ -96,14 +96,14 @@ var IDLOG = '[cfbGet]';
                     var exten = data.actionid.split('_')[1];
 
                     // check callback and info presence and execute it
-                    if (map[data.actionid] && data.event === 'DBGetResponse'
-                        && data.family === 'CFB'
-                        && data.val) {
+                    if (map[data.actionid]       && data.event === 'DBGetResponse'
+                        && data.family === 'CFB' && data.val) {
 
                         map[data.actionid](null, { exten: exten, cf_type: CF_TYPES.busy, status: 'on', to: data.val });
                         delete map[data.actionid]; // remove association ActionID-callback
 
                     } else if (map[data.actionid] && data.response === 'Error') {
+
                         map[data.actionid](null, { exten: exten, cf_type: CF_TYPES.busy, status: 'off' });
                         delete map[data.actionid]; // remove association ActionID-callback
                     }

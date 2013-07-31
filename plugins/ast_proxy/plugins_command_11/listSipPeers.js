@@ -107,7 +107,7 @@ var IDLOG = '[listSipPeers]';
                         list.push({ ext: data.objectname });
 
                     } else if (map[data.actionid] && data && data.event === 'PeerlistComplete') {
-                        map[data.actionid](list); // callback execution
+                        map[data.actionid](null, list); // callback execution
                     }
 
                     if (data && data.event === 'PeerlistComplete') {
@@ -117,6 +117,10 @@ var IDLOG = '[listSipPeers]';
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
+                    if (map[data.actionid]) {
+                        map[data.actionid](err);
+                        delete map[data.actionid];
+                    }
                 }
             },
 

@@ -116,21 +116,25 @@ var FILE_EXT = 'wav';
                     if (map[data.actionid]
                         && data.response === 'Success') {
 
-                        map[data.actionid]({ result: true });
+                        map[data.actionid](null);
 
                     } else if (map[data.actionid]
                                && data.message
                                && data.response === 'Error') {
 
-                        map[data.actionid]({ result: false, cause: data.message });
+                        map[data.actionid](new Error(data.message));
 
                     } else {
-                        map[data.actionid]({ result: false });
+                        map[data.actionid](new Error('error'));
                     }
                     delete map[data.actionid]; // remove association ActionID-callback
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
+                    if (map[data.actionid]) {
+                        map[data.actionid](err);
+                        delete map[data.actionid];
+                    }
                 }
             },
 

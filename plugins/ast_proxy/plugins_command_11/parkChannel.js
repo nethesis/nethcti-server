@@ -106,10 +106,10 @@ var IDLOG = '[parkChannel]';
                                && data.message
                                && data.response === 'Error') {
 
-                        map[data.actionid](data.message);
+                        map[data.actionid](new Error(data.message));
 
                     } else {
-                        map[data.actionid]('error');
+                        map[data.actionid](new Error('error'));
                     }
                     delete map[data.actionid]; // remove association ActionID-callback
 

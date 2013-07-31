@@ -98,8 +98,8 @@ var IDLOG = '[cfbSet]';
                     // check callback and info presence and execute it
                     if (map[data.actionid]
                         && (
-                            data.message     === 'Updated database successfully'
-                            || data.message  === 'Key deleted successfully'
+                            data.message    === 'Updated database successfully'
+                            || data.message === 'Key deleted successfully'
                         )
                         && data.response === 'Success') {
 
@@ -107,7 +107,7 @@ var IDLOG = '[cfbSet]';
                         delete map[data.actionid]; // remove association ActionID-callback
 
                     } else if (map[data.actionid] && data.response === 'Error') {
-                        map[data.actionid]('error');
+                        map[data.actionid](new Error('error'));
                         delete map[data.actionid]; // remove association ActionID-callback
                     }
 

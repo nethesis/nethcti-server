@@ -171,19 +171,23 @@ var FAIL_REASON = {
                         && data.event    === 'OriginateResponse'
                         && data.response === 'Success') {
 
-                        map[data.actionid]({ result: true });
+                        map[data.actionid](null);
                         delete map[data.actionid]; // remove association ActionID-callback
 
                     } else if (map[data.actionid]
                                && data.event    === 'OriginateResponse'
                                && data.response === 'Failure') {
 
-                        map[data.actionid]({ result: false, reason: FAIL_REASON[data.reason] });
+                        map[data.actionid](new Error(FAIL_REASON[data.reason]));
                         delete map[data.actionid]; // remove association ActionID-callback
                     }
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
+                    if (map[data.actionid]) {
+                        map[data.actionid](err);
+                        delete map[data.actionid];
+                    }
                 }
             },
 

@@ -122,7 +122,7 @@ var IDLOG = '[listVoicemail]';
                         list[data.actionid][data.voicemailbox] = obj;
 
                     } else if (map[data.actionid] && data && data.event === 'VoicemailUserEntryComplete') {
-                        map[data.actionid](list[data.actionid]); // callback execution
+                        map[data.actionid](null, list[data.actionid]); // callback execution
                     }
 
                     if (data && data.event === 'VoicemailUserEntryComplete') {
@@ -132,6 +132,10 @@ var IDLOG = '[listVoicemail]';
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
+                    if (map[data.actionid]) {
+                        map[data.actionid](err);
+                        delete map[data.actionid];
+                    }
                 }
             },
 

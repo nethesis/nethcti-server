@@ -108,12 +108,16 @@ var IDLOG = '[dndSet]';
                         delete map[data.actionid]; // remove association ActionID-callback
 
                     } else if (map[data.actionid] && data.response === 'Error') {
-                        map[data.actionid]('error');
+                        map[data.actionid](new Error('error'));
                         delete map[data.actionid]; // remove association ActionID-callback
                     }
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
+                    if (map[data.actionid]) {
+                        map[data.actionid](err);
+                        delete map[data.actionid];
+                    }
                 }
             },
 
