@@ -18,6 +18,7 @@ var AUTHORIZATION_TYPES = {
     'call':                'call',
     'chat':                'chat',
     'postit':              'postit',
+    'pickup':              'pickup',
     'history':             'history',
     'privacy':             'privacy',
     'redirect':            'redirect',

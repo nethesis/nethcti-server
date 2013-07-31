@@ -115,7 +115,7 @@ var IDLOG = '[extenStatus]';
                                && data.exten
                                && data.status === '-1') { // extension not found
 
-                        map[data.actionid](new Error('Extension ' + data.exten + 'not found'));
+                        map[data.actionid](new Error('Extension ' + data.exten + ' not found'));
 
                     } else if (map[data.actionid]) {
 

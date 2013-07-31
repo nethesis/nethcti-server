@@ -430,6 +430,41 @@ function authorizeCustomerCardUser(username) {
 }
 
 /**
+* Returns true if the specified user has the authorization to pickup a conversation
+* of the specified extension.
+*
+* @method authorizePickupUser
+* @param  {string}  username   The username
+* @param  {string}  endpointId The endpoint identifier (e.g. the extension number)
+* @return {boolean} True if the user has the authorization to pickup a conversation of the endpoint
+*/
+function authorizePickupUser(username, endpointId) {
+    try {
+        // check parameters
+        if (typeof username !== 'string' || typeof endpointId !== 'string') {
+            throw new Error('wrong parameters');
+        }
+
+        // get pickup authorization from the user
+        var autho = userMod.getAuthorization(username, authorizationTypes.TYPES.pickup);
+
+        // analize the result
+        var objResult = autho[authorizationTypes.TYPES.pickup];
+        var ext;
+        for (ext in objResult) {
+
+            if (ext === endpointId) { return true; }
+        }
+        return false;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
 * Return true if the specified user has at least one streaming authorization.
 *
 * @method authorizeStreamingUser
@@ -646,6 +681,7 @@ exports.config                        = config;
 exports.setLogger                     = setLogger;
 exports.setUserModule                 = setUserModule;
 exports.authorizeChatUser             = authorizeChatUser;
+exports.authorizePickupUser           = authorizePickupUser;
 exports.authorizePostitUser           = authorizePostitUser;
 exports.authorizeHistoryUser          = authorizeHistoryUser;
 exports.getUserAuthorizations         = getUserAuthorizations;

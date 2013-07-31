@@ -42,6 +42,13 @@ module.exports = function (options, imports, register) {
             authorizeOperatorPanelUser: authorization.authorizeOperatorPanelUser,
 
             /**
+            * It's the _authorizePickupUser_ method provided by _authorization_ module.
+            *
+            * @method authorizePickupUser
+            */
+            authorizePickupUser: authorization.authorizePickupUser,
+
+            /**
             * It's the _authorizeAdvancedOperatorUser_ method provided by _authorization_ module.
             *
             * @method authorizeAdvancedOperatorUser

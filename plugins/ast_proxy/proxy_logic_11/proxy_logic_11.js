@@ -1266,7 +1266,7 @@ function updateExtSipDetails(err, resp) {
         }
 
         // set extension informations
-        extSipDetails(resp);
+        extSipDetails(null, resp);
 
         // emit the event
         astProxy.emit(EVT_EXTEN_CHANGED, extensions[resp.exten.exten]);
@@ -2029,6 +2029,7 @@ function pickupConversation(endpointType, endpointId, convid, destType, destId, 
         }
     } catch (err) {
         logger.error(IDLOG, err.stack);
+        cb(err);
     }
 }
 

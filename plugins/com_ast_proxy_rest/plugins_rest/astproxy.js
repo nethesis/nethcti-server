@@ -94,7 +94,9 @@ var compConfigManager;
         * 1. [`astproxy/cf`](#cfpost)
         * 1. [`astproxy/dnd`](#dndpost)
         * 1. [`astproxy/park`](#parkpost)
+        * 1. [`astproxy/call`](#callpost)
         * 1. [`astproxy/hangup`](#hanguppost)
+        * 1. [`astproxy/pickup`](#pickuppost)
         *
         * ---
         *
@@ -150,6 +152,20 @@ var compConfigManager;
         *
         * ---
         *
+        * ### <a id="callpost">**`astproxy/call`**</a>
+        *
+        * Calls a number from the specified endpoint. The request must contains the following parameters:
+        *
+        * * `number: the number to be called`
+        * * `endpointId: the endpoint identifier that make the new call`
+        * * `endpointType: the type of the endpoint that make the new call`
+        *
+        * E.g. using curl:
+        *
+        *     curl --insecure -i -X POST -d '{ "number": "0123456789", "endpointType": "extension", "endpointId": "214" }' https://192.168.5.224:8282/astproxy/call
+        *
+        * ---
+        *
         * ### <a id="hanguppost">**`astproxy/hangup`**</a>
         *
         * Hangup the specified conversation. The user can hangup whatever conversation only if he has the appropriate
@@ -163,6 +179,22 @@ var compConfigManager;
         * E.g. using curl:
         *
         *     curl --insecure -i -X POST -d '{ "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "214" }' https://192.168.5.224:8282/astproxy/hangup
+        *
+        * ---
+        *
+        * ### <a id="hanguppost">**`astproxy/hangup`**</a>
+        *
+        * Pickup the specified conversation. The request must contains the following parameters:
+        *
+        * * `convid: the conversation identifier`
+        * * `destId: the endpoint identifier that pickup the conversation`
+        * * `destType: the endpoint type that pickup the conversation`
+        * * `endpointId: the endpoint identifier that has the conversation to pickup`
+        * * `endpointType: the type of the endpoint that has the conversation to pickup`
+        *
+        * E.g. using curl:
+        *
+        *     curl --insecure -i -X POST -d '{ "convid": ">SIP/221-000000", "endpointType": "extension", "endpointId": "221", "destType": "extension", "destId": "220"}' https://192.168.5.224:8282/astproxy/pickup
         *
         * @class plugin_rest_astproxy
         * @static
@@ -198,13 +230,17 @@ var compConfigManager;
                 *   @param {string} cf     Sets the call forward status of the endpoint of the user
                 *   @param {string} dnd    Sets the don't disturb status of the endpoint of the user
                 *   @param {string} park   Park a conversation of the user
+                *   @param {string} call   Make a new call
                 *   @param {string} hangup Hangup a conversation
+                *   @param {string} pickup Pickup a conversation
                 */
                 'post': [
                     'cf',
                     'dnd',
                     'park',
-                    'hangup'
+                    'call',
+                    'hangup',
+                    'pickup'
                 ],
                 'head': [],
                 'del' : []
@@ -357,6 +393,68 @@ var compConfigManager;
             },
 
             /**
+            * Make a new call with the following REST API:
+            *
+            *     POST call
+            *
+            * @method call
+            * @param {object}   req  The client request.
+            * @param {object}   res  The client response.
+            * @param {function} next Function to run the next handler in the chain.
+            */
+            call: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+                    console.log(req.params);
+
+                    // check parameters
+                    if (   typeof req.params              !== 'object'
+                        || typeof req.params.number       !== 'string'
+                        || typeof req.params.endpointId   !== 'string'
+                        || typeof req.params.endpointType !== 'string') {
+
+                        sendHttp400(res);
+                        return;
+                    }
+
+                    if (req.params.endpointType === 'extension') {
+
+                        // check if the endpoint is owned by the user
+                        if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+
+                            logger.warn(IDLOG, 'make new call to ' + req.params.number + ' failed: ' + req.params.endpointId + ' is not owned by user "' + username + '"'); +
+                            sendHttp401(res);
+                            return;
+                        }
+
+                        compAstProxy.call(req.params.endpointType, req.params.endpointId, req.params.number, function (err) {
+                            try {
+                                if (err) {
+                                    logger.warn(IDLOG, 'failed call from user "' + username + '" to ' + req.params.number + ' using ' + req.params.endpointType + ' ' + req.params.endpointId);
+                                    sendHttp500(res, err.toString());
+                                    return;
+                                }
+                                logger.info(IDLOG, 'new call from user "' + username + '" to ' + req.params.number + ' with ' + req.params.endpointType + ' ' + req.params.endpointId + ' has been successful');
+                                sendHttp200(res);
+
+                            } catch (err) {
+                                logger.error(IDLOG, err.stack);
+                                sendHttp500(res, err.toString());
+                            }
+                        });
+
+                    } else {
+                        logger.warn(IDLOG, 'making new call from user "' + username + '" to ' + req.params.number + ': unknown endpointType ' + req.params.endpointType);
+                        sendHttp400(res);
+                    }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    sendHttp500(res, err.toString());
+                }
+            },
+
+            /**
             * Hangup a conversation with the following REST API:
             *
             *     POST hangup
@@ -430,13 +528,82 @@ var compConfigManager;
                     logger.error(IDLOG, err.stack);
                     sendHttp500(res, err.toString());
                 }
+            },
+
+            /**
+            * Pickup a conversation with the following REST API:
+            *
+            *     POST pickup
+            *
+            * @method pickup
+            * @param {object}   req  The client request.
+            * @param {object}   res  The client response.
+            * @param {function} next Function to run the next handler in the chain.
+            */
+            pickup: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (   typeof req.params            !== 'object' || typeof req.params.convid       !== 'string'
+                        || typeof req.params.endpointId !== 'string' || typeof req.params.endpointType !== 'string'
+                        || typeof req.params.destType   !== 'string' || typeof req.params.destId       !== 'string') {
+
+                        sendHttp400(res);
+                        return;
+                    }
+
+                    if (req.params.endpointType === 'extension' && req.params.destType === 'extension') {
+
+                        // check if the destination endpoint is owned by the user
+                        if (compAuthorization.verifyUserEndpointExten(username, req.params.destId) === false) {
+
+                            logger.warn(IDLOG, 'pickup convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
+                                               ' the destination ' + req.params.destType + ' ' + req.params.destId + ' isn\'t owned by the user');
+                            sendHttp401(res);
+                            return;
+
+                        } else {
+                            logger.info(IDLOG, 'the destination endpoint ' + req.params.destType + ' ' + req.params.destId + ' is owned by "' + username + '"');
+                        }
+
+                        // check if the user has the permission to pickup the specified conversation of the endpoint
+                        // TODO
+
+                        compAstProxy.pickupConversation(req.params.endpointType, req.params.endpointId, req.params.convid, req.params.destType, req.params.destId, function (err) {
+                            try {
+                                if (err) {
+                                    logger.warn(IDLOG, 'pickup convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.destType + ' ' + req.params.destId + ' has been failed');
+                                    sendHttp500(res, err.toString());
+                                    return;
+                                }
+                                logger.info(IDLOG, 'pickup convid ' + req.params.convid + ' has been successful by user "' + username + '" with ' + req.params.destType + ' ' + req.params.destId);
+                                sendHttp200(res);
+
+                            } catch (err) {
+                                logger.error(IDLOG, err.stack);
+                                sendHttp500(res, err.toString());
+                            }
+                        });
+
+                    } else {
+                        logger.warn(IDLOG, 'picking up the conversation ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType + ' or destType ' + destType);
+                        sendHttp400(res);
+                    }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    sendHttp500(res, err.toString());
+                }
             }
         }
         exports.cf                   = astproxy.cf;
         exports.api                  = astproxy.api;
         exports.dnd                  = astproxy.dnd;
         exports.park                 = astproxy.park;
+        exports.call                 = astproxy.call;
         exports.hangup               = astproxy.hangup;
+        exports.pickup               = astproxy.pickup;
         exports.setLogger            = setLogger;
         exports.extensions           = astproxy.extensions;
         exports.setCompAstProxy      = setCompAstProxy;
@@ -876,7 +1043,7 @@ function cfgetUnavailable(endpoint, username, res) {
             throw new Error('wrong parameters');
         }
 
-        compAstProxy.doCmd({ command: 'cfbGet', exten: endpoint }, function (err, resp) {
+        compAstProxy.doCmd({ command: 'cfuGet', exten: endpoint }, function (err, resp) {
 
             if (err) {
                 logger.error(IDLOG, 'getting cf unavailable for extension ' + endpoint + ' of user "' + username + '"');
@@ -1102,7 +1269,7 @@ function cfsetUnavailable(endpoint, username, activate, to, res) {
 
         // when "activate" is false, "to" can be undefined if the client hasn't specified it.
         // This is not important because in this case, the asterisk command plugin doesn't use "val" value
-        compAstProxy.doCmd({ command: 'cfbSet', exten: endpoint, activate: activate, val: to }, function (err, resp) {
+        compAstProxy.doCmd({ command: 'cfuSet', exten: endpoint, activate: activate, val: to }, function (err, resp) {
 
             if (err) {
                 logger.error(IDLOG, 'setting cf unavailable for extension ' + endpoint + ' of user "' + username + '"');
