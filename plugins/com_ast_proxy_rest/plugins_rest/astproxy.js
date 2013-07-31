@@ -182,7 +182,7 @@ var compConfigManager;
         *
         * ---
         *
-        * ### <a id="hanguppost">**`astproxy/hangup`**</a>
+        * ### <a id="pickuppost">**`astproxy/pickup`**</a>
         *
         * Pickup the specified conversation. The request must contains the following parameters:
         *
