@@ -96,7 +96,7 @@ var compConfigManager;
         * 1. [`astproxy/park`](#parkpost)
         * 1. [`astproxy/call`](#callpost)
         * 1. [`astproxy/hangup`](#hanguppost)
-        * 1. [`astproxy/pickup`](#pickuppost)
+        * 1. [`astproxy/pickup_conv`](#pickup_convpost)
         *
         * ---
         *
@@ -182,7 +182,7 @@ var compConfigManager;
         *
         * ---
         *
-        * ### <a id="pickuppost">**`astproxy/pickup`**</a>
+        * ### <a id="pickup_convpost">**`astproxy/pickup_conv`**</a>
         *
         * Pickup the specified conversation. The request must contains the following parameters:
         *
@@ -194,7 +194,7 @@ var compConfigManager;
         *
         * E.g. using curl:
         *
-        *     curl --insecure -i -X POST -d '{ "convid": ">SIP/221-000000", "endpointType": "extension", "endpointId": "221", "destType": "extension", "destId": "220"}' https://192.168.5.224:8282/astproxy/pickup
+        *     curl --insecure -i -X POST -d '{ "convid": ">SIP/221-000000", "endpointType": "extension", "endpointId": "221", "destType": "extension", "destId": "220"}' https://192.168.5.224:8282/astproxy/pickup_conv
         *
         * @class plugin_rest_astproxy
         * @static
@@ -227,12 +227,12 @@ var compConfigManager;
                 * @property post
                 * @type {array}
                 *
-                *   @param {string} cf     Sets the call forward status of the endpoint of the user
-                *   @param {string} dnd    Sets the don't disturb status of the endpoint of the user
-                *   @param {string} park   Park a conversation of the user
-                *   @param {string} call   Make a new call
-                *   @param {string} hangup Hangup a conversation
-                *   @param {string} pickup Pickup a conversation
+                *   @param {string} cf          Sets the call forward status of the endpoint of the user
+                *   @param {string} dnd         Sets the don't disturb status of the endpoint of the user
+                *   @param {string} park        Park a conversation of the user
+                *   @param {string} call        Make a new call
+                *   @param {string} hangup      Hangup a conversation
+                *   @param {string} pickup_conv Pickup a conversation
                 */
                 'post': [
                     'cf',
@@ -240,7 +240,7 @@ var compConfigManager;
                     'park',
                     'call',
                     'hangup',
-                    'pickup'
+                    'pickup_conv'
                 ],
                 'head': [],
                 'del' : []
@@ -533,14 +533,14 @@ var compConfigManager;
             /**
             * Pickup a conversation with the following REST API:
             *
-            *     POST pickup
+            *     POST pickup_conv
             *
-            * @method pickup
+            * @method pickup_conv
             * @param {object}   req  The client request.
             * @param {object}   res  The client response.
             * @param {function} next Function to run the next handler in the chain.
             */
-            pickup: function (req, res, next) {
+            pickup_conv: function (req, res, next) {
                 try {
                     var username = req.headers.authorization_user;
 
@@ -603,9 +603,9 @@ var compConfigManager;
         exports.park                 = astproxy.park;
         exports.call                 = astproxy.call;
         exports.hangup               = astproxy.hangup;
-        exports.pickup               = astproxy.pickup;
         exports.setLogger            = setLogger;
         exports.extensions           = astproxy.extensions;
+        exports.pickup_conv          = astproxy.pickup_conv;
         exports.setCompAstProxy      = setCompAstProxy;
         exports.setCompAuthorization = setCompAuthorization;
         exports.setCompConfigManager = setCompConfigManager;

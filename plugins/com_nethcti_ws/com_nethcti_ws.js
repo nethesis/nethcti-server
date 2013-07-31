@@ -432,9 +432,7 @@ function dispatchMsg(socket, data) {
                 logger.info(IDLOG, 'request command ' + data.command);
 
                 // dispatch
-                if      (data.command === 'call')               { call(socket, data);               }
-                else if (data.command === 'pickupConv')         { pickupConv(socket, data);         }
-                else if (data.command === 'stopSpyConv')        { stopSpyConv(socket, data);        }
+                if (data.command === 'stopSpyConv')        { stopSpyConv(socket, data);        }
                 else if (data.command === 'redirectConv')       { redirectConv(socket, data);       }
                 else if (data.command === 'pickupParking')      { pickupParking(socket, data);      }
                 else if (data.command === 'stopRecordConv')     { stopRecordConv(socket, data);     }
@@ -577,78 +575,6 @@ function pickupParking(socket, data, sender) {
 
             astProxy.pickupParking(data.parking, data.destType, data.destId, function (resp) {
                 responseToClient(socket, 'pickupParking', resp);
-            });
-        }
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Pickup a conversation.
-*
-* @method pickupConv
-* @param {object} socket The client websocket
-* @param {object} data The data with the conversation identifier
-*   @param {string} data.endpointType The type of the endpoint that has the conversation to pickup (e.g. extension, queue, parking, trunk...)
-*   @param {string} data.endpointId The endpoint identifier that has the conversation to pickup (e.g. the extension number)
-*   @param {string} data.convid The conversation identifier
-*   @param {string} data.destType The endpoint type that pickup the conversation
-*   @param {string} data.destId The endpoint identifier that pickup the conversation
-* @private
-* @return {object} An synchronous aknowledgment or error response with the name of the command.
-*/
-function pickupConv(socket, data) {
-    try {
-        // check parameter
-        if (typeof socket !== 'object') { throw new Error('wrong parameter'); }
-        if (typeof data   !== 'object'
-            || typeof data.convid       !== 'string'
-            || typeof data.destId       !== 'string'
-            || typeof data.destType     !== 'string'
-            || typeof data.endpointId   !== 'string'
-            || typeof data.endpointType !== 'string') {
-
-            badRequest(socket);
-
-        } else {
-
-            astProxy.pickupConversation(data.endpointType, data.endpointId, data.convid, data.destType, data.destId, function (resp) {
-                responseToClient(socket, 'pickupConv', resp);
-            });
-        }
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Make a new call.
-*
-* @method call
-* @param {object} socket The client websocket
-* @param {object} data The data with the conversation identifier
-*   @param {string} data.endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
-*   @param {string} data.endpointId The endpoint identifier (e.g. the extension number)
-*   @param {string} data.number The destination number to be called
-* @private
-* @return {object} An synchronous aknowledgment or error response with the name of the command.
-*/
-function call(socket, data) {
-    try {
-        // check parameter
-        if (typeof socket !== 'object') { throw new Error('wrong parameter'); }
-        if (typeof data   !== 'object'
-            || typeof data.number       !== 'string'
-            || typeof data.endpointId   !== 'string'
-            || typeof data.endpointType !== 'string') {
-
-            badRequest(socket);
-
-        } else {
-
-            astProxy.call(data.endpointType, data.endpointId, data.number, function (resp) {
-                responseToClient(socket, 'call', resp);
             });
         }
     } catch (err) {
