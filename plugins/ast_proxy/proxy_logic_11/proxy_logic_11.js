@@ -680,7 +680,7 @@ function listParkedChannels(err, resp) {
         if (typeof resp !== 'object') { throw new Error('wrong parameter'); }
 
         // store parked channels in global variable "parkedChannels"
-        parkedChannels = resp.parkedChannels;
+        parkedChannels = resp;
 
         // request all channels to get the caller number information for each parked channel
         astProxy.doCmd({ command: 'listChannels' }, updateParkedCallerForAllParkings);
@@ -714,10 +714,10 @@ function updateParkedChannelOfOneParking(err, resp, parking) {
 
         // check if the response contains a parked channel for the specified parking
         // It it's not present, the parking is free
-        if (typeof resp.parkedChannels[parking] === 'object') {
+        if (typeof resp[parking] === 'object') {
 
             // update the parked channel of the parking
-            parkedChannels[parking] = resp.parkedChannels[parking];
+            parkedChannels[parking] = resp[parking];
 
             // request all channels to get the caller number information of
             // the parked channel of the specified parking
@@ -1347,6 +1347,7 @@ function updateConversationsForAllTrunk(err, resp) {
         for (chid in resp) {
 
             trunk = resp[chid].callerNum;
+            console.log('TODO TODO TODO TODO');
 
             // add new conversation to the extension. Queue channel is not considered,
             // otherwise an extension has also wrong conversation (e.g. 214 has the

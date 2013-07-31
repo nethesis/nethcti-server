@@ -434,7 +434,6 @@ function dispatchMsg(socket, data) {
                 // dispatch
                 if (data.command === 'stopSpyConv')        { stopSpyConv(socket, data);        }
                 else if (data.command === 'redirectConv')       { redirectConv(socket, data);       }
-                else if (data.command === 'pickupParking')      { pickupParking(socket, data);      }
                 else if (data.command === 'stopRecordConv')     { stopRecordConv(socket, data);     }
                 else if (data.command === 'startRecordConv')    { startRecordConv(socket, data);    }
                 else if (data.command === 'getOperatorGroups')  { getOperatorGroups(socket);        }
@@ -542,39 +541,6 @@ function startSpyListenConv(socket, data) {
 
             astProxy.startSpyListenConversation(data.endpointType, data.endpointId, data.convid, data.destType, data.destId, function (resp) {
                 responseToClient(socket, 'startSpyListenConv', resp);
-            });
-        }
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Pickup a parked caller.
-*
-* @method pickupParking
-* @param {object} socket The client websocket
-* @param {object} data The data with the conversation identifier
-*   @param {string} data.parking The number of the parking
-* @param {string} sender The sender of the operation (e.g. the extension number)
-* @private
-* @return {object} An synchronous aknowledgment or error response with the name of the command.
-*/
-function pickupParking(socket, data, sender) {
-    try {
-        // check parameter
-        if (typeof socket !== 'object') { throw new Error('wrong parameter'); }
-        if (typeof data   !== 'object'
-            || typeof data.destId   !== 'string'
-            || typeof data.parking  !== 'string'
-            || typeof data.destType !== 'string') {
-
-            badRequest(socket);
-
-        } else {
-
-            astProxy.pickupParking(data.parking, data.destType, data.destId, function (resp) {
-                responseToClient(socket, 'pickupParking', resp);
             });
         }
     } catch (err) {
