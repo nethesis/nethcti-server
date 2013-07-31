@@ -329,7 +329,7 @@ function sipExtenStructValidation(err, resp) {
 * @param {array}  resp The response received from the command
 * @private
 */
-function sipTrunkStructValidation(resp) {
+function sipTrunkStructValidation(err, resp) {
     try {
         if (err) {
             logger.error(IDLOG, 'validating sip trunk structure: ' + err.toString());
@@ -665,27 +665,28 @@ function initializeParkings() {
 * to get the number and the name of each parked channels.
 *
 * @method listParkedChannels
+* @param {object} err  The error object received from the "listParkedChannels" command plugin
 * @param {object} resp The reponse object received from the "listParkedChannels" command plugin
 * @private
 */
-function listParkedChannels(resp) {
+function listParkedChannels(err, resp) {
     try {
+        if (err) {
+            logger.error(IDLOG, 'listing parked channels: ' + err.toString());
+            return;
+        }
+
         // check the parameter
         if (typeof resp !== 'object') { throw new Error('wrong parameter'); }
 
-        if (resp && resp.result === true) {
+        // store parked channels in global variable "parkedChannels"
+        parkedChannels = resp.parkedChannels;
 
-            // store parked channels in global variable "parkedChannels"
-            parkedChannels = resp.parkedChannels;
+        // request all channels to get the caller number information for each parked channel
+        astProxy.doCmd({ command: 'listChannels' }, updateParkedCallerForAllParkings);
 
-            // request all channels to get the caller number information for each parked channel
-            astProxy.doCmd({ command: 'listChannels' }, updateParkedCallerForAllParkings);
-
-        } else {
-            logger.warn(IDLOG, 'getting parked channels');
-        }
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
+    } catch (error) {
+        logger.error(IDLOG, error.stack);
     }
 }
 
@@ -694,54 +695,54 @@ function listParkedChannels(resp) {
 * object received from _listParkedChannels_ command plugin.
 *
 * @method updateParkedChannelOfOneParking
+* @param {object} err     The error object received from _listParkedChannels_ command plugin
+* @param {object} resp    The response object received from _listParkedChannels_ command plugin
 * @param {string} parking The parking identifier
-* @param {resp} The response object received from _listParkedChannels_ command plugin
 * @private
 */
-function updateParkedChannelOfOneParking(parking, resp) {
+function updateParkedChannelOfOneParking(err, resp, parking) {
     try {
+        if (err) {
+            logger.error(IDLOG, 'updating parked channels of one parking ' + parking + ': ' + err.toString());
+            return;
+        }
+
         // check the parameters
         if (typeof resp !== 'object' || typeof parking !== 'string') {
             throw new Error('wrong parameters');
         }
 
-        if (resp.result === true) {
+        // check if the response contains a parked channel for the specified parking
+        // It it's not present, the parking is free
+        if (typeof resp.parkedChannels[parking] === 'object') {
 
-            // check if the response contains a parked channel for the specified parking
-            // It it's not present, the parking is free
-            if (typeof resp.parkedChannels[parking] === 'object') {
+            // update the parked channel of the parking
+            parkedChannels[parking] = resp.parkedChannels[parking];
 
-                // update the parked channel of the parking
-                parkedChannels[parking] = resp.parkedChannels[parking];
+            // request all channels to get the caller number information of
+            // the parked channel of the specified parking
+            logger.info(IDLOG, 'request all channels to update parked caller informations for parking ' + parking);
+            astProxy.doCmd({ command: 'listChannels' }, function (err, resp) {
+                // update the parked caller of one parking in "parkings" object list
+                updateParkedCallerOfOneParking(err, resp, parking);
+            });
 
-                // request all channels to get the caller number information of
-                // the parked channel of the specified parking
-                logger.info(IDLOG, 'request all channels to update parked caller informations for parking ' + parking);
-                astProxy.doCmd({ command: 'listChannels' }, function (err, resp) {
-                    // update the parked caller of one parking in "parkings" object list
-                    updateParkedCallerOfOneParking(err, resp, parking);
-                });
-
-            // there isn't a parked caller for the parking
-            } else {
-                // remove the parked channel from the memory
-                delete parkedChannels[parking];
-                logger.info(IDLOG, 'removed parked channel from parkedChannels for parking ' + parking);
-                // remove the parked caller from the parking object
-                parkings[parking].removeParkedCaller();
-                logger.info(IDLOG, 'removed parked caller from parking ' + parking);
-
-                // emit the event
-                astProxy.emit(EVT_PARKING_CHANGED, parkings[parking]);
-                logger.info(IDLOG, 'emitted event ' + EVT_PARKING_CHANGED + ' for parking ' + parking);
-            }
-
+        // there isn't a parked caller for the parking
         } else {
-            logger.warn(IDLOG, 'in update parked caller for parking ' + parking);
+            // remove the parked channel from the memory
+            delete parkedChannels[parking];
+            logger.info(IDLOG, 'removed parked channel from parkedChannels for parking ' + parking);
+            // remove the parked caller from the parking object
+            parkings[parking].removeParkedCaller();
+            logger.info(IDLOG, 'removed parked caller from parking ' + parking);
+
+            // emit the event
+            astProxy.emit(EVT_PARKING_CHANGED, parkings[parking]);
+            logger.info(IDLOG, 'emitted event ' + EVT_PARKING_CHANGED + ' for parking ' + parking);
         }
 
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
+    } catch (error) {
+        logger.error(IDLOG, error.stack);
     }
 }
 
@@ -1149,23 +1150,18 @@ function extSipDetails(err, resp) {
         }
 
         // check parameter
-        if (!resp || resp.result === undefined) { throw new Error('wrong parameter'); }
+        if (!resp) { throw new Error('wrong parameter'); }
 
-        if (resp.result === true) {
+        // extract extension object from the response
+        var data = resp.exten;
 
-            // extract extension object from the response
-            var data = resp.exten;
+        // set the extension informations
+        extensions[data.exten].setIp(data.ip);
+        extensions[data.exten].setPort(data.port);
+        extensions[data.exten].setName(data.name);
+        extensions[data.exten].setSipUserAgent(data.sipuseragent);
+        logger.info(IDLOG, 'set sip details for ext ' + data.exten);
 
-            // set the extension informations
-            extensions[data.exten].setIp(data.ip);
-            extensions[data.exten].setPort(data.port);
-            extensions[data.exten].setName(data.name);
-            extensions[data.exten].setSipUserAgent(data.sipuseragent);
-            logger.info(IDLOG, 'set sip details for ext ' + data.exten);
-
-        } else {
-            logger.warn(IDLOG, 'exten sip details ' + (resp.message !== undefined ? resp.message : ''));
-        }
     } catch (error) {
         logger.error(IDLOG, error.stack);
     }
@@ -1187,23 +1183,18 @@ function trunkSipDetails(err, resp) {
         }
 
         // check parameter
-        if (!resp || resp.result === undefined) { throw new Error('wrong parameter'); }
+        if (!resp) { throw new Error('wrong parameter'); }
 
-        if (resp.result === true) {
+        // extract extension object from the response
+        var data = resp.exten;
 
-            // extract extension object from the response
-            var data = resp.exten;
+        // set the extension informations
+        trunks[data.exten].setIp(data.ip);
+        trunks[data.exten].setPort(data.port);
+        trunks[data.exten].setName(data.name);
+        trunks[data.exten].setSipUserAgent(data.sipuseragent);
+        logger.info(IDLOG, 'set sip details for trunk ' + data.exten);
 
-            // set the extension informations
-            trunks[data.exten].setIp(data.ip);
-            trunks[data.exten].setPort(data.port);
-            trunks[data.exten].setName(data.name);
-            trunks[data.exten].setSipUserAgent(data.sipuseragent);
-            logger.info(IDLOG, 'set sip details for trunk ' + data.exten);
-
-        } else {
-            logger.warn(IDLOG, 'trunk sip details ' + (resp.message !== undefined ? resp.message : ''));
-        }
     } catch (error) {
         logger.error(IDLOG, error.stack);
     }
@@ -1610,9 +1601,9 @@ function evtExtenStatusChanged(exten, status) {
 
             // request all parked channels
             logger.info(IDLOG, 'requests all parked channels to update the parking ' + parking);
-            astProxy.doCmd({ command: 'listParkedChannels' }, function (resp) {
+            astProxy.doCmd({ command: 'listParkedChannels' }, function (err, resp) {
                 // update the parked channel of one parking in "parkedChannels"
-                updateParkedChannelOfOneParking(parking, resp);
+                updateParkedChannelOfOneParking(err, resp, parking);
             });
         }
 
@@ -1964,9 +1955,9 @@ function pickupParking(parking, destType, destId, cb) {
 
             // the pickup operation is made by redirect operation
             logger.info(IDLOG, 'pickup from ' + destType + ' ' + destId + ' of the channel ' + ch + ' of parking ' + parking);
-            astProxy.doCmd({ command: 'redirectChannel', chToRedirect: ch, to: destId }, function (err, resp) {
-               cb(err, resp);
-               redirectConvCb(err, resp);
+            astProxy.doCmd({ command: 'redirectChannel', chToRedirect: ch, to: destId }, function (err) {
+               cb(err);
+               redirectConvCb(err);
             });
 
         } else {
@@ -2026,9 +2017,9 @@ function pickupConversation(endpointType, endpointId, convid, destType, destId, 
 
                 // the pickup operation is made by redirect operation
                 logger.info(IDLOG, 'pickup from ' + destType + ' ' + destId + ' of the channel ' + chToRedirect + ' of ' + endpointType + ' ' + endpointId);
-                astProxy.doCmd({ command: 'redirectChannel', chToRedirect: chToRedirect, to: destId }, function (err, resp) {
-                    cb(err, resp);
-                    redirectConvCb(err, resp);
+                astProxy.doCmd({ command: 'redirectChannel', chToRedirect: chToRedirect, to: destId }, function (err) {
+                    cb(err);
+                    redirectConvCb(err);
                 });
 
             } else {
@@ -2101,9 +2092,9 @@ function hangupConversation(endpointType, endpointId, convid, cb) {
             if (ch) {
                 // execute the hangup
                 logger.info(IDLOG, 'execute hangup of the channel ' + ch + ' of exten ' + endpointId);
-                astProxy.doCmd({ command: 'hangup', channel: ch }, function (err, resp) {
-                    cb(err, resp);
-                    hangupConvCb(err, resp);
+                astProxy.doCmd({ command: 'hangup', channel: ch }, function (err) {
+                    cb(err);
+                    hangupConvCb(err);
                 });
 
             } else {
@@ -2128,23 +2119,14 @@ function hangupConversation(endpointType, endpointId, convid, cb) {
 * This is the callback of the _redirectChannel_ command plugin.
 *
 * @method redirectConvCb
-* @param {object} err  The error object of the operation
-* @param {object} resp The response object of the operation
+* @param {object} err The error object of the operation
 * @private
 */
-function redirectConvCb(err, resp) {
+function redirectConvCb(err) {
     try {
-        if (err) {
-            logger.error(IDLOG, 'redirecting conversation: ' + err.toString());
-            return;
-        }
+        if (err) { logger.error(IDLOG, 'redirect conversation failed: ' + err.toString()); }
+        else     { logger.info(IDLOG, 'redirect channel succesfully');                     }
 
-        if (typeof resp === 'object' && resp.result === true) {
-            logger.info(IDLOG, 'redirect channel succesfully');
-
-        } else {
-            logger.warn(IDLOG, 'redirect channel failed' + (resp.cause ? (': ' + resp.cause) : '') );
-        }
     } catch (error) {
        logger.error(IDLOG, error.stack);
     }
@@ -2171,23 +2153,15 @@ function callCb(error) {
 * This is the callback of the spy command plugin with speaking.
 *
 * @method startSpySpeakConvCb
-* @param {object} err  The error object of the operation
-* @param {object} resp The response object of the operation
+* @param {object} err    The error object of the operation
+* @param {string} convid The conversation identifier
 * @private
 */
-function startSpySpeakConvCb(err, resp) {
+function startSpySpeakConvCb(err, convid) {
     try {
-        if (err) {
-            logger.error(IDLOG, 'starting spy speak conversation: ' + err.toString());
-            return;
-        }
+        if (err) { logger.error(IDLOG, 'start spy convid ' + convid + ' with speaking failed: ' + err.toString()); }
+        else     { logger.info(IDLOG, 'start spy convid ' + convid + ' with speaking succesfully');                }
 
-        if (typeof resp === 'object' && resp.result === true) {
-            logger.info(IDLOG, 'start spy channel with speaking succesfully');
-
-        } else {
-            logger.warn(IDLOG, 'start spy channel with speaking failed' + (resp.cause ? (': ' + resp.cause) : '') );
-        }
     } catch (error) {
        logger.error(IDLOG, error.stack);
     }
@@ -2197,23 +2171,15 @@ function startSpySpeakConvCb(err, resp) {
 * This is the callback of the spy command plugin with only listening.
 *
 * @method startSpyListenConvCb
-* @param {object} err  The error object of the operation
-* @param {object} resp The response object of the operation
+* @param {object} err    The error object of the operation
+* @param {string} convid The conversation identifier
 * @private
 */
-function startSpyListenConvCb(err, resp) {
+function startSpyListenConvCb(err, convid) {
     try {
-        if (err) {
-            logger.error(IDLOG, 'starting spy listen conversation: ' + err.toString());
-            return;
-        }
+        if (err) { logger.error(IDLOG, 'start spy convid ' + convid + ' with only listening failed: ' + err.toString()); }
+        else     { logger.info(IDLOG, 'start spy convid ' + convid + ' with only listening succesfully');                }
 
-        if (typeof resp === 'object' && resp.result === true) {
-            logger.info(IDLOG, 'start spy channel with only listening succesfully');
-
-        } else {
-            logger.warn(IDLOG, 'start spy channel with only listening failed' + (resp.cause ? (': ' + resp.cause) : '') );
-        }
     } catch (error) {
        logger.error(IDLOG, error.stack);
     }
@@ -2223,17 +2189,16 @@ function startSpyListenConvCb(err, resp) {
 * This is the callback of the hangup command plugin.
 *
 * @method hangupConvCb
-* @param {object} error The error object of the operation
-* @param {object} resp  The response object of the operation
+* @param {object} err The error object of the operation
 * @private
 */
-function hangupConvCb(err, resp) {
+function hangupConvCb(err) {
     try {
         if (err) { logger.warn(IDLOG, 'hangup channel failed' + err.toString()); }
         else     { logger.info(IDLOG, 'hangup channel succesfully');             }
 
-    } catch (err) {
-       logger.error(IDLOG, err.stack);
+    } catch (error) {
+       logger.error(IDLOG, error.stack);
     }
 }
 
@@ -2276,9 +2241,9 @@ function redirectConversation(endpointType, endpointId, convid, to, cb) {
 
                 // redirect the channel
                 logger.info(IDLOG, 'redirect of the channel ' + chToRedirect + ' of exten ' + endpointId + ' to ' + to);
-                astProxy.doCmd({ command: 'redirectChannel', chToRedirect: chToRedirect, to: to }, function (err, resp) {
-                    cb(err, resp);
-                    redirectConvCb(err, resp);
+                astProxy.doCmd({ command: 'redirectChannel', chToRedirect: chToRedirect, to: to }, function (err) {
+                    cb(err);
+                    redirectConvCb(err);
                 });
 
             } else {
@@ -2406,9 +2371,9 @@ function stopRecordConversation(endpointType, endpointId, convid, cb) {
             } else if (chid) {
                 // start the recording
                 logger.info(IDLOG, 'execute the stop record of the channel ' + chid + ' of exten ' + endpointId);
-                astProxy.doCmd({ command: 'stopRecordCall', channel: chid }, function (err, resp) {
-                    cb(err, resp);
-                    stopRecordCallCb(err, resp, convid);
+                astProxy.doCmd({ command: 'stopRecordCall', channel: chid }, function (err) {
+                    cb(err);
+                    stopRecordCallCb(err, convid);
                 });
 
             } else {
@@ -2465,9 +2430,9 @@ function startSpySpeakConversation(endpointType, endpointId, convid, destType, d
 
             // start to spy
             logger.info(IDLOG, 'execute the spy with only listening from ' + destId + ' of the channel ' + chToSpy + ' of exten ' + endpointId);
-            astProxy.doCmd({ command: 'spySpeak', spierId: spierId, spiedId: endpointId, chToSpy: chToSpy }, function (err, resp) {
-                cb(err, resp);
-                startSpySpeakConvCb(err, resp, convid);
+            astProxy.doCmd({ command: 'spySpeak', spierId: spierId, spiedId: endpointId, chToSpy: chToSpy }, function (err) {
+                cb(err);
+                startSpySpeakConvCb(err, convid);
             });
 
         } else {
@@ -2518,9 +2483,9 @@ function startSpyListenConversation(endpointType, endpointId, convid, destType, 
 
             // start to spy
             logger.info(IDLOG, 'execute the spy with only listening from ' + destId + ' of the channel ' + chToSpy + ' of exten ' + endpointId);
-            astProxy.doCmd({ command: 'spyListen', spierId: spierId, spiedId: endpointId, chToSpy: chToSpy }, function (err, resp) {
-                cb(err, resp);
-                startSpyListenConvCb(err, resp, convid);
+            astProxy.doCmd({ command: 'spyListen', spierId: spierId, spiedId: endpointId, chToSpy: chToSpy }, function (err) {
+                cb(err);
+                startSpyListenConvCb(err, convid);
             });
 
         } else {
@@ -2570,9 +2535,9 @@ function startRecordConversation(endpointType, endpointId, convid, cb) {
 
                 // start the recording
                 logger.info(IDLOG, 'execute the record of the channel ' + chid + ' of exten ' + endpointId);
-                astProxy.doCmd({ command: 'recordCall', channel: chid, filepath: filepath }, function (err, resp) {
-                    cb(err, resp);
-                    recordCallCb(err, resp, convid);
+                astProxy.doCmd({ command: 'recordCall', channel: chid, filepath: filepath }, function (err) {
+                    cb(err);
+                    recordCallCb(err, convid);
                 });
 
             } else {
@@ -2644,30 +2609,23 @@ function getRecordConversationFilepath(chSource) {
 * Reset the record status of the conversations.
 *
 * @method stopRecordCallCb
-* @param {object} err  The error object of the operation
-* @param {object} resp The response object of the operation
+* @param {object} err    The error object of the operation
 * @param {string} convid The conversation identifier
 * @private
 */
-function stopRecordCallCb(err, resp, convid) {
+function stopRecordCallCb(err, convid) {
     try {
         if (err) {
-            logger.error(IDLOG, 'stopping record call: ' + err.toString());
-            return;
-        }
+            logger.error(IDLOG, 'stop record convid ' + convid + ' failed: ' + err.toString());
 
-        if (typeof resp === 'object' && resp.result === true) {
-            logger.info(IDLOG, 'stop record channel started succesfully');
+        } else {
+            logger.info(IDLOG, 'stop record convid ' + convid + ' started succesfully');
 
             // remove the recording status of the conversation
             delete recordingConv[convid];
             // reset the recording status of all conversations with specified convid
             setRecordStatusConversations(convid, false);
-
-        } else {
-            logger.warn(IDLOG, 'stop record channel failed' + (resp.cause ? (': ' + resp.cause) : '') );
         }
-
     } catch (error) {
        logger.error(IDLOG, error.stack);
     }
@@ -2678,29 +2636,22 @@ function stopRecordCallCb(err, resp, convid) {
 * Sets the recording status of the conversations.
 *
 * @method recordCallCb
-* @param {object} err  The error object of the operation
-* @param {object} resp The response object of the operation
+* @param {object} err    The error object of the operation
 * @param {string} convid The conversation identifier
 * @private
 */
-function recordCallCb(err, resp, convid) {
+function recordCallCb(err, convid) {
     try {
         if (err) {
-            logger.error(IDLOG, 'recording conversation ' + convid + ': ' + err.toString());
-            return;
-        }
+            logger.error(IDLOG, 'record convid ' + convid + ' failed: ' + err.toString());
 
-        // the operation was succesfully
-        if (typeof resp === 'object' && resp.result === true) {
-            logger.info(IDLOG, 'record channel started succesfully');
+        } else {
+            logger.info(IDLOG, 'record convid ' + convid + ' started succesfully');
 
             // set the recording status of the conversation to memory
             recordingConv[convid] = '';
             // set the recording status of all conversations with specified convid
             setRecordStatusConversations(convid, true);
-
-        } else {
-            logger.warn(IDLOG, 'record channel failed' + (resp.cause ? (': ' + resp.cause) : '') );
         }
     } catch (error) {
        logger.error(IDLOG, error.stack);
