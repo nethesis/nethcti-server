@@ -98,6 +98,7 @@ var compConfigManager;
         * 1. [`astproxy/hangup`](#hanguppost)
         * 1. [`astproxy/redirect`](#redirectpost)
         * 1. [`astproxy/pickup_conv`](#pickup_convpost)
+        * 1. [`astproxy/start_record`](#start_recordpost)
         * 1. [`astproxy/pickup_parking`](#pickup_parkingpost)
         *
         * ---
@@ -216,6 +217,20 @@ var compConfigManager;
         *
         * ---
         *
+        * ### <a id="start_recordpost">**`astproxy/start_record`**</a>
+        *
+        * Starts the recording of the specified conversation. The request must contains the following parameters:
+        *
+        * * `convid: the conversation identifier`
+        * * `endpointId: the endpoint identifier that has the conversation to record`
+        * * `endpointType: the type of the endpoint that has the conversation to record`
+        *
+        * E.g. using curl:
+        *
+        *     curl --insecure -i -X POST -d '{ "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "214" }' https://192.168.5.224:8282/astproxy/start_record
+        *
+        * ---
+        *
         * ### <a id="pickup_parkingpost">**`astproxy/pickup_parking`**</a>
         *
         * Pickup the specified parking. The request must contains the following parameters:
@@ -266,6 +281,7 @@ var compConfigManager;
                 *   @param {string} hangup         Hangup a conversation
                 *   @param {string} redirect       Redirect a conversation
                 *   @param {string} pickup_conv    Pickup a conversation
+                *   @param {string} start_record   Start the recording of a conversation
                 *   @param {string} pickup_parking Pickup a parked call
                 */
                 'post': [
@@ -276,6 +292,7 @@ var compConfigManager;
                     'hangup',
                     'redirect',
                     'pickup_conv',
+                    'start_record',
                     'pickup_parking'
                 ],
                 'head': [],
@@ -701,6 +718,72 @@ var compConfigManager;
             },
 
             /**
+            * Starts the record of the specified conversation with the following REST API:
+            *
+            *     POST start_record
+            *
+            * @method start_record
+            * @param {object}   req  The client request.
+            * @param {object}   res  The client response.
+            * @param {function} next Function to run the next handler in the chain.
+            */
+            start_record: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (   typeof req.params              !== 'object' || typeof req.params.convid     !== 'string'
+                        || typeof req.params.endpointType !== 'string' || typeof req.params.endpointId !== 'string') {
+
+                        sendHttp400(res);
+                        return;
+                    }
+
+                    if (req.params.endpointType === 'extension') {
+
+                        // check if the destination endpoint is owned by the user
+                        if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+
+                            logger.warn(IDLOG, 'starting record convid ' + req.params.convid + ' by user "' + username + '" has been failed: ' +
+                                               ' the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' isn\'t owned by the user');
+                            sendHttp401(res);
+                            return;
+
+                        } else {
+                            logger.info(IDLOG, 'the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' is owned by "' + username + '"');
+                        }
+
+                        // check if the user has the permission to start recording the specified conversation
+                        // TODO
+
+                        compAstProxy.startRecordConversation(req.params.endpointType, req.params.endpointId, req.params.convid, function (err) {
+                            try {
+                                if (err) {
+                                    logger.warn(IDLOG, 'starting record convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId + ' has been failed');
+                                    sendHttp500(res, err.toString());
+                                    return;
+                                }
+                                logger.info(IDLOG, 'started record convid ' + req.params.convid + ' has been successful by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId);
+                                sendHttp200(res);
+
+                            } catch (err) {
+                                logger.error(IDLOG, err.stack);
+                                sendHttp500(res, err.toString());
+                            }
+                        });
+
+                    } else {
+                        logger.warn(IDLOG, 'starting record of convid ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType);
+                        sendHttp400(res);
+                    }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    sendHttp500(res, err.toString());
+                }
+            },
+
+            /**
             * Pickup a parked call with the following REST API:
             *
             *     POST pickup_parking
@@ -776,6 +859,7 @@ var compConfigManager;
         exports.setLogger            = setLogger;
         exports.extensions           = astproxy.extensions;
         exports.pickup_conv          = astproxy.pickup_conv;
+        exports.start_record         = astproxy.start_record;
         exports.pickup_parking       = astproxy.pickup_parking;
         exports.setCompAstProxy      = setCompAstProxy;
         exports.setCompAuthorization = setCompAuthorization;

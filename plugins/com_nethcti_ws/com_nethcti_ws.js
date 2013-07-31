@@ -434,7 +434,6 @@ function dispatchMsg(socket, data) {
                 // dispatch
                 if (data.command === 'stopSpyConv')        { stopSpyConv(socket, data);        }
                 else if (data.command === 'stopRecordConv')     { stopRecordConv(socket, data);     }
-                else if (data.command === 'startRecordConv')    { startRecordConv(socket, data);    }
                 else if (data.command === 'getOperatorGroups')  { getOperatorGroups(socket);        }
                 else if (data.command === 'startSpySpeakConv')  { startSpySpeakConv(socket, data);  }
                 else if (data.command === 'startSpyListenConv') { startSpyListenConv(socket, data); }
@@ -574,40 +573,6 @@ function stopRecordConv(socket, data) {
 
             astProxy.stopRecordConversation(data.endpointType, data.endpointId, data.convid, function (resp) {
                 responseToClient(socket, 'stopRecordConv', resp);
-            });
-        }
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Start the recording of the conversation of the extension using the asterisk proxy component.
-*
-* @method startRecordConv
-* @param {object} socket The client websocket
-* @param {object} data The data with the conversation identifier
-*   @param {string} data.endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
-*   @param {string} data.endpointId The endpoint identifier (e.g. the extension number)
-*   @param {string} data.convid The conversation identifier
-* @private
-* @return {object} An synchronous aknowledgment or error response with the name of the command.
-*/
-function startRecordConv(socket, data) {
-    try {
-        // check parameter
-        if (typeof socket !== 'object') { throw new Error('wrong parameter'); }
-        if (typeof data   !== 'object'
-            || typeof data.convid       !== 'string'
-            || typeof data.endpointId   !== 'string'
-            || typeof data.endpointType !== 'string') {
-
-            badRequest(socket);
-
-        } else {
-
-            astProxy.startRecordConversation(data.endpointType, data.endpointId, data.convid, function (resp) {
-                responseToClient(socket, 'startRecordConv', resp);
             });
         }
     } catch (err) {
