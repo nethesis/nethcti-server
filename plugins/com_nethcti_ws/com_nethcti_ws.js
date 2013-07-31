@@ -433,7 +433,6 @@ function dispatchMsg(socket, data) {
 
                 // dispatch
                 if (data.command === 'stopSpyConv')        { stopSpyConv(socket, data);        }
-                else if (data.command === 'redirectConv')       { redirectConv(socket, data);       }
                 else if (data.command === 'stopRecordConv')     { stopRecordConv(socket, data);     }
                 else if (data.command === 'startRecordConv')    { startRecordConv(socket, data);    }
                 else if (data.command === 'getOperatorGroups')  { getOperatorGroups(socket);        }
@@ -609,43 +608,6 @@ function startRecordConv(socket, data) {
 
             astProxy.startRecordConversation(data.endpointType, data.endpointId, data.convid, function (resp) {
                 responseToClient(socket, 'startRecordConv', resp);
-            });
-        }
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Redirect the conversation of the extension using the asterisk proxy component.
-*
-* @method redirectConv
-* @param {object} socket The client websocket
-* @param {object} data The data with the conversation identifier
-*   @param {string} data.endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
-*   @param {string} data.endpointId The endpoint identifier (e.g. the extension number)
-*   @param {string} data.convid The conversation identifier
-*   @param {string} data.to The destination number to redirect the conversation
-*   @param {string} data.senderId The identifier of the applicant of the redirect operation (e.g. the extension number)
-* @private
-* @return {object} An synchronous aknowledgment or error response with the name of the command.
-*/
-function redirectConv(socket, data) {
-    try {
-        // check parameter
-        if (typeof socket !== 'object') { throw new Error('wrong parameter'); }
-        if (typeof data   !== 'object'
-            || typeof data.to           !== 'string'
-            || typeof data.convid       !== 'string'
-            || typeof data.endpointId   !== 'string'
-            || typeof data.endpointType !== 'string') {
-
-            badRequest(socket);
-
-        } else {
-
-            astProxy.redirectConversation(data.endpointType, data.endpointId, data.convid, data.to, function (resp) {
-                responseToClient(socket, 'redirectConv', resp);
             });
         }
     } catch (err) {

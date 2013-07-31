@@ -96,6 +96,7 @@ var compConfigManager;
         * 1. [`astproxy/park`](#parkpost)
         * 1. [`astproxy/call`](#callpost)
         * 1. [`astproxy/hangup`](#hanguppost)
+        * 1. [`astproxy/redirect`](#redirectpost)
         * 1. [`astproxy/pickup_conv`](#pickup_convpost)
         * 1. [`astproxy/pickup_parking`](#pickup_parkingpost)
         *
@@ -183,6 +184,22 @@ var compConfigManager;
         *
         * ---
         *
+        * ### <a id="redirectpost">**`astproxy/redirect`**</a>
+        *
+        * Redirects the specified conversation. The user can redirect only his conversations. The request
+        * must contains the following parameters:
+        *
+        * * `to: the destination number to redirect the conversation`
+        * * `convid: the conversation identifier`
+        * * `endpointId: the endpoint identifier of the user who has the conversation to redirect`
+        * * `endpointType: the type of the endpoint of the user who has the conversation to redirect`
+        *
+        * E.g. using curl:
+        *
+        *     curl --insecure -i -X POST -d '{ "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "214", "to": "0123456789" }' https://192.168.5.224:8282/astproxy/redirect
+        *
+        * ---
+        *
         * ### <a id="pickup_convpost">**`astproxy/pickup_conv`**</a>
         *
         * Pickup the specified conversation. The request must contains the following parameters:
@@ -247,6 +264,7 @@ var compConfigManager;
                 *   @param {string} park           Park a conversation of the user
                 *   @param {string} call           Make a new call
                 *   @param {string} hangup         Hangup a conversation
+                *   @param {string} redirect       Redirect a conversation
                 *   @param {string} pickup_conv    Pickup a conversation
                 *   @param {string} pickup_parking Pickup a parked call
                 */
@@ -256,6 +274,7 @@ var compConfigManager;
                     'park',
                     'call',
                     'hangup',
+                    'redirect',
                     'pickup_conv',
                     'pickup_parking'
                 ],
@@ -547,6 +566,73 @@ var compConfigManager;
                 }
             },
 
+             /**
+            * Redirect a conversation with the following REST API:
+            *
+            *     POST redirect
+            *
+            * @method redirect
+            * @param {object}   req  The client request.
+            * @param {object}   res  The client response.
+            * @param {function} next Function to run the next handler in the chain.
+            */
+            redirect: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (   typeof req.params              !== 'object'
+                        || typeof req.params.convid       !== 'string' || typeof req.params.to           !== 'string'
+                        || typeof req.params.endpointId   !== 'string' || typeof req.params.endpointType !== 'string') {
+
+                        sendHttp400(res);
+                        return;
+                    }
+
+                    if (req.params.endpointType === 'extension') {
+
+                        // check if the user has the permission to redirect the specified conversation
+                        // TODO
+
+                        // check if the endpoint of the request is owned by the user
+                        if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+
+                            logger.warn(IDLOG, 'redirect convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
+                                               ' the ' + req.params.endpointType + ' ' + req.params.endpointId + ' isn\'t owned by the user');
+                            sendHttp401(res);
+                            return;
+
+                        } else {
+                            logger.info(IDLOG, 'the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' is owned by "' + username + '"');
+                        }
+
+                        compAstProxy.redirectConversation(req.params.endpointType, req.params.endpointId, req.params.convid, req.params.to, function (err) {
+                            try {
+                                if (err) {
+                                    logger.warn(IDLOG, 'redirect convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId + ' has been failed');
+                                    sendHttp500(res, err.toString());
+                                    return;
+                                }
+                                logger.info(IDLOG, 'convid ' + req.params.convid + ' has been redirected successfully by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId);
+                                sendHttp200(res);
+
+                            } catch (err) {
+                                logger.error(IDLOG, err.stack);
+                                sendHttp500(res, err.toString());
+                            }
+                        });
+
+                    } else {
+                        logger.warn(IDLOG, 'redirecting the conversation ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType);
+                        sendHttp400(res);
+                    }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    sendHttp500(res, err.toString());
+                }
+            },
+
             /**
             * Pickup a conversation with the following REST API:
             *
@@ -686,6 +772,7 @@ var compConfigManager;
         exports.park                 = astproxy.park;
         exports.call                 = astproxy.call;
         exports.hangup               = astproxy.hangup;
+        exports.redirect             = astproxy.redirect;
         exports.setLogger            = setLogger;
         exports.extensions           = astproxy.extensions;
         exports.pickup_conv          = astproxy.pickup_conv;
