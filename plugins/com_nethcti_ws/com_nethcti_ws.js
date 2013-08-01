@@ -599,9 +599,6 @@ function loginHdlr(socket, obj) {
             logger.info(IDLOG, 'emit event parkings to websockets');
             server.sockets.in('room').emit('parkings', astProxy.getJSONParkings());
 
-            logger.info(IDLOG, 'emit event extensions to websockets');
-            server.sockets.in('room').emit('extensions', astProxy.getJSONExtensions());
-
             logger.info(IDLOG, 'emit event operatorGroups to websockets');
             server.sockets.in('room').emit('operatorGroups', operator.getJSONGroups());
 
