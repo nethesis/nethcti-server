@@ -97,6 +97,7 @@ var compConfigManager;
         * 1. [`astproxy/call`](#callpost)
         * 1. [`astproxy/hangup`](#hanguppost)
         * 1. [`astproxy/redirect`](#redirectpost)
+        * 1. [`astproxy/start_spy`](#start_spypost)
         * 1. [`astproxy/pickup_conv`](#pickup_convpost)
         * 1. [`astproxy/stop_record`](#stop_recordpost)
         * 1. [`astproxy/start_record`](#start_recordpost)
@@ -202,6 +203,23 @@ var compConfigManager;
         *
         * ---
         *
+        * ### <a id="start_spypost">**`astproxy/start_spy`**</a>
+        *
+        * Spy with only listening the specified conversation. The request
+        * must contains the following parameters:
+        *
+        * * `convid: the conversation identifier`
+        * * `endpointId: the endpoint identifier of the user who has the conversation to spy`
+        * * `endpointType: the type of the endpoint of the user who has the conversation to spy`
+        * * `destId: the endpoint identifier that spy the conversation`
+        * * `destType: the type of the endpoint that spy the conversation`
+        *
+        * E.g. using curl:
+        *
+        *     curl --insecure -i -X POST -d '{ "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "221", "destType": "extension", "destId": "205" }' https://192.168.5.224:8282/astproxy/start_spy
+        *
+        * ---
+        *
         * ### <a id="pickup_convpost">**`astproxy/pickup_conv`**</a>
         *
         * Pickup the specified conversation. The request must contains the following parameters:
@@ -295,6 +313,7 @@ var compConfigManager;
                 *   @param {string} call           Make a new call
                 *   @param {string} hangup         Hangup a conversation
                 *   @param {string} redirect       Redirect a conversation
+                *   @param {string} start_spy      Spy a conversation with only listening
                 *   @param {string} pickup_conv    Pickup a conversation
                 *   @param {string} stop_record    Stop the recording of a conversation
                 *   @param {string} start_record   Start the recording of a conversation
@@ -307,6 +326,7 @@ var compConfigManager;
                     'call',
                     'hangup',
                     'redirect',
+                    'start_spy',
                     'pickup_conv',
                     'stop_record',
                     'start_record',
@@ -668,6 +688,73 @@ var compConfigManager;
             },
 
             /**
+            * Spy a conversation with only listening it with the following REST API:
+            *
+            *     POST start_spy
+            *
+            * @method start_spy
+            * @param {object}   req  The client request.
+            * @param {object}   res  The client response.
+            * @param {function} next Function to run the next handler in the chain.
+            */
+            start_spy: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (   typeof req.params            !== 'object' || typeof req.params.convid       !== 'string'
+                        || typeof req.params.endpointId !== 'string' || typeof req.params.endpointType !== 'string'
+                        || typeof req.params.destType   !== 'string' || typeof req.params.destId       !== 'string') {
+
+                        sendHttp400(res);
+                        return;
+                    }
+
+                    if (req.params.endpointType === 'extension' && req.params.destType === 'extension') {
+
+                        // check if the destination endpoint is owned by the user
+                        if (compAuthorization.verifyUserEndpointExten(username, req.params.destId) === false) {
+
+                            logger.warn(IDLOG, 'spy listen convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
+                                               ' the destination ' + req.params.destType + ' ' + req.params.destId + ' isn\'t owned by the user');
+                            sendHttp401(res);
+                            return;
+
+                        } else {
+                            logger.info(IDLOG, 'spy listen: the destination endpoint ' + req.params.destType + ' ' + req.params.destId + ' is owned by "' + username + '"');
+                        }
+
+                        // check if the user has the permission to pickup the specified conversation of the endpoint
+                        // TODO
+
+                        compAstProxy.startSpyListenConversation(req.params.endpointType, req.params.endpointId, req.params.convid, req.params.destType, req.params.destId, function (err) {
+                            try {
+                                if (err) {
+                                    logger.warn(IDLOG, 'spy listen convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.destType + ' ' + req.params.destId + ' has been failed');
+                                    sendHttp500(res, err.toString());
+                                    return;
+                                }
+                                logger.info(IDLOG, 'spy listen convid ' + req.params.convid + ' has been successful by user "' + username + '" with ' + req.params.destType + ' ' + req.params.destId);
+                                sendHttp200(res);
+
+                            } catch (err) {
+                                logger.error(IDLOG, err.stack);
+                                sendHttp500(res, err.toString());
+                            }
+                        });
+
+                    } else {
+                        logger.warn(IDLOG, 'starting spy listen convid ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType + ' or destType ' + destType);
+                        sendHttp400(res);
+                    }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    sendHttp500(res, err.toString());
+                }
+            },
+
+            /**
             * Pickup a conversation with the following REST API:
             *
             *     POST pickup_conv
@@ -939,6 +1026,7 @@ var compConfigManager;
         exports.call                 = astproxy.call;
         exports.hangup               = astproxy.hangup;
         exports.redirect             = astproxy.redirect;
+        exports.start_spy            = astproxy.start_spy;
         exports.setLogger            = setLogger;
         exports.extensions           = astproxy.extensions;
         exports.pickup_conv          = astproxy.pickup_conv;

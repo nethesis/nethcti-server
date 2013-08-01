@@ -2161,8 +2161,8 @@ function callCb(error) {
 */
 function startSpySpeakConvCb(err, convid) {
     try {
-        if (err) { logger.error(IDLOG, 'start spy convid ' + convid + ' with speaking failed: ' + err.toString()); }
-        else     { logger.info(IDLOG, 'start spy convid ' + convid + ' with speaking succesfully');                }
+        if (err) { logger.error(IDLOG, 'start spy speak convid ' + convid + ' with speaking failed: ' + err.toString()); }
+        else     { logger.info(IDLOG, 'start spy speak convid ' + convid + ' with speaking succesfully');                }
 
     } catch (error) {
        logger.error(IDLOG, error.stack);
@@ -2179,8 +2179,8 @@ function startSpySpeakConvCb(err, convid) {
 */
 function startSpyListenConvCb(err, convid) {
     try {
-        if (err) { logger.error(IDLOG, 'start spy convid ' + convid + ' with only listening failed: ' + err.toString()); }
-        else     { logger.info(IDLOG, 'start spy convid ' + convid + ' with only listening succesfully');                }
+        if (err) { logger.error(IDLOG, 'start spy listen convid ' + convid + ' with only listening failed: ' + err.toString()); }
+        else     { logger.info(IDLOG, 'start spy listen convid ' + convid + ' with only listening succesfully');                }
 
     } catch (error) {
        logger.error(IDLOG, error.stack);

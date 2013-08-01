@@ -435,7 +435,6 @@ function dispatchMsg(socket, data) {
                 if (data.command === 'stopSpyConv')        { stopSpyConv(socket, data);        }
                 else if (data.command === 'getOperatorGroups')  { getOperatorGroups(socket);        }
                 else if (data.command === 'startSpySpeakConv')  { startSpySpeakConv(socket, data);  }
-                else if (data.command === 'startSpyListenConv') { startSpyListenConv(socket, data); }
                 else { logger.warn(IDLOG, 'request unknown command ' + data.command); }
             }
 
@@ -500,44 +499,6 @@ function startSpySpeakConv(socket, data) {
 
             astProxy.startSpySpeakConversation(data.endpointType, data.endpointId, data.convid, data.destType, data.destId, function (resp) {
                 responseToClient(socket, 'startSpySpeakConv', resp);
-            });
-        }
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Start the spy of the conversation with only listening.
-*
-* @method startSpyListenConv
-* @param {object} socket The client websocket
-* @param {object} data The data with the conversation identifier
-*   @param {string} data.convid The conversation identifier
-*   @param {string} data.endpointId The endpoint identifier that has the conversation to spy
-*   @param {string} data.endpointType The type of the endpoint that has the conversation to spy
-*   @param {string} data.destType The endpoint type that spy the conversation
-*   @param {string} data.destId The endpoint identifier that spy the conversation
-* @private
-* @return {object} An synchronous aknowledgment or error response with the name of the command.
-*/
-function startSpyListenConv(socket, data) {
-    try {
-        // check parameter
-        if (typeof socket !== 'object') { throw new Error('wrong parameter'); }
-        if (typeof data   !== 'object'
-            || typeof data.destId       !== 'string'
-            || typeof data.convid       !== 'string'
-            || typeof data.destType     !== 'string'
-            || typeof data.endpointId   !== 'string'
-            || typeof data.endpointType !== 'string') {
-
-            badRequest(socket);
-
-        } else {
-
-            astProxy.startSpyListenConversation(data.endpointType, data.endpointId, data.convid, data.destType, data.destId, function (resp) {
-                responseToClient(socket, 'startSpyListenConv', resp);
             });
         }
     } catch (err) {
