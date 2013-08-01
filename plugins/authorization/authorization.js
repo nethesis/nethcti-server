@@ -566,6 +566,39 @@ function getAuthorizedStreamingSources(username) {
 }
 
 /**
+* Returns all the authorized groups of the operator panel of the user.
+*
+* @method getAuthorizedOperatorGroups
+* @param  {string} username The username
+* @return {object} All the authorized operator panel groups.
+*/
+function getAuthorizedOperatorGroups(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        // get operator groups authorization from the user
+        var autho = userMod.getAuthorization(username, authorizationTypes.TYPES.operator_groups);
+
+        // analize the result
+        var objResult = autho[authorizationTypes.TYPES.operator_groups];
+        var group;
+        var result = {}; // object to return
+        for (group in objResult) {
+
+            // check the type of the authorization. It must be a boolean value
+            if (objResult[group] === true) { result[group] = true; }
+        }
+        return result;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns and empty object
+        return {};
+    }
+}
+
+/**
 * Gets the name of the authorized customer cards of the user.
 *
 * @method authorizedCustomerCards
@@ -694,6 +727,7 @@ exports.verifyUserEndpointExten       = verifyUserEndpointExten;
 exports.authorizeCustomerCardUser     = authorizeCustomerCardUser;
 exports.authorizeOperatorPanelUser    = authorizeOperatorPanelUser;
 exports.authorizeHistorySwitchUser    = authorizeHistorySwitchUser;
+exports.getAuthorizedOperatorGroups   = getAuthorizedOperatorGroups;
 exports.authorizeStreamingSourceUser  = authorizeStreamingSourceUser;
 exports.authorizeAdvancedOperatorUser = authorizeAdvancedOperatorUser;
 exports.getAuthorizedStreamingSources = getAuthorizedStreamingSources;

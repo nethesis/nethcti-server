@@ -119,6 +119,13 @@ module.exports = function (options, imports, register) {
             getAuthorizedStreamingSources: authorization.getAuthorizedStreamingSources,
 
             /**
+            * It's the _getAuthorizedOperatorGroups_ method provided by _authorization_ module.
+            *
+            * @method getAuthorizedOperatorGroups
+            */
+            getAuthorizedOperatorGroups: authorization.getAuthorizedOperatorGroups,
+
+            /**
             * It's the _authorizedCustomerCards_ method provided by _authorization_ module.
             *
             * @method authorizedCustomerCards

@@ -425,42 +425,14 @@ function dispatchMsg(socket, data) {
                 badRequest(socket);
 
             } else {
-
-                // get the sender identifier
-                var sender = wsid[socket.id];
-
-                logger.info(IDLOG, 'request command ' + data.command);
-
-                // dispatch
-                if (data.command === 'getOperatorGroups')  { getOperatorGroups(socket);        }
-                else { logger.warn(IDLOG, 'request unknown command ' + data.command); }
+                var username = wsid[socket.id];
+                logger.warn(IDLOG, 'requested command ' + data.command + ' from user "' + username + '" (' + getWebsocketEndpoint(socket) + '): the server doesn\'t manage the requests of commands');
             }
 
         } else {
             logger.warn(IDLOG, 'received message from unauthenticated client ' + getWebsocketEndpoint(socket));
             unauthorized(socket);
         }
-
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Return the list of the groups of extensions defined by the administrator.
-*
-* @method getOperatorGroups
-* @param {object} socket The client websocket
-* @return {object} The list of the groups of extensions.
-*/
-function getOperatorGroups(socket) {
-    try {
-        // check parameter
-        if (typeof socket !== 'object') { throw new Error('wrong parameter'); }
-
-        socket.emit('operatorGroups', operator.getJSONGroups());
-        logger.info(IDLOG, 'sent operatorGroups response to ' + getWebsocketEndpoint(socket));
-
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }

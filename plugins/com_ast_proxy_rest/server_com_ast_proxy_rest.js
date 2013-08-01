@@ -151,6 +151,48 @@ function execute(req, res, next) {
 }
 
 /**
+* Set the operator architect component to be used by REST plugins.
+*
+* @method setCompOperator
+* @param {object} comp The architect operator component
+* @static
+*/
+function setCompOperator(comp) {
+    try {
+        // check parameter
+        if (typeof comp !== 'object') { throw new Error('wrong parameter'); }
+
+        // set the asterisk proxy for all the REST plugins
+        setAllRestPluginsCompOperator(comp);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the operator component for all the REST plugins.
+*
+* @method setAllRestPluginsCompOperator
+* @param {object} comp The operator object
+* @private
+*/
+function setAllRestPluginsCompOperator(comp) {
+    try {
+        var key;
+        for (key in plugins) {
+
+            if (typeof plugins[key].setCompOperator === 'function') {
+                plugins[key].setCompOperator(comp);
+                logger.info(IDLOG, 'operator component has been set for rest plugin ' + key);
+            }
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Set the asterisk proxy architect component to be used by REST plugins.
 *
 * @method setCompAstProxy
@@ -174,9 +216,8 @@ function setCompAstProxy(cap) {
 * Sets the asterisk proxy component for all the REST plugins.
 *
 * @method setAllRestPluginsAstProxy
+* @param {object} ap The asterisk proxy object.
 * @private
-* @param ap The asterisk proxy object.
-* @type {object}
 */
 function setAllRestPluginsAstProxy(ap) {
     try {
@@ -329,5 +370,6 @@ function start() {
 exports.start                = start;
 exports.config               = config;
 exports.setLogger            = setLogger;
+exports.setCompOperator      = setCompOperator;
 exports.setCompAstProxy      = setCompAstProxy;
 exports.setCompAuthorization = setCompAuthorization;

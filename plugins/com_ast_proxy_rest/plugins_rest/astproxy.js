@@ -37,6 +37,15 @@ var logger = console;
 var compAuthorization;
 
 /**
+* The architect component to be used for operator.
+*
+* @property compOperator
+* @type object
+* @private
+*/
+var compOperator;
+
+/**
 * The asterisk proxy component used for asterisk functions.
 *
 * @property compAstProxy
@@ -63,6 +72,7 @@ var compConfigManager;
         *
         * 1. [`astproxy/cf/:endpoint`](#cfget)
         * 1. [`astproxy/dnd/:endpoint`](#dndget)
+        * 1. [`astproxy/opgroups`](#opgroupsget)
         * 1. [`astproxy/extensions`](#extensionsget)
         *
         * ---
@@ -80,6 +90,12 @@ var compConfigManager;
         *
         * Gets the don't disturb status of the endpoint of the user. The endpoint is
         * the extension identifier.
+        *
+        * ---
+        *
+        * ### <a id="opgroupsget">**`astproxy/opgroups`**</a>
+        *
+        * Gets the groups of the operator panel of the user.
         *
         * ---
         *
@@ -323,11 +339,13 @@ var compConfigManager;
                 * @property get
                 * @type {array}
                 *
+                *   @param {string} opgroups           Gets all the groups of the operator panel of the user
                 *   @param {string} extensions         Gets all the extensions with all their status informations
                 *   @param {string} dnd/:endpoint      Gets the don't disturb status of the endpoint of the user
                 *   @param {string} cf/:type/:endpoint Gets the call forward status of the endpoint of the user
                 */
                 'get' : [
+                    'opgroups',
                     'extensions',
                     'dnd/:endpoint',
                     'cf/:type/:endpoint'
@@ -370,6 +388,53 @@ var compConfigManager;
                 ],
                 'head': [],
                 'del' : []
+            },
+
+            /**
+            * Gets the operator panel groups of the user with the following REST API:
+            *
+            *     GET  opgroups
+            *
+            * @method opgroups
+            * @param {object} req The client request.
+            * @param {object} res The client response.
+            * @param {function} next Function to run the next handler in the chain.
+            */
+            opgroups: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check if the user has the operator panel authorization
+                    if (compAuthorization.authorizeOperatorPanelUser(username) !== true) {
+
+                        logger.warn(IDLOG, 'requesting operator panel groups: authorization operator panel failed for user "' + username + '"');
+                        sendHttp401(res);
+                        return;
+                    }
+
+                    // get all authorized operator groups of the user
+                    var userOpGroups = compAuthorization.getAuthorizedOperatorGroups(username);
+
+                    // get all operator groups
+                    var allOpGroups = compOperator.getJSONGroups();
+
+                    // extract only the authorized operator groups of the user
+                    var list = {}; // object to return
+                    var group;
+                    for (group in allOpGroups) {
+
+                        if (userOpGroups[group] === true) {
+                            list[group] = allOpGroups[group];
+                        }
+                    }
+
+                    logger.info(IDLOG, 'sent authorized operator groups ' + Object.keys(list) + ' to user "' + username + '" ' + res.connection.remoteAddress);
+                    res.send(200, list);
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    sendHttp500(res, err.toString());
+                }
             },
 
             /**
@@ -1194,6 +1259,7 @@ var compConfigManager;
         exports.park                 = astproxy.park;
         exports.call                 = astproxy.call;
         exports.hangup               = astproxy.hangup;
+        exports.opgroups             = astproxy.opgroups;
         exports.redirect             = astproxy.redirect;
         exports.stop_spy             = astproxy.stop_spy;
         exports.start_spy            = astproxy.start_spy;
@@ -1204,6 +1270,7 @@ var compConfigManager;
         exports.start_record         = astproxy.start_record;
         exports.pickup_parking       = astproxy.pickup_parking;
         exports.start_spyspeak       = astproxy.start_spyspeak;
+        exports.setCompOperator      = setCompOperator;
         exports.setCompAstProxy      = setCompAstProxy;
         exports.setCompAuthorization = setCompAuthorization;
         exports.setCompConfigManager = setCompConfigManager;
@@ -1223,6 +1290,21 @@ function setCompConfigManager(cm) {
     try {
         compConfigManager = cm;
         logger.info(IDLOG, 'set configuration manager architect component');
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the operator architect component.
+*
+* @method setCompOperator
+* @param {object} comp The operator architect component.
+*/
+function setCompOperator(comp) {
+    try {
+        compOperator = comp;
+        logger.info(IDLOG, 'set operator architect component');
     } catch (err) {
        logger.error(IDLOG, err.stack);
     }
