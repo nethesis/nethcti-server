@@ -432,8 +432,7 @@ function dispatchMsg(socket, data) {
                 logger.info(IDLOG, 'request command ' + data.command);
 
                 // dispatch
-                if (data.command === 'stopSpyConv')        { stopSpyConv(socket, data);        }
-                else if (data.command === 'getOperatorGroups')  { getOperatorGroups(socket);        }
+                if (data.command === 'getOperatorGroups')  { getOperatorGroups(socket);        }
                 else { logger.warn(IDLOG, 'request unknown command ' + data.command); }
             }
 
@@ -485,40 +484,6 @@ function responseToClient(socket, command, resp) {
         } else {
             sendError(socket, { command: command });
             logger.warn(IDLOG, 'sent error ' + command + ' to ' + getWebsocketEndpoint(socket));
-        }
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Stop spy the conversation using the asterisk proxy component.
-*
-* @method stopSpyConv
-* @param {object} socket The client websocket
-* @param {object} data The data with the conversation identifier
-*   @param {string} data.endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
-*   @param {string} data.endpointId The endpoint identifier (e.g. the extension number)
-*   @param {string} data.convid The conversation identifier
-* @private
-* @return {object} An synchronous aknowledgment or error response with the name of the command.
-*/
-function stopSpyConv(socket, data) {
-    try {
-        // check parameter
-        if (typeof socket !== 'object') { throw new Error('wrong parameter'); }
-        if (typeof data   !== 'object'
-            || typeof data.convid       !== 'string'
-            || typeof data.endpointId   !== 'string'
-            || typeof data.endpointType !== 'string') {
-
-            badRequest(socket);
-
-        } else {
-
-            astProxy.hangupConversation(data.endpointType, data.endpointId, data.convid, function (err, resp) {
-                responseToClient(socket, 'stopSpyConv', resp);
-            });
         }
     } catch (err) {
         logger.error(IDLOG, err.stack);

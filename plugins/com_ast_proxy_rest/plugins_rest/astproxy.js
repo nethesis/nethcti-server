@@ -97,6 +97,7 @@ var compConfigManager;
         * 1. [`astproxy/call`](#callpost)
         * 1. [`astproxy/hangup`](#hanguppost)
         * 1. [`astproxy/redirect`](#redirectpost)
+        * 1. [`astproxy/stop_spy`](#stop_spypost)
         * 1. [`astproxy/start_spy`](#start_spypost)
         * 1. [`astproxy/pickup_conv`](#pickup_convpost)
         * 1. [`astproxy/stop_record`](#stop_recordpost)
@@ -201,6 +202,20 @@ var compConfigManager;
         * E.g. using curl:
         *
         *     curl --insecure -i -X POST -d '{ "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "214", "to": "0123456789" }' https://192.168.5.224:8282/astproxy/redirect
+        *
+        * ---
+        *
+        * ### <a id="stop_spypost">**`astproxy/stop_spy`**</a>
+        *
+        * Stop the spy of the specified conversation. The request must contains the following parameters:
+        *
+        * * `convid: the conversation identifier`
+        * * `endpointId: the endpoint identifier of the user who has the conversation to stop the spy`
+        * * `endpointType: the type of the endpoint of the user who has the conversation to stop the spy`
+        *
+        * E.g. using curl:
+        *
+        *     curl --insecure -i -X POST -d '{ "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "212" }' https://192.168.5.224:8282/astproxy/stop_spy
         *
         * ---
         *
@@ -330,6 +345,7 @@ var compConfigManager;
                 *   @param {string} call           Make a new call
                 *   @param {string} hangup         Hangup a conversation
                 *   @param {string} redirect       Redirect a conversation
+                *   @param {string} stop_spy       Stop the spy of a conversation
                 *   @param {string} start_spy      Spy a conversation with only listening
                 *   @param {string} pickup_conv    Pickup a conversation
                 *   @param {string} stop_record    Stop the recording of a conversation
@@ -344,6 +360,7 @@ var compConfigManager;
                     'call',
                     'hangup',
                     'redirect',
+                    'stop_spy',
                     'start_spy',
                     'pickup_conv',
                     'stop_record',
@@ -697,6 +714,72 @@ var compConfigManager;
 
                     } else {
                         logger.warn(IDLOG, 'redirecting the conversation ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType);
+                        sendHttp400(res);
+                    }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    sendHttp500(res, err.toString());
+                }
+            },
+
+            /**
+            * Stop the spy of the conversation with the following REST API:
+            *
+            *     POST stop_spy
+            *
+            * @method stop_spy
+            * @param {object}   req  The client request.
+            * @param {object}   res  The client response.
+            * @param {function} next Function to run the next handler in the chain.
+            */
+            stop_spy: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (   typeof req.params            !== 'object' || typeof req.params.convid       !== 'string'
+                        || typeof req.params.endpointId !== 'string' || typeof req.params.endpointType !== 'string') {
+
+                        sendHttp400(res);
+                        return;
+                    }
+
+                    if (req.params.endpointType === 'extension') {
+
+                        // check if the destination endpoint is owned by the user
+                        if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+
+                            logger.warn(IDLOG, 'stop spy convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
+                                               ' the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' isn\'t owned by the user');
+                            sendHttp401(res);
+                            return;
+
+                        } else {
+                            logger.info(IDLOG, 'stop spy listen: the destination endpoint ' + req.params.destType + ' ' + req.params.destId + ' is owned by "' + username + '"');
+                        }
+
+                        // check if the user has the permission to pickup the specified conversation of the endpoint
+                        // TODO
+
+                        compAstProxy.hangupConversation(req.params.endpointType, req.params.endpointId, req.params.convid, function (err) {
+                            try {
+                                if (err) {
+                                    logger.warn(IDLOG, 'stop spy convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId + ' has been failed');
+                                    sendHttp500(res, err.toString());
+                                    return;
+                                }
+                                logger.info(IDLOG, 'stop spy convid ' + req.params.convid + ' has been successful by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endopintId);
+                                sendHttp200(res);
+
+                            } catch (err) {
+                                logger.error(IDLOG, err.stack);
+                                sendHttp500(res, err.toString());
+                            }
+                        });
+
+                    } else {
+                        logger.warn(IDLOG, 'stopping spy convid ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType);
                         sendHttp400(res);
                     }
 
@@ -1112,6 +1195,7 @@ var compConfigManager;
         exports.call                 = astproxy.call;
         exports.hangup               = astproxy.hangup;
         exports.redirect             = astproxy.redirect;
+        exports.stop_spy             = astproxy.stop_spy;
         exports.start_spy            = astproxy.start_spy;
         exports.setLogger            = setLogger;
         exports.extensions           = astproxy.extensions;
