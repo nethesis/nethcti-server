@@ -102,6 +102,7 @@ var compConfigManager;
         * 1. [`astproxy/stop_record`](#stop_recordpost)
         * 1. [`astproxy/start_record`](#start_recordpost)
         * 1. [`astproxy/pickup_parking`](#pickup_parkingpost)
+        * 1. [`astproxy/start_spyspeak`](#start_spyspeakpost)
         *
         * ---
         *
@@ -276,6 +277,22 @@ var compConfigManager;
         *
         *     curl --insecure -i -X POST -d '{ "parking": "70", "destType": "extension", "destId": "214" }' https://192.168.5.224:8282/astproxy/pickup_parking
         *
+        * ---
+        *
+        * ### <a id="start_spyspeakpost">**`astproxy/start_spyspeak`**</a>
+        *
+        * Start the spy and speak of the specified convertsation. The request must contains the following parameters:
+        *
+        * * `convid: the conversation identifier`
+        * * `endpointId: the endpoint identifier that has the conversation to spy and speak`
+        * * `endpointType: the type of the endpoint that has the conversation to spy and speak`
+        * * `destId: the endpoint identifier that spy the conversation`
+        * * `destType: the endpoint type that spy the conversation`
+        *
+        * E.g. using curl:
+        *
+        *     curl --insecure -i -X POST -d '{ "convid": "SIP/209-00000060>SIP/211-00000061", "endpointType": "extension", "endpointId": "209", "destType": "extension", "destId": "214" }' https://192.168.5.224:8282/astproxy/start_spyspeak
+        *
         * @class plugin_rest_astproxy
         * @static
         */
@@ -318,6 +335,7 @@ var compConfigManager;
                 *   @param {string} stop_record    Stop the recording of a conversation
                 *   @param {string} start_record   Start the recording of a conversation
                 *   @param {string} pickup_parking Pickup a parked call
+                *   @param {string} start_spyspeak Spy and speak in a conversation
                 */
                 'post': [
                     'cf',
@@ -330,7 +348,8 @@ var compConfigManager;
                     'pickup_conv',
                     'stop_record',
                     'start_record',
-                    'pickup_parking'
+                    'pickup_parking',
+                    'start_spyspeak'
                 ],
                 'head': [],
                 'del' : []
@@ -1017,6 +1036,73 @@ var compConfigManager;
                     logger.error(IDLOG, err.stack);
                     sendHttp500(res, err.toString());
                 }
+            },
+
+            /**
+            * Spy and speak in a conversation with the following REST API:
+            *
+            *     POST start_spyspeak
+            *
+            * @method start_spyspeak
+            * @param {object}   req  The client request.
+            * @param {object}   res  The client response.
+            * @param {function} next Function to run the next handler in the chain.
+            */
+            start_spyspeak: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (   typeof req.params              !== 'object' || typeof req.params.convid     !== 'string'
+                        || typeof req.params.endpointType !== 'string' || typeof req.params.endpointId !== 'string'
+                        || typeof req.params.destType     !== 'string' || typeof req.params.destId     !== 'string') {
+
+                        sendHttp400(res);
+                        return;
+                    }
+
+                    if (req.params.endpointType === 'extension' && req.params.destType === 'extension') {
+
+                        // check if the destination endpoint is owned by the user
+                        if (compAuthorization.verifyUserEndpointExten(username, req.params.destId) === false) {
+
+                            logger.warn(IDLOG, 'start spy & speak convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
+                                               ' the destination ' + req.params.destType + ' ' + req.params.destId + ' isn\'t owned by the user');
+                            sendHttp401(res);
+                            return;
+
+                        } else {
+                            logger.info(IDLOG, 'start spy & speak the destination endpoint ' + req.params.destType + ' ' + req.params.destId + ' is owned by "' + username + '"');
+                        }
+
+                        // check if the user has the permission to pickup the specified parking
+                        // TODO
+
+                        compAstProxy.startSpySpeakConversation(req.params.endpointType, req.params.endpointId, req.params.convid, req.params.destType, req.params.destId, function (err) {
+                            try {
+                                if (err) {
+                                    logger.warn(IDLOG, 'start spy & speak convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.destType + ' ' + req.params.destId + ' has been failed');
+                                    sendHttp500(res, err.toString());
+                                    return;
+                                }
+                                logger.info(IDLOG, 'start spy & speak convid ' + req.params.convid + ' has been successful by user "' + username + '" with ' + req.params.destType + ' ' + req.params.destId);
+                                sendHttp200(res);
+
+                            } catch (err) {
+                                logger.error(IDLOG, err.stack);
+                                sendHttp500(res, err.toString());
+                            }
+                        });
+
+                    } else {
+                        logger.warn(IDLOG, 'starting spy and speak convid ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType + ' or destType ' + req.params.destType);
+                        sendHttp400(res);
+                    }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    sendHttp500(res, err.toString());
+                }
             }
         }
         exports.cf                   = astproxy.cf;
@@ -1033,6 +1119,7 @@ var compConfigManager;
         exports.stop_record          = astproxy.stop_record;
         exports.start_record         = astproxy.start_record;
         exports.pickup_parking       = astproxy.pickup_parking;
+        exports.start_spyspeak       = astproxy.start_spyspeak;
         exports.setCompAstProxy      = setCompAstProxy;
         exports.setCompAuthorization = setCompAuthorization;
         exports.setCompConfigManager = setCompConfigManager;
