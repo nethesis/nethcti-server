@@ -73,6 +73,7 @@ var compConfigManager;
         * 1. [`astproxy/cf/:endpoint`](#cfget)
         * 1. [`astproxy/dnd/:endpoint`](#dndget)
         * 1. [`astproxy/opgroups`](#opgroupsget)
+        * 1. [`astproxy/parkings`](#parkingsget)
         * 1. [`astproxy/extensions`](#extensionsget)
         *
         * ---
@@ -96,6 +97,12 @@ var compConfigManager;
         * ### <a id="opgroupsget">**`astproxy/opgroups`**</a>
         *
         * Gets the groups of the operator panel of the user.
+        *
+        * ---
+        *
+        * ### <a id="parkingsget">**`astproxy/parkings`**</a>
+        *
+        * Gets all the parkings with all their status informations.
         *
         * ---
         *
@@ -340,12 +347,14 @@ var compConfigManager;
                 * @type {array}
                 *
                 *   @param {string} opgroups           Gets all the groups of the operator panel of the user
+                *   @param {string} parkings           Gets all the parkings with all their status informations
                 *   @param {string} extensions         Gets all the extensions with all their status informations
                 *   @param {string} dnd/:endpoint      Gets the don't disturb status of the endpoint of the user
                 *   @param {string} cf/:type/:endpoint Gets the call forward status of the endpoint of the user
                 */
                 'get' : [
                     'opgroups',
+                    'parkings',
                     'extensions',
                     'dnd/:endpoint',
                     'cf/:type/:endpoint'
@@ -430,6 +439,38 @@ var compConfigManager;
 
                     logger.info(IDLOG, 'sent authorized operator groups ' + Object.keys(list) + ' to user "' + username + '" ' + res.connection.remoteAddress);
                     res.send(200, list);
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    sendHttp500(res, err.toString());
+                }
+            },
+
+            /**
+            * Gets all the parkings with all their status informations with the following REST API:
+            *
+            *     GET  parkings
+            *
+            * @method extensions
+            * @param {object}   req  The client request.
+            * @param {object}   res  The client response.
+            * @param {function} next Function to run the next handler in the chain.
+            */
+            parkings: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check if the user has the operator panel authorization
+                    if (compAuthorization.authorizeOperatorPanelUser(username) !== true) {
+
+                        logger.warn(IDLOG, 'requesting parkings: authorization operator panel failed for user "' + username + '"');
+                        sendHttp401(res);
+                        return;
+                    }
+
+                    var extensions = compAstProxy.getJSONParkings();
+                    logger.info(IDLOG, 'sent all parkings in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
+                    res.send(200, extensions);
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
@@ -1260,6 +1301,7 @@ var compConfigManager;
         exports.call                 = astproxy.call;
         exports.hangup               = astproxy.hangup;
         exports.opgroups             = astproxy.opgroups;
+        exports.parkings             = astproxy.parkings;
         exports.redirect             = astproxy.redirect;
         exports.stop_spy             = astproxy.stop_spy;
         exports.start_spy            = astproxy.start_spy;
