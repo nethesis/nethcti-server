@@ -33,6 +33,7 @@ module.exports = function (options, imports, register) {
         comNethctiWs.setAstProxy(imports.astProxy);
         comNethctiWs.setOperator(imports.operator);
         comNethctiWs.setCompVoicemail(imports.voicemail);
+        comNethctiWs.setCompAuthorization(imports.authorization);
         comNethctiWs.start();
     } catch (err) {
         logger.error(IDLOG, err.stack);

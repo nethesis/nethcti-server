@@ -28,6 +28,18 @@ var iniparser = require('iniparser');
 var IDLOG = '[com_nethcti_ws]';
 
 /**
+* The websocket room used to update clients with asterisk events.
+*
+* @property ROOM_OP_PANEL
+* @type {string}
+* @private
+* @final
+* @readOnly
+* @default "room_op_panel"
+*/
+var ROOM_OP_PANEL = 'room_op_panel';
+
+/**
 * The websocket server port.
 *
 * @property port
@@ -75,6 +87,15 @@ var astProxy;
 * @private
 */
 var compAuthe;
+
+/**
+* The authorization module.
+*
+* @property compAuthorization
+* @type object
+* @private
+*/
+var compAuthorization;
 
 /**
 * The voicemail architect component used for voicemail functions.
@@ -142,6 +163,21 @@ function setAuthe(autheMod) {
             throw new Error('wrong authentication object');
         }
         compAuthe = autheMod;
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the authorization module to be used.
+*
+* @method setCompAuthorization
+* @param {object} comp The authorization module.
+*/
+function setCompAuthorization(comp) {
+    try {
+        if (typeof comp !== 'object') { throw new Error('wrong authorization module'); }
+        compAuthorization = comp;
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -276,7 +312,7 @@ function extenChanged(exten) {
     try {
         logger.info(IDLOG, 'received event extenChanged for extension ' + exten.getExten());
         logger.info(IDLOG, 'emit event extenUpdate for extension ' + exten.getExten() + ' to websockets');
-        server.sockets.in('room').emit('extenUpdate', exten.toJSON());
+        server.sockets.in(ROOM_OP_PANEL).emit('extenUpdate', exten.toJSON());
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -295,7 +331,7 @@ function queueChanged(queue) {
     try {
         logger.info(IDLOG, 'received event queueChanged for queue ' + queue.getQueue());
         logger.info(IDLOG, 'emit event queueUpdate for queue ' + queue.getQueue() + ' to websockets');
-        server.sockets.in('room').emit('queueUpdate', queue.toJSON());
+        server.sockets.in(ROOM_OP_PANEL).emit('queueUpdate', queue.toJSON());
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -314,7 +350,7 @@ function parkingChanged(parking) {
     try {
         logger.info(IDLOG, 'received event parkingChanged for parking ' + parking.getParking());
         logger.info(IDLOG, 'emit event parkingUpdate for parking ' + parking.getParking() + ' to websockets');
-        server.sockets.in('room').emit('parkingUpdate', parking.toJSON());
+        server.sockets.in(ROOM_OP_PANEL).emit('parkingUpdate', parking.toJSON());
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -592,10 +628,12 @@ function loginHdlr(socket, obj) {
             // send authenticated successfully response
             sendAutheSuccess(socket);
 
-            socket.join('room');
+            // if the user has the operator panel permission, than he will receive the asterisk events
+            if (compAuthorization.authorizeOperatorPanelUser(obj.accessKeyId) === true) {
 
-            logger.info(IDLOG, 'emit event operatorGroups to websockets');
-            server.sockets.in('room').emit('operatorGroups', operator.getJSONGroups());
+                // join the user to the websocket room to receive the asterisk events
+                socket.join(ROOM_OP_PANEL);
+            }
 
         } else { // authentication failed
             logger.warn(IDLOG, 'authentication failed for user "' + obj.accessKeyId + '" from ' + getWebsocketEndpoint(socket) +
@@ -724,10 +762,11 @@ function sendAutheSuccess(socket) {
 }
 
 // public interface
-exports.start            = start;
-exports.config           = config;
-exports.setAuthe         = setAuthe;
-exports.setLogger        = setLogger;
-exports.setAstProxy      = setAstProxy;
-exports.setOperator      = setOperator;
-exports.setCompVoicemail = setCompVoicemail;
+exports.start                = start;
+exports.config               = config;
+exports.setAuthe             = setAuthe;
+exports.setLogger            = setLogger;
+exports.setAstProxy          = setAstProxy;
+exports.setOperator          = setOperator;
+exports.setCompVoicemail     = setCompVoicemail;
+exports.setCompAuthorization = setCompAuthorization;
