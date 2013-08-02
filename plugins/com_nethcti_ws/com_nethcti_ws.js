@@ -593,8 +593,6 @@ function loginHdlr(socket, obj) {
             sendAutheSuccess(socket);
 
             socket.join('room');
-            logger.info(IDLOG, 'emit event queues to websockets');
-            server.sockets.in('room').emit('queues', astProxy.getJSONQueues());
 
             logger.info(IDLOG, 'emit event operatorGroups to websockets');
             server.sockets.in('room').emit('operatorGroups', operator.getJSONGroups());

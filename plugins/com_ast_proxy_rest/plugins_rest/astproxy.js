@@ -72,6 +72,7 @@ var compConfigManager;
         *
         * 1. [`astproxy/cf/:endpoint`](#cfget)
         * 1. [`astproxy/dnd/:endpoint`](#dndget)
+        * 1. [`astproxy/queues`](#queuesget)
         * 1. [`astproxy/opgroups`](#opgroupsget)
         * 1. [`astproxy/parkings`](#parkingsget)
         * 1. [`astproxy/extensions`](#extensionsget)
@@ -91,6 +92,12 @@ var compConfigManager;
         *
         * Gets the don't disturb status of the endpoint of the user. The endpoint is
         * the extension identifier.
+        *
+        * ---
+        *
+        * ### <a id="queuesget">**`astproxy/queues`**</a>
+        *
+        * Gets the queues of the operator panel of the user.
         *
         * ---
         *
@@ -346,6 +353,7 @@ var compConfigManager;
                 * @property get
                 * @type {array}
                 *
+                *   @param {string} queues             Gets all the queues of the operator panel of the user
                 *   @param {string} opgroups           Gets all the groups of the operator panel of the user
                 *   @param {string} parkings           Gets all the parkings with all their status informations
                 *   @param {string} extensions         Gets all the extensions with all their status informations
@@ -353,6 +361,7 @@ var compConfigManager;
                 *   @param {string} cf/:type/:endpoint Gets the call forward status of the endpoint of the user
                 */
                 'get' : [
+                    'queues',
                     'opgroups',
                     'parkings',
                     'extensions',
@@ -471,6 +480,38 @@ var compConfigManager;
                     var extensions = compAstProxy.getJSONParkings();
                     logger.info(IDLOG, 'sent all parkings in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
                     res.send(200, extensions);
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    sendHttp500(res, err.toString());
+                }
+            },
+
+            /**
+            * Gets all the queues with all their status informations with the following REST API:
+            *
+            *     GET  queues
+            *
+            * @method queues
+            * @param {object}   req  The client request.
+            * @param {object}   res  The client response.
+            * @param {function} next Function to run the next handler in the chain.
+            */
+            queues: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check if the user has the operator panel authorization
+                    if (compAuthorization.authorizeOperatorPanelUser(username) !== true) {
+
+                        logger.warn(IDLOG, 'requesting queues: authorization operator panel failed for user "' + username + '"');
+                        sendHttp401(res);
+                        return;
+                    }
+
+                    var queues = compAstProxy.getJSONQueues();
+                    logger.info(IDLOG, 'sent all queues in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
+                    res.send(200, queues);
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
@@ -1299,6 +1340,7 @@ var compConfigManager;
         exports.dnd                  = astproxy.dnd;
         exports.park                 = astproxy.park;
         exports.call                 = astproxy.call;
+        exports.queues               = astproxy.queues;
         exports.hangup               = astproxy.hangup;
         exports.opgroups             = astproxy.opgroups;
         exports.parkings             = astproxy.parkings;
