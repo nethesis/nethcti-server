@@ -316,6 +316,39 @@ function authorizeOpExtensionsUser(username) {
 }
 
 /**
+* Returns true if the specified user has the authorization to view the
+* groups of the operator panel.
+*
+* @method authorizeOperatorGroupsUser
+* @param  {string}  username The username
+* @return {boolean} True if the user has the operator panel authorization.
+*/
+function authorizeOperatorGroupsUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        // get cusomter card authorization from the user
+        var autho = userMod.getAuthorization(username, authorizationTypes.TYPES.operator_groups);
+
+        // analize the result
+        var objResult = autho[authorizationTypes.TYPES.operator_groups];
+        var group;
+        for (group in objResult) {
+
+            // check the type of the authorization. It must be a boolean value
+            if (objResult[group] === true) { return true; }
+        }
+        return false;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
 * Return true if the specified user has the authorization to view the cdr of all extensions.
 *
 * @method authorizeAdminCdrUser
@@ -752,6 +785,7 @@ exports.authorizeAdminPostitUser      = authorizeAdminPostitUser;
 exports.authorizeCustomerCardUser     = authorizeCustomerCardUser;
 exports.authorizeOpExtensionsUser     = authorizeOpExtensionsUser;
 exports.getAuthorizedOperatorGroups   = getAuthorizedOperatorGroups;
+exports.authorizeOperatorGroupsUser   = authorizeOperatorGroupsUser;
 exports.authorizeStreamingSourceUser  = authorizeStreamingSourceUser;
 exports.authorizeAdvancedOperatorUser = authorizeAdvancedOperatorUser;
 exports.getAuthorizedStreamingSources = getAuthorizedStreamingSources;

@@ -42,6 +42,13 @@ module.exports = function (options, imports, register) {
             authorizeOpExtensionsUser: authorization.authorizeOpExtensionsUser,
 
             /**
+            * It's the _authorizeOperatorGroupsUser_ method provided by _authorization_ module.
+            *
+            * @method authorizeOperatorGroupsUser
+            */
+            authorizeOperatorGroupsUser: authorization.authorizeOperatorGroupsUser,
+
+            /**
             * It's the _authorizePickupUser_ method provided by _authorization_ module.
             *
             * @method authorizePickupUser

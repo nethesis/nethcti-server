@@ -423,9 +423,9 @@ var compConfigManager;
                     var username = req.headers.authorization_user;
 
                     // check if the user has the operator panel authorization
-                    if (compAuthorization.authorizeOperatorPanelUser(username) !== true) {
+                    if (compAuthorization.authorizeOperatorGroupsUser(username) !== true) {
 
-                        logger.warn(IDLOG, 'requesting operator panel groups: authorization operator panel failed for user "' + username + '"');
+                        logger.warn(IDLOG, 'requesting operator groups: authorization failed for user "' + username + '"');
                         sendHttp401(res);
                         return;
                     }
