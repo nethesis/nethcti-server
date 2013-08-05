@@ -209,10 +209,10 @@ function authorizeVoicemailUser(username) {
 }
 
 /**
-* Return true if the specified user has the post-it authorization.
+* Returns true if the specified user has the post-it authorization.
 *
 * @method authorizePostitUser
-* @param {string} username The username
+* @param  {string}  username The username
 * @return {boolean} True if the user has the post-it authorization.
 */
 function authorizePostitUser(username) {

@@ -125,22 +125,33 @@ function sendHttp500(resp, err) {
         /**
         * REST plugin that provides postit functions through the following REST API:
         *
-        *     postit/interval/:from/:to/
+        * # GET requests
         *
-        * Return the history of the postit created in the interval time by the creator.
+        * 1. [`postit/day/:day`](#dayget)
+        * 1. [`postit/day/:day/:filter`](#day_filterget)
+        * 1. [`postit/interval/:from/:to`](#intervalget)
+        * 1. [`postit/interval/:from/:to/:filter`](#interavl_filterget)
         *
-        *     postit/interval/:from/:to/:filter
+        * ---
         *
-        * Return the history of the postit created in the interval time by the creator
+        * ### <a id="intervalget">**`postit/interval/:from/:to`**</a>
+        *
+        * Returns the history of the postit created in the interval time by the creator.
+        *
+        * ### <a id="interval_filterget">**`postit/interval/:from/:to/:filter`**</a>
+        *
+        * Returns the history of the postit created in the interval time by the creator
         * filtering the results.
         *
-        *     postit/day/:day
+        * ---
         *
-        * Return the history of the postit created in the specified day by the applicant.
+        * ### <a id="dayget">**`postit/day/:day`**</a>
         *
-        *     postit/day/:day/:filter
+        * Returns the history of the postit created in the specified day by the applicant.
         *
-        * Return the history of the postit created in the specified day by the applicant
+        * ### <a id="day_filterget">**`postit/day/:day/:filter`**</a>
+        *
+        * Returns the history of the postit created in the specified day by the applicant
         * filtering the results.
         *
         * @class plugin_rest_historypostit
@@ -199,10 +210,20 @@ function sendHttp500(resp, err) {
             */
             interval: function (req, res, next) {
                 try {
+                    var username = req.headers.authorization_user;
+
+                    // check the postit authorization
+                    if (compAuthorization.authorizePostitUser(username) === false) {
+                        logger.warn(IDLOG, 'postit authorization failed for user "' + username + '" !');
+                        sendHttp401(res);
+                        return;
+                    }
+                    logger.info(IDLOG, 'postit authorization successfully for user "' + username + '"');
+
                     var obj = {
                         to:       req.params.to,
                         from:     req.params.from,
-                        username: req.headers.authorization_user,
+                        username: username
                     };
 
                     // add filter parameter if it has been specified
