@@ -294,18 +294,19 @@ function authorizeAdvancedOperatorUser(username) {
 }
 
 /**
-* Return true if the specified user has the operator panel authorization.
+* Returns true if the specified user has the authorization to view all extensions
+* with their complete status informations.
 *
-* @method authorizeOperatorPanelUser
+* @method authorizeOpExtensionsUser
 * @param  {string}  username The username
 * @return {boolean} True if the user has the operator panel authorization.
 */
-function authorizeOperatorPanelUser(username) {
+function authorizeOpExtensionsUser(username) {
     try {
         // check parameter
         if (typeof username !== 'string') { throw new Error('wrong parameter'); }
 
-        return authorizeUser(authorizationTypes.TYPES.operator_panel, username);
+        return authorizeUser(authorizationTypes.TYPES.extensions, username);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -749,7 +750,7 @@ exports.authorizedCustomerCards       = authorizedCustomerCards;
 exports.verifyUserEndpointExten       = verifyUserEndpointExten;
 exports.authorizeAdminPostitUser      = authorizeAdminPostitUser;
 exports.authorizeCustomerCardUser     = authorizeCustomerCardUser;
-exports.authorizeOperatorPanelUser    = authorizeOperatorPanelUser;
+exports.authorizeOpExtensionsUser     = authorizeOpExtensionsUser;
 exports.getAuthorizedOperatorGroups   = getAuthorizedOperatorGroups;
 exports.authorizeStreamingSourceUser  = authorizeStreamingSourceUser;
 exports.authorizeAdvancedOperatorUser = authorizeAdvancedOperatorUser;

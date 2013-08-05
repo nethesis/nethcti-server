@@ -35,11 +35,11 @@ module.exports = function (options, imports, register) {
             authorizeCdrUser: authorization.authorizeCdrUser,
 
             /**
-            * It's the _authorizeOperatorPanelUser_ method provided by _authorization_ module.
+            * It's the _authorizeOpExtensionsUser_ method provided by _authorization_ module.
             *
-            * @method authorizeOperatorPanelUser
+            * @method authorizeOpExtensionsUser
             */
-            authorizeOperatorPanelUser: authorization.authorizeOperatorPanelUser,
+            authorizeOpExtensionsUser: authorization.authorizeOpExtensionsUser,
 
             /**
             * It's the _authorizePickupUser_ method provided by _authorization_ module.

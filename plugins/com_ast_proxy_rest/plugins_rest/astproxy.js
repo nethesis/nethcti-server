@@ -533,10 +533,10 @@ var compConfigManager;
                 try {
                     var username = req.headers.authorization_user;
 
-                    // check if the user has the operator panel authorization
-                    if (compAuthorization.authorizeOperatorPanelUser(username) !== true) {
+                    // check if the user has the authorization to view the extensions
+                    if (compAuthorization.authorizeOpExtensionsUser(username) !== true) {
 
-                        logger.warn(IDLOG, 'requesting extensions: authorization operator panel failed for user "' + username + '"');
+                        logger.warn(IDLOG, 'requesting extensions: authorization failed for user "' + username + '"');
                         sendHttp401(res);
                         return;
                     }
