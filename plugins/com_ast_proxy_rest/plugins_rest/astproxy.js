@@ -906,9 +906,6 @@ var compConfigManager;
                             logger.info(IDLOG, 'stop spy listen: the destination endpoint ' + req.params.destType + ' ' + req.params.destId + ' is owned by "' + username + '"');
                         }
 
-                        // check if the user has the permission to pickup the specified conversation of the endpoint
-                        // TODO
-
                         compAstProxy.hangupConversation(req.params.endpointType, req.params.endpointId, req.params.convid, function (err) {
                             try {
                                 if (err) {
@@ -959,6 +956,14 @@ var compConfigManager;
                         return;
                     }
 
+                    // check if the user has the authorization to spy
+                    if (compAuthorization.authorizeSpyUser(username) !== true) {
+
+                        logger.warn(IDLOG, 'spy convid ' + req.params.convid + ': authorization failed for user "' + username + '"');
+                        sendHttp401(res);
+                        return;
+                    }
+
                     if (req.params.endpointType === 'extension' && req.params.destType === 'extension') {
 
                         // check if the destination endpoint is owned by the user
@@ -973,24 +978,28 @@ var compConfigManager;
                             logger.info(IDLOG, 'spy listen: the destination endpoint ' + req.params.destType + ' ' + req.params.destId + ' is owned by "' + username + '"');
                         }
 
-                        // check if the user has the permission to pickup the specified conversation of the endpoint
-                        // TODO
+                        compAstProxy.startSpyListenConversation(req.params.endpointType,
+                            req.params.endpointId,
+                            req.params.convid,
+                            req.params.destType,
+                            req.params.destId,
+                            function (err) {
 
-                        compAstProxy.startSpyListenConversation(req.params.endpointType, req.params.endpointId, req.params.convid, req.params.destType, req.params.destId, function (err) {
-                            try {
-                                if (err) {
-                                    logger.warn(IDLOG, 'spy listen convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.destType + ' ' + req.params.destId + ' has been failed');
+                                try {
+                                    if (err) {
+                                        logger.warn(IDLOG, 'spy listen convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.destType + ' ' + req.params.destId + ' has been failed');
+                                        sendHttp500(res, err.toString());
+                                        return;
+                                    }
+                                    logger.info(IDLOG, 'spy listen convid ' + req.params.convid + ' has been successful by user "' + username + '" with ' + req.params.destType + ' ' + req.params.destId);
+                                    sendHttp200(res);
+
+                                } catch (err) {
+                                    logger.error(IDLOG, err.stack);
                                     sendHttp500(res, err.toString());
-                                    return;
                                 }
-                                logger.info(IDLOG, 'spy listen convid ' + req.params.convid + ' has been successful by user "' + username + '" with ' + req.params.destType + ' ' + req.params.destId);
-                                sendHttp200(res);
-
-                            } catch (err) {
-                                logger.error(IDLOG, err.stack);
-                                sendHttp500(res, err.toString());
                             }
-                        });
+                        );
 
                     } else {
                         logger.warn(IDLOG, 'starting spy listen convid ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType + ' or destType ' + destType);
@@ -1291,6 +1300,14 @@ var compConfigManager;
                         return;
                     }
 
+                    // check if the user has the authorization to spy
+                    if (compAuthorization.authorizeSpyUser(username) !== true) {
+
+                        logger.warn(IDLOG, 'start spy & speak convid ' + req.params.convid + ': authorization failed for user "' + username + '"');
+                        sendHttp401(res);
+                        return;
+                    }
+
                     if (req.params.endpointType === 'extension' && req.params.destType === 'extension') {
 
                         // check if the destination endpoint is owned by the user
@@ -1305,24 +1322,28 @@ var compConfigManager;
                             logger.info(IDLOG, 'start spy & speak the destination endpoint ' + req.params.destType + ' ' + req.params.destId + ' is owned by "' + username + '"');
                         }
 
-                        // check if the user has the permission to pickup the specified parking
-                        // TODO
+                        compAstProxy.startSpySpeakConversation(req.params.endpointType,
+                            req.params.endpointId,
+                            req.params.convid,
+                            req.params.destType,
+                            req.params.destId,
+                            function (err) {
 
-                        compAstProxy.startSpySpeakConversation(req.params.endpointType, req.params.endpointId, req.params.convid, req.params.destType, req.params.destId, function (err) {
-                            try {
-                                if (err) {
-                                    logger.warn(IDLOG, 'start spy & speak convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.destType + ' ' + req.params.destId + ' has been failed');
+                                try {
+                                    if (err) {
+                                        logger.warn(IDLOG, 'start spy & speak convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.destType + ' ' + req.params.destId + ' has been failed');
+                                        sendHttp500(res, err.toString());
+                                        return;
+                                    }
+                                    logger.info(IDLOG, 'start spy & speak convid ' + req.params.convid + ' has been successful by user "' + username + '" with ' + req.params.destType + ' ' + req.params.destId);
+                                    sendHttp200(res);
+
+                                } catch (err) {
+                                    logger.error(IDLOG, err.stack);
                                     sendHttp500(res, err.toString());
-                                    return;
                                 }
-                                logger.info(IDLOG, 'start spy & speak convid ' + req.params.convid + ' has been successful by user "' + username + '" with ' + req.params.destType + ' ' + req.params.destId);
-                                sendHttp200(res);
-
-                            } catch (err) {
-                                logger.error(IDLOG, err.stack);
-                                sendHttp500(res, err.toString());
                             }
-                        });
+                        );
 
                     } else {
                         logger.warn(IDLOG, 'starting spy and speak convid ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType + ' or destType ' + req.params.destType);
