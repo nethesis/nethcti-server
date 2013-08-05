@@ -1556,6 +1556,14 @@ function dndset(req, res, next) {
             return;
         }
 
+        // check if the user has the dnd authorization
+        if (compAuthorization.authorizeDndUser(username) !== true) {
+
+            logger.warn(IDLOG, 'setting dnd: authorization failed for user "' + username + '"');
+            sendHttp401(res);
+            return;
+        }
+
         // check if the endpoint in the request is an endpoint of the applicant user. The user
         // can only set the don't disturb status of his endpoints
         if (compAuthorization.verifyUserEndpointExten(username, req.params.endpoint) === false) {
@@ -1602,6 +1610,14 @@ function dndget(req, res, next) {
         // check parameters
         if (typeof endpoint !== 'string') {
             sendHttp400(res);
+            return;
+        }
+
+        // check if the user has the dnd authorization
+        if (compAuthorization.authorizeDndUser(username) !== true) {
+
+            logger.warn(IDLOG, 'requesting dnd: authorization failed for user "' + username + '"');
+            sendHttp401(res);
             return;
         }
 
