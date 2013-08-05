@@ -150,26 +150,41 @@ function sendHttp500(resp, err) {
         /**
         * REST plugin that provides switchboard history functions through the following REST API:
         *
-        *     histcallswitch/interval/:from/:to
+        * # GET requests
         *
-        * Returns the switchboard history call between _"from"_ date to _"to"_ date of all endpoints.
-        * Dates must be expressed in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
+        * 1. [`histcallswitch/day/:day`](#dayget)
+        * 1. [`histcallswitch/day/:day/:filter`](#day_filterget)
+        * 1. [`histcallswitch/interval/:from/:to`](#intervalget)
+        * 1. [`histcallswitch/interval/:from/:to/:filter`](#interval_filterget)
         *
-        *     histcallswitch/interval/:from/:to/:filter
+        * ---
         *
-        * Returns the switchboard history call between _"from"_ date to _"to"_ date of all endpoints
-        * filtering by _"filter"_. Date must be expressed in YYYYMMDD format. If an error occurs an HTTP 500
-        * response is returned.
-        *
-        *     histcallswitch/day/:day
+        * ### <a id="dayget">**`histcallswitch/day/:day`**</a>
         *
         * Returns the switchboard history call of the day _"day"_ of all endpoints. Date must be expressed
         * in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
         *
-        *     histcallswitch/day/:day/:filter
+        * ---
+        *
+        * ### <a id="day_filterget">**`histcallswitch/day/:day/:filter`**</a>
         *
         * Returns the switchboard history call of the day _"day"_ of all endpoints filtering by _"filter"_.
         * Date must be expressed in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
+        *
+        * ---
+        *
+        * ### <a id="intervalget">**`histcallswitch/interval/:from/:to`**</a>
+        *
+        * Returns the switchboard history call between _"from"_ date to _"to"_ date of all endpoints.
+        * Dates must be expressed in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
+        *
+        * ---
+        *
+        * ### <a id="interval_filterget">**`histcallswitch/interval/:from/:to/:filter`**</a>
+        *
+        * Returns the switchboard history call between _"from"_ date to _"to"_ date of all endpoints
+        * filtering by _"filter"_. Date must be expressed in YYYYMMDD format. If an error occurs an HTTP 500
+        * response is returned.
         *
         * @class plugin_rest_histcallswitch
         * @static
@@ -186,23 +201,23 @@ function sendHttp500(resp, err) {
                 * @property get
                 * @type {array}
                 *
-                *   @param {string} interval/:from/:to To get the history call between _"from"_ date to _"to"_ date.
-                *       The date must be expressed in YYYYMMDD format
-                *
-                *   @param {string} interval/:from/:to/:filter To get the history call between _"from"_ date to _"to"_
-                *       date filtering by filter. The date must be expressed in YYYYMMDD format
-                *
                 *   @param {string} day/:day To get the history call of the day. The date must be expressed
                 *       in YYYYMMDD format
                 *
                 *   @param {string} day/:day/:filter To get the history call of the day filtering by filter.
                 *       The date must be expressed in YYYYMMDD format
+                *
+                *   @param {string} interval/:from/:to To get the history call between _"from"_ date to _"to"_ date.
+                *       The date must be expressed in YYYYMMDD format
+                *
+                *   @param {string} interval/:from/:to/:filter To get the history call between _"from"_ date to _"to"_
+                *       date filtering by filter. The date must be expressed in YYYYMMDD format
                 */
                 'get' : [
-                    'interval/:from/:to',
-                    'interval/:from/:to/:filter',
                     'day/:day',
-                    'day/:day/:filter'
+                    'day/:day/:filter',
+                    'interval/:from/:to',
+                    'interval/:from/:to/:filter'
                 ],
                 'post': [],
                 'head': [],
@@ -216,8 +231,8 @@ function sendHttp500(resp, err) {
             *     interval/:from/:to/:filter
             *
             * @method interval
-            * @param {object} req The client request.
-            * @param {object} res The client response.
+            * @param {object}   req  The client request.
+            * @param {object}   res  The client response.
             * @param {function} next Function to run the next handler in the chain.
             */
             interval: function (req, res, next) {
@@ -225,14 +240,14 @@ function sendHttp500(resp, err) {
                     // get the username from the authorization header added by authentication step
                     var username = req.headers.authorization_user;
 
-                    // check the switchboard history authorization
-                    if (compAuthorization.authorizeHistorySwitchUser(username) === false) {
-                        logger.warn(IDLOG, 'switchboard history authorization failed for user "' + username + '"!');
+                    // check the switchboard cdr authorization
+                    if (compAuthorization.authorizeAdminCdrUser(username) === false) {
+                        logger.warn(IDLOG, 'switchboard cdr authorization failed for user "' + username + '"!');
                         sendHttp401(res);
                         return;
                     }
 
-                    logger.info(IDLOG, 'switchboard history authorization successfully for user "' + username + '"');
+                    logger.info(IDLOG, 'switchboard cdr authorization successfully for user "' + username + '"');
 
                     var obj = {
                         to:   req.params.to,

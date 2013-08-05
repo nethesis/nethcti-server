@@ -294,18 +294,18 @@ function authorizeOperatorPanelUser(username) {
 }
 
 /**
-* Return true if the specified user has the switchboard history authorization.
+* Return true if the specified user has the authorization to view the cdr of all extensions.
 *
-* @method authorizeHistorySwitchUser
-* @param {string} username The username
+* @method authorizeAdminCdrUser
+* @param  {string}  username The username
 * @return {boolean} True if the user has the switchboard history authorization.
 */
-function authorizeHistorySwitchUser(username) {
+function authorizeAdminCdrUser(username) {
     try {
         // check parameter
         if (typeof username !== 'string') { throw new Error('wrong parameter'); }
 
-        return authorizeUser(authorizationTypes.TYPES.switchboard_history, username);
+        return authorizeUser(authorizationTypes.TYPES.admin_cdr, username);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -718,6 +718,7 @@ exports.authorizeCdrUser              = authorizeCdrUser;
 exports.authorizeChatUser             = authorizeChatUser;
 exports.authorizePickupUser           = authorizePickupUser;
 exports.authorizePostitUser           = authorizePostitUser;
+exports.authorizeAdminCdrUser         = authorizeAdminCdrUser;
 exports.getUserAuthorizations         = getUserAuthorizations;
 exports.authorizeVoicemailUser        = authorizeVoicemailUser;
 exports.authorizePhonebookUser        = authorizePhonebookUser;
@@ -727,7 +728,6 @@ exports.authorizedCustomerCards       = authorizedCustomerCards;
 exports.verifyUserEndpointExten       = verifyUserEndpointExten;
 exports.authorizeCustomerCardUser     = authorizeCustomerCardUser;
 exports.authorizeOperatorPanelUser    = authorizeOperatorPanelUser;
-exports.authorizeHistorySwitchUser    = authorizeHistorySwitchUser;
 exports.getAuthorizedOperatorGroups   = getAuthorizedOperatorGroups;
 exports.authorizeStreamingSourceUser  = authorizeStreamingSourceUser;
 exports.authorizeAdvancedOperatorUser = authorizeAdvancedOperatorUser;
