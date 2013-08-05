@@ -1669,6 +1669,14 @@ function cfget(req, res, next) {
             return;
         }
 
+        // check if the user has the operator panel authorization
+        if (compAuthorization.authorizePhoneRedirectUser(username) !== true) {
+
+            logger.warn(IDLOG, 'getting phone call forward status: authorization failed for user "' + username + '"');
+            sendHttp401(res);
+            return;
+        }
+
         // check if the endpoint in the request is an endpoint of the applicant user. The user
         // can only get the call forward status of his endpoints
         if (compAuthorization.verifyUserEndpointExten(username, req.params.endpoint) === false) {
@@ -1866,6 +1874,14 @@ function cfset(req, res, next) {
             || (status === 'on' && typeof to !== 'string') ) {
 
             sendHttp400(res);
+            return;
+        }
+
+        // check if the user has the operator panel authorization
+        if (compAuthorization.authorizePhoneRedirectUser(username) !== true) {
+
+            logger.warn(IDLOG, 'setting phone call forward: authorization failed for user "' + username + '"');
+            sendHttp401(res);
             return;
         }
 
