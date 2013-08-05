@@ -316,6 +316,28 @@ function authorizeOpExtensionsUser(username) {
 }
 
 /**
+* Returns true if the specified user has the authorization to view all parkings
+* with their complete status informations.
+*
+* @method authorizeOpParkingsUser
+* @param  {string}  username The username
+* @return {boolean} True if the user has the authorization to view all parkings.
+*/
+function authorizeOpParkingsUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.parkings, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
 * Returns true if the specified user has the authorization to view the
 * groups of the operator panel.
 *
@@ -781,6 +803,7 @@ exports.authorizeStreamingUser        = authorizeStreamingUser;
 exports.authorizeCallerNoteUser       = authorizeCallerNoteUser;
 exports.authorizedCustomerCards       = authorizedCustomerCards;
 exports.verifyUserEndpointExten       = verifyUserEndpointExten;
+exports.authorizeOpParkingsUser       = authorizeOpParkingsUser;
 exports.authorizeAdminPostitUser      = authorizeAdminPostitUser;
 exports.authorizeCustomerCardUser     = authorizeCustomerCardUser;
 exports.authorizeOpExtensionsUser     = authorizeOpExtensionsUser;
