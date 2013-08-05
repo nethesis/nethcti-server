@@ -28,11 +28,11 @@ module.exports = function (options, imports, register) {
     register(null, {
         authorization: {
             /**
-            * It's the _authorizeHistoryUser_ method provided by _authorization_ module.
+            * It's the _authorizeCdrUser_ method provided by _authorization_ module.
             *
-            * @method authorizeHistoryUser
+            * @method authorizeCdrUser
             */
-            authorizeHistoryUser: authorization.authorizeHistoryUser,
+            authorizeCdrUser: authorization.authorizeCdrUser,
 
             /**
             * It's the _authorizeOperatorPanelUser_ method provided by _authorization_ module.

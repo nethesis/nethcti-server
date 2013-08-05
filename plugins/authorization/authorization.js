@@ -230,18 +230,19 @@ function authorizePostitUser(username) {
 }
 
 /**
-* Return true if the specified user has the history authorization.
+* Returns true if the specified user has the authorization to view the call
+* detail recording (cdr).
 *
-* @method authorizeHistoryUser
-* @param {string} username The username
+* @method authorizeCdrUser
+* @param  {string}  username The username
 * @return {boolean} True if the user has the history authorization.
 */
-function authorizeHistoryUser(username) {
+function authorizeCdrUser(username) {
     try {
         // check parameter
         if (typeof username !== 'string') { throw new Error('wrong parameter'); }
 
-        return authorizeUser(authorizationTypes.TYPES.history, username);
+        return authorizeUser(authorizationTypes.TYPES.cdr, username);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -713,10 +714,10 @@ function getUserAuthorizations(username) {
 exports.config                        = config;
 exports.setLogger                     = setLogger;
 exports.setUserModule                 = setUserModule;
+exports.authorizeCdrUser              = authorizeCdrUser;
 exports.authorizeChatUser             = authorizeChatUser;
 exports.authorizePickupUser           = authorizePickupUser;
 exports.authorizePostitUser           = authorizePostitUser;
-exports.authorizeHistoryUser          = authorizeHistoryUser;
 exports.getUserAuthorizations         = getUserAuthorizations;
 exports.authorizeVoicemailUser        = authorizeVoicemailUser;
 exports.authorizePhonebookUser        = authorizePhonebookUser;
