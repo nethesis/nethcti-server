@@ -463,35 +463,13 @@ function dispatchMsg(socket, data) {
             } else {
                 var username = wsid[socket.id];
                 logger.warn(IDLOG, 'requested command ' + data.command + ' from user "' + username + '" (' + getWebsocketEndpoint(socket) + '): the server doesn\'t manage the requests of commands');
+
+                sendError(socket, { error: '501: commands not allowed' });
             }
 
         } else {
             logger.warn(IDLOG, 'received message from unauthenticated client ' + getWebsocketEndpoint(socket));
             unauthorized(socket);
-        }
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Send a response to the client. The response can be
-* an acknowledgment or an error.
-*
-* @method responseToClient
-* @param {object} socket The client websocket
-* @param {string} command The name of the command
-* @param {object} resp The response received from the asterisk proxy operation execution
-*/
-function responseToClient(socket, command, resp) {
-    try {
-        if (typeof resp === 'object' && resp.result === true) {
-            sendAck(socket, { command: command });
-            logger.info(IDLOG, 'sent ack ' + command + ' to ' + getWebsocketEndpoint(socket));
-
-        } else {
-            sendError(socket, { command: command });
-            logger.warn(IDLOG, 'sent error ' + command + ' to ' + getWebsocketEndpoint(socket));
         }
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -514,27 +492,6 @@ function sendError(socket, obj) {
         if (typeof obj !== 'object') { throw new Error('wrong parameter'); }
 
         socket.emit('error', obj);
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Send the ack result to the client for the specified message.
-*
-* **It can throw an Exception.**
-*
-* @method sendAck
-* @param {object} socket The client websocket
-* @param {string} [obj] The object to send
-*/
-function sendAck(socket, obj) {
-    try {
-        // check parameter
-        if (obj === undefined) { obj = {}; }
-        if (typeof obj !== 'object') { throw new Error('wrong parameter'); }
-
-        socket.emit('ack', obj);
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
