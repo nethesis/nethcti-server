@@ -91,6 +91,13 @@ module.exports = function (options, imports, register) {
             authorizePostitUser: authorization.authorizePostitUser,
 
             /**
+            * It's the _authorizeAdminPostitUser_ method provided by _authorization_ module.
+            *
+            * @method authorizeAdminPostitUser
+            */
+            authorizeAdminPostitUser: authorization.authorizeAdminPostitUser,
+
+            /**
             * It's the _authorizeCustomerCardUser_ method provided by _authorization_ module.
             *
             * @method authorizeCustomerCardUser

@@ -37,6 +37,15 @@ var logger = console;
 var compPostit;
 
 /**
+* The architect component to be used for authorization.
+*
+* @property compAuthorization
+* @type object
+* @private
+*/
+var compAuthorization;
+
+/**
 * Set the logger to be used.
 *
 * @method setLogger
@@ -74,6 +83,26 @@ function setCompPostit(cp) {
         logger.info(IDLOG, 'set postit architect component');
     } catch (err) {
        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Set the authorization architect component.
+*
+* @method setCompAuthorization
+* @param {object} comp The architect authorization component
+* @static
+*/
+function setCompAuthorization(comp) {
+    try {
+        // check parameter
+        if (typeof comp !== 'object') { throw new Error('wrong parameter'); }
+
+        compAuthorization = comp;
+        logger.log(IDLOG, 'authorization component has been set');
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
     }
 }
 
@@ -205,13 +234,22 @@ function sendHttp400(resp) {
                         return;
                     }
 
-                    // check the postit authorization
-                    if (compAuthorization.authorizePostitUser(username) === false) {
-                        logger.warn(IDLOG, 'postit authorization failed for user "' + username + '" !');
+                    // check the postit & administration postit authorization
+                    if (   compAuthorization.authorizePostitUser(username)      !== true
+                        && compAuthorization.authorizeAdminPostitUser(username) !== true) {
+
+                        logger.warn(IDLOG, '"postit" & "admin_postit" authorizations failed for user "' + username + '" !');
                         sendHttp401(res);
                         return;
                     }
-                    logger.info(IDLOG, 'postit authorization successfully for user "' + username + '"');
+
+                    if (compAuthorization.authorizeAdminPostitUser(username) === true) {
+                        logger.info(IDLOG, '"admin_postit" authorization successfully for user "' + username + '"');
+                    }
+
+                    if (compAuthorization.authorizePostitUser(username) === true) {
+                        logger.info(IDLOG, '"postit" authorization successfully for user "' + username + '"');
+                    }
 
                     var data = {
                         text:      req.params.text,
@@ -236,10 +274,11 @@ function sendHttp400(resp) {
                 }
             }
         }
-        exports.api           = postit.api;
-        exports.create        = postit.create;
-        exports.setLogger     = setLogger;
-        exports.setCompPostit = setCompPostit;
+        exports.api                  = postit.api;
+        exports.create               = postit.create;
+        exports.setLogger            = setLogger;
+        exports.setCompPostit        = setCompPostit;
+        exports.setCompAuthorization = setCompAuthorization;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);

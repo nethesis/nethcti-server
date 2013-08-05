@@ -230,6 +230,27 @@ function authorizePostitUser(username) {
 }
 
 /**
+* Returns true if the specified user has the administration post-it authorization.
+*
+* @method authorizeAdminPostitUser
+* @param  {string}  username The username
+* @return {boolean} True if the user has the post-it authorization.
+*/
+function authorizeAdminPostitUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.admin_postit, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
 * Returns true if the specified user has the authorization to view the call
 * detail recording (cdr).
 *
@@ -726,6 +747,7 @@ exports.authorizeStreamingUser        = authorizeStreamingUser;
 exports.authorizeCallerNoteUser       = authorizeCallerNoteUser;
 exports.authorizedCustomerCards       = authorizedCustomerCards;
 exports.verifyUserEndpointExten       = verifyUserEndpointExten;
+exports.authorizeAdminPostitUser      = authorizeAdminPostitUser;
 exports.authorizeCustomerCardUser     = authorizeCustomerCardUser;
 exports.authorizeOperatorPanelUser    = authorizeOperatorPanelUser;
 exports.getAuthorizedOperatorGroups   = getAuthorizedOperatorGroups;

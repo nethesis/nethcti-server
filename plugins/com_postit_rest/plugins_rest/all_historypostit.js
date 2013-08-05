@@ -13,9 +13,9 @@
 * @private
 * @final
 * @readOnly
-* @default [plugins_rest/historypostit]
+* @default [plugins_rest/all_historypostit]
 */
-var IDLOG = '[plugins_rest/historypostit]';
+var IDLOG = '[plugins_rest/all_historypostit]';
 
 /**
 * The logger. It must have at least three methods: _info, warn and error._
@@ -152,45 +152,45 @@ function sendHttp500(resp, err) {
 (function(){
     try {
         /**
-        * REST plugin that provides history postit functions through the following REST API:
+        * REST plugin that provides administration history postit functions through the following REST API:
         *
         * # GET requests
         *
-        * 1. [`historypostit/day/:day`](#dayget)
-        * 1. [`historypostit/day/:day/:filter`](#day_filterget)
-        * 1. [`historypostit/interval/:from/:to`](#intervalget)
-        * 1. [`historypostit/interval/:from/:to/:filter`](#interavl_filterget)
+        * 1. [`all_historypostit/day/:day`](#dayget)
+        * 1. [`all_historypostit/day/:day/:filter`](#day_filterget)
+        * 1. [`all_historypostit/interval/:from/:to`](#intervalget)
+        * 1. [`all_historypostit/interval/:from/:to/:filter`](#interavl_filterget)
         *
         * ---
         *
-        * ### <a id="intervalget">**`historypostit/interval/:from/:to`**</a>
+        * ### <a id="intervalget">**`all_historypostit/interval/:from/:to`**</a>
         *
-        * Returns the history of the postit created in the interval time by the user.
+        * Returns the history of the postit created in the interval time by all the users.
         *
-        * ### <a id="interval_filterget">**`historypostit/interval/:from/:to/:filter`**</a>
+        * ### <a id="interval_filterget">**`all_historypostit/interval/:from/:to/:filter`**</a>
         *
-        * Returns the history of the postit created in the interval time by the user
+        * Returns the history of the postit created in the interval time by all the users
         * filtering the results.
         *
         * ---
         *
-        * ### <a id="dayget">**`historypostit/day/:day`**</a>
+        * ### <a id="dayget">**`all_historypostit/day/:day`**</a>
         *
-        * Returns the history of the postit created in the specified day by the user.
+        * Returns the history of the postit created in the specified day by all the users.
         *
-        * ### <a id="day_filterget">**`historypostit/day/:day/:filter`**</a>
+        * ### <a id="day_filterget">**`all_historypostit/day/:day/:filter`**</a>
         *
-        * Returns the history of the postit created in the specified day by the user
+        * Returns the history of the postit created in the specified day by all the users
         * filtering the results.
         *
-        * @class plugin_rest_historypostit
+        * @class plugin_rest_all_historypostit
         * @static
         */
-        var historypostit = {
+        var all_historypostit = {
 
             // the REST api
             api: {
-                'root': 'historypostit',
+                'root': 'all_historypostit',
 
                 /**
                 * REST API to be requested using HTTP GET request.
@@ -199,18 +199,18 @@ function sendHttp500(resp, err) {
                 * @type {array}
                 *
                 *   @param {string} interval/:from/:to To get the history of the postit
-                *       created in the interval time by the applicant
+                *       created in the interval time by all the users
                 *
                 *   @param {string} interval/:from/:to/:filter To get the history of the
-                *       postit created in the interval time by the applicant filtering the
+                *       postit created in the interval time by all the users filtering the
                 *       results by "recipient" field of db table
                 *
                 *   @param {string} day/:day To get the history of the postit created in the
-                *       specified day by the applicant. The date must be expressed in
+                *       specified day by all the users. The date must be expressed in
                 *       YYYYMMDD format
                 *
                 *   @param {string} day/:day/:filter To get the history of the postit created
-                *       in the specified day by the applicant filtering the results by "recipient"
+                *       in the specified day by all the users filtering the results by "recipient"
                 *       field of db table. The date must be expressed in YYYYMMDD format
                 */
                 'get' : [
@@ -225,7 +225,7 @@ function sendHttp500(resp, err) {
             },
 
             /**
-            * Search the history of the postit created by the applicant for the
+            * Search the history of the postit created by all the users for the
             * specified interval time and optional filter the results by recipient,
             * with the following REST api:
             *
@@ -242,39 +242,29 @@ function sendHttp500(resp, err) {
                     var username = req.headers.authorization_user;
 
                     // check the postit & administration postit authorization
-                    if (   compAuthorization.authorizePostitUser(username)      !== true
-                        && compAuthorization.authorizeAdminPostitUser(username) !== true) {
+                    if (compAuthorization.authorizeAdminPostitUser(username) !== true) {
 
-                        logger.warn(IDLOG, '"postit" & "admin_postit" authorizations failed for user "' + username + '" !');
+                        logger.warn(IDLOG, '"admin_postit" authorizations failed for user "' + username + '" !');
                         sendHttp401(res);
                         return;
                     }
-
-                    if (compAuthorization.authorizeAdminPostitUser(username) === true) {
-                        logger.info(IDLOG, '"admin_postit" authorization successfully for user "' + username + '"');
-                    }
-
-                    if (compAuthorization.authorizePostitUser(username) === true) {
-                        logger.info(IDLOG, '"postit" authorization successfully for user "' + username + '"');
-                    }
+                    logger.info(IDLOG, '"admin_postit" authorization successfully for user "' + username + '"');
 
                     var obj = {
-                        to:       req.params.to,
-                        from:     req.params.from,
-                        username: username
+                        to:   req.params.to,
+                        from: req.params.from
                     };
 
                     // add filter parameter if it has been specified
                     if (req.params.filter) { obj.filter = req.params.filter; }
 
                     // use the history component
-                    var data = compPostit.getHistoryInterval(obj, function (err, results) {
+                    var data = compPostit.getAllUserHistoryInterval(obj, function (err, results) {
 
                         if (err) { sendHttp500(res, err.toString()); }
                         else {
-                            logger.info(IDLOG, 'send ' + results.length   + ' results searching history post-it ' +
-                                               'interval between ' + obj.from + ' to ' + obj.to + ' for ' +
-                                               'username "' + obj.username + '" and filter ' + (obj.filter ? obj.filter : '""'));
+                            logger.info(IDLOG, 'send ' + results.length   + ' results searching all history post-it of all users ' +
+                                               'in the interval between ' + obj.from + ' to ' + obj.to + ' and filter ' + (obj.filter ? obj.filter : '""'));
                             res.send(200, results);
                         }
                     });
@@ -285,7 +275,7 @@ function sendHttp500(resp, err) {
             },
 
             /**
-            * Search the history postit created by the applicant in the specified day and optional
+            * Search the history postit created by all the users in the specified day and optional
             * filter the results with the following REST api:
             *
             *     day/:day
@@ -309,9 +299,9 @@ function sendHttp500(resp, err) {
                 }
             }
         }
-        exports.api                  = historypostit.api;
-        exports.day                  = historypostit.day;
-        exports.interval             = historypostit.interval;
+        exports.api                  = all_historypostit.api;
+        exports.day                  = all_historypostit.day;
+        exports.interval             = all_historypostit.interval;
         exports.setLogger            = setLogger;
         exports.setCompPostit        = setCompPostit;
         exports.setCompAuthorization = setCompAuthorization;
