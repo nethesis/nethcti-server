@@ -49,6 +49,13 @@ module.exports = function (options, imports, register) {
             authorizeOpParkingsUser: authorization.authorizeOpParkingsUser,
 
             /**
+            * It's the _authorizeOpQueuesUser_ method provided by _authorization_ module.
+            *
+            * @method authorizeOpQueuesUser
+            */
+            authorizeOpQueuesUser: authorization.authorizeOpQueuesUser,
+
+            /**
             * It's the _authorizeOperatorGroupsUser_ method provided by _authorization_ module.
             *
             * @method authorizeOperatorGroupsUser
