@@ -1326,7 +1326,7 @@ var compConfigManager;
                     }
 
                     // check if the user has the authorization to spy
-                    if (compAuthorization.authorizeSpyUser(username) !== true) {
+                    if (compAuthorization.authorizeIntrudeUser(username) !== true) {
 
                         logger.warn(IDLOG, 'start spy & speak convid ' + req.params.convid + ': authorization failed for user "' + username + '"');
                         sendHttp401(res);

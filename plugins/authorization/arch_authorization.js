@@ -207,7 +207,14 @@ module.exports = function (options, imports, register) {
             *
             * @method authorizeAdminHangupUser
             */
-            authorizeAdminHangupUser: authorization.authorizeAdminHangupUser
+            authorizeAdminHangupUser: authorization.authorizeAdminHangupUser,
+
+            /**
+            * It's the _authorizeIntrudeUser_ method provided by _authorization_ module.
+            *
+            * @method authorizeIntrudeUser
+            */
+            authorizeIntrudeUser: authorization.authorizeIntrudeUser
         }
     });
 
