@@ -2845,7 +2845,7 @@ function sendDTMFSequenceToChannel(channel, sequence, cb) {
 */
 function callAndSendDTMFSequence(chanType, extension, sequence, cb) {
     try {
-        // cehck parameters
+        // check parameters
         if (   typeof chanType  !== 'string' || typeof cb       !== 'function'
             || typeof extension !== 'string' || typeof sequence !== 'string') {
 
@@ -2876,35 +2876,95 @@ function callAndSendDTMFSequence(chanType, extension, sequence, cb) {
     }
 }
 
+/**
+* Returns the extensions involved in the specified conversation.
+*
+* @method getExtensionsFromConversation
+* @param  {string} convid The conversation identifier
+* @param  {string} exten  The extension identifier which has the conversation
+* @return {array}  The extensions involved in the conversation.
+* @private
+*/
+function getExtensionsFromConversation(convid, exten) {
+    try {
+        // check parameters
+        if (typeof convid !== 'string' || typeof exten !== 'string') {
+            throw new Error('wrong parameters');
+        }
+
+        var result = [];
+
+        // check the extension existence
+        if (extensions[exten]) {
+
+            // check if the extension has the specified conversation
+            var conv = extensions[exten].getConversation(convid);
+            if (typeof conv !== 'object') {
+                logger.warn(IDLOG, 'getting extensions from convid ' + convid + ': no conversation in extension ' + exten);
+                return result;
+            }
+            result.push(exten);
+
+            // get the other number of the conversation and check if it's an extension number
+            var chSource = conv.getSourceChannel();
+            if (typeof chSource !== 'object') {
+                logger.warn(IDLOG, 'getting extensions from convid ' + convid + ': no source channel in conversation of extension ' + exten);
+                return result;
+            }
+
+            // get the other number of the conversation
+            var numToCheckExten = chSource.getCallerNum() === exten ? chSource.getBridgedNum() : chSource.getCallerNum();
+
+            // check if the other number is an extension and if it has the specified conversation
+            if (extensions[numToCheckExten]) {
+
+                // to check whether the number is an extension, check if it has the specified conversation
+                if (extensions[numToCheckExten].getConversation(convid)) {
+                    result.push(numToCheckExten);
+                }
+            }
+
+        } else {
+            logger.warn(IDLOG, 'getting the extensions of the convid ' + convid + ' from extension ' + exten + ': no extension ' + exten + ' present');
+        }
+        return result;
+
+    } catch (e) {
+        logger.error(IDLOG, e.stack);
+        return [];
+    }
+}
+
 // public interface
-exports.on                          = on;
-exports.call                        = call;
-exports.start                       = start;
-exports.visit                       = visit;
-exports.setLogger                   = setLogger;
-exports.getExtensions               = getExtensions;
-exports.pickupParking               = pickupParking;
-exports.getJSONQueues               = getJSONQueues;
-exports.getJSONParkings             = getJSONParkings;
-exports.sendDTMFSequence            = sendDTMFSequence;
-exports.parkConversation            = parkConversation;
-exports.getJSONExtensions           = getJSONExtensions;
-exports.EVT_EXTEN_CHANGED           = EVT_EXTEN_CHANGED;
-exports.EVT_QUEUE_CHANGED           = EVT_QUEUE_CHANGED;
-exports.EVT_NEW_VOICEMAIL           = EVT_NEW_VOICEMAIL;
-exports.hangupConversation          = hangupConversation;
-exports.pickupConversation          = pickupConversation;
-exports.EVT_PARKING_CHANGED         = EVT_PARKING_CHANGED;
-exports.redirectConversation        = redirectConversation;
-exports.evtHangupConversation       = evtHangupConversation;
-exports.evtExtenStatusChanged       = evtExtenStatusChanged;
-exports.evtNewVoicemailMessage      = evtNewVoicemailMessage;
-exports.stopRecordConversation      = stopRecordConversation;
-exports.evtConversationDialing      = evtConversationDialing;
-exports.evtSpyStartConversation     = evtSpyStartConversation;
-exports.startRecordConversation     = startRecordConversation;
-exports.evtNewQueueWaitingCaller    = evtNewQueueWaitingCaller;
-exports.evtConversationConnected    = evtConversationConnected;
-exports.startSpySpeakConversation   = startSpySpeakConversation;
-exports.startSpyListenConversation  = startSpyListenConversation;
-exports.evtRemoveQueueWaitingCaller = evtRemoveQueueWaitingCaller;
+exports.on                            = on;
+exports.call                          = call;
+exports.start                         = start;
+exports.visit                         = visit;
+exports.setLogger                     = setLogger;
+exports.getExtensions                 = getExtensions;
+exports.pickupParking                 = pickupParking;
+exports.getJSONQueues                 = getJSONQueues;
+exports.getJSONParkings               = getJSONParkings;
+exports.sendDTMFSequence              = sendDTMFSequence;
+exports.parkConversation              = parkConversation;
+exports.getJSONExtensions             = getJSONExtensions;
+exports.EVT_EXTEN_CHANGED             = EVT_EXTEN_CHANGED;
+exports.EVT_QUEUE_CHANGED             = EVT_QUEUE_CHANGED;
+exports.EVT_NEW_VOICEMAIL             = EVT_NEW_VOICEMAIL;
+exports.hangupConversation            = hangupConversation;
+exports.pickupConversation            = pickupConversation;
+exports.EVT_PARKING_CHANGED           = EVT_PARKING_CHANGED;
+exports.redirectConversation          = redirectConversation;
+exports.evtHangupConversation         = evtHangupConversation;
+exports.evtExtenStatusChanged         = evtExtenStatusChanged;
+exports.evtNewVoicemailMessage        = evtNewVoicemailMessage;
+exports.stopRecordConversation        = stopRecordConversation;
+exports.evtConversationDialing        = evtConversationDialing;
+exports.evtSpyStartConversation       = evtSpyStartConversation;
+exports.startRecordConversation       = startRecordConversation;
+exports.evtNewQueueWaitingCaller      = evtNewQueueWaitingCaller;
+exports.evtConversationConnected      = evtConversationConnected;
+exports.startSpySpeakConversation     = startSpySpeakConversation;
+exports.startSpyListenConversation    = startSpyListenConversation;
+exports.evtRemoveQueueWaitingCaller   = evtRemoveQueueWaitingCaller;
+exports.getExtensionsFromConversation = getExtensionsFromConversation;

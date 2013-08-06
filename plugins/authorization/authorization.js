@@ -294,6 +294,28 @@ function authorizeSpyUser(username) {
 }
 
 /**
+* Returns true if the specified user has the no spy permission enabled.
+* In this case no user can spy the conversation of the specified user.
+*
+* @method hasNoSpyEnabled
+* @param  {string}  username The username
+* @return {boolean} True if the user has the no spy permission enabled.
+*/
+function hasNoSpyEnabled(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.no_spy, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
 * Returns true if the specified user has the authorization to view and
 * set the don't disturb status of his endpoints.
 *
@@ -877,6 +899,7 @@ function getUserAuthorizations(username) {
 exports.config                        = config;
 exports.setLogger                     = setLogger;
 exports.setUserModule                 = setUserModule;
+exports.hasNoSpyEnabled               = hasNoSpyEnabled;
 exports.authorizeSpyUser              = authorizeSpyUser;
 exports.authorizeDndUser              = authorizeDndUser;
 exports.authorizeCdrUser              = authorizeCdrUser;

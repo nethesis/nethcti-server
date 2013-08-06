@@ -571,18 +571,56 @@ function getAllEndpointsNethcti(username) {
     }
 }
 
+/**
+* Returns all users associated with the specified extension endpoint.
+*
+* @method getUsersUsingEndpointExtension
+* @param  {string} exten The extension endpoint identifier
+* @return {array}  Returns all the users associated with the specified extension endpoint.
+*/
+function getUsersUsingEndpointExtension(exten) {
+    try {
+        // check parameter
+        if (typeof exten !== 'string') { throw new Error('wrong parameter'); }
+
+        var result = [];
+
+        var extenKey, userExtens, username, endpoints;
+        for (username in users) {
+
+            // get all the extension endpoints of the user
+            endpoints  = users[username].getAllEndpoints();
+            userExtens = endpoints[endpointTypes.TYPES.EXTENSION];
+
+            for (extenKey in userExtens) {
+
+                if (extenKey === exten) {
+                    // the user have the specified extension endpoint
+                    result.push(username);
+                }
+            }
+        }
+        return result;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return [];
+    }
+}
+
 // public interface
-exports.on                     = on;
-exports.config                 = config;
-exports.setLogger              = setLogger;
-exports.getUsernames           = getUsernames;
-exports.getEndpointsJSON       = getEndpointsJSON;
-exports.getVoicemailList       = getVoicemailList;
-exports.setAuthorization       = setAuthorization;
-exports.getAuthorization       = getAuthorization;
-exports.getConfigurations      = getConfigurations;
-exports.setConfigurations      = setConfigurations;
-exports.setNethctiPresence     = setNethctiPresence;
-exports.hasExtensionEndpoint   = hasExtensionEndpoint;
-exports.hasVoicemailEndpoint   = hasVoicemailEndpoint;
-exports.getAllEndpointsNethcti = getAllEndpointsNethcti;
+exports.on                             = on;
+exports.config                         = config;
+exports.setLogger                      = setLogger;
+exports.getUsernames                   = getUsernames;
+exports.getEndpointsJSON               = getEndpointsJSON;
+exports.getVoicemailList               = getVoicemailList;
+exports.setAuthorization               = setAuthorization;
+exports.getAuthorization               = getAuthorization;
+exports.getConfigurations              = getConfigurations;
+exports.setConfigurations              = setConfigurations;
+exports.setNethctiPresence             = setNethctiPresence;
+exports.hasExtensionEndpoint           = hasExtensionEndpoint;
+exports.hasVoicemailEndpoint           = hasVoicemailEndpoint;
+exports.getAllEndpointsNethcti         = getAllEndpointsNethcti;
+exports.getUsersUsingEndpointExtension = getUsersUsingEndpointExtension;

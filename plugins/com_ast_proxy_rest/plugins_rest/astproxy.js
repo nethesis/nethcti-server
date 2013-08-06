@@ -37,6 +37,15 @@ var logger = console;
 var compAuthorization;
 
 /**
+* The architect component to be used for user.
+*
+* @property compUser
+* @type object
+* @private
+*/
+var compUser;
+
+/**
 * The architect component to be used for operator.
 *
 * @property compOperator
@@ -966,6 +975,28 @@ var compConfigManager;
 
                     if (req.params.endpointType === 'extension' && req.params.destType === 'extension') {
 
+                        // check whether the conversation endpoints belong to a user with
+                        // no spy permission enabled. In this case it's not possible to spy
+                        var extens = compAstProxy.getExtensionsFromConversation(req.params.convid, req.params.endpointId);
+
+                        var i, k, users;
+                        for (i = 0; i < extens.length; i++) {
+
+                            // get the users who have the current extension endpoint associated
+                            users = compUser.getUsersUsingEndpointExtension(extens[i]);
+
+                            for (k = 0; k < users.length; k++) {
+
+                                if (compAuthorization.hasNoSpyEnabled(users[k]) === true) {
+
+                                    logger.warn(IDLOG, 'spy convid ' + req.params.convid + ' failed: the user "' + users[k] + '"' +
+                                                       ' with extension endpoint ' + extens[i] + ' can\'t be spied');
+                                    sendHttp403(res);
+                                    return;
+                                }
+                            }
+                        }
+
                         // check if the destination endpoint is owned by the user
                         if (compAuthorization.verifyUserEndpointExten(username, req.params.destId) === false) {
 
@@ -1310,6 +1341,28 @@ var compConfigManager;
 
                     if (req.params.endpointType === 'extension' && req.params.destType === 'extension') {
 
+                        // check whether the conversation endpoints belong to a user with
+                        // no spy permission enabled. In this case it's not possible to spy
+                        var extens = compAstProxy.getExtensionsFromConversation(req.params.convid, req.params.endpointId);
+
+                        var i, k, users;
+                        for (i = 0; i < extens.length; i++) {
+
+                            // get the users who have the current extension endpoint associated
+                            users = compUser.getUsersUsingEndpointExtension(extens[i]);
+
+                            for (k = 0; k < users.length; k++) {
+
+                                if (compAuthorization.hasNoSpyEnabled(users[k]) === true) {
+
+                                    logger.warn(IDLOG, 'spy & speak convid ' + req.params.convid + ' failed: the user "' + users[k] + '"' +
+                                                       ' with extension endpoint ' + extens[i] + ' can\'t be spied');
+                                    sendHttp403(res);
+                                    return;
+                                }
+                            }
+                        }
+
                         // check if the destination endpoint is owned by the user
                         if (compAuthorization.verifyUserEndpointExten(username, req.params.destId) === false) {
 
@@ -1372,6 +1425,7 @@ var compConfigManager;
         exports.extensions           = astproxy.extensions;
         exports.pickup_conv          = astproxy.pickup_conv;
         exports.stop_record          = astproxy.stop_record;
+        exports.setCompUser          = setCompUser;
         exports.start_record         = astproxy.start_record;
         exports.pickup_parking       = astproxy.pickup_parking;
         exports.start_spyspeak       = astproxy.start_spyspeak;
@@ -1462,6 +1516,26 @@ function setCompAuthorization(ca) {
 }
 
 /**
+* Set the user architect component.
+*
+* @method setCompUser
+* @param {object} comp The architect user component
+* @static
+*/
+function setCompUser(comp) {
+    try {
+        // check parameter
+        if (typeof comp !== 'object') { throw new Error('wrong parameter'); }
+
+        compUser = comp;
+        logger.log(IDLOG, 'user component has been set');
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Sets the asterisk proxy component used for asterisk functions.
 *
 * @method setCompAstProxy
@@ -1473,6 +1547,23 @@ function setCompAstProxy(ap) {
         logger.info(IDLOG, 'set asterisk proxy architect component');
     } catch (err) {
        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Send HTTP 403 forbidden response.
+*
+* @method sendHttp403
+* @param {object} resp The client response object.
+* @private
+*/
+function sendHttp403(resp) {
+    try {
+        resp.writeHead(403);
+        logger.info(IDLOG, 'send HTTP 403 response to ' + resp.connection.remoteAddress);
+        resp.end();
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
     }
 }
 

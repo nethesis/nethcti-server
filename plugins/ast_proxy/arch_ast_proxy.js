@@ -154,6 +154,13 @@ module.exports = function (options, imports, register) {
             sendDTMFSequence: astProxy.proxyLogic.sendDTMFSequence,
 
             /**
+            * It's the _getExtensionsFromConversation_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method getExtensionsFromConversation
+            */
+            getExtensionsFromConversation: astProxy.proxyLogic.getExtensionsFromConversation,
+
+            /**
             * It's the _CF\_TYPES_ property provided by _proxy\_logic\_11/util\_call\_forward\_11_.
             *
             * @method CF_TYPES

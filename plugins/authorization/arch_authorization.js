@@ -56,6 +56,13 @@ module.exports = function (options, imports, register) {
             authorizeSpyUser: authorization.authorizeSpyUser,
 
             /**
+            * It's the _hasNoSpyEnabled_ method provided by _authorization_ module.
+            *
+            * @method hasNoSpyEnabled
+            */
+            hasNoSpyEnabled: authorization.hasNoSpyEnabled,
+
+            /**
             * It's the _authorizePhoneRedirectUser_ method provided by _authorization_ module.
             *
             * @method authorizePhoneRedirectUser
