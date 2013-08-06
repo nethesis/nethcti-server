@@ -314,6 +314,27 @@ function authorizeAdminHangupUser(username) {
 }
 
 /**
+* Returns true if the specified user has the administration pickup authorization.
+*
+* @method authorizeAdminPickupUser
+* @param  {string}  username The username
+* @return {boolean} True if the user has the administration pickup authorization.
+*/
+function authorizeAdminPickupUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.pickup, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
 * Returns true if the specified user has the authorization to view the call
 * detail recording (cdr).
 *
@@ -1028,6 +1049,7 @@ exports.verifyUserEndpointExten       = verifyUserEndpointExten;
 exports.authorizeOpParkingsUser       = authorizeOpParkingsUser;
 exports.authorizeAdminPostitUser      = authorizeAdminPostitUser;
 exports.authorizeAdminHangupUser      = authorizeAdminHangupUser;
+exports.authorizeAdminPickupUser      = authorizeAdminPickupUser;
 exports.authorizeCustomerCardUser     = authorizeCustomerCardUser;
 exports.authorizeOpExtensionsUser     = authorizeOpExtensionsUser;
 exports.authorizePhoneRedirectUser    = authorizePhoneRedirectUser;

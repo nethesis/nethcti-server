@@ -1061,20 +1061,32 @@ var compConfigManager;
 
                     if (req.params.endpointType === 'extension' && req.params.destType === 'extension') {
 
+                        // check if the user has the authorization to pickup the specified conversation
+                        if (compAuthorization.authorizeAdminPickupUser(username) === true) {
+
+                            logger.log(IDLOG, 'pickup convid "' + req.params.convid + '": admin pickup authorization successful for user "' + username + '"');
+
+                        }
+                        // check if the user has the authorization to pickup conversation of specified extension
+                        else if (compAuthorization.authorizePickupUser(username, req.params.endpointId) !== true) {
+
+                            logger.warn(IDLOG, 'pickup convid "' + req.params.convid + '" failed: user "' + username + '" ' +
+                                               ' isn\'t authorized to pickup conversation of endpoint ' + req.params.endpointType + ' ' + req.params.endpointId);
+                            sendHttp403(res);
+                            return;
+                        }
                         // check if the destination endpoint is owned by the user
-                        if (compAuthorization.verifyUserEndpointExten(username, req.params.destId) === false) {
+                        else if (compAuthorization.verifyUserEndpointExten(username, req.params.destId) === false) {
 
                             logger.warn(IDLOG, 'pickup convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
                                                ' the destination ' + req.params.destType + ' ' + req.params.destId + ' isn\'t owned by the user');
-                            sendHttp401(res);
+                            sendHttp403(res);
                             return;
 
                         } else {
-                            logger.info(IDLOG, 'the destination endpoint ' + req.params.destType + ' ' + req.params.destId + ' is owned by "' + username + '"');
+                            logger.info(IDLOG, 'pickup convid "' + req.params.convid + ': the destination endpoint ' + req.params.destType +
+                                               ' ' + req.params.destId + ' is owned by "' + username + '"');
                         }
-
-                        // check if the user has the permission to pickup the specified conversation of the endpoint
-                        // TODO
 
                         compAstProxy.pickupConversation(req.params.endpointType, req.params.endpointId, req.params.convid, req.params.destType, req.params.destId, function (err) {
                             try {
@@ -1093,7 +1105,7 @@ var compConfigManager;
                         });
 
                     } else {
-                        logger.warn(IDLOG, 'picking up the conversation ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType + ' or destType ' + destType);
+                        logger.warn(IDLOG, 'picking up convid ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType + ' or destType ' + destType);
                         sendHttp400(res);
                     }
 
@@ -1266,6 +1278,14 @@ var compConfigManager;
                         return;
                     }
 
+                    // check if the user has the authorization to pickup a parked call
+                    if (compAuthorization.authorizeOpParkingsUser(username) !== true) {
+
+                        logger.warn(IDLOG, 'pickup parking "' + req.params.parking + '": authorization failed for user "' + username + '"');
+                        sendHttp403(res);
+                        return;
+                    }
+
                     if (req.params.destType === 'extension') {
 
                         // check if the destination endpoint is owned by the user
@@ -1273,24 +1293,24 @@ var compConfigManager;
 
                             logger.warn(IDLOG, 'pickup parking "' + req.params.parking + '" by user "' + username + '" has been failed: ' +
                                                ' the destination ' + req.params.destType + ' ' + req.params.destId + ' isn\'t owned by the user');
-                            sendHttp401(res);
+                            sendHttp403(res);
                             return;
 
                         } else {
-                            logger.info(IDLOG, 'the destination endpoint ' + req.params.destType + ' ' + req.params.destId + ' is owned by "' + username + '"');
+                            logger.info(IDLOG, 'pickup parking "' + req.params.parking + '": the destination endpoint ' + req.params.destType +
+                                               ' ' + req.params.destId + ' is owned by "' + username + '"');
                         }
-
-                        // check if the user has the permission to pickup the specified parking
-                        // TODO
 
                         compAstProxy.pickupParking(req.params.parking, req.params.destType, req.params.destId, function (err) {
                             try {
                                 if (err) {
-                                    logger.warn(IDLOG, 'pickup parking ' + req.params.parking + ' by user "' + username + '" with ' + req.params.destType + ' ' + req.params.destId + ' has been failed');
+                                    logger.warn(IDLOG, 'pickup parking ' + req.params.parking + ' by user "' + username + '" with ' +
+                                                       req.params.destType + ' ' + req.params.destId + ' has been failed');
                                     sendHttp500(res, err.toString());
                                     return;
                                 }
-                                logger.info(IDLOG, 'pickup parking ' + req.params.parking + ' has been successful by user "' + username + '" with ' + req.params.destType + ' ' + req.params.destId);
+                                logger.info(IDLOG, 'pickup parking ' + req.params.parking + ' has been successful by user "' + username + '" ' +
+                                                   'with ' + req.params.destType + ' ' + req.params.destId);
                                 sendHttp200(res);
 
                             } catch (err) {

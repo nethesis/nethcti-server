@@ -63,6 +63,20 @@ module.exports = function (options, imports, register) {
             authorizeOpParkingsUser: authorization.authorizeOpParkingsUser,
 
             /**
+            * It's the _authorizePickupUser_ method provided by _authorization_ module.
+            *
+            * @method authorizePickupUser
+            */
+            authorizePickupUser: authorization.authorizePickupUser,
+
+            /**
+            * It's the _authorizeAdminPickupUser_ method provided by _authorization_ module.
+            *
+            * @method authorizeAdminPickupUser
+            */
+            authorizeAdminPickupUser: authorization.authorizeAdminPickupUser,
+
+            /**
             * It's the _authorizeSpyUser_ method provided by _authorization_ module.
             *
             * @method authorizeSpyUser
@@ -103,13 +117,6 @@ module.exports = function (options, imports, register) {
             * @method authorizeOperatorGroupsUser
             */
             authorizeOperatorGroupsUser: authorization.authorizeOperatorGroupsUser,
-
-            /**
-            * It's the _authorizePickupUser_ method provided by _authorization_ module.
-            *
-            * @method authorizePickupUser
-            */
-            authorizePickupUser: authorization.authorizePickupUser,
 
             /**
             * It's the _authorizeAdminCdrUser_ method provided by _authorization_ module.
