@@ -77,6 +77,7 @@ var JSON_KEYS = {
     POSTIT:        'postit',
     VOICEMAIL:     'voicemail',
     PHONEBOOK:     'phonebook',
+    SMS_HISTORY:   'sms_history',
     CALLER_NOTE:   'caller_note',
     HISTORY_CALL:  'history_call',
     CTI_PHONEBOOK: 'cti_phonebook'
@@ -344,7 +345,7 @@ function importModels() {
             path = __dirname + '/sequelize_models/' + k;
             if (fs.existsSync(path + '.js') === true) {
                 models[k] = dbConn[k].import(path);
-                logger.info(IDLOG, 'loaded sequelize model ' + path);
+                logger.info(IDLOG, '\n\n\nloaded sequelize model ' + path);
             }
         }
         logger.info(IDLOG, 'all sequelize models have been imported');
@@ -702,6 +703,28 @@ function getAllUserHistoryPostitInterval(data, cb) {
 }
 
 /**
+* Gets all the history sms of all the users into the interval time.
+* It can be possible to filter out the results specifying the filter. It search
+* the results into the _nethcti.sms\_history_ database.
+*
+* @method getAllUserHistorySmsInterval
+* @param {object} data
+*   @param {string} data.from       The starting date of the interval in the YYYYMMDD format (e.g. 20130521)
+*   @param {string} data.to         The ending date of the interval in the YYYYMMDD format (e.g. 20130528)
+*   @param {string} [data.filter]   The filter to be used in the _recipient_ field. If it is
+*                                   omitted the function treats it as '%' string
+* @param {function} cb The callback function
+*/
+function getAllUserHistorySmsInterval(data, cb) {
+    try {
+        getHistorySmsInterval(data, cb);
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
 * Get the history post-it of the specified user into the interval time.
 * If the username information is omitted, the results contains the
 * history post-it of all users. Moreover, it can be possible to filter
@@ -775,6 +798,85 @@ function getHistoryPostitInterval(data, cb) {
 
             logger.error(IDLOG, 'searching history post-it interval between ' + data.from + ' to ' + data.to +
                                 ' for username "' + data.username + '" and filter ' + data.filter + ': ' + err.toString());
+            cb(err.toString());
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Get the history sms sent by the specified user into the interval time.
+* If the username information is omitted, the results contains the
+* history sms of all users. Moreover, it can be possible to filter
+* the results specifying the filter. It search the results into the
+* _nethcti.sms_history_ database.
+*
+* @method getHistorySmsInterval
+* @param {object} data
+*   @param {string} [data.username] The user involved in the research. It is used to filter
+*                                   out the _sender_. If it is omitted the function treats it as '%' string. The '%'
+*                                   matches any number of characters, even zero character.
+*   @param {string} data.from       The starting date of the interval in the YYYYMMDD format (e.g. 20130521)
+*   @param {string} data.to         The ending date of the interval in the YYYYMMDD format (e.g. 20130528)
+*   @param {string} [data.filter]   The filter to be used in the _destination_ field. If it is
+*                                   omitted the function treats it as '%' string
+* @param {function} cb              The callback function
+*/
+function getHistorySmsInterval(data, cb) {
+    try {
+        // check parameters
+        if (    typeof data          !== 'object'
+            ||  typeof cb            !== 'function'
+            ||  typeof data.to       !== 'string' || typeof data.from !== 'string'
+            || (typeof data.username !== 'string' && data.username    !== undefined)
+            || (typeof data.filter   !== 'string' && data.filter      !== undefined)) {
+
+            throw new Error('wrong parameters');
+        }
+
+        // the mysql operator for the sender field
+        var operator = '=';
+
+        // check optional parameters
+        if (data.filter   === undefined) { data.filter = '%';   }
+        if (data.username === undefined) {
+            data.username = '%';
+            operator = ' LIKE ';
+        }
+
+        // search
+        models[JSON_KEYS.SMS_HISTORY].findAll({
+            where: [
+                'sender' + operator + '? AND ' +
+                '(DATE(date)>=? AND DATE(date)<=?) AND ' +
+                '(destination LIKE ?)',
+                data.username,
+                data.from, data.to,
+                data.filter
+            ],
+            attributes: [
+                [ 'DATE_FORMAT(date, "%d/%m/%Y")', 'datesent'],
+                [ 'DATE_FORMAT(date, "%H:%i:%S")', 'timesent'],
+                'id', 'text', 'status', 'sender', 'destination'
+            ]
+        }).success(function (results) {
+
+            // extract results to return in the callback function
+            var i;
+            for (i = 0; i < results.length; i++) {
+                results[i] = results[i].selectedValues;
+            }
+
+            logger.info(IDLOG, results.length + ' results searching history sms interval between ' +
+                               data.from + ' to ' + data.to + ' sent by username "' + data.username + '" and filter ' + data.filter);
+            cb(null, results);
+
+        }).error(function (err) { // manage the error
+
+            logger.error(IDLOG, 'searching history sms interval between ' + data.from + ' to ' + data.to +
+                                ' sent by username "' + data.username + '" and filter ' + data.filter + ': ' + err.toString());
             cb(err.toString());
         });
     } catch (err) {
@@ -1027,6 +1129,7 @@ exports.saveCtiPbContact                = saveCtiPbContact;
 exports.getVoicemailNewMsg              = getVoicemailNewMsg;
 exports.getVoicemailOldMsg              = getVoicemailOldMsg;
 exports.getCustomerCardByNum            = getCustomerCardByNum;
+exports.getHistorySmsInterval           = getHistorySmsInterval;
 exports.getPbContactsContains           = getPbContactsContains;
 exports.getHistoryCallInterval          = getHistoryCallInterval;
 exports.getPbContactsStartsWith         = getPbContactsStartsWith;
@@ -1034,4 +1137,5 @@ exports.getHistoryPostitInterval        = getHistoryPostitInterval;
 exports.getCtiPbContactsContains        = getCtiPbContactsContains;
 exports.getCtiPbContactsStartsWith      = getCtiPbContactsStartsWith;
 exports.getHistoryCallerNoteInterval    = getHistoryCallerNoteInterval;
+exports.getAllUserHistorySmsInterval    = getAllUserHistorySmsInterval;
 exports.getAllUserHistoryPostitInterval = getAllUserHistoryPostitInterval;

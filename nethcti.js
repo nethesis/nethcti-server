@@ -25,6 +25,7 @@ try{
         { packagePath: "./plugins/customer_card"           },
         { packagePath: "./plugins/notification_manager"    },
         { packagePath: "./plugins/com_authe_rest"          },
+        { packagePath: "./plugins/com_sms_rest"            },
         { packagePath: "./plugins/com_postit_rest"         },
         { packagePath: "./plugins/com_history_rest"        },
         { packagePath: "./plugins/com_phonebook_rest"      },

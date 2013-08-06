@@ -28,7 +28,21 @@ module.exports = function (options, imports, register) {
             *
             * @method send
             */
-            send: sms.send
+            send: sms.send,
+
+            /**
+            * It's the _getHistoryInterval_ method provided by _sms_ module.
+            *
+            * @method getHistoryInterval
+            */
+            getHistoryInterval: sms.getHistoryInterval,
+
+            /**
+            * It's the _getAllUserHistoryInterval_ method provided by _sms_ module.
+            *
+            * @method getAllUserHistoryInterval
+            */
+            getAllUserHistoryInterval: sms.getAllUserHistoryInterval
         }
     });
 
@@ -38,6 +52,7 @@ module.exports = function (options, imports, register) {
 
         sms.setLogger(logger);
         sms.config('/etc/nethcti/sms.json');
+        sms.setCompDbconn(imports.dbconn);
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }

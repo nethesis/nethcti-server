@@ -209,6 +209,48 @@ function authorizeVoicemailUser(username) {
 }
 
 /**
+* Returns true if the specified user has the recording authorization.
+*
+* @method authorizeRecordingUser
+* @param  {string}  username The username
+* @return {boolean} True if the user has the recording authorization.
+*/
+function authorizeRecordingUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.recording, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
+* Returns true if the specified user has the administration recording authorization.
+*
+* @method authorizeAdminRecordingUser
+* @param  {string}  username The username
+* @return {boolean} True if the user has the administration recording authorization.
+*/
+function authorizeAdminRecordingUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.admin_recording, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
 * Returns true if the specified user has the post-it authorization.
 *
 * @method authorizePostitUser
@@ -251,6 +293,48 @@ function authorizeAdminPostitUser(username) {
 }
 
 /**
+* Returns true if the specified user has the administration hangup authorization.
+*
+* @method authorizeAdminHangupUser
+* @param  {string}  username The username
+* @return {boolean} True if the user has the administration hangup authorization.
+*/
+function authorizeAdminHangupUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.admin_hangup, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
+* Returns true if the specified user has the administration pickup authorization.
+*
+* @method authorizeAdminPickupUser
+* @param  {string}  username The username
+* @return {boolean} True if the user has the administration pickup authorization.
+*/
+function authorizeAdminPickupUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.pickup, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
 * Returns true if the specified user has the authorization to view the call
 * detail recording (cdr).
 *
@@ -273,6 +357,48 @@ function authorizeCdrUser(username) {
 }
 
 /**
+* Returns true if the specified user has the sms authorization.
+*
+* @method authorizeSmsUser
+* @param  {string}  username The username
+* @return {boolean} True if the user has the sms authorization.
+*/
+function authorizeSmsUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.sms, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
+* Returns true if the specified user has the administration sms authorization.
+*
+* @method authorizeAdminSmsUser
+* @param  {string}  username The username
+* @return {boolean} True if the user has the administration sms authorization.
+*/
+function authorizeAdminSmsUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.admin_sms, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
 * Returns true if the specified user has the authorization to spy the conversations.
 *
 * @method authorizeSpyUser
@@ -285,6 +411,28 @@ function authorizeSpyUser(username) {
         if (typeof username !== 'string') { throw new Error('wrong parameter'); }
 
         return authorizeUser(authorizationTypes.TYPES.spy, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
+* Returns true if the specified user has the authorization to
+* intrude himself into the conversations.
+*
+* @method authorizeIntrudeUser
+* @param  {string}  username The username
+* @return {boolean} True if the user has the authorization to intrude.
+*/
+function authorizeIntrudeUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.intrude, username);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -329,27 +477,6 @@ function authorizeDndUser(username) {
         if (typeof username !== 'string') { throw new Error('wrong parameter'); }
 
         return authorizeUser(authorizationTypes.TYPES.dnd, username);
-
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-        // in the case of exception it returns false for security reasons
-        return false;
-    }
-}
-
-/**
-* Return true if the specified user has the advanced operator authorization.
-*
-* @method authorizeAdvancedOperatorUser
-* @param  {string}  username The username
-* @return {boolean} True if the user has the advanced operator authorization.
-*/
-function authorizeAdvancedOperatorUser(username) {
-    try {
-        // check parameter
-        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
-
-        return authorizeUser(authorizationTypes.TYPES.advanced_operator, username);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -903,13 +1030,17 @@ exports.hasNoSpyEnabled               = hasNoSpyEnabled;
 exports.authorizeSpyUser              = authorizeSpyUser;
 exports.authorizeDndUser              = authorizeDndUser;
 exports.authorizeCdrUser              = authorizeCdrUser;
+exports.authorizeSmsUser              = authorizeSmsUser;
 exports.authorizeChatUser             = authorizeChatUser;
 exports.authorizePickupUser           = authorizePickupUser;
 exports.authorizePostitUser           = authorizePostitUser;
+exports.authorizeIntrudeUser          = authorizeIntrudeUser;
+exports.authorizeAdminSmsUser         = authorizeAdminSmsUser;
 exports.authorizeOpQueuesUser         = authorizeOpQueuesUser;
 exports.authorizeAdminCdrUser         = authorizeAdminCdrUser;
 exports.getUserAuthorizations         = getUserAuthorizations;
 exports.authorizeVoicemailUser        = authorizeVoicemailUser;
+exports.authorizeRecordingUser        = authorizeRecordingUser;
 exports.authorizePhonebookUser        = authorizePhonebookUser;
 exports.authorizeStreamingUser        = authorizeStreamingUser;
 exports.authorizeCallerNoteUser       = authorizeCallerNoteUser;
@@ -917,11 +1048,13 @@ exports.authorizedCustomerCards       = authorizedCustomerCards;
 exports.verifyUserEndpointExten       = verifyUserEndpointExten;
 exports.authorizeOpParkingsUser       = authorizeOpParkingsUser;
 exports.authorizeAdminPostitUser      = authorizeAdminPostitUser;
+exports.authorizeAdminHangupUser      = authorizeAdminHangupUser;
+exports.authorizeAdminPickupUser      = authorizeAdminPickupUser;
 exports.authorizeCustomerCardUser     = authorizeCustomerCardUser;
 exports.authorizeOpExtensionsUser     = authorizeOpExtensionsUser;
 exports.authorizePhoneRedirectUser    = authorizePhoneRedirectUser;
+exports.authorizeAdminRecordingUser   = authorizeAdminRecordingUser;
 exports.getAuthorizedOperatorGroups   = getAuthorizedOperatorGroups;
 exports.authorizeOperatorGroupsUser   = authorizeOperatorGroupsUser;
 exports.authorizeStreamingSourceUser  = authorizeStreamingSourceUser;
-exports.authorizeAdvancedOperatorUser = authorizeAdvancedOperatorUser;
 exports.getAuthorizedStreamingSources = getAuthorizedStreamingSources;

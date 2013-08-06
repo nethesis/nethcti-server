@@ -90,11 +90,25 @@ module.exports = function (options, imports, register) {
             getHistoryPostitInterval: dbconn.getHistoryPostitInterval,
 
             /**
+            * It's the _getHistorySmsInterval_ method provided by _dbconn_ module.
+            *
+            * @method getHistorySmsInterval
+            */
+            getHistorySmsInterval: dbconn.getHistorySmsInterval,
+
+            /**
             * It's the _getAllUserHistoryPostitInterval_ method provided by _dbconn_ module.
             *
             * @method getAllUserHistoryPostitInterval
             */
             getAllUserHistoryPostitInterval: dbconn.getAllUserHistoryPostitInterval,
+
+            /**
+            * It's the _getAllUserHistorySmsInterval_ method provided by _dbconn_ module.
+            *
+            * @method getAllUserHistorySmsInterval
+            */
+            getAllUserHistorySmsInterval: dbconn.getAllUserHistorySmsInterval,
 
             /**
             * It's the _getCustomerCardByNum_ method provided by _dbconn_ module.

@@ -1,18 +1,18 @@
 /**
-* Provides the REST server for the post-it functions.
+* Provides the REST server for the sms functions.
 *
-* @module com_postit_rest
-* @main arch_com_postit_rest
+* @module com_sms_rest
+* @main arch_com_sms_rest
 */
 
 /**
 * Provides the REST server.
 *
-* @class server_com_postit_rest
+* @class server_com_sms_rest
 */
 var fs      = require('fs');
 var restify = require('restify');
-var plugins = require('jsplugs')().require('./plugins/com_postit_rest/plugins_rest');
+var plugins = require('jsplugs')().require('./plugins/com_sms_rest/plugins_rest');
 
 /**
 * The module identifier used by the logger.
@@ -22,9 +22,9 @@ var plugins = require('jsplugs')().require('./plugins/com_postit_rest/plugins_re
 * @private
 * @final
 * @readOnly
-* @default [server_com_postit_rest]
+* @default [server_com_sms_rest]
 */
-var IDLOG = '[server_com_postit_rest]';
+var IDLOG = '[server_com_sms_rest]';
 
 /**
 * The logger. It must have at least three methods: _info, warn and error._
@@ -43,9 +43,9 @@ var logger = console;
 * @property port
 * @type string
 * @private
-* @default "9004"
+* @default "9012"
 */
-var port = '9004';
+var port = '9012';
 
 /**
 * Listening address of the REST server. It can be customized by the
@@ -133,21 +133,42 @@ function execute(req, res, next) {
 }
 
 /**
-* Set the post-it architect component to be used by REST plugins.
+* Set the sms architect component to be used by REST plugins.
 *
-* @method setCompPostit
-* @param {object} compPostit The architect post-it component
+* @method setCompSms
+* @param  {object} comp The architect sms component
 * @static
 */
-function setCompPostit(compPostit) {
+function setCompSms(comp) {
     try {
         // check parameter
-        if (typeof compPostit !== 'object') { throw new Error('wrong parameter'); }
+        if (typeof comp !== 'object') { throw new Error('wrong parameter'); }
 
-        var p;
-        // set post-it architect component to all REST plugins
-        for (p in plugins) { plugins[p].setCompPostit(compPostit); }
+        // set the authorization component for all REST plugins
+        setAllRestPluginsCompSms(comp);
 
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the sms component for all REST plugins.
+*
+* @method setAllRestPluginsCompSms
+* @param  {object} comp The sms architect component
+* @private
+*/
+function setAllRestPluginsCompSms(comp) {
+    try {
+        var key;
+        for (key in plugins) {
+
+            if (typeof plugins[key].setCompSms === 'function') {
+                plugins[key].setCompSms(comp);
+                logger.info(IDLOG, 'sms component has been set for rest plugin ' + key);
+            }
+        }
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -215,16 +236,16 @@ function config(path) {
     var json = require(path).rest;
 
     // initialize the port of the REST server
-    if (json.postit && json.postit.port) {
-        port = json.postit.port;
+    if (json.sms && json.sms.port) {
+        port = json.sms.port;
 
     } else {
         logger.warn(IDLOG, 'no port has been specified in JSON file ' + path);
     }
 
     // initialize the address of the REST server
-    if (json.postit && json.postit.address) {
-        address = json.postit.address;
+    if (json.sms && json.sms.address) {
+        address = json.sms.address;
 
     } else {
         logger.warn(IDLOG, 'no address has been specified in JSON file ' + path);
@@ -288,5 +309,5 @@ function start() {
 exports.start                = start;
 exports.config               = config;
 exports.setLogger            = setLogger;
-exports.setCompPostit        = setCompPostit;
+exports.setCompSms           = setCompSms;
 exports.setCompAuthorization = setCompAuthorization;

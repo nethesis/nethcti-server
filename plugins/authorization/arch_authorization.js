@@ -35,6 +35,20 @@ module.exports = function (options, imports, register) {
             authorizeCdrUser: authorization.authorizeCdrUser,
 
             /**
+            * It's the _authorizeSmsUser_ method provided by _authorization_ module.
+            *
+            * @method authorizeSmsUser
+            */
+            authorizeSmsUser: authorization.authorizeSmsUser,
+
+            /**
+            * It's the _authorizeAdminSmsUser_ method provided by _authorization_ module.
+            *
+            * @method authorizeAdminSmsUser
+            */
+            authorizeAdminSmsUser: authorization.authorizeAdminSmsUser,
+
+            /**
             * It's the _authorizeOpExtensionsUser_ method provided by _authorization_ module.
             *
             * @method authorizeOpExtensionsUser
@@ -47,6 +61,20 @@ module.exports = function (options, imports, register) {
             * @method authorizeOpParkingsUser
             */
             authorizeOpParkingsUser: authorization.authorizeOpParkingsUser,
+
+            /**
+            * It's the _authorizePickupUser_ method provided by _authorization_ module.
+            *
+            * @method authorizePickupUser
+            */
+            authorizePickupUser: authorization.authorizePickupUser,
+
+            /**
+            * It's the _authorizeAdminPickupUser_ method provided by _authorization_ module.
+            *
+            * @method authorizeAdminPickupUser
+            */
+            authorizeAdminPickupUser: authorization.authorizeAdminPickupUser,
 
             /**
             * It's the _authorizeSpyUser_ method provided by _authorization_ module.
@@ -89,20 +117,6 @@ module.exports = function (options, imports, register) {
             * @method authorizeOperatorGroupsUser
             */
             authorizeOperatorGroupsUser: authorization.authorizeOperatorGroupsUser,
-
-            /**
-            * It's the _authorizePickupUser_ method provided by _authorization_ module.
-            *
-            * @method authorizePickupUser
-            */
-            authorizePickupUser: authorization.authorizePickupUser,
-
-            /**
-            * It's the _authorizeAdvancedOperatorUser_ method provided by _authorization_ module.
-            *
-            * @method authorizeAdvancedOperatorUser
-            */
-            authorizeAdvancedOperatorUser: authorization.authorizeAdvancedOperatorUser,
 
             /**
             * It's the _authorizeAdminCdrUser_ method provided by _authorization_ module.
@@ -207,7 +221,35 @@ module.exports = function (options, imports, register) {
             *
             * @method getUserAuthorizations
             */
-            getUserAuthorizations: authorization.getUserAuthorizations
+            getUserAuthorizations: authorization.getUserAuthorizations,
+
+            /**
+            * It's the _authorizeAdminHangupUser_ method provided by _authorization_ module.
+            *
+            * @method authorizeAdminHangupUser
+            */
+            authorizeAdminHangupUser: authorization.authorizeAdminHangupUser,
+
+            /**
+            * It's the _authorizeIntrudeUser_ method provided by _authorization_ module.
+            *
+            * @method authorizeIntrudeUser
+            */
+            authorizeIntrudeUser: authorization.authorizeIntrudeUser,
+
+            /**
+            * It's the _authorizeRecordingUser_ method provided by _authorization_ module.
+            *
+            * @method authorizeRecordingUser
+            */
+            authorizeRecordingUser: authorization.authorizeRecordingUser,
+
+            /**
+            * It's the _authorizeAdminRecordingUser_ method provided by _authorization_ module.
+            *
+            * @method authorizeAdminRecordingUser
+            */
+            authorizeAdminRecordingUser: authorization.authorizeAdminRecordingUser
         }
     });
 
