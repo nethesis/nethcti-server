@@ -762,28 +762,22 @@ var compConfigManager;
 
                     if (req.params.endpointType === 'extension') {
 
-                        // check if the user has the permission to hangup the specified conversation. If he has the advanced
-                        // operator permission he can hangup whatever conversations, otherwise he can hangup only his conversations
-                        if (compAuthorization.authorizeAdvancedOperatorUser(username) === true) {
-                            logger.info(IDLOG, 'the user "' + username + '" has the advanced operator permission');
+                        // check if the user has the authorization to hangup every calls
+                        if (compAuthorization.authorizeAdminHangupUser(username) === true) {
+
+                            logger.log(IDLOG, 'hangup convid "' + req.params.convid + '": authorization admin hangup successful for user "' + username + '"');
+                        }
+                        // check if the endpoint of the request is owned by the user
+                        else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+
+                            logger.warn(IDLOG, 'hangup convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
+                                               ' the ' + req.params.endpointType + ' ' + req.params.endpointId + ' isn\'t owned by the user');
+                            sendHttp403(res);
+                            return;
 
                         } else {
-                            logger.info(IDLOG, 'the user "' + username + '" hasn\'t the advanced operator permission');
-
-                            // check if the endpoint of the request is owned by the user
-                            if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
-
-                                logger.warn(IDLOG, 'hangup convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
-                                                   ' the ' + req.params.endpointType + ' ' + req.params.endpointId + ' isn\'t owned by the user');
-                                sendHttp401(res);
-                                return;
-
-                            } else {
-                                logger.info(IDLOG, 'the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' is owned by "' + username + '"');
-                            }
+                            logger.info(IDLOG, 'hangup convid "' + req.params.convid + '": the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' is owned by "' + username + '"');
                         }
-
-                        logger.info(IDLOG, 'the user "' + username + '" has the permission to hangup the convid ' + req.params.convid);
 
                         compAstProxy.hangupConversation(req.params.endpointType, req.params.endpointId, req.params.convid, function (err, response) {
                             try {

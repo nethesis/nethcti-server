@@ -251,6 +251,27 @@ function authorizeAdminPostitUser(username) {
 }
 
 /**
+* Returns true if the specified user has the administration hangup authorization.
+*
+* @method authorizeAdminHangupUser
+* @param  {string}  username The username
+* @return {boolean} True if the user has the administration hangup authorization.
+*/
+function authorizeAdminHangupUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.admin_hangup, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
 * Returns true if the specified user has the authorization to view the call
 * detail recording (cdr).
 *
@@ -329,27 +350,6 @@ function authorizeDndUser(username) {
         if (typeof username !== 'string') { throw new Error('wrong parameter'); }
 
         return authorizeUser(authorizationTypes.TYPES.dnd, username);
-
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-        // in the case of exception it returns false for security reasons
-        return false;
-    }
-}
-
-/**
-* Return true if the specified user has the advanced operator authorization.
-*
-* @method authorizeAdvancedOperatorUser
-* @param  {string}  username The username
-* @return {boolean} True if the user has the advanced operator authorization.
-*/
-function authorizeAdvancedOperatorUser(username) {
-    try {
-        // check parameter
-        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
-
-        return authorizeUser(authorizationTypes.TYPES.advanced_operator, username);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -917,11 +917,11 @@ exports.authorizedCustomerCards       = authorizedCustomerCards;
 exports.verifyUserEndpointExten       = verifyUserEndpointExten;
 exports.authorizeOpParkingsUser       = authorizeOpParkingsUser;
 exports.authorizeAdminPostitUser      = authorizeAdminPostitUser;
+exports.authorizeAdminHangupUser      = authorizeAdminHangupUser;
 exports.authorizeCustomerCardUser     = authorizeCustomerCardUser;
 exports.authorizeOpExtensionsUser     = authorizeOpExtensionsUser;
 exports.authorizePhoneRedirectUser    = authorizePhoneRedirectUser;
 exports.getAuthorizedOperatorGroups   = getAuthorizedOperatorGroups;
 exports.authorizeOperatorGroupsUser   = authorizeOperatorGroupsUser;
 exports.authorizeStreamingSourceUser  = authorizeStreamingSourceUser;
-exports.authorizeAdvancedOperatorUser = authorizeAdvancedOperatorUser;
 exports.getAuthorizedStreamingSources = getAuthorizedStreamingSources;

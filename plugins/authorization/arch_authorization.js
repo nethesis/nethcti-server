@@ -98,13 +98,6 @@ module.exports = function (options, imports, register) {
             authorizePickupUser: authorization.authorizePickupUser,
 
             /**
-            * It's the _authorizeAdvancedOperatorUser_ method provided by _authorization_ module.
-            *
-            * @method authorizeAdvancedOperatorUser
-            */
-            authorizeAdvancedOperatorUser: authorization.authorizeAdvancedOperatorUser,
-
-            /**
             * It's the _authorizeAdminCdrUser_ method provided by _authorization_ module.
             *
             * @method authorizeAdminCdrUser
@@ -207,7 +200,14 @@ module.exports = function (options, imports, register) {
             *
             * @method getUserAuthorizations
             */
-            getUserAuthorizations: authorization.getUserAuthorizations
+            getUserAuthorizations: authorization.getUserAuthorizations,
+
+            /**
+            * It's the _authorizeAdminHangupUser_ method provided by _authorization_ module.
+            *
+            * @method authorizeAdminHangupUser
+            */
+            authorizeAdminHangupUser: authorization.authorizeAdminHangupUser
         }
     });
 
