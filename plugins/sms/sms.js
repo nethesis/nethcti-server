@@ -38,6 +38,15 @@ var IDLOG = '[sms]';
 var logger = console;
 
 /**
+* The architect component to be used for database.
+*
+* @property compDbconn
+* @type object
+* @private
+*/
+var compDbconn;
+
+/**
 * The sms delivery type. The allowed type is defined in
 * _sms\_delivery\_types.js_ file. It's defined into the
 * configuration file.
@@ -199,10 +208,10 @@ function send(from, to, body, cb) {
 * the destination number. The script executes each interval of time.
 *
 * @method sendSmsByPortech
-* @param {string} from The sender identifier
-* @param {string} to The destination email address
-* @param {string} body The body of the email
-* @param {function} cb The callback function
+* @param {string}   from The sender identifier
+* @param {string}   to   The destination email address
+* @param {string}   body The body of the email
+* @param {function} cb   The callback function
 * @private
 */
 function sendSmsByPortech(from, to, body, cb) {
@@ -254,7 +263,89 @@ function sendSmsByPortech(from, to, body, cb) {
     }
 }
 
+/**
+* Get the history of the sms sent by the user into the interval time.
+* It can be possible to filter the results.
+*
+* @method getHistoryInterval
+* @param {object} data
+*   @param {string} data.username The username involved in the research
+*   @param {string} data.from     The starting date of the interval in the YYYYMMDD format (e.g. 20130521)
+*   @param {string} data.to       The ending date of the interval in the YYYYMMDD format (e.g. 20130528)
+*   @param {string} [data.filter] The filter to be used
+* @param {function} cb The callback function
+*/
+function getHistoryInterval(data, cb) {
+    try {
+        // check parameters
+        if (    typeof data          !== 'object'
+            ||  typeof cb            !== 'function' || typeof data.to       !== 'string'
+            ||  typeof data.from     !== 'string'   || typeof data.username !== 'string'
+            || (typeof data.filter   !== 'string'   && data.filter !== undefined)) {
+
+            throw new Error('wrong parameters');
+        }
+
+        logger.info(IDLOG, 'search history sms between ' + data.from + ' to ' + data.to + ' sent by ' +
+                           'username "' + data.username + '" and filter ' + (data.filter ? data.filter : '""'));
+        compDbconn.getHistorySmsInterval(data, cb);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Gets the history of the sms sent by all the user into the interval time.
+* It can be possible to filter the results.
+*
+* @method getAllUserHistoryInterval
+* @param {object} data
+*   @param {string} data.from     The starting date of the interval in the YYYYMMDD format (e.g. 20130521)
+*   @param {string} data.to       The ending date of the interval in the YYYYMMDD format (e.g. 20130528)
+*   @param {string} [data.filter] The filter to be used
+* @param {function} cb The callback function
+*/
+function getAllUserHistoryInterval(data, cb) {
+    try {
+        // check parameters
+        if (    typeof data        !== 'object' || typeof cb      !== 'function'
+            ||  typeof data.from   !== 'string' || typeof data.to !== 'string'
+            || (typeof data.filter !== 'string' && data.filter    !== undefined)) {
+
+            throw new Error('wrong parameters');
+        }
+
+        logger.info(IDLOG, 'search all history sms between ' + data.from + ' to ' + data.to + ' sent by ' +
+                           ' all users and filter ' + (data.filter ? data.filter : '""'));
+        compDbconn.getAllUserHistorySmsInterval(data, cb);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Sets the database architect component.
+*
+* @method setCompDbconn
+* @param {object} comp The database architect component.
+*/
+function setCompDbconn(comp) {
+    try {
+        compDbconn = comp;
+        logger.info(IDLOG, 'set database architect component');
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
 // public interface
-exports.send      = send;
-exports.config    = config;
-exports.setLogger = setLogger;
+exports.send                      = send;
+exports.config                    = config;
+exports.setLogger                 = setLogger;
+exports.setCompDbconn             = setCompDbconn;
+exports.getHistoryInterval        = getHistoryInterval;
+exports.getAllUserHistoryInterval = getAllUserHistoryInterval;

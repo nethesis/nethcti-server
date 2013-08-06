@@ -336,6 +336,48 @@ function authorizeCdrUser(username) {
 }
 
 /**
+* Returns true if the specified user has the sms authorization.
+*
+* @method authorizeSmsUser
+* @param  {string}  username The username
+* @return {boolean} True if the user has the sms authorization.
+*/
+function authorizeSmsUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.sms, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
+* Returns true if the specified user has the administration sms authorization.
+*
+* @method authorizeAdminSmsUser
+* @param  {string}  username The username
+* @return {boolean} True if the user has the administration sms authorization.
+*/
+function authorizeAdminSmsUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.admin_sms, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
 * Returns true if the specified user has the authorization to spy the conversations.
 *
 * @method authorizeSpyUser
@@ -967,10 +1009,12 @@ exports.hasNoSpyEnabled               = hasNoSpyEnabled;
 exports.authorizeSpyUser              = authorizeSpyUser;
 exports.authorizeDndUser              = authorizeDndUser;
 exports.authorizeCdrUser              = authorizeCdrUser;
+exports.authorizeSmsUser              = authorizeSmsUser;
 exports.authorizeChatUser             = authorizeChatUser;
 exports.authorizePickupUser           = authorizePickupUser;
 exports.authorizePostitUser           = authorizePostitUser;
 exports.authorizeIntrudeUser          = authorizeIntrudeUser;
+exports.authorizeAdminSmsUser         = authorizeAdminSmsUser;
 exports.authorizeOpQueuesUser         = authorizeOpQueuesUser;
 exports.authorizeAdminCdrUser         = authorizeAdminCdrUser;
 exports.getUserAuthorizations         = getUserAuthorizations;

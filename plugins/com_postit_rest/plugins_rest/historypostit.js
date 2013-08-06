@@ -167,6 +167,8 @@ function sendHttp500(resp, err) {
         *
         * Returns the history of the postit created in the interval time by the user.
         *
+        * ---
+        *
         * ### <a id="interval_filterget">**`historypostit/interval/:from/:to/:filter`**</a>
         *
         * Returns the history of the postit created in the interval time by the user
@@ -177,6 +179,8 @@ function sendHttp500(resp, err) {
         * ### <a id="dayget">**`historypostit/day/:day`**</a>
         *
         * Returns the history of the postit created in the specified day by the user.
+        *
+        * ---
         *
         * ### <a id="day_filterget">**`historypostit/day/:day/:filter`**</a>
         *
@@ -245,17 +249,17 @@ function sendHttp500(resp, err) {
                     if (   compAuthorization.authorizePostitUser(username)      !== true
                         && compAuthorization.authorizeAdminPostitUser(username) !== true) {
 
-                        logger.warn(IDLOG, '"postit" & "admin_postit" authorizations failed for user "' + username + '" !');
+                        logger.warn(IDLOG, 'getting history postit interval: "postit" & "admin_postit" authorizations failed for user "' + username + '" !');
                         sendHttp401(res);
                         return;
                     }
 
                     if (compAuthorization.authorizeAdminPostitUser(username) === true) {
-                        logger.info(IDLOG, '"admin_postit" authorization successfully for user "' + username + '"');
+                        logger.info(IDLOG, 'getting history postit interval: "admin_postit" authorization successfully for user "' + username + '"');
                     }
 
                     if (compAuthorization.authorizePostitUser(username) === true) {
-                        logger.info(IDLOG, '"postit" authorization successfully for user "' + username + '"');
+                        logger.info(IDLOG, 'getting history postit interval: "postit" authorization successfully for user "' + username + '"');
                     }
 
                     var obj = {

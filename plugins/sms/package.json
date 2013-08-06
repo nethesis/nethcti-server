@@ -3,7 +3,10 @@
     "main": "arch_sms.js",
     "private": true,
     "plugin": {
-        "consumes": [ "logger" ],
+        "consumes": [
+            "dbconn",
+            "logger"
+        ],
         "provides": [ "sms" ]
     }
 }

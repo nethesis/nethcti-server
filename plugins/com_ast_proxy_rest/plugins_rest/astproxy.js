@@ -687,7 +687,6 @@ var compConfigManager;
             call: function (req, res, next) {
                 try {
                     var username = req.headers.authorization_user;
-                    console.log(req.params);
 
                     // check parameters
                     if (   typeof req.params              !== 'object'

@@ -35,6 +35,20 @@ module.exports = function (options, imports, register) {
             authorizeCdrUser: authorization.authorizeCdrUser,
 
             /**
+            * It's the _authorizeSmsUser_ method provided by _authorization_ module.
+            *
+            * @method authorizeSmsUser
+            */
+            authorizeSmsUser: authorization.authorizeSmsUser,
+
+            /**
+            * It's the _authorizeAdminSmsUser_ method provided by _authorization_ module.
+            *
+            * @method authorizeAdminSmsUser
+            */
+            authorizeAdminSmsUser: authorization.authorizeAdminSmsUser,
+
+            /**
             * It's the _authorizeOpExtensionsUser_ method provided by _authorization_ module.
             *
             * @method authorizeOpExtensionsUser
