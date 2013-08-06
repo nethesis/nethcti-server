@@ -28,25 +28,88 @@ module.exports = function (options, imports, register) {
     register(null, {
         authorization: {
             /**
-            * It's the _authorizeHistoryUser_ method provided by _authorization_ module.
+            * It's the _authorizeCdrUser_ method provided by _authorization_ module.
             *
-            * @method authorizeHistoryUser
+            * @method authorizeCdrUser
             */
-            authorizeHistoryUser: authorization.authorizeHistoryUser,
+            authorizeCdrUser: authorization.authorizeCdrUser,
 
             /**
-            * It's the _authorizeOperatorPanelUser_ method provided by _authorization_ module.
+            * It's the _authorizeOpExtensionsUser_ method provided by _authorization_ module.
             *
-            * @method authorizeOperatorPanelUser
+            * @method authorizeOpExtensionsUser
             */
-            authorizeOperatorPanelUser: authorization.authorizeOperatorPanelUser,
+            authorizeOpExtensionsUser: authorization.authorizeOpExtensionsUser,
 
             /**
-            * It's the _authorizeHistorySwitchUser_ method provided by _authorization_ module.
+            * It's the _authorizeOpParkingsUser_ method provided by _authorization_ module.
             *
-            * @method authorizeHistorySwitchUser
+            * @method authorizeOpParkingsUser
             */
-            authorizeHistorySwitchUser: authorization.authorizeHistorySwitchUser,
+            authorizeOpParkingsUser: authorization.authorizeOpParkingsUser,
+
+            /**
+            * It's the _authorizeSpyUser_ method provided by _authorization_ module.
+            *
+            * @method authorizeSpyUser
+            */
+            authorizeSpyUser: authorization.authorizeSpyUser,
+
+            /**
+            * It's the _hasNoSpyEnabled_ method provided by _authorization_ module.
+            *
+            * @method hasNoSpyEnabled
+            */
+            hasNoSpyEnabled: authorization.hasNoSpyEnabled,
+
+            /**
+            * It's the _authorizePhoneRedirectUser_ method provided by _authorization_ module.
+            *
+            * @method authorizePhoneRedirectUser
+            */
+            authorizePhoneRedirectUser: authorization.authorizePhoneRedirectUser,
+
+            /**
+            * It's the _authorizeDndUser_ method provided by _authorization_ module.
+            *
+            * @method authorizeDndUser
+            */
+            authorizeDndUser: authorization.authorizeDndUser,
+
+            /**
+            * It's the _authorizeOpQueuesUser_ method provided by _authorization_ module.
+            *
+            * @method authorizeOpQueuesUser
+            */
+            authorizeOpQueuesUser: authorization.authorizeOpQueuesUser,
+
+            /**
+            * It's the _authorizeOperatorGroupsUser_ method provided by _authorization_ module.
+            *
+            * @method authorizeOperatorGroupsUser
+            */
+            authorizeOperatorGroupsUser: authorization.authorizeOperatorGroupsUser,
+
+            /**
+            * It's the _authorizePickupUser_ method provided by _authorization_ module.
+            *
+            * @method authorizePickupUser
+            */
+            authorizePickupUser: authorization.authorizePickupUser,
+
+            /**
+            * It's the _authorizeAdvancedOperatorUser_ method provided by _authorization_ module.
+            *
+            * @method authorizeAdvancedOperatorUser
+            */
+            authorizeAdvancedOperatorUser: authorization.authorizeAdvancedOperatorUser,
+
+            /**
+            * It's the _authorizeAdminCdrUser_ method provided by _authorization_ module.
+            *
+            * @method authorizeAdminCdrUser
+            */
+            authorizeAdminCdrUser: authorization.authorizeAdminCdrUser,
 
             /**
             * It's the _authorizePhonebookUser_ method provided by _authorization_ module.
@@ -77,6 +140,13 @@ module.exports = function (options, imports, register) {
             authorizePostitUser: authorization.authorizePostitUser,
 
             /**
+            * It's the _authorizeAdminPostitUser_ method provided by _authorization_ module.
+            *
+            * @method authorizeAdminPostitUser
+            */
+            authorizeAdminPostitUser: authorization.authorizeAdminPostitUser,
+
+            /**
             * It's the _authorizeCustomerCardUser_ method provided by _authorization_ module.
             *
             * @method authorizeCustomerCardUser
@@ -103,6 +173,13 @@ module.exports = function (options, imports, register) {
             * @method getAuthorizedStreamingSources
             */
             getAuthorizedStreamingSources: authorization.getAuthorizedStreamingSources,
+
+            /**
+            * It's the _getAuthorizedOperatorGroups_ method provided by _authorization_ module.
+            *
+            * @method getAuthorizedOperatorGroups
+            */
+            getAuthorizedOperatorGroups: authorization.getAuthorizedOperatorGroups,
 
             /**
             * It's the _authorizedCustomerCards_ method provided by _authorization_ module.

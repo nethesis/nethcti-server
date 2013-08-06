@@ -112,9 +112,9 @@ var IDLOG = '[listParkings]';
                         // possible to associate the event with the correct callback that
                         // has executed the command
                         var k;
-                        for (k in map) { map[k](list); }
+                        for (k in map) { map[k](null, list); }
 
-                        map = {};  // delete all callback functions
+                        map  = {}; // delete all callback functions
                         list = {}; // empty the list
                     }
 

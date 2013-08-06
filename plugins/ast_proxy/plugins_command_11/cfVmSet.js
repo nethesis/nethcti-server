@@ -115,7 +115,7 @@ var IDLOG = '[cfVmSet]';
                         delete map[data.actionid]; // remove association ActionID-callback
 
                     } else if (map[data.actionid] && data.response === 'Error') {
-                        map[data.actionid]('error');
+                        map[data.actionid](new Error('error'));
                         delete map[data.actionid]; // remove association ActionID-callback
                     }
 

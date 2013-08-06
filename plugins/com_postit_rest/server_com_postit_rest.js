@@ -59,15 +59,6 @@ var port = "9004";
 var address = "localhost";
 
 /**
-* The architect component to be used for authorization.
-*
-* @property compAuthorization
-* @type object
-* @private
-*/
-var compAuthorization;
-
-/**
 * Set the logger to be used.
 *
 * @method setLogger
@@ -148,18 +139,9 @@ function execute(req, res, next) {
         var p    = tmp[1];
         var name = tmp[2];
 
-        // check authorization
-        var username = req.headers.authorization_user;
-        if (compAuthorization.authorizePostitUser(username) === true) {
+        logger.info(IDLOG, 'execute: ' + p + '.' + name);
+        plugins[p][name].apply(plugins[p], [req, res, next]);
 
-            logger.info(IDLOG, 'postit authorization successfully for user "' + username + '"');
-            logger.info(IDLOG, 'execute: ' + p + '.' + name);
-            plugins[p][name].apply(plugins[p], [req, res, next]);
-
-        } else { // authorization failed
-            logger.warn(IDLOG, 'postit authorization failed for user "' + username + '"!');
-            sendHttp401(res);
-        }
         return next();
 
     } catch (err) {
@@ -192,17 +174,39 @@ function setCompPostit(compPostit) {
 * Set the authorization architect component.
 *
 * @method setCompAuthorization
-* @param {object} ca The architect authorization component
+* @param {object} comp The architect authorization component
 * @static
 */
-function setCompAuthorization(ca) {
+function setCompAuthorization(comp) {
     try {
         // check parameter
-        if (typeof ca !== 'object') { throw new Error('wrong parameter'); }
+        if (typeof comp !== 'object') { throw new Error('wrong parameter'); }
 
-        compAuthorization = ca;
-        logger.log(IDLOG, 'authorization component has been set');
+        // set the authorization component for all REST plugins
+        setAllRestPluginsAuthorization(comp);
 
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the authorization component for all REST plugins.
+*
+* @method setAllRestPluginsAuthorization
+* @param {object} comp The authorization architect component
+* @private
+*/
+function setAllRestPluginsAuthorization(comp) {
+    try {
+        var key;
+        for (key in plugins) {
+
+            if (typeof plugins[key].setCompAuthorization === 'function') {
+                plugins[key].setCompAuthorization(comp);
+                logger.info(IDLOG, 'authorization component has been set for rest plugin ' + key);
+            }
+        }
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }

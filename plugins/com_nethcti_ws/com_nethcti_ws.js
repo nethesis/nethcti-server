@@ -28,6 +28,18 @@ var iniparser = require('iniparser');
 var IDLOG = '[com_nethcti_ws]';
 
 /**
+* The websocket room used to update clients with asterisk events.
+*
+* @property ROOM_OP_PANEL
+* @type {string}
+* @private
+* @final
+* @readOnly
+* @default "room_op_panel"
+*/
+var ROOM_OP_PANEL = 'room_op_panel';
+
+/**
 * The websocket server port.
 *
 * @property port
@@ -84,6 +96,24 @@ var compUser;
 * @private
 */
 var compAuthe;
+
+/**
+* The authorization module.
+*
+* @property compAuthorization
+* @type object
+* @private
+*/
+var compAuthorization;
+
+/**
+* The voicemail architect component used for voicemail functions.
+*
+* @property compVoicemail
+* @type object
+* @private
+*/
+var compVoicemail;
 
 /**
 * The operator module.
@@ -151,19 +181,49 @@ function setAuthe(autheMod) {
 * Sets the user module to be used.
 *
 * @method setCompUser
-* @param {object} cu The user module.
+* @param {object} comp The user module.
 */
-function setCompUser(cu) {
+function setCompUser(comp) {
     try {
-        if (typeof cu !== 'object') { throw new Error('wrong user object'); }
-        compUser = cu;
+        if (typeof comp !== 'object') { throw new Error('wrong user object'); }
+        compUser = comp;
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
 }
 
 /**
-* Set the operator to be used by the module.
+* Sets the authorization module to be used.
+*
+* @method setCompAuthorization
+* @param {object} comp The authorization module.
+*/
+function setCompAuthorization(comp) {
+    try {
+        if (typeof comp !== 'object') { throw new Error('wrong authorization module'); }
+        compAuthorization = comp;
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets voicemail architect component used by voicemail functions.
+*
+* @method setCompVoicemail
+* @param {object} cv The voicemail architect component.
+*/
+function setCompVoicemail(cv) {
+    try {
+        compVoicemail = cv;
+        logger.info(IDLOG, 'set voicemail architect component');
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the operator to be used by the module.
 *
 * @method setOperator
 * @param {object} op The operator.
@@ -212,9 +272,51 @@ function setAstProxyListeners() {
             throw new Error('wrong astProxy object');
         }
 
-        astProxy.on('extenChanged',   extenChanged);   // an extension has changed
-        astProxy.on('queueChanged',   queueChanged);   // a queue has changed
-        astProxy.on('parkingChanged', parkingChanged); // a parking has changed
+        astProxy.on(astProxy.EVT_EXTEN_CHANGED,   extenChanged);   // an extension has changed
+        astProxy.on(astProxy.EVT_QUEUE_CHANGED,   queueChanged);   // a queue has changed
+        astProxy.on(astProxy.EVT_PARKING_CHANGED, parkingChanged); // a parking has changed
+
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the event listeners for the voicemail component.
+*
+* @method setVoicemailListeners
+* @private
+*/
+function setVoicemailListeners() {
+    try {
+        // check voicemail component object
+        if (!compVoicemail || typeof compVoicemail.on !== 'function') {
+            throw new Error('wrong voicemail object');
+        }
+
+        compVoicemail.on(compVoicemail.EVT_NEW_VOICEMAIL, newVoicemailListener);
+
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Manages the new voicemail event emitted by the voicemail component. It sends
+* all new voice messages of the voicemail to all users who use the voicemail.
+*
+* @method newVoicemailListener
+* @param {string} voicemail The voicemail identifier
+* @param {array}  list      The list of all new voicemail messages
+* @private
+*/
+function newVoicemailListener(voicemail, list) {
+    try {
+        // check the event data
+        if (typeof voicemail !== 'string' || list === undefined || list instanceof Array === false) {
+            throw new Error('wrong voicemails array list');
+        }
+
 
     } catch (err) {
        logger.error(IDLOG, err.stack);
@@ -234,7 +336,7 @@ function extenChanged(exten) {
     try {
         logger.info(IDLOG, 'received event extenChanged for extension ' + exten.getExten());
         logger.info(IDLOG, 'emit event extenUpdate for extension ' + exten.getExten() + ' to websockets');
-        server.sockets.in('room').emit('extenUpdate', exten.toJSON());
+        server.sockets.in(ROOM_OP_PANEL).emit('extenUpdate', exten.toJSON());
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -253,7 +355,7 @@ function queueChanged(queue) {
     try {
         logger.info(IDLOG, 'received event queueChanged for queue ' + queue.getQueue());
         logger.info(IDLOG, 'emit event queueUpdate for queue ' + queue.getQueue() + ' to websockets');
-        server.sockets.in('room').emit('queueUpdate', queue.toJSON());
+        server.sockets.in(ROOM_OP_PANEL).emit('queueUpdate', queue.toJSON());
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -272,7 +374,7 @@ function parkingChanged(parking) {
     try {
         logger.info(IDLOG, 'received event parkingChanged for parking ' + parking.getParking());
         logger.info(IDLOG, 'emit event parkingUpdate for parking ' + parking.getParking() + ' to websockets');
-        server.sockets.in('room').emit('parkingUpdate', parking.toJSON());
+        server.sockets.in(ROOM_OP_PANEL).emit('parkingUpdate', parking.toJSON());
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -309,7 +411,7 @@ function config(path) {
 }
 
 /**
-* Creates the server websocket.
+* Creates the server websocket and adds the listeners for other components.
 *
 * @method start
 */
@@ -317,6 +419,9 @@ function start() {
     try {
         // set the listener for the aterisk proxy module
         setAstProxyListeners();
+
+        // set the listener for the voicemail module
+        setVoicemailListeners();
 
         // websocket options
         var options = {
@@ -380,33 +485,16 @@ function dispatchMsg(socket, data) {
                 badRequest(socket);
 
             } else {
+                var username = wsid[socket.id];
+                logger.warn(IDLOG, 'requested command ' + data.command + ' from user "' + username + '" (' + getWebsocketEndpoint(socket) + '): the server doesn\'t manage the requests of commands');
 
-                // get the sender identifier
-                var sender = wsid[socket.id];
-
-                logger.info(IDLOG, 'request command ' + data.command);
-
-                // dispatch
-                if      (data.command === 'call')               { call(socket, data);               }
-                else if (data.command === 'parkConv')           { parkConv(socket, data, sender);   }
-                else if (data.command === 'pickupConv')         { pickupConv(socket, data);         }
-                else if (data.command === 'hangupConv')         { hangupConv(socket, data);         }
-                else if (data.command === 'stopSpyConv')        { stopSpyConv(socket, data);        }
-                else if (data.command === 'redirectConv')       { redirectConv(socket, data);       }
-                else if (data.command === 'pickupParking')      { pickupParking(socket, data);      }
-                else if (data.command === 'stopRecordConv')     { stopRecordConv(socket, data);     }
-                else if (data.command === 'startRecordConv')    { startRecordConv(socket, data);    }
-                else if (data.command === 'getOperatorGroups')  { getOperatorGroups(socket);        }
-                else if (data.command === 'startSpySpeakConv')  { startSpySpeakConv(socket, data);  }
-                else if (data.command === 'startSpyListenConv') { startSpyListenConv(socket, data); }
-                else { logger.warn(IDLOG, 'request unknown command ' + data.command); }
+                sendError(socket, { error: '501: commands not allowed' });
             }
 
         } else {
             logger.warn(IDLOG, 'received message from unauthenticated client ' + getWebsocketEndpoint(socket));
             unauthorized(socket);
         }
-
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -887,27 +975,6 @@ function sendError(socket, obj) {
 }
 
 /**
-* Send the ack result to the client for the specified message.
-*
-* **It can throw an Exception.**
-*
-* @method sendAck
-* @param {object} socket The client websocket
-* @param {string} [obj] The object to send
-*/
-function sendAck(socket, obj) {
-    try {
-        // check parameter
-        if (obj === undefined) { obj = {}; }
-        if (typeof obj !== 'object') { throw new Error('wrong parameter'); }
-
-        socket.emit('ack', obj);
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
 * Send response to the client for bad request received.
 *
 * @method badRequest
@@ -995,18 +1062,12 @@ function loginHdlr(socket, obj) {
             // send authenticated successfully response
             sendAutheSuccess(socket);
 
-            socket.join('room');
-            logger.info(IDLOG, 'emit event queues to websockets');
-            server.sockets.in('room').emit('queues', astProxy.getJSONQueues());
+            // if the user has the operator panel permission, than he will receive the asterisk events
+            if (compAuthorization.authorizeOperatorPanelUser(obj.accessKeyId) === true) {
 
-            logger.info(IDLOG, 'emit event parkings to websockets');
-            server.sockets.in('room').emit('parkings', astProxy.getJSONParkings());
-
-            logger.info(IDLOG, 'emit event extensions to websockets');
-            server.sockets.in('room').emit('extensions', astProxy.getJSONExtensions());
-
-            logger.info(IDLOG, 'emit event operatorGroups to websockets');
-            server.sockets.in('room').emit('operatorGroups', operator.getJSONGroups());
+                // join the user to the websocket room to receive the asterisk events
+                socket.join(ROOM_OP_PANEL);
+            }
 
         } else { // authentication failed
             logger.warn(IDLOG, 'authentication failed for user "' + obj.accessKeyId + '" from ' + getWebsocketEndpoint(socket) +
@@ -1135,10 +1196,12 @@ function sendAutheSuccess(socket) {
 }
 
 // public interface
-exports.start       = start;
-exports.config      = config;
-exports.setAuthe    = setAuthe;
-exports.setLogger   = setLogger;
-exports.setAstProxy = setAstProxy;
-exports.setOperator = setOperator;
-exports.setCompUser = setCompUser;
+exports.start                = start;
+exports.config               = config;
+exports.setAuthe             = setAuthe;
+exports.setLogger            = setLogger;
+exports.setAstProxy          = setAstProxy;
+exports.setOperator          = setOperator;
+exports.setCompUser          = setCompUser;
+exports.setCompVoicemail     = setCompVoicemail;
+exports.setCompAuthorization = setCompAuthorization;

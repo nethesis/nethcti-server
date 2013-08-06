@@ -111,7 +111,7 @@ var IDLOG = '[listQueues]';
                         list.push({ queue: data.queue });
 
                     } else if (map[data.actionid] && data.event === 'QueueSummaryComplete') {
-                        map[data.actionid](list); // callback execution
+                        map[data.actionid](null, list); // callback execution
                     }
 
                     if (data.event === 'QueueSummaryComplete') {
@@ -121,6 +121,10 @@ var IDLOG = '[listQueues]';
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
+                    if (map[data.actionid]) {
+                        map[data.actionid](err);
+                        delete map[data.actionid];
+                    }
                 }
             },
 

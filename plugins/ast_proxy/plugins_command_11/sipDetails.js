@@ -114,8 +114,7 @@ var IDLOG = '[sipDetails]';
                         name = name.replace(/["]/g,'').trim();
                         
                         // execute callback
-                        map[data.actionid]({
-                            result: true,
+                        map[data.actionid](null, {
                             exten: {
                                 ip:           ip,
                                 name:         name,
@@ -130,10 +129,10 @@ var IDLOG = '[sipDetails]';
                                && data.message
                                && data.response === 'Error') {
 
-                        map[data.actionid]({ result: false, message: data.message });
+                        map[data.actionid](new Error(data.message));
 
                     } else if (map[data.actionid]) {
-                        map[data.actionid]({ result: false });
+                        map[data.actionid](new Error('error'));
                     }
 
                     // remove association ActionID-callback
@@ -141,6 +140,10 @@ var IDLOG = '[sipDetails]';
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
+                    if (map[data.actionid]) {
+                        map[data.actionid](err);
+                        delete map[data.actionid];
+                    }
                 }
             },
 

@@ -111,7 +111,7 @@ var IDLOG = '[listIaxPeers]';
                         });
 
                     } else if (map[data.actionid] && data.event === 'PeerlistComplete') {
-                        map[data.actionid](list); // callback execution
+                        map[data.actionid](null, list); // callback execution
                     }
 
                     if (data.event === 'PeerlistComplete') {
@@ -121,6 +121,10 @@ var IDLOG = '[listIaxPeers]';
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
+                    if (map[data.actionid]) {
+                        map[data.actionid](err);
+                        delete map[data.actionid];
+                    }
                 }
             },
 

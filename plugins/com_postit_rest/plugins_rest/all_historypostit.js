@@ -1,8 +1,7 @@
 /**
-* Provides the functions to get the asterisk switchboard history
-* call of all endpoints through REST API.
+* Provides history postit functions through REST API.
 *
-* @module com_history_rest
+* @module com_postit_rest
 * @submodule plugins_rest
 */
 
@@ -14,9 +13,9 @@
 * @private
 * @final
 * @readOnly
-* @default [plugins_rest/histcallswitch]
+* @default [plugins_rest/all_historypostit]
 */
-var IDLOG = '[plugins_rest/histcallswitch]';
+var IDLOG = '[plugins_rest/all_historypostit]';
 
 /**
 * The logger. It must have at least three methods: _info, warn and error._
@@ -29,6 +28,15 @@ var IDLOG = '[plugins_rest/histcallswitch]';
 var logger = console;
 
 /**
+* The postit architect component used for postit functions.
+*
+* @property compPostit
+* @type object
+* @private
+*/
+var compPostit;
+
+/**
 * The architect component to be used for authorization.
 *
 * @property compAuthorization
@@ -36,15 +44,6 @@ var logger = console;
 * @private
 */
 var compAuthorization;
-
-/**
-* The history architect component used for history functions.
-*
-* @property compHistory
-* @type object
-* @private
-*/
-var compHistory;
 
 /**
 * Set the logger to be used.
@@ -73,32 +72,37 @@ function setLogger(log) {
 }
 
 /**
-* Set history architect component used by history functions.
+* Set postit architect component used by postit functions.
 *
-* @method setCompHistory
-* @param {object} ch The history architect component.
+* @method setCompPostit
+* @param {object} cp The postit architect component.
 */
-function setCompHistory(ch) {
+function setCompPostit(cp) {
     try {
-        compHistory = ch;
-        logger.info(IDLOG, 'set history architect component');
+        compPostit = cp;
+        logger.info(IDLOG, 'set postit architect component');
     } catch (err) {
        logger.error(IDLOG, err.stack);
     }
 }
 
 /**
-* Set authorization architect component used by history functions.
+* Set the authorization architect component.
 *
 * @method setCompAuthorization
-* @param {object} ca The authorization architect component.
+* @param {object} comp The architect authorization component
+* @static
 */
-function setCompAuthorization(ca) {
+function setCompAuthorization(comp) {
     try {
-        compAuthorization = ca;
-        logger.info(IDLOG, 'set authorization architect component');
+        // check parameter
+        if (typeof comp !== 'object') { throw new Error('wrong parameter'); }
+
+        compAuthorization = comp;
+        logger.log(IDLOG, 'authorization component has been set');
+
     } catch (err) {
-       logger.error(IDLOG, err.stack);
+        logger.error(IDLOG, err.stack);
     }
 }
 
@@ -148,52 +152,45 @@ function sendHttp500(resp, err) {
 (function(){
     try {
         /**
-        * REST plugin that provides switchboard history functions through the following REST API:
+        * REST plugin that provides administration history postit functions through the following REST API:
         *
         * # GET requests
         *
-        * 1. [`histcallswitch/day/:day`](#dayget)
-        * 1. [`histcallswitch/day/:day/:filter`](#day_filterget)
-        * 1. [`histcallswitch/interval/:from/:to`](#intervalget)
-        * 1. [`histcallswitch/interval/:from/:to/:filter`](#interval_filterget)
+        * 1. [`all_historypostit/day/:day`](#dayget)
+        * 1. [`all_historypostit/day/:day/:filter`](#day_filterget)
+        * 1. [`all_historypostit/interval/:from/:to`](#intervalget)
+        * 1. [`all_historypostit/interval/:from/:to/:filter`](#interavl_filterget)
         *
         * ---
         *
-        * ### <a id="dayget">**`histcallswitch/day/:day`**</a>
+        * ### <a id="intervalget">**`all_historypostit/interval/:from/:to`**</a>
         *
-        * Returns the switchboard history call of the day _"day"_ of all endpoints. Date must be expressed
-        * in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
+        * Returns the history of the postit created in the interval time by all the users.
         *
-        * ---
+        * ### <a id="interval_filterget">**`all_historypostit/interval/:from/:to/:filter`**</a>
         *
-        * ### <a id="day_filterget">**`histcallswitch/day/:day/:filter`**</a>
-        *
-        * Returns the switchboard history call of the day _"day"_ of all endpoints filtering by _"filter"_.
-        * Date must be expressed in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
+        * Returns the history of the postit created in the interval time by all the users
+        * filtering the results.
         *
         * ---
         *
-        * ### <a id="intervalget">**`histcallswitch/interval/:from/:to`**</a>
+        * ### <a id="dayget">**`all_historypostit/day/:day`**</a>
         *
-        * Returns the switchboard history call between _"from"_ date to _"to"_ date of all endpoints.
-        * Dates must be expressed in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
+        * Returns the history of the postit created in the specified day by all the users.
         *
-        * ---
+        * ### <a id="day_filterget">**`all_historypostit/day/:day/:filter`**</a>
         *
-        * ### <a id="interval_filterget">**`histcallswitch/interval/:from/:to/:filter`**</a>
+        * Returns the history of the postit created in the specified day by all the users
+        * filtering the results.
         *
-        * Returns the switchboard history call between _"from"_ date to _"to"_ date of all endpoints
-        * filtering by _"filter"_. Date must be expressed in YYYYMMDD format. If an error occurs an HTTP 500
-        * response is returned.
-        *
-        * @class plugin_rest_histcallswitch
+        * @class plugin_rest_all_historypostit
         * @static
         */
-        var histcallswitch = {
+        var all_historypostit = {
 
             // the REST api
             api: {
-                'root': 'histcallswitch',
+                'root': 'all_historypostit',
 
                 /**
                 * REST API to be requested using HTTP GET request.
@@ -201,17 +198,20 @@ function sendHttp500(resp, err) {
                 * @property get
                 * @type {array}
                 *
-                *   @param {string} day/:day To get the history call of the day. The date must be expressed
-                *       in YYYYMMDD format
+                *   @param {string} interval/:from/:to To get the history of the postit
+                *       created in the interval time by all the users
                 *
-                *   @param {string} day/:day/:filter To get the history call of the day filtering by filter.
-                *       The date must be expressed in YYYYMMDD format
+                *   @param {string} interval/:from/:to/:filter To get the history of the
+                *       postit created in the interval time by all the users filtering the
+                *       results by "recipient" field of db table
                 *
-                *   @param {string} interval/:from/:to To get the history call between _"from"_ date to _"to"_ date.
-                *       The date must be expressed in YYYYMMDD format
+                *   @param {string} day/:day To get the history of the postit created in the
+                *       specified day by all the users. The date must be expressed in
+                *       YYYYMMDD format
                 *
-                *   @param {string} interval/:from/:to/:filter To get the history call between _"from"_ date to _"to"_
-                *       date filtering by filter. The date must be expressed in YYYYMMDD format
+                *   @param {string} day/:day/:filter To get the history of the postit created
+                *       in the specified day by all the users filtering the results by "recipient"
+                *       field of db table. The date must be expressed in YYYYMMDD format
                 */
                 'get' : [
                     'day/:day',
@@ -225,29 +225,30 @@ function sendHttp500(resp, err) {
             },
 
             /**
-            * Search the history call of all endpoints for the specified interval and optional filter by the following REST api:
+            * Search the history of the postit created by all the users for the
+            * specified interval time and optional filter the results by recipient,
+            * with the following REST api:
             *
             *     interval/:from/:to
             *     interval/:from/:to/:filter
             *
             * @method interval
-            * @param {object}   req  The client request.
-            * @param {object}   res  The client response.
+            * @param {object} req The client request.
+            * @param {object} res The client response.
             * @param {function} next Function to run the next handler in the chain.
             */
             interval: function (req, res, next) {
                 try {
-                    // get the username from the authorization header added by authentication step
                     var username = req.headers.authorization_user;
 
-                    // check the switchboard cdr authorization
-                    if (compAuthorization.authorizeAdminCdrUser(username) === false) {
-                        logger.warn(IDLOG, 'switchboard cdr authorization failed for user "' + username + '"!');
+                    // check the postit & administration postit authorization
+                    if (compAuthorization.authorizeAdminPostitUser(username) !== true) {
+
+                        logger.warn(IDLOG, '"admin_postit" authorizations failed for user "' + username + '" !');
                         sendHttp401(res);
                         return;
                     }
-
-                    logger.info(IDLOG, 'switchboard cdr authorization successfully for user "' + username + '"');
+                    logger.info(IDLOG, '"admin_postit" authorization successfully for user "' + username + '"');
 
                     var obj = {
                         to:   req.params.to,
@@ -258,13 +259,12 @@ function sendHttp500(resp, err) {
                     if (req.params.filter) { obj.filter = req.params.filter; }
 
                     // use the history component
-                    var data = compHistory.getHistorySwitchCallInterval(obj, function (err, results) {
+                    var data = compPostit.getAllUserHistoryInterval(obj, function (err, results) {
 
                         if (err) { sendHttp500(res, err.toString()); }
                         else {
-                            logger.info(IDLOG, 'send ' + results.length   + ' results searching switchboard history call ' +
-                                               'interval between ' + obj.from + ' to ' + obj.to + ' for all endpoints' +
-                                               'and filter ' + (obj.filter ? obj.filter : '""') + ' to user "' + username + '"');
+                            logger.info(IDLOG, 'send ' + results.length   + ' results searching all history post-it of all users ' +
+                                               'in the interval between ' + obj.from + ' to ' + obj.to + ' and filter ' + (obj.filter ? obj.filter : '""'));
                             res.send(200, results);
                         }
                     });
@@ -275,7 +275,8 @@ function sendHttp500(resp, err) {
             },
 
             /**
-            * Search the switchboard history call for the specified day and optional filter by the following REST api:
+            * Search the history postit created by all the users in the specified day and optional
+            * filter the results with the following REST api:
             *
             *     day/:day
             *     day/:day/:filter
@@ -298,11 +299,11 @@ function sendHttp500(resp, err) {
                 }
             }
         }
-        exports.api                  = histcallswitch.api;
-        exports.day                  = histcallswitch.day;
-        exports.interval             = histcallswitch.interval;
+        exports.api                  = all_historypostit.api;
+        exports.day                  = all_historypostit.day;
+        exports.interval             = all_historypostit.interval;
         exports.setLogger            = setLogger;
-        exports.setCompHistory       = setCompHistory;
+        exports.setCompPostit        = setCompPostit;
         exports.setCompAuthorization = setCompAuthorization;
 
     } catch (err) {

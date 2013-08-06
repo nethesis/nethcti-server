@@ -8,6 +8,8 @@
             "logger",
             "astProxy",
             "operator",
+            "voicemail",
+            "authorization",
             "authentication"
         ],
         "provides": []

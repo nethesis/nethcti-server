@@ -142,24 +142,42 @@ function sendHttp500(resp, err) {
         /**
         * REST plugin that provides phonebook functions through the following REST API:
         *
-        * **GET request**
+        * # GET requests
         *
-        *     phonebook/search/:term
+        * 1. [`phonebook/search/:term`](#searchget)
+        * 1. [`phonebook/searchstartswith/:term`](#searchstartswithget)
+        *
+        * ---
+        *
+        * ### <a id="searchget">**`phonebook/search/:term`**</a>
         *
         * The client receives all phonebook contacts found or an HTTP 500 response.
         *
-        *     phonebook/searchstartswith/:term
+        * ---
+        *
+        * ### <a id="searchstartswithget">**`phonebook/searchstartswith/:term`**</a>
         *
         * The client receives all phonebook contacts whose names starts with specified term,
         * or an HTTP 500 response.
         *
-        * **POST request**
+        * <br>
         *
-        *     phonebook/create
+        * # POST requests
         *
-        * Create a contact in the NethCTI phonebook. The contact information must be
+        * 1. [`phonebook/create`](#createpost)
+        *
+        * ---
+        *
+        * ### <a id="createpost">**`phonebook/create`**</a>
+        *
+        * Creates a contact in the NethCTI phonebook. The contact information must be
         * specified in the POST request in JSON format and must contain at least the
-        * _creator_ and _type_ keys. E.g. using curl:
+        * following parameters:
+        *
+        * * `type: ("speeddial | "private" | "public"): the visibility of the contact`
+        * * `creator: the user`
+        *
+        * E.g. using curl:
         *
         *     curl --insecure -i -X POST -d '{ "creator": "alessandro", "type": "type", ... }' https://192.168.5.224:8282/phonebook/create
         *

@@ -209,10 +209,10 @@ function authorizeVoicemailUser(username) {
 }
 
 /**
-* Return true if the specified user has the post-it authorization.
+* Returns true if the specified user has the post-it authorization.
 *
 * @method authorizePostitUser
-* @param {string} username The username
+* @param  {string}  username The username
 * @return {boolean} True if the user has the post-it authorization.
 */
 function authorizePostitUser(username) {
@@ -230,18 +230,40 @@ function authorizePostitUser(username) {
 }
 
 /**
-* Return true if the specified user has the history authorization.
+* Returns true if the specified user has the administration post-it authorization.
 *
-* @method authorizeHistoryUser
-* @param {string} username The username
+* @method authorizeAdminPostitUser
+* @param  {string}  username The username
+* @return {boolean} True if the user has the post-it authorization.
+*/
+function authorizeAdminPostitUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.admin_postit, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
+* Returns true if the specified user has the authorization to view the call
+* detail recording (cdr).
+*
+* @method authorizeCdrUser
+* @param  {string}  username The username
 * @return {boolean} True if the user has the history authorization.
 */
-function authorizeHistoryUser(username) {
+function authorizeCdrUser(username) {
     try {
         // check parameter
         if (typeof username !== 'string') { throw new Error('wrong parameter'); }
 
-        return authorizeUser(authorizationTypes.TYPES.history, username);
+        return authorizeUser(authorizationTypes.TYPES.cdr, username);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -251,18 +273,105 @@ function authorizeHistoryUser(username) {
 }
 
 /**
-* Return true if the specified user has the operator panel authorization.
+* Returns true if the specified user has the authorization to spy the conversations.
 *
-* @method authorizeOperatorPanelUser
-* @param {string} username The username
+* @method authorizeSpyUser
+* @param  {string}  username The username
+* @return {boolean} True if the user has the authorization to spy.
+*/
+function authorizeSpyUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.spy, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
+* Returns true if the specified user has the no spy permission enabled.
+* In this case no user can spy the conversation of the specified user.
+*
+* @method hasNoSpyEnabled
+* @param  {string}  username The username
+* @return {boolean} True if the user has the no spy permission enabled.
+*/
+function hasNoSpyEnabled(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.no_spy, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
+* Returns true if the specified user has the authorization to view and
+* set the don't disturb status of his endpoints.
+*
+* @method authorizeDndUser
+* @param  {string}  username The username
+* @return {boolean} True if the user has the don't disturb authorization.
+*/
+function authorizeDndUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.dnd, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
+* Return true if the specified user has the advanced operator authorization.
+*
+* @method authorizeAdvancedOperatorUser
+* @param  {string}  username The username
+* @return {boolean} True if the user has the advanced operator authorization.
+*/
+function authorizeAdvancedOperatorUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.advanced_operator, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
+* Returns true if the specified user has the authorization to view all extensions
+* with their complete status informations.
+*
+* @method authorizeOpExtensionsUser
+* @param  {string}  username The username
 * @return {boolean} True if the user has the operator panel authorization.
 */
-function authorizeOperatorPanelUser(username) {
+function authorizeOpExtensionsUser(username) {
     try {
         // check parameter
         if (typeof username !== 'string') { throw new Error('wrong parameter'); }
 
-        return authorizeUser(authorizationTypes.TYPES.operator_panel, username);
+        return authorizeUser(authorizationTypes.TYPES.extensions, username);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -272,18 +381,116 @@ function authorizeOperatorPanelUser(username) {
 }
 
 /**
-* Return true if the specified user has the switchboard history authorization.
+* Returns true if the specified user has the authorization to the phone redirect.
 *
-* @method authorizeHistorySwitchUser
-* @param {string} username The username
-* @return {boolean} True if the user has the switchboard history authorization.
+* @method authorizePhoneRedirectUser
+* @param  {string}  username The username
+* @return {boolean} True if the user has the phone redirect authorization.
 */
-function authorizeHistorySwitchUser(username) {
+function authorizePhoneRedirectUser(username) {
     try {
         // check parameter
         if (typeof username !== 'string') { throw new Error('wrong parameter'); }
 
-        return authorizeUser(authorizationTypes.TYPES.switchboard_history, username);
+        return authorizeUser(authorizationTypes.TYPES.phone_redirect, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
+* Returns true if the specified user has the authorization to view all parkings
+* with their complete status informations.
+*
+* @method authorizeOpParkingsUser
+* @param  {string}  username The username
+* @return {boolean} True if the user has the authorization to view all parkings.
+*/
+function authorizeOpParkingsUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.parkings, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
+* Returns true if the specified user has the authorization to view all queues
+* with their complete status informations.
+*
+* @method authorizeOpQueuesUser
+* @param  {string}  username The username
+* @return {boolean} True if the user has the authorization to view all queues.
+*/
+function authorizeOpQueuesUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.queues, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
+* Returns true if the specified user has the authorization to view the
+* groups of the operator panel.
+*
+* @method authorizeOperatorGroupsUser
+* @param  {string}  username The username
+* @return {boolean} True if the user has the operator panel authorization.
+*/
+function authorizeOperatorGroupsUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        // get cusomter card authorization from the user
+        var autho = userMod.getAuthorization(username, authorizationTypes.TYPES.operator_groups);
+
+        // analize the result
+        var objResult = autho[authorizationTypes.TYPES.operator_groups];
+        var group;
+        for (group in objResult) {
+
+            // check the type of the authorization. It must be a boolean value
+            if (objResult[group] === true) { return true; }
+        }
+        return false;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
+* Return true if the specified user has the authorization to view the cdr of all extensions.
+*
+* @method authorizeAdminCdrUser
+* @param  {string}  username The username
+* @return {boolean} True if the user has the switchboard history authorization.
+*/
+function authorizeAdminCdrUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.admin_cdr, username);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -409,6 +616,41 @@ function authorizeCustomerCardUser(username) {
 }
 
 /**
+* Returns true if the specified user has the authorization to pickup a conversation
+* of the specified extension.
+*
+* @method authorizePickupUser
+* @param  {string}  username   The username
+* @param  {string}  endpointId The endpoint identifier (e.g. the extension number)
+* @return {boolean} True if the user has the authorization to pickup a conversation of the endpoint
+*/
+function authorizePickupUser(username, endpointId) {
+    try {
+        // check parameters
+        if (typeof username !== 'string' || typeof endpointId !== 'string') {
+            throw new Error('wrong parameters');
+        }
+
+        // get pickup authorization from the user
+        var autho = userMod.getAuthorization(username, authorizationTypes.TYPES.pickup);
+
+        // analize the result
+        var objResult = autho[authorizationTypes.TYPES.pickup];
+        var ext;
+        for (ext in objResult) {
+
+            if (ext === endpointId) { return true; }
+        }
+        return false;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
 * Return true if the specified user has at least one streaming authorization.
 *
 * @method authorizeStreamingUser
@@ -499,6 +741,39 @@ function getAuthorizedStreamingSources(username) {
 
             // check the type of the authorization. It must be a boolean value
             if (objResult[stream] === true) { result[stream] = true; }
+        }
+        return result;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns and empty object
+        return {};
+    }
+}
+
+/**
+* Returns all the authorized groups of the operator panel of the user.
+*
+* @method getAuthorizedOperatorGroups
+* @param  {string} username The username
+* @return {object} All the authorized operator panel groups.
+*/
+function getAuthorizedOperatorGroups(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        // get operator groups authorization from the user
+        var autho = userMod.getAuthorization(username, authorizationTypes.TYPES.operator_groups);
+
+        // analize the result
+        var objResult = autho[authorizationTypes.TYPES.operator_groups];
+        var group;
+        var result = {}; // object to return
+        for (group in objResult) {
+
+            // check the type of the authorization. It must be a boolean value
+            if (objResult[group] === true) { result[group] = true; }
         }
         return result;
 
@@ -624,9 +899,15 @@ function getUserAuthorizations(username) {
 exports.config                        = config;
 exports.setLogger                     = setLogger;
 exports.setUserModule                 = setUserModule;
+exports.hasNoSpyEnabled               = hasNoSpyEnabled;
+exports.authorizeSpyUser              = authorizeSpyUser;
+exports.authorizeDndUser              = authorizeDndUser;
+exports.authorizeCdrUser              = authorizeCdrUser;
 exports.authorizeChatUser             = authorizeChatUser;
+exports.authorizePickupUser           = authorizePickupUser;
 exports.authorizePostitUser           = authorizePostitUser;
-exports.authorizeHistoryUser          = authorizeHistoryUser;
+exports.authorizeOpQueuesUser         = authorizeOpQueuesUser;
+exports.authorizeAdminCdrUser         = authorizeAdminCdrUser;
 exports.getUserAuthorizations         = getUserAuthorizations;
 exports.authorizeVoicemailUser        = authorizeVoicemailUser;
 exports.authorizePhonebookUser        = authorizePhonebookUser;
@@ -634,8 +915,13 @@ exports.authorizeStreamingUser        = authorizeStreamingUser;
 exports.authorizeCallerNoteUser       = authorizeCallerNoteUser;
 exports.authorizedCustomerCards       = authorizedCustomerCards;
 exports.verifyUserEndpointExten       = verifyUserEndpointExten;
+exports.authorizeOpParkingsUser       = authorizeOpParkingsUser;
+exports.authorizeAdminPostitUser      = authorizeAdminPostitUser;
 exports.authorizeCustomerCardUser     = authorizeCustomerCardUser;
-exports.authorizeOperatorPanelUser    = authorizeOperatorPanelUser;
-exports.authorizeHistorySwitchUser    = authorizeHistorySwitchUser;
+exports.authorizeOpExtensionsUser     = authorizeOpExtensionsUser;
+exports.authorizePhoneRedirectUser    = authorizePhoneRedirectUser;
+exports.getAuthorizedOperatorGroups   = getAuthorizedOperatorGroups;
+exports.authorizeOperatorGroupsUser   = authorizeOperatorGroupsUser;
 exports.authorizeStreamingSourceUser  = authorizeStreamingSourceUser;
+exports.authorizeAdvancedOperatorUser = authorizeAdvancedOperatorUser;
 exports.getAuthorizedStreamingSources = getAuthorizedStreamingSources;

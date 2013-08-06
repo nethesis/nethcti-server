@@ -680,6 +680,28 @@ function getHistoryCallInterval(data, cb) {
 }
 
 /**
+* Gets all the history post-it of all the users into the interval time.
+* It can be possible to filter out the results specifying the filter. It search
+* the results into the _nethcti.postit_ database.
+*
+* @method getAllUserHistoryPostitInterval
+* @param {object} data
+*   @param {string} data.from       The starting date of the interval in the YYYYMMDD format (e.g. 20130521)
+*   @param {string} data.to         The ending date of the interval in the YYYYMMDD format (e.g. 20130528)
+*   @param {string} [data.filter]   The filter to be used in the _recipient_ field. If it is
+*                                   omitted the function treats it as '%' string
+* @param {function} cb The callback function
+*/
+function getAllUserHistoryPostitInterval(data, cb) {
+    try {
+        getHistoryPostitInterval(data, cb);
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
 * Get the history post-it of the specified user into the interval time.
 * If the username information is omitted, the results contains the
 * history post-it of all users. Moreover, it can be possible to filter
@@ -689,12 +711,12 @@ function getHistoryCallInterval(data, cb) {
 * @method getHistoryPostitInterval
 * @param {object} data
 *   @param {string} [data.username] The user involved in the research. It is used to filter
-*       out the _creator_. If it is omitted the function treats it as '%' string. The '%'
-*       matches any number of characters, even zero character.
-*   @param {string} data.from The starting date of the interval in the YYYYMMDD format (e.g. 20130521)
-*   @param {string} data.to The ending date of the interval in the YYYYMMDD format (e.g. 20130528)
-*   @param {string} [data.filter] The filter to be used in the _recipient_ field. If it is
-*       omitted the function treats it as '%' string
+*                                   out the _creator_. If it is omitted the function treats it as '%' string. The '%'
+*                                   matches any number of characters, even zero character.
+*   @param {string} data.from       The starting date of the interval in the YYYYMMDD format (e.g. 20130521)
+*   @param {string} data.to         The ending date of the interval in the YYYYMMDD format (e.g. 20130528)
+*   @param {string} [data.filter]   The filter to be used in the _recipient_ field. If it is
+*                                   omitted the function treats it as '%' string
 * @param {function} cb The callback function
 */
 function getHistoryPostitInterval(data, cb) {
@@ -710,14 +732,20 @@ function getHistoryPostitInterval(data, cb) {
             throw new Error('wrong parameters');
         }
 
+        // the mysql operator for the creator field
+        var operator = '=';
+
         // check optional parameters
         if (data.filter   === undefined) { data.filter = '%';   }
-        if (data.username === undefined) { data.username = '%'; }
+        if (data.username === undefined) {
+            data.username = '%';
+            operator = ' LIKE ';
+        }
 
         // search
         models[JSON_KEYS.POSTIT].findAll({
             where: [
-                'creator=? AND ' +
+                'creator' + operator + '? AND ' +
                 '(DATE(datecreation)>=? AND DATE(datecreation)<=?) AND ' +
                 '(recipient LIKE ?)',
                 data.username,
@@ -751,6 +779,7 @@ function getHistoryPostitInterval(data, cb) {
         });
     } catch (err) {
         logger.error(IDLOG, err.stack);
+        cb(err);
     }
 }
 
@@ -989,19 +1018,20 @@ function getCustomerCardByNum(type, num, cb) {
 }
 
 // public interface
-exports.start                        = start;
-exports.config                       = config;
-exports.setLogger                    = setLogger;
-exports.savePostit                   = savePostit;
-exports.saveCallerNote               = saveCallerNote;
-exports.saveCtiPbContact             = saveCtiPbContact;
-exports.getVoicemailNewMsg           = getVoicemailNewMsg;
-exports.getVoicemailOldMsg           = getVoicemailOldMsg;
-exports.getCustomerCardByNum         = getCustomerCardByNum;
-exports.getPbContactsContains        = getPbContactsContains;
-exports.getHistoryCallInterval       = getHistoryCallInterval;
-exports.getPbContactsStartsWith      = getPbContactsStartsWith;
-exports.getHistoryPostitInterval     = getHistoryPostitInterval;
-exports.getCtiPbContactsContains     = getCtiPbContactsContains;
-exports.getCtiPbContactsStartsWith   = getCtiPbContactsStartsWith;
-exports.getHistoryCallerNoteInterval = getHistoryCallerNoteInterval;
+exports.start                           = start;
+exports.config                          = config;
+exports.setLogger                       = setLogger;
+exports.savePostit                      = savePostit;
+exports.saveCallerNote                  = saveCallerNote;
+exports.saveCtiPbContact                = saveCtiPbContact;
+exports.getVoicemailNewMsg              = getVoicemailNewMsg;
+exports.getVoicemailOldMsg              = getVoicemailOldMsg;
+exports.getCustomerCardByNum            = getCustomerCardByNum;
+exports.getPbContactsContains           = getPbContactsContains;
+exports.getHistoryCallInterval          = getHistoryCallInterval;
+exports.getPbContactsStartsWith         = getPbContactsStartsWith;
+exports.getHistoryPostitInterval        = getHistoryPostitInterval;
+exports.getCtiPbContactsContains        = getCtiPbContactsContains;
+exports.getCtiPbContactsStartsWith      = getCtiPbContactsStartsWith;
+exports.getHistoryCallerNoteInterval    = getHistoryCallerNoteInterval;
+exports.getAllUserHistoryPostitInterval = getAllUserHistoryPostitInterval;

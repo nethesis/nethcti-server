@@ -144,10 +144,10 @@ var IDLOG = '[listParkedChannels]';
                             }
                         }
                         
-                        map[data.actionid]({ result: true, parkedChannels: list }); // callback execution
+                        map[data.actionid](null, list); // callback execution
 
                     } else if (map[data.actionid]) {
-                        map[data.actionid]({ result: false }); // callback execution
+                        map[data.actionid](new Error('error')); // callback execution
                     }
 
                     list = {}; // empty list
@@ -155,6 +155,10 @@ var IDLOG = '[listParkedChannels]';
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
+                    if (map[data.actionid]) {
+                        map[data.actionid](err);
+                        delete map[data.actionid];
+                    }
                 }
             },
 

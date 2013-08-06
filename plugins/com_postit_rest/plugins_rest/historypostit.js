@@ -37,6 +37,15 @@ var logger = console;
 var compPostit;
 
 /**
+* The architect component to be used for authorization.
+*
+* @property compAuthorization
+* @type object
+* @private
+*/
+var compAuthorization;
+
+/**
 * Set the logger to be used.
 *
 * @method setLogger
@@ -74,6 +83,26 @@ function setCompPostit(cp) {
         logger.info(IDLOG, 'set postit architect component');
     } catch (err) {
        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Set the authorization architect component.
+*
+* @method setCompAuthorization
+* @param {object} comp The architect authorization component
+* @static
+*/
+function setCompAuthorization(comp) {
+    try {
+        // check parameter
+        if (typeof comp !== 'object') { throw new Error('wrong parameter'); }
+
+        compAuthorization = comp;
+        logger.log(IDLOG, 'authorization component has been set');
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
     }
 }
 
@@ -123,24 +152,35 @@ function sendHttp500(resp, err) {
 (function(){
     try {
         /**
-        * REST plugin that provides postit functions through the following REST API:
+        * REST plugin that provides history postit functions through the following REST API:
         *
-        *     postit/interval/:from/:to/
+        * # GET requests
         *
-        * Return the history of the postit created in the interval time by the creator.
+        * 1. [`historypostit/day/:day`](#dayget)
+        * 1. [`historypostit/day/:day/:filter`](#day_filterget)
+        * 1. [`historypostit/interval/:from/:to`](#intervalget)
+        * 1. [`historypostit/interval/:from/:to/:filter`](#interavl_filterget)
         *
-        *     postit/interval/:from/:to/:filter
+        * ---
         *
-        * Return the history of the postit created in the interval time by the creator
+        * ### <a id="intervalget">**`historypostit/interval/:from/:to`**</a>
+        *
+        * Returns the history of the postit created in the interval time by the user.
+        *
+        * ### <a id="interval_filterget">**`historypostit/interval/:from/:to/:filter`**</a>
+        *
+        * Returns the history of the postit created in the interval time by the user
         * filtering the results.
         *
-        *     postit/day/:day
+        * ---
         *
-        * Return the history of the postit created in the specified day by the applicant.
+        * ### <a id="dayget">**`historypostit/day/:day`**</a>
         *
-        *     postit/day/:day/:filter
+        * Returns the history of the postit created in the specified day by the user.
         *
-        * Return the history of the postit created in the specified day by the applicant
+        * ### <a id="day_filterget">**`historypostit/day/:day/:filter`**</a>
+        *
+        * Returns the history of the postit created in the specified day by the user
         * filtering the results.
         *
         * @class plugin_rest_historypostit
@@ -174,10 +214,10 @@ function sendHttp500(resp, err) {
                 *       field of db table. The date must be expressed in YYYYMMDD format
                 */
                 'get' : [
-                    'interval/:from/:to',
-                    'interval/:from/:to/:filter',
                     'day/:day',
-                    'day/:day/:filter'
+                    'day/:day/:filter',
+                    'interval/:from/:to',
+                    'interval/:from/:to/:filter'
                 ],
                 'post': [],
                 'head': [],
@@ -199,10 +239,29 @@ function sendHttp500(resp, err) {
             */
             interval: function (req, res, next) {
                 try {
+                    var username = req.headers.authorization_user;
+
+                    // check the postit & administration postit authorization
+                    if (   compAuthorization.authorizePostitUser(username)      !== true
+                        && compAuthorization.authorizeAdminPostitUser(username) !== true) {
+
+                        logger.warn(IDLOG, '"postit" & "admin_postit" authorizations failed for user "' + username + '" !');
+                        sendHttp401(res);
+                        return;
+                    }
+
+                    if (compAuthorization.authorizeAdminPostitUser(username) === true) {
+                        logger.info(IDLOG, '"admin_postit" authorization successfully for user "' + username + '"');
+                    }
+
+                    if (compAuthorization.authorizePostitUser(username) === true) {
+                        logger.info(IDLOG, '"postit" authorization successfully for user "' + username + '"');
+                    }
+
                     var obj = {
                         to:       req.params.to,
                         from:     req.params.from,
-                        username: req.headers.authorization_user,
+                        username: username
                     };
 
                     // add filter parameter if it has been specified
@@ -250,11 +309,12 @@ function sendHttp500(resp, err) {
                 }
             }
         }
-        exports.api           = historypostit.api;
-        exports.day           = historypostit.day;
-        exports.interval      = historypostit.interval;
-        exports.setLogger     = setLogger;
-        exports.setCompPostit = setCompPostit;
+        exports.api                  = historypostit.api;
+        exports.day                  = historypostit.day;
+        exports.interval             = historypostit.interval;
+        exports.setLogger            = setLogger;
+        exports.setCompPostit        = setCompPostit;
+        exports.setCompAuthorization = setCompAuthorization;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);

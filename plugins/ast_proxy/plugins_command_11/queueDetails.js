@@ -155,7 +155,7 @@ var IDLOG = '[queueDetails]';
 
                     // all events has been received
                     } else if (map[data.actionid] && data.event === 'QueueStatusComplete') {
-                        map[data.actionid](list[data.actionid]); // callback execution
+                        map[data.actionid](null, list[data.actionid]); // callback execution
                     }
 
                     if (data.event === 'QueueStatusComplete') {
@@ -164,6 +164,10 @@ var IDLOG = '[queueDetails]';
                     }
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
+                    if (map[data.actionid]) {
+                        map[data.actionid](err);
+                        delete map[data.actionid];
+                    }
                 }
             },
 

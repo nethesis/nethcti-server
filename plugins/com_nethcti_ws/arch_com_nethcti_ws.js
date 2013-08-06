@@ -1,5 +1,5 @@
 /**
-* aaaaaaaaaaaaaaaaaaaaaaaaa.
+* Supply the real time informations about extensions, queues, trunks and parkings.
 *
 * @class arch_com_nethcti_ws
 * @module com_nethcti_ws
@@ -33,6 +33,8 @@ module.exports = function (options, imports, register) {
         comNethctiWs.setCompUser(imports.user);
         comNethctiWs.setAstProxy(imports.astProxy);
         comNethctiWs.setOperator(imports.operator);
+        comNethctiWs.setCompVoicemail(imports.voicemail);
+        comNethctiWs.setCompAuthorization(imports.authorization);
         comNethctiWs.start();
     } catch (err) {
         logger.error(IDLOG, err.stack);

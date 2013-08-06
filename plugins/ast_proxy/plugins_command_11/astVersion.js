@@ -96,10 +96,10 @@ var IDLOG = '[astVersion]';
                 try {
                     // check callback and info presence and execute it
                     if (map[data.actionid] && data.asteriskversion) {
-                        map[data.actionid]({ asteriskVersion: data.asteriskversion });
+                        map[data.actionid](null, data.asteriskversion);
 
                     } else if (map[data.actionid]) {
-                        map[data.actionid]({ asteriskVersion: 'unknown' });
+                        map[data.actionid](null, 'unknown');
                     }
 
                     // remove association ActionID-callback
@@ -107,6 +107,10 @@ var IDLOG = '[astVersion]';
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
+                    if (map[data.actionid]) {
+                        map[data.actionid](err);
+                        delete map[data.actionid];
+                    }
                 }
             },
 

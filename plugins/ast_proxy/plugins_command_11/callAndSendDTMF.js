@@ -113,12 +113,12 @@ var IDLOG = '[callAndSendDTMF]';
                     } else if (map[data.actionid]
                                && data.response === 'Error' && data.message) {
 
-                        map[data.actionid](data.message);
+                        map[data.actionid](new Error(data.message));
                         delete map[data.actionid]; // remove association ActionID-callback
 
                     } else if (map[data.actionid] && data.response === 'Error') {
 
-                        map[data.actionid]('error');
+                        map[data.actionid](new Error('error'));
                         delete map[data.actionid]; // remove association ActionID-callback
                     }
 
