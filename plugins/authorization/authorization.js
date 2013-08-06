@@ -209,6 +209,48 @@ function authorizeVoicemailUser(username) {
 }
 
 /**
+* Returns true if the specified user has the recording authorization.
+*
+* @method authorizeRecordingUser
+* @param  {string}  username The username
+* @return {boolean} True if the user has the recording authorization.
+*/
+function authorizeRecordingUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.recording, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
+* Returns true if the specified user has the administration recording authorization.
+*
+* @method authorizeAdminRecordingUser
+* @param  {string}  username The username
+* @return {boolean} True if the user has the administration recording authorization.
+*/
+function authorizeAdminRecordingUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.admin_recording, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
 * Returns true if the specified user has the post-it authorization.
 *
 * @method authorizePostitUser
@@ -933,6 +975,7 @@ exports.authorizeOpQueuesUser         = authorizeOpQueuesUser;
 exports.authorizeAdminCdrUser         = authorizeAdminCdrUser;
 exports.getUserAuthorizations         = getUserAuthorizations;
 exports.authorizeVoicemailUser        = authorizeVoicemailUser;
+exports.authorizeRecordingUser        = authorizeRecordingUser;
 exports.authorizePhonebookUser        = authorizePhonebookUser;
 exports.authorizeStreamingUser        = authorizeStreamingUser;
 exports.authorizeCallerNoteUser       = authorizeCallerNoteUser;
@@ -944,6 +987,7 @@ exports.authorizeAdminHangupUser      = authorizeAdminHangupUser;
 exports.authorizeCustomerCardUser     = authorizeCustomerCardUser;
 exports.authorizeOpExtensionsUser     = authorizeOpExtensionsUser;
 exports.authorizePhoneRedirectUser    = authorizePhoneRedirectUser;
+exports.authorizeAdminRecordingUser   = authorizeAdminRecordingUser;
 exports.getAuthorizedOperatorGroups   = getAuthorizedOperatorGroups;
 exports.authorizeOperatorGroupsUser   = authorizeOperatorGroupsUser;
 exports.authorizeStreamingSourceUser  = authorizeStreamingSourceUser;

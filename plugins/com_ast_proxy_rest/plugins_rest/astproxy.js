@@ -768,7 +768,7 @@ var compConfigManager;
                             logger.log(IDLOG, 'hangup convid "' + req.params.convid + '": authorization admin hangup successful for user "' + username + '"');
                         }
                         // check if the endpoint of the request is owned by the user
-                        else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+                        else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) !== true) {
 
                             logger.warn(IDLOG, 'hangup convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
                                                ' the ' + req.params.endpointType + ' ' + req.params.endpointId + ' isn\'t owned by the user');
@@ -1194,20 +1194,29 @@ var compConfigManager;
 
                     if (req.params.endpointType === 'extension') {
 
+                        // check if the user has the authorization to record all the conversations
+                        if (compAuthorization.authorizeAdminRecordingUser(username) === true) {
+
+                            logger.info(IDLOG, 'start recording convid ' + req.params.convid + ': admin recording authorization successful for user "' + username + '"');
+                        }
+                        // check if the user has the authorization to record his own conversations
+                        else if (compAuthorization.authorizeRecordingUser(username) !== true) {
+
+                            logger.warn(IDLOG, 'start recording convid ' + req.params.convid + ': recording authorization failed for user "' + username + '"');
+                            sendHttp403(res);
+                            return;
+                        }
                         // check if the destination endpoint is owned by the user
-                        if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+                        else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
                             logger.warn(IDLOG, 'starting record convid ' + req.params.convid + ' by user "' + username + '" has been failed: ' +
                                                ' the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' isn\'t owned by the user');
-                            sendHttp401(res);
+                            sendHttp403(res);
                             return;
 
                         } else {
-                            logger.info(IDLOG, 'the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' is owned by "' + username + '"');
+                            logger.info(IDLOG, 'starting record convid ' + req.params.convid + ': the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' is owned by "' + username + '"');
                         }
-
-                        // check if the user has the permission to start recording the specified conversation
-                        // TODO
 
                         compAstProxy.startRecordConversation(req.params.endpointType, req.params.endpointId, req.params.convid, function (err) {
                             try {

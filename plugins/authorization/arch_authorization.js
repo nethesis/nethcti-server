@@ -214,7 +214,21 @@ module.exports = function (options, imports, register) {
             *
             * @method authorizeIntrudeUser
             */
-            authorizeIntrudeUser: authorization.authorizeIntrudeUser
+            authorizeIntrudeUser: authorization.authorizeIntrudeUser,
+
+            /**
+            * It's the _authorizeRecordingUser_ method provided by _authorization_ module.
+            *
+            * @method authorizeRecordingUser
+            */
+            authorizeRecordingUser: authorization.authorizeRecordingUser,
+
+            /**
+            * It's the _authorizeAdminRecordingUser_ method provided by _authorization_ module.
+            *
+            * @method authorizeAdminRecordingUser
+            */
+            authorizeAdminRecordingUser: authorization.authorizeAdminRecordingUser
         }
     });
 
