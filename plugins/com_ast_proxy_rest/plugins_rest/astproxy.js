@@ -82,6 +82,7 @@ var compConfigManager;
         * 1. [`astproxy/cf/:endpoint`](#cfget)
         * 1. [`astproxy/dnd/:endpoint`](#dndget)
         * 1. [`astproxy/queues`](#queuesget)
+        * 1. [`astproxy/trunks`](#trunksget)
         * 1. [`astproxy/opgroups`](#opgroupsget)
         * 1. [`astproxy/parkings`](#parkingsget)
         * 1. [`astproxy/extensions`](#extensionsget)
@@ -107,6 +108,12 @@ var compConfigManager;
         * ### <a id="queuesget">**`astproxy/queues`**</a>
         *
         * Gets the queues of the operator panel of the user.
+        *
+        * ---
+        *
+        * ### <a id="trunksget">**`astproxy/trunks`**</a>
+        *
+        * Gets the trunks of the operator panel of the user.
         *
         * ---
         *
@@ -363,6 +370,7 @@ var compConfigManager;
                 * @type {array}
                 *
                 *   @param {string} queues             Gets all the queues of the operator panel of the user
+                *   @param {string} trunks             Gets all the trunks of the operator panel of the user
                 *   @param {string} opgroups           Gets all the groups of the operator panel of the user
                 *   @param {string} parkings           Gets all the parkings with all their status informations
                 *   @param {string} extensions         Gets all the extensions with all their status informations
@@ -371,6 +379,7 @@ var compConfigManager;
                 */
                 'get' : [
                     'queues',
+                    'trunks',
                     'opgroups',
                     'parkings',
                     'extensions',
@@ -514,6 +523,38 @@ var compConfigManager;
                     if (compAuthorization.authorizeOpQueuesUser(username) !== true) {
 
                         logger.warn(IDLOG, 'requesting queues: authorization failed for user "' + username + '"');
+                        sendHttp401(res);
+                        return;
+                    }
+
+                    var queues = compAstProxy.getJSONQueues();
+                    logger.info(IDLOG, 'sent all queues in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
+                    res.send(200, queues);
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    sendHttp500(res, err.toString());
+                }
+            },
+
+            /**
+            * Gets all the trunks with all their status informations with the following REST API:
+            *
+            *     GET trunks
+            *
+            * @method trunks
+            * @param {object}   req  The client request.
+            * @param {object}   res  The client response.
+            * @param {function} next Function to run the next handler in the chain.
+            */
+            trunks: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check if the user has the operator panel authorization
+                    if (compAuthorization.authorizeOpTrunksUser(username) !== true) {
+
+                        logger.warn(IDLOG, 'requesting trunks: authorization failed for user "' + username + '"');
                         sendHttp401(res);
                         return;
                     }
@@ -1437,6 +1478,7 @@ var compConfigManager;
         exports.park                 = astproxy.park;
         exports.call                 = astproxy.call;
         exports.queues               = astproxy.queues;
+        exports.trunks               = astproxy.trunks;
         exports.hangup               = astproxy.hangup;
         exports.opgroups             = astproxy.opgroups;
         exports.parkings             = astproxy.parkings;

@@ -551,6 +551,28 @@ function authorizeOpParkingsUser(username) {
 }
 
 /**
+* Returns true if the specified user has the authorization to view all trunks
+* with their complete status informations.
+*
+* @method authorizeOpTrunksUser
+* @param  {string}  username The username
+* @return {boolean} True if the user has the authorization to view all trunks.
+*/
+function authorizeOpTrunksUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.trunks, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
 * Returns true if the specified user has the authorization to view all queues
 * with their complete status informations.
 *
@@ -1035,6 +1057,7 @@ exports.authorizeChatUser             = authorizeChatUser;
 exports.authorizePickupUser           = authorizePickupUser;
 exports.authorizePostitUser           = authorizePostitUser;
 exports.authorizeIntrudeUser          = authorizeIntrudeUser;
+exports.authorizeOpTrunksUser         = authorizeOpTrunksUser;
 exports.authorizeAdminSmsUser         = authorizeAdminSmsUser;
 exports.authorizeOpQueuesUser         = authorizeOpQueuesUser;
 exports.authorizeAdminCdrUser         = authorizeAdminCdrUser;

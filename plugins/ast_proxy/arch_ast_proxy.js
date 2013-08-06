@@ -140,6 +140,13 @@ module.exports = function (options, imports, register) {
             getJSONQueues: astProxy.proxyLogic.getJSONQueues,
 
             /**
+            * It's the _getJSONTrunks_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method getJSONTrunks
+            */
+            getJSONTrunks: astProxy.proxyLogic.getJSONTrunks,
+
+            /**
             * It's the _getJSONParkings_ method provided by _ast\_proxy.proxyLogic_.
             *
             * @method getJSONParkings

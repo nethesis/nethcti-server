@@ -952,6 +952,24 @@ function getJSONQueues() {
 }
 
 /**
+* Returns the JSON representation of all trunks.
+*
+* @method getJSONTrunks
+* @return {object} The JSON representation of all trunks.
+*/
+function getJSONTrunks() {
+    try {
+        var tliteral = {};
+        var t;
+        for (t in trunks) { tliteral[t] = trunks[t].toJSON(); }
+        return tliteral;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Returns the JSON representation of all parkings.
 *
 * @method getJSONParkings
@@ -2944,6 +2962,7 @@ exports.setLogger                     = setLogger;
 exports.getExtensions                 = getExtensions;
 exports.pickupParking                 = pickupParking;
 exports.getJSONQueues                 = getJSONQueues;
+exports.getJSONTrunks                 = getJSONTrunks;
 exports.getJSONParkings               = getJSONParkings;
 exports.sendDTMFSequence              = sendDTMFSequence;
 exports.parkConversation              = parkConversation;
