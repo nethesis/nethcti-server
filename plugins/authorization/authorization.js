@@ -529,6 +529,48 @@ function authorizePhoneRedirectUser(username) {
 }
 
 /**
+* Returns true if the specified user has the authorization to the attended transfer calls.
+*
+* @method authorizeAttendedTransferUser
+* @param  {string}  username The username
+* @return {boolean} True if the user has the attended transfer calls authorization.
+*/
+function authorizeAttendedTransferUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.attended_transfer, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
+* Returns true if the specified user has the administration transfer authorization.
+*
+* @method authorizeAdminTransferUser
+* @param  {string}  username The username
+* @return {boolean} True if the user has the administration transfer authorization.
+*/
+function authorizeAdminTransferUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.admin_transfer, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
 * Returns true if the specified user has the authorization to view all parkings
 * with their complete status informations.
 *
@@ -1075,9 +1117,11 @@ exports.authorizeAdminHangupUser      = authorizeAdminHangupUser;
 exports.authorizeAdminPickupUser      = authorizeAdminPickupUser;
 exports.authorizeCustomerCardUser     = authorizeCustomerCardUser;
 exports.authorizeOpExtensionsUser     = authorizeOpExtensionsUser;
+exports.authorizeAdminTransferUser    = authorizeAdminTransferUser;
 exports.authorizePhoneRedirectUser    = authorizePhoneRedirectUser;
 exports.authorizeAdminRecordingUser   = authorizeAdminRecordingUser;
 exports.getAuthorizedOperatorGroups   = getAuthorizedOperatorGroups;
 exports.authorizeOperatorGroupsUser   = authorizeOperatorGroupsUser;
 exports.authorizeStreamingSourceUser  = authorizeStreamingSourceUser;
 exports.getAuthorizedStreamingSources = getAuthorizedStreamingSources;
+exports.authorizeAttendedTransferUser = authorizeAttendedTransferUser;

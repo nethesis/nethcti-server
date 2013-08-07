@@ -70,6 +70,20 @@ module.exports = function (options, imports, register) {
             authorizeOpTrunksUser: authorization.authorizeOpTrunksUser,
 
             /**
+            * It's the _authorizeAdminTransferUser_ method provided by _authorization_ module.
+            *
+            * @method authorizeAdminTransferUser
+            */
+            authorizeAdminTransferUser: authorization.authorizeAdminTransferUser,
+
+            /**
+            * It's the _authorizeAttendedTransferUser_ method provided by _authorization_ module.
+            *
+            * @method authorizeAttendedTransferUser
+            */
+            authorizeAttendedTransferUser: authorization.authorizeAttendedTransferUser,
+
+            /**
             * It's the _authorizePickupUser_ method provided by _authorization_ module.
             *
             * @method authorizePickupUser

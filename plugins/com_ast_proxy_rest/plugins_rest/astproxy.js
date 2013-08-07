@@ -141,13 +141,14 @@ var compConfigManager;
         * 1. [`astproxy/dnd`](#dndpost)
         * 1. [`astproxy/park`](#parkpost)
         * 1. [`astproxy/call`](#callpost)
+        * 1. [`astproxy/atxfer](#atxferpost)
         * 1. [`astproxy/hangup`](#hanguppost)
-        * 1. [`astproxy/redirect`](#redirectpost)
         * 1. [`astproxy/stop_spy`](#stop_spypost)
         * 1. [`astproxy/start_spy`](#start_spypost)
         * 1. [`astproxy/pickup_conv`](#pickup_convpost)
         * 1. [`astproxy/stop_record`](#stop_recordpost)
         * 1. [`astproxy/start_record`](#start_recordpost)
+        * 1. [`astproxy/blindtransfer`](#blindtransferpost)
         * 1. [`astproxy/pickup_parking`](#pickup_parkingpost)
         * 1. [`astproxy/start_spyspeak`](#start_spyspeakpost)
         *
@@ -235,19 +236,35 @@ var compConfigManager;
         *
         * ---
         *
-        * ### <a id="redirectpost">**`astproxy/redirect`**</a>
+        * ### <a id="blindtransferpost">**`astproxy/blindtransfer`**</a>
         *
-        * Redirects the specified conversation. The user can redirect only his conversations. The request
-        * must contains the following parameters:
+        * Transfer the conversation to the specified destination with blind type. The request must contains the
+        * following parameters:
         *
-        * * `to: the destination number to redirect the conversation`
+        * * `to: the destination number to blind transfer the conversation`
         * * `convid: the conversation identifier`
-        * * `endpointId: the endpoint identifier of the user who has the conversation to redirect`
-        * * `endpointType: the type of the endpoint of the user who has the conversation to redirect`
+        * * `endpointId: the endpoint identifier of the user who has the conversation to blind transfer`
+        * * `endpointType: the type of the endpoint of the user who has the conversation to blind transfer`
         *
         * E.g. using curl:
         *
-        *     curl --insecure -i -X POST -d '{ "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "214", "to": "0123456789" }' https://192.168.5.224:8282/astproxy/redirect
+        *     curl --insecure -i -X POST -d '{ "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "214", "to": "0123456789" }' https://192.168.5.224:8282/astproxy/blindtransfer
+        *
+        * ---
+        *
+        * ### <a id="atxferpost">**`astproxy/atxfer`**</a>
+        *
+        * Attended transfer the conversation to the specified destination. The request must contains the
+        * following parameters:
+        *
+        * * `to: the destination number to blind transfer the conversation`
+        * * `convid: the conversation identifier`
+        * * `endpointId: the endpoint identifier of the user who has the conversation to attended transfer`
+        * * `endpointType: the type of the endpoint of the user who has the conversation to attended transfer`
+        *
+        * E.g. using curl:
+        *
+        *     curl --insecure -i -X POST -d '{ "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "214", "to": "221" }' https://192.168.5.224:8282/astproxy/atxfer
         *
         * ---
         *
@@ -397,13 +414,14 @@ var compConfigManager;
                 *   @param {string} dnd            Sets the don't disturb status of the endpoint of the user
                 *   @param {string} park           Park a conversation of the user
                 *   @param {string} call           Make a new call
+                *   @param {string} atxfer         Transfer a conversation with attended type
                 *   @param {string} hangup         Hangup a conversation
-                *   @param {string} redirect       Redirect a conversation
                 *   @param {string} stop_spy       Stop the spy of a conversation
                 *   @param {string} start_spy      Spy a conversation with only listening
                 *   @param {string} pickup_conv    Pickup a conversation
                 *   @param {string} stop_record    Stop the recording of a conversation
                 *   @param {string} start_record   Start the recording of a conversation
+                *   @param {string} blindtransfer  Transfer a conversation with blind type
                 *   @param {string} pickup_parking Pickup a parked call
                 *   @param {string} start_spyspeak Spy and speak in a conversation
                 */
@@ -412,13 +430,14 @@ var compConfigManager;
                     'dnd',
                     'park',
                     'call',
+                    'atxfer',
                     'hangup',
-                    'redirect',
                     'stop_spy',
                     'start_spy',
                     'pickup_conv',
                     'stop_record',
                     'start_record',
+                    'blindtransfer',
                     'pickup_parking',
                     'start_spyspeak'
                 ],
@@ -846,24 +865,24 @@ var compConfigManager;
                 }
             },
 
-             /**
-            * Redirect a conversation with the following REST API:
+            /**
+            * Transfer a conversation with attended type with the following REST API:
             *
-            *     POST redirect
+            *     POST atxfer
             *
-            * @method redirect
-            * @param {object}   req  The client request.
-            * @param {object}   res  The client response.
-            * @param {function} next Function to run the next handler in the chain.
+            * @method atxfer
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
             */
-            redirect: function (req, res, next) {
+            atxfer: function (req, res, next) {
                 try {
                     var username = req.headers.authorization_user;
 
                     // check parameters
-                    if (   typeof req.params              !== 'object'
-                        || typeof req.params.convid       !== 'string' || typeof req.params.to           !== 'string'
-                        || typeof req.params.endpointId   !== 'string' || typeof req.params.endpointType !== 'string') {
+                    if (   typeof req.params            !== 'object'
+                        || typeof req.params.convid     !== 'string' || typeof req.params.to           !== 'string'
+                        || typeof req.params.endpointId !== 'string' || typeof req.params.endpointType !== 'string') {
 
                         sendHttp400(res);
                         return;
@@ -871,39 +890,135 @@ var compConfigManager;
 
                     if (req.params.endpointType === 'extension') {
 
-                        // check if the user has the permission to redirect the specified conversation
-                        // TODO
+                        // check if the user has the attended transfer authorization
+                        if (compAuthorization.authorizeAttendedTransferUser(username) !== true) {
 
-                        // check if the endpoint of the request is owned by the user
+                            logger.warn(IDLOG, 'attended transfer convid "' + req.params.convid + '": authorization failed for user "' + username + '"');
+                            sendHttp403(res);
+                            return;
+                        }
+
+                        // check if the endpoint of the request is owned by the user. The user can
+                        // attended transfer only his own conversations
                         if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
-                            logger.warn(IDLOG, 'redirect convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
-                                               ' the ' + req.params.endpointType + ' ' + req.params.endpointId + ' isn\'t owned by the user');
-                            sendHttp401(res);
+                            logger.warn(IDLOG, 'attended transfer convid "' + req.params.convid + '" by user "' + username +
+                                               '" has been failed: ' + ' the ' + req.params.endpointType + ' ' + req.params.endpointId +
+                                               ' isn\'t owned by the user');
+                            sendHttp403(res);
                             return;
 
                         } else {
-                            logger.info(IDLOG, 'the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' is owned by "' + username + '"');
+                            logger.info(IDLOG, 'attended transfer convid "' + req.params.convid + '": the endpoint ' + req.params.endpointType +
+                                               ' ' + req.params.endpointId + ' is owned by "' + username + '"');
                         }
 
-                        compAstProxy.redirectConversation(req.params.endpointType, req.params.endpointId, req.params.convid, req.params.to, function (err) {
-                            try {
-                                if (err) {
-                                    logger.warn(IDLOG, 'redirect convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId + ' has been failed');
-                                    sendHttp500(res, err.toString());
-                                    return;
-                                }
-                                logger.info(IDLOG, 'convid ' + req.params.convid + ' has been redirected successfully by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId);
-                                sendHttp200(res);
+                        compAstProxy.attendedTransferConversation(
+                            req.params.endpointType,
+                            req.params.endpointId,
+                            req.params.convid,
+                            req.params.to,
+                            function (err) {
+                                try {
+                                    if (err) {
+                                        logger.warn(IDLOG, 'attended transfer convid "' + req.params.convid + '" by user "' + username +
+                                                           '" with ' + req.params.endpointType + ' ' + req.params.endpointId +
+                                                           ' has been failed');
+                                        sendHttp500(res, err.toString());
+                                        return;
+                                    }
+                                    logger.info(IDLOG, 'attended transfer convid ' + req.params.convid + ' has been attended transfered ' +
+                                                       'successfully by user "' + username + '" with ' + req.params.endpointType +
+                                                       ' ' + req.params.endpointId);
+                                    sendHttp200(res);
 
-                            } catch (err) {
-                                logger.error(IDLOG, err.stack);
-                                sendHttp500(res, err.toString());
+                                } catch (err) {
+                                    logger.error(IDLOG, err.stack);
+                                    sendHttp500(res, err.toString());
+                                }
                             }
-                        });
+                        );
 
                     } else {
-                        logger.warn(IDLOG, 'redirecting the conversation ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType);
+                        logger.warn(IDLOG, 'attended transfering convid ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType);
+                        sendHttp400(res);
+                    }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    sendHttp500(res, err.toString());
+                }
+            },
+
+            /**
+            * Transfer a conversation with blind type with the following REST API:
+            *
+            *     POST blindtransfer
+            *
+            * @method blindtransfer
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            blindtransfer: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (   typeof req.params            !== 'object'
+                        || typeof req.params.convid     !== 'string' || typeof req.params.to           !== 'string'
+                        || typeof req.params.endpointId !== 'string' || typeof req.params.endpointType !== 'string') {
+
+                        sendHttp400(res);
+                        return;
+                    }
+
+                    if (req.params.endpointType === 'extension') {
+
+                        // check if the user has the authorization to blind transfer the call of all extensions
+                        if (compAuthorization.authorizeAdminTransferUser(username) !== true) {
+
+                            logger.info(IDLOG, 'blind transfer convid ' + req.params.convid + ': admin transfer authorization successful for user "' + username + '"');
+                        }
+                        // check if the endpoint of the request is owned by the user
+                        else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+
+                            logger.warn(IDLOG, 'blind transfer convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
+                                               ' the ' + req.params.endpointType + ' ' + req.params.endpointId + ' isn\'t owned by the user');
+                            sendHttp403(res);
+                            return;
+
+                        } else {
+                            logger.info(IDLOG, 'blind transfer convid "' + req.params.convid + '": the endpoint ' + req.params.endpointType +
+                                               ' ' + req.params.endpointId + ' is owned by "' + username + '"');
+                        }
+
+                        compAstProxy.redirectConversation(
+                            req.params.endpointType,
+                            req.params.endpointId,
+                            req.params.convid,
+                            req.params.to,
+                            function (err) {
+                                try {
+                                    if (err) {
+                                        logger.warn(IDLOG, 'blind transfer convid "' + req.params.convid + '" by user "' + username + '" with ' +
+                                                           req.params.endpointType + ' ' + req.params.endpointId + ' has been failed');
+                                        sendHttp500(res, err.toString());
+                                        return;
+                                    }
+                                    logger.info(IDLOG, 'convid ' + req.params.convid + ' has been blind transfered successfully by user "' +
+                                                       username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId);
+                                    sendHttp200(res);
+
+                                } catch (err) {
+                                    logger.error(IDLOG, err.stack);
+                                    sendHttp500(res, err.toString());
+                                }
+                            }
+                        );
+
+                    } else {
+                        logger.warn(IDLOG, 'blind transfering the convid ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType);
                         sendHttp400(res);
                     }
 
@@ -1480,9 +1595,9 @@ var compConfigManager;
         exports.queues               = astproxy.queues;
         exports.trunks               = astproxy.trunks;
         exports.hangup               = astproxy.hangup;
+        exports.atxfer               = astproxy.atxfer;
         exports.opgroups             = astproxy.opgroups;
         exports.parkings             = astproxy.parkings;
-        exports.redirect             = astproxy.redirect;
         exports.stop_spy             = astproxy.stop_spy;
         exports.start_spy            = astproxy.start_spy;
         exports.setLogger            = setLogger;
@@ -1491,6 +1606,7 @@ var compConfigManager;
         exports.stop_record          = astproxy.stop_record;
         exports.setCompUser          = setCompUser;
         exports.start_record         = astproxy.start_record;
+        exports.blindtransfer        = astproxy.blindtransfer;
         exports.pickup_parking       = astproxy.pickup_parking;
         exports.start_spyspeak       = astproxy.start_spyspeak;
         exports.setCompOperator      = setCompOperator;

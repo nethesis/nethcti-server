@@ -345,7 +345,7 @@ function importModels() {
             path = __dirname + '/sequelize_models/' + k;
             if (fs.existsSync(path + '.js') === true) {
                 models[k] = dbConn[k].import(path);
-                logger.info(IDLOG, '\n\n\nloaded sequelize model ' + path);
+                logger.info(IDLOG, 'loaded sequelize model ' + path);
             }
         }
         logger.info(IDLOG, 'all sequelize models have been imported');
