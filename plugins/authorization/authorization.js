@@ -378,6 +378,27 @@ function authorizeSmsUser(username) {
 }
 
 /**
+* Returns true if the specified user has the privacy enabled.
+*
+* @method isPrivacyEnabled
+* @param  {string}  username The username
+* @return {boolean} True if the user has the privacy enabled.
+*/
+function isPrivacyEnabled(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.privacy, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns true for security reasons
+        return true;
+    }
+}
+
+/**
 * Returns true if the specified user has the administration sms authorization.
 *
 * @method authorizeAdminSmsUser
@@ -1094,6 +1115,7 @@ exports.hasNoSpyEnabled               = hasNoSpyEnabled;
 exports.authorizeSpyUser              = authorizeSpyUser;
 exports.authorizeDndUser              = authorizeDndUser;
 exports.authorizeCdrUser              = authorizeCdrUser;
+exports.isPrivacyEnabled              = isPrivacyEnabled;
 exports.authorizeSmsUser              = authorizeSmsUser;
 exports.authorizeChatUser             = authorizeChatUser;
 exports.authorizePickupUser           = authorizePickupUser;

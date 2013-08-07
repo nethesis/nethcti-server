@@ -18,6 +18,16 @@
 var IDLOG = '[plugins_rest/astproxy]';
 
 /**
+* The string used to hide phone numbers in privacy mode.
+*
+* @property privacyStrReplace
+* @type {string}
+* @private
+* @default "xxx"
+*/
+var privacyStrReplace = 'xxx';
+
+/**
 * The logger. It must have at least three methods: _info, warn and error._
 *
 * @property logger
@@ -514,9 +524,17 @@ var compConfigManager;
                         return;
                     }
 
-                    var extensions = compAstProxy.getJSONParkings();
+                    var parkings;
+
+                    // check if the user has the privacy enabled
+                    if (compAuthorization.isPrivacyEnabled(username) === true) {
+                        parkings = compAstProxy.getJSONParkings(privacyStrReplace);
+                    } else {
+                        parkings = compAstProxy.getJSONParkings();
+                    }
+
                     logger.info(IDLOG, 'sent all parkings in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
-                    res.send(200, extensions);
+                    res.send(200, parkings);
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
@@ -546,7 +564,15 @@ var compConfigManager;
                         return;
                     }
 
-                    var queues = compAstProxy.getJSONQueues();
+                    var queues;
+
+                    // check if the user has the privacy enabled
+                    if (compAuthorization.isPrivacyEnabled(username) === true) {
+                        queues = compAstProxy.getJSONQueues(privacyStrReplace);
+                    } else {
+                        queues = compAstProxy.getJSONQueues();
+                    }
+
                     logger.info(IDLOG, 'sent all queues in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
                     res.send(200, queues);
 
@@ -578,9 +604,17 @@ var compConfigManager;
                         return;
                     }
 
-                    var queues = compAstProxy.getJSONQueues();
-                    logger.info(IDLOG, 'sent all queues in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
-                    res.send(200, queues);
+                    var trunks;
+
+                    // check if the user has the privacy enabled
+                    if (compAuthorization.isPrivacyEnabled(username) === true) {
+                        trunks = compAstProxy.getJSONTrunks(privacyStrReplace);
+                    } else {
+                        trunks = compAstProxy.getJSONTrunks();
+                    }
+
+                    logger.info(IDLOG, 'sent all trunks in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
+                    res.send(200, trunks);
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
@@ -610,7 +644,15 @@ var compConfigManager;
                         return;
                     }
 
-                    var extensions = compAstProxy.getJSONExtensions();
+                    var extensions;
+
+                    // check if the user has the privacy enabled
+                    if (compAuthorization.isPrivacyEnabled(username) === true) {
+                        extensions = compAstProxy.getJSONExtensions(privacyStrReplace);
+                    } else {
+                        extensions = compAstProxy.getJSONExtensions();
+                    }
+
                     logger.info(IDLOG, 'sent all extensions in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
                     res.send(200, extensions);
 
@@ -1602,6 +1644,7 @@ var compConfigManager;
         exports.start_spy            = astproxy.start_spy;
         exports.setLogger            = setLogger;
         exports.extensions           = astproxy.extensions;
+        exports.setPrivacy           = setPrivacy;
         exports.pickup_conv          = astproxy.pickup_conv;
         exports.stop_record          = astproxy.stop_record;
         exports.setCompUser          = setCompUser;
@@ -1618,6 +1661,21 @@ var compConfigManager;
         logger.error(IDLOG, err.stack);
     }
 })();
+
+/**
+* Sets the string used to hide last digits of phone numbers in privacy mode.
+*
+* @method setPrivacy
+* @param {object} str The string used to hide last digits of phone numbers.
+*/
+function setPrivacy(str) {
+    try {
+        privacyStrReplace = str;
+        logger.info(IDLOG, 'set privacy with string ' + privacyStrReplace);
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
 
 /**
 * Set configuration manager architect component used by configuration functions.

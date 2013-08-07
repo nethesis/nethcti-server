@@ -937,13 +937,14 @@ function queueDetails(err, resp) {
 * Returns the JSON representation of all queues.
 *
 * @method getJSONQueues
+* @param  {string} [privacyStr] If it's specified, it hides the last digits of the phone number
 * @return {object} The JSON representation of all queues.
 */
-function getJSONQueues() {
+function getJSONQueues(privacyStr) {
     try {
         var qliteral = {};
         var q;
-        for (q in queues) { qliteral[q] = queues[q].toJSON(); }
+        for (q in queues) { qliteral[q] = queues[q].toJSON(privacyStr); }
         return qliteral;
 
     } catch (err) {
@@ -955,13 +956,14 @@ function getJSONQueues() {
 * Returns the JSON representation of all trunks.
 *
 * @method getJSONTrunks
+* @param  {string} [privacyStr] If it's specified, it hides the last digits of the phone number
 * @return {object} The JSON representation of all trunks.
 */
-function getJSONTrunks() {
+function getJSONTrunks(privacyStr) {
     try {
         var tliteral = {};
         var t;
-        for (t in trunks) { tliteral[t] = trunks[t].toJSON(); }
+        for (t in trunks) { tliteral[t] = trunks[t].toJSON(privacyStr); }
         return tliteral;
 
     } catch (err) {
@@ -973,13 +975,14 @@ function getJSONTrunks() {
 * Returns the JSON representation of all parkings.
 *
 * @method getJSONParkings
+* @param  {string} [privacyStr] If it's specified, it hides the last digits of the phone number
 * @return {object} The JSON representation of all parkings.
 */
-function getJSONParkings() {
+function getJSONParkings(privacyStr) {
     try {
         var p;
         var pliteral = {};
-        for (p in parkings) { pliteral[p] = parkings[p].toJSON(); }
+        for (p in parkings) { pliteral[p] = parkings[p].toJSON(privacyStr); }
         return pliteral;
 
     } catch (err) {
@@ -992,13 +995,14 @@ function getJSONParkings() {
 * occurs it returns an empty object.
 *
 * @method getJSONExtensions
+* @param  {string} [privacyStr] If it's specified, it hides the last digits of the phone number
 * @return {object} The JSON representation of the all extensions.
 */
-function getJSONExtensions() {
+function getJSONExtensions(privacyStr) {
     try {
         var eliteral = {};
         var ext;
-        for (ext in extensions) { eliteral[ext] = extensions[ext].toJSON(); }
+        for (ext in extensions) { eliteral[ext] = extensions[ext].toJSON(privacyStr); }
         return eliteral;
 
     } catch (err) {

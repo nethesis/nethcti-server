@@ -270,7 +270,14 @@ module.exports = function (options, imports, register) {
             *
             * @method authorizeAdminRecordingUser
             */
-            authorizeAdminRecordingUser: authorization.authorizeAdminRecordingUser
+            authorizeAdminRecordingUser: authorization.authorizeAdminRecordingUser,
+
+            /**
+            * It's the _isPrivacyEnabled_ method provided by _authorization_ module.
+            *
+            * @method isPrivacyEnabled
+            */
+            isPrivacyEnabled: authorization.isPrivacyEnabled
         }
     });
 
