@@ -91,6 +91,13 @@ module.exports = function (options, imports, register) {
             redirectConversation: astProxy.proxyLogic.redirectConversation,
 
             /**
+            * It's the _attendedTransferConversation_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method attendedTransferConversation
+            */
+            attendedTransferConversation: astProxy.proxyLogic.attendedTransferConversation,
+
+            /**
             * It's the _call_ method provided by _ast\_proxy.proxyLogic_.
             *
             * @method call
@@ -138,6 +145,13 @@ module.exports = function (options, imports, register) {
             * @method getJSONQueues
             */
             getJSONQueues: astProxy.proxyLogic.getJSONQueues,
+
+            /**
+            * It's the _getJSONTrunks_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method getJSONTrunks
+            */
+            getJSONTrunks: astProxy.proxyLogic.getJSONTrunks,
 
             /**
             * It's the _getJSONParkings_ method provided by _ast\_proxy.proxyLogic_.

@@ -176,14 +176,15 @@ exports.QueueWaitingCaller = function (data) {
     *     }
     *
     * @method toJSON
+    * @param  {string} [privacyStr] If it's specified, it hides the last digits of the phone number
     * @return {object} The JSON representation of the object.
     */
-    function toJSON() {
+    function toJSON(privacyStr) {
 
         updateWaiting();
 
         return {
-            num:      num,
+            num:      privacyStr ? ( num.slice(0, -privacyStr.length) + privacyStr ) : num,
             name:     name,
             queue:    queue,
             waiting:  waiting,

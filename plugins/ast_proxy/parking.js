@@ -99,13 +99,14 @@ exports.Parking = function (parkingNum) {
     * Returns the JSON representation of the object.
     *
     * @method toJSON
+    * @param  {string} [privacyStr] If it's specified, it hides the last digits of the phone number
     * @return {object} The JSON representation of the object.
     */
-    function toJSON() {
+    function toJSON(privacyStr) {
         return {
             name:         name,
             parking:      parking,
-            parkedCaller: parkedCaller ? parkedCaller.toJSON() : {}
+            parkedCaller: parkedCaller ? parkedCaller.toJSON(privacyStr) : {}
         }
     }
 

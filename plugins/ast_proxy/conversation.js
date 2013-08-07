@@ -159,16 +159,17 @@ exports.Conversation = function (sourceChan, destChan) {
     *     }
     *
     * @method toJSON
+    * @param  {string} [privacyStr] If it's specified, it hides the last digits of the phone number
     * @return {object} The JSON representation of the object.
     */
-    function toJSON() {
+    function toJSON(privacyStr) {
 
         updateDuration();
 
         return {
             id:        id,
-            chDest:    chDest   ? chDest.toJSON()   : null,
-            chSource:  chSource ? chSource.toJSON() : null,
+            chDest:    chDest   ? chDest.toJSON(privacyStr)   : null,
+            chSource:  chSource ? chSource.toJSON(privacyStr) : null,
             duration:  duration,
             recording: recording
         };

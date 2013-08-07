@@ -378,6 +378,27 @@ function authorizeSmsUser(username) {
 }
 
 /**
+* Returns true if the specified user has the privacy enabled.
+*
+* @method isPrivacyEnabled
+* @param  {string}  username The username
+* @return {boolean} True if the user has the privacy enabled.
+*/
+function isPrivacyEnabled(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.privacy, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns true for security reasons
+        return true;
+    }
+}
+
+/**
 * Returns true if the specified user has the administration sms authorization.
 *
 * @method authorizeAdminSmsUser
@@ -529,6 +550,48 @@ function authorizePhoneRedirectUser(username) {
 }
 
 /**
+* Returns true if the specified user has the authorization to the attended transfer calls.
+*
+* @method authorizeAttendedTransferUser
+* @param  {string}  username The username
+* @return {boolean} True if the user has the attended transfer calls authorization.
+*/
+function authorizeAttendedTransferUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.attended_transfer, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
+* Returns true if the specified user has the administration transfer authorization.
+*
+* @method authorizeAdminTransferUser
+* @param  {string}  username The username
+* @return {boolean} True if the user has the administration transfer authorization.
+*/
+function authorizeAdminTransferUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.admin_transfer, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
 * Returns true if the specified user has the authorization to view all parkings
 * with their complete status informations.
 *
@@ -542,6 +605,28 @@ function authorizeOpParkingsUser(username) {
         if (typeof username !== 'string') { throw new Error('wrong parameter'); }
 
         return authorizeUser(authorizationTypes.TYPES.parkings, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
+* Returns true if the specified user has the authorization to view all trunks
+* with their complete status informations.
+*
+* @method authorizeOpTrunksUser
+* @param  {string}  username The username
+* @return {boolean} True if the user has the authorization to view all trunks.
+*/
+function authorizeOpTrunksUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.trunks, username);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -1030,11 +1115,13 @@ exports.hasNoSpyEnabled               = hasNoSpyEnabled;
 exports.authorizeSpyUser              = authorizeSpyUser;
 exports.authorizeDndUser              = authorizeDndUser;
 exports.authorizeCdrUser              = authorizeCdrUser;
+exports.isPrivacyEnabled              = isPrivacyEnabled;
 exports.authorizeSmsUser              = authorizeSmsUser;
 exports.authorizeChatUser             = authorizeChatUser;
 exports.authorizePickupUser           = authorizePickupUser;
 exports.authorizePostitUser           = authorizePostitUser;
 exports.authorizeIntrudeUser          = authorizeIntrudeUser;
+exports.authorizeOpTrunksUser         = authorizeOpTrunksUser;
 exports.authorizeAdminSmsUser         = authorizeAdminSmsUser;
 exports.authorizeOpQueuesUser         = authorizeOpQueuesUser;
 exports.authorizeAdminCdrUser         = authorizeAdminCdrUser;
@@ -1052,9 +1139,11 @@ exports.authorizeAdminHangupUser      = authorizeAdminHangupUser;
 exports.authorizeAdminPickupUser      = authorizeAdminPickupUser;
 exports.authorizeCustomerCardUser     = authorizeCustomerCardUser;
 exports.authorizeOpExtensionsUser     = authorizeOpExtensionsUser;
+exports.authorizeAdminTransferUser    = authorizeAdminTransferUser;
 exports.authorizePhoneRedirectUser    = authorizePhoneRedirectUser;
 exports.authorizeAdminRecordingUser   = authorizeAdminRecordingUser;
 exports.getAuthorizedOperatorGroups   = getAuthorizedOperatorGroups;
 exports.authorizeOperatorGroupsUser   = authorizeOperatorGroupsUser;
 exports.authorizeStreamingSourceUser  = authorizeStreamingSourceUser;
 exports.getAuthorizedStreamingSources = getAuthorizedStreamingSources;
+exports.authorizeAttendedTransferUser = authorizeAttendedTransferUser;

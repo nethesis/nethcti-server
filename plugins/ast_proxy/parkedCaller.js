@@ -158,18 +158,19 @@ exports.ParkedCaller = function (data) {
     *     }
     *
     * @method toJSON
+    * @param  {string} [privacyStr] If it's specified, it hides the last digits of the phone number
     * @return {object} The JSON representation of the object.
     */
-    function toJSON() {
+    function toJSON(privacyStr) {
 
         updateTimeout();
 
         return {
-            num:          num,
-            name:         name,
-            parking:      parking,
-            channel:      channel,
-            timeout:      timeout
+            num:     privacyStr ? ( num.slice(0, -privacyStr.length) + privacyStr ) : num,
+            name:    name,
+            parking: parking,
+            channel: channel,
+            timeout: timeout
         }
     }
 

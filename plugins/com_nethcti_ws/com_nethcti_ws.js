@@ -28,16 +28,34 @@ var iniparser = require('iniparser');
 var IDLOG = '[com_nethcti_ws]';
 
 /**
-* The websocket room used to update clients with asterisk events.
+* The websocket rooms used to update clients with asterisk events.
 *
-* @property ROOM_OP_PANEL
+* @property WS_ROOM
+* @type {object}
+* @private
+* @final
+* @readOnly
+* @default {
+    AST_EVT_CLEAR:   "ast_evt_clear",
+    AST_EVT_PRIVACY: "ast_evt_privacy"
+}
+*/
+var WS_ROOM = {
+    AST_EVT_CLEAR:   'ast_evt_clear',
+    AST_EVT_PRIVACY: 'ast_evt_privacy'
+};
+
+/**
+* The string used to hide phone numbers in privacy mode.
+*
+* @property privacyStrReplace
 * @type {string}
 * @private
 * @final
 * @readOnly
-* @default "room_op_panel"
+* @default "xxx"
 */
-var ROOM_OP_PANEL = 'room_op_panel';
+var privacyStrReplace = 'xxx';
 
 /**
 * The websocket server port.
@@ -336,7 +354,13 @@ function extenChanged(exten) {
     try {
         logger.info(IDLOG, 'received event extenChanged for extension ' + exten.getExten());
         logger.info(IDLOG, 'emit event extenUpdate for extension ' + exten.getExten() + ' to websockets');
-        server.sockets.in(ROOM_OP_PANEL).emit('extenUpdate', exten.toJSON());
+
+        // emits the event with clear numbers to all users with privacy disabled
+        server.sockets.in(WS_ROOM.AST_EVT_CLEAR).emit('extenUpdate', exten.toJSON());
+
+        // emits the event with hide numbers to all users with privacy enabled
+        server.sockets.in(WS_ROOM.AST_EVT_PRIVACY).emit('extenUpdate', exten.toJSON(privacyStrReplace));
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -355,7 +379,13 @@ function queueChanged(queue) {
     try {
         logger.info(IDLOG, 'received event queueChanged for queue ' + queue.getQueue());
         logger.info(IDLOG, 'emit event queueUpdate for queue ' + queue.getQueue() + ' to websockets');
-        server.sockets.in(ROOM_OP_PANEL).emit('queueUpdate', queue.toJSON());
+
+        // emits the event with clear numbers to all users with privacy disabled
+        server.sockets.in(WS_ROOM.AST_EVT_CLEAR).emit('queueUpdate', queue.toJSON());
+
+        // emits the event with hide numbers to all users with privacy enabled
+        server.sockets.in(WS_ROOM.AST_EVT_PRIVACY).emit('queueUpdate', queue.toJSON(privacyStrReplace));
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -374,7 +404,13 @@ function parkingChanged(parking) {
     try {
         logger.info(IDLOG, 'received event parkingChanged for parking ' + parking.getParking());
         logger.info(IDLOG, 'emit event parkingUpdate for parking ' + parking.getParking() + ' to websockets');
-        server.sockets.in(ROOM_OP_PANEL).emit('parkingUpdate', parking.toJSON());
+
+        // emits the event with clear numbers to all users with privacy disabled
+        server.sockets.in(WS_ROOM.AST_EVT_CLEAR).emit('parkingUpdate', parking.toJSON());
+
+        // emits the event with hide numbers to all users with privacy enabled
+        server.sockets.in(WS_ROOM.AST_EVT_PRIVACY).emit('parkingUpdate', parking.toJSON(privacyStrReplace));
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -408,6 +444,36 @@ function config(path) {
     }
 
     logger.info(IDLOG, 'configuration by file ' + path + ' ended');
+}
+
+/**
+* Customize the privacy used to hide phone numbers by a configuration file.
+* The file must use the JSON syntax.
+*
+* **The method can throw an Exception.**
+*
+* @method configPrivacy
+* @param {string} path The path of the configuration file
+*/
+function configPrivacy(path) {
+    // check parameter
+    if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
+
+    // check file presence
+    if (!fs.existsSync(path)) { throw new Error(path + ' not exists'); }
+
+    // read configuration file
+    var json = require(path);
+
+    // initialize the string used to hide last digits of phone numbers
+    if (json.privacy_numbers) {
+        privacyStrReplace = json.privacy_numbers;
+
+    } else {
+        logger.warn(IDLOG, 'no privacy string has been specified in JSON file ' + path);
+    }
+
+    logger.info(IDLOG, 'privacy configuration by file ' + path + ' ended');
 }
 
 /**
@@ -1065,8 +1131,14 @@ function loginHdlr(socket, obj) {
             // if the user has the operator panel permission, than he will receive the asterisk events
             if (compAuthorization.authorizeOperatorPanelUser(obj.accessKeyId) === true) {
 
-                // join the user to the websocket room to receive the asterisk events
-                socket.join(ROOM_OP_PANEL);
+                if (compAuthorization.isPrivacyOn(obj.accessKeyId) === true) {
+                    // join the user to the websocket room to receive the asterisk events with hide numbers
+                    socket.join(WS_ROOM.AST_EVT_PRIVACY);
+
+                } else {
+                    // join the user to the websocket room to receive the asterisk events with clear numbers
+                    socket.join(WS_ROOM.AST_EVT_CLEAR);
+                }
             }
 
         } else { // authentication failed
@@ -1203,5 +1275,6 @@ exports.setLogger            = setLogger;
 exports.setAstProxy          = setAstProxy;
 exports.setOperator          = setOperator;
 exports.setCompUser          = setCompUser;
+exports.configPrivacy        = configPrivacy;
 exports.setCompVoicemail     = setCompVoicemail;
 exports.setCompAuthorization = setCompAuthorization;

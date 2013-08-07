@@ -937,14 +937,34 @@ function queueDetails(err, resp) {
 * Returns the JSON representation of all queues.
 *
 * @method getJSONQueues
+* @param  {string} [privacyStr] If it's specified, it hides the last digits of the phone number
 * @return {object} The JSON representation of all queues.
 */
-function getJSONQueues() {
+function getJSONQueues(privacyStr) {
     try {
         var qliteral = {};
         var q;
-        for (q in queues) { qliteral[q] = queues[q].toJSON(); }
+        for (q in queues) { qliteral[q] = queues[q].toJSON(privacyStr); }
         return qliteral;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Returns the JSON representation of all trunks.
+*
+* @method getJSONTrunks
+* @param  {string} [privacyStr] If it's specified, it hides the last digits of the phone number
+* @return {object} The JSON representation of all trunks.
+*/
+function getJSONTrunks(privacyStr) {
+    try {
+        var tliteral = {};
+        var t;
+        for (t in trunks) { tliteral[t] = trunks[t].toJSON(privacyStr); }
+        return tliteral;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -955,13 +975,14 @@ function getJSONQueues() {
 * Returns the JSON representation of all parkings.
 *
 * @method getJSONParkings
+* @param  {string} [privacyStr] If it's specified, it hides the last digits of the phone number
 * @return {object} The JSON representation of all parkings.
 */
-function getJSONParkings() {
+function getJSONParkings(privacyStr) {
     try {
         var p;
         var pliteral = {};
-        for (p in parkings) { pliteral[p] = parkings[p].toJSON(); }
+        for (p in parkings) { pliteral[p] = parkings[p].toJSON(privacyStr); }
         return pliteral;
 
     } catch (err) {
@@ -974,13 +995,14 @@ function getJSONParkings() {
 * occurs it returns an empty object.
 *
 * @method getJSONExtensions
+* @param  {string} [privacyStr] If it's specified, it hides the last digits of the phone number
 * @return {object} The JSON representation of the all extensions.
 */
-function getJSONExtensions() {
+function getJSONExtensions(privacyStr) {
     try {
         var eliteral = {};
         var ext;
-        for (ext in extensions) { eliteral[ext] = extensions[ext].toJSON(); }
+        for (ext in extensions) { eliteral[ext] = extensions[ext].toJSON(privacyStr); }
         return eliteral;
 
     } catch (err) {
@@ -2135,6 +2157,23 @@ function redirectConvCb(err) {
 }
 
 /**
+* This is the callback of _attendedTransfer_ command plugin.
+*
+* @method attendedTransferConvCb
+* @param {object} err The error object of the operation
+* @private
+*/
+function attendedTransferConvCb(err) {
+    try {
+        if (err) { logger.error(IDLOG, 'attended transfer conversation failed: ' + err.toString()); }
+        else     { logger.info(IDLOG, 'attended transfer channel successfully');                    }
+
+    } catch (error) {
+       logger.error(IDLOG, error.stack);
+    }
+}
+
+/**
 * This is the callback of the call command plugin.
 *
 * @method callCb
@@ -2249,12 +2288,86 @@ function redirectConversation(endpointType, endpointId, convid, to, cb) {
                 });
 
             } else {
-                logger.error(IDLOG, 'getting the channel to redirect ' + chToRedirect);
-                cb();
+                var msg = 'getting the channel to redirect ' + chToRedirect;
+                logger.error(IDLOG, msg);
+                cb(msg);
             }
+
+        } else {
+            var msg = 'redirect conversation: unknown endpointType ' + endpointType + ' or extension ' + endpointId + ' not present';
+            logger.warn(IDLOG, msg);
+            cb(msg);
         }
     } catch (err) {
         logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Attended transfer the conversation.
+*
+* @method attendedTransferConversation
+* @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
+* @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
+* @param {string}   convid       The conversation identifier
+* @param {string}   to           The destination number to redirect the conversation
+* @param {function} cb           The callback function
+*/
+function attendedTransferConversation(endpointType, endpointId, convid, to, cb) {
+    try {
+        // check parameters
+        if (   typeof convid     !== 'string'
+            || typeof cb         !== 'function' || typeof to           !== 'string'
+            || typeof endpointId !== 'string'   || typeof endpointType !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // check the endpoint existence
+        if (endpointType === 'extension' && extensions[endpointId]) {
+
+            var convs = extensions[endpointId].getAllConversations();
+            var conv  = convs[convid];
+
+            if (!conv) {
+                var msg = 'attended transfer convid "' + convid + '": no conversation present in extension ' + endpointId;
+                logger.warn(IDLOG, msg);
+                cb(msg);
+                return;
+            }
+
+            var chSource   = conv.getSourceChannel();
+            var callerNum  = chSource.getCallerNum();
+            var bridgedNum = chSource.getBridgedNum();
+
+            // attended transfer is only possible on own calls. So when the endpointId is the caller, the
+            // channel to transfer is the source channel, otherwise it's the destination channel
+            var chToTransfer = endpointId === chSource.getCallerNum() ? chSource.getChannel() : chSource.getBridgedChannel();
+
+            if (chToTransfer !== undefined) {
+
+                // attended transfer the channel
+                logger.info(IDLOG, 'attended transfer of the channel ' + chToTransfer + ' of exten ' + endpointId + ' to ' + to);
+                astProxy.doCmd({ command: 'attendedTransfer', chToTransfer: chToTransfer, to: to }, function (err) {
+                    cb(err);
+                    attendedTransferConvCb(err);
+                });
+
+            } else {
+                var msg = 'attended transfer: no channel to transfer ' + chToTransfer;
+                logger.error(IDLOG, msg);
+                cb(msg);
+            }
+
+        } else {
+            var msg = 'attended transfer conversation: unknown endpointType ' + endpointType + ' or extension ' + endpointId + ' not present';
+            logger.warn(IDLOG, msg);
+            cb(msg);
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
     }
 }
 
@@ -2944,6 +3057,7 @@ exports.setLogger                     = setLogger;
 exports.getExtensions                 = getExtensions;
 exports.pickupParking                 = pickupParking;
 exports.getJSONQueues                 = getJSONQueues;
+exports.getJSONTrunks                 = getJSONTrunks;
 exports.getJSONParkings               = getJSONParkings;
 exports.sendDTMFSequence              = sendDTMFSequence;
 exports.parkConversation              = parkConversation;
@@ -2967,4 +3081,5 @@ exports.evtConversationConnected      = evtConversationConnected;
 exports.startSpySpeakConversation     = startSpySpeakConversation;
 exports.startSpyListenConversation    = startSpyListenConversation;
 exports.evtRemoveQueueWaitingCaller   = evtRemoveQueueWaitingCaller;
+exports.attendedTransferConversation  = attendedTransferConversation;
 exports.getExtensionsFromConversation = getExtensionsFromConversation;

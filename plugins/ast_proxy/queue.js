@@ -282,9 +282,10 @@ exports.Queue = function (queueNum) {
     *     }
     *
     * @method toJSON
+    * @param  {string} [privacyStr] If it's specified, it hides the last digits of the phone number
     * @return {object} The JSON representation of the object.
     */
-    function toJSON() {
+    function toJSON(privacyStr) {
 
         updateWaitingTimeOfWaitingCallers();
 
@@ -296,7 +297,7 @@ exports.Queue = function (queueNum) {
         for (k in members) { jsonMembers[k] = members[k].toJSON(); }
 
         // JSON representation of waiting callers
-        for (k in waitingCallers) { jsonWCallers[k] = waitingCallers[k].toJSON(); }
+        for (k in waitingCallers) { jsonWCallers[k] = waitingCallers[k].toJSON(privacyStr); }
 
         return {
             name:                name,

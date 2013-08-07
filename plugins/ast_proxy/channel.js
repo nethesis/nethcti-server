@@ -226,15 +226,17 @@ exports.Channel = function (obj) {
     *     }
     *
     * @method toJSON
+    * @param  {string} [privacyStr] If it's specified, it hides the last digits of the phone number
     * @return {object} The JSON representation of the object.
     */
-    function toJSON() {
+    function toJSON(privacyStr) {
+
         return {
             type:           type,
             channel:        channel,
-            callerNum:      callerNum,
+            callerNum:      privacyStr ? ( callerNum.slice(0, -privacyStr.length) + privacyStr ) : callerNum,
             callerName:     callerName,
-            bridgedNum:     bridgedNum,
+            bridgedNum:     privacyStr ? ( bridgedNum.slice(0, -privacyStr.length) + privacyStr ) : bridgedNum,
             bridgedName:    bridgedName,
             channelStatus:  channelStatus,
             bridgedChannel: bridgedChannel
