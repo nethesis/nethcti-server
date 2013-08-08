@@ -394,7 +394,7 @@ function configPrivacy(path) {
 * @param {string} str The string used to hide last digits of phone numbers
 * @private
 */
-function setAllRestPluginsLogger(str) {
+function setAllRestPluginsPrivacy(str) {
     try {
         var key;
         for (key in plugins) {
