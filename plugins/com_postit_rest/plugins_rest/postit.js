@@ -46,6 +46,15 @@ var compPostit;
 var compAuthorization;
 
 /**
+* The utility architect component.
+*
+* @property compUtil
+* @type object
+* @private
+*/
+var compUtil;
+
+/**
 * Set the logger to be used.
 *
 * @method setLogger
@@ -107,62 +116,17 @@ function setCompAuthorization(comp) {
 }
 
 /**
-* Send HTTP 401 unauthorized response.
+* Sets the utility architect component.
 *
-* @method sendHttp401
-* @param {object} resp The client response object.
-* @private
+* @method setCompUtil
+* @param {object} comp The utility architect component.
 */
-function sendHttp401(resp) {
+function setCompUtil(comp) {
     try {
-        resp.writeHead(401);
-        logger.info(IDLOG, 'send HTTP 401 response to ' + resp.connection.remoteAddress);
-        resp.end();
+        compUtil = comp;
+        logger.info(IDLOG, 'set util architect component');
     } catch (err) {
-	logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Send HTTP 500 internal server error response.
-*
-* @method sendHttp500
-* @param {object} resp The client response object
-* @param {string} [err] The error message
-* @private
-*/
-function sendHttp500(resp, err) {
-    try {
-        var text;
-        if (err === undefined || typeof err !== 'string') {
-            text = '';
-
-        } else {
-            text = err;
-        }
-
-        resp.writeHead(500, { error: err });
-        logger.error(IDLOG, 'send HTTP 500 response to ' + resp.connection.remoteAddress);
-        resp.end();
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Send HTTP 400 bad request response.
-*
-* @method sendHttp400
-* @param {object} resp The client response object.
-* @private
-*/
-function sendHttp400(resp) {
-    try {
-        resp.writeHead(400);
-        logger.warn(IDLOG, 'send HTTP 400 bad request response to ' + resp.connection.remoteAddress);
-        resp.end();
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
+       logger.error(IDLOG, err.stack);
     }
 }
 
@@ -230,7 +194,7 @@ function sendHttp400(resp) {
                         || typeof req.params.text      !== 'string'
                         || typeof req.params.recipient !== 'string') {
 
-                        sendHttp400(res);
+                        compUtil.net.sendHttp400(IDLOG, res);
                         return;
                     }
 
@@ -239,7 +203,7 @@ function sendHttp400(resp) {
                         && compAuthorization.authorizeAdminPostitUser(username) !== true) {
 
                         logger.warn(IDLOG, '"postit" & "admin_postit" authorizations failed for user "' + username + '" !');
-                        sendHttp401(res);
+                        compUtil.net.sendHttp403(IDLOG, res);
                         return;
                     }
 
@@ -261,7 +225,7 @@ function sendHttp400(resp) {
 
                         if (err) {
                             logger.error(IDLOG, 'creating new post-it from user "' + username + '" for recipient "' + req.params.recipient + '"');
-                            sendHttp500(res, err.toString());
+                            compUtil.net.sendHttp500(IDLOG, res, err.toString());
 
                         } else {
                             logger.info(IDLOG, 'new postit by "' + username + '" to "' + data.recipient + '" has been successfully crated');
@@ -270,13 +234,14 @@ function sendHttp400(resp) {
                     });
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             }
         }
         exports.api                  = postit.api;
         exports.create               = postit.create;
         exports.setLogger            = setLogger;
+        exports.setCompUtil          = setCompUtil;
         exports.setCompPostit        = setCompPostit;
         exports.setCompAuthorization = setCompAuthorization;
 
