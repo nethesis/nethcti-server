@@ -29,6 +29,15 @@ var IDLOG = '[plugins_rest/histcallswitch]';
 var logger = console;
 
 /**
+* The utility architect component.
+*
+* @property compUtil
+* @type object
+* @private
+*/
+var compUtil;
+
+/**
 * The architect component to be used for authorization.
 *
 * @property compAuthorization
@@ -88,6 +97,21 @@ function setCompHistory(ch) {
 }
 
 /**
+* Sets the utility architect component.
+*
+* @method setCompUtil
+* @param {object} comp The utility architect component.
+*/
+function setCompUtil(comp) {
+    try {
+        compUtil = comp;
+        logger.info(IDLOG, 'set util architect component');
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Set authorization architect component used by history functions.
 *
 * @method setCompAuthorization
@@ -99,49 +123,6 @@ function setCompAuthorization(ca) {
         logger.info(IDLOG, 'set authorization architect component');
     } catch (err) {
        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Send HTTP 401 unauthorized response.
-*
-* @method sendHttp401
-* @param {object} resp The client response object.
-* @private
-*/
-function sendHttp401(resp) {
-    try {
-        resp.writeHead(401);
-        logger.info(IDLOG, 'send HTTP 401 response to ' + resp.connection.remoteAddress);
-        resp.end();
-    } catch (err) {
-	logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Send HTTP 500 internal server error response.
-*
-* @method sendHttp500
-* @param {object} resp The client response object
-* @param {string} [err] The error message
-* @private
-*/
-function sendHttp500(resp, err) {
-    try {
-        var text;
-        if (err === undefined || typeof err !== 'string') {
-            text = '';
-
-        } else {
-            text = err;
-        }
-
-        resp.writeHead(500, { error: err });
-        logger.error(IDLOG, 'send HTTP 500 response to ' + resp.connection.remoteAddress);
-        resp.end();
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
     }
 }
 
@@ -243,7 +224,7 @@ function sendHttp500(resp, err) {
                     // check the switchboard cdr authorization
                     if (compAuthorization.authorizeAdminCdrUser(username) === false) {
                         logger.warn(IDLOG, 'switchboard cdr authorization failed for user "' + username + '"!');
-                        sendHttp401(res);
+                        compUtil.net.sendHttp403(IDLOG, res);
                         return;
                     }
 
@@ -260,7 +241,7 @@ function sendHttp500(resp, err) {
                     // use the history component
                     var data = compHistory.getHistorySwitchCallInterval(obj, function (err, results) {
 
-                        if (err) { sendHttp500(res, err.toString()); }
+                        if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
                         else {
                             logger.info(IDLOG, 'send ' + results.length   + ' results searching switchboard history call ' +
                                                'interval between ' + obj.from + ' to ' + obj.to + ' for all endpoints' +
@@ -270,7 +251,7 @@ function sendHttp500(resp, err) {
                     });
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             },
 
@@ -289,12 +270,12 @@ function sendHttp500(resp, err) {
             */
             day: function (req, res, next) {
                 try {
-                    req.params.to = req.params.day;
+                    req.params.to   = req.params.day;
                     req.params.from = req.params.day;
                     this.interval(req, res, next);
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             }
         }
@@ -302,6 +283,7 @@ function sendHttp500(resp, err) {
         exports.day                  = histcallswitch.day;
         exports.interval             = histcallswitch.interval;
         exports.setLogger            = setLogger;
+        exports.setCompUtil          = setCompUtil;
         exports.setCompHistory       = setCompHistory;
         exports.setCompAuthorization = setCompAuthorization;
 

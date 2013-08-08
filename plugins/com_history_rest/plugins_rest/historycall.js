@@ -46,6 +46,15 @@ var compAuthorization;
 var compHistory;
 
 /**
+* The utility architect component.
+*
+* @property compUtil
+* @type object
+* @private
+*/
+var compUtil;
+
+/**
 * Set the logger to be used.
 *
 * @method setLogger
@@ -87,6 +96,21 @@ function setCompHistory(ch) {
 }
 
 /**
+* Sets the utility architect component.
+*
+* @method setCompUtil
+* @param {object} comp The utility architect component.
+*/
+function setCompUtil(comp) {
+    try {
+        compUtil = comp;
+        logger.info(IDLOG, 'set util architect component');
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Set authorization architect component used by history functions.
 *
 * @method setCompAuthorization
@@ -98,49 +122,6 @@ function setCompAuthorization(ca) {
         logger.info(IDLOG, 'set authorization architect component');
     } catch (err) {
        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Send HTTP 401 unauthorized response.
-*
-* @method sendHttp401
-* @param {object} resp The client response object.
-* @private
-*/
-function sendHttp401(resp) {
-    try {
-        resp.writeHead(401);
-        logger.info(IDLOG, 'send HTTP 401 response to ' + resp.connection.remoteAddress);
-        resp.end();
-    } catch (err) {
-	logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Send HTTP 500 internal server error response.
-*
-* @method sendHttp500
-* @param {object} resp The client response object
-* @param {string} [err] The error message
-* @private
-*/
-function sendHttp500(resp, err) {
-    try {
-        var text;
-        if (err === undefined || typeof err !== 'string') {
-            text = '';
-
-        } else {
-            text = err;
-        }
-
-        resp.writeHead(500, { error: err });
-        logger.error(IDLOG, 'send HTTP 500 response to ' + resp.connection.remoteAddress);
-        resp.end();
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
     }
 }
 
@@ -246,7 +227,7 @@ function sendHttp500(resp, err) {
                     this.interval(req, res, next);
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             },
 
@@ -266,10 +247,15 @@ function sendHttp500(resp, err) {
                     // get the username from the authorization header added by authentication step
                     var username = req.headers.authorization_user;
 
+                    // check the administration cdr authorization
+                    if (compAuthorization.authorizeAdminCdrUser(username) === true) {
+                        logger.info(IDLOG, 'getting all history interval call: admin cdr authorization successful for user "' + username + '"');
+
+                    }
                     // check the cdr authorization
-                    if (compAuthorization.authorizeCdrUser(username) === false) {
-                        logger.warn(IDLOG, 'cdr authorization failed for user "' + username + '" !');
-                        sendHttp401(res);
+                    else if (compAuthorization.authorizeCdrUser(username) !== true) {
+                        logger.warn(IDLOG, 'getting all history interval call: cdr authorization failed for user "' + username + '" !');
+                        compUtil.net.sendHttp403(IDLOG, res);
                         return;
                     }
 
@@ -279,7 +265,7 @@ function sendHttp500(resp, err) {
 
                         logger.warn(IDLOG, 'authorization cdr call failed for user "' + username + '": requested endpoint ' +
                                            req.params.endpoint + ' not owned by him');
-                        sendHttp401(res);
+                        compUtil.net.sendHttp403(IDLOG, res);
                         return;
                     }
 
@@ -296,8 +282,7 @@ function sendHttp500(resp, err) {
 
                     // use the history component
                     var data = compHistory.getHistoryCallInterval(obj, function (err, results) {
-
-                        if (err) { sendHttp500(res, err.toString()); }
+                        if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
                         else {
                             logger.info(IDLOG, 'send ' + results.length   + ' results searching history call ' +
                                                'interval between ' + obj.from + ' to ' + obj.to + ' for ' +
@@ -308,7 +293,7 @@ function sendHttp500(resp, err) {
                     });
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             }
         }
@@ -316,6 +301,7 @@ function sendHttp500(resp, err) {
         exports.day                  = historycall.day;
         exports.interval             = historycall.interval;
         exports.setLogger            = setLogger;
+        exports.setCompUtil          = setCompUtil;
         exports.setCompHistory       = setCompHistory;
         exports.setCompAuthorization = setCompAuthorization;
 

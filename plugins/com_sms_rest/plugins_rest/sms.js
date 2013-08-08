@@ -37,6 +37,15 @@ var logger = console;
 var compSms;
 
 /**
+* The utility architect component.
+*
+* @property compUtil
+* @type object
+* @private
+*/
+var compUtil;
+
+/**
 * The architect component to be used for authorization.
 *
 * @property compAuthorization
@@ -87,6 +96,21 @@ function setCompSms(comp) {
 }
 
 /**
+* Sets the utility architect component.
+*
+* @method setCompUtil
+* @param {object} comp The utility architect component.
+*/
+function setCompUtil(comp) {
+    try {
+        compUtil = comp;
+        logger.info(IDLOG, 'set util architect component');
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Set the authorization architect component.
 *
 * @method setCompAuthorization
@@ -101,83 +125,6 @@ function setCompAuthorization(comp) {
         compAuthorization = comp;
         logger.log(IDLOG, 'authorization component has been set');
 
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Send HTTP 401 unauthorized response.
-*
-* @method sendHttp401
-* @param {object} resp The client response object.
-* @private
-*/
-function sendHttp401(resp) {
-    try {
-        resp.writeHead(401);
-        logger.info(IDLOG, 'send HTTP 401 response to ' + resp.connection.remoteAddress);
-        resp.end();
-    } catch (err) {
-	logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Send HTTP 403 forbidden response.
-*
-* @method sendHttp403
-* @param {object} resp The client response object.
-* @private
-*/
-function sendHttp403(resp) {
-    try {
-        resp.writeHead(403);
-        logger.info(IDLOG, 'send HTTP 403 response to ' + resp.connection.remoteAddress);
-        resp.end();
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Send HTTP 500 internal server error response.
-*
-* @method sendHttp500
-* @param {object} resp The client response object
-* @param {string} [err] The error message
-* @private
-*/
-function sendHttp500(resp, err) {
-    try {
-        var text;
-        if (err === undefined || typeof err !== 'string') {
-            text = '';
-
-        } else {
-            text = err;
-        }
-
-        resp.writeHead(500, { error: err });
-        logger.error(IDLOG, 'send HTTP 500 response to ' + resp.connection.remoteAddress);
-        resp.end();
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Send HTTP 400 bad request response.
-*
-* @method sendHttp400
-* @param {object} resp The client response object.
-* @private
-*/
-function sendHttp400(resp) {
-    try {
-        resp.writeHead(400);
-        logger.warn(IDLOG, 'send HTTP 400 bad request response to ' + resp.connection.remoteAddress);
-        resp.end();
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -247,7 +194,7 @@ function sendHttp400(resp) {
                         || typeof req.params.to   !== 'string'
                         || typeof req.params.body !== 'string') {
 
-                        sendHttp400(res);
+                        compUtil.net.sendHttp400(IDLOG, res);
                         return;
                     }
 
@@ -256,7 +203,7 @@ function sendHttp400(resp) {
                         && compAuthorization.authorizeAdminSmsUser(username) !== true) {
 
                         logger.warn(IDLOG, '"sms" & "admin_sms" authorizations failed for user "' + username + '" !');
-                        sendHttp403(res);
+                        compUtil.net.sendHttp403(IDLOG, res);
                         return;
                     }
 
@@ -272,7 +219,7 @@ function sendHttp400(resp) {
 
                         if (err) {
                             logger.error(IDLOG, 'sending sms from user "' + username + '" to "' + req.params.to + '"');
-                            sendHttp500(res, err.toString());
+                            compUtil.net.sendHttp500(IDLOG, res, err.toString());
 
                         } else {
                             logger.info(IDLOG, 'sent sms from "' + username + '" to "' + req.params.to + '" successful');
@@ -281,13 +228,14 @@ function sendHttp400(resp) {
                     });
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             }
         }
         exports.api                  = sms.api;
-        exports.create               = sms.create;
+        exports.send                 = sms.send;
         exports.setLogger            = setLogger;
+        exports.setCompUtil          = setCompUtil;
         exports.setCompSms           = setCompSms;
         exports.setCompAuthorization = setCompAuthorization;
 
