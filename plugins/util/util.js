@@ -35,7 +35,7 @@ var IDLOG = '[util]';
 var logger = console;
 
 /**
-* Set the logger to be used.
+* Sets the logger to be used.
 *
 * @method setLogger
 * @param {object} log The logger object. It must have at least
@@ -61,7 +61,7 @@ function setLogger(log) {
 }
 
 /**
-* Send HTTP 401 unauthorized response.
+* Sends an HTTP 401 unauthorized response.
 *
 * @method sendHttp401
 * @param {string} parentIdLog The identifier of the component that uses the utility
@@ -79,7 +79,7 @@ function sendHttp401(parentIdLog, resp) {
 }
 
 /**
-* Send HTTP 403 forbidden response.
+* Sends an HTTP 403 forbidden response.
 *
 * @method sendHttp403
 * @param {string} parentIdLog The identifier of the component that uses the utility
@@ -97,18 +97,42 @@ function sendHttp403(parentIdLog, resp) {
 }
 
 /**
+* Sends an HTTP 500 internal server error response.
+*
+* @method sendHttp500
+* @param {string} parentIdLog The identifier of the component that uses the utility
+* @param {object} resp        The client response object
+* @param {string} [err]       The error message
+* @static
+*/
+function sendHttp500(parentIdLog, resp, err) {
+    try {
+        var text;
+        typeof err !== 'string' ? text = '' : text = err;
+
+        resp.writeHead(500, { error: err });
+        logger.error(parentIdLog, 'send HTTP 500 response to ' + resp.connection.remoteAddress);
+        resp.end();
+    } catch (err) {
+        logger.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
+    }
+}
+
+/**
 * Network utility functions.
 *
 * @property net
 * @type {object}
 * @default {
     sendHttp401: sendHttp401,
-    sendHttp403: sendHttp403
+    sendHttp403: sendHttp403,
+    sendHttp500: sendHttp500
 }
 */
 var net = {
     sendHttp401: sendHttp401,
-    sendHttp403: sendHttp403
+    sendHttp403: sendHttp403,
+    sendHttp500: sendHttp500
 };
 
 // public interface

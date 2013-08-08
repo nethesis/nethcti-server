@@ -177,6 +177,30 @@ function setCompHistory(compHistory) {
 }
 
 /**
+* Set the utility architect component to be used by REST plugins.
+*
+* @method setCompUtil
+* @param {object} comp The architect utility component
+* @static
+*/
+function setCompUtil(comp) {
+    try {
+        // check parameter
+        if (typeof comp !== 'object') { throw new Error('wrong parameter'); }
+
+        var p;
+        // set utility architect component to all REST plugins
+        for (p in plugins) {
+            if (typeof plugins[p].setCompUtil === 'function') {
+                plugins[p].setCompUtil(comp);
+            }
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Sets the authorization architect component for all REST plugins.
 *
 * @method setCompAuthorization
@@ -306,5 +330,6 @@ function start() {
 exports.start                = start;
 exports.config               = config;
 exports.setLogger            = setLogger;
+exports.setCompUtil          = setCompUtil;
 exports.setCompHistory       = setCompHistory;
 exports.setCompAuthorization = setCompAuthorization;

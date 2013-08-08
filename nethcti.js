@@ -7,6 +7,7 @@ try{
     // architect components
     var config = [
         { packagePath: "./plugins/logger"                  },
+        { packagePath: "./plugins/util"                    },
         { packagePath: "./plugins/user"                    },
         { packagePath: "./plugins/authorization"           },
         { packagePath: "./plugins/authentication"          },
