@@ -46,7 +46,7 @@ var logger = console;
 * @private
 * @default "9001"
 */
-var port = "9001";
+var port = '9001';
 
 /**
 * Listening address of the REST server. It can be customized by the
@@ -57,7 +57,7 @@ var port = "9001";
 * @private
 * @default "localhost"
 */
-var address = "localhost";
+var address = 'localhost';
 
 /**
 * The architect component to be used for authorization.
@@ -67,6 +67,15 @@ var address = "localhost";
 * @private
 */
 var compAuthorization;
+
+/**
+* The utility architect component.
+*
+* @property compUtil
+* @type object
+* @private
+*/
+var compUtil;
 
 /**
 * Set the logger to be used.
@@ -121,17 +130,27 @@ function setAllRestPluginsLogger(log) {
 }
 
 /**
-* Send HTTP 401 unauthorized response.
+* Set the utility architect component to be used by REST plugins.
 *
-* @method sendHttp401
-* @param {object} resp The client response object.
-* @private
+* @method setCompUtil
+* @param {object} comp The architect utility component
+* @static
 */
-function sendHttp401(resp) {
+function setCompUtil(comp) {
     try {
-        resp.writeHead(401);
-        logger.info(IDLOG, 'send HTTP 401 response to ' + resp.connection.remoteAddress);
-        resp.end();
+        // check parameter
+        if (typeof comp !== 'object') { throw new Error('wrong parameter'); }
+
+        compUtil = comp;
+        logger.info(IDLOG, 'util component has been set');
+
+        var p;
+        // set utility architect component to all REST plugins
+        for (p in plugins) {
+            if (typeof plugins[p].setCompUtil === 'function') {
+                plugins[p].setCompUtil(comp);
+            }
+        }
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -159,7 +178,7 @@ function execute(req, res, next) {
 
         } else { // authorization failed
             logger.warn(IDLOG, 'phonebook authorization failed for user "' + username + '"!');
-            sendHttp401(res);
+            compUtil.net.sendHttp403(IDLOG, res);
         }
         return next();
 
@@ -299,8 +318,9 @@ function start() {
 }
 
 // public interface
-exports.start     = start;
-exports.config    = config;
-exports.setLogger = setLogger;
+exports.start                = start;
+exports.config               = config;
+exports.setLogger            = setLogger;
+exports.setCompUtil          = setCompUtil;
 exports.setCompPhonebook     = setCompPhonebook;
 exports.setCompAuthorization = setCompAuthorization;

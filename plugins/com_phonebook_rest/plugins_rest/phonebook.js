@@ -37,6 +37,15 @@ var logger = console;
 var compPhonebook;
 
 /**
+* The utility architect component.
+*
+* @property compUtil
+* @type object
+* @private
+*/
+var compUtil;
+
+/**
 * Set the logger to be used.
 *
 * @method setLogger
@@ -78,62 +87,17 @@ function setCompPhonebook(cp) {
 }
 
 /**
-* Send HTTP 401 unauthorized response.
+* Sets the utility architect component.
 *
-* @method sendHttp401
-* @param {object} resp The client response object.
-* @private
+* @method setCompUtil
+* @param {object} comp The utility architect component.
 */
-function sendHttp401(resp) {
+function setCompUtil(comp) {
     try {
-        resp.writeHead(401);
-        logger.info(IDLOG, 'send HTTP 401 response to ' + resp.connection.remoteAddress);
-        resp.end();
+        compUtil = comp;
+        logger.info(IDLOG, 'set util architect component');
     } catch (err) {
-	logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Send HTTP 201 created response.
-*
-* @method sendHttp201
-* @param {object} resp The client response object.
-* @private
-*/
-function sendHttp201(resp) {
-    try {
-        resp.writeHead(201);
-        logger.info(IDLOG, 'send HTTP 201 response to ' + resp.connection.remoteAddress);
-        resp.end();
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Send HTTP 500 internal server error response.
-*
-* @method sendHttp500
-* @param {object} resp The client response object
-* @param {string} [err] The error message
-* @private
-*/
-function sendHttp500(resp, err) {
-    try {
-        var text;
-        if (err === undefined || typeof err !== 'string') {
-            text = '';
-
-        } else {
-            text = err;
-        }
-
-        resp.writeHead(500, { error: err });
-        logger.error(IDLOG, 'send HTTP 500 response to ' + resp.connection.remoteAddress);
-        resp.end();
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
+       logger.error(IDLOG, err.stack);
     }
 }
 
@@ -233,7 +197,7 @@ function sendHttp500(resp, err) {
                     // use phonebook component
                     compPhonebook.getPbContactsContains(req.params.term, function (err, results) {
 
-                        if (err) { sendHttp500(res, err.toString()); }
+                        if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
 
                         else {
                             // construct the output log
@@ -271,7 +235,7 @@ function sendHttp500(resp, err) {
                     // use phonebook component
                     compPhonebook.getPbContactsStartsWith(req.params.term, function (err, results) {
 
-                        if (err) { sendHttp500(res, err.toString()); }
+                        if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
 
                         else {
                             // construct the output log
@@ -314,16 +278,16 @@ function sendHttp500(resp, err) {
                     // use phonebook component
                     compPhonebook.saveCtiPbContact(data, function (err, results) {
 
-                        if (err) { sendHttp500(res, err.toString()); }
+                        if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
 
                         else {
                             logger.info(IDLOG, 'cti phonebook contact has been created successful from the user "' + username + '"');
-                            sendHttp201(res);
+                            compUtil.net.sendHttp201(IDLOG, res);
                         }
                     });
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             }
         }
@@ -331,6 +295,7 @@ function sendHttp500(resp, err) {
         exports.search           = phonebook.search;
         exports.create           = phonebook.create;
         exports.setLogger        = setLogger;
+        exports.setCompUtil      = setCompUtil;
         exports.searchstartswith = phonebook.searchstartswith;
         exports.setCompPhonebook = setCompPhonebook;
 

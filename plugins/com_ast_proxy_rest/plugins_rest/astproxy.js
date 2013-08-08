@@ -529,7 +529,7 @@ var compConfigManager;
                     if (compAuthorization.authorizeOpParkingsUser(username) !== true) {
 
                         logger.warn(IDLOG, 'requesting parkings: authorization failed for user "' + username + '"');
-                        compUtil.net.sendHttp401(IDLOG, res);
+                        compUtil.net.sendHttp403(IDLOG, res);
                         return;
                     }
 
@@ -569,7 +569,7 @@ var compConfigManager;
                     if (compAuthorization.authorizeOpQueuesUser(username) !== true) {
 
                         logger.warn(IDLOG, 'requesting queues: authorization failed for user "' + username + '"');
-                        compUtil.net.sendHttp401(IDLOG, res);
+                        compUtil.net.sendHttp403(IDLOG, res);
                         return;
                     }
 
@@ -609,7 +609,7 @@ var compConfigManager;
                     if (compAuthorization.authorizeOpTrunksUser(username) !== true) {
 
                         logger.warn(IDLOG, 'requesting trunks: authorization failed for user "' + username + '"');
-                        compUtil.net.sendHttp401(IDLOG, res);
+                        compUtil.net.sendHttp403(IDLOG, res);
                         return;
                     }
 
@@ -649,7 +649,7 @@ var compConfigManager;
                     if (compAuthorization.authorizeOpExtensionsUser(username) !== true) {
 
                         logger.warn(IDLOG, 'requesting extensions: authorization failed for user "' + username + '"');
-                        compUtil.net.sendHttp401(IDLOG, res);
+                        compUtil.net.sendHttp403(IDLOG, res);
                         return;
                     }
 

@@ -61,6 +61,24 @@ function setLogger(log) {
 }
 
 /**
+* Sends an HTTP 201 created response.
+*
+* @method sendHttp201
+* @param {string} parentIdLog The identifier of the component that uses the utility
+* @param {object} resp        The client response object
+* @static
+*/
+function sendHttp201(parentIdLog, resp) {
+    try {
+        resp.writeHead(201);
+        logger.info(parentIdLog, 'send HTTP 201 response to ' + resp.connection.remoteAddress);
+        resp.end();
+    } catch (err) {
+        logger.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
+    }
+}
+
+/**
 * Sends an HTTP 200 OK response.
 *
 * @method sendHttp200
@@ -161,6 +179,7 @@ function sendHttp500(parentIdLog, resp, err) {
 * @type {object}
 * @default {
     sendHttp200: sendHttp200,
+    sendHttp201: sendHttp201,
     sendHttp400: sendHttp400,
     sendHttp401: sendHttp401,
     sendHttp403: sendHttp403,
@@ -169,6 +188,7 @@ function sendHttp500(parentIdLog, resp, err) {
 */
 var net = {
     sendHttp200: sendHttp200,
+    sendHttp201: sendHttp201,
     sendHttp400: sendHttp400,
     sendHttp401: sendHttp401,
     sendHttp403: sendHttp403,
