@@ -5,6 +5,7 @@
     "plugin": {
         "consumes": [
             "sms",
+            "util",
             "logger",
             "authorization"
         ],

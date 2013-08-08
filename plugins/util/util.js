@@ -61,6 +61,24 @@ function setLogger(log) {
 }
 
 /**
+* Sends an HTTP 400 bad request response.
+*
+* @method sendHttp400
+* @param {string} parentIdLog The identifier of the component that uses the utility
+* @param {object} resp        The client response object
+* @static
+*/
+function sendHttp400(parentIdLog, resp) {
+    try {
+        resp.writeHead(400);
+        logger.info(parentIdLog, 'send HTTP 400 response to ' + resp.connection.remoteAddress);
+        resp.end();
+    } catch (err) {
+        logger.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
+    }
+}
+
+/**
 * Sends an HTTP 401 unauthorized response.
 *
 * @method sendHttp401
@@ -124,12 +142,14 @@ function sendHttp500(parentIdLog, resp, err) {
 * @property net
 * @type {object}
 * @default {
+    sendHttp400: sendHttp400,
     sendHttp401: sendHttp401,
     sendHttp403: sendHttp403,
     sendHttp500: sendHttp500
 }
 */
 var net = {
+    sendHttp400: sendHttp400,
     sendHttp401: sendHttp401,
     sendHttp403: sendHttp403,
     sendHttp500: sendHttp500

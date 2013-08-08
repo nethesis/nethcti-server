@@ -46,6 +46,15 @@ var compSms;
 var compAuthorization;
 
 /**
+* The utility architect component.
+*
+* @property compUtil
+* @type object
+* @private
+*/
+var compUtil;
+
+/**
 * Set the logger to be used.
 *
 * @method setLogger
@@ -87,6 +96,21 @@ function setCompSms(cp) {
 }
 
 /**
+* Sets the utility architect component.
+*
+* @method setCompUtil
+* @param {object} comp The utility architect component.
+*/
+function setCompUtil(comp) {
+    try {
+        compUtil = comp;
+        logger.info(IDLOG, 'set util architect component');
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Set the authorization architect component.
 *
 * @method setCompAuthorization
@@ -101,49 +125,6 @@ function setCompAuthorization(comp) {
         compAuthorization = comp;
         logger.log(IDLOG, 'authorization component has been set');
 
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Send HTTP 401 unauthorized response.
-*
-* @method sendHttp401
-* @param {object} resp The client response object.
-* @private
-*/
-function sendHttp401(resp) {
-    try {
-        resp.writeHead(401);
-        logger.info(IDLOG, 'send HTTP 401 response to ' + resp.connection.remoteAddress);
-        resp.end();
-    } catch (err) {
-	logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Send HTTP 500 internal server error response.
-*
-* @method sendHttp500
-* @param {object} resp The client response object
-* @param {string} [err] The error message
-* @private
-*/
-function sendHttp500(resp, err) {
-    try {
-        var text;
-        if (err === undefined || typeof err !== 'string') {
-            text = '';
-
-        } else {
-            text = err;
-        }
-
-        resp.writeHead(500, { error: err });
-        logger.error(IDLOG, 'send HTTP 500 response to ' + resp.connection.remoteAddress);
-        resp.end();
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -249,7 +230,7 @@ function sendHttp500(resp, err) {
                     if (compAuthorization.authorizeAdminSmsUser(username) !== true) {
 
                         logger.warn(IDLOG, 'getting all history sms interval: "admin_sms" authorizations failed for user "' + username + '" !');
-                        sendHttp401(res);
+                        compUtil.net.sendHttp403(IDLOG, res);
                         return;
                     }
                     logger.info(IDLOG, 'getting all history sms interval: "admin_sms" authorization successfully for user "' + username + '"');
@@ -264,7 +245,7 @@ function sendHttp500(resp, err) {
 
                     compSms.getAllUserHistoryInterval(obj, function (err, results) {
 
-                        if (err) { sendHttp500(res, err.toString()); }
+                        if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
                         else {
                             logger.info(IDLOG, 'send ' + results.length   + ' results searching all history sms sent by all users ' +
                                                'in the interval between ' + obj.from + ' to ' + obj.to + ' and filter ' + (obj.filter ? obj.filter : '""'));
@@ -273,7 +254,7 @@ function sendHttp500(resp, err) {
                     });
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             },
 
@@ -298,12 +279,13 @@ function sendHttp500(resp, err) {
                     this.interval(req, res, next);
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             }
         }
         exports.api                  = all_historysms.api;
         exports.day                  = all_historysms.day;
+        exports.setCompUtil          = setCompUtil;
         exports.interval             = all_historysms.interval;
         exports.setLogger            = setLogger;
         exports.setCompSms           = setCompSms;
