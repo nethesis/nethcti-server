@@ -61,6 +61,24 @@ function setLogger(log) {
 }
 
 /**
+* Sends an HTTP 200 OK response.
+*
+* @method sendHttp200
+* @param {string} parentIdLog The identifier of the component that uses the utility
+* @param {object} resp        The client response object
+* @static
+*/
+function sendHttp200(parentIdLog, resp) {
+    try {
+        resp.writeHead(200);
+        logger.info(parentIdLog, 'send HTTP 200 response to ' + resp.connection.remoteAddress);
+        resp.end();
+    } catch (err) {
+        logger.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
+    }
+}
+
+/**
 * Sends an HTTP 400 bad request response.
 *
 * @method sendHttp400
@@ -142,6 +160,7 @@ function sendHttp500(parentIdLog, resp, err) {
 * @property net
 * @type {object}
 * @default {
+    sendHttp200: sendHttp200,
     sendHttp400: sendHttp400,
     sendHttp401: sendHttp401,
     sendHttp403: sendHttp403,
@@ -149,6 +168,7 @@ function sendHttp500(parentIdLog, resp, err) {
 }
 */
 var net = {
+    sendHttp200: sendHttp200,
     sendHttp400: sendHttp400,
     sendHttp401: sendHttp401,
     sendHttp403: sendHttp403,
