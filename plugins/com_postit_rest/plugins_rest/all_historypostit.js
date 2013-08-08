@@ -37,6 +37,15 @@ var logger = console;
 var compPostit;
 
 /**
+* The utility architect component.
+*
+* @property compUtil
+* @type object
+* @private
+*/
+var compUtil;
+
+/**
 * The architect component to be used for authorization.
 *
 * @property compAuthorization
@@ -107,45 +116,17 @@ function setCompAuthorization(comp) {
 }
 
 /**
-* Send HTTP 401 unauthorized response.
+* Sets the utility architect component.
 *
-* @method sendHttp401
-* @param {object} resp The client response object.
-* @private
+* @method setCompUtil
+* @param {object} comp The utility architect component.
 */
-function sendHttp401(resp) {
+function setCompUtil(comp) {
     try {
-        resp.writeHead(401);
-        logger.info(IDLOG, 'send HTTP 401 response to ' + resp.connection.remoteAddress);
-        resp.end();
+        compUtil = comp;
+        logger.info(IDLOG, 'set util architect component');
     } catch (err) {
-	logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Send HTTP 500 internal server error response.
-*
-* @method sendHttp500
-* @param {object} resp The client response object
-* @param {string} [err] The error message
-* @private
-*/
-function sendHttp500(resp, err) {
-    try {
-        var text;
-        if (err === undefined || typeof err !== 'string') {
-            text = '';
-
-        } else {
-            text = err;
-        }
-
-        resp.writeHead(500, { error: err });
-        logger.error(IDLOG, 'send HTTP 500 response to ' + resp.connection.remoteAddress);
-        resp.end();
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
+       logger.error(IDLOG, err.stack);
     }
 }
 
@@ -249,7 +230,7 @@ function sendHttp500(resp, err) {
                     if (compAuthorization.authorizeAdminPostitUser(username) !== true) {
 
                         logger.warn(IDLOG, 'getting all history postit interval: "admin_postit" authorizations failed for user "' + username + '" !');
-                        sendHttp401(res);
+                        compUtil.net.sendHttp403(IDLOG, res);
                         return;
                     }
                     logger.info(IDLOG, 'getting all history postit interval: "admin_postit" authorization successfully for user "' + username + '"');
@@ -265,7 +246,7 @@ function sendHttp500(resp, err) {
                     // use the history component
                     compPostit.getAllUserHistoryInterval(obj, function (err, results) {
 
-                        if (err) { sendHttp500(res, err.toString()); }
+                        if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
                         else {
                             logger.info(IDLOG, 'send ' + results.length   + ' results searching all history post-it of all users ' +
                                                'in the interval between ' + obj.from + ' to ' + obj.to + ' and filter ' + (obj.filter ? obj.filter : '""'));
@@ -274,7 +255,7 @@ function sendHttp500(resp, err) {
                     });
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             },
 
@@ -299,7 +280,7 @@ function sendHttp500(resp, err) {
                     this.interval(req, res, next);
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             }
         }
@@ -307,6 +288,7 @@ function sendHttp500(resp, err) {
         exports.day                  = all_historypostit.day;
         exports.interval             = all_historypostit.interval;
         exports.setLogger            = setLogger;
+        exports.setCompUtil          = setCompUtil;
         exports.setCompPostit        = setCompPostit;
         exports.setCompAuthorization = setCompAuthorization;
 

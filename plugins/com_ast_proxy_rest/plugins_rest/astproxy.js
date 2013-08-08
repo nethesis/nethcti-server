@@ -74,6 +74,15 @@ var compOperator;
 var compAstProxy;
 
 /**
+* The utility architect component.
+*
+* @property compUtil
+* @type object
+* @private
+*/
+var compUtil;
+
+/**
 * The configuration manager architect component used for configuration functions.
 *
 * @property compConfigManager
@@ -473,7 +482,7 @@ var compConfigManager;
                     if (compAuthorization.authorizeOperatorGroupsUser(username) !== true) {
 
                         logger.warn(IDLOG, 'requesting operator groups: authorization failed for user "' + username + '"');
-                        sendHttp401(res);
+                        compUtil.net.sendHttp401(IDLOG, res);
                         return;
                     }
 
@@ -498,7 +507,7 @@ var compConfigManager;
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             },
 
@@ -520,7 +529,7 @@ var compConfigManager;
                     if (compAuthorization.authorizeOpParkingsUser(username) !== true) {
 
                         logger.warn(IDLOG, 'requesting parkings: authorization failed for user "' + username + '"');
-                        sendHttp401(res);
+                        compUtil.net.sendHttp403(IDLOG, res);
                         return;
                     }
 
@@ -538,7 +547,7 @@ var compConfigManager;
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             },
 
@@ -560,7 +569,7 @@ var compConfigManager;
                     if (compAuthorization.authorizeOpQueuesUser(username) !== true) {
 
                         logger.warn(IDLOG, 'requesting queues: authorization failed for user "' + username + '"');
-                        sendHttp401(res);
+                        compUtil.net.sendHttp403(IDLOG, res);
                         return;
                     }
 
@@ -578,7 +587,7 @@ var compConfigManager;
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             },
 
@@ -600,7 +609,7 @@ var compConfigManager;
                     if (compAuthorization.authorizeOpTrunksUser(username) !== true) {
 
                         logger.warn(IDLOG, 'requesting trunks: authorization failed for user "' + username + '"');
-                        sendHttp401(res);
+                        compUtil.net.sendHttp403(IDLOG, res);
                         return;
                     }
 
@@ -618,7 +627,7 @@ var compConfigManager;
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             },
 
@@ -640,7 +649,7 @@ var compConfigManager;
                     if (compAuthorization.authorizeOpExtensionsUser(username) !== true) {
 
                         logger.warn(IDLOG, 'requesting extensions: authorization failed for user "' + username + '"');
-                        sendHttp401(res);
+                        compUtil.net.sendHttp403(IDLOG, res);
                         return;
                     }
 
@@ -658,7 +667,7 @@ var compConfigManager;
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             },
 
@@ -682,7 +691,7 @@ var compConfigManager;
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             },
 
@@ -706,7 +715,7 @@ var compConfigManager;
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             },
 
@@ -731,7 +740,7 @@ var compConfigManager;
                         || typeof req.params.applicantId  !== 'string'
                         || typeof req.params.endpointType !== 'string') {
 
-                        sendHttp400(res);
+                        compUtil.net.sendHttp400(IDLOG, res);
                         return;
                     }
 
@@ -743,7 +752,7 @@ var compConfigManager;
 
                             logger.warn(IDLOG, 'park of the conversation "' + req.params.convid + '" from user "' + username + '" has been failed: the applicant ' +
                                                    '"' + req.params.applicantId + '" isn\'t owned by him');
-                            sendHttp401(res);
+                            compUtil.net.sendHttp401(IDLOG, res);
                             return;
 
                         }
@@ -753,26 +762,26 @@ var compConfigManager;
                             try {
                                 if (err) {
                                     logger.warn(IDLOG, 'parking convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.applicantId + ' has been failed');
-                                    sendHttp500(res, err.toString());
+                                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                                     return;
                                 }
                                 logger.info(IDLOG, 'convid ' + req.params.convid + ' has been parked successfully by user "' + username + '" with ' + req.params.applicantId);
-                                sendHttp200(res);
+                                compUtil.net.sendHttp200(IDLOG, res);
 
                             } catch (err) {
                                 logger.error(IDLOG, err.stack);
-                                sendHttp500(res, err.toString());
+                                compUtil.net.sendHttp500(IDLOG, res, err.toString());
                             }
                         });
 
                     } else {
                         logger.warn(IDLOG, 'parking the conversation ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType);
-                        sendHttp400(res);
+                        compUtil.net.sendHttp400(IDLOG, res);
                     }
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             },
 
@@ -796,7 +805,7 @@ var compConfigManager;
                         || typeof req.params.endpointId   !== 'string'
                         || typeof req.params.endpointType !== 'string') {
 
-                        sendHttp400(res);
+                        compUtil.net.sendHttp400(IDLOG, res);
                         return;
                     }
 
@@ -806,7 +815,7 @@ var compConfigManager;
                         if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
                             logger.warn(IDLOG, 'make new call to ' + req.params.number + ' failed: ' + req.params.endpointId + ' is not owned by user "' + username + '"'); +
-                            sendHttp401(res);
+                            compUtil.net.sendHttp401(IDLOG, res);
                             return;
                         }
 
@@ -814,26 +823,26 @@ var compConfigManager;
                             try {
                                 if (err) {
                                     logger.warn(IDLOG, 'failed call from user "' + username + '" to ' + req.params.number + ' using ' + req.params.endpointType + ' ' + req.params.endpointId);
-                                    sendHttp500(res, err.toString());
+                                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                                     return;
                                 }
                                 logger.info(IDLOG, 'new call from user "' + username + '" to ' + req.params.number + ' with ' + req.params.endpointType + ' ' + req.params.endpointId + ' has been successful');
-                                sendHttp200(res);
+                                compUtil.net.sendHttp200(IDLOG, res);
 
                             } catch (err) {
                                 logger.error(IDLOG, err.stack);
-                                sendHttp500(res, err.toString());
+                                compUtil.net.sendHttp500(IDLOG, res, err.toString());
                             }
                         });
 
                     } else {
                         logger.warn(IDLOG, 'making new call from user "' + username + '" to ' + req.params.number + ': unknown endpointType ' + req.params.endpointType);
-                        sendHttp400(res);
+                        compUtil.net.sendHttp400(IDLOG, res);
                     }
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             },
 
@@ -857,7 +866,7 @@ var compConfigManager;
                         || typeof req.params.endpointId   !== 'string'
                         || typeof req.params.endpointType !== 'string') {
 
-                        sendHttp400(res);
+                        compUtil.net.sendHttp400(IDLOG, res);
                         return;
                     }
 
@@ -873,7 +882,7 @@ var compConfigManager;
 
                             logger.warn(IDLOG, 'hangup convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
                                                ' the ' + req.params.endpointType + ' ' + req.params.endpointId + ' isn\'t owned by the user');
-                            sendHttp403(res);
+                            compUtil.net.sendHttp403(IDLOG, res);
                             return;
 
                         } else {
@@ -884,26 +893,26 @@ var compConfigManager;
                             try {
                                 if (err) {
                                     logger.warn(IDLOG, 'hangup convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId + ' has been failed');
-                                    sendHttp500(res, err.toString());
+                                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                                     return;
                                 }
                                 logger.info(IDLOG, 'convid ' + req.params.convid + ' has been hangup successfully by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId);
-                                sendHttp200(res);
+                                compUtil.net.sendHttp200(IDLOG, res);
 
                             } catch (err) {
                                 logger.error(IDLOG, err.stack);
-                                sendHttp500(res, err.toString());
+                                compUtil.net.sendHttp500(IDLOG, res, err.toString());
                             }
                         });
 
                     } else {
                         logger.warn(IDLOG, 'parking the conversation ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType);
-                        sendHttp400(res);
+                        compUtil.net.sendHttp400(IDLOG, res);
                     }
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             },
 
@@ -926,7 +935,7 @@ var compConfigManager;
                         || typeof req.params.convid     !== 'string' || typeof req.params.to           !== 'string'
                         || typeof req.params.endpointId !== 'string' || typeof req.params.endpointType !== 'string') {
 
-                        sendHttp400(res);
+                        compUtil.net.sendHttp400(IDLOG, res);
                         return;
                     }
 
@@ -936,7 +945,7 @@ var compConfigManager;
                         if (compAuthorization.authorizeAttendedTransferUser(username) !== true) {
 
                             logger.warn(IDLOG, 'attended transfer convid "' + req.params.convid + '": authorization failed for user "' + username + '"');
-                            sendHttp403(res);
+                            compUtil.net.sendHttp403(IDLOG, res);
                             return;
                         }
 
@@ -947,7 +956,7 @@ var compConfigManager;
                             logger.warn(IDLOG, 'attended transfer convid "' + req.params.convid + '" by user "' + username +
                                                '" has been failed: ' + ' the ' + req.params.endpointType + ' ' + req.params.endpointId +
                                                ' isn\'t owned by the user');
-                            sendHttp403(res);
+                            compUtil.net.sendHttp403(IDLOG, res);
                             return;
 
                         } else {
@@ -966,29 +975,29 @@ var compConfigManager;
                                         logger.warn(IDLOG, 'attended transfer convid "' + req.params.convid + '" by user "' + username +
                                                            '" with ' + req.params.endpointType + ' ' + req.params.endpointId +
                                                            ' has been failed');
-                                        sendHttp500(res, err.toString());
+                                        compUtil.net.sendHttp500(IDLOG, res, err.toString());
                                         return;
                                     }
                                     logger.info(IDLOG, 'attended transfer convid ' + req.params.convid + ' has been attended transfered ' +
                                                        'successfully by user "' + username + '" with ' + req.params.endpointType +
                                                        ' ' + req.params.endpointId);
-                                    sendHttp200(res);
+                                    compUtil.net.sendHttp200(IDLOG, res);
 
                                 } catch (err) {
                                     logger.error(IDLOG, err.stack);
-                                    sendHttp500(res, err.toString());
+                                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                                 }
                             }
                         );
 
                     } else {
                         logger.warn(IDLOG, 'attended transfering convid ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType);
-                        sendHttp400(res);
+                        compUtil.net.sendHttp400(IDLOG, res);
                     }
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             },
 
@@ -1011,7 +1020,7 @@ var compConfigManager;
                         || typeof req.params.convid     !== 'string' || typeof req.params.to           !== 'string'
                         || typeof req.params.endpointId !== 'string' || typeof req.params.endpointType !== 'string') {
 
-                        sendHttp400(res);
+                        compUtil.net.sendHttp400(IDLOG, res);
                         return;
                     }
 
@@ -1027,7 +1036,7 @@ var compConfigManager;
 
                             logger.warn(IDLOG, 'blind transfer convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
                                                ' the ' + req.params.endpointType + ' ' + req.params.endpointId + ' isn\'t owned by the user');
-                            sendHttp403(res);
+                            compUtil.net.sendHttp403(IDLOG, res);
                             return;
 
                         } else {
@@ -1045,28 +1054,28 @@ var compConfigManager;
                                     if (err) {
                                         logger.warn(IDLOG, 'blind transfer convid "' + req.params.convid + '" by user "' + username + '" with ' +
                                                            req.params.endpointType + ' ' + req.params.endpointId + ' has been failed');
-                                        sendHttp500(res, err.toString());
+                                        compUtil.net.sendHttp500(IDLOG, res, err.toString());
                                         return;
                                     }
                                     logger.info(IDLOG, 'convid ' + req.params.convid + ' has been blind transfered successfully by user "' +
                                                        username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId);
-                                    sendHttp200(res);
+                                    compUtil.net.sendHttp200(IDLOG, res);
 
                                 } catch (err) {
                                     logger.error(IDLOG, err.stack);
-                                    sendHttp500(res, err.toString());
+                                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                                 }
                             }
                         );
 
                     } else {
                         logger.warn(IDLOG, 'blind transfering the convid ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType);
-                        sendHttp400(res);
+                        compUtil.net.sendHttp400(IDLOG, res);
                     }
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             },
 
@@ -1088,7 +1097,7 @@ var compConfigManager;
                     if (   typeof req.params            !== 'object' || typeof req.params.convid       !== 'string'
                         || typeof req.params.endpointId !== 'string' || typeof req.params.endpointType !== 'string') {
 
-                        sendHttp400(res);
+                        compUtil.net.sendHttp400(IDLOG, res);
                         return;
                     }
 
@@ -1099,7 +1108,7 @@ var compConfigManager;
 
                             logger.warn(IDLOG, 'stop spy convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
                                                ' the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' isn\'t owned by the user');
-                            sendHttp401(res);
+                            compUtil.net.sendHttp401(IDLOG, res);
                             return;
 
                         } else {
@@ -1110,26 +1119,26 @@ var compConfigManager;
                             try {
                                 if (err) {
                                     logger.warn(IDLOG, 'stop spy convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId + ' has been failed');
-                                    sendHttp500(res, err.toString());
+                                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                                     return;
                                 }
                                 logger.info(IDLOG, 'stop spy convid ' + req.params.convid + ' has been successful by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endopintId);
-                                sendHttp200(res);
+                                compUtil.net.sendHttp200(IDLOG, res);
 
                             } catch (err) {
                                 logger.error(IDLOG, err.stack);
-                                sendHttp500(res, err.toString());
+                                compUtil.net.sendHttp500(IDLOG, res, err.toString());
                             }
                         });
 
                     } else {
                         logger.warn(IDLOG, 'stopping spy convid ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType);
-                        sendHttp400(res);
+                        compUtil.net.sendHttp400(IDLOG, res);
                     }
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             },
 
@@ -1152,7 +1161,7 @@ var compConfigManager;
                         || typeof req.params.endpointId !== 'string' || typeof req.params.endpointType !== 'string'
                         || typeof req.params.destType   !== 'string' || typeof req.params.destId       !== 'string') {
 
-                        sendHttp400(res);
+                        compUtil.net.sendHttp400(IDLOG, res);
                         return;
                     }
 
@@ -1160,7 +1169,7 @@ var compConfigManager;
                     if (compAuthorization.authorizeSpyUser(username) !== true) {
 
                         logger.warn(IDLOG, 'spy convid ' + req.params.convid + ': authorization failed for user "' + username + '"');
-                        sendHttp401(res);
+                        compUtil.net.sendHttp401(IDLOG, res);
                         return;
                     }
 
@@ -1182,7 +1191,7 @@ var compConfigManager;
 
                                     logger.warn(IDLOG, 'spy convid ' + req.params.convid + ' failed: the user "' + users[k] + '"' +
                                                        ' with extension endpoint ' + extens[i] + ' can\'t be spied');
-                                    sendHttp403(res);
+                                    compUtil.net.sendHttp403(IDLOG, res);
                                     return;
                                 }
                             }
@@ -1193,7 +1202,7 @@ var compConfigManager;
 
                             logger.warn(IDLOG, 'spy listen convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
                                                ' the destination ' + req.params.destType + ' ' + req.params.destId + ' isn\'t owned by the user');
-                            sendHttp401(res);
+                            compUtil.net.sendHttp401(IDLOG, res);
                             return;
 
                         } else {
@@ -1210,27 +1219,27 @@ var compConfigManager;
                                 try {
                                     if (err) {
                                         logger.warn(IDLOG, 'spy listen convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.destType + ' ' + req.params.destId + ' has been failed');
-                                        sendHttp500(res, err.toString());
+                                        compUtil.net.sendHttp500(IDLOG, res, err.toString());
                                         return;
                                     }
                                     logger.info(IDLOG, 'spy listen convid ' + req.params.convid + ' has been successful by user "' + username + '" with ' + req.params.destType + ' ' + req.params.destId);
-                                    sendHttp200(res);
+                                    compUtil.net.sendHttp200(IDLOG, res);
 
                                 } catch (err) {
                                     logger.error(IDLOG, err.stack);
-                                    sendHttp500(res, err.toString());
+                                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                                 }
                             }
                         );
 
                     } else {
                         logger.warn(IDLOG, 'starting spy listen convid ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType + ' or destType ' + destType);
-                        sendHttp400(res);
+                        compUtil.net.sendHttp400(IDLOG, res);
                     }
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             },
 
@@ -1253,7 +1262,7 @@ var compConfigManager;
                         || typeof req.params.endpointId !== 'string' || typeof req.params.endpointType !== 'string'
                         || typeof req.params.destType   !== 'string' || typeof req.params.destId       !== 'string') {
 
-                        sendHttp400(res);
+                        compUtil.net.sendHttp400(IDLOG, res);
                         return;
                     }
 
@@ -1270,7 +1279,7 @@ var compConfigManager;
 
                             logger.warn(IDLOG, 'pickup convid "' + req.params.convid + '" failed: user "' + username + '" ' +
                                                ' isn\'t authorized to pickup conversation of endpoint ' + req.params.endpointType + ' ' + req.params.endpointId);
-                            sendHttp403(res);
+                            compUtil.net.sendHttp403(IDLOG, res);
                             return;
                         }
                         // check if the destination endpoint is owned by the user
@@ -1278,7 +1287,7 @@ var compConfigManager;
 
                             logger.warn(IDLOG, 'pickup convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
                                                ' the destination ' + req.params.destType + ' ' + req.params.destId + ' isn\'t owned by the user');
-                            sendHttp403(res);
+                            compUtil.net.sendHttp403(IDLOG, res);
                             return;
 
                         } else {
@@ -1290,26 +1299,26 @@ var compConfigManager;
                             try {
                                 if (err) {
                                     logger.warn(IDLOG, 'pickup convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.destType + ' ' + req.params.destId + ' has been failed');
-                                    sendHttp500(res, err.toString());
+                                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                                     return;
                                 }
                                 logger.info(IDLOG, 'pickup convid ' + req.params.convid + ' has been successful by user "' + username + '" with ' + req.params.destType + ' ' + req.params.destId);
-                                sendHttp200(res);
+                                compUtil.net.sendHttp200(IDLOG, res);
 
                             } catch (err) {
                                 logger.error(IDLOG, err.stack);
-                                sendHttp500(res, err.toString());
+                                compUtil.net.sendHttp500(IDLOG, res, err.toString());
                             }
                         });
 
                     } else {
                         logger.warn(IDLOG, 'picking up convid ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType + ' or destType ' + destType);
-                        sendHttp400(res);
+                        compUtil.net.sendHttp400(IDLOG, res);
                     }
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             },
 
@@ -1331,7 +1340,7 @@ var compConfigManager;
                     if (   typeof req.params              !== 'object' || typeof req.params.convid     !== 'string'
                         || typeof req.params.endpointType !== 'string' || typeof req.params.endpointId !== 'string') {
 
-                        sendHttp400(res);
+                        compUtil.net.sendHttp400(IDLOG, res);
                         return;
                     }
 
@@ -1342,7 +1351,7 @@ var compConfigManager;
 
                             logger.warn(IDLOG, 'stopping record convid ' + req.params.convid + ' by user "' + username + '" has been failed: ' +
                                                ' the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' isn\'t owned by the user');
-                            sendHttp401(res);
+                            compUtil.net.sendHttp401(IDLOG, res);
                             return;
 
                         } else {
@@ -1356,26 +1365,26 @@ var compConfigManager;
                             try {
                                 if (err) {
                                     logger.warn(IDLOG, 'stopping record convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId + ' has been failed');
-                                    sendHttp500(res, err.toString());
+                                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                                     return;
                                 }
                                 logger.info(IDLOG, 'stopped record convid ' + req.params.convid + ' has been successful by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId);
-                                sendHttp200(res);
+                                compUtil.net.sendHttp200(IDLOG, res);
 
                             } catch (err) {
                                 logger.error(IDLOG, err.stack);
-                                sendHttp500(res, err.toString());
+                                compUtil.net.sendHttp500(IDLOG, res, err.toString());
                             }
                         });
 
                     } else {
                         logger.warn(IDLOG, 'stopping record of convid ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType);
-                        sendHttp400(res);
+                        compUtil.net.sendHttp400(IDLOG, res);
                     }
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             },
 
@@ -1397,7 +1406,7 @@ var compConfigManager;
                     if (   typeof req.params              !== 'object' || typeof req.params.convid     !== 'string'
                         || typeof req.params.endpointType !== 'string' || typeof req.params.endpointId !== 'string') {
 
-                        sendHttp400(res);
+                        compUtil.net.sendHttp400(IDLOG, res);
                         return;
                     }
 
@@ -1412,7 +1421,7 @@ var compConfigManager;
                         else if (compAuthorization.authorizeRecordingUser(username) !== true) {
 
                             logger.warn(IDLOG, 'start recording convid ' + req.params.convid + ': recording authorization failed for user "' + username + '"');
-                            sendHttp403(res);
+                            compUtil.net.sendHttp403(IDLOG, res);
                             return;
                         }
                         // check if the destination endpoint is owned by the user
@@ -1420,7 +1429,7 @@ var compConfigManager;
 
                             logger.warn(IDLOG, 'starting record convid ' + req.params.convid + ' by user "' + username + '" has been failed: ' +
                                                ' the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' isn\'t owned by the user');
-                            sendHttp403(res);
+                            compUtil.net.sendHttp403(IDLOG, res);
                             return;
 
                         } else {
@@ -1431,26 +1440,26 @@ var compConfigManager;
                             try {
                                 if (err) {
                                     logger.warn(IDLOG, 'starting record convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId + ' has been failed');
-                                    sendHttp500(res, err.toString());
+                                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                                     return;
                                 }
                                 logger.info(IDLOG, 'started record convid ' + req.params.convid + ' has been successful by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId);
-                                sendHttp200(res);
+                                compUtil.net.sendHttp200(IDLOG, res);
 
                             } catch (err) {
                                 logger.error(IDLOG, err.stack);
-                                sendHttp500(res, err.toString());
+                                compUtil.net.sendHttp500(IDLOG, res, err.toString());
                             }
                         });
 
                     } else {
                         logger.warn(IDLOG, 'starting record of convid ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType);
-                        sendHttp400(res);
+                        compUtil.net.sendHttp400(IDLOG, res);
                     }
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             },
 
@@ -1472,7 +1481,7 @@ var compConfigManager;
                     if (   typeof req.params          !== 'object' || typeof req.params.parking !== 'string'
                         || typeof req.params.destType !== 'string' || typeof req.params.destId  !== 'string') {
 
-                        sendHttp400(res);
+                        compUtil.net.sendHttp400(IDLOG, res);
                         return;
                     }
 
@@ -1480,7 +1489,7 @@ var compConfigManager;
                     if (compAuthorization.authorizeOpParkingsUser(username) !== true) {
 
                         logger.warn(IDLOG, 'pickup parking "' + req.params.parking + '": authorization failed for user "' + username + '"');
-                        sendHttp403(res);
+                        compUtil.net.sendHttp403(IDLOG, res);
                         return;
                     }
 
@@ -1491,7 +1500,7 @@ var compConfigManager;
 
                             logger.warn(IDLOG, 'pickup parking "' + req.params.parking + '" by user "' + username + '" has been failed: ' +
                                                ' the destination ' + req.params.destType + ' ' + req.params.destId + ' isn\'t owned by the user');
-                            sendHttp403(res);
+                            compUtil.net.sendHttp403(IDLOG, res);
                             return;
 
                         } else {
@@ -1504,27 +1513,27 @@ var compConfigManager;
                                 if (err) {
                                     logger.warn(IDLOG, 'pickup parking ' + req.params.parking + ' by user "' + username + '" with ' +
                                                        req.params.destType + ' ' + req.params.destId + ' has been failed');
-                                    sendHttp500(res, err.toString());
+                                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                                     return;
                                 }
                                 logger.info(IDLOG, 'pickup parking ' + req.params.parking + ' has been successful by user "' + username + '" ' +
                                                    'with ' + req.params.destType + ' ' + req.params.destId);
-                                sendHttp200(res);
+                                compUtil.net.sendHttp200(IDLOG, res);
 
                             } catch (err) {
                                 logger.error(IDLOG, err.stack);
-                                sendHttp500(res, err.toString());
+                                compUtil.net.sendHttp500(IDLOG, res, err.toString());
                             }
                         });
 
                     } else {
                         logger.warn(IDLOG, 'picking up parking ' + req.params.parking + ': unknown destType ' + req.params.destType);
-                        sendHttp400(res);
+                        compUtil.net.sendHttp400(IDLOG, res);
                     }
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             },
 
@@ -1547,7 +1556,7 @@ var compConfigManager;
                         || typeof req.params.endpointType !== 'string' || typeof req.params.endpointId !== 'string'
                         || typeof req.params.destType     !== 'string' || typeof req.params.destId     !== 'string') {
 
-                        sendHttp400(res);
+                        compUtil.net.sendHttp400(IDLOG, res);
                         return;
                     }
 
@@ -1555,7 +1564,7 @@ var compConfigManager;
                     if (compAuthorization.authorizeIntrudeUser(username) !== true) {
 
                         logger.warn(IDLOG, 'start spy & speak convid ' + req.params.convid + ': authorization failed for user "' + username + '"');
-                        sendHttp401(res);
+                        compUtil.net.sendHttp401(IDLOG, res);
                         return;
                     }
 
@@ -1577,7 +1586,7 @@ var compConfigManager;
 
                                     logger.warn(IDLOG, 'spy & speak convid ' + req.params.convid + ' failed: the user "' + users[k] + '"' +
                                                        ' with extension endpoint ' + extens[i] + ' can\'t be spied');
-                                    sendHttp403(res);
+                                    compUtil.net.sendHttp403(IDLOG, res);
                                     return;
                                 }
                             }
@@ -1588,7 +1597,7 @@ var compConfigManager;
 
                             logger.warn(IDLOG, 'start spy & speak convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
                                                ' the destination ' + req.params.destType + ' ' + req.params.destId + ' isn\'t owned by the user');
-                            sendHttp401(res);
+                            compUtil.net.sendHttp401(IDLOG, res);
                             return;
 
                         } else {
@@ -1605,27 +1614,27 @@ var compConfigManager;
                                 try {
                                     if (err) {
                                         logger.warn(IDLOG, 'start spy & speak convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.destType + ' ' + req.params.destId + ' has been failed');
-                                        sendHttp500(res, err.toString());
+                                        compUtil.net.sendHttp500(IDLOG, res, err.toString());
                                         return;
                                     }
                                     logger.info(IDLOG, 'start spy & speak convid ' + req.params.convid + ' has been successful by user "' + username + '" with ' + req.params.destType + ' ' + req.params.destId);
-                                    sendHttp200(res);
+                                    compUtil.net.sendHttp200(IDLOG, res);
 
                                 } catch (err) {
                                     logger.error(IDLOG, err.stack);
-                                    sendHttp500(res, err.toString());
+                                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                                 }
                             }
                         );
 
                     } else {
                         logger.warn(IDLOG, 'starting spy and speak convid ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType + ' or destType ' + req.params.destType);
-                        sendHttp400(res);
+                        compUtil.net.sendHttp400(IDLOG, res);
                     }
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             }
         }
@@ -1645,6 +1654,7 @@ var compConfigManager;
         exports.setLogger            = setLogger;
         exports.extensions           = astproxy.extensions;
         exports.setPrivacy           = setPrivacy;
+        exports.setCompUtil          = setCompUtil;
         exports.pickup_conv          = astproxy.pickup_conv;
         exports.stop_record          = astproxy.stop_record;
         exports.setCompUser          = setCompUser;
@@ -1789,96 +1799,17 @@ function setCompAstProxy(ap) {
 }
 
 /**
-* Send HTTP 403 forbidden response.
+* Sets the utility architect component.
 *
-* @method sendHttp403
-* @param {object} resp The client response object.
-* @private
+* @method setCompUtil
+* @param {object} comp The utility architect component.
 */
-function sendHttp403(resp) {
+function setCompUtil(comp) {
     try {
-        resp.writeHead(403);
-        logger.info(IDLOG, 'send HTTP 403 response to ' + resp.connection.remoteAddress);
-        resp.end();
+        compUtil = comp;
+        logger.info(IDLOG, 'set util architect component');
     } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Send HTTP 401 unauthorized response.
-*
-* @method sendHttp401
-* @param {object} resp The client response object.
-* @private
-*/
-function sendHttp401(resp) {
-    try {
-        resp.writeHead(401);
-        logger.info(IDLOG, 'send HTTP 401 response to ' + resp.connection.remoteAddress);
-        resp.end();
-    } catch (err) {
-	logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Send HTTP 400 bad request response.
-*
-* @method sendHttp400
-* @param {object} resp The client response object.
-* @private
-*/
-function sendHttp400(resp) {
-    try {
-        resp.writeHead(400);
-        logger.warn(IDLOG, 'send HTTP 400 bad request response to ' + resp.connection.remoteAddress);
-        resp.end();
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Send HTTP 200 OK response.
-*
-* @method sendHttp200
-* @param {object} resp The client response object.
-* @private
-*/
-function sendHttp200(resp) {
-    try {
-        resp.writeHead(200);
-        logger.info(IDLOG, 'send HTTP 200 response to ' + resp.connection.remoteAddress);
-        resp.end();
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Send HTTP 500 internal server error response.
-*
-* @method sendHttp500
-* @param {object} resp The client response object
-* @param {string} [err] The error message
-* @private
-*/
-function sendHttp500(resp, err) {
-    try {
-        var text;
-        if (err === undefined || typeof err !== 'string') {
-            text = '';
-
-        } else {
-            text = err;
-        }
-
-        resp.writeHead(500, { error: err });
-        logger.error(IDLOG, 'send HTTP 500 response to ' + resp.connection.remoteAddress);
-        resp.end();
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
+       logger.error(IDLOG, err.stack);
     }
 }
 
@@ -1902,7 +1833,7 @@ function dndset(req, res, next) {
             || typeof endpoint !== 'string'
             || (status !== 'on' && status !== 'off') ) {
 
-            sendHttp400(res);
+            compUtil.net.sendHttp400(IDLOG, res);
             return;
         }
 
@@ -1910,7 +1841,7 @@ function dndset(req, res, next) {
         if (compAuthorization.authorizeDndUser(username) !== true) {
 
             logger.warn(IDLOG, 'setting dnd: authorization failed for user "' + username + '"');
-            sendHttp401(res);
+            compUtil.net.sendHttp401(IDLOG, res);
             return;
         }
 
@@ -1920,7 +1851,7 @@ function dndset(req, res, next) {
 
             logger.warn(IDLOG, 'authorization dnd set failed for user "' + username + '": extension ' +
                                endpoint + ' not owned by him');
-            sendHttp401(res);
+            compUtil.net.sendHttp401(IDLOG, res);
             return;
         }
 
@@ -1930,16 +1861,16 @@ function dndset(req, res, next) {
 
             if (err) {
                 logger.error(IDLOG, 'setting dnd for extension ' + endpoint + ' of user "' + username + '"');
-                sendHttp500(res, err.toString());
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 return;
             }
 
             logger.info(IDLOG, 'dnd ' + status + ' for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
-            sendHttp200(res);
+            compUtil.net.sendHttp200(IDLOG, res);
         });
     } catch (err) {
         logger.error(IDLOG, err.stack);
-        sendHttp500(res, err.toString());
+        compUtil.net.sendHttp500(IDLOG, res, err.toString());
     }
 }
 
@@ -1959,7 +1890,7 @@ function dndget(req, res, next) {
 
         // check parameters
         if (typeof endpoint !== 'string') {
-            sendHttp400(res);
+            compUtil.net.sendHttp400(IDLOG, res);
             return;
         }
 
@@ -1967,7 +1898,7 @@ function dndget(req, res, next) {
         if (compAuthorization.authorizeDndUser(username) !== true) {
 
             logger.warn(IDLOG, 'requesting dnd: authorization failed for user "' + username + '"');
-            sendHttp401(res);
+            compUtil.net.sendHttp401(IDLOG, res);
             return;
         }
 
@@ -1977,7 +1908,7 @@ function dndget(req, res, next) {
 
             logger.warn(IDLOG, 'authorization dnd get failed for user "' + username + '": extension ' +
                                endpoint + ' not owned by him');
-            sendHttp401(res);
+            compUtil.net.sendHttp401(IDLOG, res);
             return;
         }
 
@@ -1985,7 +1916,7 @@ function dndget(req, res, next) {
 
             if (err) {
                 logger.error(IDLOG, 'getting dnd for extension ' + endpoint + ' of user "' + username + '"');
-                sendHttp500(res, err.toString());
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 return;
             }
 
@@ -1994,7 +1925,7 @@ function dndget(req, res, next) {
         });
     } catch (err) {
         logger.error(IDLOG, err.stack);
-        sendHttp500(res, err.toString());
+        compUtil.net.sendHttp500(IDLOG, res, err.toString());
     }
 }
 
@@ -2015,7 +1946,7 @@ function cfget(req, res, next) {
 
         // check parameters
         if (typeof endpoint !== 'string' || typeof type !== 'string') {
-            sendHttp400(res);
+            compUtil.net.sendHttp400(IDLOG, res);
             return;
         }
 
@@ -2023,7 +1954,7 @@ function cfget(req, res, next) {
         if (compAuthorization.authorizePhoneRedirectUser(username) !== true) {
 
             logger.warn(IDLOG, 'getting phone call forward status: authorization failed for user "' + username + '"');
-            sendHttp401(res);
+            compUtil.net.sendHttp401(IDLOG, res);
             return;
         }
 
@@ -2033,7 +1964,7 @@ function cfget(req, res, next) {
 
             logger.warn(IDLOG, 'authorization to get "cf ' + type + '" failed for user "' + username + '": extension ' +
                                endpoint + ' not owned by him');
-            sendHttp401(res);
+            compUtil.net.sendHttp401(IDLOG, res);
             return;
         }
 
@@ -2055,7 +1986,7 @@ function cfget(req, res, next) {
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
-        sendHttp500(res, err.toString());
+        compUtil.net.sendHttp500(IDLOG, res, err.toString());
     }
 }
 
@@ -2080,17 +2011,17 @@ function cfgetUnconditional(endpoint, username, res) {
 
             if (err) {
                 logger.error(IDLOG, 'getting unconditional cf for extension ' + endpoint + ' of user "' + username + '"');
-                sendHttp500(res, err.toString());
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 return;
             }
 
             logger.info(IDLOG, 'unconditional cf for extension ' + endpoint + ' of user "' + username + '" has been get successfully: ' +
-                               'status "' + resp.status + '"' + (resp.to ? ' to ' + resp.to : ''));
+                               'status "' + resp.status + '"' + (IDLOG, resp.to ? ' to ' + resp.to : ''));
             res.send(200, resp);
         });
     } catch (err) {
         logger.error(IDLOG, err.stack);
-        sendHttp500(res, err.toString());
+        compUtil.net.sendHttp500(IDLOG, res, err.toString());
     }
 }
 
@@ -2115,17 +2046,17 @@ function cfgetVoicemail(endpoint, username, res) {
 
             if (err) {
                 logger.error(IDLOG, 'getting cf to voicemail for extension ' + endpoint + ' of user "' + username + '"');
-                sendHttp500(res, err.toString());
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 return;
             }
 
             logger.info(IDLOG, 'cf to voicemail for extension ' + endpoint + ' of user "' + username + '" has been get successfully: ' +
-                               'status "' + resp.status + '"' + (resp.to ? ' to ' + resp.to : ''));
+                               'status "' + resp.status + '"' + (IDLOG, resp.to ? ' to ' + resp.to : ''));
             res.send(200, resp);
         });
     } catch (err) {
         logger.error(IDLOG, err.stack);
-        sendHttp500(res, err.toString());
+        compUtil.net.sendHttp500(IDLOG, res, err.toString());
     }
 }
 
@@ -2150,17 +2081,17 @@ function cfgetBusy(endpoint, username, res) {
 
             if (err) {
                 logger.error(IDLOG, 'getting cf busy for extension ' + endpoint + ' of user "' + username + '"');
-                sendHttp500(res, err.toString());
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 return;
             }
 
             logger.info(IDLOG, 'cf busy for extension ' + endpoint + ' of user "' + username + '" has been get successfully: ' +
-                               'status "' + resp.status + '"' + (resp.to ? ' to ' + resp.to : ''));
+                               'status "' + resp.status + '"' + (IDLOG, resp.to ? ' to ' + resp.to : ''));
             res.send(200, resp);
         });
     } catch (err) {
         logger.error(IDLOG, err.stack);
-        sendHttp500(res, err.toString());
+        compUtil.net.sendHttp500(IDLOG, res, err.toString());
     }
 }
 
@@ -2185,17 +2116,17 @@ function cfgetUnavailable(endpoint, username, res) {
 
             if (err) {
                 logger.error(IDLOG, 'getting cf unavailable for extension ' + endpoint + ' of user "' + username + '"');
-                sendHttp500(res, err.toString());
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 return;
             }
 
             logger.info(IDLOG, 'cf unavailable for extension ' + endpoint + ' of user "' + username + '" has been get successfully: ' +
-                               'status "' + resp.status + '"' + (resp.to ? ' to ' + resp.to : ''));
+                               'status "' + resp.status + '"' + (IDLOG, resp.to ? ' to ' + resp.to : ''));
             res.send(200, resp);
         });
     } catch (err) {
         logger.error(IDLOG, err.stack);
-        sendHttp500(res, err.toString());
+        compUtil.net.sendHttp500(IDLOG, res, err.toString());
     }
 }
 
@@ -2223,7 +2154,7 @@ function cfset(req, res, next) {
             || (status !== 'on' && status    !== 'off')
             || (status === 'on' && typeof to !== 'string') ) {
 
-            sendHttp400(res);
+            compUtil.net.sendHttp400(IDLOG, res);
             return;
         }
 
@@ -2231,7 +2162,7 @@ function cfset(req, res, next) {
         if (compAuthorization.authorizePhoneRedirectUser(username) !== true) {
 
             logger.warn(IDLOG, 'setting phone call forward: authorization failed for user "' + username + '"');
-            sendHttp401(res);
+            compUtil.net.sendHttp401(IDLOG, res);
             return;
         }
 
@@ -2241,7 +2172,7 @@ function cfset(req, res, next) {
 
             logger.warn(IDLOG, 'authorization cf set failed for user "' + username + '": extension ' +
                                endpoint + ' not owned by him');
-            sendHttp401(res);
+            compUtil.net.sendHttp401(IDLOG, res);
             return;
         }
 
@@ -2264,7 +2195,7 @@ function cfset(req, res, next) {
         }
     } catch (err) {
         logger.error(IDLOG, err.stack);
-        sendHttp500(res, err.toString());
+        compUtil.net.sendHttp500(IDLOG, res, err.toString());
     }
 }
 
@@ -2293,7 +2224,7 @@ function cfsetUnconditional(endpoint, username, activate, to, res) {
 
             if (err) {
                 logger.error(IDLOG, 'setting unconditional cf for extension ' + endpoint + ' of user "' + username + '"');
-                sendHttp500(res, err.toString());
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 return;
             }
 
@@ -2302,11 +2233,11 @@ function cfsetUnconditional(endpoint, username, activate, to, res) {
             } else {
                 logger.info(IDLOG, 'unconditional cf "off" for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
             }
-            sendHttp200(res);
+            compUtil.net.sendHttp200(IDLOG, res);
         });
     } catch (err) {
         logger.error(IDLOG, err.stack);
-        sendHttp500(res, err.toString());
+        compUtil.net.sendHttp500(IDLOG, res, err.toString());
     }
 }
 
@@ -2335,7 +2266,7 @@ function cfsetVoicemail(endpoint, username, activate, to, res) {
 
             if (err) {
                 logger.error(IDLOG, 'setting cf to voicemail for extension ' + endpoint + ' of user "' + username + '"');
-                sendHttp500(res, err.toString());
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 return;
             }
 
@@ -2344,11 +2275,11 @@ function cfsetVoicemail(endpoint, username, activate, to, res) {
             } else {
                 logger.info(IDLOG, 'cf to voicemail "off" for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
             }
-            sendHttp200(res);
+            compUtil.net.sendHttp200(IDLOG, res);
         });
     } catch (err) {
         logger.error(IDLOG, err.stack);
-        sendHttp500(res, err.toString());
+        compUtil.net.sendHttp500(IDLOG, res, err.toString());
     }
 }
 
@@ -2377,7 +2308,7 @@ function cfsetBusy(endpoint, username, activate, to, res) {
 
             if (err) {
                 logger.error(IDLOG, 'setting cf busy for extension ' + endpoint + ' of user "' + username + '"');
-                sendHttp500(res, err.toString());
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 return;
             }
 
@@ -2386,11 +2317,11 @@ function cfsetBusy(endpoint, username, activate, to, res) {
             } else {
                 logger.info(IDLOG, 'cf busy "off" for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
             }
-            sendHttp200(res);
+            compUtil.net.sendHttp200(IDLOG, res);
         });
     } catch (err) {
         logger.error(IDLOG, err.stack);
-        sendHttp500(res, err.toString());
+        compUtil.net.sendHttp500(IDLOG, res, err.toString());
     }
 }
 
@@ -2419,7 +2350,7 @@ function cfsetUnavailable(endpoint, username, activate, to, res) {
 
             if (err) {
                 logger.error(IDLOG, 'setting cf unavailable for extension ' + endpoint + ' of user "' + username + '"');
-                sendHttp500(res, err.toString());
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 return;
             }
 
@@ -2428,10 +2359,10 @@ function cfsetUnavailable(endpoint, username, activate, to, res) {
             } else {
                 logger.info(IDLOG, 'cf unavailable "off" for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
             }
-            sendHttp200(res);
+            compUtil.net.sendHttp200(IDLOG, res);
         });
     } catch (err) {
         logger.error(IDLOG, err.stack);
-        sendHttp500(res, err.toString());
+        compUtil.net.sendHttp500(IDLOG, res, err.toString());
     }
 }

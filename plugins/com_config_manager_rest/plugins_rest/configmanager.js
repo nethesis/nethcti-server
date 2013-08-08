@@ -55,6 +55,15 @@ var compUser;
 var compConfigManager;
 
 /**
+* The utility architect component.
+*
+* @property compUtil
+* @type object
+* @private
+*/
+var compUtil;
+
+/**
 * Set the logger to be used.
 *
 * @method setLogger
@@ -129,79 +138,17 @@ function setCompAuthorization(ca) {
 }
 
 /**
-* Send HTTP 401 unauthorized response.
+* Sets the utility architect component.
 *
-* @method sendHttp401
-* @param {object} resp The client response object.
-* @private
+* @method setCompUtil
+* @param {object} comp The utility architect component.
 */
-function sendHttp401(resp) {
+function setCompUtil(comp) {
     try {
-        resp.writeHead(401);
-        logger.info(IDLOG, 'send HTTP 401 response to ' + resp.connection.remoteAddress);
-        resp.end();
+        compUtil = comp;
+        logger.info(IDLOG, 'set util architect component');
     } catch (err) {
-	logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Send HTTP 400 bad request response.
-*
-* @method sendHttp400
-* @param {object} resp The client response object.
-* @private
-*/
-function sendHttp400(resp) {
-    try {
-        resp.writeHead(400);
-        logger.warn(IDLOG, 'send HTTP 400 bad request response to ' + resp.connection.remoteAddress);
-        resp.end();
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Send HTTP 200 OK response.
-*
-* @method sendHttp200
-* @param {object} resp The client response object.
-* @private
-*/
-function sendHttp200(resp) {
-    try {
-        resp.writeHead(200);
-        logger.info(IDLOG, 'send HTTP 200 response to ' + resp.connection.remoteAddress);
-        resp.end();
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Send HTTP 500 internal server error response.
-*
-* @method sendHttp500
-* @param {object} resp The client response object
-* @param {string} [err] The error message
-* @private
-*/
-function sendHttp500(resp, err) {
-    try {
-        var text;
-        if (err === undefined || typeof err !== 'string') {
-            text = '';
-
-        } else {
-            text = err;
-        }
-
-        resp.writeHead(500, { error: err });
-        logger.error(IDLOG, 'send HTTP 500 response to ' + resp.connection.remoteAddress);
-        resp.end();
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
+       logger.error(IDLOG, err.stack);
     }
 }
 
@@ -362,7 +309,7 @@ function sendHttp500(resp, err) {
                     if (typeof results !== 'object') {
                         var strerr = 'wrong configurations result for user "' + username + '"';
                         logger.error(IDLOG, strerr);
-                        sendHttp500(res, strerr);
+                        compUtil.net.sendHttp500(IDLOG, res, strerr);
 
                     } else {
 
@@ -372,7 +319,7 @@ function sendHttp500(resp, err) {
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             },
 
@@ -396,7 +343,7 @@ function sendHttp500(resp, err) {
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             },
 
@@ -418,7 +365,7 @@ function sendHttp500(resp, err) {
                     if (typeof results !== 'object') {
                         var strerr = 'wrong endpoints result for user "' + username + '"';
                         logger.error(IDLOG, strerr);
-                        sendHttp500(res, strerr);
+                        compUtil.net.sendHttp500(IDLOG, res, strerr);
 
                     } else {
 
@@ -428,7 +375,7 @@ function sendHttp500(resp, err) {
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             },
 
@@ -458,7 +405,7 @@ function sendHttp500(resp, err) {
                         if (typeof results !== 'object') {
                             var strerr = 'wrong server chat configuration';
                             logger.error(IDLOG, strerr);
-                            sendHttp500(res, strerr);
+                            compUtil.net.sendHttp500(IDLOG, res, strerr);
 
                         } else {
                             logger.info(IDLOG, 'send server chat configuration to user "' + username + '"');
@@ -467,12 +414,12 @@ function sendHttp500(resp, err) {
 
                     } else {
                         logger.warn(IDLOG, 'chat authorization failed for user "' + username + '"!');
-                        sendHttp401(res);
+                        compUtil.net.sendHttp403(IDLOG, res);
                     }
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             },
 
@@ -502,7 +449,7 @@ function sendHttp500(resp, err) {
                         || (method !== 'email'     && method !== 'sms')
                         || (when   !== 'always'    && when   !== 'never' && when !== 'offline') ) {
 
-                        sendHttp400(res);
+                        compUtil.net.sendHttp400(IDLOG, res);
                         return;
                     }
 
@@ -515,18 +462,18 @@ function sendHttp500(resp, err) {
                     };
                     compConfigManager.setUserNotificationConf(data, function (err) {
                         try {
-                            if (err) { sendHttp500(res, err.toString()); }
-                            else     { sendHttp200(res); }
+                            if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
+                            else     { compUtil.net.sendHttp200(IDLOG, res); }
 
                         } catch (err) {
                             logger.error(IDLOG, err.stack);
-                            sendHttp500(res, err.toString());
+                            compUtil.net.sendHttp500(IDLOG, res, err.toString());
                         }
                     });
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             },
 
@@ -558,7 +505,7 @@ function sendHttp500(resp, err) {
                         || (type === 'automatic' && device === 'snom'    && (typeof user !== 'string' || typeof password !== 'string'))
                         || (type === 'automatic' && device === 'url'     &&  typeof url  !== 'string')) {
 
-                        sendHttp400(res);
+                        compUtil.net.sendHttp400(IDLOG, res);
                         return;
                     }
 
@@ -573,18 +520,18 @@ function sendHttp500(resp, err) {
                     };
                     compConfigManager.setUserClick2CallConf(data, function (err) {
                         try {
-                            if (err) { sendHttp500(res, err.toString()); }
-                            else     { sendHttp200(res); }
+                            if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
+                            else     { compUtil.net.sendHttp200(IDLOG, res); }
 
                         } catch (err) {
                             logger.error(IDLOG, err.stack);
-                            sendHttp500(res, err.toString());
+                            compUtil.net.sendHttp500(IDLOG, res, err.toString());
                         }
                     });
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             },
 
@@ -611,22 +558,22 @@ function sendHttp500(resp, err) {
                         || !compUser.isValidNethctiPresence(status)
                         || !compUser.isValidEndpointNethctiDevice(deviceType)) {
 
-                        sendHttp400(res);
+                        compUtil.net.sendHttp400(IDLOG, res);
                         return;
                     }
 
                     if (type === 'nethcti') { // sets the nethcti presence of the user
 
                         if (compUser.setNethctiPresence(username, deviceType, status) === true) {
-                            sendHttp200(res);
+                            compUtil.net.sendHttp200(IDLOG, res);
                         } else {
-                            sendHttp500(res, 'some errors have occured');
+                            compUtil.net.sendHttp500(IDLOG, res, 'some errors have occured');
                         };
                     }
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             }
         }
@@ -637,6 +584,7 @@ function sendHttp500(resp, err) {
         exports.usernames            = configmanager.usernames;
         exports.click2call           = configmanager.click2call;
         exports.chatserver           = configmanager.chatserver;
+        exports.setCompUtil          = setCompUtil;
         exports.setCompUser          = setCompUser;
         exports.notification         = configmanager.notification;
         exports.userendpoints        = configmanager.userendpoints;

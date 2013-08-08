@@ -4,9 +4,10 @@
     "private": true,
     "plugin": {
         "consumes": [
+            "util",
             "logger",
-            "authorization",
-            "postit"
+            "postit",
+            "authorization"
         ],
         "provides": []
     }
