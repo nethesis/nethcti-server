@@ -188,27 +188,6 @@ function authorizePhonebookUser(username) {
 }
 
 /**
-* Return true if the specified user has the voicemail authorization.
-*
-* @method authorizeVoicemailUser
-* @param {string} username The username
-* @return {boolean} True if the user has the voicemail authorization.
-*/
-function authorizeVoicemailUser(username) {
-    try {
-        // check parameter
-        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
-
-        return authorizeUser(authorizationTypes.TYPES.voicemail, username);
-
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-        // in the case of exception it returns false for security reasons
-        return false;
-    }
-}
-
-/**
 * Returns true if the specified user has the recording authorization.
 *
 * @method authorizeRecordingUser
@@ -325,7 +304,7 @@ function authorizeAdminPickupUser(username) {
         // check parameter
         if (typeof username !== 'string') { throw new Error('wrong parameter'); }
 
-        return authorizeUser(authorizationTypes.TYPES.pickup, username);
+        return authorizeUser(authorizationTypes.TYPES.admin_pickup, username);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -844,10 +823,10 @@ function authorizePickupUser(username, endpointId) {
         }
 
         // get pickup authorization from the user
-        var autho = userMod.getAuthorization(username, authorizationTypes.TYPES.pickup);
+        var autho = userMod.getAuthorization(username, authorizationTypes.TYPES.pickup_groups);
 
         // analize the result
-        var objResult = autho[authorizationTypes.TYPES.pickup];
+        var objResult = autho[authorizationTypes.TYPES.pickup_groups];
         var ext;
         for (ext in objResult) {
 
@@ -1126,7 +1105,6 @@ exports.authorizeAdminSmsUser         = authorizeAdminSmsUser;
 exports.authorizeOpQueuesUser         = authorizeOpQueuesUser;
 exports.authorizeAdminCdrUser         = authorizeAdminCdrUser;
 exports.getUserAuthorizations         = getUserAuthorizations;
-exports.authorizeVoicemailUser        = authorizeVoicemailUser;
 exports.authorizeRecordingUser        = authorizeRecordingUser;
 exports.authorizePhonebookUser        = authorizePhonebookUser;
 exports.authorizeStreamingUser        = authorizeStreamingUser;

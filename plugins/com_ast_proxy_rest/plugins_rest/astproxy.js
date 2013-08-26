@@ -160,7 +160,7 @@ var compConfigManager;
         * 1. [`astproxy/dnd`](#dndpost)
         * 1. [`astproxy/park`](#parkpost)
         * 1. [`astproxy/call`](#callpost)
-        * 1. [`astproxy/atxfer](#atxferpost)
+        * 1. [`astproxy/atxfer`](#atxferpost)
         * 1. [`astproxy/hangup`](#hanguppost)
         * 1. [`astproxy/intrude`](#intrudepost)
         * 1. [`astproxy/start_spy`](#start_spypost)
@@ -1010,7 +1010,7 @@ var compConfigManager;
                     if (req.params.endpointType === 'extension') {
 
                         // check if the user has the authorization to blind transfer the call of all extensions
-                        if (compAuthorization.authorizeAdminTransferUser(username) !== true) {
+                        if (compAuthorization.authorizeAdminTransferUser(username) === true) {
 
                             logger.info(IDLOG, 'blind transfer convid ' + req.params.convid + ': admin transfer authorization successful for user "' + username + '"');
                         }
@@ -1266,8 +1266,20 @@ var compConfigManager;
 
                     if (req.params.endpointType === 'extension') {
 
+                        // check if the user has the authorization to stop record all the conversations
+                        if (compAuthorization.authorizeAdminRecordingUser(username) === true) {
+
+                            logger.info(IDLOG, 'stop recording convid ' + req.params.convid + ': admin recording authorization successful for user "' + username + '"');
+                        }
+                        // check if the user has the authorization to stop record his own conversations
+                        else if (compAuthorization.authorizeRecordingUser(username) !== true) {
+
+                            logger.warn(IDLOG, 'stop recording convid ' + req.params.convid + ': recording authorization failed for user "' + username + '"');
+                            compUtil.net.sendHttp403(IDLOG, res);
+                            return;
+                        }
                         // check if the destination endpoint is owned by the user
-                        if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+                        else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
                             logger.warn(IDLOG, 'stopping record convid ' + req.params.convid + ' by user "' + username + '" has been failed: ' +
                                                ' the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' isn\'t owned by the user');
@@ -1275,11 +1287,8 @@ var compConfigManager;
                             return;
 
                         } else {
-                            logger.info(IDLOG, 'the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' is owned by "' + username + '"');
+                            logger.info(IDLOG, 'stopping record convid ' + req.params.convid + ': the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' is owned by "' + username + '"');
                         }
-
-                        // check if the user has the permission to stop recording the specified conversation
-                        // TODO
 
                         compAstProxy.stopRecordConversation(req.params.endpointType, req.params.endpointId, req.params.convid, function (err) {
                             try {
