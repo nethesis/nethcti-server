@@ -243,7 +243,8 @@ function setDbconn(dbconnMod) {
 * @method saveCtiPbContact
 * @param {object} data
 *   @param {string} data.creator The creator identifier of the contact
-*   @param {string} data.type The type of the contact
+*   @param {string} data.type    The type of the contact
+*   @param {string} data.name    The name of the contact
 *   @param {string} [data.homeemail]
 *   @param {string} [data.workemail]
 *   @param {string} [data.homephone]
@@ -253,7 +254,6 @@ function setDbconn(dbconnMod) {
 *   @param {string} [data.title]
 *   @param {string} [data.company]
 *   @param {string} [data.notes]
-*   @param {string} [data.name]
 *   @param {string} [data.homestreet]
 *   @param {string} [data.homepob]
 *   @param {string} [data.homecity]
@@ -274,9 +274,11 @@ function setDbconn(dbconnMod) {
 function saveCtiPbContact(data, cb) {
     try {
         // check parameter
-        if (typeof    data         !== 'object' || typeof cb    !== 'function'
-            || typeof data.type    !== 'string' || data.type    === ''
-            || typeof data.creator !== 'string' || data.creator === '') {
+        if (   typeof data         !== 'object'
+            || typeof data.type    !== 'string' || typeof cb    !== 'function'
+            || typeof data.creator !== 'string' || data.creator === ''
+            || typeof data.name    !== 'string'
+            || (data.type !== 'private' && data.type !== 'public' && data.type !== 'speeddial')) {
 
             throw new Error('wrong parameter');
         }

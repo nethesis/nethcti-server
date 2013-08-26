@@ -139,7 +139,32 @@ function setCompUtil(comp) {
         * following parameters:
         *
         * * `type: ("speeddial | "private" | "public"): the visibility of the contact`
+        * * `name: the name of the contact`
         * * `creator: the user`
+        * * `[homeemail]`
+        * * `[workemail]`
+        * * `[homephone]`
+        * * `[workphone]`
+        * * `[cellphone]`
+        * * `[fax]`
+        * * `[title]`
+        * * `[company]`
+        * * `[notes]`
+        * * `[homestreet]`
+        * * `[homepob]`
+        * * `[homecity]`
+        * * `[homeprovince]`
+        * * `[homepostalcode]`
+        * * `[homecountry]`
+        * * `[workstreet]`
+        * * `[workpob]`
+        * * `[workcity]`
+        * * `[workprovince]`
+        * * `[workpostalcode]`
+        * * `[workcountry]`
+        * * `[url]`
+        * * `[extension]`
+        * * `[speeddial_num]`
         *
         * E.g. using curl:
         *
@@ -269,9 +294,17 @@ function setCompUtil(comp) {
             */
             create: function (req, res, next) {
                 try {
-                    // extract the parameter
-                    // data is the JSON object passed by the client with an HTTP POST request
-                    var data     = JSON.parse(Object.keys(req.params)[0]);
+                    var data = req.params;
+
+                    if (   typeof data      !== 'object'
+                        || typeof data.type !== 'string' || typeof data.creator !== 'string'
+                        || typeof data.name !== 'string' ||        data.creator === ''
+                        || (data.type !== 'private' && data.type !== 'public' && data.type !== 'speeddial')) {
+
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
                     // extract the username added in the authentication step
                     var username = req.headers.authorization_user;
 
