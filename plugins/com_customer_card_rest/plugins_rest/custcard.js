@@ -126,15 +126,15 @@ function sendHttp500(resp, err) {
         /**
         * REST plugin that provides customer card functions through the following REST API:
         *
-        * * # GET requests
+        * # GET requests
         *
         * 1. [`custcard/getbynum/:number`](#getbynumget)
         *
         * ---
         *
-        * ### <a id="getbynumget">**`custcard/getbynum/:number`**</a
+        * ### <a id="getbynumget">**`custcard/getbynum/:number`**</a>
         *
-        * The client receive all customer cards by number for which he's enabled or an HTTP 500 response.
+        * The client receive all customer cards by number for which he's enabled.
         *
         * @class plugin_rest_custcard
         * @static
