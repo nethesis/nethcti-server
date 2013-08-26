@@ -98,7 +98,7 @@ var compConfigManager;
         *
         * # GET requests
         *
-        * 1. [`astproxy/cf/:endpoint`](#cfget)
+        * 1. [`astproxy/cf/:type/:endpoint`](#cfget)
         * 1. [`astproxy/dnd/:endpoint`](#dndget)
         * 1. [`astproxy/queues`](#queuesget)
         * 1. [`astproxy/trunks`](#trunksget)
@@ -160,16 +160,15 @@ var compConfigManager;
         * 1. [`astproxy/dnd`](#dndpost)
         * 1. [`astproxy/park`](#parkpost)
         * 1. [`astproxy/call`](#callpost)
-        * 1. [`astproxy/atxfer](#atxferpost)
+        * 1. [`astproxy/atxfer`](#atxferpost)
         * 1. [`astproxy/hangup`](#hanguppost)
-        * 1. [`astproxy/stop_spy`](#stop_spypost)
+        * 1. [`astproxy/intrude`](#intrudepost)
         * 1. [`astproxy/start_spy`](#start_spypost)
         * 1. [`astproxy/pickup_conv`](#pickup_convpost)
         * 1. [`astproxy/stop_record`](#stop_recordpost)
         * 1. [`astproxy/start_record`](#start_recordpost)
         * 1. [`astproxy/blindtransfer`](#blindtransferpost)
         * 1. [`astproxy/pickup_parking`](#pickup_parkingpost)
-        * 1. [`astproxy/start_spyspeak`](#start_spyspeakpost)
         *
         * ---
         *
@@ -287,20 +286,6 @@ var compConfigManager;
         *
         * ---
         *
-        * ### <a id="stop_spypost">**`astproxy/stop_spy`**</a>
-        *
-        * Stop the spy of the specified conversation. The request must contains the following parameters:
-        *
-        * * `convid: the conversation identifier`
-        * * `endpointId: the endpoint identifier of the user who has the conversation to stop the spy`
-        * * `endpointType: the type of the endpoint of the user who has the conversation to stop the spy`
-        *
-        * E.g. using curl:
-        *
-        *     curl --insecure -i -X POST -d '{ "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "212" }' https://192.168.5.224:8282/astproxy/stop_spy
-        *
-        * ---
-        *
         * ### <a id="start_spypost">**`astproxy/start_spy`**</a>
         *
         * Spy with only listening the specified conversation. The request
@@ -376,9 +361,9 @@ var compConfigManager;
         *
         * ---
         *
-        * ### <a id="start_spyspeakpost">**`astproxy/start_spyspeak`**</a>
+        * ### <a id="intrudepost">**`astproxy/intrude`**</a>
         *
-        * Start the spy and speak of the specified convertsation. The request must contains the following parameters:
+        * Intrudes into the specified conversation. The request must contains the following parameters:
         *
         * * `convid: the conversation identifier`
         * * `endpointId: the endpoint identifier that has the conversation to spy and speak`
@@ -388,7 +373,7 @@ var compConfigManager;
         *
         * E.g. using curl:
         *
-        *     curl --insecure -i -X POST -d '{ "convid": "SIP/209-00000060>SIP/211-00000061", "endpointType": "extension", "endpointId": "209", "destType": "extension", "destId": "214" }' https://192.168.5.224:8282/astproxy/start_spyspeak
+        *     curl --insecure -i -X POST -d '{ "convid": "SIP/209-00000060>SIP/211-00000061", "endpointType": "extension", "endpointId": "209", "destType": "extension", "destId": "214" }' https://192.168.5.224:8282/astproxy/intrude
         *
         * @class plugin_rest_astproxy
         * @static
@@ -435,14 +420,13 @@ var compConfigManager;
                 *   @param {string} call           Make a new call
                 *   @param {string} atxfer         Transfer a conversation with attended type
                 *   @param {string} hangup         Hangup a conversation
-                *   @param {string} stop_spy       Stop the spy of a conversation
+                *   @param {string} intrude        Spy and speak in a conversation
                 *   @param {string} start_spy      Spy a conversation with only listening
                 *   @param {string} pickup_conv    Pickup a conversation
                 *   @param {string} stop_record    Stop the recording of a conversation
                 *   @param {string} start_record   Start the recording of a conversation
                 *   @param {string} blindtransfer  Transfer a conversation with blind type
                 *   @param {string} pickup_parking Pickup a parked call
-                *   @param {string} start_spyspeak Spy and speak in a conversation
                 */
                 'post': [
                     'cf',
@@ -451,14 +435,13 @@ var compConfigManager;
                     'call',
                     'atxfer',
                     'hangup',
-                    'stop_spy',
+                    'intrude',
                     'start_spy',
                     'pickup_conv',
                     'stop_record',
                     'start_record',
                     'blindtransfer',
-                    'pickup_parking',
-                    'start_spyspeak'
+                    'pickup_parking'
                 ],
                 'head': [],
                 'del' : []
@@ -482,7 +465,7 @@ var compConfigManager;
                     if (compAuthorization.authorizeOperatorGroupsUser(username) !== true) {
 
                         logger.warn(IDLOG, 'requesting operator groups: authorization failed for user "' + username + '"');
-                        compUtil.net.sendHttp401(IDLOG, res);
+                        compUtil.net.sendHttp403(IDLOG, res);
                         return;
                     }
 
@@ -752,7 +735,7 @@ var compConfigManager;
 
                             logger.warn(IDLOG, 'park of the conversation "' + req.params.convid + '" from user "' + username + '" has been failed: the applicant ' +
                                                    '"' + req.params.applicantId + '" isn\'t owned by him');
-                            compUtil.net.sendHttp401(IDLOG, res);
+                            compUtil.net.sendHttp403(IDLOG, res);
                             return;
 
                         }
@@ -815,7 +798,7 @@ var compConfigManager;
                         if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
                             logger.warn(IDLOG, 'make new call to ' + req.params.number + ' failed: ' + req.params.endpointId + ' is not owned by user "' + username + '"'); +
-                            compUtil.net.sendHttp401(IDLOG, res);
+                            compUtil.net.sendHttp403(IDLOG, res);
                             return;
                         }
 
@@ -1027,7 +1010,7 @@ var compConfigManager;
                     if (req.params.endpointType === 'extension') {
 
                         // check if the user has the authorization to blind transfer the call of all extensions
-                        if (compAuthorization.authorizeAdminTransferUser(username) !== true) {
+                        if (compAuthorization.authorizeAdminTransferUser(username) === true) {
 
                             logger.info(IDLOG, 'blind transfer convid ' + req.params.convid + ': admin transfer authorization successful for user "' + username + '"');
                         }
@@ -1080,69 +1063,6 @@ var compConfigManager;
             },
 
             /**
-            * Stop the spy of the conversation with the following REST API:
-            *
-            *     POST stop_spy
-            *
-            * @method stop_spy
-            * @param {object}   req  The client request.
-            * @param {object}   res  The client response.
-            * @param {function} next Function to run the next handler in the chain.
-            */
-            stop_spy: function (req, res, next) {
-                try {
-                    var username = req.headers.authorization_user;
-
-                    // check parameters
-                    if (   typeof req.params            !== 'object' || typeof req.params.convid       !== 'string'
-                        || typeof req.params.endpointId !== 'string' || typeof req.params.endpointType !== 'string') {
-
-                        compUtil.net.sendHttp400(IDLOG, res);
-                        return;
-                    }
-
-                    if (req.params.endpointType === 'extension') {
-
-                        // check if the destination endpoint is owned by the user
-                        if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
-
-                            logger.warn(IDLOG, 'stop spy convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
-                                               ' the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' isn\'t owned by the user');
-                            compUtil.net.sendHttp401(IDLOG, res);
-                            return;
-
-                        } else {
-                            logger.info(IDLOG, 'stop spy listen: the destination endpoint ' + req.params.destType + ' ' + req.params.destId + ' is owned by "' + username + '"');
-                        }
-
-                        compAstProxy.hangupConversation(req.params.endpointType, req.params.endpointId, req.params.convid, function (err) {
-                            try {
-                                if (err) {
-                                    logger.warn(IDLOG, 'stop spy convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId + ' has been failed');
-                                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
-                                    return;
-                                }
-                                logger.info(IDLOG, 'stop spy convid ' + req.params.convid + ' has been successful by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endopintId);
-                                compUtil.net.sendHttp200(IDLOG, res);
-
-                            } catch (err) {
-                                logger.error(IDLOG, err.stack);
-                                compUtil.net.sendHttp500(IDLOG, res, err.toString());
-                            }
-                        });
-
-                    } else {
-                        logger.warn(IDLOG, 'stopping spy convid ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType);
-                        compUtil.net.sendHttp400(IDLOG, res);
-                    }
-
-                } catch (err) {
-                    logger.error(IDLOG, err.stack);
-                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
-                }
-            },
-
-            /**
             * Spy a conversation with only listening it with the following REST API:
             *
             *     POST start_spy
@@ -1169,7 +1089,7 @@ var compConfigManager;
                     if (compAuthorization.authorizeSpyUser(username) !== true) {
 
                         logger.warn(IDLOG, 'spy convid ' + req.params.convid + ': authorization failed for user "' + username + '"');
-                        compUtil.net.sendHttp401(IDLOG, res);
+                        compUtil.net.sendHttp403(IDLOG, res);
                         return;
                     }
 
@@ -1202,7 +1122,7 @@ var compConfigManager;
 
                             logger.warn(IDLOG, 'spy listen convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
                                                ' the destination ' + req.params.destType + ' ' + req.params.destId + ' isn\'t owned by the user');
-                            compUtil.net.sendHttp401(IDLOG, res);
+                            compUtil.net.sendHttp403(IDLOG, res);
                             return;
 
                         } else {
@@ -1346,20 +1266,29 @@ var compConfigManager;
 
                     if (req.params.endpointType === 'extension') {
 
+                        // check if the user has the authorization to stop record all the conversations
+                        if (compAuthorization.authorizeAdminRecordingUser(username) === true) {
+
+                            logger.info(IDLOG, 'stop recording convid ' + req.params.convid + ': admin recording authorization successful for user "' + username + '"');
+                        }
+                        // check if the user has the authorization to stop record his own conversations
+                        else if (compAuthorization.authorizeRecordingUser(username) !== true) {
+
+                            logger.warn(IDLOG, 'stop recording convid ' + req.params.convid + ': recording authorization failed for user "' + username + '"');
+                            compUtil.net.sendHttp403(IDLOG, res);
+                            return;
+                        }
                         // check if the destination endpoint is owned by the user
-                        if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+                        else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
                             logger.warn(IDLOG, 'stopping record convid ' + req.params.convid + ' by user "' + username + '" has been failed: ' +
                                                ' the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' isn\'t owned by the user');
-                            compUtil.net.sendHttp401(IDLOG, res);
+                            compUtil.net.sendHttp403(IDLOG, res);
                             return;
 
                         } else {
-                            logger.info(IDLOG, 'the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' is owned by "' + username + '"');
+                            logger.info(IDLOG, 'stopping record convid ' + req.params.convid + ': the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' is owned by "' + username + '"');
                         }
-
-                        // check if the user has the permission to stop recording the specified conversation
-                        // TODO
 
                         compAstProxy.stopRecordConversation(req.params.endpointType, req.params.endpointId, req.params.convid, function (err) {
                             try {
@@ -1540,14 +1469,14 @@ var compConfigManager;
             /**
             * Spy and speak in a conversation with the following REST API:
             *
-            *     POST start_spyspeak
+            *     POST intrude
             *
-            * @method start_spyspeak
+            * @method intrude
             * @param {object}   req  The client request.
             * @param {object}   res  The client response.
             * @param {function} next Function to run the next handler in the chain.
             */
-            start_spyspeak: function (req, res, next) {
+            intrude: function (req, res, next) {
                 try {
                     var username = req.headers.authorization_user;
 
@@ -1564,7 +1493,7 @@ var compConfigManager;
                     if (compAuthorization.authorizeIntrudeUser(username) !== true) {
 
                         logger.warn(IDLOG, 'start spy & speak convid ' + req.params.convid + ': authorization failed for user "' + username + '"');
-                        compUtil.net.sendHttp401(IDLOG, res);
+                        compUtil.net.sendHttp403(IDLOG, res);
                         return;
                     }
 
@@ -1597,7 +1526,7 @@ var compConfigManager;
 
                             logger.warn(IDLOG, 'start spy & speak convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
                                                ' the destination ' + req.params.destType + ' ' + req.params.destId + ' isn\'t owned by the user');
-                            compUtil.net.sendHttp401(IDLOG, res);
+                            compUtil.net.sendHttp403(IDLOG, res);
                             return;
 
                         } else {
@@ -1647,9 +1576,9 @@ var compConfigManager;
         exports.trunks               = astproxy.trunks;
         exports.hangup               = astproxy.hangup;
         exports.atxfer               = astproxy.atxfer;
+        exports.intrude              = astproxy.intrude;
         exports.opgroups             = astproxy.opgroups;
         exports.parkings             = astproxy.parkings;
-        exports.stop_spy             = astproxy.stop_spy;
         exports.start_spy            = astproxy.start_spy;
         exports.setLogger            = setLogger;
         exports.extensions           = astproxy.extensions;
@@ -1661,7 +1590,6 @@ var compConfigManager;
         exports.start_record         = astproxy.start_record;
         exports.blindtransfer        = astproxy.blindtransfer;
         exports.pickup_parking       = astproxy.pickup_parking;
-        exports.start_spyspeak       = astproxy.start_spyspeak;
         exports.setCompOperator      = setCompOperator;
         exports.setCompAstProxy      = setCompAstProxy;
         exports.setCompAuthorization = setCompAuthorization;
@@ -1841,7 +1769,7 @@ function dndset(req, res, next) {
         if (compAuthorization.authorizeDndUser(username) !== true) {
 
             logger.warn(IDLOG, 'setting dnd: authorization failed for user "' + username + '"');
-            compUtil.net.sendHttp401(IDLOG, res);
+            compUtil.net.sendHttp403(IDLOG, res);
             return;
         }
 
@@ -1851,7 +1779,7 @@ function dndset(req, res, next) {
 
             logger.warn(IDLOG, 'authorization dnd set failed for user "' + username + '": extension ' +
                                endpoint + ' not owned by him');
-            compUtil.net.sendHttp401(IDLOG, res);
+            compUtil.net.sendHttp403(IDLOG, res);
             return;
         }
 
@@ -1898,7 +1826,7 @@ function dndget(req, res, next) {
         if (compAuthorization.authorizeDndUser(username) !== true) {
 
             logger.warn(IDLOG, 'requesting dnd: authorization failed for user "' + username + '"');
-            compUtil.net.sendHttp401(IDLOG, res);
+            compUtil.net.sendHttp403(IDLOG, res);
             return;
         }
 
@@ -1908,7 +1836,7 @@ function dndget(req, res, next) {
 
             logger.warn(IDLOG, 'authorization dnd get failed for user "' + username + '": extension ' +
                                endpoint + ' not owned by him');
-            compUtil.net.sendHttp401(IDLOG, res);
+            compUtil.net.sendHttp403(IDLOG, res);
             return;
         }
 
@@ -1954,7 +1882,7 @@ function cfget(req, res, next) {
         if (compAuthorization.authorizePhoneRedirectUser(username) !== true) {
 
             logger.warn(IDLOG, 'getting phone call forward status: authorization failed for user "' + username + '"');
-            compUtil.net.sendHttp401(IDLOG, res);
+            compUtil.net.sendHttp403(IDLOG, res);
             return;
         }
 
@@ -1964,7 +1892,7 @@ function cfget(req, res, next) {
 
             logger.warn(IDLOG, 'authorization to get "cf ' + type + '" failed for user "' + username + '": extension ' +
                                endpoint + ' not owned by him');
-            compUtil.net.sendHttp401(IDLOG, res);
+            compUtil.net.sendHttp403(IDLOG, res);
             return;
         }
 
@@ -2162,7 +2090,7 @@ function cfset(req, res, next) {
         if (compAuthorization.authorizePhoneRedirectUser(username) !== true) {
 
             logger.warn(IDLOG, 'setting phone call forward: authorization failed for user "' + username + '"');
-            compUtil.net.sendHttp401(IDLOG, res);
+            compUtil.net.sendHttp403(IDLOG, res);
             return;
         }
 
@@ -2172,7 +2100,7 @@ function cfset(req, res, next) {
 
             logger.warn(IDLOG, 'authorization cf set failed for user "' + username + '": extension ' +
                                endpoint + ' not owned by him');
-            compUtil.net.sendHttp401(IDLOG, res);
+            compUtil.net.sendHttp403(IDLOG, res);
             return;
         }
 

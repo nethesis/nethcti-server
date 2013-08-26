@@ -154,13 +154,6 @@ module.exports = function (options, imports, register) {
             authorizePhonebookUser: authorization.authorizePhonebookUser,
 
             /**
-            * It's the _authorizeVoicemailUser_ method provided by _authorization_ module.
-            *
-            * @method authorizeVoicemailUser
-            */
-            authorizeVoicemailUser: authorization.authorizeVoicemailUser,
-
-            /**
             * It's the _authorizeCallerNoteUser_ method provided by _authorization_ module.
             *
             * @method authorizeCallerNoteUser

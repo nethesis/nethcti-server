@@ -193,13 +193,13 @@ function getAllVoiceMessagesByUser(username, cb) {
             async.parallel([
                 function (callback) {
                     logger.info(IDLOG, 'get all "old" voice messages of voicemail "' + vm + '" of user "' + username + '" by means dbconn module');
-                    dbconn.getVoicemailOldMsg(vm, function (err, results) {
+                    dbconn.getVoicemailOldMsg(vm, function (err, vmId, results) {
                         try {
                             if (err) { // some error in the query
                                 logger.error(IDLOG, err);
 
                             } else { // add the result
-                                objres[vm].old = results;
+                                objres[vmId].old = results;
                             }
                             callback();
     
@@ -211,13 +211,13 @@ function getAllVoiceMessagesByUser(username, cb) {
                 },
                 function (callback) {
                     logger.info(IDLOG, 'get all "new" voice messages of voicemail "' + vm + '" of user "' + username + '" by means dbconn module');
-                    dbconn.getVoicemailNewMsg(vm, function (err, results) {
+                    dbconn.getVoicemailNewMsg(vm, function (err, vmId, results) {
                         try {
                             if (err) { // some error in the query
                                 logger.error(IDLOG, err);
 
                             } else { // add the result
-                                objres[vm].new = results;
+                                objres[vmId].new = results;
                             }
                             callback();
 

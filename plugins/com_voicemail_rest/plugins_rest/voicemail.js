@@ -37,6 +37,24 @@ var logger = console;
 var compVoicemail;
 
 /**
+* The architect component to be used for authorization.
+*
+* @property compAuthorization
+* @type object
+* @private
+*/
+var compAuthorization;
+
+/**
+* The utility architect component.
+*
+* @property compUtil
+* @type object
+* @private
+*/
+var compUtil;
+
+/**
 * Set the logger to be used.
 *
 * @method setLogger
@@ -78,43 +96,35 @@ function setCompVoicemail(cp) {
 }
 
 /**
-* Send HTTP 401 unauthorized response.
+* Sets the utility architect component.
 *
-* @method sendHttp401
-* @param {object} resp The client response object.
-* @private
+* @method setCompUtil
+* @param {object} comp The utility architect component.
 */
-function sendHttp401(resp) {
+function setCompUtil(comp) {
     try {
-        resp.writeHead(401);
-        logger.info(IDLOG, 'send HTTP 401 response to ' + resp.connection.remoteAddress);
-        resp.end();
+        compUtil = comp;
+        logger.info(IDLOG, 'set util architect component');
     } catch (err) {
-	logger.error(IDLOG, err.stack);
+       logger.error(IDLOG, err.stack);
     }
 }
 
 /**
-* Send HTTP 500 internal server error response.
+* Sets the authorization architect component.
 *
-* @method sendHttp500
-* @param {object} resp The client response object
-* @param {string} [err] The error message
-* @private
+* @method setCompAuthorization
+* @param {object} comp The architect authorization component
+* @static
 */
-function sendHttp500(resp, err) {
+function setCompAuthorization(comp) {
     try {
-        var text;
-        if (err === undefined || typeof err !== 'string') {
-            text = '';
+        // check parameter
+        if (typeof comp !== 'object') { throw new Error('wrong parameter'); }
 
-        } else {
-            text = err;
-        }
+        compAuthorization = comp;
+        logger.log(IDLOG, 'authorization component has been set');
 
-        resp.writeHead(500, { error: err });
-        logger.error(IDLOG, 'send HTTP 500 response to ' + resp.connection.remoteAddress);
-        resp.end();
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -171,40 +181,50 @@ function sendHttp500(resp, err) {
 
                     // use voicemail component
                     compVoicemail.getAllVoiceMessagesByUser(username, function (err, results) {
+                        try {
 
-                        if (err) {
-                            sendHttp500(res, err.toString());
-                            return;
+                            if (err) {
+                                logger.error(IDLOG, 'getting all voice messages of user "' + username + '"');
+                                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                                return;
+                            }
+
+                            if (typeof results === 'boolean' && results === false) {
+                                var str = 'user "' + username + '" has no voicemail';
+                                logger.warn(IDLOG, str);
+                                compUtil.net.sendHttp403(IDLOG, res);
+                                return;
+                            }
+
+                            var strlog = 'send ';
+                            // construct the output log
+                            var vm;
+                            for (vm in results) {
+                                strlog += '[' + results[vm].old.length + ' old ' + results[vm].new.length + ' new - vm ' + vm + '] ';
+                            }
+                            strlog += 'voicemail messages to user "' + username + '"';
+
+                            logger.info(IDLOG, strlog);
+                            res.send(200, results);
+
+                        } catch (error) {
+                            logger.error(IDLOG, error.stack);
+                            compUtil.net.sendHttp500(IDLOG, res, error.toString());
                         }
-
-                        if (typeof results === 'boolean' && results === false) {
-                            var strlog = 'user "' + username + '" has no voicemail';
-                            logger.warn(IDLOG, 'send HTTP 401 response: ' + strlog);
-                            res.send(401, strlog);
-                            return;
-                        }
-
-                        var strlog = 'send ';
-                        // construct the output log
-                        var vm;
-                        for (vm in results) {
-                            strlog += '[' + results[vm].old.length + ' old ' + results[vm].new.length + ' new - vm ' + vm + '] ';
-                        }
-                        strlog += 'voicemail messages to user "' + username + '"';
-
-                        logger.info(IDLOG, strlog);
-                        res.send(200, results);
                     });
+
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             }
         }
-        exports.api              = voicemail.api;
-        exports.list             = voicemail.list;
-        exports.setLogger        = setLogger;
-        exports.setCompVoicemail = setCompVoicemail;
+        exports.api                  = voicemail.api;
+        exports.list                 = voicemail.list;
+        exports.setLogger            = setLogger;
+        exports.setCompUtil          = setCompUtil;
+        exports.setCompVoicemail     = setCompVoicemail;
+        exports.setCompAuthorization = setCompAuthorization;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);

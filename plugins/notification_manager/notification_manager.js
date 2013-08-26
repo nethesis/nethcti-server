@@ -442,33 +442,27 @@ function newVoicemailListener(voicemail, list) {
 
             // check the user-voicemail endpoint association
             if (compUser.hasVoicemailEndpoint(username, voicemail) === true) {
+
                 logger.info(IDLOG, 'user "' + username + '" has the voicemail endpoint ' + voicemail);
 
-                // check the user voicemail authorization
-                if (compAuthorization.authorizeVoicemailUser(username) === true) {
-                    logger.info('voicemail authorization of user "' + username + '" has been successful');
+                // check if send email notification to the user
+                if (compConfigManager.verifySendVoicemailNotificationByEmail(username) === true) {
 
-                    // check if send email notification to the user
-                    if (compConfigManager.verifySendVoicemailNotificationByEmail(username) === true) {
-
-                        sendNewVoicemailNotificationEmail(username, voicemail, list, sendNewVoicemailNotificationEmailCb);
-
-                    } else {
-                        logger.info(IDLOG, 'don\'t send voicemail notification to user "' + username + '" by email');
-                    }
-
-                    // check if send sms notification to the user
-                    if (compConfigManager.verifySendVoicemailNotificationBySms(username) === true) {
-
-                        sendNewVoicemailNotificationSms(username, voicemail, list, sendNewVoicemailNotificationSmsCb);
-
-                    } else {
-                        logger.info(IDLOG, 'don\'t send voicemail notification to user "' + username + '" by sms');
-                    }
+                    sendNewVoicemailNotificationEmail(username, voicemail, list, sendNewVoicemailNotificationEmailCb);
 
                 } else {
-                    logger.info(IDLOG, 'user "' + username + '" doesn\'t have the voicemail authorization: not send notification');
+                    logger.info(IDLOG, 'don\'t send voicemail notification to user "' + username + '" by email');
                 }
+
+                // check if send sms notification to the user
+                if (compConfigManager.verifySendVoicemailNotificationBySms(username) === true) {
+
+                    sendNewVoicemailNotificationSms(username, voicemail, list, sendNewVoicemailNotificationSmsCb);
+
+                } else {
+                    logger.info(IDLOG, 'don\'t send voicemail notification to user "' + username + '" by sms');
+                }
+
 
             } else {
                 logger.info(IDLOG, 'user "' + username + '" hasn\'t the voicemail endpoint ' + voicemail);

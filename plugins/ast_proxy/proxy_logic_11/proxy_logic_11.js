@@ -2481,7 +2481,9 @@ function stopRecordConversation(endpointType, endpointId, convid, cb) {
             var chid = getExtenIdSourceChannelConversation(endpointId, convid);
 
             if (recordingConv[convid] === undefined) {
-                logger.info(IDLOG, 'the conversation ' + convid + ' is not recording');
+                var str = 'the conversation ' + convid + ' is not recording';
+                logger.info(IDLOG, str);
+                cb(str);
 
             } else if (chid) {
                 // start the recording
@@ -2492,17 +2494,19 @@ function stopRecordConversation(endpointType, endpointId, convid, cb) {
                 });
 
             } else {
-                logger.warn(IDLOG, 'no channel to stop record of conversation ' + convid + ' of exten ' + endpointId);
-                cb();
+                var str = 'no channel to stop record of conversation ' + convid + ' of exten ' + endpointId;
+                logger.warn(IDLOG, str);
+                cb(str);
             }
 
         } else {
-            logger.warn(IDLOG, 'try to stop record conversation for the non existent endpoint ' + endpointType);
-            cb();
+            var str = 'try to stop record conversation for the non existent endpoint ' + endpointType;
+            logger.warn(IDLOG, str);
+            cb(str);
         }
 
     } catch (err) {
-        cb();
+        cb(err);
         logger.error(IDLOG, err.stack);
     }
 }
