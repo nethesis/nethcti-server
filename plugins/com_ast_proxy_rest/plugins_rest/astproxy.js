@@ -162,13 +162,13 @@ var compConfigManager;
         * 1. [`astproxy/call`](#callpost)
         * 1. [`astproxy/atxfer](#atxferpost)
         * 1. [`astproxy/hangup`](#hanguppost)
+        * 1. [`astproxy/intrude`](#intrudepost)
         * 1. [`astproxy/start_spy`](#start_spypost)
         * 1. [`astproxy/pickup_conv`](#pickup_convpost)
         * 1. [`astproxy/stop_record`](#stop_recordpost)
         * 1. [`astproxy/start_record`](#start_recordpost)
         * 1. [`astproxy/blindtransfer`](#blindtransferpost)
         * 1. [`astproxy/pickup_parking`](#pickup_parkingpost)
-        * 1. [`astproxy/start_spyspeak`](#start_spyspeakpost)
         *
         * ---
         *
@@ -361,9 +361,9 @@ var compConfigManager;
         *
         * ---
         *
-        * ### <a id="start_spyspeakpost">**`astproxy/start_spyspeak`**</a>
+        * ### <a id="intrudepost">**`astproxy/intrude`**</a>
         *
-        * Start the spy and speak of the specified convertsation. The request must contains the following parameters:
+        * Intrudes into the specified conversation. The request must contains the following parameters:
         *
         * * `convid: the conversation identifier`
         * * `endpointId: the endpoint identifier that has the conversation to spy and speak`
@@ -373,7 +373,7 @@ var compConfigManager;
         *
         * E.g. using curl:
         *
-        *     curl --insecure -i -X POST -d '{ "convid": "SIP/209-00000060>SIP/211-00000061", "endpointType": "extension", "endpointId": "209", "destType": "extension", "destId": "214" }' https://192.168.5.224:8282/astproxy/start_spyspeak
+        *     curl --insecure -i -X POST -d '{ "convid": "SIP/209-00000060>SIP/211-00000061", "endpointType": "extension", "endpointId": "209", "destType": "extension", "destId": "214" }' https://192.168.5.224:8282/astproxy/intrude
         *
         * @class plugin_rest_astproxy
         * @static
@@ -420,13 +420,13 @@ var compConfigManager;
                 *   @param {string} call           Make a new call
                 *   @param {string} atxfer         Transfer a conversation with attended type
                 *   @param {string} hangup         Hangup a conversation
+                *   @param {string} intrude        Spy and speak in a conversation
                 *   @param {string} start_spy      Spy a conversation with only listening
                 *   @param {string} pickup_conv    Pickup a conversation
                 *   @param {string} stop_record    Stop the recording of a conversation
                 *   @param {string} start_record   Start the recording of a conversation
                 *   @param {string} blindtransfer  Transfer a conversation with blind type
                 *   @param {string} pickup_parking Pickup a parked call
-                *   @param {string} start_spyspeak Spy and speak in a conversation
                 */
                 'post': [
                     'cf',
@@ -435,13 +435,13 @@ var compConfigManager;
                     'call',
                     'atxfer',
                     'hangup',
+                    'intrude',
                     'start_spy',
                     'pickup_conv',
                     'stop_record',
                     'start_record',
                     'blindtransfer',
-                    'pickup_parking',
-                    'start_spyspeak'
+                    'pickup_parking'
                 ],
                 'head': [],
                 'del' : []
@@ -1460,14 +1460,14 @@ var compConfigManager;
             /**
             * Spy and speak in a conversation with the following REST API:
             *
-            *     POST start_spyspeak
+            *     POST intrude
             *
-            * @method start_spyspeak
+            * @method intrude
             * @param {object}   req  The client request.
             * @param {object}   res  The client response.
             * @param {function} next Function to run the next handler in the chain.
             */
-            start_spyspeak: function (req, res, next) {
+            intrude: function (req, res, next) {
                 try {
                     var username = req.headers.authorization_user;
 
@@ -1567,6 +1567,7 @@ var compConfigManager;
         exports.trunks               = astproxy.trunks;
         exports.hangup               = astproxy.hangup;
         exports.atxfer               = astproxy.atxfer;
+        exports.intrude              = astproxy.intrude;
         exports.opgroups             = astproxy.opgroups;
         exports.parkings             = astproxy.parkings;
         exports.start_spy            = astproxy.start_spy;
@@ -1580,7 +1581,6 @@ var compConfigManager;
         exports.start_record         = astproxy.start_record;
         exports.blindtransfer        = astproxy.blindtransfer;
         exports.pickup_parking       = astproxy.pickup_parking;
-        exports.start_spyspeak       = astproxy.start_spyspeak;
         exports.setCompOperator      = setCompOperator;
         exports.setCompAstProxy      = setCompAstProxy;
         exports.setCompAuthorization = setCompAuthorization;
