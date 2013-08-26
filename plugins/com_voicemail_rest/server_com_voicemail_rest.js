@@ -46,7 +46,7 @@ var logger = console;
 * @private
 * @default "9008"
 */
-var port = "9008";
+var port = '9008';
 
 /**
 * Listening address of the REST server. It can be customized by the
@@ -57,16 +57,7 @@ var port = "9008";
 * @private
 * @default "localhost"
 */
-var address = "localhost";
-
-/**
-* The architect component to be used for authorization.
-*
-* @property compAuthorization
-* @type object
-* @private
-*/
-var compAuthorization;
+var address = 'localhost';
 
 /**
 * Set the logger to be used.
@@ -149,18 +140,9 @@ function execute(req, res, next) {
         var p    = tmp[1];
         var name = tmp[2];
 
-        // check authorization
-        var username = req.headers.authorization_user;
-        if (compAuthorization.authorizeVoicemailUser(username) === true) {
+        logger.info(IDLOG, 'execute: ' + p + '.' + name);
+        plugins[p][name].apply(plugins[p], [req, res, next]);
 
-            logger.info(IDLOG, 'voicemail authorization successfully for user "' + username + '"');
-            logger.info(IDLOG, 'execute: ' + p + '.' + name);
-            plugins[p][name].apply(plugins[p], [req, res, next]);
-
-        } else { // authorization failed
-            logger.warn(IDLOG, 'voicemail authorization failed for user "' + username + '"!');
-            sendHttp401(res);
-        }
         return next();
 
     } catch (err) {
@@ -193,17 +175,38 @@ function setCompVoicemail(compVoicemail) {
 * Set the authorization architect component.
 *
 * @method setCompAuthorization
-* @param {object} ca The architect authorization component
+* @param {object} comp The architect authorization component
 * @static
 */
-function setCompAuthorization(ca) {
+function setCompAuthorization(comp) {
     try {
         // check parameter
-        if (typeof ca !== 'object') { throw new Error('wrong parameter'); }
+        if (typeof comp !== 'object') { throw new Error('wrong parameter'); }
 
-        compAuthorization = ca;
-        logger.log(IDLOG, 'authorization component has been set');
+        setAllRestPluginsAuthorization(comp);
 
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Calls _setCompAuthorization_ function for all REST plugins.
+*
+* @method setAllRestPluginsAuthorization
+* @param {object} comp The authorization component
+* @private
+*/
+function setAllRestPluginsAuthorization(comp) {
+    try {
+        var key;
+        for (key in plugins) {
+
+            if (typeof plugins[key].setCompAuthorization === 'function') {
+                plugins[key].setCompAuthorization(comp);
+                logger.info(IDLOG, 'authorization component has been set for rest plugin ' + key);
+            }
+        }
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -298,9 +301,34 @@ function start() {
     }
 }
 
+/**
+* Set the utility architect component to be used by REST plugins.
+*
+* @method setCompUtil
+* @param {object} comp The architect utility component
+* @static
+*/
+function setCompUtil(comp) {
+    try {
+        // check parameter
+        if (typeof comp !== 'object') { throw new Error('wrong parameter'); }
+
+        var p;
+        // set utility architect component to all REST plugins
+        for (p in plugins) {
+            if (typeof plugins[p].setCompUtil === 'function') {
+                plugins[p].setCompUtil(comp);
+            }
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
 // public interface
 exports.start                = start;
 exports.config               = config;
 exports.setLogger            = setLogger;
+exports.setCompUtil          = setCompUtil;
 exports.setCompVoicemail     = setCompVoicemail;
 exports.setCompAuthorization = setCompAuthorization;

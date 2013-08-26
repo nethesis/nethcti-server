@@ -28,6 +28,7 @@ module.exports = function (options, imports, register) {
     try {
         serverRest.setLogger(logger);
         serverRest.config('/etc/nethcti/services.json');
+        serverRest.setCompUtil(imports.util);
         serverRest.setCompAuthorization(imports.authorization);
         serverRest.setCompVoicemail(imports.voicemail);
         serverRest.start();
