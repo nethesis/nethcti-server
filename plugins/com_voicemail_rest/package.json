@@ -4,6 +4,7 @@
     "private": true,
     "plugin": {
         "consumes": [
+            "user",
             "util",
             "logger",
             "voicemail",

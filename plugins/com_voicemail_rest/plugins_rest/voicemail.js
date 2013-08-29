@@ -55,6 +55,15 @@ var compAuthorization;
 var compUtil;
 
 /**
+* The architect component to be used for user.
+*
+* @property compUser
+* @type object
+* @private
+*/
+var compUser;
+
+/**
 * Set the logger to be used.
 *
 * @method setLogger
@@ -111,6 +120,26 @@ function setCompUtil(comp) {
 }
 
 /**
+* Set the user architect component.
+*
+* @method setCompUser
+* @param {object} comp The architect user component
+* @static
+*/
+function setCompUser(comp) {
+    try {
+        // check parameter
+        if (typeof comp !== 'object') { throw new Error('wrong parameter'); }
+
+        compUser = comp;
+        logger.log(IDLOG, 'user component has been set');
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Sets the authorization architect component.
 *
 * @method setCompAuthorization
@@ -135,11 +164,29 @@ function setCompAuthorization(comp) {
         /**
         * REST plugin that provides voicemail functions through the following REST API:
         *
-        * **GET request**
+        * # GET requests
         *
-        *     voicemail/list
+        * 1. [`voicemail/list`](#listget)
         *
-        * The client receive the list of all voicemail messages of the user or an HTTP 500 response.
+        * ---
+        *
+        * ### <a id="listget">**`voicemail/list`**</a>
+        *
+        * Returns the list of all voicemail messages of the user.
+        *
+        * <br>
+        *
+        * # POST requests
+        *
+        * 1. [`voicemail/delete`](#deletepost)
+        *
+        * ---
+        *
+        * ### <a id="deletepost">**`voicemail/delete`**</a>
+        *
+        * Delete the specified voicemail message. The request must contains the following parameters:
+        *
+        * * `id: the voice message identifier of the database`
         *
         * @class plugin_rest_voicemail
         * @static
@@ -159,7 +206,16 @@ function setCompAuthorization(comp) {
                 *   @param {string} list To get the list of all voicemail messages of the user
                 */
                 'get' : [ 'list' ],
-                'post': [],
+
+                /**
+                * REST API to be requested using HTTP POST request.
+                *
+                * @property post
+                * @type {array}
+                *
+                *   @param {string} delete To delete a voicemail messages of the user
+                */
+                'post': [ 'delete' ],
                 'head': [],
                 'del' : []
             },
@@ -217,11 +273,76 @@ function setCompAuthorization(comp) {
                     logger.error(IDLOG, err.stack);
                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
+            },
+
+            /**
+            * Gets the list of all voicemail messages of the user with the following REST API:
+            *
+            *     delete
+            *
+            * @method delete
+            * @param {object}   req  The client request.
+            * @param {object}   res  The client response.
+            * @param {function} next Function to run the next handler in the chain.
+            */
+            delete: function (req, res, next) {
+                try {
+                    // extract the username added in the authentication step
+                    var username = req.headers.authorization_user;
+
+                    // get the voicemail identifier (mailbox) from the voicemail database identifier
+                    compVoicemail.getVmIdFromDbId(req.params.id, function (err1, vmid) {
+                        try {
+
+                            if (err1) {
+                                logger.error(IDLOG, 'deleting voice message: getting voicemail id (mailbox) from db voice message id "' + req.params.id + '"');
+                                compUtil.net.sendHttp500(IDLOG, res, err1.toString());
+                                return;
+                            }
+
+                            // check the authorization to delete the voice message checking if the voicemail endpoint is owned by the user
+                            if (compUser.hasVoicemailEndpoint(username, vmid) !== true) {
+                                logger.warn(IDLOG, 'user "' + username + '" tried to delete voice message with db id "' + req.params.id + '" of the voicemail "' + vmid + '" not owned by him');
+                                compUtil.net.sendHttp403(IDLOG, res);
+                                return;
+                            }
+
+                            // delete the voice message
+                            compVoicemail.deleteVoiceMessage(req.params.id, function (err2, results) {
+                                try {
+
+                                    if (err2) {
+                                        logger.error(IDLOG, 'deleting voice message with id "' + req.params.id + '" of the voicemail "' + vmid + '" by the user "' + username + '"');
+                                        compUtil.net.sendHttp500(IDLOG, res, err2.toString());
+                                        return;
+                                    }
+
+                                    logger.info(IDLOG, 'voice message with id "' + req.params.id + '" of the voicemail "' + vmid + '" has been deleted successfully by the user "' + username + '"');
+                                    res.send(200);
+
+                                } catch (err3) {
+                                    logger.error(IDLOG, err3.stack);
+                                    compUtil.net.sendHttp500(IDLOG, res, err3.toString());
+                                }
+                            });
+
+                        } catch (error) {
+                            logger.error(IDLOG, error.stack);
+                            compUtil.net.sendHttp500(IDLOG, res, error.toString());
+                        }
+                    });
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
             }
         }
         exports.api                  = voicemail.api;
         exports.list                 = voicemail.list;
+        exports.delete               = voicemail.delete;
         exports.setLogger            = setLogger;
+        exports.setCompUser          = setCompUser;
         exports.setCompUtil          = setCompUtil;
         exports.setCompVoicemail     = setCompVoicemail;
         exports.setCompAuthorization = setCompAuthorization;

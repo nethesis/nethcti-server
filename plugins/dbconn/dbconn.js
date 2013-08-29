@@ -943,6 +943,98 @@ function getVoicemailMsg(vmId, type, cb) {
 }
 
 /**
+* Returns the voicemail mailbox from the identifier of the voicemail in the database.
+*
+* @method getVmMailboxFromDbId
+* @param {string}   dbid The voicemail identifier in the database
+* @param {function} cb   The callback function
+*/
+function getVmMailboxFromDbId(dbid, cb) {
+    try {
+        // check parameters
+        if (typeof dbid !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        // search
+        models[JSON_KEYS.VOICEMAIL].findAll({
+            where:      [ 'id=?', dbid  ],
+            attributes: [ 'mailboxuser' ]
+
+        }).success(function (result) {
+
+            if (result instanceof Array && result[0]) {
+                logger.info(IDLOG, 'obtained voicemail mailbox "' + result[0].selectedValues.mailboxuser + '" from voicemail db id "' + dbid + '"');
+                cb(null, result[0].selectedValues.mailboxuser);
+
+            } else {
+                var str = 'getting voicemail mailbox from db voice message id "' + dbid + '"';
+                logger.warn(IDLOG, str);
+                cb(str);
+            }
+
+        }).error(function (err) { // manage the error
+
+            logger.error(IDLOG, 'searching voicemail mailbox from voicemail db id "' + dbid + '"');
+            cb(err.toString());
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Delete a voice message from the database table _asteriskcdrdb.voicemessages_.
+*
+* @method deleteVoiceMessage
+* @param {string}   dbid The database identifier of the voice message to delete
+* @param {function} cb   The callback function
+*/
+function deleteVoiceMessage(dbid, cb) {
+    try {
+        // check parameters
+        if (typeof dbid !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        // search
+        models[JSON_KEYS.VOICEMAIL].find({
+            where: [ 'id=?', dbid  ]
+
+        }).success(function (task) {
+            try {
+
+                if (task) {
+
+                    task.destroy().success(function (some) {
+                        logger.info(IDLOG, 'voice message with db id "' + dbid + '" has been deleted successfully');
+                        cb();
+                    });
+
+                } else {
+                    var str = 'deleting voice message with db id "' + dbid + '": entry not found';
+                    logger.warn(IDLOG, str);
+                    cb(str);
+                }
+
+            } catch (error) {
+                logger.error(IDLOG, error.stack);
+                cb(error);
+            }
+
+        }).error(function (err) { // manage the error
+
+            logger.error(IDLOG, 'searching voicemail mailbox from voicemail db id "' + dbid + '"');
+            cb(err.toString());
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
 * Gets all the new voice messages of a voicemail. It search the
 * results into the _asteriskcdrdb.voicemessages_ database.
 *
@@ -1126,8 +1218,10 @@ exports.setLogger                       = setLogger;
 exports.savePostit                      = savePostit;
 exports.saveCallerNote                  = saveCallerNote;
 exports.saveCtiPbContact                = saveCtiPbContact;
+exports.deleteVoiceMessage              = deleteVoiceMessage;
 exports.getVoicemailNewMsg              = getVoicemailNewMsg;
 exports.getVoicemailOldMsg              = getVoicemailOldMsg;
+exports.getVmMailboxFromDbId            = getVmMailboxFromDbId;
 exports.getCustomerCardByNum            = getCustomerCardByNum;
 exports.getHistorySmsInterval           = getHistorySmsInterval;
 exports.getPbContactsContains           = getPbContactsContains;
