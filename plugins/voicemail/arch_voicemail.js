@@ -51,6 +51,20 @@ module.exports = function (options, imports, register) {
             getNewVoiceMessagesByUser: voicemail.getNewVoiceMessagesByUser,
 
             /**
+            * It's the _deleteVoiceMessage_ method provided by _voicemail_ module.
+            *
+            * @method deleteVoiceMessage
+            */
+            deleteVoiceMessage: voicemail.deleteVoiceMessage,
+
+            /**
+            * It's the _getVmIdFromDbId_ method provided by _voicemail_ module.
+            *
+            * @method getVmIdFromDbId
+            */
+            getVmIdFromDbId: voicemail.getVmIdFromDbId,
+
+            /**
             * It's the _EVT\_NEW\_VOICEMAIL_ property provided by _voicemail_ module.
             *
             * @method EVT_NEW_VOICEMAIL

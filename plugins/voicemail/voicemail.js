@@ -451,6 +451,51 @@ function newVoicemail(ev) {
 }
 
 /**
+* Delete the specified voice message.
+*
+* @method deleteVoiceMessage
+* @param {string}   id The voice message identifier in the database
+* @param {function} cb The callback function
+* @private
+*/
+function deleteVoiceMessage(id, cb) {
+    try {
+        // check parameters
+        if (typeof id !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        dbconn.deleteVoiceMessage(id, cb);
+
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Returns the voicemail identifier from the voice message identifier of the database.
+*
+* @method getVmIdFromDbId
+* @param {string}   dbid The voice message identifier in the database
+* @param {function} cb   The callback function
+* @private
+*/
+function getVmIdFromDbId(dbid, cb) {
+    try {
+        // check parameters
+        if (typeof dbid !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        dbconn.getVmMailboxFromDbId(dbid, cb);
+
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+       cb(err);
+    }
+}
+
+/**
 * It's the callback functino called when get new voicemail
 * messages from the database component.
 *
@@ -517,7 +562,9 @@ exports.setLogger                 = setLogger;
 exports.setDbconn                 = setDbconn;
 exports.setAstProxy               = setAstProxy;
 exports.setCompUser               = setCompUser;
+exports.getVmIdFromDbId           = getVmIdFromDbId;
 exports.EVT_NEW_VOICEMAIL         = EVT_NEW_VOICEMAIL;
+exports.deleteVoiceMessage        = deleteVoiceMessage;
 exports.getAllVoiceMessagesByUser = getAllVoiceMessagesByUser;
 exports.getNewVoiceMessagesByUser = getNewVoiceMessagesByUser;
 exports.getNewMessagesOfVoicemail = getNewMessagesOfVoicemail;

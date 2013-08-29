@@ -151,6 +151,49 @@ function execute(req, res, next) {
 }
 
 /**
+* Set the user architect component to be used by REST plugins.
+*
+* @method setCompUser
+* @param {object} comp The architect user component
+* @static
+*/
+function setCompUser(comp) {
+    try {
+        // check parameter
+        if (typeof comp !== 'object') { throw new Error('wrong parameter'); }
+
+        // set the user component for all the REST plugins
+        setAllRestPluginsCompUser(comp);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the user component for all the REST plugins.
+*
+* @method setAllRestPluginsCompUser
+* @param {object} comp The user object
+* @private
+*/
+function setAllRestPluginsCompUser(comp) {
+    try {
+        var key;
+        for (key in plugins) {
+
+            if (typeof plugins[key].setCompUser === 'function') {
+                plugins[key].setCompUser(comp);
+                logger.info(IDLOG, 'user component has been set for rest plugin ' + key);
+            }
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+
+/**
 * Set the voicemail architect component to be used by REST plugins.
 *
 * @method setCompVoicemail
@@ -330,5 +373,6 @@ exports.start                = start;
 exports.config               = config;
 exports.setLogger            = setLogger;
 exports.setCompUtil          = setCompUtil;
+exports.setCompUser          = setCompUser;
 exports.setCompVoicemail     = setCompVoicemail;
 exports.setCompAuthorization = setCompAuthorization;

@@ -136,7 +136,21 @@ module.exports = function (options, imports, register) {
             *
             * @method getVoicemailOldMsg
             */
-            getVoicemailOldMsg: dbconn.getVoicemailOldMsg
+            getVoicemailOldMsg: dbconn.getVoicemailOldMsg,
+
+            /**
+            * It's the _getVmMailboxFromDbId_ method provided by _dbconn_ module.
+            *
+            * @method getVmMailboxFromDbId
+            */
+            getVmMailboxFromDbId: dbconn.getVmMailboxFromDbId,
+
+            /**
+            * It's the _deleteVoiceMessage_ method provided by _dbconn_ module.
+            *
+            * @method deleteVoiceMessage
+            */
+            deleteVoiceMessage: dbconn.deleteVoiceMessage
         }
     });
 
