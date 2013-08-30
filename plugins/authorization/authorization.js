@@ -691,7 +691,8 @@ function authorizeAdminCdrUser(username) {
 }
 
 /**
-* Return true if the specified user has the caller note authorization.
+* Return true if the specified user has the caller note authorization. The caller
+* note authorization coincides with post-it authorization.
 *
 * @method authorizeCallerNoteUser
 * @param {string} username The username
@@ -702,7 +703,7 @@ function authorizeCallerNoteUser(username) {
         // check parameter
         if (typeof username !== 'string') { throw new Error('wrong parameter'); }
 
-        return authorizeUser(authorizationTypes.TYPES.caller_note, username);
+        return authorizePostitUser(username);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);

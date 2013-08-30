@@ -125,6 +125,14 @@ module.exports = function (options, imports, register) {
             getHistoryCallerNoteInterval: dbconn.getHistoryCallerNoteInterval,
 
             /**
+            * It's the _getAllUserHistoryCallerNoteInterval_ method provided by _dbconn_ module.
+            *
+            * @method getAllUserHistoryCallerNoteInterval
+            */
+            getAllUserHistoryCallerNoteInterval: dbconn.getAllUserHistoryCallerNoteInterval,
+
+
+            /**
             * It's the _getVoicemailNewMsg_ method provided by _dbconn_ module.
             *
             * @method getVoicemailNewMsg

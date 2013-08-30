@@ -1080,7 +1080,29 @@ function getVoicemailOldMsg(vmId, cb) {
 }
 
 /**
-* Get the history caller note of the specified user into the interval time.
+* Gets the history caller note of all the users into the interval time.
+* It can be possible to filter the results specifying the filter. It search
+* the results into the _nethcti.caller\_note_ database.
+*
+* @method getAllUserHistoryCallerNoteInterval
+* @param {object} data
+*   @param {string} data.from     The starting date of the interval in the YYYYMMDD format (e.g. 20130521)
+*   @param {string} data.to       The ending date of the interval in the YYYYMMDD format (e.g. 20130528)
+*   @param {string} [data.filter] The filter to be used in the _number_ field. If it is omitted the
+*                                 function treats it as '%' string
+* @param {function} cb            The callback function
+*/
+function getAllUserHistoryCallerNoteInterval(data, cb) {
+    try {
+        getHistoryCallerNoteInterval(data, cb);
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Gets the history caller note of the specified user into the interval time.
 * If the username information is omitted, the results contains the
 * history caller note of all users. Moreover, it can be possible to filter
 * the results specifying the filter. It search the results into the
@@ -1110,14 +1132,20 @@ function getHistoryCallerNoteInterval(data, cb) {
             throw new Error('wrong parameters');
         }
 
+        // the mysql operator for the creator field
+        var operator = '=';
+
         // check optional parameters
         if (data.filter   === undefined) { data.filter = '%';   }
-        if (data.username === undefined) { data.username = '%'; }
+        if (data.username === undefined) {
+            data.username = '%';
+            operator = ' LIKE ';
+        }
 
         // search
         models[JSON_KEYS.CALLER_NOTE].findAll({
             where: [
-                'creator=? AND ' +
+                'creator' + operator + '? AND ' +
                 '(DATE(datecreation)>=? AND DATE(datecreation)<=?) AND ' +
                 '(number LIKE ?)',
                 data.username,
@@ -1212,24 +1240,25 @@ function getCustomerCardByNum(type, num, cb) {
 }
 
 // public interface
-exports.start                           = start;
-exports.config                          = config;
-exports.setLogger                       = setLogger;
-exports.savePostit                      = savePostit;
-exports.saveCallerNote                  = saveCallerNote;
-exports.saveCtiPbContact                = saveCtiPbContact;
-exports.deleteVoiceMessage              = deleteVoiceMessage;
-exports.getVoicemailNewMsg              = getVoicemailNewMsg;
-exports.getVoicemailOldMsg              = getVoicemailOldMsg;
-exports.getVmMailboxFromDbId            = getVmMailboxFromDbId;
-exports.getCustomerCardByNum            = getCustomerCardByNum;
-exports.getHistorySmsInterval           = getHistorySmsInterval;
-exports.getPbContactsContains           = getPbContactsContains;
-exports.getHistoryCallInterval          = getHistoryCallInterval;
-exports.getPbContactsStartsWith         = getPbContactsStartsWith;
-exports.getHistoryPostitInterval        = getHistoryPostitInterval;
-exports.getCtiPbContactsContains        = getCtiPbContactsContains;
-exports.getCtiPbContactsStartsWith      = getCtiPbContactsStartsWith;
-exports.getHistoryCallerNoteInterval    = getHistoryCallerNoteInterval;
-exports.getAllUserHistorySmsInterval    = getAllUserHistorySmsInterval;
-exports.getAllUserHistoryPostitInterval = getAllUserHistoryPostitInterval;
+exports.start                               = start;
+exports.config                              = config;
+exports.setLogger                           = setLogger;
+exports.savePostit                          = savePostit;
+exports.saveCallerNote                      = saveCallerNote;
+exports.saveCtiPbContact                    = saveCtiPbContact;
+exports.deleteVoiceMessage                  = deleteVoiceMessage;
+exports.getVoicemailNewMsg                  = getVoicemailNewMsg;
+exports.getVoicemailOldMsg                  = getVoicemailOldMsg;
+exports.getVmMailboxFromDbId                = getVmMailboxFromDbId;
+exports.getCustomerCardByNum                = getCustomerCardByNum;
+exports.getHistorySmsInterval               = getHistorySmsInterval;
+exports.getPbContactsContains               = getPbContactsContains;
+exports.getHistoryCallInterval              = getHistoryCallInterval;
+exports.getPbContactsStartsWith             = getPbContactsStartsWith;
+exports.getHistoryPostitInterval            = getHistoryPostitInterval;
+exports.getCtiPbContactsContains            = getCtiPbContactsContains;
+exports.getCtiPbContactsStartsWith          = getCtiPbContactsStartsWith;
+exports.getHistoryCallerNoteInterval        = getHistoryCallerNoteInterval;
+exports.getAllUserHistorySmsInterval        = getAllUserHistorySmsInterval;
+exports.getAllUserHistoryPostitInterval     = getAllUserHistoryPostitInterval;
+exports.getAllUserHistoryCallerNoteInterval = getAllUserHistoryCallerNoteInterval;
