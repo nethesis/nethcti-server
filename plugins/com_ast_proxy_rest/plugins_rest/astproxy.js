@@ -1675,15 +1675,15 @@ function setLogger(log) {
 * Set the authorization architect component.
 *
 * @method setCompAuthorization
-* @param {object} ca The architect authorization component
+* @param {object} comp The architect authorization component
 * @static
 */
-function setCompAuthorization(ca) {
+function setCompAuthorization(comp) {
     try {
         // check parameter
-        if (typeof ca !== 'object') { throw new Error('wrong parameter'); }
+        if (typeof comp !== 'object') { throw new Error('wrong parameter'); }
 
-        compAuthorization = ca;
+        compAuthorization = comp;
         logger.log(IDLOG, 'authorization component has been set');
 
     } catch (err) {

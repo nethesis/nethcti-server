@@ -280,16 +280,16 @@ function setAllRestPluginsAstProxy(ap) {
 * Set the authorization architect component for all REST plugins.
 *
 * @method setCompAuthorization
-* @param {object} ca The architect authorization component
+* @param {object} comp The architect authorization component
 * @static
 */
-function setCompAuthorization(ca) {
+function setCompAuthorization(comp) {
     try {
         // check parameter
-        if (typeof ca !== 'object') { throw new Error('wrong parameter'); }
+        if (typeof comp !== 'object') { throw new Error('wrong parameter'); }
 
         // set the authorization for all REST plugins
-        setAllRestPluginsAuthorization(ca);
+        setAllRestPluginsAuthorization(comp);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -301,16 +301,16 @@ function setCompAuthorization(ca) {
 *
 * @method setAllRestPluginsAuthorization
 * @private
-* @param ca The architect authorization component
+* @param comp The architect authorization component
 * @type {object}
 */
-function setAllRestPluginsAuthorization(ca) {
+function setAllRestPluginsAuthorization(comp) {
     try {
         var key;
         for (key in plugins) {
 
             if (typeof plugins[key].setCompAuthorization === 'function') {
-                plugins[key].setCompAuthorization(ca);
+                plugins[key].setCompAuthorization(comp);
                 logger.info(IDLOG, 'authorization component has been set for rest plugin ' + key);
             }
         }
