@@ -261,6 +261,20 @@ function getUserEndpointsJSON(userid) {
 }
 
 /**
+* Returns the endpoints of all users.
+*
+* @method getAllUserEndpointsJSON
+* @return {object} The endpoints of all users in JSON format.
+*/
+function getAllUserEndpointsJSON() {
+    try {
+        return compUser.getAllUsersEndpointsJSON();
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Saves the specified notification setting for the user.
 *
 * @method setUserNotificationConf
@@ -604,6 +618,7 @@ exports.setCompUser                            = setCompUser;
 exports.getUserEndpointsJSON                   = getUserEndpointsJSON;
 exports.getUserConfigurations                  = getUserConfigurations;
 exports.setUserClick2CallConf                  = setUserClick2CallConf;
+exports.getAllUserEndpointsJSON                = getAllUserEndpointsJSON;
 exports.setUserNotificationConf                = setUserNotificationConf;
 exports.getVoicemailNotificationSmsTo          = getVoicemailNotificationSmsTo;
 exports.getVoicemailNotificationEmailTo        = getVoicemailNotificationEmailTo;

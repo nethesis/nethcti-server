@@ -163,6 +163,7 @@ function setCompUtil(comp) {
         * 1. [`configmanager/usernames`](#usernamesget)
         * 1. [`configmanager/chatserver`](#chatserverget)
         * 1. [`configmanager/userendpoints`](#userendpointsget)
+        * 1. [`configmanager/alluserendpoints`](#alluserendpointsget)
         *
         * ---
         *
@@ -186,7 +187,13 @@ function setCompUtil(comp) {
         *
         * ### <a id="userendpointsget">**`configmanager/userendpoints`**</a>
         *
-        * Returns all the user endpoints.
+        * Returns the endpoints of the current user.
+        *
+        * ---
+        *
+        * ### <a id="alluserendpointsget">**`configmanager/alluserendpoints`**</a>
+        *
+        * Returns the endpoints of all users.
         *
         * <br>
         *
@@ -260,16 +267,18 @@ function setCompUtil(comp) {
                 * @property get
                 * @type {array}
                 *
-                *   @param {string} userconf     To get all user configurations
-                *   @param {string} usernames    To get the list of all the username
-                *   @param {string} chatserver   To get the server chat parameters
-                *   @param {string} userendpoint To get all the endpoints of the user
+                *   @param {string} userconf         To get all user configurations
+                *   @param {string} usernames        To get the list of all the username
+                *   @param {string} chatserver       To get the server chat parameters
+                *   @param {string} userendpoints    To get all the endpoints of the user
+                *   @param {string} alluserendpoints To get the endpoints of all users
                 */
                 'get': [
                     'userconf',
                     'usernames',
                     'chatserver',
-                    'userendpoints'
+                    'userendpoints',
+                    'alluserendpoints'
                 ],
 
                 /**
@@ -370,6 +379,38 @@ function setCompUtil(comp) {
                     } else {
 
                         logger.info(IDLOG, 'send all endpoints of user "' + username + '"');
+                        res.send(200, results);
+                    }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * Returns the endpoints of all users by the following REST API:
+            *
+            *     alluserendpoints
+            *
+            * @method alluserendpoints
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            alluserendpoints: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+                    var results  = compConfigManager.getAllUserEndpointsJSON();
+
+                    if (typeof results !== 'object') {
+                        var strerr = 'wrong endpoints result of all users';
+                        logger.error(IDLOG, strerr);
+                        compUtil.net.sendHttp500(IDLOG, res, strerr);
+
+                    } else {
+
+                        logger.info(IDLOG, 'send endpoints of all users');
                         res.send(200, results);
                     }
 
@@ -588,6 +629,7 @@ function setCompUtil(comp) {
         exports.setCompUser          = setCompUser;
         exports.notification         = configmanager.notification;
         exports.userendpoints        = configmanager.userendpoints;
+        exports.alluserendpoints     = configmanager.alluserendpoints;
         exports.setCompConfigManager = setCompConfigManager;
         exports.setCompAuthorization = setCompAuthorization;
 

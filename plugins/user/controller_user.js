@@ -493,6 +493,29 @@ function getEndpointsJSON(userid) {
 }
 
 /**
+* Returns the endpoints of all users.
+*
+* @method getAllUsersEndpointsJSON
+* @return {object} The endpoints of all users in JSON format.
+*/
+function getAllUsersEndpointsJSON() {
+    try {
+        var obj = {};
+
+        var keyusername;
+        for (keyusername in users) {
+            // get all endpoints of the user
+            obj[keyusername] = users[keyusername].getAllEndpointsJSON();
+        }
+        return obj;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        throw err;
+    }
+}
+
+/**
 * Returns the list of all the usernames.
 *
 * @method getUsernames
@@ -623,4 +646,5 @@ exports.setNethctiPresence             = setNethctiPresence;
 exports.hasExtensionEndpoint           = hasExtensionEndpoint;
 exports.hasVoicemailEndpoint           = hasVoicemailEndpoint;
 exports.getAllEndpointsNethcti         = getAllEndpointsNethcti;
+exports.getAllUsersEndpointsJSON       = getAllUsersEndpointsJSON;
 exports.getUsersUsingEndpointExtension = getUsersUsingEndpointExtension;

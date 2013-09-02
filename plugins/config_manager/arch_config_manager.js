@@ -38,6 +38,13 @@ module.exports = function (options, imports, register) {
             getUserEndpointsJSON: configManager.getUserEndpointsJSON,
 
             /**
+            * It's the _getAllUserEndpoints_ method provided by _config\_manager_ module.
+            *
+            * @method getAllUserEndpoints
+            */
+            getAllUserEndpointsJSON: configManager.getAllUserEndpointsJSON,
+
+            /**
             * It's the _setUserNotificationConf_ method provided by _config\_manager_ module.
             *
             * @method setUserNotificationConf

@@ -106,6 +106,13 @@ module.exports = function (options, imports, register) {
             getEndpointsJSON: controllerUser.getEndpointsJSON,
 
             /**
+            * It's the _getAllUsersEndpointsJSON_ method provided by _controller\_user_ module.
+            *
+            * @method getAllUsersEndpointsJSON
+            */
+            getAllUsersEndpointsJSON: controllerUser.getAllUsersEndpointsJSON,
+
+            /**
             * It's the _isValidEndpointType_ method provided by _endpoint\_types_ module.
             *
             * @method isValidEndpointType
