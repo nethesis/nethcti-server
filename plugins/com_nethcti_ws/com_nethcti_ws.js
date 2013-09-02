@@ -1117,7 +1117,7 @@ function loginHdlr(socket, obj) {
             // if the user has the extensions permission, than he will receive the asterisk events that affects the extensions
             if (compAuthorization.authorizeOpExtensionsUser(obj.accessKeyId) === true) {
 
-                if (compAuthorization.isPrivacyOn(obj.accessKeyId) === true) {
+                if (compAuthorization.isPrivacyEnabled(obj.accessKeyId) === true) {
                     // join the user to the websocket room to receive the asterisk events that affects the extensions, using hide numbers
                     socket.join(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY);
 
@@ -1130,7 +1130,7 @@ function loginHdlr(socket, obj) {
             // if the user has the queues permission, than he will receive the asterisk events that affects the queues
             if (compAuthorization.authorizeOpQueuesUser(obj.accessKeyId) === true) {
 
-                if (compAuthorization.isPrivacyOn(obj.accessKeyId) === true) {
+                if (compAuthorization.isPrivacyEnabled(obj.accessKeyId) === true) {
                     // join the user to the websocket room to receive the asterisk events that affects the queues, using hide numbers
                     socket.join(WS_ROOM.QUEUES_AST_EVT_PRIVACY);
 
@@ -1143,7 +1143,7 @@ function loginHdlr(socket, obj) {
             // if the user has the trunks permission, than he will receive the asterisk events that affects the trunks
             if (compAuthorization.authorizeOpTrunksUser(obj.accessKeyId) === true) {
 
-                if (compAuthorization.isPrivacyOn(obj.accessKeyId) === true) {
+                if (compAuthorization.isPrivacyEnabled(obj.accessKeyId) === true) {
                     // join the user to the websocket room to receive the asterisk events that affects the trunks, using hide numbers
                     socket.join(WS_ROOM.TRUNKS_AST_EVT_PRIVACY);
 
@@ -1156,7 +1156,7 @@ function loginHdlr(socket, obj) {
             // if the user has the parkings permission, than he will receive the asterisk events that affects the parkings
             if (compAuthorization.authorizeOpParkingsUser(obj.accessKeyId) === true) {
 
-                if (compAuthorization.isPrivacyOn(obj.accessKeyId) === true) {
+                if (compAuthorization.isPrivacyEnabled(obj.accessKeyId) === true) {
                     // join the user to the websocket room to receive the asterisk events that affects the parkings, using hide numbers
                     socket.join(WS_ROOM.PARKINGS_AST_EVT_PRIVACY);
 
