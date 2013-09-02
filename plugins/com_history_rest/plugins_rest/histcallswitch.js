@@ -244,7 +244,7 @@ function setCompAuthorization(ca) {
                         if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
                         else {
                             logger.info(IDLOG, 'send ' + results.length   + ' results searching switchboard history call ' +
-                                               'interval between ' + obj.from + ' to ' + obj.to + ' for all endpoints' +
+                                               'interval between ' + obj.from + ' to ' + obj.to + ' for all endpoints ' +
                                                'and filter ' + (obj.filter ? obj.filter : '""') + ' to user "' + username + '"');
                             res.send(200, results);
                         }

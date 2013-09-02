@@ -13,9 +13,9 @@
 * @private
 * @final
 * @readOnly
-* @default [plugins_rest/histcallernote]
+* @default [plugins_rest/all_histcallernote]
 */
-var IDLOG = '[plugins_rest/histcallernote]';
+var IDLOG = '[plugins_rest/all_histcallernote]';
 
 /**
 * The logger. It must have at least three methods: _info, warn and error._
@@ -106,34 +106,34 @@ function setCompUtil(comp) {
         /**
         * REST plugin that provides history caller note functions through the following REST API:
         *
-        *     histcallernote/interval/:from/:to
+        *     all_histcallernote/interval/:from/:to
         *
-        * Return the history of the caller note between _"from"_ date to _"to"_ date. Dates must be
-        * expressed in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
+        * Returns the history of the caller note created by all users between _"from"_ date to _"to"_ date.
+        * Dates must be expressed in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
         *
-        *     histcallernote/interval/:from/:to/:filter
+        *     all_histcallernote/interval/:from/:to/:filter
         *
-        * Return the history caller note between _"from"_ date to _"to"_ date filtering by _"filter"_.
+        * Returns the history caller note created by all users between _"from"_ date to _"to"_ date filtering by _"filter"_.
         * Date must be expressed in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
         *
-        *     histcallernote/day/:day
+        *     all_histcallernote/day/:day
         *
-        * Return the history caller note of the day _"day"_. Date must be expressed in YYYYMMDD format.
+        * Returns the history caller note created by all users of the day _"day"_. Date must be expressed in YYYYMMDD format.
         * If an error occurs an HTTP 500 response is returned.
         *
-        *     histcallernote/day/:day/:filter
+        *     all_histcallernote/day/:day/:filter
         *
-        * Return the history caller note of the day _"day"_ filtering by _"filter"_. Date must be expressed
+        * Returns the history caller note created by all users of the day _"day"_ filtering by _"filter"_. Date must be expressed
         * in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
         *
         * @class plugin_rest_histcallernote
         * @static
         */
-        var histcallernote = {
+        var all_histcallernote = {
 
             // the REST api
             api: {
-                'root': 'histcallernote',
+                'root': 'all_histcallernote',
 
                 /**
                 * REST API to be requested using HTTP GET request.
@@ -141,22 +141,22 @@ function setCompUtil(comp) {
                 * @property get
                 * @type {array}
                 *
-                *   @param {string} interval/:from/:to To get the history caller note between _"from"_ date to _"to"_ date.
+                *   @param {string} interval/:from/:to To get the history caller note of all users between _"from"_ date to _"to"_ date.
                 *       The date must be expressed in YYYYMMDD format
                 *
-                *   @param {string} interval/:from/:to/:filter To get the history caller note between _"from"_ date to _"to"_
+                *   @param {string} interval/:from/:to/:filter To get the history caller note of all users between _"from"_ date to _"to"_
                 *       date filtering by filter. The date must be expressed in YYYYMMDD format
                 *
-                *   @param {string} day/:day To get the history caller note of the day. The date must be expressed in YYYYMMDD format
+                *   @param {string} day/:day To get the history caller note of all users of the day. The date must be expressed in YYYYMMDD format
                 *
-                *   @param {string} day/:day/:filter To get the history caller note of the day filtering by filter. The date must
+                *   @param {string} day/:day/:filter To get the history caller note of all users of the day filtering by filter. The date must
                 *       be expressed in YYYYMMDD format
                 */
                 'get' : [
-                    'interval/:from/:to',
-                    'interval/:from/:to/:filter',
                     'day/:day',
-                    'day/:day/:filter'
+                    'day/:day/:filter',
+                    'interval/:from/:to',
+                    'interval/:from/:to/:filter'
                 ],
                 'post': [],
                 'head': [],
@@ -164,14 +164,14 @@ function setCompUtil(comp) {
             },
 
             /**
-            * Search the history caller note for the specified interval and optional filter with the following REST api:
+            * Search the history of caller note of all users for the specified interval and optional filter with the following REST api:
             *
             *     interval/:from/:to
             *     interval/:from/:to/:filter
             *
             * @method interval
-            * @param {object} req The client request.
-            * @param {object} res The client response.
+            * @param {object}   req  The client request.
+            * @param {object}   res  The client response.
             * @param {function} next Function to run the next handler in the chain.
             */
             interval: function (req, res, next) {
@@ -180,22 +180,21 @@ function setCompUtil(comp) {
                     var username = req.headers.authorization_user;
 
                     var obj = {
-                        to:       req.params.to,
-                        from:     req.params.from,
-                        username: req.headers.authorization_user
+                        to:   req.params.to,
+                        from: req.params.from
                     };
 
                     // add filter parameter if it has been specified
                     if (req.params.filter) { obj.filter = req.params.filter; }
 
                     // use the history component
-                    var data = compCallerNote.getHistoryInterval(obj, function (err, results) {
+                    var data = compCallerNote.getAllUserHistoryInterval(obj, function (err, results) {
 
                         if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
                         else {
                             logger.info(IDLOG, 'send ' + results.length   + ' results searching history caller note' +
-                                               ' in the interval between ' + obj.from + ' to ' + obj.to +
-                                               ' and filter "' + (obj.filter ? obj.filter : '""') + ' to user "' + username + '"');
+                                               ' of all users in the interval between ' + obj.from + ' to ' + obj.to +
+                                               ' and filter ' + (obj.filter ? obj.filter : '""') + ' to user "' + username + '"');
                             res.send(200, results);
                         }
                     });
@@ -206,14 +205,15 @@ function setCompUtil(comp) {
             },
 
             /**
-            * Search the history caller note for the specified day, endpoint and optional filter by the following REST api:
+            * Search the history of the caller note of all users for the specified day, endpoint and optional filter
+            * by the following REST api:
             *
             *     day/:endpoint/:day
             *     day/:endpoint/:day/:filter
             *
             * @method day
-            * @param {object} req The client request.
-            * @param {object} res The client response.
+            * @param {object}   req  The client request.
+            * @param {object}   res  The client response.
             * @param {function} next Function to run the next handler in the chain.
             *
             * It uses _interval_ function.
@@ -229,9 +229,9 @@ function setCompUtil(comp) {
                 }
             }
         }
-        exports.api               = histcallernote.api;
-        exports.day               = histcallernote.day;
-        exports.interval          = histcallernote.interval;
+        exports.api               = all_histcallernote.api;
+        exports.day               = all_histcallernote.day;
+        exports.interval          = all_histcallernote.interval;
         exports.setLogger         = setLogger;
         exports.setCompUtil       = setCompUtil;
         exports.setCompCallerNote = setCompCallerNote;

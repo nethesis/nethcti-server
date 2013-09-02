@@ -35,7 +35,14 @@ module.exports = function (options, imports, register) {
             *
             * @method getHistoryInterval
             */
-            getHistoryInterval: controllerCallerNote.getHistoryInterval
+            getHistoryInterval: controllerCallerNote.getHistoryInterval,
+
+            /**
+            * It's the _getAllUserHistoryInterval_ method provided by _controller\_caller\_note_ module.
+            *
+            * @method getAllUserHistoryInterval
+            */
+            getAllUserHistoryInterval: controllerCallerNote.getAllUserHistoryInterval
         }
     });
 

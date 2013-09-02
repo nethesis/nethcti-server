@@ -297,9 +297,34 @@ function start() {
     }
 }
 
+/**
+* Set the utility architect component to be used by REST plugins.
+*
+* @method setCompUtil
+* @param {object} comp The architect utility component
+* @static
+*/
+function setCompUtil(comp) {
+    try {
+        // check parameter
+        if (typeof comp !== 'object') { throw new Error('wrong parameter'); }
+
+        var p;
+        // set utility architect component to all REST plugins
+        for (p in plugins) {
+            if (typeof plugins[p].setCompUtil === 'function') {
+                plugins[p].setCompUtil(comp);
+            }
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
 // public interface
-exports.start     = start;
-exports.config    = config;
-exports.setLogger = setLogger;
+exports.start                = start;
+exports.config               = config;
+exports.setLogger            = setLogger;
+exports.setCompUtil          = setCompUtil;
 exports.setCompCallerNote    = setCompCallerNote;
 exports.setCompAuthorization = setCompAuthorization;
