@@ -1190,10 +1190,10 @@ function getHistoryCallerNoteInterval(data, cb) {
 * or _/etc/nethcti/dbdynamic.json_ files.
 *
 * @method getCustomerCardByNum
-* @param {string} type The type of the customer card to retrieve
-* @param {string} num The phone number used to search in _channel_ and _dstchannel_ mysql
-*                     fields. It is used to filter. It is preceded by '%' character
-* @param {function} cb The callback function
+* @param {string}   type The type of the customer card to retrieve
+* @param {string}   num  The phone number used to search in _channel_ and _dstchannel_ mysql
+*                        fields. It is used to filter. It is preceded by '%' character
+* @param {function} cb   The callback function
 */
 function getCustomerCardByNum(type, num, cb) {
     try {
