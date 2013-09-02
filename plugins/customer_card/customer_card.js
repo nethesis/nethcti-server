@@ -163,6 +163,7 @@ function getCustomerCardByNum(ccName, num, cb) {
                 var template = ejsTemplates[ccName].content;
                 var render   = ejs.render(template, { results: results });
                 var obj = {
+                    name:   ccName,
                     index:  ejsTemplates[ccName].index,
                     render: render
                 }
@@ -227,7 +228,10 @@ function getAllCustomerCards(username, num, cb) {
                         logger.error(IDLOG, err);
 
                     } else { // add the result
-                        obj[result.index] = result.render;
+                        obj[result.index] = {
+                            name:   result.name,
+                            render: result.render
+                        }
                     }
                     callback();
 
@@ -241,7 +245,13 @@ function getAllCustomerCards(username, num, cb) {
             if (err) { logger.error(IDLOG, err); }
 
             var objKeys = Object.keys(obj);
-            logger.info(IDLOG, objKeys.length + ' customer cards "' + objKeys.toString() + '" obtained for user "' + username + '" searching num ' + num);
+            var str = '';
+            var k;
+            for (k in obj) {
+                str += obj[k].name + ',';
+            }
+            str = str.substring(0, str.length-1);
+            logger.info(IDLOG, objKeys.length + ' customer cards "' + str + '" obtained for user "' + username + '" searching num ' + num);
 
             cb(null, obj);
         });

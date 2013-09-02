@@ -161,7 +161,12 @@ function setCompUtil(comp) {
 
                             if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
                             else {
-                                logger.info(IDLOG, 'send ' + Object.keys(results).length + ' customer cards "' + Object.keys(results).toString() + '" for user "' + username + '" searching the number ' + num + ' to ' + res.connection.remoteAddress);
+                                var ccreturned = '';
+                                var key;
+                                for (key in results) { ccreturned += results[key].name + ','; }
+                                ccreturned = ccreturned.substring(0, ccreturned.length - 1);
+
+                                logger.info(IDLOG, 'send ' + Object.keys(results).length + ' customer cards "' + ccreturned + '" for user "' + username + '" searching the number ' + num + ' to ' + res.connection.remoteAddress);
                                 res.send(200, results);
                             }
 
