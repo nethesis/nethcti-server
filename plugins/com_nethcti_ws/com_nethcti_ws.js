@@ -41,8 +41,14 @@ var IDLOG = '[com_nethcti_ws]';
 }
 */
 var WS_ROOM = {
-    AST_EVT_CLEAR:   'ast_evt_clear',
-    AST_EVT_PRIVACY: 'ast_evt_privacy'
+    QUEUES_AST_EVT_CLEAR:       'queues_ast_evt_clear',
+    QUEUES_AST_EVT_PRIVACY:     'queues_ast_evt_privacy',
+    TRUNKS_AST_EVT_CLEAR:       'trunks_ast_evt_clear',
+    TRUNKS_AST_EVT_PRIVACY:     'trunks_ast_evt_privacy',
+    PARKINGS_AST_EVT_CLEAR:     'parkings_ast_evt_clear',
+    PARKINGS_AST_EVT_PRIVACY:   'parkings_ast_evt_privacy',
+    EXTENSIONS_AST_EVT_CLEAR:   'extensions_ast_evt_clear',
+    EXTENSIONS_AST_EVT_PRIVACY: 'extensions_ast_evt_privacy'
 };
 
 /**
@@ -356,10 +362,10 @@ function extenChanged(exten) {
         logger.info(IDLOG, 'emit event extenUpdate for extension ' + exten.getExten() + ' to websockets');
 
         // emits the event with clear numbers to all users with privacy disabled
-        server.sockets.in(WS_ROOM.AST_EVT_CLEAR).emit('extenUpdate', exten.toJSON());
+        server.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_CLEAR).emit('extenUpdate', exten.toJSON());
 
         // emits the event with hide numbers to all users with privacy enabled
-        server.sockets.in(WS_ROOM.AST_EVT_PRIVACY).emit('extenUpdate', exten.toJSON(privacyStrReplace));
+        server.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY).emit('extenUpdate', exten.toJSON(privacyStrReplace));
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -381,10 +387,10 @@ function queueChanged(queue) {
         logger.info(IDLOG, 'emit event queueUpdate for queue ' + queue.getQueue() + ' to websockets');
 
         // emits the event with clear numbers to all users with privacy disabled
-        server.sockets.in(WS_ROOM.AST_EVT_CLEAR).emit('queueUpdate', queue.toJSON());
+        server.sockets.in(WS_ROOM.QUEUES_AST_EVT_CLEAR).emit('queueUpdate', queue.toJSON());
 
         // emits the event with hide numbers to all users with privacy enabled
-        server.sockets.in(WS_ROOM.AST_EVT_PRIVACY).emit('queueUpdate', queue.toJSON(privacyStrReplace));
+        server.sockets.in(WS_ROOM.QUEUES_AST_EVT_PRIVACY).emit('queueUpdate', queue.toJSON(privacyStrReplace));
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -406,10 +412,10 @@ function parkingChanged(parking) {
         logger.info(IDLOG, 'emit event parkingUpdate for parking ' + parking.getParking() + ' to websockets');
 
         // emits the event with clear numbers to all users with privacy disabled
-        server.sockets.in(WS_ROOM.AST_EVT_CLEAR).emit('parkingUpdate', parking.toJSON());
+        server.sockets.in(WS_ROOM.PARKINGS_AST_EVT_CLEAR).emit('parkingUpdate', parking.toJSON());
 
         // emits the event with hide numbers to all users with privacy enabled
-        server.sockets.in(WS_ROOM.AST_EVT_PRIVACY).emit('parkingUpdate', parking.toJSON(privacyStrReplace));
+        server.sockets.in(WS_ROOM.PARKINGS_AST_EVT_PRIVACY).emit('parkingUpdate', parking.toJSON(privacyStrReplace));
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -561,26 +567,6 @@ function dispatchMsg(socket, data) {
             logger.warn(IDLOG, 'received message from unauthenticated client ' + getWebsocketEndpoint(socket));
             unauthorized(socket);
         }
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Return the list of the groups of extensions defined by the administrator.
-*
-* @method getOperatorGroups
-* @param {object} socket The client websocket
-* @return {object} The list of the groups of extensions.
-*/
-function getOperatorGroups(socket) {
-    try {
-        // check parameter
-        if (typeof socket !== 'object') { throw new Error('wrong parameter'); }
-
-        socket.emit('operatorGroups', operator.getJSONGroups());
-        logger.info(IDLOG, 'sent operatorGroups response to ' + getWebsocketEndpoint(socket));
-
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -1128,16 +1114,55 @@ function loginHdlr(socket, obj) {
             // send authenticated successfully response
             sendAutheSuccess(socket);
 
-            // if the user has the operator panel permission, than he will receive the asterisk events
-            if (compAuthorization.authorizeOperatorPanelUser(obj.accessKeyId) === true) {
+            // if the user has the extensions permission, than he will receive the asterisk events that affects the extensions
+            if (compAuthorization.authorizeOpExtensionsUser(obj.accessKeyId) === true) {
 
                 if (compAuthorization.isPrivacyOn(obj.accessKeyId) === true) {
-                    // join the user to the websocket room to receive the asterisk events with hide numbers
-                    socket.join(WS_ROOM.AST_EVT_PRIVACY);
+                    // join the user to the websocket room to receive the asterisk events that affects the extensions, using hide numbers
+                    socket.join(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY);
 
                 } else {
-                    // join the user to the websocket room to receive the asterisk events with clear numbers
-                    socket.join(WS_ROOM.AST_EVT_CLEAR);
+                    // join the user to the websocket room to receive the asterisk events that affects the extensions, using clear numbers
+                    socket.join(WS_ROOM.EXTENSIONS_AST_EVT_CLEAR);
+                }
+            }
+
+            // if the user has the queues permission, than he will receive the asterisk events that affects the queues
+            if (compAuthorization.authorizeOpQueuesUser(obj.accessKeyId) === true) {
+
+                if (compAuthorization.isPrivacyOn(obj.accessKeyId) === true) {
+                    // join the user to the websocket room to receive the asterisk events that affects the queues, using hide numbers
+                    socket.join(WS_ROOM.QUEUES_AST_EVT_PRIVACY);
+
+                } else {
+                    // join the user to the websocket room to receive the asterisk events that affects the queues, using hide numbers
+                    socket.join(WS_ROOM.QUEUES_AST_EVT_CLEAR);
+                }
+            }
+
+            // if the user has the trunks permission, than he will receive the asterisk events that affects the trunks
+            if (compAuthorization.authorizeOpTrunksUser(obj.accessKeyId) === true) {
+
+                if (compAuthorization.isPrivacyOn(obj.accessKeyId) === true) {
+                    // join the user to the websocket room to receive the asterisk events that affects the trunks, using hide numbers
+                    socket.join(WS_ROOM.TRUNKS_AST_EVT_PRIVACY);
+
+                } else {
+                    // join the user to the websocket room to receive the asterisk events that affects the trunks, using clear numbers
+                    socket.join(WS_ROOM.TRUNKS_AST_EVT_CLEAR);
+                }
+            }
+
+            // if the user has the parkings permission, than he will receive the asterisk events that affects the parkings
+            if (compAuthorization.authorizeOpParkingsUser(obj.accessKeyId) === true) {
+
+                if (compAuthorization.isPrivacyOn(obj.accessKeyId) === true) {
+                    // join the user to the websocket room to receive the asterisk events that affects the parkings, using hide numbers
+                    socket.join(WS_ROOM.PARKINGS_AST_EVT_PRIVACY);
+
+                } else {
+                    // join the user to the websocket room to receive the asterisk events that affects the parkings, using clear numbers
+                    socket.join(WS_ROOM.PARKINGS_AST_EVT_CLEAR);
                 }
             }
 
