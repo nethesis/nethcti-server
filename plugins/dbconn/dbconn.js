@@ -586,20 +586,23 @@ function deleteCtiPbContact(id, cb) {
 * any occurrences of the term in the database fields.
 *
 * @method getCtiPbContactsContains
-* @param {string} term The term to search. It can be a name or a number
-* @param {function} cb The callback function
+* @param {string}   term     The term to search. It can be a name or a number
+* @param {string}   username The name of the user used to search contacts
+* @param {function} cb       The callback function
 */
-function getCtiPbContactsContains(term, cb) {
+function getCtiPbContactsContains(term, username, cb) {
     try {
         // check parameters
-        if (typeof term !== 'string' || typeof cb !== 'function') {
+        if (   typeof term     !== 'string'
+            || typeof username !== 'string' || typeof cb !== 'function') {
+
             throw new Error('wrong parameters');
         }
 
         // add '%' to search all terms with any number of characters, even zero characters
         term = '%' + term + '%';
 
-        getCtiPbContacts(term, cb);
+        getCtiPbContacts(term, username, cb);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -612,20 +615,23 @@ function getCtiPbContactsContains(term, cb) {
 * so it search any contacts whose names starts with the term.
 *
 * @method getCtiPbContactsStartsWith
-* @param {string} term The term to search. It can be a name or a number
-* @param {function} cb The callback function
+* @param {string}   term     The term to search. It can be a name or a number
+* @param {string}   username The name of the user used to search contacts
+* @param {function} cb       The callback function
 */
-function getCtiPbContactsStartsWith(term, cb) {
+function getCtiPbContactsStartsWith(term, username, cb) {
     try {
         // check parameters
-        if (typeof term !== 'string' || typeof cb !== 'function') {
+        if (   typeof term     !== 'string'
+            || typeof username !== 'string' || typeof cb !== 'function') {
+
             throw new Error('wrong parameters');
         }
 
         // add '%' to search all contacts whose names starts with the term
         term = term + '%';
 
-        getCtiPbContacts(term, cb);
+        getCtiPbContacts(term, username, cb);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -640,26 +646,33 @@ function getCtiPbContactsStartsWith(term, cb) {
 * NethCTI address book is the mysql _nethcti.cti\_phonebook_.
 *
 * @method getCtiPbContacts
-* @param {string} term The term to search. It can be a name or a number
-* @param {function} cb The callback function
+* @param {string}   term     The term to search. It can be a name or a number
+* @param {string}   username The name of the user used to search contacts
+* @param {function} cb       The callback function
 * @private
 */
-function getCtiPbContacts(term, cb) {
+function getCtiPbContacts(term, username, cb) {
     try {
         // check parameters
-        if (typeof term !== 'string' || typeof cb !== 'function') {
+        if (   typeof term     !== 'string'
+            || typeof username !== 'string' || typeof cb !== 'function') {
+
             throw new Error('wrong parameters');
         }
 
         models[JSON_KEYS.CTI_PHONEBOOK].findAll({
             where: [
-                'name LIKE ? ' +
-                'OR company LIKE ? ' +
-                'OR workphone LIKE ? ' +
-                'OR homephone LIKE ? ' +
-                'OR cellphone LIKE ? ' +
-                'OR extension LIKE ?',
-                term, term, term, term, term, term
+                '(owner_id=? OR type="public")' +
+                'AND ' +
+                '(' +
+                    'name LIKE ? ' +
+                    'OR company LIKE ? ' +
+                    'OR workphone LIKE ? ' +
+                    'OR homephone LIKE ? ' +
+                    'OR cellphone LIKE ? ' +
+                    'OR extension LIKE ?'  +
+                ')',
+                username, term, term, term, term, term, term
             ],
             order: 'name ASC, company ASC'
 

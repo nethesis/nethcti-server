@@ -75,10 +75,11 @@ function setLogger(log) {
 * NethCTI phonebook databases.
 *
 * @method getPbContactsContains
-* @param {string} term The term to search. It can be a name or a number
-* @param {function} cb The callback function
+* @param {string}   term     The term to search. It can be a name or a number
+* @param {string}   username The name of the user used to search contacts in the cti phonebook
+* @param {function} cb       The callback function
 */
-function getPbContactsContains(term, cb) {
+function getPbContactsContains(term, username, cb) {
     try {
         // check parameters
         if (typeof term !== 'string' || typeof cb !== 'function') {
@@ -114,7 +115,7 @@ function getPbContactsContains(term, cb) {
             },
             function (callback) {
                 logger.info(IDLOG, 'search cti phonebook contacts contains term "' + term + '" by means dbconn module');
-                dbconn.getCtiPbContactsContains(term, function (err, results) {
+                dbconn.getCtiPbContactsContains(term, username, function (err, results) {
                     try {
                         if (err) { // some error in the query
                             logger.error(IDLOG, err);
@@ -222,13 +223,15 @@ function deleteCtiPbContact(id, cb) {
 * searching in the centralized and NethCTI phonebook databases.
 *
 * @method getPbContactsStartsWith
-* @param {string} term The term to search. It can be a name or a number
-* @param {function} cb The callback function
+* @param {string}   term     The term to search. It can be a name or a number
+* @param {string}   username The name of the user used to search contacts in the cti phonebook
+* @param {function} cb       The callback function
 */
-function getPbContactsStartsWith(term, cb) {
+function getPbContactsStartsWith(term, username, cb) {
     try {
         // check parameters
-        if (typeof term !== 'string' || typeof cb !== 'function') {
+        if (   typeof term     !== 'string'
+            || typeof username !== 'string' || typeof cb !== 'function') {
 
             throw new Error('wrong parameters');
         }
@@ -261,7 +264,7 @@ function getPbContactsStartsWith(term, cb) {
             },
             function (callback) {
                 logger.info(IDLOG, 'search cti phonebook contacts "starts with" term "' + term + '" by means dbconn module');
-                dbconn.getCtiPbContactsStartsWith(term, function (err, results) {
+                dbconn.getCtiPbContactsStartsWith(term, username, function (err, results) {
                     try {
                         if (err) { // some error in the query
                             logger.error(IDLOG, err);

@@ -239,16 +239,16 @@ function setCompUtil(comp) {
             *     search/:term
             *
             * @method search
-            * @param {object} req The client request.
-            * @param {object} res The client response.
-            * @param {function} next Function to run the next handler in the chain.
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
             */
             search: function (req, res, next) {
                 try {
                     var username = req.headers.authorization_user;
 
                     // use phonebook component
-                    compPhonebook.getPbContactsContains(req.params.term, function (err, results) {
+                    compPhonebook.getPbContactsContains(req.params.term, username, function (err, results) {
 
                         if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
 
@@ -323,14 +323,16 @@ function setCompUtil(comp) {
             *     searchstartswith:/:term
             *
             * @method searchstartswith
-            * @param {object} req The client request.
-            * @param {object} res The client response.
-            * @param {function} next Function to run the next handler in the chain.
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
             */
             searchstartswith: function (req, res, next) {
                 try {
+                    var username = req.headers.authorization_user;
+
                     // use phonebook component
-                    compPhonebook.getPbContactsStartsWith(req.params.term, function (err, results) {
+                    compPhonebook.getPbContactsStartsWith(req.params.term, username, function (err, results) {
 
                         if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
 
