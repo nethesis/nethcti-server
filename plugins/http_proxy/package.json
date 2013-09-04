@@ -3,7 +3,11 @@
     "main": "arch_http_proxy.js",
     "private": true,
     "plugin": {
-	"consumes": ["logger", "authentication"],
-	"provides": []
+	"consumes": [
+            "util",
+            "logger",
+            "authentication"
+        ],
+	"provides": [ "httpProxy" ]
     }
 }

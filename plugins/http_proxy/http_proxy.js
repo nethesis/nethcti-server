@@ -45,6 +45,15 @@ var logger = console;
 var compAuthentication;
 
 /**
+* The utility architect component.
+*
+* @property compUtil
+* @type object
+* @private
+*/
+var compUtil;
+
+/**
 * Listening port of the HTTPS proxy server. It can be
 * customized in the configuration file.
 *
@@ -54,6 +63,15 @@ var compAuthentication;
 * @default "8282"
 */
 var port = '8282';
+
+/**
+* Listening URL of the HTTPS proxy server. It is set by the _config_ method.
+*
+* @property listenUrl
+* @type string
+* @private
+*/
+var listenUrl;
 
 /**
 * The routing of the HTTPS proxy. It's initialized by the _config_ method.
@@ -164,6 +182,14 @@ function config(path) {
     } else {
         logger.warn(IDLOG, 'no HTTPS certificate specified in JSON file ' + path);
     }
+
+    // initialize the listen url of the proxy
+    if (json.hostname && json.port && json.proto) {
+        listenUrl = json.proto + '://' + json.hostname + ':' +  json.port;
+
+    } else {
+        logger.warn(IDLOG, 'building "listenUrl" of https proxy: "hostname" or "proto" or "port" not specified in JSON file ' + path);
+    }
     logger.info(IDLOG, 'configuration by file ' + path + ' ended');
 }
 
@@ -204,7 +230,7 @@ function start() {
         // called when some error occurs in the proxy
         server.proxy.on('proxyError', function (err, req, res) {
             logger.error(IDLOG, getProxyLog(req) + ': ' + err);
-            sendHttp500(res, err);
+            compUtil.net.sendHttp500(IDLOG, res, err.toString());
         });
 
         // called at the start of a request
@@ -244,49 +270,6 @@ function getProxyLog(req) {
 }
 
 /**
-* Send HTTP 500 internal server error response.
-*
-* @method sendHttp500
-* @param {object} resp The client response object
-* @param {string} [err] The error message
-* @private
-*/
-function sendHttp500(resp, err) {
-    try {
-        var text;
-        if (err === undefined || typeof err !== 'string') {
-            text = '';
-
-        } else {
-            text = err;
-        }
-
-        resp.writeHead(500, { error: err });
-        logger.error(IDLOG, 'send HTTP 500 response to ' + resp.connection.remoteAddress);
-        resp.end();
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Send HTTP 401 unauthorized response.
-*
-* @method sendHttp401
-* @param {object} resp The client response object.
-* @private
-*/
-function sendHttp401(resp) {
-    try {
-        resp.writeHead(401);
-        logger.info(IDLOG, 'send HTTP 401 response to ' + resp.connection.remoteAddress);
-        resp.end();
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
 * It routes the request to the correct service using the _router_
 * property. Each request is authenticated before processing it, so
 * the first time authentication request is needed and then each
@@ -299,15 +282,19 @@ function sendHttp401(resp) {
 */
 function proxyRequest(req, res, proxy) {
     try {
-        // check if the request is an authentication request
-        if (req.url.indexOf('/authentication/authenticate') !== -1) {
+        // bypass the token verification if the request is:
+        // 1. an authentication nonce request
+        // 2. a static file request
+        if (   req.url.indexOf('/authentication/authenticate') !== -1
+            || req.url.indexOf('/static') !== -1) {
+
             proxy.proxyRequest(req, res);
             return;
         }
 
         // no token is present
         if (req.headers.authorization === undefined) {
-            sendHttp401(res);
+            compUtil.net.sendHttp401(IDLOG, res);
             return;
         }
 
@@ -324,15 +311,47 @@ function proxyRequest(req, res, proxy) {
             proxy.proxyRequest(req, res);
 
         } else { // authentication failed
-            sendHttp401(res);
+            compUtil.net.sendHttp401(IDLOG, res);
         }
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
 }
 
+/**
+* Returns the url of the proxy.
+*
+* @method getUrl
+* @return {string} The url of the proxy.
+*/
+function getUrl() {
+    try {
+        return listenUrl;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the utility architect component.
+*
+* @method setCompUtil
+* @param {object} comp The utility architect component.
+*/
+function setCompUtil(comp) {
+    try {
+        compUtil = comp;
+        logger.info(IDLOG, 'set util architect component');
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
 // public interface
-exports.start     = start;
-exports.config    = config;
-exports.setLogger = setLogger;
+exports.start                 = start;
+exports.getUrl                = getUrl;
+exports.config                = config;
+exports.setLogger             = setLogger;
+exports.setCompUtil           = setCompUtil;
 exports.setCompAuthentication = setCompAuthentication;

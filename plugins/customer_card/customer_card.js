@@ -79,6 +79,15 @@ var dbconn;
 var compAuthorization;
 
 /**
+* The HTTP proxy architect component.
+*
+* @property compHttpProxy
+* @type object
+* @private
+*/
+var compHttpProxy;
+
+/**
 * All the ejs templates used for the customer cards. The keys are the name of the
 * customer card and the values are objects. These objects have two keys:
 *
@@ -159,6 +168,11 @@ function getCustomerCardByNum(ccName, num, cb) {
                     cb(err1);
                     return;
                 }
+                var proxyUrl = compHttpProxy.getUrl();
+
+                results.forEach(function (el) {
+                    el.server_address = proxyUrl;
+                });
 
                 var template = ejsTemplates[ccName].content;
                 var render   = ejs.render(template, { results: results });
@@ -190,6 +204,21 @@ function setCompAuthorization(ca) {
     try {
         compAuthorization = ca;
         logger.info(IDLOG, 'set authorization architect component');
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the HTTP proxy architect component used by customer card functions.
+*
+* @method setCompHttpProxy
+* @param {object} comp The HTTP proxy architect component.
+*/
+function setCompHttpProxy(comp) {
+    try {
+        compHttpProxy = comp;
+        logger.info(IDLOG, 'set HTTP proxy architect component');
     } catch (err) {
        logger.error(IDLOG, err.stack);
     }
@@ -420,6 +449,7 @@ exports.start                = start;
 exports.config               = config;
 exports.setLogger            = setLogger;
 exports.setDbconn            = setDbconn;
+exports.setCompHttpProxy     = setCompHttpProxy;
 exports.getAllCustomerCards  = getAllCustomerCards;
 exports.getCustomerCardByNum = getCustomerCardByNum;
 exports.setCompAuthorization = setCompAuthorization;
