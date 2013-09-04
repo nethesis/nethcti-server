@@ -55,6 +55,13 @@ module.exports = function (options, imports, register) {
             getCtiPbContact: dbconn.getCtiPbContact,
 
             /**
+            * It's the _deleteCtiPbContact_ method provided by _dbconn_ module.
+            *
+            * @method deleteCtiPbContact
+            */
+            deleteCtiPbContact: dbconn.deleteCtiPbContact,
+
+            /**
             * It's the _getPbContactsContains_ method provided by _dbconn_ module.
             *
             * @method getPbContactsContains

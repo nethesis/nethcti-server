@@ -137,6 +137,7 @@ function setCompUtil(comp) {
         * # POST requests
         *
         * 1. [`phonebook/create`](#createpost)
+        * 1. [`phonebook/delete_cticontact`](#delete_cticontactpost)
         *
         * ---
         *
@@ -178,6 +179,17 @@ function setCompUtil(comp) {
         *
         *     curl --insecure -i -X POST -d '{ "creator": "alessandro", "type": "type", ... }' https://192.168.5.224:8282/phonebook/create
         *
+        * ---
+        *
+        * ### <a id="delete_cticontactpost">**`phonebook/delete_cticontact`**</a>
+        *
+        * Deletes a contact from the NethCTI phonebook. The request must contains
+        * the following parameter:
+        *
+        * * `id: the contact identifier in the NethCTI phonebook database`
+        *
+        * The NethCTI phonebook is the _nethcti.cti\_phonebook_ database table.
+        *
         * @class plugin_rest_phonebook
         * @static
         */
@@ -210,9 +222,13 @@ function setCompUtil(comp) {
                 * @property post
                 * @type {array}
                 *
-                *   @param {string} create Creates a contact in the NethCTI phonebook
+                *   @param {string} create            Creates a contact in the NethCTI phonebook
+                *   @param {string} delete_cticontact Deletes a contact from the NethCTI phonebook
                 */
-                'post': [ 'create' ],
+                'post': [
+                    'create',
+                    'delete_cticontact'
+                ],
                 'head': [],
                 'del' : []
             },
@@ -278,9 +294,10 @@ function setCompUtil(comp) {
                         if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
 
                         else {
-                            // the user is authorized to view all his contacts and only public contacts created by the other users
-                            // if no contact has been found the "result" property is an empty object and it's returned to the user
-                            if (   Object.keys(result).length === 0 // the object is empty: not pb contact has been found
+                            // check the authorization for the user. The user is authorized to view all his
+                            // contacts and only public contacts created by the other users. If no contact
+                            // has been found the "result" property is an empty object and it's returned to the user
+                            if (   Object.keys(result).length === 0 // the object is empty: no pb contact has been found
                                 || result.type     === 'public'
                                 || result.owner_id === username) {
 
@@ -377,16 +394,79 @@ function setCompUtil(comp) {
                     logger.error(IDLOG, err.stack);
                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
+            },
+
+            /**
+            * Deletes a contact from the NethCTI phonebook.
+            *
+            *     delete_cticontact
+            *
+            * @method delete_cticontact
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            delete_cticontact: function (req, res, next) {
+                try {
+                    var data = req.params;
+
+                    if (typeof data !== 'object' || typeof data.id !== 'string') {
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    // extract the username added in the authentication step
+                    var username = req.headers.authorization_user;
+
+                    compPhonebook.getCtiPbContact(data.id, function (err1, result) {
+                        try {
+                            if (err1) {
+                                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                                return;
+                            }
+
+                            // check the authorization for the user. He's authorized to delete only his
+                            // contacts. If no contact has been found the "result" property is an empty object
+                            if (   Object.keys(result).length === 0 // the object is empty: no pb contact has been found
+                                || result.owner_id !== username) {  // the contact isn't owned by the user
+
+                                logger.warn(IDLOG, 'deleting cti contact with db id "' + data.id + '" by the user "' + username + '": the contact is not owned by the user or isn\'t present');
+                                compUtil.net.sendHttp403(IDLOG, res);
+                                return;
+                            }
+
+                            // use phonebook component
+                            compPhonebook.deleteCtiPbContact(data.id, function (err, results) {
+
+                                if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
+
+                                else {
+                                    logger.info(IDLOG, 'cti phonebook contact with db id "' + data.id + '" has been successfully deleted by the user "' + username + '"');
+                                    compUtil.net.sendHttp200(IDLOG, res);
+                                }
+                            });
+
+                        } catch (err2) {
+                            logger.error(IDLOG, err2.stack);
+                            compUtil.net.sendHttp500(IDLOG, res, err2.toString());
+                        }
+                    });
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
             }
         }
-        exports.api              = phonebook.api;
-        exports.search           = phonebook.search;
-        exports.create           = phonebook.create;
-        exports.setLogger        = setLogger;
-        exports.cticontact       = phonebook.cticontact;
-        exports.setCompUtil      = setCompUtil;
-        exports.searchstartswith = phonebook.searchstartswith;
-        exports.setCompPhonebook = setCompPhonebook;
+        exports.api               = phonebook.api;
+        exports.search            = phonebook.search;
+        exports.create            = phonebook.create;
+        exports.setLogger         = setLogger;
+        exports.cticontact        = phonebook.cticontact;
+        exports.setCompUtil       = setCompUtil;
+        exports.searchstartswith  = phonebook.searchstartswith;
+        exports.setCompPhonebook  = setCompPhonebook;
+        exports.delete_cticontact = phonebook.delete_cticontact;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);

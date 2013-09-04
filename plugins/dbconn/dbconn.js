@@ -538,6 +538,49 @@ function getCtiPbContact(id, cb) {
 }
 
 /**
+* Deletes the specified phonebook contact from the _nethcti.cti\_phonebook_ database table.
+*
+* @method deleteCtiPbContact
+* @param {string}   id The cti database contact identifier
+* @param {function} cb The callback function
+*/
+function deleteCtiPbContact(id, cb) {
+    try {
+        // check parameters
+        if (typeof id !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        models[JSON_KEYS.CTI_PHONEBOOK].find({
+            where: [ 'id=?', id  ]
+
+        }).success(function (task) {
+
+            if (task) {
+
+                task.destroy().success(function (some) {
+                    logger.info(IDLOG, 'cti phonebook contact with db id "' + id + '" has been deleted successfully');
+                    cb();
+                });
+
+            } else {
+                var str = 'deleting cti phonebook contact with db id "' + dbid + '": entry not found';
+                logger.warn(IDLOG, str);
+                cb(str);
+            }
+
+        }).error(function (err1) { // manage the error
+
+            logger.error(IDLOG, 'searching cti phonebook contact with db id "' + id + '" to delete: ' + err1.toString());
+            cb(err1.toString());
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
 * Gets the phonebook contacts searching in the NethCTI phonebook database.
 * extension_. The specified term is wrapped with '%' characters, so it search
 * any occurrences of the term in the database fields.
@@ -1066,7 +1109,7 @@ function deleteVoiceMessage(dbid, cb) {
 
         }).error(function (err) { // manage the error
 
-            logger.error(IDLOG, 'searching voicemail mailbox from voicemail db id "' + dbid + '"');
+            logger.error(IDLOG, 'searching voice message with db id "' + dbid + '" to delete not found: ' + err.toString());
             cb(err.toString());
         });
     } catch (err) {
@@ -1288,6 +1331,7 @@ exports.savePostit                          = savePostit;
 exports.saveCallerNote                      = saveCallerNote;
 exports.getCtiPbContact                     = getCtiPbContact;
 exports.saveCtiPbContact                    = saveCtiPbContact;
+exports.deleteCtiPbContact                  = deleteCtiPbContact;
 exports.deleteVoiceMessage                  = deleteVoiceMessage;
 exports.getVoicemailNewMsg                  = getVoicemailNewMsg;
 exports.getVoicemailOldMsg                  = getVoicemailOldMsg;

@@ -52,7 +52,14 @@ module.exports = function (options, imports, register) {
             *
             * @method getCtiPbContact
             */
-            getCtiPbContact: phonebook.getCtiPbContact
+            getCtiPbContact: phonebook.getCtiPbContact,
+
+            /**
+            * It's the _deleteCtiPbContact_ method provided by _phonebook_ module.
+            *
+            * @method deleteCtiPbContact
+            */
+            deleteCtiPbContact: phonebook.deleteCtiPbContact
         }
     });
 
