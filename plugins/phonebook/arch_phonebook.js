@@ -45,7 +45,14 @@ module.exports = function (options, imports, register) {
             *
             * @method saveCtiPbContact
             */
-            saveCtiPbContact: phonebook.saveCtiPbContact
+            saveCtiPbContact: phonebook.saveCtiPbContact,
+
+            /**
+            * It's the _getCtiPbContact_ method provided by _phonebook_ module.
+            *
+            * @method getCtiPbContact
+            */
+            getCtiPbContact: phonebook.getCtiPbContact
         }
     });
 

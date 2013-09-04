@@ -146,6 +146,42 @@ function getPbContactsContains(term, cb) {
 }
 
 /**
+* Returns the cti phonebook contact.
+*
+* @method getCtiPbContact
+* @param {string}   id The contact identifier in the cti phonebook database
+* @param {function} cb The callback function
+*/
+function getCtiPbContact(id, cb) {
+    try {
+        // check parameters
+        if (typeof id !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        logger.info(IDLOG, 'search cti phonebook contact using db contact id "' + id + '" by means dbconn module');
+        dbconn.getCtiPbContact(id, function (err, result) {
+            try {
+                if (err) { // some error in the query
+                    logger.error(IDLOG, err);
+                    cb(err);
+                    return;
+                }
+                cb(null, result);
+
+            } catch (error) {
+                logger.error(IDLOG, error.stack);
+                cb(error);
+            }
+        });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err.toString());
+    }
+}
+
+/**
 * Gets the phonebook contacts whose name starts with the specified term
 * searching in the centralized and NethCTI phonebook databases.
 *
@@ -298,6 +334,7 @@ function saveCtiPbContact(data, cb) {
 // public interface
 exports.setLogger               = setLogger;
 exports.setDbconn               = setDbconn;
+exports.getCtiPbContact         = getCtiPbContact;
 exports.saveCtiPbContact        = saveCtiPbContact;
 exports.getPbContactsContains   = getPbContactsContains;
 exports.getPbContactsStartsWith = getPbContactsStartsWith;

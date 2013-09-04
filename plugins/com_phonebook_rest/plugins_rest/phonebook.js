@@ -109,6 +109,7 @@ function setCompUtil(comp) {
         * # GET requests
         *
         * 1. [`phonebook/search/:term`](#searchget)
+        * 1. [`phonebook/cticontact/:id`](#cticontactget)
         * 1. [`phonebook/searchstartswith/:term`](#searchstartswithget)
         *
         * ---
@@ -116,6 +117,13 @@ function setCompUtil(comp) {
         * ### <a id="searchget">**`phonebook/search/:term`**</a>
         *
         * The client receives all phonebook contacts found or an HTTP 500 response.
+        *
+        * ---
+        *
+        * ### <a id="cticontactget">**`phonebook/cticontact/:id`**</a>
+        *
+        * The client receives the details of the contact that is in the cti phonebook. The parameter
+        * "id" is the database identifier of the contact.
         *
         * ---
         *
@@ -185,12 +193,14 @@ function setCompUtil(comp) {
                 * @property get
                 * @type {array}
                 *
-                *   @param {string} search/:term To get the centralized phonebook contacts
+                *   @param {string} search/:term           To get the centralized phonebook contacts
+                *   @param {string} cticontact/:id         To get the the details of the contact that is in the cti phonebook
                 *   @param {string} searchstartswith/:term To get the centralized phonebook contacts whose
-                *       name starts with the specified term
+                *                                          name starts with the specified term
                 */
                 'get' : [
                     'search/:term',
+                    'cticontact/:id',
                     'searchstartswith/:term'
                 ],
 
@@ -219,6 +229,8 @@ function setCompUtil(comp) {
             */
             search: function (req, res, next) {
                 try {
+                    var username = req.headers.authorization_user;
+
                     // use phonebook component
                     compPhonebook.getPbContactsContains(req.params.term, function (err, results) {
 
@@ -241,6 +253,49 @@ function setCompUtil(comp) {
                     });
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
+                }
+            },
+
+            /**
+            * Search the address book contacts in the centralized and NethCTI phonebooks for the following REST API:
+            * Returns the details of the contact that is in the cti phonebook. The parameter "id" is the database
+            * identifier of the contact.
+            *
+            *     cticontact/:id
+            *
+            * @method search
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            cticontact: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // use phonebook component
+                    compPhonebook.getCtiPbContact(req.params.id, function (err, result) {
+
+                        if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
+
+                        else {
+                            // the user is authorized to view all his contacts and only public contacts created by the other users
+                            // if no contact has been found the "result" property is an empty object and it's returned to the user
+                            if (   Object.keys(result).length === 0 // the object is empty: not pb contact has been found
+                                || result.type     === 'public'
+                                || result.owner_id === username) {
+
+                                logger.info(IDLOG, 'send cti phonebook contact details of contact id "' + req.params.id + '" to user "' + username + '"');
+                                res.send(200, result);
+
+                            } else {
+                                logger.warn(IDLOG, 'user "' + username + '" has searched cti pb contact with id "' + req.params.id + '": the contact is not owned by him or is not a public contact');
+                                compUtil.net.sendHttp403(IDLOG, res);
+                            }
+                        }
+                    });
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             },
 
@@ -328,6 +383,7 @@ function setCompUtil(comp) {
         exports.search           = phonebook.search;
         exports.create           = phonebook.create;
         exports.setLogger        = setLogger;
+        exports.cticontact       = phonebook.cticontact;
         exports.setCompUtil      = setCompUtil;
         exports.searchstartswith = phonebook.searchstartswith;
         exports.setCompPhonebook = setCompPhonebook;

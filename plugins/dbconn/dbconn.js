@@ -493,6 +493,47 @@ function getPhonebookContacts(term, cb) {
         });
     } catch (err) {
         logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Returns the cti phonebook contact. It searches the _id_ field in the
+* _nethcti.cti\_phonebook_ database table.
+*
+* @method getCtiPbContact
+* @param {string}   id The cti database contact identifier
+* @param {function} cb The callback function
+*/
+function getCtiPbContact(id, cb) {
+    try {
+        // check parameters
+        if (typeof id !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        models[JSON_KEYS.CTI_PHONEBOOK].find({
+            where: [ 'id=?', id  ]
+
+        }).success(function (result) {
+
+            if (result && result.selectedValues) {
+                logger.info(IDLOG, 'search cti phonebook contact with db id "' + id + '" has been successful');
+                cb(null, result.selectedValues);
+
+            } else {
+                logger.info(IDLOG, 'search cti phonebook contact with db id "' + id + '": not found');
+                cb(null, {});
+            }
+
+        }).error(function (err1) { // manage the error
+
+            logger.error(IDLOG, 'search cti phonebook contact with db id "' + id + '" failed: ' + err1.toString());
+            cb(err1.toString());
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
     }
 }
 
@@ -1245,6 +1286,7 @@ exports.config                              = config;
 exports.setLogger                           = setLogger;
 exports.savePostit                          = savePostit;
 exports.saveCallerNote                      = saveCallerNote;
+exports.getCtiPbContact                     = getCtiPbContact;
 exports.saveCtiPbContact                    = saveCtiPbContact;
 exports.deleteVoiceMessage                  = deleteVoiceMessage;
 exports.getVoicemailNewMsg                  = getVoicemailNewMsg;
