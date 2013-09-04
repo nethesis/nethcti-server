@@ -259,7 +259,8 @@ function getAllCustomerCards(username, num, cb) {
                     } else { // add the result
                         obj[result.index] = {
                             name:   result.name,
-                            render: result.render
+                            render: result.render,
+                            number: num
                         }
                     }
                     callback();
