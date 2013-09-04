@@ -333,6 +333,6 @@ function start() {
 exports.start                = start;
 exports.config               = config;
 exports.setLogger            = setLogger;
-exports.setCompUtil          = setCompUtil;
 exports.setCompSms           = setCompSms;
+exports.setCompUtil          = setCompUtil;
 exports.setCompAuthorization = setCompAuthorization;
