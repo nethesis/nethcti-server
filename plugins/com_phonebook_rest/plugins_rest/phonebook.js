@@ -111,26 +111,36 @@ function setCompUtil(comp) {
         * 1. [`phonebook/search/:term`](#searchget)
         * 1. [`phonebook/cticontact/:id`](#cticontactget)
         * 1. [`phonebook/searchstartswith/:term`](#searchstartswithget)
+        * 1. [`phonebook/searchstartswith_digit/:term`](#searchstartswith_digitget)
         *
         * ---
         *
         * ### <a id="searchget">**`phonebook/search/:term`**</a>
         *
-        * The client receives all phonebook contacts found or an HTTP 500 response.
+        * The client receives all phonebook contacts found in the _centralized_ and _NethCTI_ phonebooks.
+        * It returns all database entries that contain the specified _term_ in the fields _name, company,
+        * workphone, homephone_ and _cellphone_.
         *
         * ---
         *
         * ### <a id="cticontactget">**`phonebook/cticontact/:id`**</a>
         *
-        * The client receives the details of the contact that is in the cti phonebook. The parameter
-        * "id" is the database identifier of the contact.
+        * The client receives the details of the contact that is in the _NethCTI_ phonebook. The parameter
+        * _id_ is the database identifier of the contact.
         *
         * ---
         *
         * ### <a id="searchstartswithget">**`phonebook/searchstartswith/:term`**</a>
         *
-        * The client receives all phonebook contacts whose names starts with specified term,
-        * or an HTTP 500 response.
+        * The client receives all phonebook contacts found in the _centralized_ and _NethCTI_ phonebooks.
+        * It returns all database entries whose _name_ and _company_ fields starts with the specified term.
+        *
+        * ---
+        *
+        * ### <a id="searchstartswith_digitget">**`phonebook/searchstartswith_digit/:range`**</a>
+        *
+        * The client receives all phonebook contacts found in the _centralized_ and _NethCTI_ phonebooks.
+        * It returns all database entries whose _name_ and _company_ fields starts with a digit.
         *
         * <br>
         *
@@ -205,15 +215,16 @@ function setCompUtil(comp) {
                 * @property get
                 * @type {array}
                 *
-                *   @param {string} search/:term           To get the centralized phonebook contacts
+                *   @param {string} search/:term           To get the centralized and cti phonebook contacts that contains the term
                 *   @param {string} cticontact/:id         To get the the details of the contact that is in the cti phonebook
-                *   @param {string} searchstartswith/:term To get the centralized phonebook contacts whose
-                *                                          name starts with the specified term
+                *   @param {string} searchstartswith/:term To get the centralized and cti phonebook contacts whose name starts with the specified term
+                *   @param {string} searchstartswith_digit To get the centralized and cti phonebook contacts whose name starts with a digit
                 */
                 'get' : [
                     'search/:term',
                     'cticontact/:id',
-                    'searchstartswith/:term'
+                    'searchstartswith/:term',
+                    'searchstartswith_digit'
                 ],
 
                 /**
@@ -234,7 +245,9 @@ function setCompUtil(comp) {
             },
 
             /**
-            * Search the address book contacts in the centralized and NethCTI phonebooks for the following REST API:
+            * It searches all phonebook contacts found in the _centralized_ and _NethCTI_ phonebooks.
+            * Returns all database entries that contain the specified _term_ in the fields _name, company,
+            * workphone, homephone_ and _cellphone_.
             *
             *     search/:term
             *
@@ -249,26 +262,34 @@ function setCompUtil(comp) {
 
                     // use phonebook component
                     compPhonebook.getPbContactsContains(req.params.term, username, function (err, results) {
+                        try {
 
-                        if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
+                            if (err) { throw err; }
 
-                        else {
-                            // construct the output log
-                            var strlog = 'send ';
-                            var pbtype;
-                            for (pbtype in results) {
+                            else {
+                                // construct the output log
+                                var strlog = 'send to user "' + username + '" ';
+                                var pbtype;
+                                for (pbtype in results) {
 
-                                strlog += results[pbtype].length + ' ' + pbtype + ' phonebook contacts and ';
+                                    strlog += results[pbtype].length + ' ' + pbtype + ' phonebook contacts and ';
+                                }
+                                strlog = strlog.substring(0, strlog.length - 5);
+                                strlog += ' searching the term "' + req.params.term + '"';
+
+                                logger.info(IDLOG, strlog);
+                                res.send(200, results);
                             }
-                            strlog = strlog.substring(0, strlog.length - 5);
-                            strlog += ' searching the term "' + req.params.term + '"';
 
-                            logger.info(IDLOG, strlog);
-                            res.send(200, results);
+                        } catch (err1) {
+                            logger.error(IDLOG, err1.stack);
+                            compUtil.net.sendHttp500(IDLOG, res, err1.toString());
                         }
                     });
+
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             },
 
@@ -290,26 +311,33 @@ function setCompUtil(comp) {
 
                     // use phonebook component
                     compPhonebook.getCtiPbContact(req.params.id, function (err, result) {
+                        try {
 
-                        if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
+                            if (err) { throw err; }
 
-                        else {
-                            // check the authorization for the user. The user is authorized to view all his
-                            // contacts and only public contacts created by the other users. If no contact
-                            // has been found the "result" property is an empty object and it's returned to the user
-                            if (   Object.keys(result).length === 0 // the object is empty: no pb contact has been found
-                                || result.type     === 'public'
-                                || result.owner_id === username) {
+                            else {
+                                // check the authorization for the user. The user is authorized to view all his
+                                // contacts and only public contacts created by the other users. If no contact
+                                // has been found the "result" property is an empty object and it's returned to the user
+                                if (   Object.keys(result).length === 0 // the object is empty: no pb contact has been found
+                                    || result.type     === 'public'
+                                    || result.owner_id === username) {
 
-                                logger.info(IDLOG, 'send cti phonebook contact details of contact id "' + req.params.id + '" to user "' + username + '"');
-                                res.send(200, result);
+                                    logger.info(IDLOG, 'send cti phonebook contact details of contact id "' + req.params.id + '" to user "' + username + '"');
+                                    res.send(200, result);
 
-                            } else {
-                                logger.warn(IDLOG, 'user "' + username + '" has searched cti pb contact with id "' + req.params.id + '": the contact is not owned by him or is not a public contact');
-                                compUtil.net.sendHttp403(IDLOG, res);
+                                } else {
+                                    logger.warn(IDLOG, 'user "' + username + '" has searched cti pb contact with id "' + req.params.id + '": the contact is not owned by him or is not a public contact');
+                                    compUtil.net.sendHttp403(IDLOG, res);
+                                }
                             }
+
+                        } catch (err1) {
+                            logger.error(IDLOG, err1.stack);
+                            compUtil.net.sendHttp500(IDLOG, res, err1.toString());
                         }
                     });
+
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -317,10 +345,10 @@ function setCompUtil(comp) {
             },
 
             /**
-            * Search the address book contacts whose name starts with the specified term in the centralized and
-            * NethCTI phonebooks for the following REST API:
+            * Searches all phonebook contacts found in the _centralized_ and _NethCTI_ phonebooks.
+            * It returns all database entries whose _name_ and _company_ fields starts with the specified term.
             *
-            *     searchstartswith:/:term
+            *     searchstartswith/:term
             *
             * @method searchstartswith
             * @param {object}   req  The client request
@@ -333,26 +361,82 @@ function setCompUtil(comp) {
 
                     // use phonebook component
                     compPhonebook.getPbContactsStartsWith(req.params.term, username, function (err, results) {
+                        try {
 
-                        if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
+                            if (err) { throw err; }
 
-                        else {
-                            // construct the output log
-                            var strlog = 'send ';
-                            var pbtype;
-                            for (pbtype in results) {
+                            else {
+                                // construct the output log
+                                var strlog = 'send to user "' + username + '" ';
+                                var pbtype;
+                                for (pbtype in results) {
 
-                                strlog += results[pbtype].length + ' ' + pbtype + ' phonebook contacts and ';
+                                    strlog += results[pbtype].length + ' ' + pbtype + ' phonebook contacts and ';
+                                }
+                                strlog = strlog.substring(0, strlog.length - 5);
+                                strlog += ' searching contacts "starts with" the term "' + req.params.term + '"';
+
+                                logger.info(IDLOG, strlog);
+                                res.send(200, results);
                             }
-                            strlog = strlog.substring(0, strlog.length - 5);
-                            strlog += ' searching contacts "starts with" the term "' + req.params.term + '"';
 
-                            logger.info(IDLOG, strlog);
-                            res.send(200, results);
+                        } catch (err1) {
+                            logger.error(IDLOG, err1.stack);
+                            compUtil.net.sendHttp500(IDLOG, res, err1.toString());
                         }
                     });
+
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * Searches all phonebook contacts found in the _centralized_ and _NethCTI_ phonebooks.
+            * It returns all database entries whose _name_ and _company_ fields starts with a digit.
+            *
+            *     searchstartswith_digit
+            *
+            * @method searchstartswith_digit
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            searchstartswith_digit: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // use phonebook component
+                    compPhonebook.getPbContactsStartsWithDigit(username, function (err1, results) {
+                        try {
+
+                            if (err1) { throw err1; }
+
+                            else {
+                                // construct the output log
+                                var strlog = 'send to user "' + username + '" ';
+                                var pbtype;
+                                for (pbtype in results) {
+
+                                    strlog += results[pbtype].length + ' ' + pbtype + ' phonebook contacts and ';
+                                }
+                                strlog = strlog.substring(0, strlog.length - 5);
+                                strlog += ' searching contacts "starts with digit"';
+
+                                logger.info(IDLOG, strlog);
+                                res.send(200, results);
+                            }
+
+                        } catch (err2) {
+                            logger.error(IDLOG, err2.stack);
+                            compUtil.net.sendHttp500(IDLOG, res, err2.toString());
+                        }
+                    });
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             },
 
@@ -384,14 +468,21 @@ function setCompUtil(comp) {
 
                     // use phonebook component
                     compPhonebook.saveCtiPbContact(data, function (err, results) {
+                        try {
 
-                        if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
+                            if (err) { throw err; }
 
-                        else {
-                            logger.info(IDLOG, 'cti phonebook contact has been created successful from the user "' + username + '"');
-                            compUtil.net.sendHttp201(IDLOG, res);
+                            else {
+                                logger.info(IDLOG, 'cti phonebook contact has been created successful from the user "' + username + '"');
+                                compUtil.net.sendHttp201(IDLOG, res);
+                            }
+
+                        } catch (err1) {
+                            logger.error(IDLOG, err1.stack);
+                            compUtil.net.sendHttp500(IDLOG, res, err1.toString());
                         }
                     });
+
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -422,10 +513,7 @@ function setCompUtil(comp) {
 
                     compPhonebook.getCtiPbContact(data.id, function (err1, result) {
                         try {
-                            if (err1) {
-                                compUtil.net.sendHttp500(IDLOG, res, err.toString());
-                                return;
-                            }
+                            if (err1) { throw err1; }
 
                             // check the authorization for the user. He's authorized to delete only his
                             // contacts. If no contact has been found the "result" property is an empty object
@@ -438,13 +526,19 @@ function setCompUtil(comp) {
                             }
 
                             // use phonebook component
-                            compPhonebook.deleteCtiPbContact(data.id, function (err, results) {
+                            compPhonebook.deleteCtiPbContact(data.id, function (err3, results) {
+                                try {
 
-                                if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
+                                    if (err3) { throw err3; }
 
-                                else {
-                                    logger.info(IDLOG, 'cti phonebook contact with db id "' + data.id + '" has been successfully deleted by the user "' + username + '"');
-                                    compUtil.net.sendHttp200(IDLOG, res);
+                                    else {
+                                        logger.info(IDLOG, 'cti phonebook contact with db id "' + data.id + '" has been successfully deleted by the user "' + username + '"');
+                                        compUtil.net.sendHttp200(IDLOG, res);
+                                    }
+
+                                } catch (err4) {
+                                    logger.error(IDLOG, err4.stack);
+                                    compUtil.net.sendHttp500(IDLOG, res, err4.toString());
                                 }
                             });
 
@@ -460,15 +554,16 @@ function setCompUtil(comp) {
                 }
             }
         }
-        exports.api               = phonebook.api;
-        exports.search            = phonebook.search;
-        exports.create            = phonebook.create;
-        exports.setLogger         = setLogger;
-        exports.cticontact        = phonebook.cticontact;
-        exports.setCompUtil       = setCompUtil;
-        exports.searchstartswith  = phonebook.searchstartswith;
-        exports.setCompPhonebook  = setCompPhonebook;
-        exports.delete_cticontact = phonebook.delete_cticontact;
+        exports.api                    = phonebook.api;
+        exports.search                 = phonebook.search;
+        exports.create                 = phonebook.create;
+        exports.setLogger              = setLogger;
+        exports.cticontact             = phonebook.cticontact;
+        exports.setCompUtil            = setCompUtil;
+        exports.searchstartswith       = phonebook.searchstartswith;
+        exports.setCompPhonebook       = setCompPhonebook;
+        exports.delete_cticontact      = phonebook.delete_cticontact;
+        exports.searchstartswith_digit = phonebook.searchstartswith_digit;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);

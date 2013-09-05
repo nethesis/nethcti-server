@@ -390,7 +390,9 @@ function initConnections() {
 /**
 * Gets the phonebook contacts from the centralized address book.
 * The specified term is wrapped with '%' characters, so it search any
-* occurrences of the term in the database fields.
+* occurrences of the term in the fields: _name, company, workphone, homephone_
+* and _cellphone_. It orders the results by _name_ and _company_ ascending.
+* The centralized address book is the mysql _phonebook.phonebook_.
 *
 * @method getPbContactsContains
 * @param {string} term The term to search. It can be a name or a number. It
@@ -408,61 +410,6 @@ function getPbContactsContains(term, cb) {
 
         // add '%' to search all terms with any number of characters, even zero characters
         term = '%' + term + '%';
-
-        getPhonebookContacts(term, cb);
-
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Gets the phonebook contacts from the centralized address book.
-* At the end of the specified term is added the '%' character,
-* so it search any contacts whose names starts with the term.
-*
-* @method getPbContactsStartsWith
-* @param {string} term The term to search. It can be a name or a number. It
-*   will ended with '%' character to search any contacts with names that starts
-*   with the term.
-* @param {function} cb The callback function
-*/
-function getPbContactsStartsWith(term, cb) {
-    try {
-        // check parameters
-        if (typeof term !== 'string' || typeof cb !== 'function') {
-
-            throw new Error('wrong parameters');
-        }
-
-        // add '%' to search all terms with any number of characters, even zero characters
-        term = term + '%';
-
-        getPhonebookContacts(term, cb);
-
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Gets the phonebook contacts. It search in the centralized address
-* book and search in the fields _name, company, workphone, homephone_ and
-* _cellphone_. It orders the results by _name_ and _company_ ascending.
-* The centralized address book is the mysql _phonebook.phonebook_.
-*
-* @method getPhonebookContacts
-* @param {string} term The term to search. It can be a name or a number
-* @param {function} cb The callback function
-* @private
-*/
-function getPhonebookContacts(term, cb) {
-    try {
-        // check parameters
-        if (typeof term !== 'string' || typeof cb !== 'function') {
-
-            throw new Error('wrong parameters');
-        }
 
         models[JSON_KEYS.PHONEBOOK].findAll({
             where: [
@@ -483,17 +430,114 @@ function getPhonebookContacts(term, cb) {
                 results[i] = results[i].selectedValues;
             }
 
-            logger.info(IDLOG, results.length + ' results by searching centralized phonebook contacts for ' + term);
+            logger.info(IDLOG, results.length + ' results by searching centralized phonebook contacts that contains "' + term + '"');
             cb(null, results);
 
         }).error(function (err) { // manage the error
 
-            logger.error(IDLOG, 'searching centralized phonebook contacts for ' + term + ': ' + err.toString());
+            logger.error(IDLOG, 'searching centralized phonebook contacts that contains "' + term + '": ' + err.toString());
             cb(err.toString());
         });
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
-        cb(err);
+    }
+}
+
+/**
+* Gets the phonebook contacts from the centralized address book.
+* At the end of the specified term is added the '%' character,
+* so it searches the entries whose fields _name_ and _company_
+* starts with the term. It orders the results by _name_ and _company_ ascending.
+* The centralized address book is the mysql _phonebook.phonebook_.
+*
+* @method getPbContactsStartsWith
+* @param {string} term The term to search. It can be a name or a number. It
+*   will ended with '%' character to search any contacts with names that starts
+*   with the term.
+* @param {function} cb The callback function
+*/
+function getPbContactsStartsWith(term, cb) {
+    try {
+        // check parameters
+        if (typeof term !== 'string' || typeof cb !== 'function') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // add '%' to search all terms with any number of characters, even zero characters
+        term = term + '%';
+
+        models[JSON_KEYS.PHONEBOOK].findAll({
+            where: [
+                'name LIKE ? ' +
+                'OR company LIKE ?',
+                term, term
+            ],
+            order: 'name ASC, company ASC'
+
+        }).success(function (results) {
+
+            // extract results to return in the callback function
+            var i;
+            for (i = 0; i < results.length; i++) {
+                results[i] = results[i].selectedValues;
+            }
+
+            logger.info(IDLOG, results.length + ' results by searching centralized phonebook contacts with names starts with "' + term + '"');
+            cb(null, results);
+
+        }).error(function (err) { // manage the error
+
+            logger.error(IDLOG, 'searching centralized phonebook contacts whose names starts with "' + term + '": ' + err.toString());
+            cb(err.toString());
+        });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Gets the phonebook contacts from the centralized address book.
+* It searches the entries whose fields _name_ and _company_
+* starts with a digit. It orders the results by _name_ and _company_
+* ascending. The centralized address book is the mysql _phonebook.phonebook_.
+*
+* @method getPbContactsStartsWithDigit
+* @param {function} cb The callback function
+*/
+function getPbContactsStartsWithDigit(cb) {
+    try {
+        // check parameters
+        if (typeof cb !== 'function') { throw new Error('wrong parameters'); }
+
+        models[JSON_KEYS.PHONEBOOK].findAll({
+            where: [
+                'name REGEXP "^[0-9]" ' +
+                'OR company REGEXP "^[0-9]"'
+            ],
+            order: 'name ASC, company ASC'
+
+        }).success(function (results) {
+
+            // extract results to return in the callback function
+            var i;
+            for (i = 0; i < results.length; i++) {
+                results[i] = results[i].selectedValues;
+            }
+
+            logger.info(IDLOG, results.length + ' results by searching centralized phonebook contacts with names starts with a digit');
+            cb(null, results);
+
+        }).error(function (err) { // manage the error
+
+            logger.error(IDLOG, 'searching centralized phonebook contacts whose names starts with a digit: ' + err.toString());
+            cb(err.toString());
+        });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
     }
 }
 
@@ -582,8 +626,10 @@ function deleteCtiPbContact(id, cb) {
 
 /**
 * Gets the phonebook contacts searching in the NethCTI phonebook database.
-* extension_. The specified term is wrapped with '%' characters, so it search
-* any occurrences of the term in the database fields.
+* The specified term is wrapped with '%' characters, so it searches
+* any occurrences of the term in the following fields: _name, company, workphone,
+* homephone, cellphone and extension_. It orders the results by _name_ and _company_
+* ascending. The NethCTI phonebook is the mysql _nethcti.cti\_phonebook_.
 *
 * @method getCtiPbContactsContains
 * @param {string}   term     The term to search. It can be a name or a number
@@ -602,67 +648,9 @@ function getCtiPbContactsContains(term, username, cb) {
         // add '%' to search all terms with any number of characters, even zero characters
         term = '%' + term + '%';
 
-        getCtiPbContacts(term, username, cb);
-
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Gets the phonebook contacts searching in the NethCTI phonebook database.
-* extension_. At the end of the specified term is added the '%' character,
-* so it search any contacts whose names starts with the term.
-*
-* @method getCtiPbContactsStartsWith
-* @param {string}   term     The term to search. It can be a name or a number
-* @param {string}   username The name of the user used to search contacts
-* @param {function} cb       The callback function
-*/
-function getCtiPbContactsStartsWith(term, username, cb) {
-    try {
-        // check parameters
-        if (   typeof term     !== 'string'
-            || typeof username !== 'string' || typeof cb !== 'function') {
-
-            throw new Error('wrong parameters');
-        }
-
-        // add '%' to search all contacts whose names starts with the term
-        term = term + '%';
-
-        getCtiPbContacts(term, username, cb);
-
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-
-/**
-* Gets the phonebook contacts searching in the NethCTI phonebook database.
-* It search in the fields _name, company, workphone, homephone, cellphone and
-* extension_. It orders the results by _name_ and _company_ ascending. The
-* NethCTI address book is the mysql _nethcti.cti\_phonebook_.
-*
-* @method getCtiPbContacts
-* @param {string}   term     The term to search. It can be a name or a number
-* @param {string}   username The name of the user used to search contacts
-* @param {function} cb       The callback function
-* @private
-*/
-function getCtiPbContacts(term, username, cb) {
-    try {
-        // check parameters
-        if (   typeof term     !== 'string'
-            || typeof username !== 'string' || typeof cb !== 'function') {
-
-            throw new Error('wrong parameters');
-        }
-
         models[JSON_KEYS.CTI_PHONEBOOK].findAll({
             where: [
-                '(owner_id=? OR type="public")' +
+                '(owner_id=? OR type="public") ' +
                 'AND ' +
                 '(' +
                     'name LIKE ? ' +
@@ -684,14 +672,119 @@ function getCtiPbContacts(term, username, cb) {
                 results[i] = results[i].selectedValues;
             }
 
-            logger.info(IDLOG, results.length + ' results by searching cti phonebook contacts for ' + term);
+            logger.info(IDLOG, results.length + ' results by searching cti phonebook contacts that contains "' + term + '"');
             cb(null, results);
 
         }).error(function (err) { // manage the error
 
-            logger.error(IDLOG, 'searching cti phonebook contacts for ' + term + ': ' + err.toString());
+            logger.error(IDLOG, 'searching cti phonebook contacts that contains "' + term + '": ' + err.toString());
             cb(err.toString());
         });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Gets the phonebook contacts searching in the NethCTI phonebook database.
+* At the end of the specified term is added the '%' character, so it searches
+* the entries whose fields _name_ and _company_ starts with the term.
+* It orders the results by _name_ and _company_ ascending. The NethCTI phonebook
+* is the mysql _nethcti.cti\_phonebook_.
+*
+* @method getCtiPbContactsStartsWith
+* @param {string}   term     The term to search. It can be a name or a number
+* @param {string}   username The name of the user used to search contacts
+* @param {function} cb       The callback function
+*/
+function getCtiPbContactsStartsWith(term, username, cb) {
+    try {
+        // check parameters
+        if (   typeof term     !== 'string'
+            || typeof username !== 'string' || typeof cb !== 'function') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // add '%' to search all contacts whose names starts with the term
+        term = term + '%';
+
+        models[JSON_KEYS.CTI_PHONEBOOK].findAll({
+            where: [
+                '(owner_id=? OR type="public") ' +
+                'AND ' +
+                '(name LIKE ? OR company LIKE ?)',
+                username, term, term
+            ],
+            order: 'name ASC, company ASC'
+
+        }).success(function (results) {
+
+            // extract results to return in the callback function
+            var i;
+            for (i = 0; i < results.length; i++) {
+                results[i] = results[i].selectedValues;
+            }
+
+            logger.info(IDLOG, results.length + ' results by searching cti phonebook contacts whose names starts with "' + term + '"');
+            cb(null, results);
+
+        }).error(function (err) { // manage the error
+
+            logger.error(IDLOG, 'searching cti phonebook contacts whose names starts with "' + term + '": ' + err.toString());
+            cb(err.toString());
+        });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Gets the phonebook contacts searching in the NethCTI phonebook database.
+* Tt searches the entries whose fields _name_ and _company_ starts with a digit.
+* It orders the results by _name_ and _company_ ascending. The NethCTI
+* phonebook is the mysql _nethcti.cti\_phonebook_.
+*
+* @method getCtiPbContactsStartsWithDigit
+* @param {string}   username The name of the user used to search contacts
+* @param {function} cb       The callback function
+*/
+function getCtiPbContactsStartsWithDigit(username, cb) {
+    try {
+        // check parameters
+        if (typeof username !== 'string' || typeof cb !== 'function') {
+
+            throw new Error('wrong parameters');
+        }
+
+        models[JSON_KEYS.CTI_PHONEBOOK].findAll({
+            where: [
+                '(owner_id=? OR type="public") ' +
+                'AND ' +
+                '(name REGEXP "^[0-9]" OR company REGEXP "^[0-9]")',
+                username
+            ],
+            order: 'name ASC, company ASC'
+
+        }).success(function (results) {
+
+            // extract results to return in the callback function
+            var i;
+            for (i = 0; i < results.length; i++) {
+                results[i] = results[i].selectedValues;
+            }
+
+            logger.info(IDLOG, results.length + ' results by searching cti phonebook contacts whose names starts with a digit');
+            cb(null, results);
+
+        }).error(function (err) { // manage the error
+
+            logger.error(IDLOG, 'searching cti phonebook contacts whose names starts with a digit: ' + err.toString());
+            cb(err.toString());
+        });
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -1357,7 +1450,9 @@ exports.getPbContactsStartsWith             = getPbContactsStartsWith;
 exports.getHistoryPostitInterval            = getHistoryPostitInterval;
 exports.getCtiPbContactsContains            = getCtiPbContactsContains;
 exports.getCtiPbContactsStartsWith          = getCtiPbContactsStartsWith;
+exports.getPbContactsStartsWithDigit        = getPbContactsStartsWithDigit;
 exports.getHistoryCallerNoteInterval        = getHistoryCallerNoteInterval;
 exports.getAllUserHistorySmsInterval        = getAllUserHistorySmsInterval;
+exports.getCtiPbContactsStartsWithDigit     = getCtiPbContactsStartsWithDigit;
 exports.getAllUserHistoryPostitInterval     = getAllUserHistoryPostitInterval;
 exports.getAllUserHistoryCallerNoteInterval = getAllUserHistoryCallerNoteInterval;

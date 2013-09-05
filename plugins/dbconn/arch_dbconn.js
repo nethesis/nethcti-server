@@ -83,11 +83,25 @@ module.exports = function (options, imports, register) {
             getPbContactsStartsWith: dbconn.getPbContactsStartsWith,
 
             /**
+            * It's the _getPbContactsStartsWithDigit_ method provided by _dbconn_ module.
+            *
+            * @method getPbContactsStartsWithDigit
+            */
+            getPbContactsStartsWithDigit: dbconn.getPbContactsStartsWithDigit,
+
+            /**
             * It's the _getCtiPbContactsStartsWith_ method provided by _dbconn_ module.
             *
             * @method getCtiPbContactsStartsWith
             */
             getCtiPbContactsStartsWith: dbconn.getCtiPbContactsStartsWith,
+
+            /**
+            * It's the _getCtiPbContactsStartsWithDigit_ method provided by _dbconn_ module.
+            *
+            * @method getCtiPbContactsStartsWithDigit
+            */
+            getCtiPbContactsStartsWithDigit: dbconn.getCtiPbContactsStartsWithDigit,
 
             /**
             * It's the _getHistoryCallInterval_ method provided by _dbconn_ module.

@@ -41,6 +41,13 @@ module.exports = function (options, imports, register) {
             getPbContactsStartsWith: phonebook.getPbContactsStartsWith,
 
             /**
+            * It's the _getPbContactsStartsWithDigit_ method provided by _phonebook_ module.
+            *
+            * @method getPbContactsStartsWithDigit
+            */
+            getPbContactsStartsWithDigit: phonebook.getPbContactsStartsWithDigit,
+
+            /**
             * It's the _saveCtiPbContact_ method provided by _phonebook_ module.
             *
             * @method saveCtiPbContact

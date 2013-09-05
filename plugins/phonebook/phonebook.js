@@ -219,7 +219,7 @@ function deleteCtiPbContact(id, cb) {
 }
 
 /**
-* Gets the phonebook contacts whose name starts with the specified term
+* Gets the phonebook contacts whose name starts with the specified term,
 * searching in the centralized and NethCTI phonebook databases.
 *
 * @method getPbContactsStartsWith
@@ -287,6 +287,80 @@ function getPbContactsStartsWith(term, username, cb) {
             logger.info(IDLOG, 'found ' + obj['centralized'].length + ' contacts in centralized phonebook and ' +
                                obj['nethcti'].length + ' contacts in cti phonebook searching contacts "starts with" ' +
                                'the term ' + term);
+            cb(err, obj);
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err.toString());
+    }
+}
+
+/**
+* Gets the phonebook contacts whose name starts with a digit, searching in
+* the centralized and NethCTI phonebook databases.
+*
+* @method getPbContactsStartsWithDigit
+* @param {string}   username The name of the user used to search contacts in the cti phonebook
+* @param {function} cb       The callback function
+*/
+function getPbContactsStartsWithDigit(username, cb) {
+    try {
+        // check parameters
+        if (typeof username !== 'string' || typeof cb !== 'function') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // object with all results
+        var obj = {
+            'centralized': [],
+            'nethcti':     []
+        };
+
+        async.parallel([
+
+            function (callback) {
+                logger.info(IDLOG, 'search centralized phonebook contacts "starts with digit" by means dbconn module');
+                dbconn.getPbContactsStartsWithDigit(function (err, results) {
+                    try {
+                        if (err) { // some error in the query
+                            logger.error(IDLOG, err);
+
+                        } else { // add the result
+                            obj['centralized'] = results;
+                        }
+                        callback();
+
+                    } catch (err) {
+                        logger.error(IDLOG, err.stack);
+                        callback();
+                    }
+                });
+            },
+            function (callback) {
+                logger.info(IDLOG, 'search cti phonebook contacts "starts with digit" by means dbconn module');
+                dbconn.getCtiPbContactsStartsWithDigit(username, function (err, results) {
+                    try {
+                        if (err) { // some error in the query
+                            logger.error(IDLOG, err);
+
+                        } else { // add the result
+                            obj['nethcti'] = results;
+                        }
+                        callback();
+
+                    } catch (err) {
+                        logger.error(IDLOG, err.stack);
+                        callback();
+                    }
+                });
+            }
+
+        ], function (err) {
+            if (err) { logger.error(IDLOG, err); }
+
+            logger.info(IDLOG, 'found ' + obj['centralized'].length + ' contacts in centralized phonebook and ' +
+                               obj['nethcti'].length + ' contacts in cti phonebook searching contacts "starts with digit"');
             cb(err, obj);
         });
     } catch (err) {
@@ -371,10 +445,11 @@ function saveCtiPbContact(data, cb) {
 }
 
 // public interface
-exports.setLogger               = setLogger;
-exports.setDbconn               = setDbconn;
-exports.getCtiPbContact         = getCtiPbContact;
-exports.saveCtiPbContact        = saveCtiPbContact;
-exports.deleteCtiPbContact      = deleteCtiPbContact;
-exports.getPbContactsContains   = getPbContactsContains;
-exports.getPbContactsStartsWith = getPbContactsStartsWith;
+exports.setLogger                    = setLogger;
+exports.setDbconn                    = setDbconn;
+exports.getCtiPbContact              = getCtiPbContact;
+exports.saveCtiPbContact             = saveCtiPbContact;
+exports.deleteCtiPbContact           = deleteCtiPbContact;
+exports.getPbContactsContains        = getPbContactsContains;
+exports.getPbContactsStartsWith      = getPbContactsStartsWith;
+exports.getPbContactsStartsWithDigit = getPbContactsStartsWithDigit;
