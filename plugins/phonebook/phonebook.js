@@ -183,6 +183,42 @@ function getCtiPbContact(id, cb) {
 }
 
 /**
+* Returns all the speeddial contacts of the specified user.
+*
+* @method getPbSpeeddialContacts
+* @param {string}   username The name of the user
+* @param {function} cb       The callback function
+*/
+function getPbSpeeddialContacts(username, cb) {
+    try {
+        // check parameters
+        if (typeof username !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        logger.info(IDLOG, 'search all speeddial contacts of the user "' + username + '" in the cti phonebook by means dbconn module');
+        dbconn.getCtiPbSpeeddialContacts(username, function (err, result) {
+            try {
+                if (err) { // some error in the query
+                    logger.error(IDLOG, err);
+                    cb(err);
+                    return;
+                }
+                cb(null, result);
+
+            } catch (error) {
+                logger.error(IDLOG, error.stack);
+                cb(error);
+            }
+        });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err.toString());
+    }
+}
+
+/**
 * Deletes the cti phonebook contact.
 *
 * @method deleteCtiPbContact
@@ -451,5 +487,6 @@ exports.getCtiPbContact              = getCtiPbContact;
 exports.saveCtiPbContact             = saveCtiPbContact;
 exports.deleteCtiPbContact           = deleteCtiPbContact;
 exports.getPbContactsContains        = getPbContactsContains;
+exports.getPbSpeeddialContacts       = getPbSpeeddialContacts;
 exports.getPbContactsStartsWith      = getPbContactsStartsWith;
 exports.getPbContactsStartsWithDigit = getPbContactsStartsWithDigit;

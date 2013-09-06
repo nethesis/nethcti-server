@@ -90,6 +90,13 @@ module.exports = function (options, imports, register) {
             getPbContactsStartsWithDigit: dbconn.getPbContactsStartsWithDigit,
 
             /**
+            * It's the _getCtiPbSpeeddialContacts_ method provided by _dbconn_ module.
+            *
+            * @method getCtiPbSpeeddialContacts
+            */
+            getCtiPbSpeeddialContacts: dbconn.getCtiPbSpeeddialContacts,
+
+            /**
             * It's the _getCtiPbContactsStartsWith_ method provided by _dbconn_ module.
             *
             * @method getCtiPbContactsStartsWith

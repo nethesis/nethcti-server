@@ -109,6 +109,7 @@ function setCompUtil(comp) {
         * # GET requests
         *
         * 1. [`phonebook/search/:term`](#searchget)
+        * 1. [`phonebook/speeddials`](#speeddialsget)
         * 1. [`phonebook/cticontact/:id`](#cticontactget)
         * 1. [`phonebook/searchstartswith/:term`](#searchstartswithget)
         * 1. [`phonebook/searchstartswith_digit/:term`](#searchstartswith_digitget)
@@ -120,6 +121,13 @@ function setCompUtil(comp) {
         * The client receives all phonebook contacts found in the _centralized_ and _NethCTI_ phonebooks.
         * It returns all database entries that contain the specified _term_ in the fields _name, company,
         * workphone, homephone_ and _cellphone_.
+        *
+        * ---
+        *
+        * ### <a id="speeddialsget">**`phonebook/speeddials`**</a>
+        *
+        * The client receives all speeddial contacts owned by him. The contacts are in the _NethCTI_ phonebook.
+        * It returns all database entries that have the field _type_ equal to "speeddial".
         *
         * ---
         *
@@ -215,12 +223,14 @@ function setCompUtil(comp) {
                 * @property get
                 * @type {array}
                 *
+                *   @param {string} speeddials             To get all the speeddial contacts of the user from the _NethCTI_ phonebook
                 *   @param {string} search/:term           To get the centralized and cti phonebook contacts that contains the term
                 *   @param {string} cticontact/:id         To get the the details of the contact that is in the cti phonebook
                 *   @param {string} searchstartswith/:term To get the centralized and cti phonebook contacts whose name starts with the specified term
                 *   @param {string} searchstartswith_digit To get the centralized and cti phonebook contacts whose name starts with a digit
                 */
                 'get' : [
+                    'speeddials',
                     'search/:term',
                     'cticontact/:id',
                     'searchstartswith/:term',
@@ -242,6 +252,44 @@ function setCompUtil(comp) {
                 ],
                 'head': [],
                 'del' : []
+            },
+
+            /**
+            * Returns all the speeddial contacts of the user. The contacts are in the _NethCTI_ phonebook.
+            * It returns all database entries that have the field _type_ equal to "speeddial".
+            *
+            *     speeddials
+            *
+            * @method speeddials
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            speeddials: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // use phonebook component
+                    compPhonebook.getPbSpeeddialContacts(username, function (err, results) {
+                        try {
+
+                            if (err) { throw err; }
+
+                            else {
+                                logger.info(IDLOG, 'send to user "' + username + '" all his #' + results.length + ' speeddial contacts');
+                                res.send(200, results);
+                            }
+
+                        } catch (err1) {
+                            logger.error(IDLOG, err1.stack);
+                            compUtil.net.sendHttp500(IDLOG, res, err1.toString());
+                        }
+                    });
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
             },
 
             /**
@@ -446,17 +494,16 @@ function setCompUtil(comp) {
             *     create
             *
             * @method create
-            * @param {object} req The client request.
-            * @param {object} res The client response.
-            * @param {function} next Function to run the next handler in the chain.
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
             */
             create: function (req, res, next) {
                 try {
                     var data = req.params;
 
                     if (   typeof data      !== 'object'
-                        || typeof data.type !== 'string' || typeof data.creator !== 'string'
-                        || typeof data.name !== 'string' ||        data.creator === ''
+                        || typeof data.type !== 'string' || typeof data.name !== 'string'
                         || (data.type !== 'private' && data.type !== 'public' && data.type !== 'speeddial')) {
 
                         compUtil.net.sendHttp400(IDLOG, res);
@@ -465,6 +512,9 @@ function setCompUtil(comp) {
 
                     // extract the username added in the authentication step
                     var username = req.headers.authorization_user;
+
+                    // add the creator of the contact
+                    data.creator = username;
 
                     // use phonebook component
                     compPhonebook.saveCtiPbContact(data, function (err, results) {
@@ -558,6 +608,7 @@ function setCompUtil(comp) {
         exports.search                 = phonebook.search;
         exports.create                 = phonebook.create;
         exports.setLogger              = setLogger;
+        exports.speeddials             = phonebook.speeddials;
         exports.cticontact             = phonebook.cticontact;
         exports.setCompUtil            = setCompUtil;
         exports.searchstartswith       = phonebook.searchstartswith;

@@ -66,7 +66,14 @@ module.exports = function (options, imports, register) {
             *
             * @method deleteCtiPbContact
             */
-            deleteCtiPbContact: phonebook.deleteCtiPbContact
+            deleteCtiPbContact: phonebook.deleteCtiPbContact,
+
+            /**
+            * It's the _getPbSpeeddialContacts_ method provided by _phonebook_ module.
+            *
+            * @method getPbSpeeddialContacts
+            */
+            getPbSpeeddialContacts: phonebook.getPbSpeeddialContacts
         }
     });
 

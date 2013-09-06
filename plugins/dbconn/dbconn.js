@@ -683,6 +683,56 @@ function getCtiPbContactsContains(term, username, cb) {
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Gets all the speeddial contacts of the specified user searching in
+* the NethCTI phonebook database. It searches all entries of he user
+* where _type_ field is equal to "speeddial". It orders the results by
+* _name_ and _company_ ascending. The NethCTI phonebook is the mysql
+* _nethcti.cti\_phonebook_.
+*
+* @method getCtiPbSpeeddialContacts
+* @param {string}   username The name of the user used to search speeddial contacts
+* @param {function} cb       The callback function
+*/
+function getCtiPbSpeeddialContacts(username, cb) {
+    try {
+        // check parameters
+        if (typeof username !== 'string' || typeof cb !== 'function') {
+
+            throw new Error('wrong parameters');
+        }
+
+        models[JSON_KEYS.CTI_PHONEBOOK].findAll({
+            where: [
+                'owner_id=? AND type="speeddial"',
+                username
+            ],
+            order: 'name ASC, company ASC'
+
+        }).success(function (results) {
+
+            // extract results to return in the callback function
+            var i;
+            for (i = 0; i < results.length; i++) {
+                results[i] = results[i].selectedValues;
+            }
+
+            logger.info(IDLOG, results.length + ' results by searching cti phonebook speeddial contacts of the user "' + username + '"');
+            cb(null, results);
+
+        }).error(function (err) { // manage the error
+
+            logger.error(IDLOG, 'searching cti phonebook speeddial contacts of the user "' + username + '": ' + err.toString());
+            cb(err.toString());
+        });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
     }
 }
 
@@ -1449,6 +1499,7 @@ exports.getHistoryCallInterval              = getHistoryCallInterval;
 exports.getPbContactsStartsWith             = getPbContactsStartsWith;
 exports.getHistoryPostitInterval            = getHistoryPostitInterval;
 exports.getCtiPbContactsContains            = getCtiPbContactsContains;
+exports.getCtiPbSpeeddialContacts           = getCtiPbSpeeddialContacts;
 exports.getCtiPbContactsStartsWith          = getCtiPbContactsStartsWith;
 exports.getPbContactsStartsWithDigit        = getPbContactsStartsWithDigit;
 exports.getHistoryCallerNoteInterval        = getHistoryCallerNoteInterval;
