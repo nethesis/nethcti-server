@@ -49,6 +49,16 @@ var logger = console;
 var port = '9000';
 
 /**
+* Listening protocol of the REST server, can be 'http' or 'https'.
+*
+* @property proto
+* @type string
+* @private
+* @default "http"
+*/
+var proto = 'http';
+
+/**
 * Listening address of the HTTPS REST server.
 *
 * @property address
@@ -168,10 +178,13 @@ function start() {
         * @type {object}
         * @private
         */
-        var options = {
-            key:         fs.readFileSync(HTTPS_KEY),
-            certificate: fs.readFileSync(HTTPS_CERT)
-        };
+        var options = {};
+        if (proto === 'https') {
+            options.https = {
+                key:         fs.readFileSync(HTTPS_KEY),
+                certificate: fs.readFileSync(HTTPS_CERT)
+            };
+        }
         var server = restify.createServer(options);
 
         // set the middlewares to use
@@ -261,6 +274,14 @@ function config(path) {
 
     } else {
         logger.warn(IDLOG, 'no address has been specified in JSON file ' + path);
+    }
+
+    // initialize proto of the REST server
+    if (json.authentication.proto) {
+        proto = json.authentication.proto;
+
+    } else {
+        logger.warn(IDLOG, 'no proto has been specified in JSON file ' + path);
     }
     logger.info(IDLOG, 'configuration by file ' + path + ' ended');
 }

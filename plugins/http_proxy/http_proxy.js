@@ -65,6 +65,18 @@ var compUtil;
 var port = '8282';
 
 /**
+* Listening protocol, can be 'https' or 'http'. It can be
+* customized in the configuration file.
+*
+* @property proto
+* @type string
+* @private
+* @default "http"
+*/
+var proto = 'http';
+
+
+/**
 * Listening URL of the HTTPS proxy server. It is set by the _config_ method.
 *
 * @property listenUrl
@@ -167,6 +179,14 @@ function config(path) {
         logger.warn(IDLOG, 'no port specified in JSON file ' + path);
     }
 
+    // initialize the proto of the proxy
+    if (json.proto) {
+        proto = json.proto;
+
+    } else {
+        logger.warn(IDLOG, 'no proto specified in JSON file ' + path);
+    }
+
     // initialize the key of the HTTPS proxy
     if (json.https_key) {
         HTTPS_KEY = json.https_key;
@@ -216,16 +236,18 @@ function setCompAuthentication(ca) {
 */
 function start() {
     try {
-        // create HTTPS proxy
         var options = {
-            https: {
-                key:  fs.readFileSync(HTTPS_KEY,  'utf8'),
-                cert: fs.readFileSync(HTTPS_CERT, 'utf8')
-            },
             router: router
         };
+        // create HTTPS proxy
+        if (proto === 'https') { 
+            options.https = {
+                key:  fs.readFileSync(HTTPS_KEY,  'utf8'),
+                cert: fs.readFileSync(HTTPS_CERT, 'utf8')
+            };
+        }
         var server = httpProxy.createServer(options, proxyRequest).listen(port);
-        logger.info(IDLOG, 'HTTPS proxy listening on port ' + port);
+        logger.info(IDLOG, proto.toUpperCase() + ' proxy listening on port ' + port);
 
         // called when some error occurs in the proxy
         server.proxy.on('proxyError', function (err, req, res) {
