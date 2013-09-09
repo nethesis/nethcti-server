@@ -167,12 +167,19 @@ function setCompAuthorization(comp) {
         * # GET requests
         *
         * 1. [`voicemail/list`](#listget)
+        * 1. [`voicemail/listen/:id`](#listenget)
         *
         * ---
         *
         * ### <a id="listget">**`voicemail/list`**</a>
         *
         * Returns the list of all voicemail messages of the user.
+        *
+        * ---
+        *
+        * ### <a id="listenget">**`voicemail/listen/:id`**</a>
+        *
+        * The user can listen the voice message of the user. The _id_ must be the identifier of the voice message in the database.
         *
         * <br>
         *
@@ -203,9 +210,13 @@ function setCompAuthorization(comp) {
                 * @property get
                 * @type {array}
                 *
-                *   @param {string} list To get the list of all voicemail messages of the user
+                *   @param {string} list       To get the list of all voicemail messages of the user
+                *   @param {string} listen/:id To listen the voicemail message of the user
                 */
-                'get' : [ 'list' ],
+                'get' : [
+                    'list',
+                    'listen/:id'
+                ],
 
                 /**
                 * REST API to be requested using HTTP POST request.
@@ -276,6 +287,71 @@ function setCompAuthorization(comp) {
             },
 
             /**
+            * Listen the voicemail message of the user with the following REST API:
+            *
+            *     listen
+            *
+            * @method listen
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            listen: function (req, res, next) {
+                try {
+                    // extract the username added in the authentication step
+                    var username = req.headers.authorization_user;
+
+                    // get the voicemail identifier (mailbox) from the voicemail database identifier.
+                    // This is for the authorization check
+                    compVoicemail.getVmIdFromDbId(req.params.id, function (err1, vmid) {
+                        try {
+
+                            if (err1) {
+                                logger.error(IDLOG, 'listening voice message: getting voicemail id (mailbox) from db voice message id "' + req.params.id + '"');
+                                compUtil.net.sendHttp500(IDLOG, res, err1.toString());
+                                return;
+                            }
+
+                            // check the authorization to listen the voice message checking if the voicemail endpoint is owned by the user
+                            if (compUser.hasVoicemailEndpoint(username, vmid) !== true) {
+                                logger.warn(IDLOG, 'user "' + username + '" tried to listen voice message with db id "' + req.params.id + '" of the voicemail "' + vmid + '" not owned by him');
+                                compUtil.net.sendHttp403(IDLOG, res);
+                                return;
+                            }
+return;
+
+                            // listen the voice message
+                            compVoicemail.listenVoiceMessage(req.params.id, function (err2, results) {
+                                try {
+
+                                    if (err2) {
+                                        logger.error(IDLOG, 'deleting voice message with id "' + req.params.id + '" of the voicemail "' + vmid + '" by the user "' + username + '"');
+                                        compUtil.net.sendHttp500(IDLOG, res, err2.toString());
+                                        return;
+                                    }
+
+                                    logger.info(IDLOG, 'voice message with id "' + req.params.id + '" of the voicemail "' + vmid + '" has been deleted successfully by the user "' + username + '"');
+                                    res.send(200);
+
+                                } catch (err3) {
+                                    logger.error(IDLOG, err3.stack);
+                                    compUtil.net.sendHttp500(IDLOG, res, err3.toString());
+                                }
+                            });
+
+                        } catch (error) {
+                            logger.error(IDLOG, error.stack);
+                            compUtil.net.sendHttp500(IDLOG, res, error.toString());
+                        }
+                    });
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
             * Gets the list of all voicemail messages of the user with the following REST API:
             *
             *     delete
@@ -290,7 +366,8 @@ function setCompAuthorization(comp) {
                     // extract the username added in the authentication step
                     var username = req.headers.authorization_user;
 
-                    // get the voicemail identifier (mailbox) from the voicemail database identifier
+                    // get the voicemail identifier (mailbox) from the voicemail database identifier.
+                    // This is for authorization check
                     compVoicemail.getVmIdFromDbId(req.params.id, function (err1, vmid) {
                         try {
 
@@ -340,6 +417,7 @@ function setCompAuthorization(comp) {
         }
         exports.api                  = voicemail.api;
         exports.list                 = voicemail.list;
+        exports.listen               = voicemail.listen;
         exports.delete               = voicemail.delete;
         exports.setLogger            = setLogger;
         exports.setCompUser          = setCompUser;
