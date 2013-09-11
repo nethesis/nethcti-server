@@ -1,0 +1,44 @@
+/**
+* The architect component that exposes _cel_ module.
+*
+* @class arch_cel
+* @module cel
+*/
+var cel = require('./cel');
+
+/**
+* The module identifier used by the logger.
+*
+* @property IDLOG
+* @type string
+* @private
+* @final
+* @readOnly
+* @default [arch_cel]
+*/
+var IDLOG = '[arch_cel]';
+
+module.exports = function (options, imports, register) {
+
+    // public interface for other architect components
+    register(null, {
+        cel: {
+            /**
+            * It's the _getCallTrace_ method provided by _cel_ module.
+            *
+            * @method getCallTrace
+            */
+            getCallTrace: cel.getCallTrace,
+        }
+    });
+
+    try {
+        var logger = console;
+        if (imports.logger) { logger = imports.logger; }
+
+        cel.setLogger(logger);
+        cel.setCompDbconn(imports.dbconn);
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
