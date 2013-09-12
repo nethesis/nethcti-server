@@ -71,15 +71,10 @@ function setLogger(log) {
 
 
 /**
-* TODO Get the history of the cel sent by the user into the interval time.
-* It can be possible to filter the results.
+* Get call trace from linkedid.
 *
-* @method getHistoryInterval
-* @param {object} data
-*   @param {string} data.username The username involved in the research
-*   @param {string} data.from     The starting date of the interval in the YYYYMMDD format (e.g. 20130521)
-*   @param {string} data.to       The ending date of the interval in the YYYYMMDD format (e.g. 20130528)
-*   @param {string} [data.filter] The filter to be used
+* @method getCallTrace
+* @param {string} linkedid Call identifier
 * @param {function} cb The callback function
 */
 function getCallTrace(linkedid, cb) {
@@ -99,6 +94,30 @@ function getCallTrace(linkedid, cb) {
 }
 
 /**
+* Get call information from uniqueid.
+*
+* @method getCallInfo
+* @param {string} uniqueid Call identifier
+* @param {function} cb The callback function
+*/
+function getCallInfo(uniqueid, cb) {
+    try {
+        // check parameters
+        if ( typeof uniqueid !== 'string' ||  typeof cb !== 'function' ) {
+            throw new Error('wrong parameters');
+        }
+
+        logger.info(IDLOG, 'search cel for uniqueid "' + uniqueid + '"');
+        compDbconn.getCallInfo(uniqueid, cb);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+
+/**
 * Sets the database architect component.
 *
 * @method setCompDbconn
@@ -115,5 +134,6 @@ function setCompDbconn(comp) {
 
 // public interface
 exports.setLogger                 = setLogger;
+exports.getCallInfo               = getCallInfo;
 exports.getCallTrace              = getCallTrace;
 exports.setCompDbconn             = setCompDbconn;

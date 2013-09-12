@@ -200,7 +200,14 @@ module.exports = function (options, imports, register) {
             *
             * @method getCallTrace
             */
-            getCallTrace: dbconn.getCallTrace
+            getCallTrace: dbconn.getCallTrace,
+
+            /**
+            * It's the _getCallInfo_ method provided by _dbconn_ module.
+            *
+            * @method getCallInfo
+            */
+            getCallInfo: dbconn.getCallInfo
         }
     });
 

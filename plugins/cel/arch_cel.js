@@ -29,6 +29,13 @@ module.exports = function (options, imports, register) {
             * @method getCallTrace
             */
             getCallTrace: cel.getCallTrace,
+            
+            /**
+            * It's the _getCallInfo_ method provided by _cel_ module.
+            *
+            * @method getCallInfo
+            */
+            getCallInfo: cel.getCallInfo
         }
     });
 

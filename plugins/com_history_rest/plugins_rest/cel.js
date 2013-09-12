@@ -157,11 +157,13 @@ function setCompAuthorization(ca) {
                 * @property get
                 * @type {array}
                 *
-                *   @param {string} cel/:linkedid To get the call trace associated with the linkedid. 
+                *   @param {string} cel/calltrace/:linkedid To get the call trace associated with the linkedid. 
+                *   @param {string} cel/callinfo/:uniqueid To get call information ssociated with the unqueid. 
                 *
                 */
                 'get' : [
-                    'calltrace/:linkedid'
+                    'calltrace/:linkedid',
+                    'callinfo/:uniqueid'
                 ],
                 'post': [],
                 'head': [],
@@ -173,7 +175,7 @@ function setCompAuthorization(ca) {
             *
             *     calltrace/:linkedid
             *
-            * @method interval
+            * @method calltrace
             * @param {object}   req  The client request.
             * @param {object}   res  The client response.
             * @param {function} next Function to run the next handler in the chain.
@@ -207,9 +209,54 @@ function setCompAuthorization(ca) {
                     logger.error(IDLOG, err.stack);
                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
+            },
+
+        /**
+        * Returns call information of given uniqueid using the following REST api:
+        *
+        *     callinfo/:linkedid
+        *
+        * @method callinfo
+        * @param {object}   req  The client request.
+        * @param {object}   res  The client response.
+        * @param {function} next Function to run the next handler in the chain.
+        */
+        callinfo: function (req, res, next) {
+                try {
+                    // get the username from the authorization header added by authentication step
+                    var username = req.headers.authorization_user;
+
+                    // check the switchboard cdr authorization
+                    if (compAuthorization.authorizeAdminCdrUser(username) === false) {
+                        logger.warn(IDLOG, 'switchboard cdr authorization failed for user "' + username + '"!');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+
+                    logger.info(IDLOG, 'switchboard cdr authorization successfully for user "' + username + '"');
+
+                    var uniqueid = req.params.uniqueid;
+
+                    // use the history component
+                    compCel.getCallInfo(uniqueid, function (err, results) {
+
+                        if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
+                        else {
+                            logger.info(IDLOG, 'send ' + results.length   + ' results searching CEL to user "' + username + '"');
+                            res.send(200, results);
+                        }
+                    });
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
             }
         }
+
+
+
         exports.api                  = cel.api;
+        exports.callinfo             = cel.callinfo;
         exports.calltrace            = cel.calltrace;
         exports.setLogger            = setLogger;
         exports.setCompCel           = setCompCel;

@@ -1531,6 +1531,55 @@ function getCallTrace(linkedid, cb) {
     }
 }
 
+/**
+* Get call info of speciefied uniqueid. It searches the results into the
+* database specified into the key names of one of the _/etc/nethcti/dbstatic.json_
+* or _/etc/nethcti/dbdynamic.json_ files.
+*
+* @method getCallInfo
+* @param {string}   link Call uniqueid
+* @param {function} cb   The callback function
+*/
+function getCallInfo(uniqueid, cb) {
+    try {
+        // check parameters
+        if (typeof uniqueid   !== 'string'
+            || typeof cb  !== 'function') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // search
+        models[JSON_KEYS.CEL].findAll({
+            where: [
+                'uniqueid=?', uniqueid
+            ],
+            attributes: [
+                'eventtype', 'eventtime',
+                [ 'concat(cid_name," ",cid_num)', 'cid' ],
+                'exten', 'context', 'channame', 'accountcode'
+            ]
+        }).success(function (results) {
+
+            // extract results to return in the callback function
+            var i;
+            for (i = 0; i < results.length; i++) {
+                results[i] = results[i].selectedValues;
+            }
+
+            logger.info(IDLOG, results.length + ' results searching CEL on uniqueid "' + uniqueid + '"');
+            cb(null, results);
+
+        }).error(function (err) { // manage the error
+
+            logger.error(IDLOG, 'searching CEL on uniqueid "' + uniqueid + '"');
+            cb(err.toString());
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
 
 
 
@@ -1539,6 +1588,7 @@ exports.start                               = start;
 exports.config                              = config;
 exports.setLogger                           = setLogger;
 exports.savePostit                          = savePostit;
+exports.getCallInfo                         = getCallInfo;
 exports.getCallTrace                        = getCallTrace
 exports.saveCallerNote                      = saveCallerNote;
 exports.getCtiPbContact                     = getCtiPbContact;
