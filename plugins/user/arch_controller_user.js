@@ -148,6 +148,13 @@ module.exports = function (options, imports, register) {
             isValidNethctiPresence: endpointTypes.isValidEndpointNethctiStatus,
 
             /**
+            * It's the _isValidEndpointNethctiDevice_ method provided by _endpoint\_types_ module.
+            *
+            * @method isValidEndpointNethctiDevice
+            */
+            isValidEndpointNethctiDevice: endpointTypes.isValidEndpointNethctiDevice,
+
+            /**
             * It's the _getAllEndpointsNethcti_ method provided by _controller\_user_ module.
             *
             * @method getAllEndpointsNethcti

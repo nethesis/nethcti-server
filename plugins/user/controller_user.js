@@ -534,9 +534,10 @@ function getUsernames() {
 * Sets the nethcti presence of the user.
 *
 * @method setNethctiPresence
-* @param {string} username   The username
-* @param {string} deviceType The device type used for nethcti
-* @param {string} status     The status of the nethcti presence
+* @param {string}  username   The username
+* @param {string}  deviceType The device type used for nethcti
+* @param {string}  status     The status of the nethcti presence
+* @param {boolean} True if the NethCTI presence has been set successfully
 */
 function setNethctiPresence(username, deviceType, status) {
     try {
@@ -553,16 +554,18 @@ function setNethctiPresence(username, deviceType, status) {
         // check the user existence
         if (typeof users[username] !== 'object') {
             logger.warn(IDLOG, 'try to set nethcti presence of non existent user "' + username + '" for device "' + deviceType + '" to value ' + status);
-            return;
+            return false;
         }
 
         // gets all endpoints, extracts the nethcti endpoint and then sets its status
         var endpoints = users[username].getAllEndpoints();
         endpoints[endpointTypes.TYPES.NETHCTI][deviceType].setStatus(status);
 
+        return true;
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
-        return [];
+        return false;
     }
 }
 
