@@ -193,7 +193,21 @@ module.exports = function (options, imports, register) {
             *
             * @method deleteVoiceMessage
             */
-            deleteVoiceMessage: dbconn.deleteVoiceMessage
+            deleteVoiceMessage: dbconn.deleteVoiceMessage,
+            
+            /**
+            * It's the _getCallTrace_ method provided by _dbconn_ module.
+            *
+            * @method getCallTrace
+            */
+            getCallTrace: dbconn.getCallTrace,
+
+            /**
+            * It's the _getCallInfo_ method provided by _dbconn_ module.
+            *
+            * @method getCallInfo
+            */
+            getCallInfo: dbconn.getCallInfo
         }
     });
 

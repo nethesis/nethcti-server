@@ -14,6 +14,7 @@ try{
         { packagePath: "./plugins/dbconn"                  },
         { packagePath: "./plugins/mailer"                  },
         { packagePath: "./plugins/sms"                     },
+        { packagePath: "./plugins/cel"                     },
         { packagePath: "./plugins/ast_proxy"               },
         { packagePath: "./plugins/postit"                  },
         { packagePath: "./plugins/history"                 },

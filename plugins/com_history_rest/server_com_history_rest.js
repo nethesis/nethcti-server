@@ -169,7 +169,11 @@ function setCompHistory(compHistory) {
 
         var p;
         // set history call architect component to all REST plugins
-        for (p in plugins) { plugins[p].setCompHistory(compHistory); }
+        for (p in plugins) {
+            if (typeof plugins[p].setCompHistory === 'function') {
+                plugins[p].setCompHistory(compHistory);
+            }
+        }
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -193,6 +197,31 @@ function setCompUtil(comp) {
         for (p in plugins) {
             if (typeof plugins[p].setCompUtil === 'function') {
                 plugins[p].setCompUtil(comp);
+            }
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+
+/**
+* Set the cel architect component to be used by REST plugins.
+*
+* @method setCompCel
+* @param {object} comp The architect cel component
+* @static
+*/
+function setCompCel(comp) {
+    try {
+        // check parameter 
+        if (typeof comp !== 'object') { throw new Error('wrong parameter'); }
+
+        var p; 
+        // set utility architect component to all REST plugins
+        for (p in plugins) {
+            if (typeof plugins[p].setCompCel === 'function') {
+                plugins[p].setCompCel(comp);
             }
         }
     } catch (err) {
@@ -330,6 +359,7 @@ function start() {
 exports.start                = start;
 exports.config               = config;
 exports.setLogger            = setLogger;
+exports.setCompCel           = setCompCel;
 exports.setCompUtil          = setCompUtil;
 exports.setCompHistory       = setCompHistory;
 exports.setCompAuthorization = setCompAuthorization;
