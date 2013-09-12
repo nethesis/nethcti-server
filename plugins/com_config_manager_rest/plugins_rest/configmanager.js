@@ -591,7 +591,7 @@ function setCompUtil(comp) {
                     var type       = req.params.type;
                     var status     = req.params.status;
                     var username   = req.headers.authorization_user;
-                    var deviceType = req.headers.device_type;
+                    var deviceType = req.params.device_type;
 
                     // check parameters
                     if (typeof type !== 'string'
@@ -607,9 +607,11 @@ function setCompUtil(comp) {
 
                         if (compUser.setNethctiPresence(username, deviceType, status) === true) {
                             compUtil.net.sendHttp200(IDLOG, res);
+
                         } else {
+                            logger.warn(IDLOG, 'settings "' + type + '" presence of the user "' + username + '"');
                             compUtil.net.sendHttp500(IDLOG, res, 'some errors have occured');
-                        };
+                        }
                     }
 
                 } catch (err) {
