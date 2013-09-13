@@ -58,6 +58,13 @@ module.exports = function (options, imports, register) {
             deleteVoiceMessage: voicemail.deleteVoiceMessage,
 
             /**
+            * It's the _listenVoiceMessage_ method provided by _voicemail_ module.
+            *
+            * @method listenVoiceMessage
+            */
+            listenVoiceMessage: voicemail.listenVoiceMessage,
+
+            /**
             * It's the _getVmIdFromDbId_ method provided by _voicemail_ module.
             *
             * @method getVmIdFromDbId

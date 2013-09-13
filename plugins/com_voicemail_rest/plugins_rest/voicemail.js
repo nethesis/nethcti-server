@@ -318,20 +318,21 @@ function setCompAuthorization(comp) {
                                 compUtil.net.sendHttp403(IDLOG, res);
                                 return;
                             }
-return;
 
                             // listen the voice message
-                            compVoicemail.listenVoiceMessage(req.params.id, function (err2, results) {
+                            compVoicemail.listenVoiceMessage(req.params.id, function (err2, result) {
                                 try {
 
                                     if (err2) {
-                                        logger.error(IDLOG, 'deleting voice message with id "' + req.params.id + '" of the voicemail "' + vmid + '" by the user "' + username + '"');
+                                        logger.error(IDLOG, 'listening voice message with id "' + req.params.id + '" of the voicemail "' + vmid + '" by the user "' + username + '"');
                                         compUtil.net.sendHttp500(IDLOG, res, err2.toString());
                                         return;
                                     }
 
-                                    logger.info(IDLOG, 'voice message with id "' + req.params.id + '" of the voicemail "' + vmid + '" has been deleted successfully by the user "' + username + '"');
-                                    res.send(200);
+                                    logger.info(IDLOG, 'listen voice message with id "' + req.params.id + '" of the voicemail "' + vmid + '" successfully by the user "' + username + '"');
+
+                                    //res.send(200, result.toString('base64'));
+                                    res.send(200, result);
 
                                 } catch (err3) {
                                     logger.error(IDLOG, err3.stack);

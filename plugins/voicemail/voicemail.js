@@ -472,6 +472,31 @@ function deleteVoiceMessage(id, cb) {
     }
 }
 
+
+/** 
+* Listen the specified voice message.
+*
+* @method listenVoiceMessage
+* @param {string}   id The voice message identifier in the database
+* @param {function} cb The callback function
+* @private
+*/
+function listenVoiceMessage(id, cb) {
+    try {
+        // check parameters
+        if (typeof id !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        dbconn.listenVoiceMessage(id, cb);
+
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+
+
 /**
 * Returns the voicemail identifier from the voice message identifier of the database.
 *
@@ -565,6 +590,7 @@ exports.setCompUser               = setCompUser;
 exports.getVmIdFromDbId           = getVmIdFromDbId;
 exports.EVT_NEW_VOICEMAIL         = EVT_NEW_VOICEMAIL;
 exports.deleteVoiceMessage        = deleteVoiceMessage;
+exports.listenVoiceMessage        = listenVoiceMessage;
 exports.getAllVoiceMessagesByUser = getAllVoiceMessagesByUser;
 exports.getNewVoiceMessagesByUser = getNewVoiceMessagesByUser;
 exports.getNewMessagesOfVoicemail = getNewMessagesOfVoicemail;
