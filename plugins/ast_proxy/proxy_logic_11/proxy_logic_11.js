@@ -2455,6 +2455,53 @@ function parkConversation(endpointType, endpointId, convid, applicantId, cb) {
 }
 
 /**
+* Logon the specified endpoint into all queues in which it's a dynamic member.
+*
+* @method logonDynQueues
+* @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
+* @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
+* @param {function} cb           The callback function
+*/
+function logonDynQueues(endpointType, endpointId, cb) {
+    try {
+        // check parameters
+        if (   typeof cb           !== 'function'
+            || typeof endpointType !== 'string' || typeof endpointId !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // check the endpoint existence
+        if (endpointType === 'extension' && extensions[endpointId]) {
+
+            logger.info(IDLOG, 'execute logon to all queues in which the ' + endpointType + ' ' + endpointId + ' is dynamic');
+            astProxy.doCmd({ command: 'logonDynQueues', exten: '220' }, function (err) {
+                try {
+                    if (err) {
+                        logger.error(IDLOG, 'logon to all queues for which exten ' + endpointId + ' is dynamic');
+                        cb(err);
+                        return;
+                    }
+                    logger.info(IDLOG, 'logon to all queues for which exten ' + endpointId + ' is dynamic has been successfull');
+                    cb(null);
+
+                } catch (err) {
+                   logger.error(IDLOG, err.stack);
+                   cb(err);
+                }
+            });
+        } else {
+            var err = 'logon to all queues in which the endpoint is dynamic: unknown endpointType ' + endpointType + ' or extension not present';
+            logger.warn(IDLOG, err);
+            cb(err);
+        }
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+       cb(err);
+    }
+}
+
+/**
 * Stop the recording of the conversation.
 *
 * @method stopRecordConversation
@@ -3062,6 +3109,7 @@ exports.getExtensions                 = getExtensions;
 exports.pickupParking                 = pickupParking;
 exports.getJSONQueues                 = getJSONQueues;
 exports.getJSONTrunks                 = getJSONTrunks;
+exports.logonDynQueues                = logonDynQueues;
 exports.getJSONParkings               = getJSONParkings;
 exports.sendDTMFSequence              = sendDTMFSequence;
 exports.parkConversation              = parkConversation;
