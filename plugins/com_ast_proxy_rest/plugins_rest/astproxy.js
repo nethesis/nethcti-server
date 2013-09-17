@@ -169,6 +169,7 @@ var compConfigManager;
         * 1. [`astproxy/start_record`](#start_recordpost)
         * 1. [`astproxy/blindtransfer`](#blindtransferpost)
         * 1. [`astproxy/pickup_parking`](#pickup_parkingpost)
+        * 1. [`astproxy/logon_dyn_queues`](#logon_dyn_queuespost)
         *
         * ---
         *
@@ -375,6 +376,19 @@ var compConfigManager;
         *
         *     curl --insecure -i -X POST -d '{ "convid": "SIP/209-00000060>SIP/211-00000061", "endpointType": "extension", "endpointId": "209", "destType": "extension", "destId": "214" }' https://192.168.5.224:8282/astproxy/intrude
         *
+        * ---
+        *
+        * ### <a id="logon_dyn_queuespost">**`astproxy/logon_dyn_queues`**</a>
+        *
+        * The specified extension logon in all the queues for which is dynamic member. The request must contains the following parameters:
+        *
+        * * `endpointId:   the endpoint identifier`
+        * * `endpointType: the type of the endpoint`
+        *
+        * E.g. using curl:
+        *
+        *     curl --insecure -i -X POST -d '{ "endpointType": "extension", "endpointId": "209" }' https://192.168.5.224:8282/astproxy/logon_dyn_queues
+        *
         * @class plugin_rest_astproxy
         * @static
         */
@@ -414,19 +428,20 @@ var compConfigManager;
                 * @property post
                 * @type {array}
                 *
-                *   @param {string} cf             Sets the call forward status of the endpoint of the user
-                *   @param {string} dnd            Sets the don't disturb status of the endpoint of the user
-                *   @param {string} park           Park a conversation of the user
-                *   @param {string} call           Make a new call
-                *   @param {string} atxfer         Transfer a conversation with attended type
-                *   @param {string} hangup         Hangup a conversation
-                *   @param {string} intrude        Spy and speak in a conversation
-                *   @param {string} start_spy      Spy a conversation with only listening
-                *   @param {string} pickup_conv    Pickup a conversation
-                *   @param {string} stop_record    Stop the recording of a conversation
-                *   @param {string} start_record   Start the recording of a conversation
-                *   @param {string} blindtransfer  Transfer a conversation with blind type
-                *   @param {string} pickup_parking Pickup a parked call
+                *   @param {string} cf               Sets the call forward status of the endpoint of the user
+                *   @param {string} dnd              Sets the don't disturb status of the endpoint of the user
+                *   @param {string} park             Park a conversation of the user
+                *   @param {string} call             Make a new call
+                *   @param {string} atxfer           Transfer a conversation with attended type
+                *   @param {string} hangup           Hangup a conversation
+                *   @param {string} intrude          Spy and speak in a conversation
+                *   @param {string} start_spy        Spy a conversation with only listening
+                *   @param {string} pickup_conv      Pickup a conversation
+                *   @param {string} stop_record      Stop the recording of a conversation
+                *   @param {string} start_record     Start the recording of a conversation
+                *   @param {string} blindtransfer    Transfer a conversation with blind type
+                *   @param {string} pickup_parking   Pickup a parked call
+                *   @param {string} logon_dyn_queues Logon the extension in all the queues for which is dynamic member
                 */
                 'post': [
                     'cf',
@@ -441,7 +456,8 @@ var compConfigManager;
                     'stop_record',
                     'start_record',
                     'blindtransfer',
-                    'pickup_parking'
+                    'pickup_parking',
+                    'logon_dyn_queues'
                 ],
                 'head': [],
                 'del' : []
@@ -1467,6 +1483,80 @@ var compConfigManager;
             },
 
             /**
+            * Logon the extension in all the queues in which is dynamic member with the following REST API:
+            *
+            *     POST logon_dyn_queues
+            *
+            * @method logon_dyn_queues
+            * @param {object}   req  The client request.
+            * @param {object}   res  The client response.
+            * @param {function} next Function to run the next handler in the chain.
+            */
+            logon_dyn_queues: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (   typeof req.params              !== 'object'
+                        || typeof req.params.endpointType !== 'string' || typeof req.params.endpointId  !== 'string') {
+
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    // check if the user has the authorization to pickup a parked call
+                    if (compAuthorization.authorizeOpQueuesUser(username) !== true) {
+
+                        logger.warn(IDLOG, 'logon dynamic all queues for "' + req.params.endpointType + '" "' + req.params.endpointId + '": authorization failed for user "' + username + '"');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+
+                    if (req.params.endpointType === 'extension') {
+
+                        // check if the endpoint is owned by the user
+                        if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+
+                            logger.warn(IDLOG, 'logon dynamic all queues by user "' + username + '" has been failed: ' +
+                                               ' the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' isn\'t owned by the user');
+                            compUtil.net.sendHttp403(IDLOG, res);
+                            return;
+
+                        } else {
+                            logger.info(IDLOG, 'logon dynamic all queues: endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' is owned by user "' + username + '"');
+                        }
+
+                        compAstProxy.logonDynQueues(req.params.endpointType, req.params.endpointId, function (err) {
+                            try {
+                                if (err) {
+                                    logger.warn(IDLOG, 'logon dynamic all queues by user "' + username + '" with ' +
+                                                       req.params.endpointType + ' ' + req.params.endpointId + ' has been failed');
+                                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                                    return;
+                                }
+
+                                logger.info(IDLOG, 'logon dynamic all queues has been successful by user "' + username + '" ' +
+                                                   'with ' + req.params.endpointType + ' ' + req.params.endpointId);
+                                compUtil.net.sendHttp200(IDLOG, res);
+
+                            } catch (err) {
+                                logger.error(IDLOG, err.stack);
+                                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                            }
+                        });
+
+                    } else {
+                        logger.warn(IDLOG, 'logon dynamic all queues: unknown endpointType ' + req.params.endpointType);
+                        compUtil.net.sendHttp400(IDLOG, res);
+                    }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
             * Spy and speak in a conversation with the following REST API:
             *
             *     POST intrude
@@ -1592,6 +1682,7 @@ var compConfigManager;
         exports.pickup_parking       = astproxy.pickup_parking;
         exports.setCompOperator      = setCompOperator;
         exports.setCompAstProxy      = setCompAstProxy;
+        exports.logon_dyn_queues     = astproxy.logon_dyn_queues;
         exports.setCompAuthorization = setCompAuthorization;
         exports.setCompConfigManager = setCompConfigManager;
 
