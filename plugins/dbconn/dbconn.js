@@ -1225,6 +1225,50 @@ function getVmMailboxFromDbId(dbid, cb) {
     }
 }
 
+
+/**
+* Returns audio file from the id mailbox.
+*
+* @method listenVoiceMessage
+* @param {string}   dbid The voicemail identifier in the database
+* @param {function} cb   The callback function
+*/
+function listenVoiceMessage(dbid, cb) {
+    try {
+        // check parameters
+        if (typeof dbid !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        // search
+        models[JSON_KEYS.VOICEMAIL].find({
+            where:      [ 'id=?', dbid  ],
+            attributes: [ 'recording' ]
+
+        }).success(function (result) {
+            if (result.selectedValues.recording) {
+                logger.info(IDLOG, 'obtained voicemail audio file from voicemail db id "' + dbid + '"');
+                cb(null, result.selectedValues.recording);
+
+            } else {
+                var str = 'getting voicemail audio file from db voice message id "' + dbid + '"';
+                logger.warn(IDLOG, str);
+                cb(str);
+            }
+
+        }).error(function (err) { // manage the error
+
+            logger.error(IDLOG, 'searching voicemail audio file from voicemail db id "' + dbid + '"');
+            cb(err.toString());
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+
+
 /**
 * Delete a voice message from the database table _asteriskcdrdb.voicemessages_.
 *
@@ -1595,6 +1639,7 @@ exports.getCtiPbContact                     = getCtiPbContact;
 exports.saveCtiPbContact                    = saveCtiPbContact;
 exports.deleteCtiPbContact                  = deleteCtiPbContact;
 exports.deleteVoiceMessage                  = deleteVoiceMessage;
+exports.listenVoiceMessage                  = listenVoiceMessage;
 exports.getVoicemailNewMsg                  = getVoicemailNewMsg;
 exports.getVoicemailOldMsg                  = getVoicemailOldMsg;
 exports.getVmMailboxFromDbId                = getVmMailboxFromDbId;
