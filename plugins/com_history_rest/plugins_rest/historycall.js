@@ -133,6 +133,7 @@ function setCompAuthorization(ca) {
         * # GET requests
         *
         * 1. [`historycall/day/:endpoint/:day`](#dayget)
+        * 1. [`historycall/listen/:filename`](#listenget)
         * 1. [`historycall/day/:endpoint/:day/:filter`](#day_filterget)
         * 1. [`historycall/interval/:endpoint/:from/:to`](#intervalget)
         * 1. [`historycall/interval/:endpoint/:from/:to/:filter`](#interval_filterget)
@@ -144,6 +145,14 @@ function setCompAuthorization(ca) {
         * Returns the history call of the day _"day"_ and endpoint _"endpoint"_. E.g. the endpoint can be
         * the extension number. Date must be expressed in YYYYMMDD format. If an error occurs an HTTP 500
         * response is returned.
+        *
+        * ---
+        *
+        * ### <a id="listenget">**`historycall/listen/:filename`**</a>
+        *
+        * The user can listen the record audio file of a call. The _"filename"_ is the audio filename to listen.
+        * The user with _admin\_recording_ authorization can listen all audio files, while the user with the _recording_
+        * permission can listen only the audio file of his own calls.
         *
         * ---
         *
@@ -184,19 +193,22 @@ function setCompAuthorization(ca) {
                 * @property get
                 * @type {array}
                 *
+                *   @param {string} listen/:filename To listen the record audio file of a call
+                *
                 *   @param {string} day/:endpoint/:day To get the history call of the day and endpoint. The date must be expressed
-                *       in YYYYMMDD format
+                *                                      in YYYYMMDD format
                 *
                 *   @param {string} day/:endpoint/:day/:filter To get the history call of the day and endpoint filtering by filter.
-                *       The date must be expressed in YYYYMMDD format
+                *                                              The date must be expressed in YYYYMMDD format
                 *
                 *   @param {string} interval/:endpoint/:from/:to To get the history call between _"from"_ date to _"to"_ date.
-                *       The date must be expressed in YYYYMMDD format
+                *                                                The date must be expressed in YYYYMMDD format
                 *
                 *   @param {string} interval/:endpoint/:from/:to/:filter To get the history call between _"from"_ date to _"to"_
-                *       date filtering by filter. The date must be expressed in YYYYMMDD format
+                *                                                        date filtering by filter. The date must be expressed in YYYYMMDD format
                 */
                 'get' : [
+                    'listen/:filename',
                     'day/:endpoint/:day',
                     'day/:endpoint/:day/:filter',
                     'interval/:endpoint/:from/:to',
@@ -205,6 +217,28 @@ function setCompAuthorization(ca) {
                 'post': [],
                 'head': [],
                 'del' : []
+            },
+
+            /**
+            * Listen the record audio file of a call with the following REST API:
+            *
+            *     listen
+            *
+            * @method listen
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            listen: function (req, res, next) {
+                try {
+                    // extract the username added in the authentication step
+                    var username = req.headers.authorization_user;
+                    var filename = req.params.filename;
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
             },
 
             /**
@@ -299,6 +333,7 @@ function setCompAuthorization(ca) {
         }
         exports.api                  = historycall.api;
         exports.day                  = historycall.day;
+        exports.listen               = historycall.listen;
         exports.interval             = historycall.interval;
         exports.setLogger            = setLogger;
         exports.setCompUtil          = setCompUtil;
