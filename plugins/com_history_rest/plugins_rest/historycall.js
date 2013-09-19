@@ -305,10 +305,24 @@ function setCompAuthorization(ca) {
 
                     logger.info(IDLOG, 'cdr authorization successfully for user "' + username + '" and endpoint ' + req.params.endpoint);
 
+                    // check the "administration recording" and "recording" authorization. If it's enabled the user can view also all the data
+                    // about his recording audio files
+                    var recording = compAuthorization.authorizeRecordingUser(username) || compAuthorization.authorizeAdminRecordingUser(username);
+                    if (compAuthorization.authorizeAdminRecordingUser(username) === true) {
+                        logger.info(IDLOG, 'user "' + username + '" has the "admin_recording" authorization');
+
+                    } else if (compAuthorization.authorizeRecordingUser(username) === true) {
+                        logger.info(IDLOG, 'user "' + username + '" has the "recording" authorization');
+
+                    } else {
+                        logger.info(IDLOG, 'user "' + username + '" has neither the "admin_recording" nor the "recording" authorization');
+                    }
+
                     var obj = {
-                        to:       req.params.to,
-                        from:     req.params.from,
-                        endpoint: req.params.endpoint
+                        to:        req.params.to,
+                        from:      req.params.from,
+                        endpoint:  req.params.endpoint,
+                        recording: recording
                     };
 
                     // add filter parameter if it has been specified
@@ -321,6 +335,7 @@ function setCompAuthorization(ca) {
                             logger.info(IDLOG, 'send ' + results.length   + ' results searching history call ' +
                                                'interval between ' + obj.from + ' to ' + obj.to + ' for ' +
                                                'endpoint ' + obj.endpoint + ' and filter ' + (obj.filter ? obj.filter : '""') +
+                                               (obj.recording ? ' with recording data' : '') +
                                                ' to user "' + username + '"');
                             res.send(200, results);
                         }
