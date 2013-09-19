@@ -126,25 +126,26 @@ function getHistoryCallInterval(data, cb) {
 *
 * @method getHistorySwitchCallInterval
 * @param {object} data
-*   @param {string} data.from The starting date of the interval in the YYYYMMDD format (e.g. 20130521)
-*   @param {string} data.to The ending date of the interval in the YYYYMMDD format (e.g. 20130528)
-*   @param {string} [data.filter] The filter to be used
+*   @param {string}  data.from      The starting date of the interval in the YYYYMMDD format (e.g. 20130521)
+*   @param {string}  data.to        The ending date of the interval in the YYYYMMDD format (e.g. 20130528)
+*   @param {boolean} data.recording True if the data about recording audio file must be returned
+*   @param {string}  [data.filter]  The filter to be used
 * @param {function} cb The callback function
 */
 function getHistorySwitchCallInterval(data, cb) {
     try {
         // check parameters
         if (    typeof data          !== 'object'
-            ||  typeof cb            !== 'function'
-            ||  typeof data.to       !== 'string'
-            ||  typeof data.from     !== 'string'
+            ||  typeof cb            !== 'function' || typeof data.recording !== 'boolean'
+            ||  typeof data.to       !== 'string'   || typeof data.from      !== 'string'
             || (typeof data.filter   !== 'string' && data.filter !== undefined)) {
 
             throw new Error('wrong parameters');
         }
 
         logger.info(IDLOG, 'search switchboard history call between ' + data.from + ' to ' + data.to + ' for ' +
-                           'all endpoints and filter ' + (data.filter ? data.filter : '""'));
+                           'all endpoints and filter ' + (data.filter ? data.filter : '""') +
+                           (data.recording ? ' with recording data' : '') );
         dbconn.getHistoryCallInterval(data, cb);
 
     } catch (err) {

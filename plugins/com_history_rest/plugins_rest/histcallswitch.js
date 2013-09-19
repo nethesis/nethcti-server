@@ -230,9 +230,20 @@ function setCompAuthorization(ca) {
 
                     logger.info(IDLOG, 'switchboard cdr authorization successfully for user "' + username + '"');
 
+                    // check the administration recording authorization. If it's enabled the user
+                    // can view also all data about recording audio files
+                    var recording = compAuthorization.authorizeAdminRecordingUser(username);
+                    if (recording !== true) {
+                        logger.info(IDLOG, 'user "' + username + '" hasn\'t the "admin recording" authorization');
+
+                    } else {
+                        logger.info(IDLOG, 'user "' + username + '" has the "admin recording" authorization');
+                    }
+
                     var obj = {
-                        to:   req.params.to,
-                        from: req.params.from
+                        to:        req.params.to,
+                        from:      req.params.from,
+                        recording: recording
                     };
 
                     // add filter parameter if it has been specified

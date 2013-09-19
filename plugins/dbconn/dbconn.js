@@ -850,25 +850,25 @@ function getCtiPbContactsStartsWithDigit(username, cb) {
 *
 * @method getHistoryCallInterval
 * @param {object} data
-*   @param {string} [data.endpoint] The endpoint involved in the research, e.g. the extesion
-*       identifier. It is used to filter out the _channel_ and _dstchannel_. It is wrapped with '%'
-*       characters. If it is omitted the function treats it as '%' string. The '%' matches any number
-*       of characters, even zero character
-*   @param {string} data.from The starting date of the interval in the YYYYMMDD format (e.g. 20130521)
-*   @param {string} data.to The ending date of the interval in the YYYYMMDD format (e.g. 20130528)
-*   @param {string} [data.filter] The filter to be used in the _src, clid_ and _dst_ fields. If it is
-*                                 omitted the function treats it as '%' string
+*   @param {string}  [data.endpoint] The endpoint involved in the research, e.g. the extesion
+*                                    identifier. It is used to filter out the _channel_ and _dstchannel_.
+*                                    It is wrapped with '%' characters. If it is omitted the function treats
+*                                    it as '%' string. The '%' matches any number of characters, even zero character
+*   @param {string}  data.from       The starting date of the interval in the YYYYMMDD format (e.g. 20130521)
+*   @param {string}  data.to         The ending date of the interval in the YYYYMMDD format (e.g. 20130528)
+*   @param {boolean} data.recording  True if the data about recording audio file must be returned
+*   @param {string}  [data.filter]   The filter to be used in the _src, clid_ and _dst_ fields. If it is
+*                                    omitted the function treats it as '%' string
 * @param {function} cb The callback function
 */
 function getHistoryCallInterval(data, cb) {
     try {
         // check parameters
         if (typeof data !== 'object'
-            ||  typeof cb            !== 'function'
-            ||  typeof data.to       !== 'string'
-            ||  typeof data.from     !== 'string'
-            || (typeof data.endpoint !== 'string' && data.endpoint  !== undefined)
-            || (typeof data.filter   !== 'string' && data.filter !== undefined)) {
+            ||  typeof cb            !== 'function' || typeof data.recording !== 'boolean'
+            ||  typeof data.to       !== 'string'   || typeof data.from      !== 'string'
+            || (typeof data.endpoint !== 'string'   && data.endpoint         !== undefined)
+            || (typeof data.filter   !== 'string'   && data.filter           !== undefined)) {
 
             throw new Error('wrong parameters');
         }
@@ -881,6 +881,16 @@ function getHistoryCallInterval(data, cb) {
             data.endpoint = '%' + data.endpoint + '%';
         }
 
+        // define the mysql field to be returned. The "recordingfile" field
+        // is returned only if the "data.recording" argument is true
+        var attributes = [
+            [ 'DATE_FORMAT(calldate, "%d/%m/%Y")', 'date'],
+            [ 'DATE_FORMAT(calldate, "%H:%i:%S")', 'time'],
+            'clid', 'src', 'dst', 'channel', 'dstchannel', 'uniqueid',
+            'duration', 'billsec', 'disposition', 'dcontext'
+        ];
+        if (data.recording === true) { attributes.push('recordingfile'); }
+
         // search
         models[JSON_KEYS.HISTORY_CALL].findAll({
             where: [
@@ -891,12 +901,8 @@ function getHistoryCallInterval(data, cb) {
                 data.from,     data.to,
                 data.filter,   data.filter,   data.filter
             ],
-            attributes: [
-                [ 'DATE_FORMAT(calldate, "%d/%m/%Y")', 'date'],
-                [ 'DATE_FORMAT(calldate, "%H:%i:%S")', 'time'],
-                'clid', 'src', 'dst', 'channel', 'dstchannel', 'uniqueid',
-                'duration', 'billsec', 'disposition', 'dcontext', 'recordingfile'
-            ]
+            attributes: attributes
+
         }).success(function (results) {
 
             // extract results to return in the callback function
