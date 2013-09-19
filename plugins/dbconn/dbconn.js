@@ -895,7 +895,7 @@ function getHistoryCallInterval(data, cb) {
                 [ 'DATE_FORMAT(calldate, "%d/%m/%Y")', 'date'],
                 [ 'DATE_FORMAT(calldate, "%H:%i:%S")', 'time'],
                 'clid', 'src', 'dst', 'channel', 'dstchannel', 'uniqueid',
-                'duration', 'billsec', 'disposition', 'dcontext'
+                'duration', 'billsec', 'disposition', 'dcontext', 'recordingfile'
             ]
         }).success(function (results) {
 
