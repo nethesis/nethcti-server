@@ -4,6 +4,8 @@
 * @module history
 * @main history
 */
+var fs   = require('fs');
+var path = require('path');
 
 /**
 * Provides the history call functionalities.
@@ -42,6 +44,15 @@ var logger = console;
 * @private
 */
 var dbconn;
+
+/**
+* The asterisk proxy architect component.
+*
+* @property compAstProxy
+* @type object
+* @private
+*/
+var compAstProxy;
 
 /**
 * Set the logger to be used.
@@ -83,6 +94,21 @@ function setDbconn(dbconnMod) {
         logger.info(IDLOG, 'set dbconn module');
     } catch (err) {
         logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the asterisk proxy architect component.
+*
+* @method setCompAstProxy
+* @param {object} comp The asterisk proxy architect component.
+*/
+function setCompAstProxy(comp) {
+    try {
+        compAstProxy = comp;
+        logger.info(IDLOG, 'set asterisk proxy architect component');
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
     }
 }
 
@@ -153,8 +179,95 @@ function getHistorySwitchCallInterval(data, cb) {
     }
 }
 
+/**
+* Checks if at least one of the specified list of extensions is implied in the recorded call.
+*
+* @method isAtLeastExtenInCallRecording
+* @param {string}   id         The call identifier
+* @param {array}    extensions The list of the extensions to check
+* @param {function} cb         The callback function
+*/
+function isAtLeastExtenInCallRecording(id, extensions, cb) {
+    try {
+        // check parameters
+        if (   typeof cb !== 'function'
+            || typeof id !== 'string'   || !(extensions instanceof Array)) {
+
+            throw new Error('wrong parameters');
+        }
+
+        logger.info(IDLOG, 'check if at least one extension ' + extensions.toString() + ' is involved in the call recording with id "' + id + '"');
+        dbconn.isAtLeastExtenInCall(id, extensions, cb);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Returns the data about call recording audio file.
+*
+* @method getCallRecordingFileData
+* @param {string}   id The call identifier
+* @param {function} cb The callback function
+*/
+function getCallRecordingFileData(id, cb) {
+    try {
+        // check parameters
+        if (typeof cb !== 'function' || typeof id !== 'string') {
+            throw new Error('wrong parameters');
+        }
+
+        logger.info(IDLOG, 'get the data informations about call recording audio file of the call with id "' + id + '"');
+        dbconn.getCallRecordingFileData(id, cb);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Reads the specified file using base64 encoding.
+*
+* @method listenCallRecording
+* @param {object} data
+*   @param {string} data.year     The creation year of the file
+*   @param {string} data.month    The creation month of the file
+*   @param {string} data.day      The creation day of the file
+*   @param {string} data.filename The name of the file
+* @param {function} cb The callback function
+*/
+function listenCallRecording(data, cb) {
+    try {
+        // check parameters
+        if (   typeof cb        !== 'function' || typeof data.filename !== 'string'
+            || typeof data      !== 'object'   || typeof data.month    !== 'string'
+            || typeof data.year !== 'string'   || typeof data.day      !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // get base path of the call recordings and then construct the filepath using the arguments
+        var basepath = compAstProxy.getBaseCallRecAudioPath();
+        var filepath = path.join(basepath, data.year, data.month, data.day, data.filename);
+
+        // read the audio file using base64 enconding
+        logger.info(IDLOG, 'read call recording file ' + filepath);
+        fs.readFile(filepath, 'base64', function (err, result) {
+            cb(err, result);
+        });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
 // public interface
-exports.setLogger                    = setLogger;
-exports.setDbconn                    = setDbconn;
-exports.getHistoryCallInterval       = getHistoryCallInterval;
-exports.getHistorySwitchCallInterval = getHistorySwitchCallInterval;
+exports.setLogger                     = setLogger;
+exports.setDbconn                     = setDbconn;
+exports.setCompAstProxy               = setCompAstProxy;
+exports.listenCallRecording           = listenCallRecording;
+exports.getHistoryCallInterval        = getHistoryCallInterval;
+exports.getCallRecordingFileData      = getCallRecordingFileData;
+exports.getHistorySwitchCallInterval  = getHistorySwitchCallInterval;
+exports.isAtLeastExtenInCallRecording = isAtLeastExtenInCallRecording;

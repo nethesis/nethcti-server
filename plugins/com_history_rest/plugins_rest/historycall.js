@@ -55,6 +55,15 @@ var compHistory;
 var compUtil;
 
 /**
+* The user architect component.
+*
+* @property compUser
+* @type object
+* @private
+*/
+var compUser;
+
+/**
 * Set the logger to be used.
 *
 * @method setLogger
@@ -111,6 +120,21 @@ function setCompUtil(comp) {
 }
 
 /**
+* Sets the user architect component.
+*
+* @method setCompUser
+* @param {object} comp The user architect component.
+*/
+function setCompUser(comp) {
+    try {
+        compUser = comp;
+        logger.info(IDLOG, 'set user architect component');
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Set authorization architect component used by history functions.
 *
 * @method setCompAuthorization
@@ -132,11 +156,20 @@ function setCompAuthorization(ca) {
         *
         * # GET requests
         *
+        * 1. [`historycall/listen/:id`](#listenget)
         * 1. [`historycall/day/:endpoint/:day`](#dayget)
-        * 1. [`historycall/listen/:filename`](#listenget)
         * 1. [`historycall/day/:endpoint/:day/:filter`](#day_filterget)
         * 1. [`historycall/interval/:endpoint/:from/:to`](#intervalget)
         * 1. [`historycall/interval/:endpoint/:from/:to/:filter`](#interval_filterget)
+        *
+        * ---
+        *
+        * ### <a id="listenget">**`historycall/listen/:id`**</a>
+        *
+        * The user can listen the record audio file of a call. The _id_ is the call indentifier in the database
+        * (_uniqueid_ field of the _asteriskcdrdb.cdr_ database table). The user with _admin\_recording_
+        * authorization can listen all audio files, while the user with the _recording_ permission can listen only the
+        * audio file of his own calls.
         *
         * ---
         *
@@ -145,14 +178,6 @@ function setCompAuthorization(ca) {
         * Returns the history call of the day _"day"_ and endpoint _"endpoint"_. E.g. the endpoint can be
         * the extension number. Date must be expressed in YYYYMMDD format. If an error occurs an HTTP 500
         * response is returned.
-        *
-        * ---
-        *
-        * ### <a id="listenget">**`historycall/listen/:filename`**</a>
-        *
-        * The user can listen the record audio file of a call. The _"filename"_ is the audio filename to listen.
-        * The user with _admin\_recording_ authorization can listen all audio files, while the user with the _recording_
-        * permission can listen only the audio file of his own calls.
         *
         * ---
         *
@@ -193,7 +218,7 @@ function setCompAuthorization(ca) {
                 * @property get
                 * @type {array}
                 *
-                *   @param {string} listen/:filename To listen the record audio file of a call
+                *   @param {string} listen/:id         To listen the record audio file of a call
                 *
                 *   @param {string} day/:endpoint/:day To get the history call of the day and endpoint. The date must be expressed
                 *                                      in YYYYMMDD format
@@ -208,7 +233,7 @@ function setCompAuthorization(ca) {
                 *                                                        date filtering by filter. The date must be expressed in YYYYMMDD format
                 */
                 'get' : [
-                    'listen/:filename',
+                    'listen/:id',
                     'day/:endpoint/:day',
                     'day/:endpoint/:day/:filter',
                     'interval/:endpoint/:from/:to',
@@ -233,11 +258,79 @@ function setCompAuthorization(ca) {
                 try {
                     // extract the username added in the authentication step
                     var username = req.headers.authorization_user;
-                    var filename = req.params.filename;
+                    var id       = req.params.id;
 
-                } catch (err) {
-                    logger.error(IDLOG, err.stack);
-                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                    // check the "admin_recording" authorization. If the user has this permission he can listen
+                    // all the audio file. So gets the file informations and then return the data to the client
+                    if (compAuthorization.authorizeAdminRecordingUser(username) === true) {
+                        logger.info(IDLOG, 'listening record call audio file: admin recording authorization successful for user "' + username + '"');
+
+                        // get the file informations using the history component. The informations are the creation year,
+                        // month, day and the filename. This data is need to listen the file using history component
+                        compHistory.getCallRecordingFileData(id, function (err, result) {
+                            try {
+
+                                if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
+
+                                // the user isn't involved in the recorded call, so he can't listen it
+                                else if (typeof result === 'boolean' && !result) {
+                                    var str = 'no data informations about recording call with id "' + id + '" for user "' + username + '"';
+                                    logger.warn(IDLOG, str);
+                                    compUtil.net.sendHttp500(IDLOG, res, str);
+
+                                } else {
+                                    // listen recorded call, so the content of the file is sent to the client
+                                    listenCallRecording(id, username, result, res);
+                                }
+                            } catch (err1) {
+                                logger.error(IDLOG, err1.stack);
+                                compUtil.net.sendHttp500(IDLOG, res, err1.toString());
+                            }
+                        });
+
+                    }
+
+                    // check the "recording" authorization
+                    else if (compAuthorization.authorizeRecordingUser(username) !== true) {
+                        logger.warn(IDLOG, 'listening record call audio file: recording authorization failed for user "' + username + '" !');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+
+                    // the user has the "recording" authorization, so check if the recorded call relates to himself
+                    else {
+                        // get all the extension endpoints of the user
+                        var extens = Object.keys(compUser.getAllEndpointsExtension(username));
+
+                        // here the user only has the "recording" authorization so he can listen only the recording call in which he
+                        // is involved. So checks if at least one extension of the user is involved in the recorded call. As a result
+                        // of this test is returned a "false" value if the test is failed, an object with the file informations if the
+                        // test is successful
+                        compHistory.isAtLeastExtenInCallRecording(id, extens, function (err, result) {
+                            try {
+
+                                if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
+
+                                // the user isn't involved in the recorded call, so he can't listen it
+                                else if (typeof result === 'boolean' && !result) {
+                                    logger.warn(IDLOG, 'user "' + username + '" try to listen the recording call id "' + id + '", but he isn\'t involved in the call');
+                                    compUtil.net.sendHttp403(IDLOG, res);
+
+                                } else {
+                                    // the user is involved in the recorded call so the content of the file is sent to the client
+                                    listenCallRecording(id, username, result, res);
+                                }
+
+                            } catch (err1) {
+                                logger.error(IDLOG, err1.stack);
+                                compUtil.net.sendHttp500(IDLOG, res, err1.toString());
+                            }
+                        });
+                    }
+
+                } catch (error) {
+                    logger.error(IDLOG, error.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, error.toString());
                 }
             },
 
@@ -329,7 +422,7 @@ function setCompAuthorization(ca) {
                     if (req.params.filter) { obj.filter = req.params.filter; }
 
                     // use the history component
-                    var data = compHistory.getHistoryCallInterval(obj, function (err, results) {
+                    compHistory.getHistoryCallInterval(obj, function (err, results) {
                         if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
                         else {
                             logger.info(IDLOG, 'send ' + results.length   + ' results searching history call ' +
@@ -352,6 +445,7 @@ function setCompAuthorization(ca) {
         exports.interval             = historycall.interval;
         exports.setLogger            = setLogger;
         exports.setCompUtil          = setCompUtil;
+        exports.setCompUser          = setCompUser;
         exports.setCompHistory       = setCompHistory;
         exports.setCompAuthorization = setCompAuthorization;
 
@@ -359,3 +453,42 @@ function setCompAuthorization(ca) {
         logger.error(IDLOG, err.stack);
     }
 })();
+
+/**
+* Listen call recording using history component. This returns the content of
+* the audio file using base64 enconding. So the data is sent to the client.
+*
+* @method listenCallRecording
+* @param {string} id              The identifier of the call
+* @param {string} username        The name of the user
+* @param {object} data
+*   @param {string} data.year     The creation year of the file
+*   @param {string} data.month    The creation month of the file
+*   @param {string} data.day      The creation day of the file
+*   @param {string} data.filename The name of the file
+* @param {object} res             The client response
+* @private
+*/
+function listenCallRecording(id, username, result, res) {
+    try {
+        compHistory.listenCallRecording(result, function (err1, result) {
+            try {
+
+                if (err1) { compUtil.net.sendHttp500(IDLOG, res, err1.toString()); }
+
+                else {
+                    logger.info(IDLOG, 'listen of the recording call with id "' + id + '" has been sent successfully to user "' + username + '"');
+                    res.send(200, result);
+                }
+
+            } catch (err2) {
+                logger.error(IDLOG, err2.stack);
+                compUtil.net.sendHttp500(IDLOG, res, err2.toString());
+            }
+        });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        compUtil.net.sendHttp500(IDLOG, res, err.toString());
+    }
+}

@@ -99,6 +99,16 @@ var EVT_QUEUE_CHANGED = 'queueChanged';
 var EVT_NEW_VOICEMAIL = 'newVoicemail';
 
 /**
+* The default base path for the recording call audio file.
+*
+* @property BASE_CALL_REC_AUDIO_PATH
+* @type object
+* @private
+* @default "/var/spool/asterisk/monitor"
+*/
+var BASE_CALL_REC_AUDIO_PATH = '/var/spool/asterisk/monitor';
+
+/**
 * The logger. It must have at least three methods: _info, warn and error._
 *
 * @property logger
@@ -3099,6 +3109,20 @@ function getExtensionsFromConversation(convid, exten) {
     }
 }
 
+/**
+* Returns the base path of the call recording audio files.
+*
+* @method getBaseCallRecAudioPath
+* @return {string} The base path of the call recording audio files.
+*/
+function getBaseCallRecAudioPath() {
+    try {
+        return BASE_CALL_REC_AUDIO_PATH;
+    } catch (e) {
+        logger.error(IDLOG, e.stack);
+    }
+}
+
 // public interface
 exports.on                            = on;
 exports.call                          = call;
@@ -3128,6 +3152,7 @@ exports.stopRecordConversation        = stopRecordConversation;
 exports.evtConversationDialing        = evtConversationDialing;
 exports.evtSpyStartConversation       = evtSpyStartConversation;
 exports.startRecordConversation       = startRecordConversation;
+exports.getBaseCallRecAudioPath       = getBaseCallRecAudioPath;
 exports.evtNewQueueWaitingCaller      = evtNewQueueWaitingCaller;
 exports.evtConversationConnected      = evtConversationConnected;
 exports.startSpySpeakConversation     = startSpySpeakConversation;

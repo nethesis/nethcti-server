@@ -331,7 +331,6 @@ function setCompAuthorization(comp) {
 
                                     logger.info(IDLOG, 'listen voice message with id "' + req.params.id + '" of the voicemail "' + vmid + '" successfully by the user "' + username + '"');
 
-                                    //res.send(200, result.toString('base64'));
                                     res.send(200, result);
 
                                 } catch (err3) {

@@ -598,6 +598,34 @@ function getAllEndpointsNethcti(username) {
 }
 
 /**
+* Returns all the extension endpoints of the user.
+*
+* @method getAllEndpointsExtension
+* @param  {string} username The username
+* @return {object} Returns all the extension endpoints of the user.
+*/
+function getAllEndpointsExtension(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        // check the user existence
+        if (typeof users[username] !== 'object') {
+            logger.warn(IDLOG, 'gettings all the extension endpoints: the user "' + username + '" not exists');
+            return {};
+        }
+
+        // gets all endpoints, extracts the extension endpoints and then sets its status
+        var endpoints = users[username].getAllEndpoints();
+        return endpoints[endpointTypes.TYPES.EXTENSION];
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return {};
+    }
+}
+
+/**
 * Returns all users associated with the specified extension endpoint.
 *
 * @method getUsersUsingEndpointExtension
@@ -649,5 +677,6 @@ exports.setNethctiPresence             = setNethctiPresence;
 exports.hasExtensionEndpoint           = hasExtensionEndpoint;
 exports.hasVoicemailEndpoint           = hasVoicemailEndpoint;
 exports.getAllEndpointsNethcti         = getAllEndpointsNethcti;
+exports.getAllEndpointsExtension       = getAllEndpointsExtension;
 exports.getAllUsersEndpointsJSON       = getAllUsersEndpointsJSON;
 exports.getUsersUsingEndpointExtension = getUsersUsingEndpointExtension;

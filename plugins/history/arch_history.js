@@ -38,15 +38,35 @@ module.exports = function (options, imports, register) {
             *
             * @method getHistorySwitchCallInterval
             */
-            getHistorySwitchCallInterval: history.getHistorySwitchCallInterval
+            getHistorySwitchCallInterval: history.getHistorySwitchCallInterval,
+
+            /**
+            * It's the _isAtLeastExtenInCallRecording_ method provided by _history_ module.
+            *
+            * @method isAtLeastExtenInCallRecording
+            */
+            isAtLeastExtenInCallRecording: history.isAtLeastExtenInCallRecording,
+
+            /**
+            * It's the _listenCallRecording_ method provided by _history_ module.
+            *
+            * @method listenCallRecording
+            */
+            listenCallRecording: history.listenCallRecording,
+
+            /**
+            * It's the _getCallRecordingFileData_ method provided by _history_ module.
+            *
+            * @method getCallRecordingFileData
+            */
+            getCallRecordingFileData: history.getCallRecordingFileData
         }
     });
 
     try {
-        var dbconn = imports.dbconn;
-
         history.setLogger(logger);
-        history.setDbconn(dbconn);
+        history.setDbconn(imports.dbconn);
+        history.setCompAstProxy(imports.astProxy);
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }

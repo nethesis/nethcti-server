@@ -4,10 +4,11 @@
     "private": true,
     "plugin": {
         "consumes": [
+            "cel",
             "util",
+            "user",
             "logger",
             "history",
-            "cel",
             "authorization"
         ],
         "provides": []

@@ -924,6 +924,114 @@ function getHistoryCallInterval(data, cb) {
         });
     } catch (err) {
         logger.error(IDLOG, err.stack);
+        cb(err.toString());
+    }
+}
+
+/**
+* Checks if at least one of the specified list of extensions is implied in the recorded call.
+*
+* @method isAtLeastExtenInCall
+* @param {string}   uniqueid   The call identifier: is the _uniqueid_ field of the _asteriskcdrdb.cdr_ database table
+* @param {array}    extensions The list of the extensions to check
+* @param {function} cb         The callback function. If none of the extensions is involved in the call, the callback
+*                              is called with a false boolean value. Otherwise it's called with the entry of the database
+*/
+function isAtLeastExtenInCall(uniqueid, extensions, cb) {
+    try {
+        // check parameters
+        if (   typeof cb       !== 'function'
+            || typeof uniqueid !== 'string'   || !(extensions instanceof Array) ) {
+
+            throw new Error('wrong parameters');
+        }
+
+        extensions = extensions.join('|');
+
+        // search
+        models[JSON_KEYS.HISTORY_CALL].find({
+            where: [
+                'uniqueid=? AND ' +
+                '(channel REGEXP ? OR dstchannel REGEXP ?)',
+                uniqueid, extensions, extensions
+            ],
+            attributes: [
+                [ 'DATE_FORMAT(calldate, "%Y")', 'year'  ],
+                [ 'DATE_FORMAT(calldate, "%m")', 'month' ],
+                [ 'DATE_FORMAT(calldate, "%d")', 'day'   ],
+                [ 'recordingfile', 'filename'            ]
+            ]
+
+        }).success(function (result) {
+
+            // extract result to return in the callback function
+            if (result &&  result.selectedValues) {
+                logger.info(IDLOG, 'at least one extensions ' + extensions.toString() + ' is involved in the call with uniqueid ' + uniqueid);
+                cb(null, result.selectedValues);
+
+            } else {
+                logger.info(IDLOG, 'none of the extensions ' + extensions.toString() + ' is involved in the call with uniqueid ' + uniqueid);
+                cb(null, false);
+            }
+
+        }).error(function (err) { // manage the error
+
+            logger.error(IDLOG, 'checking if at least one extension of ' + extensions.toString() + ' is involved in the call with uniqueid ' + uniqueid);
+            cb(err.toString());
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err.toString());
+    }
+}
+
+/**
+* Returns the data about the call recording audio file as an object, or
+* a false value if no data has been found.
+*
+* @method getCallRecordingFileData
+* @param {string}   uniqueid The call identifier in the database
+* @param {function} cb       The callback function
+*/
+function getCallRecordingFileData(uniqueid, cb) {
+    try {
+        // check parameters
+        if (typeof cb !== 'function' || typeof uniqueid !== 'string') {
+            throw new Error('wrong parameters');
+        }
+
+        // search
+        models[JSON_KEYS.HISTORY_CALL].find({
+            where: [
+                'uniqueid=?', uniqueid
+            ],
+            attributes: [
+                [ 'DATE_FORMAT(calldate, "%Y")', 'year'  ],
+                [ 'DATE_FORMAT(calldate, "%m")', 'month' ],
+                [ 'DATE_FORMAT(calldate, "%d")', 'day'   ],
+                [ 'recordingfile', 'filename'            ]
+            ]
+
+        }).success(function (result) {
+
+            // extract result to return in the callback function
+            if (result &&  result.selectedValues) {
+                logger.info(IDLOG, 'found data informations about recording call with uniqueid ' + uniqueid);
+                cb(null, result.selectedValues);
+
+            } else {
+                logger.info(IDLOG, 'no data informations about recording call with uniqueid ' + uniqueid);
+                cb(null, false);
+            }
+
+        }).error(function (err) { // manage the error
+
+            logger.error(IDLOG, 'getting data informations about recording call with uniqueid ' + uniqueid);
+            cb(err.toString());
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err.toString());
     }
 }
 
@@ -1252,7 +1360,7 @@ function listenVoiceMessage(dbid, cb) {
             attributes: [ 'recording' ]
 
         }).success(function (result) {
-            if (result.selectedValues.recording) {
+            if (result && result.selectedValues && result.selectedValues.recording) {
                 logger.info(IDLOG, 'obtained voicemail audio file from voicemail db id "' + dbid + '"');
                 cb(null, result.selectedValues.recording);
 
@@ -1649,11 +1757,13 @@ exports.listenVoiceMessage                  = listenVoiceMessage;
 exports.getVoicemailNewMsg                  = getVoicemailNewMsg;
 exports.getVoicemailOldMsg                  = getVoicemailOldMsg;
 exports.getVmMailboxFromDbId                = getVmMailboxFromDbId;
+exports.isAtLeastExtenInCall                = isAtLeastExtenInCall;
 exports.getCustomerCardByNum                = getCustomerCardByNum;
 exports.getHistorySmsInterval               = getHistorySmsInterval;
 exports.getPbContactsContains               = getPbContactsContains;
 exports.getHistoryCallInterval              = getHistoryCallInterval;
 exports.getPbContactsStartsWith             = getPbContactsStartsWith;
+exports.getCallRecordingFileData            = getCallRecordingFileData;
 exports.getHistoryPostitInterval            = getHistoryPostitInterval;
 exports.getCtiPbContactsContains            = getCtiPbContactsContains;
 exports.getCtiPbSpeeddialContacts           = getCtiPbSpeeddialContacts;

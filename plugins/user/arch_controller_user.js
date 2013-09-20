@@ -162,6 +162,13 @@ module.exports = function (options, imports, register) {
             getAllEndpointsNethcti: controllerUser.getAllEndpointsNethcti,
 
             /**
+            * It's the _getAllEndpointsExtension_ method provided by _controller\_user_ module.
+            *
+            * @method getAllEndpointsExtension
+            */
+            getAllEndpointsExtension: controllerUser.getAllEndpointsExtension,
+
+            /**
             * It's the _getUsersUsingEndpointExtension_ method provided by _controller\_user_ module.
             *
             * @method getUsersUsingEndpointExtension

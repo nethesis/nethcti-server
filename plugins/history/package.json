@@ -3,7 +3,11 @@
     "main": "arch_history.js",
     "private": true,
     "plugin": {
-        "consumes": ["logger", "dbconn"],
-        "provides": ["history"]
+        "consumes": [
+            "logger",
+            "dbconn",
+            "astProxy"
+        ],
+        "provides": [ "history" ]
     }
 }
