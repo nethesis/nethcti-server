@@ -156,20 +156,11 @@ function setCompAuthorization(ca) {
         *
         * # GET requests
         *
-        * 1. [`historycall/listen/:id`](#listenget)
         * 1. [`historycall/day/:endpoint/:day`](#dayget)
+        * 1. [`historycall/listen_reccall/:id`](#listen_reccallget)
         * 1. [`historycall/day/:endpoint/:day/:filter`](#day_filterget)
         * 1. [`historycall/interval/:endpoint/:from/:to`](#intervalget)
         * 1. [`historycall/interval/:endpoint/:from/:to/:filter`](#interval_filterget)
-        *
-        * ---
-        *
-        * ### <a id="listenget">**`historycall/listen/:id`**</a>
-        *
-        * The user can listen the record audio file of a call. The _id_ is the call indentifier in the database
-        * (_uniqueid_ field of the _asteriskcdrdb.cdr_ database table). The user with _admin\_recording_
-        * authorization can listen all audio files, while the user with the _recording_ permission can listen only the
-        * audio file of his own calls.
         *
         * ---
         *
@@ -178,6 +169,15 @@ function setCompAuthorization(ca) {
         * Returns the history call of the day _"day"_ and endpoint _"endpoint"_. E.g. the endpoint can be
         * the extension number. Date must be expressed in YYYYMMDD format. If an error occurs an HTTP 500
         * response is returned.
+        *
+        * ---
+        *
+        * ### <a id="listen_reccallget">**`historycall/listen_reccall/:id`**</a>
+        *
+        * The user can listen the record audio file of a call. The _id_ is the call indentifier in the database
+        * (_uniqueid_ field of the _asteriskcdrdb.cdr_ database table). The user with _admin\_recording_
+        * authorization can listen all audio files, while the user with the _recording_ permission can listen only the
+        * audio file of his own calls.
         *
         * ---
         *
@@ -218,7 +218,7 @@ function setCompAuthorization(ca) {
                 * @property get
                 * @type {array}
                 *
-                *   @param {string} listen/:id         To listen the record audio file of a call
+                *   @param {string} listen_reccall/:id         To listen the record audio file of a call
                 *
                 *   @param {string} day/:endpoint/:day To get the history call of the day and endpoint. The date must be expressed
                 *                                      in YYYYMMDD format
@@ -233,7 +233,7 @@ function setCompAuthorization(ca) {
                 *                                                        date filtering by filter. The date must be expressed in YYYYMMDD format
                 */
                 'get' : [
-                    'listen/:id',
+                    'listen_reccall/:id',
                     'day/:endpoint/:day',
                     'day/:endpoint/:day/:filter',
                     'interval/:endpoint/:from/:to',
@@ -247,14 +247,14 @@ function setCompAuthorization(ca) {
             /**
             * Listen the record audio file of a call with the following REST API:
             *
-            *     listen
+            *     listen_reccall
             *
-            * @method listen
+            * @method listen_reccall
             * @param {object}   req  The client request
             * @param {object}   res  The client response
             * @param {function} next Function to run the next handler in the chain
             */
-            listen: function (req, res, next) {
+            listen_reccall: function (req, res, next) {
                 try {
                     // extract the username added in the authentication step
                     var username = req.headers.authorization_user;
@@ -441,11 +441,11 @@ function setCompAuthorization(ca) {
         }
         exports.api                  = historycall.api;
         exports.day                  = historycall.day;
-        exports.listen               = historycall.listen;
         exports.interval             = historycall.interval;
         exports.setLogger            = setLogger;
         exports.setCompUtil          = setCompUtil;
         exports.setCompUser          = setCompUser;
+        exports.listen_reccall       = historycall.listen_reccall;
         exports.setCompHistory       = setCompHistory;
         exports.setCompAuthorization = setCompAuthorization;
 
@@ -469,9 +469,9 @@ function setCompAuthorization(ca) {
 * @param {object} res             The client response
 * @private
 */
-function listenCallRecording(id, username, result, res) {
+function listenCallRecording(id, username, data, res) {
     try {
-        compHistory.listenCallRecording(result, function (err1, result) {
+        compHistory.listenCallRecording(data, function (err1, result) {
             try {
 
                 if (err1) { compUtil.net.sendHttp500(IDLOG, res, err1.toString()); }
