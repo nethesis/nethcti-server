@@ -227,7 +227,8 @@ function getCallRecordingFileData(id, cb) {
 }
 
 /**
-* Reads the specified file using base64 encoding.
+* Reads the specified file of the recorded call using base64 encoding and
+* return the content in the callback.
 *
 * @method listenCallRecording
 * @param {object} data
@@ -235,7 +236,7 @@ function getCallRecordingFileData(id, cb) {
 *   @param {string} data.month    The creation month of the file
 *   @param {string} data.day      The creation day of the file
 *   @param {string} data.filename The name of the file
-* @param {function} cb The callback function
+* @param {function} cb            The callback function
 */
 function listenCallRecording(data, cb) {
     try {
@@ -259,6 +260,64 @@ function listenCallRecording(data, cb) {
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Deletes the specified file of the recorded call. It deletes the file from the
+* filesystem and updates the database entry of the call.
+*
+* @method deleteCallRecording
+* @param {string} id              The identifier of the call
+* @param {object} data
+*   @param {string} data.year     The creation year of the file
+*   @param {string} data.month    The creation month of the file
+*   @param {string} data.day      The creation day of the file
+*   @param {string} data.filename The name of the file
+* @param {function} cb            The callback function
+*/
+function deleteCallRecording(id, data, cb) {
+    try {
+        // check parameters
+        if (   typeof cb            !== 'function'
+            || typeof data.filename !== 'string'   || typeof id         !== 'string'
+            || typeof data          !== 'object'   || typeof data.month !== 'string'
+            || typeof data.year     !== 'string'   || typeof data.day   !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // get base path of the call recordings and then construct the filepath using the arguments
+        var basepath = compAstProxy.getBaseCallRecAudioPath();
+        var filepath = path.join(basepath, data.year, data.month, data.day, data.filename);
+
+        // delete the audio file from the filesystem
+        logger.info(IDLOG, 'delete call recording file ' + filepath);
+        fs.unlink(filepath, function (err) {
+            try {
+                if (err) {
+                    logger.error(IDLOG, 'removing call recording file ' + filepath);
+                    cb(err);
+                }
+
+                // update the database entry of the call to remove the link to the file
+                else {
+                    logger.info(IDLOG, 'delete call recording from the database for call with id ' + id);
+                    dbconn.deleteCallRecording(id, function (err) {
+                        cb(err);
+                    });
+                }
+
+            } catch (err) {
+                logger.error(IDLOG, err.stack);
+                cb(err);
+            }
+        });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
     }
 }
 
@@ -267,6 +326,7 @@ exports.setLogger                     = setLogger;
 exports.setDbconn                     = setDbconn;
 exports.setCompAstProxy               = setCompAstProxy;
 exports.listenCallRecording           = listenCallRecording;
+exports.deleteCallRecording           = deleteCallRecording;
 exports.getHistoryCallInterval        = getHistoryCallInterval;
 exports.getCallRecordingFileData      = getCallRecordingFileData;
 exports.getHistorySwitchCallInterval  = getHistorySwitchCallInterval;

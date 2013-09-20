@@ -157,7 +157,7 @@ function setCompAuthorization(ca) {
         * # GET requests
         *
         * 1. [`historycall/day/:endpoint/:day`](#dayget)
-        * 1. [`historycall/listen_reccall/:id`](#listen_reccallget)
+        * 1. [`historycall/listen_callrec/:id`](#listen_callrecget)
         * 1. [`historycall/day/:endpoint/:day/:filter`](#day_filterget)
         * 1. [`historycall/interval/:endpoint/:from/:to`](#intervalget)
         * 1. [`historycall/interval/:endpoint/:from/:to/:filter`](#interval_filterget)
@@ -172,7 +172,7 @@ function setCompAuthorization(ca) {
         *
         * ---
         *
-        * ### <a id="listen_reccallget">**`historycall/listen_reccall/:id`**</a>
+        * ### <a id="listen_callrecget">**`historycall/listen_callrec/:id`**</a>
         *
         * The user can listen the record audio file of a call. The _id_ is the call indentifier in the database
         * (_uniqueid_ field of the _asteriskcdrdb.cdr_ database table). The user with _admin\_recording_
@@ -203,6 +203,20 @@ function setCompAuthorization(ca) {
         * filtering by _"filter"_. E.g. the endpoint can be the extension number. Date must be expressed
         * in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
         *
+        * <br>
+        *
+        * # POST requests
+        *
+        * 1. [`historycall/delete_callrec`](#delete_callrecpost)
+        *
+        * ---
+        *
+        * ### <a id="delete_callrecpost">**`historycall/delete_callrec`**</a>
+        *
+        * Delete the specified call recording. The request must contains the following parameters:
+        *
+        * * `id: the identifier of the call in the database`
+        *
         * @class plugin_rest_historycall
         * @static
         */
@@ -218,7 +232,7 @@ function setCompAuthorization(ca) {
                 * @property get
                 * @type {array}
                 *
-                *   @param {string} listen_reccall/:id         To listen the record audio file of a call
+                *   @param {string} listen_callrec/:id         To listen the record audio file of a call
                 *
                 *   @param {string} day/:endpoint/:day To get the history call of the day and endpoint. The date must be expressed
                 *                                      in YYYYMMDD format
@@ -233,28 +247,125 @@ function setCompAuthorization(ca) {
                 *                                                        date filtering by filter. The date must be expressed in YYYYMMDD format
                 */
                 'get' : [
-                    'listen_reccall/:id',
+                    'listen_callrec/:id',
                     'day/:endpoint/:day',
                     'day/:endpoint/:day/:filter',
                     'interval/:endpoint/:from/:to',
                     'interval/:endpoint/:from/:to/:filter'
                 ],
-                'post': [],
+
+                /**
+                * REST API to be requested using HTTP POST request.
+                *
+                * @property post
+                * @type {array}
+                *
+                *   @param {string} delete_callrec To delete a call recording
+                */
+                'post': [ 'delete_callrec' ],
                 'head': [],
                 'del' : []
             },
 
             /**
-            * Listen the record audio file of a call with the following REST API:
+            * Delete the record audio file of a call with the following REST API:
             *
-            *     listen_reccall
+            *     delete_callrec
             *
-            * @method listen_reccall
+            * @method delete_callrec
             * @param {object}   req  The client request
             * @param {object}   res  The client response
             * @param {function} next Function to run the next handler in the chain
             */
-            listen_reccall: function (req, res, next) {
+            delete_callrec: function (req, res, next) {
+                try {
+                    // extract the username added in the authentication step
+                    var username = req.headers.authorization_user;
+                    var id       = req.params.id;
+
+                    // check the "admin_recording" authorization. If the user has this permission he can delete
+                    // all the audio files. So gets the file informations and then delete the file
+                    if (compAuthorization.authorizeAdminRecordingUser(username) === true) {
+                        logger.info(IDLOG, 'deleting record call audio file: "admin_recording" authorization successful for user "' + username + '"');
+
+                        // get the file informations using the history component. The informations are the creation year,
+                        // month, day and the filename. This data is need to delete the file using history component
+                        compHistory.getCallRecordingFileData(id, function (err, result) {
+                            try {
+
+                                if (err) { throw err; }
+
+                                // the user isn't involved in the recorded call, so he can't delete it
+                                else if (typeof result === 'boolean' && !result) {
+                                    var str = 'no data informations about recording call with id "' + id + '" to delete by the user "' + username + '"';
+                                    logger.warn(IDLOG, str);
+                                    compUtil.net.sendHttp500(IDLOG, res, str);
+
+                                } else {
+                                    // delete recorded call
+                                    deleteCallRecording(id, username, result, res);
+                                }
+                            } catch (err1) {
+                                logger.error(IDLOG, err1.stack);
+                                compUtil.net.sendHttp500(IDLOG, res, err1.toString());
+                            }
+                        });
+                    }
+
+                    // check the "recording" authorization
+                    else if (compAuthorization.authorizeRecordingUser(username) !== true) {
+                        logger.warn(IDLOG, 'deleting record call audio file: "recording" authorization failed for user "' + username + '" !');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+
+                    // the user has the "recording" authorization, so check if the recorded call relates to himself
+                    else {
+                        // get all the extension endpoints of the user
+                        var extens = Object.keys(compUser.getAllEndpointsExtension(username));
+
+                        // here the user only has the "recording" authorization so he can delete only the recording call in which he
+                        // is involved. So checks if at least one extension of the user is involved in the recorded call. As a result
+                        // of this test is returned a "false" value if the test is failed, an object with the file informations if the
+                        // test is successful
+                        compHistory.isAtLeastExtenInCallRecording(id, extens, function (err, result) {
+                            try {
+
+                                if (err) { throw err; }
+
+                                // the user isn't involved in the recorded call, so he can't delete it
+                                else if (typeof result === 'boolean' && !result) {
+                                    logger.warn(IDLOG, 'user "' + username + '" try to delete the recording call id "' + id + '", but he isn\'t involved in the call');
+                                    compUtil.net.sendHttp403(IDLOG, res);
+
+                                } else {
+                                    // the user is involved in the recorded call so the file is deleted
+                                    deleteCallRecording(id, username, result, res);
+                                }
+
+                            } catch (err1) {
+                                logger.error(IDLOG, err1.stack);
+                                compUtil.net.sendHttp500(IDLOG, res, err1.toString());
+                            }
+                        });
+                    }
+                } catch (error) {
+                    logger.error(IDLOG, error.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, error.toString());
+                }
+            },
+
+            /**
+            * Listen the record audio file of a call with the following REST API:
+            *
+            *     listen_callrec
+            *
+            * @method listen_callrec
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            listen_callrec: function (req, res, next) {
                 try {
                     // extract the username added in the authentication step
                     var username = req.headers.authorization_user;
@@ -270,11 +381,11 @@ function setCompAuthorization(ca) {
                         compHistory.getCallRecordingFileData(id, function (err, result) {
                             try {
 
-                                if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
+                                if (err) { throw err; }
 
                                 // the user isn't involved in the recorded call, so he can't listen it
                                 else if (typeof result === 'boolean' && !result) {
-                                    var str = 'no data informations about recording call with id "' + id + '" for user "' + username + '"';
+                                    var str = 'no data informations about recording call with id "' + id + '" to listen by the user "' + username + '"';
                                     logger.warn(IDLOG, str);
                                     compUtil.net.sendHttp500(IDLOG, res, str);
 
@@ -309,7 +420,7 @@ function setCompAuthorization(ca) {
                         compHistory.isAtLeastExtenInCallRecording(id, extens, function (err, result) {
                             try {
 
-                                if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
+                                if (err) { throw err; }
 
                                 // the user isn't involved in the recorded call, so he can't listen it
                                 else if (typeof result === 'boolean' && !result) {
@@ -422,20 +533,26 @@ function setCompAuthorization(ca) {
                     if (req.params.filter) { obj.filter = req.params.filter; }
 
                     // use the history component
-                    compHistory.getHistoryCallInterval(obj, function (err, results) {
-                        if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
-                        else {
-                            logger.info(IDLOG, 'send ' + results.length   + ' results searching history call ' +
-                                               'interval between ' + obj.from + ' to ' + obj.to + ' for ' +
-                                               'endpoint ' + obj.endpoint + ' and filter ' + (obj.filter ? obj.filter : '""') +
-                                               (obj.recording ? ' with recording data' : '') +
-                                               ' to user "' + username + '"');
-                            res.send(200, results);
+                    compHistory.getHistoryCallInterval(obj, function (err1, results) {
+                        try {
+                            if (err1) { throw err1; }
+                            else {
+                                logger.info(IDLOG, 'send ' + results.length   + ' results searching history call ' +
+                                                   'interval between ' + obj.from + ' to ' + obj.to + ' for ' +
+                                                   'endpoint ' + obj.endpoint + ' and filter ' + (obj.filter ? obj.filter : '""') +
+                                                   (obj.recording ? ' with recording data' : '') +
+                                                   ' to user "' + username + '"');
+                                res.send(200, results);
+                            }
+
+                        } catch (err2) {
+                            logger.error(IDLOG, err2.stack);
+                            compUtil.net.sendHttp500(IDLOG, res, err2.toString());
                         }
                     });
-                } catch (err) {
-                    logger.error(IDLOG, err.stack);
-                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                } catch (error) {
+                    logger.error(IDLOG, error.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, error.toString());
                 }
             }
         }
@@ -445,7 +562,8 @@ function setCompAuthorization(ca) {
         exports.setLogger            = setLogger;
         exports.setCompUtil          = setCompUtil;
         exports.setCompUser          = setCompUser;
-        exports.listen_reccall       = historycall.listen_reccall;
+        exports.listen_callrec       = historycall.listen_callrec;
+        exports.delete_callrec       = historycall.delete_callrec;
         exports.setCompHistory       = setCompHistory;
         exports.setCompAuthorization = setCompAuthorization;
 
@@ -474,10 +592,47 @@ function listenCallRecording(id, username, data, res) {
         compHistory.listenCallRecording(data, function (err1, result) {
             try {
 
-                if (err1) { compUtil.net.sendHttp500(IDLOG, res, err1.toString()); }
+                if (err1) { throw err1; }
 
                 else {
                     logger.info(IDLOG, 'listen of the recording call with id "' + id + '" has been sent successfully to user "' + username + '"');
+                    res.send(200, result);
+                }
+
+            } catch (err2) {
+                logger.error(IDLOG, err2.stack);
+                compUtil.net.sendHttp500(IDLOG, res, err2.toString());
+            }
+        });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        compUtil.net.sendHttp500(IDLOG, res, err.toString());
+    }
+}
+
+/**
+* Delete call recording using history component.
+*
+* @method deleteCallRecording
+* @param {string} id              The identifier of the call
+* @param {string} username        The name of the user
+* @param {object} data
+*   @param {string} data.year     The creation year of the file
+*   @param {string} data.month    The creation month of the file
+*   @param {string} data.day      The creation day of the file
+*   @param {string} data.filename The name of the file
+* @param {object} res             The client response
+* @private
+*/
+function deleteCallRecording(id, username, data, res) {
+    try {
+        compHistory.deleteCallRecording(id, data, function (err1, result) {
+            try {
+                if (err1) { throw err1; }
+
+                else {
+                    logger.info(IDLOG, 'the recording call with id "' + id + '" has been deleted successfully by the user "' + username + '"');
                     res.send(200, result);
                 }
 

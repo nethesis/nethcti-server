@@ -603,7 +603,7 @@ function deleteCtiPbContact(id, cb) {
 
             if (task) {
 
-                task.destroy().success(function (some) {
+                task.destroy().success(function () {
                     logger.info(IDLOG, 'cti phonebook contact with db id "' + id + '" has been deleted successfully');
                     cb();
                 });
@@ -1003,7 +1003,7 @@ function getCallRecordingFileData(uniqueid, cb) {
         // search
         models[JSON_KEYS.HISTORY_CALL].find({
             where: [
-                'uniqueid=?', uniqueid
+                'uniqueid=? AND recordingfile!=""', uniqueid
             ],
             attributes: [
                 [ 'DATE_FORMAT(calldate, "%Y")', 'year'  ],
@@ -1381,8 +1381,6 @@ function listenVoiceMessage(dbid, cb) {
     }
 }
 
-
-
 /**
 * Delete a voice message from the database table _asteriskcdrdb.voicemessages_.
 *
@@ -1406,7 +1404,7 @@ function deleteVoiceMessage(dbid, cb) {
 
                 if (task) {
 
-                    task.destroy().success(function (some) {
+                    task.destroy().success(function () {
                         logger.info(IDLOG, 'voice message with db id "' + dbid + '" has been deleted successfully');
                         cb();
                     });
@@ -1425,6 +1423,59 @@ function deleteVoiceMessage(dbid, cb) {
         }).error(function (err) { // manage the error
 
             logger.error(IDLOG, 'searching voice message with db id "' + dbid + '" to delete not found: ' + err.toString());
+            cb(err.toString());
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Deletes a call recording from the database. It updates the entry of the specified call emptying
+* the content of the _recordingfile_ field of the _asteriskcdrdb.cdr_ database table.
+*
+* @method deleteCallRecording
+* @param {string}   uniqueid The database identifier of the call
+* @param {function} cb       The callback function
+*/
+function deleteCallRecording(uniqueid, cb) {
+    try {
+        // check parameters
+        if (typeof uniqueid !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        // search
+        models[JSON_KEYS.HISTORY_CALL].find({
+            where: [ 'uniqueid=?', uniqueid  ]
+
+        }).success(function (task) {
+            try {
+
+                if (task) {
+
+                    // empty the content of the "recordingfile" field
+                    task.updateAttributes({ recordingfile: '' }, [ 'recordingfile' ]).success(function () {
+
+                        logger.info(IDLOG, '"recordingfile" field of the call with uniqueid "' + uniqueid + '" has been emptied successfully from asteriskcdrdb.cdr table');
+                        cb();
+                    });
+
+                } else {
+                    var str = 'emptying "recordingfile" of the call with uniqueid "' + uniqueid + '" from asteriskcdrdb.cdr table: entry not found';
+                    logger.warn(IDLOG, str);
+                    cb(str);
+                }
+
+            } catch (error) {
+                logger.error(IDLOG, error.stack);
+                cb(error);
+            }
+
+        }).error(function (err) { // manage the error
+
+            logger.error(IDLOG, 'emptying "recordingfile" of the call with uniqueid "' + uniqueid + '" from asteriskcdrdb.cdr table: not found: ' + err.toString());
             cb(err.toString());
         });
     } catch (err) {
@@ -1756,6 +1807,7 @@ exports.deleteVoiceMessage                  = deleteVoiceMessage;
 exports.listenVoiceMessage                  = listenVoiceMessage;
 exports.getVoicemailNewMsg                  = getVoicemailNewMsg;
 exports.getVoicemailOldMsg                  = getVoicemailOldMsg;
+exports.deleteCallRecording                 = deleteCallRecording;
 exports.getVmMailboxFromDbId                = getVmMailboxFromDbId;
 exports.isAtLeastExtenInCall                = isAtLeastExtenInCall;
 exports.getCustomerCardByNum                = getCustomerCardByNum;

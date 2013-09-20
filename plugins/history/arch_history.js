@@ -55,6 +55,13 @@ module.exports = function (options, imports, register) {
             listenCallRecording: history.listenCallRecording,
 
             /**
+            * It's the _deleteCallRecording_ method provided by _history_ module.
+            *
+            * @method deleteCallRecording
+            */
+            deleteCallRecording: history.deleteCallRecording,
+
+            /**
             * It's the _getCallRecordingFileData_ method provided by _history_ module.
             *
             * @method getCallRecordingFileData
