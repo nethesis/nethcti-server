@@ -168,6 +168,7 @@ function setCompAuthorization(comp) {
         *
         * 1. [`voicemail/list`](#listget)
         * 1. [`voicemail/listen/:id`](#listenget)
+        * 1. [`voicemail/new_counters`](#new_countersget)
         *
         * ---
         *
@@ -180,6 +181,12 @@ function setCompAuthorization(comp) {
         * ### <a id="listenget">**`voicemail/listen/:id`**</a>
         *
         * The user can listen the voice message of the user. The _id_ must be the identifier of the voice message in the database.
+        *
+        * ---
+        *
+        * ### <a id="new_countersget">**`voicemail/new_counters`**</a>
+        *
+        * Returns the number of the new voice messages of all voicemails.
         *
         * <br>
         *
@@ -210,12 +217,14 @@ function setCompAuthorization(comp) {
                 * @property get
                 * @type {array}
                 *
-                *   @param {string} list       To get the list of all voicemail messages of the user
-                *   @param {string} listen/:id To listen the voicemail message of the user
+                *   @param {string} list         To get the list of all voicemail messages of the user
+                *   @param {string} listen/:id   To listen the voicemail message of the user
+                *   @param {string} new_counters To get the number of new voice messages of all voicemails
                 */
                 'get' : [
                     'list',
-                    'listen/:id'
+                    'listen/:id',
+                    'new_counters'
                 ],
 
                 /**
@@ -280,6 +289,51 @@ function setCompAuthorization(comp) {
                         }
                     });
 
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * Gets the number of new voice messages of all voicemails with the following REST API:
+            *
+            *     new_counters
+            *
+            * @method new_counters
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            new_counters: function (req, res, next) {
+                try {
+                    // extract the username added in the authentication step
+                    var username = req.headers.authorization_user;
+
+                    // check if the user has the "extension" authorization
+                    if (compAuthorization.authorizeOpExtensionsUser(username) !== true) {
+
+                        logger.warn(IDLOG, 'requesting new voice message counter of all voicemails: authorization failed for user "' + username + '"');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+
+                    compVoicemail.getAllNewVoiceMessageCount(function (err1, results) {
+                        try {
+                            if (err1) {
+                                logger.error(IDLOG, 'getting the number of new voice messages of all voicemailes for user "' + username + '"');
+                                compUtil.net.sendHttp500(IDLOG, res, err1.toString());
+                                return;
+                            }
+
+                            logger.info(IDLOG, 'send the number of new voice messages of all voicemailes to user "' + username + '"');
+                            res.send(200, results);
+
+                        } catch (error) {
+                            logger.error(IDLOG, error.stack);
+                            compUtil.net.sendHttp500(IDLOG, res, error.toString());
+                        }
+                    });
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -422,6 +476,7 @@ function setCompAuthorization(comp) {
         exports.setLogger            = setLogger;
         exports.setCompUser          = setCompUser;
         exports.setCompUtil          = setCompUtil;
+        exports.new_counters         = voicemail.new_counters;
         exports.setCompVoicemail     = setCompVoicemail;
         exports.setCompAuthorization = setCompAuthorization;
 

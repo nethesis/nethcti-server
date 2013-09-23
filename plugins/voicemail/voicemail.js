@@ -232,7 +232,6 @@ function getAllVoiceMessagesByUser(username, cb) {
                 callback();
             });
 
-
         }, function (err) { // async.each
             if (err) { logger.error(IDLOG, err); }
 
@@ -368,6 +367,42 @@ function getNewMessagesOfVoicemail(vm, cb) {
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err.toString());
+    }
+}
+
+/**
+* Gets the number of new voice messages of all users.
+*
+* @method getNewVoiceMessageCountAllUsers
+* @param {function} cb The callback function
+*/
+function getAllNewVoiceMessageCount(cb) {
+    try {
+        // check parameter
+        if (typeof cb !== 'function') { throw new Error('wrong parameter'); }
+
+        // get the number of new voice messages of all voicemails using the listVoicemail plugin
+        // command of the asterisk proxy component. Then clean the results to return only the necessary informations
+        logger.info(IDLOG, 'get the number of new voice messages of all voicemails using astProxy module');
+        astProxy.doCmd({ command: 'listVoicemail' }, function (err, res) {
+            try {
+                if (err) { throw err; }
+
+                var vm;
+                var obj = {};
+                for (vm in res) {
+                    obj[vm] = { newMessageCount: res[vm].newMessageCount };
+                }
+                cb(null, obj);
+
+            } catch (err1) {
+                logger.error(IDLOG, err1.stack);
+                cb(err1);
+            }
+        });
+    } catch (error) {
+        logger.error(IDLOG, error.stack);
+        cb(error.toString());
     }
 }
 
@@ -581,16 +616,17 @@ function on(type, cb) {
 }
 
 // public interface
-exports.on                        = on;
-exports.start                     = start;
-exports.setLogger                 = setLogger;
-exports.setDbconn                 = setDbconn;
-exports.setAstProxy               = setAstProxy;
-exports.setCompUser               = setCompUser;
-exports.getVmIdFromDbId           = getVmIdFromDbId;
-exports.EVT_NEW_VOICEMAIL         = EVT_NEW_VOICEMAIL;
-exports.deleteVoiceMessage        = deleteVoiceMessage;
-exports.listenVoiceMessage        = listenVoiceMessage;
-exports.getAllVoiceMessagesByUser = getAllVoiceMessagesByUser;
-exports.getNewVoiceMessagesByUser = getNewVoiceMessagesByUser;
-exports.getNewMessagesOfVoicemail = getNewMessagesOfVoicemail;
+exports.on                         = on;
+exports.start                      = start;
+exports.setLogger                  = setLogger;
+exports.setDbconn                  = setDbconn;
+exports.setAstProxy                = setAstProxy;
+exports.setCompUser                = setCompUser;
+exports.getVmIdFromDbId            = getVmIdFromDbId;
+exports.EVT_NEW_VOICEMAIL          = EVT_NEW_VOICEMAIL;
+exports.deleteVoiceMessage         = deleteVoiceMessage;
+exports.listenVoiceMessage         = listenVoiceMessage;
+exports.getAllVoiceMessagesByUser  = getAllVoiceMessagesByUser;
+exports.getNewVoiceMessagesByUser  = getNewVoiceMessagesByUser;
+exports.getNewMessagesOfVoicemail  = getNewMessagesOfVoicemail;
+exports.getAllNewVoiceMessageCount = getAllNewVoiceMessageCount;

@@ -65,6 +65,13 @@ module.exports = function (options, imports, register) {
             listenVoiceMessage: voicemail.listenVoiceMessage,
 
             /**
+            * It's the _getAllNewVoiceMessageCount_ method provided by _voicemail_ module.
+            *
+            * @method getAllNewVoiceMessageCount
+            */
+            getAllNewVoiceMessageCount: voicemail.getAllNewVoiceMessageCount,
+
+            /**
             * It's the _getVmIdFromDbId_ method provided by _voicemail_ module.
             *
             * @method getVmIdFromDbId

@@ -106,7 +106,7 @@ var IDLOG = '[listVoicemail]';
                     if (   data                 && data.event === 'VoicemailUserEntry'
                         && data.fullname        && data.email
                         && data.vmcontext       && data.voicemailbox
-                        && data.maxmessagecount && data.maxmessagelength) {
+                        && data.maxmessagecount && data.maxmessagelength && data.newmessagecount) {
 
                         // initialize result only in the first event received
                         if (!list[data.actionid]) { list[data.actionid] = {}; }
@@ -116,6 +116,7 @@ var IDLOG = '[listVoicemail]';
                             owner:            data.fullname,
                             email:            data.email,
                             context:          data.vmcontext,
+                            newMessageCount:  data.newmessagecount,
                             maxMessageCount:  data.maxmessagecount,
                             maxMessageLength: data.maxmessagelength
                         };
