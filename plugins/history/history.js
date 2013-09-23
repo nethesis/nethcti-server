@@ -230,7 +230,7 @@ function getCallRecordingFileData(id, cb) {
 * Reads the specified file of the recorded call using base64 encoding and
 * return the content in the callback.
 *
-* @method listenCallRecording
+* @method getCallRecordingContent
 * @param {object} data
 *   @param {string} data.year     The creation year of the file
 *   @param {string} data.month    The creation month of the file
@@ -238,7 +238,7 @@ function getCallRecordingFileData(id, cb) {
 *   @param {string} data.filename The name of the file
 * @param {function} cb            The callback function
 */
-function listenCallRecording(data, cb) {
+function getCallRecordingContent(data, cb) {
     try {
         // check parameters
         if (   typeof cb        !== 'function' || typeof data.filename !== 'string'
@@ -325,9 +325,9 @@ function deleteCallRecording(id, data, cb) {
 exports.setLogger                     = setLogger;
 exports.setDbconn                     = setDbconn;
 exports.setCompAstProxy               = setCompAstProxy;
-exports.listenCallRecording           = listenCallRecording;
 exports.deleteCallRecording           = deleteCallRecording;
 exports.getHistoryCallInterval        = getHistoryCallInterval;
+exports.getCallRecordingContent       = getCallRecordingContent;
 exports.getCallRecordingFileData      = getCallRecordingFileData;
 exports.getHistorySwitchCallInterval  = getHistorySwitchCallInterval;
 exports.isAtLeastExtenInCallRecording = isAtLeastExtenInCallRecording;

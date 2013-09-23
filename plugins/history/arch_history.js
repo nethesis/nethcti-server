@@ -48,11 +48,11 @@ module.exports = function (options, imports, register) {
             isAtLeastExtenInCallRecording: history.isAtLeastExtenInCallRecording,
 
             /**
-            * It's the _listenCallRecording_ method provided by _history_ module.
+            * It's the _getCallRecordingContent_ method provided by _history_ module.
             *
-            * @method listenCallRecording
+            * @method getCallRecordingContent
             */
-            listenCallRecording: history.listenCallRecording,
+            getCallRecordingContent: history.getCallRecordingContent,
 
             /**
             * It's the _deleteCallRecording_ method provided by _history_ module.
