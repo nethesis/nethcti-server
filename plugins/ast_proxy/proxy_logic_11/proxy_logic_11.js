@@ -1646,6 +1646,40 @@ function evtExtenStatusChanged(exten, status) {
 }
 
 /**
+* Updates the extension dnd status.
+*
+* @method evtExtenDndChanged
+* @param {string}  exten   The extension number
+* @param {boolean} enabled True if the dnd is enabled
+* @private
+*/
+function evtExtenDndChanged(exten, enabled) {
+    try {
+        // check parameters
+        if (typeof exten !== 'string' && typeof enabled !== 'boolean') {
+            throw new Error('wrong parameters');
+        }
+
+        if (extensions[exten]) { // the exten is an extension
+
+            // request sip details for current extension
+            extensions[exten].setDnd(enabled);
+            logger.info(IDLOG, 'set dnd status to ' + enabled + ' for extension ' + exten);
+
+            // emit the event
+            astProxy.emit(EVT_EXTEN_CHANGED, extensions[exten]);
+            logger.info(IDLOG, 'emitted event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
+
+        } else {
+            logger.warn(IDLOG, 'try to set dnd status of non existent extension ' + exten);
+        }
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * New voice messages has been left. So it emits the _EVT\_NEW\_VOICEMAIL_ event.
 *
 * @method evtNewVoicemailMessage
@@ -3143,6 +3177,7 @@ exports.EVT_QUEUE_CHANGED             = EVT_QUEUE_CHANGED;
 exports.EVT_NEW_VOICEMAIL             = EVT_NEW_VOICEMAIL;
 exports.hangupConversation            = hangupConversation;
 exports.pickupConversation            = pickupConversation;
+exports.evtExtenDndChanged            = evtExtenDndChanged;
 exports.EVT_PARKING_CHANGED           = EVT_PARKING_CHANGED;
 exports.redirectConversation          = redirectConversation;
 exports.evtHangupConversation         = evtHangupConversation;
