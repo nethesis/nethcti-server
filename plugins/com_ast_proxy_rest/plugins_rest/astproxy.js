@@ -276,7 +276,7 @@ var compConfigManager;
         * Attended transfer the conversation to the specified destination. The request must contains the
         * following parameters:
         *
-        * * `to: the destination number to blind transfer the conversation`
+        * * `to: the destination number to transfer the conversation`
         * * `convid: the conversation identifier`
         * * `endpointId: the endpoint identifier of the user who has the conversation to attended transfer`
         * * `endpointType: the type of the endpoint of the user who has the conversation to attended transfer`
