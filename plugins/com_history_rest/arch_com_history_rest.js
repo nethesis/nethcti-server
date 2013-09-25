@@ -33,6 +33,8 @@ module.exports = function (options, imports, register) {
         serverRest.setCompHistory(imports.history);
         serverRest.setCompCel(imports.cel);
         serverRest.setCompUser(imports.user);
+        serverRest.setCompAstProxy(imports.astProxy);
+        serverRest.setCompStaticHttp(imports.staticHttp);
         serverRest.start();
     } catch (err) {
        logger.error(IDLOG, err.stack);

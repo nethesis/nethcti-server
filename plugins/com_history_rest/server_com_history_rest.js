@@ -180,6 +180,57 @@ function setCompHistory(compHistory) {
     }
 }
 
+
+/**
+* Set the static http architect component to be used by REST plugins.
+*
+* @method setCompStaticHttp
+* @param {object} comp The architect static http component
+* @static
+*/
+function setCompStaticHttp(comp) {
+    try {
+        // check parameter
+        if (typeof comp !== 'object') { throw new Error('wrong parameter'); }
+
+        var p;
+        // set static http call architect component to all REST plugins
+        for (p in plugins) {
+            if (typeof plugins[p].setCompStaticHttp === 'function') {
+                plugins[p].setCompStaticHttp(comp);
+            }
+        }
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Set asterisk proxy architect component to be used by REST plugins.
+*
+* @method setCompAstProxy
+* @param {object} comp The architect asterisk proxy component
+* @static
+*/
+function setCompAstProxy(comp) {
+    try {
+        // check parameter
+        if (typeof comp !== 'object') { throw new Error('wrong parameter'); }
+
+        var p;
+        // set static http call architect component to all REST plugins
+        for (p in plugins) {
+            if (typeof plugins[p].setCompAstProxy === 'function') {
+                plugins[p].setCompAstProxy(comp);
+            }
+        }
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
 /**
 * Set the utility architect component to be used by REST plugins.
 *
@@ -387,4 +438,6 @@ exports.setCompCel           = setCompCel;
 exports.setCompUser          = setCompUser;
 exports.setCompUtil          = setCompUtil;
 exports.setCompHistory       = setCompHistory;
+exports.setCompAstProxy      = setCompAstProxy;
+exports.setCompStaticHttp    = setCompStaticHttp;
 exports.setCompAuthorization = setCompAuthorization;

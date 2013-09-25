@@ -4,6 +4,7 @@
 * @module com_history_rest
 * @submodule plugins_rest
 */
+var path = require('path');
 
 /**
 * The module identifier used by the logger.
@@ -63,6 +64,40 @@ var compUtil;
 */
 var compUser;
 
+/** 
+* The http static module.
+*
+* @property compStaticHttp
+* @type object 
+* @private
+*/
+var compStaticHttp;
+
+/**
+* The asterisk proxy architect component.
+*
+* @property compAstProxy
+* @type object
+* @private
+*/
+var compAstProxy;
+
+/**
+* Sets the asterisk proxy architect component.
+*
+* @method setCompAstProxy
+* @param {object} comp The asterisk proxy architect component.
+*/
+function setCompAstProxy(comp) {
+    try {
+        compAstProxy = comp;
+        logger.info(IDLOG, 'set asterisk proxy architect component');
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+
 /**
 * Set the logger to be used.
 *
@@ -88,6 +123,22 @@ function setLogger(log) {
         logger.error(IDLOG, err.stack);
     }
 }
+
+/**
+* Set static http architecht component used by history functions.
+*
+* @method setCompStatic
+* @param {object} comp The http static architect component.
+*/
+function setCompStaticHttp(comp) {
+    try {
+        compStaticHttp = comp;
+        logger.info(IDLOG, 'set http static component');
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
 
 /**
 * Set history architect component used by history functions.
@@ -668,6 +719,8 @@ function setCompAuthorization(ca) {
         exports.down_callrec         = historycall.down_callrec;
         exports.listen_callrec       = historycall.listen_callrec;
         exports.delete_callrec       = historycall.delete_callrec;
+        exports.setCompStaticHttp    = setCompStaticHttp;
+        exports.setCompAstProxy      = setCompAstProxy;
         exports.setCompHistory       = setCompHistory;
         exports.setCompAuthorization = setCompAuthorization;
 
@@ -739,11 +792,13 @@ function downCallRecording(id, username, data, res) {
 
                 else {
                     logger.info(IDLOG, 'download of the recording call with id "' + id + '" has been sent successfully to user "' + username + '"');
-                    var obj = {
-                        content:  result,
-                        filename: data.filename
-                    };
-                    res.send(200, obj);
+                    // get base path of the call recordings and then construct the filepath using the arguments
+                    var filename = 'recording' + id + 'tmpaudio.wav';
+                    var basepath = compAstProxy.getBaseCallRecAudioPath();
+                    var filepath = path.join(basepath, data.year, data.month, data.day, data.filename);
+
+                    compStaticHttp.copyFile(filepath, filename);
+                    res.send(200, filename);
                 }
 
             } catch (err2) {

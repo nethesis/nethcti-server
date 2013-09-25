@@ -200,7 +200,17 @@ function httpServerCb(req, res) {
         req.addListener('end', function () {
 
             try {
-                fileStaticRoot.serve(req, res);
+                fileStaticRoot.serve(req, res, function(err, result) {
+                    // Handle temp files: delete after serving
+                    if (path.basename(req.url).indexOf('tmpaudio') >= 0) {
+                        logger.info(IDLOG, 'deleting temp file ' + path.join(__dirname, webroot,req.url));
+                        fs.unlink(path.join(__dirname, webroot,req.url), function(err) {
+                            if (err) {
+                                logger.error(IDLOG, 'deleting temp file ' + req.url + ': ' + err);
+                            }
+                        });
+                    }
+                });
 
             } catch (err1) {
                 logger.error(IDLOG, 'serving static file ' + req.url + ': ' + err1.stack);
@@ -215,8 +225,48 @@ function httpServerCb(req, res) {
     }
 }
 
+/**
+* Save given data to a file inside the webroot directory.
+*
+* @method saveFile
+* @param {string} dstpath The path of destination file
+* @param {object} data Raw data to save inside the file
+*/
+function saveFile(dstpath, data) {
+    try {
+        var dstpath = path.join(__dirname, webroot, dstpath);
+        fs.writeFile(dstpath, data, function (err) {
+            if (err) {
+                logger.error(IDLOG, 'saveing file: ' + dstpath);
+            }
+        }); 
+    } catch (err) {
+        logger.error(IDLOG, 'serving static file ' + req.url + ': ' + err.stack);
+    }
+}
+
+/**
+* Copy given file path to local a file inside the webroot directory.
+*
+* @method copyFile
+* @param {string} srcpath Original file path
+* @param {string} dstpath Name of symlink
+*/
+function copyFile(srcpath, dstpath) {
+    try {
+        var dstpath = path.join(__dirname, webroot, dstpath);
+        //copy file
+        fs.createReadStream(srcpath).pipe(fs.createWriteStream(dstpath));
+    } catch (err) {
+        logger.error(IDLOG, 'serving static file ' + req.url + ': ' + err.stack);
+    }
+}
+
+
 // public interface
 exports.start       = start;
 exports.config      = config;
+exports.copyFile    = copyFile;
+exports.saveFile    = saveFile;
 exports.setLogger   = setLogger;
 exports.setCompUtil = setCompUtil;

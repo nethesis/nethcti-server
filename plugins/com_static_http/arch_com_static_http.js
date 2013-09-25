@@ -20,7 +20,13 @@ var IDLOG = '[arch_com_static_http]';
 
 module.exports = function (options, imports, register) {
 
-    register();
+    register(null, {
+        staticHttp: {
+            saveFile: serverRest.saveFile,
+            copyFile: serverRest.copyFile
+        }
+    });
+
 
     var logger = console;
     if (imports.logger) { logger = imports.logger; }
