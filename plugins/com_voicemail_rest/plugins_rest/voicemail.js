@@ -63,6 +63,15 @@ var compUtil;
 */
 var compUser;
 
+/** 
+* The http static module.
+*
+* @property compStaticHttp
+* @type object 
+* @private
+*/
+var compStaticHttp;
+
 /**
 * Set the logger to be used.
 *
@@ -136,6 +145,21 @@ function setCompUser(comp) {
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Set static http architecht component used by history functions.
+*
+* @method setCompStatic
+* @param {object} comp The http static architect component.
+*/
+function setCompStaticHttp(comp) {
+    try {
+        compStaticHttp = comp;
+        logger.info(IDLOG, 'set http static component');
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
     }
 }
 
@@ -224,6 +248,7 @@ function setCompAuthorization(comp) {
                 'get' : [
                     'list',
                     'listen/:id',
+                    'download/:id',
                     'new_counters'
                 ],
 
@@ -406,6 +431,73 @@ function setCompAuthorization(comp) {
             },
 
             /**
+            * Download voicemail message of the user with the following REST API:
+            *
+            *     Download
+            *
+            * @method download
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            download: function (req, res, next) {
+                try {
+                    // extract the username added in the authentication step
+                    var username = req.headers.authorization_user;
+
+                    // get the voicemail identifier (mailbox) from the voicemail database identifier.
+                    // This is for the authorization check
+                    compVoicemail.getVmIdFromDbId(req.params.id, function (err1, vmid) {
+                        try {
+
+                            if (err1) {
+                                logger.error(IDLOG, 'downloading voice message: getting voicemail id (mailbox) from db voice message id "' + req.params.id + '"');
+                                compUtil.net.sendHttp500(IDLOG, res, err1.toString());
+                                return;
+                            }
+
+                            // check the authorization to download the voice message checking if the voicemail endpoint is owned by the user
+                            if (compUser.hasVoicemailEndpoint(username, vmid) !== true) {
+                                logger.warn(IDLOG, 'user "' + username + '" tried to download voice message with db id "' + req.params.id + '" of the voicemail "' + vmid + '" not owned by him');
+                                compUtil.net.sendHttp403(IDLOG, res);
+                                return;
+                            }
+
+                            // download the voice message
+                            compVoicemail.listenVoiceMessage(req.params.id, function (err2, result) {
+                                try {
+
+                                    if (err2) {
+                                        logger.error(IDLOG, 'downloading voice message with id "' + req.params.id + '" of the voicemail "' + vmid + '" by the user "' + username + '"');
+                                        compUtil.net.sendHttp500(IDLOG, res, err2.toString());
+                                        return;
+                                    }
+
+                                    logger.info(IDLOG, 'download voice message with id "' + req.params.id + '" of the voicemail "' + vmid + '" successfully by the user "' + username + '"');
+                                    var filename = "voicemail" + req.params.id + username + "tmpaudio.wav";
+                                    compStaticHttp.saveFile(filename, result);
+                                    res.send(200, filename);
+
+                                } catch (err3) {
+                                    logger.error(IDLOG, err3.stack);
+                                    compUtil.net.sendHttp500(IDLOG, res, err3.toString());
+                                }
+                            });
+
+                        } catch (error) {
+                            logger.error(IDLOG, error.stack);
+                            compUtil.net.sendHttp500(IDLOG, res, error.toString());
+                        }
+                    });
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+
+            /**
             * Gets the list of all voicemail messages of the user with the following REST API:
             *
             *     delete
@@ -473,11 +565,13 @@ function setCompAuthorization(comp) {
         exports.list                 = voicemail.list;
         exports.listen               = voicemail.listen;
         exports.delete               = voicemail.delete;
+        exports.download             = voicemail.download;
         exports.setLogger            = setLogger;
         exports.setCompUser          = setCompUser;
         exports.setCompUtil          = setCompUtil;
         exports.new_counters         = voicemail.new_counters;
         exports.setCompVoicemail     = setCompVoicemail;
+        exports.setCompStaticHttp    = setCompStaticHttp;
         exports.setCompAuthorization = setCompAuthorization;
 
     } catch (err) {

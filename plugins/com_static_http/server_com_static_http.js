@@ -235,13 +235,14 @@ function httpServerCb(req, res) {
 function saveFile(dstpath, data) {
     try {
         var dstpath = path.join(__dirname, webroot, dstpath);
+        logger.info(IDLOG, 'saveing file ' + dstpath);
         fs.writeFile(dstpath, data, function (err) {
             if (err) {
-                logger.error(IDLOG, 'saveing file: ' + dstpath);
+                throw err;
             }
         }); 
     } catch (err) {
-        logger.error(IDLOG, 'serving static file ' + req.url + ': ' + err.stack);
+        logger.error(IDLOG, 'saving static file ' + req.url + ': ' + err.stack);
     }
 }
 

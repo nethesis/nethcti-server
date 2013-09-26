@@ -32,6 +32,7 @@ module.exports = function (options, imports, register) {
         serverRest.setCompUser(imports.user);
         serverRest.setCompAuthorization(imports.authorization);
         serverRest.setCompVoicemail(imports.voicemail);
+        serverRest.setCompStaticHttp(imports.staticHttp);
         serverRest.start();
     } catch (err) {
        logger.error(IDLOG, err.stack);
