@@ -6,6 +6,7 @@ var sprintf = require('util').format;
 
 var assert = require('assert-plus');
 var mime = require('mime');
+var Negotatior = require('negotiator');
 var uuid = require('node-uuid');
 
 var utils = require('./utils');
@@ -16,26 +17,27 @@ var utils = require('./utils');
 
 var Request = http.IncomingMessage;
 
+var parseAccept = utils.parseAccept;
 var sanitizePath = utils.sanitizePath;
 
 
 
-///--- Helpers
+///-- Helpers
 
-// Helpers for 'Accept'
-// http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.1
+function negotiator(req) {
+        var h = req.headers;
+        if (!req._negotatiator) {
+                req._negotiator = new Negotatior({
+                        headers: {
+                                accept: h.accept || '*/*',
+                                'accept-encoding': h['accept-encoding'] ||
+                                        'identity'
+                        }
+                });
+        }
 
-function parseAccept(str) {
-        var accept =  utils.parseQuality(str).map(function (obj) {
-                var parts = obj.value.split('/');
-                obj.type = parts[0];
-                obj.subtype = parts[1];
-                return (obj);
-        });
-
-        return (accept);
+        return (req._negotiator);
 }
-
 
 
 ///--- API
@@ -51,49 +53,43 @@ Request.prototype.absoluteUri = function absoluteUri(path) {
 };
 
 
-Request.prototype.accepts = function accepts(type) {
-        assert.string(type, 'type');
+Request.prototype.accepts = function accepts(types) {
+        if (typeof (types) === 'string')
+                types = [types];
 
-        if (!this.accept)
-                this.accept = parseAccept(this.headers.accept || '*/*');
-
-        if (type.indexOf('/') === -1)
-                type = mime.lookup(type);
-
-        type = type.split('/');
-
-        var matches = this.accept.some(function (obj) {
-                if ((obj.type === type[0] || obj.type === '*') &&
-                    (obj.subtype === type[1] || obj.subtype === '*'))
-                        return (true);
-
-                return (false);
+        types = types.map(function (t) {
+                assert.string(t, 'type');
+                if (t.indexOf('/') === -1)
+                        t = mime.lookup(t);
+                return (t);
         });
 
-        return (matches);
+        negotiator(this);
+
+        return (this._negotiator.preferredMediaType(types));
 };
 
 
-Request.prototype.acceptsEncoding = function acceptsEncoding(type) {
-        assert.string(type, 'type');
+Request.prototype.acceptsEncoding = function acceptsEncoding(types) {
+        if (typeof (types) === 'string')
+                types = [types];
 
-        if (!this._acceptEncoding) {
-                this._acceptEncoding =
-                        parseAccept(this.headers['accept-encoding'] || '*/*');
-        }
+        assert.arrayOfString(types, 'types');
 
+        negotiator(this);
 
-        var matches = this._acceptEncoding.some(function (obj) {
-                return (obj.type === type);
-        });
-
-        return (matches);
+        return (this._negotiator.preferredEncoding(types));
 };
 
 
 Request.prototype.getContentLength = function getContentLength() {
         if (this._clen !== undefined)
                 return (this._clen === false ? undefined : this._clen);
+
+        // We should not attempt to read and parse the body of an
+        // Upgrade request, so force Content-Length to zero:
+        if (this.isUpgradeRequest())
+                return (0);
 
         var len = this.header('content-length');
         if (!len) {
@@ -282,6 +278,20 @@ Request.prototype.isSecure = function isSecure() {
 
         this._secure = this.connection.encrypted ? true : false;
         return (this._secure);
+};
+
+
+Request.prototype.isUpgradeRequest = function isUpgradeRequest() {
+        if (this._upgradeRequest !== undefined)
+                return (this._upgradeRequest);
+        else
+                return (false);
+};
+
+
+Request.prototype.isUpload = function isUpload() {
+        var m = this.method;
+        return (m === 'PATH' || m === 'POST' || m === 'PUT');
 };
 
 

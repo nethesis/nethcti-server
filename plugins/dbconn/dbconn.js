@@ -1667,8 +1667,8 @@ function getCustomerCardByNum(type, num, cb) {
         }
 
         // escape of the number
-        num = dbConn[type].constructor.Utils.escape(num); // e.g. num = '123456'
-        num = num.substring(1, num.length - 1); // remove external quote e.g. num = 123456
+        num = dbConn[type].getQueryInterface().escape(num); // e.g. num = '123456'
+        num = num.substring(1, num.length - 1);             // remove external quote e.g. num = 123456
 
         // replace the key of the query with paramter
         var query = dbConfig[type].query.replace(/\$TERM/g, num);
