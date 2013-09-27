@@ -19,6 +19,30 @@ var MD5_MSG = 'Content-MD5 \'%s\' didn\'t match \'%s\'';
 
 
 
+///--- Helpers
+
+function createBodyWriter(req) {
+        var contentType = req.contentType();
+        if (!contentType ||
+            contentType === 'application/json' ||
+            contentType === 'application/x-www-form-urlencoded' ||
+            contentType === 'multipart/form-data' ||
+            contentType.substr(0, 5) === 'text/') {
+
+                req.body = '';
+                return (function (chunk) {
+                        req.body += chunk.toString('utf8');
+                });
+        }
+
+        req.body = new Buffer(0);
+        return (function (chunk) {
+                req.body = Buffer.concat([req.body, chunk]);
+        });
+}
+
+
+
 ///--- API
 
 function bodyReader(options) {
@@ -33,7 +57,7 @@ function bodyReader(options) {
                         next();
                         return;
                 }
-                req.body = '';
+                var bodyWriter = createBodyWriter(req);
 
                 function done() {
                         if (maxBodySize && bytesReceived > maxBodySize) {
@@ -43,7 +67,7 @@ function bodyReader(options) {
                                 return;
                         }
 
-                        if (!req.body) {
+                        if (!req.body.length) {
                                 next();
                                 return;
                         }
@@ -67,7 +91,7 @@ function bodyReader(options) {
                 if (req.headers['content-encoding'] === 'gzip') {
                         gz = zlib.createGunzip();
                         gz.on('data', function onData(chunk) {
-                                req.body += chunk.toString('utf8');
+                                bodyWriter(chunk);
                         });
                         gz.once('end', done);
                         req.once('end', gz.end.bind(gz));
@@ -88,7 +112,7 @@ function bodyReader(options) {
                         if (gz) {
                                 gz.write(chunk);
                         } else {
-                                req.body += chunk.toString('utf8');
+                                bodyWriter(chunk);
                         }
                 });
 
