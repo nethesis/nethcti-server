@@ -1597,7 +1597,8 @@ function getHistoryCallerNoteInterval(data, cb) {
             where: [
                 'creator' + operator + '? AND ' +
                 '(DATE(datecreation)>=? AND DATE(datecreation)<=?) AND ' +
-                '(number LIKE ?)',
+                '(number LIKE ?) AND ' +
+                'expiration>=NOW()',
                 data.username,
                 data.from, data.to,
                 data.filter
