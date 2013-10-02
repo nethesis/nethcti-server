@@ -98,6 +98,13 @@ module.exports = function (options, imports, register) {
             attendedTransferConversation: astProxy.proxyLogic.attendedTransferConversation,
 
             /**
+            * It's the _transferConversationToVoicemail_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method transferConversationToVoicemail
+            */
+            transferConversationToVoicemail: astProxy.proxyLogic.transferConversationToVoicemail,
+
+            /**
             * It's the _call_ method provided by _ast\_proxy.proxyLogic_.
             *
             * @method call

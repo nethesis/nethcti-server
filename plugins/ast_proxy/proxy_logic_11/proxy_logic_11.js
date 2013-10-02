@@ -2218,6 +2218,23 @@ function attendedTransferConvCb(err) {
 }
 
 /**
+* This is the callback of _transferToVoicemail_ command plugin.
+*
+* @method transferConvToVoicemailCb
+* @param {object} err The error object of the operation
+* @private
+*/
+function transferConvToVoicemailCb(err) {
+    try {
+        if (err) { logger.error(IDLOG, 'transfer channel to voicemail failed: ' + err.toString()); }
+        else     { logger.info(IDLOG, 'transfer channel to voicemail successfully');               }
+
+    } catch (error) {
+       logger.error(IDLOG, error.stack);
+    }
+}
+
+/**
 * This is the callback of the call command plugin.
 *
 * @method callCb
@@ -2406,6 +2423,73 @@ function attendedTransferConversation(endpointType, endpointId, convid, to, cb) 
 
         } else {
             var msg = 'attended transfer conversation: unknown endpointType ' + endpointType + ' or extension ' + endpointId + ' not present';
+            logger.warn(IDLOG, msg);
+            cb(msg);
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Transfer the conversation to the voicemail.
+*
+* @method transferConversationToVoicemail
+* @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
+* @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
+* @param {string}   convid       The conversation identifier
+* @param {string}   voicemail    The destination voicemail number to transfer the conversation
+* @param {function} cb           The callback function
+*/
+function transferConversationToVoicemail(endpointType, endpointId, convid, voicemail, cb) {
+    try {
+        // check parameters
+        if (   typeof convid     !== 'string'
+            || typeof cb         !== 'function' || typeof voicemail    !== 'string'
+            || typeof endpointId !== 'string'   || typeof endpointType !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // check the endpoint existence
+        if (endpointType === 'extension' && extensions[endpointId]) {
+
+            var convs = extensions[endpointId].getAllConversations();
+            var conv  = convs[convid];
+
+            if (!conv) {
+                var msg = 'transfer convid "' + convid + '" to voicemail "' + voicemail + '": no conversation present in extension ' + endpointId;
+                logger.warn(IDLOG, msg);
+                cb(msg);
+                return;
+            }
+
+            var chSource   = conv.getSourceChannel();
+            var callerNum  = chSource.getCallerNum();
+            var bridgedNum = chSource.getBridgedNum();
+
+            // transfer to voicemail is only possible on own calls. So when the endpointId is the caller, the
+            // channel to transfer is the source channel, otherwise it's the destination channel
+            var chToTransfer = endpointId === chSource.getCallerNum() ? chSource.getChannel() : chSource.getBridgedChannel();
+
+            if (chToTransfer !== undefined) {
+
+                // transfer the channel to the voicemail
+                logger.info(IDLOG, 'transfer of the channel ' + chToTransfer + ' of exten ' + endpointId + ' to voicemail ' + voicemail);
+                astProxy.doCmd({ command: 'transferToVoicemail', chToTransfer: chToTransfer, voicemail: voicemail }, function (err) {
+                    cb(err);
+                    transferConvToVoicemailCb(err);
+                });
+
+            } else {
+                var msg = 'transfer to voicemail: no channel to transfer ' + chToTransfer;
+                logger.error(IDLOG, msg);
+                cb(msg);
+            }
+
+        } else {
+            var msg = 'transfer conversation to voicemail: unknown endpointType ' + endpointType + ' or extension ' + endpointId + ' not present';
             logger.warn(IDLOG, msg);
             cb(msg);
         }
@@ -3158,40 +3242,41 @@ function getBaseCallRecAudioPath() {
 }
 
 // public interface
-exports.on                            = on;
-exports.call                          = call;
-exports.start                         = start;
-exports.visit                         = visit;
-exports.setLogger                     = setLogger;
-exports.getExtensions                 = getExtensions;
-exports.pickupParking                 = pickupParking;
-exports.getJSONQueues                 = getJSONQueues;
-exports.getJSONTrunks                 = getJSONTrunks;
-exports.logonDynQueues                = logonDynQueues;
-exports.getJSONParkings               = getJSONParkings;
-exports.sendDTMFSequence              = sendDTMFSequence;
-exports.parkConversation              = parkConversation;
-exports.getJSONExtensions             = getJSONExtensions;
-exports.EVT_EXTEN_CHANGED             = EVT_EXTEN_CHANGED;
-exports.EVT_QUEUE_CHANGED             = EVT_QUEUE_CHANGED;
-exports.EVT_NEW_VOICEMAIL             = EVT_NEW_VOICEMAIL;
-exports.hangupConversation            = hangupConversation;
-exports.pickupConversation            = pickupConversation;
-exports.evtExtenDndChanged            = evtExtenDndChanged;
-exports.EVT_PARKING_CHANGED           = EVT_PARKING_CHANGED;
-exports.redirectConversation          = redirectConversation;
-exports.evtHangupConversation         = evtHangupConversation;
-exports.evtExtenStatusChanged         = evtExtenStatusChanged;
-exports.evtNewVoicemailMessage        = evtNewVoicemailMessage;
-exports.stopRecordConversation        = stopRecordConversation;
-exports.evtConversationDialing        = evtConversationDialing;
-exports.evtSpyStartConversation       = evtSpyStartConversation;
-exports.startRecordConversation       = startRecordConversation;
-exports.getBaseCallRecAudioPath       = getBaseCallRecAudioPath;
-exports.evtNewQueueWaitingCaller      = evtNewQueueWaitingCaller;
-exports.evtConversationConnected      = evtConversationConnected;
-exports.startSpySpeakConversation     = startSpySpeakConversation;
-exports.startSpyListenConversation    = startSpyListenConversation;
-exports.evtRemoveQueueWaitingCaller   = evtRemoveQueueWaitingCaller;
-exports.attendedTransferConversation  = attendedTransferConversation;
-exports.getExtensionsFromConversation = getExtensionsFromConversation;
+exports.on                              = on;
+exports.call                            = call;
+exports.start                           = start;
+exports.visit                           = visit;
+exports.setLogger                       = setLogger;
+exports.getExtensions                   = getExtensions;
+exports.pickupParking                   = pickupParking;
+exports.getJSONQueues                   = getJSONQueues;
+exports.getJSONTrunks                   = getJSONTrunks;
+exports.logonDynQueues                  = logonDynQueues;
+exports.getJSONParkings                 = getJSONParkings;
+exports.sendDTMFSequence                = sendDTMFSequence;
+exports.parkConversation                = parkConversation;
+exports.getJSONExtensions               = getJSONExtensions;
+exports.EVT_EXTEN_CHANGED               = EVT_EXTEN_CHANGED;
+exports.EVT_QUEUE_CHANGED               = EVT_QUEUE_CHANGED;
+exports.EVT_NEW_VOICEMAIL               = EVT_NEW_VOICEMAIL;
+exports.hangupConversation              = hangupConversation;
+exports.pickupConversation              = pickupConversation;
+exports.evtExtenDndChanged              = evtExtenDndChanged;
+exports.EVT_PARKING_CHANGED             = EVT_PARKING_CHANGED;
+exports.redirectConversation            = redirectConversation;
+exports.evtHangupConversation           = evtHangupConversation;
+exports.evtExtenStatusChanged           = evtExtenStatusChanged;
+exports.evtNewVoicemailMessage          = evtNewVoicemailMessage;
+exports.stopRecordConversation          = stopRecordConversation;
+exports.evtConversationDialing          = evtConversationDialing;
+exports.evtSpyStartConversation         = evtSpyStartConversation;
+exports.startRecordConversation         = startRecordConversation;
+exports.getBaseCallRecAudioPath         = getBaseCallRecAudioPath;
+exports.evtNewQueueWaitingCaller        = evtNewQueueWaitingCaller;
+exports.evtConversationConnected        = evtConversationConnected;
+exports.startSpySpeakConversation       = startSpySpeakConversation;
+exports.startSpyListenConversation      = startSpyListenConversation;
+exports.evtRemoveQueueWaitingCaller     = evtRemoveQueueWaitingCaller;
+exports.attendedTransferConversation    = attendedTransferConversation;
+exports.getExtensionsFromConversation   = getExtensionsFromConversation;
+exports.transferConversationToVoicemail = transferConversationToVoicemail;

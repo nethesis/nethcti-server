@@ -164,6 +164,7 @@ var compConfigManager;
         * 1. [`astproxy/hangup`](#hanguppost)
         * 1. [`astproxy/intrude`](#intrudepost)
         * 1. [`astproxy/start_spy`](#start_spypost)
+        * 1. [`astproxy/txfer_tovm`](#txfer_tovmpost)
         * 1. [`astproxy/pickup_conv`](#pickup_convpost)
         * 1. [`astproxy/stop_record`](#stop_recordpost)
         * 1. [`astproxy/start_record`](#start_recordpost)
@@ -304,6 +305,22 @@ var compConfigManager;
         *
         * ---
         *
+        * ### <a id="txfer_tovmpost">**`astproxy/txfer_tovm`**</a>
+        *
+        * Transfer the conversation to the specified voicemail. The request
+        * must contains the following parameters:
+        *
+        * * `convid:       the conversation identifier`
+        * * `endpointId:   the endpoint identifier of the user who has the conversation to transfer`
+        * * `endpointType: the type of the endpoint of the user who has the conversation to transfer`
+        * * `voicemailId:  the voicemail identifier to transfer the conversation. It's assumed that the destination type is the same of the endpoint type`
+        *
+        * E.g. using curl:
+        *
+        *     curl --insecure -i -X POST -d '{ "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "221", "voicemailId": "214" }' https://192.168.5.224:8282/astproxy/txfer_tovm
+        *
+        * ---
+        *
         * ### <a id="pickup_convpost">**`astproxy/pickup_conv`**</a>
         *
         * Pickup the specified conversation. The request must contains the following parameters:
@@ -436,6 +453,7 @@ var compConfigManager;
                 *   @param {string} hangup           Hangup a conversation
                 *   @param {string} intrude          Spy and speak in a conversation
                 *   @param {string} start_spy        Spy a conversation with only listening
+                *   @param {string} txfer_tovm       Transfer the conversation to the voicemail
                 *   @param {string} pickup_conv      Pickup a conversation
                 *   @param {string} stop_record      Stop the recording of a conversation
                 *   @param {string} start_record     Start the recording of a conversation
@@ -452,6 +470,7 @@ var compConfigManager;
                     'hangup',
                     'intrude',
                     'start_spy',
+                    'txfer_tovm',
                     'pickup_conv',
                     'stop_record',
                     'start_record',
@@ -1180,6 +1199,95 @@ var compConfigManager;
             },
 
             /**
+            * Transfer a conversation to the specified voicemail with the following REST API:
+            *
+            *     POST txfer_tovm
+            *
+            * @method txfer_tovm
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            txfer_tovm: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (   typeof req.params            !== 'object'
+                        || typeof req.params.convid     !== 'string' || typeof req.params.voicemailId  !== 'string'
+                        || typeof req.params.endpointId !== 'string' || typeof req.params.endpointType !== 'string') {
+
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    if (req.params.endpointType === 'extension') {
+
+                        // check if the endpoint of the request is owned by the user: the user can
+                        // transfer only his own conversations
+                        if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+
+                            logger.warn(IDLOG, 'transfer convid "' + req.params.convid + '" to voicemail "' + req.params.voicemailId + '" by user "' + username +
+                                               '" has been failed: ' + ' the ' + req.params.endpointType + ' ' + req.params.endpointId +
+                                               ' isn\'t owned by the user');
+                            compUtil.net.sendHttp403(IDLOG, res);
+                            return;
+
+                        } else {
+                            logger.info(IDLOG, 'transfer convid "' + req.params.convid + '" to voicemail "' + req.params.voicemailId + '": the endpoint ' + req.params.endpointType +
+                                               ' ' + req.params.endpointId + ' is owned by "' + username + '"');
+                        }
+
+                        // check if the voicemail of the request is owned by the user: the user can
+                        // transfer only to his voicemails
+                        if (compAuthorization.verifyUserEndpointVoicemail(username, req.params.voicemailId) === false) {
+
+                            logger.warn(IDLOG, 'transfer convid "' + req.params.convid + '" to voicemail "' + req.params.voicemailId + '" by user "' + username +
+                                               '" has been failed: ' + ' the voicemail ' + req.params.voicemailId + ' isn\'t owned by the user');
+                            compUtil.net.sendHttp403(IDLOG, res);
+                            return;
+
+                        } else {
+                            logger.info(IDLOG, 'transfer convid "' + req.params.convid + '" to voicemail "' + req.params.voicemailId + '": the voicemail ' +
+                                               ' ' + req.params.voicemailId + ' is owned by "' + username + '"');
+                        }
+
+                        compAstProxy.transferConversationToVoicemail(
+                            req.params.endpointType,
+                            req.params.endpointId,
+                            req.params.convid,
+                            req.params.voicemailId,
+                            function (err) {
+                                try {
+                                    if (err) {
+                                        logger.warn(IDLOG, 'transfer convid "' + req.params.convid + '" to voicemail "' + req.params.voicemailId + '" by user "' + username +
+                                                           '" with ' + req.params.endpointType + ' ' + req.params.endpointId + ' has been failed');
+                                        compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                                        return;
+                                    }
+                                    logger.info(IDLOG, 'transfer convid ' + req.params.convid + ' to voicemail "' + req.params.voicemailId + '" has been attended transfered ' +
+                                                       'successfully by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId);
+                                    compUtil.net.sendHttp200(IDLOG, res);
+
+                                } catch (err) {
+                                    logger.error(IDLOG, err.stack);
+                                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                                }
+                            }
+                        );
+
+                    } else {
+                        logger.warn(IDLOG, 'transfering convid ' + req.params.convid + ' to voicemail ' + req.params.voicemailId + ': unknown endpointType ' + req.params.endpointType);
+                        compUtil.net.sendHttp400(IDLOG, res);
+                    }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
             * Pickup a conversation with the following REST API:
             *
             *     POST pickup_conv
@@ -1671,6 +1779,7 @@ var compConfigManager;
         exports.parkings             = astproxy.parkings;
         exports.start_spy            = astproxy.start_spy;
         exports.setLogger            = setLogger;
+        exports.txfer_tovm           = astproxy.txfer_tovm;
         exports.extensions           = astproxy.extensions;
         exports.setPrivacy           = setPrivacy;
         exports.setCompUtil          = setCompUtil;

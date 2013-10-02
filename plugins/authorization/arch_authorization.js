@@ -224,6 +224,13 @@ module.exports = function (options, imports, register) {
             verifyUserEndpointExten: authorization.verifyUserEndpointExten,
 
             /**
+            * It's the _verifyUserEndpointVoicemail_ method provided by _authorization_ module.
+            *
+            * @method verifyUserEndpointVoicemail
+            */
+            verifyUserEndpointVoicemail: authorization.verifyUserEndpointVoicemail,
+
+            /**
             * It's the _authorizeChatUser_ method provided by _authorization_ module.
             *
             * @method

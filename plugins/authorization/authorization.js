@@ -1034,6 +1034,30 @@ function verifyUserEndpointExten(username, endpoint) {
 }
 
 /**
+* Checks if the voicemail endpoint is owned by the specified user.
+*
+* @method verifyUserEndpointVoicemail
+* @param  {string}  username The username
+* @param  {string}  endpoint The identifier of the endpoint
+* @return {boolean} True if the endpoint is owned by the user, false otherwise.
+*/
+function verifyUserEndpointVoicemail(username, endpoint) {
+    try {
+        // check parameters
+        if (typeof username !== 'string' || typeof endpoint !== 'string') {
+            throw new Error('wrong parameters');
+        }
+
+        return userMod.hasVoicemailEndpoint(username, endpoint);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false value for security reasons
+        return false;
+    }
+}
+
+/**
 * Returns all authorizations of the user.
 *
 * @method getUserAuthorizations
@@ -1120,6 +1144,7 @@ exports.authorizeCustomerCardUser     = authorizeCustomerCardUser;
 exports.authorizeOpExtensionsUser     = authorizeOpExtensionsUser;
 exports.authorizeAdminTransferUser    = authorizeAdminTransferUser;
 exports.authorizePhoneRedirectUser    = authorizePhoneRedirectUser;
+exports.verifyUserEndpointVoicemail   = verifyUserEndpointVoicemail;
 exports.authorizeAdminRecordingUser   = authorizeAdminRecordingUser;
 exports.getAuthorizedOperatorGroups   = getAuthorizedOperatorGroups;
 exports.authorizeOperatorGroupsUser   = authorizeOperatorGroupsUser;
