@@ -2469,9 +2469,8 @@ function transferConversationToVoicemail(endpointType, endpointId, convid, voice
             var callerNum  = chSource.getCallerNum();
             var bridgedNum = chSource.getBridgedNum();
 
-            // transfer to voicemail is only possible on own calls. So when the endpointId is the caller, the
-            // channel to transfer is the source channel, otherwise it's the destination channel
-            var chToTransfer = endpointId === chSource.getCallerNum() ? chSource.getChannel() : chSource.getBridgedChannel();
+            // when the endpointId is the caller, the channel to transfer is the destination channel
+            var chToTransfer = endpointId === chSource.getCallerNum() ? chSource.getBridgedChannel() : chSource.getChannel();
 
             if (chToTransfer !== undefined) {
 
