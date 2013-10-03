@@ -205,6 +205,33 @@ function start() {
 *
 * @method saveCtiPbContact
 * @param {object} data All the contact information to save in the database
+*   @param {string} data.owner_id    The owner of the contact
+*   @param {string} data.type        The type
+*   @param {string} data.name        The name
+*   @param {string} [data.homeemail]
+*   @param {string} [data.workemail]
+*   @param {string} [data.homephone]
+*   @param {string} [data.workphone]
+*   @param {string} [data.cellphone]
+*   @param {string} [data.fax]
+*   @param {string} [data.title]
+*   @param {string} [data.company]
+*   @param {string} [data.notes]
+*   @param {string} [data.homestreet]
+*   @param {string} [data.homepob]
+*   @param {string} [data.homecity]
+*   @param {string} [data.homeprovince]
+*   @param {string} [data.homepostalcode]
+*   @param {string} [data.homecountry]
+*   @param {string} [data.workstreet]
+*   @param {string} [data.workpob]
+*   @param {string} [data.workcity]
+*   @param {string} [data.workprovince]
+*   @param {string} [data.workpostalcode]
+*   @param {string} [data.workcountry]
+*   @param {string} [data.url]
+*   @param {string} [data.extension]
+*   @param {string} [data.speeddial_num]
 * @param {function} cb The callback function
 */
 function saveCtiPbContact(data, cb) {
@@ -212,7 +239,8 @@ function saveCtiPbContact(data, cb) {
         // check parameters
         if (typeof    data          !== 'object' || typeof cb     !== 'function'
             || typeof data.type     !== 'string' || data.type     === ''
-            || typeof data.owner_id !== 'string' || data.owner_id === '') {
+            || typeof data.owner_id !== 'string' || data.owner_id === ''
+            || typeof data.name     !== 'string' || data.name     === '') {
 
             throw new Error('wrong parameter');
         }

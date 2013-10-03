@@ -470,6 +470,7 @@ function saveCtiPbContact(data, cb) {
 
         // adapt data to the database
         data.owner_id = data.creator;
+        delete data.creator;
 
         logger.info(IDLOG, 'save cti phonebook contact by means dbconn module');
         dbconn.saveCtiPbContact(data, cb);
