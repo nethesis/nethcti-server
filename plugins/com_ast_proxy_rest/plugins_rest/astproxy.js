@@ -138,7 +138,7 @@ var compConfigManager;
         *
         * ### <a id="opgroupsget">**`astproxy/opgroups`**</a>
         *
-        * Gets the groups of the operator panel of the user.
+        * Gets the user groups of the operator panel.
         *
         * ---
         *
@@ -423,7 +423,7 @@ var compConfigManager;
                 *
                 *   @param {string} queues             Gets all the queues of the operator panel of the user
                 *   @param {string} trunks             Gets all the trunks of the operator panel of the user
-                *   @param {string} opgroups           Gets all the groups of the operator panel of the user
+                *   @param {string} opgroups           Gets all the user groups of the operator panel
                 *   @param {string} parkings           Gets all the parkings with all their status informations
                 *   @param {string} extensions         Gets all the extensions with all their status informations
                 *   @param {string} dnd/:endpoint      Gets the don't disturb status of the endpoint of the user
@@ -483,14 +483,14 @@ var compConfigManager;
             },
 
             /**
-            * Gets the operator panel groups of the user with the following REST API:
+            * Gets the operator panel user groups with the following REST API:
             *
             *     GET  opgroups
             *
             * @method opgroups
-            * @param {object} req The client request.
-            * @param {object} res The client response.
-            * @param {function} next Function to run the next handler in the chain.
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
             */
             opgroups: function (req, res, next) {
                 try {

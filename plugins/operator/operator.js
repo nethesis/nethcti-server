@@ -11,8 +11,8 @@
 * @class operator
 * @static
 */
-var fs        = require('fs');
-var Group     = require('./group').Group;
+var fs    = require('fs');
+var Group = require('./group').Group;
 
 /**
 * The module identifier used by the logger.
@@ -78,8 +78,7 @@ function setLogger(log) {
 * **The method can throw an Exception.**
 *
 * @method config
-* @param {string} path The file path of the configuration file. It must
-* use the JSON syntax.
+* @param {string} path The file path of the configuration file. It must use the JSON syntax.
 */
 function config(path) {
     // check parameter
@@ -97,7 +96,7 @@ function config(path) {
         newgroup = new Group(g);
 
         // json[g] is an array as readed from the JSON file
-        newgroup.addExtensions(json[g]);
+        newgroup.addUsers(json[g]);
         groups[g] = newgroup;
     }
     logger.info(IDLOG, 'ended configuration by JSON file ' + path);
@@ -116,7 +115,7 @@ function getJSONGroups() {
         // construct the object to return
         var g;
         for (g in groups) {
-            obj[g] = { extensions: groups[g].getExtensionList()};
+            obj[g] = { users: groups[g].getUserList() };
         }
 
         return obj;

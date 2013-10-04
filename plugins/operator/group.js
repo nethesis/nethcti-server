@@ -1,5 +1,5 @@
 /**
-* Abstraction of a group of extensions in the operator panel.
+* Abstraction of a group of users in the operator panel.
 *
 * **It can throw exceptions.**
 *
@@ -23,16 +23,16 @@ exports.Group = function (groupName) {
     var name = groupName;
 
     /**
-    * The list of the extensions that belongs to the group. The keys
-    * are the extension identifiers. The value is not used. It uses an
+    * The list of the users that belongs to the group. The keys
+    * are the usernames. The value is not used. It uses an
     * object instead of an array for convenience of code.
     *
-    * @property extensions
+    * @property users
     * @type {object}
     * @default {}
     * @private
     */
-    var extensions = {};
+    var users = {};
 
     /**
     * Return the group name.
@@ -43,50 +43,50 @@ exports.Group = function (groupName) {
     function getName() { return name; }
 
     /**
-    * Return the number of the extension members.
+    * Return the number of the user members.
     *
-    * @method extenCount
-    * @return {number} The number of the extension members.
+    * @method userCount
+    * @return {number} The number of the user members.
     */
-    function extenCount() { return Object.keys(extensions).length; }
+    function userCount() { return Object.keys(users).length; }
 
     /**
-    * Adds extensions to the group.
+    * Adds users to the group.
     *
-    * @method addExtensions
-    * @param {array} arr The list of extensions identifier as strings
+    * @method addUsers
+    * @param {array} arr The list of usernames as strings
     */
-    function addExtensions(arr) {
+    function addUsers(arr) {
         // check parameter
         if (!(arr instanceof Array)) { throw new Error('wrong parameter'); }
 
-        // add all extensions to extensions property
+        // add all users to users property
         var i;
-        for (i = 0; i < arr.length; i++) { extensions[arr[i]] = ''; }
+        for (i = 0; i < arr.length; i++) { users[arr[i]] = ''; }
     }
 
     /**
-    * Return the list of the extensions of the group.
+    * Returns the list of the users of the group.
     *
-    * @method getExtensionList
-    * @return {array} The list of the extensions of the group.
+    * @method getUserList
+    * @return {array} The list of the users of the group.
     */
-    function getExtensionList() { return Object.keys(extensions); }
+    function getUserList() { return Object.keys(users); }
 
     /**
-    * Return the readable string of the group.
+    * Returns the readable string of the group.
     *
     * @method toString
     * @return {string} The readable description of the group
     */
-    function toString() { return 'Opertor panel group "' + getName() + '": ' + extenCount() + ' extension members'; }
+    function toString() { return 'Opertor panel group "' + getName() + '": ' + userCount() + ' user members'; }
 
     /**
     * Returns the JSON representation of the object.
     *
     *     {
     *         name: "Developer"          // the group name
-    *         extensions: ["214", "221"] // the list of the extensions that belongs to the group
+    *         users: ["alessandro", "giovanni"] // the list of the users that belongs to the group
     *     }
     *
     * @method toJSON
@@ -95,17 +95,17 @@ exports.Group = function (groupName) {
     function toJSON() {
         return {
             name: name,
-            extensions: Object.keys(extensions)
+            users: Object.keys(users)
         }
     }
 
     // public interface
     return {
-        toJSON:           toJSON,
-        getName:          getName,
-        toString:         toString,
-        extenCount:       extenCount,
-        addExtensions:    addExtensions,
-        getExtensionList: getExtensionList
+        toJSON:      toJSON,
+        getName:     getName,
+        toString:    toString,
+        addUsers:    addUsers,
+        userCount:   userCount,
+        getUserList: getUserList
     };
 }
