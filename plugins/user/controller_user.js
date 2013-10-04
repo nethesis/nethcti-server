@@ -389,7 +389,7 @@ function hasExtensionEndpoint(username, exten) {
 
         var ext;
         var obj = users[username].getAllEndpoints();
-        obj     = obj[endpointTypes.TYPES.EXTENSION];
+        obj     = obj[endpointTypes.TYPES.extension];
         for (ext in obj) {
             if (ext === exten) { return true; }
         }
@@ -423,7 +423,7 @@ function hasVoicemailEndpoint(username, voicemail) {
 
         var vm;
         var obj = users[username].getAllEndpoints();
-        obj     = obj[endpointTypes.TYPES.VOICEMAIL];
+        obj     = obj[endpointTypes.TYPES.voicemail];
         for (vm in obj) {
             if (vm === voicemail) { return true; }
         }
@@ -455,7 +455,7 @@ function getVoicemailList(username) {
 
         // get voicemail endpoints object
         var evms = users[username].getAllEndpoints();
-        evms     = evms[endpointTypes.TYPES.VOICEMAIL];
+        evms     = evms[endpointTypes.TYPES.voicemail];
 
         if (typeof evms !== 'object') {
             throw new Error('wrong voicemail endpoint result for user "' + username + '"');
@@ -559,7 +559,7 @@ function setNethctiPresence(username, deviceType, status) {
 
         // gets all endpoints, extracts the nethcti endpoint and then sets its status
         var endpoints = users[username].getAllEndpoints();
-        endpoints[endpointTypes.TYPES.NETHCTI][deviceType].setStatus(status);
+        endpoints[endpointTypes.TYPES.nethcti][deviceType].setStatus(status);
 
         return true;
 
@@ -589,7 +589,7 @@ function getAllEndpointsNethcti(username) {
 
         // gets all endpoints, extracts the nethcti endpoint and then sets its status
         var endpoints = users[username].getAllEndpoints();
-        return endpoints[endpointTypes.TYPES.NETHCTI];
+        return endpoints[endpointTypes.TYPES.nethcti];
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -617,7 +617,7 @@ function getAllEndpointsExtension(username) {
 
         // gets all endpoints, extracts the extension endpoints and then sets its status
         var endpoints = users[username].getAllEndpoints();
-        return endpoints[endpointTypes.TYPES.EXTENSION];
+        return endpoints[endpointTypes.TYPES.extension];
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -644,7 +644,7 @@ function getUsersUsingEndpointExtension(exten) {
 
             // get all the extension endpoints of the user
             endpoints  = users[username].getAllEndpoints();
-            userExtens = endpoints[endpointTypes.TYPES.EXTENSION];
+            userExtens = endpoints[endpointTypes.TYPES.extension];
 
             for (extenKey in userExtens) {
 

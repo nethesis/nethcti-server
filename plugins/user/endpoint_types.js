@@ -8,51 +8,27 @@
 */
 
 /**
-* The list of the endpoint types.
-*
-* @property ENDPOINT_TYPES
-* @type {object}
-* @readOnly
-* @default {
-    'jabber':    '',
-    'nethcti':   '',
-    'calendar':  '',
-    'extension': '',
-    'cellphone': '',
-    'voicemail': ''
-}
-*/
-var ENDPOINT_TYPES = {
-    'jabber':    '',
-    'nethcti':   '',
-    'calendar':  '',
-    'extension': '',
-    'cellphone': '',
-    'voicemail': ''
-}
-
-/**
 * The public list of the endpoint types.
 *
 * @property TYPES
 * @type {object}
 * @readOnly
 * @default {
-    JABBER:    'jabber',
-    NETHCTI:   'nethcti',
-    CALENDAR:  'calendar',
-    EXTENSION: 'extension',
-    CELLPHONE: 'cellphone',
-    VOICEMAIL: 'voicemail'
+    jabber:    'jabber',
+    nethcti:   'nethcti',
+    calendar:  'calendar',
+    extension: 'extension',
+    cellphone: 'cellphone',
+    voicemail: 'voicemail'
 }
 */
 var TYPES = {
-    JABBER:    'jabber',
-    NETHCTI:   'nethcti',
-    CALENDAR:  'calendar',
-    EXTENSION: 'extension',
-    CELLPHONE: 'cellphone',
-    VOICEMAIL: 'voicemail'
+    jabber:    'jabber',
+    nethcti:   'nethcti',
+    calendar:  'calendar',
+    extension: 'extension',
+    cellphone: 'cellphone',
+    voicemail: 'voicemail'
 }
 
 /**
@@ -122,14 +98,14 @@ function isValidEndpointNethctiDevice(type) {
 * Checks if the endpoint type is valid.
 *
 * @method isValidEndpointType
-* @param {string} type The type of the endpoint
+* @param  {string}  type The type of the endpoint
 * @return {boolean} Return true if the type is valid, false otherwise.
 */
 function isValidEndpointType(type) {
     // check parameter
     if (typeof type !== 'string') { throw new Error('wrong parameter'); }
 
-    if (ENDPOINT_TYPES[type] !== undefined) { return true; }
+    if (TYPES[type] !== undefined) { return true; }
     return false;
 }
 
