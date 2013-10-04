@@ -170,12 +170,12 @@ exports.User = function (name) {
 
         // create new endpoint object
         var newEndpoint;
-        if      (type === endpointTypes.TYPES.JABBER)    { newEndpoint = new EndpointJabber(id);    }
-        else if (type === endpointTypes.TYPES.NETHCTI)   { newEndpoint = new EndpointNethcti(id);   }
-        else if (type === endpointTypes.TYPES.CALENDAR)  { newEndpoint = new EndpointCalendar(id);  }
-        else if (type === endpointTypes.TYPES.EXTENSION) { newEndpoint = new EndpointExtension(id); }
-        else if (type === endpointTypes.TYPES.CELLPHONE) { newEndpoint = new EndpointCellphone(id); }
-        else if (type === endpointTypes.TYPES.VOICEMAIL) { newEndpoint = new EndpointVoicemail(id); }
+        if      (type === endpointTypes.TYPES.jabber)    { newEndpoint = new EndpointJabber(id);    }
+        else if (type === endpointTypes.TYPES.nethcti)   { newEndpoint = new EndpointNethcti(id);   }
+        else if (type === endpointTypes.TYPES.calendar)  { newEndpoint = new EndpointCalendar(id);  }
+        else if (type === endpointTypes.TYPES.extension) { newEndpoint = new EndpointExtension(id); }
+        else if (type === endpointTypes.TYPES.cellphone) { newEndpoint = new EndpointCellphone(id); }
+        else if (type === endpointTypes.TYPES.voicemail) { newEndpoint = new EndpointVoicemail(id); }
 
         // add endpoint by its type
         endpoints[type][id] = newEndpoint;
