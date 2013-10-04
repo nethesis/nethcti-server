@@ -1,7 +1,7 @@
 /**
 * Provides authentication functions through REST API.
 *
-* @module com_authe_rest
+* @module com_authentication_rest
 * @submodule plugins_rest
 */
 
@@ -35,6 +35,15 @@ var logger = console;
 * @private
 */
 var compAuthe;
+
+/**
+* The utility architect component.
+*
+* @property compUtil
+* @type object
+* @private
+*/
+var compUtil;
 
 /**
 * Set the logger to be used.
@@ -78,38 +87,17 @@ function setCompAuthentication(ca) {
 }
 
 /**
-* Send HTTP 401 unauthorized response with nonce into the
-* WWW-Authenticate http header.
+* Sets the utility architect component.
 *
-* @method sendHttp401Nonce
-* @param {object} resp The client response object.
-* @param {string} nonce The nonce to return to the client.
-* @private
+* @method setCompUtil
+* @param {object} comp The utility architect component.
 */
-function sendHttp401Nonce(resp, nonce) {
+function setCompUtil(comp) {
     try {
-        resp.writeHead(401, { 'WWW-Authenticate': 'Digest ' + nonce });
-        logger.info(IDLOG, 'send HTTP 401 response with nonce to ' + resp.connection.remoteAddress);
-        resp.end();
+        compUtil = comp;
+        logger.info(IDLOG, 'set util architect component');
     } catch (err) {
-	logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Send HTTP 401 unauthorized response.
-*
-* @method sendHttp401
-* @param {object} resp The client response object.
-* @private
-*/
-function sendHttp401(resp) {
-    try {
-        resp.writeHead(401);
-        logger.info(IDLOG, 'send HTTP 401 response to ' + resp.connection.remoteAddress);
-        resp.end();
-    } catch (err) {
-	logger.error(IDLOG, err.stack);
+       logger.error(IDLOG, err.stack);
     }
 }
 
@@ -118,9 +106,13 @@ function sendHttp401(resp) {
         /**
         * REST plugin that provides authentication functions through the following REST API:
         *
-        * **POST requests**
+        * # POST requests
         *
-        *     authentication/authenticate
+        * 1. [`authentication/authenticate`](#authenticatepost)
+        *
+        * ---
+        *
+        * ### <a id="authenticatepost">**`authentication/authenticate`**</a>
         *
         * If the user is successfully authenticated, he receives an HTTP 401 response with an
         * HMAC-SHA1 _nonce_ in the WWW-Authenticate header. The _nonce_ is then used by the
@@ -174,28 +166,29 @@ function sendHttp401(resp) {
                         try {
                             if (err) {
                                 logger.warn(IDLOG, 'authentication failed for user "' + username + '"');
-                                sendHttp401(res);
+                                compUtil.net.sendHttp401(IDLOG, res);
                                 return;
 
                             } else {
                                 logger.info(IDLOG, 'user "' + username + '" has been successfully authenticated');
                                 var nonce = compAuthe.getNonce(username, password);
-                                sendHttp401Nonce(res, nonce);
+                                compUtil.net.sendHttp401(IDLOG, res, nonce);
                             }
                         } catch (err) {
                             logger.error(IDLOG, err.stack);
-                            sendHttp401(res);
+                            compUtil.net.sendHttp401(IDLOG, res);
                         }
                     });
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp401(res);
+                    compUtil.net.sendHttp401(IDLOG, res);
                 }
             }
         }
         exports.api                   = authentication.api;
         exports.setLogger             = setLogger;
         exports.authenticate          = authentication.authenticate;
+        exports.setCompUtil           = setCompUtil;
         exports.setCompAuthentication = setCompAuthentication;
 
     } catch (err) {

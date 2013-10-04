@@ -2,19 +2,19 @@
 * Provides the HTTPS REST server for authentication functions using
 * _authentication_ component.
 *
-* @module com_authe_rest
-* @main com_authe_rest
+* @module com_authentication_rest
+* @main com_authentication_rest
 */
 
 /**
 * Provides the HTTPS REST server.
 *
-* @class server_com_authe_rest
+* @class server_com_authentication_rest
 */
 var fs      = require('fs');
 var https   = require('https');
 var restify = require('restify');
-var plugins = require('jsplugs')().require('./plugins/com_authe_rest/plugins_rest');
+var plugins = require('jsplugs')().require('./plugins/com_authentication_rest/plugins_rest');
 
 /**
 * The module identifier used by the logger.
@@ -24,9 +24,9 @@ var plugins = require('jsplugs')().require('./plugins/com_authe_rest/plugins_res
 * @private
 * @final
 * @readOnly
-* @default [server_com_authe_rest]
+* @default [server_com_authentication_rest]
 */
-var IDLOG = '[server_com_authe_rest]';
+var IDLOG = '[server_com_authentication_rest]';
 
 /**
 * The logger. It must have at least three methods: _info, warn and error._
@@ -242,6 +242,30 @@ function setCompAuthentication(compAuthentication) {
 }
 
 /**
+* Set the utility architect component to be used by REST plugins.
+*
+* @method setCompUtil
+* @param {object} comp The architect utility component
+* @static
+*/
+function setCompUtil(comp) {
+    try {
+        // check parameter
+        if (typeof comp !== 'object') { throw new Error('wrong parameter'); }
+
+        var p;
+        // set utility architect component to all REST plugins
+        for (p in plugins) {
+            if (typeof plugins[p].setCompUtil === 'function') {
+                plugins[p].setCompUtil(comp);
+            }
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Configurates the REST server properties by a configuration file.
 * The file must use the JSON syntax.
 *
@@ -290,4 +314,5 @@ function config(path) {
 exports.start                 = start;
 exports.config                = config;
 exports.setLogger             = setLogger;
+exports.setCompUtil           = setCompUtil;
 exports.setCompAuthentication = setCompAuthentication;
