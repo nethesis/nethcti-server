@@ -37,6 +37,15 @@ var logger = console;
 var compCallerNote;
 
 /**
+* The utility architect component.
+*
+* @property compUtil
+* @type object
+* @private
+*/
+var compUtil;
+
+/**
 * Set the logger to be used.
 *
 * @method setLogger
@@ -78,41 +87,34 @@ function setCompCallerNote(cn) {
 }
 
 /**
-* Send HTTP 500 internal server error response.
+* Sets the utility architect component.
 *
-* @method sendHttp500
-* @param {object} resp The client response object
-* @param {string} [err] The error message
-* @private
+* @method setCompUtil
+* @param {object} comp The utility architect component.
 */
-function sendHttp500(resp, err) {
+function setCompUtil(comp) {
     try {
-        var text;
-        if (err === undefined || typeof err !== 'string') {
-            text = '';
-
-        } else {
-            text = err;
-        }
-
-        resp.writeHead(500, { error: err });
-        logger.error(IDLOG, 'send HTTP 500 response to ' + resp.connection.remoteAddress);
-        resp.end();
+        compUtil = comp;
+        logger.info(IDLOG, 'set util architect component');
     } catch (err) {
-        logger.error(IDLOG, err.stack);
+       logger.error(IDLOG, err.stack);
     }
 }
 
-(function(){
+(function() {
     try {
         /**
         * REST plugin that provides caller note functions through the following REST API:
         *
-        * **POST Requests**
+        * # POST requests
         *
-        *     callernote/create
+        * 1. [`callernote/create`](#createpost)
         *
-        * The client crete a new caller note. The request must contain the configurations object in the
+        * ---
+        *
+        * ### <a id="createpost">**`callernote/create`**</a>
+        *
+        * The client cretes a new caller note. The request must contains the configurations object in the
         * POST request. E.g. using curl:
         *
         *     curl --insecure -i -X POST -d '{ "text": "some text", "number": "123456", "callid": "1234.56", "visibility": "public | private", "expiration": "20131001", "booking": "true | false" }' https://192.168.5.224:8282/callernote/create
@@ -158,22 +160,23 @@ function sendHttp500(resp, err) {
 
                     compCallerNote.newCallerNote(data, function (err) {
 
-                        if (err) { sendHttp500(res, err.toString()); }
+                        if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
 
                         else {
                             logger.info(IDLOG, 'new caller note by "' + username + '" for number "' + data.number + '" has been successfully crated');
-                            res.send(200);
+                            compUtil.net.sendHttp200(IDLOG, res);
                         }
                     });
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             }
         }
         exports.api               = callernote.api;
         exports.create            = callernote.create;
         exports.setLogger         = setLogger;
+        exports.setCompUtil       = setCompUtil;
         exports.setCompCallerNote = setCompCallerNote;
 
     } catch (err) {

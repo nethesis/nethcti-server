@@ -106,25 +106,40 @@ function setCompUtil(comp) {
         /**
         * REST plugin that provides history caller note functions through the following REST API:
         *
-        *     histcallernote/interval/:from/:to
+        * # GET requests
         *
-        * Return the history of the caller note between _"from"_ date to _"to"_ date. Dates must be
-        * expressed in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
+        * 1. [`histcallernote/day/:day`](#dayget)
+        * 1. [`histcallernote/day/:day/:filter`](#day_filterget)
+        * 1. [`histcallernote/interval/:from/:to`](#intervalget)
+        * 1. [`histcallernote/interval/:from/:to/:filter`](#interval_filterget)
         *
-        *     histcallernote/interval/:from/:to/:filter
+        * ---
         *
-        * Return the history caller note between _"from"_ date to _"to"_ date filtering by _"filter"_.
-        * Date must be expressed in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
+        * ### <a id="dayget">**`histcallernote/day/:day`**</a>
         *
-        *     histcallernote/day/:day
-        *
-        * Return the history caller note of the day _"day"_. Date must be expressed in YYYYMMDD format.
+        * Returns the history caller note of the day _"day"_. Date must be expressed in YYYYMMDD format.
         * If an error occurs an HTTP 500 response is returned.
         *
-        *     histcallernote/day/:day/:filter
+        * ---
         *
-        * Return the history caller note of the day _"day"_ filtering by _"filter"_. Date must be expressed
+        * ### <a id="day_filterget">**`histcallernote/day/:day/:filter`**</a>
+        *
+        * Returns the history caller note of the day _"day"_ filtering by _"filter"_. Date must be expressed
         * in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
+        *
+        * ---
+        *
+        * ### <a id="intervalget">**`histcallernote/interval/:from/:to`**</a>
+        *
+        * Returns the history of the caller note between _"from"_ date to _"to"_ date. Dates must be
+        * expressed in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
+        *
+        * ---
+        *
+        * ### <a id="interval_filterget">**`histcallernote/interval/:from/:to/:filter`**</a>
+        *
+        * Returns the history caller note between _"from"_ date to _"to"_ date filtering by _"filter"_.
+        * Date must be expressed in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
         *
         * @class plugin_rest_histcallernote
         * @static
