@@ -229,7 +229,7 @@ function setCompUtil(comp) {
 
                         } else {
                             logger.info(IDLOG, 'new postit by "' + username + '" to "' + data.recipient + '" has been successfully crated');
-                            res.send(200);
+                            compUtil.net.sendHttp201(IDLOG, res);
                         }
                     });
                 } catch (err) {

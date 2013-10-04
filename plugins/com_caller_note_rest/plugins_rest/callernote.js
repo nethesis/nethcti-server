@@ -164,7 +164,7 @@ function setCompUtil(comp) {
 
                         else {
                             logger.info(IDLOG, 'new caller note by "' + username + '" for number "' + data.number + '" has been successfully crated');
-                            compUtil.net.sendHttp200(IDLOG, res);
+                            compUtil.net.sendHttp201(IDLOG, res);
                         }
                     });
                 } catch (err) {
