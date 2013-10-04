@@ -68,6 +68,15 @@ var address = "localhost";
 var compAuthorization;
 
 /**
+* The utility architect component.
+*
+* @property compUtil
+* @type object
+* @private
+*/
+var compUtil;
+
+/**
 * Set the logger to be used.
 *
 * @method setLogger
@@ -120,23 +129,6 @@ function setAllRestPluginsLogger(log) {
 }
 
 /**
-* Send HTTP 401 unauthorized response.
-*
-* @method sendHttp401
-* @param {object} resp The client response object.
-* @private
-*/
-function sendHttp401(resp) {
-    try {
-        resp.writeHead(401);
-        logger.info(IDLOG, 'send HTTP 401 response to ' + resp.connection.remoteAddress);
-        resp.end();
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
 * Executed by all REST request. It calls the appropriate REST plugin function.
 *
 * @method execute
@@ -158,7 +150,7 @@ function execute(req, res, next) {
 
         } else { // authorization failed
             logger.warn(IDLOG, 'caller note authorization failed for user "' + username + '"!');
-            sendHttp401(res);
+            compUtil.net.sendHttp403(IDLOG, res);
         }
         return next();
 
@@ -308,6 +300,8 @@ function setCompUtil(comp) {
     try {
         // check parameter
         if (typeof comp !== 'object') { throw new Error('wrong parameter'); }
+
+        compUtil = comp;
 
         var p;
         // set utility architect component to all REST plugins

@@ -46,6 +46,15 @@ var compStreaming;
 var compAuthorization;
 
 /**
+* The utility architect component.
+*
+* @property compUtil
+* @type object
+* @private
+*/
+var compUtil;
+
+/**
 * Set the logger to be used.
 *
 * @method setLogger
@@ -87,6 +96,21 @@ function setCompStreaming(cp) {
 }
 
 /**
+* Sets the utility architect component.
+*
+* @method setCompUtil
+* @param {object} comp The utility architect component.
+*/
+function setCompUtil(comp) {
+    try {
+        compUtil = comp;
+        logger.info(IDLOG, 'set util architect component');
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Set authorization architect component.
 *
 * @method setCompAuthorization
@@ -101,67 +125,7 @@ function setCompAuthorization(ca) {
     }
 }
 
-/**
-* Send HTTP 401 unauthorized response.
-*
-* @method sendHttp401
-* @param {object} resp The client response object.
-* @private
-*/
-function sendHttp401(resp) {
-    try {
-        resp.writeHead(401);
-        logger.info(IDLOG, 'send HTTP 401 response to ' + resp.connection.remoteAddress);
-        resp.end();
-    } catch (err) {
-	logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Send HTTP 200 ok response.
-*
-* @method sendHttp200
-* @param {object} resp The client response object.
-* @private
-*/
-function sendHttp200(resp) {
-    try {
-        resp.writeHead(200);
-        logger.info(IDLOG, 'send HTTP 200 ok response to ' + resp.connection.remoteAddress);
-        resp.end();
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Send HTTP 500 internal server error response.
-*
-* @method sendHttp500
-* @param {object} resp The client response object
-* @param {string} [err] The error message
-* @private
-*/
-function sendHttp500(resp, err) {
-    try {
-        var text;
-        if (err === undefined || typeof err !== 'string') {
-            text = '';
-
-        } else {
-            text = err;
-        }
-
-        resp.writeHead(500, { error: err });
-        logger.error(IDLOG, 'send HTTP 500 response to ' + resp.connection.remoteAddress);
-        resp.end();
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-(function(){
+(function() {
     try {
         /**
         * REST plugin that provides streaming functions through the following REST API:
@@ -261,7 +225,7 @@ function sendHttp500(resp, err) {
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             },
 
@@ -292,23 +256,24 @@ function sendHttp500(resp, err) {
                         compStreaming.open(stream, function (err) {
 
                             if (err) {
-                                logger.error(IDLOG, 'opening streaming source "' + stream + '"');
-                                sendHttp500(res);
+                                var str = 'opening streaming source "' + stream + '"';
+                                logger.error(IDLOG, str);
+                                compUtil.net.sendHttp500(IDLOG, res, str);
 
                             } else {
                                 logger.info(IDLOG, 'opened streaming source "' + stream + '" successful');
-                                sendHttp200(res);
+                                compUtil.net.sendHttp200(IDLOG, res);
                             }
                         });
 
                     } else {
                         logger.warn(IDLOG, 'authorization for user "' + username + '" for open streaming source "' + stream + '" has been failed !');
-                        sendHttp401(res);
+                        compUtil.net.sendHttp403(IDLOG, res);
                     }
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             }
         }
@@ -316,6 +281,7 @@ function sendHttp500(resp, err) {
         exports.open                 = streaming.open;
         exports.sources              = streaming.sources;
         exports.setLogger            = setLogger;
+        exports.setCompUtil          = setCompUtil;
         exports.setCompStreaming     = setCompStreaming;
         exports.setCompAuthorization = setCompAuthorization;
 

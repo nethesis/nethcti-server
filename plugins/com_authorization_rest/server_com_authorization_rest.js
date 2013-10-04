@@ -131,6 +131,30 @@ function setCompAuthorization(ca) {
 }
 
 /**
+* Set the utility architect component to be used by REST plugins.
+*
+* @method setCompUtil
+* @param {object} comp The architect utility component
+* @static
+*/
+function setCompUtil(comp) {
+    try {
+        // check parameter
+        if (typeof comp !== 'object') { throw new Error('wrong parameter'); }
+
+        var p;
+        // set utility architect component to all REST plugins
+        for (p in plugins) {
+            if (typeof plugins[p].setCompUtil === 'function') {
+                plugins[p].setCompUtil(comp);
+            }
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Called by _setCompAuthorization_ function for all REST plugins.
 *
 * @method setAllRestPluginsAuthorization
@@ -148,23 +172,6 @@ function setAllRestPluginsAuthorization(ca) {
                 logger.info(IDLOG, 'authorization component has been set for rest plugin ' + key);
             }
         }
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Send HTTP 401 unauthorized response.
-*
-* @method sendHttp401
-* @param {object} resp The client response object.
-* @private
-*/
-function sendHttp401(resp) {
-    try {
-        resp.writeHead(401);
-        logger.info(IDLOG, 'send HTTP 401 response to ' + resp.connection.remoteAddress);
-        resp.end();
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -285,4 +292,5 @@ function start() {
 exports.start                = start;
 exports.config               = config;
 exports.setLogger            = setLogger;
+exports.setCompUtil          = setCompUtil;
 exports.setCompAuthorization = setCompAuthorization;

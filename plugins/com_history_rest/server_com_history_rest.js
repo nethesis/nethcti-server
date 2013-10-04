@@ -232,7 +232,7 @@ function setCompAstProxy(comp) {
 }
 
 /**
-* Set the utility architect component to be used by REST plugins.
+* Sets the utility architect component to be used by REST plugins.
 *
 * @method setCompUtil
 * @param {object} comp The architect utility component
@@ -319,23 +319,6 @@ function setCompAuthorization(ca) {
         // set the authorization for all REST plugins
         setAllRestPluginsAuthorization(ca);
 
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Send HTTP 401 unauthorized response.
-*
-* @method sendHttp401
-* @param {object} resp The client response object.
-* @private
-*/
-function sendHttp401(resp) {
-    try {
-        resp.writeHead(401);
-        logger.info(IDLOG, 'send HTTP 401 response to ' + resp.connection.remoteAddress);
-        resp.end();
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }

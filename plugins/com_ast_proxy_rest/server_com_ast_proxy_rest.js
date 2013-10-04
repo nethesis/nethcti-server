@@ -112,23 +112,6 @@ function setAllRestPluginsLogger(log) {
 }
 
 /**
-* Send HTTP 401 unauthorized response.
-*
-* @method sendHttp401
-* @param {object} resp The client response object.
-* @private
-*/
-function sendHttp401(resp) {
-    try {
-        resp.writeHead(401);
-        logger.info(IDLOG, 'send HTTP 401 response to ' + resp.connection.remoteAddress);
-        resp.end();
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
 * Executed by all REST request. It calls the appropriate REST plugin function.
 *
 * @method execute

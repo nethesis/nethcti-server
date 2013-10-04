@@ -28,6 +28,15 @@ var IDLOG = '[plugins_rest/authorization]';
 var logger = console;
 
 /**
+* The utility architect component.
+*
+* @property compUtil
+* @type object
+* @private
+*/
+var compUtil;
+
+/**
 * The architect component to be used for authorization functions.
 *
 * @property compAuthorization
@@ -63,6 +72,22 @@ function setLogger(log) {
 }
 
 /**
+* Sets the utility architect component.
+*
+* @method setCompUtil
+* @param {object} comp The utility architect component.
+*/
+function setCompUtil(comp) {
+    try {
+        compUtil = comp;
+        logger.info(IDLOG, 'set util architect component');
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+
+/**
 * Set authorization architect component.
 *
 * @method setCompAuthorization
@@ -77,67 +102,7 @@ function setCompAuthorization(ca) {
     }
 }
 
-/**
-* Send HTTP 401 unauthorized response.
-*
-* @method sendHttp401
-* @param {object} resp The client response object.
-* @private
-*/
-function sendHttp401(resp) {
-    try {
-        resp.writeHead(401);
-        logger.info(IDLOG, 'send HTTP 401 response to ' + resp.connection.remoteAddress);
-        resp.end();
-    } catch (err) {
-	logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Send HTTP 200 OK response.
-*
-* @method sendHttp200
-* @param {object} resp The client response object.
-* @private
-*/
-function sendHttp200(resp) {
-    try {
-        resp.writeHead(200);
-        logger.info(IDLOG, 'send HTTP 200 response to ' + resp.connection.remoteAddress);
-        resp.end();
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Send HTTP 500 internal server error response.
-*
-* @method sendHttp500
-* @param {object} resp The client response object
-* @param {string} [err] The error message
-* @private
-*/
-function sendHttp500(resp, err) {
-    try {
-        var text;
-        if (err === undefined || typeof err !== 'string') {
-            text = '';
-
-        } else {
-            text = err;
-        }
-
-        resp.writeHead(500, { error: err });
-        logger.error(IDLOG, 'send HTTP 500 response to ' + resp.connection.remoteAddress);
-        resp.end();
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-(function(){
+(function() {
     try {
         /**
         * REST plugin that provides authorization functions through the following REST API:
@@ -191,9 +156,9 @@ function sendHttp500(resp, err) {
                     var results  = compAuthorization.getUserAuthorizations(username);
 
                     if (typeof results !== 'object') {
-                        var strerr = 'wrong user authorization result for user "' + username + '"';
-                        logger.error(IDLOG, strerr);
-                        sendHttp500(res, strerr);
+                        var str = 'wrong user authorization result for user "' + username + '"';
+                        logger.error(IDLOG, str);
+                        compUtil.net.sendHttp500(IDLOG, res, str);
 
                     } else {
                         logger.info(IDLOG, 'send authorization of user "' + username + '"');
@@ -201,13 +166,14 @@ function sendHttp500(resp, err) {
                     }
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
-                    sendHttp500(res, err.toString());
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             }
         }
         exports.api                  = authorization.api;
         exports.user                 = authorization.user;
         exports.setLogger            = setLogger;
+        exports.setCompUtil          = setCompUtil;
         exports.setCompAuthorization = setCompAuthorization;
 
     } catch (err) {

@@ -133,6 +133,25 @@ function sendHttp401(parentIdLog, resp) {
 }
 
 /**
+* Sends an HTTP 401 unauthorized response with nonce into the WWW-Authenticate http header.
+*
+* @method sendHttp401Nonce
+* @param {string} parentIdLog The identifier of the component that uses the utility
+* @param {object} resp        The client response object
+* @param {string} nonce       The nonce to send
+* @static
+*/
+function sendHttp401Nonce(parentIdLog, resp, nonce) {
+    try {
+        resp.writeHead(401, { 'WWW-Authenticate': 'Digest ' + nonce });
+        logger.info(IDLOG, 'send HTTP 401 response with nonce to ' + resp.connection.remoteAddress);
+        resp.end();
+    } catch (err) {
+        logger.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
+    }
+}
+
+/**
 * Sends an HTTP 403 forbidden response.
 *
 * @method sendHttp403
