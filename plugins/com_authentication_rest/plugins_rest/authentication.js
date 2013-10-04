@@ -172,7 +172,7 @@ function setCompUtil(comp) {
                             } else {
                                 logger.info(IDLOG, 'user "' + username + '" has been successfully authenticated');
                                 var nonce = compAuthe.getNonce(username, password);
-                                compUtil.net.sendHttp401(IDLOG, res, nonce);
+                                compUtil.net.sendHttp401Nonce(IDLOG, res, nonce);
                             }
                         } catch (err) {
                             logger.error(IDLOG, err.stack);

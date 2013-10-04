@@ -197,21 +197,23 @@ function sendHttp500(parentIdLog, resp, err) {
 * @property net
 * @type {object}
 * @default {
-    sendHttp200: sendHttp200,
-    sendHttp201: sendHttp201,
-    sendHttp400: sendHttp400,
-    sendHttp401: sendHttp401,
-    sendHttp403: sendHttp403,
-    sendHttp500: sendHttp500
+    sendHttp200:      sendHttp200,
+    sendHttp201:      sendHttp201,
+    sendHttp400:      sendHttp400,
+    sendHttp401:      sendHttp401,
+    sendHttp403:      sendHttp403,
+    sendHttp500:      sendHttp500,
+    sendHttp401Nonce: sendHttp401Nonce
 }
 */
 var net = {
-    sendHttp200: sendHttp200,
-    sendHttp201: sendHttp201,
-    sendHttp400: sendHttp400,
-    sendHttp401: sendHttp401,
-    sendHttp403: sendHttp403,
-    sendHttp500: sendHttp500
+    sendHttp200:      sendHttp200,
+    sendHttp201:      sendHttp201,
+    sendHttp400:      sendHttp400,
+    sendHttp401:      sendHttp401,
+    sendHttp403:      sendHttp403,
+    sendHttp500:      sendHttp500,
+    sendHttp401Nonce: sendHttp401Nonce
 };
 
 // public interface
