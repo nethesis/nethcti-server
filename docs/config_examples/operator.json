@@ -1,0 +1,7 @@
+{
+    "groups": {
+        "Support":     ["user2", "user4"],
+        "Business":    ["user3", "user4", "user6"],
+        "Development": ["user1", "user5"]
+    }
+}

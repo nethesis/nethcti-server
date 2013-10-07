@@ -1,0 +1,13 @@
+{
+    "type":   "ldap",
+    "ldap": {
+        "ou":     "OU",
+        "baseDn": "dc=DC,dc=DC",
+        "port":   "389",
+        "server": "localhost"
+    },
+    "file": {
+        "path": "/etc/nethcti/users.json"
+    },
+    "expiration_timeout": "3600"
+}
