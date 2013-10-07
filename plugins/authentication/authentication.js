@@ -86,22 +86,13 @@ var authFileCredentials = {};
 var ou;
 
 /**
-* The LDAP domain component 1. E.g. ...nethesis...
+* The LDAP base DN.
 *
-* @property dc1
+* @property baseDn
 * @type {string}
 * @private
 */
-var dc1;
-
-/**
-* The LDAP domain component 2. E.g. ...it
-*
-* @property dc2
-* @type {string}
-* @private
-*/
-var dc2;
+var baseDn;
 
 /**
 * The LDAP client.
@@ -288,21 +279,18 @@ function configFile(json) {
 */
 function configLDAP(json) {
     // check the parameter
-    if (typeof json !== 'object'
-        || json.ou  === undefined
-        || json.dc1 === undefined || json.dc1 === ''
-        || json.dc2 === undefined || json.dc2 === '') {
+    if (   typeof json    !== 'object'
+        || typeof json.ou !== 'string' || typeof json.baseDn !== 'string') {
 
         throw new Error('wrong LDAP auhtentication configuration');
     }
 
     // customize server and port by the configuration file
-    if (json.port)   { port = json.port; }
+    if (json.port)   { port   = json.port;   }
     if (json.server) { server = json.server; }
 
-    ou  = json.ou;
-    dc1 = json.dc1;
-    dc2 = json.dc2;
+    ou     = json.ou;
+    baseDn = json.baseDn;
 
     var ldapurl = 'ldap://' + server + ':' + port;
 
@@ -472,7 +460,7 @@ function authByLDAP(accessKeydId, password, cb) {
             throw new Error('wrong parameters');
         }
 
-        var dn = 'uid=' + accessKeydId + ',ou=' + ou + ',dc=' + dc1 + ',dc=' + dc2;
+        var dn = 'uid=' + accessKeydId + ',ou=' + ou + ',' + baseDn;
 
         // ldap authentication
         client.bind(dn, password, function (err, result) {
