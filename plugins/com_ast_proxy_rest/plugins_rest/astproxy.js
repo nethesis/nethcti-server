@@ -167,6 +167,7 @@ var compConfigManager;
         * 1. [`astproxy/txfer_tovm`](#txfer_tovmpost)
         * 1. [`astproxy/pickup_conv`](#pickup_convpost)
         * 1. [`astproxy/stop_record`](#stop_recordpost)
+        * 1. [`astproxy/pickup_queue`](#pickup_queuepost)
         * 1. [`astproxy/start_record`](#start_recordpost)
         * 1. [`astproxy/blindtransfer`](#blindtransferpost)
         * 1. [`astproxy/pickup_parking`](#pickup_parkingpost)
@@ -351,6 +352,21 @@ var compConfigManager;
         *
         * ---
         *
+        * ### <a id="pickup_queuepost">**`astproxy/pickup_queue`**</a>
+        *
+        * Pickup the specified waiting caller of the queue. The request must contains the following parameters:
+        *
+        * * `waitingCallerId: the identifier of the waiting caller in the queue`
+        * * `destId: the endpoint identifier that pickup the conversation`
+        * * `destType: the endpoint type that pickup the conversation`
+        * * `queue: the identifier of the queue`
+        *
+        * E.g. using curl:
+        *
+        *     curl --insecure -i -X POST -d '{ "waitingCallerId": "SIP/214-00000006", "destType": "extension", "destId": "221", "queue": "401" }' https://192.168.5.224:8282/astproxy/pickup_queue
+        *
+        * ---
+        *
         * ### <a id="start_recordpost">**`astproxy/start_record`**</a>
         *
         * Starts the recording of the specified conversation. The request must contains the following parameters:
@@ -456,6 +472,7 @@ var compConfigManager;
                 *   @param {string} txfer_tovm       Transfer the conversation to the voicemail
                 *   @param {string} pickup_conv      Pickup a conversation
                 *   @param {string} stop_record      Stop the recording of a conversation
+                *   @param {string} pickup_queue     Pickup a waiting caller from a queue
                 *   @param {string} start_record     Start the recording of a conversation
                 *   @param {string} blindtransfer    Transfer a conversation with blind type
                 *   @param {string} pickup_parking   Pickup a parked call
@@ -474,6 +491,7 @@ var compConfigManager;
                     'pickup_conv',
                     'stop_record',
                     'start_record',
+                    'pickup_queue',
                     'blindtransfer',
                     'pickup_parking',
                     'logon_dyn_queues'
@@ -1591,6 +1609,80 @@ var compConfigManager;
             },
 
             /**
+            * Pickup a waiting caller from the queue with the following REST API:
+            *
+            *     POST pickup_queue
+            *
+            * @method pickup_queue
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            pickup_queue: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (   typeof req.params                 !== 'object'
+                        || typeof req.params.destType        !== 'string' || typeof req.params.destId !== 'string'
+                        || typeof req.params.waitingCallerId !== 'string' || typeof req.params.queue  !== 'string') {
+
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    if (req.params.destType === 'extension') {
+
+                        // check if the user has the authorization to pickup waiting caller from the specified queue
+                        if (compAuthorization.authorizePickupUser(username, req.params.queue) !== true) {
+
+                            logger.warn(IDLOG, 'pickup waiting caller "' + req.params.waitingCallerId + '" failed: user "' + username + '" ' +
+                                               ' isn\'t authorized to pickup waiting caller from the queue ' + req.params.queue);
+                            compUtil.net.sendHttp403(IDLOG, res);
+                            return;
+                        }
+                        // check if the destination endpoint is owned by the user
+                        else if (compAuthorization.verifyUserEndpointExten(username, req.params.destId) === false) {
+
+                            logger.warn(IDLOG, 'pickup waiting caller "' + req.params.waitingCallerId + '" by user "' + username + '" has been failed: ' +
+                                               ' the destination ' + req.params.destType + ' ' + req.params.destId + ' isn\'t owned by the user');
+                            compUtil.net.sendHttp403(IDLOG, res);
+                            return;
+
+                        } else {
+                            logger.info(IDLOG, 'pickup waiting caller "' + req.params.waitingCallerId + '" from queue ' + req.params.queue + ': ' +
+                                               'the destination endpoint ' + req.params.destType + ' ' + req.params.destId + ' is owned by "' + username + '"');
+                        }
+
+                        compAstProxy.pickupQueue(req.params.waitingCallerId, req.params.queue, req.params.destType, req.params.destId, function (err) {
+                            try {
+                                if (err) {
+                                    logger.warn(IDLOG, 'pickup waiting caller "' + req.params.waitingCallerId + '" from queue ' + req.params.queue + ' by user "' + username + '" with ' + req.params.destType + ' ' + req.params.destId + ' has been failed');
+                                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                                    return;
+                                }
+                                logger.info(IDLOG, 'pickup waiting caller "' + req.params.waitingCallerId + '" from queue ' + req.params.queue +
+                                                   ' has been successful by user "' + username + '" with ' + req.params.destType + ' ' + req.params.destId);
+                                compUtil.net.sendHttp200(IDLOG, res);
+
+                            } catch (err) {
+                                logger.error(IDLOG, err.stack);
+                                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                            }
+                        });
+
+                    } else {
+                        logger.warn(IDLOG, 'picking up waiting caller ' + req.params.waitingCallerId + ' from queue ' + req.params.queue + ': unknown destType ' + destType);
+                        compUtil.net.sendHttp400(IDLOG, res);
+                    }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
             * Logon the extension in all the queues in which is dynamic member with the following REST API:
             *
             *     POST logon_dyn_queues
@@ -1786,6 +1878,7 @@ var compConfigManager;
         exports.pickup_conv          = astproxy.pickup_conv;
         exports.stop_record          = astproxy.stop_record;
         exports.setCompUser          = setCompUser;
+        exports.pickup_queue         = astproxy.pickup_queue;
         exports.start_record         = astproxy.start_record;
         exports.blindtransfer        = astproxy.blindtransfer;
         exports.pickup_parking       = astproxy.pickup_parking;

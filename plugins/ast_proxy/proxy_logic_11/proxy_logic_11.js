@@ -2028,8 +2028,9 @@ function pickupParking(parking, destType, destId, cb) {
             });
 
         } else {
-            logger.error(IDLOG, 'pickup parking from ' + destType + ' ' + destId + ' of parking ' + parking);
-            cb();
+            var str = 'pickup parking from ' + destType + ' ' + destId + ' of parking ' + parking;
+            logger.error(IDLOG, str);
+            cb(str);
         }
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -2090,10 +2091,54 @@ function pickupConversation(endpointType, endpointId, convid, destType, destId, 
                 });
 
             } else {
-                logger.error(IDLOG, 'pickup conversation of ' + endpointType + ' ' + endpointId + ' from ' + destType + ' ' + destId);
-                cb();
+                var str = 'pickup conversation of ' + endpointType + ' ' + endpointId + ' from ' + destType + ' ' + destId;
+                logger.error(IDLOG, str);
+                cb(str);
             }
         }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Pickup a waiting caller from the specified queue.
+*
+* @method pickupQueue
+* @param {string}   waitingCallerId The identifier of the waiting caller
+* @param {string}   queue           The queue identifier
+* @param {string}   destType        The endpoint type that pickup the waiting caller
+* @param {string}   destId          The endpoint identifier that pickup the waiting caller
+* @param {function} cb              The callback function
+*/
+function pickupQueue(waitingCallerId, queue, destType, destId, cb) {
+    try {
+        // check parameters
+        if (   typeof waitingCallerId !== 'string'
+            || typeof destId          !== 'string' || typeof destType !== 'string'
+            || typeof queue           !== 'string' || typeof cb       !== 'function') {
+
+            throw new Error('wrong parameters');
+        }
+
+        var ch = queues[queue].getAllWaitingCallers()[waitingCallerId].getChannel();
+
+        if (destType === 'extension' && extensions[destId] && ch !== undefined) {
+
+            // the pickup operation is made by redirect operation
+            logger.info(IDLOG, 'pickup waitingCaller ' + waitingCallerId + ' from queue ' + queue + ' to ' + destType + ' ' + destId);
+            astProxy.doCmd({ command: 'redirectChannel', chToRedirect: ch, to: destId }, function (err) {
+               cb(err);
+               redirectConvCb(err);
+            });
+
+        } else {
+            var str = 'picking up waiting caller ' + waitingCallerId + ' from queue ' + queue + ' to ' + destType + ' ' + destId;
+            logger.error(IDLOG, str);
+            cb(str);
+        }
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err);
@@ -3246,6 +3291,7 @@ exports.call                            = call;
 exports.start                           = start;
 exports.visit                           = visit;
 exports.setLogger                       = setLogger;
+exports.pickupQueue                     = pickupQueue;
 exports.getExtensions                   = getExtensions;
 exports.pickupParking                   = pickupParking;
 exports.getJSONQueues                   = getJSONQueues;
