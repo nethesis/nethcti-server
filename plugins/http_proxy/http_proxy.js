@@ -304,10 +304,12 @@ function getProxyLog(req) {
 */
 function proxyRequest(req, res, proxy) {
     try {
+        logger.info(IDLOG, req.url);
+
         // bypass the token verification if the request is:
         // 1. an authentication nonce request
         // 2. a static file request
-        if (   req.url.indexOf('/authentication/authenticate') !== -1
+        if (   req.url.indexOf('/authentication/login') !== -1
             || req.url.indexOf('/static') !== -1) {
 
             proxy.proxyRequest(req, res);
@@ -324,8 +326,7 @@ function proxyRequest(req, res, proxy) {
         // arr[0] is the username
         // arr[1] is the token
         var arr = req.headers.authorization.split(':');
-        //if (compAuthentication.verifyToken(arr[0], arr[1]) === true) {
-        if (true) {
+        if (compAuthentication.verifyToken(arr[0], arr[1]) === true) {
 
             // add header used by the authorization module
             req.headers.authorization_user = arr[0];

@@ -376,9 +376,9 @@ function getNonce(accessKeyId, password) {
 * **It can throw an exception.**
 *
 * @method authenticate
-* @param {string} accessKeyId The access key used to authenticate, e.g. the username
-* @param {string} password The password of the account
-* @param {function} cb The callback function
+* @param {string}   accessKeyId The access key used to authenticate, e.g. the username
+* @param {string}   password    The password of the account
+* @param {function} cb          The callback function
 */
 function authenticate(accessKeydId, password, cb) {
     try {
@@ -503,10 +503,11 @@ function bindCb(accessKeydId, err, result, cb) {
 }
 
 /**
-* Remove the grant for an access key.
+* Removes the grant for an access key.
 *
 * @method removeGrant
-* @param {string} accessKeyId The access key.
+* @param  {string}  accessKeyId The access key.
+* @return {boolean} True if the grant removing has been successful.
 */
 function removeGrant(accessKeyId) {
     try {
@@ -518,6 +519,10 @@ function removeGrant(accessKeyId) {
             delete grants[accessKeyId];
             logger.info(IDLOG, 'removed grant for accessKeyId ' + accessKeyId);
         }
+
+        if (grants[accessKeyId] === undefined) { return true; }
+        return false;
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -607,10 +612,10 @@ function verifyToken(accessKeyId, token) {
 }
 
 // public interface
-exports.config        = config;
-exports.getNonce      = getNonce;
-exports.setLogger     = setLogger;
-exports.verifyToken   = verifyToken;
-exports.removeGrant   = removeGrant;
-exports.authenticate  = authenticate;
+exports.config                   = config;
+exports.getNonce                 = getNonce;
+exports.setLogger                = setLogger;
+exports.verifyToken              = verifyToken;
+exports.removeGrant              = removeGrant;
+exports.authenticate             = authenticate;
 exports.isAutoUpdateTokenExpires = isAutoUpdateTokenExpires;
