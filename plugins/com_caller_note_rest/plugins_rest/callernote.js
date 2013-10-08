@@ -162,7 +162,7 @@ function setCompUtil(comp) {
             create: function (req, res, next) {
                 try {
                     var username = req.headers.authorization_user;
-                    var data = JSON.parse(Object.keys(req.params)[0]);
+                    var data     = req.params;
                     data.creator = username;
 
                     compCallerNote.newCallerNote(data, function (err) {
