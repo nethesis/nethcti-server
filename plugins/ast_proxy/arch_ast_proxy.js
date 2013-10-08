@@ -91,6 +91,13 @@ module.exports = function (options, imports, register) {
             redirectConversation: astProxy.proxyLogic.redirectConversation,
 
             /**
+            * It's the _redirectWaitingCaller_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method redirectWaitingCaller
+            */
+            redirectWaitingCaller: astProxy.proxyLogic.redirectWaitingCaller,
+
+            /**
             * It's the _attendedTransferConversation_ method provided by _ast\_proxy.proxyLogic_.
             *
             * @method attendedTransferConversation
@@ -124,13 +131,6 @@ module.exports = function (options, imports, register) {
             * @method pickupParking
             */
             pickupParking: astProxy.proxyLogic.pickupParking,
-
-            /**
-            * It's the _pickupQueue_ method provided by _ast\_proxy.proxyLogic_.
-            *
-            * @method pickupQueue
-            */
-            pickupQueue: astProxy.proxyLogic.pickupQueue,
 
             /**
             * It's the _logonDynQueues_ method provided by _ast\_proxy.proxyLogic_.

@@ -2103,49 +2103,6 @@ function pickupConversation(endpointType, endpointId, convid, destType, destId, 
 }
 
 /**
-* Pickup a waiting caller from the specified queue.
-*
-* @method pickupQueue
-* @param {string}   waitingCallerId The identifier of the waiting caller
-* @param {string}   queue           The queue identifier
-* @param {string}   destType        The endpoint type that pickup the waiting caller
-* @param {string}   destId          The endpoint identifier that pickup the waiting caller
-* @param {function} cb              The callback function
-*/
-function pickupQueue(waitingCallerId, queue, destType, destId, cb) {
-    try {
-        // check parameters
-        if (   typeof waitingCallerId !== 'string'
-            || typeof destId          !== 'string' || typeof destType !== 'string'
-            || typeof queue           !== 'string' || typeof cb       !== 'function') {
-
-            throw new Error('wrong parameters');
-        }
-
-        var ch = queues[queue].getAllWaitingCallers()[waitingCallerId].getChannel();
-
-        if (destType === 'extension' && extensions[destId] && ch !== undefined) {
-
-            // the pickup operation is made by redirect operation
-            logger.info(IDLOG, 'pickup waitingCaller ' + waitingCallerId + ' from queue ' + queue + ' to ' + destType + ' ' + destId);
-            astProxy.doCmd({ command: 'redirectChannel', chToRedirect: ch, to: destId }, function (err) {
-               cb(err);
-               redirectConvCb(err);
-            });
-
-        } else {
-            var str = 'picking up waiting caller ' + waitingCallerId + ' from queue ' + queue + ' to ' + destType + ' ' + destId;
-            logger.error(IDLOG, str);
-            cb(str);
-        }
-
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-        cb(err);
-    }
-}
-
-/**
 * It's called when an Hangup event is raised from the asterisk. It is
 * called from the _hangup_ event plugin.
 *
@@ -2237,7 +2194,7 @@ function hangupConversation(endpointType, endpointId, convid, cb) {
 */
 function redirectConvCb(err) {
     try {
-        if (err) { logger.error(IDLOG, 'redirect conversation failed: ' + err.toString()); }
+        if (err) { logger.error(IDLOG, 'redirect channel failed: ' + err.toString()); }
         else     { logger.info(IDLOG, 'redirect channel succesfully');                     }
 
     } catch (error) {
@@ -2401,6 +2358,54 @@ function redirectConversation(endpointType, endpointId, convid, to, cb) {
 
         } else {
             var msg = 'redirect conversation: unknown endpointType ' + endpointType + ' or extension ' + endpointId + ' not present';
+            logger.warn(IDLOG, msg);
+            cb(msg);
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Redirect the waiting caller from the queue to the specified destination.
+*
+* @method redirectWaitingCaller
+* @param {string}   waitingCallerId The identifier of the waiting caller
+* @param {string}   queue           The identifier of the queue in which the caller waiting
+* @param {string}   to              The destination number to redirect the conversation
+* @param {function} cb              The callback function
+*/
+function redirectWaitingCaller(waitingCallerId, queue, to, cb) {
+    try {
+        // check parameters
+        if (   typeof cb              !== 'function' || typeof to    !== 'string'
+            || typeof waitingCallerId !== 'string'   || typeof queue !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // check the queue existence
+        if (queues[queue]) {
+
+            var ch = queues[queue].getAllWaitingCallers()[waitingCallerId].getChannel();
+
+            if (ch !== undefined) {
+
+                logger.info(IDLOG, 'redirect waitingCaller ' + waitingCallerId + ' from queue ' + queue + ' to ' + to);
+                astProxy.doCmd({ command: 'redirectChannel', chToRedirect: ch, to: to }, function (err) {
+                   cb(err);
+                   redirectConvCb(err);
+                });
+
+            } else {
+                var str = 'redirecting waiting caller ' + waitingCallerId + ' from queue ' + queue + ' to ' + to + ': no channel found';
+                logger.error(IDLOG, str);
+                cb(str);
+            }
+
+        } else {
+            var msg = 'redirecting waiting caller ' + waitingCallerId + ' from queue ' + queue + ' to ' + to + ': non existent queue ' + queue;
             logger.warn(IDLOG, msg);
             cb(msg);
         }
@@ -3291,7 +3296,6 @@ exports.call                            = call;
 exports.start                           = start;
 exports.visit                           = visit;
 exports.setLogger                       = setLogger;
-exports.pickupQueue                     = pickupQueue;
 exports.getExtensions                   = getExtensions;
 exports.pickupParking                   = pickupParking;
 exports.getJSONQueues                   = getJSONQueues;
@@ -3309,6 +3313,7 @@ exports.pickupConversation              = pickupConversation;
 exports.evtExtenDndChanged              = evtExtenDndChanged;
 exports.EVT_PARKING_CHANGED             = EVT_PARKING_CHANGED;
 exports.redirectConversation            = redirectConversation;
+exports.redirectWaitingCaller           = redirectWaitingCaller;
 exports.evtHangupConversation           = evtHangupConversation;
 exports.evtExtenStatusChanged           = evtExtenStatusChanged;
 exports.evtNewVoicemailMessage          = evtNewVoicemailMessage;
