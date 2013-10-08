@@ -75,27 +75,23 @@ function setLogger(log) {
 *
 * @method newCallerNote
 * @param {object} data
-*   @param {string} data.number The caller/called number that is associated
-*       with the note
-*   @param {string} data.creator The creator of the caller note
-*   @param {string} data.callid The identifier of the call. It can be the "uniqueid" field
-*       of the database table "asteriskcdrdb.cdr" in the asterisk scenario
-*   @param {string} data.text The text of the note
-*   @param {string} data.booking The reservation option. If the creator has booked
-*       the callback from the expressed number
-*   @param {string} data.visibility It can be "private" or "public"
-*   @param {string} data.expiration It's the expiration date of the note. It must
-*       use the YYYYMMDD format, e.g. to express the date of "12 june 2013" you must
-*       use 20130612
+*   @param {string} data.number      The caller/called number that is associated with the note
+*   @param {string} data.creator     The creator of the caller note
+*   @param {string} data.text        The text of the note
+*   @param {string} data.reservation The reservation option. If the creator has booked the callback from
+*                                    the expressed number
+*   @param {string} data.visibility  It can be "private" or "public"
+*   @param {string} data.expiration  It's the expiration date of the note. It must use the YYYYMMDD format,
+*                                    e.g. to express the date of "12 june 2013" you must use 20130612
 * @param {function} cb The callback function
 */
 function newCallerNote(data, cb) {
     try {
         // check parameter
-        if (typeof data               !== 'object' || typeof data.text       !== 'string'
-            || typeof data.creator    !== 'string' || typeof data.number     !== 'string'
-            || typeof data.booking    !== 'string' || typeof data.expiration !== 'string'
-            || typeof data.visibility !== 'string' || typeof data.callid     !== 'string'
+        if (typeof data                !== 'object'
+            || typeof data.creator     !== 'string' || typeof data.number     !== 'string'
+            || typeof data.reservation !== 'string' || typeof data.expiration !== 'string'
+            || typeof data.visibility  !== 'string' || typeof data.text       !== 'string'
             || CallerNote.isValidVisibility(data.visibility) === false) {
 
             throw new Error('wrong parameter');
@@ -113,27 +109,23 @@ function newCallerNote(data, cb) {
 *
 * @method save
 * @param {object} data
-*   @param {string} data.number The caller/called number that is associated
-*       with the note
-*   @param {string} data.creator The creator of the caller note
-*   @param {string} data.callid The identifier of the call. It can be the "uniqueid" field
-*       of the database table "asteriskcdrdb.cdr" in the asterisk scenario
-*   @param {string} data.text The text of the note
-*   @param {string} data.booking The reservation option. If the creator has booked
-*       the callback from the expressed number
-*   @param {string} data.visibility It can be "private" or "public"
-*   @param {string} data.expiration It's the expiration date of the note. It must
-*       use the YYYYMMDD format, e.g. to express the date of "12 june 2013" you must
-*       use 20130612
+*   @param {string} data.number      The caller/called number that is associated with the note
+*   @param {string} data.creator     The creator of the caller note
+*   @param {string} data.text        The text of the note
+*   @param {string} data.reservation The reservation option. If the creator has booked the callback from
+*                                    the expressed number
+*   @param {string} data.visibility  It can be "private" or "public"
+*   @param {string} data.expiration  It's the expiration date of the note. It must use the YYYYMMDD format,
+*                                    e.g. to express the date of "12 june 2013" you must use 20130612
 * @param {function} cb The callback function
 */
 function save(data, cb) {
     try {
         // check parameter
-        if (typeof data               !== 'object' || typeof data.text       !== 'string'
-            || typeof data.creator    !== 'string' || typeof data.number     !== 'string'
-            || typeof data.booking    !== 'string' || typeof data.expiration !== 'string'
-            || typeof data.visibility !== 'string' || typeof data.callid     !== 'string'
+        if (typeof data                !== 'object'
+            || typeof data.creator     !== 'string' || typeof data.number     !== 'string'
+            || typeof data.reservation !== 'string' || typeof data.expiration !== 'string'
+            || typeof data.visibility  !== 'string' || typeof data.text       !== 'string'
             || CallerNote.isValidVisibility(data.visibility) === false) {
 
             throw new Error('wrong parameter');
@@ -144,9 +136,9 @@ function save(data, cb) {
         if (data.visibility === CallerNote.VISIBILITY.public) { data.public = true; }
         else { data.public = false; }
 
-        // set data.booking property as boolean to adapt it to dbconn module
-        if (data.booking === 'true') { data.booking = true; }
-        else { data.booking = false; }
+        // set data.reservation property as boolean to adapt it to dbconn module
+        if (data.reservation === 'true') { data.reservation = true; }
+        else { data.reservation = false; }
 
         logger.info(IDLOG, 'save caller note by means dbconn module');
         dbconn.saveCallerNote(data, cb);

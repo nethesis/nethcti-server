@@ -6,10 +6,8 @@ CREATE TABLE `caller_note` (
   `number` varchar(50) default NULL,
   `public` tinyint(1) default '0',
   `expiration` timestamp NOT NULL default '0000-00-00 00:00:00',
-  `booking` tinyint(1) default '0',
-  `callid` varchar(50) default NULL,
+  `reservation` tinyint(1) default '0',
   PRIMARY KEY  (`id`),
   KEY `index_creator` (`creator`),
-  KEY `index_number` (`number`),
-  KEY `index_callid` (`callid`)
-) ENGINE=MyISAM AUTO_INCREMENT=23 DEFAULT CHARSET=utf8;
+  KEY `index_number` (`number`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;

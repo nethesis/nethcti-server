@@ -114,10 +114,17 @@ function setCompUtil(comp) {
         *
         * ### <a id="createpost">**`callernote/create`**</a>
         *
-        * The client cretes a new caller note. The request must contains the configurations object in the
-        * POST request. E.g. using curl:
+        * The client cretes a new caller note. The request must contains the following parameters:
         *
-        *     curl --insecure -i -X POST -d '{ "text": "some text", "number": "123456", "callid": "1234.56", "visibility": "public | private", "expiration": "20131001", "booking": "true | false" }' https://192.168.5.224:8282/callernote/create
+        * * `text: the message`
+        * * `number: the phone number to associate the note`
+        * * `visibility: ("public" | "private") If it's private only the user can view it, otherwise all other users can do it`
+        * * `expiration: the expiration of the note. After that the note remains stored but isn't more showed up`
+        * * `reservation: (true | false) if the user want to booking the next call from the specified number`
+        *
+        * E.g. using curl:
+        *
+        *     curl --insecure -i -X POST -d '{ "text": "some text", "number": "123456", "visibility": "public | private", "expiration": "20131001", "reservation": "true | false" }' https://192.168.5.224:8282/callernote/create
         *
         * @class plugin_rest_callernote
         * @static
