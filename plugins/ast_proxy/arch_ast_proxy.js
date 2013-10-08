@@ -98,6 +98,13 @@ module.exports = function (options, imports, register) {
             redirectWaitingCaller: astProxy.proxyLogic.redirectWaitingCaller,
 
             /**
+            * It's the _redirectParking_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method redirectParking
+            */
+            redirectParking: astProxy.proxyLogic.redirectParking,
+
+            /**
             * It's the _attendedTransferConversation_ method provided by _ast\_proxy.proxyLogic_.
             *
             * @method attendedTransferConversation

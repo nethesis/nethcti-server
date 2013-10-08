@@ -2392,7 +2392,7 @@ function redirectWaitingCaller(waitingCallerId, queue, to, cb) {
 
             if (ch !== undefined) {
 
-                logger.info(IDLOG, 'redirect waitingCaller ' + waitingCallerId + ' from queue ' + queue + ' to ' + to);
+                logger.info(IDLOG, 'redirect channel ' + ch + ' of waitingCaller ' + waitingCallerId + ' from queue ' + queue + ' to ' + to);
                 astProxy.doCmd({ command: 'redirectChannel', chToRedirect: ch, to: to }, function (err) {
                    cb(err);
                    redirectConvCb(err);
@@ -2406,6 +2406,53 @@ function redirectWaitingCaller(waitingCallerId, queue, to, cb) {
 
         } else {
             var msg = 'redirecting waiting caller ' + waitingCallerId + ' from queue ' + queue + ' to ' + to + ': non existent queue ' + queue;
+            logger.warn(IDLOG, msg);
+            cb(msg);
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Redirect the parkde call to the specified destination.
+*
+* @method redirectParking
+* @param {string}   parking The identifier of the parking
+* @param {string}   to      The destination number to redirect the parked call
+* @param {function} cb      The callback function
+*/
+function redirectParking(parking, to, cb) {
+    try {
+        // check parameters
+        if (   typeof cb      !== 'function'
+            || typeof parking !== 'string'   || typeof to !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // check the parking existence
+        if (parkings[parking]) {
+
+            var ch = parkings[parking].getParkedCaller().getChannel();
+
+            if (ch !== undefined) {
+
+                logger.info(IDLOG, 'redirect channel ' + ch + ' from parking ' + parking + ' to ' + to);
+                astProxy.doCmd({ command: 'redirectChannel', chToRedirect: ch, to: to }, function (err) {
+                   cb(err);
+                   redirectConvCb(err);
+                });
+
+            } else {
+                var str = 'redirecting parked caller of parking ' + parking + ' to ' + to + ': no channel found';
+                logger.error(IDLOG, str);
+                cb(str);
+            }
+
+        } else {
+            var msg = 'redirecting parked caller of parking ' + parking + ' to ' + to + ': non existent parking ' + parking;
             logger.warn(IDLOG, msg);
             cb(msg);
         }
@@ -3302,6 +3349,7 @@ exports.getJSONQueues                   = getJSONQueues;
 exports.getJSONTrunks                   = getJSONTrunks;
 exports.logonDynQueues                  = logonDynQueues;
 exports.getJSONParkings                 = getJSONParkings;
+exports.redirectParking                 = redirectParking;
 exports.sendDTMFSequence                = sendDTMFSequence;
 exports.parkConversation                = parkConversation;
 exports.getJSONExtensions               = getJSONExtensions;

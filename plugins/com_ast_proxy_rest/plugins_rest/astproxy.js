@@ -172,6 +172,7 @@ var compConfigManager;
         * 1. [`astproxy/pickup_parking`](#pickup_parkingpost)
         * 1. [`astproxy/logon_dyn_queues`](#logon_dyn_queuespost)
         * 1. [`astproxy/blindtransfer_queue`](#blindtransfer_queuepost)
+        * 1. [`astproxy/blindtransfer_parking`](#blindtransfer_parkingpost)
         *
         * ---
         *
@@ -421,6 +422,19 @@ var compConfigManager;
         *
         *     curl --insecure -i -X POST -d '{ "queue": "401", "waitingCallerId": "SIP/209-00000060", "to": "209" }' https://192.168.5.224:8282/astproxy/blindtransfer_queue
         *
+        * ---
+        *
+        * ### <a id="blindtransfer_parkingpost">**`astproxy/blindtransfer_parking`**</a>
+        *
+        * Transfer the parked call to the specified destination using the blind type. The request must contains the following parameters:
+        *
+        * * `to: the destination number`
+        * * `parking: the parking identifier`
+        *
+        * E.g. using curl:
+        *
+        *     curl --insecure -i -X POST -d '{ "parking": "71", "to": "209" }' https://192.168.5.224:8282/astproxy/blindtransfer_parking
+        *
         * @class plugin_rest_astproxy
         * @static
         */
@@ -460,22 +474,23 @@ var compConfigManager;
                 * @property post
                 * @type {array}
                 *
-                *   @param {string} cf                  Sets the call forward status of the endpoint of the user
-                *   @param {string} dnd                 Sets the don't disturb status of the endpoint of the user
-                *   @param {string} park                Park a conversation of the user
-                *   @param {string} call                Make a new call
-                *   @param {string} atxfer              Transfer a conversation with attended type
-                *   @param {string} hangup              Hangup a conversation
-                *   @param {string} intrude             Spy and speak in a conversation
-                *   @param {string} start_spy           Spy a conversation with only listening
-                *   @param {string} txfer_tovm          Transfer the conversation to the voicemail
-                *   @param {string} pickup_conv         Pickup a conversation
-                *   @param {string} stop_record         Stop the recording of a conversation
-                *   @param {string} start_record        Start the recording of a conversation
-                *   @param {string} blindtransfer       Transfer a conversation with blind type
-                *   @param {string} pickup_parking      Pickup a parked call
-                *   @param {string} logon_dyn_queues    Logon the extension in all the queues for which is dynamic member
-                *   @param {string} blindtransfer_queue Transfer a waiting caller from a queue to the destination with blind type
+                *   @param {string} cf                    Sets the call forward status of the endpoint of the user
+                *   @param {string} dnd                   Sets the don't disturb status of the endpoint of the user
+                *   @param {string} park                  Park a conversation of the user
+                *   @param {string} call                  Make a new call
+                *   @param {string} atxfer                Transfer a conversation with attended type
+                *   @param {string} hangup                Hangup a conversation
+                *   @param {string} intrude               Spy and speak in a conversation
+                *   @param {string} start_spy             Spy a conversation with only listening
+                *   @param {string} txfer_tovm            Transfer the conversation to the voicemail
+                *   @param {string} pickup_conv           Pickup a conversation
+                *   @param {string} stop_record           Stop the recording of a conversation
+                *   @param {string} start_record          Start the recording of a conversation
+                *   @param {string} blindtransfer         Transfer a conversation with blind type
+                *   @param {string} pickup_parking        Pickup a parked call
+                *   @param {string} logon_dyn_queues      Logon the extension in all the queues for which is dynamic member
+                *   @param {string} blindtransfer_queue   Transfer a waiting caller from a queue to the destination with blind type
+                *   @param {string} blindtransfer_parking Transfer the parked call to the destination with blind type
                 */
                 'post': [
                     'cf',
@@ -493,7 +508,8 @@ var compConfigManager;
                     'blindtransfer',
                     'pickup_parking',
                     'logon_dyn_queues',
-                    'blindtransfer_queue'
+                    'blindtransfer_queue',
+                    'blindtransfer_parking'
                 ],
                 'head': [],
                 'del' : []
@@ -1115,7 +1131,7 @@ var compConfigManager;
             },
 
             /**
-            * Transfer the waiting caller from the queue to the specified destination  with blind type with the following REST API:
+            * Transfer the waiting caller from the queue to the specified destination with blind type with the following REST API:
             *
             *     POST blindtransfer_queue
             *
@@ -1137,51 +1153,115 @@ var compConfigManager;
                     }
 
 
-                        // check if the user has the authorization to blind transfer the waiting callers from all queues
-                        if (compAuthorization.authorizeAdminTransferUser(username) === true) {
+                    // check if the user has the authorization to blind transfer the waiting callers from all queues
+                    if (compAuthorization.authorizeAdminTransferUser(username) === true) {
 
-                            logger.info(IDLOG, 'blind transfer waiting caller "' + req.params.waitingCallerId + '" from queue ' + req.params.queue + ' to ' + req.params.to + ': "admin_transfer" authorization successful for user "' + username + '"');
+                        logger.info(IDLOG, 'blind transfer waiting caller "' + req.params.waitingCallerId + '" from queue ' + req.params.queue + ' to ' + req.params.to + ': "admin_transfer" authorization successful for user "' + username + '"');
 
-                        } else {
-                            logger.warn(IDLOG, 'blind transfer waiting caller "' + req.params.waitingCallerId + '" to ' + req.params.to + ': "admin_transfer" authorization failed for user "' + username + '"');
-                            compUtil.net.sendHttp403(IDLOG, res);
-                            return;
-                        }
+                    } else {
+                        logger.warn(IDLOG, 'blind transfer waiting caller "' + req.params.waitingCallerId + '" from queue ' + req.params.queue + ' to ' + req.params.to + ': "admin_transfer" authorization failed for user "' + username + '"');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
 
-                        compAstProxy.redirectWaitingCaller(
-                            req.params.waitingCallerId,
-                            req.params.queue,
-                            req.params.to,
-                            function (err) {
-                                try {
-                                    if (err) {
-                                        logger.warn(IDLOG, 'blind transfer waiting caller "' + req.params.waitingCallerId + '" from queue ' +
-                                                           req.params.queue + ' to ' + req.params.to + ' by user "' + username + '" has been failed');
+                    compAstProxy.redirectWaitingCaller(
+                        req.params.waitingCallerId,
+                        req.params.queue,
+                        req.params.to,
+                        function (err) {
+                            try {
+                                if (err) {
+                                    logger.warn(IDLOG, 'blind transfer waiting caller "' + req.params.waitingCallerId + '" from queue ' +
+                                                       req.params.queue + ' to ' + req.params.to + ' by user "' + username + '" has been failed');
 
-                                        compUtil.net.sendHttp500(IDLOG, res, err.toString());
-                                        return;
-                                    }
-
-                                    logger.info(IDLOG, 'waiting caller ' + req.params.waitingCallerId + ' has been blind transfered successfully ' +
-                                                       'by user "' + username + '" from queue ' + req.params.queue + ' to ' + req.params.to);
-                                    compUtil.net.sendHttp200(IDLOG, res);
-
-                                } catch (err) {
-                                    logger.error(IDLOG, err.stack);
                                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                                    return;
                                 }
+
+                                logger.info(IDLOG, 'waiting caller ' + req.params.waitingCallerId + ' has been blind transfered successfully ' +
+                                                   'by user "' + username + '" from queue ' + req.params.queue + ' to ' + req.params.to);
+                                compUtil.net.sendHttp200(IDLOG, res);
+
+                            } catch (err) {
+                                logger.error(IDLOG, err.stack);
+                                compUtil.net.sendHttp500(IDLOG, res, err.toString());
                             }
-                        );
+                        }
+                    );
 
-                } catch (err) {
-                    logger.error(IDLOG, err.stack);
-                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
-                }
-            },
+            } catch (err) {
+                logger.error(IDLOG, err.stack);
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+            }
+        },
 
-            /**
-            * Spy a conversation with only listening it with the following REST API:
+        /**
+        * Transfer the parked call to the specified destination with blind type with the following REST API:
+        *
+            *     POST blindtransfer_parking
             *
+            * @method blindtransfer_parking
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            blindtransfer_parking: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (   typeof req.params         !== 'object'
+                        || typeof req.params.parking !== 'string' || typeof req.params.to !== 'string') {
+
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+
+                    // check if the user has the authorization to blind transfer the parked calls
+                    if (compAuthorization.authorizeAdminTransferUser(username) === true) {
+
+                        logger.info(IDLOG, 'blind transfer parking "' + req.params.parking + '" to ' + req.params.to + ': "admin_transfer" authorization successful for user "' + username + '"');
+
+                    } else {
+                        logger.warn(IDLOG, 'blind transfer parking "' + req.params.parking + '" to ' + req.params.to + ': "admin_transfer" authorization failed for user "' + username + '"');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+
+                    compAstProxy.redirectParking(
+                        req.params.parking,
+                        req.params.to,
+                        function (err) {
+                            try {
+                                if (err) {
+                                    logger.warn(IDLOG, 'blind transfer waiting caller "' + req.params.waitingCallerId + '" from queue ' +
+                                                       req.params.queue + ' to ' + req.params.to + ' by user "' + username + '" has been failed');
+
+                                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                                    return;
+                                }
+
+                                logger.info(IDLOG, 'waiting caller ' + req.params.waitingCallerId + ' has been blind transfered successfully ' +
+                                                   'by user "' + username + '" from queue ' + req.params.queue + ' to ' + req.params.to);
+                                compUtil.net.sendHttp200(IDLOG, res);
+
+                            } catch (err) {
+                                logger.error(IDLOG, err.stack);
+                                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                            }
+                        }
+                    );
+
+            } catch (err) {
+                logger.error(IDLOG, err.stack);
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+            }
+        },
+
+        /**
+        * Spy a conversation with only listening it with the following REST API:
+        *
             *     POST start_spy
             *
             * @method start_spy
@@ -1847,36 +1927,37 @@ var compConfigManager;
                 }
             }
         }
-        exports.cf                   = astproxy.cf;
-        exports.api                  = astproxy.api;
-        exports.dnd                  = astproxy.dnd;
-        exports.park                 = astproxy.park;
-        exports.call                 = astproxy.call;
-        exports.queues               = astproxy.queues;
-        exports.trunks               = astproxy.trunks;
-        exports.hangup               = astproxy.hangup;
-        exports.atxfer               = astproxy.atxfer;
-        exports.intrude              = astproxy.intrude;
-        exports.opgroups             = astproxy.opgroups;
-        exports.parkings             = astproxy.parkings;
-        exports.start_spy            = astproxy.start_spy;
-        exports.setLogger            = setLogger;
-        exports.txfer_tovm           = astproxy.txfer_tovm;
-        exports.extensions           = astproxy.extensions;
-        exports.setPrivacy           = setPrivacy;
-        exports.setCompUtil          = setCompUtil;
-        exports.pickup_conv          = astproxy.pickup_conv;
-        exports.stop_record          = astproxy.stop_record;
-        exports.setCompUser          = setCompUser;
-        exports.start_record         = astproxy.start_record;
-        exports.blindtransfer        = astproxy.blindtransfer;
-        exports.pickup_parking       = astproxy.pickup_parking;
-        exports.setCompOperator      = setCompOperator;
-        exports.setCompAstProxy      = setCompAstProxy;
-        exports.logon_dyn_queues     = astproxy.logon_dyn_queues;
-        exports.blindtransfer_queue  = astproxy.blindtransfer_queue;
-        exports.setCompAuthorization = setCompAuthorization;
-        exports.setCompConfigManager = setCompConfigManager;
+        exports.cf                    = astproxy.cf;
+        exports.api                   = astproxy.api;
+        exports.dnd                   = astproxy.dnd;
+        exports.park                  = astproxy.park;
+        exports.call                  = astproxy.call;
+        exports.queues                = astproxy.queues;
+        exports.trunks                = astproxy.trunks;
+        exports.hangup                = astproxy.hangup;
+        exports.atxfer                = astproxy.atxfer;
+        exports.intrude               = astproxy.intrude;
+        exports.opgroups              = astproxy.opgroups;
+        exports.parkings              = astproxy.parkings;
+        exports.start_spy             = astproxy.start_spy;
+        exports.setLogger             = setLogger;
+        exports.txfer_tovm            = astproxy.txfer_tovm;
+        exports.extensions            = astproxy.extensions;
+        exports.setPrivacy            = setPrivacy;
+        exports.setCompUtil           = setCompUtil;
+        exports.pickup_conv           = astproxy.pickup_conv;
+        exports.stop_record           = astproxy.stop_record;
+        exports.setCompUser           = setCompUser;
+        exports.start_record          = astproxy.start_record;
+        exports.blindtransfer         = astproxy.blindtransfer;
+        exports.pickup_parking        = astproxy.pickup_parking;
+        exports.setCompOperator       = setCompOperator;
+        exports.setCompAstProxy       = setCompAstProxy;
+        exports.logon_dyn_queues      = astproxy.logon_dyn_queues;
+        exports.blindtransfer_queue   = astproxy.blindtransfer_queue;
+        exports.setCompAuthorization  = setCompAuthorization;
+        exports.setCompConfigManager  = setCompConfigManager;
+        exports.blindtransfer_parking = astproxy.blindtransfer_parking;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
