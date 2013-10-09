@@ -134,7 +134,7 @@ function setCompUtil(comp) {
         *
         * E.g. using curl:
         *
-        *     curl --insecure -i -X POST -d '{ "username": "alessandro", "token": "0123456789" }' https://192.168.5.224:8282/authentication/logout
+        *     curl --insecure -i -X POST -d '{}' https://192.168.5.224:8282/authentication/logout
         *
         * @class plugin_rest_authentication
         * @static
