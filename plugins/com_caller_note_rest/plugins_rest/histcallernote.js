@@ -104,7 +104,7 @@ function setCompUtil(comp) {
 (function(){
     try {
         /**
-        * REST plugin that provides history caller note functions through the following REST API:
+        * REST plugin that provides history caller note of the user through the following REST API:
         *
         * # GET requests
         *

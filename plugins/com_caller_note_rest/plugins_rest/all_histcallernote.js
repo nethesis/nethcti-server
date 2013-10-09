@@ -104,7 +104,7 @@ function setCompUtil(comp) {
 (function(){
     try {
         /**
-        * REST plugin that provides history caller note functions through the following REST API:
+        * REST plugin that provides history caller note of all users through the following REST API:
         *
         * # GET requests
         *
@@ -141,7 +141,7 @@ function setCompUtil(comp) {
         * Returns the history caller note created by all users between _"from"_ date to _"to"_ date filtering by _"filter"_.
         * Date must be expressed in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
         *
-        * @class plugin_rest_histcallernote
+        * @class plugin_rest_all_histcallernote
         * @static
         */
         var all_histcallernote = {
