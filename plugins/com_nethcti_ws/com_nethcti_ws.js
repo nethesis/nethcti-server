@@ -1191,12 +1191,12 @@ function logoutHdlr(socket) {
 
         socket.get('username', function (err, username) {
 
-            logger.info(IDLOG, 'received logout request from user "' + username + '" ' + getWebsocketEndpoint(socket) + ' with id ' + socket.id);
+            logger.info(IDLOG, 'logout websocket of user "' + username + '" ' + getWebsocketEndpoint(socket) + ' with id ' + socket.id);
 
-            compAuthe.removeGrant(username);
+            // remove trusted identifier of the websocket
+            removeWebsocketId(socket.id);
 
-            logger.info(IDLOG, 'send logout successfully to ' + username + ' ' + getWebsocketEndpoint(socket) + ' with id ' + socket.id);
-            socket.emit('ack_logout');
+            socket.disconnect();
         });
 
     } catch (err) {
