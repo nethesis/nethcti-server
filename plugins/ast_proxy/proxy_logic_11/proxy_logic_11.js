@@ -16,6 +16,7 @@ var path               = require('path');
 var async              = require('async');
 var Queue              = require('../queue').Queue;
 var Trunk              = require('../trunk').Trunk;
+var moment             = require('moment');
 var Channel            = require('../channel').Channel;
 var Parking            = require('../parking').Parking;
 var iniparser          = require('iniparser');
@@ -2889,18 +2890,18 @@ function startSpyListenConversation(endpointType, endpointId, convid, destType, 
 }
 
 /**
-* Start the recording of the conversation.
+* Starts the recording of the conversation.
 *
 * @method startRecordConversation
-* @param {string} endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
-* @param {string} endpointId The endpoint identifier (e.g. the extension number)
-* @param {string} convid The conversation identifier
-* @param {function} cb The callback function
+* @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
+* @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
+* @param {string}   convid       The conversation identifier
+* @param {function} cb           The callback function
 */
 function startRecordConversation(endpointType, endpointId, convid, cb) {
     try {
         // check parameters
-        if (typeof convid !== 'string'
+        if (   typeof convid       !== 'string'
             || typeof cb           !== 'function'
             || typeof endpointId   !== 'string'
             || typeof endpointType !== 'string') {
@@ -2917,80 +2918,34 @@ function startRecordConversation(endpointType, endpointId, convid, cb) {
             // check if the conversation is already recording
             if (recordingConv[convid] !== undefined) {
                 logger.info(IDLOG, 'the conversation ' + convid + ' is already recording');
+                cb();
 
             } else if (ch) {
 
                 var chid = ch.getChannel(); // the channel identifier
-                var filepath = getRecordConversationFilepath(ch);
 
                 // start the recording
-                logger.info(IDLOG, 'execute the record of the channel ' + chid + ' of exten ' + endpointId);
-                astProxy.doCmd({ command: 'recordCall', channel: chid, filepath: filepath }, function (err) {
+                logger.info(IDLOG, 'execute the record of the channel ' + chid + ' of exten ' + endpointId + ' by DMTF tones');
+                sendDTMFSequenceToChannel(chid, '*1', function (err) {
                     cb(err);
-                    recordCallCb(err, convid);
+                    startRecordCallCb(err, convid);
                 });
 
             } else {
-                logger.warn(IDLOG, 'no channel to record of conversation ' + convid + ' of exten ' + endpointId);
-                cb();
+                var str = 'no channel to record of conversation ' + convid + ' of exten ' + endpointId;
+                logger.warn(IDLOG, str);
+                cb(str);
             }
 
         } else {
-            logger.warn(IDLOG, 'try to record conversation for the non existent endpoint ' + endpointType);
-            cb();
+            var str = 'try to record conversation for the non existent endpoint ' + endpointType;
+            logger.warn(IDLOG, str);
+            cb(str);
         }
 
     } catch (err) {
-        cb();
         logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Returns the file path to be used to record the conversation.
-*
-* @method getRecordConversationFilepath
-* @param {object} chSource The source channel
-* @return {string} The filepath to be used to record the conversation.
-*/
-function getRecordConversationFilepath(chSource) {
-    try {
-        // check parameter
-        if (typeof chSource.getUniqueId !== 'function'
-            || typeof chSource.getCallerNum  !== 'function'
-            || typeof chSource.getBridgedNum !== 'function') {
-
-            throw new Error('wrong parameter');
-        }
-
-        var SEP = '-';
-        var EXT = '.wav';
-        var PRE = 'nethcti';
-        var d = new Date(chSource.getStartTime());
-
-        // get date and time components
-        var yyyy = d.getFullYear() + '';
-        var mon  = d.getMonth()   < 10 ? ('0' + (d.getMonth() + 1)) : (d.getMonth() + 1) + '';
-        var dd   = d.getDate()    < 10 ? ('0' + d.getDate())        : d.getDate() + '';
-        var hh   = d.getHours()   < 10 ? ('0' + d.getHours())       : d.getHours() + '';
-        var min  = d.getMinutes() < 10 ? ('0' + d.getMinutes())     : d.getMinutes() + '';
-        var ss   = d.getSeconds() < 10 ? ('0' + d.getSeconds())     : d.getSeconds() + '';
-
-        // the dest and the source are so calculated because the channel is the source channel
-        var dest     = chSource.getBridgedNum();
-        var source   = chSource.getCallerNum();
-        var uniqueid = chSource.getUniqueId();
-        var date = yyyy + mon + dd;
-        var time = hh   + min + ss;
-
-        // construct the filename
-        var filename = PRE + SEP + dest + SEP + source + SEP + date + SEP + time + SEP + uniqueid + EXT;
-
-        // return the filepath
-        return path.join(yyyy, mon, dd, filename);
-
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
+        cb(err);
     }
 }
 
@@ -3025,12 +2980,12 @@ function stopRecordCallCb(err, convid) {
 * This is the callback of the record call command plugin.
 * Sets the recording status of the conversations.
 *
-* @method recordCallCb
+* @method startRecordCallCb
 * @param {object} err    The error object of the operation
 * @param {string} convid The conversation identifier
 * @private
 */
-function recordCallCb(err, convid) {
+function startRecordCallCb(err, convid) {
     try {
         if (err) {
             logger.error(IDLOG, 'record convid ' + convid + ' failed: ' + err.toString());

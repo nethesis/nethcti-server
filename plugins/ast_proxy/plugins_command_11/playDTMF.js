@@ -42,7 +42,7 @@ var IDLOG = '[playDTMF]';
         *
         * Use it with _ast\_proxy_ module as follow:
         *
-        *     ast_proxy.doCmd({ command: 'playDTMF', channel: 'SIP/301-0000000a', digit: '0' }, function (res) {
+        *     ast_proxy.doCmd({ command: 'playDTMF', channel: 'SIP/301-0000000a', digit: '0' }, function (err) {
         *         // some code
         *     });
         *
@@ -69,6 +69,8 @@ var IDLOG = '[playDTMF]';
                         Channel: args.channel,
                         Digit:   args.digit
                     };
+
+                    logger.info('\n\n\nact=', act);
 
                     // set the action identifier
                     act.ActionID = action.getActionId('playDTMF');
