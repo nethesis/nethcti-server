@@ -224,6 +224,13 @@ module.exports = function (options, imports, register) {
             EVT_EXTEN_CHANGED: astProxy.proxyLogic.EVT_EXTEN_CHANGED,
 
             /**
+            * It's the _EVT\_EXTEN\_DIALING_ property provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method EVT_EXTEN_DIALING
+            */
+            EVT_EXTEN_DIALING: astProxy.proxyLogic.EVT_EXTEN_DIALING,
+
+            /**
             * It's the _EVT\_QUEUE\_CHANGED_ property provided by _ast\_proxy.proxyLogic_.
             *
             * @method EVT_QUEUE_CHANGED
@@ -249,6 +256,8 @@ module.exports = function (options, imports, register) {
     try {
         astProxy.setLogger(logger);
         astProxy.config('/etc/nethcti/asterisk.json');
+        astProxy.proxyLogic.setCompPhonebook(imports.phonebook);
+        astProxy.proxyLogic.setCompCallerNote(imports.callerNote);
         astProxy.start();
     } catch (err) {
         logger.error(err.stack);

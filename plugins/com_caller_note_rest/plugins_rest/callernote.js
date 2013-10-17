@@ -101,10 +101,83 @@ function setCompUtil(comp) {
     }
 }
 
+/**
+* Sets the authorization architect component.
+*
+* @method setCompAuthorization
+* @param {object} comp The authorization architect component.
+*/
+function setCompAuthorization(comp) {
+    try {
+        compAuthorization = comp;
+        logger.info(IDLOG, 'set authorization architect component');
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Returns the caller notes filtered by user authorizations. Returned caller
+* notes are those all of the user and the publics of the others. Phonebook contacts returned
+* is the one created by the user in the cti phonebook, or one from the centralized phonebook
+* or a public contact created by other users in the cti address book.
+*
+* @method getFilteredCallerNotes
+* @param  {string} username       The username
+* @param  {object} callerIdentity The identity of the caller to br filtered
+* @return {array}  The filtered caller notes.
+* @private
+*/
+function getFilteredCallerNotes(username, callerNotes) {
+    try {
+        // check parameters
+        if ( typeof username !== 'string' || !(callerNotes instanceof Array) ) {
+            throw new Error('wrong parameters');
+        }
+
+        var i;
+        // filter the caller notes
+        var filteredCallerNotes = [];
+
+        // the user can view all the caller notes of all users, both private and public
+        if (compAuthorization.authorizeAdminPostitUser(username) === true) {
+
+            return callerNotes;
+        }
+
+        // the user can view only his caller notes and the public of the others
+        else if (compAuthorization.authorizePostitUser(username) === true) {
+
+            for (i = 0; i < callerNotes.length; i++) {
+
+                if (callerNotes[i].creator === username || callerNotes[i].public  === 1) {
+
+                    filteredCallerNotes.push(callerNotes[i]);
+                }
+            }
+        }
+        return filteredCallerNotes;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return [];
+    }
+}
+
 (function() {
     try {
         /**
         * REST plugin that provides caller note functions through the following REST API:
+        *
+        * # GET requests
+        *
+        * 1. [`callernote/get_allbynum/:num`](#get_allbynumget)
+        *
+        * ---
+        *
+        * ### <a id="get_allbynumget">**`callernote/get_allbynum/:num`**</a>
+        *
+        * Gets all the created caller notes by the user and the publics by the others for the specified phone number.
         *
         * # POST requests
         *
@@ -119,7 +192,7 @@ function setCompUtil(comp) {
         * * `text: the message`
         * * `number: the phone number to associate the note`
         * * `visibility: ("public" | "private") If it's private only the user can view it, otherwise all other users can do it`
-        * * `expiration: the expiration of the note. After that the note remains stored but isn't more showed up`
+        * * `expiration: the expiration of the note. After that the note remains stored but isn't more showed up. It must be espressed in the format YYYYMMDD.`
         * * `reservation: (true | false) if the user want to booking the next call from the specified number`
         *
         * E.g. using curl:
@@ -134,7 +207,16 @@ function setCompUtil(comp) {
             // the REST api
             api: {
                 'root': 'callernote',
-                'get': [],
+
+                /**
+                * REST API to be requested using HTTP GET request.
+                *
+                * @property get
+                * @type {array}
+                *
+                *   @param {string} get_allbynum/:num To gets all the created caller notes for the specified phone number
+                */
+                'get': [ 'get_allbynum/:num' ],
 
                 /**
                 * REST API to be requested using HTTP POST request.
@@ -150,14 +232,70 @@ function setCompUtil(comp) {
             },
 
             /**
+            * Gets all the created caller notes by the user and the publics by the others
+            * for the specified phone number, using the following REST API:
+            *
+            *     get_allbynum
+            *
+            * @method create
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            get_allbynum: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+                    var num      = req.params.num;
+
+                    // check if the user has the "admin_postit" authorization
+                    if (compAuthorization.authorizeAdminPostitUser(username) === true) {
+
+                        logger.log(IDLOG, 'requesting all caller notes by number ' + num + ': authorization "admin postit" successful for user "' + username + '"');
+
+                    }
+
+                    // check if the user has the "postit" authorization
+                    else if (compAuthorization.authorizePostitUser(username) !== true) {
+
+                        logger.warn(IDLOG, 'requesting all caller notes by number ' + num + ': authorization "postit" failed for user "' + username + '"');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+
+                    } else {
+                        logger.log(IDLOG, 'requesting all caller notes by number ' + num + ': authorization "postit" successful for user "' + username + '"');
+                    }
+
+                    compCallerNote.getAllValidCallerNotesByNum(num, function (err, results) {
+                        try {
+                            if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
+
+                            else {
+                                var filteredCallerNotes = getFilteredCallerNotes(username, results);
+
+                                logger.info(IDLOG, 'send ' + filteredCallerNotes.length + ' filtered caller notes of number ' + num + ' to user "' + username + '"');
+                                res.send(200, filteredCallerNotes);
+                            }
+                        } catch (err) {
+                            logger.error(IDLOG, err.stack);
+                            compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                        }
+                    });
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
             * Create a new caller note by the following REST API:
             *
             *     create
             *
             * @method create
-            * @param {object} req The client request.
-            * @param {object} res The client response.
-            * @param {function} next Function to run the next handler in the chain.
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
             */
             create: function (req, res, next) {
                 try {
@@ -170,7 +308,7 @@ function setCompUtil(comp) {
                         if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
 
                         else {
-                            logger.info(IDLOG, 'new caller note by "' + username + '" for number "' + data.number + '" has been successfully crated');
+                            logger.info(IDLOG, 'new caller note by "' + username + '" for number "' + data.number + '" has been successfully created');
                             compUtil.net.sendHttp201(IDLOG, res);
                         }
                     });
@@ -180,11 +318,13 @@ function setCompUtil(comp) {
                 }
             }
         }
-        exports.api               = callernote.api;
-        exports.create            = callernote.create;
-        exports.setLogger         = setLogger;
-        exports.setCompUtil       = setCompUtil;
-        exports.setCompCallerNote = setCompCallerNote;
+        exports.api                  = callernote.api;
+        exports.create               = callernote.create;
+        exports.setLogger            = setLogger;
+        exports.setCompUtil          = setCompUtil;
+        exports.get_allbynum         = callernote.get_allbynum;
+        exports.setCompCallerNote    = setCompCallerNote;
+        exports.setCompAuthorization = setCompAuthorization;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);

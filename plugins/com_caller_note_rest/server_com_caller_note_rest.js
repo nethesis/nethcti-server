@@ -184,17 +184,43 @@ function setCompCallerNote(compCallerNote) {
 * Set the authorization architect component.
 *
 * @method setCompAuthorization
-* @param {object} ca The architect authorization component
+* @param {object} comp The architect authorization component
 * @static
 */
-function setCompAuthorization(ca) {
+function setCompAuthorization(comp) {
     try {
         // check parameter
-        if (typeof ca !== 'object') { throw new Error('wrong parameter'); }
+        if (typeof comp !== 'object') { throw new Error('wrong parameter'); }
 
-        compAuthorization = ca;
+        compAuthorization = comp;
         logger.log(IDLOG, 'authorization component has been set');
 
+        // set the logger for all REST plugins
+        setAllRestPluginsCompAuthorization(comp);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Call _setCompAuthorization_ function for all REST plugins.
+*
+* @method setAllRestPluginsCompAuthorization
+* @private
+* @param comp The authorization component.
+* @type {object}
+*/
+function setAllRestPluginsCompAuthorization(comp) {
+    try {
+        var key;
+        for (key in plugins) {
+
+            if (typeof plugins[key].setCompAuthorization === 'function') {
+                plugins[key].setCompAuthorization(comp);
+                logger.info(IDLOG, 'new authorization component has been set for rest plugin ' + key);
+            }
+        }
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }

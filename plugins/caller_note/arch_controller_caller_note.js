@@ -42,7 +42,14 @@ module.exports = function (options, imports, register) {
             *
             * @method getAllUserHistoryInterval
             */
-            getAllUserHistoryInterval: controllerCallerNote.getAllUserHistoryInterval
+            getAllUserHistoryInterval: controllerCallerNote.getAllUserHistoryInterval,
+
+            /**
+            * It's the _getAllValidCallerNotesByNum_ method provided by _controller\_caller\_note_ module.
+            *
+            * @method getAllValidCallerNotesByNum
+            */
+            getAllValidCallerNotesByNum: controllerCallerNote.getAllValidCallerNotesByNum
         }
     });
 

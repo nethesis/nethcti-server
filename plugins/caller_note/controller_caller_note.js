@@ -229,9 +229,32 @@ function getAllUserHistoryInterval(data, cb) {
     }
 }
 
+/**
+* Gets all the public and private caller notes for the specified number that hasn't expired.
+*
+* @method getAllValidCallerNotesByNum
+* @param {string}   number The phone number used to search the associated caller note
+* @param {function} cb     The callback function
+*/
+function getAllValidCallerNotesByNum(number, cb) {
+    try {
+        // check parameters
+        if (typeof number !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        logger.info(IDLOG, 'search all valid caller notes of number ' + number + ' of all users');
+        dbconn.getAllValidCallerNotesByNum(number, cb);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
 // public interface
-exports.setLogger                 = setLogger;
-exports.setDbconn                 = setDbconn;
-exports.newCallerNote             = newCallerNote;
-exports.getHistoryInterval        = getHistoryInterval;
-exports.getAllUserHistoryInterval = getAllUserHistoryInterval;
+exports.setLogger                   = setLogger;
+exports.setDbconn                   = setDbconn;
+exports.newCallerNote               = newCallerNote;
+exports.getHistoryInterval          = getHistoryInterval;
+exports.getAllUserHistoryInterval   = getAllUserHistoryInterval;
+exports.getAllValidCallerNotesByNum = getAllValidCallerNotesByNum;
