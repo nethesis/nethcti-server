@@ -419,10 +419,9 @@ function initConnections() {
 * The centralized address book is the mysql _phonebook.phonebook_.
 *
 * @method getPbContactsContains
-* @param {string} term The term to search. It can be a name or a number. It
-*   will wrapped with '%' characters to search any occurrences of the term
-*   in the database fields.
-* @param {function} cb The callback function
+* @param {string}   term The term to search. It can be a name or a number. It will wrapped
+*                        with '%' characters to search any occurrences of the term in the database fields.
+* @param {function} cb   The callback function
 */
 function getPbContactsContains(term, cb) {
     try {
@@ -465,6 +464,106 @@ function getPbContactsContains(term, cb) {
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Gets the phonebook contacts from the centralized address book.
+* It searches the number in the fields: _workphone, homephone_ and _cellphone_.
+* It orders the results by _name_ and _company_ ascending.
+* The centralized address book is the mysql _phonebook.phonebook_.
+*
+* @method getPbContactsByNum
+* @param {string}   number The phone number term to search
+* @param {function} cb     The callback function
+*/
+function getPbContactsByNum(number, cb) {
+    try {
+        // check parameters
+        if (typeof number !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        models[JSON_KEYS.PHONEBOOK].findAll({
+            where: [
+                'workphone=? ' +
+                'OR homephone=? ' +
+                'OR cellphone=?',
+                number, number, number
+            ],
+            order: 'name ASC, company ASC'
+
+        }).success(function (results) {
+
+            // extract results to return in the callback function
+            var i;
+            for (i = 0; i < results.length; i++) {
+                results[i] = results[i].selectedValues;
+            }
+
+            logger.info(IDLOG, results.length + ' results by searching centralized phonebook contacts by number ' + number);
+            cb(null, results);
+
+        }).error(function (err) { // manage the error
+
+            logger.error(IDLOG, 'searching centralized phonebook contacts by number ' + number + ': ' + err.toString());
+            cb(err.toString());
+        });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Gets the phonebook contacts from the cti address book.
+* It searches the number in the fields: _workphone, homephone, cellphone_
+* and _extension_. It orders the results by _name_ and _company_ ascending.
+* The cti address book is the mysql _nethcti.cti\_phonebook_.
+*
+* @method getCtiPbContactsByNum
+* @param {string}   number The phone number term to search
+* @param {function} cb     The callback function
+*/
+function getCtiPbContactsByNum(number, cb) {
+    try {
+        // check parameters
+        if (typeof number !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        models[JSON_KEYS.CTI_PHONEBOOK].findAll({
+            where: [
+                'workphone=? ' +
+                'OR homephone=? ' +
+                'OR cellphone=? ' +
+                'OR extension=?',
+                number, number, number, number
+            ],
+            order: 'name ASC, company ASC'
+
+        }).success(function (results) {
+
+            // extract results to return in the callback function
+            var i;
+            for (i = 0; i < results.length; i++) {
+                results[i] = results[i].selectedValues;
+            }
+
+            logger.info(IDLOG, results.length + ' results by searching cti phonebook contacts by number ' + number);
+            cb(null, results);
+
+        }).error(function (err) { // manage the error
+
+            logger.error(IDLOG, 'searching cti phonebook contacts by number ' + number + ': ' + err.toString());
+            cb(err.toString());
+        });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
     }
 }
 
@@ -1655,6 +1754,56 @@ function getHistoryCallerNoteInterval(data, cb) {
         });
     } catch (err) {
         logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Gets all the public and private caller notes for the specified number that hasn't expired.
+*
+* @method getAllValidCallerNotesByNum
+* @param {string}   number The phone number used to search the associated caller note
+* @param {function} cb     The callback function
+*/
+function getAllValidCallerNotesByNum(number, cb) {
+    try {
+        // check parameters
+        if (typeof number !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        // search
+        models[JSON_KEYS.CALLER_NOTE].findAll({
+            where: [
+                'number=? AND expiration>=NOW()', number
+            ],
+            attributes: [
+                [ 'DATE_FORMAT(datecreation, "%d/%m/%Y")', 'datecreation'   ],
+                [ 'DATE_FORMAT(datecreation, "%H:%i:%S")', 'timecreation'   ],
+                [ 'DATE_FORMAT(expiration,   "%d/%m/%Y")', 'expirationdate' ],
+                [ 'DATE_FORMAT(expiration,   "%H:%i:%S")', 'expirationtime' ],
+                'id',     'text',    'creator', 'number',
+                'public', 'reservation'
+            ]
+        }).success(function (results) {
+
+            // extract results to return them in the callback function
+            var i;
+            for (i = 0; i < results.length; i++) {
+                results[i] = results[i].selectedValues;
+            }
+
+            logger.info(IDLOG, results.length + ' results searching all public and private valid caller notes for number ' + number);
+            cb(null, results);
+
+        }).error(function (err) { // manage the error
+
+            logger.error(IDLOG, 'searching all public and private valid caller notes for number ' + number);
+            cb(err.toString());
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
     }
 }
 
@@ -1826,6 +1975,7 @@ exports.getCallTrace                        = getCallTrace
 exports.saveCallerNote                      = saveCallerNote;
 exports.getCtiPbContact                     = getCtiPbContact;
 exports.saveCtiPbContact                    = saveCtiPbContact;
+exports.getPbContactsByNum                  = getPbContactsByNum;
 exports.deleteCtiPbContact                  = deleteCtiPbContact;
 exports.deleteVoiceMessage                  = deleteVoiceMessage;
 exports.listenVoiceMessage                  = listenVoiceMessage;
@@ -1837,6 +1987,7 @@ exports.isAtLeastExtenInCall                = isAtLeastExtenInCall;
 exports.getCustomerCardByNum                = getCustomerCardByNum;
 exports.getHistorySmsInterval               = getHistorySmsInterval;
 exports.getPbContactsContains               = getPbContactsContains;
+exports.getCtiPbContactsByNum               = getCtiPbContactsByNum;
 exports.getHistoryCallInterval              = getHistoryCallInterval;
 exports.getPbContactsStartsWith             = getPbContactsStartsWith;
 exports.getCallRecordingFileData            = getCallRecordingFileData;
@@ -1844,6 +1995,7 @@ exports.getHistoryPostitInterval            = getHistoryPostitInterval;
 exports.getCtiPbContactsContains            = getCtiPbContactsContains;
 exports.getCtiPbSpeeddialContacts           = getCtiPbSpeeddialContacts;
 exports.getCtiPbContactsStartsWith          = getCtiPbContactsStartsWith;
+exports.getAllValidCallerNotesByNum         = getAllValidCallerNotesByNum;
 exports.getPbContactsStartsWithDigit        = getPbContactsStartsWithDigit;
 exports.getHistoryCallerNoteInterval        = getHistoryCallerNoteInterval;
 exports.getAllUserHistorySmsInterval        = getAllUserHistorySmsInterval;

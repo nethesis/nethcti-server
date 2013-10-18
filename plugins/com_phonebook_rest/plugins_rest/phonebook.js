@@ -167,7 +167,6 @@ function setCompUtil(comp) {
         *
         * * `type: ("speeddial | "private" | "public"): the visibility of the contact`
         * * `name: the name of the contact`
-        * * `creator: the user`
         * * `[homeemail]`
         * * `[workemail]`
         * * `[homephone]`

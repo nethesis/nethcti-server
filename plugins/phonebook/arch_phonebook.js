@@ -1,4 +1,4 @@
-/**
+    /**
 * The architect component that exposes _phonebook_ module.
 *
 * @class arch_phonebook
@@ -73,7 +73,14 @@ module.exports = function (options, imports, register) {
             *
             * @method getPbSpeeddialContacts
             */
-            getPbSpeeddialContacts: phonebook.getPbSpeeddialContacts
+            getPbSpeeddialContacts: phonebook.getPbSpeeddialContacts,
+
+            /**
+            * It's the _getPbContactsByNum_ method provided by _phonebook_ module.
+            *
+            * @method getPbContactsByNum
+            */
+            getPbContactsByNum: phonebook.getPbContactsByNum
         }
     });
 

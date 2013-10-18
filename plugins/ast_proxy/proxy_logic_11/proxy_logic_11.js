@@ -55,6 +55,21 @@ var IDLOG = '[proxy_logic_11]';
 var EVT_EXTEN_CHANGED = 'extenChanged';
 
 /**
+* Fired when an extension ringing.
+*
+* @event extenDialing
+* @param {object} data The caller identity
+*/
+/**
+* The name of the extension dialing event.
+*
+* @property EVT_EXTEN_DIALING
+* @type string
+* @default "extenDialing"
+*/
+var EVT_EXTEN_DIALING = 'extenDialing';
+
+/**
 * Fired when something changed in a parking.
 *
 * @event parkingChanged
@@ -120,6 +135,24 @@ var BASE_CALL_REC_AUDIO_PATH = '/var/spool/asterisk/monitor';
 var logger = console;
 
 /**
+* The phonebook component.
+*
+* @property compPhonebook
+* @type object
+* @private
+*/
+var compPhonebook;
+
+/**
+* The caller note component.
+*
+* @property compCallerNote
+* @type object
+* @private
+*/
+var compCallerNote;
+
+/**
 * The event emitter.
 *
 * @property emitter
@@ -136,6 +169,27 @@ var emitter = new EventEmitter();
 * @private
 */
 var astProxy;
+
+/**
+* Contains the informations about the caller. The key is the caller
+* number and the value is the information object. The data are about
+* the created caller notes and the phonebook contacts from the centralized
+* and nethcti address book that match on the caller number. The informations
+* are retrieved when a _UserEvent_ is received and are used when _Dialing_
+* events occurs. This is because when a call is directed to a queue, only
+* one _UserEvent_ is emitted and many _Dialing_ events for each members of
+* the queue. So it executes only one query per call. Due to asynchronous nature
+* of the query, it may happen that when _Dialing_ event occurs the query is
+* not completed. In this case the informations of the caller are those returned
+* by the asterisk event. In this manner we give more importance to the speed
+* rather than to informations completeness.
+*
+* @property callerIdentityData
+* @type object
+* @private
+* @default {}
+*/
+var callerIdentityData = {};
 
 /**
 * All extensions. The key is the extension number and the value
@@ -260,6 +314,36 @@ function setLogger(log) {
         }
     } catch (err) {
         logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the phonebook architect component.
+*
+* @method setCompPhonebook
+* @param {object} comp The phonebook architect component.
+*/
+function setCompPhonebook(comp) {
+    try {
+        compPhonebook = comp;
+        logger.info(IDLOG, 'set phonebook architect component');
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the caller note architect component.
+*
+* @method setCompCallerNote
+* @param {object} comp The caller note architect component.
+*/
+function setCompCallerNote(comp) {
+    try {
+        compCallerNote = comp;
+        logger.info(IDLOG, 'set caller note architect component');
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
     }
 }
 
@@ -1647,6 +1731,61 @@ function evtExtenStatusChanged(exten, status) {
 }
 
 /**
+* A new external call is received. So it retrieves the data about the caller.
+* It gets the created caller notes for the specified number and the central and
+* cti phonebook contacts. Then add the data into the _callerIdentityData_ property
+* to use it when _Dialing_ events are received. This method is called by the
+* _plugins\_event\_11/userevent.js_.
+*
+* @method evtNewExternalCall
+* @param {string} number The caller number
+*/
+function evtNewExternalCall(number) {
+    try {
+        // check parameter
+        if (typeof number !== 'string') { throw new Error('wrong parameter'); }
+
+        logger.info(IDLOG, 'new external call from number ' + number + ': get data about the caller');
+
+        // initialize the caller data object. Due to asy
+        if (callerIdentityData[number] === undefined) { callerIdentityData[number] = {}; }
+
+        // get the caller notes data
+        compCallerNote.getAllValidCallerNotesByNum(number, function (err, results) {
+            try {
+                if (err) {
+                    logger.warn(IDLOG, 'retrieving caller notes data for new external call from number ' + number);
+
+                } else {
+                    logger.info(IDLOG, 'add caller notes data for new external call from number ' + number);
+                    callerIdentityData[number].callerNotes = results;
+                }
+            } catch (err) {
+                logger.error(IDLOG, err.stack);
+            }
+        });
+
+        // get the phonebook contacts
+        compPhonebook.getPbContactsByNum(number, function (err, results) {
+            try {
+                if (err) {
+                    logger.warn(IDLOG, 'retrieving phonebook contacts data for new external call from number ' + number);
+
+                } else {
+                    logger.info(IDLOG, 'add phonebook contacts data for new external call from number ' + number);
+                    callerIdentityData[number].pbContacts = results;
+                }
+            } catch (err) {
+                logger.error(IDLOG, err.stack);
+            }
+        });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Updates the extension dnd status.
 *
 * @method evtExtenDndChanged
@@ -1790,7 +1929,8 @@ function evtSpyStartConversation(data) {
 }
 
 /**
-* If the involved numbers are extensions, it updates their conversations.
+* If the involved numbers are extensions, it updates their conversations. If the called
+* is an extension it emits a dialing event to him with caller identity.
 *
 * @method evtConversationDialing
 * @param {object} data The data received from the _dial_ event plugin
@@ -1807,17 +1947,52 @@ function evtConversationDialing(data) {
             throw new Error('wrong parameter');
         }
 
+        // if the destination is an extension, it emits the dialing event with caller
+        // identity data. If the call is an external call, an _UserEvent_ has occured
+        // and the identity data could be present in the _callerIdentityData_ object if
+        // the query was successful before this event. If the data isn't present or the
+        // call isn't an external call, the used identity data are those present in the
+        // event itself
+
+        // check if the destination is an extension
+        if (extensions[data.dialingNum]) {
+
+            var obj;
+            var callerNum    = data.callerNum;
+            var dialingExten = data.dialingNum;
+
+            if (callerIdentityData[callerNum]) {
+                obj = callerIdentityData[callerNum];
+
+            } else {
+                obj = {};
+            }
+
+            // add data about the caller and the called
+            obj.numCalled  = data.dialingNum;
+            obj.callerNum  = data.callerNum;
+            obj.callerName = data.callerName;
+
+            // emit the event
+            logger.info(IDLOG, 'emit event ' + EVT_EXTEN_DIALING + ' for extension ' + dialingExten + ' with caller identity');
+            astProxy.emit(EVT_EXTEN_DIALING, { dialingExten: dialingExten, callerIdentity: obj });
+        }
+
         // when dialing each channel received from listChannels command
         // plugin hasn't the information about the bridgedChannel. So add
         // it in the following manner
         astProxy.doCmd({ command: 'listChannels' }, function (err, resp) {
+            try {
+                resp[data.chDest].bridgedChannel   = data.chSource;
+                resp[data.chSource].bridgedChannel = data.chDest;
 
-            resp[data.chDest].bridgedChannel   = data.chSource;
-            resp[data.chSource].bridgedChannel = data.chDest;
+                // update the conversations of the extensions
+                if (extensions[data.callerNum])  { updateExtenConversations(err, resp, data.callerNum);  }
+                if (extensions[data.dialingNum]) { updateExtenConversations(err, resp, data.dialingNum); }
 
-            // update the conversations of the extensions
-            if (extensions[data.callerNum])  { updateExtenConversations(err, resp, data.callerNum);  }
-            if (extensions[data.dialingNum]) { updateExtenConversations(err, resp, data.dialingNum); }
+            } catch (err) {
+                logger.error(IDLOG, err.stack);
+            }
         });
 
     } catch (err) {
@@ -3307,11 +3482,15 @@ exports.getJSONParkings                 = getJSONParkings;
 exports.redirectParking                 = redirectParking;
 exports.sendDTMFSequence                = sendDTMFSequence;
 exports.parkConversation                = parkConversation;
+exports.setCompPhonebook                = setCompPhonebook;
 exports.getJSONExtensions               = getJSONExtensions;
+exports.setCompCallerNote               = setCompCallerNote;
 exports.EVT_EXTEN_CHANGED               = EVT_EXTEN_CHANGED;
+exports.EVT_EXTEN_DIALING               = EVT_EXTEN_DIALING;
 exports.EVT_QUEUE_CHANGED               = EVT_QUEUE_CHANGED;
 exports.EVT_NEW_VOICEMAIL               = EVT_NEW_VOICEMAIL;
 exports.hangupConversation              = hangupConversation;
+exports.evtNewExternalCall              = evtNewExternalCall;
 exports.pickupConversation              = pickupConversation;
 exports.evtExtenDndChanged              = evtExtenDndChanged;
 exports.EVT_PARKING_CHANGED             = EVT_PARKING_CHANGED;

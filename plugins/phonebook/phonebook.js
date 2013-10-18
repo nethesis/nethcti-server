@@ -82,7 +82,8 @@ function setLogger(log) {
 function getPbContactsContains(term, username, cb) {
     try {
         // check parameters
-        if (typeof term !== 'string' || typeof cb !== 'function') {
+        if (   typeof term     !== 'string'
+            || typeof username !== 'string' || typeof cb !== 'function') {
 
             throw new Error('wrong parameters');
         }
@@ -138,6 +139,79 @@ function getPbContactsContains(term, username, cb) {
             logger.info(IDLOG, 'found ' + obj['centralized'].length + ' contacts in centralized phonebook and ' +
                                obj['nethcti'].length + ' contacts in cti phonebook searching contacts that contains ' +
                                'the term ' + term);
+            cb(err, obj);
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err.toString());
+    }
+}
+
+/**
+* Gets the phonebook contacts searching the phone number in the centralized and
+* NethCTI phonebook databases.
+*
+* @method getPbContactsByNum
+* @param {string}   number The phone number to search
+* @param {function} cb     The callback function
+*/
+function getPbContactsByNum(number, cb) {
+    try {
+        // check parameters
+        if (typeof number !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        // object with all results
+        var obj = {
+            'centralized': [],
+            'nethcti':     []
+        };
+
+        async.parallel([
+
+            function (callback) {
+                logger.info(IDLOG, 'search centralized phonebook contacts by number ' + number + ' using dbconn module');
+                dbconn.getPbContactsByNum(number, function (err, results) {
+                    try {
+                        if (err) { // some error in the query
+                            logger.error(IDLOG, err);
+
+                        } else { // add the result
+                            obj['centralized'] = results;
+                        }
+                        callback();
+
+                    } catch (err) {
+                        logger.error(IDLOG, err.stack);
+                        callback();
+                    }
+                });
+            },
+            function (callback) {
+                logger.info(IDLOG, 'search cti phonebook contacts by number ' + number + ' using dbconn module');
+                dbconn.getCtiPbContactsByNum(number, function (err, results) {
+                    try {
+                        if (err) { // some error in the query
+                            logger.error(IDLOG, err);
+
+                        } else { // add the result
+                            obj['nethcti'] = results;
+                        }
+                        callback();
+
+                    } catch (err) {
+                        logger.error(IDLOG, err.stack);
+                        callback();
+                    }
+                });
+            }
+
+        ], function (err) {
+            if (err) { logger.error(IDLOG, err); }
+
+            logger.info(IDLOG, 'found ' + obj['centralized'].length + ' contacts in centralized phonebook and ' +
+                               obj['nethcti'].length + ' contacts in cti phonebook searching contacts by number ' + number);
             cb(err, obj);
         });
     } catch (err) {
@@ -487,6 +561,7 @@ exports.setDbconn                    = setDbconn;
 exports.getCtiPbContact              = getCtiPbContact;
 exports.saveCtiPbContact             = saveCtiPbContact;
 exports.deleteCtiPbContact           = deleteCtiPbContact;
+exports.getPbContactsByNum           = getPbContactsByNum;
 exports.getPbContactsContains        = getPbContactsContains;
 exports.getPbSpeeddialContacts       = getPbSpeeddialContacts;
 exports.getPbContactsStartsWith      = getPbContactsStartsWith;

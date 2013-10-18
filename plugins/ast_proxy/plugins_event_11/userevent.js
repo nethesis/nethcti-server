@@ -60,6 +60,12 @@ var astProxy;
                         logger.info(IDLOG, 'received event ' + data.event + ' with ' + data.key + ' ' + data.value + ' for exten ' + data.agent);
                         var enabled = ( data.value === 'ON' ? true : false );
                         astProxy.proxyLogic.evtExtenDndChanged(data.agent, enabled);
+
+                    } else if (   data.value
+                               && data.userevent === 'CallIn' && data.event === 'UserEvent') {
+
+                        logger.info('UserEvent "CallIn" from number "' + data.value + '"');
+                        astProxy.proxyLogic.evtNewExternalCall(data.value);
                     }
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
