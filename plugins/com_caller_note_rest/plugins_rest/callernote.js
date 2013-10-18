@@ -192,12 +192,14 @@ function getFilteredCallerNotes(username, callerNotes) {
         * * `text: the message`
         * * `number: the phone number to associate the note`
         * * `visibility: ("public" | "private") If it's private only the user can view it, otherwise all other users can do it`
-        * * `expiration: the expiration of the note. After that the note remains stored but isn't more showed up. It must be espressed in the format YYYYMMDD.`
+        * * `expirationDate: the expiration date of the note. Together with expirationTime, after that the note remains stored but isn't more showed up.
+        *                    It must be espressed in the format YYYYMMDD. e.g. to express the date of "12 june 2013" you must use "20130612"`
+        * * `expirationTime: the expiration time of the note. It must be espressed in the format HHmmss. e.g. to express the time of "21:00:45" you must use "210045"`
         * * `reservation: (true | false) if the user want to booking the next call from the specified number`
         *
         * E.g. using curl:
         *
-        *     curl --insecure -i -X POST -d '{ "text": "some text", "number": "123456", "visibility": "public | private", "expiration": "20131001", "reservation": "true | false" }' https://192.168.5.224:8282/callernote/create
+        *     curl --insecure -i -X POST -d '{ "text": "some text", "number": "123456", "visibility": "public", "expirationDate": "20131001", "expirationTime": "210045", "reservation": "true" }' https://192.168.5.224:8282/callernote/create
         *
         * @class plugin_rest_callernote
         * @static

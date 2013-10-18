@@ -5,6 +5,7 @@ module.exports = function (sequelize, DataTypes) {
         number:       DataTypes.STRING,
         public:       { type: DataTypes.BOOLEAN, defaultValue: false },
         creator:      DataTypes.STRING,
+        expiration:   DataTypes.DATE,
         reservation:  { type: DataTypes.BOOLEAN, defaultValue: false },
         datecreation: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
     });

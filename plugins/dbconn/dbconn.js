@@ -311,20 +311,18 @@ function savePostit(creator, text, recipient, cb) {
 *   @param {string}  data.number      The caller/called number that is associated with the note
 *   @param {string}  data.creator     The creator of the caller note
 *   @param {string}  data.text        The text of the note
-*   @param {boolean} data.reservation The reservation option. If the creator has booked
-*                                     the callback from the expressed number
+*   @param {boolean} data.reservation The reservation option. If the creator has booked the callback from the expressed number
 *   @param {boolean} data.public      True if the caller note visibility is public, false otherwise
-*   @param {string}  data.expiration  It's the expiration date of the note. It must use the YYYYMMDD format,
-*                                     e.g. to express the date of "12 june 2013" you must use 20130612
-* @param {function} cb The callback function
+*   @param {string}  data.expiration  The expiration date and time of the caller note. It must be expressed in YYYY-MM-DD HH:mm:ss format
+* @param {function}  cb The callback function
 */
 function saveCallerNote(data, cb) {
     try {
         // check parameter
-        if (typeof data                !== 'object'
-            || typeof data.creator     !== 'string'  || typeof data.number     !== 'string'
-            || typeof data.reservation !== 'boolean' || typeof data.expiration !== 'string'
-            || typeof data.public      !== 'boolean' || typeof data.text       !== 'string') {
+        if (typeof data                   !== 'object'
+            || typeof data.creator        !== 'string'  || typeof data.number     !== 'string'
+            || typeof data.reservation    !== 'boolean' || typeof data.expiration !== 'string'
+            || typeof data.public         !== 'boolean' || typeof data.text       !== 'string') {
 
             throw new Error('wrong parameter');
         }
