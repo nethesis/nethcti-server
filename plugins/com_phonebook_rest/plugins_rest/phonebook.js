@@ -112,7 +112,7 @@ function setCompUtil(comp) {
         * 1. [`phonebook/speeddials`](#speeddialsget)
         * 1. [`phonebook/cticontact/:id`](#cticontactget)
         * 1. [`phonebook/searchstartswith/:term`](#searchstartswithget)
-        * 1. [`phonebook/searchstartswith_digit/:term`](#searchstartswith_digitget)
+        * 1. [`phonebook/searchstartswith_digit`](#searchstartswith_digitget)
         *
         * ---
         *
@@ -145,7 +145,7 @@ function setCompUtil(comp) {
         *
         * ---
         *
-        * ### <a id="searchstartswith_digitget">**`phonebook/searchstartswith_digit/:range`**</a>
+        * ### <a id="searchstartswith_digitget">**`phonebook/searchstartswith_digit`**</a>
         *
         * The client receives all phonebook contacts found in the _centralized_ and _NethCTI_ phonebooks.
         * It returns all database entries whose _name_ and _company_ fields starts with a digit.
