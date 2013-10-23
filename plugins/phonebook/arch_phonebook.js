@@ -69,6 +69,13 @@ module.exports = function (options, imports, register) {
             deleteCtiPbContact: phonebook.deleteCtiPbContact,
 
             /**
+            * It's the _modifyCtiPbContact_ method provided by _phonebook_ module.
+            *
+            * @method modifyCtiPbContact
+            */
+            modifyCtiPbContact: phonebook.modifyCtiPbContact,
+
+            /**
             * It's the _getPbSpeeddialContacts_ method provided by _phonebook_ module.
             *
             * @method getPbSpeeddialContacts

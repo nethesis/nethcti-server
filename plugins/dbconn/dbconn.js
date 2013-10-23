@@ -729,7 +729,7 @@ function deleteCtiPbContact(id, cb) {
                 });
 
             } else {
-                var str = 'deleting cti phonebook contact with db id "' + dbid + '": entry not found';
+                var str = 'deleting cti phonebook contact with db id "' + id + '": entry not found';
                 logger.warn(IDLOG, str);
                 cb(str);
             }
@@ -737,6 +737,78 @@ function deleteCtiPbContact(id, cb) {
         }).error(function (err1) { // manage the error
 
             logger.error(IDLOG, 'searching cti phonebook contact with db id "' + id + '" to delete: ' + err1.toString());
+            cb(err1.toString());
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Modify the specified phonebook contact in the _nethcti.cti\_phonebook_ database table.
+*
+* @method modifyCtiPbContact
+* @param {object} data
+*   @param {string} data.id     The unique identifier of the contact
+*   @param {string} [data.type] The type of the contact
+*   @param {string} [data.name] The name of the contact
+*   @param {string} [data.homeemail]
+*   @param {string} [data.workemail]
+*   @param {string} [data.homephone]
+*   @param {string} [data.workphone]
+*   @param {string} [data.cellphone]
+*   @param {string} [data.fax]
+*   @param {string} [data.title]
+*   @param {string} [data.company]
+*   @param {string} [data.notes]
+*   @param {string} [data.homestreet]
+*   @param {string} [data.homepob]
+*   @param {string} [data.homecity]
+*   @param {string} [data.homeprovince]
+*   @param {string} [data.homepostalcode]
+*   @param {string} [data.homecountry]
+*   @param {string} [data.workstreet]
+*   @param {string} [data.workpob]
+*   @param {string} [data.workcity]
+*   @param {string} [data.workprovince]
+*   @param {string} [data.workpostalcode]
+*   @param {string} [data.workcountry]
+*   @param {string} [data.url]
+*   @param {string} [data.extension]
+*   @param {string} [data.speeddial_num]
+* @param {function} cb The callback function
+*/
+function modifyCtiPbContact(data, cb) {
+    try {
+        // check parameters
+        if (   typeof data    !== 'object'
+            || typeof data.id !== 'string' || typeof cb !== 'function') {
+
+            throw new Error('wrong parameters');
+        }
+
+        models[JSON_KEYS.CTI_PHONEBOOK].find({
+            where: [ 'id=?', data.id  ]
+
+        }).success(function (task) {
+
+            if (task) {
+
+                task.updateAttributes(data).success(function () {
+                    logger.info(IDLOG, 'cti phonebook contact with db id "' + data.id + '" has been modified successfully');
+                    cb();
+                });
+
+            } else {
+                var str = 'modify cti phonebook contact with db id "' + data.id + '": entry not found';
+                logger.warn(IDLOG, str);
+                cb(str);
+            }
+
+        }).error(function (err1) { // manage the error
+
+            logger.error(IDLOG, 'searching cti phonebook contact with db id "' + data.id + '" to modify: ' + err1.toString());
             cb(err1.toString());
         });
     } catch (err) {
@@ -1975,6 +2047,7 @@ exports.getCtiPbContact                     = getCtiPbContact;
 exports.saveCtiPbContact                    = saveCtiPbContact;
 exports.getPbContactsByNum                  = getPbContactsByNum;
 exports.deleteCtiPbContact                  = deleteCtiPbContact;
+exports.modifyCtiPbContact                  = modifyCtiPbContact;
 exports.deleteVoiceMessage                  = deleteVoiceMessage;
 exports.listenVoiceMessage                  = listenVoiceMessage;
 exports.getVoicemailNewMsg                  = getVoicemailNewMsg;

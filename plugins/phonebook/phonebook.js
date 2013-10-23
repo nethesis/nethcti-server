@@ -329,6 +329,70 @@ function deleteCtiPbContact(id, cb) {
 }
 
 /**
+* Modify the cti phonebook contact.
+*
+* @method modifyCtiPbContact
+* @param {object} data
+*   @param {string} data.id     The unique identifier of the contact
+*   @param {string} [data.type] The type of the contact
+*   @param {string} [data.name] The name of the contact
+*   @param {string} [data.homeemail]
+*   @param {string} [data.workemail]
+*   @param {string} [data.homephone]
+*   @param {string} [data.workphone]
+*   @param {string} [data.cellphone]
+*   @param {string} [data.fax]
+*   @param {string} [data.title]
+*   @param {string} [data.company]
+*   @param {string} [data.notes]
+*   @param {string} [data.homestreet]
+*   @param {string} [data.homepob]
+*   @param {string} [data.homecity]
+*   @param {string} [data.homeprovince]
+*   @param {string} [data.homepostalcode]
+*   @param {string} [data.homecountry]
+*   @param {string} [data.workstreet]
+*   @param {string} [data.workpob]
+*   @param {string} [data.workcity]
+*   @param {string} [data.workprovince]
+*   @param {string} [data.workpostalcode]
+*   @param {string} [data.workcountry]
+*   @param {string} [data.url]
+*   @param {string} [data.extension]
+*   @param {string} [data.speeddial_num]
+* @param {function} cb The callback function
+*/
+function modifyCtiPbContact(data, cb) {
+    try {
+        // check parameters
+        if (   typeof data    !== 'object'
+            || typeof data.id !== 'string' || typeof cb !== 'function') {
+
+            throw new Error('wrong parameters');
+        }
+
+        logger.info(IDLOG, 'modify cti phonebook contact using db contact id "' + data.id + '" by means dbconn module');
+        dbconn.modifyCtiPbContact(data, function (err, result) {
+            try {
+                if (err) { // some error in the query
+                    logger.error(IDLOG, err);
+                    cb(err);
+                    return;
+                }
+                cb(null);
+
+            } catch (error) {
+                logger.error(IDLOG, error.stack);
+                cb(error);
+            }
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err.toString());
+    }
+}
+
+/**
 * Gets the phonebook contacts whose name starts with the specified term,
 * searching in the centralized and NethCTI phonebook databases.
 *
@@ -561,6 +625,7 @@ exports.setDbconn                    = setDbconn;
 exports.getCtiPbContact              = getCtiPbContact;
 exports.saveCtiPbContact             = saveCtiPbContact;
 exports.deleteCtiPbContact           = deleteCtiPbContact;
+exports.modifyCtiPbContact           = modifyCtiPbContact;
 exports.getPbContactsByNum           = getPbContactsByNum;
 exports.getPbContactsContains        = getPbContactsContains;
 exports.getPbSpeeddialContacts       = getPbSpeeddialContacts;

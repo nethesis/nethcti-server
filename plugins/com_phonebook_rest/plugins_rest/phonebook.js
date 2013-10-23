@@ -156,6 +156,7 @@ function setCompUtil(comp) {
         *
         * 1. [`phonebook/create`](#createpost)
         * 1. [`phonebook/delete_cticontact`](#delete_cticontactpost)
+        * 1. [`phonebook/modify_cticontact`](#modify_cticontactpost)
         *
         * ---
         *
@@ -207,6 +208,47 @@ function setCompUtil(comp) {
         *
         * The NethCTI phonebook is the _nethcti.cti\_phonebook_ database table.
         *
+        * ---
+        *
+        * ### <a id="modify_cticontactpost">**`phonebook/modify_cticontact`**</a>
+        *
+        * Modify a contact in the NethCTI phonebook. The request must contains
+        * the following parameters:
+        *
+        * * `id: the contact identifier in the NethCTI phonebook database`
+        * * `[type]: ("speeddial | "private" | "public"): the visibility of the contact`
+        * * `[name]: the name of the contact`
+        * * `[homeemail]`
+        * * `[workemail]`
+        * * `[homephone]`
+        * * `[workphone]`
+        * * `[cellphone]`
+        * * `[fax]`
+        * * `[title]`
+        * * `[company]`
+        * * `[notes]`
+        * * `[homestreet]`
+        * * `[homepob]`
+        * * `[homecity]`
+        * * `[homeprovince]`
+        * * `[homepostalcode]`
+        * * `[homecountry]`
+        * * `[workstreet]`
+        * * `[workpob]`
+        * * `[workcity]`
+        * * `[workprovince]`
+        * * `[workpostalcode]`
+        * * `[workcountry]`
+        * * `[url]`
+        * * `[extension]`
+        * * `[speeddial_num]`
+        *
+        * E.g. using curl:
+        *
+        *     curl --insecure -i -X POST -d '{ "creator": "alessandro", "type": "type", ... }' http://192.168.5.224:8282/phonebook/modify_cticontact
+        *
+        * The NethCTI phonebook is the _nethcti.cti\_phonebook_ database table.
+        *
         * @class plugin_rest_phonebook
         * @static
         */
@@ -244,10 +286,12 @@ function setCompUtil(comp) {
                 *
                 *   @param {string} create            Creates a contact in the NethCTI phonebook
                 *   @param {string} delete_cticontact Deletes a contact from the NethCTI phonebook
+                *   @param {string} modify_cticontact Modify a contact in the NethCTI phonebook
                 */
                 'post': [
                     'create',
-                    'delete_cticontact'
+                    'delete_cticontact',
+                    'modify_cticontact'
                 ],
                 'head': [],
                 'del' : []
@@ -601,6 +645,71 @@ function setCompUtil(comp) {
                     logger.error(IDLOG, err.stack);
                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
+            },
+
+            /**
+            * Modify a contact in the NethCTI phonebook.
+            *
+            *     modify_cticontact
+            *
+            * @method modify_cticontact
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            modify_cticontact: function (req, res, next) {
+                try {
+                    var data = req.params;
+
+                    if (typeof data !== 'object' || typeof data.id !== 'string') {
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    // extract the username added in the authentication step
+                    var username = req.headers.authorization_user;
+
+                    compPhonebook.getCtiPbContact(data.id, function (err1, result) {
+                        try {
+                            if (err1) { throw err1; }
+
+                            // check the authorization for the user. He's authorized to modify only his
+                            // contacts. If no contact has been found the "result" property is an empty object
+                            if (   Object.keys(result).length === 0 // the object is empty: no pb contact has been found
+                                || result.owner_id !== username) {  // the contact isn't owned by the user
+
+                                logger.warn(IDLOG, 'modify cti contact with db id "' + data.id + '" by the user "' + username + '": the contact is not owned by the user or it isn\'t present');
+                                compUtil.net.sendHttp403(IDLOG, res);
+                                return;
+                            }
+
+                            // use phonebook component
+                            compPhonebook.modifyCtiPbContact(data, function (err3, results) {
+                                try {
+
+                                    if (err3) { throw err3; }
+
+                                    else {
+                                        logger.info(IDLOG, 'cti phonebook contact with db id "' + data.id + '" has been successfully modified by the user "' + username + '"');
+                                        compUtil.net.sendHttp200(IDLOG, res);
+                                    }
+
+                                } catch (err4) {
+                                    logger.error(IDLOG, err4.stack);
+                                    compUtil.net.sendHttp500(IDLOG, res, err4.toString());
+                                }
+                            });
+
+                        } catch (err2) {
+                            logger.error(IDLOG, err2.stack);
+                            compUtil.net.sendHttp500(IDLOG, res, err2.toString());
+                        }
+                    });
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
             }
         }
         exports.api                    = phonebook.api;
@@ -613,6 +722,7 @@ function setCompUtil(comp) {
         exports.searchstartswith       = phonebook.searchstartswith;
         exports.setCompPhonebook       = setCompPhonebook;
         exports.delete_cticontact      = phonebook.delete_cticontact;
+        exports.modify_cticontact      = phonebook.modify_cticontact;
         exports.searchstartswith_digit = phonebook.searchstartswith_digit;
 
     } catch (err) {
