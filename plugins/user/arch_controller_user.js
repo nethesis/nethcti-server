@@ -134,6 +134,13 @@ module.exports = function (options, imports, register) {
             getUsernames: controllerUser.getUsernames,
 
             /**
+            * It's the _getUsernamesWithData_ method provided by _controller\_user_ module.
+            *
+            * @method getUsernamesWithData
+            */
+            getUsernamesWithData: controllerUser.getUsernamesWithData,
+
+            /**
             * It's the _setNethctiPresence_ method provided by _controller\_user_ module.
             *
             * @method setNethctiPresence

@@ -175,7 +175,7 @@ function setCompUtil(comp) {
         *
         * ### <a id="usernamesget">**`configmanager/usernames`**</a>
         *
-        * Returns the list of all the username.
+        * Returns the list of all the usernames, each of one with its name and surname.
         *
         * ---
         *
@@ -333,22 +333,22 @@ function setCompUtil(comp) {
             },
 
             /**
-            * Gets the list of all the username with the following REST API:
+            * Gets the list of all the username each of one with its name and surname with the following REST API:
             *
             *     usernames
             *
             * @method userslist
-            * @param {object} req The client request.
-            * @param {object} res The client response.
-            * @param {function} next Function to run the next handler in the chain.
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
             */
             usernames: function (req, res, next) {
                 try {
-                    var username     = req.headers.authorization_user;
-                    var usernameList = compUser.getUsernames();
+                    var username         = req.headers.authorization_user;
+                    var usernameWithData = compUser.getUsernamesWithData();
 
-                    logger.info(IDLOG, 'send the list of all the usernames to the user "' + username + '"');
-                    res.send(200, usernameList);
+                    logger.info(IDLOG, 'send the list of all the usernames with data to the user "' + username + '"');
+                    res.send(200, usernameWithData);
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);

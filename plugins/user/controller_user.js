@@ -136,9 +136,8 @@ function configByFile(path) {
         // initialize user objects
         var userid, newuser;
         for (userid in json) { // cycle users
-
             // add new user in memory
-            newuser = new User(userid);
+            newuser = new User(userid, json[userid].name, json[userid].surname);
             users[userid] = newuser;
             logger.info(IDLOG, 'new user "' + newuser.getUsername() + '" has been created');
         }
@@ -531,6 +530,33 @@ function getUsernames() {
 }
 
 /**
+* Returns the list of all the usernames with their names and surnames.
+*
+* @method getUsernamesWithData
+* @return {object} The list of all the usernames with their names and surnames.
+*/
+function getUsernamesWithData() {
+    try {
+        var username;
+        var obj = {};
+
+        for (username in users) {
+
+            obj[username] = {
+                name:    users[username].getName(),
+                surname: users[username].getSurname()
+            };
+        }
+
+        return obj;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return {};
+    }
+}
+
+/**
 * Sets the nethcti presence of the user.
 *
 * @method setNethctiPresence
@@ -676,6 +702,7 @@ exports.setConfigurations              = setConfigurations;
 exports.setNethctiPresence             = setNethctiPresence;
 exports.hasExtensionEndpoint           = hasExtensionEndpoint;
 exports.hasVoicemailEndpoint           = hasVoicemailEndpoint;
+exports.getUsernamesWithData           = getUsernamesWithData;
 exports.getAllEndpointsNethcti         = getAllEndpointsNethcti;
 exports.getAllEndpointsExtension       = getAllEndpointsExtension;
 exports.getAllUsersEndpointsJSON       = getAllUsersEndpointsJSON;

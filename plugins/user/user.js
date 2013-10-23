@@ -18,23 +18,49 @@ var EndpointVoicemail = require('./endpointVoicemail').EndpointVoicemail;
 * **It can throw exceptions.**
 *
 * @class User
-* @param {string} name The name of the user
+* @param  {string} uname The username of the user
+* @param  {string} na    The name of the user
+* @param  {string} sur   The surname of the user
+* @return {object}       The user object.
 * @constructor
-* @return {object} The user object.
 */
-exports.User = function (name) {
-    // check the parameter
-    if (typeof name !== 'string') { throw new Error('wrong parameter'); }
+exports.User = function (uname, na, sur) {
+    // check the parameters
+    if (   typeof uname !== 'string'
+        || typeof na    !== 'string' || typeof sur !== 'string') {
+
+        throw new Error('wrong parameter');
+    }
 
     /**
-    * The name of the user.
+    * The username of the user.
     *
     * @property username
     * @type {string}
     * @required
     * @private
     */
-    var username = name;
+    var username = uname;
+
+    /**
+    * The name of the user.
+    *
+    * @property name
+    * @type {string}
+    * @required
+    * @private
+    */
+    var name = na;
+
+    /**
+    * The surname of the user.
+    *
+    * @property surname
+    * @type {string}
+    * @required
+    * @private
+    */
+    var surname = sur;
 
     /**
     * The user authorizations.
@@ -91,12 +117,28 @@ exports.User = function (name) {
     }
 
     /**
-    * Returns the name of the user.
+    * Returns the username of the user.
     *
     * @method getUsername
     * @return {string} The username
     */
     function getUsername() { return username; }
+
+    /**
+    * Returns the name of the user.
+    *
+    * @method getName
+    * @return {string} The name
+    */
+    function getName() { return name; }
+
+    /**
+    * Returns the surname of the user.
+    *
+    * @method getSurname
+    * @return {string} The surname
+    */
+    function getSurname() { return surname; }
 
     /**
     * Returns all the user authorizations.
@@ -256,7 +298,9 @@ exports.User = function (name) {
     // public interface
     return {
         toJSON:                toJSON,
+        getName:               getName,
         toString:              toString,
+        getSurname:            getSurname,
         getUsername:           getUsername,
         addEndpoint:           addEndpoint,
         getAllEndpoints:       getAllEndpoints,

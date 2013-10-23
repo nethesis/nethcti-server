@@ -1,5 +1,10 @@
 {
     "alessandro": {
+        "name": "THE NAME",
+        "surname: "THE SURNAME",
+        "authentication": {
+            "password": "FILE_AUTHENTICATION_PASS"
+        },
         "endpoints": {
             "extension": {
                 "214": {}
@@ -62,9 +67,6 @@
                 "Business",
                 "Development"
             ]
-        },
-        "authentication": {
-            "password": "FILE_AUTHENTICATION_PASS"
         },
         "configurations": {
             "click2call": {
