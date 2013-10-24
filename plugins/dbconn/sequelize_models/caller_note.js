@@ -5,8 +5,8 @@ module.exports = function (sequelize, DataTypes) {
         number:       DataTypes.STRING,
         public:       DataTypes.BOOLEAN,
         creator:      DataTypes.STRING,
+        creation:     { type: DataTypes.DATE, allowNull: false },
         expiration:   DataTypes.DATE,
-        reservation:  DataTypes.BOOLEAN,
-        datecreation: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
+        reservation:  DataTypes.BOOLEAN
     });
 }

@@ -142,7 +142,7 @@ function save(data, cb) {
         else { data.reservation = false; }
 
         // set data.expiration property to adapt it to dbconn module
-        data.expiration = moment(data.expirationDate + ' ' + data.expirationTime, 'YYYYMMDD HHmmss').utc().format('YYYY-MM-DD HH:mm:ss');
+        data.expiration = moment(data.expirationDate + ' ' + data.expirationTime, 'YYYYMMDD HHmmss').format('YYYY-MM-DD HH:mm:ss');
 
         logger.info(IDLOG, 'save caller note by means dbconn module');
         dbconn.saveCallerNote(data, cb);
@@ -323,7 +323,7 @@ function modifyCallerNote(data, cb) {
 
         if (data.expirationDate && data.expirationTime) {
             // set data.expiration property to adapt it to dbconn module
-            data.expiration = moment(data.expirationDate + ' ' + data.expirationTime, 'YYYYMMDD HHmmss').utc().format('YYYY-MM-DD HH:mm:ss');
+            data.expiration = moment(data.expirationDate + ' ' + data.expirationTime, 'YYYYMMDD HHmmss').format('YYYY-MM-DD HH:mm:ss');
         }
 
         logger.info(IDLOG, 'modify caller note using db contact id "' + data.id + '" by means dbconn module');

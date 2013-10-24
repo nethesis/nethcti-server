@@ -12,6 +12,7 @@
 * @static
 */
 var fs        = require('fs');
+var moment    = require('moment');
 var iniparser = require('iniparser');
 var Sequelize = require("sequelize");
 
@@ -333,6 +334,7 @@ function saveCallerNote(data, cb) {
             number:      data.number,
             public:      data.public,
             creator:     data.creator,
+            creation:    moment().format('YYYY-MM-DD HH:mm:ss'),
             expiration:  data.expiration,
             reservation: data.reservation
         });
@@ -1884,7 +1886,7 @@ function getHistoryCallerNoteInterval(data, cb) {
         models[JSON_KEYS.CALLER_NOTE].findAll({
             where: [
                 'creator' + operator + '? AND ' +
-                '(DATE(datecreation)>=? AND DATE(datecreation)<=?) AND ' +
+                '(DATE(creation)>=? AND DATE(creation)<=?) AND ' +
                 '(number LIKE ?) AND ' +
                 'expiration>=NOW()',
                 data.username,
@@ -1892,10 +1894,10 @@ function getHistoryCallerNoteInterval(data, cb) {
                 data.filter
             ],
             attributes: [
-                [ 'DATE_FORMAT(datecreation, "%d/%m/%Y")', 'datecreation'   ],
-                [ 'DATE_FORMAT(datecreation, "%H:%i:%S")', 'timecreation'   ],
-                [ 'DATE_FORMAT(expiration,   "%d/%m/%Y")', 'expirationdate' ],
-                [ 'DATE_FORMAT(expiration,   "%H:%i:%S")', 'expirationtime' ],
+                [ 'DATE_FORMAT(creation,   "%d/%m/%Y")', 'creationdate'   ],
+                [ 'DATE_FORMAT(creation,   "%H:%i:%S")', 'creationtime'   ],
+                [ 'DATE_FORMAT(expiration, "%d/%m/%Y")', 'expirationdate' ],
+                [ 'DATE_FORMAT(expiration, "%H:%i:%S")', 'expirationtime' ],
                 'id',     'text',    'creator', 'number',
                 'public', 'reservation'
             ]
@@ -1944,10 +1946,10 @@ function getAllValidCallerNotesByNum(number, cb) {
                 'number=? AND expiration>=NOW()', number
             ],
             attributes: [
-                [ 'DATE_FORMAT(datecreation, "%d/%m/%Y")', 'datecreation'   ],
-                [ 'DATE_FORMAT(datecreation, "%H:%i:%S")', 'timecreation'   ],
-                [ 'DATE_FORMAT(expiration,   "%d/%m/%Y")', 'expirationdate' ],
-                [ 'DATE_FORMAT(expiration,   "%H:%i:%S")', 'expirationtime' ],
+                [ 'DATE_FORMAT(creation,   "%d/%m/%Y")', 'creationdate'   ],
+                [ 'DATE_FORMAT(creation,   "%H:%i:%S")', 'creationtime'   ],
+                [ 'DATE_FORMAT(expiration, "%d/%m/%Y")', 'expirationdate' ],
+                [ 'DATE_FORMAT(expiration, "%H:%i:%S")', 'expirationtime' ],
                 'id',     'text',    'creator', 'number',
                 'public', 'reservation'
             ]
