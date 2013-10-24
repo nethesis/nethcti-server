@@ -268,15 +268,15 @@ function saveCtiPbContact(data, cb) {
 * Save new post-it in the database.
 *
 * @method savePostit
-* @param {string} creator The creator name of the post-it
-* @param {string} text The message text
-* @param {string} recipient The recipient of the message
-* @param {function} cb The callback function
+* @param {string}   creator   The creator name of the post-it
+* @param {string}   text      The message text
+* @param {string}   recipient The recipient of the message
+* @param {function} cb        The callback function
 */
 function savePostit(creator, text, recipient, cb) {
     try {
         // check parameters
-        if (typeof    creator   !== 'string' || typeof text !== 'string'
+        if (   typeof creator   !== 'string' || typeof text !== 'string'
             || typeof recipient !== 'string' || typeof cb   !== 'function') {
 
             throw new Error('wrong parameters');
@@ -286,6 +286,7 @@ function savePostit(creator, text, recipient, cb) {
         var postit = models[JSON_KEYS.POSTIT].build({
             text:      text,
             creator:   creator,
+            creation:  moment().format('YYYY-MM-DD HH:mm:ss'),
             recipient: recipient
         });
 
@@ -1414,17 +1415,17 @@ function getHistoryPostitInterval(data, cb) {
         models[JSON_KEYS.POSTIT].findAll({
             where: [
                 'creator' + operator + '? AND ' +
-                '(DATE(datecreation)>=? AND DATE(datecreation)<=?) AND ' +
+                '(DATE(creation)>=? AND DATE(creation)<=?) AND ' +
                 '(recipient LIKE ?)',
                 data.username,
                 data.from, data.to,
                 data.filter
             ],
             attributes: [
-                [ 'DATE_FORMAT(datecreation, "%d/%m/%Y")', 'datecreation'],
-                [ 'DATE_FORMAT(datecreation, "%H:%i:%S")', 'timecreation'],
-                [ 'DATE_FORMAT(dateread, "%d/%m/%Y")', 'dateread'],
-                [ 'DATE_FORMAT(dateread, "%H:%i:%S")', 'timeread'],
+                [ 'DATE_FORMAT(creation, "%d/%m/%Y")', 'creationdate'],
+                [ 'DATE_FORMAT(creation, "%H:%i:%S")', 'creationtime'],
+                [ 'DATE_FORMAT(readdate, "%d/%m/%Y")', 'readdate'],
+                [ 'DATE_FORMAT(readdate, "%H:%i:%S")', 'timeread'],
                 'id', 'text', 'creator', 'recipient'
             ]
         }).success(function (results) {
