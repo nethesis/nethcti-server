@@ -45,6 +45,13 @@ module.exports = function (options, imports, register) {
             modifyCallerNote: controllerCallerNote.modifyCallerNote,
 
             /**
+            * It's the _deleteCallerNote_ method provided by _controller\_caller\_note_ module.
+            *
+            * @method deleteCallerNote
+            */
+            deleteCallerNote: controllerCallerNote.deleteCallerNote,
+
+            /**
             * It's the _getHistoryInterval_ method provided by _controller\_caller\_note_ module.
             *
             * @method getHistoryInterval

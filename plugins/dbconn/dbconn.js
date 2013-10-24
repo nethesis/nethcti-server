@@ -789,6 +789,49 @@ function deleteCtiPbContact(id, cb) {
 }
 
 /**
+* Deletes the specified caller note from the _nethcti.caller\_note_ database table.
+*
+* @method deleteCallerNote
+* @param {string}   id The database caller note identifier
+* @param {function} cb The callback function
+*/
+function deleteCallerNote(id, cb) {
+    try {
+        // check parameters
+        if (typeof id !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        models[JSON_KEYS.CALLER_NOTE].find({
+            where: [ 'id=?', id  ]
+
+        }).success(function (task) {
+
+            if (task) {
+
+                task.destroy().success(function () {
+                    logger.info(IDLOG, 'caller note with db id "' + id + '" has been deleted successfully');
+                    cb();
+                });
+
+            } else {
+                var str = 'deleting caller note with db id "' + id + '": entry not found';
+                logger.warn(IDLOG, str);
+                cb(str);
+            }
+
+        }).error(function (err1) { // manage the error
+
+            logger.error(IDLOG, 'searching caller note with db id "' + id + '" to delete: ' + err1.toString());
+            cb(err1.toString());
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
 * Modify the specified phonebook contact in the _nethcti.cti\_phonebook_ database table.
 *
 * @method modifyCtiPbContact
@@ -2145,6 +2188,7 @@ exports.getCallerNote                       = getCallerNote;
 exports.saveCallerNote                      = saveCallerNote;
 exports.getCtiPbContact                     = getCtiPbContact;
 exports.saveCtiPbContact                    = saveCtiPbContact;
+exports.deleteCallerNote                    = deleteCallerNote;
 exports.modifyCallerNote                    = modifyCallerNote;
 exports.getPbContactsByNum                  = getPbContactsByNum;
 exports.deleteCtiPbContact                  = deleteCtiPbContact;

@@ -335,12 +335,36 @@ function modifyCallerNote(data, cb) {
     }
 }
 
+/**
+* Delete the caller note.
+*
+* @method deleteCallerNote
+* @param {string}   id The unique identifier of the caller note
+* @param {function} cb The callback function
+*/
+function deleteCallerNote(id, cb) {
+    try {
+        // check parameters
+        if (typeof id !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        logger.info(IDLOG, 'delete caller note using db contact id "' + id + '" by means dbconn module');
+        dbconn.deleteCallerNote(id, cb);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err.toString());
+    }
+}
+
 // public interface
 exports.setLogger                   = setLogger;
 exports.setDbconn                   = setDbconn;
 exports.newCallerNote               = newCallerNote;
 exports.getCallerNote               = getCallerNote;
 exports.modifyCallerNote            = modifyCallerNote;
+exports.deleteCallerNote            = deleteCallerNote;
 exports.getHistoryInterval          = getHistoryInterval;
 exports.getAllUserHistoryInterval   = getAllUserHistoryInterval;
 exports.getAllValidCallerNotesByNum = getAllValidCallerNotesByNum;

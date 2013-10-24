@@ -192,6 +192,7 @@ function getFilteredCallerNotes(username, callerNotes) {
         *
         * 1. [`callernote/create`](#createpost)
         * 1. [`callernote/modify`](#modifypost)
+        * 1. [`callernote/delete`](#deletepost)
         *
         * ---
         *
@@ -211,6 +212,8 @@ function getFilteredCallerNotes(username, callerNotes) {
         *
         *     curl --insecure -i -X POST -d '{ "text": "some text", "number": "123456", "visibility": "public", "expirationDate": "20131001", "expirationTime": "210045", "reservation": "true" }' https://192.168.5.224:8282/callernote/create
         *
+        * ---
+        *
         * ### <a id="modifypost">**`callernote/modify`**</a>
         *
         * The client modify his caller note. The request must contains the following parameters:
@@ -228,6 +231,18 @@ function getFilteredCallerNotes(username, callerNotes) {
         * E.g. using curl:
         *
         *     curl --insecure -i -X POST -d '{ "id": "71", "text": "some text" }' https://192.168.5.224:8282/callernote/modify
+        *
+        * ---
+        *
+        * ### <a id="deletepost">**`callernote/delete`**</a>
+        *
+        * The client delete his caller note. The request must contains the following parameters:
+        *
+        * * `id: the caller note identifier in the NethCTI caller note database`
+        *
+        * E.g. using curl:
+        *
+        *     curl --insecure -i -X POST -d '{ "id": "71" }' https://192.168.5.224:8282/callernote/delete
         *
         * @class plugin_rest_callernote
         * @static
@@ -256,10 +271,12 @@ function getFilteredCallerNotes(username, callerNotes) {
                 *
                 *   @param {string} create To create a new caller note
                 *   @param {string} modify To modify a caller note of the user
+                *   @param {string} delete To delete a caller note of the user
                 */
                 'post' : [
                     'create',
-                    'modify'
+                    'modify',
+                    'delete'
                 ],
                 'head':  [],
                 'del' :  []
@@ -388,7 +405,6 @@ function getFilteredCallerNotes(username, callerNotes) {
                                 return;
                             }
 
-                            // use phonebook component
                             compCallerNote.modifyCallerNote(data, function (err3, results) {
                                 try {
                                     if (err3) { throw err3; }
@@ -414,11 +430,74 @@ function getFilteredCallerNotes(username, callerNotes) {
                     logger.error(IDLOG, err.stack);
                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
+            },
+
+            /**
+            * Delete a caller note by the following REST API:
+            *
+            *     delete
+            *
+            * @method delete
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            delete: function (req, res, next) {
+                try {
+                    var id = req.params.id;
+
+                    if (typeof id !== 'string') {
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    // extract the username added in the authentication step
+                    var username = req.headers.authorization_user;
+
+                    compCallerNote.getCallerNote(id, function (err1, result) {
+                        try {
+                            if (err1) { throw err1; }
+
+                            // check the authorization for the user. He's authorized to delete only his
+                            // caller note. If no caller note has been found the "result" property is an empty object
+                            if (   Object.keys(result).length === 0 // the object is empty: no caller note has been found
+                                || result.creator !== username) {   // the caller note isn't owned by the user
+
+                                logger.warn(IDLOG, 'deleting caller note with db id "' + id + '" by the user "' + username + '": the caller note is not owned by the user or it isn\'t present');
+                                compUtil.net.sendHttp403(IDLOG, res);
+                                return;
+                            }
+
+                            compCallerNote.deleteCallerNote(id, function (err3, results) {
+                                try {
+                                    if (err3) { throw err3; }
+
+                                    else {
+                                        logger.info(IDLOG, 'caller note with db id "' + id + '" has been successfully deleted by the user "' + username + '"');
+                                        compUtil.net.sendHttp200(IDLOG, res);
+                                    }
+
+                                } catch (err4) {
+                                    logger.error(IDLOG, err4.stack);
+                                    compUtil.net.sendHttp500(IDLOG, res, err4.toString());
+                                }
+                            });
+
+                        } catch (err2) {
+                            logger.error(IDLOG, err2.stack);
+                            compUtil.net.sendHttp500(IDLOG, res, err2.toString());
+                        }
+                    });
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
             }
         }
         exports.api                  = callernote.api;
         exports.create               = callernote.create;
         exports.modify               = callernote.modify;
+        exports.delete               = callernote.delete;
         exports.setLogger            = setLogger;
         exports.setCompUtil          = setCompUtil;
         exports.get_allbynum         = callernote.get_allbynum;
