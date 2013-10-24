@@ -255,10 +255,92 @@ function getAllValidCallerNotesByNum(number, cb) {
     }
 }
 
+/**
+* Returns the caller note.
+*
+* @method getCallerNote
+* @param {string}   id The caller note identifier in the caller note database
+* @param {function} cb The callback function
+*/
+function getCallerNote(id, cb) {
+    try {
+        // check parameters
+        if (typeof id !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        logger.info(IDLOG, 'search caller note using db contact id "' + id + '" by means dbconn module');
+        dbconn.getCallerNote(id, cb);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err.toString());
+    }
+}
+
+/**
+* Modify the caller note.
+*
+* @method modifyCallerNote
+* @param {object} data
+*   @param {string} data.id                The unique identifier of the caller note
+*   @param {string} [data.number]          The caller/called number that is associated with the note
+*   @param {string} [data.text]            The text of the note
+*   @param {string} [data.reservation]     The reservation option. If the creator has booked the callback from the expressed number
+*   @param {string} [data.visibility]      It can be "private" or "public"
+*   @param {string} [data.expirationDate]  It's the expiration date of the note. It must use the YYYYMMDD format, e.g. to express the date of "12 june 2013" you must use "20130612"
+*   @param {string} [data.expirationTime]  It's the expiration time of the note. It must use the HHmmss format, e.g. to express the time of "21:00:45" you must use "210045"
+* @param {function} cb The callback function
+*/
+function modifyCallerNote(data, cb) {
+    try {
+        // check parameters
+        if (   typeof data    !== 'object'
+            || typeof data.id !== 'string' || typeof cb !== 'function'
+            || (data.number         && typeof data.number         !== 'string')
+            || (data.reservation    && typeof data.reservation    !== 'string')
+            || (data.visibility     && typeof data.visibility     !== 'string')
+            || (data.text           && typeof data.text           !== 'string')
+            || (data.expirationDate && typeof data.expirationDate !== 'string')
+            || (data.expirationTime && typeof data.expirationTime !== 'string')
+            || (data.expirationDate && !data.expirationTime)
+            || (data.expirationTime && !data.expirationDate) ) {
+
+            throw new Error('wrong parameters');
+        }
+
+        if (data.visibility) {
+            // set data.public property used by dbconn module to modify the caller note into the database
+            if (data.visibility === CallerNote.VISIBILITY.public) { data.public = true; }
+            else { data.public = false; }
+        }
+
+        if (data.reservation) {
+            // set data.reservation property as boolean to adapt it to dbconn module
+            if (data.reservation === 'true') { data.reservation = true; }
+            else { data.reservation = false; }
+        }
+
+        if (data.expirationDate && data.expirationTime) {
+            // set data.expiration property to adapt it to dbconn module
+            data.expiration = moment(data.expirationDate + ' ' + data.expirationTime, 'YYYYMMDD HHmmss').utc().format('YYYY-MM-DD HH:mm:ss');
+        }
+
+        logger.info(IDLOG, 'modify caller note using db contact id "' + data.id + '" by means dbconn module');
+        dbconn.modifyCallerNote(data, cb);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err.toString());
+    }
+}
+
 // public interface
 exports.setLogger                   = setLogger;
 exports.setDbconn                   = setDbconn;
 exports.newCallerNote               = newCallerNote;
+exports.getCallerNote               = getCallerNote;
+exports.modifyCallerNote            = modifyCallerNote;
 exports.getHistoryInterval          = getHistoryInterval;
 exports.getAllUserHistoryInterval   = getAllUserHistoryInterval;
 exports.getAllValidCallerNotesByNum = getAllValidCallerNotesByNum;

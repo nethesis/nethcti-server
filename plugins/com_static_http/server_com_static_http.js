@@ -247,7 +247,7 @@ function saveFile(dstpath, data) {
 }
 
 /**
-* Copy given file path to local a file inside the webroot directory.
+* Copy given file path to a local file inside the webroot directory.
 *
 * @method copyFile
 * @param {string} srcpath Original file path
@@ -256,7 +256,7 @@ function saveFile(dstpath, data) {
 function copyFile(srcpath, dstpath) {
     try {
         var dstpath = path.join(__dirname, webroot, dstpath);
-        //copy file
+        // copy file
         fs.createReadStream(srcpath).pipe(fs.createWriteStream(dstpath));
     } catch (err) {
         logger.error(IDLOG, 'serving static file ' + req.url + ': ' + err.stack);

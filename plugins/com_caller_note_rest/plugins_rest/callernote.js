@@ -46,6 +46,15 @@ var compCallerNote;
 var compUtil;
 
 /**
+* The architect component to be used for authorization.
+*
+* @property compAuthorization
+* @type object
+* @private
+*/
+var compAuthorization;
+
+/**
 * Set the logger to be used.
 *
 * @method setLogger
@@ -182,6 +191,7 @@ function getFilteredCallerNotes(username, callerNotes) {
         * # POST requests
         *
         * 1. [`callernote/create`](#createpost)
+        * 1. [`callernote/modify`](#modifypost)
         *
         * ---
         *
@@ -200,6 +210,24 @@ function getFilteredCallerNotes(username, callerNotes) {
         * E.g. using curl:
         *
         *     curl --insecure -i -X POST -d '{ "text": "some text", "number": "123456", "visibility": "public", "expirationDate": "20131001", "expirationTime": "210045", "reservation": "true" }' https://192.168.5.224:8282/callernote/create
+        *
+        * ### <a id="modifypost">**`callernote/modify`**</a>
+        *
+        * The client modify his caller note. The request must contains the following parameters:
+        *
+        * * `id:               the caller note identifier in the NethCTI caller note database`
+        * * `[text]:           the message`
+        * * `[number]:         the phone number to associate the note`
+        * * `[visibility]:     ("public" | "private") If it's private only the user can view it, otherwise all other users can do it`
+        * * `[expirationDate]: the expiration date of the note. Together with expirationTime, after that the note remains stored but isn't more showed up.
+        *                      It must be espressed in the format YYYYMMDD. e.g. to express the date of "12 june 2013" you must use "20130612". It requires the expirationTime`
+        * * `[expirationTime]: the expiration time of the note. It must be espressed in the format HHmmss. e.g. to express the time of "21:00:45" you must use "210045".
+        *                      It requires the expirationDate`
+        * * `[reservation]:    (true | false) if the user want to booking the next call from the specified number`
+        *
+        * E.g. using curl:
+        *
+        *     curl --insecure -i -X POST -d '{ "id": "71", "text": "some text" }' https://192.168.5.224:8282/callernote/modify
         *
         * @class plugin_rest_callernote
         * @static
@@ -227,8 +255,12 @@ function getFilteredCallerNotes(username, callerNotes) {
                 * @type {array}
                 *
                 *   @param {string} create To create a new caller note
+                *   @param {string} modify To modify a caller note of the user
                 */
-                'post' : [ 'create' ],
+                'post' : [
+                    'create',
+                    'modify'
+                ],
                 'head':  [],
                 'del' :  []
             },
@@ -318,10 +350,75 @@ function getFilteredCallerNotes(username, callerNotes) {
                     logger.error(IDLOG, err.stack);
                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
+            },
+
+            /**
+            * Modify a caller note of the user by the following REST API:
+            *
+            *     modify
+            *
+            * @method modify
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            modify: function (req, res, next) {
+                try {
+                    var data = req.params;
+
+                    if (typeof data !== 'object' || typeof data.id !== 'string') {
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    // extract the username added in the authentication step
+                    var username = req.headers.authorization_user;
+
+                    compCallerNote.getCallerNote(data.id, function (err1, result) {
+                        try {
+                            if (err1) { throw err1; }
+
+                            // check the authorization for the user. He's authorized to modify only his
+                            // caller note. If no caller note has been found the "result" property is an empty object
+                            if (   Object.keys(result).length === 0 // the object is empty: no caller note has been found
+                                || result.creator !== username) {   // the caller note isn't owned by the user
+
+                                logger.warn(IDLOG, 'modify caller note with db id "' + data.id + '" by the user "' + username + '": the caller note is not owned by the user or it isn\'t present');
+                                compUtil.net.sendHttp403(IDLOG, res);
+                                return;
+                            }
+
+                            // use phonebook component
+                            compCallerNote.modifyCallerNote(data, function (err3, results) {
+                                try {
+                                    if (err3) { throw err3; }
+
+                                    else {
+                                        logger.info(IDLOG, 'caller note with db id "' + data.id + '" has been successfully modified by the user "' + username + '"');
+                                        compUtil.net.sendHttp200(IDLOG, res);
+                                    }
+
+                                } catch (err4) {
+                                    logger.error(IDLOG, err4.stack);
+                                    compUtil.net.sendHttp500(IDLOG, res, err4.toString());
+                                }
+                            });
+
+                        } catch (err2) {
+                            logger.error(IDLOG, err2.stack);
+                            compUtil.net.sendHttp500(IDLOG, res, err2.toString());
+                        }
+                    });
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
             }
         }
         exports.api                  = callernote.api;
         exports.create               = callernote.create;
+        exports.modify               = callernote.modify;
         exports.setLogger            = setLogger;
         exports.setCompUtil          = setCompUtil;
         exports.get_allbynum         = callernote.get_allbynum;

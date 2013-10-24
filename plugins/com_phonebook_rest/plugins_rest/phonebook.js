@@ -686,7 +686,6 @@ function setCompUtil(comp) {
                             // use phonebook component
                             compPhonebook.modifyCtiPbContact(data, function (err3, results) {
                                 try {
-
                                     if (err3) { throw err3; }
 
                                     else {

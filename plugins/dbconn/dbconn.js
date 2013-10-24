@@ -703,6 +703,46 @@ function getCtiPbContact(id, cb) {
 }
 
 /**
+* Returns the caller note. It searches the _id_ field in the
+* _nethcti.caller\_note_ database table.
+*
+* @method getCallerNote
+* @param {string}   id The caller note identifier
+* @param {function} cb The callback function
+*/
+function getCallerNote(id, cb) {
+    try {
+        // check parameters
+        if (typeof id !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        models[JSON_KEYS.CALLER_NOTE].find({
+            where: [ 'id=?', id  ]
+
+        }).success(function (result) {
+
+            if (result && result.selectedValues) {
+                logger.info(IDLOG, 'search caller note with db id "' + id + '" has been successful');
+                cb(null, result.selectedValues);
+
+            } else {
+                logger.info(IDLOG, 'search caller note with db id "' + id + '": not found');
+                cb(null, {});
+            }
+
+        }).error(function (err1) { // manage the error
+
+            logger.error(IDLOG, 'search caller note with db id "' + id + '" failed: ' + err1.toString());
+            cb(err1.toString());
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
 * Deletes the specified phonebook contact from the _nethcti.cti\_phonebook_ database table.
 *
 * @method deleteCtiPbContact
@@ -809,6 +849,62 @@ function modifyCtiPbContact(data, cb) {
         }).error(function (err1) { // manage the error
 
             logger.error(IDLOG, 'searching cti phonebook contact with db id "' + data.id + '" to modify: ' + err1.toString());
+            cb(err1.toString());
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Modify the specified caller note in the _nethcti.caller\_note_ database table.
+*
+* @method modifyCallerNote
+* @param {object} data
+*   @param {string}  data.id            The unique identifier of the caller note in the database
+*   @param {string}  [data.number]      The caller/called number that is associated with the note
+*   @param {string}  [data.text]        The text of the note
+*   @param {boolean} [data.reservation] The reservation option. If the creator has booked the callback from the expressed number
+*   @param {boolean} [data.public]      True if the caller note visibility is public, false otherwise
+*   @param {string}  [data.expiration]  The expiration date and time of the caller note. It must be expressed in YYYY-MM-DD HH:mm:ss format
+* @param {function}  cb The callback function
+*/
+function modifyCallerNote(data, cb) {
+    try {
+        // check parameters
+        if (   typeof data    !== 'object'
+            || typeof data.id !== 'string' || typeof cb !== 'function'
+            || (data.number      && typeof data.number      !== 'string' )
+            || (data.reservation && typeof data.reservation !== 'boolean')
+            || (data.expiration  && typeof data.expiration  !== 'string' )
+            || (data.public      && typeof data.public      !== 'boolean')
+            || (data.text        && typeof data.text        !== 'string' ) ) {
+
+            throw new Error('wrong parameters');
+        }
+
+        models[JSON_KEYS.CALLER_NOTE].find({
+            where: [ 'id=?', data.id  ]
+
+        }).success(function (task) {
+
+            if (task) {
+
+                task.updateAttributes(data).success(function () {
+                    logger.info(IDLOG, 'caller note with db id "' + data.id + '" has been modified successfully');
+                    cb();
+                });
+
+            } else {
+                var str = 'modify caller note with db id "' + data.id + '": entry not found';
+                logger.warn(IDLOG, str);
+                cb(str);
+            }
+
+        }).error(function (err1) { // manage the error
+
+            logger.error(IDLOG, 'searching caller note with db id "' + data.id + '" to modify: ' + err1.toString());
             cb(err1.toString());
         });
     } catch (err) {
@@ -2042,9 +2138,11 @@ exports.setLogger                           = setLogger;
 exports.savePostit                          = savePostit;
 exports.getCallInfo                         = getCallInfo;
 exports.getCallTrace                        = getCallTrace
+exports.getCallerNote                       = getCallerNote;
 exports.saveCallerNote                      = saveCallerNote;
 exports.getCtiPbContact                     = getCtiPbContact;
 exports.saveCtiPbContact                    = saveCtiPbContact;
+exports.modifyCallerNote                    = modifyCallerNote;
 exports.getPbContactsByNum                  = getPbContactsByNum;
 exports.deleteCtiPbContact                  = deleteCtiPbContact;
 exports.modifyCtiPbContact                  = modifyCtiPbContact;

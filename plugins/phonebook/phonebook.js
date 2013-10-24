@@ -235,20 +235,7 @@ function getCtiPbContact(id, cb) {
         }
 
         logger.info(IDLOG, 'search cti phonebook contact using db contact id "' + id + '" by means dbconn module');
-        dbconn.getCtiPbContact(id, function (err, result) {
-            try {
-                if (err) { // some error in the query
-                    logger.error(IDLOG, err);
-                    cb(err);
-                    return;
-                }
-                cb(null, result);
-
-            } catch (error) {
-                logger.error(IDLOG, error.stack);
-                cb(error);
-            }
-        });
+        dbconn.getCtiPbContact(id, cb);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
