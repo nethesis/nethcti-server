@@ -193,6 +193,7 @@ function setCompAuthorization(comp) {
         * 1. [`voicemail/list`](#listget)
         * 1. [`voicemail/listen/:id`](#listenget)
         * 1. [`voicemail/new_counters`](#new_countersget)
+        * 1. [`voicemail/download/:id`](#downloadget)
         *
         * ---
         *
@@ -211,6 +212,12 @@ function setCompAuthorization(comp) {
         * ### <a id="new_countersget">**`voicemail/new_counters`**</a>
         *
         * Returns the number of the new voice messages of all voicemails.
+        *
+        * ---
+        *
+        * ### <a id="downloadget">**`voicemail/download/:id`**</a>
+        *
+        * The user can download the voice message of the user. The _id_ must be the identifier of the voice message in the database..
         *
         * <br>
         *
@@ -243,6 +250,7 @@ function setCompAuthorization(comp) {
                 *
                 *   @param {string} list         To get the list of all voicemail messages of the user
                 *   @param {string} listen/:id   To listen the voicemail message of the user
+                *   @param {string} download/:id To download the voicemail message of the user
                 *   @param {string} new_counters To get the number of new voice messages of all voicemails
                 */
                 'get' : [
@@ -431,9 +439,9 @@ function setCompAuthorization(comp) {
             },
 
             /**
-            * Download voicemail message of the user with the following REST API:
+            * Download the voice message of the user with the following REST API:
             *
-            *     Download
+            *     download
             *
             * @method download
             * @param {object}   req  The client request
@@ -449,16 +457,15 @@ function setCompAuthorization(comp) {
                     // This is for the authorization check
                     compVoicemail.getVmIdFromDbId(req.params.id, function (err1, vmid) {
                         try {
-
                             if (err1) {
-                                logger.error(IDLOG, 'downloading voice message: getting voicemail id (mailbox) from db voice message id "' + req.params.id + '"');
+                                logger.error(IDLOG, 'downloading voice message: getting voicemail id (mailbox) from db with voice message id "' + req.params.id + '" by user "' + username + '"');
                                 compUtil.net.sendHttp500(IDLOG, res, err1.toString());
                                 return;
                             }
 
                             // check the authorization to download the voice message checking if the voicemail endpoint is owned by the user
                             if (compUser.hasVoicemailEndpoint(username, vmid) !== true) {
-                                logger.warn(IDLOG, 'user "' + username + '" tried to download voice message with db id "' + req.params.id + '" of the voicemail "' + vmid + '" not owned by him');
+                                logger.warn(IDLOG, 'user "' + username + '" has tried to download voice message with db id "' + req.params.id + '" of the voicemail "' + vmid + '" not owned by him');
                                 compUtil.net.sendHttp403(IDLOG, res);
                                 return;
                             }
@@ -466,7 +473,6 @@ function setCompAuthorization(comp) {
                             // download the voice message
                             compVoicemail.listenVoiceMessage(req.params.id, function (err2, result) {
                                 try {
-
                                     if (err2) {
                                         logger.error(IDLOG, 'downloading voice message with id "' + req.params.id + '" of the voicemail "' + vmid + '" by the user "' + username + '"');
                                         compUtil.net.sendHttp500(IDLOG, res, err2.toString());
