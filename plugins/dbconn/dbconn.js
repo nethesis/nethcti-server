@@ -306,6 +306,45 @@ function savePostit(creator, text, recipient, cb) {
 }
 
 /**
+* Returns the post-it from the _nethcti.postit_ database table using its unique database identifier.
+*
+* @method getPostit
+* @param {string}   id The post-it unique identifier. It's the _id_ column of the _nethcti.postit_ database table
+* @param {function} cb The callback function
+*/
+function getPostit(id, cb) {
+    try {
+        // check parameters
+        if (typeof id !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        models[JSON_KEYS.POSTIT].find({
+            where: [ 'id=?', id  ]
+
+        }).success(function (result) {
+
+            if (result && result.selectedValues) {
+                logger.info(IDLOG, 'search postit with db id "' + id + '" has been successful');
+                cb(null, result.selectedValues);
+
+            } else {
+                logger.info(IDLOG, 'search postit with db id "' + id + '": not found');
+                cb(null, {});
+            }
+
+        }).error(function (err1) { // manage the error
+
+            logger.error(IDLOG, 'search postit with db id "' + id + '" failed: ' + err1.toString());
+            cb(err1.toString());
+        });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Save the the caller note in the database.
 *
 * @method saveCallerNote
@@ -2181,6 +2220,7 @@ function getCallInfo(uniqueid, cb) {
 exports.start                               = start;
 exports.config                              = config;
 exports.setLogger                           = setLogger;
+exports.getPostit                           = getPostit;
 exports.savePostit                          = savePostit;
 exports.getCallInfo                         = getCallInfo;
 exports.getCallTrace                        = getCallTrace

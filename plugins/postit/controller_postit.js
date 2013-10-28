@@ -70,6 +70,28 @@ function setLogger(log) {
 }
 
 /**
+* Returns the post-it with the specified unique identifier.
+*
+* @method getPostit
+* @param {string}   id The unique identifier of the post-it message
+* @param {function} cb The callback function
+*/
+function getPostit(id, cb) {
+    try {
+        // check parameters
+        if (typeof id !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        logger.info(IDLOG, 'get postit by means dbconn module');
+        dbconn.getPostit(id, cb);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * New post-it is created and saved.
 *
 * @method newPostit
@@ -208,6 +230,7 @@ function getAllUserHistoryInterval(data, cb) {
 
 // public interface
 exports.newPostit                 = newPostit;
+exports.getPostit                 = getPostit;
 exports.setLogger                 = setLogger;
 exports.setDbconn                 = setDbconn;
 exports.getHistoryInterval        = getHistoryInterval;

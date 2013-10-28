@@ -135,6 +135,16 @@ function setCompUtil(comp) {
         /**
         * REST plugin that provides postit functions through the following REST API:
         *
+        * # GET requests
+        *
+        * 1. [`postit/get/:id`](#getget)
+        *
+        * ---
+        *
+        * ### <a id="getget">**`postit/get/:id`**</a>
+        *
+        * Gets the specified post-it. The _id_ is the unique identifier of the message.
+        *
         * # POST requests
         *
         * 1. [`postit/create`](#createpost)
@@ -160,7 +170,16 @@ function setCompUtil(comp) {
             // the REST api
             api: {
                 'root': 'postit',
-                'get': [],
+
+                /**
+                * REST API to be requested using HTTP GET request.
+                *
+                * @property get
+                * @type {array}
+                *
+                *   @param {string} get/:id To get a specific post-it message
+                */
+                'get': [ 'get/:id' ],
 
                 /**
                 * REST API to be requested using HTTP POST request.
@@ -173,6 +192,73 @@ function setCompUtil(comp) {
                 'post' : [ 'create' ],
                 'head':  [],
                 'del' :  []
+            },
+
+            /**
+            * Returns the specified post-it message by its unique identifier by the following REST API:
+            *
+            *     get
+            *
+            * @method get
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            get: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+                    var id       = req.params.id;
+
+                    // check the postit & administration postit authorization
+                    if (   compAuthorization.authorizePostitUser(username)      !== true
+                        && compAuthorization.authorizeAdminPostitUser(username) !== true) {
+
+                        logger.warn(IDLOG, 'getting postit with db id "' + id  + '": "postit" & "admin_postit" authorizations failed for user "' + username + '" !');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+
+                    if (compAuthorization.authorizeAdminPostitUser(username) === true) {
+                        logger.info(IDLOG, 'getting postit with db id "' + id  + '": "admin_postit" authorization successfully for user "' + username + '"');
+                    }
+
+                    if (compAuthorization.authorizePostitUser(username) === true) {
+                        logger.info(IDLOG, 'getting postit with db id "' + id  + '": "postit" authorization successfully for user "' + username + '"');
+                    }
+
+                    compPostit.getPostit(id, function (err, result) {
+
+                        if (err) {
+                            logger.error(IDLOG, 'getting postit with db id "' + id + '" for user "' + username + '"');
+                            compUtil.net.sendHttp500(IDLOG, res, err.toString());
+
+                        } else {
+
+                            // check the user authorization. If the user has the "admin_postit" authorization he can read the postit.
+                            // If the user has only the "postit" authorization he can read only his created postit and those that is
+                            // assigned to him
+                            if (compAuthorization.authorizeAdminPostitUser(username) === true) {
+
+                                logger.info(IDLOG, 'send postit with db id "' + id + '" to user "' + username + '"');
+                                res.send(200, result);
+
+                            } else if (compAuthorization.authorizePostitUser(username) === true) {
+
+                                if (result.creator === username || result.recipient === username) {
+                                    logger.info(IDLOG, 'send postit with db id "' + id + '" to user "' + username + '"');
+                                    res.send(200, result);
+
+                                } else {
+                                    logger.warn(IDLOG, 'getting postit with db id "' + id  + '": the user "' + username + '" has "postit" permission but the postit isn\'t for him');
+                                    compUtil.net.sendHttp403(IDLOG, res);
+                                }
+                            }
+                        }
+                    });
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
             },
 
             /**
@@ -239,6 +325,7 @@ function setCompUtil(comp) {
             }
         }
         exports.api                  = postit.api;
+        exports.get                  = postit.get;
         exports.create               = postit.create;
         exports.setLogger            = setLogger;
         exports.setCompUtil          = setCompUtil;
