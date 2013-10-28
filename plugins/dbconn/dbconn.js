@@ -307,6 +307,8 @@ function savePostit(creator, text, recipient, cb) {
 
 /**
 * Returns the post-it from the _nethcti.postit_ database table using its unique database identifier.
+* Then it sets the status read for the required postit updating the _readdate_ column of the
+* _nethcti.postit_ database table.
 *
 * @method getPostit
 * @param {string}   id The post-it unique identifier. It's the _id_ column of the _nethcti.postit_ database table
@@ -328,6 +330,10 @@ function getPostit(id, cb) {
                 logger.info(IDLOG, 'search postit with db id "' + id + '" has been successful');
                 cb(null, result.selectedValues);
 
+                // update the read date of the postit updating the "readdate" column of the "nethcti.postit" database table
+                logger.info(IDLOG, 'update the read date of the postit with db id "' + id + '"');
+                updatePostitReadIt(id);
+
             } else {
                 logger.info(IDLOG, 'search postit with db id "' + id + '": not found');
                 cb(null, {});
@@ -337,6 +343,47 @@ function getPostit(id, cb) {
 
             logger.error(IDLOG, 'search postit with db id "' + id + '" failed: ' + err1.toString());
             cb(err1.toString());
+        });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Updates the _readdate_ column of the specified postit with the current date.
+*
+* @method updatePostitReadIt
+* @param {string} id The post-it unique identifier. It's the _id_ column of the _nethcti.postit_ database table
+* @private
+*/
+function updatePostitReadIt(id) {
+    try {
+        // check parameter
+        if (typeof id !== 'string') { throw new Error('wrong parameter'); }
+
+        models[JSON_KEYS.POSTIT].find({
+            where: [ 'id=?', id  ]
+
+        }).success(function (task) {
+
+            if (task) {
+
+                task.updateAttributes({
+                    readdate: moment().format('YYYY-MM-DD HH:mm:ss')
+
+                }).success(function () {
+                    logger.info(IDLOG, 'read date of the postit with db id "' + id + '" has been updated successfully');
+                });
+
+            } else {
+                var str = 'updating read date of the postit with db id "' + id + '": entry not found';
+                logger.warn(IDLOG, str);
+            }
+
+        }).error(function (err1) { // manage the error
+            logger.error(IDLOG, 'searching posit with db id "' + data.id + '" to update read date: ' + err1.toString());
         });
 
     } catch (err) {
