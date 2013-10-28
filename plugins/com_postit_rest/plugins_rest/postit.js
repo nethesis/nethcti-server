@@ -137,30 +137,31 @@ function setCompUtil(comp) {
         *
         * # GET requests
         *
-        * 1. [`postit/get/:id`](#getget)
+        * 1. [`postit/read/:id`](#readget)
         *
         * ---
         *
-        * ### <a id="getget">**`postit/get/:id`**</a>
+        * ### <a id="readget">**`postit/read/:id`**</a>
         *
-        * Gets the specified post-it. The _id_ is the unique identifier of the message.
+        * Gets the specified post-it. This call update the read date status of the post-it.
+        * The _id_ is the unique identifier of the message.
         *
         * # POST requests
         *
         * 1. [`postit/create`](#createpost)
+        * 1. [`postit/delete`](#deletepost)
         *
         * ---
         *
-        * ### <a id="createpost">**`postit/create`**</a>
+        * ### <a id="deletepost">**`postit/delete`**</a>
         *
-        * The client crete a new post-it for the recipient.
+        * Deletes the specified post-it.
         *
-        * * `text: the text of the post-it`
-        * * `recipient: the destination user of the message`
+        * * `id: the unique identifier of the post-it`
         *
         * E.g. using curl:
         *
-        *     curl --insecure -i -X POST -d '{ "text": "message text", "recipient": "john"  }' https://192.168.5.224:8282/postit/create
+        *     curl --insecure -i -X POST -d '{ "id": "76" }' http://192.168.5.224:8282/postit/delete
         *
         * @class plugin_rest_postit
         * @static
@@ -177,9 +178,9 @@ function setCompUtil(comp) {
                 * @property get
                 * @type {array}
                 *
-                *   @param {string} get/:id To get a specific post-it message
+                *   @param {string} read/:id To get a specific post-it message
                 */
-                'get': [ 'get/:id' ],
+                'get': [ 'read/:id' ],
 
                 /**
                 * REST API to be requested using HTTP POST request.
@@ -188,8 +189,12 @@ function setCompUtil(comp) {
                 * @type {array}
                 *
                 *   @param {string} create To create a new post-it for a user
+                *   @param {string} delete To delete the post-it
                 */
-                'post' : [ 'create' ],
+                'post' : [
+                    'create',
+                    'delete'
+                ],
                 'head':  [],
                 'del' :  []
             },
@@ -197,14 +202,14 @@ function setCompUtil(comp) {
             /**
             * Returns the specified post-it message by its unique identifier by the following REST API:
             *
-            *     get
+            *     read
             *
-            * @method get
+            * @method read
             * @param {object}   req  The client request
             * @param {object}   res  The client response
             * @param {function} next Function to run the next handler in the chain
             */
-            get: function (req, res, next) {
+            read: function (req, res, next) {
                 try {
                     var username = req.headers.authorization_user;
                     var id       = req.params.id;
@@ -213,23 +218,23 @@ function setCompUtil(comp) {
                     if (   compAuthorization.authorizePostitUser(username)      !== true
                         && compAuthorization.authorizeAdminPostitUser(username) !== true) {
 
-                        logger.warn(IDLOG, 'getting postit with db id "' + id  + '": "postit" & "admin_postit" authorizations failed for user "' + username + '" !');
+                        logger.warn(IDLOG, 'reading postit with db id "' + id  + '": "postit" & "admin_postit" authorizations failed for user "' + username + '" !');
                         compUtil.net.sendHttp403(IDLOG, res);
                         return;
                     }
 
                     if (compAuthorization.authorizeAdminPostitUser(username) === true) {
-                        logger.info(IDLOG, 'getting postit with db id "' + id  + '": "admin_postit" authorization successfully for user "' + username + '"');
+                        logger.info(IDLOG, 'reading postit with db id "' + id  + '": "admin_postit" authorization successfully for user "' + username + '"');
                     }
 
                     if (compAuthorization.authorizePostitUser(username) === true) {
-                        logger.info(IDLOG, 'getting postit with db id "' + id  + '": "postit" authorization successfully for user "' + username + '"');
+                        logger.info(IDLOG, 'reading postit with db id "' + id  + '": "postit" authorization successfully for user "' + username + '"');
                     }
 
-                    compPostit.getPostit(id, function (err, result) {
+                    compPostit.readPostit(id, function (err, result) {
 
                         if (err) {
-                            logger.error(IDLOG, 'getting postit with db id "' + id + '" for user "' + username + '"');
+                            logger.error(IDLOG, 'reading postit with db id "' + id + '" for user "' + username + '"');
                             compUtil.net.sendHttp500(IDLOG, res, err.toString());
 
                         } else {
@@ -249,7 +254,7 @@ function setCompUtil(comp) {
                                     res.send(200, result);
 
                                 } else {
-                                    logger.warn(IDLOG, 'getting postit with db id "' + id  + '": the user "' + username + '" has "postit" permission but the postit isn\'t for him');
+                                    logger.warn(IDLOG, 'reading postit with db id "' + id  + '": the user "' + username + '" has "postit" permission but the postit isn\'t for him');
                                     compUtil.net.sendHttp403(IDLOG, res);
                                 }
                             }
@@ -322,11 +327,82 @@ function setCompUtil(comp) {
                     logger.error(IDLOG, err.stack);
                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
+            },
+
+            /**
+            * Deletes the specified post-it by the following REST API:
+            *
+            *     delete
+            *
+            * @method delete
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            delete: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (typeof req.params !== 'object' || typeof req.params.id !== 'string') {
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    var id = req.params.id;
+
+                    // check the postit & administration postit authorization
+                    if (   compAuthorization.authorizePostitUser(username)      !== true
+                        && compAuthorization.authorizeAdminPostitUser(username) !== true) {
+
+                        logger.warn(IDLOG, '"postit" & "admin_postit" authorizations failed for user "' + username + '" !');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+
+                    if (compAuthorization.authorizeAdminPostitUser(username) === true) {
+                        logger.info(IDLOG, '"admin_postit" authorization successfully for user "' + username + '"');
+                    }
+
+                    if (compAuthorization.authorizePostitUser(username) === true) {
+                        logger.info(IDLOG, '"postit" authorization successfully for user "' + username + '"');
+                    }
+
+                    compPostit.getPostit(id, function (err, result) {
+
+                        if (err) {
+                            logger.error(IDLOG, 'getting post-it with db id "' + id + '" to delete by user "' + username + '"');
+                            compUtil.net.sendHttp500(IDLOG, res, err.toString());
+
+                        } else {
+                            // check the user authorization. If the user has the "admin_postit" authorization he can delete the postit.
+                            // If the user has only the "postit" authorization he can delete only his created postit
+                            if (compAuthorization.authorizeAdminPostitUser(username) === true
+                                || (
+                                    compAuthorization.authorizePostitUser(username) === true
+                                    && result.creator === username
+                                   )
+                                ) {
+
+                                logger.info(IDLOG, 'delete postit with db id "' + id + '" by user "' + username + '"');
+                                deletePostit(id, username, res);
+
+                            } else {
+                                logger.warn(IDLOG, 'deleting postit with db id "' + id  + '": user "' + username + '" hasn\'t the permission');
+                                compUtil.net.sendHttp403(IDLOG, res);
+                            }
+                        }
+                    });
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
             }
         }
         exports.api                  = postit.api;
-        exports.get                  = postit.get;
+        exports.read                 = postit.read;
         exports.create               = postit.create;
+        exports.delete               = postit.delete;
         exports.setLogger            = setLogger;
         exports.setCompUtil          = setCompUtil;
         exports.setCompPostit        = setCompPostit;
@@ -336,3 +412,38 @@ function setCompUtil(comp) {
         logger.error(IDLOG, err.stack);
     }
 })();
+
+/**
+* Delete the specified post-it.
+*
+* @method deletePostit
+* @param {string} id       The unique identifier of the post-it
+* @param {string} username The name of the user
+* @param {object} res      The client response
+* @static
+*/
+function deletePostit(id, username, res) {
+    try {
+        // check parameters
+        if (typeof id !== 'string' || typeof username !== 'string' || typeof res !== 'object') {
+            throw new Error('wrong parameters');
+        }
+
+        compPostit.deletePostit(id, function (err) {
+            try {
+                if (err) { throw err; }
+
+                logger.info(IDLOG, 'postit with db id "' + id + '" has been successfully deleted by user "' + username + '"');
+                compUtil.net.sendHttp200(IDLOG, res);
+
+            } catch (err1) {
+                logger.error(IDLOG, err1.stack);
+                compUtil.net.sendHttp500(IDLOG, res, err1.toString());
+            }
+        });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        compUtil.net.sendHttp500(IDLOG, res, err.toString());
+    }
+}

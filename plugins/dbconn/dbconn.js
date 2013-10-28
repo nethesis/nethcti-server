@@ -253,7 +253,7 @@ function saveCtiPbContact(data, cb) {
         contact.save()
         .success(function () { // the save was successful
             logger.info(IDLOG, 'cti phonebook contact saved successfully');
-            cb(null);
+            cb();
 
         }).error(function (err) { // manage the error
             logger.error(IDLOG, 'saving cti phonebook contact: ' + err.toString());
@@ -294,7 +294,7 @@ function savePostit(creator, text, recipient, cb) {
         postit.save()
         .success(function () { // the save was successful
             logger.info(IDLOG, 'postit saved successfully');
-            cb(null);
+            cb();
 
         }).error(function (err) { // manage the error
             logger.error(IDLOG, 'saving postit: ' + err.toString());
@@ -330,10 +330,6 @@ function getPostit(id, cb) {
                 logger.info(IDLOG, 'search postit with db id "' + id + '" has been successful');
                 cb(null, result.selectedValues);
 
-                // update the read date of the postit updating the "readdate" column of the "nethcti.postit" database table
-                logger.info(IDLOG, 'update the read date of the postit with db id "' + id + '"');
-                updatePostitReadIt(id);
-
             } else {
                 logger.info(IDLOG, 'search postit with db id "' + id + '": not found');
                 cb(null, {});
@@ -355,13 +351,15 @@ function getPostit(id, cb) {
 * Updates the _readdate_ column of the specified postit with the current date.
 *
 * @method updatePostitReadIt
-* @param {string} id The post-it unique identifier. It's the _id_ column of the _nethcti.postit_ database table
-* @private
+* @param {string}  id The post-it unique identifier. It's the _id_ column of the _nethcti.postit_ database table
+* @param {funcion} cb The callback function
 */
-function updatePostitReadIt(id) {
+function updatePostitReadIt(id, cb) {
     try {
-        // check parameter
-        if (typeof id !== 'string') { throw new Error('wrong parameter'); }
+        // check parameters
+        if (typeof id !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
 
         models[JSON_KEYS.POSTIT].find({
             where: [ 'id=?', id  ]
@@ -375,19 +373,23 @@ function updatePostitReadIt(id) {
 
                 }).success(function () {
                     logger.info(IDLOG, 'read date of the postit with db id "' + id + '" has been updated successfully');
+                    cb();
                 });
 
             } else {
                 var str = 'updating read date of the postit with db id "' + id + '": entry not found';
                 logger.warn(IDLOG, str);
+                cb(str);
             }
 
         }).error(function (err1) { // manage the error
             logger.error(IDLOG, 'searching posit with db id "' + data.id + '" to update read date: ' + err1.toString());
+            cb(err1);
         });
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
+        cb(err);
     }
 }
 
@@ -430,7 +432,7 @@ function saveCallerNote(data, cb) {
         callerNote.save()
         .success(function () { // the save was successful
             logger.info(IDLOG, 'caller note saved successfully');
-            cb(null);
+            cb();
 
         }).error(function (err) { // manage the error
             logger.error(IDLOG, 'saving caller note: ' + err.toString());
@@ -866,6 +868,49 @@ function deleteCtiPbContact(id, cb) {
         }).error(function (err1) { // manage the error
 
             logger.error(IDLOG, 'searching cti phonebook contact with db id "' + id + '" to delete: ' + err1.toString());
+            cb(err1.toString());
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Deletes the specified postit from the _nethcti.cti\postit_ database table.
+*
+* @method deletePostit
+* @param {string}   id The post-it identifier
+* @param {function} cb The callback function
+*/
+function deletePostit(id, cb) {
+    try {
+        // check parameters
+        if (typeof id !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        models[JSON_KEYS.POSTIT].find({
+            where: [ 'id=?', id  ]
+
+        }).success(function (task) {
+
+            if (task) {
+
+                task.destroy().success(function () {
+                    logger.info(IDLOG, 'post-it with db id "' + id + '" has been deleted successfully');
+                    cb();
+                });
+
+            } else {
+                var str = 'deleting post-it with db id "' + id + '": entry not found';
+                logger.warn(IDLOG, str);
+                cb(str);
+            }
+
+        }).error(function (err1) { // manage the error
+
+            logger.error(IDLOG, 'searching post-it with db id "' + id + '" to delete: ' + err1.toString());
             cb(err1.toString());
         });
     } catch (err) {
@@ -2270,6 +2315,7 @@ exports.setLogger                           = setLogger;
 exports.getPostit                           = getPostit;
 exports.savePostit                          = savePostit;
 exports.getCallInfo                         = getCallInfo;
+exports.deletePostit                        = deletePostit;
 exports.getCallTrace                        = getCallTrace
 exports.getCallerNote                       = getCallerNote;
 exports.saveCallerNote                      = saveCallerNote;
@@ -2279,6 +2325,7 @@ exports.deleteCallerNote                    = deleteCallerNote;
 exports.modifyCallerNote                    = modifyCallerNote;
 exports.getPbContactsByNum                  = getPbContactsByNum;
 exports.deleteCtiPbContact                  = deleteCtiPbContact;
+exports.updatePostitReadIt                  = updatePostitReadIt;
 exports.modifyCtiPbContact                  = modifyCtiPbContact;
 exports.deleteVoiceMessage                  = deleteVoiceMessage;
 exports.listenVoiceMessage                  = listenVoiceMessage;

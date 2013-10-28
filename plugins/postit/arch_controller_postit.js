@@ -38,6 +38,20 @@ module.exports = function (options, imports, register) {
             getPostit: controllerPostit.getPostit,
 
             /**
+            * It's the _readPostit_ method provided by _controller\_postit_ module.
+            *
+            * @method readPostit
+            */
+            readPostit: controllerPostit.readPostit,
+
+            /**
+            * It's the _deletePostit_ method provided by _controller\_postit_ module.
+            *
+            * @method deletePostit
+            */
+            deletePostit: controllerPostit.deletePostit,
+
+            /**
             * It's the _getHistoryInterval_ method provided by _controller\_postit_ module.
             *
             * @method getHistoryInterval

@@ -88,6 +88,64 @@ function getPostit(id, cb) {
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Returns the post-it with the specified unique identifier and update the
+* read status of the post-it.
+*
+* @method readPostit
+* @param {string}   id The unique identifier of the post-it message
+* @param {function} cb The callback function
+*/
+function readPostit(id, cb) {
+    try {
+        // check parameters
+        if (typeof id !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        logger.info(IDLOG, 'get postit by means dbconn module');
+        dbconn.getPostit(id, cb);
+
+        // update the read date status of the postit
+        logger.info(IDLOG, 'update the read date status of the postit with db id "' + id + '"');
+        dbconn.updatePostitReadIt(id, function (err) {
+            if (err) {
+                logger.info(IDLOG, 'updating read date status of the postit with db id "' + id + '"');
+
+            } else {
+                logger.info(IDLOG, 'read date status of the postit with db id "' + id + '" has been updated successfully');
+            }
+        });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Deletes the post-it with the specified unique identifier.
+*
+* @method deletePostit
+* @param {string}   id The unique identifier of the post-it message
+* @param {function} cb The callback function
+*/
+function deletePostit(id, cb) {
+    try {
+        // check parameters
+        if (typeof id !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        logger.info(IDLOG, 'delete postit by means dbconn module');
+        dbconn.deletePostit(id, cb);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
     }
 }
 
@@ -233,5 +291,7 @@ exports.newPostit                 = newPostit;
 exports.getPostit                 = getPostit;
 exports.setLogger                 = setLogger;
 exports.setDbconn                 = setDbconn;
+exports.readPostit                = readPostit;
+exports.deletePostit              = deletePostit;
 exports.getHistoryInterval        = getHistoryInterval;
 exports.getAllUserHistoryInterval = getAllUserHistoryInterval;
