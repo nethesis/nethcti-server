@@ -39,7 +39,7 @@ var IDLOG = '[cfVmSet]';
         var map = {};
 
         /**
-        * Command plugin to set the CF to voicemail status of an extension.
+        * Command plugin to set the unconditional CF to voicemail status of an extension.
         *
         * Use it with _ast\_proxy_ module as follow:
         *
@@ -53,7 +53,7 @@ var IDLOG = '[cfVmSet]';
         var cfVmSet = {
 
             /**
-            * Execute asterisk action to set the CF to voicemail status.
+            * Execute asterisk action to set the unconditional CF to voicemail status.
             * 
             * @method execute
             * @param {object} am Asterisk manager to send the action
@@ -68,7 +68,7 @@ var IDLOG = '[cfVmSet]';
                     // action for asterisk
                     if (args.activate) {
 
-                        // call forward to voicemail sets the CF property of the asterisk database as
+                        // unconditional call forward to voicemail sets the CF property of the asterisk database as
                         // well as the other type of call forward to a number. So, to distinguish them,
                         // the call forward to a voicemail adds a prefix code to the destination
                         // voicemail number

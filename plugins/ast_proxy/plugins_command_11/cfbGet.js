@@ -1,8 +1,9 @@
 /**
 * @submodule plugins_command_11
 */
-var action   = require('../action');
-var CF_TYPES = require('../proxy_logic_11/util_call_forward_11').CF_TYPES;
+var action           = require('../action');
+var CF_TYPES         = require('../proxy_logic_11/util_call_forward_11').CF_TYPES;
+var CFVM_PREFIX_CODE = require('../proxy_logic_11/util_call_forward_11').CFVM_PREFIX_CODE;
 
 /**
 * The module identifier used by the logger.
@@ -99,7 +100,26 @@ var IDLOG = '[cfbGet]';
                     if (map[data.actionid]       && data.event === 'DBGetResponse'
                         && data.family === 'CFB' && data.val) {
 
-                        map[data.actionid](null, { exten: exten, cf_type: CF_TYPES.busy, status: 'on', to: data.val });
+                        // check if the destination of the call forward is a something different
+                        // from a voicemail. If it's to voicemail then the result is false. This
+                        // is because the call forward to voicemail is checked with another
+                        // command plugin. The call forward busy and the call forward busy to voicemail use
+                        // the same key database: CFB, but the second adds a prefix to it
+                        var pre;
+                        var isCfb2Vm = false;
+                        for (pre in CFVM_PREFIX_CODE) { // cycle in each cf to voicemail prefix code
+
+                            // check if the call forward value start with the prefix code. If it's
+                            // the call forward is to voicemail
+                            if (data.val.substring(0, pre.length) === pre) {
+                                isCfb2Vm = true;
+                                break;
+                            }
+                        }
+
+                        if (isCfb2Vm) { map[data.actionid](null, { exten: exten, status: 'off', cf_type: CF_TYPES.busy               }); }
+                        else          { map[data.actionid](null, { exten: exten, status: 'on',  cf_type: CF_TYPES.busy, to: data.val }); }
+
                         delete map[data.actionid]; // remove association ActionID-callback
 
                     } else if (map[data.actionid] && data.response === 'Error') {

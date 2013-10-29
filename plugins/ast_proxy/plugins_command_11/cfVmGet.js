@@ -40,7 +40,7 @@ var IDLOG = '[cfVmGet]';
         var map = {};
 
         /**
-        * Command plugin to get the call forward to voicemail status of an extension.
+        * Command plugin to get the unconditional call forward to voicemail status of an extension.
         *
         * Use it with _ast\_proxy_ module as follow:
         *
@@ -54,7 +54,7 @@ var IDLOG = '[cfVmGet]';
         var cfVmGet = {
 
             /**
-            * Execute asterisk action to get the call forward to voicemail status.
+            * Execute asterisk action to get the unconditional call forward to voicemail status.
             * 
             * @method execute
             * @param {object} am Asterisk manager to send the action
@@ -123,13 +123,13 @@ var IDLOG = '[cfVmGet]';
                             }
                         }
 
-                        if (isCf2Vm) { map[data.actionid](null, { exten: exten, status: 'on',  cf_type: CF_TYPES.voicemail, to: vm }); }
-                        else         { map[data.actionid](null, { exten: exten, status: 'off', cf_type: CF_TYPES.voicemail         }); }
+                        if (isCf2Vm) { map[data.actionid](null, { exten: exten, status: 'on',  cf_type: CF_TYPES.unconditional, to: vm }); }
+                        else         { map[data.actionid](null, { exten: exten, status: 'off', cf_type: CF_TYPES.unconditional         }); }
 
                         delete map[data.actionid]; // remove association ActionID-callback
 
                     } else if (map[data.actionid] && data.response === 'Error') {
-                        map[data.actionid](null, { exten: exten, status: 'off', cf_type: CF_TYPES.voicemail });
+                        map[data.actionid](null, { exten: exten, status: 'off', cf_type: CF_TYPES.unconditional });
                         delete map[data.actionid]; // remove association ActionID-callback
                     }
 

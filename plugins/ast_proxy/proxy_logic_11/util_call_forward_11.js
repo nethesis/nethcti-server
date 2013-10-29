@@ -35,14 +35,12 @@ var CFVM_PREFIX_CODE = {
 * @readOnly
 * @default {
     "busy":          "busy",
-    "voicemail":     "voicemail",
     "unavailable":   "unavailable",
     "unconditional": "unconditional"
 }
 */
 var CF_TYPES = {
     'busy':          'busy',
-    'voicemail':     'voicemail',
     'unavailable':   'unavailable',
     'unconditional': 'unconditional'
 };

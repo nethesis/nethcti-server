@@ -1,8 +1,9 @@
 /**
 * @submodule plugins_command_11
 */
-var action   = require('../action');
-var CF_TYPES = require('../proxy_logic_11/util_call_forward_11').CF_TYPES;
+var action           = require('../action');
+var CF_TYPES         = require('../proxy_logic_11/util_call_forward_11').CF_TYPES;
+var CFVM_PREFIX_CODE = require('../proxy_logic_11/util_call_forward_11').CFVM_PREFIX_CODE;
 
 /**
 * The module identifier used by the logger.
@@ -97,10 +98,65 @@ var IDLOG = '[cfuGet]';
 
                     // check callback and info presence and execute it
                     if (map[data.actionid] && data.event === 'DBGetResponse'
+                        && data.family === 'CF'
+                        && data.val) {
+
+                        // check if the destination of the call forward is a something different
+                        // from a voicemail. If it's to voicemail then the result is false. This
+                        // is because the call forward to voicemail is checked with another
+                        // command plugin. The call forward and the call forward to voicemail use
+                        // the same key database: CF, but the second adds a prefix to it
+                        var pre;
+                        var isCf2Vm = false;
+                        for (pre in CFVM_PREFIX_CODE) { // cycle in each cf to voicemail prefix code
+
+                            // check if the call forward value start with the prefix code. If it's
+                            // the call forward is to voicemail
+                            if (data.val.substring(0, pre.length) === pre) {
+                                isCf2Vm = true;
+                                break;
+                            }
+                        }
+
+                        if (isCf2Vm) { map[data.actionid](null, { exten: exten, status: 'off', cf_type: CF_TYPES.unconditional               }); }
+                        else         { map[data.actionid](null, { exten: exten, status: 'on',  cf_type: CF_TYPES.unconditional, to: data.val }); }
+
+                        delete map[data.actionid]; // remove association ActionID-callback
+
+                    } else if (map[data.actionid] && data.response === 'Error') {
+                        map[data.actionid](null, { exten: exten, status: 'off', type: CF_TYPES.unconditional });
+                        delete map[data.actionid]; // remove association ActionID-callback
+                    }
+
+
+                    // get the extension number from the action id
+                    var exten = data.actionid.split('_')[1];
+
+                    // check callback and info presence and execute it
+                    if (map[data.actionid] && data.event === 'DBGetResponse'
                         && data.family === 'CFU'
                         && data.val) {
 
-                        map[data.actionid](null, { cf_type: CF_TYPES.unavailable, exten: exten, status: 'on', to: data.val });
+                        // check if the destination of the call forward is a something different
+                        // from a voicemail. If it's to voicemail then the result is false. This
+                        // is because the call forward to voicemail is checked with another
+                        // command plugin. The call forward unavailable and the call forward unavailable to voicemail use
+                        // the same key database: CFU, but the second adds a prefix to it
+                        var pre;
+                        var isCfu2Vm = false;
+                        for (pre in CFVM_PREFIX_CODE) { // cycle in each cf to voicemail prefix code
+
+                            // check if the call forward value start with the prefix code. If it's
+                            // the call forward is to voicemail
+                            if (data.val.substring(0, pre.length) === pre) {
+                                isCfu2Vm = true;
+                                break;
+                            }
+                        }
+
+                        if (isCfu2Vm) { map[data.actionid](null, { exten: exten, status: 'off', cf_type: CF_TYPES.unavailable               }); }
+                        else          { map[data.actionid](null, { exten: exten, status: 'on',  cf_type: CF_TYPES.unavailable, to: data.val }); }
+
                         delete map[data.actionid]; // remove association ActionID-callback
 
                     } else if (map[data.actionid] && data.response === 'Error') {
