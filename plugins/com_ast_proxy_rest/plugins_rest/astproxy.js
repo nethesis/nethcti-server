@@ -98,6 +98,7 @@ var compConfigManager;
         *
         * # GET requests
         *
+        * 1. [`astproxy/cw/:endpoint`](#cwget)
         * 1. [`astproxy/dnd/:endpoint`](#dndget)
         * 1. [`astproxy/cfvm/:type/:endpoint`](#cfvmget)
         * 1. [`astproxy/cfcall/:type/:endpoint`](#cfcallget)
@@ -106,6 +107,14 @@ var compConfigManager;
         * 1. [`astproxy/opgroups`](#opgroupsget)
         * 1. [`astproxy/parkings`](#parkingsget)
         * 1. [`astproxy/extensions`](#extensionsget)
+        *
+        * ---
+        *
+        * ### <a id="cwget">**`astproxy/cw/:endpoint`**</a>
+        *
+        * Gets the call waiting status of the endpoint of the user
+        *
+        * * `endpoint: the extension identifier`
         *
         * ---
         *
@@ -166,6 +175,7 @@ var compConfigManager;
         *
         * # POST requests
         *
+        * 1. [`astproxy/cw`](#cwpost)
         * 1. [`astproxy/dnd`](#dndpost)
         * 1. [`astproxy/park`](#parkpost)
         * 1. [`astproxy/call`](#callpost)
@@ -184,6 +194,21 @@ var compConfigManager;
         * 1. [`astproxy/logon_dyn_queues`](#logon_dyn_queuespost)
         * 1. [`astproxy/blindtransfer_queue`](#blindtransfer_queuepost)
         * 1. [`astproxy/blindtransfer_parking`](#blindtransfer_parkingpost)
+        *
+        * ---
+        *
+        * ### <a id="cwpost">**`astproxy/cw`**</a>
+        *
+        * Sets the call waiting status of the endpoint of the user. The request must contains
+        * the following parameters:
+        *
+        * * `endpoint: the extension identifier`
+        * * `status: ("on" | "off")`
+        *
+        * E.g. using curl:
+        *
+        *     curl --insecure -i -X POST -d '{ "endpoint": "214", "status": "on" }' https://192.168.5.224:8282/astproxy/cw
+        *     curl --insecure -i -X POST -d '{ "endpoint": "214", "status": "off" }' https://192.168.5.224:8282/astproxy/cw
         *
         * ---
         *
@@ -489,6 +514,7 @@ var compConfigManager;
                 *   @param {string} opgroups               Gets all the user groups of the operator panel
                 *   @param {string} parkings               Gets all the parkings with all their status informations
                 *   @param {string} extensions             Gets all the extensions with all their status informations
+                *   @param {string} cw/:endpoint           Gets the call waiting status of the endpoint of the user
                 *   @param {string} dnd/:endpoint          Gets the don't disturb status of the endpoint of the user
                 *   @param {string} cfvm/:type/:endpoint   Gets the call forward status to voicemail of the endpoint of the user
                 *   @param {string} cfcall/:type/:endpoint Gets the call forward status to a destination number of the endpoint of the user
@@ -499,6 +525,7 @@ var compConfigManager;
                     'opgroups',
                     'parkings',
                     'extensions',
+                    'cw/:endpoint',
                     'dnd/:endpoint',
                     'cfvm/:type/:endpoint',
                     'cfcall/:type/:endpoint'
@@ -510,6 +537,7 @@ var compConfigManager;
                 * @property post
                 * @type {array}
                 *
+                *   @param {string} cw                    Sets the call waiting status of the endpoint of the user
                 *   @param {string} dnd                   Sets the don't disturb status of the endpoint of the user
                 *   @param {string} park                  Park a conversation of the user
                 *   @param {string} call                  Make a new call
@@ -530,6 +558,7 @@ var compConfigManager;
                 *   @param {string} blindtransfer_parking Transfer the parked call to the destination with blind type
                 */
                 'post': [
+                    'cw',
                     'dnd',
                     'park',
                     'call',
@@ -812,8 +841,32 @@ var compConfigManager;
             * Manages both GET and POST requests for don't disturb status of the endpoint of
             * the user with the following REST API:
             *
-            *     GET  dnd
-            *     POST dnd/:endpoint
+            *     GET  cw/:endpoint
+            *     POST cw
+            *
+            * @method dnd
+            * @param {object} req The client request.
+            * @param {object} res The client response.
+            * @param {function} next Function to run the next handler in the chain.
+            */
+            cw: function (req, res, next) {
+                try {
+                    if      (req.method.toLowerCase() === 'get' ) { cwget(req, res, next); }
+                    else if (req.method.toLowerCase() === 'post') { cwset(req, res, next); }
+                    else    { logger.warn(IDLOG, 'unknown requested method ' + req.method); }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * Manages both GET and POST requests for don't disturb status of the endpoint of
+            * the user with the following REST API:
+            *
+            *     GET  dnd/:endpoint
+            *     POST dnd
             *
             * @method dnd
             * @param {object} req The client request.
@@ -1989,6 +2042,7 @@ var compConfigManager;
                 }
             }
         }
+        exports.cw                    = astproxy.cw;
         exports.api                   = astproxy.api;
         exports.dnd                   = astproxy.dnd;
         exports.park                  = astproxy.park;
@@ -2230,6 +2284,59 @@ function dndset(req, res, next) {
 }
 
 /**
+* Sets the call waiting status of the endpoint of the user.
+*
+* @method cwset
+* @param {object} req  The request object
+* @param {object} res  The response object
+* @param {object} next
+*/
+function cwset(req, res, next) {
+    try {
+        // extract the parameters needed
+        var status   = req.params.status;
+        var endpoint = req.params.endpoint;
+        var username = req.headers.authorization_user;
+
+        // check parameters
+        if (   typeof status   !== 'string'
+            || typeof endpoint !== 'string'
+            || (status !== 'on' && status !== 'off') ) {
+
+            compUtil.net.sendHttp400(IDLOG, res);
+            return;
+        }
+
+        // check if the endpoint in the request is an endpoint of the applicant user. The user
+        // can only set the call waiting status of his endpoints
+        if (compAuthorization.verifyUserEndpointExten(username, req.params.endpoint) === false) {
+
+            logger.warn(IDLOG, 'authorization cw set failed for user "' + username + '": extension ' +
+                               endpoint + ' not owned by him');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+        }
+
+        var activate = (status === 'on') ? true : false;
+
+        compAstProxy.doCmd({ command: 'cwSet', exten: endpoint, activate: activate }, function (err, resp) {
+
+            if (err) {
+                logger.error(IDLOG, 'setting cw "' + status + '" for extension ' + endpoint + ' of user "' + username + '"');
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                return;
+            }
+
+            logger.info(IDLOG, 'cw "' + status + '" for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
+            compUtil.net.sendHttp200(IDLOG, res);
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        compUtil.net.sendHttp500(IDLOG, res, err.toString());
+    }
+}
+
+/**
 * Gets the don't disturb status of the endpoint of the user.
 *
 * @method dndget
@@ -2276,6 +2383,53 @@ function dndget(req, res, next) {
             }
 
             logger.info(IDLOG, 'dnd for extension endpoint ' + endpoint + ' of user "' + username + '" has been get successfully: the status is ' + resp.dnd);
+            res.send(200, resp);
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        compUtil.net.sendHttp500(IDLOG, res, err.toString());
+    }
+}
+
+/**
+* Gets the call waiting status of the endpoint of the user.
+*
+* @method cwget
+* @param {object} req  The request object
+* @param {object} res  The response object
+* @param {object} next
+*/
+function cwget(req, res, next) {
+    try {
+        // extract the parameters needed
+        var endpoint = req.params.endpoint;
+        var username = req.headers.authorization_user;
+
+        // check parameters
+        if (typeof endpoint !== 'string') {
+            compUtil.net.sendHttp400(IDLOG, res);
+            return;
+        }
+
+        // check if the endpoint in the request is an endpoint of the applicant user. The user
+        // can only get the call waiting status of his endpoints
+        if (compAuthorization.verifyUserEndpointExten(username, req.params.endpoint) === false) {
+
+            logger.warn(IDLOG, 'authorization cw get failed for user "' + username + '": extension ' +
+                               endpoint + ' not owned by him');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+        }
+
+        compAstProxy.doCmd({ command: 'cwGet', exten: endpoint }, function (err, resp) {
+
+            if (err) {
+                logger.error(IDLOG, 'getting cw for extension ' + endpoint + ' of user "' + username + '"');
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                return;
+            }
+
+            logger.info(IDLOG, 'cw for extension endpoint ' + endpoint + ' of user "' + username + '" has been get successfully: the status is ' + resp.cw);
             res.send(200, resp);
         });
     } catch (err) {
