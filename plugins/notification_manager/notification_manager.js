@@ -511,10 +511,10 @@ function sendNewVoicemailNotificationSmsCb(err, resp) {
 * Sends a voicemail notification to the user by email.
 *
 * @method sendNewVoicemailNotificationEmail
-* @param {string}   username The user identifier
-* @param {string}   voiemail The voicemail identifier
-* @param {array}    list     The list of all new voice messages of the voicemail
-* @param {function} cb       The callback function
+* @param {string}   username  The user identifier
+* @param {string}   voicemail The voicemail identifier
+* @param {array}    list      The list of all new voice messages of the voicemail
+* @param {function} cb        The callback function
 * @private
 */
 function sendNewVoicemailNotificationEmail(username, voicemail, list, cb) {
@@ -531,6 +531,7 @@ function sendNewVoicemailNotificationEmail(username, voicemail, list, cb) {
         var subject = getVmNotificationEmailSubject(username, voicemail, list);
         var body    = getVmNotificationEmailBody(username, voicemail, list);
 
+        logger.info(IDLOG, 'send new voicemail ' + voicemail + ' notification to email ' + to + ' of user "' + username + '"');
         compMailer.send(to, subject, body, function (err, resp) {
             try {
                 if (err) {
@@ -573,6 +574,7 @@ function sendNewVoicemailNotificationSms(username, voicemail, list, cb) {
         var to   = compConfigManager.getVoicemailNotificationSmsTo(username);
         var body = getVmNotificationSmsBody(username, voicemail, list);
 
+        logger.info(IDLOG, 'send new voicemail ' + voicemail + ' notification to sms cellphone ' + to + ' of user "' + username + '"');
         compSms.send(username, to, body, function (err, resp) {
             try {
                 if (err) {
