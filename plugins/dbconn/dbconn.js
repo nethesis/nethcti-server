@@ -1821,13 +1821,27 @@ function listenVoiceMessage(dbid, cb) {
 
         // search
         models[JSON_KEYS.VOICEMAIL].find({
-            where:      [ 'id=?', dbid  ],
-            attributes: [ 'recording' ]
+            where: [ 'id=?', dbid  ]
 
         }).success(function (result) {
+
             if (result && result.selectedValues && result.selectedValues.recording) {
                 logger.info(IDLOG, 'obtained voicemail audio file from voicemail db id "' + dbid + '"');
                 cb(null, result.selectedValues.recording);
+
+                // if the voice message has never been read, it updates its status as "read".
+                // If the message has never been read the "dir" field contains the "INBOX" string.
+                // So if it's present it updates the field replacing the "INBOX" string with "Old"
+                var dir = result.selectedValues.dir;
+                if (dir.split('/').pop() === 'INBOX') {
+
+                    result.updateAttributes({
+                        dir: dir.substring(0, dir.length - 5) + 'Old'
+
+                    }, [ 'dir' ]).success(function () {
+                        logger.info(IDLOG, 'read status of the voice message with db id "' + dbid + '" has been updated successfully');
+                    });
+                }
 
             } else {
                 var str = 'getting voicemail audio file from db voice message id "' + dbid + '"';
