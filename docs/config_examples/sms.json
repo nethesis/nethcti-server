@@ -9,6 +9,7 @@
         "queue_path": "ASTERISK-PROXY_PATH/sms_queue"
     },
     "webservice": {
+        "url": "",
         "user": "",
         "method": "get",
         "password": ""

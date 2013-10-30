@@ -5,7 +5,10 @@
 * @main arch_sms
 */
 var fs               = require('fs');
+var url              = require('url');
+var http             = require('http');
 var pathreq          = require('path');
+var querystring      = require('querystring');
 var smsDeliveryTypes = require('./sms_delivery_types');
 
 /**
@@ -84,6 +87,17 @@ var portech = {
 };
 
 /**
+* The configurations used to send sms by webservice. It's
+* initialized by the configuration file.
+*
+* @property webservice
+* @type object
+* @private
+* @default {}
+*/
+var webservice = {};
+
+/**
 * Set the logger to be used.
 *
 * @method setLogger
@@ -141,11 +155,14 @@ function config(path) {
     deliveryType = json.type;
     logger.info(IDLOG, 'sms configuration for "' + deliveryType + '"');
 
+    // set the prefix to be used
+    prefix = json.prefix;
+
     if (deliveryType === smsDeliveryTypes.TYPES.portech) {
         configDeliveryPortech(json.portech);
 
     } else if (deliveryType === smsDeliveryTypes.TYPES.webservice) {
-        //configDeliveryWebservice(json.webservice);
+        configDeliveryWebservice(json.webservice);
     }
 
     logger.info(IDLOG, 'sms configuration by file ' + path + ' ended');
@@ -170,6 +187,36 @@ function configDeliveryPortech(json) {
 }
 
 /**
+* Configuration for webservice usage.
+*
+* @method configDeliveryWebservice
+* @param {object} json
+*   @param {string} json.url      The parameterized url of the webservice
+*   @param {string} json.user     The username to use the webservice
+*   @param {string} json.method   The method used to make the HTTP request for the webservice (GET or POST)
+*   @param {string} json.password The password to use the webservice
+* @private
+*/
+function configDeliveryWebservice(json) {
+    // check parameter
+    if (   typeof json        !== 'object'
+        || typeof json.url    !== 'string' || typeof json.user     !== 'string'
+        || typeof json.method !== 'string' || typeof json.password !== 'string') {
+
+        throw new Error('wrong parameter');
+    }
+
+    // get the escape values of the user and password to be used in the http url
+    var user     = escapeHttpUrlArgValue(json.user);
+    var password = escapeHttpUrlArgValue(json.password);
+
+    webservice.url    = json.url.replace('$USER', user).replace('$PASSWORD', password);
+    webservice.method = json.method.toUpperCase();
+
+    logger.info(IDLOG, 'delivery by webservice has been configured');
+}
+
+/**
 * Sends an sms message.
 *
 * @method send
@@ -187,14 +234,16 @@ function send(from, to, body, cb) {
             throw new Error('wrong parameters');
         }
 
+        // add the prefix to the destination number, if it doesn't contains it 
+        if (to.length <= 10 && to.substring(0, 1) === '3') { to = prefix + to; }
+
         if (deliveryType === smsDeliveryTypes.TYPES.portech) {
             logger.info(IDLOG, 'send sms to ' + to + ' with portech');
             sendSmsByPortech(from, to, body, cb);
 
         } else {
-            throw new Error('sendSmsByWebservice TO IMPLEMENT.......');
-            //..................................
-            //..................................
+            logger.info(IDLOG, 'send sms to ' + to + ' with webservice');
+            sendSmsByWebservice(to, body, cb);
         }
     } catch (err) {
         logger.error(err.stack);
@@ -209,16 +258,16 @@ function send(from, to, body, cb) {
 *
 * @method sendSmsByPortech
 * @param {string}   from The sender identifier
-* @param {string}   to   The destination email address
-* @param {string}   body The body of the email
+* @param {string}   to   The destination number
+* @param {string}   body The text of the sms
 * @param {function} cb   The callback function
 * @private
 */
 function sendSmsByPortech(from, to, body, cb) {
     try {
         // check parameters
-        if (   typeof to   !== 'string'
-            || typeof body !== 'string' || typeof cb !== 'function') {
+        if (   typeof to   !== 'string' || typeof from !== 'string'
+            || typeof body !== 'string' || typeof cb   !== 'function') {
 
             throw new Error('wrong parameters');
         }
@@ -260,6 +309,276 @@ function sendSmsByPortech(from, to, body, cb) {
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err);
+    }
+}
+
+/**
+* Sends an sms using a webservice.
+*
+* @method sendSmsByWebservice
+* @param {string}   to   The destination number
+* @param {string}   body The text of the sms
+* @param {function} cb   The callback function
+* @private
+*/
+function sendSmsByWebservice(to, body, cb) {
+    try {
+        // check parameters
+        if (   typeof to   !== 'string'
+            || typeof body !== 'string' || typeof cb !== 'function') {
+
+            throw new Error('wrong parameters');
+        }
+
+        if (webservice.method === 'GET') {
+            sendSmsByHttpGet(to, body, cb);
+
+        } else if (webservice.method === 'POST') {
+            sendSmsByHttpPost(to, body, cb);
+
+        } else {
+            var str = 'sending sms to ' + to + ': bad webservice delivery method ' + webservice.method;
+            logger.warn(IDLOG, str);
+            cb(str);
+        }
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Sends an sms using a POST HTTP request.
+*
+* @method sendSmsByHttpPost
+* @param {string}   to   The destination number
+* @param {string}   body The text of the sms
+* @param {function} cb   The callback function
+* @private
+*/
+function sendSmsByHttpPost(to, body, cb) {
+    try {
+        // check parameters
+        if (   typeof to   !== 'string'
+            || typeof body !== 'string' || typeof cb !== 'function') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // escape the values of "to" and "body" to be inserted in the http url
+        var eto   = escapeHttpUrlArgValue(to);
+        var ebody = escapeHttpUrlArgValue(body);
+
+        var httpUrl   = webservice.url.replace('$NUMBER', eto).replace('$TEXT', ebody);
+        var parsedUrl = url.parse(httpUrl, true);
+        var dataPost  = querystring.stringify(parsedUrl.query);
+
+        var options = {
+            host:    parsedUrl.hostname,
+            port:    parsedUrl.port ? parsedUrl.port : '80',
+            path:    parsedUrl.pathname,
+            method:  webservice.method,
+            headers: {
+               'Content-Type':   'application/x-www-form-urlencoded',
+               'Content-Length': dataPost.length
+            }
+        };
+
+        logger.info(IDLOG, 'sending sms to ' + to + ' using HTTP POST request');
+
+        var request = http.request(options, function (res) {
+            try {
+                // the http response is successful
+                if (res.statusCode === 200) {
+
+                    res.setEncoding('utf8');
+
+                    // analize the response. Only the response of webservice "smshosting" is analyzed in detail
+                    res.on('data', function (chunk) {
+                        try {
+                            analizeWebserviceResponse(parsedUrl.hostname, to, chunk, cb);
+
+                        } catch (err2) {
+                            logger.error(err2.stack);
+                            cb(err2);
+                        }
+                    });
+                }
+
+                // there is an error in the http response
+                else {
+                    var str = 'sending sms to ' + to + ': response statusCode ' + res.statusCode;
+                    logger.warn(IDLOG, str);
+                    cb(str);
+                }
+
+            } catch (err1) {
+                logger.error(err1.stack);
+                cb(err1);
+            }
+        });
+
+        request.on('error', function (e) {
+            var str = 'sending sms to ' + to + ': ' + e.message;
+            logger.warn(IDLOG, str);
+            cb(str);
+        });
+
+        // send the request
+        request.write(dataPost);
+        request.end();
+
+    } catch (err) {
+        logger.error(err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Sends an sms using a GET HTTP request.
+*
+* @method sendSmsByHttpGet
+* @param {string}   to   The destination number
+* @param {string}   body The text of the sms
+* @param {function} cb   The callback function
+* @private
+*/
+function sendSmsByHttpGet(to, body, cb) {
+    try {
+        // check parameters
+        if (   typeof to   !== 'string'
+            || typeof body !== 'string' || typeof cb !== 'function') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // escape the values of "to" and "body" to be inserted in the http url
+        var eto       = escapeHttpUrlArgValue(to);
+        var ebody     = escapeHttpUrlArgValue(body);
+
+        var httpUrl   = webservice.url.replace('$NUMBER', eto).replace('$TEXT', ebody);
+        var parsedUrl = url.parse(httpUrl, true);
+
+        var options = {
+            host:   parsedUrl.hostname,
+            port:   parsedUrl.port ? parsedUrl.port : '80',
+            path:   parsedUrl.pathname + parsedUrl.search,
+            method: webservice.method
+        };
+
+        logger.info(IDLOG, 'sending sms to ' + to + ' using HTTP GET request');
+
+        var request = http.request(options, function (res) {
+            try {
+                // the http response is successful
+                if (res.statusCode === 200) {
+
+                    res.setEncoding('utf8');
+
+                    res.on('data', function (chunk) {
+                        try {
+                            analizeWebserviceResponse(parsedUrl.hostname, to, chunk, cb);
+
+                        } catch (err2) {
+                            logger.error(err2.stack);
+                            cb(err2);
+                        }
+                    });
+                }
+
+                // there is an error in the http response
+                else {
+                    var str = 'sending sms to ' + to + ': response statusCode ' + res.statusCode;
+                    logger.warn(IDLOG, str);
+                    cb(str);
+                }
+
+            } catch (err1) {
+                logger.error(err1.stack);
+                cb(err1);
+            }
+        });
+
+        request.on('error', function (e) {
+            var str = 'sending sms to ' + to + ': ' + e.message;
+            logger.warn(IDLOG, str);
+            cb(str);
+        });
+
+        // send the request
+        request.end();
+
+    } catch (err) {
+        logger.error(err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Analize the webservice response to understand if it's successful or not.
+*
+* @method analizeWebserviceResponse
+* @param  {string}   serviceName The webservice name
+* @param  {string}   response    The response from the webservice
+* @param  {string}   to          The destination number
+* @return {function} The callback function
+* @private
+*/
+function analizeWebserviceResponse(serviceName, to, response, cb) {
+    try {
+        var i, respCode;
+        var temp = response.split('<CODICE>');
+
+        for (i = 0; i < temp.length; i++) {
+
+            if (temp[i].indexOf('</CODICE>') !== -1) {
+                respCode = temp[i].split('</CODICE>')[0];
+            }
+        }
+
+        // the sms was sent successfully
+        if (   respCode === 'HTTP_00'
+            || serviceName.indexOf('smshosting') === -1) {
+
+            logger.info(IDLOG, 'sms has been sent successfully to ' + to);
+            cb();
+
+        } else {
+            var str = 'sending sms to ' + to + ': response code "' + respCode + '"';
+            logger.warn(IDLOG, str);
+            cb(str);
+        }
+    } catch (err) {
+        logger.error(err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Returns the escape of the specified argument value to be inserted in a HTTP URL.
+*
+* @method escapeHttpUrlArgValue
+* @param  {string} value The value to be escape
+* @return {string} The escape of the value
+* @private
+*/
+function escapeHttpUrlArgValue(value) {
+    try {
+        var str = escape(value);
+
+        str = str.replace(/[*]/g, "%2A")
+        .replace(/[@]/g, "%40")
+        .replace(/[-]/g, "%2D")
+        .replace(/[_]/g, "%5F")
+        .replace(/[+]/g, "%2B")
+        .replace(/[.]/g, "%2E")
+        .replace(/[/]/g, "%2F");
+
+        return str;
+
+    } catch (err) {
+        logger.error(err.stack);
     }
 }
 

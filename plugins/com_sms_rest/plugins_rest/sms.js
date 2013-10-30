@@ -223,7 +223,7 @@ function setCompAuthorization(comp) {
 
                         } else {
                             logger.info(IDLOG, 'sent sms from "' + username + '" to "' + req.params.to + '" successful');
-                            compUtil.net.sendHttp201(IDLOG, res);
+                            compUtil.net.sendHttp200(IDLOG, res);
                         }
                     });
                 } catch (err) {
