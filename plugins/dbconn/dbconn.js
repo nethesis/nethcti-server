@@ -302,6 +302,7 @@ function savePostit(creator, text, recipient, cb) {
         });
     } catch (err) {
         logger.error(IDLOG, err.stack);
+        cb(err);
     }
 }
 
@@ -424,6 +425,48 @@ function getPostit(id, cb) {
         }).error(function (err1) { // manage the error
 
             logger.error(IDLOG, 'search postit with db id "' + id + '" failed: ' + err1.toString());
+            cb(err1.toString());
+        });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Returns all the unread post-it of the recipient user from the _nethcti.postit_ database table.
+*
+* @method getAllUnreadPostitOfRecipient
+* @param {string}   username The username of the recipient
+* @param {function} cb       The callback function
+*/
+function getAllUnreadPostitOfRecipient(username, cb) {
+    try {
+        // check parameters
+        if (typeof username !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        models[JSON_KEYS.POSTIT].findAll({
+            where: [ 'recipient=? ' +
+            'AND readdate IS NULL',
+            username ]
+
+        }).success(function (results) {
+
+            // extract results to return in the callback function
+            var i;
+            for (i = 0; i < results.length; i++) {
+                results[i] = results[i].selectedValues;
+            }
+
+            logger.info(IDLOG, results.length + ' results by searching all unread postit of the recipient user "' + username + '"');
+            cb(null, username, results);
+
+        }).error(function (err1) { // manage the error
+
+            logger.error(IDLOG, 'search all unread postit of the recipient user "' + username + '" failed: ' + err1.toString());
             cb(err1.toString());
         });
 
@@ -2451,6 +2494,7 @@ exports.getAllValidCallerNotesByNum         = getAllValidCallerNotesByNum;
 exports.getPbContactsStartsWithDigit        = getPbContactsStartsWithDigit;
 exports.getHistoryCallerNoteInterval        = getHistoryCallerNoteInterval;
 exports.getAllUserHistorySmsInterval        = getAllUserHistorySmsInterval;
+exports.getAllUnreadPostitOfRecipient       = getAllUnreadPostitOfRecipient;
 exports.getCtiPbContactsStartsWithDigit     = getCtiPbContactsStartsWithDigit;
 exports.getAllUserHistoryPostitInterval     = getAllUserHistoryPostitInterval;
 exports.getAllUserHistoryCallerNoteInterval = getAllUserHistoryCallerNoteInterval;

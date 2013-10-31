@@ -30,9 +30,6 @@ module.exports = function (options, imports, register) {
             * It's the _on_ method provided by _voicemail_ module.
             *
             * @method on
-            * @param  {string}   type The name of the event
-            * @param  {function} cb   The callback to execute in response to the event
-            * @return {object}   A subscription handle capable of detaching that subscription
             */
             on: voicemail.on,
 

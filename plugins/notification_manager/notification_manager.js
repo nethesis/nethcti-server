@@ -71,13 +71,17 @@ var ejsTemplates = {};
 * @default {
     newVoicemailSmsBody:      "new_voicemail_sms_body.ejs",
     newVoicemailEmailBody:    "new_voicemail_email_body.ejs",
-    newVoicemailEmailSubject: "new_voicemail_email_subject.ejs"
+    newVoicemailEmailSubject: "new_voicemail_email_subject.ejs",
+    newPostitEmailSubject:    "new_postit_email_subject.ejs",
+    newPostitEmailBody:       "new_postit_email_body.ejs"
 }
 */
 var EJS_TEMPLATE_FILENAMES = {
     newVoicemailSmsBody:      'new_voicemail_sms_body.ejs',
     newVoicemailEmailBody:    'new_voicemail_email_body.ejs',
-    newVoicemailEmailSubject: 'new_voicemail_email_subject.ejs'
+    newVoicemailEmailSubject: 'new_voicemail_email_subject.ejs',
+    newPostitEmailSubject:    'new_postit_email_subject.ejs',
+    newPostitEmailBody:       'new_postit_email_body.ejs'
 };
 
 /**
@@ -98,6 +102,15 @@ var logger = console;
 * @private
 */
 var compVoicemail;
+
+/**
+* The postit architect component used for postit functions.
+*
+* @property compPostit
+* @type object
+* @private
+*/
+var compPostit;
 
 /**
 * The architect component to be used for user functions.
@@ -183,6 +196,24 @@ function setCompVoicemail(comp) {
 
         compVoicemail = comp;
         logger.info(IDLOG, 'set voicemail architect component');
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the postit architect component used by postit functions.
+*
+* @method setCompPostit
+* @param {object} comp The postit architect component.
+*/
+function setCompPostit(comp) {
+    try {
+        // check parameter
+        if (typeof comp !== 'object') { throw new Error('wrong parameter'); }
+
+        compPostit = comp;
+        logger.info(IDLOG, 'set postit architect component');
     } catch (err) {
        logger.error(IDLOG, err.stack);
     }
@@ -326,6 +357,9 @@ function start() {
         // set the listener for the voicemail module
         setVoicemailListeners();
 
+        // set the listener for the postit module
+        setPostitListeners();
+
         // initialize ejs templates
         initEjsTemplates();
 
@@ -385,6 +419,26 @@ function initEjsTemplates() {
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the event listeners for the postit component.
+*
+* @method setPostitListeners
+* @private
+*/
+function setPostitListeners() {
+    try {
+        // check postit component object
+        if (!compPostit || typeof compPostit.on !== 'function') {
+            throw new Error('wrong voicemail object');
+        }
+
+        compPostit.on(compPostit.EVT_NEW_POSTIT, newPostitListener);
+
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
     }
 }
 
@@ -474,6 +528,75 @@ function newVoicemailListener(voicemail, list) {
 }
 
 /**
+* Manages the new post-it event emitted by the postit component. It sends
+* the post-it notifications to the recipient user of the post-it using their
+* notification configurations.
+*
+* @method newPostitListener
+* @param {string} creator   The creator username of the new post-it
+* @param {string} recipient The recipient username of the new post-it
+* @param {array}  list      The list of all unread post-it of the recipient user
+* @private
+*/
+function newPostitListener(creator, recipient, list) {
+    try {
+        logger.info(IDLOG, 'received "' + compPostit.EVT_NEW_POSTIT + '" event: created by "' + creator + '" for "' + recipient + '" : ' + list.length + ' unread post-it for "' + recipient + '"');
+
+        // check the event data
+        if (   typeof creator !== 'string'  || typeof recipient      !== 'string'
+            || list           === undefined || list instanceof Array === false) {
+
+            throw new Error('wrong data from event "' + compPostit.EVT_NEW_POSTIT + '"');
+        }
+
+        // get the list of all the usernames
+        var users = compUser.getUsernames();
+
+        // it sends notifications to the recipient user of the new post-it message,
+        // if he has the post-it authorization and have the notification configurations enabled
+        var i;
+        var conf;
+        var username;
+        for (i = 0; i < users.length; i++) {
+
+            username = users[i];
+
+            // check the user authorization
+            if (   compAuthorization.authorizePostitUser(username)      === true
+                || compAuthorization.authorizeAdminPostitUser(username) === true) {
+
+                logger.info(IDLOG, 'recipient user "' + username + '" has the post-it authorization');
+
+                // check if send email notification to the user
+                if (compConfigManager.verifySendVoicemailNotificationByEmail(username) === true) {
+
+                    sendNewPostitNotificationEmail(creator, recipient, list, sendNewPostitNotificationEmailCb);
+
+                } else {
+                    logger.info(IDLOG, 'don\'t send new post-it notification to user "' + username + '" by email');
+                }
+
+                // check if send sms notification to the user
+                if (compConfigManager.verifySendPostitNotificationBySms(username) === true) {
+
+                    logger.error('TODO TODO TODO');
+//                    sendNewPostitNotificationSms(creator, recipient, list, sendNewPostitNotificationSmsCb);
+
+                } else {
+                    logger.info(IDLOG, 'don\'t send new post-it notification to user "' + username + '" by sms');
+                }
+
+
+            } else {
+                logger.info(IDLOG, 'recipient user "' + username + '" hasn\'t the post-it authorization: don\'t send any notification to him');
+            }
+        }
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * The callback function of the send notification of a new voicemail message
 * by email. It's called at the end of the email dispatch.
 *
@@ -491,6 +614,23 @@ function sendNewVoicemailNotificationEmailCb(err, resp) {
 }
 
 /**
+* The callback function of the send notification of a new post-it message
+* by email. It's called at the end of the email dispatch.
+*
+* @method sendNewPostitNotificationEmailCb
+* @param {object} err  The error object
+* @param {object} resp The response of the action
+* @private
+*/
+function sendNewPostitNotificationEmailCb(err, resp) {
+    try {
+        if (err) { logger.error(IDLOG, 'sending email notification for new post-it message'); }
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * The callback function of the send notification of a new voicemail message
 * by sms. It's called at the end of the sms dispatch.
 *
@@ -502,6 +642,23 @@ function sendNewVoicemailNotificationEmailCb(err, resp) {
 function sendNewVoicemailNotificationSmsCb(err, resp) {
     try {
         if (err) { logger.error(IDLOG, 'sending sms notification for new voicemail message'); }
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* The callback function of the send notification of a new post-it message
+* by sms. It's called at the end of the sms dispatch.
+*
+* @method sendNewPostitNotificationSmsCb
+* @param {object} err  The error object
+* @param {object} resp The response of the action
+* @private
+*/
+function sendNewPostitNotificationSmsCb(err, resp) {
+    try {
+        if (err) { logger.error(IDLOG, 'sending sms notification for new post-it message'); }
     } catch (err) {
        logger.error(IDLOG, err.stack);
     }
@@ -536,6 +693,50 @@ function sendNewVoicemailNotificationEmail(username, voicemail, list, cb) {
             try {
                 if (err) {
                     logger.error(IDLOG, 'sending email notification to ' + to + ' of the new voicemail "' + voicemail + '" of the user "' + username + '"');
+                    throw err;
+                }
+                cb(null, resp);
+
+            } catch (err) {
+                logger.error(IDLOG, err.stack);
+                cb(err);
+            }
+        });
+
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sends a new post-it notification to the user by email.
+*
+* @method sendNewPostitNotificationEmail
+* @param {string}   creator   The creator username of the new post-it message
+* @param {string}   recipient The recipient username of the new post-it message
+* @param {array}    list      The list of all unread post-it of the recipient user
+* @param {function} cb        The callback function
+* @private
+*/
+function sendNewPostitNotificationEmail(creator, recipient, list, cb) {
+    try {
+        // check the parameters
+        if (   typeof creator   !== 'string'
+            || typeof recipient !== 'string' || typeof cb !== 'function'
+            || list instanceof Array === false) {
+
+            throw new Error('wrong parameters');
+        }
+
+        var to      = compConfigManager.getPostitNotificationEmailTo(recipient);
+        var subject = getPostitNotificationEmailSubject(creator, recipient, list);
+        var body    = getPostitNotificationEmailBody(creator, recipient, list);
+
+        logger.info(IDLOG, 'send new post-it notification from creator "' + creator + '" to email ' + to + ' of user "' + recipient + '"');
+        compMailer.send(to, subject, body, function (err, resp) {
+            try {
+                if (err) {
+                    logger.error(IDLOG, 'sending email notification to ' + to + ' of the new post-it from "' + creator + '" to user "' + recipient + '"');
                     throw err;
                 }
                 cb(null, resp);
@@ -631,7 +832,39 @@ function getVmNotificationEmailSubject(username, voicemail, list) {
         return subject;
 
     } catch (err) {
-       logger.error(IDLOG, err.stack);
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Returns the subject of the email message used to notify new post-it messages.
+*
+* @method getPostitNotificationEmailSubject
+* @param {string}  creator   The creator username of the new post-it message
+* @param {string}  recipient The recipient username of the new post-it message
+* @param {array}   list      The list of all unread post-it of the recipient user
+* @return {string} The subject of the email message.
+* @private
+*/
+function getPostitNotificationEmailSubject(creator, recipient, list) {
+    try {
+        // check the parameters
+        if (   typeof creator   !== 'string'
+            || typeof recipient !== 'string' || list instanceof Array === false) {
+
+            throw new Error('wrong parameters');
+        }
+
+        var template = ejsTemplates[EJS_TEMPLATE_FILENAMES.newPostitEmailSubject];
+        var subject  = ejs.render(template, {
+            creator:       creator,
+            recipient:     recipient,
+            unreadPostits: list
+        });
+        return subject;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
     }
 }
 
@@ -670,6 +903,48 @@ function getVmNotificationEmailBody(username, voicemail, list) {
             voicemail:     voicemail,
             lastVoicemail: lastVoicemail,
             newVoicemails: list
+        });
+        return body;
+
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Returns the body of the email message used to notify new post-it messages.
+*
+* @method getPostitNotificationEmailBody
+* @param {string}  creator   The creator username of the new post-it message
+* @param {string}  recipient The recipient username of the new post-it message
+* @param {array}   list      The list of all unread post-it of the recipient user
+* @return {string} The body of the email message.
+* @private
+*/
+function getPostitNotificationEmailBody(creator, recipient, list) {
+    try {
+        // check the parameters
+        if (   typeof creator   !== 'string'
+            || typeof recipient !== 'string' || list instanceof Array === false) {
+
+            throw new Error('wrong parameters');
+        }
+
+        var lastPostit = extractNewPostitMostRecent(list);
+
+        // parse creation date to all the unread post-it
+        var i;
+        for (i = 0; i < list.length; i++) {
+
+            list[i].creation = moment(list[i].creation).format('LLLL');
+        }
+
+        var template = ejsTemplates[EJS_TEMPLATE_FILENAMES.newPostitEmailBody];
+        var body     = ejs.render(template, {
+            creator:       creator,
+            recipient:     recipient,
+            lastPostit:    lastPostit,
+            unreadPostits: list
         });
         return body;
 
@@ -726,7 +1001,7 @@ function getVmNotificationSmsBody(username, voicemail, list) {
 function extractNewVoicemailMostRecent(list) {
     try {
         // check parameter
-        if(list instanceof Array === false) { throw new Error('wrong parameter'); }
+        if (list instanceof Array === false) { throw new Error('wrong parameter'); }
 
         var i;
         var temp = 0;
@@ -745,6 +1020,40 @@ function extractNewVoicemailMostRecent(list) {
     }
 }
 
+/**
+* Returns the most recent post-it from the list.
+*
+* @method extractNewPostitMostRecent
+* @param  {array}  list The list of all unread post-it messages of a user
+* @return {object} The most recent post-it.
+* @private
+*/
+function extractNewPostitMostRecent(list) {
+    try {
+        // check parameter
+        if (list instanceof Array === false) { throw new Error('wrong parameter'); }
+
+        var i;
+        var temp = 0;
+        var recentPostit;
+        var timestamp;
+
+        for (i = 0; i < list.length; i++) {
+
+            timestamp = list[i].creation.getTime();
+
+            if (temp < timestamp) {
+                temp = timestamp;
+                recentPostit = list[i];
+            }
+        }
+        return recentPostit;
+
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
 // public interface
 exports.start                = start;
 exports.config               = config;
@@ -752,6 +1061,7 @@ exports.setLogger            = setLogger;
 exports.setCompSms           = setCompSms;
 exports.setCompUser          = setCompUser;
 exports.setCompMailer        = setCompMailer;
+exports.setCompPostit        = setCompPostit;
 exports.setCompVoicemail     = setCompVoicemail;
 exports.setCompAuthorization = setCompAuthorization;
 exports.setCompConfigManager = setCompConfigManager;

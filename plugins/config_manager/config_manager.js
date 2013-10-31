@@ -502,6 +502,64 @@ function verifySendVoicemailNotification(username, deliveryMethod) {
 }
 
 /**
+* Checks the user post-it notification configurations and returns true if he
+* wants to receives the new post-it notification by the specified delivery method.
+*
+* @method verifySendPostitNotification
+* @param  {string}  username       The username identifier
+* @param  {string}  deliveryMethod The delivery method, e.g. email or sms
+* @return {boolean} True if the user wants to receive the new post-it notification by the specified delivery method.
+*/
+function verifySendPostitNotification(username, deliveryMethod) {
+    try {
+        // check parameters
+        if (typeof username !== 'string' || typeof deliveryMethod !== 'string') {
+            throw new Error('wrong parameters');
+        }
+
+        var conf = compUser.getConfigurations(username);
+
+        // check the configurations of the user
+        if (   typeof conf                                                        !== 'object'
+            || typeof conf[USER_CONFIG_KEYS.notifications]                        !== 'object'
+            || typeof conf[USER_CONFIG_KEYS.notifications].postit                 !== 'object'
+            || typeof conf[USER_CONFIG_KEYS.notifications].postit[deliveryMethod] !== 'object') {
+
+            logger.warn(IDLOG, 'checking if send new post-it notification by "' + deliveryMethod + '" for user "' + username + '": ' +
+                               'wrong notification configurations');
+            return false;
+        }
+
+        var when = conf[USER_CONFIG_KEYS.notifications].postit[deliveryMethod].when;
+
+        if      (when === NOTIF_WHEN.always)  { return true;  }
+        else if (when === NOTIF_WHEN.never)   { return false; }
+        else if (when === NOTIF_WHEN.offline) {
+            // checks if the presence of all the nethcti user endpoints is offline
+
+            // this "offline" must be adapted to report if the recipient user if offline
+            /*
+            var nethctiEndpoints = compUser.getAllEndpointsNethcti(username);
+            var end;
+            var allOffline = true;
+            for (end in nethctiEndpoints) {
+                allOffline = allOffline && (nethctiEndpoints[end].getStatus() === NOTIF_WHEN.offline);
+            }
+            return allOffline;
+            */
+
+        } else {
+            logger.warn(IDLOG, 'checking if send new post-it notification by "' + deliveryMethod + '" for user "' + username + '": ' +
+                               'wrong when value "' + when + '"');
+            return false;
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return false;
+    }
+}
+
+/**
 * Checks the user voicemail notification configurations and returns true if he
 * wants to receives the voicemail notification by email.
 *
@@ -523,6 +581,27 @@ function verifySendVoicemailNotificationByEmail(username) {
 }
 
 /**
+* Checks the user post-it notification configurations and returns true if he
+* wants to receives the new post-it notification by email.
+*
+* @method verifySendPostitNotificationByEmail
+* @param  {string}  username The username identifier
+* @return {boolean} True if the user wants to receive the new post-it notification by email
+*/
+function verifySendPostitNotificationByEmail(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return verifySendPostitNotification(username, 'email');
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return false;
+    }
+}
+
+/**
 * Checks the user voicemail notification configurations and returns true if he
 * wants to receives the voicemail notification by sms.
 *
@@ -536,6 +615,27 @@ function verifySendVoicemailNotificationBySms(username) {
         if (typeof username !== 'string') { throw new Error('wrong parameter'); }
 
         return verifySendVoicemailNotification(username, 'sms');
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return false;
+    }
+}
+
+/**
+* Checks the user post-it notification configurations and returns true if he
+* wants to receives the new post-it notification by sms.
+*
+* @method verifySendPostitNotificationBySms
+* @param  {string}  username The username identifier
+* @return {boolean} True if the user wants to receive the new post-it notification by sms
+*/
+function verifySendPostitNotificationBySms(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return verifySendPostitNotification(username, 'sms');
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -569,6 +669,39 @@ function getVoicemailNotificationEmailTo(username) {
         }
 
         return conf[USER_CONFIG_KEYS.notifications].voicemail.email.to;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return '';
+    }
+}
+
+/**
+* Returns the destination email address for the new post-it notification of the user.
+*
+* @method getPostitNotificationEmailTo
+* @param  {string} username The username identifier
+* @return {string} The destination email address.
+*/
+function getPostitNotificationEmailTo(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        var conf = compUser.getConfigurations(username);
+
+        // check the configurations of the user
+        if (   typeof conf                                                 !== 'object'
+            || typeof conf[USER_CONFIG_KEYS.notifications]                 !== 'object'
+            || typeof conf[USER_CONFIG_KEYS.notifications].postit          !== 'object'
+            || typeof conf[USER_CONFIG_KEYS.notifications].postit.email    !== 'object'
+            || typeof conf[USER_CONFIG_KEYS.notifications].postit.email.to !== 'string') {
+
+            logger.warn(IDLOG, 'getting email destination for new post-it notification of user "' + username + '": wrong configurations');
+            return '';
+        }
+
+        return conf[USER_CONFIG_KEYS.notifications].postit.email.to;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -620,7 +753,10 @@ exports.getUserConfigurations                  = getUserConfigurations;
 exports.setUserClick2CallConf                  = setUserClick2CallConf;
 exports.getAllUserEndpointsJSON                = getAllUserEndpointsJSON;
 exports.setUserNotificationConf                = setUserNotificationConf;
+exports.getPostitNotificationEmailTo           = getPostitNotificationEmailTo;
 exports.getVoicemailNotificationSmsTo          = getVoicemailNotificationSmsTo;
 exports.getVoicemailNotificationEmailTo        = getVoicemailNotificationEmailTo;
+exports.verifySendPostitNotificationBySms      = verifySendPostitNotificationBySms;
+exports.verifySendPostitNotificationByEmail    = verifySendPostitNotificationByEmail;
 exports.verifySendVoicemailNotificationBySms   = verifySendVoicemailNotificationBySms;
 exports.verifySendVoicemailNotificationByEmail = verifySendVoicemailNotificationByEmail;

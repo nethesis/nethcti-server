@@ -556,7 +556,7 @@ function getVmIdFromDbId(dbid, cb) {
 }
 
 /**
-* It's the callback functino called when get new voicemail
+* It's the callback function called when get new voicemail
 * messages from the database component.
 *
 * @method getVoicemailNewMsgCb
@@ -573,7 +573,7 @@ function getVoicemailNewMsgCb(err, voicemail, results) {
             else { str += err.stack; }
 
             logger.error(IDLOG, str);
-            return [];
+            return;
         }
 
         // check the parameters

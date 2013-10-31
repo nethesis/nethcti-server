@@ -73,6 +73,13 @@ module.exports = function (options, imports, register) {
             verifySendVoicemailNotificationByEmail: configManager.verifySendVoicemailNotificationByEmail,
 
             /**
+            * It's the _verifySendPostitNotificationByEmail_ method provided by _config\_manager_ module.
+            *
+            * @method verifySendPostitNotificationByEmail
+            */
+            verifySendPostitNotificationByEmail: configManager.verifySendPostitNotificationByEmail,
+
+            /**
             * It's the _verifySendVoicemailNotificationBySms_ method provided by _config\_manager_ module.
             *
             * @method verifySendVoicemailNotificationBySms
@@ -80,11 +87,25 @@ module.exports = function (options, imports, register) {
             verifySendVoicemailNotificationBySms: configManager.verifySendVoicemailNotificationBySms,
 
             /**
+            * It's the _verifySendPostitNotificationBySms_ method provided by _config\_manager_ module.
+            *
+            * @method verifySendPostitNotificationBySms
+            */
+            verifySendPostitNotificationBySms: configManager.verifySendPostitNotificationBySms,
+
+            /**
             * It's the _getVoicemailNotificationEmailTo_ method provided by _config\_manager_ module.
             *
             * @method getVoicemailNotificationEmailTo
             */
             getVoicemailNotificationEmailTo: configManager.getVoicemailNotificationEmailTo,
+
+            /**
+            * It's the _getPostitNotificationEmailTo_ method provided by _config\_manager_ module.
+            *
+            * @method getPostitNotificationEmailTo
+            */
+            getPostitNotificationEmailTo: configManager.getPostitNotificationEmailTo,
 
             /**
             * It's the _getVoicemailNotificationSmsTo_ method provided by _config\_manager_ module.

@@ -4,6 +4,7 @@
 * @module postit
 * @main arch_controller_postit
 */
+var EventEmitter = require('events').EventEmitter;
 
 /**
 * Provides the post-it functionalities.
@@ -33,6 +34,30 @@ var IDLOG = '[controller_postit]';
 * @default console
 */
 var logger = console;
+
+/**
+* The event emitter.
+*
+* @property emitter
+* @type object
+* @private
+*/
+var emitter = new EventEmitter();
+
+/**
+* Fired when new post-it has been created for a user.
+*
+* @event newPostit
+* @param {object} postits The list of all unread post-it of the recipient user
+*/
+/**
+* The name of the new post-it event.
+*
+* @property EVT_NEW_POSTIT
+* @type string
+* @default "newPostit"
+*/
+var EVT_NEW_POSTIT = 'newPostit';
 
 /**
 * The dbconn module.
@@ -176,13 +201,15 @@ function newPostit(data, cb) {
 }
 
 /**
-* Save the post-it data into the database using dbconn module.
+* Save the post-it data into the database using dbconn module. Then gets
+* all the unread post-it of the recipient user and emit the new post-it
+* event EVT_NEW_POSTIT.
 *
 * @method save
 * @param {object} data
 *   @param {string} data.recipient The recipient of the post-it
-*   @param {string} data.creator The creator of the post-it
-*   @param {string} data.text The text of the message
+*   @param {string} data.creator   The creator of the post-it
+*   @param {string} data.text      The text of the message
 * @param {function} cb The callback function
 */
 function save(data, cb) {
@@ -195,8 +222,81 @@ function save(data, cb) {
         }
 
         logger.info(IDLOG, 'save postit by means dbconn module');
-        dbconn.savePostit(data.creator, data.text, data.recipient, cb);
+        dbconn.savePostit(data.creator, data.text, data.recipient, function (err) {
+            try {
+                if (err) {
+                    cb(err);
 
+                } else {
+                    cb();
+
+                    // get all the new postit of the recipient to emit the EVT_NEW_POSTIT event
+                    dbconn.getAllUnreadPostitOfRecipient(data.recipient, function (err, recipient, results) {
+                        getAllUnreadPostitOfRecipientCb(err, data.creator, recipient, results);
+                    });
+                }
+            } catch (err1) {
+                logger.error(IDLOG, err1.stack);
+                cb(err1);
+            }
+        });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* It's the callback function called when get all unread postit
+* of a recipient user from the database component. It's called when
+* a new post-it message has been created for a recipient user.
+*
+* @method getAllUnreadPostitOfRecipientCb
+* @param {object} err       The error
+* @param {string} creator   The creator username of the new post-it
+* @param {string} recipient The recipient username of the new post-it
+* @param {object} results   All the unread post-it of the recipient user
+* @private
+*/
+function getAllUnreadPostitOfRecipientCb(err, creator, recipient, results) {
+    try {
+        if (err) {
+            var str = 'getting all unread postit of recipient user ' + username + ': ';
+            if (typeof err === 'string') { str += err; }
+            else { str += err.stack; }
+
+            logger.error(IDLOG, str);
+            return;
+        }
+
+        // check the parameters
+        if (   typeof creator   !== 'string'
+            || typeof recipient !== 'string' || results instanceof Array === false) {
+
+            throw new Error('wrong parameters');
+        }
+
+        // emits the new postit event with all the unread postit of the recipient user
+        emitter.emit(EVT_NEW_POSTIT, creator, recipient, results);
+
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Subscribe a callback function to a custom event fired by this object.
+* It's the same of nodejs _events.EventEmitter.on_ method.
+*
+* @method on
+* @param  {string}   type The name of the event
+* @param  {function} cb   The callback to execute in response to the event
+* @return {object}   A subscription handle capable of detaching that subscription.
+*/
+function on(type, cb) {
+    try {
+        return emitter.on(type, cb);
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -287,11 +387,13 @@ function getAllUserHistoryInterval(data, cb) {
 }
 
 // public interface
+exports.on                        = on;
 exports.newPostit                 = newPostit;
 exports.getPostit                 = getPostit;
 exports.setLogger                 = setLogger;
 exports.setDbconn                 = setDbconn;
 exports.readPostit                = readPostit;
 exports.deletePostit              = deletePostit;
+exports.EVT_NEW_POSTIT            = EVT_NEW_POSTIT;
 exports.getHistoryInterval        = getHistoryInterval;
 exports.getAllUserHistoryInterval = getAllUserHistoryInterval;

@@ -24,6 +24,13 @@ module.exports = function (options, imports, register) {
     register(null, {
         postit: {
             /**
+            * It's the _on_ method provided by _controller\_postit_ module.
+            *
+            * @method on
+            */
+            on: controllerPostit.on,
+
+            /**
             * It's the _newPostit_ method provided by _controller\_postit_ module.
             *
             * @method newPostit
@@ -63,7 +70,14 @@ module.exports = function (options, imports, register) {
             *
             * @method getAllUserHistoryInterval
             */
-            getAllUserHistoryInterval: controllerPostit.getAllUserHistoryInterval
+            getAllUserHistoryInterval: controllerPostit.getAllUserHistoryInterval,
+
+            /**
+            * It's the _EVT\_NEW\_POSTIT_ method provided by _controller\_postit_ module.
+            *
+            * @method EVT_NEW_POSTIT
+            */
+            EVT_NEW_POSTIT: controllerPostit.EVT_NEW_POSTIT
         }
     });
 
