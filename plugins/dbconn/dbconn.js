@@ -306,6 +306,92 @@ function savePostit(creator, text, recipient, cb) {
 }
 
 /**
+* Save a successfully sms sending in the _nethcti.sms\_history_ database table.
+*
+* @method storeSmsSuccess
+* @param {string}   username The name of the user who sent the sms
+* @param {string}   to       The destination number
+* @param {string}   body     The text of the message
+* @param {function} cb       The callback function
+*/
+function storeSmsSuccess(username, to, body, cb) {
+    try {
+        // check parameters
+        if (   typeof username !== 'string' || typeof cb   !== 'function'
+            || typeof to       !== 'string' || typeof body !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // get the sequelize model already loaded
+        var smsHistory = models[JSON_KEYS.SMS_HISTORY].build({
+            date:        moment().format('YYYY-MM-DD HH:mm:ss'),
+            text:        body,
+            status:      true,
+            sender:      username,
+            destination: to
+        });
+
+        // save the model into the database
+        smsHistory.save()
+        .success(function () { // the save was successful
+            logger.info(IDLOG, 'sms success from user "' + username + '" to ' + to + ' saved successfully in the database');
+            cb();
+
+        }).error(function (err) { // manage the error
+            logger.error(IDLOG, 'saving sms success from user "' + username + '" to ' + to + ': ' + err.toString());
+            cb(err.toString());
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Save a failure in sms sending in the _nethcti.sms\_history_ database table.
+*
+* @method storeSmsFailure
+* @param {string}   username The name of the user who sent the sms
+* @param {string}   to       The destination number
+* @param {string}   body     The text of the message
+* @param {function} cb       The callback function
+*/
+function storeSmsFailure(username, to, body, cb) {
+    try {
+        // check parameters
+        if (   typeof username !== 'string' || typeof cb   !== 'function'
+            || typeof to       !== 'string' || typeof body !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // get the sequelize model already loaded
+        var smsHistory = models[JSON_KEYS.SMS_HISTORY].build({
+            date:        moment().format('YYYY-MM-DD HH:mm:ss'),
+            text:        body,
+            status:      false,
+            sender:      username,
+            destination: to
+        });
+
+        // save the model into the database
+        smsHistory.save()
+        .success(function () { // the save was successful
+            logger.info(IDLOG, 'sms failure from user "' + username + '" to ' + to + ' saved successfully in the database');
+            cb();
+
+        }).error(function (err) { // manage the error
+            logger.error(IDLOG, 'saving sms failure from user "' + username + '" to ' + to + ': ' + err.toString());
+            cb(err.toString());
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
 * Returns the post-it from the _nethcti.postit_ database table using its unique database identifier.
 * Then it sets the status read for the required postit updating the _readdate_ column of the
 * _nethcti.postit_ database table.
@@ -2333,6 +2419,8 @@ exports.deletePostit                        = deletePostit;
 exports.getCallTrace                        = getCallTrace
 exports.getCallerNote                       = getCallerNote;
 exports.saveCallerNote                      = saveCallerNote;
+exports.storeSmsFailure                     = storeSmsFailure;
+exports.storeSmsSuccess                     = storeSmsSuccess;
 exports.getCtiPbContact                     = getCtiPbContact;
 exports.saveCtiPbContact                    = saveCtiPbContact;
 exports.deleteCallerNote                    = deleteCallerNote;

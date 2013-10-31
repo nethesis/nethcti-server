@@ -31,6 +31,20 @@ module.exports = function (options, imports, register) {
             send: sms.send,
 
             /**
+            * It's the _storeSmsSuccess_ method provided by _sms_ module.
+            *
+            * @method storeSmsSuccess
+            */
+            storeSmsSuccess: sms.storeSmsSuccess,
+
+            /**
+            * It's the _storeSmsFailure_ method provided by _sms_ module.
+            *
+            * @method storeSmsFailure
+            */
+            storeSmsFailure: sms.storeSmsFailure,
+
+            /**
             * It's the _getHistoryInterval_ method provided by _sms_ module.
             *
             * @method getHistoryInterval

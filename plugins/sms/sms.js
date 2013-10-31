@@ -647,6 +647,58 @@ function getAllUserHistoryInterval(data, cb) {
 }
 
 /**
+* Store a successfully sms sending in the database.
+*
+* @method storeSmsSuccess
+* @param {string} username The name of the user who sent the sms
+* @param {string} to       The destination number
+* @param {string} body     The text of the message
+*/
+function storeSmsSuccess(username, to, body) {
+    try {
+        // check parameters
+        if (   typeof username !== 'string'
+            || typeof to       !== 'string' || typeof body !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        logger.info(IDLOG, 'store sms success from user "' + username + '" to number ' + to + ' in the database');
+        compDbconn.storeSmsSuccess(username, to, body, function () {});
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Store an sms sending failure in the database.
+*
+* @method storeSmsFailure
+* @param {string} username The name of the user who sent the sms
+* @param {string} to       The destination number
+* @param {string} body     The text of the message
+*/
+function storeSmsFailure(username, to, body) {
+    try {
+        // check parameters
+        if (   typeof username !== 'string'
+            || typeof to       !== 'string' || typeof body !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        logger.info(IDLOG, 'store sms failure from user "' + username + '" to number ' + to + ' in the database');
+        compDbconn.storeSmsFailure(username, to, body, function () {});
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
 * Sets the database architect component.
 *
 * @method setCompDbconn
@@ -666,5 +718,7 @@ exports.send                      = send;
 exports.config                    = config;
 exports.setLogger                 = setLogger;
 exports.setCompDbconn             = setCompDbconn;
+exports.storeSmsFailure           = storeSmsFailure;
+exports.storeSmsSuccess           = storeSmsSuccess;
 exports.getHistoryInterval        = getHistoryInterval;
 exports.getAllUserHistoryInterval = getAllUserHistoryInterval;

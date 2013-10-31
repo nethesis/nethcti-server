@@ -578,19 +578,27 @@ function sendNewVoicemailNotificationSms(username, voicemail, list, cb) {
         compSms.send(username, to, body, function (err, resp) {
             try {
                 if (err) {
-                    logger.error(IDLOG, 'sending sms notification from "' + username + '" to ' + to + ' of the new voicemail "' + voicemail + '" of the user "' + username + '"');
-                    throw err;
+                    throw new Error('sending sms notification from "' + username + '" to ' + to + ' of the new voicemail "' + voicemail + '" of the user "' + username + '"');
                 }
                 cb(null, resp);
+
+                // store a success sms sending in the database
+                logger.info(IDLOG, 'store sms success to ' + to + ' of user "' + username + '" for new voicemail ' + voicemail + ' notification');
+                compSms.storeSmsSuccess(username, to, body);
 
             } catch (err) {
                 logger.error(IDLOG, err.stack);
                 cb(err);
+
+                // store a failure sms sending in the database
+                logger.info(IDLOG, 'store sms failure to ' + to + ' of user "' + username + '" for new voicemail ' + voicemail + ' notification');
+                compSms.storeSmsFailure(username, to, body);
             }
         });
 
     } catch (err) {
        logger.error(IDLOG, err.stack);
+       cb(err);
     }
 }
 
