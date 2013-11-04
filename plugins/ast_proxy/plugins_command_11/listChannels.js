@@ -107,10 +107,7 @@ var IDLOG = '[listChannels]';
                     if (data.event === 'CoreShowChannel'
                         && data.calleridnum) {
 
-                        var type = calculateChType(data);
-
                         var obj = {
-                            type:           type,
                             status:         AST_CHANNEL_STATE_2_STRING_ADAPTER[data.channelstate],
                             channel:        data.channel,
                             uniqueid:       data.uniqueid,
@@ -174,48 +171,3 @@ var IDLOG = '[listChannels]';
         logger.error(IDLOG, err.stack);
     }
 })();
-
-/**
-* Extract the channel type from the aterisk event.
-*
-* @method calculateChType
-* @param {object} data The asterisk event
-* @private
-* @return {string} The channel type: "source" | "destination"
-*/
-function calculateChType(data) {
-    try {
-        // calculate channel type: source or destination
-        var ch        = data.channel;
-        var chBridged = data.bridgedchannel;
-        var type;
-
-        // the channel is connected to another one, so channel type
-        // calculation is based on the asterisk channel number
-        if (chBridged !== '') {
-
-            var numCh        = ch.split('-')[1]; // asterisk channel number
-            var numChBridged = chBridged.split('-')[1];
-
-            if (numCh > numChBridged) { // this channel has been created later
-                type = 'destination';
-            } else { // this channel has been created earlier
-                type = 'source';
-            }
-
-        } else if (data.channelstate === '5') { // ringing
-            type = 'destination';
-
-        } else if (data.channelstate === '4') { // ring
-            type = 'source';
-
-        } else {
-            type = 'unknown';
-        }
-
-        return type;
-
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}

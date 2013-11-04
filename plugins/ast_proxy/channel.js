@@ -5,20 +5,19 @@
 *
 * @class Channel
 * @param {object} channel The channel object
-*   @param {string} channel.channel The channel identifier
-*   @param {string} channel.callerNum The caller number
-*   @param {string} channel.callerName The caller name
-*   @param {string} channel.bridgedNum The connected number
-*   @param {string} channel.bridgedName The connected name
+*   @param {string} channel.channel        The channel identifier
+*   @param {string} channel.callerNum      The caller number
+*   @param {string} channel.callerName     The caller name
+*   @param {string} channel.bridgedNum     The connected number
+*   @param {string} channel.bridgedName    The connected name
 *   @param {string} channel.bridgedChannel The connected asterisk channel
-*   @param {string} channel.channelStatus The status description of the asterisk channel
+*   @param {string} channel.status         The status description of the asterisk channel
 * @return {object} The channel object.
 * @constructor
 */
 exports.Channel = function (obj) {
     // check parameter
     if (obj.channel           === undefined
-        || obj.type           === undefined
         || obj.status         === undefined
         || obj.uniqueid       === undefined
         || obj.callerNum      === undefined
@@ -118,7 +117,16 @@ exports.Channel = function (obj) {
     * @required
     * @private
     */
-    var type = obj.type;
+    // the channel type is calculated using the channel number. The minor
+    // number means that the channel is previously created. The channel
+    // number is the last part of the channel identifier, e.g. the number
+    // of the channel "SIP/211-00000486" is "00000486"
+    if (channel.split('-')[1] > bridgedChannel.split('-')[1]) {
+        type = TYPE.DEST;
+    } else {
+        type = TYPE.SOURCE;
+    }
+
 
     /**
     * Return the channel identifier.
