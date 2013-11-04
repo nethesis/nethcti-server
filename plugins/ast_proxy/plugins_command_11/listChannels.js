@@ -107,6 +107,8 @@ var IDLOG = '[listChannels]';
                     if (data.event === 'CoreShowChannel'
                         && data.calleridnum) {
 
+                        var channelExten = data.channel.split('/')[1].split('-')[0];
+
                         var obj = {
                             status:         AST_CHANNEL_STATE_2_STRING_ADAPTER[data.channelstate],
                             channel:        data.channel,
@@ -115,6 +117,7 @@ var IDLOG = '[listChannels]';
                             callerName:     data.calleridname,
                             bridgedNum:     data.connectedlinenum,
                             bridgedName:    data.connectedlinename,
+                            channelExten:   channelExten,
                             bridgedChannel: data.bridgedchannel
                         };
                         list[data.channel] = obj;

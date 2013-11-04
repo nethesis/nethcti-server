@@ -1511,7 +1511,7 @@ function updateExtenConversations(err, resp, exten) {
             for (chid in resp) {
 
                 // current extension of the channel
-                ext = resp[chid].callerNum;
+                ext = resp[chid].channelExten;
 
                 // add new conversation to the extension. Queue channel is not considered,
                 // otherwise an extension has also wrong conversation (e.g. 214 has the
@@ -1938,10 +1938,12 @@ function evtConversationDialing(data) {
     try {
         // check parameter
         if (typeof data !== 'object'
-            && typeof data.chDest     !== 'string'
-            && typeof data.chSource   !== 'string'
-            && typeof data.callerNum  !== 'string'
-            && typeof data.dialingNum !== 'string') {
+            && typeof data.chDest        !== 'string'
+            && typeof data.chSource      !== 'string'
+            && typeof data.callerNum     !== 'string'
+            && typeof data.dialingNum    !== 'string'
+            && typeof data.chDestExten   !== 'string'
+            && typeof data.chSourceExten !== 'string') {
 
             throw new Error('wrong parameter');
         }
@@ -1986,8 +1988,8 @@ function evtConversationDialing(data) {
                 resp[data.chSource].bridgedChannel = data.chDest;
 
                 // update the conversations of the extensions
-                if (extensions[data.callerNum])  { updateExtenConversations(err, resp, data.callerNum);  }
-                if (extensions[data.dialingNum]) { updateExtenConversations(err, resp, data.dialingNum); }
+                if (extensions[data.chSourceExten]) { updateExtenConversations(err, resp, data.chSourceExten); }
+                if (extensions[data.chDestExten])   { updateExtenConversations(err, resp, data.chDestExten);   }
 
             } catch (err) {
                 logger.error(IDLOG, err.stack);
@@ -2287,21 +2289,21 @@ function pickupConversation(endpointType, endpointId, convid, destType, destId, 
 function evtHangupConversation(data) {
     try {
         // check parameter
-        if (typeof data !== 'object'
-            || typeof data.channel   !== 'string'
-            || typeof data.callerNum !== 'string') {
+        if (   typeof data              !== 'object'
+            || typeof data.channel      !== 'string'
+            || typeof data.channelExten !== 'string') {
 
             throw new Error('wrong parameter');
         }
 
         // check the extension existence
-        if (extensions[data.callerNum]) {
+        if (extensions[data.channelExten]) {
 
             // request all channel list and update channels of extension
             astProxy.doCmd({ command: 'listChannels' }, function (err, resp) {
 
                 // update the conversations of the extension
-                updateExtenConversations(err, resp, data.callerNum);
+                updateExtenConversations(err, resp, data.channelExten);
             });
         }
 

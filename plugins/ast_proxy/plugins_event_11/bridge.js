@@ -53,16 +53,17 @@ var astProxy;
             */
             data: function (data) {
                 try {
-                    if (data.callerid1
-                        && data.callerid2
+                    if (   data.channel1
+                        && data.channel2
                         && data.bridgestate === 'Link'
                         && data.event       === 'Bridge') {
 
+                        var channelExten1 = data.channel1.split('-')[0].split('/')[1];
+                        var channelExten2 = data.channel2.split('-')[0].split('/')[1];
+
                         logger.info(IDLOG, 'received event ' + data.event);
-                        astProxy.proxyLogic.evtConversationConnected(data.callerid1, data.callerid2);
-
+                        astProxy.proxyLogic.evtConversationConnected(channelExten1, channelExten2);
                     }
-
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
                 }

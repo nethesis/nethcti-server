@@ -118,11 +118,14 @@ var CAUSE = {
                         && data.calleridnum && data.channel
                         && data.cause       && data.event === 'Hangup') {
 
+                        var channelExten = data.channel.split('-')[0].split('/')[1];
+
                         logger.info(IDLOG, 'received event ' + data.event);
                         astProxy.proxyLogic.evtHangupConversation({
-                            cause:     CAUSE[data.cause],
-                            channel:   data.channel,
-                            callerNum: data.calleridnum
+                            cause:        CAUSE[data.cause],
+                            channel:      data.channel,
+                            callerNum:    data.calleridnum,
+                            channelExten: channelExten
                         });
 
                     } else {

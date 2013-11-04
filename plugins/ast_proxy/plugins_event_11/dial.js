@@ -58,13 +58,18 @@ var astProxy;
                         && data.destination  && data.connectedlinenum
                         && data.calleridname && data.event === 'Dial') {
 
+                        var chDestExten   = data.destination.split('/')[1].split('-')[0];
+                        var chSourceExten = data.channel.split('/')[1].split('-')[0];
+
                         logger.info(IDLOG, 'received event ' + data.event);
                         astProxy.proxyLogic.evtConversationDialing({
-                            chDest:     data.destination,
-                            chSource:   data.channel,
-                            callerNum:  data.calleridnum,
-                            callerName: data.calleridname,
-                            dialingNum: data.dialstring
+                            chDest:        data.destination,
+                            chSource:      data.channel,
+                            callerNum:     data.calleridnum,
+                            callerName:    data.calleridname,
+                            dialingNum:    data.connectedlinenum,
+                            chDestExten:   chDestExten,
+                            chSourceExten: chSourceExten
                         });
                     }
                 } catch (err) {
