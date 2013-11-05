@@ -121,6 +121,7 @@ exports.Channel = function (obj) {
     // number means that the channel is previously created. The channel
     // number is the last part of the channel identifier, e.g. the number
     // of the channel "SIP/211-00000486" is "00000486"
+    var type;
     var numChannel        = parseInt(channel.split('-')[1], 16);
     var numBridgedChannel = parseInt(bridgedChannel.split('-')[1], 16);
     if (numChannel < numBridgedChannel) {
@@ -128,7 +129,6 @@ exports.Channel = function (obj) {
     } else {
         type = TYPE.DEST;
     }
-
 
     /**
     * Return the channel identifier.
