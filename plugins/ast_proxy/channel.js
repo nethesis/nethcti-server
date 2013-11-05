@@ -222,6 +222,21 @@ exports.Channel = function (obj) {
     }
 
     /**
+    * Returns true if this channel is of the specified extension.
+    *
+    * @method isExtension
+    * @param  {string}  exten The extension identifier
+    * @return {boolean} True if the channel is of the specified extension identifier
+    */
+    function isExtension(exten) {
+        if (channel.split('-')[0].split('/')[1] === exten) {
+            return true;
+        } else {
+            return false;
+        }
+     }
+
+    /**
     * Returns the JSON representation of the object.
     *
     *     {
@@ -260,6 +275,7 @@ exports.Channel = function (obj) {
         isSource:            isSource,
         getChannel:          getChannel,
         getUniqueId:         getUniqueId,
+        isExtension:         isExtension,
         getStartTime:        getStartTime,
         getCallerNum:        getCallerNum,
         getCallerName:       getCallerName,

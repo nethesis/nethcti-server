@@ -2120,10 +2120,15 @@ function getExtenIdChannelConversation(exten, convid) {
 
         var chDest   = conv.getDestinationChannel();
         var chSource = conv.getSourceChannel();
-        var ch;
 
-        if (chSource)    { return chSource.getChannel(); }
-        else if (chDest) { return chDest.getChannel();   }
+        // get the channel of the extension "exten"
+        if (chSource && chSource.isExtension(exten) === true) {
+            return chSource.getChannel();
+        }
+
+        if (chDest && chDest.isExtension(exten) === true) {
+            return chDest.getChannel();
+        }
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
