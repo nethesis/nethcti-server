@@ -6,7 +6,6 @@
 */
 var endpointTypes  = require('./endpoint_types');
 var controllerUser = require('./controller_user');
-var endpointTypes  = require('./endpoint_types');
 
 /**
 * The module identifier used by the logger.
@@ -125,6 +124,13 @@ module.exports = function (options, imports, register) {
             * @method ENDPOINT_TYPES
             */
             ENDPOINT_TYPES: endpointTypes.TYPES,
+
+            /**
+            * It's the _ENDPOINT\_NETHCTI\_STATUS_ method provided by _endpoint\_types_ module.
+            *
+            * @method ENDPOINT_NETHCTI_STATUS
+            */
+            ENDPOINT_NETHCTI_STATUS: endpointTypes.ENDPOINT_NETHCTI_STATUS,
 
             /**
             * It's the _getUsernames_ method provided by _controller\_user_ module.

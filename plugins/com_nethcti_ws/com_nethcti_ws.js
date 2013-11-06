@@ -1407,10 +1407,6 @@ function logoutHdlr(socket) {
         socket.get('username', function (err, username) {
 
             logger.info(IDLOG, 'logout websocket of user "' + username + '" ' + getWebsocketEndpoint(socket) + ' with id ' + socket.id);
-
-            // remove trusted identifier of the websocket
-            removeWebsocketId(socket.id);
-
             socket.disconnect();
         });
 
@@ -1429,7 +1425,13 @@ function logoutHdlr(socket) {
 function disconnHdlr(socket) {
     try {
         logger.info(IDLOG, 'client websocket disconnected ' + getWebsocketEndpoint(socket));
+
+        var username = wsid[socket.id];
+        compUser.setNethctiPresence(username, 'desktop', compUser.ENDPOINT_NETHCTI_STATUS.offline);
+
+        // remove trusted identifier of the websocket
         removeWebsocketId(socket.id);
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }

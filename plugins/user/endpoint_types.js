@@ -38,10 +38,10 @@ var TYPES = {
 * @type {object}
 * @readOnly
 * @default {
-    "BUSY":    "busy",
-    "AWAY":    "away",
-    "ONLINE":  "online",
-    "OFFLINE": "offline"
+    busy:    "busy",
+    away:    "away",
+    online:  "online",
+    offline: "offline"
 }
 */
 var ENDPOINT_NETHCTI_STATUS = {
