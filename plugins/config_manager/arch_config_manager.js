@@ -121,7 +121,7 @@ module.exports = function (options, imports, register) {
         if (imports.logger) { logger = imports.logger; }
 
         // wait for the creation of the users
-        imports.user.on('users_ready', function () {
+        imports.user.on(imports.user.EVT_USERS_READY, function () {
             configManager.setLogger(logger);
             configManager.setCompUser(imports.user);
             configManager.configUser('/etc/nethcti/users.json');

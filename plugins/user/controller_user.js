@@ -29,6 +29,38 @@ var endpointTypes = require('./endpoint_types');
 var IDLOG = '[controller_user]';
 
 /**
+* Fired when the presence of an endpoint of the user changes.
+*
+* @event endpointPresenceChanged
+* @param {string} username     The username of the endpoint owner
+* @param {string} endpointType The type of the updated endpoint
+* @param {object} endpoint     The updated endpoint object of the user
+..
+*/
+/**
+* The name of the user endpoint presence changed event.
+*
+* @property EVT_USER_ENDPOINT_CHANGED
+* @type string
+* @default "endpointPresenceChanged"
+*/
+var EVT_ENDPOINT_PRESENCE_CHANGED = 'endpointPresenceChanged';
+
+/**
+* Fired when the creation of the _User_ objects is completed.
+*
+* @event usersReady
+*/
+/**
+* The name of the users ready event.
+*
+* @property EVT_USERS_READY
+* @type string
+* @default "usersReady"
+*/
+var EVT_USERS_READY = 'usersReady';
+
+/**
 * The logger. It must have at least three methods: _info, warn and error._
 *
 * @property logger
@@ -107,12 +139,6 @@ function config(data) {
 }
 
 /**
-* It's emitted when the creation of the _User_ objects is completed.
-*
-* @event users_ready
-*/
-
-/**
 * Initialize the users by file. The file must use the JSON syntax and
 * must report user/endpoint associations and authorization data.
 *
@@ -148,8 +174,8 @@ function configByFile(path) {
         logger.info(IDLOG, 'configuration ended');
 
         // emit the event for tell to other modules that the user objects are ready
-        emitter.emit('users_ready');
-        logger.info(IDLOG, '"user_ready" event emitted');
+        emitter.emit(EVT_USERS_READY);
+        logger.info(IDLOG, '"' + EVT_USERS_READY + '" event emitted');
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -587,6 +613,16 @@ function setNethctiPresence(username, deviceType, status) {
         var endpoints = users[username].getAllEndpoints();
         endpoints[endpointTypes.TYPES.nethcti][deviceType].setStatus(status);
 
+        // get the updated user endpoint in JSON format
+        var allUsersEndpoints = getAllUsersEndpointsJSON();
+        var obj = {};
+        obj[username] = {};
+        obj[username][endpointTypes.TYPES.nethcti] = allUsersEndpoints[username][endpointTypes.TYPES.nethcti];
+
+        // emit the event to tell other modules that the nethcti endpoint presence of the user has changed
+        emitter.emit(EVT_ENDPOINT_PRESENCE_CHANGED, username, endpointTypes.TYPES.nethcti, obj);
+        logger.info(IDLOG, '"' + EVT_ENDPOINT_PRESENCE_CHANGED + '" event emitted');
+
         return true;
 
     } catch (err) {
@@ -693,6 +729,7 @@ exports.on                             = on;
 exports.config                         = config;
 exports.setLogger                      = setLogger;
 exports.getUsernames                   = getUsernames;
+exports.EVT_USERS_READY                = EVT_USERS_READY;
 exports.getEndpointsJSON               = getEndpointsJSON;
 exports.getVoicemailList               = getVoicemailList;
 exports.setAuthorization               = setAuthorization;
@@ -706,4 +743,5 @@ exports.getUsernamesWithData           = getUsernamesWithData;
 exports.getAllEndpointsNethcti         = getAllEndpointsNethcti;
 exports.getAllEndpointsExtension       = getAllEndpointsExtension;
 exports.getAllUsersEndpointsJSON       = getAllUsersEndpointsJSON;
+exports.EVT_ENDPOINT_PRESENCE_CHANGED  = EVT_ENDPOINT_PRESENCE_CHANGED;
 exports.getUsersUsingEndpointExtension = getUsersUsingEndpointExtension;

@@ -86,7 +86,7 @@ module.exports = function (options, imports, register) {
 
     try {
         // wait for the creation of the users
-        imports.user.on('users_ready', function () {
+        imports.user.on(imports.user.EVT_USERS_READY, function () {
             voicemail.setLogger(logger);
             voicemail.setDbconn(imports.dbconn);
             voicemail.setCompUser(imports.user);

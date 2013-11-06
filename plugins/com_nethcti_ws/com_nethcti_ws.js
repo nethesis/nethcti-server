@@ -327,6 +327,27 @@ function setVoicemailListeners() {
 }
 
 /**
+* Sets the event listeners for the user component.
+*
+* @method setUserListeners
+* @private
+*/
+function setUserListeners() {
+    try {
+        // check user component object
+        if (!compUser || typeof compUser.on !== 'function') {
+            throw new Error('wrong user object');
+        }
+
+        // the presence of an endpoint of a user is changed
+        compUser.on(compUser.EVT_ENDPOINT_PRESENCE_CHANGED, endpointPresenceChangedListener);
+
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Manages the new voicemail event emitted by the voicemail component. It sends
 * all new voice messages of the voicemail to all users who use the voicemail.
 *
@@ -345,6 +366,37 @@ function newVoicemailListener(voicemail, list) {
 
     } catch (err) {
        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Handler for the _endpointPresenceChanged_ event emitted by _user_
+* component. The endpoint presence has changed, so notifies all clients.
+*
+* @method endpointPresenceChangedListener
+* @param {string} username     The username of the endpoint owner
+* @param {string} endpointType The type of the updated endpoint
+* @param {object} endpoint     The updated endpoint of the user
+* @private
+*/
+function endpointPresenceChangedListener(username, endpointType, endpoint) {
+    try {
+        // check parameters
+        if (   typeof username     !== 'string'
+            || typeof endpointType !== 'string' || typeof endpoint !== 'object') {
+
+            throw new Error('wrong parameters');
+        }
+
+        logger.info(IDLOG, 'received event "endpointPresenceChanged" for endpoint "' + endpointType + '" of the user "' + username + '"');
+        logger.info(IDLOG, 'emit event "endpointPresenceUpdate" for endpoint "' + endpointType + '" of the user "' + username + '" to websockets');
+
+        // emits the event to all users
+        server.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_CLEAR).emit('endpointPresenceUpdate', endpoint);
+        server.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY).emit('endpointPresenceUpdate', endpoint);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
     }
 }
 
@@ -654,6 +706,9 @@ function start() {
 
         // set the listener for the voicemail module
         setVoicemailListeners();
+
+        // set the listener for the user module
+        setUserListeners();
 
         // websocket options
         var options = {

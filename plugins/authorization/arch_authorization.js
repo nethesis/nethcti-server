@@ -282,7 +282,7 @@ module.exports = function (options, imports, register) {
     });
 
     try {
-        imports.user.on('users_ready', function () {
+        imports.user.on(imports.user.EVT_USERS_READY, function () {
             authorization.setLogger(logger);
             authorization.setUserModule(imports.user);
             authorization.config({ type: 'file', path: '/etc/nethcti/users.json' });

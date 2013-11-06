@@ -180,7 +180,21 @@ module.exports = function (options, imports, register) {
             *
             * @method getUsersUsingEndpointExtension
             */
-            getUsersUsingEndpointExtension: controllerUser.getUsersUsingEndpointExtension
+            getUsersUsingEndpointExtension: controllerUser.getUsersUsingEndpointExtension,
+
+            /**
+            * It's the _EVT\_USERS\_READY_ property provided by _controller\_user_ module.
+            *
+            * @property EVT_USERS_READY
+            */
+            EVT_USERS_READY: controllerUser.EVT_USERS_READY,
+
+            /**
+            * It's the _EVT\_ENDPOINT\_PRESENCE\_CHANGED_ property provided by _controller\_user_ module.
+            *
+            * @property EVT_ENDPOINT_PRESENCE_CHANGED
+            */
+            EVT_ENDPOINT_PRESENCE_CHANGED: controllerUser.EVT_ENDPOINT_PRESENCE_CHANGED
         }
     });
 
