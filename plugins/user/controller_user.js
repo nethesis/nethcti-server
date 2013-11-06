@@ -609,7 +609,7 @@ function setNethctiPresence(username, deviceType, status) {
             return false;
         }
 
-        logger.info(IDLOG, 'set nethcti presence to status "' + status + '" of "' + deviceType + '" of user "' + username + '"');
+        logger.info(IDLOG, 'set nethcti "' + deviceType + '" presence to status "' + status + '" of user "' + username + '"');
 
         // gets all endpoints, extracts the nethcti endpoint and then sets its status
         var endpoints = users[username].getAllEndpoints();

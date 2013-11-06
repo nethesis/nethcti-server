@@ -1321,6 +1321,9 @@ function loginHdlr(socket, obj) {
             // add websocket id for future fast authentication for each request from the clients
             addWebsocketId(obj.accessKeyId, socket.id);
 
+            // set the nethcti endpoint presence of the user to online status
+            compUser.setNethctiPresence(obj.accessKeyId, 'desktop', compUser.ENDPOINT_NETHCTI_STATUS.online);
+
             // sets extension property to the client socket
             socket.set('username', obj.accessKeyId, function () {
                 logger.info(IDLOG, 'setted username property ' + obj.accessKeyId + ' to socket ' + socket.id);
