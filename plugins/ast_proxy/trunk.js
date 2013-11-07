@@ -188,20 +188,19 @@ exports.Trunk = function (ext, chType) {
     * Set the trunk status.
     *
     * @method setStatus
-    * @param {string} extStatus The trunk status must be one
-    * of _STATUS\_ENUM_ property.
+    * @param {string} trunkStatus The trunk status must be one of _STATUS\_ENUM_ property.
     *
     * **It can throw exception**.
     */
-    function setStatus(extStatus) {
+    function setStatus(trunkStatus) {
 
-        if (!extStatus) { throw new Error('wrong parameter extStatus'); }
+        if (!trunkStatus) { throw new Error('wrong parameter trunkStatus'); }
 
-        if (STATUS_ENUM[extStatus.toUpperCase()]) {
-            status = extStatus;
+        if (STATUS_ENUM[trunkStatus.toUpperCase()]) {
+            status = trunkStatus;
             return true;
         }
-        throw new Error('wrong parameter extStatus');
+        throw new Error('wrong parameter trunkStatus');
     }
 
     /**
@@ -274,7 +273,7 @@ exports.Trunk = function (ext, chType) {
     *         port:         "5062",
     *         name:         "2001",
     *         exten:        "200",
-    *         status:       "online",                       // the status can be: "dnd", "busy", "online", "onhold", "offline", "ringing", "busy_ringing"
+    *         status:       "online",                       // the status can be: "busy", "online", "offline"
     *         sipuseragent: "Patton SN4638 5BIS",
     *         conversations: { Conversation.toJSON(), ... } // the keys is the conversation identifiers
     *     }
@@ -335,3 +334,33 @@ exports.Trunk = function (ext, chType) {
 * @private
 */
 var STATUS_ENUM = require('./extension').EXTEN_STATUS_ENUM;
+
+/**
+* The trunk status enumeration.
+*
+* @property STATUS_ENUM
+* @type {object}
+* @private
+* @final
+* @default {
+    BUSY:    "busy",
+    ONLINE:  "online",
+    OFFLINE: "offline"
+}
+*/
+var STATUS_ENUM = {
+    BUSY:    'busy',
+    ONLINE:  'online',
+    OFFLINE: 'offline'
+};
+
+/**
+* The trunk status enumeration. It's the same of
+* private _STATUS\_ENUM_.
+*
+* @property TRUNK_STATUS_ENUM
+* @type {object}
+* @final
+* @default Equal to the private property STATUS_ENUM
+*/
+exports.TRUNK_STATUS_ENUM = STATUS_ENUM;

@@ -2,7 +2,7 @@
 * @submodule plugins_command_11
 */
 var action = require('../action');
-var AST_EXTEN_STATUS_2_STR_ADAPTER = require('../proxy_logic_11/exten_status_adapter_11.js').AST_EXTEN_STATUS_2_STR_ADAPTER;
+var AST_TRUNK_STATUS_2_STR_ADAPTER = require('../proxy_logic_11/trunk_status_adapter_11.js').AST_TRUNK_STATUS_2_STR_ADAPTER;
 
 /**
 * The module identifier used by the logger.
@@ -12,9 +12,9 @@ var AST_EXTEN_STATUS_2_STR_ADAPTER = require('../proxy_logic_11/exten_status_ada
 * @private
 * @final
 * @readOnly
-* @default [extenStatus]
+* @default [trunkStatus]
 */
-var IDLOG = '[extenStatus]';
+var IDLOG = '[trunkStatus]';
 
 (function() {
     try {
@@ -39,21 +39,21 @@ var IDLOG = '[extenStatus]';
         var map = {};
 
         /**
-        * Command plugin to get the extension status.
+        * Command plugin to get the trunk status.
         *
         * Use it with _ast\_proxy_ module as follow:
         *
-        *     ast_proxy.doCmd({ command: 'extenStatus', exten: '214' }, function (res) {
+        *     ast_proxy.doCmd({ command: 'trunkStatus', trunk: '3001' }, function (res) {
         *         // some code
         *     });
         *
-        * @class extenStatus
+        * @class trunkStatus
         * @static
         */
-        var extenStatus = {
+        var trunkStatus = {
 
             /**
-            * Execute asterisk action to get the extension status.
+            * Execute asterisk action to get the trunk status.
             * 
             * @method execute
             * @param {object} am Asterisk manager to send the action
@@ -66,10 +66,10 @@ var IDLOG = '[extenStatus]';
             execute: function (am, args, cb) {
                 try {
                     // action for asterisk
-                    var act = { Action: 'ExtensionState', Exten: args.exten };
+                    var act = { Action: 'SIPpeerstatus', Peer: args.trunk };
                     
                     // set the action identifier
-                    act.ActionID = action.getActionId('extenStatus');
+                    act.ActionID = action.getActionId('trunkStatus');
 
                     // add association ActionID-callback
                     map[act.ActionID] = cb;
@@ -94,35 +94,37 @@ var IDLOG = '[extenStatus]';
                 try {
                     // check callback and info presence and execute it
                     if (map[data.actionid]
-                        && data.exten
-                        && data.status   !== '-1' // extension not found
-                        && data.response === 'Success') {
+                        && data.peer
+                        && data.peerstatus
+                        && data.event === 'PeerStatus') {
 
                         // execute callback
                         map[data.actionid](null, {
-                            exten:  data.exten,
-                            status: AST_EXTEN_STATUS_2_STR_ADAPTER[data.status]
+                            trunk:  data.peer.split('/')[1],
+                            status: AST_TRUNK_STATUS_2_STR_ADAPTER[data.peerstatus]
                         });
 
                     } else if (map[data.actionid]
                                && data.message
-                               && data.response === 'Error') { // extension not specified
+                               && data.response === 'Error') {
 
                         map[data.actionid](new Error(data.message));
 
-                    } else if (map[data.actionid]
-                               && data.exten
-                               && data.status === '-1') { // extension not found
+                        // remove association ActionID-callback
+                        delete map[data.actionid];
 
-                        map[data.actionid](new Error('Extension ' + data.exten + ' not found'));
-
-                    } else if (map[data.actionid]) {
+                    } else if (map[data.actionid] && data.response === 'Error') {
 
                         map[data.actionid](new Error('error'));
-                    }
+                        
+                        // remove association ActionID-callback
+                        delete map[data.actionid];
 
-                    // remove association ActionID-callback
-                    delete map[data.actionid];
+                    } else if (map[data.actionid] && data.event === 'SIPpeerstatusComplete') {
+
+                        // remove association ActionID-callback
+                        delete map[data.actionid];
+                    }
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
@@ -159,9 +161,9 @@ var IDLOG = '[extenStatus]';
         };
 
         // public interface
-        exports.data      = extenStatus.data;
-        exports.execute   = extenStatus.execute;
-        exports.setLogger = extenStatus.setLogger;
+        exports.data      = trunkStatus.data;
+        exports.execute   = trunkStatus.execute;
+        exports.setLogger = trunkStatus.setLogger;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);

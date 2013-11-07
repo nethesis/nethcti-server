@@ -5,7 +5,7 @@
 * @class exten_status_adapter_11
 * @static
 */
-var EXTEN_STATUS_ENUM = require('../extension').EXTEN_STATUS_ENUM
+var EXTEN_STATUS_ENUM = require('../extension').EXTEN_STATUS_ENUM;
 
 /**
 * Adapter from asterisk extension status code to status string

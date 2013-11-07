@@ -1162,10 +1162,12 @@ function initializeSipTrunk() {
 
                 // request sip details for current trunk
                 astProxy.doCmd({ command: 'sipDetails', exten: trunk.getExten() }, trunkSipDetails);
+
                 // request the trunk status
-                astProxy.doCmd({ command: 'extenStatus', exten: trunk.getExten() }, trunkStatus);
+                astProxy.doCmd({ command: 'trunkStatus', trunk: trunk.getExten() }, trunkStatus);
             }
         }
+
         // request all channels
         logger.info(IDLOG, 'requests the channel list to initialize sip trunks');
         astProxy.doCmd({ command: 'listChannels' }, updateConversationsForAllTrunk);
@@ -1639,8 +1641,8 @@ function trunkStatus(err, resp) {
             return;
         }
 
-        trunks[resp.exten].setStatus(resp.status);
-        logger.info(IDLOG, 'sets status ' + resp.status + ' for trunk ' + resp.exten);
+        trunks[resp.trunk].setStatus(resp.status);
+        logger.info(IDLOG, 'sets status ' + resp.status + ' for trunk ' + resp.trunk);
 
     } catch (error) {
         logger.error(IDLOG, error.stack);
