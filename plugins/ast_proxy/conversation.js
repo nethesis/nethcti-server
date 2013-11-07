@@ -7,11 +7,22 @@
 * @constructor
 * @return {object} The conversation object.
 */
-exports.Conversation = function (sourceChan, destChan) {
+exports.Conversation = function (ownerId, sourceChan, destChan) {
     // check parameters
-    if (typeof sourceChan !== 'object' && typeof destChan !== 'object') {
+    if (   typeof ownerId  !== 'string'
+        || typeof destChan !== 'object' || typeof sourceChan !== 'object') {
+
         throw new Error('wrong parameters');
     }
+
+    /**
+    * The owner of the channel.
+    *
+    * @property owner
+    * @type {string}
+    * @private
+    */
+    var owner = ownerId;
 
     /**
     * The source channel.
@@ -70,6 +81,34 @@ exports.Conversation = function (sourceChan, destChan) {
     if (chSource && chDest) { id = chSource.getChannel() + '>' + chDest.getChannel(); }
     else if ( chSource && !chDest) { id = chSource.getChannel() + '>'; }
     else if (!chSource &&  chDest) { id = '>' + chDest.getChannel(); }
+
+    /**
+    * The conversation direction.
+    *
+    * @property direction
+    * @type {string}
+    * @private
+    */
+    var direction;
+    if (chSource && chSource.isExtension(owner) === true) {
+        direction = DIRECTION.OUT;
+    } else {
+        direction = DIRECTION.IN;
+    }
+
+    /**
+    * The number of the counterpart.
+    *
+    * @property counterpartNum
+    * @type {string}
+    * @private
+    */
+    var counterpartNum;
+    if (chSource && chSource.isExtension(owner) === true) {
+        counterpartNum = chSource.getBridgedNum();
+    } else {
+        counterpartNum = chSource.getCallerNum();
+    }
 
     /**
     * Return the source channel.
@@ -167,11 +206,14 @@ exports.Conversation = function (sourceChan, destChan) {
         updateDuration();
 
         return {
-            id:        id,
-            chDest:    chDest   ? chDest.toJSON(privacyStr)   : null,
-            chSource:  chSource ? chSource.toJSON(privacyStr) : null,
-            duration:  duration,
-            recording: recording
+            id:             id,
+            owner:          owner,
+            chDest:         chDest   ? chDest.toJSON(privacyStr)   : null,
+            chSource:       chSource ? chSource.toJSON(privacyStr) : null,
+            duration:       duration,
+            recording:      recording,
+            direction:      direction,
+            counterpartNum: counterpartNum
         };
     }
 
@@ -187,3 +229,18 @@ exports.Conversation = function (sourceChan, destChan) {
         getDestinationChannel: getDestinationChannel
     };
 }
+
+/**
+* The possible values for conversation direction.
+*
+* @property {object} DIRECTION
+* @private
+* @default {
+    IN:  "in",
+    OUT: "out"
+}
+*/
+var DIRECTION = {
+    IN:  'in',
+    OUT: 'out'
+};
