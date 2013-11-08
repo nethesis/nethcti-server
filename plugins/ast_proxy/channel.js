@@ -291,7 +291,10 @@ exports.Channel = function (obj) {
 *
 * @property {object} TYPE
 * @private
-* @default DESTINATION | SOURCE
+* @default {
+    DEST:   "dest",
+    SOURCE: "source"
+}
 */
 var TYPE = {
     DEST:   'dest',

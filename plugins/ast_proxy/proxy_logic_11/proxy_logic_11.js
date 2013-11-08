@@ -1581,7 +1581,7 @@ function addConversationToExten(exten, resp, chid) {
                 }
             }
             // create a new conversation
-            var conv = new Conversation(chSource, chDest);
+            var conv = new Conversation(exten, chSource, chDest);
             var convid = conv.getId();
 
             // if the conversation is recording, sets its recording status
