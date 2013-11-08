@@ -1464,17 +1464,16 @@ function updateConversationsForAllTrunk(err, resp) {
         var chid;
         for (chid in resp) {
 
-            trunk = resp[chid].callerNum;
-            console.log('TODO TODO TODO TODO');
+            trunk = resp[chid].channelExten;
 
-            // add new conversation to the extension. Queue channel is not considered,
-            // otherwise an extension has also wrong conversation (e.g. 214 has the
-            // conversation SIP/221-00000592>Local/221@from-queue-000009dc;2)
+            // add new conversation to the trunk. Queue channel is not considered,
+            // otherwise a trunk has also wrong conversation (e.g. 3001 has the
+            // conversation SIP/3001-00000592>Local/221@from-queue-000009dc;1)
             if (chid.indexOf('Local')    === -1
                 && chid.indexOf('@from') === -1
-                && trunks[ext]) { // the extension exists
+                && trunks[trunk]) { // the trunk exists
 
-                addConversationToExten(ext, resp, chid);
+                addConversationToTrunk(trunk, resp, chid);
             }
         }
     } catch (error) {
@@ -1595,7 +1594,71 @@ function addConversationToExten(exten, resp, chid) {
             logger.info(IDLOG, 'the conversation ' + convid + ' has been added to exten ' + exten);
 
         } else {
-            logger.warn(IDLOG, 'try to add new conversation to a non existent extensions ' + exten);
+            logger.warn(IDLOG, 'try to add new conversation to a non existent extension ' + exten);
+        }
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Add new conversation to the trunk.
+*
+* @method addConversationToTrunk
+* @param {string} trunk The trunk number
+* @param {object} resp  The channel list object received by the _listChannels_ command plugin
+* @param {string} chid  The channel identifier
+* @private
+*/
+function addConversationToTrunk(trunk, resp, chid) {
+    try {
+        // check parameters
+        if (   typeof trunk !== 'string'
+            || typeof resp  !== 'object'
+            || typeof chid  !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        if (trunks[trunk]) {
+
+            var chDest, chSource, chBridged;
+
+            // creates the source and destination channels
+            var ch = new Channel(resp[chid]);
+            if (ch.isSource()) {
+
+                chSource = ch;
+                chBridged = resp[chid].bridgedChannel;
+                if (resp[chBridged]) { // the call is connected
+                    chDest = new Channel(resp[chBridged]);
+                }
+
+            } else {
+
+                chDest = ch;
+                chBridged = resp[chid].bridgedChannel;
+                if (resp[chBridged]) { // the call is connected
+                    chSource = new Channel(resp[chBridged]);
+                }
+            }
+            // create a new conversation
+            var conv = new Conversation(trunk, chSource, chDest);
+            var convid = conv.getId();
+
+            // if the conversation is recording, sets its recording status
+            if (recordingConv[convid] !== undefined) {
+                conv.setRecording(true);
+                logger.info(IDLOG, 'set recording status to conversation ' + convid);
+            }
+
+            // add the created conversation to the trunk
+            trunks[trunk].addConversation(conv);
+            logger.info(IDLOG, 'the conversation ' + convid + ' has been added to trunk ' + trunk);
+
+        } else {
+            logger.warn(IDLOG, 'try to add new conversation to a non existent trunk ' + trunk);
         }
 
     } catch (err) {
