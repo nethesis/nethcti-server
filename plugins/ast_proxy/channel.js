@@ -108,7 +108,7 @@ exports.Channel = function (obj) {
     * @required
     * @private
     */
-    var channelStatus = obj.channelStatus;
+    var channelStatus = obj.status;
 
     /**
     * The type of the channel can be source or destination.
@@ -122,12 +122,22 @@ exports.Channel = function (obj) {
     // number is the last part of the channel identifier, e.g. the number
     // of the channel "SIP/211-00000486" is "00000486"
     var type;
-    var numChannel        = parseInt(channel.split('-')[1], 16);
-    var numBridgedChannel = parseInt(bridgedChannel.split('-')[1], 16);
-    if (numChannel < numBridgedChannel) {
+    if (channelStatus === STATUS_ENUM.RING) {
         type = TYPE.SOURCE;
-    } else {
+
+    } else if (channelStatus === STATUS_ENUM.RINGING) {
         type = TYPE.DEST;
+
+    } else {
+
+        var numChannel        = parseInt(channel.split('-')[1], 16);
+        var numBridgedChannel = parseInt(bridgedChannel.split('-')[1], 16);
+
+        if (numChannel < numBridgedChannel) {
+            type = TYPE.SOURCE;
+        } else {
+            type = TYPE.DEST;
+        }
     }
 
     /**
@@ -300,6 +310,36 @@ var TYPE = {
     DEST:   'dest',
     SOURCE: 'source'
 };
+
+/**
+* The Channel status enumeration.
+*
+* @property STATUS_ENUM
+* @type {object}
+* @private
+* @final
+* @default {
+    RING:    "ring",
+    RINGING: "ringing"
+}
+*/
+// the list is not complete. It's only used to determine
+// the type of the channel
+var STATUS_ENUM = {
+    RING:    'ring',
+    RINGING: 'ringing'
+};
+
+/**
+* The Channel status enumeration. It's the same of
+* private _STATUS\_ENUM_.
+*
+* @property CHANNEL_STATUS_ENUM
+* @type {object}
+* @final
+* @default Equal to the private property STATUS_ENUM
+*/
+exports.CHANNEL_STATUS_ENUM = STATUS_ENUM;
 
 /**
 * The possible values for channel type.

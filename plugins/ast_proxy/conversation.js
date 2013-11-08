@@ -9,8 +9,8 @@
 */
 exports.Conversation = function (ownerId, sourceChan, destChan) {
     // check parameters
-    if (   typeof ownerId  !== 'string'
-        || typeof destChan !== 'object' || typeof sourceChan !== 'object') {
+    if (    typeof ownerId  !== 'string'
+        || (typeof destChan !== 'object' && typeof sourceChan !== 'object') ) {
 
         throw new Error('wrong parameters');
     }
@@ -103,11 +103,20 @@ exports.Conversation = function (ownerId, sourceChan, destChan) {
     * @type {string}
     * @private
     */
+    // "chSource" and "chDest" are always present at runtime. Instead,
+    // during the boot, if there are some ringing calls, they may lack
     var counterpartNum;
     if (chSource && chSource.isExtension(owner) === true) {
         counterpartNum = chSource.getBridgedNum();
-    } else {
+
+    } else if (chSource) {
         counterpartNum = chSource.getCallerNum();
+
+    } else if (chDest && chDest.isExtension(owner) === true) {
+        counterpartNum = chDest.getBridgedNum();
+
+    } else if (chDest) {
+        counterpartNum = chDest.getCallerNum();
     }
 
     /**

@@ -1421,7 +1421,7 @@ function updateConversationsForAllExten(err, resp) {
         var chid;
         for (chid in resp) {
 
-            ext = resp[chid].callerNum;
+            ext = resp[chid].channelExten;
 
             // add new conversation to the extension. Queue channel is not considered,
             // otherwise an extension has also wrong conversation (e.g. 214 has the
