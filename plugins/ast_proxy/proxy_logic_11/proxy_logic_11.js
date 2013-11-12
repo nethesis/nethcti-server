@@ -2093,11 +2093,11 @@ function evtConversationDialing(data) {
         // event itself
 
         // check if the destination is an extension
-        if (extensions[data.dialingNum]) {
+        if (extensions[data.chDestExten]) {
 
             var obj;
             var callerNum    = data.callerNum;
-            var dialingExten = data.dialingNum;
+            var dialingExten = data.chDestExten;
 
             if (callerIdentityData[callerNum]) {
                 obj = callerIdentityData[callerNum];
@@ -2107,7 +2107,7 @@ function evtConversationDialing(data) {
             }
 
             // add data about the caller and the called
-            obj.numCalled  = data.dialingNum;
+            obj.numCalled  = data.chDestExten;
             obj.callerNum  = data.callerNum;
             obj.callerName = data.callerName;
 
