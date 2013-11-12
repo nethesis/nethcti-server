@@ -298,6 +298,7 @@ function setAstProxyListeners() {
 
         astProxy.on(astProxy.EVT_EXTEN_CHANGED,   extenChanged);   // an extension has changed
         astProxy.on(astProxy.EVT_EXTEN_DIALING,   extenDialing);   // an extension ringing
+        astProxy.on(astProxy.EVT_TRUNK_CHANGED,   trunkChanged);   // a trunk has changed
         astProxy.on(astProxy.EVT_QUEUE_CHANGED,   queueChanged);   // a queue has changed
         astProxy.on(astProxy.EVT_PARKING_CHANGED, parkingChanged); // a parking has changed
 
@@ -419,6 +420,31 @@ function extenChanged(exten) {
 
         // emits the event with hide numbers to all users with privacy enabled
         server.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY).emit('extenUpdate', exten.toJSON(privacyStrReplace));
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Handler for the _trunkChanged_ event emitted by _ast\_proxy_
+* component. Something has changed in the trunk, so notifies
+* all interested clients.
+*
+* @method trunkChanged
+* @param {object} trunk The trunk object
+* @private
+*/
+function trunkChanged(trunk) {
+    try {
+        logger.info(IDLOG, 'received event trunkChanged for trunk ' + trunk.getExten());
+        logger.info(IDLOG, 'emit event trunkUpdate for trunk ' + trunk.getExten() + ' to websockets');
+
+        // emits the event with clear numbers to all users with privacy disabled
+        server.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_CLEAR).emit('trunkUpdate', trunk.toJSON());
+
+        // emits the event with hide numbers to all users with privacy enabled
+        server.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY).emit('trunkUpdate', trunk.toJSON(privacyStrReplace));
 
     } catch (err) {
         logger.error(IDLOG, err.stack);

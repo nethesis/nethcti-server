@@ -224,6 +224,13 @@ module.exports = function (options, imports, register) {
             EVT_EXTEN_CHANGED: astProxy.proxyLogic.EVT_EXTEN_CHANGED,
 
             /**
+            * It's the _EVT\_TRUNK\_CHANGED_ property provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method EVT_TRUNK_CHANGED
+            */
+            EVT_TRUNK_CHANGED: astProxy.proxyLogic.EVT_TRUNK_CHANGED,
+
+            /**
             * It's the _EVT\_EXTEN\_DIALING_ property provided by _ast\_proxy.proxyLogic_.
             *
             * @method EVT_EXTEN_DIALING

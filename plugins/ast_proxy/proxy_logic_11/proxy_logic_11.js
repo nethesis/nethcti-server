@@ -54,6 +54,21 @@ var IDLOG = '[proxy_logic_11]';
 var EVT_EXTEN_CHANGED = 'extenChanged';
 
 /**
+* Fired when something changed in a trunk.
+*
+* @event trunkChanged
+* @param {object} msg The trunk object
+*/
+/**
+* The name of the trunk changed event.
+*
+* @property EVT_TRUNK_CHANGED
+* @type string
+* @default "trunkChanged"
+*/
+var EVT_TRUNK_CHANGED = 'trunkChanged';
+
+/**
 * Fired when an extension ringing.
 *
 * @event extenDialing
@@ -1539,6 +1554,63 @@ function updateExtenConversations(err, resp, exten) {
 }
 
 /**
+* Update the conversations of the extension.
+*
+* @method updateTrunkConversations
+* @param {object} err   The error object received by the _listChannels_ command plugin
+* @param {object} resp  The object received by the _listChannels_ command plugin
+* @param {string} trunk The trunk number
+* @private
+*/
+function updateTrunkConversations(err, resp, trunk) {
+    try {
+        if (err) {
+            logger.error(IDLOG, 'updating conversations of trunk ' + trunk + ': ' + err.toString());
+            return;
+        }
+
+        // check parameters
+        if (typeof trunk !== 'string' || !resp) { throw new Error('wrong parameters'); }
+
+        // check if the extension exists, otherwise there is some error
+        if (trunks[trunk]) {
+
+            // reset all conversations of the trunk
+            trunks[trunk].removeAllConversations();
+            logger.info(IDLOG, 'reset all conversations of the trunk ' + trunk);
+
+            // cycle in all received channels
+            var trunkid, chid;
+            for (chid in resp) {
+
+                // current trunk of the channel
+                trunkid = resp[chid].channelExten;
+
+                // add new conversation to the trunk. Queue channel is not considered,
+                // otherwise a trunk has also wrong conversation (e.g. 3001 has the
+                // conversation SIP/3001-00000592>Local/221@from-queue-000009dc;2)
+                if (chid.indexOf('Local')    === -1
+                    && chid.indexOf('@from') === -1
+                    && trunkid === trunk) { // the current trunk is of interest
+
+                    addConversationToTrunk(trunkid, resp, chid);
+                }
+            }
+
+            // emit the event
+            astProxy.emit(EVT_TRUNK_CHANGED, trunks[trunk]);
+            logger.info(IDLOG, 'emitted event ' + EVT_TRUNK_CHANGED + ' for trunk ' + trunk);
+
+        } else {
+            logger.warn(IDLOG, 'try to update channel list of the non existent trunk ' + trunk);
+        }
+
+    } catch (error) {
+        logger.error(IDLOG, error.stack);
+    }
+}
+
+/**
 * Add new conversation to the extension.
 *
 * @method addConversationToExten
@@ -2374,6 +2446,17 @@ function evtHangupConversation(data) {
 
                 // update the conversations of the extension
                 updateExtenConversations(err, resp, data.channelExten);
+            });
+        }
+
+        // check the trunk existence
+        if (trunks[data.channelExten]) {
+
+            // request all channel list and update channels of trunk
+            astProxy.doCmd({ command: 'listChannels' }, function (err, resp) {
+
+                // update the conversations of the trunk
+                updateTrunkConversations(err, resp, data.channelExten);
             });
         }
 
@@ -3557,6 +3640,7 @@ exports.setCompPhonebook                = setCompPhonebook;
 exports.getJSONExtensions               = getJSONExtensions;
 exports.setCompCallerNote               = setCompCallerNote;
 exports.EVT_EXTEN_CHANGED               = EVT_EXTEN_CHANGED;
+exports.EVT_TRUNK_CHANGED               = EVT_TRUNK_CHANGED;
 exports.EVT_EXTEN_DIALING               = EVT_EXTEN_DIALING;
 exports.EVT_QUEUE_CHANGED               = EVT_QUEUE_CHANGED;
 exports.EVT_NEW_VOICEMAIL               = EVT_NEW_VOICEMAIL;
