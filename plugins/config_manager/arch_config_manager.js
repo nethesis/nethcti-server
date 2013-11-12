@@ -112,7 +112,14 @@ module.exports = function (options, imports, register) {
             *
             * @method getVoicemailNotificationSmsTo
             */
-            getVoicemailNotificationSmsTo: configManager.getVoicemailNotificationSmsTo
+            getVoicemailNotificationSmsTo: configManager.getVoicemailNotificationSmsTo,
+
+            /**
+            * It's the _getPostitNotificationSmsTo_ method provided by _config\_manager_ module.
+            *
+            * @method getPostitNotificationSmsTo
+            */
+            getPostitNotificationSmsTo: configManager.getPostitNotificationSmsTo
         }
     });
 

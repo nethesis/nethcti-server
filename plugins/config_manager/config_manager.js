@@ -742,6 +742,39 @@ function getVoicemailNotificationSmsTo(username) {
     }
 }
 
+/**
+* Returns the destination sms number for the post-it notification of the user.
+*
+* @method getPostitNotificationSmsTo
+* @param  {string} username The username identifier
+* @return {string} The destination sms number.
+*/
+function getPostitNotificationSmsTo(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        var conf = compUser.getConfigurations(username);
+
+        // check the configurations of the user
+        if (   typeof conf                                               !== 'object'
+            || typeof conf[USER_CONFIG_KEYS.notifications]               !== 'object'
+            || typeof conf[USER_CONFIG_KEYS.notifications].postit        !== 'object'
+            || typeof conf[USER_CONFIG_KEYS.notifications].postit.sms    !== 'object'
+            || typeof conf[USER_CONFIG_KEYS.notifications].postit.sms.to !== 'string') {
+
+            logger.warn(IDLOG, 'getting sms destination number for post-it notification of user "' + username + '": wrong configurations');
+            return '';
+        }
+
+        return conf[USER_CONFIG_KEYS.notifications].postit.sms.to;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return '';
+    }
+}
+
 // public interface
 exports.setLogger                              = setLogger;
 exports.configUser                             = configUser;
@@ -753,6 +786,7 @@ exports.getUserConfigurations                  = getUserConfigurations;
 exports.setUserClick2CallConf                  = setUserClick2CallConf;
 exports.getAllUserEndpointsJSON                = getAllUserEndpointsJSON;
 exports.setUserNotificationConf                = setUserNotificationConf;
+exports.getPostitNotificationSmsTo             = getPostitNotificationSmsTo;
 exports.getPostitNotificationEmailTo           = getPostitNotificationEmailTo;
 exports.getVoicemailNotificationSmsTo          = getVoicemailNotificationSmsTo;
 exports.getVoicemailNotificationEmailTo        = getVoicemailNotificationEmailTo;

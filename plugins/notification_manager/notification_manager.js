@@ -69,19 +69,21 @@ var ejsTemplates = {};
 * @readonly
 * @private
 * @default {
+    newPostitSmsBody:         "new_postit_sms_body.ejs",
+    newPostitEmailBody:       "new_postit_email_body.ejs",
     newVoicemailSmsBody:      "new_voicemail_sms_body.ejs",
     newVoicemailEmailBody:    "new_voicemail_email_body.ejs",
-    newVoicemailEmailSubject: "new_voicemail_email_subject.ejs",
     newPostitEmailSubject:    "new_postit_email_subject.ejs",
-    newPostitEmailBody:       "new_postit_email_body.ejs"
+    newVoicemailEmailSubject: "new_voicemail_email_subject.ejs"
 }
 */
 var EJS_TEMPLATE_FILENAMES = {
+    newPostitSmsBody:         'new_postit_sms_body.ejs',
+    newPostitEmailBody:       'new_postit_email_body.ejs',
     newVoicemailSmsBody:      'new_voicemail_sms_body.ejs',
     newVoicemailEmailBody:    'new_voicemail_email_body.ejs',
-    newVoicemailEmailSubject: 'new_voicemail_email_subject.ejs',
     newPostitEmailSubject:    'new_postit_email_subject.ejs',
-    newPostitEmailBody:       'new_postit_email_body.ejs'
+    newVoicemailEmailSubject: 'new_voicemail_email_subject.ejs'
 };
 
 /**
@@ -570,8 +572,7 @@ function newPostitListener(creator, recipient, list) {
             // check if send sms notification to the user
             if (compConfigManager.verifySendPostitNotificationBySms(recipient) === true) {
 
-                logger.error('TODO TODO TODO');
-//                    sendNewPostitNotificationSms(creator, recipient, list, sendNewPostitNotificationSmsCb);
+                sendNewPostitNotificationSms(creator, recipient, list, sendNewPostitNotificationSmsCb);
 
             } else {
                 logger.info(IDLOG, 'don\'t send new post-it notification to user "' + recipient + '" by sms');
@@ -746,10 +747,10 @@ function sendNewPostitNotificationEmail(creator, recipient, list, cb) {
 * Sends a voicemail notification to the user by sms.
 *
 * @method sendNewVoicemailNotificationSms
-* @param {string}   username The user identifier
-* @param {string}   voiemail The voicemail identifier
-* @param {array}    list     The list of all new voice messages of the voicemail
-* @param {function} cb       The callback function
+* @param {string}   username  The user identifier
+* @param {string}   voicemail The voicemail identifier
+* @param {array}    list      The list of all new voice messages of the voicemail
+* @param {function} cb        The callback function
 * @private
 */
 function sendNewVoicemailNotificationSms(username, voicemail, list, cb) {
@@ -784,6 +785,57 @@ function sendNewVoicemailNotificationSms(username, voicemail, list, cb) {
                 // store a failure sms sending in the database
                 logger.info(IDLOG, 'store sms failure to ' + to + ' of user "' + username + '" for new voicemail ' + voicemail + ' notification');
                 compSms.storeSmsFailure(username, to, body);
+            }
+        });
+
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+       cb(err);
+    }
+}
+
+/**
+* Sends a post-it notification to the user by sms.
+*
+* @method sendNewPostitNotificationSms
+* @param {string}   creator   The creator username of the new post-it message
+* @param {string}   recipient The recipient username of the new post-it message
+* @param {array}    list      The list of all unread post-it of the recipient user
+* @param {function} cb        The callback function
+* @private
+*/
+function sendNewPostitNotificationSms(creator, recipient, list, cb) {
+    try {
+        // check the parameters
+        if (   typeof creator   !== 'string'
+            || typeof recipient !== 'string' || typeof cb !== 'function'
+            || list instanceof Array === false) {
+
+            throw new Error('wrong parameters');
+        }
+
+        var to   = compConfigManager.getPostitNotificationSmsTo(recipient);
+        var body = getPostitNotificationSmsBody(creator, recipient, list);
+
+        logger.info(IDLOG, 'send new post-it notification from creator "' + creator + '" to sms cellphone ' + to + ' of user "' + recipient + '"');
+        compSms.send(creator, to, body, function (err, resp) {
+            try {
+                if (err) {
+                    throw new Error('sending new post-it notification from creator "' + creator + '" to sms cellphone ' + to + ' of user "' + recipient + '"');
+                }
+                cb(null, resp);
+
+                // store a success sms sending in the database
+                logger.info(IDLOG, 'store sms success to ' + to + ' of user "' + recipient + '" for new post-it created by "' + creator + '"');
+                compSms.storeSmsSuccess(creator, to, body);
+
+            } catch (err) {
+                logger.error(IDLOG, err.stack);
+                cb(err);
+
+                // store a failure sms sending in the database
+                logger.info(IDLOG, 'store sms failure to ' + to + ' of user "' + recipient + '" for new post-it created by "' + creator + '"');
+                compSms.storeSmsFailure(creator, to, body);
             }
         });
 
@@ -973,6 +1025,42 @@ function getVmNotificationSmsBody(username, voicemail, list) {
             voicemail:     voicemail,
             lastVoicemail: lastVoicemail,
             newVoicemails: list
+        });
+        return body;
+
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Returns the body of the sms message used to notify new post-it message.
+*
+* @method getPostitNotificationSmsBody
+* @param {string}  creator   The creator username of the new post-it message
+* @param {string}  recipient The recipient username of the new post-it message
+* @param {array}   list      The list of all unread post-it of the recipient user
+* @return {string} The body of the sms message.
+* @private
+*/
+function getPostitNotificationSmsBody(creator, recipient, list) {
+    try {
+        // check the parameters
+        if (   typeof creator   !== 'string'
+            || typeof recipient !== 'string' || list instanceof Array === false) {
+
+            throw new Error('wrong parameters');
+        }
+
+
+        var lastPostit = extractNewPostitMostRecent(list);
+        lastPostit.creationDate = moment(lastPostit.creation).format('LLLL');
+
+        var template = ejsTemplates[EJS_TEMPLATE_FILENAMES.newPostitSmsBody];
+        var body     = ejs.render(template, {
+            creator:       creator,
+            lastPostit:    lastPostit,
+            unreadPostits: list
         });
         return body;
 
