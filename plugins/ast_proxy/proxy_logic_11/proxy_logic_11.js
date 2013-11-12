@@ -2167,6 +2167,17 @@ function evtConversationConnected(num1, num2) {
             });
         }
 
+        // check if num1 is a trunk
+        if (trunks[num1]) {
+
+            // request all channels
+            logger.info(IDLOG, 'requests the channel list to update the trunk ' + num1);
+            astProxy.doCmd({ command: 'listChannels' }, function (err, resp) {
+                // update the conversations of the trunk
+                updateTrunkConversations(err, resp, num1);
+            });
+        }
+
         // check if num2 is an extension
         if (extensions[num2]) {
 
@@ -2175,6 +2186,17 @@ function evtConversationConnected(num1, num2) {
             astProxy.doCmd({ command: 'listChannels' }, function (err, resp) {
                 // update the conversations of the extension
                 updateExtenConversations(err, resp, num2);
+            });
+        }
+
+        // check if num2 is a trunk
+        if (trunks[num2]) {
+
+            // request all channels
+            logger.info(IDLOG, 'requests the channel list to update the trunk ' + num2);
+            astProxy.doCmd({ command: 'listChannels' }, function (err, resp) {
+                // update the conversations of the trunk
+                updateTrunkConversations(err, resp, num2);
             });
         }
     } catch (err) {
