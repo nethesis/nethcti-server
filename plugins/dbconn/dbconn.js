@@ -451,7 +451,8 @@ function getAllUnreadPostitOfRecipient(username, cb) {
         models[JSON_KEYS.POSTIT].findAll({
             where: [ 'recipient=? ' +
             'AND readdate IS NULL',
-            username ]
+            username ],
+            order: 'creation DESC'
 
         }).success(function (results) {
 
