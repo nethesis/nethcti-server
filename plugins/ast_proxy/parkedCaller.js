@@ -4,12 +4,12 @@
 * **It can throw exception.**
 *
 * @class ParkedCaller
-* @param {object} data The caller information object
-*   @param {string} data.channel The parked channel
-*   @param {string} data.callerNum The caller number
+* @param {object} data              The caller information object
+*   @param {string} data.channel    The parked channel
+*   @param {string} data.callerNum  The caller number
 *   @param {string} data.callerName The caller name
-*   @param {string} data.parking The parking identifier
-*   @param {string} data.timeout The timestamp of waited time elapsed in the parking
+*   @param {string} data.parking    The parking identifier
+*   @param {string} data.timeout    The timestamp of waited time elapsed in the parking
 * @constructor
 * @return {object} The parked caller object.
 */

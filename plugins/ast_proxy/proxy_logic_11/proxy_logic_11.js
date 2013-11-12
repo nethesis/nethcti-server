@@ -2078,7 +2078,6 @@ function evtConversationDialing(data) {
             && typeof data.chDest        !== 'string'
             && typeof data.chSource      !== 'string'
             && typeof data.callerNum     !== 'string'
-            && typeof data.dialingNum    !== 'string'
             && typeof data.chDestExten   !== 'string'
             && typeof data.chSourceExten !== 'string') {
 
