@@ -2128,6 +2128,10 @@ function evtConversationDialing(data) {
                 if (extensions[data.chSourceExten]) { updateExtenConversations(err, resp, data.chSourceExten); }
                 if (extensions[data.chDestExten])   { updateExtenConversations(err, resp, data.chDestExten);   }
 
+                // update the conversations of the trunks
+                if (trunks[data.chSourceExten]) { updateTrunkConversations(err, resp, data.chSourceExten); }
+                if (trunks[data.chDestExten])   { updateTrunkConversations(err, resp, data.chDestExten);   }
+
             } catch (err) {
                 logger.error(IDLOG, err.stack);
             }
