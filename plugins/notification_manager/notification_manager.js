@@ -931,12 +931,13 @@ function getPostitNotificationEmailBody(creator, recipient, list) {
         }
 
         var lastPostit = extractNewPostitMostRecent(list);
+        lastPostit.creationDate = moment(lastPostit.creation).format('LLLL');
 
         // parse creation date to all the unread post-it
         var i;
         for (i = 0; i < list.length; i++) {
 
-            list[i].creation = moment(list[i].creation).format('LLLL');
+            list[i].creationDate = moment(list[i].creation).format('LLLL');
         }
 
         var template = ejsTemplates[EJS_TEMPLATE_FILENAMES.newPostitEmailBody];

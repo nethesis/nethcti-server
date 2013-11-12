@@ -3,11 +3,11 @@
 <%- creator -%> ha creato un nuovo POST-IT per te:
 
 
-    Data:  <%- lastPostit.creation %>
+    Data:  <%- lastPostit.creationDate %>
     Messaggio: <%- lastPostit.text %>
 
 ---
 
 In totale hai <%- unreadPostits.length %> nuovi POST-IT da leggere:
 <% unreadPostits.forEach(function (postit) { %>
-Da <%- postit.creator %> (<%- postit.creation %>) - <%- postit.text.substring(0, 20) %><% if (postit.text.length > 20) { %>...<% } %><% }) %>
+Da <%- postit.creator %> (<%- postit.creationDate %>) - <%- postit.text.substring(0, 20) %><% if (postit.text.length > 20) { %>...<% } %><% }) %>
