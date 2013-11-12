@@ -549,47 +549,37 @@ function newPostitListener(creator, recipient, list) {
             throw new Error('wrong data from event "' + compPostit.EVT_NEW_POSTIT + '"');
         }
 
-        // get the list of all the usernames
-        var users = compUser.getUsernames();
+        // it sends notification to the recipient user of the new post-it message,
+        // if he has the post-it authorization and has the notification configurations enabled
 
-        // it sends notifications to the recipient user of the new post-it message,
-        // if he has the post-it authorization and have the notification configurations enabled
-        var i;
-        var conf;
-        var username;
-        for (i = 0; i < users.length; i++) {
+        // check the user authorization
+        if (   compAuthorization.authorizePostitUser(recipient)      === true
+            || compAuthorization.authorizeAdminPostitUser(recipient) === true) {
 
-            username = users[i];
+            logger.info(IDLOG, 'recipient user "' + recipient + '" has the post-it authorization');
 
-            // check the user authorization
-            if (   compAuthorization.authorizePostitUser(username)      === true
-                || compAuthorization.authorizeAdminPostitUser(username) === true) {
+            // check if send email notification to the user
+            if (compConfigManager.verifySendPostitNotificationByEmail(recipient) === true) {
 
-                logger.info(IDLOG, 'recipient user "' + username + '" has the post-it authorization');
-
-                // check if send email notification to the user
-                if (compConfigManager.verifySendVoicemailNotificationByEmail(username) === true) {
-
-                    sendNewPostitNotificationEmail(creator, recipient, list, sendNewPostitNotificationEmailCb);
-
-                } else {
-                    logger.info(IDLOG, 'don\'t send new post-it notification to user "' + username + '" by email');
-                }
-
-                // check if send sms notification to the user
-                if (compConfigManager.verifySendPostitNotificationBySms(username) === true) {
-
-                    logger.error('TODO TODO TODO');
-//                    sendNewPostitNotificationSms(creator, recipient, list, sendNewPostitNotificationSmsCb);
-
-                } else {
-                    logger.info(IDLOG, 'don\'t send new post-it notification to user "' + username + '" by sms');
-                }
-
+                sendNewPostitNotificationEmail(creator, recipient, list, sendNewPostitNotificationEmailCb);
 
             } else {
-                logger.info(IDLOG, 'recipient user "' + username + '" hasn\'t the post-it authorization: don\'t send any notification to him');
+                logger.info(IDLOG, 'don\'t send new post-it notification to user "' + recipient + '" by email');
             }
+
+            // check if send sms notification to the user
+            if (compConfigManager.verifySendPostitNotificationBySms(recipient) === true) {
+
+                logger.error('TODO TODO TODO');
+//                    sendNewPostitNotificationSms(creator, recipient, list, sendNewPostitNotificationSmsCb);
+
+            } else {
+                logger.info(IDLOG, 'don\'t send new post-it notification to user "' + recipient + '" by sms');
+            }
+
+
+        } else {
+            logger.info(IDLOG, 'recipient user "' + recipient + '" hasn\'t the post-it authorization: don\'t send any notification to him');
         }
     } catch (err) {
        logger.error(IDLOG, err.stack);
