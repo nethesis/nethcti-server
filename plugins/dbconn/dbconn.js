@@ -39,16 +39,6 @@ var IDLOG = '[dbconn]';
 var logger = console;
 
 /**
-* The default database file socket.
-*
-* @property DB_FILE_SOCK
-* @type string
-* @private
-* @default "/var/lib/mysql/mysql.sock"
-*/
-var DB_FILE_SOCK = '/var/lib/mysql/mysql.sock';
-
-/**
 * The prefix for all customer card name.
 *
 * @property CUSTOMER_CARD
@@ -611,7 +601,7 @@ function initConnections() {
             if (dbConfig[k].dbtype === 'mysql') {
 
                 var sequelize = new Sequelize(dbConfig[k].dbname, dbConfig[k].dbuser, dbConfig[k].dbpassword, {
-                    port:    DB_FILE_SOCK,
+                    port:    dbConfig[k].dbport,
                     host:    dbConfig[k].dbhost,
                     define:  {
                         charset:         'utf8',
@@ -622,7 +612,7 @@ function initConnections() {
                 });
 
                 dbConn[k] = sequelize;
-                logger.info(IDLOG, 'initialized db connection with ' + dbConfig[k].dbtype + ' ' + dbConfig[k].dbname + ' ' + dbConfig[k].dbhost + ':' + DB_FILE_SOCK);
+                logger.info(IDLOG, 'initialized db connection with ' + dbConfig[k].dbtype + ' ' + dbConfig[k].dbname + ' ' + dbConfig[k].dbhost + ':' + dbConfig[k].dbport);
             }
         }
     } catch (err) {
