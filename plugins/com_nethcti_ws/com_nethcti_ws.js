@@ -1455,8 +1455,12 @@ function disconnHdlr(socket) {
     try {
         logger.info(IDLOG, 'client websocket disconnected ' + getWebsocketEndpoint(socket));
 
-        var username = wsid[socket.id];
-        compUser.setNethctiPresence(username, 'desktop', compUser.ENDPOINT_NETHCTI_STATUS.offline);
+        // when the user isn't authenticated but connected by websocket,
+        // the "socket.id" isn't present in the "wsid" property
+        if (wsid[socket.id]) {
+            var username = wsid[socket.id];
+            compUser.setNethctiPresence(username, 'desktop', compUser.ENDPOINT_NETHCTI_STATUS.offline);
+        }
 
         // remove trusted identifier of the websocket
         removeWebsocketId(socket.id);
