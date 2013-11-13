@@ -1,11 +1,11 @@
 CREATE TABLE `caller_note` (
   `id` int(11) NOT NULL auto_increment,
-  `datecreation` timestamp NOT NULL default CURRENT_TIMESTAMP,
+  `creation` datetime NOT NULL,
   `text` varchar(255) default NULL,
   `creator` varchar(50) default NULL,
   `number` varchar(50) default NULL,
   `public` tinyint(1) default '0',
-  `expiration` timestamp NOT NULL default '0000-00-00 00:00:00',
+  `expiration` datetime NOT NULL default '0000-00-00 00:00:00',
   `reservation` tinyint(1) default '0',
   PRIMARY KEY  (`id`),
   KEY `index_creator` (`creator`),
