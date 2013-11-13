@@ -326,8 +326,7 @@ function proxyRequest(req, res, proxy) {
         // arr[0] is the username
         // arr[1] is the token
         var arr = req.headers.authorization.split(':');
-//        if (compAuthentication.verifyToken(arr[0], arr[1]) === true) {
-            if(true){
+        if (compAuthentication.verifyToken(arr[0], arr[1]) === true) {
 
             // add header used by the authorization module
             req.headers.authorization_user = arr[0];
