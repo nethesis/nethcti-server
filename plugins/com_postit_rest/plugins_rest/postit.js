@@ -153,6 +153,19 @@ function setCompUtil(comp) {
         *
         * ---
         *
+        * ### <a id="createpost">**`postit/create`**</a>
+        *
+        * The client crete a new post-it for the recipient.
+        *
+        * * `text: the text of the post-it`
+        * * `recipient: the destination user of the message`
+        *
+        * E.g. using curl:
+        *
+        *     curl --insecure -i -X POST -d '{ "text": "message text", "recipient": "john"  }' http://192.168.5.224:8282/postit/create
+        *
+        * ---
+        *
         * ### <a id="deletepost">**`postit/delete`**</a>
         *
         * Deletes the specified post-it.
