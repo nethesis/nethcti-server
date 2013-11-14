@@ -66,7 +66,7 @@ var astProxy;
                             chDest:        data.destination,
                             chSource:      data.channel,
                             callerNum:     data.calleridnum,
-                            callerName:    data.calleridname,
+                            callerName:    data.calleridname === '<unknown>' ? '' : data.calleridname,
                             dialingNum:    data.connectedlinenum,
                             chDestExten:   chDestExten,
                             chSourceExten: chSourceExten
