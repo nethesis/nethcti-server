@@ -40,13 +40,13 @@ var IDLOG = '[config_manager]';
 var logger = console;
 
 /**
-* The path of the file that contains the user configurations.
+* The path of the file that contains the user preferences.
 *
-* @property configUserPath
+* @property userPrefsPath
 * @type string
 * @private
 */
-var configUserPath;
+var userPrefsPath;
 
 /**
 * The head key of the JSON configuration file that contains all user
@@ -60,13 +60,13 @@ var configUserPath;
 var CONFIG_FILE_HEAD = 'configurations';
 
 /**
-* The content of the JSON configuration file.
+* The content of the JSON preferences and configurations file.
 *
-* @property contentJsonConfigFile
+* @property contentConfPrefJson
 * @type object
 * @private
 */
-var contentJsonConfigFile;
+var contentConfPrefJson;
 
 /**
 * The user module.
@@ -137,43 +137,56 @@ function setCompUser(cu) {
 * **The method can throw an Exception.**
 *
 * @method configUser
-* @param {string} path The path of the configuration file
+* @param {object} obj
+*   @param {string} obj.users     The path of the configuration file with user endpoints, authorizations, ...
+*   @param {string} obj.userPrefs The path of the user preferences file, e.g. notification preferences
 */
-function configUser(path) {
+function configUser(obj) {
     // check parameter
-    if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
+    if (typeof obj !== 'object' || typeof obj.users !== 'string' || typeof obj.userPrefs !== 'string') {
+        throw new TypeError('wrong parameter');
+    }
 
     // check file presence
-    if (!fs.existsSync(path)) { throw new Error(path + ' not exists'); }
+    if (!fs.existsSync(obj.users))     { throw new Error(obj.users + ' not exists');     }
+    if (!fs.existsSync(obj.userPrefs)) { throw new Error(obj.userPrefs + ' not exists'); }
 
-    configUserPath = path;
-    logger.info(IDLOG, 'configure user configurations with ' + configUserPath);
+    // global property used also by other methods
+    userPrefsPath = obj.userPrefs;
+    logger.info(IDLOG, 'configure user prefs with ' + userPrefsPath + ' and configs with ' + obj.users);
 
-    // read configuration file
-    contentJsonConfigFile = require(configUserPath);
+    // read configuration files
+    var userPrefs       = require(userPrefsPath);
+    contentConfPrefJson = require(obj.users);
 
-    // check JSON file
-    if (typeof contentJsonConfigFile !== 'object') { throw new Error('wrong JSON file ' + configUserPath); }
+    // merge configurations (from obj.users file) and preferences (from obj.userPrefs file) in one single object
+    var username;
+    for (username in contentConfPrefJson) {
+        contentConfPrefJson[username].configurations = userPrefs[username].configurations;
+    }
 
-    // cycle user configurations and set the configuration in the
-    // User objects using user module
-    var userTemp;
-    for (userTemp in contentJsonConfigFile) {
+    // check created content of the JSON files
+    if (typeof contentConfPrefJson !== 'object') {
+        throw new Error('bad user confs and prefs object: check ' + userPrefsPath + ' or ' + obj.users);
+    }
+
+    // cycle user configurations and set the configuration in the User objects using user module
+    for (username in contentConfPrefJson) {
 
         // check the configuration object of the user
-        if (   typeof contentJsonConfigFile[userTemp]                   === 'object'
-            && typeof contentJsonConfigFile[userTemp][CONFIG_FILE_HEAD] === 'object') {
+        if (   typeof contentConfPrefJson[username]                   === 'object'
+            && typeof contentConfPrefJson[username][CONFIG_FILE_HEAD] === 'object') {
 
             // with this operation, the configuration set in the User object is a reference link to the
-            // "contentJsonConfigFile" property. So the future change in the configurations of the User
-            // object is reported in the "contentJsonConfigFile" property
-            compUser.setConfigurations(userTemp, contentJsonConfigFile[userTemp][CONFIG_FILE_HEAD]);
+            // "contentConfPrefJson" property. So the future change in the configurations of the User
+            // object is reported in the "contentConfPrefJson" property
+            compUser.setConfigurations(username, contentConfPrefJson[username][CONFIG_FILE_HEAD]);
 
         } else {
-            logger.error(IDLOG, 'wrong configuration for user "' + userTemp + '" in file ' + configUserPath);
+            logger.error(IDLOG, 'wrong preferences for user "' + username + '" in file ' + userPrefsPath);
         }
     }
-    logger.info(IDLOG, 'user configuration by file ' + path + ' ended');
+    logger.info(IDLOG, 'user preferences by ' + userPrefsPath + ' and configurations by ' + obj.users + ' ended');
 }
 
 /**
@@ -302,17 +315,15 @@ function setUserNotificationConf(data, cb) {
         // update the User object. Change the specified notification settings.
         // This update is automatically reported in the User object because
         // it's a reference link to it.
-        // Also the relative section of "contentJsonConfigFile" property is automatically
+        // Also the relative section of "contentConfPrefJson" property is automatically
         // updated, because the "configUser" function sets the user configurations to be
         // a reference link to it.
         logger.info(IDLOG, 'update notifications settings of user "' + data.username + '"');
         config[USER_CONFIG_KEYS.notifications][data.type][data.method].to   = data.to;
         config[USER_CONFIG_KEYS.notifications][data.type][data.method].when = data.when;
 
-        // update the notification settings section in the configuration file in the filesystem
-        // store the configurations of all the users. This is because the _contentJsonConfigFile_
-        // property contains all the users
-        storeAllUsersConfigurations(data.username, cb);
+        // update the notification settings section in the preference file in the filesystem
+        storeAllUserPreferences(data.username, cb);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -320,20 +331,20 @@ function setUserNotificationConf(data, cb) {
 }
 
 /**
-* Stores the configurations of all the users.
+* Stores the preferences of all the users.
 *
-* @method storeAllUsersConfigurations
+* @method storeAllUserPreferences
 * @param {object}   username The username to update the notification settings
 * @param {function} cb       The callback function
 * @private
 */
-function storeAllUsersConfigurations(username, cb) {
+function storeAllUserPreferences(username, cb) {
     try {
         // check parameter
         if (typeof username !== 'string') { throw new Error('wrong parameter'); }
 
         // store the configurations of all the users in the JSON configuration file
-        updateAllUsersConfInJSONFile(cb);
+        updateAllUserPrefsInJSONFile(cb);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -343,26 +354,33 @@ function storeAllUsersConfigurations(username, cb) {
 /**
 * Stores the configurations of all the users in the JSON configuration file.
 *
-* @method updateAllUsersConfInJSONFile
+* @method updateAllUserPrefsInJSONFile
 * @param {function} cb The callback function
 * @private
 */
-function updateAllUsersConfInJSONFile(cb) {
+function updateAllUserPrefsInJSONFile(cb) {
     try {
         // check parameter
         if (typeof cb !== 'function') { throw new Error('wrong parameter'); }
 
-        // updated JSON configuration file with the "contentJsonConfigFile" property. It's updated
-        // changing the configuration settings of the users
-        fs.writeFile(configUserPath, JSON.stringify(contentJsonConfigFile, null, 4), function (err) {
-            try {
+        // get only the preferences from the "contentConfPrefJson" property, because it
+        // contains also the configurations as endpoints, authorizations, ...
+        var content = {};
+        var username;
+        for (username in contentConfPrefJson) {
+            content[username] = {};
+            content[username][CONFIG_FILE_HEAD] = contentConfPrefJson[username][CONFIG_FILE_HEAD];
+        }
 
+        // updated JSON preferences file. It's updated changing the configuration settings of the users
+        fs.writeFile(userPrefsPath, JSON.stringify(content, null, 4), function (err) {
+            try {
                 if (err) {
-                    logger.error(IDLOG, 'updating configurations file ' + configUserPath);
+                    logger.error(IDLOG, 'updating preferences file ' + userPrefsPath);
                     cb(err.toString());
 
                 } else {
-                    logger.info(IDLOG, configUserPath + ' has been updated successfully');
+                    logger.info(IDLOG, userPrefsPath + ' has been updated successfully');
                     cb(null);
                 }
 
@@ -371,7 +389,6 @@ function updateAllUsersConfInJSONFile(cb) {
                cb(err);
             }
         });
-
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err);
@@ -410,7 +427,7 @@ function setUserClick2CallConf(data, cb) {
         // update the User object. Change the specified click2call setting.
         // This update is automatically reported in the User object because
         // it's a reference link to it.
-        // Also the relative section of "contentJsonConfigFile" property is automatically
+        // Also the relative section of "contentConfPrefJson" property is automatically
         // updated, because the "configUser" function sets the user configurations to be
         // a reference link to it.
         logger.info(IDLOG, 'update click2call setting of user "' + data.username + '"');
@@ -436,10 +453,8 @@ function setUserClick2CallConf(data, cb) {
             logger.error(IDLOG, 'setting click2call setting for user "' + data.username + '"');
         }
 
-        // update the notification settings section in the configuration file in the filesystem
-        // store the configurations of all the users. This is because the _contentJsonConfigFile_
-        // property contains all the users
-        storeAllUsersConfigurations(data.username, cb);
+        // update the notification settings section in the preference file in the filesystem
+        storeAllUserPreferences(data.username, cb);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);

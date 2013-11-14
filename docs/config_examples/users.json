@@ -1,7 +1,7 @@
 {
     "alessandro": {
         "name": "THE NAME",
-        "surname: "THE SURNAME",
+        "surname": "THE SURNAME",
         "authentication": {
             "password": "FILE_AUTHENTICATION_PASS"
         },
@@ -67,46 +67,6 @@
                 "Business",
                 "Development"
             ]
-        },
-        "configurations": {
-            "click2call": {
-                "type": "manual",
-                "automatic": {
-                    "device": "yealink",
-                    "yealink": {
-                        "model": "T26",
-                        "user": "USER",
-                        "password": "PASS"
-                    },
-                    "snom": {
-                        "user": "USER",
-                        "password": "PASS"
-                    },
-                    "url": "URL"
-                }
-            },
-            "notifications": {
-                "postit": {
-                    "sms": {
-                        "to": "0123456789",
-                        "when": "never"
-                    },
-                    "email": {
-                        "to": "USER@DOMAIN",
-                        "when": "never"
-                    }
-                },
-                "voicemail": {
-                    "sms": {
-                        "to": "0123456789",
-                        "when": "never"
-                    },
-                    "email": {
-                        "to": "USER@DOMAIN",
-                        "when": "never"
-                    }
-                }
-            }
         }
     }
 }
