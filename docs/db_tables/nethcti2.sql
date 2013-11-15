@@ -81,5 +81,3 @@ CREATE TABLE IF NOT EXISTS `sms_history` (
   KEY `sender_index` (`sender`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
-GRANT ALL ON faxdb.* TO faxuser@localhost  IDENTIFIED BY 'faxpass';
-FLUSH PRIVILEGES;
