@@ -1,0 +1,14 @@
+#!/bin/bash
+
+DB=`/usr/bin/mysqlshow | /bin/grep -o nethcti2`
+if [ "$DB" == "nethcti2" ]; then 
+    # update
+    if [ -f /usr/lib/node/proxycti/docs/db_tables/update.sh ]; then
+        ln -s /usr/lib/node/proxycti/docs/db_tables/update.sh /etc/e-smith/sql/init/20nethcti2_update
+    fi
+    exit 0
+else
+    # install
+    ln -s /usr/lib/node/proxycti/docs/db_tables/nethcti2.sql /etc/e-smith/sql/init/10nethcti2.sql
+    /sbin/e-smith/service mysql.init start
+fi
