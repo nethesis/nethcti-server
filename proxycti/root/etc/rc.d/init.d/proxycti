@@ -9,8 +9,8 @@
 # Source function library.
 . /etc/rc.d/init.d/functions
 
-helper="/usr/lib/node/forever/bin/forever"
-exec="/usr/lib/node/proxycti/proxycti.js"
+helper="/usr/bin/forever"
+exec="/usr/lib/node/asterisk-proxy/nethcti.js"
 prog=$(basename $exec)
 dirname=$(dirname $exec)
 
