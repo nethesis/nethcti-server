@@ -1,0 +1,9 @@
+    "customer_card_identity": \{
+        "dbhost":     "localhost",
+        "dbport":     "/var/lib/mysql/mysql.sock",
+        "dbtype":     "mysql",
+        "dbuser":     "pbookuser",
+        "dbpassword": "pbookpass",
+        "dbname":     "phonebook",
+        "query":      "select * from phonebook where homephone like '%$TERM' or workphone like '%$TERM' or cellphone like '%$TERM' or fax like '%$TERM'"
+    \},

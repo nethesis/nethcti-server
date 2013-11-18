@@ -1,8 +1,0 @@
-
-[SERVER_PROXY]
-{
-   my $port = $proxycti{TCPPort} || "8181";
-   $OUT.="";
-   $OUT.="hostname=${SystemName}.${DomainName}\n";
-   $OUT.="port=$port";
-}

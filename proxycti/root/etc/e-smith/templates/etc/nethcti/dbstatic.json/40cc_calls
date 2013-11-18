@@ -1,0 +1,9 @@
+    "customer_card_calls": \{
+        "dbhost":     "localhost",
+        "dbport":     "/var/lib/mysql/mysql.sock",
+        "dbtype":     "mysql",
+        "dbuser":     "asteriskuser",
+        "dbpassword": "{$nethvoice{DbPasswd}}",
+        "dbname":     "asteriskcdrdb",
+        "query":      "select DATE_FORMAT(calldate,'%d/%m/%Y') as date, DATE_FORMAT(calldate,'%H:%i:%S') as time, clid, src, dst, uniqueid,duration, time_format(billsec, '%H:%i:%S') as billsec, disposition,if(src='$TERM','in','out') as direction from cdr where (src = '$TERM' or dst = '$TERM') and disposition = 'ANSWERED' order by calldate desc limit 0,10"
+    \},

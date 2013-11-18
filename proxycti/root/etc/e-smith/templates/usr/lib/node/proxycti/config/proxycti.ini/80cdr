@@ -1,8 +1,0 @@
-{
-    my $script = $proxycti{'CdrScript'} || "";
-    my $timeout = $proxycti{'CdrScriptTimeout'} || "";
-    $OUT.="
-[CDR_EVENT]
-script=$script
-timeout=$timeout";
-}

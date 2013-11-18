@@ -9,22 +9,42 @@ service_link_enhanced('proxycti', 'K02', '2');
 service_link_enhanced('proxycti', 'K02', '1');
 service_link_enhanced('proxycti', 'K02', '0');
 
-
-templates2events("/usr/lib/node/proxycti/config/proxycti.ini", qw(proxycti-update bootstrap-console-save));
-templates2events("/etc/asterisk/manager.conf", qw(proxycti-update));
-templates2events("/etc/crontab", qw(proxycti-update));
-
-for my $event (qw(pre-backup))
-{
-    event_link("proxycti-backup", $event, "89");
-}
-
-$event = 'logrotate';
-safe_symlink("restart", "root/etc/e-smith/events/$event/services2adjust/proxycti");
-
-$event = "proxycti-update";
-event_link("proxycti-configure", $event, 10);
+#
+# proxycti-update
+#
+my $event = "proxycti-update";
+templates2events("/etc/asterisk/manager.conf", $event);
+templates2events("/etc/crontab",$event);
+templates2events("/etc/nethcti/authentication.json",$event);
+templates2events("/etc/nethcti/services.json",$event);
+templates2events("/etc/nethcti/chat.json",$event);
+templates2events("/etc/nethcti/dbstatic.json",$event);
+templates2events("/etc/nethcti/mailer.json",$event);
 event_link("proxycti-conf", $event, 20);
 event_link("asterisk-reload", $event, "30");
 safe_symlink("restart", "root/etc/e-smith/events/$event/services2adjust/proxycti");
+
+
+#
+# bootstrap-console-save 
+#
+$event = "bootstrap-console-save";
+templates2events("/etc/nethcti/chat.json",$event);
+templates2events("/etc/nethcti/mailer.json",$event);
+templates2events("/etc/nethcti/services.json",$event);
+
+
+
+#
+# pre-backup
+#
+$event = "pre-backup";
+event_link("proxycti-backup", $event, "89");
+
+#
+# logrotate
+#
+$event = 'logrotate';
+safe_symlink("restart", "root/etc/e-smith/events/$event/services2adjust/proxycti");
+
 
