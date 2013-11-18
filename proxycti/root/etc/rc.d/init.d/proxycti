@@ -9,8 +9,8 @@
 # Source function library.
 . /etc/rc.d/init.d/functions
 
-helper="/usr/bin/forever"
-exec="/usr/lib/node/asterisk-proxy/nethcti.js"
+helper="/usr/bin/forever --minUptime 1000 --spinSleepTime 1000"
+exec="/usr/lib/node/proxycti/nethcti.js"
 prog=$(basename $exec)
 dirname=$(dirname $exec)
 

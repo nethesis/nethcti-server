@@ -1,19 +1,20 @@
 {
-    our $base = $proxycti{'LdapBaseDN'} || esmith::util::ldapBase($DomainName);
-    our $ou = $proxycti{'LdapOu'} || "Users";
-    our $port = $proxycti{'LdapPort'} || "389";
-    our $server = $proxycti{'LdapServer'} || 'localhost';
-}
-\{
+    my $base = $proxycti{'LdapBaseDN'} || esmith::util::ldapBase($DomainName);
+    my $ou = $proxycti{'LdapOu'} || "Users";
+    my $port = $proxycti{'LdapPort'} || "389";
+    my $server = $proxycti{'LdapServer'} || 'localhost';
+
+    $OUT = '{
     "type":   "ldap",
-    "ldap": \{
-        "ou":     "{$ou}",
-        "baseDn": "{$base}",
-        "port":   "{$port}",
-        "server": "{$server}"
-    \},
-    "file": \{
+    "ldap": {
+        "ou":     "' . $ou . '",
+        "baseDn": "' . $base .'",
+        "port":   "' . $port .'",
+        "server": "' . $server .'"
+    },
+    "file": {
         "path": "/etc/nethcti/users.json"
-    \},
+    },
     "expiration_timeout": "3600"
-\}
+}';
+}

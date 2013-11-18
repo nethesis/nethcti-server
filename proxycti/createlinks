@@ -29,6 +29,7 @@ safe_symlink("restart", "root/etc/e-smith/events/$event/services2adjust/proxycti
 # bootstrap-console-save 
 #
 $event = "bootstrap-console-save";
+templates2events("/etc/nethcti/authentication.json",$event);
 templates2events("/etc/nethcti/chat.json",$event);
 templates2events("/etc/nethcti/mailer.json",$event);
 templates2events("/etc/nethcti/services.json",$event);
