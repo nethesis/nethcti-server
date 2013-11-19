@@ -1,0 +1,88 @@
+<% if(results.length==0){ %>
+	<table width="50%" cellpadding="5" style="border: 1px solid gray"><tr><td><h3></h3></td></tr> <tr><td>Spiacente, nessun dato presente.</td></tr></table>
+<% } else { %>
+<% for(var i=0; i<results.length; i++){ %>
+	<div class="contactsVCard">
+		<div class='logo click2cc' style='float: left'>
+		<% if(results[i].name){ %>
+			<img src="/images/40/contact.png">
+		<% } else { %>
+			<img src="/image/40/company.png">
+		<% } %>
+		</div>
+
+		<% if(results[i].name){ %>
+                        <div class='name'><%= results[i].name %>
+                        <% if(results[i].title) { %>
+                                <div class='title'><%= results[i].title %> <%= results[i].type %></div>
+                        <% } %>
+                        </div>
+                <% } %>
+
+		<% if(results[i].company){ %>
+                        <% if(results[i].name){ %>
+                                <div class='company'> <%= results[i].company %></div>
+                        <% } else { %>
+                                <div class='name'> <%= results[i].company %></div>
+                        <% } %>
+                <% } %>
+
+		<div class='numbers'>
+                <% if(results[i].workphone){ %>
+                        <div class='tr'>
+				<span class='value td'>
+                                    <img src="/images/24/phone.png" title='Telefono Ufficio' alt='Telefono Ufficio' class='cc_click2call cursorPointer' data-num='<%= results[i].workphone %>'/>
+                                </span>
+                                <span class='td'>
+                                    <span data-prefix='<%= results[i].prefix %>'><%= results[i].workphone %></span>
+                                </span>
+			</div>
+                <% } %>
+		<% if(results[i].cellphone) { %>
+                        <div class='tr'>
+                            <span class='value td'>
+                                <img src="/images/24/mobile.png" title='Cellulare' alt='Cellulare' class='cc_click2call cursorPointer' data-num='<%= results[i].cellphone %>'/>
+                            </span>
+                            <span class='value td'>
+                                <img src="/images/24/sms.png" class="click2sms cursorPointer" title='Invia SMS' data-num='<%= results[i].cellphone %>' alt='SMS'/>
+                            </span>
+                            <span class='td'>
+                                <span data-prefix='<%= results[i].prefix %>'><%= results[i].cellphone %></span>
+                            </span>
+                        </div>
+                <% } %>
+		<% if(results[i].homephone) { %>
+                        <div class='tr'>
+                            <span class='value td'>
+                                <img src="/images/24/phone.png" title='Telefono Casa' alt='Telefono Casa' class='cc_click2call cursorPointer' data-num='<%= results[i].homephone %>'/>
+                            </span>
+                            <span class='td'>
+                                <span data-prefix='<%= results[i].prefix %>'><%= results[i].homephone %></span>
+                            </span>
+                        </div>
+                <% } %>
+		<% if(results[i].fax) { %>
+                        <div class='tr'><span class='value td'><img src="/images/24/fax.png" title='Fax' alt='Fax'/></span> <span class='td'><span class='click2fax'><%= results[i].fax %></span></span></div>
+                <% } %>
+                </div>
+
+		<% if(results[i].workemail) { %>
+	                <div class='numbers'>
+        	                <div class='tr'><span class='value td'><img src="/images/24/mail.png" title='Email' alt='Email'/></span> <span class='td'><a href='mailto:<%= results[i].workemail %>'><%= results[i].workemail %></a></span></div>
+	                </div>
+                <% } %>
+
+		<% if(results[i].workstreet) { %>
+                	<div class='numbers'> <div class='label' style="margin-top: 5px">Ufficio <a href='http://maps.google.it/maps?q=<%= results[i].workcity %>, <%= results[i].workstreet %> (<%= results[i].workprovince %>) - <%= results[i].workpostalcode %>' target='_blank'><img src='/images/24/map.png' title='Cerca su Google Maps'/></a></div> <div class='address'> <%= results[i].workcity %>, <%= results[i].workstreet %> (<%= results[i].workprovince %>) - <%= results[i].workpostalcode %></div> </div>
+                <% } %>
+
+		<% if(results[i].homestreet) { %>
+                	<div class='numbers'> <div class='label' style="margin-top: 5px">Casa <a href='http://maps.google.it/maps?q=<%= results[i].homecity %>, <%= results[i].homestreet %> (<%= results[i].homeprovince %>)' target='_blank'><img src='/images/24/map.png' title='Cerca su Google Maps'/></a></div> <div class='address'> <%= results[i].homecity %>, <%= results[i].homestreet %> (<%= results[i].homeprovince %>) </div> </div>
+                <% } %>
+
+		<% if(results[i].url) { %>
+                	<div class='numbers'><span class=''>Sito:</span> <a href='<%= results[i].url %>'><%= results[i].url %></a></div>
+                <% } %>
+	</div>
+<% } %>
+<% } %>

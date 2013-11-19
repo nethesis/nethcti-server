@@ -1,0 +1,13 @@
+<% if(results.length==0){ %>
+	<table width="50%" cellpadding="5" style="border: 1px solid gray"><tr><td><h3></h3></td></tr> <tr><td>Spiacente, nessun dato presente.</td></tr></table>
+<% } else { %>
+	<div id='cdr' class='flatTable'>
+		<div class='name'>Ultime chiamate</div>
+		<table>
+			<tr><th>Data</th><th>Ora</th><th>Durata</th><th>Sorgente</th><th/><th>Destinazione</th></tr>
+			<% for(var i=0; i<results.length; i++){ %>
+				<tr><td><%= results[i].date %></td><td><%= results[i].time %></td><td><%= results[i].billsec %></td><td><%= results[i].clid %></td><td><img src="/images/24/out.png" title='Direction' alt='Direction'/></td><td><%= results[i].dst %></td></tr>
+			<% } %>
+		</table>
+	</div>
+<% } %>

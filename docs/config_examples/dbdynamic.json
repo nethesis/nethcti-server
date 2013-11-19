@@ -1,0 +1,11 @@
+{
+    "customer_card_test": {
+        "dbhost":     "localhost",
+        "dbport":     "/var/lib/mysql/mysql.sock",
+        "dbtype":     "mysql",
+        "dbuser":     "USER",
+        "dbpassword": "PASS",
+        "dbname":     "DBNAME",
+        "query":      "select * from DB_TEST where COLUMN like '%$TERM'"
+    }
+}
