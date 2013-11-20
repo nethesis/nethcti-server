@@ -1,9 +1,10 @@
 <% if(results.length==0){ %>
-	<table width="50%" cellpadding="5" style="border: 1px solid gray"><tr><td><h3></h3></td></tr> <tr><td>Spiacente, nessun dato presente.</td></tr></table>
+	<table width="50%" cellpadding="5"><tr><td><h3></h3></td></tr> <tr><td>Spiacente, nessun dato presente.</td></tr></table>
 <% } else { %>
 <% for(var i=0; i<results.length; i++){ %>
 	<div class="contactsVCard">
-		<div class='logo click2cc' style='float: left'>
+	    <div class='contactsVCardHeader'>
+		<div class='logo click2cc''>
 		<% if(results[i].name){ %>
 			<img src="/images/40/contact.png">
 		<% } else { %>
@@ -26,7 +27,9 @@
                                 <div class='name'> <%= results[i].company %></div>
                         <% } %>
                 <% } %>
+            </div>
 
+	    <div class='contactsVCardContent ui-widget-content'>
 		<div class='numbers'>
                 <% if(results[i].workphone){ %>
                         <div class='tr'>
@@ -73,16 +76,17 @@
                 <% } %>
 
 		<% if(results[i].workstreet) { %>
-                	<div class='numbers'> <div class='label' style="margin-top: 5px">Ufficio <a href='http://maps.google.it/maps?q=<%= results[i].workcity %>, <%= results[i].workstreet %> (<%= results[i].workprovince %>) - <%= results[i].workpostalcode %>' target='_blank'><img src='/images/24/map.png' title='Cerca su Google Maps'/></a></div> <div class='address'> <%= results[i].workcity %>, <%= results[i].workstreet %> (<%= results[i].workprovince %>) - <%= results[i].workpostalcode %></div> </div>
+                	<div class='numbers'> <div class='label'>Ufficio <a href='http://maps.google.it/maps?q=<%= results[i].workcity %>, <%= results[i].workstreet %> (<%= results[i].workprovince %>) - <%= results[i].workpostalcode %>' target='_blank'><img src='/images/24/map.png' title='Cerca su Google Maps'/></a></div> <div class='address'> <%= results[i].workcity %>, <%= results[i].workstreet %> (<%= results[i].workprovince %>) - <%= results[i].workpostalcode %></div> </div>
                 <% } %>
 
 		<% if(results[i].homestreet) { %>
-                	<div class='numbers'> <div class='label' style="margin-top: 5px">Casa <a href='http://maps.google.it/maps?q=<%= results[i].homecity %>, <%= results[i].homestreet %> (<%= results[i].homeprovince %>)' target='_blank'><img src='/images/24/map.png' title='Cerca su Google Maps'/></a></div> <div class='address'> <%= results[i].homecity %>, <%= results[i].homestreet %> (<%= results[i].homeprovince %>) </div> </div>
+                	<div class='numbers'> <div class='label'>Casa <a href='http://maps.google.it/maps?q=<%= results[i].homecity %>, <%= results[i].homestreet %> (<%= results[i].homeprovince %>)' target='_blank'><img src='/images/24/map.png' title='Cerca su Google Maps'/></a></div> <div class='address'> <%= results[i].homecity %>, <%= results[i].homestreet %> (<%= results[i].homeprovince %>) </div> </div>
                 <% } %>
 
 		<% if(results[i].url) { %>
-                	<div class='numbers'><span class=''>Sito:</span> <a href='<%= results[i].url %>'><%= results[i].url %></a></div>
+                	<div class='numbers'><a href='<%= results[i].url %>'><%= results[i].url %></a></div>
                 <% } %>
+            </div>
 	</div>
 <% } %>
 <% } %>
