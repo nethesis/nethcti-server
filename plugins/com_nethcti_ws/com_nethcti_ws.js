@@ -767,7 +767,6 @@ function connHdlr(socket) {
 
         // set the listeners for the new socket connection
         socket.on('login',      function (data) { loginHdlr(socket, data);   });
-        socket.on('logout',     function (data) { logoutHdlr(socket);        });
         socket.on('message',    function (data) { dispatchMsg(socket, data); });
         socket.on('disconnect', function (data) { disconnHdlr(socket);       });
         logger.info(IDLOG, 'listeners for new socket connection have been set');
@@ -1415,29 +1414,6 @@ function loginHdlr(socket, obj) {
                                ' with id ' + socket.id);
             unauthorized(socket);
         }
-
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Websocket logout handler.
-*
-* @method logoutHdlr
-* @param {object} socket The client websocket
-* @private
-*/
-function logoutHdlr(socket) {
-    try {
-        // check parameter
-        if (typeof socket !== 'object') { throw new Error('wrong parameter'); }
-
-        socket.get('username', function (err, username) {
-
-            logger.info(IDLOG, 'logout websocket of user "' + username + '" ' + getWebsocketEndpoint(socket) + ' with id ' + socket.id);
-            socket.disconnect();
-        });
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
