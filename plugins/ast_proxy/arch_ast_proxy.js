@@ -48,6 +48,13 @@ module.exports = function (options, imports, register) {
             doCmd: astProxy.doCmd,
 
             /**
+            * It's the _setDnd_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method setDnd
+            */
+            setDnd: astProxy.proxyLogic.setDnd,
+
+            /**
             * It's the _getExtensions_ method provided by _ast\_proxy.proxyLogic_.
             *
             * @method getExtensions

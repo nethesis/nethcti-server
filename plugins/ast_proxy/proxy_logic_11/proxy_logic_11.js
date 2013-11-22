@@ -1956,6 +1956,43 @@ function evtExtenDndChanged(exten, enabled) {
 }
 
 /**
+* Enable/disable the don't disturb status of the endpoint. The used plugin command _dndSet_
+* doesn't generate any asterisk events, so simulates it.
+*
+* @method setDnd
+* @param {string}   exten    The extension number
+* @param {boolean}  activate True if the dnd must be enabled
+* @param {function} cb       The callback function
+*/
+function setDnd(exten, activate, cb) {
+    try {
+        // check parameters
+        if (typeof exten !== 'string' && typeof activate !== 'boolean') {
+            throw new Error('wrong parameters');
+        }
+
+        if (extensions[exten]) { // the exten is an extension
+
+            // this command doesn't generate any asterisk event, so if it's successful, it simulate the event
+            astProxy.doCmd({ command: 'dndSet', exten: exten, activate: activate }, function (err) {
+
+                cb(err);
+                if (err === null) { evtExtenDndChanged(exten, activate); }
+            });
+
+        } else {
+            var str = 'try to set dnd status of non existent extension ' + exten;
+            logger.warn(IDLOG, str);
+            cb(str);
+        }
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
 * New voice messages has been left. So it emits the _EVT\_NEW\_VOICEMAIL_ event.
 *
 * @method evtNewVoicemailMessage
@@ -3651,6 +3688,7 @@ exports.on                              = on;
 exports.call                            = call;
 exports.start                           = start;
 exports.visit                           = visit;
+exports.setDnd                          = setDnd;
 exports.setLogger                       = setLogger;
 exports.getExtensions                   = getExtensions;
 exports.pickupParking                   = pickupParking;

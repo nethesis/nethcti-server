@@ -2266,20 +2266,27 @@ function dndset(req, res, next) {
 
         var activate = (status === 'on') ? true : false;
 
-        compAstProxy.doCmd({ command: 'dndSet', exten: endpoint, activate: activate }, function (err, resp) {
+        compAstProxy.setDnd(endpoint, activate, function (err) {
+            try {
 
-            if (err) {
-                logger.error(IDLOG, 'setting dnd for extension ' + endpoint + ' of user "' + username + '"');
-                compUtil.net.sendHttp500(IDLOG, res, err.toString());
-                return;
+                if (err) {
+                    logger.error(IDLOG, 'setting dnd for extension ' + endpoint + ' of user "' + username + '"');
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                    return;
+                }
+
+                logger.info(IDLOG, 'dnd ' + status + ' for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
+                compUtil.net.sendHttp200(IDLOG, res);
+
+            } catch (err1) {
+                logger.error(IDLOG, err1.stack);
+                compUtil.net.sendHttp500(IDLOG, res, err1.toString());
             }
-
-            logger.info(IDLOG, 'dnd ' + status + ' for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
-            compUtil.net.sendHttp200(IDLOG, res);
         });
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-        compUtil.net.sendHttp500(IDLOG, res, err.toString());
+
+    } catch (error) {
+        logger.error(IDLOG, error.stack);
+        compUtil.net.sendHttp500(IDLOG, res, error.toString());
     }
 }
 
