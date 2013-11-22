@@ -11,9 +11,24 @@
 * @class authentication
 * @static
 */
-var fs     = require('fs');
-var ldap   = require('ldapjs');
-var crypto = require('crypto');
+var fs           = require('fs');
+var ldap         = require('ldapjs');
+var crypto       = require('crypto');
+var EventEmitter = require('events').EventEmitter;
+
+/**
+* Fired when the component is ready.
+*
+* @event ready
+*/
+/**
+* The name of the component ready event.
+*
+* @property EVT_COMP_READY
+* @type string
+* @default "ready"
+*/
+var EVT_COMP_READY = 'ready';
 
 /**
 * The module identifier used by the logger.
@@ -26,6 +41,15 @@ var crypto = require('crypto');
 * @default [authentication]
 */
 var IDLOG = '[authentication]';
+
+/**
+* The event emitter.
+*
+* @property emitter
+* @type object
+* @private
+*/
+var emitter = new EventEmitter();
 
 /**
 * The logger. It must have at least three methods: _info, warn and error._
@@ -217,7 +241,7 @@ function config(path) {
     authenticationType = json.type;
 
     // set the expiration timeout of the token
-    expires = json.expiration_timeout * 1000;
+    expires = parseInt(json.expiration_timeout, 10) * 1000;
 
     // configure LDAP authentication
     if (json.type === AUTH_TYPE.ldap) {
@@ -229,6 +253,10 @@ function config(path) {
         logger.info(IDLOG, 'configure authentication with credentials file');
         configFile(json.file);
     }
+
+    // emit the event to tell other modules that the component is ready to be used
+    logger.info(IDLOG, 'emit "' + EVT_COMP_READY + '" event');
+    emitter.emit(EVT_COMP_READY);
 }
 
 /**
@@ -532,9 +560,7 @@ function removeGrant(accessKeyId) {
 * Update the expiration of the token relative to the access key.
 *
 * @method updateTokenExpires
-* @param {string} accessKeyId The access key relative to the token
-* to be updated.
-* @private
+* @param {string} accessKeyId The access key relative to the token to be updated.
 */
 function updateTokenExpires(accessKeyId) {
     try {
@@ -611,11 +637,46 @@ function verifyToken(accessKeyId, token) {
     }
 }
 
+/**
+* Returns the token expiration timeout.
+*
+* @method getTokenExpirationTimeout
+* @return {number} The token expiration timeout in milliseconds.
+*/
+function getTokenExpirationTimeout() {
+    try {
+        return expires;
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Subscribe a callback function to a custom event fired by this object.
+* It's the same of nodejs _events.EventEmitter.on._
+*
+* @method on
+* @param  {string}   type The name of the event
+* @param  {function} cb   The callback to execute in response to the event
+* @return {object}   A subscription handle capable of detaching that subscription.
+*/
+function on(type, cb) {
+    try {
+        return emitter.on(type, cb);
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
 // public interface
-exports.config                   = config;
-exports.getNonce                 = getNonce;
-exports.setLogger                = setLogger;
-exports.verifyToken              = verifyToken;
-exports.removeGrant              = removeGrant;
-exports.authenticate             = authenticate;
-exports.isAutoUpdateTokenExpires = isAutoUpdateTokenExpires;
+exports.on                        = on;
+exports.config                    = config;
+exports.getNonce                  = getNonce;
+exports.setLogger                 = setLogger;
+exports.verifyToken               = verifyToken;
+exports.removeGrant               = removeGrant;
+exports.authenticate              = authenticate;
+exports.EVT_COMP_READY            = EVT_COMP_READY;
+exports.updateTokenExpires        = updateTokenExpires;
+exports.isAutoUpdateTokenExpires  = isAutoUpdateTokenExpires;
+exports.getTokenExpirationTimeout = getTokenExpirationTimeout;
