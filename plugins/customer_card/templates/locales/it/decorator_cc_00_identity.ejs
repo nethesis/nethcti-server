@@ -6,9 +6,9 @@
 	    <div class='contactsVCardHeader'>
 		<div class='logo click2cc''>
 		<% if(results[i].name){ %>
-			<img src="/images/40/contact.png">
+			<img src="images/32/contact.png">
 		<% } else { %>
-			<img src="/image/40/company.png">
+			<img src="images/32/company.png">
 		<% } %>
 		</div>
 
@@ -34,7 +34,7 @@
                 <% if(results[i].workphone){ %>
                         <div class='tr'>
 				<span class='value td'>
-                                    <img src="/images/24/phone.png" title='Telefono Ufficio' alt='Telefono Ufficio' class='cc_click2call cursorPointer' data-num='<%= results[i].workphone %>'/>
+                                    <img src="images/24/phone.png" title='Telefono Ufficio' alt='Telefono Ufficio' class='cc_click2call cursorPointer' data-num='<%= results[i].workphone %>'/>
                                 </span>
                                 <span class='td'>
                                     <span data-prefix='<%= results[i].prefix %>'><%= results[i].workphone %></span>
@@ -44,10 +44,10 @@
 		<% if(results[i].cellphone) { %>
                         <div class='tr'>
                             <span class='value td'>
-                                <img src="/images/24/mobile.png" title='Cellulare' alt='Cellulare' class='cc_click2call cursorPointer' data-num='<%= results[i].cellphone %>'/>
+                                <img src="images/24/mobile.png" title='Cellulare' alt='Cellulare' class='cc_click2call cursorPointer' data-num='<%= results[i].cellphone %>'/>
                             </span>
                             <span class='value td'>
-                                <img src="/images/24/sms.png" class="click2sms cursorPointer" title='Invia SMS' data-num='<%= results[i].cellphone %>' alt='SMS'/>
+                                <img src="images/24/sms.png" class="click2sms cursorPointer" title='Invia SMS' data-num='<%= results[i].cellphone %>' alt='SMS'/>
                             </span>
                             <span class='td'>
                                 <span data-prefix='<%= results[i].prefix %>'><%= results[i].cellphone %></span>
@@ -57,7 +57,7 @@
 		<% if(results[i].homephone) { %>
                         <div class='tr'>
                             <span class='value td'>
-                                <img src="/images/24/phone.png" title='Telefono Casa' alt='Telefono Casa' class='cc_click2call cursorPointer' data-num='<%= results[i].homephone %>'/>
+                                <img src="images/24/phone.png" title='Telefono Casa' alt='Telefono Casa' class='cc_click2call cursorPointer' data-num='<%= results[i].homephone %>'/>
                             </span>
                             <span class='td'>
                                 <span data-prefix='<%= results[i].prefix %>'><%= results[i].homephone %></span>
@@ -65,26 +65,26 @@
                         </div>
                 <% } %>
 		<% if(results[i].fax) { %>
-                        <div class='tr'><span class='value td'><img src="/images/24/fax.png" title='Fax' alt='Fax'/></span> <span class='td'><span class='click2fax'><%= results[i].fax %></span></span></div>
+                        <div class='tr'><span class='value td'><img src="images/24/fax.png" title='Fax' alt='Fax'/></span> <span class='td'><span class='click2fax'><%= results[i].fax %></span></span></div>
                 <% } %>
                 </div>
 
 		<% if(results[i].workemail) { %>
 	                <div class='numbers'>
-                            <div class='tr'><span class='value td'><img src="/images/24/mail.png" title='Email' alt='Email'/></span> <span class='td'><a href='mailto:<%= results[i].workemail %>' target='_blank'><%= results[i].workemail %></a></span></div>
+        	                <div class='tr'><span class='value td'><img src="images/24/mail.png" title='Email' alt='Email'/></span> <span class='td'><a href='mailto:<%= results[i].workemail %>'><%= results[i].workemail %></a></span></div>
 	                </div>
                 <% } %>
 
 		<% if(results[i].workstreet) { %>
-                	<div class='numbers'> <div class='label'>Ufficio <a href='http://maps.google.it/maps?q=<%= results[i].workcity %>, <%= results[i].workstreet %> (<%= results[i].workprovince %>) - <%= results[i].workpostalcode %>' target='_blank'><img src='/images/24/map.png' title='Cerca su Google Maps'/></a></div> <div class='address'> <%= results[i].workcity %>, <%= results[i].workstreet %> (<%= results[i].workprovince %>) - <%= results[i].workpostalcode %></div> </div>
+                	<div class='numbers'> <div class='label'>Ufficio <a href='http://maps.google.it/maps?q=<%= results[i].workcity %>, <%= results[i].workstreet %> (<%= results[i].workprovince %>) - <%= results[i].workpostalcode %>' target='_blank'><img src='images/24/map.png' title='Cerca su Google Maps'/></a></div> <div class='address'> <%= results[i].workcity %>, <%= results[i].workstreet %> (<%= results[i].workprovince %>) - <%= results[i].workpostalcode %></div> </div>
                 <% } %>
 
 		<% if(results[i].homestreet) { %>
-                	<div class='numbers'> <div class='label'>Casa <a href='http://maps.google.it/maps?q=<%= results[i].homecity %>, <%= results[i].homestreet %> (<%= results[i].homeprovince %>)' target='_blank'><img src='/images/24/map.png' title='Cerca su Google Maps'/></a></div> <div class='address'> <%= results[i].homecity %>, <%= results[i].homestreet %> (<%= results[i].homeprovince %>) </div> </div>
+                	<div class='numbers'> <div class='label'>Casa <a href='http://maps.google.it/maps?q=<%= results[i].homecity %>, <%= results[i].homestreet %> (<%= results[i].homeprovince %>)' target='_blank'><img src='images/24/map.png' title='Cerca su Google Maps'/></a></div> <div class='address'> <%= results[i].homecity %>, <%= results[i].homestreet %> (<%= results[i].homeprovince %>) </div> </div>
                 <% } %>
 
 		<% if(results[i].url) { %>
-                	<div class='numbers'><a href='<%= results[i].url %>'><%= results[i].url %></a></div>
+                	<div class='numbers'><a href='<%= results[i].url %>'><img src="images/24/url.png"/></a></div>
                 <% } %>
             </div>
 	</div>

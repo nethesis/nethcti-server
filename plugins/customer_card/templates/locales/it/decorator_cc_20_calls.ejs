@@ -4,9 +4,9 @@
 	<div id='cdr' class='flatTable ui-widget'>
 		<div class='name ui-widget-header'>Ultime chiamate</div>
 		<table class='ui-widget-content'>
-			<tr><th>Data</th><th>Ora</th><th>Durata</th><th>Sorgente</th><th/><th>Destinazione</th></tr>
+			<tr><th>Data</th><th>Ora</th><th>Durata</th><th>Sorgente</th><th>Destinazione</th></tr>
 			<% for(var i=0; i<results.length; i++){ %>
-				<tr><td><%= results[i].date %></td><td><%= results[i].time %></td><td><%= results[i].billsec %></td><td><%= results[i].clid %></td><td><img src="/images/24/out.png" title='Direction' alt='Direction'/></td><td><%= results[i].dst %></td></tr>
+				<tr><td><%= results[i].date %></td><td><%= results[i].time %></td><td><%= results[i].billsec %></td><td><%= results[i].clid %></td><td><%= results[i].dst %></td></tr>
 			<% } %>
 		</table>
 	</div>
