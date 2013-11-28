@@ -38,7 +38,9 @@ var IDLOG = '[dndSet]';
         var map = {};
 
         /**
-        * Command plugin to set the DND status of an extension.
+        * Command plugin to set the DND status of an extension. This command doesn't generates any
+        * asterisk events, so it's better to use the _setDnd_ method of the _ast\_proxy_ component
+        * that simulate it.
         *
         * Use it with _ast\_proxy_ module as follow:
         *

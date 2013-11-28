@@ -27,6 +27,13 @@ module.exports = function (options, imports, register) {
     register(null, {
         authentication: {
             /**
+            * It's the _on_ method provided by _authentication_ module.
+            *
+            * @method on
+            */
+            on: authentication.on,
+
+            /**
             * It's the _authenticate_ method provided by _authentication_ module.
             *
             * @method authenticate
@@ -68,7 +75,28 @@ module.exports = function (options, imports, register) {
             * @method verifyToken
             * @param {string} token The token to be checked.
             */
-            verifyToken: authentication.verifyToken
+            verifyToken: authentication.verifyToken,
+
+            /**
+            * It's the _updateTokenExpires_ method provided by _authentication_ module.
+            *
+            * @method updateTokenExpires
+            */
+            updateTokenExpires: authentication.updateTokenExpires,
+
+            /**
+            * It's the _getTokenExpirationTimeout_ method provided by _authentication_ module.
+            *
+            * @method getTokenExpirationTimeout
+            */
+            getTokenExpirationTimeout: authentication.getTokenExpirationTimeout,
+
+            /**
+            * It's the _EVT_COMP_READY_ property provided by _authentication_ module.
+            *
+            * @method EVT_COMP_READY
+            */
+            EVT_COMP_READY: authentication.EVT_COMP_READY
         }
     });
 

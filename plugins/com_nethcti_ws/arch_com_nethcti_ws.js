@@ -27,16 +27,19 @@ module.exports = function (options, imports, register) {
 
         if (imports.logger) { logger = imports.logger; }
 
-        comNethctiWs.setLogger(logger);
-        comNethctiWs.config('/etc/nethcti/services.json');
-        comNethctiWs.configPrivacy('/etc/nethcti/nethcti.json');
-        comNethctiWs.setAuthe(imports.authentication);
-        comNethctiWs.setCompUser(imports.user);
-        comNethctiWs.setAstProxy(imports.astProxy);
-        comNethctiWs.setOperator(imports.operator);
-        comNethctiWs.setCompVoicemail(imports.voicemail);
-        comNethctiWs.setCompAuthorization(imports.authorization);
-        comNethctiWs.start();
+        // wait for the authentication component ready event
+        imports.authentication.on(imports.authentication.EVT_COMP_READY, function () {
+            comNethctiWs.setLogger(logger);
+            comNethctiWs.setAuthe(imports.authentication);
+            comNethctiWs.config('/etc/nethcti/services.json');
+            comNethctiWs.configPrivacy('/etc/nethcti/nethcti.json');
+            comNethctiWs.setCompUser(imports.user);
+            comNethctiWs.setAstProxy(imports.astProxy);
+            comNethctiWs.setOperator(imports.operator);
+            comNethctiWs.setCompVoicemail(imports.voicemail);
+            comNethctiWs.setCompAuthorization(imports.authorization);
+            comNethctiWs.start();
+        });
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }

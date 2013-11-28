@@ -160,6 +160,16 @@ var operator;
 var wsid = {};
 
 /**
+* Interval time to automatic update token expiration of all users that
+* are connected by websocket.
+*
+* @property updateTokenExpirationInterval
+* @type {number}
+* @private
+*/
+var updateTokenExpirationInterval;
+
+/**
 * Set the logger to be used.
 *
 * @method setLogger
@@ -687,6 +697,11 @@ function config(path) {
         logger.warn(IDLOG, 'no port has been specified in JSON file ' + path);
     }
 
+    // initialize the interval at which update the token expiration of all users
+    // that are connected by websocket
+    var expires = compAuthe.getTokenExpirationTimeout();
+    updateTokenExpirationInterval = expires / 2;
+
     logger.info(IDLOG, 'configuration by file ' + path + ' ended');
 }
 
@@ -748,6 +763,32 @@ function start() {
         // set the websocket server listener
         server.on('connection', connHdlr);
         logger.info(IDLOG, 'websocket server listening on port ' + port);
+
+        // start the automatic update of token expiration of all users that are connected by websocket.
+        // The interval is the half value of expiration provided by authentication component
+        setInterval(function () {
+
+            updateTokenExpirationOfAllWsUsers();
+
+        }, updateTokenExpirationInterval);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Update the token expiration of all users that are connected by websocket.
+*
+* @method updateTokenExpirationOfAllWsUsers
+* @private
+*/
+function updateTokenExpirationOfAllWsUsers() {
+    try {
+        logger.info(IDLOG, 'update token expiration of all websocket users');
+
+        var id;
+        for (id in wsid) { compAuthe.updateTokenExpires(wsid[id]); }
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
