@@ -66,7 +66,7 @@ var IDLOG = '[attendedTransfer]';
                     // action for asterisk
                     var act = {
                         Action:   'Atxfer',
-                        Exten:    args.to,           // extension to transfer to
+                        Exten:    args.to + '#',     // extension to transfer to. The '#' character is need to eliminate asterisk delay
                         Context:  'from-internal',   // context to transfer to
                         Channel:  args.chToTransfer, // channel to attended transfer
                         Priority: 1                  // priority to transfer to
