@@ -1,0 +1,20 @@
+{
+    my $base = ${'nethcti-server'}{'LdapBaseDN'} || esmith::util::ldapBase($DomainName);
+    my $ou = ${'nethcti-server'}{'LdapOu'} || "Users";
+    my $port = ${'nethcti-server'}{'LdapPort'} || "389";
+    my $server = ${'nethcti-server'}{'LdapServer'} || 'localhost';
+
+    $OUT = '{
+    "type":   "ldap",
+    "ldap": {
+        "ou":     "' . $ou . '",
+        "baseDn": "' . $base .'",
+        "port":   "' . $port .'",
+        "server": "' . $server .'"
+    },
+    "file": {
+        "path": "/etc/nethcti/users.json"
+    },
+    "expiration_timeout": "3600"
+}';
+}

@@ -1,4 +1,0 @@
-{
-    my $url = $proxycti{JabberUrl} || "http://${SystemName}.${DomainName}/http-bind";
-    $OUT = '{ "url" : "' . $url . '" }';
-}

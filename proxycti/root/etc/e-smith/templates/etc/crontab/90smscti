@@ -1,4 +1,0 @@
-{
-      $OUT.="# send sms from cti via portech\n";
-      $OUT.= "*/5 * * * * root /usr/lib/node/proxycti/script/sendsms.php"
-}

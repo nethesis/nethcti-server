@@ -1,4 +1,0 @@
-#!/bin/bash
-
-cd /usr/lib/node/proxycti
-tar czf /home/e-smith/proxycti/backup.tgz config/ template/

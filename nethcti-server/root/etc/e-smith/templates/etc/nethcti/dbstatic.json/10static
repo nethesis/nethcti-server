@@ -1,0 +1,32 @@
+    "postit": \{
+        "dbhost":     "localhost",
+        "dbport":     "/var/lib/mysql/mysql.sock",
+        "dbtype":     "mysql",
+        "dbuser":     "nethcti",
+        "dbpassword": "{${'nethcti-server'}{DbPasswd}}",
+        "dbname":     "nethcti2"
+    \},
+    "caller_note": \{
+        "dbhost":     "localhost",
+        "dbport":     "/var/lib/mysql/mysql.sock",
+        "dbtype":     "mysql",
+        "dbuser":     "nethcti",
+        "dbpassword": "{${'nethcti-server'}{DbPasswd}}",
+        "dbname":     "nethcti2"
+    \},
+    "sms_history": \{
+        "dbhost":     "localhost",
+        "dbport":     "/var/lib/mysql/mysql.sock",
+        "dbtype":     "mysql",
+        "dbuser":     "nethcti",
+        "dbpassword": "{${'nethcti-server'}{DbPasswd}}",
+        "dbname":     "nethcti2"
+    \},
+    "cti_phonebook": \{
+        "dbhost":     "localhost",
+        "dbport":     "/var/lib/mysql/mysql.sock",
+        "dbtype":     "mysql",
+        "dbuser":     "nethcti",
+        "dbpassword": "{${'nethcti-server'}{DbPasswd}}",
+        "dbname":     "nethcti2"
+    \},

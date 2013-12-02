@@ -1,0 +1,8 @@
+\{
+    "logfile": "/var/log/asterisk/nethcti.log",
+    "loglevel": "info",
+    "custom_templates_notifications": "/home/e-smith/nethcti/templates/notification_manager",
+    "custom_templates_customercards": "/home/e-smith/nethcti/templates/customer_card",
+    "http_static": "/home/e-smith/nethcti/static",
+    "privacy_numbers": "xxx"
+\}
