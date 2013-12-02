@@ -84,9 +84,15 @@ var compUser;
 * @property chatServer
 * @type object
 * @private
-* @default { "url": "" }
+* @default {
+    "url":    "",
+    "domain": ""
+}
 */
-var chatServer = { 'url': '' };
+var chatServer = {
+    'url':    '',
+    'domain': ''
+};
 
 /**
 * Set the logger to be used.
@@ -217,6 +223,12 @@ function configChat(path) {
     if (typeof json.url === 'string') {
         chatServer.url = json.url;
         logger.info(IDLOG, 'configured chat URL as ' + chatServer.url);
+    }
+
+    // configure chat domain
+    if (typeof json.domain === 'string') {
+        chatServer.domain = json.domain;
+        logger.info(IDLOG, 'configured chat domain as ' + chatServer.domain);
     }
     logger.info(IDLOG, 'server chat configuration by file ' + path + ' ended');
 }

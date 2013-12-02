@@ -1,3 +1,4 @@
 {
-    "url": "http://IP/http-bind"
+    "url": "http://IP/http-bind",
+    "domain": "domain.it"
 }
