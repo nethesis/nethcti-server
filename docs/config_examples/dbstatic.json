@@ -31,6 +31,14 @@
         "dbpassword": "PASS",
         "dbname":     "nethcti"
     },
+    "cel": {
+        "dbhost":     "localhost",
+        "dbport":     "/var/lib/mysql/mysql.sock",
+        "dbtype":     "mysql",
+        "dbuser":     "USER",
+        "dbpassword": "PASS",
+        "dbname":     "asteriskcdrdb"
+    },
     "history_call": {
         "dbhost":     "localhost",
         "dbport":     "/var/lib/mysql/mysql.sock",
