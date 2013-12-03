@@ -28,6 +28,7 @@
             "127.0.0.1/historysms":         "http://127.0.0.1:10012/historysms",
             "127.0.0.1/historycall":        "http://127.0.0.1:10002/historycall",
             "127.0.0.1/histcallswitch":     "http://127.0.0.1:10002/histcallswitch",
+            "127.0.0.1/cel":                "http://127.0.0.1:10002/cel",
             "127.0.0.1/authorization":      "http://127.0.0.1:10007/authorization",
             "127.0.0.1/configmanager":      "http://127.0.0.1:10006/configmanager",
             "127.0.0.1/historypostit":      "http://127.0.0.1:10004/historypostit",

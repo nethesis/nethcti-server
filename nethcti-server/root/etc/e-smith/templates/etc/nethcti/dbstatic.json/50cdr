@@ -6,3 +6,11 @@
         "dbpassword": "{$nethvoice{DbPasswd}}",
         "dbname":     "asteriskcdrdb"
     \},
+    "cel": \{
+        "dbhost":     "localhost",
+        "dbport":     "/var/lib/mysql/mysql.sock",
+        "dbtype":     "mysql",
+        "dbuser":     "asteriskuser",
+        "dbpassword": "{$nethvoice{DbPasswd}}",
+        "dbname":     "asteriskcdrdb"
+    \},
