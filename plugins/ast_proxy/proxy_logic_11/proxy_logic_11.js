@@ -3118,46 +3118,57 @@ function logonDynQueues(endpointType, endpointId, cb) {
 }
 
 /**
-* Logon the specified endpoint into all queues in which it's a dynamic member.
+* Pause or unpause an extension of a queue.
 *
-* @method logonDynQueues
+* @method queueMemberPauseUnpause
 * @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
 * @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
 * @param {string}   queueId      The queue identifier
-* @param {string}   reason       The textual description of the reason
+* @param {string}   reason       The textual description of the reason. In the unpause case, simply it's ignored
+* @param {boolean}  paused       If the extension must be paused or unpaused. If it's true the extension will be paused from the queue
 * @param {function} cb           The callback function
 */
-function pauseQueueMember(endpointType, endpointId, queueId, reason, cb) {
+function queueMemberPauseUnpause(endpointType, endpointId, queueId, reason, paused, cb) {
     try {
         // check parameters
-        if (   typeof cb           !== 'function'
-            || typeof endpointType !== 'string' || typeof endpointId !== 'string'
-            || typeof queueId      !== 'string' || typeof reason     !== 'string') {
+        if (   typeof cb           !== 'function' || typeof paused     !== 'boolean'
+            || typeof endpointType !== 'string'   || typeof endpointId !== 'string'
+            || typeof queueId      !== 'string'   || typeof reason     !== 'string') {
 
             throw new Error('wrong parameters');
         }
 
+        var logWord = (paused ? 'pause' : 'unpause');
+
         // check the endpoint existence
         if (endpointType === 'extension' && extensions[endpointId]) {
 
-            logger.info(IDLOG, 'execute pause ' + endpointType + ' ' + endpointId + ' from queue ' + queueId);
-            astProxy.doCmd({ command: 'queueMemberPause', queue: queueId, exten: endpointId, reason: reason }, function (err) {
-                try {
-                    if (err) {
-                        logger.error(IDLOG, 'pause extension ' + endpointId + ' from queue ' + queueId + ' has been failed');
-                        cb(err);
-                        return;
-                    }
-                    logger.info(IDLOG, ' cuse extension ' + endpointId + ' from queue ' + queueId + ' has been successful');
-                    cb(null);
+            logger.info(IDLOG, 'execute ' + logWord + ' ' + endpointType + ' ' + endpointId + ' of the queue ' + queueId);
+            astProxy.doCmd({
+                    command: 'queueMemberPauseUnpause',
+                    queue:   queueId,
+                    exten:   endpointId,
+                    reason:  reason,
+                    paused:  paused
+                },
+                function (err) {
+                    try {
+                        if (err) {
+                            logger.error(IDLOG, logWord + ' extension ' + endpointId + ' from queue ' + queueId + ' has been failed');
+                            cb(err);
+                            return;
+                        }
+                        logger.info(IDLOG, logWord + ' extension ' + endpointId + ' from queue ' + queueId + ' has been successful');
+                        cb(null);
 
-                } catch (err) {
-                   logger.error(IDLOG, err.stack);
-                   cb(err);
+                    } catch (err) {
+                       logger.error(IDLOG, err.stack);
+                       cb(err);
+                    }
                 }
-            });
+            );
         } else {
-            var err = 'pause queue member: unknown endpointType ' + endpointType + ' or extension not present';
+            var err = logWord + ' queue member: unknown endpointType ' + endpointType + ' or extension not present';
             logger.warn(IDLOG, err);
             cb(err);
         }
@@ -3747,7 +3758,6 @@ exports.getJSONTrunks                   = getJSONTrunks;
 exports.logonDynQueues                  = logonDynQueues;
 exports.getJSONParkings                 = getJSONParkings;
 exports.redirectParking                 = redirectParking;
-exports.pauseQueueMember                = pauseQueueMember;
 exports.sendDTMFSequence                = sendDTMFSequence;
 exports.parkConversation                = parkConversation;
 exports.setCompPhonebook                = setCompPhonebook;
@@ -3773,6 +3783,7 @@ exports.evtConversationDialing          = evtConversationDialing;
 exports.evtSpyStartConversation         = evtSpyStartConversation;
 exports.startRecordConversation         = startRecordConversation;
 exports.getBaseCallRecAudioPath         = getBaseCallRecAudioPath;
+exports.queueMemberPauseUnpause         = queueMemberPauseUnpause;
 exports.evtNewQueueWaitingCaller        = evtNewQueueWaitingCaller;
 exports.evtConversationConnected        = evtConversationConnected;
 exports.startSpySpeakConversation       = startSpySpeakConversation;

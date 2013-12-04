@@ -154,11 +154,11 @@ module.exports = function (options, imports, register) {
             logonDynQueues: astProxy.proxyLogic.logonDynQueues,
 
             /**
-            * It's the _pauseQueueMember_ method provided by _ast\_proxy.proxyLogic_.
+            * It's the _queueMemberPauseUnpause_ method provided by _ast\_proxy.proxyLogic_.
             *
-            * @method pauseQueueMember
+            * @method queueMemberPauseUnpause
             */
-            pauseQueueMember: astProxy.proxyLogic.pauseQueueMember,
+            queueMemberPauseUnpause: astProxy.proxyLogic.queueMemberPauseUnpause,
 
             /**
             * It's the _startSpyListenConversation_ method provided by _ast\_proxy.proxyLogic_.

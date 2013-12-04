@@ -193,6 +193,7 @@ var compConfigManager;
         * 1. [`astproxy/pickup_parking`](#pickup_parkingpost)
         * 1. [`astproxy/logon_dyn_queues`](#logon_dyn_queuespost)
         * 1. [`astproxy/queuemember_pause`](#queuemember_pausepost)
+        * 1. [`astproxy/queuemember_unpause`](#queuemember_unpausepost)
         * 1. [`astproxy/blindtransfer_queue`](#blindtransfer_queuepost)
         * 1. [`astproxy/blindtransfer_parking`](#blindtransfer_parkingpost)
         *
@@ -472,16 +473,30 @@ var compConfigManager;
         *
         * ### <a id="queuemember_pausepost">**`astproxy/queuemember_pause`**</a>
         *
-        * Pause the specified extension to receive calls from the queue. The request must contains the following parameters:
+        * Pause the specified extension from receiving calls from the queue. The request must contains the following parameters:
         *
         * * `endpointId:   the endpoint identifier`
         * * `endpointType: the type of the endpoint`
         * * `queueId:      the queue identifier`
-        * * `reason:       the textual description of the reason`
+        * * `[reason]:     the textual description of the reason`
         *
         * E.g. using curl:
         *
         *     curl --insecure -i -X POST -d '{ "endpointType": "extension", "endpointId": "209", "queueId": "401", "reason": "some reason" }' https://192.168.5.224:8282/astproxy/queuemember_pause
+        *
+        * ---
+        *
+        * ### <a id="queuemember_unpausepost">**`astproxy/queuemember_unpause`**</a>
+        *
+        * Unpause the specified extension to receiving calls from the queue. The request must contains the following parameters:
+        *
+        * * `endpointId:   the endpoint identifier`
+        * * `endpointType: the type of the endpoint`
+        * * `queueId:      the queue identifier`
+        *
+        * E.g. using curl:
+        *
+        *     curl --insecure -i -X POST -d '{ "endpointType": "extension", "endpointId": "209", "queueId": "401" }' https://192.168.5.224:8282/astproxy/queuemember_unpause
         *
         * ---
         *
@@ -570,7 +585,8 @@ var compConfigManager;
                 *   @param {string} blindtransfer         Transfer a conversation with blind type
                 *   @param {string} pickup_parking        Pickup a parked call
                 *   @param {string} logon_dyn_queues      Logon the extension in all the queues for which is dynamic member
-                *   @param {string} queuemember_pause     Pause the specified extension to receive calls from the queue
+                *   @param {string} queuemember_pause     Pause the specified extension from receive calls from the queue
+                *   @param {string} queuemember_unpause   Unpause the specified extension to receive calls from the queue
                 *   @param {string} blindtransfer_queue   Transfer a waiting caller from a queue to the destination with blind type
                 *   @param {string} blindtransfer_parking Transfer the parked call to the destination with blind type
                 */
@@ -593,6 +609,7 @@ var compConfigManager;
                     'pickup_parking',
                     'logon_dyn_queues',
                     'queuemember_pause',
+                    'queuemember_unpause',
                     'blindtransfer_queue',
                     'blindtransfer_parking'
                 ],
@@ -1907,7 +1924,7 @@ var compConfigManager;
                         return;
                     }
 
-                    // check if the user has the authorization to pickup a parked call
+                    // check if the user has the queues operator panel authorization
                     if (compAuthorization.authorizeOpQueuesUser(username) !== true) {
 
                         logger.warn(IDLOG, 'logon dynamic all queues for "' + req.params.endpointType + '" "' + req.params.endpointId + '": authorization failed for user "' + username + '"');
@@ -1960,7 +1977,7 @@ var compConfigManager;
             },
 
             /**
-            * Pause the specified extension to receive calls from the queue with the following REST API:
+            * Pause the specified extension from receiving calls from the queue with the following REST API:
             *
             *     POST queuemember_pause
             *
@@ -1971,64 +1988,27 @@ var compConfigManager;
             */
             queuemember_pause: function (req, res, next) {
                 try {
-                    var username = req.headers.authorization_user;
+                    queueMemberPauseUnpause(req, res, true);
 
-                    // check parameters
-                    if (   typeof req.params              !== 'object'
-                        || typeof req.params.endpointType !== 'string' || typeof req.params.endpointId  !== 'string'
-                        || typeof req.params.queueId      !== 'string' || typeof req.params.reason      !== 'string') {
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
 
-                        compUtil.net.sendHttp400(IDLOG, res);
-                        return;
-                    }
-
-                    // check if the user has the authorization to pickup a parked call
-                    if (compAuthorization.authorizeOpQueuesUser(username) !== true) {
-
-                        logger.warn(IDLOG, 'pause "' + req.params.endpointType + '" "' + req.params.endpointId + '" from queue "' + req.params.queueId + '": authorization failed for user "' + username + '"');
-                        compUtil.net.sendHttp403(IDLOG, res);
-                        return;
-                    }
-
-                    if (req.params.endpointType === 'extension') {
-
-                        // check if the endpoint is owned by the user
-                        if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
-
-                            logger.warn(IDLOG, 'pause "' + req.params.endpointType + '" "' + req.params.endpointId + '" from queue "' + req.params.queueId + '" by user "' + username + '" has been failed: the endpoint isn\'t owned by the user');
-                            compUtil.net.sendHttp403(IDLOG, res);
-                            return;
-
-                        } else {
-                            logger.info(IDLOG, 'pause "' + req.params.endpointType + '" "' + req.params.endpointId + '" from queue "' + req.params.queueId + '": the endpoint is owned by user "' + username + '"');
-                        }
-
-                        compAstProxy.pauseQueueMember(
-                            req.params.endpointType,
-                            req.params.endpointId,
-                            req.params.queueId,
-                            req.params.reason,
-                            function (err) {
-                                try {
-                                    if (err) {
-                                        logger.warn(IDLOG, 'pause "' + req.params.endpointType + '" "' + req.params.endpointId + '" from queue "' + req.params.queueId + '" by user "' + username + '": has been failed');
-                                        compUtil.net.sendHttp500(IDLOG, res, err.toString());
-                                        return;
-                                    }
-
-                                    logger.info(IDLOG, 'pause "' + req.params.endpointType + '" "' + req.params.endpointId + '" from queue "' + req.params.queueId + '" has been successful by user "' + username + '"');
-                                    compUtil.net.sendHttp200(IDLOG, res);
-
-                                } catch (err) {
-                                    logger.error(IDLOG, err.stack);
-                                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
-                                }
-                            }
-                        );
-                    } else {
-                        logger.warn(IDLOG, 'pause endpoint from a queue: unknown endpointType ' + req.params.endpointType);
-                        compUtil.net.sendHttp400(IDLOG, res);
-                    }
+            /**
+            * Unpause the specified extension to receive calls from the queue with the following REST API:
+            *
+            *     POST queuemember_unpause
+            *
+            * @method queuemember_unpause
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            queuemember_unpause: function (req, res, next) {
+                try {
+                    queueMemberPauseUnpause(req, res, false);
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
@@ -2167,6 +2147,7 @@ var compConfigManager;
         exports.setCompAstProxy       = setCompAstProxy;
         exports.logon_dyn_queues      = astproxy.logon_dyn_queues;
         exports.queuemember_pause     = astproxy.queuemember_pause;
+        exports.queuemember_unpause   = astproxy.queuemember_unpause;
         exports.blindtransfer_queue   = astproxy.blindtransfer_queue;
         exports.setCompAuthorization  = setCompAuthorization;
         exports.setCompConfigManager  = setCompConfigManager;
@@ -3249,6 +3230,90 @@ function cfcallSetUnavailable(endpoint, username, activate, to, res) {
             }
             compUtil.net.sendHttp200(IDLOG, res);
         });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        compUtil.net.sendHttp500(IDLOG, res, err.toString());
+    }
+}
+
+
+/**
+* Pause or unpause an extension of a queue.
+*
+* @method queueMemberPauseUnpause
+* @param {object}  req    The client request
+* @param {object}  res    The client response
+* @param {boolean} paused If the extension must be paused or unpaused. If it's true the extension will be paused from the queue.
+*/
+function queueMemberPauseUnpause(req, res, paused) {
+    try {
+        var username = req.headers.authorization_user;
+
+        // check parameters
+        if (   typeof req.params              !== 'object'
+            || typeof req.params.endpointType !== 'string' || typeof req.params.endpointId  !== 'string'
+            || typeof req.params.queueId      !== 'string' || typeof paused                 !== 'boolean') {
+
+            compUtil.net.sendHttp400(IDLOG, res);
+            return;
+        }
+
+        // the reason is an optional parameter, and it's used only to pause the extension. So if it's not
+        // present, it's initialized to an empty string. In the unpause case, simply it's ignored
+        if (!req.params.reason) { req.params.reason = ''; }
+
+        // used to discriminate between the two operation: pause or unpause
+        var logWord = (paused ? 'pause' : 'unpause');
+
+        // check if the user has the queues operator panel authorization
+        if (compAuthorization.authorizeOpQueuesUser(username) !== true) {
+
+            logger.warn(IDLOG, logWord + ' "' + req.params.endpointType + '" "' + req.params.endpointId + '" from queue "' + req.params.queueId + '": authorization failed for user "' + username + '"');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+        }
+
+        if (req.params.endpointType === 'extension') {
+
+            // check if the endpoint is owned by the user
+            if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+
+                logger.warn(IDLOG, logWord + ' "' + req.params.endpointType + '" "' + req.params.endpointId + '" from queue "' + req.params.queueId + '" by user "' + username + '" has been failed: the endpoint isn\'t owned by the user');
+                compUtil.net.sendHttp403(IDLOG, res);
+                return;
+
+            } else {
+                logger.info(IDLOG, logWord + ' "' + req.params.endpointType + '" "' + req.params.endpointId + '" from queue "' + req.params.queueId + '": the endpoint is owned by user "' + username + '"');
+            }
+
+            compAstProxy.queueMemberPauseUnpause(
+                req.params.endpointType,
+                req.params.endpointId,
+                req.params.queueId,
+                req.params.reason,
+                paused,
+                function (err) {
+                    try {
+                        if (err) {
+                            logger.warn(IDLOG, logWord + ' "' + req.params.endpointType + '" "' + req.params.endpointId + '" from queue "' + req.params.queueId + '" by user "' + username + '": has been failed');
+                            compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                            return;
+                        }
+
+                        logger.info(IDLOG, logWord + ' "' + req.params.endpointType + '" "' + req.params.endpointId + '" from queue "' + req.params.queueId + '" has been successful by user "' + username + '"');
+                        compUtil.net.sendHttp200(IDLOG, res);
+
+                    } catch (err) {
+                        logger.error(IDLOG, err.stack);
+                        compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                    }
+                }
+            );
+        } else {
+            logger.warn(IDLOG, logWord + ' endpoint from a queue: unknown endpointType ' + req.params.endpointType);
+            compUtil.net.sendHttp400(IDLOG, res);
+        }
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
         compUtil.net.sendHttp500(IDLOG, res, err.toString());

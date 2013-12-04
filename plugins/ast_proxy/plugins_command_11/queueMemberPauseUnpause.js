@@ -11,9 +11,9 @@ var action = require('../action');
 * @private
 * @final
 * @readOnly
-* @default [queueMemberPause]
+* @default [queueMemberPauseUnpause]
 */
-var IDLOG = '[queueMemberPause]';
+var IDLOG = '[queueMemberPauseUnpause]';
 
 (function() {
     try {
@@ -38,19 +38,19 @@ var IDLOG = '[queueMemberPause]';
         var map = {};
 
         /**
-        * Command plugin to logon the extension in all queus for which it's dynamic
+        * Command plugin to pause or unpause an extension from the specified queue.
         *
         * Use it with _ast\_proxy_ module as follow:
         *
-        *     ast_proxy.doCmd({ command: 'queueMemberPause', queue: '401', exten: '214', reason: 'some reason' }, function (res) {
+        *     ast_proxy.doCmd({ command: 'queueMemberPauseUnpause', queue: '401', exten: '214', reason: 'some reason', paused: true }, function (res) {
         *         // some code
         *     });
         *
         *
-        * @class queueMemberPause
+        * @class queueMemberPauseUnpause
         * @static
         */
-        var queueMemberPause = {
+        var queueMemberPauseUnpause = {
 
             /**
             * Execute asterisk action to originate a new call.
@@ -70,13 +70,13 @@ var IDLOG = '[queueMemberPause]';
                     var act = {
                         Action:    'QueuePause',
                         Interface: interf,
-                        Paused:    true,
+                        Paused:    args.paused,
                         Queue:     args.queue,
                         Reason:    args.reason,
                     };
                     
                     // set the action identifier
-                    act.ActionID = action.getActionId('queueMemberPause');
+                    act.ActionID = action.getActionId('queueMemberPauseUnpause');
 
                     // add association ActionID-callback
                     map[act.ActionID] = cb;
@@ -149,9 +149,9 @@ var IDLOG = '[queueMemberPause]';
         };
 
         // public interface
-        exports.data      = queueMemberPause.data;
-        exports.execute   = queueMemberPause.execute;
-        exports.setLogger = queueMemberPause.setLogger;
+        exports.data      = queueMemberPauseUnpause.data;
+        exports.execute   = queueMemberPauseUnpause.execute;
+        exports.setLogger = queueMemberPauseUnpause.setLogger;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
