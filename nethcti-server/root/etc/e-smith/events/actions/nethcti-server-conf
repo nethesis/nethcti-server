@@ -22,3 +22,7 @@ else
 fi
 
 /var/lib/asterisk/bin/retrieve_nethcti_from_mysql.pl
+
+
+# Migration from old releases
+mv /home/e-smith/proxycti/template/* /home/e-smith/nethcti/templates/customer_card/; rm -rf /home/e-smith/proxycti 2> /dev/null
