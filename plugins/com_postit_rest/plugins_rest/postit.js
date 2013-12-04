@@ -160,9 +160,9 @@ function setCompUtil(comp) {
         * * `text: the text of the post-it`
         * * `recipient: the destination user of the message`
         *
-        * E.g. using curl:
+        * E.g. object parameters:
         *
-        *     curl --insecure -i -X POST -d '{ "text": "message text", "recipient": "john"  }' http://192.168.5.224:8282/postit/create
+        *     { "text": "message text", "recipient": "john"  }
         *
         * ---
         *
@@ -172,9 +172,9 @@ function setCompUtil(comp) {
         *
         * * `id: the unique identifier of the post-it`
         *
-        * E.g. using curl:
+        * E.g. object parameters:
         *
-        *     curl --insecure -i -X POST -d '{ "id": "76" }' http://192.168.5.224:8282/postit/delete
+        *     { "id": "76" }
         *
         * @class plugin_rest_postit
         * @static

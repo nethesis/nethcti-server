@@ -278,6 +278,10 @@ function setCompAuthorization(ca) {
         *
         * * `id: the identifier of the call in the database`
         *
+        * E.g. object parameters:
+        *
+        *     { "id": "74" }
+        *
         * @class plugin_rest_historycall
         * @static
         */

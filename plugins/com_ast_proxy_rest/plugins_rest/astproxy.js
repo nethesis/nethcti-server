@@ -207,10 +207,9 @@ var compConfigManager;
         * * `endpoint: the extension identifier`
         * * `status: ("on" | "off")`
         *
-        * E.g. using curl:
+        * E.g. object parameters:
         *
-        *     curl --insecure -i -X POST -d '{ "endpoint": "214", "status": "on" }' https://192.168.5.224:8282/astproxy/cw
-        *     curl --insecure -i -X POST -d '{ "endpoint": "214", "status": "off" }' https://192.168.5.224:8282/astproxy/cw
+        *     { "endpoint": "214", "status": "on" }
         *
         * ---
         *
@@ -224,10 +223,10 @@ var compConfigManager;
         * * `type: ("unconditional" | "unavailable" | "busy")`
         * * `[to]: the destination number (optional when the status is off)`
         *
-        * E.g. using curl:
+        * E.g. object parameters:
         *
-        *     curl --insecure -i -X POST -d '{ "endpoint": "214", "status": "on", "type": "unconditional", "to": "340123456" }' https://192.168.5.224:8282/astproxy/cfcall
-        *     curl --insecure -i -X POST -d '{ "endpoint": "214", "status": "off", "type": "unconditional" }' https://192.168.5.224:8282/astproxy/cfcall
+        *     { "endpoint": "214", "status": "on", "type": "unconditional", "to": "340123456" }
+        *     { "endpoint": "214", "status": "off", "type": "unconditional" }
         *
         * **Note:** _astproxy/cfcall_ and _astproxy/cfvoicemail_ are mutually exclusive because both
         * of them use the same property in the asterisk server database. So, e.g. setting the
@@ -247,10 +246,10 @@ var compConfigManager;
         * * `type: ("unconditional" | "unavailable" | "busy")`
         * * `[to]: the destination voicemail identifier (optional when the status is off)`
         *
-        * E.g. using curl:
+        * E.g. object parameters:
         *
-        *     curl --insecure -i -X POST -d '{ "endpoint": "214", "status": "on", "type": "unconditional", "to": "209" }' https://192.168.5.224:8282/astproxy/cfvm
-        *     curl --insecure -i -X POST -d '{ "endpoint": "214", "status": "off", "type": "unconditional" }' https://192.168.5.224:8282/astproxy/cfvm
+        *     { "endpoint": "214", "status": "on", "type": "unconditional", "to": "209" }
+        *     { "endpoint": "214", "status": "off", "type": "unconditional" }
         *
         * **Note:** _astproxy/cfcall_ and _astproxy/cfvoicemail_ are mutually exclusive because both
         * of them use the same property in the asterisk server database. So, e.g. setting the
@@ -268,9 +267,9 @@ var compConfigManager;
         * * `status: (on|off)`
         * * `endpoint`
         *
-        * E.g. using curl:
+        * E.g. object parameters:
         *
-        *     curl --insecure -i -X POST -d '{ "endpoint": "214", "status": "on" }' https://192.168.5.224:8282/astproxy/dnd
+        *     { "endpoint": "214", "status": "on" }
         *
         * ---
         *
@@ -283,9 +282,9 @@ var compConfigManager;
         * * `applicantId: the endpoint identifier who requested the parking. It is assumed that the applicant type is the same of the endpointType`
         * * `endpointType: the type of the endpoint that has the conversation to park`
         *
-        * E.g. using curl:
+        * E.g. object parameters:
         *
-        *     curl --insecure -i -X POST -d '{ "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "221", "applicantId": "216" }' https://192.168.5.224:8282/astproxy/park
+        *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "221", "applicantId": "216" }
         *
         * ---
         *
@@ -297,9 +296,9 @@ var compConfigManager;
         * * `endpointId: the endpoint identifier that make the new call`
         * * `endpointType: the type of the endpoint that make the new call`
         *
-        * E.g. using curl:
+        * E.g. object parameters:
         *
-        *     curl --insecure -i -X POST -d '{ "number": "0123456789", "endpointType": "extension", "endpointId": "214" }' https://192.168.5.224:8282/astproxy/call
+        *     { "number": "0123456789", "endpointType": "extension", "endpointId": "214" }
         *
         * ---
         *
@@ -313,9 +312,9 @@ var compConfigManager;
         *                operator the endpointId must to be its endpoint identifier.`
         * * `endpointType: the type of the endpoint that has the conversation to hangup`
         *
-        * E.g. using curl:
+        * E.g. object parameters:
         *
-        *     curl --insecure -i -X POST -d '{ "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "214" }' https://192.168.5.224:8282/astproxy/hangup
+        *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "214" }
         *
         * ---
         *
@@ -329,9 +328,9 @@ var compConfigManager;
         * * `endpointId: the endpoint identifier of the user who has the conversation to blind transfer`
         * * `endpointType: the type of the endpoint of the user who has the conversation to blind transfer`
         *
-        * E.g. using curl:
+        * E.g. object parameters:
         *
-        *     curl --insecure -i -X POST -d '{ "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "214", "to": "0123456789" }' https://192.168.5.224:8282/astproxy/blindtransfer
+        *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "214", "to": "0123456789" }
         *
         * ---
         *
@@ -345,9 +344,9 @@ var compConfigManager;
         * * `endpointId: the endpoint identifier of the user who has the conversation to attended transfer`
         * * `endpointType: the type of the endpoint of the user who has the conversation to attended transfer`
         *
-        * E.g. using curl:
+        * E.g. object parameters:
         *
-        *     curl --insecure -i -X POST -d '{ "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "214", "to": "221" }' https://192.168.5.224:8282/astproxy/atxfer
+        *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "214", "to": "221" }
         *
         * ---
         *
@@ -362,9 +361,9 @@ var compConfigManager;
         * * `destId: the endpoint identifier that spy the conversation`
         * * `destType: the type of the endpoint that spy the conversation`
         *
-        * E.g. using curl:
+        * E.g. object parameters:
         *
-        *     curl --insecure -i -X POST -d '{ "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "221", "destType": "extension", "destId": "205" }' https://192.168.5.224:8282/astproxy/start_spy
+        *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "221", "destType": "extension", "destId": "205" }
         *
         * ---
         *
@@ -378,9 +377,9 @@ var compConfigManager;
         * * `endpointType: the type of the endpoint of the user who has the conversation to transfer`
         * * `voicemailId:  the voicemail identifier to transfer the conversation. It's assumed that the destination type is the same of the endpoint type`
         *
-        * E.g. using curl:
+        * E.g. object parameters:
         *
-        *     curl --insecure -i -X POST -d '{ "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "221", "voicemailId": "214" }' https://192.168.5.224:8282/astproxy/txfer_tovm
+        *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "221", "voicemailId": "214" }
         *
         * ---
         *
@@ -394,9 +393,9 @@ var compConfigManager;
         * * `endpointId: the endpoint identifier that has the conversation to pickup`
         * * `endpointType: the type of the endpoint that has the conversation to pickup`
         *
-        * E.g. using curl:
+        * E.g. object parameters:
         *
-        *     curl --insecure -i -X POST -d '{ "convid": ">SIP/221-000000", "endpointType": "extension", "endpointId": "221", "destType": "extension", "destId": "220"}' https://192.168.5.224:8282/astproxy/pickup_conv
+        *     { "convid": ">SIP/221-000000", "endpointType": "extension", "endpointId": "221", "destType": "extension", "destId": "220"}
         *
         * ---
         *
@@ -408,9 +407,9 @@ var compConfigManager;
         * * `endpointId: the endpoint identifier that has the conversation to stop recording`
         * * `endpointType: the type of the endpoint that has the conversation to stop recording`
         *
-        * E.g. using curl:
+        * E.g. object parameters:
         *
-        *     curl --insecure -i -X POST -d '{ "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "214" }' https://192.168.5.224:8282/astproxy/stop_record
+        *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "214" }
         *
         * ---
         *
@@ -422,9 +421,9 @@ var compConfigManager;
         * * `endpointId: the endpoint identifier that has the conversation to record`
         * * `endpointType: the type of the endpoint that has the conversation to record`
         *
-        * E.g. using curl:
+        * E.g. object parameters:
         *
-        *     curl --insecure -i -X POST -d '{ "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "214" }' https://192.168.5.224:8282/astproxy/start_record
+        *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "214" }
         *
         * ---
         *
@@ -436,9 +435,9 @@ var compConfigManager;
         * * `parking: the parking identifier`
         * * `destType: the endpoint type that pickup the conversation`
         *
-        * E.g. using curl:
+        * E.g. object parameters:
         *
-        *     curl --insecure -i -X POST -d '{ "parking": "70", "destType": "extension", "destId": "214" }' https://192.168.5.224:8282/astproxy/pickup_parking
+        *     { "parking": "70", "destType": "extension", "destId": "214" }
         *
         * ---
         *
@@ -452,9 +451,9 @@ var compConfigManager;
         * * `destId: the endpoint identifier that spy the conversation`
         * * `destType: the endpoint type that spy the conversation`
         *
-        * E.g. using curl:
+        * E.g. object parameters:
         *
-        *     curl --insecure -i -X POST -d '{ "convid": "SIP/209-00000060>SIP/211-00000061", "endpointType": "extension", "endpointId": "209", "destType": "extension", "destId": "214" }' https://192.168.5.224:8282/astproxy/intrude
+        *     { "convid": "SIP/209-00000060>SIP/211-00000061", "endpointType": "extension", "endpointId": "209", "destType": "extension", "destId": "214" }
         *
         * ---
         *
@@ -465,9 +464,9 @@ var compConfigManager;
         * * `endpointId:   the endpoint identifier`
         * * `endpointType: the type of the endpoint`
         *
-        * E.g. using curl:
+        * E.g. object parameters:
         *
-        *     curl --insecure -i -X POST -d '{ "endpointType": "extension", "endpointId": "209" }' https://192.168.5.224:8282/astproxy/logon_dyn_queues
+        *     { "endpointType": "extension", "endpointId": "209" }
         *
         * ---
         *
@@ -480,9 +479,9 @@ var compConfigManager;
         * * `queueId:      the queue identifier`
         * * `[reason]:     the textual description of the reason`
         *
-        * E.g. using curl:
+        * E.g. object parameters:
         *
-        *     curl --insecure -i -X POST -d '{ "endpointType": "extension", "endpointId": "209", "queueId": "401", "reason": "some reason" }' https://192.168.5.224:8282/astproxy/queuemember_pause
+        *     { "endpointType": "extension", "endpointId": "209", "queueId": "401", "reason": "some reason" }
         *
         * ---
         *
@@ -494,9 +493,9 @@ var compConfigManager;
         * * `endpointType: the type of the endpoint`
         * * `queueId:      the queue identifier`
         *
-        * E.g. using curl:
+        * E.g. object parameters:
         *
-        *     curl --insecure -i -X POST -d '{ "endpointType": "extension", "endpointId": "209", "queueId": "401" }' https://192.168.5.224:8282/astproxy/queuemember_unpause
+        *     { "endpointType": "extension", "endpointId": "209", "queueId": "401" }
         *
         * ---
         *
@@ -508,9 +507,9 @@ var compConfigManager;
         * * `queue: the queue identifier`
         * * `waitingCallerId: the identifier of the waiting caller`
         *
-        * E.g. using curl:
+        * E.g. object parameters:
         *
-        *     curl --insecure -i -X POST -d '{ "queue": "401", "waitingCallerId": "SIP/209-00000060", "to": "209" }' https://192.168.5.224:8282/astproxy/blindtransfer_queue
+        *     { "queue": "401", "waitingCallerId": "SIP/209-00000060", "to": "209" }
         *
         * ---
         *
@@ -521,9 +520,9 @@ var compConfigManager;
         * * `to: the destination number`
         * * `parking: the parking identifier`
         *
-        * E.g. using curl:
+        * E.g. object parameters:
         *
-        *     curl --insecure -i -X POST -d '{ "parking": "71", "to": "209" }' https://192.168.5.224:8282/astproxy/blindtransfer_parking
+        *     { "parking": "71", "to": "209" }
         *
         * @class plugin_rest_astproxy
         * @static

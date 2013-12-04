@@ -122,7 +122,9 @@ function setCompUtil(comp) {
         * * `username`
         * * `password`
         *
-        * E.g. using curl:
+        * E.g. object parameters:
+        *
+        *     { "username": "alessandro", "password": "somepwd" }
         *
         *     curl --insecure -i -X POST -d '{ "username": "alessandro", "password": "somepwd" }' https://192.168.5.224:8282/authentication/login
         *
@@ -132,9 +134,9 @@ function setCompUtil(comp) {
         *
         * Logout the user.
         *
-        * E.g. using curl:
+        * E.g. object parameters:
         *
-        *     curl --insecure -i -X POST -d '{}' https://192.168.5.224:8282/authentication/logout
+        *     {}
         *
         * @class plugin_rest_authentication
         * @static

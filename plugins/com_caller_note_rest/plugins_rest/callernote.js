@@ -208,9 +208,9 @@ function getFilteredCallerNotes(username, callerNotes) {
         * * `expirationTime: the expiration time of the note. It must be espressed in the format HHmmss. e.g. to express the time of "21:00:45" you must use "210045"`
         * * `reservation: (true | false) if the user want to booking the next call from the specified number`
         *
-        * E.g. using curl:
+        * E.g. object parameters:
         *
-        *     curl --insecure -i -X POST -d '{ "text": "some text", "number": "123456", "visibility": "public", "expirationDate": "20131001", "expirationTime": "210045", "reservation": "true" }' https://192.168.5.224:8282/callernote/create
+        *     { "text": "some text", "number": "123456", "visibility": "public", "expirationDate": "20131001", "expirationTime": "210045", "reservation": "true" }
         *
         * ---
         *
@@ -228,9 +228,9 @@ function getFilteredCallerNotes(username, callerNotes) {
         *                      It requires the expirationDate`
         * * `[reservation]:    (true | false) if the user want to booking the next call from the specified number`
         *
-        * E.g. using curl:
+        * E.g. object parameters:
         *
-        *     curl --insecure -i -X POST -d '{ "id": "71", "text": "some text" }' https://192.168.5.224:8282/callernote/modify
+        *     { "id": "71", "text": "some text" }
         *
         * ---
         *
@@ -240,9 +240,9 @@ function getFilteredCallerNotes(username, callerNotes) {
         *
         * * `id: the caller note identifier in the NethCTI caller note database`
         *
-        * E.g. using curl:
+        * E.g. object parameters:
         *
-        *     curl --insecure -i -X POST -d '{ "id": "71" }' https://192.168.5.224:8282/callernote/delete
+        *     { "id": "71" }
         *
         * @class plugin_rest_callernote
         * @static

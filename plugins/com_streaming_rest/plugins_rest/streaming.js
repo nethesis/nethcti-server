@@ -151,9 +151,9 @@ function setCompAuthorization(ca) {
         *
         * * `id: the streaming identifier`
         *
-        * E.g. using curl:
+        * E.g. object parameters:
         *
-        *     curl --insecure -i -X POST -d '{ "id": "door" }' https://192.168.5.224:8282/streaming/open
+        *     { "id": "door" }
         *
         * @class plugin_rest_streaming
         * @static

@@ -216,12 +216,12 @@ function setCompUtil(comp) {
         * * `[password]: the device password. It's needed with automatic type and yealink or snom device`
         * * `[url]: the HTTP url. It's needed with automatic type and url device`
         *
-        * E.g. using curl:
+        * E.g. object parameters:
         *
-        *     curl --insecure -i -X POST -d '{ "type": "manual" }' https://192.168.5.224:8282/configmanager/notification
-        *     curl --insecure -i -X POST -d '{ "type": "automatic", "device": "yealink", "model": "t26", "user": "admin", "password": "admin" }' https://192.168.5.224:8282/configmanager/notification
-        *     curl --insecure -i -X POST -d '{ "type": "automatic", "device": "snom", "user": "admin", "password": "admin" }' https://192.168.5.224:8282/configmanager/notification
-        *     curl --insecure -i -X POST -d '{ "type": "automatic", "device": "url", "url": "http://<IP_PHONE>/cgi-bin/cgiServer.exx?number=<CALL_TO>&outgoing_uri=<FROM_EXT>@<SERVER>" }' https://192.168.5.224:8282/configmanager/notification
+        *     { "type": "manual" }
+        *     { "type": "automatic", "device": "yealink", "model": "t26", "user": "admin", "password": "admin" }
+        *     { "type": "automatic", "device": "snom", "user": "admin", "password": "admin" }
+        *     { "type": "automatic", "device": "url", "url": "http://<IP_PHONE>/cgi-bin/cgiServer.exx?number=<CALL_TO>&outgoing_uri=<FROM_EXT>@<SERVER>" }
         *
         * ---
         *
@@ -234,9 +234,9 @@ function setCompUtil(comp) {
         * * `when: ("always" | "never" | "offline") the value to be set for the specified key`
         * * `to: the destination for the method: a cellphone number or an e-mail address`
         *
-        * E.g. using curl:
+        * E.g. object parameters:
         *
-        *     curl --insecure -i -X POST -d '{ "type": "voicemail", "method": "email", "when": "offline", "to": "a@a.it" }' https://192.168.5.224:8282/configmanager/notification
+        *     { "type": "voicemail", "method": "email", "when": "offline", "to": "a@a.it" }
         *
         * ---
         *
@@ -248,9 +248,9 @@ function setCompUtil(comp) {
         * * `status: ("online" | "offline" | "busy" | "away") the nethcti presence status`
         * * `device_type: ["desktop" | "mobile"] the device type used by the user for nethcti. It's needed when type is equal to "nethcti"`
         *
-        * E.g. using curl:
+        * E.g. object parameters:
         *
-        *     curl --insecure -i -X POST -d '{ "type": "nethcti", "device_type": "desktop", "status": "online" }' https://192.168.5.224:8282/configmanager/presence
+        *     { "type": "nethcti", "device_type": "desktop", "status": "online" }
         *
         * @class plugin_rest_configmanager
         * @static

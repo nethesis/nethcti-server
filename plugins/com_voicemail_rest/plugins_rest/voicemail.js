@@ -233,6 +233,10 @@ function setCompAuthorization(comp) {
         *
         * * `id: the voice message identifier of the database`
         *
+        * E.g. object parameters:
+        *
+        *     { "id": "74" }
+        *
         * @class plugin_rest_voicemail
         * @static
         */

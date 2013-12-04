@@ -193,9 +193,9 @@ function setCompUtil(comp) {
         * * `[extension]`
         * * `[speeddial_num]`
         *
-        * E.g. using curl:
+        * E.g. object parameters:
         *
-        *     curl --insecure -i -X POST -d '{ "creator": "alessandro", "type": "type", ... }' https://192.168.5.224:8282/phonebook/create
+        *     { "creator": "alessandro", "type": "type", ... }
         *
         * ---
         *
@@ -205,6 +205,10 @@ function setCompUtil(comp) {
         * the following parameter:
         *
         * * `id: the contact identifier in the NethCTI phonebook database`
+        *
+        * E.g. object parameters:
+        *
+        *     { "id": "74" }
         *
         * The NethCTI phonebook is the _nethcti.cti\_phonebook_ database table.
         *
@@ -243,9 +247,9 @@ function setCompUtil(comp) {
         * * `[extension]`
         * * `[speeddial_num]`
         *
-        * E.g. using curl:
+        * E.g. object parameters:
         *
-        *     curl --insecure -i -X POST -d '{ "creator": "alessandro", "type": "type", ... }' http://192.168.5.224:8282/phonebook/modify_cticontact
+        *     { "creator": "alessandro", "type": "type", ... }
         *
         * The NethCTI phonebook is the _nethcti.cti\_phonebook_ database table.
         *

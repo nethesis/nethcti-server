@@ -148,9 +148,9 @@ function setCompAuthorization(comp) {
         * * `to: the destination number of the sms message`
         * * `body: the body of the sms message`
         *
-        * E.g. using curl:
+        * E.g. object parameters:
         *
-        *     curl --insecure -i -X POST -d '{ "text": "message text", "to": "0123456789"  }' https://192.168.5.224:8282/sms/send
+        *     { "text": "message text", "to": "0123456789" }
         *
         * @class plugin_rest_sms
         * @static
