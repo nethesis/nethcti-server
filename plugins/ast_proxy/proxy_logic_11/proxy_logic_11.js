@@ -3098,7 +3098,7 @@ function logonDynQueues(endpointType, endpointId, cb) {
                         cb(err);
                         return;
                     }
-                    logger.info(IDLOG, 'logon to all queues for which exten ' + endpointId + ' is dynamic has been successfull');
+                    logger.info(IDLOG, 'logon to all queues for which exten ' + endpointId + ' is dynamic has been successful');
                     cb(null);
 
                 } catch (err) {
@@ -3108,6 +3108,56 @@ function logonDynQueues(endpointType, endpointId, cb) {
             });
         } else {
             var err = 'logon to all queues in which the endpoint is dynamic: unknown endpointType ' + endpointType + ' or extension not present';
+            logger.warn(IDLOG, err);
+            cb(err);
+        }
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+       cb(err);
+    }
+}
+
+/**
+* Logon the specified endpoint into all queues in which it's a dynamic member.
+*
+* @method logonDynQueues
+* @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
+* @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
+* @param {string}   queueId      The queue identifier
+* @param {string}   reason       The textual description of the reason
+* @param {function} cb           The callback function
+*/
+function pauseQueueMember(endpointType, endpointId, queueId, reason, cb) {
+    try {
+        // check parameters
+        if (   typeof cb           !== 'function'
+            || typeof endpointType !== 'string' || typeof endpointId !== 'string'
+            || typeof queueId      !== 'string' || typeof reason     !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // check the endpoint existence
+        if (endpointType === 'extension' && extensions[endpointId]) {
+
+            logger.info(IDLOG, 'execute pause ' + endpointType + ' ' + endpointId + ' from queue ' + queueId);
+            astProxy.doCmd({ command: 'queueMemberPause', queue: queueId, exten: endpointId, reason: reason }, function (err) {
+                try {
+                    if (err) {
+                        logger.error(IDLOG, 'pause extension ' + endpointId + ' from queue ' + queueId + ' has been failed');
+                        cb(err);
+                        return;
+                    }
+                    logger.info(IDLOG, ' cuse extension ' + endpointId + ' from queue ' + queueId + ' has been successful');
+                    cb(null);
+
+                } catch (err) {
+                   logger.error(IDLOG, err.stack);
+                   cb(err);
+                }
+            });
+        } else {
+            var err = 'pause queue member: unknown endpointType ' + endpointType + ' or extension not present';
             logger.warn(IDLOG, err);
             cb(err);
         }
@@ -3697,6 +3747,7 @@ exports.getJSONTrunks                   = getJSONTrunks;
 exports.logonDynQueues                  = logonDynQueues;
 exports.getJSONParkings                 = getJSONParkings;
 exports.redirectParking                 = redirectParking;
+exports.pauseQueueMember                = pauseQueueMember;
 exports.sendDTMFSequence                = sendDTMFSequence;
 exports.parkConversation                = parkConversation;
 exports.setCompPhonebook                = setCompPhonebook;
