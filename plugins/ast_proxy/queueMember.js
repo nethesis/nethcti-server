@@ -41,6 +41,15 @@ exports.QueueMember = function (memberNum) {
     var type;
 
     /**
+    * The pause status of the member.
+    *
+    * @property paused
+    * @type {boolean}
+    * @private
+    */
+    var paused;
+
+    /**
     * The number of the taken calls.
     *
     * @property callsTakenCount
@@ -106,6 +115,14 @@ exports.QueueMember = function (memberNum) {
     function setType(value) { type = value; }
 
     /**
+    * Set the paused status of the member.
+    *
+    * @method setPaused
+    * @param {string} type The member type
+    */
+    function setPaused(value) { paused = value; }
+
+    /**
     * Return the type of the member.
     *
     * @method getType
@@ -152,6 +169,7 @@ exports.QueueMember = function (memberNum) {
     *         type:              "static",
     *         name:              "Alessandro",
     *         member:            "214",
+    *         paused:            true,         // the paused status
     *         callsTakenCount:   "0",          // the number of taken calls
     *         lastCallTimestamp: 1365590191    // the timestamp of the last taken call
     *     }
@@ -164,6 +182,7 @@ exports.QueueMember = function (memberNum) {
             type:              type,
             name:              name,
             member:            member,
+            paused:            paused,
             callsTakenCount:   callsTakenCount,
             lastCallTimestamp: lastCallTimestamp
         }
@@ -177,6 +196,7 @@ exports.QueueMember = function (memberNum) {
         getType:              getType,
         setType:              setType,
         toString:             toString,
+        setPaused:            setPaused,
         getMember:            getMember,
         setCallsTakenCount:   setCallsTakenCount,
         getCallsTakenCount:   getCallsTakenCount,

@@ -133,10 +133,11 @@ var IDLOG = '[queueDetails]';
                         // add the member information object
                         list[data.actionid].members[member] = {
                             name:              data.name,
-                            type:              data.membership,        // it can be 'static', 'dynamic' or 'realtime'
+                            type:              data.membership,                    // it can be 'static', 'dynamic' or 'realtime'
                             member:            member,
-                            callsTakenCount:   data.callstaken,        // the number of the taken calls
-                            lastCallTimestamp: parseInt(data.lastcall) // timestamp of the last call received by the member
+                            paused:            data.paused === '1' ? true : false, // if the extension is paused on queue
+                            callsTakenCount:   data.callstaken,                    // the number of the taken calls
+                            lastCallTimestamp: parseInt(data.lastcall)             // timestamp of the last call received by the member
                         };
 
                     } else if (data.wait            && data.queue

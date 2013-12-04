@@ -1021,6 +1021,7 @@ function queueDetails(err, resp) {
             member = new QueueMember(resp.members[m].member);
             member.setName(resp.members[m].name);
             member.setType(resp.members[m].type);
+            member.setPaused(resp.members[m].paused);
             member.setCallsTakenCount(resp.members[m].callsTakenCount);
             member.setLastCallTimestamp(resp.members[m].lastCallTimestamp);
 
