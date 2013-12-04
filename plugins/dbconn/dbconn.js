@@ -600,7 +600,7 @@ function initConnections() {
 
             if (dbConfig[k].dbtype === 'mysql') {
 
-                var sequelize = new Sequelize(dbConfig[k].dbname, dbConfig[k].dbuser, dbConfig[k].dbpassword, {
+                sequelize = new Sequelize(dbConfig[k].dbname, dbConfig[k].dbuser, dbConfig[k].dbpassword, {
                     port:    dbConfig[k].dbport,
                     host:    dbConfig[k].dbhost,
                     define:  {
