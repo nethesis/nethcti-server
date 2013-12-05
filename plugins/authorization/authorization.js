@@ -274,11 +274,11 @@ function authorizeAdminPostitUser(username) {
 /**
 * Returns true if the specified user has the administration queues authorization.
 *
-* @method authorizeAdminQueuesUser
+* @method authorizeOpAdminQueuesUser
 * @param  {string}  username The username
 * @return {boolean} True if the user has the administration queues authorization.
 */
-function authorizeAdminQueuesUser(username) {
+function authorizeOpAdminQueuesUser(username) {
     try {
         // check parameter
         if (typeof username !== 'string') { throw new Error('wrong parameter'); }
@@ -1159,12 +1159,12 @@ exports.authorizedCustomerCards       = authorizedCustomerCards;
 exports.verifyUserEndpointExten       = verifyUserEndpointExten;
 exports.authorizeOpParkingsUser       = authorizeOpParkingsUser;
 exports.authorizeAdminPostitUser      = authorizeAdminPostitUser;
-exports.authorizeAdminQueuesUser      = authorizeAdminQueuesUser;
 exports.authorizeAdminHangupUser      = authorizeAdminHangupUser;
 exports.authorizeAdminPickupUser      = authorizeAdminPickupUser;
 exports.authorizeCustomerCardUser     = authorizeCustomerCardUser;
 exports.authorizeOpExtensionsUser     = authorizeOpExtensionsUser;
 exports.authorizeAdminTransferUser    = authorizeAdminTransferUser;
+exports.authorizeOpAdminQueuesUser    = authorizeOpAdminQueuesUser;
 exports.authorizePhoneRedirectUser    = authorizePhoneRedirectUser;
 exports.verifyUserEndpointVoicemail   = verifyUserEndpointVoicemail;
 exports.authorizeAdminRecordingUser   = authorizeAdminRecordingUser;
