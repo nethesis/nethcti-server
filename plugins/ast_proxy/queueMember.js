@@ -5,12 +5,15 @@
 *
 * @class QueueMember
 * @param {string} memberNum The member number
+* @param {string} queueId   The name of the queue membership
 * @constructor
 * @return {object} The queue member object.
 */
-exports.QueueMember = function (memberNum) {
+exports.QueueMember = function (memberNum, queueId) {
     // check the parameter
-    if (typeof memberNum !== 'string') { throw new Error('wrong parameter'); }
+    if (typeof memberNum !== 'string' || typeof queueId !== 'string') {
+        throw new Error('wrong parameter');
+    }
 
     /**
     * The member number.
@@ -30,6 +33,15 @@ exports.QueueMember = function (memberNum) {
     * @private
     */
     var name = '';
+
+    /**
+    * The identifier of queue membership.
+    *
+    * @property queue
+    * @type {string}
+    * @private
+    */
+    var queue = queueId;
 
     /**
     * The member typology.
@@ -131,6 +143,14 @@ exports.QueueMember = function (memberNum) {
     function getType() { return type; }
 
     /**
+    * Return the name of the queue membership.
+    *
+    * @method getQueue
+    * @return {string} The name of the queue membership.
+    */
+    function getQueue() { return queue; }
+
+    /**
     * Set the member name.
     *
     * @method setName
@@ -168,6 +188,7 @@ exports.QueueMember = function (memberNum) {
     *     {
     *         type:              "static",
     *         name:              "Alessandro",
+    *         queue:             "401",
     *         member:            "214",
     *         paused:            true,         // the paused status
     *         callsTakenCount:   "0",          // the number of taken calls
@@ -181,6 +202,7 @@ exports.QueueMember = function (memberNum) {
         return {
             type:              type,
             name:              name,
+            queue:             queue,
             member:            member,
             paused:            paused,
             callsTakenCount:   callsTakenCount,
@@ -195,6 +217,7 @@ exports.QueueMember = function (memberNum) {
         getName:              getName,
         getType:              getType,
         setType:              setType,
+        getQueue:             getQueue,
         toString:             toString,
         setPaused:            setPaused,
         getMember:            getMember,

@@ -54,6 +54,21 @@ var IDLOG = '[proxy_logic_11]';
 var EVT_EXTEN_CHANGED = 'extenChanged';
 
 /**
+* Fired when something changed in an queue member.
+*
+* @event queueMemberChanged
+* @param {object} msg The queue member object
+*/
+/**
+* The name of the queue member changed event.
+*
+* @property EVT_QUEUE_MEMBER_CHANGED
+* @type string
+* @default "queueMemberChanged"
+*/
+var EVT_QUEUE_MEMBER_CHANGED = 'queueMemberChanged';
+
+/**
 * Fired when something changed in a trunk.
 *
 * @event trunkChanged
@@ -1018,7 +1033,7 @@ function queueDetails(err, resp) {
         for (m in resp.members) {
 
             // create new queue member object
-            member = new QueueMember(resp.members[m].member);
+            member = new QueueMember(resp.members[m].member, q);
             member.setName(resp.members[m].name);
             member.setType(resp.members[m].type);
             member.setPaused(resp.members[m].paused);
@@ -1897,6 +1912,10 @@ function evtQueueMemberPausedChanged(queueId, memberId, paused) {
 
             member.setPaused(paused);
             logger.info(IDLOG, 'paused status of queue member "' + memberId + '" of queue "' + queueId + '" has been changed to "' + paused + '"');
+
+            // emit the event
+            astProxy.emit(EVT_QUEUE_MEMBER_CHANGED, member);
+            logger.info(IDLOG, 'emitted event ' + EVT_QUEUE_MEMBER_CHANGED + ' for queue member ' + memberId + ' of queue ' + queueId);
 
         } else {
             logger.warn(IDLOG, 'received event queue member paused changed for non existent member "' + memberId + '"');
@@ -3824,6 +3843,7 @@ exports.evtSpyStartConversation         = evtSpyStartConversation;
 exports.startRecordConversation         = startRecordConversation;
 exports.getBaseCallRecAudioPath         = getBaseCallRecAudioPath;
 exports.queueMemberPauseUnpause         = queueMemberPauseUnpause;
+exports.EVT_QUEUE_MEMBER_CHANGED        = EVT_QUEUE_MEMBER_CHANGED;
 exports.evtNewQueueWaitingCaller        = evtNewQueueWaitingCaller;
 exports.evtConversationConnected        = evtConversationConnected;
 exports.startSpySpeakConversation       = startSpySpeakConversation;

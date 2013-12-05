@@ -306,11 +306,12 @@ function setAstProxyListeners() {
             throw new Error('wrong astProxy object');
         }
 
-        astProxy.on(astProxy.EVT_EXTEN_CHANGED,   extenChanged);   // an extension has changed
-        astProxy.on(astProxy.EVT_EXTEN_DIALING,   extenDialing);   // an extension ringing
-        astProxy.on(astProxy.EVT_TRUNK_CHANGED,   trunkChanged);   // a trunk has changed
-        astProxy.on(astProxy.EVT_QUEUE_CHANGED,   queueChanged);   // a queue has changed
-        astProxy.on(astProxy.EVT_PARKING_CHANGED, parkingChanged); // a parking has changed
+        astProxy.on(astProxy.EVT_EXTEN_CHANGED,        extenChanged);       // an extension has changed
+        astProxy.on(astProxy.EVT_EXTEN_DIALING,        extenDialing);       // an extension ringing
+        astProxy.on(astProxy.EVT_TRUNK_CHANGED,        trunkChanged);       // a trunk has changed
+        astProxy.on(astProxy.EVT_QUEUE_CHANGED,        queueChanged);       // a queue has changed
+        astProxy.on(astProxy.EVT_PARKING_CHANGED,      parkingChanged);     // a parking has changed
+        astProxy.on(astProxy.EVT_QUEUE_MEMBER_CHANGED, queueMemberChanged); // a queue member has changed
 
     } catch (err) {
        logger.error(IDLOG, err.stack);
@@ -430,6 +431,31 @@ function extenChanged(exten) {
 
         // emits the event with hide numbers to all users with privacy enabled
         server.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY).emit('extenUpdate', exten.toJSON(privacyStrReplace));
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Handler for the _queueMemberChanged_ event emitted by _ast\_proxy_
+* component. Something has changed in the queue member, so notifies
+* all interested clients.
+*
+* @method queueMemberChanged
+* @param {object} member The queue member object
+* @private
+*/
+function queueMemberChanged(member) {
+    try {
+        logger.info(IDLOG, 'received event queueMemberChanged for queue member ' + member.getMember());
+        logger.info(IDLOG, 'emit event queueMemberUpdate for member ' + member.getMember() + ' of queue ' + member.getQueue() + ' to websockets');
+
+        // emits the event with clear numbers to all users with privacy disabled
+        server.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_CLEAR).emit('queueMemberUpdate', member.toJSON());
+
+        // emits the event with hide numbers to all users with privacy enabled
+        server.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY).emit('queueMemberUpdate', member.toJSON(privacyStrReplace));
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
