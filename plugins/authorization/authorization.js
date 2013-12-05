@@ -255,7 +255,7 @@ function authorizePostitUser(username) {
 *
 * @method authorizeAdminPostitUser
 * @param  {string}  username The username
-* @return {boolean} True if the user has the post-it authorization.
+* @return {boolean} True if the user has the administration post-it authorization.
 */
 function authorizeAdminPostitUser(username) {
     try {
@@ -263,6 +263,27 @@ function authorizeAdminPostitUser(username) {
         if (typeof username !== 'string') { throw new Error('wrong parameter'); }
 
         return authorizeUser(authorizationTypes.TYPES.admin_postit, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
+* Returns true if the specified user has the administration queues authorization.
+*
+* @method authorizeAdminQueuesUser
+* @param  {string}  username The username
+* @return {boolean} True if the user has the administration queues authorization.
+*/
+function authorizeAdminQueuesUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.admin_queues, username);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -1138,6 +1159,7 @@ exports.authorizedCustomerCards       = authorizedCustomerCards;
 exports.verifyUserEndpointExten       = verifyUserEndpointExten;
 exports.authorizeOpParkingsUser       = authorizeOpParkingsUser;
 exports.authorizeAdminPostitUser      = authorizeAdminPostitUser;
+exports.authorizeAdminQueuesUser      = authorizeAdminQueuesUser;
 exports.authorizeAdminHangupUser      = authorizeAdminHangupUser;
 exports.authorizeAdminPickupUser      = authorizeAdminPickupUser;
 exports.authorizeCustomerCardUser     = authorizeCustomerCardUser;

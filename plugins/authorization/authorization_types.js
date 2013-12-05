@@ -32,6 +32,7 @@ var AUTHORIZATION_TYPES = {
     'recording':         'recording',
     'phonebook':         'phonebook',
     'extensions':        'extensions',
+    'admin_queues':      'admin_queues',
     'admin_pickup':      'admin_pickup',
     'admin_postit':      'admin_postit',
     'admin_hangup':      'admin_hangup',
