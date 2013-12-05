@@ -717,8 +717,13 @@ var compConfigManager;
                 try {
                     var username = req.headers.authorization_user;
 
-                    // check if the user has the operator panel authorization
-                    if (compAuthorization.authorizeOpQueuesUser(username) !== true) {
+                    // check if the user has the administration operator panel queues authorization
+                    if (compAuthorization.authorizeOpAdminQueuesUser(username) === true) {
+
+                        logger.info(IDLOG, 'requesting queues: user "' + username + '" has the "admin_queues" authorization');
+                    }
+                    // otherwise check if the user has the operator panel queues authorization
+                    else if (compAuthorization.authorizeOpQueuesUser(username) !== true) {
 
                         logger.warn(IDLOG, 'requesting queues: authorization failed for user "' + username + '"');
                         compUtil.net.sendHttp403(IDLOG, res);
@@ -1923,17 +1928,23 @@ var compConfigManager;
                         return;
                     }
 
-                    // check if the user has the queues operator panel authorization
-                    if (compAuthorization.authorizeOpQueuesUser(username) !== true) {
+                    // check if the user has the administration operator panel queues authorization
+                    if (compAuthorization.authorizeOpAdminQueuesUser(username) === true) {
+
+                        logger.info(IDLOG, 'logon dynamic all queues for "' + req.params.endpointType + '" "' + req.params.endpointId + '": user "' + username + '" has the "admin_queues" authorization');
+                    }
+                    // otherwise check if the user has the queues operator panel authorization
+                    else if (compAuthorization.authorizeOpQueuesUser(username) !== true) {
 
                         logger.warn(IDLOG, 'logon dynamic all queues for "' + req.params.endpointType + '" "' + req.params.endpointId + '": authorization failed for user "' + username + '"');
                         compUtil.net.sendHttp403(IDLOG, res);
                         return;
                     }
+                    // the user has the "queues" authorization. So check if the endpoint is owned by the user
+                    else {
 
-                    if (req.params.endpointType === 'extension') {
+                        logger.info(IDLOG, 'logon dynamic all queues for "' + req.params.endpointType + '" "' + req.params.endpointId + '": user "' + username + '" has the "queues" authorization');
 
-                        // check if the endpoint is owned by the user
                         if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
                             logger.warn(IDLOG, 'logon dynamic all queues by user "' + username + '" has been failed: ' +
@@ -1944,6 +1955,9 @@ var compConfigManager;
                         } else {
                             logger.info(IDLOG, 'logon dynamic all queues: endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' is owned by user "' + username + '"');
                         }
+                    }
+
+                    if (req.params.endpointType === 'extension') {
 
                         compAstProxy.logonDynQueues(req.params.endpointType, req.params.endpointId, function (err) {
                             try {
