@@ -1829,7 +1829,7 @@ function getExtensions() {
 function evtExtenStatusChanged(exten, status) {
     try {
         // check parameters
-        if (typeof exten !== 'string' && typeof status !== 'string') {
+        if (typeof exten !== 'string' || typeof status !== 'string') {
             throw new Error('wrong parameters');
         }
 
@@ -1862,6 +1862,45 @@ function evtExtenStatusChanged(exten, status) {
             });
         }
 
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Updates the queue member paused status and it start time.
+*
+* @method evtQueueMemberPausedChanged
+* @param {string}  queueId  The queue identifier
+* @param {string}  memberId The queue member identifier
+* @param {boolean} paused   True if the extension has been paused from the queue
+* @private
+*/
+function evtQueueMemberPausedChanged(queueId, memberId, paused) {
+    try {
+        // check parameters
+        if (   typeof queueId  !== 'string'
+            || typeof memberId !== 'string' || typeof paused !== 'boolean') {
+
+            throw new Error('wrong parameters');
+        }
+
+        if (!queues[queueId]) {
+            logger.warn(IDLOG, 'received event queue member paused changed for not existent queue "' + queueId + '"');
+            return;
+        }
+
+        // get the queue member object and set its "paused" status
+        var member = queues[queueId].getMember(memberId);
+
+        if (member) {
+
+            member.setPaused(paused);
+            logger.info(IDLOG, 'paused status of queue member "' + memberId + '" of queue "' + queueId + '" has been changed to "' + paused + '"');
+
+        } else {
+            logger.warn(IDLOG, 'received event queue member paused changed for non existent member "' + memberId + '"');
+        }
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -3789,6 +3828,7 @@ exports.evtNewQueueWaitingCaller        = evtNewQueueWaitingCaller;
 exports.evtConversationConnected        = evtConversationConnected;
 exports.startSpySpeakConversation       = startSpySpeakConversation;
 exports.startSpyListenConversation      = startSpyListenConversation;
+exports.evtQueueMemberPausedChanged     = evtQueueMemberPausedChanged;
 exports.evtRemoveQueueWaitingCaller     = evtRemoveQueueWaitingCaller;
 exports.attendedTransferConversation    = attendedTransferConversation;
 exports.getExtensionsFromConversation   = getExtensionsFromConversation;

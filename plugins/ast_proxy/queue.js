@@ -88,6 +88,14 @@ exports.Queue = function (queueNum) {
     var waitingCallers = {};
 
     /**
+    * Returns the specified member.
+    *
+    * @method getMember
+    * @return {object} The member.
+    */
+    function getMember(memberId) { return members[memberId]; }
+
+    /**
     * Returns all the members.
     *
     * @method getAllMembers
@@ -313,12 +321,13 @@ exports.Queue = function (queueNum) {
 
     // public interface
     return {
-        toJSON:         toJSON,
-        setName:        setName,
-        getName:        getName,
-        getQueue:       getQueue,
-        toString:       toString,
-        addMember:      addMember,
+        toJSON:                 toJSON,
+        setName:                setName,
+        getName:                getName,
+        getQueue:               getQueue,
+        toString:               toString,
+        addMember:              addMember,
+        getMember:              getMember,
         removeMember:           removeMember,
         getAllMembers:          getAllMembers,
         getAvgHoldTime:         getAvgHoldTime,
