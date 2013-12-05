@@ -97,6 +97,21 @@ exports.Conversation = function (ownerId, sourceChan, destChan) {
     }
 
     /**
+    * True if the conversation has gone through a queue.
+    *
+    * @property throughQueue
+    * @type {boolean}
+    * @private
+    */
+    var throughQueue;
+    if (   chSource.getChannel().indexOf('from-queue')        !== -1
+        || chSource.getBridgedChannel().indexOf('from-queue') !== -1) {
+
+        throughQueue = true;
+
+    } else { throughQueue = false; }
+
+    /**
     * The number of the counterpart.
     *
     * @property counterpartNum
@@ -200,10 +215,15 @@ exports.Conversation = function (ownerId, sourceChan, destChan) {
     * connected, one between the source channel and the destination channel can be null.
     *
     *     {
-    *         id:        "SIP/214-000002f4>SIP/209-000002f5",
-    *         chDest:    Channel.toJSON(),                    // the source channel of the call
-    *         chSource:  Channel.toJSON(),                    // the destination channel of the call
-    *         recording: false                                // it's true if the conversation is recording, false otherwise
+    *         id:             "SIP/214-000002f4>SIP/209-000002f5",
+    *         owner:          "214",
+    *         chDest:         Channel.toJSON(),                    // the source channel of the call
+    *         chSource:       Channel.toJSON(),                    // the destination channel of the call
+    *         duration:       26,
+    *         recording:      false,                               // it's true if the conversation is recording, false otherwise
+    *         direction:      "in",
+    *         throughQueue:   false,                               // if the call has gone through a queue
+    *         counterpartNum: "209"
     *     }
     *
     * @method toJSON
@@ -222,6 +242,7 @@ exports.Conversation = function (ownerId, sourceChan, destChan) {
             duration:       duration,
             recording:      recording,
             direction:      direction,
+            throughQueue:   throughQueue,
             counterpartNum: counterpartNum
         };
     }
