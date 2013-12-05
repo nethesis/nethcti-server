@@ -16,6 +16,8 @@ Requires:	smeserver-ejabberd
 Requires:       nethcti-module >= 1.2.0
 AutoReq:	no
 
+Obsoletes:	proxycti
+
 %description
 Nodejs Asterisk proxy used for NethCTI 2
 
@@ -62,7 +64,6 @@ rm -rf $RPM_BUILD_ROOT
 %pre
 
 %post
-/etc/e-smith/events/actions/initialize-default-databases
 /sbin/e-smith/signal-event %{name}-update || exit 0
 
 
