@@ -2242,18 +2242,18 @@ function getHistoryCallerNoteInterval(data, cb) {
 }
 
 /**
-* Gets the more recent timestamp of the started paused of queue member in the specified
+* Gets the data of the more recent started pause of the queue member in the specified
 * queue. It searches the results into the _asteriskcdrdb.queue\_log_ database. If the
-* queue member has never paused, the timestamp isn't present in the database. So, in this
-* case, the method return a null value.
+* queue member has never started a pause, the data values isn't present in the database.
+* So, in this case, the method returns some null values.
 *
-* @method getQueueMemberLastPausedInTimestamp
+* @method getQueueMemberLastPausedInData
 * @param {string}   memberName The queue member name
 * @param {string}   queueId    The queue identifier
 * @param {string}   memberId   The queue member identifier
 * @param {function} cb         The callback function
 */
-function getQueueMemberLastPausedInTimestamp(memberName, queueId, memberId, cb) {
+function getQueueMemberLastPausedInData(memberName, queueId, memberId, cb) {
     try {
         // check parameters
         if (   typeof cb         !== 'function' || typeof memberId !== 'string'
@@ -2266,18 +2266,22 @@ function getQueueMemberLastPausedInTimestamp(memberName, queueId, memberId, cb) 
             where: [
                 'agent=? ' +
                 'AND queuename=? ' +
-                'AND event=? ',
+                'AND event=? ' +
+                'ORDER BY time DESC',
                 memberName, queueId, 'PAUSE'
             ],
-            attributes: [ [ 'MAX(time)', 'timestamp' ] ]
+            attributes: [
+                [ 'time',  'timestamp' ],
+                [ 'data1', 'reason'    ]
+            ]
 
         }).success(function (result) {
 
             if (result && result.selectedValues) {
 
-                logger.info(IDLOG, 'get last "paused in" timestamp of member "' + memberName + '" of the queue "' + queueId + '" has been successful');
+                logger.info(IDLOG, 'get last "paused in" data of member "' + memberName + '" of the queue "' + queueId + '" has been successful');
 
-                // if the queue member has never paused, the timestamp isn't present in the database. So check its presence
+                // if the queue member has never started a pause, the timestamp isn't present in the database. So check its presence
                 if (result.selectedValues.timestamp) {
                     result.selectedValues.timestamp = new Date(result.selectedValues.timestamp).getTime();
                 }
@@ -2289,13 +2293,78 @@ function getQueueMemberLastPausedInTimestamp(memberName, queueId, memberId, cb) 
                 cb(null, result.selectedValues);
 
             } else {
-                logger.info(IDLOG, 'get last "paused in" timestamp of member "' + memberName + '" of the queue "' + queueId + '": not found');
+                logger.info(IDLOG, 'get last "paused in" data of member "' + memberName + '" of the queue "' + queueId + '": not found');
                 cb(null, {});
             }
 
         }).error(function (err1) { // manage the error
 
-            logger.error(IDLOG, 'search postit with db id "' + id + '" failed: ' + err1.toString());
+            logger.error(IDLOG, 'get last "paused in" data of member "' + memberName + '" of the queue "' + queueId + '" failed: ' + err1.toString());
+            cb(err1);
+        });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Gets the data of the more recent ended pause of the queue member in the specified
+* queue. It searches the results into the _asteriskcdrdb.queue\_log_ database. If the
+* queue member has never ended a pause, the data values isn't present in the database.
+* So, in this case, the method returns some null values.
+*
+* @method getQueueMemberLastPausedOutData
+* @param {string}   memberName The queue member name
+* @param {string}   queueId    The queue identifier
+* @param {string}   memberId   The queue member identifier
+* @param {function} cb         The callback function
+*/
+function getQueueMemberLastPausedOutData(memberName, queueId, memberId, cb) {
+    try {
+        // check parameters
+        if (   typeof cb         !== 'function' || typeof memberId !== 'string'
+            || typeof memberName !== 'string'   || typeof queueId  !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        models[JSON_KEYS.QUEUE_LOG].find({
+            where: [
+                'agent=? ' +
+                'AND queuename=? ' +
+                'AND event=? ' +
+                'ORDER BY time DESC',
+                memberName, queueId, 'UNPAUSE'
+            ],
+            attributes: [ [ 'time',  'timestamp' ] ]
+
+        }).success(function (result) {
+
+            if (result && result.selectedValues) {
+
+                logger.info(IDLOG, 'get last "paused out" data of member "' + memberName + '" of the queue "' + queueId + '" has been successful');
+
+                // if the queue member has never ended a pause, the timestamp isn't present in the database. So check its presence
+                if (result.selectedValues.timestamp) {
+                    result.selectedValues.timestamp = new Date(result.selectedValues.timestamp).getTime();
+                }
+
+                // add received parameters used by the callback
+                result.selectedValues.queueId  = queueId;
+                result.selectedValues.memberId = memberId;
+
+                cb(null, result.selectedValues);
+
+            } else {
+                logger.info(IDLOG, 'get last "paused out" data of member "' + memberName + '" of the queue "' + queueId + '": not found');
+                cb(null, {});
+            }
+
+        }).error(function (err1) { // manage the error
+
+            logger.error(IDLOG, 'get last "paused out" data of member "' + memberName + '" of the queue "' + queueId + '" failed: ' + err1.toString());
             cb(err1);
         });
 
@@ -2556,7 +2625,8 @@ exports.getPbContactsStartsWithDigit        = getPbContactsStartsWithDigit;
 exports.getHistoryCallerNoteInterval        = getHistoryCallerNoteInterval;
 exports.getAllUserHistorySmsInterval        = getAllUserHistorySmsInterval;
 exports.getAllUnreadPostitOfRecipient       = getAllUnreadPostitOfRecipient;
+exports.getQueueMemberLastPausedInData      = getQueueMemberLastPausedInData;
+exports.getQueueMemberLastPausedOutData     = getQueueMemberLastPausedOutData;
 exports.getCtiPbContactsStartsWithDigit     = getCtiPbContactsStartsWithDigit;
 exports.getAllUserHistoryPostitInterval     = getAllUserHistoryPostitInterval;
 exports.getAllUserHistoryCallerNoteInterval = getAllUserHistoryCallerNoteInterval;
-exports.getQueueMemberLastPausedInTimestamp = getQueueMemberLastPausedInTimestamp;

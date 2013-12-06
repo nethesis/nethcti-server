@@ -1067,14 +1067,28 @@ function queueDetails(err, resp) {
             queues[q].addMember(member);
             logger.info(IDLOG, 'added member ' + member.getMember() + ' to queue ' + q);
 
-            // set the last start paused timestamp of the member
-            compDbconn.getQueueMemberLastPausedInTimestamp(member.getName(), q, m, function (err1, result) {
+            // set the last started pause data of the member
+            compDbconn.getQueueMemberLastPausedInData(member.getName(), q, m, function (err1, result) {
                 try {
                     if (err1) { throw err1; }
 
                     // if the queue member has never paused, the timestamp is null
                     if (result.queueId && result.memberId && result.timestamp) {
-                        queues[result.queueId].getMember(result.memberId).setLastPausedInTimestamp(result.timestamp);
+                        queues[result.queueId].getMember(result.memberId).setLastPausedInData(result.timestamp, result.reason);
+                    }
+                } catch (err2) {
+                    logger.error(IDLOG, err2.stack);
+                }
+            });
+
+            // set the last ended pause data of the member
+            compDbconn.getQueueMemberLastPausedOutData(member.getName(), q, m, function (err1, result) {
+                try {
+                    if (err1) { throw err1; }
+
+                    // if the queue member has never paused, the timestamp is null
+                    if (result.queueId && result.memberId && result.timestamp) {
+                        queues[result.queueId].getMember(result.memberId).setLastPausedOutData(result.timestamp);
                     }
                 } catch (err2) {
                     logger.error(IDLOG, err2.stack);
@@ -1926,12 +1940,13 @@ function evtExtenStatusChanged(exten, status) {
 * @param {string}  queueId  The queue identifier
 * @param {string}  memberId The queue member identifier
 * @param {boolean} paused   True if the extension has been paused from the queue
+* @param {string}  reason   True reason description of the pause
 * @private
 */
-function evtQueueMemberPausedChanged(queueId, memberId, paused) {
+function evtQueueMemberPausedChanged(queueId, memberId, paused, reason) {
     try {
         // check parameters
-        if (   typeof queueId  !== 'string'
+        if (   typeof queueId  !== 'string' || typeof reason !== 'string'
             || typeof memberId !== 'string' || typeof paused !== 'boolean') {
 
             throw new Error('wrong parameters');
@@ -1947,7 +1962,7 @@ function evtQueueMemberPausedChanged(queueId, memberId, paused) {
 
         if (member) {
 
-            member.setPaused(paused);
+            member.setPaused(paused, reason);
             logger.info(IDLOG, 'paused status of queue member "' + memberId + '" of queue "' + queueId + '" has been changed to "' + paused + '"');
 
             // emit the event

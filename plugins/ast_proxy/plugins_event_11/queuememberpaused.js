@@ -62,8 +62,9 @@ var astProxy;
                         // extract the queue member identifier. e.g. data.location is: "Local/214@from-queue/n"
                         var memberId = data.location.split('@')[0].split('/')[1];
                         var paused   = (data.paused === '1' ? true : false);
+                        var reason   = (data.reason ? data.reason : '');
 
-                        astProxy.proxyLogic.evtQueueMemberPausedChanged(data.queue, memberId, paused);
+                        astProxy.proxyLogic.evtQueueMemberPausedChanged(data.queue, memberId, paused, reason);
 
                     } else {
                         logger.warn(IDLOG, 'QueueMemberPaused event not recognized');
