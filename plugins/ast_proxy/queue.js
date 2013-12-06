@@ -91,6 +91,7 @@ exports.Queue = function (queueNum) {
     * Returns the specified member.
     *
     * @method getMember
+    * @param  {string} memberId The member identifier
     * @return {object} The member.
     */
     function getMember(memberId) { return members[memberId]; }

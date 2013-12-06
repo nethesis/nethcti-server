@@ -4,12 +4,13 @@
 * **It can throw exception.**
 *
 * @class QueueMember
-* @param {string} memberNum The member number
-* @param {string} queueId   The name of the queue membership
+* @param {string} memberNum   The member number
+* @param {string} queueId     The name of the queue membership
+* @param {string} pausedValue True if the extension is paused from the queue
 * @constructor
 * @return {object} The queue member object.
 */
-exports.QueueMember = function (memberNum, queueId) {
+exports.QueueMember = function (memberNum, queueId, pausedValue) {
     // check the parameter
     if (typeof memberNum !== 'string' || typeof queueId !== 'string') {
         throw new Error('wrong parameter');
@@ -59,7 +60,7 @@ exports.QueueMember = function (memberNum, queueId) {
     * @type {boolean}
     * @private
     */
-    var paused;
+    var paused = pausedValue;
 
     /**
     * The number of the taken calls.
@@ -80,12 +81,30 @@ exports.QueueMember = function (memberNum, queueId) {
     var lastCallTimestamp;
 
     /**
+    * The timestamp of the last start paused.
+    *
+    * @property lastPausedInTimestamp
+    * @type {number}
+    * @default 0
+    * @private
+    */
+    var lastPausedInTimestamp = 0;
+
+    /**
     * Return the timestamp of the last taken call.
     *
     * @method getLastCallTimestamp
     * @return {number} The timestamp of the last taken call.
     */
     function getLastCallTimestamp() { return lastCallTimestamp; }
+
+    /**
+    * Return the timestamp of the last start paused.
+    *
+    * @method getLastPausedInTimestamp
+    * @return {number} The timestamp of the last start paused.
+    */
+    function getLastPausedInTimestamp() { return lastPausedInTimestamp; }
 
     /**
     * Set the timestamp of the last taken call.
@@ -100,6 +119,21 @@ exports.QueueMember = function (memberNum, queueId) {
         if (typeof num !== 'number') { throw new Error('wrong parameter'); }
 
         lastCallTimestamp = num;
+    }
+
+    /**
+    * Set the timestamp of the last start paused.
+    *
+    * **It can throw an Exception**.
+    *
+    * @method setLastPausedInTimestamp
+    * @param {number} num The timestamp number.
+    */
+    function setLastPausedInTimestamp(num) {
+        // check the parameter
+        if (typeof num !== 'number') { throw new Error('wrong parameter'); }
+
+        lastPausedInTimestamp = num;
     }
 
     /**
@@ -127,12 +161,16 @@ exports.QueueMember = function (memberNum, queueId) {
     function setType(value) { type = value; }
 
     /**
-    * Set the paused status of the member.
+    * Set the paused status of the member and updates the
+    * _lastPausedInTimestamp_ property to the current timestamp.
     *
     * @method setPaused
     * @param {string} type The member type
     */
-    function setPaused(value) { paused = value; }
+    function setPaused(value) {
+        paused = value;
+        lastPausedInTimestamp = new Date().getTime();
+    }
 
     /**
     * Return the type of the member.
@@ -186,13 +224,14 @@ exports.QueueMember = function (memberNum, queueId) {
     * Returns the JSON representation of the object.
     *
     *     {
-    *         type:              "static",
-    *         name:              "Alessandro",
-    *         queue:             "401",
-    *         member:            "214",
-    *         paused:            true,         // the paused status
-    *         callsTakenCount:   "0",          // the number of taken calls
-    *         lastCallTimestamp: 1365590191    // the timestamp of the last taken call
+    *         type:                  "static",
+    *         name:                  "Name",
+    *         queue:                 "401",
+    *         member:                "214",
+    *         paused:                true,          // the paused status
+    *         callsTakenCount:       "0",           // the number of taken calls
+    *         lastCallTimestamp:     1365590191     // the timestamp of the last taken call
+    *         lastPausedInTimestamp: 1365591191     // the timestamp of the last start paused
     *     }
     *
     * @method toJSON
@@ -200,30 +239,33 @@ exports.QueueMember = function (memberNum, queueId) {
     */
     function toJSON() {
         return {
-            type:              type,
-            name:              name,
-            queue:             queue,
-            member:            member,
-            paused:            paused,
-            callsTakenCount:   callsTakenCount,
-            lastCallTimestamp: lastCallTimestamp
+            type:                  type,
+            name:                  name,
+            queue:                 queue,
+            member:                member,
+            paused:                paused,
+            callsTakenCount:       callsTakenCount,
+            lastCallTimestamp:     lastCallTimestamp,
+            lastPausedInTimestamp: lastPausedInTimestamp
         }
     }
 
     // public interface
     return {
-        toJSON:               toJSON,
-        setName:              setName,
-        getName:              getName,
-        getType:              getType,
-        setType:              setType,
-        getQueue:             getQueue,
-        toString:             toString,
-        setPaused:            setPaused,
-        getMember:            getMember,
-        setCallsTakenCount:   setCallsTakenCount,
-        getCallsTakenCount:   getCallsTakenCount,
-        setLastCallTimestamp: setLastCallTimestamp,
-        getLastCallTimestamp: getLastCallTimestamp
+        toJSON:                   toJSON,
+        setName:                  setName,
+        getName:                  getName,
+        getType:                  getType,
+        setType:                  setType,
+        getQueue:                 getQueue,
+        toString:                 toString,
+        setPaused:                setPaused,
+        getMember:                getMember,
+        setCallsTakenCount:       setCallsTakenCount,
+        getCallsTakenCount:       getCallsTakenCount,
+        setLastCallTimestamp:     setLastCallTimestamp,
+        getLastCallTimestamp:     getLastCallTimestamp,
+        setLastPausedInTimestamp: setLastPausedInTimestamp,
+        getLastPausedInTimestamp: getLastPausedInTimestamp
     };
 }

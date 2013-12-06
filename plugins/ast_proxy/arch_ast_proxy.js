@@ -284,6 +284,7 @@ module.exports = function (options, imports, register) {
     try {
         astProxy.setLogger(logger);
         astProxy.config('/etc/nethcti/asterisk.json');
+        astProxy.proxyLogic.setCompDbconn(imports.dbconn);
         astProxy.proxyLogic.setCompPhonebook(imports.phonebook);
         astProxy.proxyLogic.setCompCallerNote(imports.callerNote);
         astProxy.start();

@@ -58,21 +58,27 @@ var CUSTOMER_CARD = {
 * @type {object}
 * @private
 * @default {
-    POSTIT:       'postit',
-    PHONEBOOK:    'phonebook',
-    CALLER_NOTE:  'caller_note',
-    HISTORY_CALL: 'history_call'
+    CEL:           "cel",
+    POSTIT:        "postit",
+    VOICEMAIL:     "voicemail",
+    PHONEBOOK:     "phonebook",
+    QUEUE_LOG:     "queue_log",
+    SMS_HISTORY:   "sms_history",
+    CALLER_NOTE:   "caller_note",
+    HISTORY_CALL:  "history_call",
+    CTI_PHONEBOOK: "cti_phonebook"
 }
 */
 var JSON_KEYS = {
+    CEL:           'cel',
     POSTIT:        'postit',
     VOICEMAIL:     'voicemail',
     PHONEBOOK:     'phonebook',
+    QUEUE_LOG:     'queue_log',
     SMS_HISTORY:   'sms_history',
     CALLER_NOTE:   'caller_note',
     HISTORY_CALL:  'history_call',
-    CTI_PHONEBOOK: 'cti_phonebook',
-    CEL:           'cel'
+    CTI_PHONEBOOK: 'cti_phonebook'
 };
 
 /**
@@ -2236,6 +2242,70 @@ function getHistoryCallerNoteInterval(data, cb) {
 }
 
 /**
+* Gets the more recent timestamp of the started paused of queue member in the specified
+* queue. It searches the results into the _asteriskcdrdb.queue\_log_ database. If the
+* queue member has never paused, the timestamp isn't present in the database. So, in this
+* case, the method return a null value.
+*
+* @method getQueueMemberLastPausedInTimestamp
+* @param {string}   memberName The queue member name
+* @param {string}   queueId    The queue identifier
+* @param {string}   memberId   The queue member identifier
+* @param {function} cb         The callback function
+*/
+function getQueueMemberLastPausedInTimestamp(memberName, queueId, memberId, cb) {
+    try {
+        // check parameters
+        if (   typeof cb         !== 'function' || typeof memberId !== 'string'
+            || typeof memberName !== 'string'   || typeof queueId  !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        models[JSON_KEYS.QUEUE_LOG].find({
+            where: [
+                'agent=? ' +
+                'AND queuename=? ' +
+                'AND event=? ',
+                memberName, queueId, 'PAUSE'
+            ],
+            attributes: [ [ 'MAX(time)', 'timestamp' ] ]
+
+        }).success(function (result) {
+
+            if (result && result.selectedValues) {
+
+                logger.info(IDLOG, 'get last "paused in" timestamp of member "' + memberName + '" of the queue "' + queueId + '" has been successful');
+
+                // if the queue member has never paused, the timestamp isn't present in the database. So check its presence
+                if (result.selectedValues.timestamp) {
+                    result.selectedValues.timestamp = new Date(result.selectedValues.timestamp).getTime();
+                }
+
+                // add received parameters used by the callback
+                result.selectedValues.queueId  = queueId;
+                result.selectedValues.memberId = memberId;
+
+                cb(null, result.selectedValues);
+
+            } else {
+                logger.info(IDLOG, 'get last "paused in" timestamp of member "' + memberName + '" of the queue "' + queueId + '": not found');
+                cb(null, {});
+            }
+
+        }).error(function (err1) { // manage the error
+
+            logger.error(IDLOG, 'search postit with db id "' + id + '" failed: ' + err1.toString());
+            cb(err1);
+        });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
 * Gets all the public and private caller notes for the specified number that hasn't expired.
 *
 * @method getAllValidCallerNotesByNum
@@ -2489,3 +2559,4 @@ exports.getAllUnreadPostitOfRecipient       = getAllUnreadPostitOfRecipient;
 exports.getCtiPbContactsStartsWithDigit     = getCtiPbContactsStartsWithDigit;
 exports.getAllUserHistoryPostitInterval     = getAllUserHistoryPostitInterval;
 exports.getAllUserHistoryCallerNoteInterval = getAllUserHistoryCallerNoteInterval;
+exports.getQueueMemberLastPausedInTimestamp = getQueueMemberLastPausedInTimestamp;

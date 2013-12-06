@@ -24,10 +24,7 @@ module.exports = function (options, imports, register) {
     if (imports.logger) { logger = imports.logger; }
 
     // public interface for other architect components
-    register(null, {
-        dbconn: dbconn 
-        }
-    );
+    register(null, { dbconn: dbconn });
 
     try {
         dbconn.setLogger(logger);

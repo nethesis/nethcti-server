@@ -173,6 +173,15 @@ var logger = console;
 var compPhonebook;
 
 /**
+* The database component.
+*
+* @property compDbconn
+* @type object
+* @private
+*/
+var compDbconn;
+
+/**
 * The caller note component.
 *
 * @property compCallerNote
@@ -356,6 +365,21 @@ function setCompPhonebook(comp) {
     try {
         compPhonebook = comp;
         logger.info(IDLOG, 'set phonebook architect component');
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the database architect component.
+*
+* @method setCompDbconn
+* @param {object} comp The database architect component.
+*/
+function setCompDbconn(comp) {
+    try {
+        compDbconn = comp;
+        logger.info(IDLOG, 'set database architect component');
     } catch (err) {
        logger.error(IDLOG, err.stack);
     }
@@ -1033,16 +1057,29 @@ function queueDetails(err, resp) {
         for (m in resp.members) {
 
             // create new queue member object
-            member = new QueueMember(resp.members[m].member, q);
+            member = new QueueMember(resp.members[m].member, q, resp.members[m].paused);
             member.setName(resp.members[m].name);
             member.setType(resp.members[m].type);
-            member.setPaused(resp.members[m].paused);
             member.setCallsTakenCount(resp.members[m].callsTakenCount);
             member.setLastCallTimestamp(resp.members[m].lastCallTimestamp);
 
             // add the member to its queue
             queues[q].addMember(member);
             logger.info(IDLOG, 'added member ' + member.getMember() + ' to queue ' + q);
+
+            // set the last start paused timestamp of the member
+            compDbconn.getQueueMemberLastPausedInTimestamp(member.getName(), q, m, function (err1, result) {
+                try {
+                    if (err1) { throw err1; }
+
+                    // if the queue member has never paused, the timestamp is null
+                    if (result.queueId && result.memberId && result.timestamp) {
+                        queues[result.queueId].getMember(result.memberId).setLastPausedInTimestamp(result.timestamp);
+                    }
+                } catch (err2) {
+                    logger.error(IDLOG, err2.stack);
+                }
+            });
         }
 
         // set all waiting callers
@@ -3810,6 +3847,7 @@ exports.start                           = start;
 exports.visit                           = visit;
 exports.setDnd                          = setDnd;
 exports.setLogger                       = setLogger;
+exports.setCompDbconn                   = setCompDbconn;
 exports.getExtensions                   = getExtensions;
 exports.pickupParking                   = pickupParking;
 exports.getJSONQueues                   = getJSONQueues;
