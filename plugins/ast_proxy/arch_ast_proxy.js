@@ -147,11 +147,11 @@ module.exports = function (options, imports, register) {
             pickupParking: astProxy.proxyLogic.pickupParking,
 
             /**
-            * It's the _logonDynQueues_ method provided by _ast\_proxy.proxyLogic_.
+            * It's the _inoutDynQueues_ method provided by _ast\_proxy.proxyLogic_.
             *
-            * @method logonDynQueues
+            * @method inoutDynQueues
             */
-            logonDynQueues: astProxy.proxyLogic.logonDynQueues,
+            inoutDynQueues: astProxy.proxyLogic.inoutDynQueues,
 
             /**
             * It's the _queueMemberPauseUnpause_ method provided by _ast\_proxy.proxyLogic_.

@@ -459,7 +459,7 @@ var compConfigManager;
         *
         * ### <a id="inout_dyn_queuespost">**`astproxy/inout_dyn_queues`**</a>
         *
-        * Alternates the logon and logout of the specified extension in all the queues for which he's a dynamic member.
+        * Alternates the logon and logout of the specified extension in all the queues for which it's a dynamic member.
         * The request must contains the following parameters:
         *
         * * `endpointId:   the endpoint identifier`
@@ -1964,7 +1964,7 @@ var compConfigManager;
 
                     if (req.params.endpointType === 'extension') {
 
-                        compAstProxy.logonDynQueues(req.params.endpointType, req.params.endpointId, function (err) {
+                        compAstProxy.inoutDynQueues(req.params.endpointType, req.params.endpointId, function (err) {
                             try {
                                 if (err) {
                                     logger.warn(IDLOG, 'inout dynamic all queues by user "' + username + '" with ' +

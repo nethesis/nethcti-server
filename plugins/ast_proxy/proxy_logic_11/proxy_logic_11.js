@@ -3182,14 +3182,15 @@ function parkConversation(endpointType, endpointId, convid, applicantId, cb) {
 }
 
 /**
-* Logon the specified endpoint into all queues in which it's a dynamic member.
+* Alternates the logon and logout of the specified extension in all the queues
+* for which it's a dynamic member.
 *
-* @method logonDynQueues
+* @method inoutDynQueues
 * @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
 * @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
 * @param {function} cb           The callback function
 */
-function logonDynQueues(endpointType, endpointId, cb) {
+function inoutDynQueues(endpointType, endpointId, cb) {
     try {
         // check parameters
         if (   typeof cb           !== 'function'
@@ -3201,15 +3202,15 @@ function logonDynQueues(endpointType, endpointId, cb) {
         // check the endpoint existence
         if (endpointType === 'extension' && extensions[endpointId]) {
 
-            logger.info(IDLOG, 'execute logon to all queues in which the ' + endpointType + ' ' + endpointId + ' is dynamic');
-            astProxy.doCmd({ command: 'logonDynQueues', exten: '220' }, function (err) {
+            logger.info(IDLOG, 'execute inout to all queues in which the ' + endpointType + ' ' + endpointId + ' is dynamic');
+            astProxy.doCmd({ command: 'inoutDynQueues', exten: endpointId }, function (err) {
                 try {
                     if (err) {
-                        logger.error(IDLOG, 'logon to all queues for which exten ' + endpointId + ' is dynamic');
+                        logger.error(IDLOG, 'inout to all queues for which exten ' + endpointId + ' is dynamic');
                         cb(err);
                         return;
                     }
-                    logger.info(IDLOG, 'logon to all queues for which exten ' + endpointId + ' is dynamic has been successful');
+                    logger.info(IDLOG, 'inout to all queues for which exten ' + endpointId + ' is dynamic has been successful');
                     cb(null);
 
                 } catch (err) {
@@ -3218,7 +3219,7 @@ function logonDynQueues(endpointType, endpointId, cb) {
                 }
             });
         } else {
-            var err = 'logon to all queues in which the endpoint is dynamic: unknown endpointType ' + endpointType + ' or extension not present';
+            var err = 'inout to all queues in which the endpoint is dynamic: unknown endpointType ' + endpointType + ' or extension not present';
             logger.warn(IDLOG, err);
             cb(err);
         }
@@ -3874,7 +3875,7 @@ exports.getExtensions                   = getExtensions;
 exports.pickupParking                   = pickupParking;
 exports.getJSONQueues                   = getJSONQueues;
 exports.getJSONTrunks                   = getJSONTrunks;
-exports.logonDynQueues                  = logonDynQueues;
+exports.inoutDynQueues                  = inoutDynQueues;
 exports.getJSONParkings                 = getJSONParkings;
 exports.redirectParking                 = redirectParking;
 exports.sendDTMFSequence                = sendDTMFSequence;
