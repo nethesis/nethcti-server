@@ -11,9 +11,9 @@ var action = require('../action');
 * @private
 * @final
 * @readOnly
-* @default [logonDynQueues]
+* @default [inoutDynQueues]
 */
-var IDLOG = '[logonDynQueues]';
+var IDLOG = '[inoutDynQueues]';
 
 /**
 * The prefix to use for caller id.
@@ -48,29 +48,28 @@ var PRE_CALLERID = '"CTI"';
         var map = {};
 
         /**
-        * Command plugin to logon the extension in all queus for which it's dynamic
+        * Command plugin to alternate the logon and logout of the specified extension
+        * in all the queues for which it's a dynamic member.
         *
         * Use it with _ast\_proxy_ module as follow:
         *
-        *     ast_proxy.doCmd({ command: 'logonDynQueues', exten: '214' }, function (res) {
+        *     ast_proxy.doCmd({ command: 'inoutDynQueues', exten: '214' }, function (res) {
         *         // some code
         *     });
         *
         *
-        * @class logonDynQueues
+        * @class inoutDynQueues
         * @static
         */
-        var logonDynQueues = {
+        var inoutDynQueues = {
 
             /**
             * Execute asterisk action to originate a new call.
             * 
             * @method execute
-            * @param {object} am Asterisk manager to send the action
-            * @param {object} args The object contains optional parameters
-            * passed to _doCmd_ method of the ast_proxy component
-            * @param {function} cb The callback function called at the end
-            * of the command
+            * @param {object}   am   Asterisk manager to send the action
+            * @param {object}   args The object contains optional parameters passed to _doCmd_ method of the ast_proxy component
+            * @param {function} cb   The callback function called at the end of the command
             * @static
             */
             execute: function (am, args, cb) {
@@ -86,11 +85,12 @@ var PRE_CALLERID = '"CTI"';
                     };
                     
                     // set the action identifier
-                    act.ActionID = action.getActionId('logonDynQueues');
+                    act.ActionID = action.getActionId('inoutDynQueues');
 
                     // add association ActionID-callback
                     map[act.ActionID] = cb;
 
+console.log(act);
                     // send action to asterisk
                     am.send(act);
 
@@ -109,6 +109,7 @@ var PRE_CALLERID = '"CTI"';
             */
             data: function (data) {
                 try {
+                    console.log(data);
                     // check callback and info presence and execute it
                     if (map[data.actionid] && data.response === 'Success') {
 
@@ -159,9 +160,9 @@ var PRE_CALLERID = '"CTI"';
         };
 
         // public interface
-        exports.data      = logonDynQueues.data;
-        exports.execute   = logonDynQueues.execute;
-        exports.setLogger = logonDynQueues.setLogger;
+        exports.data      = inoutDynQueues.data;
+        exports.execute   = inoutDynQueues.execute;
+        exports.setLogger = inoutDynQueues.setLogger;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);

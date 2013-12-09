@@ -191,7 +191,7 @@ var compConfigManager;
         * 1. [`astproxy/start_record`](#start_recordpost)
         * 1. [`astproxy/blindtransfer`](#blindtransferpost)
         * 1. [`astproxy/pickup_parking`](#pickup_parkingpost)
-        * 1. [`astproxy/logon_dyn_queues`](#logon_dyn_queuespost)
+        * 1. [`astproxy/inout_dyn_queues`](#inout_dyn_queuespost)
         * 1. [`astproxy/queuemember_pause`](#queuemember_pausepost)
         * 1. [`astproxy/queuemember_unpause`](#queuemember_unpausepost)
         * 1. [`astproxy/blindtransfer_queue`](#blindtransfer_queuepost)
@@ -457,9 +457,10 @@ var compConfigManager;
         *
         * ---
         *
-        * ### <a id="logon_dyn_queuespost">**`astproxy/logon_dyn_queues`**</a>
+        * ### <a id="inout_dyn_queuespost">**`astproxy/inout_dyn_queues`**</a>
         *
-        * The specified extension logon in all the queues for which is dynamic member. The request must contains the following parameters:
+        * Alternates the logon and logout of the specified extension in all the queues for which he's a dynamic member.
+        * The request must contains the following parameters:
         *
         * * `endpointId:   the endpoint identifier`
         * * `endpointType: the type of the endpoint`
@@ -583,7 +584,7 @@ var compConfigManager;
                 *   @param {string} start_record          Start the recording of a conversation
                 *   @param {string} blindtransfer         Transfer a conversation with blind type
                 *   @param {string} pickup_parking        Pickup a parked call
-                *   @param {string} logon_dyn_queues      Logon the extension in all the queues for which is dynamic member
+                *   @param {string} inout_dyn_queues      Alternates the logon and logout of the extension in all the queues for which it's a dynamic member
                 *   @param {string} queuemember_pause     Pause the specified extension from receive calls from the queue
                 *   @param {string} queuemember_unpause   Unpause the specified extension to receive calls from the queue
                 *   @param {string} blindtransfer_queue   Transfer a waiting caller from a queue to the destination with blind type
@@ -606,7 +607,7 @@ var compConfigManager;
                     'start_record',
                     'blindtransfer',
                     'pickup_parking',
-                    'logon_dyn_queues',
+                    'inout_dyn_queues',
                     'queuemember_pause',
                     'queuemember_unpause',
                     'blindtransfer_queue',
@@ -1909,14 +1910,14 @@ var compConfigManager;
             /**
             * Logon the extension in all the queues in which is dynamic member with the following REST API:
             *
-            *     POST logon_dyn_queues
+            *     POST inout_dyn_queues
             *
-            * @method logon_dyn_queues
+            * @method inout_dyn_queues
             * @param {object}   req  The client request.
             * @param {object}   res  The client response.
             * @param {function} next Function to run the next handler in the chain.
             */
-            logon_dyn_queues: function (req, res, next) {
+            inout_dyn_queues: function (req, res, next) {
                 try {
                     var username = req.headers.authorization_user;
 
@@ -1931,29 +1932,33 @@ var compConfigManager;
                     // check if the user has the administration operator panel queues authorization
                     if (compAuthorization.authorizeOpAdminQueuesUser(username) === true) {
 
-                        logger.info(IDLOG, 'logon dynamic all queues for "' + req.params.endpointType + '" "' + req.params.endpointId + '": user "' + username + '" has the "admin_queues" authorization');
+                        logger.info(IDLOG, 'inout dynamic all queues for "' + req.params.endpointType + '" "' +
+                                           req.params.endpointId + '": user "' + username + '" has the "admin_queues" authorization');
                     }
                     // otherwise check if the user has the queues operator panel authorization
                     else if (compAuthorization.authorizeOpQueuesUser(username) !== true) {
 
-                        logger.warn(IDLOG, 'logon dynamic all queues for "' + req.params.endpointType + '" "' + req.params.endpointId + '": authorization failed for user "' + username + '"');
+                        logger.warn(IDLOG, 'inout dynamic all queues for "' + req.params.endpointType + '" "' +
+                                           req.params.endpointId + '": authorization failed for user "' + username + '"');
                         compUtil.net.sendHttp403(IDLOG, res);
                         return;
                     }
                     // the user has the "queues" authorization. So check if the endpoint is owned by the user
                     else {
 
-                        logger.info(IDLOG, 'logon dynamic all queues for "' + req.params.endpointType + '" "' + req.params.endpointId + '": user "' + username + '" has the "queues" authorization');
+                        logger.info(IDLOG, 'inout dynamic all queues for "' + req.params.endpointType + '" "' +
+                                           req.params.endpointId + '": user "' + username + '" has the "queues" authorization');
 
                         if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
-                            logger.warn(IDLOG, 'logon dynamic all queues by user "' + username + '" has been failed: ' +
+                            logger.warn(IDLOG, 'inout dynamic all queues by user "' + username + '" has been failed: ' +
                                                ' the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' isn\'t owned by the user');
                             compUtil.net.sendHttp403(IDLOG, res);
                             return;
 
                         } else {
-                            logger.info(IDLOG, 'logon dynamic all queues: endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' is owned by user "' + username + '"');
+                            logger.info(IDLOG, 'inout dynamic all queues: endpoint ' + req.params.endpointType + ' ' +
+                                               req.params.endpointId + ' is owned by user "' + username + '"');
                         }
                     }
 
@@ -1962,13 +1967,13 @@ var compConfigManager;
                         compAstProxy.logonDynQueues(req.params.endpointType, req.params.endpointId, function (err) {
                             try {
                                 if (err) {
-                                    logger.warn(IDLOG, 'logon dynamic all queues by user "' + username + '" with ' +
+                                    logger.warn(IDLOG, 'inout dynamic all queues by user "' + username + '" with ' +
                                                        req.params.endpointType + ' ' + req.params.endpointId + ' has been failed');
                                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
                                     return;
                                 }
 
-                                logger.info(IDLOG, 'logon dynamic all queues has been successful by user "' + username + '" ' +
+                                logger.info(IDLOG, 'inout dynamic all queues has been successful by user "' + username + '" ' +
                                                    'with ' + req.params.endpointType + ' ' + req.params.endpointId);
                                 compUtil.net.sendHttp200(IDLOG, res);
 
@@ -1979,7 +1984,7 @@ var compConfigManager;
                         });
 
                     } else {
-                        logger.warn(IDLOG, 'logon dynamic all queues: unknown endpointType ' + req.params.endpointType);
+                        logger.warn(IDLOG, 'inout dynamic all queues: unknown endpointType ' + req.params.endpointType);
                         compUtil.net.sendHttp400(IDLOG, res);
                     }
 
@@ -2158,7 +2163,7 @@ var compConfigManager;
         exports.pickup_parking        = astproxy.pickup_parking;
         exports.setCompOperator       = setCompOperator;
         exports.setCompAstProxy       = setCompAstProxy;
-        exports.logon_dyn_queues      = astproxy.logon_dyn_queues;
+        exports.inout_dyn_queues      = astproxy.inout_dyn_queues;
         exports.queuemember_pause     = astproxy.queuemember_pause;
         exports.queuemember_unpause   = astproxy.queuemember_unpause;
         exports.blindtransfer_queue   = astproxy.blindtransfer_queue;
