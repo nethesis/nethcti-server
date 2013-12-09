@@ -476,7 +476,7 @@ var compConfigManager;
         *
         * * `endpointId:   the endpoint identifier`
         * * `endpointType: the type of the endpoint`
-        * * `queueId:      the queue identifier`
+        * * `[queueId]:    the queue identifier. If omitted the pause is done in all queues`
         * * `[reason]:     the textual description of the reason`
         *
         * E.g. object parameters:
@@ -491,7 +491,7 @@ var compConfigManager;
         *
         * * `endpointId:   the endpoint identifier`
         * * `endpointType: the type of the endpoint`
-        * * `queueId:      the queue identifier`
+        * * `[queueId]:    the queue identifier. If omitted the unpause is done in all queues`
         *
         * E.g. object parameters:
         *
@@ -3251,7 +3251,8 @@ function cfcallSetUnavailable(endpoint, username, activate, to, res) {
 
 
 /**
-* Pause or unpause an extension of a queue.
+* Pause or unpause an extension of a queue. The parameter "queueId" can be omitted. In this
+* case the pause or unpause is done in all queues.
 *
 * @method queueMemberPauseUnpause
 * @param {object}  req    The client request
@@ -3263,9 +3264,9 @@ function queueMemberPauseUnpause(req, res, paused) {
         var username = req.headers.authorization_user;
 
         // check parameters
-        if (   typeof req.params              !== 'object'
-            || typeof req.params.endpointType !== 'string' || typeof req.params.endpointId  !== 'string'
-            || typeof req.params.queueId      !== 'string' || typeof paused                 !== 'boolean') {
+        if (    typeof req.params              !== 'object' || typeof paused                 !== 'boolean'
+            ||  typeof req.params.endpointType !== 'string' || typeof req.params.endpointId  !== 'string'
+            || (typeof req.params.queueId      !== 'string' && req.params.queueId) ) {
 
             compUtil.net.sendHttp400(IDLOG, res);
             return;
@@ -3275,34 +3276,37 @@ function queueMemberPauseUnpause(req, res, paused) {
         // present, it's initialized to an empty string. In the unpause case, simply it's ignored
         if (!req.params.reason) { req.params.reason = ''; }
 
-        // used to discriminate between the two operation: pause or unpause
+        // used to discriminate the output log between the two operation: pause or unpause
         var logWord = (paused ? 'pause' : 'unpause');
+        // used to discriminate the presence of the queueId parameter. If it's omitted the pause or unpause
+        // is done in all queues
+        var logQueue = (req.params.queueId ? 'queue "' + req.params.queueId + '"' : 'all queues');
 
         // check if the user has the administration queues operator panel authorization
         if (compAuthorization.authorizeOpAdminQueuesUser(username) === true) {
 
-            logger.info(IDLOG, logWord + ' "' + req.params.endpointType + '" "' + req.params.endpointId + '" from queue "' + req.params.queueId + '": user "' + username + '" has "admin_queues" authorization');
+            logger.info(IDLOG, logWord + ' "' + req.params.endpointType + '" "' + req.params.endpointId + '" from ' + logQueue + ': user "' + username + '" has "admin_queues" authorization');
         }
         // otherwise check if the user has the queues operator panel authorization
         else if (compAuthorization.authorizeOpQueuesUser(username) !== true) {
 
-            logger.warn(IDLOG, logWord + ' "' + req.params.endpointType + '" "' + req.params.endpointId + '" from queue "' + req.params.queueId + '": authorization failed for user "' + username + '"');
+            logger.warn(IDLOG, logWord + ' "' + req.params.endpointType + '" "' + req.params.endpointId + '" from ' + logQueue + ': authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
         }
         // the user has the "queues" authorization. So check if the endpoint is owned by the user
         else {
 
-            logger.info(IDLOG, logWord + ' "' + req.params.endpointType + '" "' + req.params.endpointId + '" from queue "' + req.params.queueId + '": user "' + username + '" has "queues" authorization');
+            logger.info(IDLOG, logWord + ' "' + req.params.endpointType + '" "' + req.params.endpointId + '" from ' + logQueue + ': user "' + username + '" has "queues" authorization');
 
             if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
-                logger.warn(IDLOG, logWord + ' "' + req.params.endpointType + '" "' + req.params.endpointId + '" from queue "' + req.params.queueId + '" by user "' + username + '" has been failed: the endpoint isn\'t owned by the user');
+                logger.warn(IDLOG, logWord + ' "' + req.params.endpointType + '" "' + req.params.endpointId + '" from ' + logQueue + ' by user "' + username + '" has been failed: the endpoint isn\'t owned by the user');
                 compUtil.net.sendHttp403(IDLOG, res);
                 return;
 
             } else {
-                logger.info(IDLOG, logWord + ' "' + req.params.endpointType + '" "' + req.params.endpointId + '" from queue "' + req.params.queueId + '": the endpoint is owned by user "' + username + '"');
+                logger.info(IDLOG, logWord + ' "' + req.params.endpointType + '" "' + req.params.endpointId + '" from ' + logQueue + ': the endpoint is owned by user "' + username + '"');
             }
 
         }
@@ -3318,12 +3322,12 @@ function queueMemberPauseUnpause(req, res, paused) {
                 function (err) {
                     try {
                         if (err) {
-                            logger.warn(IDLOG, logWord + ' "' + req.params.endpointType + '" "' + req.params.endpointId + '" from queue "' + req.params.queueId + '" by user "' + username + '": has been failed');
+                            logger.warn(IDLOG, logWord + ' "' + req.params.endpointType + '" "' + req.params.endpointId + '" from ' + logQueue + ' by user "' + username + '": has been failed');
                             compUtil.net.sendHttp500(IDLOG, res, err.toString());
                             return;
                         }
 
-                        logger.info(IDLOG, logWord + ' "' + req.params.endpointType + '" "' + req.params.endpointId + '" from queue "' + req.params.queueId + '" has been successful by user "' + username + '"');
+                        logger.info(IDLOG, logWord + ' "' + req.params.endpointType + '" "' + req.params.endpointId + '" from ' + logQueue + ' has been successful by user "' + username + '"');
                         compUtil.net.sendHttp200(IDLOG, res);
 
                     } catch (err) {

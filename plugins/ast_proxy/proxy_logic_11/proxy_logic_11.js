@@ -3229,7 +3229,7 @@ function logonDynQueues(endpointType, endpointId, cb) {
 }
 
 /**
-* Pause or unpause an extension of a queue.
+* Pause or unpause an extension from a specific queue or from all queues omitting the _queueId_ parameter.
 *
 * @method queueMemberPauseUnpause
 * @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
@@ -3242,42 +3242,49 @@ function logonDynQueues(endpointType, endpointId, cb) {
 function queueMemberPauseUnpause(endpointType, endpointId, queueId, reason, paused, cb) {
     try {
         // check parameters
-        if (   typeof cb           !== 'function' || typeof paused     !== 'boolean'
-            || typeof endpointType !== 'string'   || typeof endpointId !== 'string'
-            || typeof queueId      !== 'string'   || typeof reason     !== 'string') {
+        if (    typeof cb           !== 'function' || typeof paused     !== 'boolean'
+            ||  typeof endpointType !== 'string'   || typeof endpointId !== 'string'
+            || (typeof queueId      !== 'string'   && queueId)
+            ||  typeof reason       !== 'string') {
 
             throw new Error('wrong parameters');
         }
 
+        // used to discriminate the output log between the two operation: pause or unpause
         var logWord = (paused ? 'pause' : 'unpause');
+        // used to discriminate the presence of the queueId parameter. If it's omitted the pause or unpause
+        // is done in all queues
+        var logQueue = (queueId ? 'queue "' + queueId + '"' : 'all queues');
 
         // check the endpoint existence
         if (endpointType === 'extension' && extensions[endpointId]) {
 
-            logger.info(IDLOG, 'execute ' + logWord + ' ' + endpointType + ' ' + endpointId + ' of the queue ' + queueId);
-            astProxy.doCmd({
-                    command: 'queueMemberPauseUnpause',
-                    queue:   queueId,
-                    exten:   endpointId,
-                    reason:  reason,
-                    paused:  paused
-                },
-                function (err) {
-                    try {
-                        if (err) {
-                            logger.error(IDLOG, logWord + ' extension ' + endpointId + ' from queue ' + queueId + ' has been failed');
-                            cb(err);
-                            return;
-                        }
-                        logger.info(IDLOG, logWord + ' extension ' + endpointId + ' from queue ' + queueId + ' has been successful');
-                        cb(null);
+            var obj = {
+                command: 'queueMemberPauseUnpause',
+                exten:   endpointId,
+                reason:  reason,
+                paused:  paused
+            };
 
-                    } catch (err) {
-                       logger.error(IDLOG, err.stack);
-                       cb(err);
+            // if queueId is omitted the action is done on all queues
+            queueId ? obj.queue = queueId : '';
+
+            logger.info(IDLOG, 'execute ' + logWord + ' ' + endpointType + ' ' + endpointId + ' of ' + logQueue);
+            astProxy.doCmd(obj, function (err) {
+                try {
+                    if (err) {
+                        logger.error(IDLOG, logWord + ' extension ' + endpointId + ' from ' + logQueue + ' has been failed');
+                        cb(err);
+                        return;
                     }
+                    logger.info(IDLOG, logWord + ' extension ' + endpointId + ' from ' + logQueue + ' has been successful');
+                    cb(null);
+
+                } catch (err) {
+                   logger.error(IDLOG, err.stack);
+                   cb(err);
                 }
-            );
+            });
         } else {
             var err = logWord + ' queue member: unknown endpointType ' + endpointType + ' or extension not present';
             logger.warn(IDLOG, err);
