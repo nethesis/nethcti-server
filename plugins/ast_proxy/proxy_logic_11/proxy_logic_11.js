@@ -1112,31 +1112,58 @@ function addQueueMember(data, queueId) {
         queues[queueId].addMember(member);
         logger.info(IDLOG, 'added member ' + member.getMember() + ' to queue ' + queueId);
 
-        // set the last started pause data of the member
-        compDbconn.getQueueMemberLastPausedInData(member.getName(), queueId, data.member, function (err1, result) {
-            try {
-                if (err1) { throw err1; }
+        // set the "last started pause" and the "last ended pause" data of the member
+        async.parallel([
 
-                // if the queue member has never paused, the timestamp is null
-                if (result.queueId && result.memberId && result.timestamp) {
-                    queues[result.queueId].getMember(result.memberId).setLastPausedInData(result.timestamp, result.reason);
-                }
-            } catch (err2) {
-                logger.error(IDLOG, err2.stack);
+            function (callback) {
+
+                // set the last started pause data of the member
+                compDbconn.getQueueMemberLastPausedInData(member.getName(), queueId, data.member, function (err1, result) {
+                    try {
+                        if (err1) { throw err1; }
+
+                        // if the queue member has never paused, the timestamp is null
+                        if (result.queueId && result.memberId && result.timestamp) {
+                            queues[result.queueId].getMember(result.memberId).setLastPausedInData(result.timestamp, result.reason);
+                        }
+                        callback();
+
+                    } catch (err2) {
+                        logger.error(IDLOG, err2.stack);
+                        callback(err2);
+                    }
+                });
+            },
+            function (callback) {
+
+                // set the last ended pause data of the member
+                compDbconn.getQueueMemberLastPausedOutData(member.getName(), queueId, data.member, function (err3, result3) {
+                    try {
+                        if (err3) { throw err3; }
+
+                        // if the queue member has never paused, the timestamp is null
+                        if (result3.queueId && result3.memberId && result3.timestamp) {
+                            queues[result3.queueId].getMember(result3.memberId).setLastPausedOutData(result3.timestamp);
+                        }
+                        callback();
+
+                    } catch (err4) {
+                        logger.error(IDLOG, err4.stack);
+                        callback(err4);
+                    }
+                });
             }
-        });
 
-        // set the last ended pause data of the member
-        compDbconn.getQueueMemberLastPausedOutData(member.getName(), queueId, data.member, function (err3, result3) {
-            try {
-                if (err3) { throw err3; }
+        ], function (err) {
 
-                // if the queue member has never paused, the timestamp is null
-                if (result3.queueId && result3.memberId && result3.timestamp) {
-                    queues[result3.queueId].getMember(result3.memberId).setLastPausedOutData(result3.timestamp);
-                }
-            } catch (err4) {
-                logger.error(IDLOG, err4.stack);
+            if (err) { logger.error(IDLOG, err); }
+            else {
+
+                logger.info(IDLOG, 'set "last paused in" and "last paused out" data of member "' + data.member + '" of queue "' + queueId + '"');
+
+                // emit the event
+                astProxy.emit(EVT_QUEUE_CHANGED, queues[queueId]);
+                logger.info(IDLOG, 'emitted event ' + EVT_QUEUE_CHANGED + ' for queue ' + queueId);
             }
         });
 
@@ -2104,6 +2131,10 @@ function removeQueueMember(memberId, queueId) {
         // remove the member from the queue
         queues[queueId].removeMember(memberId);
         logger.info(IDLOG, 'removed member "' + memberId + '" from the queue "' + queueId + '"');
+
+        // emit the event
+        astProxy.emit(EVT_QUEUE_CHANGED, queues[queueId]);
+        logger.info(IDLOG, 'emitted event ' + EVT_QUEUE_CHANGED + ' for queue ' + queueId);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
