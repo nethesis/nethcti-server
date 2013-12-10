@@ -1096,6 +1096,11 @@ function addQueueMember(data, queueId) {
             throw new Error('wrong parameters');
         }
 
+        if (!queues[queueId]) {
+            logger.warn(IDLOG, 'try to add the queue member "' + data.member + '" to a not existent queue "' + queueId + '"');
+            return;
+        }
+
         // create new queue member object
         var member = new QueueMember(data.member, queueId, data.paused);
         member.setName(data.name);
@@ -1103,7 +1108,7 @@ function addQueueMember(data, queueId) {
         member.setCallsTakenCount(data.callsTakenCount);
         member.setLastCallTimestamp(data.lastCallTimestamp);
 
-        // add the member to its queue
+        // add the member to the queue
         queues[queueId].addMember(member);
         logger.info(IDLOG, 'added member ' + member.getMember() + ' to queue ' + queueId);
 
@@ -2009,12 +2014,12 @@ function evtQueueMemberPausedChanged(queueId, memberId, paused, reason) {
 }
 
 /**
-* Add the new member to the queue.
+* An event about queue member added has been received from the asterisk.
 *
 * @method evtQueueMemberAdded
 * @param {object} data
 *   @param {string}  data.queueId           The queue identifier
-*   @param {string}  data.memberId          The queue member identifier
+*   @param {string}  data.member            The queue member identifier
 *   @param {boolean} data.paused            True if the extension has been paused from the queue
 *   @param {number}  data.lastCallTimestamp The timestamp of the last call received by the member
 *   @param {number}  data.callsTakenCount   The number of the taken calls
@@ -2038,6 +2043,67 @@ function evtQueueMemberAdded(data) {
 
         // add the new member to the queue
         addQueueMember(data, data.queueId);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* An event about queue member removed has been received from the asterisk.
+*
+* @method evtQueueMemberRemoved
+* @param {object} data
+*   @param {string} data.queueId The queue identifier
+*   @param {string} data.member  The queue member identifier
+* @private
+*/
+function evtQueueMemberRemoved(data) {
+    try {
+        // check parameters
+        if (   typeof data         !== 'object'
+            || typeof data.queueId !== 'string' || typeof data.member !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        if (!queues[data.queueId]) {
+            logger.warn(IDLOG, 'received event queue member removed for not existent queue "' + queueId + '"');
+            return;
+        }
+
+        // add the new member to the queue
+        removeQueueMember(data.member, data.queueId);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Removes a member from a queue.
+*
+* @method removeQueueMember
+* @param {string} memberId The queue member identifier
+* @param {string} queueId  The queue identifier
+* @private
+*/
+function removeQueueMember(memberId, queueId) {
+    try {
+        // check parameters
+        if (typeof queueId !== 'string' || typeof memberId !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        if (!queues[queueId]) {
+            logger.warn(IDLOG, 'try to remove the queue member "' + memberId + '" from a not existent queue "' + queueId + '"');
+            return;
+        }
+
+        // remove the member from the queue
+        queues[queueId].removeMember(memberId);
+        logger.info(IDLOG, 'removed member "' + memberId + '" from the queue "' + queueId + '"');
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -3962,6 +4028,7 @@ exports.evtExtenDndChanged              = evtExtenDndChanged;
 exports.evtQueueMemberAdded             = evtQueueMemberAdded;
 exports.EVT_PARKING_CHANGED             = EVT_PARKING_CHANGED;
 exports.redirectConversation            = redirectConversation;
+exports.evtQueueMemberRemoved           = evtQueueMemberRemoved;
 exports.redirectWaitingCaller           = redirectWaitingCaller;
 exports.evtHangupConversation           = evtHangupConversation;
 exports.evtExtenStatusChanged           = evtExtenStatusChanged;
