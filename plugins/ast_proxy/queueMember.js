@@ -180,10 +180,17 @@ exports.QueueMember = function (memberNum, queueId, pausedValue) {
     /**
     * Set the number of the taken calls.
     *
+    * **It can throw an Exception**.
+    *
     * @method setCallsTakenCount
     * @param {number} num The number of the taken calls.
     */
-    function setCallsTakenCount(num) { callsTakenCount = num; }
+    function setCallsTakenCount(num) {
+        // check the parameter
+        if (typeof num !== 'number') { throw new Error('wrong parameter'); }
+
+        callsTakenCount = num;
+    }
 
     /**
     * Set the member type.
@@ -280,7 +287,7 @@ exports.QueueMember = function (memberNum, queueId, pausedValue) {
     *         queue:                  "401",
     *         member:                 "214",
     *         paused:                 true,          // the paused status
-    *         callsTakenCount:        "0",           // the number of taken calls
+    *         callsTakenCount:        0,             // the number of taken calls
     *         lastCallTimestamp:      1365590191     // the timestamp of the last taken call
     *         lastPausedInReason:     "some reason"  // the reason description of the last started pause
     *         lastPausedInTimestamp:  1365591191     // the timestamp of the last started pause

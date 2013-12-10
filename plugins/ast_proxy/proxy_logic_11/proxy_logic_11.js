@@ -1053,47 +1053,9 @@ function queueDetails(err, resp) {
         queues[q].setAbandonedCallsCount(resp.abandonedCallsCount);
 
         // set all queue members
-        var m, member;
+        var m;
         for (m in resp.members) {
-
-            // create new queue member object
-            member = new QueueMember(resp.members[m].member, q, resp.members[m].paused);
-            member.setName(resp.members[m].name);
-            member.setType(resp.members[m].type);
-            member.setCallsTakenCount(resp.members[m].callsTakenCount);
-            member.setLastCallTimestamp(resp.members[m].lastCallTimestamp);
-
-            // add the member to its queue
-            queues[q].addMember(member);
-            logger.info(IDLOG, 'added member ' + member.getMember() + ' to queue ' + q);
-
-            // set the last started pause data of the member
-            compDbconn.getQueueMemberLastPausedInData(member.getName(), q, m, function (err1, result) {
-                try {
-                    if (err1) { throw err1; }
-
-                    // if the queue member has never paused, the timestamp is null
-                    if (result.queueId && result.memberId && result.timestamp) {
-                        queues[result.queueId].getMember(result.memberId).setLastPausedInData(result.timestamp, result.reason);
-                    }
-                } catch (err2) {
-                    logger.error(IDLOG, err2.stack);
-                }
-            });
-
-            // set the last ended pause data of the member
-            compDbconn.getQueueMemberLastPausedOutData(member.getName(), q, m, function (err1, result) {
-                try {
-                    if (err1) { throw err1; }
-
-                    // if the queue member has never paused, the timestamp is null
-                    if (result.queueId && result.memberId && result.timestamp) {
-                        queues[result.queueId].getMember(result.memberId).setLastPausedOutData(result.timestamp);
-                    }
-                } catch (err2) {
-                    logger.error(IDLOG, err2.stack);
-                }
-            });
+            addQueueMember(resp.members[m], q);
         }
 
         // set all waiting callers
@@ -1103,6 +1065,75 @@ function queueDetails(err, resp) {
             queues[q].addWaitingCaller(wCaller);
             logger.info(IDLOG, 'added waiting caller ' + wCaller.getName() + ' to queue ' + wCaller.getQueue());
         }
+
+    } catch (error) {
+        logger.error(IDLOG, error.stack);
+    }
+}
+
+/**
+* Add a member to a queue.
+*
+* @method addQueueMember
+* @param {object} data
+*    @param {string}  data.member            The member identifier
+*    @param {boolean} data.paused            The paused status of the member
+*    @param {string}  data.name              The name of the member
+*    @param {string}  data.type              The type of the member (dynamic, static, realtime)
+*    @param {number}  data.callsTakenCount   The number of the taken calls
+*    @param {number}  data.lastCallTimestamp The timestamp of the last call received by the member
+* @param {string} queueId The queue identifier
+* @private
+*/
+function addQueueMember(data, queueId) {
+    try {
+        // check parameters
+        if (   typeof data                 !== 'object' || typeof queueId                !== 'string'
+            || typeof data.member          !== 'string' || typeof data.paused            !== 'boolean'
+            || typeof data.name            !== 'string' || typeof data.type              !== 'string'
+            || typeof data.callsTakenCount !== 'number' || typeof data.lastCallTimestamp !== 'number') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // create new queue member object
+        var member = new QueueMember(data.member, queueId, data.paused);
+        member.setName(data.name);
+        member.setType(data.type);
+        member.setCallsTakenCount(data.callsTakenCount);
+        member.setLastCallTimestamp(data.lastCallTimestamp);
+
+        // add the member to its queue
+        queues[queueId].addMember(member);
+        logger.info(IDLOG, 'added member ' + member.getMember() + ' to queue ' + queueId);
+
+        // set the last started pause data of the member
+        compDbconn.getQueueMemberLastPausedInData(member.getName(), queueId, data.member, function (err1, result) {
+            try {
+                if (err1) { throw err1; }
+
+                // if the queue member has never paused, the timestamp is null
+                if (result.queueId && result.memberId && result.timestamp) {
+                    queues[result.queueId].getMember(result.memberId).setLastPausedInData(result.timestamp, result.reason);
+                }
+            } catch (err2) {
+                logger.error(IDLOG, err2.stack);
+            }
+        });
+
+        // set the last ended pause data of the member
+        compDbconn.getQueueMemberLastPausedOutData(member.getName(), queueId, data.member, function (err3, result3) {
+            try {
+                if (err3) { throw err3; }
+
+                // if the queue member has never paused, the timestamp is null
+                if (result3.queueId && result3.memberId && result3.timestamp) {
+                    queues[result3.queueId].getMember(result3.memberId).setLastPausedOutData(result3.timestamp);
+                }
+            } catch (err4) {
+                logger.error(IDLOG, err4.stack);
+            }
+        });
 
     } catch (error) {
         logger.error(IDLOG, error.stack);
@@ -1972,6 +2003,42 @@ function evtQueueMemberPausedChanged(queueId, memberId, paused, reason) {
         } else {
             logger.warn(IDLOG, 'received event queue member paused changed for non existent member "' + memberId + '"');
         }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Add the new member to the queue.
+*
+* @method evtQueueMemberAdded
+* @param {object} data
+*   @param {string}  data.queueId           The queue identifier
+*   @param {string}  data.memberId          The queue member identifier
+*   @param {boolean} data.paused            True if the extension has been paused from the queue
+*   @param {number}  data.lastCallTimestamp The timestamp of the last call received by the member
+*   @param {number}  data.callsTakenCount   The number of the taken calls
+* @private
+*/
+function evtQueueMemberAdded(data) {
+    try {
+        // check parameters
+        if (   typeof data         !== 'object'  || typeof data.type              !== 'string'
+            || typeof data.queueId !== 'string'  || typeof data.lastCallTimestamp !== 'number'
+            || typeof data.member  !== 'string'  || typeof data.callsTakenCount   !== 'number'
+            || typeof data.paused  !== 'boolean' || typeof data.name              !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        if (!queues[data.queueId]) {
+            logger.warn(IDLOG, 'received event queue member added for not existent queue "' + queueId + '"');
+            return;
+        }
+
+        // add the new member to the queue
+        addQueueMember(data, data.queueId);
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -3892,6 +3959,7 @@ exports.hangupConversation              = hangupConversation;
 exports.evtNewExternalCall              = evtNewExternalCall;
 exports.pickupConversation              = pickupConversation;
 exports.evtExtenDndChanged              = evtExtenDndChanged;
+exports.evtQueueMemberAdded             = evtQueueMemberAdded;
 exports.EVT_PARKING_CHANGED             = EVT_PARKING_CHANGED;
 exports.redirectConversation            = redirectConversation;
 exports.redirectWaitingCaller           = redirectWaitingCaller;
