@@ -90,7 +90,6 @@ var PRE_CALLERID = '"CTI"';
                     // add association ActionID-callback
                     map[act.ActionID] = cb;
 
-console.log(act);
                     // send action to asterisk
                     am.send(act);
 
@@ -109,7 +108,6 @@ console.log(act);
             */
             data: function (data) {
                 try {
-                    console.log(data);
                     // check callback and info presence and execute it
                     if (map[data.actionid] && data.response === 'Success') {
 
