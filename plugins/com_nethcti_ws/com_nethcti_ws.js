@@ -448,7 +448,7 @@ function extenChanged(exten) {
 */
 function queueMemberChanged(member) {
     try {
-        logger.info(IDLOG, 'received event queueMemberChanged for queue member ' + member.getMember());
+        logger.info(IDLOG, 'received event queueMemberChanged for member ' + member.getMember() + ' of queue ' + member.getQueue());
         logger.info(IDLOG, 'emit event queueMemberUpdate for member ' + member.getMember() + ' of queue ' + member.getQueue() + ' to websockets');
 
         // emits the event with clear numbers to all users with privacy disabled
