@@ -399,7 +399,15 @@ exports.Extension = function (ext, chType) {
 * @type {object}
 * @private
 * @final
-* @default DND | BUSY | ONLINE | ONHOLD | OFFLINE | RINGING | BUSY_RINGING
+* @default {
+    DND:          "dnd",         // Busy
+    BUSY:         "busy",        // In Use
+    ONLINE:       "online",      // Idle
+    ONHOLD:       "onhold",
+    OFFLINE:      "offline",     // Unavailable
+    RINGING:      "ringing",     // Ringing
+    BUSY_RINGING: "busy_ringing" // In Use & Ringin
+}
 */
 var STATUS_ENUM = {
     DND:          'dnd',         // Busy
