@@ -1047,6 +1047,12 @@ function queueDetails(err, resp) {
 
         var q = resp.queue; // the queue number
 
+        // check the existence of the queue
+        if (!queues[q]) {
+            logger.warn(IDLOG, 'try to set details of not existent queue "' + q + '"');
+            return;
+        }
+
         // set the queue data
         queues[q].setAvgHoldTime(resp.holdtime);
         queues[q].setAvgTalkTime(resp.talktime);
@@ -1056,7 +1062,7 @@ function queueDetails(err, resp) {
         // add all static and dynamic members that are logged in
         var m;
         for (m in resp.members) {
-            addQueueMember(resp.members[m], q);
+            addQueueMemberLoggedIn(resp.members[m], q);
         }
 
         // adds all static and dynamic members that are logged out. To do so it cycle
@@ -1071,6 +1077,11 @@ function queueDetails(err, resp) {
 
             if (struct[structKey].type === INI_STRUCT.TYPE.QUEUE && q === structQueueId) {
 
+                if (!struct[structKey].dynmembers) {
+                    logger.warn(IDLOG, 'no "dynmembers" key for "' + structKey + '" in configuration file');
+                    continue;
+                }
+
                 structDynMembers = struct[structKey].dynmembers.split(',');
 
                 var i, structDynMemberId;
@@ -1084,17 +1095,7 @@ function queueDetails(err, resp) {
                     // the asterisk events. So if it's not present means that the member isn't logged in and
                     // adds the member to the queue as logged off
                     if (!allMembersQueue[structDynMemberId]) {
-
-                        // create new queue member object
-                        // false value of the third parameter is used as "paused" parameter because asterisk doesn't
-                        // provides this information. When the queue member logged in the queue a new "QueueMemberAdded"
-                        // event is generated from the asterisk and so the member is updated with all the updated values
-                        var member = new QueueMember(structDynMemberId, q, false, false);
-                        member.setType(QUEUE_MEMBER_TYPES_ENUM.DYNAMIC);
-
-                        // add the member to the queue
-                        queues[q].addMember(member);
-                        logger.info(IDLOG, 'added logged off member ' + member.getMember() + ' to the queue ' + q);
+                        addQueueMemberLoggedOut(structDynMemberId, q);
                     }
                 }
             }
@@ -1114,9 +1115,46 @@ function queueDetails(err, resp) {
 }
 
 /**
-* Add a member to a queue.
+* Add a member to a queue with logged status set to out.
 *
-* @method addQueueMember
+* @method addQueueMemberLoggedOut
+* @param {string} memberId The queue member identifier
+* @param {string} queueId  The queue identifier
+* @private
+*/
+function addQueueMemberLoggedOut(memberId, queueId) {
+    try {
+        // check parameters
+        if (typeof memberId !== 'string' || typeof queueId !== 'string') {
+            throw new Error('wrong parameters');
+        }
+
+        // check the existence of the queue
+        if (!queues[queueId]) {
+            logger.warn(IDLOG, 'try to add logged out member "' + memberId + '" to the not existent queue "' + queueId + '"');
+            return;
+        }
+
+        // create new queue member object
+        // false value of the third parameter is used as "paused" parameter because asterisk doesn't
+        // provides this information. When the queue member logged in the queue a new "QueueMemberAdded"
+        // event is generated from the asterisk and so the member is updated with all the updated values
+        var member = new QueueMember(memberId, queueId, false, false);
+        member.setType(QUEUE_MEMBER_TYPES_ENUM.DYNAMIC);
+
+        // add the member to the queue
+        queues[queueId].addMember(member);
+        logger.info(IDLOG, 'added logged off member ' + member.getMember() + ' to the queue ' + queueId);
+
+    } catch (error) {
+        logger.error(IDLOG, error.stack);
+    }
+}
+
+/**
+* Add a member to the queue with logged status set to in.
+*
+* @method addQueueMemberLoggedIn
 * @param {object} data
 *    @param {string}  data.member            The member identifier
 *    @param {boolean} data.paused            The paused status of the member
@@ -1127,7 +1165,7 @@ function queueDetails(err, resp) {
 * @param {string} queueId The queue identifier
 * @private
 */
-function addQueueMember(data, queueId) {
+function addQueueMemberLoggedIn(data, queueId) {
     try {
         // check parameters
         if (   typeof data                 !== 'object' || typeof queueId                !== 'string'
@@ -1152,15 +1190,45 @@ function addQueueMember(data, queueId) {
 
         // add the member to the queue
         queues[queueId].addMember(member);
-        logger.info(IDLOG, 'added member ' + member.getMember() + ' to queue ' + queueId);
+        logger.info(IDLOG, 'added member ' + member.getMember() + ' to the queue ' + queueId);
 
-        // set the "last started pause" and the "last ended pause" data of the member
+        // set the last pause data to the member
+        updateQueueMemberLastPauseData(member.getName(), data.member, queueId);
+
+    } catch (error) {
+        logger.error(IDLOG, error.stack);
+    }
+}
+
+/**
+* Sets the "last started pause" and the "last ended pause" data to the member.
+*
+* @method updateQueueMemberLastPauseData
+* @param {string} memberName The queue member name
+* @param {string} memberId   The queue member identifier
+* @param {string} queueId    The queue identifier
+* @private
+*/
+function updateQueueMemberLastPauseData(memberName, memberId, queueId) {
+    try {
+        // check parameters
+        if (   typeof memberName !== 'string'
+            || typeof memberId   !== 'string' || typeof queueId !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        if (!queues[queueId]) {
+            logger.warn(IDLOG, 'try to update "last pause" data for the queue member "' + memberId + '" to a not existent queue "' + queueId + '"');
+            return;
+        }
+
         async.parallel([
 
             function (callback) {
 
                 // set the last started pause data of the member
-                compDbconn.getQueueMemberLastPausedInData(member.getName(), queueId, data.member, function (err1, result) {
+                compDbconn.getQueueMemberLastPausedInData(memberName, queueId, memberId, function (err1, result) {
                     try {
                         if (err1) { throw err1; }
 
@@ -1179,7 +1247,7 @@ function addQueueMember(data, queueId) {
             function (callback) {
 
                 // set the last ended pause data of the member
-                compDbconn.getQueueMemberLastPausedOutData(member.getName(), queueId, data.member, function (err3, result3) {
+                compDbconn.getQueueMemberLastPausedOutData(memberName, queueId, memberId, function (err3, result3) {
                     try {
                         if (err3) { throw err3; }
 
@@ -1201,14 +1269,13 @@ function addQueueMember(data, queueId) {
             if (err) { logger.error(IDLOG, err); }
             else {
 
-                logger.info(IDLOG, 'set "last paused in" and "last paused out" data of member "' + data.member + '" of queue "' + queueId + '"');
+                logger.info(IDLOG, 'set "last paused in" and "last paused out" data of the member "' + memberId + '" of queue "' + queueId + '"');
 
                 // emit the event
-                astProxy.emit(EVT_QUEUE_CHANGED, queues[queueId]);
-                logger.info(IDLOG, 'emitted event ' + EVT_QUEUE_CHANGED + ' for queue ' + queueId);
+                logger.info(IDLOG, 'emit event ' + EVT_QUEUE_MEMBER_CHANGED + ' for member ' + memberId + ' of queue ' + queueId);
+                astProxy.emit(EVT_QUEUE_MEMBER_CHANGED, queues[queueId].getMember(memberId));
             }
         });
-
     } catch (error) {
         logger.error(IDLOG, error.stack);
     }
@@ -2111,7 +2178,7 @@ function evtQueueMemberAdded(data) {
         }
 
         // add the new member to the queue
-        addQueueMember(data, data.queueId);
+        addQueueMemberLoggedIn(data, data.queueId);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -2120,6 +2187,7 @@ function evtQueueMemberAdded(data) {
 
 /**
 * An event about queue member removed has been received from the asterisk.
+* So updates the queue member status.
 *
 * @method evtQueueMemberRemoved
 * @param {object} data
@@ -2141,42 +2209,20 @@ function evtQueueMemberRemoved(data) {
             return;
         }
 
-        // add the new member to the queue
-        removeQueueMember(data.member, data.queueId);
+        // update the logged in status of the member
+        var member = queues[data.queueId].getMember(data.member);
 
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Removes a member from a queue.
-*
-* @method removeQueueMember
-* @param {string} memberId The queue member identifier
-* @param {string} queueId  The queue identifier
-* @private
-*/
-function removeQueueMember(memberId, queueId) {
-    try {
-        // check parameters
-        if (typeof queueId !== 'string' || typeof memberId !== 'string') {
-
-            throw new Error('wrong parameters');
-        }
-
-        if (!queues[queueId]) {
-            logger.warn(IDLOG, 'try to remove the queue member "' + memberId + '" from a not existent queue "' + queueId + '"');
+        if (!member) {
+            logger.warn(IDLOG, 'try to set logged in status to "false" of not existent member "' + data.member + '" of queue "' + data.queueId + '"');
             return;
         }
 
-        // remove the member from the queue
-        queues[queueId].removeMember(memberId);
-        logger.info(IDLOG, 'removed member "' + memberId + '" from the queue "' + queueId + '"');
+        member.setLoggedIn(false);
+        logger.info(IDLOG, 'set the member "' + data.member + '" of queue "' + data.queueId + '" to logged off');
 
         // emit the event
-        astProxy.emit(EVT_QUEUE_CHANGED, queues[queueId]);
-        logger.info(IDLOG, 'emitted event ' + EVT_QUEUE_CHANGED + ' for queue ' + queueId);
+        astProxy.emit(EVT_QUEUE_MEMBER_CHANGED, member);
+        logger.info(IDLOG, 'emitted event ' + EVT_QUEUE_MEMBER_CHANGED + ' for queue member ' + data.member + ' of queue ' + data.queueId);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);

@@ -79,18 +79,20 @@ exports.QueueMember = function (memberNum, queueId, pausedValue, loggedInValue) 
     *
     * @property callsTakenCount
     * @type {number}
+    * @default 0
     * @private
     */
-    var callsTakenCount;
+    var callsTakenCount = 0;
 
     /**
     * The timestamp of the last taken call.
     *
     * @property lastCallTimestamp
     * @type {number}
+    * @default 0
     * @private
     */
-    var lastCallTimestamp;
+    var lastCallTimestamp = 0;
 
     /**
     * The timestamp of the last started pause.
@@ -143,6 +145,21 @@ exports.QueueMember = function (memberNum, queueId, pausedValue, loggedInValue) 
         if (typeof num !== 'number') { throw new Error('wrong parameter'); }
 
         lastCallTimestamp = num;
+    }
+
+    /**
+    * Set the logged in status of the member.
+    *
+    * **It can throw an Exception**.
+    *
+    * @method setLoggedIn
+    * @param {boolean} value True if the member is logged in the queue
+    */
+    function setLoggedIn(value) {
+        // check the parameter
+        if (typeof value !== 'boolean') { throw new Error('wrong parameter'); }
+
+        loggedIn = value;
     }
 
     /**
@@ -337,6 +354,7 @@ exports.QueueMember = function (memberNum, queueId, pausedValue, loggedInValue) 
         toString:             toString,
         setPaused:            setPaused,
         getMember:            getMember,
+        setLoggedIn:          setLoggedIn,
         setCallsTakenCount:   setCallsTakenCount,
         getCallsTakenCount:   getCallsTakenCount,
         setLastPausedInData:  setLastPausedInData,
