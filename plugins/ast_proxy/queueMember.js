@@ -4,16 +4,19 @@
 * **It can throw exception.**
 *
 * @class QueueMember
-* @param {string} memberNum   The member number
-* @param {string} queueId     The name of the queue membership
-* @param {string} pausedValue True if the extension is paused from the queue
+* @param  {string}  memberNum   The member number
+* @param  {string}  queueId     The name of the queue membership
+* @param  {boolean} pausedValue True if the extension is paused from the queue
+* @param  {boolean} loggedIn    True if the extension is logged in the queue
+* @return {object}  The queue member object.
 * @constructor
-* @return {object} The queue member object.
 */
-exports.QueueMember = function (memberNum, queueId, pausedValue) {
-    // check the parameter
-    if (typeof memberNum !== 'string' || typeof queueId !== 'string') {
-        throw new Error('wrong parameter');
+exports.QueueMember = function (memberNum, queueId, pausedValue, loggedInValue) {
+    // check the parameters
+    if (   typeof queueId   !== 'string' || typeof loggedInValue !== 'boolean'
+        || typeof memberNum !== 'string' || typeof pausedValue   !== 'boolean') {
+
+        throw new Error('wrong parameters');
     }
 
     /**
@@ -61,6 +64,15 @@ exports.QueueMember = function (memberNum, queueId, pausedValue) {
     * @private
     */
     var paused = pausedValue;
+
+    /**
+    * The logged in status of the member.
+    *
+    * @property loggedIn
+    * @type {boolean}
+    * @private
+    */
+    var loggedIn = loggedInValue;
 
     /**
     * The number of the taken calls.
@@ -287,6 +299,7 @@ exports.QueueMember = function (memberNum, queueId, pausedValue) {
     *         queue:                  "401",
     *         member:                 "214",
     *         paused:                 true,          // the paused status
+    *         loggedIn:               true,          // if the member is logged in or not
     *         callsTakenCount:        0,             // the number of taken calls
     *         lastCallTimestamp:      1365590191     // the timestamp of the last taken call
     *         lastPausedInReason:     "some reason"  // the reason description of the last started pause
@@ -304,6 +317,7 @@ exports.QueueMember = function (memberNum, queueId, pausedValue) {
             queue:                  queue,
             member:                 member,
             paused:                 paused,
+            loggedIn:               loggedIn,
             callsTakenCount:        callsTakenCount,
             lastCallTimestamp:      lastCallTimestamp,
             lastPausedInReason:     lastPausedInReason,
@@ -331,3 +345,33 @@ exports.QueueMember = function (memberNum, queueId, pausedValue) {
         getLastCallTimestamp: getLastCallTimestamp
     };
 }
+
+/**
+* The queue member types enumeration.
+*
+* @property TYPES_ENUM
+* @type {object}
+* @private
+* @final
+* @default {
+    STATIC:   "static",
+    DYNAMIC:  "dynamic",
+    REALTIME: "realtime"
+}
+*/
+var TYPES_ENUM = {
+    STATIC:   'static',
+    DYNAMIC:  'dynamic',
+    REALTIME: 'realtime'
+};
+
+/**
+* The QueueMember types enumeration. It's the same of
+* the private _TYPES\_ENUM_.
+*
+* @property QUEUE_MEMBER_TYPES_ENUM
+* @type {object}
+* @final
+* @default Equal to the private property TYPES_ENUM
+*/
+exports.QUEUE_MEMBER_TYPES_ENUM = TYPES_ENUM;

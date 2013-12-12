@@ -6,7 +6,7 @@
         "user":       "USER",
         "password":   "PASS",
         "simnumber":  "1",
-        "queue_path": "ASTERISK-PROXY_PATH/sms_queue"
+        "queue_path": "/var/spool/nethcti/sms"
     },
     "webservice": {
         "url": "",

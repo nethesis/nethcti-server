@@ -12,19 +12,20 @@
 * @class proxy_logic_11
 * @static
 */
-var path               = require('path');
-var async              = require('async');
-var Queue              = require('../queue').Queue;
-var Trunk              = require('../trunk').Trunk;
-var Channel            = require('../channel').Channel;
-var Parking            = require('../parking').Parking;
-var iniparser          = require('iniparser');
-var Extension          = require('../extension').Extension;
-var QueueMember        = require('../queueMember').QueueMember;
-var EventEmitter       = require('events').EventEmitter;
-var ParkedCaller       = require('../parkedCaller').ParkedCaller;
-var Conversation       = require('../conversation').Conversation;
-var QueueWaitingCaller = require('../queueWaitingCaller').QueueWaitingCaller;
+var path                    = require('path');
+var async                   = require('async');
+var Queue                   = require('../queue').Queue;
+var Trunk                   = require('../trunk').Trunk;
+var Channel                 = require('../channel').Channel;
+var Parking                 = require('../parking').Parking;
+var iniparser               = require('iniparser');
+var Extension               = require('../extension').Extension;
+var QueueMember             = require('../queueMember').QueueMember;
+var EventEmitter            = require('events').EventEmitter;
+var ParkedCaller            = require('../parkedCaller').ParkedCaller;
+var Conversation            = require('../conversation').Conversation;
+var QueueWaitingCaller      = require('../queueWaitingCaller').QueueWaitingCaller;
+var QUEUE_MEMBER_TYPES_ENUM = require('../queueMember').QUEUE_MEMBER_TYPES_ENUM;
 
 /**
 * The module identifier used by the logger.
@@ -1020,7 +1021,7 @@ function initializeQueues() {
 }
 
 /**
-* Sets the details for queue object. The details include the members and
+* Sets the details for the queue object. The details include the members and
 * the waiting callers.
 *
 * @method queueDetails
@@ -1052,10 +1053,51 @@ function queueDetails(err, resp) {
         queues[q].setCompletedCallsCount(resp.completedCallsCount);
         queues[q].setAbandonedCallsCount(resp.abandonedCallsCount);
 
-        // set all queue members
+        // add all static and dynamic members that are logged in
         var m;
         for (m in resp.members) {
             addQueueMember(resp.members[m], q);
+        }
+
+        // adds all static and dynamic members that are logged out. To do so it cycle
+        // in all elements of the structure ini file getting the dynamic member list from each queue
+        // and checking if each member has already been added to the queue. If it's not present means
+        // that it's not logged in, becuase asterisk didn't generate the event for the member
+        var structKey, structDynMembers, structQueueId;
+        for (structKey in struct) {
+
+            // get the "queue" value of the structure json content. If the content isn't of a queue the value is undefined
+            structQueueId = struct[structKey].queue;
+
+            if (struct[structKey].type === INI_STRUCT.TYPE.QUEUE && q === structQueueId) {
+
+                structDynMembers = struct[structKey].dynmembers.split(',');
+
+                var i, structDynMemberId;
+                var allMembersQueue = queues[q].getAllMembers();
+
+                for (i = 0; i < structDynMembers.length; i++) {
+
+                    structDynMemberId = structDynMembers[i];
+
+                    // all the logged in member as already been added to the queue in the above code using
+                    // the asterisk events. So if it's not present means that the member isn't logged in and
+                    // adds the member to the queue as logged off
+                    if (!allMembersQueue[structDynMemberId]) {
+
+                        // create new queue member object
+                        // false value of the third parameter is used as "paused" parameter because asterisk doesn't
+                        // provides this information. When the queue member logged in the queue a new "QueueMemberAdded"
+                        // event is generated from the asterisk and so the member is updated with all the updated values
+                        var member = new QueueMember(structDynMemberId, q, false, false);
+                        member.setType(QUEUE_MEMBER_TYPES_ENUM.DYNAMIC);
+
+                        // add the member to the queue
+                        queues[q].addMember(member);
+                        logger.info(IDLOG, 'added logged off member ' + member.getMember() + ' to the queue ' + q);
+                    }
+                }
+            }
         }
 
         // set all waiting callers
@@ -1102,7 +1144,7 @@ function addQueueMember(data, queueId) {
         }
 
         // create new queue member object
-        var member = new QueueMember(data.member, queueId, data.paused);
+        var member = new QueueMember(data.member, queueId, data.paused, true);
         member.setName(data.name);
         member.setType(data.type);
         member.setCallsTakenCount(data.callsTakenCount);
