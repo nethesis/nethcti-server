@@ -43,6 +43,7 @@ var logger = console;
 * @property groups
 * @type object
 * @private
+* @default {}
 */
 var groups = {};
 
@@ -81,25 +82,30 @@ function setLogger(log) {
 * @param {string} path The file path of the configuration file. It must use the JSON syntax.
 */
 function config(path) {
-    // check parameter
-    if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
+    try {
+        // check parameter
+        if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
 
-    // check file presence
-    if (!fs.existsSync(path)) { throw new Error(path + ' not exists'); }
+        // check file presence
+        if (!fs.existsSync(path)) { throw new Error(path + ' doesn\'t exists'); }
 
-    // read groups part from the JSON file
-    var json = require(path).groups;
+        // read groups part from the JSON file
+        var json = require(path).groups;
 
-    // create the Group objects
-    var g, newgroup;
-    for (g in json) {
-        newgroup = new Group(g);
+        // create the Group objects
+        var g, newgroup;
+        for (g in json) {
+            newgroup = new Group(g);
 
-        // json[g] is an array as readed from the JSON file
-        newgroup.addUsers(json[g]);
-        groups[g] = newgroup;
+            // json[g] is an array as readed from the JSON file
+            newgroup.addUsers(json[g]);
+            groups[g] = newgroup;
+        }
+        logger.info(IDLOG, 'ended configuration by JSON file ' + path);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
     }
-    logger.info(IDLOG, 'ended configuration by JSON file ' + path);
 }
 
 /**

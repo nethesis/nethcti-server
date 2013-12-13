@@ -132,40 +132,45 @@ function setLogger(log) {
 * @param {string} path The path of the configuration file
 */
 function config(path) {
-    // check parameter
-    if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
+    try {
+        // check parameter
+        if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
 
-    // check file presence
-    if (!fs.existsSync(path)) { throw new Error(path + ' not exists'); }
+        // check file presence
+        if (!fs.existsSync(path)) { throw new Error(path + ' doesn\'t exists'); }
 
-    // read configuration file
-    var json = require(path);
+        // read configuration file
+        var json = require(path);
 
-    // check the configuration
-    if (   typeof json      !== 'object'
-        || typeof json.type !== 'string' || typeof json.prefix !== 'string'
-        || smsDeliveryTypes.isValidDeliveryType(json.type) === false
-        || (json.type === smsDeliveryTypes.TYPES.portech    && !json.portech)
-        || (json.type === smsDeliveryTypes.TYPES.webservice && !json.webservice)) {
+        // check the configuration
+        if (   typeof json      !== 'object'
+            || typeof json.type !== 'string' || typeof json.prefix !== 'string'
+            || smsDeliveryTypes.isValidDeliveryType(json.type) === false
+            || (json.type === smsDeliveryTypes.TYPES.portech    && !json.portech)
+            || (json.type === smsDeliveryTypes.TYPES.webservice && !json.webservice)) {
 
-        throw new Error('sms configuration file ' + path);
+            throw new Error('wrong sms configuration file ' + path);
+        }
+
+        // set the delivery type
+        deliveryType = json.type;
+        logger.info(IDLOG, 'sms configuration for "' + deliveryType + '"');
+
+        // set the prefix to be used
+        prefix = json.prefix;
+
+        if (deliveryType === smsDeliveryTypes.TYPES.portech) {
+            configDeliveryPortech(json.portech);
+
+        } else if (deliveryType === smsDeliveryTypes.TYPES.webservice) {
+            configDeliveryWebservice(json.webservice);
+        }
+
+        logger.info(IDLOG, 'sms configuration by file ' + path + ' ended');
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
     }
-
-    // set the delivery type
-    deliveryType = json.type;
-    logger.info(IDLOG, 'sms configuration for "' + deliveryType + '"');
-
-    // set the prefix to be used
-    prefix = json.prefix;
-
-    if (deliveryType === smsDeliveryTypes.TYPES.portech) {
-        configDeliveryPortech(json.portech);
-
-    } else if (deliveryType === smsDeliveryTypes.TYPES.webservice) {
-        configDeliveryWebservice(json.webservice);
-    }
-
-    logger.info(IDLOG, 'sms configuration by file ' + path + ' ended');
 }
 
 /**
@@ -337,9 +342,8 @@ function sendSmsByWebservice(to, body, cb) {
             sendSmsByHttpPost(to, body, cb);
 
         } else {
-            var str = 'sending sms to ' + to + ': bad webservice delivery method ' + webservice.method;
-            logger.warn(IDLOG, str);
-            cb(str);
+            var str = 'sending sms to ' + to + ': bad webservice configuration';
+            throw new Error(str);
         }
 
     } catch (err) {
@@ -364,6 +368,13 @@ function sendSmsByHttpPost(to, body, cb) {
             || typeof body !== 'string' || typeof cb !== 'function') {
 
             throw new Error('wrong parameters');
+        }
+
+        if (   typeof webservice.url    !== 'string'
+            || typeof webservice.method !== 'string') {
+
+            var str = 'sending sms to ' + to + ' by HTTP GET: bad webservice configuration';
+            throw new Error(str);
         }
 
         // escape the values of "to" and "body" to be inserted in the http url
@@ -451,6 +462,13 @@ function sendSmsByHttpGet(to, body, cb) {
             || typeof body !== 'string' || typeof cb !== 'function') {
 
             throw new Error('wrong parameters');
+        }
+
+        if (   typeof webservice.url    !== 'string'
+            || typeof webservice.method !== 'string') {
+
+            var str = 'sending sms to ' + to + ' by HTTP GET: bad webservice configuration';
+            throw new Error(str);
         }
 
         // escape the values of "to" and "body" to be inserted in the http url
