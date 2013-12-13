@@ -28,6 +28,7 @@
             "127.0.0.1/phonebook":          "http://127.0.0.1:10001/phonebook",
             "127.0.0.1/streaming":          "http://127.0.0.1:10011/streaming",
             "127.0.0.1/voicemail":          "http://127.0.0.1:10008/voicemail",
+            "127.0.0.1/cel":                "http://127.0.0.1:10002/cel",
             "127.0.0.1/callernote":         "http://127.0.0.1:10005/callernote",
             "127.0.0.1/historysms":         "http://127.0.0.1:10012/historysms",
             "127.0.0.1/historycall":        "http://127.0.0.1:10002/historycall",
