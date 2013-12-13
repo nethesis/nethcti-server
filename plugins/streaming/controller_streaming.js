@@ -108,38 +108,43 @@ function setCompAstProxy(ap) {
 * @param {string} path The path of the configuration file
 */
 function config(path) {
-    // check parameter
-    if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
+    try {
+        // check parameter
+        if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
 
-    // check file presence
-    if (!fs.existsSync(path)) { throw new Error(path + ' not exists'); }
+        // check file presence
+        if (!fs.existsSync(path)) { throw new Error(path + ' not exists'); }
 
-    logger.info(IDLOG, 'configure streaming with ' + path);
+        logger.info(IDLOG, 'configure streaming with ' + path);
 
-    // read configuration file
-    var json = require(path);
+        // read configuration file
+        var json = require(path);
 
-    // check JSON file
-    if (typeof json !== 'object') { throw new Error('wrong JSON file ' + path); }
+        // check JSON file
+        if (typeof json !== 'object') { throw new Error('wrong JSON file ' + path); }
 
-    // creates the Streaming objects and store them
-    var id;
-    var newStreaming;
-    for (id in json) {
-        
-        // add the identifier to the current object. It's needed
-        // to create the new Streaming object
-        json[id].id = id;
+        // creates the Streaming objects and store them
+        var id;
+        var newStreaming;
+        for (id in json) {
+            
+            // add the identifier to the current object. It's needed
+            // to create the new Streaming object
+            json[id].id = id;
 
-        // create the new Streaming object
-        newStreaming = new Streaming(json[id]);
+            // create the new Streaming object
+            newStreaming = new Streaming(json[id]);
 
-        // memorize it
-        streamings[id] = newStreaming;
+            // memorize it
+            streamings[id] = newStreaming;
+        }
+
+        logger.info(IDLOG, 'configured streaming sources: ' + Object.keys(streamings));
+        logger.info(IDLOG, 'streaming configuration by file ' + path + ' ended');
+
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
     }
-
-    logger.info(IDLOG, 'configured streaming sources: ' + Object.keys(streamings));
-    logger.info(IDLOG, 'strreaming configuration by file ' + path + ' ended');
 }
 
 /**
