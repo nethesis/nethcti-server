@@ -1,5 +1,5 @@
 Name:		nethcti-server
-Version:	1.9.0
+Version:	1.9.2
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI 2
 
