@@ -22,14 +22,7 @@ module.exports = function (options, imports, register) {
 
     // public interface for other architect components
     register(null, {
-        notificationManager: {
-            /**
-            * It's the _.._ method provided by _..._ module.
-            *
-            * @method ....
-            */
-            //..: ...,
-        }
+        notificationManager: {}
     });
 
     try {

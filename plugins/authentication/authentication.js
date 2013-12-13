@@ -86,7 +86,6 @@ var AUTH_TYPE = {
 * @property authenticationType
 * @type string
 * @private
-* @default {}
 */
 var authenticationType;
 
@@ -128,26 +127,22 @@ var baseDn;
 var client;
 
 /**
-* The LDAP server address. It can be customized by the configuration
-* file. The configuration file must use the JSON syntax.
+* The authentication LDAP server address.
 *
 * @property server
 * @type {string}
 * @private
-* @default "localhost"
 */
-var server = 'localhost';
+var server;
 
 /**
-* The LDAP server port. It can be customized by the configuration
-* file. The configuration file must use the JSON syntax.
+* The authentication LDAP server port.
 *
 * @property port
 * @type {string}
 * @private
-* @default "389"
 */
-var port = '389';
+var port;
 
 /**
 * The token expiration expressed in milliseconds. It can be customized
@@ -211,7 +206,7 @@ function setLogger(log) {
 /**
 * It reads the authentication configuration file and call
 * the appropriate function to configure authentication by
-* LDAP or by file. The file must use JSON syntax.
+* LDAP or by file. The file must use the JSON syntax.
 *
 * **The method can throw an Exception.**
 *
@@ -230,7 +225,9 @@ function config(path) {
 
     if (   typeof json      !== 'object'
         || typeof json.type !== 'string' || typeof json.expiration_timeout !== 'string'
-        || !AUTH_TYPE[json.type]) {
+        || !AUTH_TYPE[json.type]
+        || (json.type === 'ldap' && typeof json.ldap !== 'object')
+        || (json.type === 'file' && typeof json.file !== 'object')) {
 
         throw new Error('wrong configuration file for authentication ' + path);
     }

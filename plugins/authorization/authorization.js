@@ -84,15 +84,20 @@ function setLogger(log) {
 * key is the name of customer card or video streaming.
 */
 function config(data) {
-    // check parameter
-    if (typeof data !== 'object'
-        ||  typeof data.type !== 'string'
-        || (typeof data.type === 'file' && typeof data.path !== 'string')) {
+    try {
+        // check parameter
+        if (    typeof data      !== 'object'
+            ||  typeof data.type !== 'string'
+            || (typeof data.type === 'file' && typeof data.path !== 'string')) {
         
-        throw new TypeError('wrong parameter');
-    }
+            throw new TypeError('wrong parameter');
+        }
 
-    if (data.type === 'file') { configByFile(data.path); }
+        if (data.type === 'file') { configByFile(data.path); }
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
 }
 
 /**
@@ -103,9 +108,14 @@ function config(data) {
 * private
 */
 function setUserModule(module) {
-    // check parameter
-    if (typeof module !== 'object') { throw new TypeError('wrong parameter'); }
-    userMod = module;
+    try {
+        // check parameter
+        if (typeof module !== 'object') { throw new TypeError('wrong parameter'); }
+        userMod = module;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
 }
 
 /**
@@ -119,7 +129,7 @@ function configByFile(path) {
     try {
         if (typeof path !== 'string') { throw new Error('wrong parameter'); }
 
-        if (!fs.existsSync(path)) { throw new Error(path + ' not exists'); }
+        if (!fs.existsSync(path)) { throw new Error(path + ' doesn\'t exists'); }
 
         // read the file
         var json = require(path);

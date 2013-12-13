@@ -86,6 +86,7 @@ var emitter = new EventEmitter();
 * @property users
 * @type {object}
 * @private
+* @default {}
 */
 var users = {};
 
@@ -127,15 +128,20 @@ function setLogger(log) {
 *                             the authorization data.
 */
 function config(data) {
-    // check parameter
-    if (typeof data !== 'object'
-        ||  typeof data.type !== 'string'
-        || (typeof data.type === 'file' && typeof data.path !== 'string')) {
+    try {
+        // check parameter
+        if (typeof data !== 'object'
+            ||  typeof data.type !== 'string'
+            || (typeof data.type === 'file' && typeof data.path !== 'string')) {
 
-        throw new TypeError('wrong parameter');
+            throw new TypeError('wrong parameter');
+        }
+
+        if (data.type === 'file') { configByFile(data.path); }
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
     }
-
-    if (data.type === 'file') { configByFile(data.path); }
 }
 
 /**

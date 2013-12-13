@@ -138,39 +138,56 @@ function setLogger(log) {
 }
 
 /**
-* Set the configurations to be use by database connections.
+* Sets the static configurations to be use by database connections.
 *
-* @method config
-* @param {object} obj The object that contains the configurations
-*   @param {array} [obj.file] The list of the files
+* @method configDbStatic
+* @param {string} path The file path of the static JSON configuration file.
 */
-function config(obj) {
+function configDbStatic(path) {
     try {
         // check parameter
-        if (typeof obj !== 'object') { throw new Error('wrong parameter'); }
+        if (typeof path !== 'string') { throw new Error('wrong parameter'); }
 
-        // configurations by means of files. The files must have the
-        // JSON syntax. The "file" key has an array of values conatining
-        // the list of one or more file paths
-        if (obj.file) {
+        // check the file existence
+        if (!fs.existsSync(path)) { throw new Error(path + ' doesn\'t exists'); }
 
-            var i, k, json, path;
-            var fileList = obj.file; // the list of file paths
-            for (i = 0; i < fileList.length; i++) {
-                
-                path = fileList[i];
+        var json = require(path); // read the file
+        logger.info(IDLOG, 'file ' + path + ' has been read');
 
-                if (fs.existsSync(path)) { // check the file existence
+        // transfer the file content into the memory
+        var k;
+        for (k in json) { dbConfig[k] = json[k]; }
 
-                    json = require(path); // read the file
-                    logger.info(IDLOG, 'configuration file ' + path + ' has been read');
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
 
-                    // transfer the file content in the memory
-                    for (k in json) { dbConfig[k] = json[k]; }
+/**
+* Sets the dynamic configurations to be use by database connections.
+*
+* @method configDbDynamic
+* @param {string} path The file path of the dynamic JSON configuration file.
+*/
+function configDbDynamic(path) {
+    try {
+        // check parameter
+        if (typeof path !== 'string') { throw new Error('wrong parameter'); }
 
-                } else {
-                    logger.warn(IDLOG, 'configuration file ' + path + ' doesn\'t exists');
-                }
+        // check the file existence
+        if (!fs.existsSync(path)) {
+            logger.info('\n\n\n' + IDLOG, path + ' doesn\'t exists');
+
+        } else {
+
+            var json = require(path); // read the file
+            logger.info(IDLOG, 'file ' + path + ' has been read');
+
+            // transfer the file content into the memory. If the "k" key has
+            // already been added by the _configDbStatic_ method, it is not overwritten
+            var k;
+            for (k in json) {
+                if (!dbConfig[k]) { dbConfig[k] = json[k]; }
             }
         }
     } catch (err) {
@@ -2583,7 +2600,6 @@ function getCallInfo(uniqueid, cb) {
 
 // public interface
 exports.start                               = start;
-exports.config                              = config;
 exports.setLogger                           = setLogger;
 exports.getPostit                           = getPostit;
 exports.savePostit                          = savePostit;
@@ -2592,6 +2608,8 @@ exports.deletePostit                        = deletePostit;
 exports.getCallTrace                        = getCallTrace
 exports.getCallerNote                       = getCallerNote;
 exports.saveCallerNote                      = saveCallerNote;
+exports.configDbStatic                      = configDbStatic;
+exports.configDbDynamic                     = configDbDynamic;
 exports.storeSmsFailure                     = storeSmsFailure;
 exports.storeSmsSuccess                     = storeSmsSuccess;
 exports.getCtiPbContact                     = getCtiPbContact;

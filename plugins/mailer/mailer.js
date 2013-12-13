@@ -65,9 +65,9 @@ var address = 'localhost';
 * @property sender
 * @type string
 * @private
-* @default ""
+* @default "nethcti@mycompany.local"
 */
-var sender = '';
+var sender = 'nethcti@mycompany.local';
 
 /**
 * Set the logger to be used.
@@ -104,56 +104,52 @@ function setLogger(log) {
 * @param {string} path The path of the configuration file
 */
 function config(path) {
-    // check parameter
-    if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
+    try {
+        // check parameter
+        if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
 
-    // check file presence
-    if (!fs.existsSync(path)) { throw new Error(path + ' not exists'); }
+        // check file presence
+        if (!fs.existsSync(path)) {
+            logger.info(IDLOG, path + ' doesn\'t exists: use default values "' + address  + '" "' + port + '" from "' + sender + '"');
+            return;
+        }
 
-    // read configuration file
-    var json = require(path);
+        // read the configuration file
+        var json = require(path);
 
-    // check the configuration
-    if (typeof json.sender !== 'string' || json.sender === '') {
-        throw new Error('wrong configuration file ' + path);
-    }
+        // check the configuration
+        if (   typeof json.sender  !== 'string' || json.sender  === ''
+            || typeof json.port    !== 'string' || json.port    === ''
+            || typeof json.address !== 'string' || json.address === '') {
 
-    // set the sender address
-    sender = json.sender;
+            throw new Error('wrong configuration file ' + path);
+        }
 
-    // customize the port of the mail server
-    if (json.port) {
-        port = json.port;
-
-    } else {
-        logger.warn(IDLOG, 'no port has been specified in JSON file ' + path + ': use ' + port);
-    }
-
-    // initialize the address of the mail server
-    if (json.address) {
+        port    = json.port;
+        sender  = json.sender;
         address = json.address;
 
-    } else {
-        logger.warn(IDLOG, 'no address has been specified in JSON file ' + path + ': use ' + address);
+        logger.info(IDLOG, 'configuration by file ' + path + ' ended');
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
     }
-    logger.info(IDLOG, 'configuration by file ' + path + ' ended');
 }
 
 /**
 * Sends an email.
 *
 * @method send
-* @param {string} to The destination email address
-* @param {string} subject The subject of the email
-* @param {string} body The body of the email
-* @param {function} cb The callback function
+* @param {string}   to      The destination email address
+* @param {string}   subject The subject of the email
+* @param {string}   body    The body of the email
+* @param {function} cb      The callback function
 */
 function send(to, subject, body, cb) {
     try {
         // check parameters
-        if (   typeof to      !== 'string'
-            || typeof subject !== 'string' || typeof body !== 'string'
-            || typeof cb !== 'function') {
+        if (   typeof to      !== 'string' || typeof cb   !== 'function'
+            || typeof subject !== 'string' || typeof body !== 'string') {
 
             throw new Error('wrong parameters');
         }

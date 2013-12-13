@@ -28,9 +28,8 @@ module.exports = function (options, imports, register) {
 
     try {
         dbconn.setLogger(logger);
-        dbconn.config({
-            file: ['/etc/nethcti/dbstatic.json', '/etc/nethcti/dbdynamic.json']
-        });
+        dbconn.configDbStatic('/etc/nethcti/dbstatic.json');
+        dbconn.configDbDynamic('/etc/nethcti/dbdynamic.json');
         dbconn.start();
     } catch (err) {
         logger.error(IDLOG, err.stack);

@@ -84,21 +84,14 @@ var am;
 var emitter = new EventEmitter();
 
 /**
-* The asterisk connection parameters. The default host
-* and port can be customized by the configuration file.
+* The asterisk connection parameters that are
+* customized using the configuration file.
 *
 * @property astConf
 * @type object
 * @private
-* @default {
-    port: '5038',
-    host: 'localhost'
-}
 */
-var astConf = {
-    port: '5038',
-    host: 'localhost'
-};
+var astConf;
 
 /**
 * Sets the component's visitors.
@@ -126,61 +119,43 @@ var astConf = {
 }());
 
 /**
-* Set configuration to use by telnet asterisk connection.
+* Sets the configuration to be use to establish the telnet asterisk connection.
 *
 * **The method can throw an Exception.**
 *
 * @method config
-* @param {string|object} config The configuration to be used
-* for the telnet asterisk connection
-*   @param {string} config.path Path of the JSON configuration file.
-*   The file must contain host, port, user and password key-value pairs
-*   into a single section called ASTERISK
-*   @param {object} config.object The object with host, port user and password keys
-*     @param {string} [config.object.host=localhost] The address of the asterisk server
-*     @param {string|number} [config.object.port=5038] The port of the asterisk server
-*     @param {string} config.object.user The username
-*     @param {string} config.object.pass The password
+* @param {string} path The file path of the JSON configuration file that contains the
+*                      host, port, user and password of the asterisk server
 */
-function config(config) {
-
-    if (typeof config === 'string') {
+function config(path) {
+    try {
+        if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
 
         // check the file presence
-        if (!fs.existsSync(config)) { throw new Error(config + ' not exists'); }
+        if (!fs.existsSync(path)) { throw new Error(path + ' not exists'); }
 
         // read the configuration file
-        var json = require(config);
+        var json = require(path);
 
-        // check the validity of the configuration file
-        if (typeof json.user !== 'string' || typeof json.pass !== 'string') {
-            throw new Error('wrong configuration file ' + config);
+        // check the configuration file content
+        if (   typeof json.user !== 'string' || typeof json.pass !== 'string'
+            || typeof json.host !== 'string' || typeof json.port !== 'string') {
+
+            throw new Error('wrong configuration file ' + path);
         }
 
-        // the address and port are present in the configuration file, so
-        // overwrite default configuration address and port
-        if (json.port) { astConf.port = json.port; }
-        if (json.host) { astConf.host = json.host; }
+        astConf = {
+            port:     json.port,
+            host:     json.host,
+            username: json.user,
+            password: json.pass
+        };
 
-        astConf.username = json.user;
-        astConf.password = json.pass;
+        logger.info(IDLOG, 'successfully configured');
 
-    } else if (typeof config === 'object'
-               && config.user
-               && config.pass) {
-
-        // the address and port are present in the configuration object, so
-        // overwrite default configuration address and port
-        if (config.port) { astConf.port = config.port; }
-        if (config.host) { astConf.host = config.host; }
-
-        astConf.username = config.user;
-        astConf.password = config.pass;
-
-    } else {
-        throw new TypeError('wrong parameters');
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
     }
-    logger.info(IDLOG, 'successfully configured');
 }
 
 /**
@@ -205,13 +180,9 @@ function start() {
         logger.info(IDLOG, 'added event listeners to asterisk manager');
 
         // connect to asterisk
-        try {
-            am.connect(function () {
-                logger.info(IDLOG, 'asterisk connected');
-            });
-        } catch (err) {
-            logger.error(IDLOG, err.stack);
-        }
+        am.connect(function () {
+            logger.info(IDLOG, 'asterisk connected');
+        });
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -296,7 +267,7 @@ function onData(data) {
     try {
         // get ActionId and action name
         var actionid = data.actionid;
-        var cmd = action.getActionName(actionid);
+        var cmd      = action.getActionName(actionid);
 
         // check the command plugin presence. This event is generated in
         // response to a command request. It passes the event handler to
@@ -305,7 +276,6 @@ function onData(data) {
             && typeof pluginsCmd[cmd].data === 'function') {
 
             pluginsCmd[cmd].data(data);
-
         }
         // this is a particular case: 'listParkings' command plugin cause
         // an event 'Parkinglot' without the relative 'ActionID' key. So
