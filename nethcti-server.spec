@@ -1,5 +1,5 @@
 Name:		nethcti-server
-Version:	1.9.2
+Version:	1.9.6
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI 2
 
@@ -46,6 +46,7 @@ mv root/usr/lib/node/nethcti-server/plugins/com_static_http/static/img  $RPM_BUI
 --file /usr/lib/node/nethcti-server/sql/update.sh 'attr(0755,asterisk,asterisk)' \
 --dir /var/spool/asterisk/monitor 'attr(0775,asterisk,asterisk)' \
 --dir /var/spool/nethcti/sms 'attr(0775,asterisk,asterisk)' \
+--dir /etc/nethcti 'attr(0775,asterisk,asterisk)' \
 --dir /var/lib/asterisk 'attr(0775,asterisk,asterisk)' \
 --dir /var/lib/asterisk/bin 'attr(0775,asterisk,asterisk)' $RPM_BUILD_ROOT > %{name}-%{version}-filelist
 
