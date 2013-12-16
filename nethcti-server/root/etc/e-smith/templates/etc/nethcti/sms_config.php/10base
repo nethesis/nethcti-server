@@ -1,0 +1,6 @@
+<?php
+define("SERVER","localhost");
+define("DB","nethcti2");
+define("USER","nethcti");
+define("PASS","{${'nethcti-server'}{'DbPasswd'}}");
+?>
