@@ -134,16 +134,9 @@ function send_sms($tomobile,$xbody,$xhost,$xusername,$xpassword,$lock,$simnumber
         fputs($fp, $cmd, strlen($cmd));
         sleep(2);
 
-
-	//if $simnumber = 1 => send sms with #1 sim, if $simnumber=2 use a random sim betweeen 1 and 2
-	if ($simnumber > 1) {
-            $simtouse = 1;
-        } else {
-            $simtouse = rand (1,$simnumber);
-        }
 	//ate1 = SIM1, ate2 = SIM2  ...
-        debug("Sending 'ate' command. SIM number: $simtouse");
-	$cmd = "ate".$simtouse."\r";
+        debug("Sending 'ate' command. SIM number: $simnumber");
+	$cmd = "ate".$simnumber."\r";
         fputs($fp, $cmd, strlen($cmd));
         sleep(1);
 
