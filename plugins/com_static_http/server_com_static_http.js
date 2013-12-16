@@ -162,6 +162,14 @@ function config(path) {
     } else {
         logger.warn(IDLOG, 'no address has been specified in JSON file ' + path);
     }
+
+    // initialize webroot
+    if (json.static.webroot) {
+        webroot = json.static.webroot;
+    } else {
+        webroot = path.join(__dirname, webroot);
+        logger.warn(IDLOG, 'no webroot has been specified in JSON file ' + path);
+    }
     logger.info(IDLOG, 'configuration by file ' + path + ' ended');
 }
 
@@ -174,7 +182,7 @@ function config(path) {
 function start() {
     try {
         // initialize node-static server instance
-        fileStaticRoot = new (nodeStatic.Server)(path.join(__dirname, webroot), { 
+        fileStaticRoot = new (nodeStatic.Server)(webroot, { 
             cache: 3600
         });
 
@@ -203,8 +211,8 @@ function httpServerCb(req, res) {
                 fileStaticRoot.serve(req, res, function(err, result) {
                     // Handle temp files: delete after serving
                     if (path.basename(req.url).indexOf('tmpaudio') >= 0) {
-                        logger.info(IDLOG, 'deleting temp file ' + path.join(__dirname, webroot,req.url));
-                        fs.unlink(path.join(__dirname, webroot,req.url), function(err) {
+                        logger.info(IDLOG, 'deleting temp file ' + path.join(webroot,req.url));
+                        fs.unlink(path.join(webroot,req.url), function(err) {
                             if (err) {
                                 logger.error(IDLOG, 'deleting temp file ' + req.url + ': ' + err);
                             }
@@ -234,8 +242,8 @@ function httpServerCb(req, res) {
 */
 function saveFile(dstpath, data) {
     try {
-        var dstpath = path.join(__dirname, webroot, dstpath);
-        logger.info(IDLOG, 'saveing file ' + dstpath);
+        var dstpath = path.join(webroot, dstpath);
+        logger.info(IDLOG, 'saving file ' + dstpath);
         fs.writeFile(dstpath, data, function (err) {
             if (err) {
                 throw err;
