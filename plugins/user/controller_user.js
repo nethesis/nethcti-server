@@ -234,7 +234,7 @@ function initializeEndpointsUsersByJSON(json) {
 function addEndpointsToUser(userid, endpoType, obj) {
     try {
         // check parameters
-        if (typeof userid !== 'string'
+        if (   typeof userid    !== 'string'
             || typeof endpoType !== 'string' || typeof obj !== 'object') {
 
             throw new Error('wrong parameters');

@@ -14,15 +14,17 @@
 * @type {object}
 * @readOnly
 * @default {
-    jabber:    'jabber',
-    nethcti:   'nethcti',
-    calendar:  'calendar',
-    extension: 'extension',
-    cellphone: 'cellphone',
-    voicemail: 'voicemail'
+    email:     "email",
+    jabber:    "jabber",
+    nethcti:   "nethcti",
+    calendar:  "calendar",
+    extension: "extension",
+    cellphone: "cellphone",
+    voicemail: "voicemail"
 }
 */
 var TYPES = {
+    email:     'email',
     jabber:    'jabber',
     nethcti:   'nethcti',
     calendar:  'calendar',

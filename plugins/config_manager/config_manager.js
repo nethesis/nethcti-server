@@ -221,7 +221,7 @@ function configUser(obj) {
         }
 
         // merge configurations (from obj.users file) and preferences (from obj.userPrefs file) in one single object
-        var username, endpointsCellphone, firstEndpointCellphone;
+        var username, emailEndpoints, firstEmailEndpoint, cellphoneEndpoints, firstCellphoneEndpoint;
         for (username in contentConfPrefJson) {
 
             // get the cellphone endpoint associated with the user. It can be empty
@@ -232,13 +232,13 @@ function configUser(obj) {
             // check if the endpoint is present
             firstCellphoneEndpoint = (firstCellphoneEndpoint ? firstCellphoneEndpoint : '');
 
-            // get the jabber endpoint associated with the user. It can be empty
-            // get all jabber endpoints of the user
-            jabberEndpoints = contentConfPrefJson[username].endpoints[compUser.ENDPOINT_TYPES.jabber];
-            // get the first jabber endpoint of the user
-            firstJabberEndpoint = Object.keys(jabberEndpoints)[0];
+            // get the email endpoint associated with the user. It can be empty
+            // get all email endpoints of the user
+            emailEndpoints = contentConfPrefJson[username].endpoints[compUser.ENDPOINT_TYPES.email];
+            // get the first email endpoint of the user
+            firstEmailEndpoint = Object.keys(emailEndpoints)[0];
             // check if the endpoint is present
-            firstJabberEndpoint = (firstJabberEndpoint ? firstJabberEndpoint : '');
+            firstEmailEndpoint = (firstEmailEndpoint ? firstEmailEndpoint : '');
 
             // the user has never saved his preferences and so they doesn't exist in the
             // file of the preferences. So a default values are used
@@ -252,9 +252,9 @@ function configUser(obj) {
 
             // add the cellphone and email endpoints destination to the user configuration
             contentConfPrefJson[username].configurations.notifications.postit.sms.to      = firstCellphoneEndpoint;
-            contentConfPrefJson[username].configurations.notifications.postit.email.to    = firstJabberEndpoint;
+            contentConfPrefJson[username].configurations.notifications.postit.email.to    = firstEmailEndpoint;
             contentConfPrefJson[username].configurations.notifications.voicemail.sms.to   = firstCellphoneEndpoint;
-            contentConfPrefJson[username].configurations.notifications.voicemail.email.to = firstJabberEndpoint;
+            contentConfPrefJson[username].configurations.notifications.voicemail.email.to = firstEmailEndpoint;
         }
 
         // check created content of the JSON files

@@ -1,19 +1,19 @@
 /**
-* Abstraction of a jabber account.
+* Abstraction of an email account.
 *
 * **It can throw exceptions.**
 *
-* @class EndpointJabber
-* @param {string} identifier The jabber account
+* @class EndpointEmail
+* @param  {string} identifier The email account
+* @return {object} The email endpoint object.
 * @constructor
-* @return {object} The jabber endpoint object.
 */
-exports.EndpointJabber = function (identifier) {
+exports.EndpointEmail = function (identifier) {
     // check the parameter
     if (typeof identifier !== 'string') { throw new Error('wrong parameters'); }
 
     /**
-    * The jabber account identifier.
+    * The email account identifier.
     *
     * @property id
     * @type {string}
@@ -23,20 +23,20 @@ exports.EndpointJabber = function (identifier) {
     var id = identifier;
 
     /**
-    * Return the jabber account identifier.
+    * Returns the email account identifier.
     *
     * @method getId
-    * @return {string} The jabber account identifier.
+    * @return {string} The email account identifier.
     */
     function getId() { return id; }
 
     /**
-    * Return the readable string of the jabber account endpoint.
+    * Returns the readable string of the email account endpoint.
     *
     * @method toString
-    * @return {string} The readable description of the jabber account endpoint.
+    * @return {string} The readable description of the email account endpoint.
     */
-    function toString() { return 'Jabber account ' + getId(); }
+    function toString() { return 'Email account ' + getId(); }
 
     /**
     * Returns the JSON representation of the object.
