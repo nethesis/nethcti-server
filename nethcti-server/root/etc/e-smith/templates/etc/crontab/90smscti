@@ -1,4 +1,4 @@
 {
       $OUT.="# send sms from cti via portech\n";
-      #$OUT.= "*/5 * * * * root /usr/lib/node/nethcti-server/script/sendsms.php"
+      $OUT.= "*/5 * * * * root /usr/lib/node/nethcti-server/scripts/sendsms.php"
 }
