@@ -39,6 +39,17 @@ var IDLOG = '[dbconn]';
 var logger = console;
 
 /**
+* True if the sequelize library will be logged.
+* It's customized by the _config_ method.
+*
+* @property logSequelize
+* @type {boolean}
+* @private
+* @default false
+*/
+var logSequelize = false;
+
+/**
 * The prefix for all customer card name.
 *
 * @property CUSTOMER_CARD
@@ -132,6 +143,32 @@ function setLogger(log) {
         } else {
             throw new Error('wrong logger object');
         }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the log level used to debug the sequelize library.
+*
+* @method config
+* @param {string} path The file path of the static JSON configuration file.
+*/
+function config(path) {
+    try {
+        // check parameter
+        if (typeof path !== 'string') { throw new Error('wrong parameter'); }
+
+        // check the file existence
+        if (!fs.existsSync(path)) { throw new Error(path + ' doesn\'t exist'); }
+
+        var json = require(path); // read the file
+        logger.info(IDLOG, 'file ' + path + ' has been read');
+
+        if (typeof json === 'object' && json.loglevel.toLowerCase() === 'info') {
+            logSequelize = true;
+        }
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -631,7 +668,8 @@ function initConnections() {
                         timestamps:      false,
                         freezeTableName: true
                     },
-                    dialect: dbConfig[k].dbtype
+                    dialect: dbConfig[k].dbtype,
+                    logging: logSequelize
                 });
 
                 dbConn[k] = sequelize;
@@ -2600,6 +2638,7 @@ function getCallInfo(uniqueid, cb) {
 
 // public interface
 exports.start                               = start;
+exports.config                              = config;
 exports.setLogger                           = setLogger;
 exports.getPostit                           = getPostit;
 exports.savePostit                          = savePostit;

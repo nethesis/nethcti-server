@@ -28,6 +28,7 @@ module.exports = function (options, imports, register) {
 
     try {
         dbconn.setLogger(logger);
+        dbconn.config('/etc/nethcti/nethcti.json');
         dbconn.configDbStatic('/etc/nethcti/dbstatic.json');
         dbconn.configDbDynamic('/etc/nethcti/dbdynamic.json');
         dbconn.start();
