@@ -660,7 +660,7 @@ function initConnections() {
 
             if (dbConfig[k].dbtype === 'mysql') {
 
-                sequelize = new Sequelize(dbConfig[k].dbname, dbConfig[k].dbuser, dbConfig[k].dbpassword, {
+                var config = {
                     port:    dbConfig[k].dbport,
                     host:    dbConfig[k].dbhost,
                     define:  {
@@ -668,9 +668,13 @@ function initConnections() {
                         timestamps:      false,
                         freezeTableName: true
                     },
-                    dialect: dbConfig[k].dbtype,
-                    logging: logSequelize
-                });
+                    dialect: dbConfig[k].dbtype
+                };
+
+                // default sequelize log is console.log
+                if (!logSequelize) { config.logging = false; }
+
+                sequelize = new Sequelize(dbConfig[k].dbname, dbConfig[k].dbuser, dbConfig[k].dbpassword, config);
 
                 dbConn[k] = sequelize;
                 logger.info(IDLOG, 'initialized db connection with ' + dbConfig[k].dbtype + ' ' + dbConfig[k].dbname + ' ' + dbConfig[k].dbhost + ':' + dbConfig[k].dbport);
