@@ -1,5 +1,5 @@
 Name:		nethcti-server
-Version:	1.9.8
+Version:	1.9.9
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI 2
 
@@ -13,7 +13,7 @@ BuildRequires:	e-smith-devtools
 Requires:	nodejs >= 0.8.16
 Requires:	node-forever >= 0.10.9
 Requires:	smeserver-ejabberd
-Requires:       nethcti-module >= 1.2.0
+Requires:       nethcti-nethvoice-module
 AutoReq:	no
 
 Obsoletes:	proxycti
