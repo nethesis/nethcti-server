@@ -352,9 +352,9 @@ function storeSmsSuccess(username, to, body, cb) {
             logger.info(IDLOG, 'sms success from user "' + username + '" to ' + to + ' saved successfully in the database');
             cb();
 
-        }).error(function (err) { // manage the error
-            logger.error(IDLOG, 'saving sms success from user "' + username + '" to ' + to + ': ' + err.toString());
-            cb(err.toString());
+        }).error(function (err1) { // manage the error
+            logger.error(IDLOG, 'saving sms success from user "' + username + '" to ' + to + ': ' + err1.toString());
+            cb(err1);
         });
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -395,9 +395,9 @@ function storeSmsFailure(username, to, body, cb) {
             logger.info(IDLOG, 'sms failure from user "' + username + '" to ' + to + ' saved successfully in the database');
             cb();
 
-        }).error(function (err) { // manage the error
-            logger.error(IDLOG, 'saving sms failure from user "' + username + '" to ' + to + ': ' + err.toString());
-            cb(err.toString());
+        }).error(function (err1) { // manage the error
+            logger.error(IDLOG, 'saving sms failure from user "' + username + '" to ' + to + ': ' + err1.toString());
+            cb(err1);
         });
     } catch (err) {
         logger.error(IDLOG, err.stack);

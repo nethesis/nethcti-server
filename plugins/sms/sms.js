@@ -239,20 +239,60 @@ function send(from, to, body, cb) {
             throw new Error('wrong parameters');
         }
 
-        // add the prefix to the destination number, if it doesn't contains it 
+        // add the prefix to the destination number, if it doesn't contain it
         if (to.length <= 10 && to.substring(0, 1) === '3') { to = prefix + to; }
 
+        // send the sms with the configured type. If the type is "webservice" it also
+        // store a send result into the database
         if (deliveryType === smsDeliveryTypes.TYPES.portech) {
-            logger.info(IDLOG, 'send sms to ' + to + ' with portech');
+            logger.info(IDLOG, 'send sms to ' + to + ' by portech');
             sendSmsByPortech(from, to, body, cb);
 
         } else {
-            logger.info(IDLOG, 'send sms to ' + to + ' with webservice');
-            sendSmsByWebservice(to, body, cb);
+            logger.info(IDLOG, 'send sms to ' + to + ' by webservice');
+            sendSmsByWebservice(to, body, function (err1) {
+                sendSmsByWebserviceCb(err1, from, to, body, cb);
+            });
         }
     } catch (err) {
         logger.error(err.stack);
         cb(err);
+    }
+}
+
+/**
+* The callback of the _sendSmsByWebservice_ method.
+*
+* @method sendSmsByWebserviceCb
+* @param {object}   err  The callback error
+* @param {string}   from The sender identifier
+* @param {string}   to   The destination number
+* @param {string}   body The body of the sms message
+* @param {function} cb   The callback function
+*/
+function sendSmsByWebserviceCb(err, from, to, body, cb) {
+    try {
+        // check parameters
+        if (   typeof to   !== 'string' || typeof cb   !== 'function'
+            || typeof body !== 'string' || typeof from !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // store a failure sms sending in the database
+        if (err) {
+            storeSmsFailure(from, to, body);
+            cb(err);
+        }
+        // store a success sms sending in the database
+        else {
+            storeSmsSuccess(from, to, body);
+            cb();
+        }
+
+    } catch (err1) {
+        logger.error(err1.stack);
+        cb(err1);
     }
 }
 
@@ -671,6 +711,7 @@ function getAllUserHistoryInterval(data, cb) {
 * @param {string} username The name of the user who sent the sms
 * @param {string} to       The destination number
 * @param {string} body     The text of the message
+* @private
 */
 function storeSmsSuccess(username, to, body) {
     try {
@@ -682,6 +723,7 @@ function storeSmsSuccess(username, to, body) {
         }
 
         logger.info(IDLOG, 'store sms success from user "' + username + '" to number ' + to + ' in the database');
+        // the callback doesn't do anything because the dbconn component itself logs the output
         compDbconn.storeSmsSuccess(username, to, body, function () {});
 
     } catch (err) {
@@ -697,6 +739,7 @@ function storeSmsSuccess(username, to, body) {
 * @param {string} username The name of the user who sent the sms
 * @param {string} to       The destination number
 * @param {string} body     The text of the message
+* @private
 */
 function storeSmsFailure(username, to, body) {
     try {
@@ -708,6 +751,7 @@ function storeSmsFailure(username, to, body) {
         }
 
         logger.info(IDLOG, 'store sms failure from user "' + username + '" to number ' + to + ' in the database');
+        // the callback doesn't do anything because the dbconn component itself logs the output
         compDbconn.storeSmsFailure(username, to, body, function () {});
 
     } catch (err) {
@@ -736,7 +780,5 @@ exports.send                      = send;
 exports.config                    = config;
 exports.setLogger                 = setLogger;
 exports.setCompDbconn             = setCompDbconn;
-exports.storeSmsFailure           = storeSmsFailure;
-exports.storeSmsSuccess           = storeSmsSuccess;
 exports.getHistoryInterval        = getHistoryInterval;
 exports.getAllUserHistoryInterval = getAllUserHistoryInterval;

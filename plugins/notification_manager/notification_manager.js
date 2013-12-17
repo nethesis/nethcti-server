@@ -774,17 +774,9 @@ function sendNewVoicemailNotificationSms(username, voicemail, list, cb) {
                 }
                 cb(null, resp);
 
-                // store a success sms sending in the database
-                logger.info(IDLOG, 'store sms success to ' + to + ' of user "' + username + '" for new voicemail ' + voicemail + ' notification');
-                compSms.storeSmsSuccess(username, to, body);
-
             } catch (err) {
                 logger.error(IDLOG, err.stack);
                 cb(err);
-
-                // store a failure sms sending in the database
-                logger.info(IDLOG, 'store sms failure to ' + to + ' of user "' + username + '" for new voicemail ' + voicemail + ' notification');
-                compSms.storeSmsFailure(username, to, body);
             }
         });
 
@@ -825,17 +817,9 @@ function sendNewPostitNotificationSms(creator, recipient, list, cb) {
                 }
                 cb(null, resp);
 
-                // store a success sms sending in the database
-                logger.info(IDLOG, 'store sms success to ' + to + ' of user "' + recipient + '" for new post-it created by "' + creator + '"');
-                compSms.storeSmsSuccess(creator, to, body);
-
             } catch (err) {
                 logger.error(IDLOG, err.stack);
                 cb(err);
-
-                // store a failure sms sending in the database
-                logger.info(IDLOG, 'store sms failure to ' + to + ' of user "' + recipient + '" for new post-it created by "' + creator + '"');
-                compSms.storeSmsFailure(creator, to, body);
             }
         });
 

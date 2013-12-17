@@ -221,15 +221,9 @@ function setCompAuthorization(comp) {
                             logger.error(IDLOG, 'sending sms from user "' + username + '" to "' + req.params.to + '"');
                             compUtil.net.sendHttp500(IDLOG, res, err.toString());
 
-                            // store a failure sms sending in the database
-                            compSms.storeSmsFailure(username, req.params.to, req.params.body);
-
                         } else {
                             logger.info(IDLOG, 'sent sms from "' + username + '" to "' + req.params.to + '" successful');
                             compUtil.net.sendHttp200(IDLOG, res);
-
-                            // store a success sms sending in the database
-                            compSms.storeSmsSuccess(username, req.params.to, req.params.body);
                         }
                     });
                 } catch (err) {
