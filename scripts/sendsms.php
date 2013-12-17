@@ -17,6 +17,10 @@ if ( @isset($options['d']) || @isset($options['debug']) ) {
 }
 require_once("/etc/nethcti/sms_config.php");
 
+if (!file_exists("/etc/nethcti/sms.json")) {
+    debug("Configuration file not found: /etc/nethcti/sms.json");
+    exit(0);
+}
 
 $smsdata = json_decode ( file_get_contents("/etc/nethcti/sms.json"), true);
 if ($smsdata['type'] != 'portech'){
