@@ -2433,6 +2433,10 @@ function evtNewQueueWaitingCaller(data) {
         queues[q].addWaitingCaller(wCaller);
         logger.info(IDLOG, 'added new queue waiting caller ' + wCaller.getNumber() + ' to queue ' + q);
 
+        // request all channels
+        logger.info(IDLOG, 'update conversations of all trunks');
+        astProxy.doCmd({ command: 'listChannels' }, updateConversationsForAllTrunk);
+
         // emit the event
         astProxy.emit(EVT_QUEUE_CHANGED, queues[q]);
         logger.info(IDLOG, 'emitted event ' + EVT_QUEUE_CHANGED + ' for queue ' + q);
