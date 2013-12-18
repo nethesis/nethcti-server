@@ -263,7 +263,7 @@ function saveFile(dstpath, data) {
 */
 function copyFile(srcpath, dstpath) {
     try {
-        var dstpath = path.join(__dirname, webroot, dstpath);
+        var dstpath = path.join(webroot, dstpath);
         // copy file
         fs.createReadStream(srcpath).pipe(fs.createWriteStream(dstpath));
     } catch (err) {
