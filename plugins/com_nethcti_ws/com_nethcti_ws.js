@@ -779,7 +779,7 @@ function start() {
 
         // websocket options
         var options = {
-            'log level':  1,
+            'log':        false,
             'transports': ['websocket']
         };
 
