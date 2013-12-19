@@ -6,7 +6,6 @@
         "consumes": [
             "logger",
             "dbconn",
-            "httpProxy",
             "authorization"
         ],
         "provides": ["customerCard"]

@@ -25,15 +25,7 @@ module.exports = function (options, imports, register) {
 
     // public interface for other architect components
     register(null, {
-        httpProxy: {
-            /**
-            * It's the _getUrl_ method provided by _http\_proxy_ module.
-            *
-            * @method getUrl
-            * @return {string} The url of the proxy.
-            */
-            getUrl: httpProxy.getUrl
-        }
+        httpProxy: {}
     });
 
     try {

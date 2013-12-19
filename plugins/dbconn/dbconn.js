@@ -213,7 +213,7 @@ function configDbDynamic(path) {
 
         // check the file existence
         if (!fs.existsSync(path)) {
-            logger.info('\n\n\n' + IDLOG, path + ' doesn\'t exists');
+            logger.info(IDLOG, path + ' doesn\'t exist');
 
         } else {
 
