@@ -1,24 +1,25 @@
 {
    my $ports_str = ${'nethcti-server'}{TCPPorts} || "8181,8180";
    our @ports = split(',', $ports_str);
-   our $fqdn = "${SystemName}.${DomainName}";
-   our $proto = ${'nethcti-server'}{'Protocol'} || 'http';
+   our $http_proto = ${'nethcti-server'}{'Protocol'} || 'http';
+   our $ws_proto = "http";
+   if ($http_proto eq "https") {
+      $ws_proto = "wss";
+   }
    our $key = $modSSL{crt}
 }
 \{
     "websocket": \{
         "port":    "{$ports[0]}",
-        "proto":      "{$proto}",
-        "hostname":   "{$fqdn}",
-        "https_key":  "/etc/pki/tls/private/localhost.key",
-        "https_cert": "/etc/pki/tls/certs/localhost.crt"
+        "proto":      "{$ws_proto}",
+        "https_key":  "/etc/nethcti/nethcti.pem",
+        "https_cert": "/etc/nethcti/nethcti.pem"
     \},
     "http_proxy": \{
         "port":       "{$ports[1]}",
-        "proto":      "{$proto}",
-        "hostname":   "{$fqdn}",
-        "https_key":  "/etc/pki/tls/private/localhost.key",
-        "https_cert": "/etc/pki/tls/certs/localhost.crt",
+        "proto":      "{$http_proto}",
+        "https_key":  "/etc/nethcti/nethcti.pem",
+        "https_cert": "/etc/nethcti/nethcti.pem",
         "router": \{
             "127.0.0.1/sms":                "http://127.0.0.1:10012/sms",
             "127.0.0.1/static":             "http://127.0.0.1:10013",

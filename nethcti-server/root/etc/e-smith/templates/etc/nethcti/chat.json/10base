@@ -1,4 +1,5 @@
 {
-    my $url = ${'nethcti-server'}{JabberUrl} || "http://${SystemName}.${DomainName}/http-bind";
+    my $http_proto = ${'nethcti-server'}{'Protocol'} || 'http';
+    my $url = ${'nethcti-server'}{JabberUrl} || "${http_proto}://${SystemName}.${DomainName}/http-bind";
     $OUT = '{ "url" : "' . $url . '", "domain": "'. $DomainName .'" }';
 }

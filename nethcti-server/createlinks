@@ -23,6 +23,7 @@ templates2events("/etc/nethcti/mailer.json",$event);
 templates2events("/etc/nethcti/nethcti.json",$event);
 templates2events("/etc/httpd/conf/httpd.conf",$event);
 templates2events("/etc/nethcti/sms_config.php",$event);
+templates2events("/etc/nethcti/nethcti.pem",$event);
 safe_symlink("sigusr1", "root/etc/e-smith/events/$event/services2adjust/httpd-e-smith");
 event_link("initialize-default-databases", $event, 20);
 event_link("nethcti-server-conf", $event, 20);
@@ -38,7 +39,14 @@ templates2events("/etc/nethcti/authentication.json",$event);
 templates2events("/etc/nethcti/chat.json",$event);
 templates2events("/etc/nethcti/mailer.json",$event);
 templates2events("/etc/nethcti/services.json",$event);
+templates2events("/etc/nethcti/nethcti.pem",$event);
 
+
+#
+# console-save 
+#
+$event = "console-save";
+templates2events("/etc/nethcti/nethcti.pem",$event);
 
 
 #
