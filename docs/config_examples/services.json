@@ -1,11 +1,15 @@
 {
     "websocket": {
-        "port":    "8181"
+        "port":       "8181",
+        "proto":      "wss",
+        "hostname":   "mycompany.local",
+        "https_key":  "/etc/pki/tls/private/localhost.key",
+        "https_cert": "/etc/pki/tls/certs/localhost.crt"
     },
     "http_proxy": {
         "port":       "8180",
-        "proto":      "http",
-        "hostname":   "HOSTNAME",
+        "proto":      "https",
+        "hostname":   "mycompany.local",
         "https_key":  "KEY PATH",
         "https_cert": "CRT PATH",
         "router": {

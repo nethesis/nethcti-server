@@ -14,6 +14,7 @@
 var fs        = require('fs');
 var io        = require('socket.io');
 var iniparser = require('iniparser');
+var httpProxy = require('http-proxy');
 
 /**
 * The module identifier used by the logger.
@@ -26,6 +27,39 @@ var iniparser = require('iniparser');
 * @default [com_nethcti_ws]
 */
 var IDLOG = '[com_nethcti_ws]';
+
+/**
+* Listening protocol, can be 'https' or 'http'. It can be
+* customized in the configuration file.
+*
+* @property proto
+* @type string
+* @private
+* @default "http"
+*/
+var proto = 'http';
+
+/**
+* The path of the certificate to be used by HTTPS server. It can be
+* customized in the configuration file.
+*
+* @property HTTPS_CERT
+* @type string
+* @private
+* @default "/etc/pki/tls/certs/localhost.crt"
+*/
+var HTTPS_CERT = '/etc/pki/tls/certs/localhost.crt';
+
+/**
+* The path of key to be used by HTTPS server. It can be
+* customized in the configuration file.
+*
+* @property HTTPS_KEY
+* @type string
+* @private
+* @default "/etc/pki/tls/private/localhost.key"
+*/
+var HTTPS_KEY = '/etc/pki/tls/private/localhost.key';
 
 /**
 * The websocket rooms used to update clients with asterisk events.
@@ -723,6 +757,30 @@ function config(path) {
         logger.warn(IDLOG, 'no port has been specified in JSON file ' + path);
     }
 
+    // initialize the proto of the proxy
+    if (json.websocket.proto) {
+        proto = json.websocket.proto;
+
+    } else {
+        logger.warn(IDLOG, 'no proto specified in JSON file ' + path);
+    }
+
+    // initialize the key of the HTTPS proxy
+    if (json.websocket.https_key) {
+        HTTPS_KEY = json.websocket.https_key;
+
+    } else {
+        logger.warn(IDLOG, 'no HTTPS key specified in JSON file ' + path);
+    }
+
+    // initialize the certificate of the HTTPS proxy
+    if (json.websocket.https_cert) {
+        HTTPS_CERT = json.websocket.https_cert;
+
+    } else {
+        logger.warn(IDLOG, 'no HTTPS certificate specified in JSON file ' + path);
+    }
+
     // initialize the interval at which update the token expiration of all users
     // that are connected by websocket
     var expires = compAuthe.getTokenExpirationTimeout();
@@ -779,16 +837,27 @@ function start() {
 
         // websocket options
         var options = {
-            'log':        false,
             'transports': ['websocket']
         };
 
+        // create HTTPS proxy
+        if (proto === 'https') {
+            options.https = {
+                key:  fs.readFileSync(HTTPS_KEY,  'utf8'),
+                cert: fs.readFileSync(HTTPS_CERT, 'utf8')
+            };
+        }
+        var httpServer = httpProxy.createServer(options, function( req , res ){} );
+
         // websocket server
-        server = io.listen(parseInt(port), options);
+        server = io.listen(httpServer);
+        server.set('log level', 0); // log only the errors
+        httpServer.listen(port);
+
 
         // set the websocket server listener
         server.on('connection', connHdlr);
-        logger.info(IDLOG, 'websocket server listening on port ' + port);
+        logger.info(IDLOG, 'websocket server listening on proto "' + proto + '" on port ' + port);
 
         // start the automatic update of token expiration of all users that are connected by websocket.
         // The interval is the half value of expiration provided by authentication component
