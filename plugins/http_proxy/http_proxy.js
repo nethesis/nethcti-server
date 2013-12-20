@@ -230,7 +230,7 @@ function start() {
             };
         }
         var server = httpProxy.createServer(options, proxyRequest).listen(port);
-        logger.info(IDLOG, proto.toUpperCase() + ' proxy listening on port ' + port);
+        logger.warn(IDLOG, proto.toUpperCase() + ' proxy listening on port ' + port);
 
         // called when some error occurs in the proxy
         server.proxy.on('proxyError', function (err, req, res) {

@@ -9,8 +9,8 @@
 *
 * @class arch_logger
 */
-var fs        = require('fs');
-var winston   = require('winston');
+var fs      = require('fs');
+var winston = require('winston');
 
 module.exports = function (options, imports, register) {
     try {
@@ -59,6 +59,8 @@ module.exports = function (options, imports, register) {
                 })
             ]
         });
+
+        log.warn('Starting...');
 
     } catch (err) {
         console.log(err.stack);

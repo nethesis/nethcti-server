@@ -857,7 +857,7 @@ function start() {
 
         // set the websocket server listener
         server.on('connection', connHdlr);
-        logger.info(IDLOG, 'websocket server listening on proto "' + proto + '" on port ' + port);
+        logger.warn(IDLOG, 'websocket server listening on proto "' + proto + '" on port ' + port);
 
         // start the automatic update of token expiration of all users that are connected by websocket.
         // The interval is the half value of expiration provided by authentication component
