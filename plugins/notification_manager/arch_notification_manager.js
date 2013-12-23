@@ -31,7 +31,7 @@ module.exports = function (options, imports, register) {
         if (imports.logger) { logger = imports.logger; }
 
         notificationManager.setLogger(logger);
-        notificationManager.config('/etc/nethcti/nethcti.json');
+        notificationManager.config('/etc/nethcti/services.json');
         notificationManager.setCompSms(imports.sms);
         notificationManager.setCompUser(imports.user);
         notificationManager.setCompMailer(imports.mailer);

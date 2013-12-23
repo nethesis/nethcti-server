@@ -1,6 +1,5 @@
 {
     "logfile": "/var/log/asterisk/nethcti.log",
     "loglevel": "warn",
-    "custom_templates_notifications": "/home/e-smith/nethcti/templates/notification_manager",
     "privacy_numbers": "xxx"
 }

@@ -34,6 +34,9 @@
             "127.0.0.1/all_histcallernote": "http://127.0.0.1:10005/all_histcallernote"
         }
     },
+    "notification_manager": {
+        "custom_templates_notifications": "/home/e-smith/nethcti/templates/notification_manager"
+    },
     "rest": {
         "postit": {
             "port":    "10004",

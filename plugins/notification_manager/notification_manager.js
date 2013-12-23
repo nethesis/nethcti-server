@@ -333,12 +333,14 @@ function config(path) {
         var json = require(path);
 
         // check the configuration file
-        if (typeof json !== 'object' || typeof json.custom_templates_notifications !== 'string') {
+        if (   typeof json !== 'object' || typeof json.notification_manager    !== 'object'
+            || typeof json.notification_manager.custom_templates_notifications !== 'string') {
+
             logger.error('wrong configuration file ' + path);
             return;
         }
 
-        customTemplatesPath = json.custom_templates_notifications;
+        customTemplatesPath = json.notification_manager.custom_templates_notifications;
         logger.info(IDLOG, 'end configuration by file ' + path);
 
     } catch (err) {
