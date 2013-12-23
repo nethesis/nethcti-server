@@ -2,6 +2,5 @@
     "logfile": "/var/log/asterisk/nethcti.log",
     "loglevel": "warn",
     "custom_templates_notifications": "/home/e-smith/nethcti/templates/notification_manager",
-    "custom_templates_customercards": "/home/e-smith/nethcti/templates/customer_card",
     "privacy_numbers": "xxx"
 }

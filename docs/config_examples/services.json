@@ -49,7 +49,8 @@
         },
         "customer_card": {
             "port":    "10003",
-            "address": "localhost"
+            "address": "localhost",
+            "custom_templates_customercards": "/home/e-smith/nethcti/templates/customer_card"
         },
         "phonebook": {
             "port":    "10001",

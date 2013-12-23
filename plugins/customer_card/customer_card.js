@@ -403,12 +403,15 @@ function config(path) {
         var json = require(path);
 
         // check the configuration file
-        if (typeof json !== 'object' || typeof json.custom_templates_customercards !== 'string') {
+        if (   typeof json      !== 'object'
+            || typeof json.rest !== 'object' || typeof json.rest.customer_card !== 'object'
+            || typeof json.rest.customer_card.custom_templates_customercards   !== 'string') {
+
             logger.error('wrong configuration file ' + path);
             return;
         }
 
-        customTemplatesPath = json.custom_templates_customercards;
+        customTemplatesPath = json.rest.customer_card.custom_templates_customercards;
         logger.info(IDLOG, 'end configuration by file ' + path);
 
     } catch (err) {
