@@ -740,53 +740,58 @@ function parkingChanged(parking) {
 * @param {string} path The path of the configuration file
 */
 function config(path) {
-    // check parameter
-    if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
+    try {
+        // check parameter
+        if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
 
-    // check file presence
-    if (!fs.existsSync(path)) { throw new Error(path + ' doesn\'t exist'); }
+        // check file presence
+        if (!fs.existsSync(path)) { throw new Error(path + ' doesn\'t exist'); }
 
-    // read configuration file
-    var json = require(path);
+        // read configuration file
+        var json = require(path);
 
-    // initialize the port of the websocket server
-    if (json.websocket && json.websocket.port) {
-        port = json.websocket.port;
+        // initialize the port of the websocket server
+        if (json.websocket && json.websocket.port) {
+            port = json.websocket.port;
 
-    } else {
-        logger.warn(IDLOG, 'no port has been specified in JSON file ' + path);
+        } else {
+            logger.warn(IDLOG, 'no port has been specified in JSON file ' + path);
+        }
+
+        // initialize the proto of the proxy
+        if (json.websocket.proto) {
+            proto = json.websocket.proto;
+
+        } else {
+            logger.warn(IDLOG, 'no proto specified in JSON file ' + path);
+        }
+
+        // initialize the key of the HTTPS proxy
+        if (json.websocket.https_key) {
+            HTTPS_KEY = json.websocket.https_key;
+
+        } else {
+            logger.warn(IDLOG, 'no HTTPS key specified in JSON file ' + path);
+        }
+
+        // initialize the certificate of the HTTPS proxy
+        if (json.websocket.https_cert) {
+            HTTPS_CERT = json.websocket.https_cert;
+
+        } else {
+            logger.warn(IDLOG, 'no HTTPS certificate specified in JSON file ' + path);
+        }
+
+        // initialize the interval at which update the token expiration of all users
+        // that are connected by websocket
+        var expires = compAuthe.getTokenExpirationTimeout();
+        updateTokenExpirationInterval = expires / 2;
+
+        logger.info(IDLOG, 'configuration by file ' + path + ' ended');
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
     }
-
-    // initialize the proto of the proxy
-    if (json.websocket.proto) {
-        proto = json.websocket.proto;
-
-    } else {
-        logger.warn(IDLOG, 'no proto specified in JSON file ' + path);
-    }
-
-    // initialize the key of the HTTPS proxy
-    if (json.websocket.https_key) {
-        HTTPS_KEY = json.websocket.https_key;
-
-    } else {
-        logger.warn(IDLOG, 'no HTTPS key specified in JSON file ' + path);
-    }
-
-    // initialize the certificate of the HTTPS proxy
-    if (json.websocket.https_cert) {
-        HTTPS_CERT = json.websocket.https_cert;
-
-    } else {
-        logger.warn(IDLOG, 'no HTTPS certificate specified in JSON file ' + path);
-    }
-
-    // initialize the interval at which update the token expiration of all users
-    // that are connected by websocket
-    var expires = compAuthe.getTokenExpirationTimeout();
-    updateTokenExpirationInterval = expires / 2;
-
-    logger.info(IDLOG, 'configuration by file ' + path + ' ended');
 }
 
 /**
@@ -799,24 +804,29 @@ function config(path) {
 * @param {string} path The path of the configuration file
 */
 function configPrivacy(path) {
-    // check parameter
-    if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
+    try {
+        // check parameter
+        if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
 
-    // check file presence
-    if (!fs.existsSync(path)) { throw new Error(path + ' doesn\'t exist'); }
+        // check file presence
+        if (!fs.existsSync(path)) { throw new Error(path + ' doesn\'t exist'); }
 
-    // read configuration file
-    var json = require(path);
+        // read configuration file
+        var json = require(path);
 
-    // initialize the string used to hide last digits of phone numbers
-    if (json.privacy_numbers) {
-        privacyStrReplace = json.privacy_numbers;
+        // initialize the string used to hide last digits of phone numbers
+        if (json.privacy_numbers) {
+            privacyStrReplace = json.privacy_numbers;
 
-    } else {
-        logger.warn(IDLOG, 'no privacy string has been specified in JSON file ' + path);
+        } else {
+            logger.warn(IDLOG, 'no privacy string has been specified in JSON file ' + path);
+        }
+
+        logger.info(IDLOG, 'privacy configuration by file ' + path + ' ended');
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
     }
-
-    logger.info(IDLOG, 'privacy configuration by file ' + path + ' ended');
 }
 
 /**
