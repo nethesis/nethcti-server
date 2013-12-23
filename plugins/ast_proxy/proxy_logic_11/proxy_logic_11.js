@@ -1077,7 +1077,7 @@ function queueDetails(err, resp) {
 
             if (struct[structKey].type === INI_STRUCT.TYPE.QUEUE && q === structQueueId) {
 
-                if (!struct[structKey].dynmembers) {
+                if (struct[structKey].dynmembers === undefined) {
                     logger.warn(IDLOG, 'no "dynmembers" key for "' + structKey + '" in configuration file');
                     continue;
                 }
