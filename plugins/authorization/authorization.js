@@ -129,7 +129,7 @@ function configByFile(path) {
     try {
         if (typeof path !== 'string') { throw new Error('wrong parameter'); }
 
-        if (!fs.existsSync(path)) { throw new Error(path + ' doesn\'t exists'); }
+        if (!fs.existsSync(path)) { throw new Error(path + ' doesn\'t exist'); }
 
         // read the file
         var json = require(path);

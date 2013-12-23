@@ -744,7 +744,7 @@ function config(path) {
     if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
 
     // check file presence
-    if (!fs.existsSync(path)) { throw new Error(path + ' not exists'); }
+    if (!fs.existsSync(path)) { throw new Error(path + ' doesn\'t exist'); }
 
     // read configuration file
     var json = require(path);
@@ -803,7 +803,7 @@ function configPrivacy(path) {
     if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
 
     // check file presence
-    if (!fs.existsSync(path)) { throw new Error(path + ' not exists'); }
+    if (!fs.existsSync(path)) { throw new Error(path + ' doesn\'t exist'); }
 
     // read configuration file
     var json = require(path);

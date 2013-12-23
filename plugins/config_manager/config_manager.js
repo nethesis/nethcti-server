@@ -201,7 +201,7 @@ function configUser(obj) {
         }
 
         // check file presence
-        if (!fs.existsSync(obj.users)) { throw new Error(obj.users + ' not exists'); }
+        if (!fs.existsSync(obj.users)) { throw new Error(obj.users + ' doesn\'t exist'); }
 
         // global property used also by other methods
         userPrefsPath = obj.userPrefs;
@@ -211,10 +211,10 @@ function configUser(obj) {
         contentConfPrefJson = require(obj.users);
 
         // read the user preferences file. If the user has never saved its preferences,
-        // the file doesn't exists and so default preference values are used
+        // the file doesn't exist and so default preference values are used
         var userPrefs = {};
         if (!fs.existsSync(obj.userPrefs)) {
-            logger.info(obj.userPrefs + ' not exists');
+            logger.info(obj.userPrefs + ' doesn\'t exist');
 
         } else {
             userPrefs = require(userPrefsPath);
@@ -300,7 +300,7 @@ function configChat(path) {
         if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
 
         // check file presence
-        if (!fs.existsSync(path)) { throw new Error(path + ' not exists'); }
+        if (!fs.existsSync(path)) { throw new Error(path + ' doesn\'t exist'); }
 
         logger.info(IDLOG, 'configure server chat with ' + path);
 

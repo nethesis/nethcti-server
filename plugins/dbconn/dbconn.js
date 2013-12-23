@@ -186,7 +186,7 @@ function configDbStatic(path) {
         if (typeof path !== 'string') { throw new Error('wrong parameter'); }
 
         // check the file existence
-        if (!fs.existsSync(path)) { throw new Error(path + ' doesn\'t exists'); }
+        if (!fs.existsSync(path)) { throw new Error(path + ' doesn\'t exist'); }
 
         var json = require(path); // read the file
         logger.info(IDLOG, 'file ' + path + ' has been read');

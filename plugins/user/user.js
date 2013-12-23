@@ -262,7 +262,7 @@ exports.User = function (uname, na, sur) {
     * @param {string} type The type of the authorization
     * @return {object} The authorization requested. The key is the passed type
     *                  and the value is the authorization or an undefined if it
-    *                  doesn't exists.
+    *                  doesn't exist.
     */
     function getAuthorization(type) {
         // check parameter

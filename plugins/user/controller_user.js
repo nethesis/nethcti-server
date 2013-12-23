@@ -160,7 +160,7 @@ function configByFile(path) {
         if (typeof path !== 'string') { throw new Error('wrong parameter'); }
 
         // check file presence
-        if (!fs.existsSync(path)) { throw new Error(path + ' not exists'); }
+        if (!fs.existsSync(path)) { throw new Error(path + ' doesn\'t exist'); }
 
         // read JSON file with the user/endpoint associations
         var json = require(path);
@@ -346,7 +346,7 @@ function setAuthorization(userid, typeAutho, value) {
 *
 * @method getAuthorization
 * @param {string} userid The user identifier
-* @return {object} The authorization of the user or undefined value if the user not exists.
+* @return {object} The authorization of the user or undefined value if the user doesn\'t exist.
 */
 function getAuthorization(userid, type) {
     try {
@@ -653,7 +653,7 @@ function getAllEndpointsNethcti(username) {
 
         // check the user existence
         if (typeof users[username] !== 'object') {
-            logger.warn(IDLOG, 'gettings all the nethcti endpoints: the user "' + username + '" not exists');
+            logger.warn(IDLOG, 'gettings all the nethcti endpoints: the user "' + username + '" doesn\'t exist');
             return {};
         }
 
@@ -681,7 +681,7 @@ function getAllEndpointsExtension(username) {
 
         // check the user existence
         if (typeof users[username] !== 'object') {
-            logger.warn(IDLOG, 'gettings all the extension endpoints: the user "' + username + '" not exists');
+            logger.warn(IDLOG, 'gettings all the extension endpoints: the user "' + username + '" doesn\'t exist');
             return {};
         }
 

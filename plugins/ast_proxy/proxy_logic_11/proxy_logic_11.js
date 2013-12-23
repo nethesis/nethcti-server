@@ -3895,7 +3895,7 @@ function sendDTMFSequence(extension, sequence, cb) {
         // check if the extension exists
         if (!extensions[extension]) {
             logger.warn(IDLOG, 'sending DTMF sequence to non existing extension ' + extension);
-            cb(extension + ' not exists');
+            cb(extension + ' doesn\'t exist');
             return;
         }
 

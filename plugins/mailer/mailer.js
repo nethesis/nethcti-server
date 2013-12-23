@@ -110,7 +110,7 @@ function config(path) {
 
         // check file presence
         if (!fs.existsSync(path)) {
-            logger.info(IDLOG, path + ' doesn\'t exists: use default values "' + address  + '" "' + port + '" from "' + sender + '"');
+            logger.info(IDLOG, path + ' doesn\'t exist: use default values "' + address  + '" "' + port + '" from "' + sender + '"');
             return;
         }
 
