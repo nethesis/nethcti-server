@@ -41,6 +41,18 @@ var IDLOG = '[customer_card]';
 var DEFAULT_TEMPLATES_DIR = 'templates/locales/it';
 
 /**
+* The default file extension of the customer cards templates.
+*
+* @property TEMPLATE_EXTENSION
+* @type string
+* @private
+* @final
+* @readOnly
+* @default ".ejs"
+*/
+var TEMPLATE_EXTENSION = '.ejs';
+
+/**
 * The directory path of the custom templates used by the customer card component. All
 * templates in this path are more priority than the default ones.
 *
@@ -311,7 +323,11 @@ function initEjsTemplates() {
 
             filename = customFilenames[i];
             filepath = path.join(customTemplatesPath, filename);
-            filesToRead[filename] = filepath;
+
+            // add file to read only if the file extension is correct
+            if (path.extname(filepath) === TEMPLATE_EXTENSION) {
+                filesToRead[filename] = filepath;
+            }
         }
 
         // read the content of all the ejs templates
