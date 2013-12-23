@@ -13,7 +13,6 @@
 */
 var fs        = require('fs');
 var io        = require('socket.io');
-var iniparser = require('iniparser');
 var httpProxy = require('http-proxy');
 
 /**
@@ -734,8 +733,6 @@ function parkingChanged(parking) {
 * Configurates the websocket server properties by a configuration file.
 * The file must use the JSON syntax.
 *
-* **The method can throw an Exception.**
-*
 * @method config
 * @param {string} path The path of the configuration file
 */
@@ -755,7 +752,7 @@ function config(path) {
             port = json.websocket.port;
 
         } else {
-            logger.warn(IDLOG, 'no port has been specified in JSON file ' + path);
+            logger.warn(IDLOG, 'no ws port has been specified in JSON file ' + path);
         }
 
         // initialize the proto of the proxy
@@ -763,7 +760,7 @@ function config(path) {
             proto = json.websocket.proto;
 
         } else {
-            logger.warn(IDLOG, 'no proto specified in JSON file ' + path);
+            logger.warn(IDLOG, 'no ws proto has been specified in JSON file ' + path);
         }
 
         // initialize the key of the HTTPS proxy
@@ -771,7 +768,7 @@ function config(path) {
             HTTPS_KEY = json.websocket.https_key;
 
         } else {
-            logger.warn(IDLOG, 'no HTTPS key specified in JSON file ' + path);
+            logger.warn(IDLOG, 'no ws HTTPS key has been specified in JSON file ' + path);
         }
 
         // initialize the certificate of the HTTPS proxy
@@ -779,7 +776,7 @@ function config(path) {
             HTTPS_CERT = json.websocket.https_cert;
 
         } else {
-            logger.warn(IDLOG, 'no HTTPS certificate specified in JSON file ' + path);
+            logger.warn(IDLOG, 'no ws HTTPS certificate has been specified in JSON file ' + path);
         }
 
         // initialize the interval at which update the token expiration of all users
@@ -797,8 +794,6 @@ function config(path) {
 /**
 * Customize the privacy used to hide phone numbers by a configuration file.
 * The file must use the JSON syntax.
-*
-* **The method can throw an Exception.**
 *
 * @method configPrivacy
 * @param {string} path The path of the configuration file
