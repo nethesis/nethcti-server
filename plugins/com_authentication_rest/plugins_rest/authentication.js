@@ -184,6 +184,10 @@ function setCompUtil(comp) {
                     var username = req.params.username;
                     var password = req.params.password;
 
+                    if (!username || !password) {
+                        throw new Error('username or password has not been specified');
+                    }
+
                     compAuthe.authenticate(username, password, function (err) {
                         try {
                             if (err) {

@@ -1,4 +1,8 @@
 {
+    "tcp": {
+        "port": "8182",
+        "proto": "http"
+    },
     "websocket": {
         "port":       "8181",
         "proto":      "wss",

@@ -39,6 +39,7 @@ try{
         { packagePath: "./plugins/com_authorization_rest"  },
         { packagePath: "./plugins/com_customer_card_rest"  },
         { packagePath: "./plugins/com_config_manager_rest" },
+        { packagePath: "./plugins/com_nethcti_tcp"         },
         { packagePath: "./plugins/com_nethcti_ws"          },
         { packagePath: "./plugins/http_proxy"              }
     ];

@@ -1,10 +1,10 @@
 /**
-* Supply the real time informations about extensions, queues, trunks and parkings.
+* Provides the real time informations about extension ringings.
 *
-* @class arch_com_nethcti_ws
-* @module com_nethcti_ws
+* @class arch_com_nethcti_tcp
+* @module com_nethcti_tcp
 */
-var comNethctiWs = require('./com_nethcti_ws');
+var comNethctiWs = require('./com_nethcti_tcp');
 
 /**
 * The module identifier used by the logger.
@@ -14,9 +14,9 @@ var comNethctiWs = require('./com_nethcti_ws');
 * @private
 * @final
 * @readOnly
-* @default [arch_com_nethcti_ws]
+* @default [arch_com_nethcti_tcp]
 */
-var IDLOG = '[arch_com_nethcti_ws]';
+var IDLOG = '[arch_com_nethcti_tcp]';
 
 module.exports = function (options, imports, register) {
     
@@ -30,13 +30,12 @@ module.exports = function (options, imports, register) {
         // wait for the authentication component ready event
         imports.authentication.on(imports.authentication.EVT_COMP_READY, function () {
             comNethctiWs.setLogger(logger);
-            comNethctiWs.setAuthe(imports.authentication);
+            comNethctiWs.setCompAuthe(imports.authentication);
             comNethctiWs.config('/etc/nethcti/services.json');
-            comNethctiWs.configPrivacy('/etc/nethcti/nethcti.json');
             comNethctiWs.setCompUser(imports.user);
             comNethctiWs.setAstProxy(imports.astProxy);
-            comNethctiWs.setCompVoicemail(imports.voicemail);
             comNethctiWs.setCompAuthorization(imports.authorization);
+            comNethctiWs.setCompStreaming(imports.streaming);
             comNethctiWs.start();
         });
     } catch (err) {

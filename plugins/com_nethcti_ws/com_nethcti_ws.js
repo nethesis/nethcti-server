@@ -173,15 +173,6 @@ var compAuthorization;
 var compVoicemail;
 
 /**
-* The operator module.
-*
-* @property operator
-* @type object
-* @private
-*/
-var operator;
-
-/**
 * Contains all websocket identifiers of authenticated clients.
 * The key is the websocket identifier and the value is the username.
 * It's used for fast authentication for each request.
@@ -286,23 +277,6 @@ function setCompVoicemail(cv) {
         logger.info(IDLOG, 'set voicemail architect component');
     } catch (err) {
        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Sets the operator to be used by the module.
-*
-* @method setOperator
-* @param {object} op The operator.
-*/
-function setOperator(op) {
-    try {
-        if (typeof op !== 'object') {
-            throw new Error('wrong operator object');
-        }
-        operator = op;
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
     }
 }
 
@@ -529,7 +503,7 @@ function trunkChanged(trunk) {
 *
 * @method getFilteredCallerIndentity
 * @param  {string} username       The username
-* @param  {object} callerIdentity The identity of the caller to br filtered
+* @param  {object} callerIdentity The identity of the caller to be filtered
 * @return {object} The filtered caller identity.
 * @private
 */
@@ -1057,7 +1031,7 @@ function loginHdlr(socket, obj) {
             // set the nethcti endpoint presence of the user to online status
             compUser.setNethctiPresence(obj.accessKeyId, 'desktop', compUser.ENDPOINT_NETHCTI_STATUS.online);
 
-            // sets extension property to the client socket
+            // sets username property to the client socket
             socket.set('username', obj.accessKeyId, function () {
                 logger.info(IDLOG, 'setted username property ' + obj.accessKeyId + ' to socket ' + socket.id);
             });
@@ -1125,6 +1099,7 @@ function loginHdlr(socket, obj) {
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
+        unauthorized(socket);
     }
 }
 
@@ -1219,7 +1194,7 @@ function sendAutheSuccess(socket) {
     try {
         socket.emit('authe_ok', { message: 'authorized successfully' });
         socket.get('username', function (err, name) {
-            logger.info(IDLOG, 'send authorized successfully to ' + name + ' ' + getWebsocketEndpoint(socket) + ' with id ' + socket.id);
+            logger.info(IDLOG, 'sent authorized successfully to ' + name + ' ' + getWebsocketEndpoint(socket) + ' with id ' + socket.id);
         });
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -1232,7 +1207,6 @@ exports.config               = config;
 exports.setAuthe             = setAuthe;
 exports.setLogger            = setLogger;
 exports.setAstProxy          = setAstProxy;
-exports.setOperator          = setOperator;
 exports.setCompUser          = setCompUser;
 exports.configPrivacy        = configPrivacy;
 exports.setCompVoicemail     = setCompVoicemail;
