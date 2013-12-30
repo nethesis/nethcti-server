@@ -174,6 +174,62 @@ function getAllSourcesJSON() {
 }
 
 /**
+* Returns the streaming source in JSON format or an empty
+* object in error case.
+*
+* @method getSourceJSONByExten
+* @param  {string} extenId The extension endpoint identifier
+* @return {object} The streaming source in JSON format.
+*/
+function getSourceJSONByExten(extenId) {
+    try {
+        // check parameter
+        if (typeof extenId !== 'string') { throw new Error('wrong parameter'); }
+
+        // cycle in all streaming sources
+        var stream;
+        for (stream in streamings) {
+
+            if (streamings[stream].getExtension() === extenId) {
+                return streamings[stream].toJSON();
+            }
+        }
+        return {};
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return {};
+    }
+}
+
+/**
+* Check if the endpoint extension is a streaming source.
+*
+* @method isExtenStreamingSource
+* @param  {string}  extenId The extension endpoint identifier
+* @return {boolean} True if the extension endpoint is a steraming source.
+*/
+function isExtenStreamingSource(extenId) {
+    try {
+        // check parameter
+        if (typeof extenId !== 'string') { throw new Error('wrong parameter'); }
+
+        // cycle in all streaming sources
+        var stream;
+        for (stream in streamings) {
+
+            // check if the streaming has the specified extension identifier
+            if (streamings[stream].getExtension() === extenId) { return true; }
+        }
+        return false;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return false;
+    }
+}
+
+/**
 * Executes the command associated with the streaming source to open
 * the associated device, e.g. a door.
 *
@@ -229,8 +285,10 @@ function open(streamId, cb) {
 }
 
 // public interface
-exports.open              = open;
-exports.config            = config;
-exports.setLogger         = setLogger;
-exports.setCompAstProxy   = setCompAstProxy;
-exports.getAllSourcesJSON = getAllSourcesJSON;
+exports.open                   = open;
+exports.config                 = config;
+exports.setLogger              = setLogger;
+exports.setCompAstProxy        = setCompAstProxy;
+exports.getAllSourcesJSON      = getAllSourcesJSON;
+exports.getSourceJSONByExten   = getSourceJSONByExten;
+exports.isExtenStreamingSource = isExtenStreamingSource;

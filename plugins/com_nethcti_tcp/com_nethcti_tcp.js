@@ -266,22 +266,22 @@ function setAstProxyListeners() {
 * contacts returned is the one created by the user in the cti phonebook, or one from the
 * centralized phonebook or a public contact created by other users in the cti address book.
 *
-* @method getFilteredCallerIndentity
+* @method getFilteredCallerData
 * @param  {string} username       The username
 * @param  {object} callerIdentity The identity of the caller to be filtered
-* @return {object} The filtered caller identity.
+* @return {object} The filtered caller identity data
 * @private
 */
-function getFilteredCallerIndentity(username, callerIdentity) {
+function getFilteredCallerData(username, callerIdentity) {
     try {
         // check parameters
         if (typeof username !== 'string' || typeof callerIdentity !== 'object') {
             throw new Error('wrong parameters');
         }
 
+        /*
+        // if some caller notes are present, filter them
         var i;
-
-        // filter the caller notes, if there are
         var filteredCallerNotes = [];
 
         if (callerIdentity.callerNotes) {
@@ -308,6 +308,7 @@ function getFilteredCallerIndentity(username, callerIdentity) {
                 }
             }
         }
+        */
 
         // filter the phonebook contact if it's present
         // chose the phonebook contacts: is first returned the contact of the user from the cti phonebook,
@@ -355,19 +356,55 @@ function getFilteredCallerIndentity(username, callerIdentity) {
         }
 
         // object to return
-        var filteredIdentityCaller = {
-            numCalled:   callerIdentity.numCalled,
-            callerNum:   callerIdentity.callerNum,
-            callerName:  callerIdentity.callerName
-        };
+        var filteredCallerData = {};
 
-        if (pbContact)                      { filteredIdentityCaller.pbContact   = pbContact;           }
-        if (filteredCallerNotes.length > 0) { filteredIdentityCaller.callerNotes = filteredCallerNotes; }
+        if (pbContact)                      { filteredCallerData.pbContact   = pbContact;           }
+        // if (filteredCallerNotes.length > 0) { filteredCallerData.callerNotes = filteredCallerNotes; }
 
-        return filteredIdentityCaller;
+        return filteredCallerData;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
+        return {};
+    }
+}
+
+/**
+* Returns data about the streaming source filtered by user authorizations. If the user
+* doesn't have the authorization, an empty object is returned.
+*
+* @method getFilteredStreamData
+* @param  {string} username   The username
+* @param  {string} callerNum  The number of the caller
+* @return {object} The filtered streaming data
+* @private
+*/
+function getFilteredStreamData(username, callerNum) {
+    try {
+        // check parameters
+        if (typeof username !== 'string' || typeof callerNum !== 'string') {
+            throw new Error('wrong parameters');
+        }
+
+        // get the streaming data
+        var streamJSON = compStreaming.getSourceJSONByExten(callerNum);
+
+        // check if the user has the streaming permission, otherwise return an empty object
+        if (compAuthorization.authorizeStreamingSourceUser(username, streamJSON.id) === true) {
+
+            return {
+                id:          streamJSON.id,
+                url:         streamJSON.url,
+                description: streamJSON.description
+            };
+        }
+
+        // the user has not the streaming permission, so return an empty object
+        return {};
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return {};
     }
 }
 
@@ -396,8 +433,11 @@ function extenDialing(data) {
         // get all users associated with the ringing extension
         var users = compUser.getUsersUsingEndpointExtension(data.dialingExten);
 
+        // check if the caller is a streaming source
+        var isStreaming = compStreaming.isExtenStreamingSource(data.callerIdentity.callerNum);
+
         // emit the "extenRinging" event for each logged in user associated with the ringing extension
-        var sockId, username, filteredCallerIdentity;
+        var sockId, username;
 
         for (sockId in sockets) {
 
@@ -405,20 +445,32 @@ function extenDialing(data) {
             // and "id" properties added by "connHdlr" and "loginHdlr" methods
             username = sockets[sockId].username;
 
-            // the user is associated with the ringing extension and is logged in
+            // the user is associated with the ringing extension and is logged in, so return the caller data
             if (users.indexOf(username) !== -1) {
 
-                filteredCallerIdentity = getFilteredCallerIndentity(username, data.callerIdentity);
+                // the object to return to the client. It contains the source type of the caller, informations
+                // about the caller and the streaming data if the source is a streaming
+                var callerInfo = {
+                    type:       (isStreaming ? 'streaming' : 'call'),
+                    message:    'extenRinging',
+                    callerData: {}
+                };
+
+                if (isStreaming) {
+                    callerInfo.streaming = getFilteredStreamData(username, data.callerIdentity.callerNum);
+                } else {
+                    callerInfo.callerData = getFilteredCallerData(username, data.callerIdentity);
+                }
+
+                // always add this informations without filter them
+                callerInfo.callerData.numCalled  = data.callerIdentity.numCalled;
+                callerInfo.callerData.callerNum  = data.callerIdentity.callerNum;
+                callerInfo.callerData.callerName = data.callerIdentity.callerName;
 
                 // emits the event with the caller identity data
                 logger.info(IDLOG, 'emit event extenRinging for extension ' + data.dialingExten + ' to user "' + username + '" with the caller identity');
 
-                var data = {
-                    message:        'extenRinging',
-                    callerIdentity: filteredCallerIdentity
-                };
-
-                sockets[sockId].write(JSON.stringify(data));
+                sockets[sockId].write(JSON.stringify(callerInfo));
             }
         }
     } catch (err) {
