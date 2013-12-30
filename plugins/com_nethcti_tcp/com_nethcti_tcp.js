@@ -451,9 +451,15 @@ function extenDialing(data) {
                 // the object to return to the client. It contains the source type of the caller, informations
                 // about the caller and the streaming data if the source is a streaming
                 var callerInfo = {
-                    type:       (isStreaming ? 'streaming' : 'call'),
-                    message:    'extenRinging',
-                    callerData: {}
+                    type:         (isStreaming ? 'streaming' : 'call'),
+                    message:      'extenRinging',
+                    callerData:   {},
+                    notification: {
+                        url:          (isStreaming ? 'stream_template_url' : 'call_template_url'),
+                        width:        200,
+                        height:       100,
+                        closeTimeout: 10
+                    }
                 };
 
                 if (isStreaming) {
