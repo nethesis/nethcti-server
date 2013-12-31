@@ -6,6 +6,6 @@
         "dbuser":     "USER",
         "dbpassword": "PASS",
         "dbname":     "DBNAME",
-        "query":      "select * from DB_TEST where COLUMN like '%$TERM'"
+        "query":      "select * from DB_TEST where COLUMN like '%$EXTEN'"
     }
 }

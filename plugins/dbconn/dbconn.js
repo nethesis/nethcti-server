@@ -2519,7 +2519,7 @@ function getCustomerCardByNum(type, num, cb) {
         num = num.substring(1, num.length - 1);             // remove external quote e.g. num = 123456
 
         // replace the key of the query with paramter
-        var query = dbConfig[type].query.replace(/\$TERM/g, num);
+        var query = dbConfig[type].query.replace(/\$EXTEN/g, num);
 
         dbConn[type].query(query).success(function (results) {
 
