@@ -886,8 +886,8 @@ function updateParkedChannelOfOneParking(err, resp, parking) {
             logger.info(IDLOG, 'removed parked caller from parking ' + parking);
 
             // emit the event
+            logger.info(IDLOG, 'emit event ' + EVT_PARKING_CHANGED + ' for parking ' + parking);
             astProxy.emit(EVT_PARKING_CHANGED, parkings[parking]);
-            logger.info(IDLOG, 'emitted event ' + EVT_PARKING_CHANGED + ' for parking ' + parking);
         }
 
     } catch (error) {
@@ -936,8 +936,8 @@ function updateParkedCallerOfOneParking(err, resp, parking) {
                 logger.info(IDLOG, 'updated parked call ' + pCall.getNumber() + ' to parking ' + parking);
 
                 // emit the event
+                logger.info(IDLOG, 'emit event ' + EVT_PARKING_CHANGED + ' for parking ' + parking);
                 astProxy.emit(EVT_PARKING_CHANGED, parkings[parking]);
-                logger.info(IDLOG, 'emitted event ' + EVT_PARKING_CHANGED + ' for parking ' + parking);
             }
 
         } else {
@@ -1591,8 +1591,8 @@ function updateExtIaxDetails(err, resp) {
         extIaxDetails(resp);
 
         // emit the event
+        logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for iax extension ' + resp.exten);
         astProxy.emit(EVT_EXTEN_CHANGED, extensions[resp.exten]);
-        logger.info(IDLOG, 'emitted event ' + EVT_EXTEN_CHANGED + ' for iax extension ' + resp.exten);
 
     } catch (error) {
         logger.error(IDLOG, error.stack);
@@ -1641,8 +1641,8 @@ function updateExtSipDetails(err, resp) {
         extSipDetails(null, resp);
 
         // emit the event
+        logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for sip extension ' + resp.exten.exten);
         astProxy.emit(EVT_EXTEN_CHANGED, extensions[resp.exten.exten]);
-        logger.info(IDLOG, 'emitted event ' + EVT_EXTEN_CHANGED + ' for sip extension ' + resp.exten.exten);
 
     } catch (error) {
         logger.error(IDLOG, error.stack);
@@ -1780,8 +1780,8 @@ function updateExtenConversations(err, resp, exten) {
             }
 
             // emit the event
+            logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
             astProxy.emit(EVT_EXTEN_CHANGED, extensions[exten]);
-            logger.info(IDLOG, 'emitted event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
 
         } else {
             logger.warn(IDLOG, 'try to update channel list of the non existent extension ' + exten);
@@ -1837,8 +1837,8 @@ function updateTrunkConversations(err, resp, trunk) {
             }
 
             // emit the event
+            logger.info(IDLOG, 'emit event ' + EVT_TRUNK_CHANGED + ' for trunk ' + trunk);
             astProxy.emit(EVT_TRUNK_CHANGED, trunks[trunk]);
-            logger.info(IDLOG, 'emitted event ' + EVT_TRUNK_CHANGED + ' for trunk ' + trunk);
 
         } else {
             logger.warn(IDLOG, 'try to update channel list of the non existent trunk ' + trunk);
@@ -2138,8 +2138,8 @@ function evtQueueMemberPausedChanged(queueId, memberId, paused, reason) {
             logger.info(IDLOG, 'paused status of queue member "' + memberId + '" of queue "' + queueId + '" has been changed to "' + paused + '"');
 
             // emit the event
+            logger.info(IDLOG, 'emit event ' + EVT_QUEUE_MEMBER_CHANGED + ' for queue member ' + memberId + ' of queue ' + queueId);
             astProxy.emit(EVT_QUEUE_MEMBER_CHANGED, member);
-            logger.info(IDLOG, 'emitted event ' + EVT_QUEUE_MEMBER_CHANGED + ' for queue member ' + memberId + ' of queue ' + queueId);
 
         } else {
             logger.warn(IDLOG, 'received event queue member paused changed for non existent member "' + memberId + '"');
@@ -2221,8 +2221,8 @@ function evtQueueMemberRemoved(data) {
         logger.info(IDLOG, 'set the member "' + data.member + '" of queue "' + data.queueId + '" to logged off');
 
         // emit the event
+        logger.info(IDLOG, 'emit event ' + EVT_QUEUE_MEMBER_CHANGED + ' for queue member ' + data.member + ' of queue ' + data.queueId);
         astProxy.emit(EVT_QUEUE_MEMBER_CHANGED, member);
-        logger.info(IDLOG, 'emitted event ' + EVT_QUEUE_MEMBER_CHANGED + ' for queue member ' + data.member + ' of queue ' + data.queueId);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -2306,8 +2306,8 @@ function evtExtenDndChanged(exten, enabled) {
             logger.info(IDLOG, 'set dnd status to ' + enabled + ' for extension ' + exten);
 
             // emit the event
+            logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
             astProxy.emit(EVT_EXTEN_CHANGED, extensions[exten]);
-            logger.info(IDLOG, 'emitted event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
 
         } else {
             logger.warn(IDLOG, 'try to set dnd status of non existent extension ' + exten);
@@ -2377,9 +2377,8 @@ function evtNewVoicemailMessage(data) {
         }
 
         // emit the event
+        logger.info(IDLOG, 'emit event ' + EVT_NEW_VOICEMAIL + ' in voicemail ' + data.voicemail + ' with context ' + data.context);
         astProxy.emit(EVT_NEW_VOICEMAIL, data);
-        logger.info(IDLOG, 'emitted event ' + EVT_NEW_VOICEMAIL + ' in voicemail ' + data.voicemail +
-                           ' with context ' + data.context);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -2408,8 +2407,8 @@ function evtRemoveQueueWaitingCaller(data) {
         logger.info(IDLOG, 'removed queue waiting caller ' + data.channel + ' from queue ' + q);
 
         // emit the event
+        logger.info(IDLOG, 'emit event ' + EVT_QUEUE_CHANGED + ' for queue ' + q);
         astProxy.emit(EVT_QUEUE_CHANGED, queues[q]);
-        logger.info(IDLOG, 'emitted event ' + EVT_QUEUE_CHANGED + ' for queue ' + q);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -2438,8 +2437,8 @@ function evtNewQueueWaitingCaller(data) {
         astProxy.doCmd({ command: 'listChannels' }, updateConversationsForAllTrunk);
 
         // emit the event
+        logger.info(IDLOG, 'emit event ' + EVT_QUEUE_CHANGED + ' for queue ' + q);
         astProxy.emit(EVT_QUEUE_CHANGED, queues[q]);
-        logger.info(IDLOG, 'emitted event ' + EVT_QUEUE_CHANGED + ' for queue ' + q);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -3860,8 +3859,8 @@ function setRecordStatusConversations(convid, value) {
                         logger.info(IDLOG, 'set recording status ' + value + ' to conversation ' + convid);
 
                         // emit the event
+                        logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
                         astProxy.emit(EVT_EXTEN_CHANGED, extensions[exten]);
-                        logger.info(IDLOG, 'emitted event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
                     }
                 }
             }

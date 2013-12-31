@@ -591,6 +591,7 @@ function getVoicemailNewMsgCb(err, voicemail, results) {
         }
 
         // emits the new voicemail event with all the new voice messages of the voicemail
+        logger.info(IDLOG, 'emit event "' + EVT_NEW_VOICEMAIL + '" for voicemail ' + voicemail);
         emitter.emit(EVT_NEW_VOICEMAIL, voicemail, arr);
 
     } catch (err) {

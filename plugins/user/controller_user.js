@@ -180,8 +180,8 @@ function configByFile(path) {
         logger.info(IDLOG, 'configuration ended');
 
         // emit the event for tell to other modules that the user objects are ready
+        logger.info(IDLOG, 'emit event "' + EVT_USERS_READY + '"');
         emitter.emit(EVT_USERS_READY);
-        logger.info(IDLOG, '"' + EVT_USERS_READY + '" event emitted');
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -628,8 +628,8 @@ function setNethctiPresence(username, deviceType, status) {
         obj[username][endpointTypes.TYPES.nethcti] = allUsersEndpoints[username][endpointTypes.TYPES.nethcti];
 
         // emit the event to tell other modules that the nethcti endpoint presence of the user has changed
+        logger.info(IDLOG, 'emit event "' + EVT_ENDPOINT_PRESENCE_CHANGED + '"');
         emitter.emit(EVT_ENDPOINT_PRESENCE_CHANGED, username, endpointTypes.TYPES.nethcti, obj);
-        logger.info(IDLOG, '"' + EVT_ENDPOINT_PRESENCE_CHANGED + '" event emitted');
 
         return true;
 

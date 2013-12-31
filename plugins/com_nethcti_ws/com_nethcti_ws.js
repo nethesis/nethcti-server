@@ -1176,8 +1176,8 @@ function addWebsocketId(user, socketId) {
 */
 function send401(socket) {
     try {
-        socket.emit('401', { message: 'unauthorized access' });
         logger.warn(IDLOG, 'send 401 unauthorized to ' + getWebsocketEndpoint(socket));
+        socket.emit('401', { message: 'unauthorized access' });
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }

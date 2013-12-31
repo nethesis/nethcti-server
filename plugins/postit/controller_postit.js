@@ -278,6 +278,7 @@ function getAllUnreadPostitOfRecipientCb(err, creator, recipient, results) {
         }
 
         // emits the new postit event with all the unread postit of the recipient user
+        logger.info(IDLOG, 'emit event ' + EVT_NEW_POSTIT + ' created by ' + creator + ' for ' + recipient);
         emitter.emit(EVT_NEW_POSTIT, creator, recipient, results);
 
     } catch (err) {
