@@ -232,6 +232,17 @@ exports.Channel = function (obj) {
     }
 
     /**
+    * Check if the channel status id "down".
+    *
+    * @method isDown
+    * @return {boolean} Returns true if the channel status is "down".
+    */
+    function isDown() {
+        if (channelStatus === STATUS_ENUM.DOWN) { return true; }
+        return false;
+    }
+
+    /**
     * Returns true if this channel is of the specified extension.
     *
     * @method isExtension
@@ -280,6 +291,7 @@ exports.Channel = function (obj) {
 
     // public interface
     return {
+        isDown:              isDown,
         toJSON:              toJSON,
         toString:            toString,
         isSource:            isSource,
@@ -319,13 +331,15 @@ var TYPE = {
 * @private
 * @final
 * @default {
+    DOWN:    "down",
     RING:    "ring",
     RINGING: "ringing"
 }
 */
 // the list is not complete. It's only used to determine
-// the type of the channel
+// the type of the channel and the trunk conversation direction
 var STATUS_ENUM = {
+    DOWN:    'down',
     RING:    'ring',
     RINGING: 'ringing'
 };

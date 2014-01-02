@@ -24,6 +24,7 @@ var QueueMember             = require('../queueMember').QueueMember;
 var EventEmitter            = require('events').EventEmitter;
 var ParkedCaller            = require('../parkedCaller').ParkedCaller;
 var Conversation            = require('../conversation').Conversation;
+var TrunkConversation       = require('../trunkConversation').TrunkConversation;
 var QueueWaitingCaller      = require('../queueWaitingCaller').QueueWaitingCaller;
 var QUEUE_MEMBER_TYPES_ENUM = require('../queueMember').QUEUE_MEMBER_TYPES_ENUM;
 
@@ -1938,6 +1939,7 @@ function addConversationToTrunk(trunk, resp, chid) {
 
             // creates the source and destination channels
             var ch = new Channel(resp[chid]);
+
             if (ch.isSource()) {
 
                 chSource = ch;
@@ -1955,7 +1957,7 @@ function addConversationToTrunk(trunk, resp, chid) {
                 }
             }
             // create a new conversation
-            var conv = new Conversation(trunk, chSource, chDest);
+            var conv = new TrunkConversation(trunk, chSource, chDest);
             var convid = conv.getId();
 
             // if the conversation is recording, sets its recording status
