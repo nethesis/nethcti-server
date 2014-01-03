@@ -103,8 +103,9 @@ var IDLOG = '[listVoicemail]';
                 try {
                     // store new voicemail information object
                     // data.objectname is the extension number, e.g., 214
+                    // data.email can be an empty string, so check that it is not undefined
                     if (   data                 && data.event === 'VoicemailUserEntry'
-                        && data.fullname        && data.email
+                        && data.fullname        && data.email !== undefined
                         && data.vmcontext       && data.voicemailbox
                         && data.maxmessagecount && data.maxmessagelength && data.newmessagecount) {
 
