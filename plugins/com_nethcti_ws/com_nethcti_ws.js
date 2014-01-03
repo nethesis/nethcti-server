@@ -382,7 +382,26 @@ function newVoicemailListener(voicemail, list) {
             throw new Error('wrong voicemails array list');
         }
 
+        logger.info(IDLOG, 'received "new voicemail" event for voicemail ' + voicemail);
 
+        // get all users associated with the ringing extension
+        var users = compUser.getUsersUsingEndpointVoicemail(voicemail);
+
+        // emit the "newVoiceMessage" event for each logged in user associated with the voicemail
+        var socketId, username, filteredCallerIdentity;
+
+        for (socketId in wsid) {
+
+            username = wsid[socketId];
+
+            // the user is associated with the voicemail is logged in
+            if (users.indexOf(username) !== -1) {
+
+                // emits the event with the list of all new voice messages of the voicemail
+                logger.info(IDLOG, 'emit event newVoiceMessage for voicemail ' + voicemail + ' to user "' + username + '"');
+                server.sockets.sockets[socketId].emit('newVoiceMessage', list);
+            }
+        }
     } catch (err) {
        logger.error(IDLOG, err.stack);
     }

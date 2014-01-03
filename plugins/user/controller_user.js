@@ -732,6 +732,43 @@ function getUsersUsingEndpointExtension(exten) {
     }
 }
 
+/**
+* Returns all users associated with the specified voicemail endpoint.
+*
+* @method getUsersUsingEndpointVoicemail
+* @param  {string} voicemail The voicemail endpoint identifier
+* @return {array}  Returns all the users associated with the specified voicemail endpoint.
+*/
+function getUsersUsingEndpointVoicemail(voicemail) {
+    try {
+        // check parameter
+        if (typeof voicemail !== 'string') { throw new Error('wrong parameter'); }
+
+        var result = [];
+
+        var vmKey, userVms, username, endpoints;
+        for (username in users) {
+
+            // get all the voicemail endpoints of the user
+            endpoints = users[username].getAllEndpoints();
+            userVms   = endpoints[endpointTypes.TYPES.voicemail];
+
+            for (vmKey in userVms) {
+
+                if (vmKey === voicemail) {
+                    // the user have the specified voicemail endpoint
+                    result.push(username);
+                }
+            }
+        }
+        return result;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return [];
+    }
+}
+
 // public interface
 exports.on                             = on;
 exports.config                         = config;
@@ -753,3 +790,4 @@ exports.getAllEndpointsExtension       = getAllEndpointsExtension;
 exports.getAllUsersEndpointsJSON       = getAllUsersEndpointsJSON;
 exports.EVT_ENDPOINT_PRESENCE_CHANGED  = EVT_ENDPOINT_PRESENCE_CHANGED;
 exports.getUsersUsingEndpointExtension = getUsersUsingEndpointExtension;
+exports.getUsersUsingEndpointVoicemail = getUsersUsingEndpointVoicemail;

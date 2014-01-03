@@ -521,7 +521,6 @@ function newVoicemailListener(voicemail, list) {
                     logger.info(IDLOG, 'don\'t send voicemail notification to user "' + username + '" by sms');
                 }
 
-
             } else {
                 logger.info(IDLOG, 'user "' + username + '" hasn\'t the voicemail endpoint ' + voicemail);
             }

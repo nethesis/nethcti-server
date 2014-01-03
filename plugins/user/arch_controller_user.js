@@ -189,6 +189,13 @@ module.exports = function (options, imports, register) {
             getUsersUsingEndpointExtension: controllerUser.getUsersUsingEndpointExtension,
 
             /**
+            * It's the _getUsersUsingEndpointVoicemail_ method provided by _controller\_user_ module.
+            *
+            * @method getUsersUsingEndpointVoicemail
+            */
+            getUsersUsingEndpointVoicemail: controllerUser.getUsersUsingEndpointVoicemail,
+
+            /**
             * It's the _EVT\_USERS\_READY_ property provided by _controller\_user_ module.
             *
             * @property EVT_USERS_READY
