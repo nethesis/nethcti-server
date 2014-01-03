@@ -1917,7 +1917,8 @@ function getVoicemailMsg(vmId, type, cb) {
         models[JSON_KEYS.VOICEMAIL].findAll({
             where: [
                 'mailboxuser=? AND ' +
-                'LOWER(RIGHT(dir, ' + type.length + '))=?',
+                'LOWER(RIGHT(dir, ' + type.length + '))=? ' +
+                'ORDER BY origtime DESC',
                 vmId, type
             ],
             attributes: [
