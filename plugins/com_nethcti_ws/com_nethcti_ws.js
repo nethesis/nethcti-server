@@ -173,6 +173,15 @@ var compAuthorization;
 var compVoicemail;
 
 /**
+* The post-it architect component.
+*
+* @property compPostit
+* @type object
+* @private
+*/
+var compPostit;
+
+/**
 * Contains all websocket identifiers of authenticated clients.
 * The key is the websocket identifier and the value is the username.
 * It's used for fast authentication for each request.
@@ -281,6 +290,21 @@ function setCompVoicemail(cv) {
 }
 
 /**
+* Sets post-it architect component.
+*
+* @method setCompPostit
+* @param {object} comp The post-it architect component.
+*/
+function setCompPostit(comp) {
+    try {
+        compPostit = comp;
+        logger.info(IDLOG, 'set post-it architect component');
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Set the asterisk proxy to be used by the module.
 *
 * @method setAstProxy
@@ -346,6 +370,26 @@ function setVoicemailListeners() {
 }
 
 /**
+* Sets the event listeners for the post-it component.
+*
+* @method setPostitListeners
+* @private
+*/
+function setPostitListeners() {
+    try {
+        // check post-it component object
+        if (!compPostit || typeof compPostit.on !== 'function') {
+            throw new Error('wrong post-it object');
+        }
+
+        compPostit.on(compPostit.EVT_NEW_POSTIT, newPostitListener);
+
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Sets the event listeners for the user component.
 *
 * @method setUserListeners
@@ -389,7 +433,7 @@ function newVoicemailListener(voicemail, list) {
         var users = compUser.getUsersUsingEndpointVoicemail(voicemail);
 
         // emit the "newVoiceMessage" event for each logged in user associated with the voicemail
-        var socketId, username, filteredCallerIdentity;
+        var socketId, username;
 
         for (socketId in wsid) {
 
@@ -404,6 +448,45 @@ function newVoicemailListener(voicemail, list) {
                 var obj = {};
                 obj[voicemail] = list;
                 server.sockets.sockets[socketId].emit('newVoiceMessage', obj);
+            }
+        }
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Manages the new post-it event emitted by the post-it component. It sends
+* all new post-its to the recipient user.
+*
+* @method newPostitListener
+* @param {string} creator   The user who has created the new post-it message
+* @param {string} recipient The recipient user of the new post-it
+* @param {array}  list      All the new post-it messages of the user
+* @private
+*/
+function newPostitListener(creator, recipient, list) {
+    try {
+        // check the event data
+        if (typeof creator !== 'string' || list === undefined || list instanceof Array === false) {
+            throw new Error('wrong arguments');
+        }
+
+        logger.info(IDLOG, 'received "new postit" event created by ' + creator + ' for user ' + recipient);
+
+        // emit the "newPostit" event for recipient user
+        var socketId, username, filteredCallerIdentity;
+
+        for (socketId in wsid) {
+
+            username = wsid[socketId];
+
+            // the user is the recipient of the new post-it message
+            if (username === recipient) {
+
+                // emits the event with the list of all new post-it messages of the user
+                logger.info(IDLOG, 'emit event newPostit created by "' + creator + '" to user "' + recipient + '"');
+                server.sockets.sockets[socketId].emit('newPostit', list);
             }
         }
     } catch (err) {
@@ -834,6 +917,9 @@ function start() {
         // set the listener for the voicemail module
         setVoicemailListeners();
 
+        // set the listener for the post-it module
+        setPostitListeners();
+
         // set the listener for the user module
         setUserListeners();
 
@@ -1232,5 +1318,6 @@ exports.setLogger            = setLogger;
 exports.setAstProxy          = setAstProxy;
 exports.setCompUser          = setCompUser;
 exports.configPrivacy        = configPrivacy;
+exports.setCompPostit        = setCompPostit;
 exports.setCompVoicemail     = setCompVoicemail;
 exports.setCompAuthorization = setCompAuthorization;

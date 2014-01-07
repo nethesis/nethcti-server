@@ -34,6 +34,7 @@ module.exports = function (options, imports, register) {
             comNethctiWs.config('/etc/nethcti/services.json');
             comNethctiWs.configPrivacy('/etc/nethcti/nethcti.json');
             comNethctiWs.setCompUser(imports.user);
+            comNethctiWs.setCompPostit(imports.postit);
             comNethctiWs.setAstProxy(imports.astProxy);
             comNethctiWs.setCompVoicemail(imports.voicemail);
             comNethctiWs.setCompAuthorization(imports.authorization);
