@@ -432,7 +432,8 @@ function newVoicemailListener(voicemail, list) {
         // receives the list of all new voice messages
         var users = compUser.getUsersUsingEndpointVoicemail(voicemail);
 
-        // emit the "newVoiceMessage" event for each logged in user associated with the voicemail
+        // emit the "newVoiceMessage" event for each logged in user associated with the voicemail.
+        // The event contains the voicemail details
         var socketId, username;
 
         for (socketId in wsid) {
@@ -450,6 +451,19 @@ function newVoicemailListener(voicemail, list) {
                 server.sockets.sockets[socketId].emit('newVoiceMessage', obj);
             }
         }
+
+        // emit the "newVoiceMessageCounter" to all the users. The event contains only the number
+        // of new voice messages of the voicemail without they details. So it is sent to all the users
+        // without any authorization checking
+        for (socketId in wsid) {
+
+            username = wsid[socketId];
+
+            // emits the event "newVoiceMessageCounter" with the number of new voice messages of the user
+            logger.info(IDLOG, 'emit event "newVoiceMessageCounter" ' + list.length + ' to user "' + username + '"');
+            server.sockets.sockets[socketId].emit('newVoiceMessageCounter', { voicemail: voicemail, counter: list.length });
+        }
+
     } catch (err) {
        logger.error(IDLOG, err.stack);
     }
@@ -474,7 +488,7 @@ function newPostitListener(creator, recipient, list) {
 
         logger.info(IDLOG, 'received "new postit" event created by ' + creator + ' for user ' + recipient);
 
-        // emit the "newPostit" event for recipient user
+        // emit the "newPostit" event for recipient user. The events contains all the new post-it with their details
         var socketId, username, filteredCallerIdentity;
 
         for (socketId in wsid) {
@@ -485,10 +499,22 @@ function newPostitListener(creator, recipient, list) {
             if (username === recipient) {
 
                 // emits the event with the list of all new post-it messages of the user
-                logger.info(IDLOG, 'emit event newPostit created by "' + creator + '" to user "' + recipient + '"');
+                logger.info(IDLOG, 'emit event "newPostit" created by "' + creator + '" to user "' + recipient + '"');
                 server.sockets.sockets[socketId].emit('newPostit', list);
             }
         }
+
+        // emit the "newPostitCounter". The event only contains the number of new post-it of a user. So it is
+        // sent to all users without any authorization checking
+        for (socketId in wsid) {
+
+            username = wsid[socketId];
+
+            // emits the event with the number of new post-it of the user
+            logger.info(IDLOG, 'emit event "newPostitCounter" ' + list.length + ' to user "' + username + '"');
+            server.sockets.sockets[socketId].emit('newPostitCounter', { user: recipient, counter: list.length });
+        }
+
     } catch (err) {
        logger.error(IDLOG, err.stack);
     }
