@@ -4,6 +4,7 @@ PASS=`/sbin/e-smith/config getprop nethcti-server DbPasswd`
 if [ "x$PASS" == "x" ]; then
     PASS=`/usr/bin/openssl rand -base64 6`
     /sbin/e-smith/config setprop nethcti-server DbPasswd $PASS
+    /sbin/e-smith/expand-template /etc/nethcti/dbstatic.json 
 fi
 
 
