@@ -1,0 +1,19 @@
+/var/log/asterisk/nethcti.log {
+   missingok
+   rotate 10
+   compress
+   weekly
+   create 0644 asterisk asterisk
+   postrotate
+       /sbin/e-smith/service nethcti-server restart &> /dev/null
+   endscript
+}
+
+/var/log/forever_nethcti.js.log {
+   missingok
+   rotate 10
+   compress
+   weekly
+   create 0644 asterisk asterisk
+   copytruncate
+}
