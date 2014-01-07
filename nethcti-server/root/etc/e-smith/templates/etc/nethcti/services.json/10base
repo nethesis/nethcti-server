@@ -6,7 +6,7 @@
    if ($http_proto eq "https") {
       $ws_proto = "wss";
    }
-   our $key = $modSSL{crt}
+   return "";
 }
 \{
     "websocket": \{
