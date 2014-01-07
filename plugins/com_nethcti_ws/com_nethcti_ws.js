@@ -384,7 +384,8 @@ function newVoicemailListener(voicemail, list) {
 
         logger.info(IDLOG, 'received "new voicemail" event for voicemail ' + voicemail);
 
-        // get all users associated with the ringing extension
+        // get all users associated with the voicemail. Only the user with the associated voicemail
+        // receives the list of all new voice messages
         var users = compUser.getUsersUsingEndpointVoicemail(voicemail);
 
         // emit the "newVoiceMessage" event for each logged in user associated with the voicemail
@@ -399,7 +400,10 @@ function newVoicemailListener(voicemail, list) {
 
                 // emits the event with the list of all new voice messages of the voicemail
                 logger.info(IDLOG, 'emit event newVoiceMessage for voicemail ' + voicemail + ' to user "' + username + '"');
-                server.sockets.sockets[socketId].emit('newVoiceMessage', list);
+                // object to return with the event
+                var obj = {};
+                obj[voicemail] = list;
+                server.sockets.sockets[socketId].emit('newVoiceMessage', obj);
             }
         }
     } catch (err) {
