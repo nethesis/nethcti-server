@@ -60,8 +60,6 @@ module.exports = function (options, imports, register) {
             ]
         });
 
-        log.warn('Starting...');
-
     } catch (err) {
         console.log(err.stack);
     }

@@ -112,7 +112,6 @@ var astConf;
                 pluginsEvent[ev].visit(self);
             }
         }
-        logger.info(IDLOG, 'set the asterisk proxy visitors');
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }

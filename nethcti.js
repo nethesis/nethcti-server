@@ -46,9 +46,7 @@ try{
 
     var app = architect.resolveConfig(config, __dirname);
 
-    architect.createApp(app, function (resp) {
-        console.log('cti architect app created');
-    });
+    architect.createApp(app, function (resp) {});
 
     process.on('uncaughtException', function (err) {
         console.log('UncaughtException !!!');
