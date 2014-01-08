@@ -120,7 +120,7 @@ exports.Conversation = function (ownerId, sourceChan, destChan) {
     * @private
     */
     // "chSource" and "chDest" are always present at runtime. Instead,
-    // during the boot, if there are some ringing calls, they may lack
+    // during the boot, if there are some ringing calls, they may be lack
     var counterpartNum;
     if (chSource && chSource.isExtension(owner) === true) {
         counterpartNum = chSource.getBridgedNum();
@@ -133,6 +133,29 @@ exports.Conversation = function (ownerId, sourceChan, destChan) {
 
     } else if (chDest) {
         counterpartNum = chDest.getCallerNum();
+    }
+
+    /**
+    * The name of the counterpart.
+    *
+    * @property counterpartName
+    * @type {string}
+    * @private
+    */
+    // "chSource" and "chDest" are always present at runtime. Instead,
+    // during the boot, if there are some ringing calls, they may be lack
+    var counterpartName;
+    if (chSource && chSource.isExtension(owner) === true) {
+        counterpartName = chSource.getBridgedName();
+
+    } else if (chSource) {
+        counterpartName = chSource.getCallerName();
+
+    } else if (chDest && chDest.isExtension(owner) === true) {
+        counterpartName = chDest.getBridgedName();
+
+    } else if (chDest) {
+        counterpartName = chDest.getCallerName();
     }
 
     /**
@@ -216,15 +239,16 @@ exports.Conversation = function (ownerId, sourceChan, destChan) {
     * connected, one between the source channel and the destination channel can be null.
     *
     *     {
-    *         id:             "SIP/214-000002f4>SIP/209-000002f5",
-    *         owner:          "214",
-    *         chDest:         Channel.toJSON(),                    // the source channel of the call
-    *         chSource:       Channel.toJSON(),                    // the destination channel of the call
-    *         duration:       26,
-    *         recording:      false,                               // it's true if the conversation is recording, false otherwise
-    *         direction:      "in",
-    *         throughQueue:   false,                               // if the call has gone through a queue
-    *         counterpartNum: "209"
+    *         id:              "SIP/214-000002f4>SIP/209-000002f5",
+    *         owner:           "214",
+    *         chDest:          Channel.toJSON(),                    // the source channel of the call
+    *         chSource:        Channel.toJSON(),                    // the destination channel of the call
+    *         duration:        26,
+    *         recording:       false,                               // it's true if the conversation is recording, false otherwise
+    *         direction:       "in",
+    *         throughQueue:    false,                               // if the call has gone through a queue
+    *         counterpartNum:  "209",
+    *         counterpartName: "user"
     *     }
     *
     * @method toJSON
@@ -236,15 +260,16 @@ exports.Conversation = function (ownerId, sourceChan, destChan) {
         updateDuration();
 
         return {
-            id:             id,
-            owner:          owner,
-            chDest:         chDest   ? chDest.toJSON(privacyStr)   : null,
-            chSource:       chSource ? chSource.toJSON(privacyStr) : null,
-            duration:       duration,
-            recording:      recording,
-            direction:      direction,
-            throughQueue:   throughQueue,
-            counterpartNum: counterpartNum
+            id:              id,
+            owner:           owner,
+            chDest:          chDest   ? chDest.toJSON(privacyStr)   : null,
+            chSource:        chSource ? chSource.toJSON(privacyStr) : null,
+            duration:        duration,
+            recording:       recording,
+            direction:       direction,
+            throughQueue:    throughQueue,
+            counterpartNum:  counterpartNum,
+            counterpartName: counterpartName
         };
     }
 
