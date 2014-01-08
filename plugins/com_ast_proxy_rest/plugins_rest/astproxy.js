@@ -2363,7 +2363,6 @@ function dndset(req, res, next) {
 
         compAstProxy.setDnd(endpoint, activate, function (err) {
             try {
-
                 if (err) {
                     logger.error(IDLOG, 'setting dnd for extension ' + endpoint + ' of user "' + username + '"');
                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -2956,11 +2955,11 @@ function cfvmSetUnconditional(endpoint, username, activate, to, res) {
 
         // when "activate" is false, "to" can be undefined if the client hasn't specified it.
         // This is not important because in this case, the asterisk command plugin doesn't use "val" value
-        compAstProxy.doCmd({ command: 'cfVmSet', exten: endpoint, activate: activate, val: to }, function (err, resp) {
+        compAstProxy.setUnconditionalCfVm(endpoint, activate, to, function (err1, resp) {
 
-            if (err) {
+            if (err1) {
                 logger.error(IDLOG, 'setting unconditional cfvm for extension ' + endpoint + ' of user "' + username + '"');
-                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                compUtil.net.sendHttp500(IDLOG, res, err1.toString());
                 return;
             }
 
@@ -3149,21 +3148,27 @@ function cfcallSetUnconditional(endpoint, username, activate, to, res) {
 
         // when "activate" is false, "to" can be undefined if the client hasn't specified it.
         // This is not important because in this case, the asterisk command plugin doesn't use "val" value
-        compAstProxy.doCmd({ command: 'cfSet', exten: endpoint, activate: activate, val: to }, function (err, resp) {
+        compAstProxy.setUnconditionalCf(endpoint, activate, to, function (err1, resp) {
+            try {
+                if (err1) {
+                    logger.error(IDLOG, 'setting unconditional cfcall for extension ' + endpoint + ' of user "' + username + '"');
+                    compUtil.net.sendHttp500(IDLOG, res, err1.toString());
+                    return;
+                }
 
-            if (err) {
-                logger.error(IDLOG, 'setting unconditional cfcall for extension ' + endpoint + ' of user "' + username + '"');
-                compUtil.net.sendHttp500(IDLOG, res, err.toString());
-                return;
-            }
+                if (activate) {
+                    logger.info(IDLOG, 'unconditional cfcall "on" to ' + to + ' for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
+                } else {
+                    logger.info(IDLOG, 'unconditional cfcall "off" for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
+                }
+                compUtil.net.sendHttp200(IDLOG, res);
 
-            if (activate) {
-                logger.info(IDLOG, 'unconditional cfcall "on" to ' + to + ' for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
-            } else {
-                logger.info(IDLOG, 'unconditional cfcall "off" for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
+            } catch (err2) {
+                logger.error(IDLOG, err2.stack);
+                compUtil.net.sendHttp500(IDLOG, res, err2.toString());
             }
-            compUtil.net.sendHttp200(IDLOG, res);
         });
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
         compUtil.net.sendHttp500(IDLOG, res, err.toString());

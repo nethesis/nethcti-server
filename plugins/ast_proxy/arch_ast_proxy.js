@@ -55,6 +55,20 @@ module.exports = function (options, imports, register) {
             setDnd: astProxy.proxyLogic.setDnd,
 
             /**
+            * It's the _setUnconditionalCfVm_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method setUnconditionalCfVm
+            */
+            setUnconditionalCfVm: astProxy.proxyLogic.setUnconditionalCfVm,
+
+            /**
+            * It's the _setUnconditionalCf_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method setUnconditionalCf
+            */
+            setUnconditionalCf: astProxy.proxyLogic.setUnconditionalCf,
+
+            /**
             * It's the _getExtensions_ method provided by _ast\_proxy.proxyLogic_.
             *
             * @method getExtensions

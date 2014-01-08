@@ -2303,7 +2303,6 @@ function evtExtenDndChanged(exten, enabled) {
 
         if (extensions[exten]) { // the exten is an extension
 
-            // request sip details for current extension
             extensions[exten].setDnd(enabled);
             logger.info(IDLOG, 'set dnd status to ' + enabled + ' for extension ' + exten);
 
@@ -2313,6 +2312,46 @@ function evtExtenDndChanged(exten, enabled) {
 
         } else {
             logger.warn(IDLOG, 'try to set dnd status of non existent extension ' + exten);
+        }
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Updates the extension unconditional call forward status.
+*
+* @method evtExtenUnconditionalCfChanged
+* @param {string}  exten   The extension number
+* @param {boolean} enabled True if the call forward is enabled
+* @param {string}  [to]    The destination number of the call forward
+* @private
+*/
+function evtExtenUnconditionalCfChanged(exten, enabled, to) {
+    try {
+        // check parameters
+        if (typeof exten !== 'string' && typeof enabled !== 'boolean') {
+            throw new Error('wrong parameters');
+        }
+
+        if (extensions[exten]) { // the exten is an extension
+
+            if (enabled) {
+                logger.info(IDLOG, 'set cf status to ' + enabled + ' for extension ' + exten + ' to ' + to);
+                extensions[exten].setCf(to);
+
+            } else {
+                logger.info(IDLOG, 'set cf status to ' + enabled + ' for extension ' + exten);
+                extensions[exten].disableCf();
+            }
+
+            // emit the event
+            logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
+            astProxy.emit(EVT_EXTEN_CHANGED, extensions[exten]);
+
+        } else {
+            logger.warn(IDLOG, 'try to set call forward status of non existent extension ' + exten);
         }
 
     } catch (err) {
@@ -2347,6 +2386,80 @@ function setDnd(exten, activate, cb) {
 
         } else {
             var str = 'try to set dnd status of non existent extension ' + exten;
+            logger.warn(IDLOG, str);
+            cb(str);
+        }
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Enable/disable the unconditional call forward status of the endpoint. The used plugin command _cfSet_
+* doesn't generate any asterisk events, so simulates it.
+*
+* @method setUnconditionalCf
+* @param {string}   exten    The extension number
+* @param {boolean}  activate True if the call forward must be enabled
+* @param {string}   [to]     The destination number of the call forward to be set
+* @param {function} cb       The callback function
+*/
+function setUnconditionalCf(exten, activate, to, cb) {
+    try {
+        // check parameters
+        if (typeof exten !== 'string' && typeof activate !== 'boolean') {
+            throw new Error('wrong parameters');
+        }
+
+        if (extensions[exten]) { // the exten is an extension
+
+            // this command doesn't generate any asterisk event, so if it's successful, it simulate the event
+            astProxy.doCmd({ command: 'cfSet', exten: exten, activate: activate, val: to }, function (err, resp) {
+
+                cb(err, resp);
+                if (err === null) { evtExtenUnconditionalCfChanged(exten, activate, to); }
+            });
+
+        } else {
+            var str = 'try to set unconditional call forward status of non existent extension ' + exten;
+            logger.warn(IDLOG, str);
+            cb(str);
+        }
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Enable/disable the call forward to voicemail status of the endpoint. The used plugin command _cfVmSet_
+* doesn't generate any asterisk events, so simulates it.
+*
+* @method setUnconditionalCfVm
+* @param {string}   exten    The extension number
+* @param {boolean}  activate True if the call forward to voicemail must be enabled
+* @param {string}   [to]     The destination voicemail identifier of the call forward to be set
+* @param {function} cb       The callback function
+*/
+function setUnconditionalCfVm(exten, activate, to, cb) {
+    try {
+        // check parameters
+        if (typeof exten !== 'string' && typeof activate !== 'boolean') {
+            throw new Error('wrong parameters');
+        }
+
+        if (extensions[exten]) { // the exten is an extension
+
+            // this command doesn't generate any asterisk event, so if it's successful, it simulate the event
+            astProxy.doCmd({ command: 'cfVmSet', exten: exten, activate: activate, val: to }, function (err, resp) {
+                cb(err, resp);
+            });
+
+        } else {
+            var str = 'try to set call forward to voicemail of non existent extension ' + exten;
             logger.warn(IDLOG, str);
             cb(str);
         }
@@ -4145,12 +4258,14 @@ exports.EVT_TRUNK_CHANGED               = EVT_TRUNK_CHANGED;
 exports.EVT_EXTEN_DIALING               = EVT_EXTEN_DIALING;
 exports.EVT_QUEUE_CHANGED               = EVT_QUEUE_CHANGED;
 exports.EVT_NEW_VOICEMAIL               = EVT_NEW_VOICEMAIL;
+exports.setUnconditionalCf              = setUnconditionalCf;
 exports.hangupConversation              = hangupConversation;
 exports.evtNewExternalCall              = evtNewExternalCall;
 exports.pickupConversation              = pickupConversation;
 exports.evtExtenDndChanged              = evtExtenDndChanged;
 exports.evtQueueMemberAdded             = evtQueueMemberAdded;
 exports.EVT_PARKING_CHANGED             = EVT_PARKING_CHANGED;
+exports.setUnconditionalCfVm            = setUnconditionalCfVm;
 exports.redirectConversation            = redirectConversation;
 exports.evtQueueMemberRemoved           = evtQueueMemberRemoved;
 exports.redirectWaitingCaller           = redirectWaitingCaller;
