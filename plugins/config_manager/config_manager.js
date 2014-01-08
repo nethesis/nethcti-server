@@ -300,7 +300,10 @@ function configChat(path) {
         if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
 
         // check file presence
-        if (!fs.existsSync(path)) { throw new Error(path + ' doesn\'t exist'); }
+        if (!fs.existsSync(path)) {
+            logger.warn(IDLOG, path + ' doesn\'t exist');
+            return;
+        }
 
         logger.info(IDLOG, 'configure server chat with ' + path);
 
@@ -311,7 +314,8 @@ function configChat(path) {
         if (   typeof json     !== 'object'
             || typeof json.url !== 'string' || typeof json.domain !== 'string') {
 
-            throw new Error('wrong JSON file ' + path);
+            logger.warn(IDLOG, 'wrong JSON file ' + path);
+            return;
         }
 
         chatServer.url    = json.url;

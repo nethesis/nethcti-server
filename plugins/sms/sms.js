@@ -137,7 +137,10 @@ function config(path) {
         if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
 
         // check file presence
-        if (!fs.existsSync(path)) { throw new Error(path + ' doesn\'t exist'); }
+        if (!fs.existsSync(path)) {
+            logger.warn(IDLOG, path + ' doesn\'t exist');
+            return;
+        }
 
         // read configuration file
         var json = require(path);
@@ -149,7 +152,8 @@ function config(path) {
             || (json.type === smsDeliveryTypes.TYPES.portech    && !json.portech)
             || (json.type === smsDeliveryTypes.TYPES.webservice && !json.webservice)) {
 
-            throw new Error('wrong sms configuration file ' + path);
+            logger.warn(IDLOG, 'wrong sms configuration file ' + path);
+            return;
         }
 
         // set the delivery type

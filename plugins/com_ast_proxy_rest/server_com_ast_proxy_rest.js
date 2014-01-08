@@ -373,24 +373,29 @@ function config(path) {
 * @param {string} path The path of the configuration file
 */
 function configPrivacy(path) {
-    // check parameter
-    if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
+    try {
+        // check parameter
+        if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
 
-    // check file presence
-    if (!fs.existsSync(path)) { throw new Error(path + ' doesn\'t exist'); }
+        // check file presence
+        if (!fs.existsSync(path)) { throw new Error(path + ' doesn\'t exist'); }
 
-    // read configuration file
-    var json = require(path);
+        // read configuration file
+        var json = require(path);
 
-    if (json.privacy_numbers) {
-        // set the privacy for all REST plugins
-        setAllRestPluginsPrivacy(json.privacy_numbers);
+        if (json.privacy_numbers) {
+            // set the privacy for all REST plugins
+            setAllRestPluginsPrivacy(json.privacy_numbers);
 
-    } else {
-        logger.warn(IDLOG, 'no privacy string has been specified in JSON file ' + path);
+        } else {
+            logger.warn(IDLOG, 'no privacy string has been specified in JSON file ' + path);
+        }
+
+        logger.info(IDLOG, 'privacy configuration by file ' + path + ' ended');
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
     }
-
-    logger.info(IDLOG, 'privacy configuration by file ' + path + ' ended');
 }
 
 /**
