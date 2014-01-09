@@ -46,13 +46,14 @@ var logger = console;
 var emitter = new EventEmitter();
 
 /**
-* Fired when a new voice message has been left in a voicemail.
+* Fired when a new voice message has been left in a voicemail, or a
+* voice message has been listened or deleted.
 *
 * @event updateNewVoiceMessages
 * @param {object} voicemails The list of all the new voice messages of the voicemail
 */
 /**
-* The name of the new voicemail event.
+* The name of event for the update of the new voice messages.
 *
 * @property EVT_UPDATE_NEW_VOICE_MESSAGES
 * @type string

@@ -45,6 +45,21 @@ var logger = console;
 var emitter = new EventEmitter();
 
 /**
+* Fired when new post-it has been created for a user, or a post-it has been read or deleted.
+*
+* @event updateNewPostit
+* @param {object} postits The list of all unread post-it of the recipient user
+*/
+/**
+* The name of the event for update of the new post-it messages.
+*
+* @property EVT_UPDATE_NEW_POSTIT
+* @type string
+* @default "updateNewPostit"
+*/
+var EVT_UPDATE_NEW_POSTIT = 'updateNewPostit';
+
+/**
 * Fired when new post-it has been created for a user.
 *
 * @event newPostit
@@ -230,7 +245,7 @@ function save(data, cb) {
                 } else {
                     cb();
 
-                    // get all the new postit of the recipient to emit the EVT_NEW_POSTIT event
+                    // get all the new postit of the recipient to emit the events through the callback
                     dbconn.getAllUnreadPostitOfRecipient(data.recipient, function (err, recipient, results) {
                         getAllUnreadPostitOfRecipientCb(err, data.creator, recipient, results);
                     });
@@ -277,9 +292,15 @@ function getAllUnreadPostitOfRecipientCb(err, creator, recipient, results) {
             throw new Error('wrong parameters');
         }
 
-        // emits the new postit event with all the unread postit of the recipient user
+        // emits the new postit event with all the unread postit of the recipient user. This event
+        // is emitted only when a new post-it has been created
         logger.info(IDLOG, 'emit event ' + EVT_NEW_POSTIT + ' created by ' + creator + ' for ' + recipient);
         emitter.emit(EVT_NEW_POSTIT, creator, recipient, results);
+
+        // emits the event with the update of new postit of the recipient user. This event is emitted
+        // each time a new post-it has been left, when the user read it or delete it
+        logger.info(IDLOG, 'emit event ' + EVT_UPDATE_NEW_POSTIT + ' created by ' + creator + ' for ' + recipient);
+        emitter.emit(EVT_UPDATE_NEW_POSTIT, creator, recipient, results);
 
     } catch (err) {
        logger.error(IDLOG, err.stack);
@@ -397,4 +418,5 @@ exports.readPostit                = readPostit;
 exports.deletePostit              = deletePostit;
 exports.EVT_NEW_POSTIT            = EVT_NEW_POSTIT;
 exports.getHistoryInterval        = getHistoryInterval;
+exports.EVT_UPDATE_NEW_POSTIT     = EVT_UPDATE_NEW_POSTIT;
 exports.getAllUserHistoryInterval = getAllUserHistoryInterval;

@@ -542,7 +542,14 @@ function getAllUnreadPostitOfRecipient(username, cb) {
             where: [ 'recipient=? ' +
             'AND readdate IS NULL',
             username ],
-            order: 'creation DESC'
+            order: 'creation DESC',
+            attributes: [
+                [ 'DATE_FORMAT(creation, "%d/%m/%Y")', 'creationdate'],
+                [ 'DATE_FORMAT(creation, "%H:%i:%S")', 'creationtime'],
+                [ 'DATE_FORMAT(readdate, "%d/%m/%Y")', 'readdate'],
+                [ 'DATE_FORMAT(readdate, "%H:%i:%S")', 'timeread'],
+                'id', 'text', 'creator', 'recipient'
+            ]
 
         }).success(function (results) {
 

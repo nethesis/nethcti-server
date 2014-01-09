@@ -382,7 +382,7 @@ function setPostitListeners() {
             throw new Error('wrong post-it object');
         }
 
-        compPostit.on(compPostit.EVT_NEW_POSTIT, newPostitListener);
+        compPostit.on(compPostit.EVT_UPDATE_NEW_POSTIT, updateNewPostitListener);
 
     } catch (err) {
        logger.error(IDLOG, err.stack);
@@ -473,13 +473,13 @@ function updateNewVoiceMessagesListener(voicemail, list) {
 * Manages the new post-it event emitted by the post-it component. It sends
 * all new post-its to the recipient user.
 *
-* @method newPostitListener
+* @method updateNewPostitListener
 * @param {string} creator   The user who has created the new post-it message
 * @param {string} recipient The recipient user of the new post-it
 * @param {array}  list      All the new post-it messages of the user
 * @private
 */
-function newPostitListener(creator, recipient, list) {
+function updateNewPostitListener(creator, recipient, list) {
     try {
         // check the event data
         if (typeof creator !== 'string' || list === undefined || list instanceof Array === false) {
@@ -499,8 +499,8 @@ function newPostitListener(creator, recipient, list) {
             if (username === recipient) {
 
                 // emits the event with the list of all new post-it messages of the user
-                logger.info(IDLOG, 'emit event "newPostit" created by "' + creator + '" to user "' + recipient + '"');
-                server.sockets.sockets[socketId].emit('newPostit', list);
+                logger.info(IDLOG, 'emit event "updateNewPostit" created by "' + creator + '" to user "' + recipient + '"');
+                server.sockets.sockets[socketId].emit('updateNewPostit', list);
             }
         }
 
