@@ -291,7 +291,14 @@ module.exports = function (options, imports, register) {
             *
             * @method EVT_NEW_VOICE_MESSAGE
             */
-            EVT_NEW_VOICE_MESSAGE: astProxy.proxyLogic.EVT_NEW_VOICE_MESSAGE
+            EVT_NEW_VOICE_MESSAGE: astProxy.proxyLogic.EVT_NEW_VOICE_MESSAGE,
+
+            /**
+            * It's the _EVT\_UPDATE\_VOICE\_MESSAGES_ property provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method EVT_UPDATE_VOICE_MESSAGES
+            */
+            EVT_UPDATE_VOICE_MESSAGES: astProxy.proxyLogic.EVT_UPDATE_VOICE_MESSAGES
         }
     });
 

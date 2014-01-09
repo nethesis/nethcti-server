@@ -1072,8 +1072,8 @@ function extractNewVoicemailMostRecent(list) {
         var recentVm;
         for (i = 0; i < list.length; i++) {
 
-            if (temp < list[i].creationTimestamp) {
-                temp = list[i].creationTimestamp;
+            if (temp < list[i].origtime) {
+                temp = list[i].origtime;
                 recentVm = list[i];
             }
         }

@@ -468,8 +468,13 @@ function setAstProxyListeners() {
             throw new Error('wrong astProxy object');
         }
 
-        astProxy.on(astProxy.EVT_NEW_VOICE_MESSAGE, newVoiceMessage); // new voice message has been left in a voicemail
+        // new voice message has been left in a voicemail
+        astProxy.on(astProxy.EVT_NEW_VOICE_MESSAGE, newVoiceMessage);
         logger.info(IDLOG, 'new listener has been set for "' + astProxy.EVT_NEW_VOICE_MESSAGE + '" event from the asterisk proxy component');
+
+        // something changed in voice messages of a voicemail
+        astProxy.on(astProxy.EVT_UPDATE_VOICE_MESSAGES, updateVoiceMessages);
+        logger.info(IDLOG, 'new listener has been set for "' + astProxy.EVT_UPDATE_VOICE_MESSAGES + '" event from the asterisk proxy component');
 
     } catch (err) {
        logger.error(IDLOG, err.stack);
@@ -522,6 +527,31 @@ function newVoiceMessage(ev) {
 
         // get all the new voice messages of the voicemail to send the events through the callback
         dbconn.getVoicemailNewMsg(ev.voicemail, newVoiceMessageCb);
+
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Something has changed in voice messages of a voicemail. It gets all the new voice messages
+* of the voicemail and emits the _EVT\_UPDATE\_NEW\_VOICEMAIL_ event with all the new voice messages.
+*
+* @method updateVoiceMessages
+* @param {object} ev The event data
+* @private
+*/
+function updateVoiceMessages(ev) {
+    try {
+        // check parameter
+        if (   typeof ev           !== 'object'
+            && typeof ev.voicemail !== 'string' && typeof ev.context  !== 'string') {
+
+            throw new Error('wrong parameter');
+        }
+
+        // get all the new voice messages of the voicemail to send the events through the callback
+        dbconn.getVoicemailNewMsg(ev.voicemail, updateVoiceMessagesCb);
 
     } catch (err) {
        logger.error(IDLOG, err.stack);
@@ -650,6 +680,25 @@ function newVoiceMessageCb(err, voicemail, results) {
 */
 function listenedVoiceMessageCb(err, voicemail, results) {
     try {
+        updateVoiceMessagesCb(err, voicemail, results);
+
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* It's the callback function called when get new voicemail messages from
+* the database component, after something has changed to a voice messages of a voicemail.
+*
+* @method updateVoiceMessagesCb
+* @param {object} err       The error
+* @param {string} voicemail The voicemail identifier
+* @param {object} results   The results
+* @private
+*/
+function updateVoiceMessagesCb(err, voicemail, results) {
+    try {
         if (err) {
             var str = 'getting new voicemail messages: ';
             if (typeof err === 'string') { str += err; }
@@ -706,24 +755,7 @@ function listenedVoiceMessage(voicemail) {
 */
 function deletedVoiceMessageCb(err, voicemail, results) {
     try {
-        if (err) {
-            var str = 'getting new voicemail messages: ';
-            if (typeof err === 'string') { str += err; }
-            else { str += err.stack; }
-
-            logger.error(IDLOG, str);
-            return;
-        }
-
-        // check the parameters
-        if (typeof voicemail !== 'string' || results instanceof Array === false) {
-            throw new Error('wrong parameters');
-        }
-
-        // emits the event with the update list of new voice messages of a voicemail. This event is emitted
-        // each time a new voice message has been left, when the user listen a message or delete it
-        logger.info(IDLOG, 'emit event "' + EVT_UPDATE_NEW_VOICE_MESSAGES + '" for voicemail ' + voicemail);
-        emitter.emit(EVT_UPDATE_NEW_VOICE_MESSAGES, voicemail, results);
+        updateVoiceMessagesCb(err, voicemail, results);
 
     } catch (err) {
        logger.error(IDLOG, err.stack);

@@ -146,6 +146,22 @@ var EVT_QUEUE_CHANGED = 'queueChanged';
 var EVT_NEW_VOICE_MESSAGE = 'newVoiceMessage';
 
 /**
+* Something has appen in the voice messages of the voicemail, for example the listen
+* of a new voice message from the phone.
+*
+* @event updateVoiceMessages
+* @param {object} msg The data about the voicemail
+*/
+/**
+* The name of the update voice messages event.
+*
+* @property EVT_UPDATE_VOICE_MESSAGES
+* @type string
+* @default "updateVoiceMessages"
+*/
+var EVT_UPDATE_VOICE_MESSAGES = 'updateVoiceMessages';
+
+/**
 * The default base path for the recording call audio file.
 *
 * @property BASE_CALL_REC_AUDIO_PATH
@@ -2500,6 +2516,34 @@ function evtNewVoicemailMessage(data) {
 }
 
 /**
+* Something has appens in the voice messages of the voicemail, for example the listen
+* of a new voice message from the phone. So it emits the _EVT\_UPDATE\_VOICE\_MESSAGES_ event.
+*
+* @method evtUpdateVoicemailMessages
+* @param {object} data
+*  @param {string} data.context   The context of the voicemail extension
+*  @param {string} data.voicemail The voicemail identifier who received the voice message
+* @private
+*/
+function evtUpdateVoicemailMessages(data) {
+    try {
+        // check parameter
+        if (   typeof data           !== 'object'
+            && typeof data.voicemail !== 'string' && typeof data.context  !== 'string') {
+
+            throw new Error('wrong parameter');
+        }
+
+        // emit the event
+        logger.info(IDLOG, 'emit event ' + EVT_UPDATE_VOICE_MESSAGES + ' of voicemail ' + data.voicemail + ' with context ' + data.context);
+        astProxy.emit(EVT_UPDATE_VOICE_MESSAGES, data);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Removes a waiting caller from a queue and emit the _EVT\_QUEUE\_CHANGED_ event.
 *
 * @method evtRemoveQueueWaitingCaller
@@ -4280,8 +4324,10 @@ exports.queueMemberPauseUnpause         = queueMemberPauseUnpause;
 exports.EVT_QUEUE_MEMBER_CHANGED        = EVT_QUEUE_MEMBER_CHANGED;
 exports.evtNewQueueWaitingCaller        = evtNewQueueWaitingCaller;
 exports.evtConversationConnected        = evtConversationConnected;
+exports.EVT_UPDATE_VOICE_MESSAGES       = EVT_UPDATE_VOICE_MESSAGES;
 exports.startSpySpeakConversation       = startSpySpeakConversation;
 exports.startSpyListenConversation      = startSpyListenConversation;
+exports.evtUpdateVoicemailMessages      = evtUpdateVoicemailMessages;
 exports.evtQueueMemberPausedChanged     = evtQueueMemberPausedChanged;
 exports.evtRemoveQueueWaitingCaller     = evtRemoveQueueWaitingCaller;
 exports.attendedTransferConversation    = attendedTransferConversation;
