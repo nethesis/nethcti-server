@@ -287,11 +287,11 @@ module.exports = function (options, imports, register) {
             EVT_PARKING_CHANGED: astProxy.proxyLogic.EVT_PARKING_CHANGED,
 
             /**
-            * It's the _EVT\_NEW\_VOICEMAIL_ property provided by _ast\_proxy.proxyLogic_.
+            * It's the _EVT\_NEW\_VOICE\_MESSAGE_ property provided by _ast\_proxy.proxyLogic_.
             *
-            * @method EVT_NEW_VOICEMAIL
+            * @method EVT_NEW_VOICE_MESSAGE
             */
-            EVT_NEW_VOICEMAIL: astProxy.proxyLogic.EVT_NEW_VOICEMAIL
+            EVT_NEW_VOICE_MESSAGE: astProxy.proxyLogic.EVT_NEW_VOICE_MESSAGE
         }
     });
 

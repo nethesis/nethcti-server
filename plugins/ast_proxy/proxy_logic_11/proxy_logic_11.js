@@ -133,17 +133,17 @@ var EVT_QUEUE_CHANGED = 'queueChanged';
 /**
 * Fired when new voicemail message has been left.
 *
-* @event newVoicemail
-* @param {object} msg The queue object
+* @event newVoiceMessage
+* @param {object} msg The data about the voicemail, with the number of new and old messages
 */
 /**
 * The name of the new voicemail event.
 *
-* @property EVT_NEW_VOICEMAIL
+* @property EVT_NEW_VOICE_MESSAGE
 * @type string
-* @default "newVoicemail"
+* @default "newVoiceMessage"
 */
-var EVT_NEW_VOICEMAIL = 'newVoicemail';
+var EVT_NEW_VOICE_MESSAGE = 'newVoiceMessage';
 
 /**
 * The default base path for the recording call audio file.
@@ -2491,8 +2491,8 @@ function evtNewVoicemailMessage(data) {
         }
 
         // emit the event
-        logger.info(IDLOG, 'emit event ' + EVT_NEW_VOICEMAIL + ' in voicemail ' + data.voicemail + ' with context ' + data.context);
-        astProxy.emit(EVT_NEW_VOICEMAIL, data);
+        logger.info(IDLOG, 'emit event ' + EVT_NEW_VOICE_MESSAGE + ' in voicemail ' + data.voicemail + ' with context ' + data.context);
+        astProxy.emit(EVT_NEW_VOICE_MESSAGE, data);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -4256,7 +4256,6 @@ exports.EVT_EXTEN_CHANGED               = EVT_EXTEN_CHANGED;
 exports.EVT_TRUNK_CHANGED               = EVT_TRUNK_CHANGED;
 exports.EVT_EXTEN_DIALING               = EVT_EXTEN_DIALING;
 exports.EVT_QUEUE_CHANGED               = EVT_QUEUE_CHANGED;
-exports.EVT_NEW_VOICEMAIL               = EVT_NEW_VOICEMAIL;
 exports.setUnconditionalCf              = setUnconditionalCf;
 exports.hangupConversation              = hangupConversation;
 exports.evtNewExternalCall              = evtNewExternalCall;
@@ -4266,6 +4265,7 @@ exports.evtQueueMemberAdded             = evtQueueMemberAdded;
 exports.EVT_PARKING_CHANGED             = EVT_PARKING_CHANGED;
 exports.setUnconditionalCfVm            = setUnconditionalCfVm;
 exports.redirectConversation            = redirectConversation;
+exports.EVT_NEW_VOICE_MESSAGE           = EVT_NEW_VOICE_MESSAGE;
 exports.evtQueueMemberRemoved           = evtQueueMemberRemoved;
 exports.redirectWaitingCaller           = redirectWaitingCaller;
 exports.evtHangupConversation           = evtHangupConversation;

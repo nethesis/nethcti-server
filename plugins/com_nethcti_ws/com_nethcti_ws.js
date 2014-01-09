@@ -362,7 +362,7 @@ function setVoicemailListeners() {
             throw new Error('wrong voicemail object');
         }
 
-        compVoicemail.on(compVoicemail.EVT_NEW_VOICEMAIL, newVoicemailListener);
+        compVoicemail.on(compVoicemail.EVT_UPDATE_NEW_VOICE_MESSAGES, updateNewVoiceMessagesListener);
 
     } catch (err) {
        logger.error(IDLOG, err.stack);
@@ -414,12 +414,12 @@ function setUserListeners() {
 * Manages the new voicemail event emitted by the voicemail component. It sends
 * all new voice messages of the voicemail to all users who use the voicemail.
 *
-* @method newVoicemailListener
+* @method updateNewVoiceMessagesListener
 * @param {string} voicemail The voicemail identifier
 * @param {array}  list      The list of all new voicemail messages
 * @private
 */
-function newVoicemailListener(voicemail, list) {
+function updateNewVoiceMessagesListener(voicemail, list) {
     try {
         // check the event data
         if (typeof voicemail !== 'string' || list === undefined || list instanceof Array === false) {
@@ -444,11 +444,11 @@ function newVoicemailListener(voicemail, list) {
             if (users.indexOf(username) !== -1) {
 
                 // emits the event with the list of all new voice messages of the voicemail
-                logger.info(IDLOG, 'emit event newVoiceMessage for voicemail ' + voicemail + ' to user "' + username + '"');
+                logger.info(IDLOG, 'emit event "updateNewVoiceMessages" for voicemail ' + voicemail + ' to user "' + username + '"');
                 // object to return with the event
                 var obj = {};
                 obj[voicemail] = list;
-                server.sockets.sockets[socketId].emit('newVoiceMessage', obj);
+                server.sockets.sockets[socketId].emit('updateNewVoiceMessages', obj);
             }
         }
 

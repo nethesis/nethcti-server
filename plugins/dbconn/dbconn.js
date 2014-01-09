@@ -11,10 +11,11 @@
 * @class dbconn
 * @static
 */
-var fs        = require('fs');
-var moment    = require('moment');
-var iniparser = require('iniparser');
-var Sequelize = require("sequelize");
+var fs           = require('fs');
+var moment       = require('moment');
+var iniparser    = require('iniparser');
+var Sequelize    = require("sequelize");
+var EventEmitter = require('events').EventEmitter;
 
 /**
 * The module identifier used by the logger.
@@ -37,6 +38,45 @@ var IDLOG = '[dbconn]';
 * @default console
 */
 var logger = console;
+
+/**
+* The event emitter.
+*
+* @property emitter
+* @type object
+* @private
+*/
+var emitter = new EventEmitter();
+
+/**
+* Fired when a voice message content has been read from the database by the _listenVoiceMessage_ method.
+*
+* @event listenedVoiceMessage
+* @param {object} voicemail The voicemail identifier
+*/
+/**
+* The name of the listened voice message event.
+*
+* @property EVT_LISTENED_VOICE_MESSAGE
+* @type string
+* @default "listenedVoiceMessage"
+*/
+var EVT_LISTENED_VOICE_MESSAGE = 'listenedVoiceMessage';
+
+/**
+* Fired when a voice message has been deleted from the database by the _deleteVoiceMessage_ method.
+*
+* @event deleteVoiceMessage
+* @param {object} voicemail The voicemail identifier
+*/
+/**
+* The name of the listened voice message event.
+*
+* @property EVT_DELETED_VOICE_MESSAGE
+* @type string
+* @default "deleteVoiceMessage"
+*/
+var EVT_DELETED_VOICE_MESSAGE = 'deleteVoiceMessage';
 
 /**
 * True if the sequelize library will be logged.
@@ -2012,12 +2052,13 @@ function listenVoiceMessage(dbid, cb) {
         }).success(function (result) {
 
             if (result && result.selectedValues && result.selectedValues.recording) {
+
                 logger.info(IDLOG, 'obtained voicemail audio file from voicemail db id "' + dbid + '"');
                 cb(null, result.selectedValues.recording);
 
                 // if the voice message has never been read, it updates its status as "read".
                 // If the message has never been read the "dir" field contains the "INBOX" string.
-                // So if it's present it updates the field replacing the "INBOX" string with "Old"
+                // So if it's present it updates the field replacing the "INBOX" string with the "Old" one
                 var dir = result.selectedValues.dir;
                 if (dir.split('/').pop() === 'INBOX') {
 
@@ -2025,7 +2066,12 @@ function listenVoiceMessage(dbid, cb) {
                         dir: dir.substring(0, dir.length - 5) + 'Old'
 
                     }, [ 'dir' ]).success(function () {
+
                         logger.info(IDLOG, 'read status of the voice message with db id "' + dbid + '" has been updated successfully');
+
+                        // emits the event for a listened voice message
+                        logger.info(IDLOG, 'emit event "' + EVT_LISTENED_VOICE_MESSAGE + '" for voicemail ' + result.selectedValues.mailboxuser);
+                        emitter.emit(EVT_LISTENED_VOICE_MESSAGE, result.selectedValues.mailboxuser);
                     });
                 }
 
@@ -2066,12 +2112,16 @@ function deleteVoiceMessage(dbid, cb) {
 
         }).success(function (task) {
             try {
-
                 if (task) {
 
                     task.destroy().success(function () {
+
                         logger.info(IDLOG, 'voice message with db id "' + dbid + '" has been deleted successfully');
                         cb();
+
+                        // emits the event for a deleted voice message
+                        logger.info(IDLOG, 'emit event "' + EVT_DELETED_VOICE_MESSAGE + '" for voicemail ' + task.selectedValues.mailboxuser);
+                        emitter.emit(EVT_DELETED_VOICE_MESSAGE, task.selectedValues.mailboxuser);
                     });
 
                 } else {
@@ -2639,9 +2689,25 @@ function getCallInfo(uniqueid, cb) {
     }
 }
 
-
+/**
+* Subscribe a callback function to a custom event fired by this object.
+* It's the same of nodejs _events.EventEmitter.on_ method.
+*
+* @method on
+* @param  {string}   type The name of the event
+* @param  {function} cb   The callback to execute in response to the event
+* @return {object}   A subscription handle capable of detaching that subscription.
+*/
+function on(type, cb) {
+    try {
+        return emitter.on(type, cb);
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
 
 // public interface
+exports.on                                  = on;
 exports.start                               = start;
 exports.config                              = config;
 exports.setLogger                           = setLogger;
@@ -2681,6 +2747,8 @@ exports.getCallRecordingFileData            = getCallRecordingFileData;
 exports.getHistoryPostitInterval            = getHistoryPostitInterval;
 exports.getCtiPbContactsContains            = getCtiPbContactsContains;
 exports.getCtiPbSpeeddialContacts           = getCtiPbSpeeddialContacts;
+exports.EVT_DELETED_VOICE_MESSAGE           = EVT_DELETED_VOICE_MESSAGE;
+exports.EVT_LISTENED_VOICE_MESSAGE          = EVT_LISTENED_VOICE_MESSAGE;
 exports.getCtiPbContactsStartsWith          = getCtiPbContactsStartsWith;
 exports.getAllValidCallerNotesByNum         = getAllValidCallerNotesByNum;
 exports.getPbContactsStartsWithDigit        = getPbContactsStartsWithDigit;

@@ -459,7 +459,7 @@ function setVoicemailListeners() {
             throw new Error('wrong voicemail object');
         }
 
-        compVoicemail.on(compVoicemail.EVT_NEW_VOICEMAIL, newVoicemailListener);
+        compVoicemail.on(compVoicemail.EVT_NEW_VOICE_MESSAGE, newVoiceMessageListener);
 
     } catch (err) {
        logger.error(IDLOG, err.stack);
@@ -471,14 +471,14 @@ function setVoicemailListeners() {
 * the voicemail notifications to all users who use the voicemail using their
 * notification configurations.
 *
-* @method newVoicemailListener
+* @method newVoiceMessageListener
 * @param {string} voicemail The voicemail identifier
 * @param {array}  list      The list of all new voicemail messages
 * @private
 */
-function newVoicemailListener(voicemail, list) {
+function newVoiceMessageListener(voicemail, list) {
     try {
-        logger.info(IDLOG, 'received "' + compVoicemail.EVT_NEW_VOICEMAIL + '" event from voicemail "' + voicemail + '": ' + list.length + ' new voice messages');
+        logger.info(IDLOG, 'received "' + compVoicemail.EVT_NEW_VOICE_MESSAGE + '" event from voicemail "' + voicemail + '": ' + list.length + ' new voice messages');
 
         // check the event data
         if (typeof voicemail !== 'string' || list === undefined || list instanceof Array === false) {
