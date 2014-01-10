@@ -79,6 +79,36 @@ var EVT_LISTENED_VOICE_MESSAGE = 'listenedVoiceMessage';
 var EVT_DELETED_VOICE_MESSAGE = 'deleteVoiceMessage';
 
 /**
+* Fired when a post-it has been deleted from the database by the _deletePostit_ method.
+*
+* @event deletedPostit
+* @param {object} user The recipient of the deleted post-it
+*/
+/**
+* The name of the deleted post-it message event.
+*
+* @property EVT_DELETED_POSTIT
+* @type string
+* @default "deletedPostit"
+*/
+var EVT_DELETED_POSTIT = 'deletedPostit';
+
+/**
+* Fired when the read status of a post-it has been set in the database by the _updatePostitReadIt_ method.
+*
+* @event postitReadIt
+* @param {object} user The recipient of the read post-it
+*/
+/**
+* The name of the "udpate post-it read it" message event.
+*
+* @property EVT_POSTIT_READIT
+* @type string
+* @default "postitReadIt"
+*/
+var EVT_READ_POSTIT = 'readPostit';
+
+/**
 * True if the sequelize library will be logged.
 * It's customized by the _config_ method.
 *
@@ -599,8 +629,13 @@ function updatePostitReadIt(id, cb) {
                     readdate: moment().format('YYYY-MM-DD HH:mm:ss')
 
                 }).success(function () {
+
                     logger.info(IDLOG, 'read date of the postit with db id "' + id + '" has been updated successfully');
                     cb();
+
+                    // emits the event for a read post-it
+                    logger.info(IDLOG, 'emit event "' + EVT_READ_POSTIT + '" of post-it with db id ' + id + ' of recipient user ' + task.selectedValues.recipient);
+                    emitter.emit(EVT_READ_POSTIT, task.selectedValues.recipient);
                 });
 
             } else {
@@ -1130,8 +1165,13 @@ function deletePostit(id, cb) {
             if (task) {
 
                 task.destroy().success(function () {
+
                     logger.info(IDLOG, 'post-it with db id "' + id + '" has been deleted successfully');
                     cb();
+
+                    // emits the event for a deleted post-it
+                    logger.info(IDLOG, 'emit event "' + EVT_DELETED_POSTIT + '" of post-it with db id ' + id + ' of recipient user ' + task.selectedValues.recipient);
+                    emitter.emit(EVT_DELETED_POSTIT, task.selectedValues.recipient);
                 });
 
             } else {
@@ -2736,6 +2776,7 @@ exports.modifyCallerNote                    = modifyCallerNote;
 exports.getPbContactsByNum                  = getPbContactsByNum;
 exports.deleteCtiPbContact                  = deleteCtiPbContact;
 exports.updatePostitReadIt                  = updatePostitReadIt;
+exports.EVT_DELETED_POSTIT                  = EVT_DELETED_POSTIT;
 exports.modifyCtiPbContact                  = modifyCtiPbContact;
 exports.deleteVoiceMessage                  = deleteVoiceMessage;
 exports.listenVoiceMessage                  = listenVoiceMessage;

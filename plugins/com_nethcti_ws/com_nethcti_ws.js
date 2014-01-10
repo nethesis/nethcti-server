@@ -470,26 +470,25 @@ function updateNewVoiceMessagesListener(voicemail, list) {
 }
 
 /**
-* Manages the new post-it event emitted by the post-it component. It sends
-* all new post-its to the recipient user.
+* Manages the event emitted by the post-it component to update the new post-it messages.
+* It send all new post-it to the recipient user.
 *
 * @method updateNewPostitListener
-* @param {string} creator   The user who has created the new post-it message
 * @param {string} recipient The recipient user of the new post-it
 * @param {array}  list      All the new post-it messages of the user
 * @private
 */
-function updateNewPostitListener(creator, recipient, list) {
+function updateNewPostitListener(recipient, list) {
     try {
         // check the event data
-        if (typeof creator !== 'string' || list === undefined || list instanceof Array === false) {
+        if (typeof recipient !== 'string' || list === undefined || list instanceof Array === false) {
             throw new Error('wrong arguments');
         }
 
-        logger.info(IDLOG, 'received "new postit" event created by ' + creator + ' for user ' + recipient);
+        logger.info(IDLOG, 'received "updateNewPostit" event for recipient user ' + recipient);
 
-        // emit the "newPostit" event for recipient user. The events contains all the new post-it with their details
-        var socketId, username, filteredCallerIdentity;
+        // emit the "updateNewPostit" event for the recipient user. The events contains all the new post-it with their details
+        var socketId, username;
 
         for (socketId in wsid) {
 
@@ -499,7 +498,7 @@ function updateNewPostitListener(creator, recipient, list) {
             if (username === recipient) {
 
                 // emits the event with the list of all new post-it messages of the user
-                logger.info(IDLOG, 'emit event "updateNewPostit" created by "' + creator + '" to user "' + recipient + '"');
+                logger.info(IDLOG, 'emit event "updateNewPostit" to the recipient user "' + recipient + '"');
                 server.sockets.sockets[socketId].emit('updateNewPostit', list);
             }
         }
@@ -510,8 +509,8 @@ function updateNewPostitListener(creator, recipient, list) {
 
             username = wsid[socketId];
 
-            // emits the event with the number of new post-it of the user
-            logger.info(IDLOG, 'emit event "newPostitCounter" ' + list.length + ' to user "' + username + '"');
+            // emits the event with the number of new post-it of the recipient user
+            logger.info(IDLOG, 'emit event "newPostitCounter" ' + list.length + ' to recipient user "' + username + '"');
             server.sockets.sockets[socketId].emit('newPostitCounter', { user: recipient, counter: list.length });
         }
 

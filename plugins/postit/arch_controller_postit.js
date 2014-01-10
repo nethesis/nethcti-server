@@ -96,6 +96,7 @@ module.exports = function (options, imports, register) {
 
         controllerPostit.setLogger(logger);
         controllerPostit.setDbconn(dbconn);
+        controllerPostit.start();
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
