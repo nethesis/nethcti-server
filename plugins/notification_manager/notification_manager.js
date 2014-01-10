@@ -1104,7 +1104,7 @@ function extractNewPostitMostRecent(list) {
 
         for (i = 0; i < list.length; i++) {
 
-            timestamp = list[i].creation.getTime();
+            timestamp = moment(list[i].creationdate + ' ' + list[i].creationtime, 'D/MM/YYYY hh:mm:ss').valueOf();
 
             if (temp < timestamp) {
                 temp = timestamp;

@@ -134,6 +134,29 @@ function getPostit(id, cb) {
 }
 
 /**
+* Returns all the new post-it messages of the user.
+*
+* @method getNewPostit
+* @param {string}   username The name of the user
+* @param {function} cb       The callback function
+*/
+function getNewPostit(username, cb) {
+    try {
+        // check parameters
+        if (typeof username !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        logger.info(IDLOG, 'get all new postit messages of user "' + username + '" by means dbconn module');
+        dbconn.getAllUnreadPostitOfRecipient(username, cb);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
 * Returns the post-it with the specified unique identifier and update the
 * read status of the post-it.
 *
@@ -240,13 +263,13 @@ function deletePostit(id, cb) {
 }
 
 /**
-* New post-it is created and saved.
+* Creates a new post-it and save it in the database.
 *
 * @method newPostit
 * @param {object} data
 *   @param {string} data.recipient The recipient of the post-it
-*   @param {string} data.creator The creator of the post-it
-*   @param {string} data.text The text of the message
+*   @param {string} data.creator   The creator of the post-it
+*   @param {string} data.text      The text of the message
 * @param {function} cb The callback function
 */
 function newPostit(data, cb) {
@@ -597,6 +620,7 @@ exports.getPostit                 = getPostit;
 exports.setLogger                 = setLogger;
 exports.setDbconn                 = setDbconn;
 exports.readPostit                = readPostit;
+exports.getNewPostit              = getNewPostit;
 exports.deletePostit              = deletePostit;
 exports.EVT_NEW_POSTIT            = EVT_NEW_POSTIT;
 exports.getHistoryInterval        = getHistoryInterval;

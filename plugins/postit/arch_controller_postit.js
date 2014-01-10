@@ -38,6 +38,13 @@ module.exports = function (options, imports, register) {
             newPostit: controllerPostit.newPostit,
 
             /**
+            * It's the _getNewPostit_ method provided by _controller\_postit_ module.
+            *
+            * @method getNewPostit
+            */
+            getNewPostit: controllerPostit.getNewPostit,
+
+            /**
             * It's the _getPostit_ method provided by _controller\_postit_ module.
             *
             * @method getPostit
