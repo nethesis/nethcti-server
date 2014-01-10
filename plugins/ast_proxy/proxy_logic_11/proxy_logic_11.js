@@ -4332,4 +4332,5 @@ exports.evtQueueMemberPausedChanged     = evtQueueMemberPausedChanged;
 exports.evtRemoveQueueWaitingCaller     = evtRemoveQueueWaitingCaller;
 exports.attendedTransferConversation    = attendedTransferConversation;
 exports.getExtensionsFromConversation   = getExtensionsFromConversation;
+exports.evtExtenUnconditionalCfChanged  = evtExtenUnconditionalCfChanged;
 exports.transferConversationToVoicemail = transferConversationToVoicemail;
