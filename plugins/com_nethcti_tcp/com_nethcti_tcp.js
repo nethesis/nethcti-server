@@ -32,9 +32,8 @@ var IDLOG = '[com_nethcti_tcp]';
 * @property proto
 * @type string
 * @private
-* @default "http"
 */
-var proto = 'http';
+var proto;
 
 /**
 * The TCP server port. It is customized by the configuration file.
@@ -44,9 +43,8 @@ var proto = 'http';
 * @private
 * @final
 * @readOnly
-* @default "8182"
 */
-var port = '8182';
+var port;
 
 /**
 * The logger. It must have at least three methods: _info, warn and error._
@@ -503,7 +501,7 @@ function config(path) {
         var json = require(path);
 
         // initialize the port of the tcp server
-        if (json.tcp && json.tcp.port) {
+        if (json && json.tcp && json.tcp.port) {
             port = json.tcp.port;
 
         } else {
@@ -511,7 +509,7 @@ function config(path) {
         }
 
         // initialize the proto of the proxy
-        if (json.tcp.proto) {
+        if (json && json.tcp && json.tcp.proto) {
             proto = json.tcp.proto;
 
         } else {
@@ -555,6 +553,15 @@ function config(path) {
 */
 function start() {
     try {
+
+        // check the configuration. The server starts only if the configuration has been done
+        // correctly, that is if the /etc/nethcti/services.json file exists and contains
+        // the tcp json object
+        if (port === undefined || proto === undefined) {
+            logger.warn(IDLOG, 'tcp server does not start, because the configuration is not present');
+            return;
+        }
+
         // set the listener for the aterisk proxy module
         setAstProxyListeners();
 
