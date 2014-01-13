@@ -27,15 +27,6 @@ var net = require('net');
 var IDLOG = '[com_nethcti_tcp]';
 
 /**
-* Listening protocol. It can be customized in the configuration file.
-*
-* @property proto
-* @type string
-* @private
-*/
-var proto;
-
-/**
 * The TCP server port. It is customized by the configuration file.
 *
 * @property port
@@ -508,14 +499,6 @@ function config(path) {
             logger.warn(IDLOG, 'no TCP port has been specified in JSON file ' + path);
         }
 
-        // initialize the proto of the proxy
-        if (json && json.tcp && json.tcp.proto) {
-            proto = json.tcp.proto;
-
-        } else {
-            logger.warn(IDLOG, 'no TCP proto has been specified in JSON file ' + path);
-        }
-
         /*
         // initialize the key of the HTTPS proxy
         if (json.tcp.https_key) {
@@ -557,7 +540,7 @@ function start() {
         // check the configuration. The server starts only if the configuration has been done
         // correctly, that is if the /etc/nethcti/services.json file exists and contains
         // the tcp json object
-        if (port === undefined || proto === undefined) {
+        if (port === undefined) {
             logger.warn(IDLOG, 'tcp server does not start, because the configuration is not present');
             return;
         }
