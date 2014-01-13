@@ -6,9 +6,20 @@
    if ($http_proto eq "https") {
       $ws_proto = "wss";
    }
+   my $tcp_server_port = ${'nethcti-server-tcp'}{TCPPort} || "8182";
+   my $tcp_server_enabled = ${'nethcti-server-tcp'}{status} || "disabled";
+   our $tcp_server = "";
+   if ($tcp_server_enabled eq "enabled") {
+      $tcp_server = "\"tcp\": \{
+        \"port\": \"$tcp_server_port\",
+        \"https_key\": \"/etc/pki/tls/private/localhost.key\",
+        \"https_cert\": \"/etc/pki/tls/certs/localhost.crt\"
+    \},";
+   }
    return "";
 }
 \{
+    {$tcp_server}
     "websocket": \{
         "port":    "{$ports[0]}",
         "proto":      "{$ws_proto}",
@@ -44,6 +55,9 @@
             "127.0.0.1/all_histcallernote": "http://127.0.0.1:10005/all_histcallernote"
         \}
     \},
+    "notification_manager": \{
+        "custom_templates_notifications": "/home/e-smith/nethcti/templates/notification_manager"
+    \},
     "rest": \{
         "postit": \{
             "port":    "10004",
@@ -59,7 +73,8 @@
         \},
         "customer_card": \{
             "port":    "10003",
-            "address": "localhost"
+            "address": "localhost",
+            "custom_templates_customercards": "/home/e-smith/nethcti/templates/customer_card"
         \},
         "phonebook": \{
             "port":    "10001",

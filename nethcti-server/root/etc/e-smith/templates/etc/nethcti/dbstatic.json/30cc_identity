@@ -5,5 +5,5 @@
         "dbuser":     "pbookuser",
         "dbpassword": "pbookpass",
         "dbname":     "phonebook",
-        "query":      "select * from phonebook where homephone like '%$TERM' or workphone like '%$TERM' or cellphone like '%$TERM' or fax like '%$TERM'"
+        "query":      "select * from phonebook where homephone like '%$EXTEN' or workphone like '%$EXTEN' or cellphone like '%$EXTEN' or fax like '%$EXTEN'"
     \},
