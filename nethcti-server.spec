@@ -1,5 +1,5 @@
 Name:		nethcti-server
-Version:	1.9.13
+Version:	1.9.16
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI 2
 
@@ -70,6 +70,9 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Mon Jan 13 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 1.9.16-1
+- Alpha2 release with new functions #2512 #2222 #2557 for neth-oppanel beta2 release
+
 * Tue Jan 08 2014 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.9.13-1
 - Fix installation problem #2555
 
