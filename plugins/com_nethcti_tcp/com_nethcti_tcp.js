@@ -552,9 +552,9 @@ function start() {
         server = net.createServer();
 
         // add listeners
-        server.on('listening',  listeningHdlr);
         server.on('connection', connHdlr);
         server.listen(port);
+        logger.warn(IDLOG, 'TCP server listening on ' + server.address().address + ':' + server.address().port);
 
         // start the automatic update of token expiration of all the users that are connected by tcp.
         // The interval is the half value of expiration provided by authentication component
@@ -566,20 +566,6 @@ function start() {
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Handler for server socket listening operation.
-*
-* @method listeningHdlr
-* @private
-*/
-function listeningHdlr() {
-    try {
-        logger.warn(IDLOG, 'TCP server listening on ' + server.address().address + ':' + server.address().port);
-    } catch (err1) {
-        logger.error(IDLOG, err1.stack);
     }
 }
 
