@@ -4,7 +4,6 @@
 * @module postit
 * @main arch_controller_postit
 */
-var async        = require('async');
 var EventEmitter = require('events').EventEmitter;
 
 /**
@@ -161,82 +160,82 @@ function getNewPostit(username, cb) {
 * read status of the post-it.
 *
 * @method readPostit
-* @param {string}   id The unique identifier of the post-it message
-* @param {function} cb The callback function
+* @param {string}   username The username of the reader
+* @param {string}   id       The unique identifier of the post-it message
+* @param {function} cb       The callback function
 */
-function readPostit(id, cb) {
+function readPostit(username, id, cb) {
     try {
         // check parameters
-        if (typeof id !== 'string' || typeof cb !== 'function') {
+        if (typeof username !== 'string' || typeof id !== 'string' || typeof cb !== 'function') {
             throw new Error('wrong parameters');
         }
 
         // read the content of the post-it message to return, then update the read date of the message
-        // and emit the event to update the new post-it messages of the recipient only if the message was unread
-        async.series([
+        // only if the reader is the recipient. Then emits the event to update the new post-it messages
+        // of the recipient only if the message was unread
+        logger.info(IDLOG, 'get postit by means dbconn module');
+        dbconn.getPostit(id, function (err1, result) {
+            try {
+                cb(err1, result);
+                getPostitCb(err1, username, id, result);
 
-            // read the post-it content and return it to the callback "cb" passed as argument. The callback
-            // "callback" is called with recipient value only if the message has never been read. This data is used
-            // to emit the event to update all the new post-it messages of the recipient user
-            function (callback) {
-
-                logger.info(IDLOG, 'get postit by means dbconn module');
-                dbconn.getPostit(id, function (err1, result) {
-                    try {
-                        cb(err1, result);
-
-                        // the post-it is new, has never been read
-                        if (result.readdate === null) { callback(null, result.recipient); }
-                        else                          { callback(null);                   }
-
-                    } catch (err2) {
-                        logger.error(IDLOG, err2.stack);
-                        cb(err2);
-                        callback();
-                    }
-                });
-            },
-            function (callback) {
-
-                // update the read date status of the postit
-                logger.info(IDLOG, 'update the read date status of the postit with db id "' + id + '"');
-                dbconn.updatePostitReadIt(id, function (err3) {
-                    try {
-                        if (err3) {
-                            logger.info(IDLOG, 'updating read date status of the postit with db id "' + id + '"');
-                            callback(null, false);
-
-                        } else {
-                            logger.info(IDLOG, 'read date status of the postit with db id "' + id + '" has been updated successfully');
-                            callback(null, true);
-                        }
-
-                    } catch (err4) {
-                        logger.error(IDLOG, err4.stack);
-                        cb(err4);
-                        callback();
-                    }
-                });
-            }
-
-        ], function (err5, results) {
-
-            if (err5) { logger.error(IDLOG, err5); }
-
-            // emit the event to update all the new post-it messages of the recipient user only if
-            // the message was new before read it and the read status has been updated
-            // results[0] indicates if the read post-it was new before read it and contains the recipient user of the read post-it
-            // results[1] indicates if the read status of the post-it has been updated
-            if (results[0] && results[1]) {
-
-                // get all the new postit of the recipient to emit the events through the callback
-                dbconn.getAllUnreadPostitOfRecipient(results[0], readPostitCb);
+            } catch (err2) {
+                logger.error(IDLOG, err2.stack);
+                cb(err2);
             }
         });
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err);
+    }
+}
+
+/**
+* Updates the read date status of the postit only if the reader is the recipient
+* of the post-it. Then emits the event to update all the new post-it messages of
+* the recipient user. The event is emitted only if the message was new before read
+* it and the read status has been updated.
+*
+* @method getPostitCb
+* @param {object} err      The error object
+* @param {string} username The username of the reader
+* @param {string} id       The post-it database identifier
+* @param {object} result   The result object of the query
+*/
+function getPostitCb(err, username, id, result) {
+    try {
+        // check parameters
+        if (typeof username !== 'string' || typeof id !== 'string' || typeof result !== 'object') {
+            throw new Error('wrong parameters');
+        }
+
+        // update the read date status of the postit only if the readere is the recipient of the post-it
+        if (username === result.recipient) {
+
+            logger.info(IDLOG, 'update the read date status of the postit with db id "' + id + '"');
+            dbconn.updatePostitReadIt(id, function (err1) {
+                try {
+                    if (err1) {
+                        logger.info(IDLOG, 'updating read date status of the postit with db id "' + id + '"');
+
+                    } else {
+                        logger.info(IDLOG, 'read date status of the postit with db id "' + id + '" has been updated successfully');
+
+                        // emit the event to update all the new post-it messages of the recipient user only if
+                        // the message was new before read it and the read status has been updated
+                        // get all the new postit of the recipient to emit the events through the callback
+                        dbconn.getAllUnreadPostitOfRecipient(result.recipient, readPostitCb);
+                    }
+
+                } catch (err2) {
+                    logger.error(IDLOG, err2.stack);
+                }
+            });
+        }
+    } catch (error) {
+        logger.error(IDLOG, error.stack);
     }
 }
 

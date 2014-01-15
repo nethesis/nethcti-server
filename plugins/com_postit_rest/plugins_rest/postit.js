@@ -314,33 +314,38 @@ function setCompUtil(comp) {
                         logger.info(IDLOG, 'reading postit with db id "' + id  + '": "postit" authorization successfully for user "' + username + '"');
                     }
 
-                    compPostit.readPostit(id, function (err, result) {
+                    compPostit.readPostit(username, id, function (err, result) {
+                        try {
+                            if (err) {
+                                logger.error(IDLOG, 'reading postit with db id "' + id + '" for user "' + username + '"');
+                                compUtil.net.sendHttp500(IDLOG, res, err.toString());
 
-                        if (err) {
-                            logger.error(IDLOG, 'reading postit with db id "' + id + '" for user "' + username + '"');
-                            compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                            } else {
 
-                        } else {
+                                // check the user authorization. If the user has the "admin_postit" authorization he can read the postit.
+                                // If the user has only the "postit" authorization he can read only his created postit and those that is
+                                // assigned to him
+                                if (compAuthorization.authorizeAdminPostitUser(username) === true) {
 
-                            // check the user authorization. If the user has the "admin_postit" authorization he can read the postit.
-                            // If the user has only the "postit" authorization he can read only his created postit and those that is
-                            // assigned to him
-                            if (compAuthorization.authorizeAdminPostitUser(username) === true) {
-
-                                logger.info(IDLOG, 'send postit with db id "' + id + '" to user "' + username + '"');
-                                res.send(200, result);
-
-                            } else if (compAuthorization.authorizePostitUser(username) === true) {
-
-                                if (result.creator === username || result.recipient === username) {
                                     logger.info(IDLOG, 'send postit with db id "' + id + '" to user "' + username + '"');
                                     res.send(200, result);
 
-                                } else {
-                                    logger.warn(IDLOG, 'reading postit with db id "' + id  + '": the user "' + username + '" has "postit" permission but the postit isn\'t for him');
-                                    compUtil.net.sendHttp403(IDLOG, res);
+                                } else if (compAuthorization.authorizePostitUser(username) === true) {
+
+                                    if (result.creator === username || result.recipient === username) {
+                                        logger.info(IDLOG, 'send postit with db id "' + id + '" to user "' + username + '"');
+                                        res.send(200, result);
+
+                                    } else {
+                                        logger.warn(IDLOG, 'reading postit with db id "' + id  + '": the user "' + username + '" has "postit" permission but the postit isn\'t for him');
+                                        compUtil.net.sendHttp403(IDLOG, res);
+                                    }
                                 }
                             }
+
+                        } catch (err1) {
+                            logger.error(IDLOG, err1.stack);
+                            compUtil.net.sendHttp500(IDLOG, res, err1.toString());
                         }
                     });
                 } catch (err) {
