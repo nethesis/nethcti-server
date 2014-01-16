@@ -1401,6 +1401,8 @@ function initializeSipExten() {
                 astProxy.doCmd({ command: 'dndGet', exten: exten.getExten() }, setDndStatus);
                 // get the call forward status
                 astProxy.doCmd({ command: 'cfGet', exten: exten.getExten() }, setCfStatus);
+                // get the call forward to voicemail status
+                astProxy.doCmd({ command: 'cfVmGet', exten: exten.getExten() }, setCfVmStatus);
             }
         }
         // request all channels
@@ -1480,6 +1482,46 @@ function setCfStatus(err, resp) {
 
         } else {
             logger.warn(IDLOG, 'request cf for not existing extension ' + resp.exten);
+        }
+
+    } catch (error) {
+        logger.error(IDLOG, error.stack);
+    }
+}
+
+/**
+* Sets the call forward to voicemail status of the extension.
+*
+* @method setCfVmStatus
+* @param {object} err  The error object of the _cfVmGet_ command plugin.
+* @param {object} resp The response object of the _cfVmGet_ command plugin.
+* @private
+*/
+function setCfVmStatus(err, resp) {
+    try {
+        // check the error
+        if (err) { throw err; }
+
+        // check parameter
+        if (   typeof resp       !== 'object'
+            || typeof resp.exten !== 'string' || typeof resp.status !== 'string') {
+
+            throw new Error('wrong parameter');
+        }
+
+        if (extensions[resp.exten]) { // the extension exists
+
+            if (resp.status === 'on') {
+                extensions[resp.exten].setCfVm(resp.to);
+                logger.info(IDLOG, 'set extension ' + resp.exten + ' cfvm enable to ' + resp.to);
+
+            } else {
+                extensions[resp.exten].disableCfVm();
+                logger.info(IDLOG, 'set extension ' + resp.exten + ' cfvm disabled');
+            }
+
+        } else {
+            logger.warn(IDLOG, 'request cfvm for not existing extension ' + resp.exten);
         }
 
     } catch (error) {
@@ -2356,6 +2398,9 @@ function evtExtenUnconditionalCfChanged(exten, enabled, to) {
                 logger.info(IDLOG, 'set cf status to ' + enabled + ' for extension ' + exten + ' to ' + to);
                 extensions[exten].setCf(to);
 
+                // disable the call forward to voicemail because the call forward set the same property in the database
+                evtExtenUnconditionalCfVmChanged(exten, false);
+
             } else {
                 logger.info(IDLOG, 'set cf status to ' + enabled + ' for extension ' + exten);
                 extensions[exten].disableCf();
@@ -2367,6 +2412,49 @@ function evtExtenUnconditionalCfChanged(exten, enabled, to) {
 
         } else {
             logger.warn(IDLOG, 'try to set call forward status of non existent extension ' + exten);
+        }
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Updates the extension unconditional call forward to voicemail status.
+*
+* @method evtExtenUnconditionalCfVmChanged
+* @param {string}  exten   The extension number
+* @param {boolean} enabled True if the call forward to voicemail is enabled
+* @param {string}  [vm]    The destination voicemail number of the call forward
+* @private
+*/
+function evtExtenUnconditionalCfVmChanged(exten, enabled, vm) {
+    try {
+        // check parameters
+        if (typeof exten !== 'string' && typeof enabled !== 'boolean') {
+            throw new Error('wrong parameters');
+        }
+
+        if (extensions[exten]) { // the exten is an extension
+
+            if (enabled) {
+                logger.info(IDLOG, 'set cfvm status to ' + enabled + ' for extension ' + exten + ' to voicemail ' + vm);
+                extensions[exten].setCfVm(vm);
+
+                // disable the call forward because the call forward to voicemail set the same property in the database
+                evtExtenUnconditionalCfChanged(exten, false);
+
+            } else {
+                logger.info(IDLOG, 'set cfvm status to ' + enabled + ' for extension ' + exten);
+                extensions[exten].disableCfVm();
+            }
+
+            // emit the event
+            logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
+            astProxy.emit(EVT_EXTEN_CHANGED, extensions[exten]);
+
+        } else {
+            logger.warn(IDLOG, 'try to set call forward to voicemail status of non existent extension ' + exten);
         }
 
     } catch (err) {
@@ -2470,7 +2558,9 @@ function setUnconditionalCfVm(exten, activate, to, cb) {
 
             // this command doesn't generate any asterisk event, so if it's successful, it simulate the event
             astProxy.doCmd({ command: 'cfVmSet', exten: exten, activate: activate, val: to }, function (err, resp) {
+
                 cb(err, resp);
+                if (err === null) { evtExtenUnconditionalCfVmChanged(exten, activate, to); }
             });
 
         } else {
