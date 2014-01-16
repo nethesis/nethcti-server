@@ -1,5 +1,5 @@
 Name:		nethcti-server
-Version:	1.9.16
+Version:	1.9.17
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI 2
 
@@ -70,6 +70,12 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Thu Jan 16 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 1.9.17-1
+- New Alpha2 release with new functions for neth-oppanel beta2 release
+- Update sequelize library: better performance #2602
+- New call forward to voicemail property for extensions #2565
+- Relaxed permission for REST api astproxy/txfer_tovm #2610
+
 * Mon Jan 13 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 1.9.16-1
 - Alpha2 release with new functions #2512 #2222 #2557 for neth-oppanel beta2 release
 
