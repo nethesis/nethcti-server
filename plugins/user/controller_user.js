@@ -403,8 +403,8 @@ function on(type, cb) {
 * Check if the user has an extension endpoint.
 *
 * @method hasExtensionEndpoint
-* @param {string} username The name of the user to check
-* @param {string} exten The extension identifier
+* @param  {string}  username The name of the user to check
+* @param  {string}  exten    The extension identifier
 * @return {boolean} True if the user has the extension endpoint, false otherwise.
 */
 function hasExtensionEndpoint(username, exten) {
@@ -415,7 +415,8 @@ function hasExtensionEndpoint(username, exten) {
         }
 
         if (users[username] === undefined) { // the user is not present
-            throw new Error('checking the user-extension endpoint association: no user "' + username + '" is present');
+            logger.warn('checking the user-extension endpoint association: no user "' + username + '" is present');
+            return false;
         }
 
         var ext;

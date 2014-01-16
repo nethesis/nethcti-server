@@ -373,13 +373,14 @@ var compConfigManager;
         * must contains the following parameters:
         *
         * * `convid:       the conversation identifier`
+        * * `username:     the username that has the endpointId that has the conversation to transfer`
         * * `endpointId:   the endpoint identifier of the user who has the conversation to transfer`
         * * `endpointType: the type of the endpoint of the user who has the conversation to transfer`
         * * `voicemailId:  the voicemail identifier to transfer the conversation. It's assumed that the destination type is the same of the endpoint type`
         *
         * E.g. object parameters:
         *
-        *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "221", "voicemailId": "214" }
+        *     { "username": "user", "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "221", "voicemailId": "214" }
         *
         * ---
         *
@@ -1530,7 +1531,7 @@ var compConfigManager;
                     var username = req.headers.authorization_user;
 
                     // check parameters
-                    if (   typeof req.params            !== 'object'
+                    if (   typeof req.params            !== 'object' || typeof req.params.username     !== 'string'
                         || typeof req.params.convid     !== 'string' || typeof req.params.voicemailId  !== 'string'
                         || typeof req.params.endpointId !== 'string' || typeof req.params.endpointType !== 'string') {
 
@@ -1540,33 +1541,33 @@ var compConfigManager;
 
                     if (req.params.endpointType === 'extension') {
 
-                        // check if the endpoint of the request is owned by the user: the user can
-                        // transfer only his own conversations
-                        if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+                        // all the users can redirect any calls to the destination voicemail associated with the specified endpointId
+                        // req.params.username is the username that has the endpoint extension that has the conversation to transfer
 
-                            logger.warn(IDLOG, 'transfer convid "' + req.params.convid + '" to voicemail "' + req.params.voicemailId + '" by user "' + username +
-                                               '" has been failed: ' + ' the ' + req.params.endpointType + ' ' + req.params.endpointId +
-                                               ' isn\'t owned by the user');
+                        // check if the endpoint of the request is owned by the username that has the conversation to transfer
+                        if (compAuthorization.verifyUserEndpointExten(req.params.username, req.params.endpointId) === false) {
+
+                            logger.warn(IDLOG, 'transfer convid "' + req.params.convid + '" of exten "' + req.params.endpointId + '" of user "' + req.params.username + '" to voicemail "' +
+                                               req.params.voicemailId + '" by user "' + username + '" has been failed: the ' + req.params.endpointId + ' isn\'t owned by user "' + req.params.username + '"');
                             compUtil.net.sendHttp403(IDLOG, res);
                             return;
 
                         } else {
-                            logger.info(IDLOG, 'transfer convid "' + req.params.convid + '" to voicemail "' + req.params.voicemailId + '": the endpoint ' + req.params.endpointType +
-                                               ' ' + req.params.endpointId + ' is owned by "' + username + '"');
+                            logger.info(IDLOG, 'transfer convid "' + req.params.convid + '" of exten "' + req.params.endpointId + '" of user "' + req.params.username + '" to voicemail "' +
+                                               req.params.voicemailId + '" by user "' + username + '": the ' + req.params.endpointId + ' is owned by user "' + req.params.username + '"');
                         }
 
-                        // check if the voicemail of the request is owned by the user: the user can
-                        // transfer only to his voicemails
-                        if (compAuthorization.verifyUserEndpointVoicemail(username, req.params.voicemailId) === false) {
+                        // check if the voicemail of the request is owned by the user
+                        if (compAuthorization.verifyUserEndpointVoicemail(req.params.username, req.params.voicemailId) === false) {
 
-                            logger.warn(IDLOG, 'transfer convid "' + req.params.convid + '" to voicemail "' + req.params.voicemailId + '" by user "' + username +
-                                               '" has been failed: ' + ' the voicemail ' + req.params.voicemailId + ' isn\'t owned by the user');
+                            logger.warn(IDLOG, 'transfer convid "' + req.params.convid + '" of exten "' + req.params.endpointId + '" of user "' + req.params.username + '" to voicemail "' +
+                                               req.params.voicemailId + '" by user "' + username + '" has been failed: the voicemail ' + req.params.voicemailId + ' isn\'t owned by the user "' + req.params.username + '"');
                             compUtil.net.sendHttp403(IDLOG, res);
                             return;
 
                         } else {
-                            logger.info(IDLOG, 'transfer convid "' + req.params.convid + '" to voicemail "' + req.params.voicemailId + '": the voicemail ' +
-                                               ' ' + req.params.voicemailId + ' is owned by "' + username + '"');
+                            logger.info(IDLOG, 'transfer convid "' + req.params.convid + '" of exten "' + req.params.endpointId + '" of user "' + req.params.username + '" to voicemail "' +
+                                               req.params.voicemailId + '": by user "' + username + '" the voicemail ' + req.params.voicemailId + ' is owned by user "' + req.params.username + '"');
                         }
 
                         compAstProxy.transferConversationToVoicemail(
