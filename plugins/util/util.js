@@ -125,7 +125,7 @@ function sendHttp400(parentIdLog, resp) {
 function sendHttp401(parentIdLog, resp) {
     try {
         resp.writeHead(401);
-        logger.info(parentIdLog, 'send HTTP 401 response to ' + resp.connection.remoteAddress);
+        logger.warn(parentIdLog, 'send HTTP 401 response to ' + resp.connection.remoteAddress);
         resp.end();
     } catch (err) {
         logger.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
