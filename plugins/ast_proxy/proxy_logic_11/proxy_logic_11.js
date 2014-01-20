@@ -2855,6 +2855,71 @@ function evtConversationConnected(num1, num2) {
 }
 
 /**
+* Returns the name of the audio file to record the conversation of the specified extension.
+*
+* @method getRecordFilename
+* @param  {string} exten  The extension number
+* @param  {string} convid The conversation identifier
+* @param  {object} now    A date object
+* @return {string} The name of the audio file or undefined value if it is not present.
+* @private
+*/
+function getRecordFilename(exten, convid, now) {
+    try {
+        // check the extension existence
+        if (!extensions[exten]) { return; }
+
+        // get the conversation
+        var conv = extensions[exten].getConversation(convid);
+
+        if (!conv) { return; }
+
+        console.log('conv=', conv);
+
+        var YYYYMMDD = moment(now).format('YYYYMMDD');
+        var HHmmss   = moment(now).format('HHmmss');
+        var msec     = now.getMilliseconds();
+
+        if (conv.isIncoming()) {
+            return 'exten-' + exten + '-' + conv.getCounterpartNum() + '-' + YYYYMMDD + '-' + HHmmss + '-' + msec + '.wav';
+        } else {
+            return 'exten-' + conv.getCounterpartNum() + '-' + exten + '-' + YYYYMMDD + '-' + HHmmss + '-' + msec + '.wav';
+        }
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Returns the path of the audio file to record the conversation of the specified extension.
+*
+* @method getRecordFilepath
+* @param  {string} exten  The extension number
+* @param  {string} convid The conversation identifier
+* @param  {object} now    A date object
+* @return {string} The path of the audio file or undefined value if it is not present.
+* @private
+*/
+function getRecordFilepath(exten, convid, now) {
+    try {
+        // check the extension existence
+        if (!extensions[exten]) { return; }
+
+        // get the conversation
+        var conv = extensions[exten].getConversation(convid);
+        if (!conv) { return; }
+
+        var filename = getRecordFilename(exten, convid, now);
+        var YYYYMMDD = moment(now).format('YYYY' + path.sep + 'MM' + path.sep + 'DD');
+        return YYYYMMDD + path.sep + filename;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Return the source channel of the conversation of the specified extension.
 * If the source channel isn't present, undefined will be returned. It is
 * useful for those operation in which the channel type is important. For example
@@ -3986,8 +4051,12 @@ function startRecordConversation(endpointType, endpointId, convid, cb) {
         // check the endpoint existence
         if (endpointType === 'extension' && extensions[endpointId]) {
 
-            // get the channel to hangup
+            // get the channel to record
             var ch = getExtenSourceChannelConversation(endpointId, convid);
+            // get the name of the audio file
+            var now = new Date();
+            var filename = getRecordFilename(endpointId, convid, now);
+            var filepath = getRecordFilepath(endpointId, convid, now);
 
             // check if the conversation is already recording
             if (recordingConv[convid] !== undefined) {
@@ -3998,11 +4067,113 @@ function startRecordConversation(endpointType, endpointId, convid, cb) {
 
                 var chid = ch.getChannel(); // the channel identifier
 
-                // start the recording
-                logger.info(IDLOG, 'execute the record of the channel ' + chid + ' of exten ' + endpointId + ' by DMTF tones');
-                sendDTMFSequenceToChannel(chid, '*1', function (err) {
-                    cb(err);
-                    startRecordCallCb(err, convid);
+                logger.info(IDLOG, 'set asterisk variables to record the convid "' + convid + '" of extension "' + endpointId + '"');
+                // set some asterisk variables to fill the "recordingfile" field of the
+                // asteriskcdrdb.cdr database table and then record the conversation
+                async.series([
+
+                    // set the asterisk variables
+                    function(callback) {
+
+                        logger.info(IDLOG, 'set "MASTER_CHANNEL(ONETOUCH_REC)" asterisk variable');
+                        astProxy.doCmd({ command: 'setVariable', name: 'MASTER_CHANNEL(ONETOUCH_REC)', value: 'RECORDING', channel: chid }, function (err) {
+                            try {
+                                if (err) { callback(err); }
+                                else     { callback();    }
+
+                            } catch (e) {
+                               logger.error(IDLOG, e.stack);
+                               callback(e);
+                            }
+                        });
+                    },
+
+                    function(callback) {
+
+                        logger.info(IDLOG, 'set "MASTER_CHANNEL(REC_STATUS)" asterisk variable');
+                        astProxy.doCmd({ command: 'setVariable', name: 'MASTER_CHANNEL(REC_STATUS)', value: 'RECORDING', channel: chid }, function (err) {
+                            try {
+                                if (err) { callback(err); }
+                                else     { callback();    }
+
+                            } catch (e) {
+                               logger.error(IDLOG, e.stack);
+                               callback(e);
+                            }
+                        });
+                    },
+
+                    function(callback) {
+
+                        logger.info(IDLOG, 'set "AUDIOHOOK_INHERIT(MixMonitor)" asterisk variable');
+                        astProxy.doCmd({ command: 'setVariable', name: 'AUDIOHOOK_INHERIT(MixMonitor)', value: 'yes', channel: chid }, function (err) {
+                            try {
+                                if (err) { callback(err); }
+                                else     { callback();    }
+
+                            } catch (e) {
+                               logger.error(IDLOG, e.stack);
+                               callback(e);
+                            }
+                        });
+                    },
+
+                    function(callback) {
+
+                        logger.info(IDLOG, 'set "MASTER_CHANNEL(CDR(recordingfile))" asterisk variable with filename "' + filename + '"');
+                        astProxy.doCmd({ command: 'setVariable', name: 'MASTER_CHANNEL(CDR(recordingfile))', value: filename, channel: chid }, function (err) {
+                            try {
+                                if (err) { callback(err); }
+                                else     { callback();    }
+
+                            } catch (e) {
+                               logger.error(IDLOG, e.stack);
+                               callback(e);
+                            }
+                        });
+                    },
+
+                    function(callback) {
+
+                        logger.info(IDLOG, 'set "MASTER_CHANNEL(CDR(recordingfile))" asterisk variable');
+                        astProxy.doCmd({ command: 'setVariable', name: 'MASTER_CHANNEL(ONETOUCH_RECFILE)', value: filename, channel: chid }, function (err) {
+                            try {
+                                if (err) { callback(err); }
+                                else     { callback();    }
+
+                            } catch (e) {
+                               logger.error(IDLOG, e.stack);
+                               callback();
+                            }
+                        });
+                    }
+
+                ], function (err) {
+
+                    if (err) {
+                        logger.error(IDLOG, 'setting asterisk variables to record the convid "' + convid + '" of extension "' + endpointId + '"');
+                        return;
+                    }
+
+                    logger.info(IDLOG, 'asterisk variables to record the convid "' + convid + '" of extension "' + endpointId + '" has been set');
+
+                    // start the recording
+                    logger.info(IDLOG, 'record the convid "' + convid + '" of extension "' + endpointId + '"');
+                    astProxy.doCmd({ command: 'recordCall', channel: chid, filepath: filepath }, function (err) {
+                        try {
+                            if (err) {
+                                logger.error(IDLOG, 'recording the convid "' + convid + '" of extension "' + endpointId + '"');
+                                cb(err);
+                                return;
+                            }
+                            logger.info(IDLOG, 'record the convid "' + convid + '" of extension "' + endpointId + '" has been successfully started in ' + filepath);
+                            cb();
+
+                        } catch (e) {
+                           logger.error(IDLOG, e.stack);
+                           cb(e);
+                        }
+                    });
                 });
 
             } else {

@@ -191,6 +191,14 @@ exports.Conversation = function (ownerId, sourceChan, destChan) {
     function getId() { return id; }
 
     /**
+    * Returns the counterpart number.
+    *
+    * @method getCounterpartNum
+    * @return {string} The number of the counterpart.
+    */
+    function getCounterpartNum() { return counterpartNum; }
+
+    /**
     * Return the recording status.
     *
     * @method isRecording
@@ -209,6 +217,17 @@ exports.Conversation = function (ownerId, sourceChan, destChan) {
     function setRecording(value) {
         if (typeof value !== 'boolean') { throw new Error('wrong parameter'); }
         recording = value;
+    }
+
+    /**
+    * Returns true if the conversation is incoming.
+    *
+    * @method isIncoming
+    * @return {boolean} True if the conversation is incoming.
+    */
+    function isIncoming(value) {
+        if (direction === DIRECTION.IN) { return true;  }
+        else                            { return false; }
     }
 
     /**
@@ -278,10 +297,12 @@ exports.Conversation = function (ownerId, sourceChan, destChan) {
         getId:                 getId,
         toJSON:                toJSON,
         toString:              toString,
+        isIncoming:            isIncoming,
         getDuration:           getDuration,
         isRecording:           isRecording,
         setRecording:          setRecording,
         getSourceChannel:      getSourceChannel,
+        getCounterpartNum:     getCounterpartNum,
         getDestinationChannel: getDestinationChannel
     };
 }

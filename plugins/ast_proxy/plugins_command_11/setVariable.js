@@ -1,6 +1,7 @@
 /**
 * @submodule plugins_command_11
 */
+var async  = require('async');
 var action = require('../action');
 
 /**
@@ -11,21 +12,9 @@ var action = require('../action');
 * @private
 * @final
 * @readOnly
-* @default [recordCall]
+* @default [setVariable]
 */
-var IDLOG = '[recordCall]';
-
-/**
-* The audio file extension.
-*
-* @property FILE_EXT
-* @type string
-* @private
-* @final
-* @readOnly
-* @default [wav]
-*/
-var FILE_EXT = 'wav';
+var IDLOG = '[setVariable]';
 
 (function() {
     try {
@@ -50,46 +39,42 @@ var FILE_EXT = 'wav';
         var map = {};
 
         /**
-        * Command plugin to record a call. If the record file already exists,
-        * it will not be overwritten but appended. The default directory of the
-        * recordings is /var/spool/asterisk/monitor.
+        * Command plugin to set an asterisk variable.
         *
         * Use it with _ast\_proxy_ module as follow:
         *
-        *     ast_proxy.doCmd({ command: 'recordCall', channel: 'SIP/214-00000', filepath: '2013/04/06/exten-214-209-20130406-120406-1365062949.146.wav' }, function (res) {
+        *     ast_proxy.doCmd({ command: 'setVariable', name: 'MASTER_CHANNEL(CDR(recordingfile))', value: 'audio_file.wav' }, function (res) {
         *         // some code
         *     });
         *
         *
-        * @class recordCall
+        * @class setVariable
         * @static
         */
-        var recordCall = {
+        var setVariable = {
 
             /**
-            * Execute asterisk action to record a call. If the record file
-            * already exists, it will not be overwritten but appended.
+            * Execute asterisk action to set an asterisk variable.
             * 
             * @method execute
-            * @param {object} am Asterisk manager to send the action
-            * @param {object} args The object contains optional parameters
-            * passed to _doCmd_ method of the ast_proxy component
-            * @param {function} cb The callback function called at the end
-            * of the command
+            * @param {object}   am   Asterisk manager to send the action
+            * @param {object}   args The object contains optional parameters
+            *                        passed to _doCmd_ method of the ast_proxy component
+            * @param {function} cb   The callback function called at the end of the command
             * @static
             */
             execute: function (am, args, cb) {
                 try {
-                    // action for asterisk
+                    // asterisk action
                     var act = {
-                        Action:  'MixMonitor',
-                        Channel: args.channel,
-                        File:    args.filepath,
-                        options: 'a' // append if the file already exists
+                        Action:   'Setvar',
+                        Channel:  args.channel,
+                        Variable: args.name,
+                        Value:    args.value
                     };
                     
                     // set the action identifier
-                    act.ActionID = action.getActionId('recordCall');
+                    act.ActionID = action.getActionId('setVariable');
 
                     // add association ActionID-callback
                     map[act.ActionID] = cb;
@@ -164,9 +149,9 @@ var FILE_EXT = 'wav';
         };
 
         // public interface
-        exports.data      = recordCall.data;
-        exports.execute   = recordCall.execute;
-        exports.setLogger = recordCall.setLogger;
+        exports.data      = setVariable.data;
+        exports.execute   = setVariable.execute;
+        exports.setLogger = setVariable.setLogger;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
