@@ -185,7 +185,9 @@ function setCompUtil(comp) {
                     var password = req.params.password;
 
                     if (!username || !password) {
-                        throw new Error('username or password has not been specified');
+                        logger.warn('username or password has not been specified');
+                        compUtil.net.sendHttp401(IDLOG, res);
+                        return;
                     }
 
                     compAuthe.authenticate(username, password, function (err) {
