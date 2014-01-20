@@ -2874,8 +2874,6 @@ function getRecordFilename(exten, convid, now) {
 
         if (!conv) { return; }
 
-        console.log('conv=', conv);
-
         var YYYYMMDD = moment(now).format('YYYYMMDD');
         var HHmmss   = moment(now).format('HHmmss');
         var msec     = now.getMilliseconds();
@@ -4167,6 +4165,9 @@ function startRecordConversation(endpointType, endpointId, convid, cb) {
                                 return;
                             }
                             logger.info(IDLOG, 'record the convid "' + convid + '" of extension "' + endpointId + '" has been successfully started in ' + filepath);
+
+                            // set the recording status of the conversation
+                            startRecordCallCb(convid);
                             cb();
 
                         } catch (e) {
@@ -4222,27 +4223,19 @@ function stopRecordCallCb(err, convid) {
 }
 
 /**
-* This is the callback of the record call command plugin.
 * Sets the recording status of the conversations.
 *
 * @method startRecordCallCb
-* @param {object} err    The error object of the operation
 * @param {string} convid The conversation identifier
 * @private
 */
-function startRecordCallCb(err, convid) {
+function startRecordCallCb(convid) {
     try {
-        if (err) {
-            logger.error(IDLOG, 'record convid ' + convid + ' failed: ' + err.toString());
+        // set the recording status of the conversation to memory
+        recordingConv[convid] = '';
+        // set the recording status of all conversations with specified convid
+        setRecordStatusConversations(convid, true);
 
-        } else {
-            logger.info(IDLOG, 'record convid ' + convid + ' started succesfully');
-
-            // set the recording status of the conversation to memory
-            recordingConv[convid] = '';
-            // set the recording status of all conversations with specified convid
-            setRecordStatusConversations(convid, true);
-        }
     } catch (error) {
        logger.error(IDLOG, error.stack);
     }
