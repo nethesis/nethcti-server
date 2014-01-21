@@ -200,7 +200,9 @@ function setCompUtil(comp) {
                             } else {
                                 logger.info(IDLOG, 'user "' + username + '" has been successfully authenticated');
                                 var nonce = compAuthe.getNonce(username, password);
-                                compUtil.net.sendHttp401Nonce(IDLOG, res, nonce);
+                                res.writeHead(200, { 'WWW-Authenticate': 'Digest ' + nonce });
+                                logger.info(IDLOG, 'send HTTP 200 response with nonce to ' + res.connection.remoteAddress);
+                                res.end();
                             }
                         } catch (err) {
                             logger.error(IDLOG, err.stack);

@@ -681,20 +681,20 @@ function unauthorized(socket) {
 function loginHdlr(socket, obj) {
     try {
         // check parameters
-        if (   typeof socket    !== 'object' || typeof obj             !== 'object'
-            || typeof obj.token !== 'string' || typeof obj.accessKeyId !== 'string') {
+        if (   typeof socket    !== 'object' || typeof obj          !== 'object'
+            || typeof obj.token !== 'string' || typeof obj.username !== 'string') {
 
             logger.warn(IDLOG, 'bad authentication login request from ' + getClientSocketEndpoint(socket));
             unauthorized(socket);
             return;
         }
 
-        if (compAuthe.verifyToken(obj.accessKeyId, obj.token) === true) { // user successfully authenticated
+        if (compAuthe.verifyToken(obj.username, obj.token) === true) { // user successfully authenticated
 
-            logger.info(IDLOG, 'user "' + obj.accessKeyId + '" successfully authenticated from ' + getClientSocketEndpoint(socket));
+            logger.info(IDLOG, 'user "' + obj.username + '" successfully authenticated from ' + getClientSocketEndpoint(socket));
 
             // sets username property to the client socket
-            socket.username = obj.accessKeyId;
+            socket.username = obj.username;
 
             // add client socket to future fast authentication for each request from the clients
             addSocket(socket);
@@ -703,7 +703,7 @@ function loginHdlr(socket, obj) {
             sendAutheSuccess(socket);
 
         } else { // authentication failed
-            logger.warn(IDLOG, 'authentication failed for user "' + obj.accessKeyId + '" from ' + getClientSocketEndpoint(socket));
+            logger.warn(IDLOG, 'authentication failed for user "' + obj.username + '" from ' + getClientSocketEndpoint(socket));
             unauthorized(socket);
         }
 

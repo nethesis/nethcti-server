@@ -611,7 +611,7 @@ function verifyToken(accessKeyId, token) {
         if (!grants[accessKeyId]) {
 
             logger.warn(IDLOG, 'authentication failed for accessKeyId: "' + accessKeyId + '": no grant is present');
-             return false;
+            return false;
         }
 
         // check the tokens equality
@@ -636,6 +636,7 @@ function verifyToken(accessKeyId, token) {
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
+        return false;
     }
 }
 
