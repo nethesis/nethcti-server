@@ -4028,15 +4028,15 @@ function startSpyListenConversation(endpointType, endpointId, convid, destType, 
 }
 
 /**
-* Pause the recording of the conversation.
+* Mute the recording of the conversation.
 *
-* @method pauseRecordConversation
+* @method muteRecordConversation
 * @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
 * @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
 * @param {string}   convid       The conversation identifier
 * @param {function} cb           The callback function
 */
-function pauseRecordConversation(endpointType, endpointId, convid, cb) {
+function muteRecordConversation(endpointType, endpointId, convid, cb) {
     try {
         // check parameters
         if (   typeof convid       !== 'string'
@@ -4055,7 +4055,7 @@ function pauseRecordConversation(endpointType, endpointId, convid, cb) {
 
             // check if the conversation is already recording
             if (recordingConv[convid] === undefined) {
-                logger.info(IDLOG, 'the conversation ' + convid + ' is not recording, so it can not be paused');
+                logger.info(IDLOG, 'the conversation ' + convid + ' is not recording, so it can not be mute');
                 cb();
 
             } else if (ch) {
@@ -4063,15 +4063,15 @@ function pauseRecordConversation(endpointType, endpointId, convid, cb) {
                 var chid = ch.getChannel(); // the channel identifier
 
                 // start the recording
-                logger.info(IDLOG, 'pause the recording of convid "' + convid + '" of extension "' + endpointId + '" with channel ' + chid);
-                astProxy.doCmd({ command: 'pause_record', channel: chid }, function (err) {
+                logger.info(IDLOG, 'mute the recording of convid "' + convid + '" of extension "' + endpointId + '" with channel ' + chid);
+                astProxy.doCmd({ command: 'muteRecordCall', channel: chid }, function (err) {
                     try {
                         if (err) {
-                            logger.error(IDLOG, 'pausing recording of convid "' + convid + '" of extension "' + endpointId + '" with channel ' + chid);
+                            logger.error(IDLOG, 'muting recording of convid "' + convid + '" of extension "' + endpointId + '" with channel ' + chid);
                             cb(err);
                             return;
                         }
-                        logger.info(IDLOG, 'pause the recording of convid "' + convid + '" of extension "' + endpointId + '" with channel ' + chid + ' has been successfully');
+                        logger.info(IDLOG, 'mute the recording of convid "' + convid + '" of extension "' + endpointId + '" with channel ' + chid + ' has been successfully');
 
                         // set the recording status of the conversation
                         startRecordCallCb(convid);
@@ -4084,13 +4084,13 @@ function pauseRecordConversation(endpointType, endpointId, convid, cb) {
                 });
 
             } else {
-                var str = 'no channel to pause record of conversation ' + convid + ' of exten ' + endpointId;
+                var str = 'no channel to mute record of conversation ' + convid + ' of exten ' + endpointId;
                 logger.warn(IDLOG, str);
                 cb(str);
             }
 
         } else {
-            var str = 'try to pause the record conversation for the non existent endpoint ' + endpointType;
+            var str = 'try to mute the record conversation for the non existent endpoint ' + endpointType;
             logger.warn(IDLOG, str);
             cb(str);
         }
@@ -4102,15 +4102,15 @@ function pauseRecordConversation(endpointType, endpointId, convid, cb) {
 }
 
 /**
-* Unpause the recording of the conversation.
+* Unmute the recording of the conversation.
 *
-* @method unpauseRecordConversation
+* @method unmuteRecordConversation
 * @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
 * @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
 * @param {string}   convid       The conversation identifier
 * @param {function} cb           The callback function
 */
-function unpauseRecordConversation(endpointType, endpointId, convid, cb) {
+function unmuteRecordConversation(endpointType, endpointId, convid, cb) {
     try {
         // check parameters
         if (   typeof convid       !== 'string'
@@ -4129,7 +4129,7 @@ function unpauseRecordConversation(endpointType, endpointId, convid, cb) {
 
             // check if the conversation is already recording
             if (recordingConv[convid] === undefined) {
-                logger.info(IDLOG, 'the conversation ' + convid + ' is not recording, so it can not be paused');
+                logger.info(IDLOG, 'the conversation ' + convid + ' is not recording, so it can not be unmute');
                 cb();
 
             } else if (ch) {
@@ -4137,15 +4137,15 @@ function unpauseRecordConversation(endpointType, endpointId, convid, cb) {
                 var chid = ch.getChannel(); // the channel identifier
 
                 // start the recording
-                logger.info(IDLOG, 'pause the recording of convid "' + convid + '" of extension "' + endpointId + '" with channel ' + chid);
-                astProxy.doCmd({ command: 'pause_record', channel: chid }, function (err) {
+                logger.info(IDLOG, 'unmute the recording of convid "' + convid + '" of extension "' + endpointId + '" with channel ' + chid);
+                astProxy.doCmd({ command: 'unmuteRecordCall', channel: chid }, function (err) {
                     try {
                         if (err) {
-                            logger.error(IDLOG, 'pausing recording of convid "' + convid + '" of extension "' + endpointId + '" with channel ' + chid);
+                            logger.error(IDLOG, 'unmuting recording of convid "' + convid + '" of extension "' + endpointId + '" with channel ' + chid);
                             cb(err);
                             return;
                         }
-                        logger.info(IDLOG, 'pause the recording of convid "' + convid + '" of extension "' + endpointId + '" with channel ' + chid + ' has been successfully');
+                        logger.info(IDLOG, 'unmuting the recording of convid "' + convid + '" of extension "' + endpointId + '" with channel ' + chid + ' has been successfully');
 
                         // set the recording status of the conversation
                         startRecordCallCb(convid);
@@ -4158,13 +4158,13 @@ function unpauseRecordConversation(endpointType, endpointId, convid, cb) {
                 });
 
             } else {
-                var str = 'no channel to pause record of conversation ' + convid + ' of exten ' + endpointId;
+                var str = 'no channel to unmute record of conversation ' + convid + ' of exten ' + endpointId;
                 logger.warn(IDLOG, str);
                 cb(str);
             }
 
         } else {
-            var str = 'try to pause the record conversation for the non existent endpoint ' + endpointType;
+            var str = 'try to unmute the record conversation for the non existent endpoint ' + endpointType;
             logger.warn(IDLOG, str);
             cb(str);
         }
@@ -4721,14 +4721,14 @@ exports.evtNewVoicemailMessage          = evtNewVoicemailMessage;
 exports.stopRecordConversation          = stopRecordConversation;
 exports.evtConversationDialing          = evtConversationDialing;
 exports.evtSpyStartConversation         = evtSpyStartConversation;
+exports.muteRecordConversation          = muteRecordConversation;
 exports.startRecordConversation         = startRecordConversation;
-exports.pauseRecordConversation         = pauseRecordConversation;
 exports.getBaseCallRecAudioPath         = getBaseCallRecAudioPath;
 exports.queueMemberPauseUnpause         = queueMemberPauseUnpause;
 exports.EVT_QUEUE_MEMBER_CHANGED        = EVT_QUEUE_MEMBER_CHANGED;
 exports.evtNewQueueWaitingCaller        = evtNewQueueWaitingCaller;
 exports.evtConversationConnected        = evtConversationConnected;
-exports.unpauseRecordConversation       = unpauseRecordConversation;
+exports.unmuteRecordConversation        = unmuteRecordConversation;
 exports.EVT_UPDATE_VOICE_MESSAGES       = EVT_UPDATE_VOICE_MESSAGES;
 exports.startSpySpeakConversation       = startSpySpeakConversation;
 exports.startSpyListenConversation      = startSpyListenConversation;

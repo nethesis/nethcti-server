@@ -11,9 +11,9 @@ var action = require('../action');
 * @private
 * @final
 * @readOnly
-* @default [pauseRecordCall]
+* @default [unmuteRecordCall]
 */
-var IDLOG = '[pauseRecordCall]';
+var IDLOG = '[unmuteRecordCall]';
 
 (function() {
     try {
@@ -38,22 +38,22 @@ var IDLOG = '[pauseRecordCall]';
         var map = {};
 
         /**
-        * Command plugin to pause the recording of a call.
+        * Command plugin to unmute the recording of a call.
         *
         * Use it with _ast\_proxy_ module as follow:
         *
-        *     ast_proxy.doCmd({ command: 'pauseRecordCall', channel: 'SIP/214-00000' }, function (res) {
+        *     ast_proxy.doCmd({ command: 'unmuteRecordCall', channel: 'SIP/214-00000' }, function (res) {
         *         // some code
         *     });
         *
         *
-        * @class pauseRecordCall
+        * @class unmuteRecordCall
         * @static
         */
-        var pauseRecordCall = {
+        var unmuteRecordCall = {
 
             /**
-            * Execute asterisk action to pause the recording of a call.
+            * Execute asterisk action to unmute the recording of a call.
             * 
             * @method execute
             * @param {object}   am   Asterisk manager to send the action
@@ -65,12 +65,14 @@ var IDLOG = '[pauseRecordCall]';
                 try {
                     // action for asterisk
                     var act = {
-                        Action: 'PauseMonitor',
-                        Channel: args.channel
+                        Action:    'MixMonitorMute',
+                        Channel:   args.channel,
+                        Direction: 'both',
+                        State:     0
                     };
                     
                     // set the action identifier
-                    act.ActionID = action.getActionId('pauseRecordCall');
+                    act.ActionID = action.getActionId('unmuteRecordCall');
 
                     // add association ActionID-callback
                     map[act.ActionID] = cb;
@@ -145,9 +147,9 @@ var IDLOG = '[pauseRecordCall]';
         };
 
         // public interface
-        exports.data      = pauseRecordCall.data;
-        exports.execute   = pauseRecordCall.execute;
-        exports.setLogger = pauseRecordCall.setLogger;
+        exports.data      = unmuteRecordCall.data;
+        exports.execute   = unmuteRecordCall.execute;
+        exports.setLogger = unmuteRecordCall.setLogger;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);

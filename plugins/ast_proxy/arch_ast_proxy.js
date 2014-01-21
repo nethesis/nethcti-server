@@ -98,6 +98,20 @@ module.exports = function (options, imports, register) {
             stopRecordConversation: astProxy.proxyLogic.stopRecordConversation,
 
             /**
+            * It's the _muteRecordConversation_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method muteRecordConversation
+            */
+            muteRecordConversation: astProxy.proxyLogic.muteRecordConversation,
+
+            /**
+            * It's the _unmuteRecordConversation_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method unmuteRecordConversation
+            */
+            unmuteRecordConversation: astProxy.proxyLogic.unmuteRecordConversation,
+
+            /**
             * It's the _parkConversation_ method provided by _ast\_proxy.proxyLogic_.
             *
             * @method parkConversation

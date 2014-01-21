@@ -11,9 +11,9 @@ var action = require('../action');
 * @private
 * @final
 * @readOnly
-* @default [pauseRecordCall]
+* @default [muteRecordCall]
 */
-var IDLOG = '[pauseRecordCall]';
+var IDLOG = '[muteRecordCall]';
 
 (function() {
     try {
@@ -38,22 +38,22 @@ var IDLOG = '[pauseRecordCall]';
         var map = {};
 
         /**
-        * Command plugin to pause the recording of a call.
+        * Command plugin to mute the recording of a call.
         *
         * Use it with _ast\_proxy_ module as follow:
         *
-        *     ast_proxy.doCmd({ command: 'pauseRecordCall', channel: 'SIP/214-00000' }, function (res) {
+        *     ast_proxy.doCmd({ command: 'muteRecordCall', channel: 'SIP/214-00000' }, function (res) {
         *         // some code
         *     });
         *
         *
-        * @class pauseRecordCall
+        * @class muteRecordCall
         * @static
         */
-        var pauseRecordCall = {
+        var muteRecordCall = {
 
             /**
-            * Execute asterisk action to pause the recording of a call.
+            * Execute asterisk action to mute the recording of a call.
             * 
             * @method execute
             * @param {object}   am   Asterisk manager to send the action
@@ -65,12 +65,14 @@ var IDLOG = '[pauseRecordCall]';
                 try {
                     // action for asterisk
                     var act = {
-                        Action: 'PauseMonitor',
-                        Channel: args.channel
+                        Action:    'MixMonitorMute',
+                        Channel:   args.channel,
+                        Direction: 'both',
+                        State:     1
                     };
                     
                     // set the action identifier
-                    act.ActionID = action.getActionId('pauseRecordCall');
+                    act.ActionID = action.getActionId('muteRecordCall');
 
                     // add association ActionID-callback
                     map[act.ActionID] = cb;
@@ -145,9 +147,9 @@ var IDLOG = '[pauseRecordCall]';
         };
 
         // public interface
-        exports.data      = pauseRecordCall.data;
-        exports.execute   = pauseRecordCall.execute;
-        exports.setLogger = pauseRecordCall.setLogger;
+        exports.data      = muteRecordCall.data;
+        exports.execute   = muteRecordCall.execute;
+        exports.setLogger = muteRecordCall.setLogger;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);

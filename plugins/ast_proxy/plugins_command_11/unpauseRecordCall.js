@@ -93,7 +93,6 @@ var IDLOG = '[unpauseRecordCall]';
             */
             data: function (data) {
                 try {
-                    console.log('unpause data=', data);
                     // check callback and info presence and execute it
                     if (map[data.actionid]
                         && data.response === 'Success') {
