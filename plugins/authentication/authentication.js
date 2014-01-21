@@ -320,7 +320,12 @@ function configLDAP(json) {
     var ldapurl = 'ldap://' + server + ':' + port;
 
     // create ldap client
-    client = ldap.createClient({ url: ldapurl });
+    client = ldap.createClient({
+        url:            ldapurl,
+        timeout:        5000,    // how long the client should let operations live for before timing out. Default is Infinity
+        maxConnections: 10,      // whether or not to enable connection pooling, and if so, how many to maintain
+        connectTimeout: 10000    // how long the client should wait before timing out on TCP connections. Default is up to the OS
+    });
     logger.info(IDLOG, 'LDAP client created to ' + ldapurl);
     logger.info(IDLOG, 'LDAP authentication configuration ended');
 }
