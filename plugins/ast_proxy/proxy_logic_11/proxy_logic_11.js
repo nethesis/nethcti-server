@@ -4017,11 +4017,160 @@ function startSpyListenConversation(endpointType, endpointId, convid, destType, 
             });
 
         } else {
-            logger.warn(IDLOG, 'spy listen conversation of ' + endpointType + ' ' + endpointId + ' from ' + destType + ' ' + destId);
-            cb();
+            var str = 'spy listen conversation of ' + endpointType + ' ' + endpointId + ' from ' + destType + ' ' + destId;
+            logger.warn(IDLOG, str);
+            cb(str);
         }
     } catch (err) {
-        cb();
+        cb(err);
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Pause the recording of the conversation.
+*
+* @method pauseRecordConversation
+* @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
+* @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
+* @param {string}   convid       The conversation identifier
+* @param {function} cb           The callback function
+*/
+function pauseRecordConversation(endpointType, endpointId, convid, cb) {
+    try {
+        // check parameters
+        if (   typeof convid       !== 'string'
+            || typeof cb           !== 'function'
+            || typeof endpointId   !== 'string'
+            || typeof endpointType !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // check the endpoint existence
+        if (endpointType === 'extension' && extensions[endpointId]) {
+
+            // get the channel to record
+            var ch = getExtenSourceChannelConversation(endpointId, convid);
+
+            // check if the conversation is already recording
+            if (recordingConv[convid] === undefined) {
+                logger.info(IDLOG, 'the conversation ' + convid + ' is not recording, so it can not be paused');
+                cb();
+
+            } else if (ch) {
+
+                var chid = ch.getChannel(); // the channel identifier
+
+                // start the recording
+                logger.info(IDLOG, 'pause the recording of convid "' + convid + '" of extension "' + endpointId + '" with channel ' + chid);
+                astProxy.doCmd({ command: 'pause_record', channel: chid }, function (err) {
+                    try {
+                        if (err) {
+                            logger.error(IDLOG, 'pausing recording of convid "' + convid + '" of extension "' + endpointId + '" with channel ' + chid);
+                            cb(err);
+                            return;
+                        }
+                        logger.info(IDLOG, 'pause the recording of convid "' + convid + '" of extension "' + endpointId + '" with channel ' + chid + ' has been successfully');
+
+                        // set the recording status of the conversation
+                        startRecordCallCb(convid);
+                        cb();
+
+                    } catch (e) {
+                       logger.error(IDLOG, e.stack);
+                       cb(e);
+                    }
+                });
+
+            } else {
+                var str = 'no channel to pause record of conversation ' + convid + ' of exten ' + endpointId;
+                logger.warn(IDLOG, str);
+                cb(str);
+            }
+
+        } else {
+            var str = 'try to pause the record conversation for the non existent endpoint ' + endpointType;
+            logger.warn(IDLOG, str);
+            cb(str);
+        }
+
+    } catch (err) {
+        cb(err);
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Unpause the recording of the conversation.
+*
+* @method unpauseRecordConversation
+* @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
+* @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
+* @param {string}   convid       The conversation identifier
+* @param {function} cb           The callback function
+*/
+function unpauseRecordConversation(endpointType, endpointId, convid, cb) {
+    try {
+        // check parameters
+        if (   typeof convid       !== 'string'
+            || typeof cb           !== 'function'
+            || typeof endpointId   !== 'string'
+            || typeof endpointType !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // check the endpoint existence
+        if (endpointType === 'extension' && extensions[endpointId]) {
+
+            // get the channel to record
+            var ch = getExtenSourceChannelConversation(endpointId, convid);
+
+            // check if the conversation is already recording
+            if (recordingConv[convid] === undefined) {
+                logger.info(IDLOG, 'the conversation ' + convid + ' is not recording, so it can not be paused');
+                cb();
+
+            } else if (ch) {
+
+                var chid = ch.getChannel(); // the channel identifier
+
+                // start the recording
+                logger.info(IDLOG, 'pause the recording of convid "' + convid + '" of extension "' + endpointId + '" with channel ' + chid);
+                astProxy.doCmd({ command: 'pause_record', channel: chid }, function (err) {
+                    try {
+                        if (err) {
+                            logger.error(IDLOG, 'pausing recording of convid "' + convid + '" of extension "' + endpointId + '" with channel ' + chid);
+                            cb(err);
+                            return;
+                        }
+                        logger.info(IDLOG, 'pause the recording of convid "' + convid + '" of extension "' + endpointId + '" with channel ' + chid + ' has been successfully');
+
+                        // set the recording status of the conversation
+                        startRecordCallCb(convid);
+                        cb();
+
+                    } catch (e) {
+                       logger.error(IDLOG, e.stack);
+                       cb(e);
+                    }
+                });
+
+            } else {
+                var str = 'no channel to pause record of conversation ' + convid + ' of exten ' + endpointId;
+                logger.warn(IDLOG, str);
+                cb(str);
+            }
+
+        } else {
+            var str = 'try to pause the record conversation for the non existent endpoint ' + endpointType;
+            logger.warn(IDLOG, str);
+            cb(str);
+        }
+
+    } catch (err) {
+        cb(err);
         logger.error(IDLOG, err.stack);
     }
 }
@@ -4573,11 +4722,13 @@ exports.stopRecordConversation          = stopRecordConversation;
 exports.evtConversationDialing          = evtConversationDialing;
 exports.evtSpyStartConversation         = evtSpyStartConversation;
 exports.startRecordConversation         = startRecordConversation;
+exports.pauseRecordConversation         = pauseRecordConversation;
 exports.getBaseCallRecAudioPath         = getBaseCallRecAudioPath;
 exports.queueMemberPauseUnpause         = queueMemberPauseUnpause;
 exports.EVT_QUEUE_MEMBER_CHANGED        = EVT_QUEUE_MEMBER_CHANGED;
 exports.evtNewQueueWaitingCaller        = evtNewQueueWaitingCaller;
 exports.evtConversationConnected        = evtConversationConnected;
+exports.unpauseRecordConversation       = unpauseRecordConversation;
 exports.EVT_UPDATE_VOICE_MESSAGES       = EVT_UPDATE_VOICE_MESSAGES;
 exports.startSpySpeakConversation       = startSpySpeakConversation;
 exports.startSpyListenConversation      = startSpyListenConversation;

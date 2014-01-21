@@ -11,9 +11,9 @@ var action = require('../action');
 * @private
 * @final
 * @readOnly
-* @default [recordCall]
+* @default [unpauseRecordCall]
 */
-var IDLOG = '[recordCall]';
+var IDLOG = '[unpauseRecordCall]';
 
 (function() {
     try {
@@ -38,46 +38,39 @@ var IDLOG = '[recordCall]';
         var map = {};
 
         /**
-        * Command plugin to record a call. If the record file already exists,
-        * it will not be overwritten but appended. The default directory of the
-        * recordings is /var/spool/asterisk/monitor.
+        * Command plugin to unpause the recording of a call.
         *
         * Use it with _ast\_proxy_ module as follow:
         *
-        *     ast_proxy.doCmd({ command: 'recordCall', channel: 'SIP/214-00000', filepath: '2013/04/06/exten-214-209-20130406-120406-1365062949.146.wav' }, function (res) {
+        *     ast_proxy.doCmd({ command: 'unpauseRecordCall', channel: 'SIP/214-00000' }, function (res) {
         *         // some code
         *     });
         *
         *
-        * @class recordCall
+        * @class unpauseRecordCall
         * @static
         */
-        var recordCall = {
+        var unpauseRecordCall = {
 
             /**
-            * Execute asterisk action to record a call. If the record file
-            * already exists, it will not be overwritten but appended.
+            * Execute asterisk action to unpause the recording of a call.
             * 
             * @method execute
-            * @param {object} am Asterisk manager to send the action
-            * @param {object} args The object contains optional parameters
-            * passed to _doCmd_ method of the ast_proxy component
-            * @param {function} cb The callback function called at the end
-            * of the command
+            * @param {object}   am   Asterisk manager to send the action
+            * @param {object}   args The object contains optional parameters passed to _doCmd_ method of the ast_proxy component
+            * @param {function} cb   The callback function called at the end of the command
             * @static
             */
             execute: function (am, args, cb) {
                 try {
                     // action for asterisk
                     var act = {
-                        Action:  'MixMonitor',
-                        Channel: args.channel,
-                        File:    args.filepath,
-                        options: 'a' // append if the file already exists
+                        Action: 'UnpauseMonitor',
+                        Channel: args.channel
                     };
                     
                     // set the action identifier
-                    act.ActionID = action.getActionId('recordCall');
+                    act.ActionID = action.getActionId('unpauseRecordCall');
 
                     // add association ActionID-callback
                     map[act.ActionID] = cb;
@@ -100,6 +93,7 @@ var IDLOG = '[recordCall]';
             */
             data: function (data) {
                 try {
+                    console.log('unpause data=', data);
                     // check callback and info presence and execute it
                     if (map[data.actionid]
                         && data.response === 'Success') {
@@ -152,9 +146,9 @@ var IDLOG = '[recordCall]';
         };
 
         // public interface
-        exports.data      = recordCall.data;
-        exports.execute   = recordCall.execute;
-        exports.setLogger = recordCall.setLogger;
+        exports.data      = unpauseRecordCall.data;
+        exports.execute   = unpauseRecordCall.execute;
+        exports.setLogger = unpauseRecordCall.setLogger;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
