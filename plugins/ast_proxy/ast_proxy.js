@@ -144,10 +144,12 @@ function config(path) {
         }
 
         astConf = {
-            port:     json.port,
-            host:     json.host,
-            username: json.user,
-            password: json.pass
+            port:            json.port,
+            host:            json.host,
+            username:        json.user,
+            password:        json.pass,
+            reconnect:       true,      // do you want the ami to reconnect if the connection is dropped, default: false
+            reconnect_after: 3000       // how long to wait to reconnect, in miliseconds, default: 3000
         };
 
         logger.info(IDLOG, 'successfully configured');
