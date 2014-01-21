@@ -4073,8 +4073,8 @@ function muteRecordConversation(endpointType, endpointId, convid, cb) {
                         }
                         logger.info(IDLOG, 'mute the recording of convid "' + convid + '" of extension "' + endpointId + '" with channel ' + chid + ' has been successfully');
 
-                        // set the recording status of the conversation
-                        startRecordCallCb(convid);
+                        // set the recording status mute of all conversations with specified convid
+                        setRecordStatusMuteConversations(convid);
                         cb();
 
                     } catch (e) {
@@ -4147,8 +4147,8 @@ function unmuteRecordConversation(endpointType, endpointId, convid, cb) {
                         }
                         logger.info(IDLOG, 'unmuting the recording of convid "' + convid + '" of extension "' + endpointId + '" with channel ' + chid + ' has been successfully');
 
-                        // set the recording status of the conversation
-                        startRecordCallCb(convid);
+                        // set the recording status of all conversations with specified convid
+                        setRecordStatusConversations(convid, true);
                         cb();
 
                     } catch (e) {
@@ -4418,6 +4418,46 @@ function setRecordStatusConversations(convid, value) {
                     if (cid === convid) {
                         convs[convid].setRecording(value);
                         logger.info(IDLOG, 'set recording status ' + value + ' to conversation ' + convid);
+
+                        // emit the event
+                        logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
+                        astProxy.emit(EVT_EXTEN_CHANGED, extensions[exten]);
+                    }
+                }
+            }
+        }
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the recording status mute of all the conversations with the specified convid.
+*
+* @method setRecordStatusMuteConversations
+* @param {string} convid The conversation identifier
+* @private
+*/
+function setRecordStatusMuteConversations(convid) {
+    try {
+        // check parameter
+        if (typeof convid !== 'string') { throw new Error('wrong parameter'); }
+
+        // set the recording status mute of all the conversations with the specified convid
+        var exten, convs, cid;
+        for (exten in extensions) { // cycle in all extensions
+
+            // get all the conversations of the current extension
+            convs = extensions[exten].getAllConversations();
+            if (convs) {
+
+                // cycle in all conversations
+                for (cid in convs) {
+                    // if the current conversation identifier is the
+                    // same of that specified, set its recording status to mute
+                    if (cid === convid) {
+                        convs[convid].setRecordingMute();
+                        logger.info(IDLOG, 'set recording status "mute" to conversation ' + convid);
 
                         // emit the event
                         logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);

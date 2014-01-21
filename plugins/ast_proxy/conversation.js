@@ -43,13 +43,14 @@ exports.Conversation = function (ownerId, sourceChan, destChan) {
     var chDest = destChan;
 
     /**
-    * The recordig status.
+    * The recordig status. It can be one of the "RECORDING_STATUS" property.
     *
     * @property recording
-    * @type {boolean}
+    * @type {string}
+    * @default RECORDING_STATUS.FALSE
     * @private
     */
-    var recording = false;
+    var recording = RECORDING_STATUS.FALSE;
 
     /**
     * The timestamp of the starting time. This is necessary to
@@ -199,15 +200,18 @@ exports.Conversation = function (ownerId, sourceChan, destChan) {
     function getCounterpartNum() { return counterpartNum; }
 
     /**
-    * Return the recording status.
+    * Returns true if the conversation is recording or is in mute recording.
     *
     * @method isRecording
-    * @return {booelan} true if the conversation is recording, false otherwise.
+    * @return {booelan} true if the conversation is recording or is in mute recording, false otherwise.
     */
-    function isRecording() { return recording; }
+    function isRecording() {
+        if (recording === RECORDING_STATUS.FALSE) { return false; }
+        return true;
+    }
 
     /**
-    * Set the recording status.
+    * Sets the recording status.
     *
     * **It can throw an Exception.**
     *
@@ -216,7 +220,20 @@ exports.Conversation = function (ownerId, sourceChan, destChan) {
     */
     function setRecording(value) {
         if (typeof value !== 'boolean') { throw new Error('wrong parameter'); }
-        recording = value;
+
+        if (value) { recording = RECORDING_STATUS.TRUE;  }
+        else       { recording = RECORDING_STATUS.FALSE; }
+    }
+
+    /**
+    * Sets the recording status to mute.
+    *
+    * **It can throw an Exception.**
+    *
+    * @method setRecordingMute
+    */
+    function setRecordingMute() {
+        recording = RECORDING_STATUS.MUTE;
     }
 
     /**
@@ -263,7 +280,7 @@ exports.Conversation = function (ownerId, sourceChan, destChan) {
     *         chDest:          Channel.toJSON(),                    // the source channel of the call
     *         chSource:        Channel.toJSON(),                    // the destination channel of the call
     *         duration:        26,
-    *         recording:       false,                               // it's true if the conversation is recording, false otherwise
+    *         recording:       "false",                             // it's "true" or "mute" if the conversation is recording, "false" otherwise
     *         direction:       "in",
     *         throughQueue:    false,                               // if the call has gone through a queue
     *         counterpartNum:  "209",
@@ -301,6 +318,7 @@ exports.Conversation = function (ownerId, sourceChan, destChan) {
         getDuration:           getDuration,
         isRecording:           isRecording,
         setRecording:          setRecording,
+        setRecordingMute:      setRecordingMute,
         getSourceChannel:      getSourceChannel,
         getCounterpartNum:     getCounterpartNum,
         getDestinationChannel: getDestinationChannel
@@ -320,4 +338,21 @@ exports.Conversation = function (ownerId, sourceChan, destChan) {
 var DIRECTION = {
     IN:  'in',
     OUT: 'out'
+};
+
+/**
+* The possible values for conversation recording.
+*
+* @property {object} RECORDING_STATUS
+* @private
+* @default {
+    "MUTE":  "mute",
+    "TRUE":  "true",
+    "FALSE": "false"
+}
+*/
+var RECORDING_STATUS = {
+    MUTE:  'mute',
+    TRUE:  'true',
+    FALSE: 'false'
 };
