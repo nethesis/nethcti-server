@@ -1,5 +1,5 @@
 Name:		nethcti-server
-Version:	1.9.17
+Version:	1.9.18
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI 2
 
@@ -70,6 +70,12 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Tue Jan 21 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 1.9.18-1
+- Beta2 release
+- Automatic ldap reconnection #2498
+- Automatic asterisk reconnection #2562
+- Fix call recording and add new rest api to mute/unmute. Refs #2284
+
 * Thu Jan 16 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 1.9.17-1
 - New Alpha2 release with new functions for neth-oppanel beta2 release
 - Update sequelize library: better performance #2602
