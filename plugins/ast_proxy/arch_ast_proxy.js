@@ -189,6 +189,27 @@ module.exports = function (options, imports, register) {
             getJSONQueues: astProxy.proxyLogic.getJSONQueues,
 
             /**
+            * It's the _getJSONQueuesStats_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method getJSONQueuesStats
+            */
+            getJSONQueuesStats: astProxy.proxyLogic.getJSONQueuesStats,
+
+            /**
+            * It's the _getJSONQueuesQOS_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method getJSONQueuesQOS
+            */
+            getJSONQueuesQOS: astProxy.proxyLogic.getJSONQueuesQOS,
+
+            /**
+            * It's the _getJSONAgentsStats_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method getJSONAgentsStats
+            */
+            getJSONAgentsStats: astProxy.proxyLogic.getJSONAgentsStats,
+
+            /**
             * It's the _getJSONTrunks_ method provided by _ast\_proxy.proxyLogic_.
             *
             * @method getJSONTrunks

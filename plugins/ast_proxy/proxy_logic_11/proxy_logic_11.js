@@ -1282,6 +1282,81 @@ function updateQueueMemberLastPauseData(memberName, memberId, queueId) {
 }
 
 /**
+* Return the JSON representation of extended queue statistics.
+*
+* @method getJSONQueuesStats
+* @return {object} The JSON representation of extended queue statistics.
+*/
+function getJSONQueuesStats(day, callback) {
+    try {
+        compDbconn.getQueuesStats(day, function (err1, result) {
+            try {
+                if (err1) { throw err1; }
+
+                if (result)
+                    callback(result);
+
+            } catch (err2) {
+                logger.error(IDLOG, err2.stack);
+            }
+        });
+
+    } catch (error) {
+        logger.error(IDLOG, error.stack);
+    }
+}
+
+/**
+* Return the JSON representation of queues QOS.
+*
+* @method getJSONQueuesQOS
+* @return {object} The JSON representation of queues QOS.
+*/
+function getJSONQueuesQOS(day, callback) {
+    try {
+        compDbconn.getQueuesQOS(day, function (err1, result) {
+            try {
+                if (err1) { throw err1; }
+
+                if (result)
+                    callback(result);
+
+            } catch (err2) {
+                logger.error(IDLOG, err2.stack);
+            }
+        });
+
+    } catch (error) {
+        logger.error(IDLOG, error.stack);
+    }
+}
+
+/**
+* Return the JSON representation of agent stats.
+*
+* @method getJSONAgentsStats
+* @return {object} The JSON representation of agent stats.
+*/
+function getJSONAgentsStats(day, callback) {
+    try {
+        compDbconn.getAgentsStats(day, function (err1, result) {
+            try {
+                if (err1) { throw err1; }
+
+                if (result)
+                    callback(result);
+
+            } catch (err2) {
+                logger.error(IDLOG, err2.stack);
+            }
+        });
+
+    } catch (error) {
+        logger.error(IDLOG, error.stack);
+    }
+}
+
+/**
 * Returns the JSON representation of all queues.
 *
 * @method getJSONQueues
@@ -4126,6 +4201,9 @@ exports.setCompDbconn                   = setCompDbconn;
 exports.getExtensions                   = getExtensions;
 exports.pickupParking                   = pickupParking;
 exports.getJSONQueues                   = getJSONQueues;
+exports.getJSONQueuesStats              = getJSONQueuesStats;
+exports.getJSONQueuesQOS                = getJSONQueuesQOS;
+exports.getJSONAgentsStats              = getJSONAgentsStats;
 exports.getJSONTrunks                   = getJSONTrunks;
 exports.inoutDynQueues                  = inoutDynQueues;
 exports.getJSONParkings                 = getJSONParkings;

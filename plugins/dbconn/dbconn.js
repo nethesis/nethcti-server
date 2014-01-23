@@ -15,6 +15,7 @@ var fs        = require('fs');
 var moment    = require('moment');
 var iniparser = require('iniparser');
 var Sequelize = require("sequelize");
+var async     = require('async');
 
 /**
 * The module identifier used by the logger.
@@ -2327,6 +2328,256 @@ function getQueueMemberLastPausedInData(memberName, queueId, memberId, cb) {
 }
 
 /**
+* Gets statistics about queues.
+*
+* @method getQueuesStats
+* @param {string}   day        The query date (YYYYMMDD)
+* @param {function} cb         The callback function
+*/
+function getQueuesStats(day, cb) {
+    try {
+        // check parameters
+        if (typeof cb !== 'function'
+            || typeof day !== 'string'
+            || (typeof day === 'string' && day.match('/\d{8}/') === null))
+            throw new Error('wrong parameters');
+
+        async.parallel({
+            general: function(callback) {
+                models[JSON_KEYS.QUEUE_LOG].findAll({
+                    where: [
+                        'event in ("ABANDON","EXITWITHTIMEOUT","COMPLETEAGENT","COMPLETECALLER")'
+                        + ' AND DATE_FORMAT(time,"%Y%m%d") = \'' + day + '\''
+                        + ' GROUP BY queuename, action, hold'
+                    ],
+                    attributes: [
+                        'id', 'queuename',
+                        [ 'IF(event = "COMPLETEAGENT", "ANSWER",'
+                            + ' IF(event = "COMPLETECALLER", "ANSWER",'
+                            + ' IF(event = "EXITWITHTIMEOUT", "TIMEOUT", event)))',
+                            'action' ],
+                        [ 'IF(event = "ABANDON", IF(cast(data1 as unsigned) <= 50, "nulled", "failed"), cast(data1 as unsigned))', 'hold' ],
+                        [ 'count(id)', 'calls' ]],
+                    order: ['queuename', 'action', 'hold']
+
+                }).success(function (results) {
+
+                    if (results) {
+                        logger.info(IDLOG, 'get extended queues statistics has been successful');
+
+                        var stats = {};
+
+                        for (var i in results) {
+                            if (!(results[i].queuename in stats)) {
+                                stats[results[i].queuename] = {
+                                    'ANSWER' : {},
+                                    'ABANDON' : {},
+                                    'TIMEOUT' : 0
+                                };
+                            }
+
+                            switch (results[i].action) {
+                                case 'ANSWER':
+                                case 'ABANDON':
+                                    stats[results[i].queuename][results[i].action]
+                                        [results[i].hold] = results[i].calls;
+                                    break;
+                                default:
+                                    stats[results[i].queuename][results[i].action]
+                                        = results[i].calls;
+                            }
+
+                        }
+
+                        callback(null, stats);
+                    }
+                });
+            },
+            answer : function(callback) {
+                models[JSON_KEYS.QUEUE_LOG].findAll({
+                    where: [
+                        'event in ("COMPLETEAGENT","COMPLETECALLER")'
+                        + ' AND DATE_FORMAT(time,"%Y%m%d") = \'' + day + '\''
+                        + ' GROUP BY queuename'
+                    ],
+                    attributes: [
+                        'queuename',
+                        [ 'count(id)', 'calls' ],
+                        [ 'max(cast(data1 as unsigned))', 'max_hold' ],
+                        [ 'min(cast(data1 as unsigned))', 'min_hold' ],
+                        [ 'avg(cast(data1 as unsigned))', 'avg_hold' ],
+                        [ 'max(cast(data2 as unsigned))', 'max_duration' ],
+                        [ 'min(cast(data2 as unsigned))', 'min_duration' ],
+                        [ 'avg(cast(data2 as unsigned))', 'avg_duration' ]],
+                    order: ['queuename']
+
+                }).success(function (results) {
+
+                    if (results) {
+                        logger.info(IDLOG, 'get extended queues statistics has been successful');
+
+                        var stats = {};
+
+                        for (var i in results)
+                            if (!(results[i].queuename in stats))
+                                stats[results[i].queuename] = results[i];
+
+                        callback(null, stats);
+                    }
+                });
+            }
+        }, function(err, results) {
+            cb(null, results);
+        });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Get answered calls statistics by hold time
+*
+* @method getQueuesQOS
+* @param {string}   day        The query date (YYYYMMDD)
+* @param {function} cb         The callback function
+*/
+function getQueuesQOS(day, cb) {
+    try {
+        // check parameters
+        if (typeof cb !== 'function'
+            || typeof day !== 'string'
+            || (typeof day === 'string' && day.match('/\d{8}/') === null))
+            throw new Error('wrong parameters');
+
+        models[JSON_KEYS.QUEUE_LOG].findAll({
+            where: ['event in ("COMPLETEAGENT","COMPLETECALLER")'
+                + ' AND DATE_FORMAT(time,"%Y%m%d") = \'' + day + '\''
+            ],
+            attributes: [
+                'agent', [ 'DATE_FORMAT(time,"%d-%m-%Y")', 'period' ], 'queuename',
+                [ 'count(id)', 'calls' ],
+                [ 'sum(cast(data2 as unsigned))', 'tot_duration' ],
+                [ 'max(cast(data2 as unsigned))', 'max_duration' ],
+                [ 'min(cast(data2 as unsigned))', 'min_duration' ],
+                [ 'avg(cast(data2 as unsigned))', 'avg_duration' ] ],
+            group: ['agent', 'queuename'],
+            order: ['agent', 'queuename']
+
+        }).success(function (results) {
+
+            if (results) {
+                logger.info(IDLOG, 'get queues answered qos has been successful');
+
+                cb(null, results);
+
+            } else {
+                logger.info(IDLOG, 'get queues answered qos: not found');
+                cb(null, {});
+            }
+
+        }).error(function (err1) { // manage the error
+            logger.error(IDLOG, 'get queues answered qos: ' + err1.toString());
+            cb(err1);
+        });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Get agent statistics about work times
+*
+* @method getAgentsStats
+* @param {string}   day        The query date (YYYYMMDD)
+* @param {function} cb         The callback function
+*/
+function getAgentsStats(day, cb) {
+    try {
+        // check parameters
+        if (typeof cb !== 'function'
+            || typeof day !== 'string'
+            || (typeof day === 'string' && day.match('/\d{8}/') === null))
+            throw new Error('wrong parameters');
+
+        var query = 'SELECT'
+                    + ' a.agent AS agent'
+                    + ', DATE_FORMAT(a.time, "%k:%i:%s") AS time_in'
+                    + ', DATE_FORMAT(MIN(b.time), "%k:%i:%s") AS time_out'
+                    + ', UNIX_TIMESTAMP(MIN(b.time))-UNIX_TIMESTAMP(a.time) AS secs'
+                    + ', a.data1 AS reason'
+                    + ' FROM asteriskcdrdb.queue_log a'
+                    + ' LEFT JOIN asteriskcdrdb.queue_log b'
+                    + ' ON b.agent = a.agent'
+                        + ' AND b.time > a.time'
+                        + ' AND $JOINS'
+                    + ' WHERE $BINDS'
+                    + ' AND DATE_FORMAT(a.time,"%Y%m%d") = \'' + day + '\''
+                    + ' GROUP BY agent, a.time';
+
+        // Group results by agent
+        var __group = function(rows) {
+            var rows_grouped = {};
+
+            for (var i in rows) {
+                if (!(rows[i].agent in rows_grouped))
+                    rows_grouped[rows[i].agent] = {};
+
+                var agent = rows[i].agent;
+
+                delete rows[i].agent;
+
+                rows_grouped[agent] = rows;
+            }
+
+            return rows_grouped;
+        }
+
+        // Launch agents queries
+        async.parallel({
+            pause_unpause : function(callback) {
+                var binds = "a.event = 'PAUSE' AND a.callid = 'NONE'";
+                var joins = "b.event = 'UNPAUSE' AND b.callid = 'NONE'";
+                dbConn[JSON_KEYS.QUEUE_LOG].query(query.replace(/\$BINDS/g, binds)
+                    .replace(/\$JOINS/g, joins))
+                    .success(function(rows) {
+                        callback(null, __group(rows));
+                });
+            },
+            join_leave_queue : function(callback) {
+                var binds = "a.event = 'ADDMEMBER' AND a.callid = 'MANAGER'";
+                var joins = "b.event = 'REMOVEMEMBER' AND b.callid = 'MANAGER'";
+                dbConn[JSON_KEYS.QUEUE_LOG].query(query.replace(/\$BINDS/g, binds)
+                    .replace(/\$JOINS/g, joins))
+                    .success(function(rows) {
+                        callback(null, __group(rows));
+                });
+            },
+            logon_logoff : function(callback) {
+                var binds = "a.event = 'AGENTLOGIN'";
+                var joins = "b.event = 'AGENTLOGOFF'";
+                dbConn[JSON_KEYS.QUEUE_LOG].query(query.replace(/\$BINDS/g, binds)
+                    .replace(/\$JOINS/g, joins))
+                    .success(function(rows) {
+                        callback(null, __group(rows));
+                });
+
+            }
+        }, function(err, results) {
+            cb(null, results);
+        });
+
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
 * Gets the data of the more recent ended pause of the queue member in the specified
 * queue. It searches the results into the _asteriskcdrdb.queue\_log_ database. If the
 * queue member has never ended a pause, the data values isn't present in the database.
@@ -2611,6 +2862,9 @@ exports.saveCallerNote                      = saveCallerNote;
 exports.configDbStatic                      = configDbStatic;
 exports.configDbDynamic                     = configDbDynamic;
 exports.storeSmsFailure                     = storeSmsFailure;
+exports.getQueuesStats                      = getQueuesStats;
+exports.getQueuesQOS                        = getQueuesQOS;
+exports.getAgentsStats                      = getAgentsStats;
 exports.storeSmsSuccess                     = storeSmsSuccess;
 exports.getCtiPbContact                     = getCtiPbContact;
 exports.saveCtiPbContact                    = saveCtiPbContact;
