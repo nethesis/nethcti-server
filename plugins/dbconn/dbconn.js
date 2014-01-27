@@ -2471,19 +2471,21 @@ function getQueueMemberLastPausedInData(memberName, queueId, memberId, cb) {
 * Gets statistics about queues.
 *
 * @method getQueuesStats
-* @param {string}   day        The query date (YYYYMMDD)
-* @param {function} cb         The callback function
+* @param {string}   day The query date (YYYYMMDD)
+* @param {function} cb  The callback function
 */
 function getQueuesStats(day, cb) {
     try {
         // check parameters
         if (typeof cb !== 'function'
             || typeof day !== 'string'
-            || (typeof day === 'string' && day.match('/\d{8}/') === null))
+            || (typeof day === 'string' && day.match(/\d{8}/) === null)) {
+
             throw new Error('wrong parameters');
+        }
 
         async.parallel({
-            general: function(callback) {
+            general: function (callback) {
                 models[JSON_KEYS.QUEUE_LOG].findAll({
                     where: [
                         'event in ("ABANDON","EXITWITHTIMEOUT","COMPLETEAGENT","COMPLETECALLER")'
@@ -2533,7 +2535,7 @@ function getQueuesStats(day, cb) {
                     }
                 });
             },
-            answer : function(callback) {
+            answer : function (callback) {
                 models[JSON_KEYS.QUEUE_LOG].findAll({
                     where: [
                         'event in ("COMPLETEAGENT","COMPLETECALLER")'
@@ -2558,11 +2560,17 @@ function getQueuesStats(day, cb) {
 
                         var stats = {};
 
-                        for (var i in results)
-                            if (!(results[i].queuename in stats))
+                        for (var i in results) {
+                            if (!(results[i].queuename in stats)) {
                                 stats[results[i].queuename] = results[i];
+                            }
+                        }
 
                         callback(null, stats);
+
+                    } else {
+                        logger.info(IDLOG, 'get extended queues statistics: not found');
+                        cb(null, {});
                     }
                 });
             }
@@ -2580,16 +2588,18 @@ function getQueuesStats(day, cb) {
 * Get answered calls statistics by hold time
 *
 * @method getQueuesQOS
-* @param {string}   day        The query date (YYYYMMDD)
-* @param {function} cb         The callback function
+* @param {string}   day The query date (YYYYMMDD)
+* @param {function} cb  The callback function
 */
 function getQueuesQOS(day, cb) {
     try {
         // check parameters
         if (typeof cb !== 'function'
             || typeof day !== 'string'
-            || (typeof day === 'string' && day.match('/\d{8}/') === null))
+            || (typeof day === 'string' && day.match(/\d{8}/) === null)) {
+
             throw new Error('wrong parameters');
+        }
 
         models[JSON_KEYS.QUEUE_LOG].findAll({
             where: ['event in ("COMPLETEAGENT","COMPLETECALLER")'
@@ -2632,15 +2642,15 @@ function getQueuesQOS(day, cb) {
 * Get agent statistics about work times
 *
 * @method getAgentsStats
-* @param {string}   day        The query date (YYYYMMDD)
-* @param {function} cb         The callback function
+* @param {string}   day The query date (YYYYMMDD)
+* @param {function} cb  The callback function
 */
 function getAgentsStats(day, cb) {
     try {
         // check parameters
         if (typeof cb !== 'function'
             || typeof day !== 'string'
-            || (typeof day === 'string' && day.match('/\d{8}/') === null))
+            || (typeof day === 'string' && day.match(/\d{8}/) === null))
             throw new Error('wrong parameters');
 
         var query = 'SELECT'
@@ -2659,12 +2669,13 @@ function getAgentsStats(day, cb) {
                     + ' GROUP BY agent, a.time';
 
         // Group results by agent
-        var __group = function(rows) {
+        var __group = function (rows) {
             var rows_grouped = {};
 
             for (var i in rows) {
-                if (!(rows[i].agent in rows_grouped))
+                if (!(rows[i].agent in rows_grouped)) {
                     rows_grouped[rows[i].agent] = {};
+                }
 
                 var agent = rows[i].agent;
 
@@ -2678,30 +2689,30 @@ function getAgentsStats(day, cb) {
 
         // Launch agents queries
         async.parallel({
-            pause_unpause : function(callback) {
+            pause_unpause : function (callback) {
                 var binds = "a.event = 'PAUSE' AND a.callid = 'NONE'";
                 var joins = "b.event = 'UNPAUSE' AND b.callid = 'NONE'";
                 dbConn[JSON_KEYS.QUEUE_LOG].query(query.replace(/\$BINDS/g, binds)
                     .replace(/\$JOINS/g, joins))
-                    .success(function(rows) {
+                    .success(function (rows) {
                         callback(null, __group(rows));
                 });
             },
-            join_leave_queue : function(callback) {
+            join_leave_queue : function (callback) {
                 var binds = "a.event = 'ADDMEMBER' AND a.callid = 'MANAGER'";
                 var joins = "b.event = 'REMOVEMEMBER' AND b.callid = 'MANAGER'";
                 dbConn[JSON_KEYS.QUEUE_LOG].query(query.replace(/\$BINDS/g, binds)
                     .replace(/\$JOINS/g, joins))
-                    .success(function(rows) {
+                    .success(function (rows) {
                         callback(null, __group(rows));
                 });
             },
-            logon_logoff : function(callback) {
+            logon_logoff : function (callback) {
                 var binds = "a.event = 'AGENTLOGIN'";
                 var joins = "b.event = 'AGENTLOGOFF'";
                 dbConn[JSON_KEYS.QUEUE_LOG].query(query.replace(/\$BINDS/g, binds)
                     .replace(/\$JOINS/g, joins))
-                    .success(function(rows) {
+                    .success(function (rows) {
                         callback(null, __group(rows));
                 });
 
@@ -2709,7 +2720,6 @@ function getAgentsStats(day, cb) {
         }, function(err, results) {
             cb(null, results);
         });
-
 
     } catch (err) {
         logger.error(IDLOG, err.stack);

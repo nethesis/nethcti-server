@@ -1301,24 +1301,24 @@ function updateQueueMemberLastPauseData(memberName, memberId, queueId) {
 * Return the JSON representation of extended queue statistics.
 *
 * @method getJSONQueuesStats
-* @return {object} The JSON representation of extended queue statistics.
+* @param  {string}   day      The day expressed in YYYYMMDD format
+* @param  {function} callback The callback function
+* @return {object}   The JSON representation of extended queue statistics.
 */
 function getJSONQueuesStats(day, callback) {
     try {
+        // check parameters
+        if (typeof day !== 'string' || typeof callback !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
         compDbconn.getQueuesStats(day, function (err1, result) {
-            try {
-                if (err1) { throw err1; }
-
-                if (result)
-                    callback(result);
-
-            } catch (err2) {
-                logger.error(IDLOG, err2.stack);
-            }
+            callback(err1, result);
         });
 
     } catch (error) {
         logger.error(IDLOG, error.stack);
+        callback(error);
     }
 }
 
@@ -1326,24 +1326,24 @@ function getJSONQueuesStats(day, callback) {
 * Return the JSON representation of queues QOS.
 *
 * @method getJSONQueuesQOS
-* @return {object} The JSON representation of queues QOS.
+* @param  {string}   day      The day expressed in YYYYMMDD format
+* @param  {function} callback The callback function
+* @return {object}   The JSON representation of queues QOS.
 */
 function getJSONQueuesQOS(day, callback) {
     try {
+        // check parameters
+        if (typeof day !== 'string' || typeof callback !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
         compDbconn.getQueuesQOS(day, function (err1, result) {
-            try {
-                if (err1) { throw err1; }
-
-                if (result)
-                    callback(result);
-
-            } catch (err2) {
-                logger.error(IDLOG, err2.stack);
-            }
+            callback(err1, result);
         });
 
     } catch (error) {
         logger.error(IDLOG, error.stack);
+        callback(error);
     }
 }
 
@@ -1351,24 +1351,24 @@ function getJSONQueuesQOS(day, callback) {
 * Return the JSON representation of agent stats.
 *
 * @method getJSONAgentsStats
-* @return {object} The JSON representation of agent stats.
+* @param  {string}   day      The day expressed in YYYYMMDD format
+* @param  {function} callback The callback function
+* @return {object}   The JSON representation of agent stats.
 */
 function getJSONAgentsStats(day, callback) {
     try {
+        // check parameters
+        if (typeof day !== 'string' || typeof callback !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
         compDbconn.getAgentsStats(day, function (err1, result) {
-            try {
-                if (err1) { throw err1; }
-
-                if (result)
-                    callback(result);
-
-            } catch (err2) {
-                logger.error(IDLOG, err2.stack);
-            }
+            callback(err1, result);
         });
 
     } catch (error) {
         logger.error(IDLOG, error.stack);
+        callback(error);
     }
 }
 

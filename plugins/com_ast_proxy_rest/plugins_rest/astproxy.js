@@ -107,9 +107,9 @@ var compConfigManager;
         * 1. [`astproxy/opgroups`](#opgroupsget)
         * 1. [`astproxy/parkings`](#parkingsget)
         * 1. [`astproxy/extensions`](#extensionsget)
-        * 1. [`astproxy/queues_stats`](#queues_stats)
-        * 1. [`astproxy/queues_qos`](#queues_qos)
-        * 1. [`astproxy/agents_qos`](#agents_qos)
+        * 1. [`astproxy/queues_stats/:day`](#queues_statsget)
+        * 1. [`astproxy/queues_qos/:day`](#queues_qosget)
+        * 1. [`astproxy/agents_qos/:day`](#agents_qosget)
         *
         * ---
         *
@@ -176,21 +176,21 @@ var compConfigManager;
         *
         * ---
         *
-        * ### <a id="queues_stats">**`astproxy/queues_stats`**</a>
+        * ### <a id="queues_statsget">**`astproxy/queues_stats/:day`**</a>
         *
-        * Gets extended statistics about queues.
-        *
-        * ---
-        *
-        * ### <a id="queues_qos">**`astproxy/queues_qos`**</a>
-        *
-        * Gets QOS info about queues.
+        * Gets extended statistics about queues. The day must be expressed in YYYYMMDD format.
         *
         * ---
         *
-        * ### <a id="agents_qos">**`astproxy/agents_qos`**</a>
+        * ### <a id="queues_qosget">**`astproxy/queues_qos/:day`**</a>
         *
-        * Gets QOS info about agents.
+        * Gets QOS info about queues. The day must be expressed in YYYYMMDD format.
+        *
+        * ---
+        *
+        * ### <a id="agents_qosget">**`astproxy/agents_qos/:day`**</a>
+        *
+        * Gets QOS info about agents. The day must be expressed in YYYYMMDD format.
         *
         * <br>
         *
@@ -921,15 +921,22 @@ var compConfigManager;
 
                     // check if the user has the privacy enabled
 
-                    queues_stats = compAstProxy.getJSONQueuesStats(day, function(stats) {
-                        logger.info(IDLOG, 'sent all queues statistics in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
+                    compAstProxy.getJSONQueuesStats(day, function (err1, stats) {
+                        try {
+                            if (err1) { throw err1; }
 
-                        res.send(200, stats);
+                            logger.info(IDLOG, 'sent all queues statistics of ' + day + ' in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
+                            res.send(200, stats);
+
+                        } catch (err) {
+                            logger.error(IDLOG, err.stack);
+                            compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                        }
                     });
 
-                } catch (err) {
-                    logger.error(IDLOG, err.stack);
-                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                } catch (error) {
+                    logger.error(IDLOG, error.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, error.toString());
                 }
             },
 
@@ -963,15 +970,22 @@ var compConfigManager;
 
                     // check if the user has the privacy enabled
 
-                    queues_stats = compAstProxy.getJSONQueuesQOS(day, function(qosinfo) {
-                        logger.info(IDLOG, 'sent all queues QOS info in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
+                    compAstProxy.getJSONQueuesQOS(day, function (err1, qosinfo) {
+                        try {
+                            if (err1) { throw err1; }
 
-                        res.send(200, qosinfo);
+                            logger.info(IDLOG, 'sent all queues QOS info of ' + day + ' in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
+                            res.send(200, qosinfo);
+
+                        } catch (err) {
+                            logger.error(IDLOG, err.stack);
+                            compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                        }
                     });
 
-                } catch (err) {
-                    logger.error(IDLOG, err.stack);
-                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                } catch (error) {
+                    logger.error(IDLOG, error.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, error.toString());
                 }
             },
 
@@ -1005,15 +1019,22 @@ var compConfigManager;
 
                     // check if the user has the privacy enabled
 
-                    agent_stats = compAstProxy.getJSONAgentsStats(day, function(agstats) {
-                        logger.info(IDLOG, 'sent all queues agent stats in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
+                    compAstProxy.getJSONAgentsStats(day, function (err1, agstats) {
+                        try {
+                            if (err1) { throw err1; }
 
-                        res.send(200, agstats);
+                            logger.info(IDLOG, 'sent all queues agent stats of ' + day + ' in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
+                            res.send(200, agstats);
+
+                        } catch (err) {
+                            logger.error(IDLOG, err.stack);
+                            compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                        }
                     });
 
-                } catch (err) {
-                    logger.error(IDLOG, err.stack);
-                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                } catch (error) {
+                    logger.error(IDLOG, error.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, error.toString());
                 }
             },
 
