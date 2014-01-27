@@ -218,7 +218,7 @@ function config(path) {
     if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
 
     // check file presence
-    if (!fs.existsSync(path)) { throw new Error(path + ' not exists'); }
+    if (!fs.existsSync(path)) { throw new Error(path + ' doesn\'t exist'); }
 
     // read configuration file
     var json = require(path);
@@ -275,7 +275,7 @@ function configFile(json) {
     }
 
     // check file presence
-    if (!fs.existsSync(json.path)) { throw new Error(json.path + ' not exists'); }
+    if (!fs.existsSync(json.path)) { throw new Error(json.path + ' doesn\'t exist'); }
 
     // read configuration file
     var cred = require(json.path);
@@ -320,7 +320,12 @@ function configLDAP(json) {
     var ldapurl = 'ldap://' + server + ':' + port;
 
     // create ldap client
-    client = ldap.createClient({ url: ldapurl });
+    client = ldap.createClient({
+        url:            ldapurl,
+        timeout:        5000,    // how long the client should let operations live for before timing out. Default is Infinity
+        maxConnections: 10,      // whether or not to enable connection pooling, and if so, how many to maintain
+        connectTimeout: 10000    // how long the client should wait before timing out on TCP connections. Default is up to the OS
+    });
     logger.info(IDLOG, 'LDAP client created to ' + ldapurl);
     logger.info(IDLOG, 'LDAP authentication configuration ended');
 }
@@ -606,7 +611,7 @@ function verifyToken(accessKeyId, token) {
         if (!grants[accessKeyId]) {
 
             logger.warn(IDLOG, 'authentication failed for accessKeyId: "' + accessKeyId + '": no grant is present');
-             return false;
+            return false;
         }
 
         // check the tokens equality
@@ -631,6 +636,7 @@ function verifyToken(accessKeyId, token) {
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
+        return false;
     }
 }
 

@@ -3,7 +3,10 @@
     "main": "arch_controller_postit.js",
     "private": true,
     "plugin": {
-        "consumes": ["logger", "dbconn"],
-        "provides": ["postit"]
+        "consumes": [
+            "logger",
+            "dbconn"
+        ],
+        "provides": [ "postit" ]
     }
 }

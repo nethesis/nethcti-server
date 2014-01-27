@@ -11,11 +11,12 @@
 * @class dbconn
 * @static
 */
-var fs        = require('fs');
-var moment    = require('moment');
-var iniparser = require('iniparser');
-var Sequelize = require("sequelize");
-var async     = require('async');
+var fs           = require('fs');
+var async        = require('async');
+var moment       = require('moment');
+var iniparser    = require('iniparser');
+var Sequelize    = require("sequelize");
+var EventEmitter = require('events').EventEmitter;
 
 /**
 * The module identifier used by the logger.
@@ -38,6 +39,86 @@ var IDLOG = '[dbconn]';
 * @default console
 */
 var logger = console;
+
+/**
+* The event emitter.
+*
+* @property emitter
+* @type object
+* @private
+*/
+var emitter = new EventEmitter();
+
+/**
+* Fired when a voice message content has been read from the database by the _listenVoiceMessage_ method.
+*
+* @event listenedVoiceMessage
+* @param {object} voicemail The voicemail identifier
+*/
+/**
+* The name of the listened voice message event.
+*
+* @property EVT_LISTENED_VOICE_MESSAGE
+* @type string
+* @default "listenedVoiceMessage"
+*/
+var EVT_LISTENED_VOICE_MESSAGE = 'listenedVoiceMessage';
+
+/**
+* Fired when a voice message has been deleted from the database by the _deleteVoiceMessage_ method.
+*
+* @event deleteVoiceMessage
+* @param {object} voicemail The voicemail identifier
+*/
+/**
+* The name of the listened voice message event.
+*
+* @property EVT_DELETED_VOICE_MESSAGE
+* @type string
+* @default "deleteVoiceMessage"
+*/
+var EVT_DELETED_VOICE_MESSAGE = 'deleteVoiceMessage';
+
+/**
+* Fired when a post-it has been deleted from the database by the _deletePostit_ method.
+*
+* @event deletedPostit
+* @param {object} user The recipient of the deleted post-it
+*/
+/**
+* The name of the deleted post-it message event.
+*
+* @property EVT_DELETED_POSTIT
+* @type string
+* @default "deletedPostit"
+*/
+var EVT_DELETED_POSTIT = 'deletedPostit';
+
+/**
+* Fired when the read status of a post-it has been set in the database by the _updatePostitReadIt_ method.
+*
+* @event postitReadIt
+* @param {object} user The recipient of the read post-it
+*/
+/**
+* The name of the "udpate post-it read it" message event.
+*
+* @property EVT_POSTIT_READIT
+* @type string
+* @default "postitReadIt"
+*/
+var EVT_READ_POSTIT = 'readPostit';
+
+/**
+* True if the sequelize library will be logged.
+* It's customized by the _config_ method.
+*
+* @property logSequelize
+* @type {boolean}
+* @private
+* @default false
+*/
+var logSequelize = false;
 
 /**
 * The prefix for all customer card name.
@@ -139,6 +220,32 @@ function setLogger(log) {
 }
 
 /**
+* Sets the log level used to debug the sequelize library.
+*
+* @method config
+* @param {string} path The file path of the static JSON configuration file.
+*/
+function config(path) {
+    try {
+        // check parameter
+        if (typeof path !== 'string') { throw new Error('wrong parameter'); }
+
+        // check the file existence
+        if (!fs.existsSync(path)) { throw new Error(path + ' doesn\'t exist'); }
+
+        var json = require(path); // read the file
+        logger.info(IDLOG, 'file ' + path + ' has been read');
+
+        if (typeof json === 'object' && json.loglevel.toLowerCase() === 'info') {
+            logSequelize = true;
+        }
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Sets the static configurations to be use by database connections.
 *
 * @method configDbStatic
@@ -150,7 +257,7 @@ function configDbStatic(path) {
         if (typeof path !== 'string') { throw new Error('wrong parameter'); }
 
         // check the file existence
-        if (!fs.existsSync(path)) { throw new Error(path + ' doesn\'t exists'); }
+        if (!fs.existsSync(path)) { throw new Error(path + ' doesn\'t exist'); }
 
         var json = require(path); // read the file
         logger.info(IDLOG, 'file ' + path + ' has been read');
@@ -177,7 +284,7 @@ function configDbDynamic(path) {
 
         // check the file existence
         if (!fs.existsSync(path)) {
-            logger.info('\n\n\n' + IDLOG, path + ' doesn\'t exists');
+            logger.info(IDLOG, path + ' doesn\'t exist');
 
         } else {
 
@@ -353,9 +460,9 @@ function storeSmsSuccess(username, to, body, cb) {
             logger.info(IDLOG, 'sms success from user "' + username + '" to ' + to + ' saved successfully in the database');
             cb();
 
-        }).error(function (err) { // manage the error
-            logger.error(IDLOG, 'saving sms success from user "' + username + '" to ' + to + ': ' + err.toString());
-            cb(err.toString());
+        }).error(function (err1) { // manage the error
+            logger.error(IDLOG, 'saving sms success from user "' + username + '" to ' + to + ': ' + err1.toString());
+            cb(err1);
         });
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -396,9 +503,9 @@ function storeSmsFailure(username, to, body, cb) {
             logger.info(IDLOG, 'sms failure from user "' + username + '" to ' + to + ' saved successfully in the database');
             cb();
 
-        }).error(function (err) { // manage the error
-            logger.error(IDLOG, 'saving sms failure from user "' + username + '" to ' + to + ': ' + err.toString());
-            cb(err.toString());
+        }).error(function (err1) { // manage the error
+            logger.error(IDLOG, 'saving sms failure from user "' + username + '" to ' + to + ': ' + err1.toString());
+            cb(err1);
         });
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -466,7 +573,14 @@ function getAllUnreadPostitOfRecipient(username, cb) {
             where: [ 'recipient=? ' +
             'AND readdate IS NULL',
             username ],
-            order: 'creation DESC'
+            order: 'creation DESC',
+            attributes: [
+                [ 'DATE_FORMAT(creation, "%d/%m/%Y")', 'creationdate'],
+                [ 'DATE_FORMAT(creation, "%H:%i:%S")', 'creationtime'],
+                [ 'DATE_FORMAT(readdate, "%d/%m/%Y")', 'readdate'],
+                [ 'DATE_FORMAT(readdate, "%H:%i:%S")', 'timeread'],
+                'id', 'text', 'creator', 'recipient'
+            ]
 
         }).success(function (results) {
 
@@ -516,8 +630,13 @@ function updatePostitReadIt(id, cb) {
                     readdate: moment().format('YYYY-MM-DD HH:mm:ss')
 
                 }).success(function () {
+
                     logger.info(IDLOG, 'read date of the postit with db id "' + id + '" has been updated successfully');
                     cb();
+
+                    // emits the event for a read post-it
+                    logger.info(IDLOG, 'emit event "' + EVT_READ_POSTIT + '" of post-it with db id ' + id + ' of recipient user ' + task.selectedValues.recipient);
+                    emitter.emit(EVT_READ_POSTIT, task.selectedValues.recipient);
                 });
 
             } else {
@@ -624,7 +743,7 @@ function initConnections() {
 
             if (dbConfig[k].dbtype === 'mysql') {
 
-                sequelize = new Sequelize(dbConfig[k].dbname, dbConfig[k].dbuser, dbConfig[k].dbpassword, {
+                var config = {
                     port:    dbConfig[k].dbport,
                     host:    dbConfig[k].dbhost,
                     define:  {
@@ -633,7 +752,12 @@ function initConnections() {
                         freezeTableName: true
                     },
                     dialect: dbConfig[k].dbtype
-                });
+                };
+
+                // default sequelize log is console.log
+                if (!logSequelize) { config.logging = false; }
+
+                sequelize = new Sequelize(dbConfig[k].dbname, dbConfig[k].dbuser, dbConfig[k].dbpassword, config);
 
                 dbConn[k] = sequelize;
                 logger.info(IDLOG, 'initialized db connection with ' + dbConfig[k].dbtype + ' ' + dbConfig[k].dbname + ' ' + dbConfig[k].dbhost + ':' + dbConfig[k].dbport);
@@ -1042,8 +1166,13 @@ function deletePostit(id, cb) {
             if (task) {
 
                 task.destroy().success(function () {
+
                     logger.info(IDLOG, 'post-it with db id "' + id + '" has been deleted successfully');
                     cb();
+
+                    // emits the event for a deleted post-it
+                    logger.info(IDLOG, 'emit event "' + EVT_DELETED_POSTIT + '" of post-it with db id ' + id + ' of recipient user ' + task.selectedValues.recipient);
+                    emitter.emit(EVT_DELETED_POSTIT, task.selectedValues.recipient);
                 });
 
             } else {
@@ -1876,7 +2005,8 @@ function getVoicemailMsg(vmId, type, cb) {
         models[JSON_KEYS.VOICEMAIL].findAll({
             where: [
                 'mailboxuser=? AND ' +
-                'LOWER(RIGHT(dir, ' + type.length + '))=?',
+                'LOWER(RIGHT(dir, ' + type.length + '))=? ' +
+                'ORDER BY origtime DESC',
                 vmId, type
             ],
             attributes: [
@@ -1970,12 +2100,13 @@ function listenVoiceMessage(dbid, cb) {
         }).success(function (result) {
 
             if (result && result.selectedValues && result.selectedValues.recording) {
+
                 logger.info(IDLOG, 'obtained voicemail audio file from voicemail db id "' + dbid + '"');
                 cb(null, result.selectedValues.recording);
 
                 // if the voice message has never been read, it updates its status as "read".
                 // If the message has never been read the "dir" field contains the "INBOX" string.
-                // So if it's present it updates the field replacing the "INBOX" string with "Old"
+                // So if it's present it updates the field replacing the "INBOX" string with the "Old" one
                 var dir = result.selectedValues.dir;
                 if (dir.split('/').pop() === 'INBOX') {
 
@@ -1983,7 +2114,12 @@ function listenVoiceMessage(dbid, cb) {
                         dir: dir.substring(0, dir.length - 5) + 'Old'
 
                     }, [ 'dir' ]).success(function () {
+
                         logger.info(IDLOG, 'read status of the voice message with db id "' + dbid + '" has been updated successfully');
+
+                        // emits the event for a listened voice message
+                        logger.info(IDLOG, 'emit event "' + EVT_LISTENED_VOICE_MESSAGE + '" for voicemail ' + result.selectedValues.mailboxuser);
+                        emitter.emit(EVT_LISTENED_VOICE_MESSAGE, result.selectedValues.mailboxuser);
                     });
                 }
 
@@ -2024,12 +2160,16 @@ function deleteVoiceMessage(dbid, cb) {
 
         }).success(function (task) {
             try {
-
                 if (task) {
 
                     task.destroy().success(function () {
+
                         logger.info(IDLOG, 'voice message with db id "' + dbid + '" has been deleted successfully');
                         cb();
+
+                        // emits the event for a deleted voice message
+                        logger.info(IDLOG, 'emit event "' + EVT_DELETED_VOICE_MESSAGE + '" for voicemail ' + task.selectedValues.mailboxuser);
+                        emitter.emit(EVT_DELETED_VOICE_MESSAGE, task.selectedValues.mailboxuser);
                     });
 
                 } else {
@@ -2728,7 +2868,7 @@ function getCustomerCardByNum(type, num, cb) {
         num = num.substring(1, num.length - 1);             // remove external quote e.g. num = 123456
 
         // replace the key of the query with paramter
-        var query = dbConfig[type].query.replace(/\$TERM/g, num);
+        var query = dbConfig[type].query.replace(/\$EXTEN/g, num);
 
         dbConn[type].query(query).success(function (results) {
 
@@ -2847,10 +2987,27 @@ function getCallInfo(uniqueid, cb) {
     }
 }
 
-
+/**
+* Subscribe a callback function to a custom event fired by this object.
+* It's the same of nodejs _events.EventEmitter.on_ method.
+*
+* @method on
+* @param  {string}   type The name of the event
+* @param  {function} cb   The callback to execute in response to the event
+* @return {object}   A subscription handle capable of detaching that subscription.
+*/
+function on(type, cb) {
+    try {
+        return emitter.on(type, cb);
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
 
 // public interface
+exports.on                                  = on;
 exports.start                               = start;
+exports.config                              = config;
 exports.setLogger                           = setLogger;
 exports.getPostit                           = getPostit;
 exports.savePostit                          = savePostit;
@@ -2873,6 +3030,7 @@ exports.modifyCallerNote                    = modifyCallerNote;
 exports.getPbContactsByNum                  = getPbContactsByNum;
 exports.deleteCtiPbContact                  = deleteCtiPbContact;
 exports.updatePostitReadIt                  = updatePostitReadIt;
+exports.EVT_DELETED_POSTIT                  = EVT_DELETED_POSTIT;
 exports.modifyCtiPbContact                  = modifyCtiPbContact;
 exports.deleteVoiceMessage                  = deleteVoiceMessage;
 exports.listenVoiceMessage                  = listenVoiceMessage;
@@ -2891,6 +3049,8 @@ exports.getCallRecordingFileData            = getCallRecordingFileData;
 exports.getHistoryPostitInterval            = getHistoryPostitInterval;
 exports.getCtiPbContactsContains            = getCtiPbContactsContains;
 exports.getCtiPbSpeeddialContacts           = getCtiPbSpeeddialContacts;
+exports.EVT_DELETED_VOICE_MESSAGE           = EVT_DELETED_VOICE_MESSAGE;
+exports.EVT_LISTENED_VOICE_MESSAGE          = EVT_LISTENED_VOICE_MESSAGE;
 exports.getCtiPbContactsStartsWith          = getCtiPbContactsStartsWith;
 exports.getAllValidCallerNotesByNum         = getAllValidCallerNotesByNum;
 exports.getPbContactsStartsWithDigit        = getPbContactsStartsWithDigit;

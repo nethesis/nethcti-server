@@ -112,7 +112,6 @@ var astConf;
                 pluginsEvent[ev].visit(self);
             }
         }
-        logger.info(IDLOG, 'set the asterisk proxy visitors');
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -132,7 +131,7 @@ function config(path) {
         if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
 
         // check the file presence
-        if (!fs.existsSync(path)) { throw new Error(path + ' not exists'); }
+        if (!fs.existsSync(path)) { throw new Error(path + ' doesn\'t exist'); }
 
         // read the configuration file
         var json = require(path);
@@ -145,10 +144,12 @@ function config(path) {
         }
 
         astConf = {
-            port:     json.port,
-            host:     json.host,
-            username: json.user,
-            password: json.pass
+            port:            json.port,
+            host:            json.host,
+            username:        json.user,
+            password:        json.pass,
+            reconnect:       true,      // do you want the ami to reconnect if the connection is dropped, default: false
+            reconnect_after: 3000       // how long to wait to reconnect, in miliseconds, default: 3000
         };
 
         logger.info(IDLOG, 'successfully configured');

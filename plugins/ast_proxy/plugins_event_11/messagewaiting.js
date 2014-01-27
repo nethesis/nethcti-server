@@ -55,6 +55,7 @@ var astProxy;
             */
             data: function (data) {
                 try {
+                    // a new voice message has been left in a voicemail
                     if (   data     && data.mailbox && data.new
                         && data.old && data.event === 'MessageWaiting') {
 
@@ -71,8 +72,22 @@ var astProxy;
                             voicemail: voicemail
                         });
 
-                    } else {
-                        logger.warn(IDLOG, 'MessageWaiting event not recognized');
+                    }
+                    // some operation has been made on a voicemail message by the phone,
+                    // for example listen or delete
+                    else if (   data         && data.mailbox
+                             && data.waiting && data.event === 'MessageWaiting') {
+
+                        logger.info(IDLOG, 'received event ' + data.event);
+
+                        // extract the informations
+                        var context   = data.mailbox.split('@')[1]
+                        var voicemail = data.mailbox.split('@')[0];
+
+                        astProxy.proxyLogic.evtUpdateVoicemailMessages({
+                            context:   context,
+                            voicemail: voicemail
+                        });
                     }
 
                 } catch (err) {
@@ -117,7 +132,6 @@ var astProxy;
                         throw new Error('wrong parameter');
                     }
                     astProxy = ap;
-                    logger.info(IDLOG, 'set the asterisk proxy to visit');
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
                 }

@@ -137,7 +137,14 @@ function setCompUtil(comp) {
         *
         * # GET requests
         *
+        * 1. [`postit/new`](#newget)
         * 1. [`postit/read/:id`](#readget)
+        *
+        * ---
+        *
+        * ### <a id="newget">**`postit/new`**</a>
+        *
+        * Gets all the new post-it messages of the user.
         *
         * ---
         *
@@ -191,9 +198,13 @@ function setCompUtil(comp) {
                 * @property get
                 * @type {array}
                 *
+                *   @param {string} new      To get all the new post-it messages
                 *   @param {string} read/:id To get a specific post-it message
                 */
-                'get': [ 'read/:id' ],
+                'get': [
+                    'new',
+                    'read/:id'
+                ],
 
                 /**
                 * REST API to be requested using HTTP POST request.
@@ -210,6 +221,65 @@ function setCompUtil(comp) {
                 ],
                 'head':  [],
                 'del' :  []
+            },
+
+            /**
+            * Returns all the new post-it messages by the following REST API:
+            *
+            *     new
+            *
+            * @method new
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            new: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check the postit & administration postit authorization
+                    if (   compAuthorization.authorizePostitUser(username)      !== true
+                        && compAuthorization.authorizeAdminPostitUser(username) !== true) {
+
+                        logger.warn(IDLOG, 'getting all new post-it of user "' + username + '": "postit" & "admin_postit" authorizations failed for user "' + username + '" !');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+
+                    if (compAuthorization.authorizeAdminPostitUser(username) === true) {
+                        logger.info(IDLOG, 'getting all new post-it of user "' + username + '": "admin_postit" authorization successfully for user "' + username + '"');
+                    }
+
+                    if (compAuthorization.authorizePostitUser(username) === true) {
+                        logger.info(IDLOG, 'getting all new post-it of user "' + username + '": "postit" authorization successfully for user "' + username + '"');
+                    }
+
+                    compPostit.getNewPostit(username, function (err1, username, results) {
+                        try {
+                            if (err1) {
+                                logger.error(IDLOG, 'getting all new post-it of user "' + username + '"');
+                                compUtil.net.sendHttp500(IDLOG, res, err1.toString());
+
+                            } else {
+
+                                // check the user authorization
+                                if (   compAuthorization.authorizeAdminPostitUser(username) === true
+                                    || compAuthorization.authorizePostitUser(username)      === true) {
+
+                                    logger.info(IDLOG, 'send all the new post-it of user "' + username + '" to himself');
+                                    res.send(200, { recipient: username, new: results });
+                                }
+                            }
+                        } catch (err2) {
+                            logger.error(IDLOG, err2.stack);
+                            compUtil.net.sendHttp500(IDLOG, res, err2.toString());
+                        }
+                    });
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
             },
 
             /**
@@ -244,33 +314,38 @@ function setCompUtil(comp) {
                         logger.info(IDLOG, 'reading postit with db id "' + id  + '": "postit" authorization successfully for user "' + username + '"');
                     }
 
-                    compPostit.readPostit(id, function (err, result) {
+                    compPostit.readPostit(username, id, function (err, result) {
+                        try {
+                            if (err) {
+                                logger.error(IDLOG, 'reading postit with db id "' + id + '" for user "' + username + '"');
+                                compUtil.net.sendHttp500(IDLOG, res, err.toString());
 
-                        if (err) {
-                            logger.error(IDLOG, 'reading postit with db id "' + id + '" for user "' + username + '"');
-                            compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                            } else {
 
-                        } else {
+                                // check the user authorization. If the user has the "admin_postit" authorization he can read the postit.
+                                // If the user has only the "postit" authorization he can read only his created postit and those that is
+                                // assigned to him
+                                if (compAuthorization.authorizeAdminPostitUser(username) === true) {
 
-                            // check the user authorization. If the user has the "admin_postit" authorization he can read the postit.
-                            // If the user has only the "postit" authorization he can read only his created postit and those that is
-                            // assigned to him
-                            if (compAuthorization.authorizeAdminPostitUser(username) === true) {
-
-                                logger.info(IDLOG, 'send postit with db id "' + id + '" to user "' + username + '"');
-                                res.send(200, result);
-
-                            } else if (compAuthorization.authorizePostitUser(username) === true) {
-
-                                if (result.creator === username || result.recipient === username) {
                                     logger.info(IDLOG, 'send postit with db id "' + id + '" to user "' + username + '"');
                                     res.send(200, result);
 
-                                } else {
-                                    logger.warn(IDLOG, 'reading postit with db id "' + id  + '": the user "' + username + '" has "postit" permission but the postit isn\'t for him');
-                                    compUtil.net.sendHttp403(IDLOG, res);
+                                } else if (compAuthorization.authorizePostitUser(username) === true) {
+
+                                    if (result.creator === username || result.recipient === username) {
+                                        logger.info(IDLOG, 'send postit with db id "' + id + '" to user "' + username + '"');
+                                        res.send(200, result);
+
+                                    } else {
+                                        logger.warn(IDLOG, 'reading postit with db id "' + id  + '": the user "' + username + '" has "postit" permission but the postit isn\'t for him');
+                                        compUtil.net.sendHttp403(IDLOG, res);
+                                    }
                                 }
                             }
+
+                        } catch (err1) {
+                            logger.error(IDLOG, err1.stack);
+                            compUtil.net.sendHttp500(IDLOG, res, err1.toString());
                         }
                     });
                 } catch (err) {
@@ -413,6 +488,7 @@ function setCompUtil(comp) {
             }
         }
         exports.api                  = postit.api;
+        exports.new                  = postit.new;
         exports.read                 = postit.read;
         exports.create               = postit.create;
         exports.delete               = postit.delete;

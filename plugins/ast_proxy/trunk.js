@@ -327,15 +327,6 @@ exports.Trunk = function (ext, chType) {
 }
 
 /**
-* The trunk status enumeration. It is the same of _Extension.EXTEN_STATUS_ENUM_.
-*
-* @property STATUS_ENUM
-* @type {object}
-* @private
-*/
-var STATUS_ENUM = require('./extension').EXTEN_STATUS_ENUM;
-
-/**
 * The trunk status enumeration.
 *
 * @property STATUS_ENUM

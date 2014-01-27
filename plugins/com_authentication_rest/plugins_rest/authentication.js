@@ -184,6 +184,12 @@ function setCompUtil(comp) {
                     var username = req.params.username;
                     var password = req.params.password;
 
+                    if (!username || !password) {
+                        logger.warn('username or password has not been specified');
+                        compUtil.net.sendHttp401(IDLOG, res);
+                        return;
+                    }
+
                     compAuthe.authenticate(username, password, function (err) {
                         try {
                             if (err) {
@@ -194,7 +200,9 @@ function setCompUtil(comp) {
                             } else {
                                 logger.info(IDLOG, 'user "' + username + '" has been successfully authenticated');
                                 var nonce = compAuthe.getNonce(username, password);
-                                compUtil.net.sendHttp401Nonce(IDLOG, res, nonce);
+                                res.writeHead(200, { 'WWW-Authenticate': 'Digest ' + nonce });
+                                logger.info(IDLOG, 'send HTTP 200 response with nonce to ' + res.connection.remoteAddress);
+                                res.end();
                             }
                         } catch (err) {
                             logger.error(IDLOG, err.stack);

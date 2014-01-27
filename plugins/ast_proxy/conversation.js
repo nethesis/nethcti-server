@@ -43,13 +43,14 @@ exports.Conversation = function (ownerId, sourceChan, destChan) {
     var chDest = destChan;
 
     /**
-    * The recordig status.
+    * The recordig status. It can be one of the "RECORDING_STATUS" property.
     *
     * @property recording
-    * @type {boolean}
+    * @type {string}
+    * @default RECORDING_STATUS.FALSE
     * @private
     */
-    var recording = false;
+    var recording = RECORDING_STATUS.FALSE;
 
     /**
     * The timestamp of the starting time. This is necessary to
@@ -104,8 +105,9 @@ exports.Conversation = function (ownerId, sourceChan, destChan) {
     * @private
     */
     var throughQueue;
-    if (   chSource.getChannel().indexOf('from-queue')        !== -1
-        || chSource.getBridgedChannel().indexOf('from-queue') !== -1) {
+    if (   (chSource && (chSource.getChannel().indexOf('from-queue') !== -1 || chSource.getBridgedChannel().indexOf('from-queue') !== -1))
+        || (chDest   && (chDest.getChannel().indexOf('from-queue')   !== -1 || chDest.getBridgedChannel().indexOf('from-queue')   !== -1))
+       ) {
 
         throughQueue = true;
 
@@ -119,7 +121,7 @@ exports.Conversation = function (ownerId, sourceChan, destChan) {
     * @private
     */
     // "chSource" and "chDest" are always present at runtime. Instead,
-    // during the boot, if there are some ringing calls, they may lack
+    // during the boot, if there are some ringing calls, they may be lack
     var counterpartNum;
     if (chSource && chSource.isExtension(owner) === true) {
         counterpartNum = chSource.getBridgedNum();
@@ -132,6 +134,29 @@ exports.Conversation = function (ownerId, sourceChan, destChan) {
 
     } else if (chDest) {
         counterpartNum = chDest.getCallerNum();
+    }
+
+    /**
+    * The name of the counterpart.
+    *
+    * @property counterpartName
+    * @type {string}
+    * @private
+    */
+    // "chSource" and "chDest" are always present at runtime. Instead,
+    // during the boot, if there are some ringing calls, they may be lack
+    var counterpartName;
+    if (chSource && chSource.isExtension(owner) === true) {
+        counterpartName = chSource.getBridgedName();
+
+    } else if (chSource) {
+        counterpartName = chSource.getCallerName();
+
+    } else if (chDest && chDest.isExtension(owner) === true) {
+        counterpartName = chDest.getBridgedName();
+
+    } else if (chDest) {
+        counterpartName = chDest.getCallerName();
     }
 
     /**
@@ -167,15 +192,26 @@ exports.Conversation = function (ownerId, sourceChan, destChan) {
     function getId() { return id; }
 
     /**
-    * Return the recording status.
+    * Returns the counterpart number.
     *
-    * @method isRecording
-    * @return {booelan} true if the conversation is recording, false otherwise.
+    * @method getCounterpartNum
+    * @return {string} The number of the counterpart.
     */
-    function isRecording() { return recording; }
+    function getCounterpartNum() { return counterpartNum; }
 
     /**
-    * Set the recording status.
+    * Returns true if the conversation is recording or is in mute recording.
+    *
+    * @method isRecording
+    * @return {booelan} true if the conversation is recording or is in mute recording, false otherwise.
+    */
+    function isRecording() {
+        if (recording === RECORDING_STATUS.FALSE) { return false; }
+        return true;
+    }
+
+    /**
+    * Sets the recording status.
     *
     * **It can throw an Exception.**
     *
@@ -184,7 +220,31 @@ exports.Conversation = function (ownerId, sourceChan, destChan) {
     */
     function setRecording(value) {
         if (typeof value !== 'boolean') { throw new Error('wrong parameter'); }
-        recording = value;
+
+        if (value) { recording = RECORDING_STATUS.TRUE;  }
+        else       { recording = RECORDING_STATUS.FALSE; }
+    }
+
+    /**
+    * Sets the recording status to mute.
+    *
+    * **It can throw an Exception.**
+    *
+    * @method setRecordingMute
+    */
+    function setRecordingMute() {
+        recording = RECORDING_STATUS.MUTE;
+    }
+
+    /**
+    * Returns true if the conversation is incoming.
+    *
+    * @method isIncoming
+    * @return {boolean} True if the conversation is incoming.
+    */
+    function isIncoming(value) {
+        if (direction === DIRECTION.IN) { return true;  }
+        else                            { return false; }
     }
 
     /**
@@ -215,15 +275,16 @@ exports.Conversation = function (ownerId, sourceChan, destChan) {
     * connected, one between the source channel and the destination channel can be null.
     *
     *     {
-    *         id:             "SIP/214-000002f4>SIP/209-000002f5",
-    *         owner:          "214",
-    *         chDest:         Channel.toJSON(),                    // the source channel of the call
-    *         chSource:       Channel.toJSON(),                    // the destination channel of the call
-    *         duration:       26,
-    *         recording:      false,                               // it's true if the conversation is recording, false otherwise
-    *         direction:      "in",
-    *         throughQueue:   false,                               // if the call has gone through a queue
-    *         counterpartNum: "209"
+    *         id:              "SIP/214-000002f4>SIP/209-000002f5",
+    *         owner:           "214",
+    *         chDest:          Channel.toJSON(),                    // the source channel of the call
+    *         chSource:        Channel.toJSON(),                    // the destination channel of the call
+    *         duration:        26,
+    *         recording:       "false",                             // it's "true" or "mute" if the conversation is recording, "false" otherwise
+    *         direction:       "in",
+    *         throughQueue:    false,                               // if the call has gone through a queue
+    *         counterpartNum:  "209",
+    *         counterpartName: "user"
     *     }
     *
     * @method toJSON
@@ -235,15 +296,16 @@ exports.Conversation = function (ownerId, sourceChan, destChan) {
         updateDuration();
 
         return {
-            id:             id,
-            owner:          owner,
-            chDest:         chDest   ? chDest.toJSON(privacyStr)   : null,
-            chSource:       chSource ? chSource.toJSON(privacyStr) : null,
-            duration:       duration,
-            recording:      recording,
-            direction:      direction,
-            throughQueue:   throughQueue,
-            counterpartNum: counterpartNum
+            id:              id,
+            owner:           owner,
+            chDest:          chDest   ? chDest.toJSON(privacyStr)   : null,
+            chSource:        chSource ? chSource.toJSON(privacyStr) : null,
+            duration:        duration,
+            recording:       recording,
+            direction:       direction,
+            throughQueue:    throughQueue,
+            counterpartNum:  counterpartNum,
+            counterpartName: counterpartName
         };
     }
 
@@ -252,10 +314,13 @@ exports.Conversation = function (ownerId, sourceChan, destChan) {
         getId:                 getId,
         toJSON:                toJSON,
         toString:              toString,
+        isIncoming:            isIncoming,
         getDuration:           getDuration,
         isRecording:           isRecording,
         setRecording:          setRecording,
+        setRecordingMute:      setRecordingMute,
         getSourceChannel:      getSourceChannel,
+        getCounterpartNum:     getCounterpartNum,
         getDestinationChannel: getDestinationChannel
     };
 }
@@ -273,4 +338,21 @@ exports.Conversation = function (ownerId, sourceChan, destChan) {
 var DIRECTION = {
     IN:  'in',
     OUT: 'out'
+};
+
+/**
+* The possible values for conversation recording.
+*
+* @property {object} RECORDING_STATUS
+* @private
+* @default {
+    "MUTE":  "mute",
+    "TRUE":  "true",
+    "FALSE": "false"
+}
+*/
+var RECORDING_STATUS = {
+    MUTE:  'mute',
+    TRUE:  'true',
+    FALSE: 'false'
 };

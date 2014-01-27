@@ -9,8 +9,8 @@
 *
 * @class arch_logger
 */
-var fs        = require('fs');
-var winston   = require('winston');
+var fs      = require('fs');
+var winston = require('winston');
 
 module.exports = function (options, imports, register) {
     try {
@@ -28,7 +28,7 @@ module.exports = function (options, imports, register) {
 
         // check configuration file presence
         if (!fs.existsSync(PATH)) {
-            throw new Error(PATH + ' not exists');
+            throw new Error(PATH + ' doesn\'t exist');
         }
         
         // parse the configuration file

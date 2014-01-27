@@ -333,12 +333,14 @@ function config(path) {
         var json = require(path);
 
         // check the configuration file
-        if (typeof json !== 'object' || typeof json.custom_templates_notifications !== 'string') {
+        if (   typeof json !== 'object' || typeof json.notification_manager    !== 'object'
+            || typeof json.notification_manager.custom_templates_notifications !== 'string') {
+
             logger.error('wrong configuration file ' + path);
             return;
         }
 
-        customTemplatesPath = json.custom_templates_notifications;
+        customTemplatesPath = json.notification_manager.custom_templates_notifications;
         logger.info(IDLOG, 'end configuration by file ' + path);
 
     } catch (err) {
@@ -457,7 +459,7 @@ function setVoicemailListeners() {
             throw new Error('wrong voicemail object');
         }
 
-        compVoicemail.on(compVoicemail.EVT_NEW_VOICEMAIL, newVoicemailListener);
+        compVoicemail.on(compVoicemail.EVT_NEW_VOICE_MESSAGE, newVoiceMessageListener);
 
     } catch (err) {
        logger.error(IDLOG, err.stack);
@@ -469,14 +471,14 @@ function setVoicemailListeners() {
 * the voicemail notifications to all users who use the voicemail using their
 * notification configurations.
 *
-* @method newVoicemailListener
+* @method newVoiceMessageListener
 * @param {string} voicemail The voicemail identifier
 * @param {array}  list      The list of all new voicemail messages
 * @private
 */
-function newVoicemailListener(voicemail, list) {
+function newVoiceMessageListener(voicemail, list) {
     try {
-        logger.info(IDLOG, 'received "' + compVoicemail.EVT_NEW_VOICEMAIL + '" event from voicemail "' + voicemail + '": ' + list.length + ' new voice messages');
+        logger.info(IDLOG, 'received "' + compVoicemail.EVT_NEW_VOICE_MESSAGE + '" event from voicemail "' + voicemail + '": ' + list.length + ' new voice messages');
 
         // check the event data
         if (typeof voicemail !== 'string' || list === undefined || list instanceof Array === false) {
@@ -518,7 +520,6 @@ function newVoicemailListener(voicemail, list) {
                 } else {
                     logger.info(IDLOG, 'don\'t send voicemail notification to user "' + username + '" by sms');
                 }
-
 
             } else {
                 logger.info(IDLOG, 'user "' + username + '" hasn\'t the voicemail endpoint ' + voicemail);
@@ -774,17 +775,9 @@ function sendNewVoicemailNotificationSms(username, voicemail, list, cb) {
                 }
                 cb(null, resp);
 
-                // store a success sms sending in the database
-                logger.info(IDLOG, 'store sms success to ' + to + ' of user "' + username + '" for new voicemail ' + voicemail + ' notification');
-                compSms.storeSmsSuccess(username, to, body);
-
             } catch (err) {
                 logger.error(IDLOG, err.stack);
                 cb(err);
-
-                // store a failure sms sending in the database
-                logger.info(IDLOG, 'store sms failure to ' + to + ' of user "' + username + '" for new voicemail ' + voicemail + ' notification');
-                compSms.storeSmsFailure(username, to, body);
             }
         });
 
@@ -825,17 +818,9 @@ function sendNewPostitNotificationSms(creator, recipient, list, cb) {
                 }
                 cb(null, resp);
 
-                // store a success sms sending in the database
-                logger.info(IDLOG, 'store sms success to ' + to + ' of user "' + recipient + '" for new post-it created by "' + creator + '"');
-                compSms.storeSmsSuccess(creator, to, body);
-
             } catch (err) {
                 logger.error(IDLOG, err.stack);
                 cb(err);
-
-                // store a failure sms sending in the database
-                logger.info(IDLOG, 'store sms failure to ' + to + ' of user "' + recipient + '" for new post-it created by "' + creator + '"');
-                compSms.storeSmsFailure(creator, to, body);
             }
         });
 
@@ -1087,8 +1072,8 @@ function extractNewVoicemailMostRecent(list) {
         var recentVm;
         for (i = 0; i < list.length; i++) {
 
-            if (temp < list[i].creationTimestamp) {
-                temp = list[i].creationTimestamp;
+            if (temp < list[i].origtime) {
+                temp = list[i].origtime;
                 recentVm = list[i];
             }
         }
@@ -1119,7 +1104,7 @@ function extractNewPostitMostRecent(list) {
 
         for (i = 0; i < list.length; i++) {
 
-            timestamp = list[i].creation.getTime();
+            timestamp = moment(list[i].creationdate + ' ' + list[i].creationtime, 'D/MM/YYYY hh:mm:ss').valueOf();
 
             if (temp < timestamp) {
                 temp = timestamp;

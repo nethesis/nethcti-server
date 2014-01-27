@@ -20,21 +20,17 @@
             "notifications": {
                 "postit": {
                     "sms": {
-                        "to": "0123456789",
                         "when": "never"
                     },
                     "email": {
-                        "to": "USER@DOMAIN",
                         "when": "never"
                     }
                 },
                 "voicemail": {
                     "sms": {
-                        "to": "0123456789",
                         "when": "never"
                     },
                     "email": {
-                        "to": "USER@DOMAIN",
                         "when": "never"
                     }
                 }

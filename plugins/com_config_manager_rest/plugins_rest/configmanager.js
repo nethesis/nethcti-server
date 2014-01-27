@@ -232,11 +232,10 @@ function setCompUtil(comp) {
         * * `type: ("voicemail" | "postit") the notification type`
         * * `method: ("email" | "sms") the delivery method`
         * * `when: ("always" | "never" | "offline") the value to be set for the specified key`
-        * * `to: the destination for the method: a cellphone number or an e-mail address`
         *
         * E.g. object parameters:
         *
-        *     { "type": "voicemail", "method": "email", "when": "offline", "to": "a@a.it" }
+        *     { "type": "voicemail", "method": "email", "when": "offline" }
         *
         * ---
         *
@@ -476,7 +475,6 @@ function setCompUtil(comp) {
             */
             notification: function (req, res, next) {
                 try {
-                    var to       = req.params.to;
                     var type     = req.params.type;
                     var when     = req.params.when;
                     var method   = req.params.method;
@@ -485,7 +483,6 @@ function setCompUtil(comp) {
                     // check parameters
                     if (   typeof when !== 'string' || typeof method   !== 'string'
                         || typeof type !== 'string' || typeof username !== 'string'
-                        || typeof to   !== 'string'
                         || (type   !== 'voicemail' && type   !== 'postit')
                         || (method !== 'email'     && method !== 'sms')
                         || (when   !== 'always'    && when   !== 'never' && when !== 'offline') ) {
@@ -495,7 +492,6 @@ function setCompUtil(comp) {
                     }
 
                     var data = {
-                        to:       to,
                         type:     type,
                         when:     when,
                         method:   method,

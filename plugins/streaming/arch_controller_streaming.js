@@ -35,7 +35,21 @@ module.exports = function (options, imports, register) {
             *
             * @method open
             */
-            open: controllerStreaming.open
+            open: controllerStreaming.open,
+
+            /**
+            * It's the _isExtenStreamingSource_ method provided by _controller\_streaming_ module.
+            *
+            * @method isExtenStreamingSource
+            */
+            isExtenStreamingSource: controllerStreaming.isExtenStreamingSource,
+
+            /**
+            * It's the _getSourceJSONByExten_ method provided by _controller\_streaming_ module.
+            *
+            * @method getSourceJSONByExten
+            */
+            getSourceJSONByExten: controllerStreaming.getSourceJSONByExten
         }
     });
 

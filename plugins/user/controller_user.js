@@ -160,7 +160,7 @@ function configByFile(path) {
         if (typeof path !== 'string') { throw new Error('wrong parameter'); }
 
         // check file presence
-        if (!fs.existsSync(path)) { throw new Error(path + ' not exists'); }
+        if (!fs.existsSync(path)) { throw new Error(path + ' doesn\'t exist'); }
 
         // read JSON file with the user/endpoint associations
         var json = require(path);
@@ -180,8 +180,8 @@ function configByFile(path) {
         logger.info(IDLOG, 'configuration ended');
 
         // emit the event for tell to other modules that the user objects are ready
+        logger.info(IDLOG, 'emit event "' + EVT_USERS_READY + '"');
         emitter.emit(EVT_USERS_READY);
-        logger.info(IDLOG, '"' + EVT_USERS_READY + '" event emitted');
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -234,7 +234,7 @@ function initializeEndpointsUsersByJSON(json) {
 function addEndpointsToUser(userid, endpoType, obj) {
     try {
         // check parameters
-        if (typeof userid !== 'string'
+        if (   typeof userid    !== 'string'
             || typeof endpoType !== 'string' || typeof obj !== 'object') {
 
             throw new Error('wrong parameters');
@@ -346,7 +346,7 @@ function setAuthorization(userid, typeAutho, value) {
 *
 * @method getAuthorization
 * @param {string} userid The user identifier
-* @return {object} The authorization of the user or undefined value if the user not exists.
+* @return {object} The authorization of the user or undefined value if the user doesn\'t exist.
 */
 function getAuthorization(userid, type) {
     try {
@@ -403,8 +403,8 @@ function on(type, cb) {
 * Check if the user has an extension endpoint.
 *
 * @method hasExtensionEndpoint
-* @param {string} username The name of the user to check
-* @param {string} exten The extension identifier
+* @param  {string}  username The name of the user to check
+* @param  {string}  exten    The extension identifier
 * @return {boolean} True if the user has the extension endpoint, false otherwise.
 */
 function hasExtensionEndpoint(username, exten) {
@@ -415,7 +415,8 @@ function hasExtensionEndpoint(username, exten) {
         }
 
         if (users[username] === undefined) { // the user is not present
-            throw new Error('checking the user-extension endpoint association: no user "' + username + '" is present');
+            logger.warn('checking the user-extension endpoint association: no user "' + username + '" is present');
+            return false;
         }
 
         var ext;
@@ -628,8 +629,8 @@ function setNethctiPresence(username, deviceType, status) {
         obj[username][endpointTypes.TYPES.nethcti] = allUsersEndpoints[username][endpointTypes.TYPES.nethcti];
 
         // emit the event to tell other modules that the nethcti endpoint presence of the user has changed
+        logger.info(IDLOG, 'emit event "' + EVT_ENDPOINT_PRESENCE_CHANGED + '"');
         emitter.emit(EVT_ENDPOINT_PRESENCE_CHANGED, username, endpointTypes.TYPES.nethcti, obj);
-        logger.info(IDLOG, '"' + EVT_ENDPOINT_PRESENCE_CHANGED + '" event emitted');
 
         return true;
 
@@ -653,7 +654,7 @@ function getAllEndpointsNethcti(username) {
 
         // check the user existence
         if (typeof users[username] !== 'object') {
-            logger.warn(IDLOG, 'gettings all the nethcti endpoints: the user "' + username + '" not exists');
+            logger.warn(IDLOG, 'gettings all the nethcti endpoints: the user "' + username + '" doesn\'t exist');
             return {};
         }
 
@@ -681,7 +682,7 @@ function getAllEndpointsExtension(username) {
 
         // check the user existence
         if (typeof users[username] !== 'object') {
-            logger.warn(IDLOG, 'gettings all the extension endpoints: the user "' + username + '" not exists');
+            logger.warn(IDLOG, 'gettings all the extension endpoints: the user "' + username + '" doesn\'t exist');
             return {};
         }
 
@@ -732,6 +733,43 @@ function getUsersUsingEndpointExtension(exten) {
     }
 }
 
+/**
+* Returns all users associated with the specified voicemail endpoint.
+*
+* @method getUsersUsingEndpointVoicemail
+* @param  {string} voicemail The voicemail endpoint identifier
+* @return {array}  Returns all the users associated with the specified voicemail endpoint.
+*/
+function getUsersUsingEndpointVoicemail(voicemail) {
+    try {
+        // check parameter
+        if (typeof voicemail !== 'string') { throw new Error('wrong parameter'); }
+
+        var result = [];
+
+        var vmKey, userVms, username, endpoints;
+        for (username in users) {
+
+            // get all the voicemail endpoints of the user
+            endpoints = users[username].getAllEndpoints();
+            userVms   = endpoints[endpointTypes.TYPES.voicemail];
+
+            for (vmKey in userVms) {
+
+                if (vmKey === voicemail) {
+                    // the user have the specified voicemail endpoint
+                    result.push(username);
+                }
+            }
+        }
+        return result;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return [];
+    }
+}
+
 // public interface
 exports.on                             = on;
 exports.config                         = config;
@@ -753,3 +791,4 @@ exports.getAllEndpointsExtension       = getAllEndpointsExtension;
 exports.getAllUsersEndpointsJSON       = getAllUsersEndpointsJSON;
 exports.EVT_ENDPOINT_PRESENCE_CHANGED  = EVT_ENDPOINT_PRESENCE_CHANGED;
 exports.getUsersUsingEndpointExtension = getUsersUsingEndpointExtension;
+exports.getUsersUsingEndpointVoicemail = getUsersUsingEndpointVoicemail;

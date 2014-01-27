@@ -112,7 +112,6 @@ var astProxy;
                         throw new Error('wrong parameter');
                     }
                     astProxy = ap;
-                    logger.info(IDLOG, 'set the asterisk proxy to visit');
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
                 }

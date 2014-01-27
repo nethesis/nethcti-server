@@ -134,16 +134,10 @@ function setCompUser(cu) {
 * Returns the default user preferences.
 *
 * @method getDefaultUserPrefs
-* @param  {string} cellphone The cellphone number of the user
-* @param  {string} jabber    The jabber account of the user
 * @return {object} The default user preferences
 */
-function getDefaultUserPrefs(cellphone, jabber) {
+function getDefaultUserPrefs() {
     try {
-        // check parameters
-        if (!jabber    || typeof jabber    !== 'string') { jabber    = ''; }
-        if (!cellphone || typeof cellphone !== 'string') { cellphone = ''; }
-
         var obj = {
             click2call: {
                 type: 'manual',
@@ -164,21 +158,17 @@ function getDefaultUserPrefs(cellphone, jabber) {
             notifications: {
                 postit: {
                     sms: {
-                        to: cellphone,
                         when: 'never'
                     },
                     email: {
-                        to: jabber,
                         when: 'never'
                     }
                 },
                 voicemail: {
                     sms: {
-                        to: cellphone,
                         when: 'never'
                     },
                     email: {
-                        to: jabber,
                         when: 'never'
                     }
                 }
@@ -211,7 +201,7 @@ function configUser(obj) {
         }
 
         // check file presence
-        if (!fs.existsSync(obj.users)) { throw new Error(obj.users + ' not exists'); }
+        if (!fs.existsSync(obj.users)) { throw new Error(obj.users + ' doesn\'t exist'); }
 
         // global property used also by other methods
         userPrefsPath = obj.userPrefs;
@@ -221,45 +211,50 @@ function configUser(obj) {
         contentConfPrefJson = require(obj.users);
 
         // read the user preferences file. If the user has never saved its preferences,
-        // the file doesn't exists and so default preference values are used
+        // the file doesn't exist and so default preference values are used
         var userPrefs = {};
         if (!fs.existsSync(obj.userPrefs)) {
-            logger.info(obj.userPrefs + ' not exists');
+            logger.info(obj.userPrefs + ' doesn\'t exist');
 
         } else {
             userPrefs = require(userPrefsPath);
         }
 
         // merge configurations (from obj.users file) and preferences (from obj.userPrefs file) in one single object
-        var username, endpointsCellphone, firstEndpointCellphone;
+        var username, emailEndpoints, firstEmailEndpoint, cellphoneEndpoints, firstCellphoneEndpoint;
         for (username in contentConfPrefJson) {
 
-            // the user has never saved its preferences and so they doesn't exist in the
+            // get the cellphone endpoint associated with the user. It can be empty
+            // get all cellphone endpoints of the user
+            cellphoneEndpoints = contentConfPrefJson[username].endpoints[compUser.ENDPOINT_TYPES.cellphone];
+            // get the first cellphone endpoint of the user
+            firstCellphoneEndpoint = Object.keys(cellphoneEndpoints)[0];
+            // check if the endpoint is present
+            firstCellphoneEndpoint = (firstCellphoneEndpoint ? firstCellphoneEndpoint : '');
+
+            // get the email endpoint associated with the user. It can be empty
+            // get all email endpoints of the user
+            emailEndpoints = contentConfPrefJson[username].endpoints[compUser.ENDPOINT_TYPES.email];
+            // get the first email endpoint of the user
+            firstEmailEndpoint = Object.keys(emailEndpoints)[0];
+            // check if the endpoint is present
+            firstEmailEndpoint = (firstEmailEndpoint ? firstEmailEndpoint : '');
+
+            // the user has never saved his preferences and so they doesn't exist in the
             // file of the preferences. So a default values are used
             if (!userPrefs[username]) {
-
-                // get the cellphone endpoint associated with the user. It can be empty
-                // get all cellphone endpoints of the user
-                cellphoneEndpoints = contentConfPrefJson[username].endpoints[compUser.ENDPOINT_TYPES.cellphone];
-                // get the first cellphone endpoint of the user
-                firstCellphoneEndpoint = Object.keys(cellphoneEndpoints)[0];
-                // check if the endpoint is present
-                firstCellphoneEndpoint = (firstCellphoneEndpoint ? firstCellphoneEndpoint : '');
-
-                // get the jabber endpoint associated with the user. It can be empty
-                // get all jabber endpoints of the user
-                jabberEndpoints = contentConfPrefJson[username].endpoints[compUser.ENDPOINT_TYPES.jabber];
-                // get the first jabber endpoint of the user
-                firstJabberEndpoint = Object.keys(jabberEndpoints)[0];
-                // check if the endpoint is present
-                firstJabberEndpoint = (firstJabberEndpoint ? firstJabberEndpoint : '');
-
-                contentConfPrefJson[username].configurations = getDefaultUserPrefs(firstCellphoneEndpoint, firstJabberEndpoint);
+                contentConfPrefJson[username].configurations = getDefaultUserPrefs();
             }
             // the user preferences are present in the file
             else {
                 contentConfPrefJson[username].configurations = userPrefs[username].configurations;
             }
+
+            // add the cellphone and email endpoints destination to the user configuration
+            contentConfPrefJson[username].configurations.notifications.postit.sms.to      = firstCellphoneEndpoint;
+            contentConfPrefJson[username].configurations.notifications.postit.email.to    = firstEmailEndpoint;
+            contentConfPrefJson[username].configurations.notifications.voicemail.sms.to   = firstCellphoneEndpoint;
+            contentConfPrefJson[username].configurations.notifications.voicemail.email.to = firstEmailEndpoint;
         }
 
         // check created content of the JSON files
@@ -305,7 +300,10 @@ function configChat(path) {
         if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
 
         // check file presence
-        if (!fs.existsSync(path)) { throw new Error(path + ' not exists'); }
+        if (!fs.existsSync(path)) {
+            logger.warn(IDLOG, path + ' doesn\'t exist');
+            return;
+        }
 
         logger.info(IDLOG, 'configure server chat with ' + path);
 
@@ -316,7 +314,8 @@ function configChat(path) {
         if (   typeof json     !== 'object'
             || typeof json.url !== 'string' || typeof json.domain !== 'string') {
 
-            throw new Error('wrong JSON file ' + path);
+            logger.warn(IDLOG, 'wrong JSON file ' + path);
+            return;
         }
 
         chatServer.url    = json.url;
@@ -410,8 +409,7 @@ function setUserNotificationConf(data, cb) {
         // check parameter
         if (   typeof data          !== 'object' || typeof data.type   !== 'string'
             || typeof data.when     !== 'string' || typeof data.method !== 'string'
-            || typeof data.username !== 'string' || typeof cb          !== 'function'
-            || typeof data.to       !== 'string') {
+            || typeof data.username !== 'string' || typeof cb          !== 'function') {
 
             throw new Error('wrong parameter');
         }
@@ -426,7 +424,6 @@ function setUserNotificationConf(data, cb) {
         // updated, because the "configUser" function sets the user configurations to be
         // a reference link to it.
         logger.info(IDLOG, 'update notifications settings of user "' + data.username + '"');
-        config[USER_CONFIG_KEYS.notifications][data.type][data.method].to   = data.to;
         config[USER_CONFIG_KEYS.notifications][data.type][data.method].when = data.when;
 
         // update the notification settings section in the preference file in the filesystem
@@ -476,7 +473,14 @@ function updateAllUserPrefsInJSONFile(cb) {
         var username;
         for (username in contentConfPrefJson) {
             content[username] = {};
-            content[username][CONFIG_FILE_HEAD] = contentConfPrefJson[username][CONFIG_FILE_HEAD];
+            content[username][CONFIG_FILE_HEAD] = JSON.parse(JSON.stringify(contentConfPrefJson[username][CONFIG_FILE_HEAD])); // object copy
+
+            // remove the cellphone and email destination, because in the /etc/nethcti/usr_prefs.json file they
+            // don't be present. These informations are present in the /etc/nethcti/users.json file
+            delete content[username][CONFIG_FILE_HEAD].notifications.postit.sms.to;
+            delete content[username][CONFIG_FILE_HEAD].notifications.postit.email.to;
+            delete content[username][CONFIG_FILE_HEAD].notifications.voicemail.sms.to;
+            delete content[username][CONFIG_FILE_HEAD].notifications.voicemail.email.to;
         }
 
         // updated JSON preferences file. It's updated changing the configuration settings of the users

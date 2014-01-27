@@ -39,15 +39,14 @@ try{
         { packagePath: "./plugins/com_authorization_rest"  },
         { packagePath: "./plugins/com_customer_card_rest"  },
         { packagePath: "./plugins/com_config_manager_rest" },
+        { packagePath: "./plugins/com_nethcti_tcp"         },
         { packagePath: "./plugins/com_nethcti_ws"          },
         { packagePath: "./plugins/http_proxy"              }
     ];
 
     var app = architect.resolveConfig(config, __dirname);
 
-    architect.createApp(app, function (resp) {
-        console.log('cti architect app created');
-    });
+    architect.createApp(app, function (resp) {});
 
     process.on('uncaughtException', function (err) {
         console.log('UncaughtException !!!');

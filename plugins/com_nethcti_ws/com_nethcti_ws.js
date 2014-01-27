@@ -13,7 +13,7 @@
 */
 var fs        = require('fs');
 var io        = require('socket.io');
-var iniparser = require('iniparser');
+var httpProxy = require('http-proxy');
 
 /**
 * The module identifier used by the logger.
@@ -26,6 +26,39 @@ var iniparser = require('iniparser');
 * @default [com_nethcti_ws]
 */
 var IDLOG = '[com_nethcti_ws]';
+
+/**
+* Listening protocol, can be 'https' or 'http'. It can be
+* customized in the configuration file.
+*
+* @property proto
+* @type string
+* @private
+* @default "http"
+*/
+var proto = 'http';
+
+/**
+* The path of the certificate to be used by HTTPS server. It can be
+* customized in the configuration file.
+*
+* @property HTTPS_CERT
+* @type string
+* @private
+* @default "/etc/pki/tls/certs/localhost.crt"
+*/
+var HTTPS_CERT = '/etc/pki/tls/certs/localhost.crt';
+
+/**
+* The path of key to be used by HTTPS server. It can be
+* customized in the configuration file.
+*
+* @property HTTPS_KEY
+* @type string
+* @private
+* @default "/etc/pki/tls/private/localhost.key"
+*/
+var HTTPS_KEY = '/etc/pki/tls/private/localhost.key';
 
 /**
 * The websocket rooms used to update clients with asterisk events.
@@ -140,13 +173,13 @@ var compAuthorization;
 var compVoicemail;
 
 /**
-* The operator module.
+* The post-it architect component.
 *
-* @property operator
+* @property compPostit
 * @type object
 * @private
 */
-var operator;
+var compPostit;
 
 /**
 * Contains all websocket identifiers of authenticated clients.
@@ -257,19 +290,17 @@ function setCompVoicemail(cv) {
 }
 
 /**
-* Sets the operator to be used by the module.
+* Sets post-it architect component.
 *
-* @method setOperator
-* @param {object} op The operator.
+* @method setCompPostit
+* @param {object} comp The post-it architect component.
 */
-function setOperator(op) {
+function setCompPostit(comp) {
     try {
-        if (typeof op !== 'object') {
-            throw new Error('wrong operator object');
-        }
-        operator = op;
+        compPostit = comp;
+        logger.info(IDLOG, 'set post-it architect component');
     } catch (err) {
-        logger.error(IDLOG, err.stack);
+       logger.error(IDLOG, err.stack);
     }
 }
 
@@ -331,7 +362,27 @@ function setVoicemailListeners() {
             throw new Error('wrong voicemail object');
         }
 
-        compVoicemail.on(compVoicemail.EVT_NEW_VOICEMAIL, newVoicemailListener);
+        compVoicemail.on(compVoicemail.EVT_UPDATE_NEW_VOICE_MESSAGES, updateNewVoiceMessagesListener);
+
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the event listeners for the post-it component.
+*
+* @method setPostitListeners
+* @private
+*/
+function setPostitListeners() {
+    try {
+        // check post-it component object
+        if (!compPostit || typeof compPostit.on !== 'function') {
+            throw new Error('wrong post-it object');
+        }
+
+        compPostit.on(compPostit.EVT_UPDATE_NEW_POSTIT, updateNewPostitListener);
 
     } catch (err) {
        logger.error(IDLOG, err.stack);
@@ -363,18 +414,105 @@ function setUserListeners() {
 * Manages the new voicemail event emitted by the voicemail component. It sends
 * all new voice messages of the voicemail to all users who use the voicemail.
 *
-* @method newVoicemailListener
+* @method updateNewVoiceMessagesListener
 * @param {string} voicemail The voicemail identifier
 * @param {array}  list      The list of all new voicemail messages
 * @private
 */
-function newVoicemailListener(voicemail, list) {
+function updateNewVoiceMessagesListener(voicemail, list) {
     try {
         // check the event data
         if (typeof voicemail !== 'string' || list === undefined || list instanceof Array === false) {
             throw new Error('wrong voicemails array list');
         }
 
+        logger.info(IDLOG, 'received "new voicemail" event for voicemail ' + voicemail);
+
+        // get all users associated with the voicemail. Only the user with the associated voicemail
+        // receives the list of all new voice messages
+        var users = compUser.getUsersUsingEndpointVoicemail(voicemail);
+
+        // emit the "newVoiceMessage" event for each logged in user associated with the voicemail.
+        // The event contains the voicemail details
+        var socketId, username;
+
+        for (socketId in wsid) {
+
+            username = wsid[socketId];
+
+            // the user is associated with the voicemail is logged in
+            if (users.indexOf(username) !== -1) {
+
+                // emits the event with the list of all new voice messages of the voicemail
+                logger.info(IDLOG, 'emit event "updateNewVoiceMessages" for voicemail ' + voicemail + ' to user "' + username + '"');
+                // object to return with the event
+                var obj = {};
+                obj[voicemail] = list;
+                server.sockets.sockets[socketId].emit('updateNewVoiceMessages', obj);
+            }
+        }
+
+        // emit the "newVoiceMessageCounter" to all the users. The event contains only the number
+        // of new voice messages of the voicemail without they details. So it is sent to all the users
+        // without any authorization checking
+        for (socketId in wsid) {
+
+            username = wsid[socketId];
+
+            // emits the event "newVoiceMessageCounter" with the number of new voice messages of the user
+            logger.info(IDLOG, 'emit event "newVoiceMessageCounter" ' + list.length + ' to user "' + username + '"');
+            server.sockets.sockets[socketId].emit('newVoiceMessageCounter', { voicemail: voicemail, counter: list.length });
+        }
+
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Manages the event emitted by the post-it component to update the new post-it messages.
+* It send all new post-it to the recipient user.
+*
+* @method updateNewPostitListener
+* @param {string} recipient The recipient user of the new post-it
+* @param {array}  list      All the new post-it messages of the user
+* @private
+*/
+function updateNewPostitListener(recipient, list) {
+    try {
+        // check the event data
+        if (typeof recipient !== 'string' || list === undefined || list instanceof Array === false) {
+            throw new Error('wrong arguments');
+        }
+
+        logger.info(IDLOG, 'received "updateNewPostit" event for recipient user ' + recipient);
+
+        // emit the "updateNewPostit" event for the recipient user. The events contains all the new post-it with their details
+        var socketId, username;
+
+        for (socketId in wsid) {
+
+            username = wsid[socketId];
+
+            // the user is the recipient of the new post-it message
+            if (username === recipient) {
+
+                // emits the event with the list of all new post-it messages of the user
+                logger.info(IDLOG, 'emit event "updateNewPostit" to the recipient user "' + recipient + '"');
+                server.sockets.sockets[socketId].emit('updateNewPostit', list);
+            }
+        }
+
+        // emit the "newPostitCounter". The event only contains the number of new post-it of a user. So it is
+        // sent to all users without any authorization checking
+        for (socketId in wsid) {
+
+            username = wsid[socketId];
+
+            // emits the event with the number of new post-it of the recipient user
+            logger.info(IDLOG, 'emit event "newPostitCounter" ' + list.length + ' to recipient user "' + username + '"');
+            server.sockets.sockets[socketId].emit('newPostitCounter', { user: recipient, counter: list.length });
+        }
 
     } catch (err) {
        logger.error(IDLOG, err.stack);
@@ -496,7 +634,7 @@ function trunkChanged(trunk) {
 *
 * @method getFilteredCallerIndentity
 * @param  {string} username       The username
-* @param  {object} callerIdentity The identity of the caller to br filtered
+* @param  {object} callerIdentity The identity of the caller to be filtered
 * @return {object} The filtered caller identity.
 * @private
 */
@@ -700,65 +838,95 @@ function parkingChanged(parking) {
 * Configurates the websocket server properties by a configuration file.
 * The file must use the JSON syntax.
 *
-* **The method can throw an Exception.**
-*
 * @method config
 * @param {string} path The path of the configuration file
 */
 function config(path) {
-    // check parameter
-    if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
+    try {
+        // check parameter
+        if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
 
-    // check file presence
-    if (!fs.existsSync(path)) { throw new Error(path + ' not exists'); }
+        // check file presence
+        if (!fs.existsSync(path)) { throw new Error(path + ' doesn\'t exist'); }
 
-    // read configuration file
-    var json = require(path);
+        // read configuration file
+        var json = require(path);
 
-    // initialize the port of the websocket server
-    if (json.websocket && json.websocket.port) {
-        port = json.websocket.port;
+        // initialize the port of the websocket server
+        if (json.websocket && json.websocket.port) {
+            port = json.websocket.port;
 
-    } else {
-        logger.warn(IDLOG, 'no port has been specified in JSON file ' + path);
+        } else {
+            logger.warn(IDLOG, 'no ws port has been specified in JSON file ' + path);
+        }
+
+        // initialize the proto of the proxy
+        if (json.websocket.proto) {
+            proto = json.websocket.proto;
+
+        } else {
+            logger.warn(IDLOG, 'no ws proto has been specified in JSON file ' + path);
+        }
+
+        // initialize the key of the HTTPS proxy
+        if (json.websocket.https_key) {
+            HTTPS_KEY = json.websocket.https_key;
+
+        } else {
+            logger.warn(IDLOG, 'no ws HTTPS key has been specified in JSON file ' + path);
+        }
+
+        // initialize the certificate of the HTTPS proxy
+        if (json.websocket.https_cert) {
+            HTTPS_CERT = json.websocket.https_cert;
+
+        } else {
+            logger.warn(IDLOG, 'no ws HTTPS certificate has been specified in JSON file ' + path);
+        }
+
+        // initialize the interval at which update the token expiration of all users
+        // that are connected by websocket
+        var expires = compAuthe.getTokenExpirationTimeout();
+        updateTokenExpirationInterval = expires / 2;
+
+        logger.info(IDLOG, 'configuration by file ' + path + ' ended');
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
     }
-
-    // initialize the interval at which update the token expiration of all users
-    // that are connected by websocket
-    var expires = compAuthe.getTokenExpirationTimeout();
-    updateTokenExpirationInterval = expires / 2;
-
-    logger.info(IDLOG, 'configuration by file ' + path + ' ended');
 }
 
 /**
 * Customize the privacy used to hide phone numbers by a configuration file.
 * The file must use the JSON syntax.
 *
-* **The method can throw an Exception.**
-*
 * @method configPrivacy
 * @param {string} path The path of the configuration file
 */
 function configPrivacy(path) {
-    // check parameter
-    if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
+    try {
+        // check parameter
+        if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
 
-    // check file presence
-    if (!fs.existsSync(path)) { throw new Error(path + ' not exists'); }
+        // check file presence
+        if (!fs.existsSync(path)) { throw new Error(path + ' doesn\'t exist'); }
 
-    // read configuration file
-    var json = require(path);
+        // read configuration file
+        var json = require(path);
 
-    // initialize the string used to hide last digits of phone numbers
-    if (json.privacy_numbers) {
-        privacyStrReplace = json.privacy_numbers;
+        // initialize the string used to hide last digits of phone numbers
+        if (json.privacy_numbers) {
+            privacyStrReplace = json.privacy_numbers;
 
-    } else {
-        logger.warn(IDLOG, 'no privacy string has been specified in JSON file ' + path);
+        } else {
+            logger.warn(IDLOG, 'no privacy string has been specified in JSON file ' + path);
+        }
+
+        logger.info(IDLOG, 'privacy configuration by file ' + path + ' ended');
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
     }
-
-    logger.info(IDLOG, 'privacy configuration by file ' + path + ' ended');
 }
 
 /**
@@ -774,21 +942,35 @@ function start() {
         // set the listener for the voicemail module
         setVoicemailListeners();
 
+        // set the listener for the post-it module
+        setPostitListeners();
+
         // set the listener for the user module
         setUserListeners();
 
         // websocket options
         var options = {
-            'log level':  1,
             'transports': ['websocket']
         };
 
+        // create HTTPS proxy
+        if (proto === 'https') {
+            options.https = {
+                key:  fs.readFileSync(HTTPS_KEY,  'utf8'),
+                cert: fs.readFileSync(HTTPS_CERT, 'utf8')
+            };
+        }
+        var httpServer = httpProxy.createServer(options, function( req , res ){} );
+
         // websocket server
-        server = io.listen(parseInt(port), options);
+        server = io.listen(httpServer);
+        server.set('log level', 0); // log only the errors
+        httpServer.listen(port);
+
 
         // set the websocket server listener
         server.on('connection', connHdlr);
-        logger.info(IDLOG, 'websocket server listening on port ' + port);
+        logger.warn(IDLOG, 'websocket server listening on proto "' + proto + '" on port ' + port);
 
         // start the automatic update of token expiration of all users that are connected by websocket.
         // The interval is the half value of expiration provided by authentication component
@@ -983,7 +1165,7 @@ function loginHdlr(socket, obj) {
             // set the nethcti endpoint presence of the user to online status
             compUser.setNethctiPresence(obj.accessKeyId, 'desktop', compUser.ENDPOINT_NETHCTI_STATUS.online);
 
-            // sets extension property to the client socket
+            // sets username property to the client socket
             socket.set('username', obj.accessKeyId, function () {
                 logger.info(IDLOG, 'setted username property ' + obj.accessKeyId + ' to socket ' + socket.id);
             });
@@ -1051,6 +1233,7 @@ function loginHdlr(socket, obj) {
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
+        unauthorized(socket);
     }
 }
 
@@ -1127,8 +1310,8 @@ function addWebsocketId(user, socketId) {
 */
 function send401(socket) {
     try {
-        socket.emit('401', { message: 'unauthorized access' });
         logger.warn(IDLOG, 'send 401 unauthorized to ' + getWebsocketEndpoint(socket));
+        socket.emit('401', { message: 'unauthorized access' });
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -1145,7 +1328,7 @@ function sendAutheSuccess(socket) {
     try {
         socket.emit('authe_ok', { message: 'authorized successfully' });
         socket.get('username', function (err, name) {
-            logger.info(IDLOG, 'send authorized successfully to ' + name + ' ' + getWebsocketEndpoint(socket) + ' with id ' + socket.id);
+            logger.info(IDLOG, 'sent authorized successfully to ' + name + ' ' + getWebsocketEndpoint(socket) + ' with id ' + socket.id);
         });
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -1158,8 +1341,8 @@ exports.config               = config;
 exports.setAuthe             = setAuthe;
 exports.setLogger            = setLogger;
 exports.setAstProxy          = setAstProxy;
-exports.setOperator          = setOperator;
 exports.setCompUser          = setCompUser;
 exports.configPrivacy        = configPrivacy;
+exports.setCompPostit        = setCompPostit;
 exports.setCompVoicemail     = setCompVoicemail;
 exports.setCompAuthorization = setCompAuthorization;

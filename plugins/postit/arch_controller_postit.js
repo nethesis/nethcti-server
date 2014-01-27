@@ -38,6 +38,13 @@ module.exports = function (options, imports, register) {
             newPostit: controllerPostit.newPostit,
 
             /**
+            * It's the _getNewPostit_ method provided by _controller\_postit_ module.
+            *
+            * @method getNewPostit
+            */
+            getNewPostit: controllerPostit.getNewPostit,
+
+            /**
             * It's the _getPostit_ method provided by _controller\_postit_ module.
             *
             * @method getPostit
@@ -73,6 +80,13 @@ module.exports = function (options, imports, register) {
             getAllUserHistoryInterval: controllerPostit.getAllUserHistoryInterval,
 
             /**
+            * It's the _EVT\_UPDATE\_NEW\_POSTIT_ method provided by _controller\_postit_ module.
+            *
+            * @method EVT_UPDATE_NEW_POSTIT
+            */
+            EVT_UPDATE_NEW_POSTIT: controllerPostit.EVT_UPDATE_NEW_POSTIT,
+
+            /**
             * It's the _EVT\_NEW\_POSTIT_ method provided by _controller\_postit_ module.
             *
             * @method EVT_NEW_POSTIT
@@ -89,6 +103,7 @@ module.exports = function (options, imports, register) {
 
         controllerPostit.setLogger(logger);
         controllerPostit.setDbconn(dbconn);
+        controllerPostit.start();
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }

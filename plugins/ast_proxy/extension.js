@@ -64,6 +64,15 @@ exports.Extension = function (ext, chType) {
     var cf;
 
     /**
+    * The call forward to voicemail status.
+    *
+    * @property cfVm
+    * @type {string}
+    * @private
+    */
+    var cfVm;
+
+    /**
     * The port of the device.
     *
     * @property port
@@ -307,12 +316,28 @@ exports.Extension = function (ext, chType) {
     function setCf(value) { cf = value; }
 
     /**
+    * Set the call forward to voicemail.
+    *
+    * @method setCfVm
+    * @param {string} value The destination voicemail number to set the call forward to voicemail.
+    */
+    function setCfVm(value) { cfVm = value; }
+
+    /**
     * Get the call forward status.
     *
     * @method getCf
-    * @return {string} The number of the call forward. Return an empty string if it's disable.
+    * @return {string} The number of the call forward. Returns an empty string if it is disabled.
     */
     function getCf() { return cf; }
+
+    /**
+    * Get the call forward to voicemail status.
+    *
+    * @method getCfVm
+    * @return {string} The voicemail number of the call forward to voicemail. Returns an empty string if it is disabled.
+    */
+    function getCfVm() { return cfVm; }
 
     /**
     * Disable the call forward status.
@@ -322,12 +347,20 @@ exports.Extension = function (ext, chType) {
     function disableCf() { cf = ''; }
 
     /**
+    * Disable the call forward to voicemail status.
+    *
+    * @method disableCfVm
+    */
+    function disableCfVm() { cfVm = ''; }
+
+    /**
     * Returns the JSON representation of the object.
     *
     *     {
     *         ip:           "192.168.5.163",
     *         cf:           "221",                          // the call forward status. If it's disabled, it is an empty string
     *         dnd:          false,                          // it's true if the don't disturb is active
+    *         cfVm:         "",                             // the call forward to voicemail status. If it's disabled, it is an empty string
     *         port:         "5062",
     *         name:         "Alessandro",
     *         exten:        "214",
@@ -352,6 +385,7 @@ exports.Extension = function (ext, chType) {
             ip:            ip,
             cf:            cf,
             dnd:           dnd,
+            cfVm:          cfVm,
             port:          port,
             name:          name,
             exten:         exten,
@@ -371,6 +405,8 @@ exports.Extension = function (ext, chType) {
         toJSON:    toJSON,
         setDnd:    setDnd,
         getDnd:    getDnd,
+        getCfVm:   getCfVm,
+        setCfVm:   setCfVm,
         getName:   getName,
         setName:   setName,
         setPort:   setPort,
@@ -381,6 +417,7 @@ exports.Extension = function (ext, chType) {
         disableCf: disableCf,
         setStatus: setStatus,
         getStatus: getStatus,
+        disableCfVm:            disableCfVm,
         getChanType:            getChanType,
         addConversation:        addConversation,
         setSipUserAgent:        setSipUserAgent,

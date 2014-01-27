@@ -15,18 +15,6 @@ var action = require('../action');
 */
 var IDLOG = '[recordCall]';
 
-/**
-* The audio file extension.
-*
-* @property FILE_EXT
-* @type string
-* @private
-* @final
-* @readOnly
-* @default [wav]
-*/
-var FILE_EXT = 'wav';
-
 (function() {
     try {
         /**
@@ -56,7 +44,7 @@ var FILE_EXT = 'wav';
         *
         * Use it with _ast\_proxy_ module as follow:
         *
-        *     ast_proxy.doCmd({ command: 'recordCall', channel: 'SIP/214-00000', filepath: '2013/04/06/nethcti-214-209-20130406-120406-1365062949.146.wav' }, function (res) {
+        *     ast_proxy.doCmd({ command: 'recordCall', channel: 'SIP/214-00000', filepath: '2013/04/06/exten-214-209-20130406-120406-1365062949.146.wav' }, function (res) {
         *         // some code
         *     });
         *

@@ -78,7 +78,7 @@
         "dbuser":     "USER",
         "dbpassword": "PASS",
         "dbname":     "phonebook",
-        "query":      "select * from phonebook where homephone like '%$TERM' or workphone like '%$TERM' or cellphone like '%$TERM' or fax like '%$TERM'"
+        "query":      "select * from phonebook where homephone like '%$EXTEN' or workphone like '%$EXTEN' or cellphone like '%$EXTEN' or fax like '%$EXTEN'"
     },
     "customer_card_calls": {
         "dbhost":     "localhost",
@@ -87,6 +87,6 @@
         "dbuser":     "USER",
         "dbpassword": "PASS",
         "dbname":     "asteriskcdrdb",
-        "query":      "select DATE_FORMAT(calldate,'%d/%m/%Y') as date, DATE_FORMAT(calldate,'%H:%i:%S') as time, clid, src, dst, uniqueid,duration, time_format(billsec, '%H:%i:%S') as billsec, disposition,if(src='$TERM','in','out') as direction from cdr where (src = '$TERM' or dst = '$TERM') and disposition = 'ANSWERED' order by calldate desc limit 0,10"
+        "query":      "select DATE_FORMAT(calldate,'%d/%m/%Y') as date, DATE_FORMAT(calldate,'%H:%i:%S') as time, clid, src, dst, uniqueid,duration, time_format(billsec, '%H:%i:%S') as billsec, disposition,if(src='$EXTEN','in','out') as direction from cdr where (src = '$EXTEN' or dst = '$EXTEN') and disposition = 'ANSWERED' order by calldate desc limit 0,10"
     }
 }

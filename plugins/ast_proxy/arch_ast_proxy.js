@@ -55,6 +55,20 @@ module.exports = function (options, imports, register) {
             setDnd: astProxy.proxyLogic.setDnd,
 
             /**
+            * It's the _setUnconditionalCfVm_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method setUnconditionalCfVm
+            */
+            setUnconditionalCfVm: astProxy.proxyLogic.setUnconditionalCfVm,
+
+            /**
+            * It's the _setUnconditionalCf_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method setUnconditionalCf
+            */
+            setUnconditionalCf: astProxy.proxyLogic.setUnconditionalCf,
+
+            /**
             * It's the _getExtensions_ method provided by _ast\_proxy.proxyLogic_.
             *
             * @method getExtensions
@@ -82,6 +96,20 @@ module.exports = function (options, imports, register) {
             * @method stopRecordConversation
             */
             stopRecordConversation: astProxy.proxyLogic.stopRecordConversation,
+
+            /**
+            * It's the _muteRecordConversation_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method muteRecordConversation
+            */
+            muteRecordConversation: astProxy.proxyLogic.muteRecordConversation,
+
+            /**
+            * It's the _unmuteRecordConversation_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method unmuteRecordConversation
+            */
+            unmuteRecordConversation: astProxy.proxyLogic.unmuteRecordConversation,
 
             /**
             * It's the _parkConversation_ method provided by _ast\_proxy.proxyLogic_.
@@ -294,11 +322,18 @@ module.exports = function (options, imports, register) {
             EVT_PARKING_CHANGED: astProxy.proxyLogic.EVT_PARKING_CHANGED,
 
             /**
-            * It's the _EVT\_NEW\_VOICEMAIL_ property provided by _ast\_proxy.proxyLogic_.
+            * It's the _EVT\_NEW\_VOICE\_MESSAGE_ property provided by _ast\_proxy.proxyLogic_.
             *
-            * @method EVT_NEW_VOICEMAIL
+            * @method EVT_NEW_VOICE_MESSAGE
             */
-            EVT_NEW_VOICEMAIL: astProxy.proxyLogic.EVT_NEW_VOICEMAIL
+            EVT_NEW_VOICE_MESSAGE: astProxy.proxyLogic.EVT_NEW_VOICE_MESSAGE,
+
+            /**
+            * It's the _EVT\_UPDATE\_VOICE\_MESSAGES_ property provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method EVT_UPDATE_VOICE_MESSAGES
+            */
+            EVT_UPDATE_VOICE_MESSAGES: astProxy.proxyLogic.EVT_UPDATE_VOICE_MESSAGES
         }
     });
 

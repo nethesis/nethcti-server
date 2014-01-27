@@ -24,6 +24,7 @@ var QueueMember             = require('../queueMember').QueueMember;
 var EventEmitter            = require('events').EventEmitter;
 var ParkedCaller            = require('../parkedCaller').ParkedCaller;
 var Conversation            = require('../conversation').Conversation;
+var TrunkConversation       = require('../trunkConversation').TrunkConversation;
 var QueueWaitingCaller      = require('../queueWaitingCaller').QueueWaitingCaller;
 var QUEUE_MEMBER_TYPES_ENUM = require('../queueMember').QUEUE_MEMBER_TYPES_ENUM;
 
@@ -132,17 +133,33 @@ var EVT_QUEUE_CHANGED = 'queueChanged';
 /**
 * Fired when new voicemail message has been left.
 *
-* @event newVoicemail
-* @param {object} msg The queue object
+* @event newVoiceMessage
+* @param {object} msg The data about the voicemail, with the number of new and old messages
 */
 /**
 * The name of the new voicemail event.
 *
-* @property EVT_NEW_VOICEMAIL
+* @property EVT_NEW_VOICE_MESSAGE
 * @type string
-* @default "newVoicemail"
+* @default "newVoiceMessage"
 */
-var EVT_NEW_VOICEMAIL = 'newVoicemail';
+var EVT_NEW_VOICE_MESSAGE = 'newVoiceMessage';
+
+/**
+* Something has appen in the voice messages of the voicemail, for example the listen
+* of a new voice message from the phone.
+*
+* @event updateVoiceMessages
+* @param {object} msg The data about the voicemail
+*/
+/**
+* The name of the update voice messages event.
+*
+* @property EVT_UPDATE_VOICE_MESSAGES
+* @type string
+* @default "updateVoiceMessages"
+*/
+var EVT_UPDATE_VOICE_MESSAGES = 'updateVoiceMessages';
 
 /**
 * The default base path for the recording call audio file.
@@ -414,7 +431,6 @@ function visit(ap) {
             throw new Error('wrong parameter');
         }
         astProxy = ap;
-        logger.info(IDLOG, 'set the asterisk proxy to visit');
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -886,8 +902,8 @@ function updateParkedChannelOfOneParking(err, resp, parking) {
             logger.info(IDLOG, 'removed parked caller from parking ' + parking);
 
             // emit the event
+            logger.info(IDLOG, 'emit event ' + EVT_PARKING_CHANGED + ' for parking ' + parking);
             astProxy.emit(EVT_PARKING_CHANGED, parkings[parking]);
-            logger.info(IDLOG, 'emitted event ' + EVT_PARKING_CHANGED + ' for parking ' + parking);
         }
 
     } catch (error) {
@@ -936,8 +952,8 @@ function updateParkedCallerOfOneParking(err, resp, parking) {
                 logger.info(IDLOG, 'updated parked call ' + pCall.getNumber() + ' to parking ' + parking);
 
                 // emit the event
+                logger.info(IDLOG, 'emit event ' + EVT_PARKING_CHANGED + ' for parking ' + parking);
                 astProxy.emit(EVT_PARKING_CHANGED, parkings[parking]);
-                logger.info(IDLOG, 'emitted event ' + EVT_PARKING_CHANGED + ' for parking ' + parking);
             }
 
         } else {
@@ -1077,7 +1093,7 @@ function queueDetails(err, resp) {
 
             if (struct[structKey].type === INI_STRUCT.TYPE.QUEUE && q === structQueueId) {
 
-                if (!struct[structKey].dynmembers) {
+                if (struct[structKey].dynmembers === undefined) {
                     logger.warn(IDLOG, 'no "dynmembers" key for "' + structKey + '" in configuration file');
                     continue;
                 }
@@ -1460,6 +1476,8 @@ function initializeSipExten() {
                 astProxy.doCmd({ command: 'dndGet', exten: exten.getExten() }, setDndStatus);
                 // get the call forward status
                 astProxy.doCmd({ command: 'cfGet', exten: exten.getExten() }, setCfStatus);
+                // get the call forward to voicemail status
+                astProxy.doCmd({ command: 'cfVmGet', exten: exten.getExten() }, setCfVmStatus);
             }
         }
         // request all channels
@@ -1539,6 +1557,46 @@ function setCfStatus(err, resp) {
 
         } else {
             logger.warn(IDLOG, 'request cf for not existing extension ' + resp.exten);
+        }
+
+    } catch (error) {
+        logger.error(IDLOG, error.stack);
+    }
+}
+
+/**
+* Sets the call forward to voicemail status of the extension.
+*
+* @method setCfVmStatus
+* @param {object} err  The error object of the _cfVmGet_ command plugin.
+* @param {object} resp The response object of the _cfVmGet_ command plugin.
+* @private
+*/
+function setCfVmStatus(err, resp) {
+    try {
+        // check the error
+        if (err) { throw err; }
+
+        // check parameter
+        if (   typeof resp       !== 'object'
+            || typeof resp.exten !== 'string' || typeof resp.status !== 'string') {
+
+            throw new Error('wrong parameter');
+        }
+
+        if (extensions[resp.exten]) { // the extension exists
+
+            if (resp.status === 'on') {
+                extensions[resp.exten].setCfVm(resp.to);
+                logger.info(IDLOG, 'set extension ' + resp.exten + ' cfvm enable to ' + resp.to);
+
+            } else {
+                extensions[resp.exten].disableCfVm();
+                logger.info(IDLOG, 'set extension ' + resp.exten + ' cfvm disabled');
+            }
+
+        } else {
+            logger.warn(IDLOG, 'request cfvm for not existing extension ' + resp.exten);
         }
 
     } catch (error) {
@@ -1666,8 +1724,8 @@ function updateExtIaxDetails(err, resp) {
         extIaxDetails(resp);
 
         // emit the event
+        logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for iax extension ' + resp.exten);
         astProxy.emit(EVT_EXTEN_CHANGED, extensions[resp.exten]);
-        logger.info(IDLOG, 'emitted event ' + EVT_EXTEN_CHANGED + ' for iax extension ' + resp.exten);
 
     } catch (error) {
         logger.error(IDLOG, error.stack);
@@ -1716,8 +1774,8 @@ function updateExtSipDetails(err, resp) {
         extSipDetails(null, resp);
 
         // emit the event
+        logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for sip extension ' + resp.exten.exten);
         astProxy.emit(EVT_EXTEN_CHANGED, extensions[resp.exten.exten]);
-        logger.info(IDLOG, 'emitted event ' + EVT_EXTEN_CHANGED + ' for sip extension ' + resp.exten.exten);
 
     } catch (error) {
         logger.error(IDLOG, error.stack);
@@ -1855,8 +1913,8 @@ function updateExtenConversations(err, resp, exten) {
             }
 
             // emit the event
+            logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
             astProxy.emit(EVT_EXTEN_CHANGED, extensions[exten]);
-            logger.info(IDLOG, 'emitted event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
 
         } else {
             logger.warn(IDLOG, 'try to update channel list of the non existent extension ' + exten);
@@ -1912,8 +1970,8 @@ function updateTrunkConversations(err, resp, trunk) {
             }
 
             // emit the event
+            logger.info(IDLOG, 'emit event ' + EVT_TRUNK_CHANGED + ' for trunk ' + trunk);
             astProxy.emit(EVT_TRUNK_CHANGED, trunks[trunk]);
-            logger.info(IDLOG, 'emitted event ' + EVT_TRUNK_CHANGED + ' for trunk ' + trunk);
 
         } else {
             logger.warn(IDLOG, 'try to update channel list of the non existent trunk ' + trunk);
@@ -2013,6 +2071,7 @@ function addConversationToTrunk(trunk, resp, chid) {
 
             // creates the source and destination channels
             var ch = new Channel(resp[chid]);
+
             if (ch.isSource()) {
 
                 chSource = ch;
@@ -2030,7 +2089,7 @@ function addConversationToTrunk(trunk, resp, chid) {
                 }
             }
             // create a new conversation
-            var conv = new Conversation(trunk, chSource, chDest);
+            var conv = new TrunkConversation(trunk, chSource, chDest);
             var convid = conv.getId();
 
             // if the conversation is recording, sets its recording status
@@ -2213,8 +2272,8 @@ function evtQueueMemberPausedChanged(queueId, memberId, paused, reason) {
             logger.info(IDLOG, 'paused status of queue member "' + memberId + '" of queue "' + queueId + '" has been changed to "' + paused + '"');
 
             // emit the event
+            logger.info(IDLOG, 'emit event ' + EVT_QUEUE_MEMBER_CHANGED + ' for queue member ' + memberId + ' of queue ' + queueId);
             astProxy.emit(EVT_QUEUE_MEMBER_CHANGED, member);
-            logger.info(IDLOG, 'emitted event ' + EVT_QUEUE_MEMBER_CHANGED + ' for queue member ' + memberId + ' of queue ' + queueId);
 
         } else {
             logger.warn(IDLOG, 'received event queue member paused changed for non existent member "' + memberId + '"');
@@ -2296,8 +2355,8 @@ function evtQueueMemberRemoved(data) {
         logger.info(IDLOG, 'set the member "' + data.member + '" of queue "' + data.queueId + '" to logged off');
 
         // emit the event
+        logger.info(IDLOG, 'emit event ' + EVT_QUEUE_MEMBER_CHANGED + ' for queue member ' + data.member + ' of queue ' + data.queueId);
         astProxy.emit(EVT_QUEUE_MEMBER_CHANGED, member);
-        logger.info(IDLOG, 'emitted event ' + EVT_QUEUE_MEMBER_CHANGED + ' for queue member ' + data.member + ' of queue ' + data.queueId);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -2376,16 +2435,101 @@ function evtExtenDndChanged(exten, enabled) {
 
         if (extensions[exten]) { // the exten is an extension
 
-            // request sip details for current extension
             extensions[exten].setDnd(enabled);
             logger.info(IDLOG, 'set dnd status to ' + enabled + ' for extension ' + exten);
 
             // emit the event
+            logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
             astProxy.emit(EVT_EXTEN_CHANGED, extensions[exten]);
-            logger.info(IDLOG, 'emitted event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
 
         } else {
             logger.warn(IDLOG, 'try to set dnd status of non existent extension ' + exten);
+        }
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Updates the extension unconditional call forward status.
+*
+* @method evtExtenUnconditionalCfChanged
+* @param {string}  exten   The extension number
+* @param {boolean} enabled True if the call forward is enabled
+* @param {string}  [to]    The destination number of the call forward
+* @private
+*/
+function evtExtenUnconditionalCfChanged(exten, enabled, to) {
+    try {
+        // check parameters
+        if (typeof exten !== 'string' && typeof enabled !== 'boolean') {
+            throw new Error('wrong parameters');
+        }
+
+        if (extensions[exten]) { // the exten is an extension
+
+            if (enabled) {
+                logger.info(IDLOG, 'set cf status to ' + enabled + ' for extension ' + exten + ' to ' + to);
+                extensions[exten].setCf(to);
+
+                // disable the call forward to voicemail because the call forward set the same property in the database
+                evtExtenUnconditionalCfVmChanged(exten, false);
+
+            } else {
+                logger.info(IDLOG, 'set cf status to ' + enabled + ' for extension ' + exten);
+                extensions[exten].disableCf();
+            }
+
+            // emit the event
+            logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
+            astProxy.emit(EVT_EXTEN_CHANGED, extensions[exten]);
+
+        } else {
+            logger.warn(IDLOG, 'try to set call forward status of non existent extension ' + exten);
+        }
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Updates the extension unconditional call forward to voicemail status.
+*
+* @method evtExtenUnconditionalCfVmChanged
+* @param {string}  exten   The extension number
+* @param {boolean} enabled True if the call forward to voicemail is enabled
+* @param {string}  [vm]    The destination voicemail number of the call forward
+* @private
+*/
+function evtExtenUnconditionalCfVmChanged(exten, enabled, vm) {
+    try {
+        // check parameters
+        if (typeof exten !== 'string' && typeof enabled !== 'boolean') {
+            throw new Error('wrong parameters');
+        }
+
+        if (extensions[exten]) { // the exten is an extension
+
+            if (enabled) {
+                logger.info(IDLOG, 'set cfvm status to ' + enabled + ' for extension ' + exten + ' to voicemail ' + vm);
+                extensions[exten].setCfVm(vm);
+
+                // disable the call forward because the call forward to voicemail set the same property in the database
+                evtExtenUnconditionalCfChanged(exten, false);
+
+            } else {
+                logger.info(IDLOG, 'set cfvm status to ' + enabled + ' for extension ' + exten);
+                extensions[exten].disableCfVm();
+            }
+
+            // emit the event
+            logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
+            astProxy.emit(EVT_EXTEN_CHANGED, extensions[exten]);
+
+        } else {
+            logger.warn(IDLOG, 'try to set call forward to voicemail status of non existent extension ' + exten);
         }
 
     } catch (err) {
@@ -2431,6 +2575,82 @@ function setDnd(exten, activate, cb) {
 }
 
 /**
+* Enable/disable the unconditional call forward status of the endpoint. The used plugin command _cfSet_
+* doesn't generate any asterisk events, so simulates it.
+*
+* @method setUnconditionalCf
+* @param {string}   exten    The extension number
+* @param {boolean}  activate True if the call forward must be enabled
+* @param {string}   [to]     The destination number of the call forward to be set
+* @param {function} cb       The callback function
+*/
+function setUnconditionalCf(exten, activate, to, cb) {
+    try {
+        // check parameters
+        if (typeof exten !== 'string' && typeof activate !== 'boolean') {
+            throw new Error('wrong parameters');
+        }
+
+        if (extensions[exten]) { // the exten is an extension
+
+            // this command doesn't generate any asterisk event, so if it's successful, it simulate the event
+            astProxy.doCmd({ command: 'cfSet', exten: exten, activate: activate, val: to }, function (err, resp) {
+
+                cb(err, resp);
+                if (err === null) { evtExtenUnconditionalCfChanged(exten, activate, to); }
+            });
+
+        } else {
+            var str = 'try to set unconditional call forward status of non existent extension ' + exten;
+            logger.warn(IDLOG, str);
+            cb(str);
+        }
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Enable/disable the call forward to voicemail status of the endpoint. The used plugin command _cfVmSet_
+* doesn't generate any asterisk events, so simulates it.
+*
+* @method setUnconditionalCfVm
+* @param {string}   exten    The extension number
+* @param {boolean}  activate True if the call forward to voicemail must be enabled
+* @param {string}   [to]     The destination voicemail identifier of the call forward to be set
+* @param {function} cb       The callback function
+*/
+function setUnconditionalCfVm(exten, activate, to, cb) {
+    try {
+        // check parameters
+        if (typeof exten !== 'string' && typeof activate !== 'boolean') {
+            throw new Error('wrong parameters');
+        }
+
+        if (extensions[exten]) { // the exten is an extension
+
+            // this command doesn't generate any asterisk event, so if it's successful, it simulate the event
+            astProxy.doCmd({ command: 'cfVmSet', exten: exten, activate: activate, val: to }, function (err, resp) {
+
+                cb(err, resp);
+                if (err === null) { evtExtenUnconditionalCfVmChanged(exten, activate, to); }
+            });
+
+        } else {
+            var str = 'try to set call forward to voicemail of non existent extension ' + exten;
+            logger.warn(IDLOG, str);
+            cb(str);
+        }
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
 * New voice messages has been left. So it emits the _EVT\_NEW\_VOICEMAIL_ event.
 *
 * @method evtNewVoicemailMessage
@@ -2452,9 +2672,36 @@ function evtNewVoicemailMessage(data) {
         }
 
         // emit the event
-        astProxy.emit(EVT_NEW_VOICEMAIL, data);
-        logger.info(IDLOG, 'emitted event ' + EVT_NEW_VOICEMAIL + ' in voicemail ' + data.voicemail +
-                           ' with context ' + data.context);
+        logger.info(IDLOG, 'emit event ' + EVT_NEW_VOICE_MESSAGE + ' in voicemail ' + data.voicemail + ' with context ' + data.context);
+        astProxy.emit(EVT_NEW_VOICE_MESSAGE, data);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Something has appens in the voice messages of the voicemail, for example the listen
+* of a new voice message from the phone. So it emits the _EVT\_UPDATE\_VOICE\_MESSAGES_ event.
+*
+* @method evtUpdateVoicemailMessages
+* @param {object} data
+*  @param {string} data.context   The context of the voicemail extension
+*  @param {string} data.voicemail The voicemail identifier who received the voice message
+* @private
+*/
+function evtUpdateVoicemailMessages(data) {
+    try {
+        // check parameter
+        if (   typeof data           !== 'object'
+            && typeof data.voicemail !== 'string' && typeof data.context  !== 'string') {
+
+            throw new Error('wrong parameter');
+        }
+
+        // emit the event
+        logger.info(IDLOG, 'emit event ' + EVT_UPDATE_VOICE_MESSAGES + ' of voicemail ' + data.voicemail + ' with context ' + data.context);
+        astProxy.emit(EVT_UPDATE_VOICE_MESSAGES, data);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -2483,8 +2730,8 @@ function evtRemoveQueueWaitingCaller(data) {
         logger.info(IDLOG, 'removed queue waiting caller ' + data.channel + ' from queue ' + q);
 
         // emit the event
+        logger.info(IDLOG, 'emit event ' + EVT_QUEUE_CHANGED + ' for queue ' + q);
         astProxy.emit(EVT_QUEUE_CHANGED, queues[q]);
-        logger.info(IDLOG, 'emitted event ' + EVT_QUEUE_CHANGED + ' for queue ' + q);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -2508,9 +2755,13 @@ function evtNewQueueWaitingCaller(data) {
         queues[q].addWaitingCaller(wCaller);
         logger.info(IDLOG, 'added new queue waiting caller ' + wCaller.getNumber() + ' to queue ' + q);
 
+        // request all channels
+        logger.info(IDLOG, 'update conversations of all trunks');
+        astProxy.doCmd({ command: 'listChannels' }, updateConversationsForAllTrunk);
+
         // emit the event
+        logger.info(IDLOG, 'emit event ' + EVT_QUEUE_CHANGED + ' for queue ' + q);
         astProxy.emit(EVT_QUEUE_CHANGED, queues[q]);
-        logger.info(IDLOG, 'emitted event ' + EVT_QUEUE_CHANGED + ' for queue ' + q);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -2673,6 +2924,69 @@ function evtConversationConnected(num1, num2) {
                 updateTrunkConversations(err, resp, num2);
             });
         }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Returns the name of the audio file to record the conversation of the specified extension.
+*
+* @method getRecordFilename
+* @param  {string} exten  The extension number
+* @param  {string} convid The conversation identifier
+* @param  {object} now    A date object
+* @return {string} The name of the audio file or undefined value if it is not present.
+* @private
+*/
+function getRecordFilename(exten, convid, now) {
+    try {
+        // check the extension existence
+        if (!extensions[exten]) { return; }
+
+        // get the conversation
+        var conv = extensions[exten].getConversation(convid);
+
+        if (!conv) { return; }
+
+        var YYYYMMDD = moment(now).format('YYYYMMDD');
+        var HHmmss   = moment(now).format('HHmmss');
+        var msec     = now.getMilliseconds();
+
+        if (conv.isIncoming()) {
+            return 'exten-' + exten + '-' + conv.getCounterpartNum() + '-' + YYYYMMDD + '-' + HHmmss + '-' + msec + '.wav';
+        } else {
+            return 'exten-' + conv.getCounterpartNum() + '-' + exten + '-' + YYYYMMDD + '-' + HHmmss + '-' + msec + '.wav';
+        }
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Returns the path of the audio file to record the conversation of the specified extension.
+*
+* @method getRecordFilepath
+* @param  {string} exten  The extension number
+* @param  {string} convid The conversation identifier
+* @param  {object} now    A date object
+* @return {string} The path of the audio file or undefined value if it is not present.
+* @private
+*/
+function getRecordFilepath(exten, convid, now) {
+    try {
+        // check the extension existence
+        if (!extensions[exten]) { return; }
+
+        // get the conversation
+        var conv = extensions[exten].getConversation(convid);
+        if (!conv) { return; }
+
+        var filename = getRecordFilename(exten, convid, now);
+        var YYYYMMDD = moment(now).format('YYYY' + path.sep + 'MM' + path.sep + 'DD');
+        return YYYYMMDD + path.sep + filename;
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -3778,11 +4092,160 @@ function startSpyListenConversation(endpointType, endpointId, convid, destType, 
             });
 
         } else {
-            logger.warn(IDLOG, 'spy listen conversation of ' + endpointType + ' ' + endpointId + ' from ' + destType + ' ' + destId);
-            cb();
+            var str = 'spy listen conversation of ' + endpointType + ' ' + endpointId + ' from ' + destType + ' ' + destId;
+            logger.warn(IDLOG, str);
+            cb(str);
         }
     } catch (err) {
-        cb();
+        cb(err);
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Mute the recording of the conversation.
+*
+* @method muteRecordConversation
+* @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
+* @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
+* @param {string}   convid       The conversation identifier
+* @param {function} cb           The callback function
+*/
+function muteRecordConversation(endpointType, endpointId, convid, cb) {
+    try {
+        // check parameters
+        if (   typeof convid       !== 'string'
+            || typeof cb           !== 'function'
+            || typeof endpointId   !== 'string'
+            || typeof endpointType !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // check the endpoint existence
+        if (endpointType === 'extension' && extensions[endpointId]) {
+
+            // get the channel to record
+            var ch = getExtenSourceChannelConversation(endpointId, convid);
+
+            // check if the conversation is already recording
+            if (recordingConv[convid] === undefined) {
+                logger.info(IDLOG, 'the conversation ' + convid + ' is not recording, so it can not be mute');
+                cb();
+
+            } else if (ch) {
+
+                var chid = ch.getChannel(); // the channel identifier
+
+                // start the recording
+                logger.info(IDLOG, 'mute the recording of convid "' + convid + '" of extension "' + endpointId + '" with channel ' + chid);
+                astProxy.doCmd({ command: 'muteRecordCall', channel: chid }, function (err) {
+                    try {
+                        if (err) {
+                            logger.error(IDLOG, 'muting recording of convid "' + convid + '" of extension "' + endpointId + '" with channel ' + chid);
+                            cb(err);
+                            return;
+                        }
+                        logger.info(IDLOG, 'mute the recording of convid "' + convid + '" of extension "' + endpointId + '" with channel ' + chid + ' has been successfully');
+
+                        // set the recording status mute of all conversations with specified convid
+                        setRecordStatusMuteConversations(convid);
+                        cb();
+
+                    } catch (e) {
+                       logger.error(IDLOG, e.stack);
+                       cb(e);
+                    }
+                });
+
+            } else {
+                var str = 'no channel to mute record of conversation ' + convid + ' of exten ' + endpointId;
+                logger.warn(IDLOG, str);
+                cb(str);
+            }
+
+        } else {
+            var str = 'try to mute the record conversation for the non existent endpoint ' + endpointType;
+            logger.warn(IDLOG, str);
+            cb(str);
+        }
+
+    } catch (err) {
+        cb(err);
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Unmute the recording of the conversation.
+*
+* @method unmuteRecordConversation
+* @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
+* @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
+* @param {string}   convid       The conversation identifier
+* @param {function} cb           The callback function
+*/
+function unmuteRecordConversation(endpointType, endpointId, convid, cb) {
+    try {
+        // check parameters
+        if (   typeof convid       !== 'string'
+            || typeof cb           !== 'function'
+            || typeof endpointId   !== 'string'
+            || typeof endpointType !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // check the endpoint existence
+        if (endpointType === 'extension' && extensions[endpointId]) {
+
+            // get the channel to record
+            var ch = getExtenSourceChannelConversation(endpointId, convid);
+
+            // check if the conversation is already recording
+            if (recordingConv[convid] === undefined) {
+                logger.info(IDLOG, 'the conversation ' + convid + ' is not recording, so it can not be unmute');
+                cb();
+
+            } else if (ch) {
+
+                var chid = ch.getChannel(); // the channel identifier
+
+                // start the recording
+                logger.info(IDLOG, 'unmute the recording of convid "' + convid + '" of extension "' + endpointId + '" with channel ' + chid);
+                astProxy.doCmd({ command: 'unmuteRecordCall', channel: chid }, function (err) {
+                    try {
+                        if (err) {
+                            logger.error(IDLOG, 'unmuting recording of convid "' + convid + '" of extension "' + endpointId + '" with channel ' + chid);
+                            cb(err);
+                            return;
+                        }
+                        logger.info(IDLOG, 'unmuting the recording of convid "' + convid + '" of extension "' + endpointId + '" with channel ' + chid + ' has been successfully');
+
+                        // set the recording status of all conversations with specified convid
+                        setRecordStatusConversations(convid, true);
+                        cb();
+
+                    } catch (e) {
+                       logger.error(IDLOG, e.stack);
+                       cb(e);
+                    }
+                });
+
+            } else {
+                var str = 'no channel to unmute record of conversation ' + convid + ' of exten ' + endpointId;
+                logger.warn(IDLOG, str);
+                cb(str);
+            }
+
+        } else {
+            var str = 'try to unmute the record conversation for the non existent endpoint ' + endpointType;
+            logger.warn(IDLOG, str);
+            cb(str);
+        }
+
+    } catch (err) {
+        cb(err);
         logger.error(IDLOG, err.stack);
     }
 }
@@ -3810,8 +4273,12 @@ function startRecordConversation(endpointType, endpointId, convid, cb) {
         // check the endpoint existence
         if (endpointType === 'extension' && extensions[endpointId]) {
 
-            // get the channel to hangup
+            // get the channel to record
             var ch = getExtenSourceChannelConversation(endpointId, convid);
+            // get the name of the audio file
+            var now = new Date();
+            var filename = getRecordFilename(endpointId, convid, now);
+            var filepath = getRecordFilepath(endpointId, convid, now);
 
             // check if the conversation is already recording
             if (recordingConv[convid] !== undefined) {
@@ -3822,11 +4289,116 @@ function startRecordConversation(endpointType, endpointId, convid, cb) {
 
                 var chid = ch.getChannel(); // the channel identifier
 
-                // start the recording
-                logger.info(IDLOG, 'execute the record of the channel ' + chid + ' of exten ' + endpointId + ' by DMTF tones');
-                sendDTMFSequenceToChannel(chid, '*1', function (err) {
-                    cb(err);
-                    startRecordCallCb(err, convid);
+                logger.info(IDLOG, 'set asterisk variables to record the convid "' + convid + '" of extension "' + endpointId + '"');
+                // set some asterisk variables to fill the "recordingfile" field of the
+                // asteriskcdrdb.cdr database table and then record the conversation
+                async.series([
+
+                    // set the asterisk variables
+                    function(callback) {
+
+                        logger.info(IDLOG, 'set "MASTER_CHANNEL(ONETOUCH_REC)" asterisk variable');
+                        astProxy.doCmd({ command: 'setVariable', name: 'MASTER_CHANNEL(ONETOUCH_REC)', value: 'RECORDING', channel: chid }, function (err) {
+                            try {
+                                if (err) { callback(err); }
+                                else     { callback();    }
+
+                            } catch (e) {
+                               logger.error(IDLOG, e.stack);
+                               callback(e);
+                            }
+                        });
+                    },
+
+                    function(callback) {
+
+                        logger.info(IDLOG, 'set "MASTER_CHANNEL(REC_STATUS)" asterisk variable');
+                        astProxy.doCmd({ command: 'setVariable', name: 'MASTER_CHANNEL(REC_STATUS)', value: 'RECORDING', channel: chid }, function (err) {
+                            try {
+                                if (err) { callback(err); }
+                                else     { callback();    }
+
+                            } catch (e) {
+                               logger.error(IDLOG, e.stack);
+                               callback(e);
+                            }
+                        });
+                    },
+
+                    function(callback) {
+
+                        logger.info(IDLOG, 'set "AUDIOHOOK_INHERIT(MixMonitor)" asterisk variable');
+                        astProxy.doCmd({ command: 'setVariable', name: 'AUDIOHOOK_INHERIT(MixMonitor)', value: 'yes', channel: chid }, function (err) {
+                            try {
+                                if (err) { callback(err); }
+                                else     { callback();    }
+
+                            } catch (e) {
+                               logger.error(IDLOG, e.stack);
+                               callback(e);
+                            }
+                        });
+                    },
+
+                    function(callback) {
+
+                        logger.info(IDLOG, 'set "MASTER_CHANNEL(CDR(recordingfile))" asterisk variable with filename "' + filename + '"');
+                        astProxy.doCmd({ command: 'setVariable', name: 'MASTER_CHANNEL(CDR(recordingfile))', value: filename, channel: chid }, function (err) {
+                            try {
+                                if (err) { callback(err); }
+                                else     { callback();    }
+
+                            } catch (e) {
+                               logger.error(IDLOG, e.stack);
+                               callback(e);
+                            }
+                        });
+                    },
+
+                    function(callback) {
+
+                        logger.info(IDLOG, 'set "MASTER_CHANNEL(CDR(recordingfile))" asterisk variable');
+                        astProxy.doCmd({ command: 'setVariable', name: 'MASTER_CHANNEL(ONETOUCH_RECFILE)', value: filename, channel: chid }, function (err) {
+                            try {
+                                if (err) { callback(err); }
+                                else     { callback();    }
+
+                            } catch (e) {
+                               logger.error(IDLOG, e.stack);
+                               callback();
+                            }
+                        });
+                    }
+
+                ], function (err) {
+
+                    if (err) {
+                        logger.error(IDLOG, 'setting asterisk variables to record the convid "' + convid + '" of extension "' + endpointId + '"');
+                        return;
+                    }
+
+                    logger.info(IDLOG, 'asterisk variables to record the convid "' + convid + '" of extension "' + endpointId + '" has been set');
+
+                    // start the recording
+                    logger.info(IDLOG, 'record the convid "' + convid + '" of extension "' + endpointId + '"');
+                    astProxy.doCmd({ command: 'recordCall', channel: chid, filepath: filepath }, function (err) {
+                        try {
+                            if (err) {
+                                logger.error(IDLOG, 'recording the convid "' + convid + '" of extension "' + endpointId + '"');
+                                cb(err);
+                                return;
+                            }
+                            logger.info(IDLOG, 'record the convid "' + convid + '" of extension "' + endpointId + '" has been successfully started in ' + filepath);
+
+                            // set the recording status of the conversation
+                            startRecordCallCb(convid);
+                            cb();
+
+                        } catch (e) {
+                           logger.error(IDLOG, e.stack);
+                           cb(e);
+                        }
+                    });
                 });
 
             } else {
@@ -3875,27 +4447,19 @@ function stopRecordCallCb(err, convid) {
 }
 
 /**
-* This is the callback of the record call command plugin.
 * Sets the recording status of the conversations.
 *
 * @method startRecordCallCb
-* @param {object} err    The error object of the operation
 * @param {string} convid The conversation identifier
 * @private
 */
-function startRecordCallCb(err, convid) {
+function startRecordCallCb(convid) {
     try {
-        if (err) {
-            logger.error(IDLOG, 'record convid ' + convid + ' failed: ' + err.toString());
+        // set the recording status of the conversation to memory
+        recordingConv[convid] = '';
+        // set the recording status of all conversations with specified convid
+        setRecordStatusConversations(convid, true);
 
-        } else {
-            logger.info(IDLOG, 'record convid ' + convid + ' started succesfully');
-
-            // set the recording status of the conversation to memory
-            recordingConv[convid] = '';
-            // set the recording status of all conversations with specified convid
-            setRecordStatusConversations(convid, true);
-        }
     } catch (error) {
        logger.error(IDLOG, error.stack);
     }
@@ -3931,8 +4495,48 @@ function setRecordStatusConversations(convid, value) {
                         logger.info(IDLOG, 'set recording status ' + value + ' to conversation ' + convid);
 
                         // emit the event
+                        logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
                         astProxy.emit(EVT_EXTEN_CHANGED, extensions[exten]);
-                        logger.info(IDLOG, 'emitted event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
+                    }
+                }
+            }
+        }
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the recording status mute of all the conversations with the specified convid.
+*
+* @method setRecordStatusMuteConversations
+* @param {string} convid The conversation identifier
+* @private
+*/
+function setRecordStatusMuteConversations(convid) {
+    try {
+        // check parameter
+        if (typeof convid !== 'string') { throw new Error('wrong parameter'); }
+
+        // set the recording status mute of all the conversations with the specified convid
+        var exten, convs, cid;
+        for (exten in extensions) { // cycle in all extensions
+
+            // get all the conversations of the current extension
+            convs = extensions[exten].getAllConversations();
+            if (convs) {
+
+                // cycle in all conversations
+                for (cid in convs) {
+                    // if the current conversation identifier is the
+                    // same of that specified, set its recording status to mute
+                    if (cid === convid) {
+                        convs[convid].setRecordingMute();
+                        logger.info(IDLOG, 'set recording status "mute" to conversation ' + convid);
+
+                        // emit the event
+                        logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
+                        astProxy.emit(EVT_EXTEN_CHANGED, extensions[exten]);
                     }
                 }
             }
@@ -3966,7 +4570,7 @@ function sendDTMFSequence(extension, sequence, cb) {
         // check if the extension exists
         if (!extensions[extension]) {
             logger.warn(IDLOG, 'sending DTMF sequence to non existing extension ' + extension);
-            cb(extension + ' not exists');
+            cb(extension + ' doesn\'t exist');
             return;
         }
 
@@ -4217,14 +4821,16 @@ exports.EVT_EXTEN_CHANGED               = EVT_EXTEN_CHANGED;
 exports.EVT_TRUNK_CHANGED               = EVT_TRUNK_CHANGED;
 exports.EVT_EXTEN_DIALING               = EVT_EXTEN_DIALING;
 exports.EVT_QUEUE_CHANGED               = EVT_QUEUE_CHANGED;
-exports.EVT_NEW_VOICEMAIL               = EVT_NEW_VOICEMAIL;
+exports.setUnconditionalCf              = setUnconditionalCf;
 exports.hangupConversation              = hangupConversation;
 exports.evtNewExternalCall              = evtNewExternalCall;
 exports.pickupConversation              = pickupConversation;
 exports.evtExtenDndChanged              = evtExtenDndChanged;
 exports.evtQueueMemberAdded             = evtQueueMemberAdded;
 exports.EVT_PARKING_CHANGED             = EVT_PARKING_CHANGED;
+exports.setUnconditionalCfVm            = setUnconditionalCfVm;
 exports.redirectConversation            = redirectConversation;
+exports.EVT_NEW_VOICE_MESSAGE           = EVT_NEW_VOICE_MESSAGE;
 exports.evtQueueMemberRemoved           = evtQueueMemberRemoved;
 exports.redirectWaitingCaller           = redirectWaitingCaller;
 exports.evtHangupConversation           = evtHangupConversation;
@@ -4233,16 +4839,21 @@ exports.evtNewVoicemailMessage          = evtNewVoicemailMessage;
 exports.stopRecordConversation          = stopRecordConversation;
 exports.evtConversationDialing          = evtConversationDialing;
 exports.evtSpyStartConversation         = evtSpyStartConversation;
+exports.muteRecordConversation          = muteRecordConversation;
 exports.startRecordConversation         = startRecordConversation;
 exports.getBaseCallRecAudioPath         = getBaseCallRecAudioPath;
 exports.queueMemberPauseUnpause         = queueMemberPauseUnpause;
 exports.EVT_QUEUE_MEMBER_CHANGED        = EVT_QUEUE_MEMBER_CHANGED;
 exports.evtNewQueueWaitingCaller        = evtNewQueueWaitingCaller;
 exports.evtConversationConnected        = evtConversationConnected;
+exports.unmuteRecordConversation        = unmuteRecordConversation;
+exports.EVT_UPDATE_VOICE_MESSAGES       = EVT_UPDATE_VOICE_MESSAGES;
 exports.startSpySpeakConversation       = startSpySpeakConversation;
 exports.startSpyListenConversation      = startSpyListenConversation;
+exports.evtUpdateVoicemailMessages      = evtUpdateVoicemailMessages;
 exports.evtQueueMemberPausedChanged     = evtQueueMemberPausedChanged;
 exports.evtRemoveQueueWaitingCaller     = evtRemoveQueueWaitingCaller;
 exports.attendedTransferConversation    = attendedTransferConversation;
 exports.getExtensionsFromConversation   = getExtensionsFromConversation;
+exports.evtExtenUnconditionalCfChanged  = evtExtenUnconditionalCfChanged;
 exports.transferConversationToVoicemail = transferConversationToVoicemail;

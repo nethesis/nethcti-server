@@ -5,6 +5,7 @@
 * @main controller_user
 */
 var endpointTypes     = require('./endpoint_types');
+var EndpointEmail     = require('./endpointEmail').EndpointEmail;
 var EndpointJabber    = require('./endpointJabber').EndpointJabber;
 var EndpointNethcti   = require('./endpointNethcti').EndpointNethcti;
 var EndpointCalendar  = require('./endpointCalendar').EndpointCalendar;
@@ -212,7 +213,8 @@ exports.User = function (uname, na, sur) {
 
         // create new endpoint object
         var newEndpoint;
-        if      (type === endpointTypes.TYPES.jabber)    { newEndpoint = new EndpointJabber(id);    }
+        if      (type === endpointTypes.TYPES.email)     { newEndpoint = new EndpointEmail(id);     }
+        else if (type === endpointTypes.TYPES.jabber)    { newEndpoint = new EndpointJabber(id);    }
         else if (type === endpointTypes.TYPES.nethcti)   { newEndpoint = new EndpointNethcti(id);   }
         else if (type === endpointTypes.TYPES.calendar)  { newEndpoint = new EndpointCalendar(id);  }
         else if (type === endpointTypes.TYPES.extension) { newEndpoint = new EndpointExtension(id); }
@@ -260,7 +262,7 @@ exports.User = function (uname, na, sur) {
     * @param {string} type The type of the authorization
     * @return {object} The authorization requested. The key is the passed type
     *                  and the value is the authorization or an undefined if it
-    *                  doesn't exists.
+    *                  doesn't exist.
     */
     function getAuthorization(type) {
         // check parameter

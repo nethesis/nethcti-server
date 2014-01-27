@@ -110,7 +110,7 @@ function config(path) {
 
         // check file presence
         if (!fs.existsSync(path)) {
-            logger.info(IDLOG, path + ' doesn\'t exists: use default values "' + address  + '" "' + port + '" from "' + sender + '"');
+            logger.warn(IDLOG, path + ' doesn\'t exist: use default values "' + address  + '" "' + port + '" from "' + sender + '"');
             return;
         }
 
@@ -122,7 +122,8 @@ function config(path) {
             || typeof json.port    !== 'string' || json.port    === ''
             || typeof json.address !== 'string' || json.address === '') {
 
-            throw new Error('wrong configuration file ' + path);
+            logger.warn(IDLOG, 'wrong configuration file ' + path);
+            return;
         }
 
         port    = json.port;

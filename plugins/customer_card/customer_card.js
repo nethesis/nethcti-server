@@ -41,6 +41,18 @@ var IDLOG = '[customer_card]';
 var DEFAULT_TEMPLATES_DIR = 'templates/locales/it';
 
 /**
+* The default file extension of the customer cards templates.
+*
+* @property TEMPLATE_EXTENSION
+* @type string
+* @private
+* @final
+* @readOnly
+* @default ".ejs"
+*/
+var TEMPLATE_EXTENSION = '.ejs';
+
+/**
 * The directory path of the custom templates used by the customer card component. All
 * templates in this path are more priority than the default ones.
 *
@@ -77,15 +89,6 @@ var dbconn;
 * @private
 */
 var compAuthorization;
-
-/**
-* The HTTP proxy architect component.
-*
-* @property compHttpProxy
-* @type object
-* @private
-*/
-var compHttpProxy;
 
 /**
 * All the ejs templates used for the customer cards. The keys are the name of the
@@ -168,11 +171,6 @@ function getCustomerCardByNum(ccName, num, cb) {
                     cb(err1);
                     return;
                 }
-                var proxyUrl = compHttpProxy.getUrl();
-
-                results.forEach(function (el) {
-                    el.server_address = proxyUrl;
-                });
 
                 var template = ejsTemplates[ccName].content;
                 var render   = ejs.render(template, { results: results });
@@ -204,21 +202,6 @@ function setCompAuthorization(ca) {
     try {
         compAuthorization = ca;
         logger.info(IDLOG, 'set authorization architect component');
-    } catch (err) {
-       logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Sets the HTTP proxy architect component used by customer card functions.
-*
-* @method setCompHttpProxy
-* @param {object} comp The HTTP proxy architect component.
-*/
-function setCompHttpProxy(comp) {
-    try {
-        compHttpProxy = comp;
-        logger.info(IDLOG, 'set HTTP proxy architect component');
     } catch (err) {
        logger.error(IDLOG, err.stack);
     }
@@ -340,7 +323,11 @@ function initEjsTemplates() {
 
             filename = customFilenames[i];
             filepath = path.join(customTemplatesPath, filename);
-            filesToRead[filename] = filepath;
+
+            // add file to read only if the file extension is correct
+            if (path.extname(filepath) === TEMPLATE_EXTENSION) {
+                filesToRead[filename] = filepath;
+            }
         }
 
         // read the content of all the ejs templates
@@ -432,12 +419,15 @@ function config(path) {
         var json = require(path);
 
         // check the configuration file
-        if (typeof json !== 'object' || typeof json.custom_templates_customercards !== 'string') {
+        if (   typeof json      !== 'object'
+            || typeof json.rest !== 'object' || typeof json.rest.customer_card !== 'object'
+            || typeof json.rest.customer_card.custom_templates_customercards   !== 'string') {
+
             logger.error('wrong configuration file ' + path);
             return;
         }
 
-        customTemplatesPath = json.custom_templates_customercards;
+        customTemplatesPath = json.rest.customer_card.custom_templates_customercards;
         logger.info(IDLOG, 'end configuration by file ' + path);
 
     } catch (err) {
@@ -450,7 +440,6 @@ exports.start                = start;
 exports.config               = config;
 exports.setLogger            = setLogger;
 exports.setDbconn            = setDbconn;
-exports.setCompHttpProxy     = setCompHttpProxy;
 exports.getAllCustomerCards  = getAllCustomerCards;
 exports.getCustomerCardByNum = getCustomerCardByNum;
 exports.setCompAuthorization = setCompAuthorization;

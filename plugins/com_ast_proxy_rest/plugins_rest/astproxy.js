@@ -209,8 +209,10 @@ var compConfigManager;
         * 1. [`astproxy/txfer_tovm`](#txfer_tovmpost)
         * 1. [`astproxy/pickup_conv`](#pickup_convpost)
         * 1. [`astproxy/stop_record`](#stop_recordpost)
+        * 1. [`astproxy/mute_record`](#mute_recordpost)
         * 1. [`astproxy/start_record`](#start_recordpost)
         * 1. [`astproxy/blindtransfer`](#blindtransferpost)
+        * 1. [`astproxy/unmute_record`](#unmute_recordpost)
         * 1. [`astproxy/pickup_parking`](#pickup_parkingpost)
         * 1. [`astproxy/inout_dyn_queues`](#inout_dyn_queuespost)
         * 1. [`astproxy/queuemember_pause`](#queuemember_pausepost)
@@ -394,13 +396,14 @@ var compConfigManager;
         * must contains the following parameters:
         *
         * * `convid:       the conversation identifier`
+        * * `username:     the username that has the endpointId that has the conversation to transfer`
         * * `endpointId:   the endpoint identifier of the user who has the conversation to transfer`
         * * `endpointType: the type of the endpoint of the user who has the conversation to transfer`
         * * `voicemailId:  the voicemail identifier to transfer the conversation. It's assumed that the destination type is the same of the endpoint type`
         *
         * E.g. object parameters:
         *
-        *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "221", "voicemailId": "214" }
+        *     { "username": "user", "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "221", "voicemailId": "214" }
         *
         * ---
         *
@@ -448,6 +451,20 @@ var compConfigManager;
         *
         * ---
         *
+        * ### <a id="mute_recordpost">**`astproxy/mute_record`**</a>
+        *
+        * Mute the recording of the specified conversation. The request must contains the following parameters:
+        *
+        * * `convid: the conversation identifier`
+        * * `endpointId: the endpoint identifier that has the conversation to record`
+        * * `endpointType: the type of the endpoint that has the conversation to record`
+        *
+        * E.g. object parameters:
+        *
+        *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "214" }
+        *
+        * ---
+        *
         * ### <a id="pickup_parkingpost">**`astproxy/pickup_parking`**</a>
         *
         * Pickup the specified parking. The request must contains the following parameters:
@@ -459,6 +476,20 @@ var compConfigManager;
         * E.g. object parameters:
         *
         *     { "parking": "70", "destType": "extension", "destId": "214" }
+        *
+        * ---
+        *
+        * ### <a id="unmute_recordpost">**`astproxy/unmute_record`**</a>
+        *
+        * Unmute the recording of the specified conversation. The request must contains the following parameters:
+        *
+        * * `convid: the conversation identifier`
+        * * `endpointId: the endpoint identifier that has the conversation to record`
+        * * `endpointType: the type of the endpoint that has the conversation to record`
+        *
+        * E.g. object parameters:
+        *
+        *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "214" }
         *
         * ---
         *
@@ -608,8 +639,10 @@ var compConfigManager;
                 *   @param {string} txfer_tovm            Transfer the conversation to the voicemail
                 *   @param {string} pickup_conv           Pickup a conversation
                 *   @param {string} stop_record           Stop the recording of a conversation
+                *   @param {string} mute_record           Mute the recording of a conversation
                 *   @param {string} start_record          Start the recording of a conversation
                 *   @param {string} blindtransfer         Transfer a conversation with blind type
+                *   @param {string} unmute_record         Unmute the recording of a conversation
                 *   @param {string} pickup_parking        Pickup a parked call
                 *   @param {string} inout_dyn_queues      Alternates the logon and logout of the extension in all the queues for which it's a dynamic member
                 *   @param {string} queuemember_pause     Pause the specified extension from receive calls from the queue
@@ -631,8 +664,10 @@ var compConfigManager;
                     'txfer_tovm',
                     'pickup_conv',
                     'stop_record',
+                    'mute_record',
                     'start_record',
                     'blindtransfer',
+                    'unmute_record',
                     'pickup_parking',
                     'inout_dyn_queues',
                     'queuemember_pause',
@@ -1683,7 +1718,7 @@ var compConfigManager;
                     var username = req.headers.authorization_user;
 
                     // check parameters
-                    if (   typeof req.params            !== 'object'
+                    if (   typeof req.params            !== 'object' || typeof req.params.username     !== 'string'
                         || typeof req.params.convid     !== 'string' || typeof req.params.voicemailId  !== 'string'
                         || typeof req.params.endpointId !== 'string' || typeof req.params.endpointType !== 'string') {
 
@@ -1693,33 +1728,33 @@ var compConfigManager;
 
                     if (req.params.endpointType === 'extension') {
 
-                        // check if the endpoint of the request is owned by the user: the user can
-                        // transfer only his own conversations
-                        if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+                        // all the users can redirect any calls to the destination voicemail associated with the specified endpointId
+                        // req.params.username is the username that has the endpoint extension that has the conversation to transfer
 
-                            logger.warn(IDLOG, 'transfer convid "' + req.params.convid + '" to voicemail "' + req.params.voicemailId + '" by user "' + username +
-                                               '" has been failed: ' + ' the ' + req.params.endpointType + ' ' + req.params.endpointId +
-                                               ' isn\'t owned by the user');
+                        // check if the endpoint of the request is owned by the username that has the conversation to transfer
+                        if (compAuthorization.verifyUserEndpointExten(req.params.username, req.params.endpointId) === false) {
+
+                            logger.warn(IDLOG, 'transfer convid "' + req.params.convid + '" of exten "' + req.params.endpointId + '" of user "' + req.params.username + '" to voicemail "' +
+                                               req.params.voicemailId + '" by user "' + username + '" has been failed: the ' + req.params.endpointId + ' isn\'t owned by user "' + req.params.username + '"');
                             compUtil.net.sendHttp403(IDLOG, res);
                             return;
 
                         } else {
-                            logger.info(IDLOG, 'transfer convid "' + req.params.convid + '" to voicemail "' + req.params.voicemailId + '": the endpoint ' + req.params.endpointType +
-                                               ' ' + req.params.endpointId + ' is owned by "' + username + '"');
+                            logger.info(IDLOG, 'transfer convid "' + req.params.convid + '" of exten "' + req.params.endpointId + '" of user "' + req.params.username + '" to voicemail "' +
+                                               req.params.voicemailId + '" by user "' + username + '": the ' + req.params.endpointId + ' is owned by user "' + req.params.username + '"');
                         }
 
-                        // check if the voicemail of the request is owned by the user: the user can
-                        // transfer only to his voicemails
-                        if (compAuthorization.verifyUserEndpointVoicemail(username, req.params.voicemailId) === false) {
+                        // check if the voicemail of the request is owned by the user
+                        if (compAuthorization.verifyUserEndpointVoicemail(req.params.username, req.params.voicemailId) === false) {
 
-                            logger.warn(IDLOG, 'transfer convid "' + req.params.convid + '" to voicemail "' + req.params.voicemailId + '" by user "' + username +
-                                               '" has been failed: ' + ' the voicemail ' + req.params.voicemailId + ' isn\'t owned by the user');
+                            logger.warn(IDLOG, 'transfer convid "' + req.params.convid + '" of exten "' + req.params.endpointId + '" of user "' + req.params.username + '" to voicemail "' +
+                                               req.params.voicemailId + '" by user "' + username + '" has been failed: the voicemail ' + req.params.voicemailId + ' isn\'t owned by the user "' + req.params.username + '"');
                             compUtil.net.sendHttp403(IDLOG, res);
                             return;
 
                         } else {
-                            logger.info(IDLOG, 'transfer convid "' + req.params.convid + '" to voicemail "' + req.params.voicemailId + '": the voicemail ' +
-                                               ' ' + req.params.voicemailId + ' is owned by "' + username + '"');
+                            logger.info(IDLOG, 'transfer convid "' + req.params.convid + '" of exten "' + req.params.endpointId + '" of user "' + req.params.username + '" to voicemail "' +
+                                               req.params.voicemailId + '": by user "' + username + '" the voicemail ' + req.params.voicemailId + ' is owned by user "' + req.params.username + '"');
                         }
 
                         compAstProxy.transferConversationToVoicemail(
@@ -1977,6 +2012,156 @@ var compConfigManager;
 
                     } else {
                         logger.warn(IDLOG, 'starting record of convid ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType);
+                        compUtil.net.sendHttp400(IDLOG, res);
+                    }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * Mute the record of the specified conversation with the following REST API:
+            *
+            *     POST mute_record
+            *
+            * @method mute_record
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            mute_record: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (   typeof req.params              !== 'object' || typeof req.params.convid     !== 'string'
+                        || typeof req.params.endpointType !== 'string' || typeof req.params.endpointId !== 'string') {
+
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    if (req.params.endpointType === 'extension') {
+
+                        // check if the user has the authorization to record all the conversations
+                        if (compAuthorization.authorizeAdminRecordingUser(username) === true) {
+
+                            logger.info(IDLOG, 'mute recording convid ' + req.params.convid + ': admin recording authorization successful for user "' + username + '"');
+                        }
+                        // check if the user has the authorization to record his own conversations
+                        else if (compAuthorization.authorizeRecordingUser(username) !== true) {
+
+                            logger.warn(IDLOG, 'mute recording convid ' + req.params.convid + ': recording authorization failed for user "' + username + '"');
+                            compUtil.net.sendHttp403(IDLOG, res);
+                            return;
+                        }
+                        // check if the destination endpoint is owned by the user
+                        else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+
+                            logger.warn(IDLOG, 'muting record convid ' + req.params.convid + ' by user "' + username + '" has been failed: ' +
+                                               ' the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' is not owned by the user');
+                            compUtil.net.sendHttp403(IDLOG, res);
+                            return;
+
+                        } else {
+                            logger.info(IDLOG, 'muting record convid ' + req.params.convid + ': the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' is owned by "' + username + '"');
+                        }
+
+                        compAstProxy.muteRecordConversation(req.params.endpointType, req.params.endpointId, req.params.convid, function (err) {
+                            try {
+                                if (err) {
+                                    logger.warn(IDLOG, 'muting record convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId + ' has been failed');
+                                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                                    return;
+                                }
+                                logger.info(IDLOG, 'mute record convid ' + req.params.convid + ' has been successful by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId);
+                                compUtil.net.sendHttp200(IDLOG, res);
+
+                            } catch (err) {
+                                logger.error(IDLOG, err.stack);
+                                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                            }
+                        });
+
+                    } else {
+                        logger.warn(IDLOG, 'muting record of convid ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType);
+                        compUtil.net.sendHttp400(IDLOG, res);
+                    }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * Unmute the record of the specified conversation with the following REST API:
+            *
+            *     POST unmute_record
+            *
+            * @method unmute_record
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            unmute_record: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (   typeof req.params              !== 'object' || typeof req.params.convid     !== 'string'
+                        || typeof req.params.endpointType !== 'string' || typeof req.params.endpointId !== 'string') {
+
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    if (req.params.endpointType === 'extension') {
+
+                        // check if the user has the authorization to record all the conversations
+                        if (compAuthorization.authorizeAdminRecordingUser(username) === true) {
+
+                            logger.info(IDLOG, 'unmute recording convid ' + req.params.convid + ': admin recording authorization successful for user "' + username + '"');
+                        }
+                        // check if the user has the authorization to record his own conversations
+                        else if (compAuthorization.authorizeRecordingUser(username) !== true) {
+
+                            logger.warn(IDLOG, 'unmute recording convid ' + req.params.convid + ': recording authorization failed for user "' + username + '"');
+                            compUtil.net.sendHttp403(IDLOG, res);
+                            return;
+                        }
+                        // check if the destination endpoint is owned by the user
+                        else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+
+                            logger.warn(IDLOG, 'unmuting record convid ' + req.params.convid + ' by user "' + username + '" has been failed: ' +
+                                               ' the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' is not owned by the user');
+                            compUtil.net.sendHttp403(IDLOG, res);
+                            return;
+
+                        } else {
+                            logger.info(IDLOG, 'unmuting record convid ' + req.params.convid + ': the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' is owned by "' + username + '"');
+                        }
+
+                        compAstProxy.unmuteRecordConversation(req.params.endpointType, req.params.endpointId, req.params.convid, function (err) {
+                            try {
+                                if (err) {
+                                    logger.warn(IDLOG, 'unmuting record convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId + ' has been failed');
+                                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                                    return;
+                                }
+                                logger.info(IDLOG, 'unmuting record convid ' + req.params.convid + ' has been successful by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId);
+                                compUtil.net.sendHttp200(IDLOG, res);
+
+                            } catch (err) {
+                                logger.error(IDLOG, err.stack);
+                                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                            }
+                        });
+
+                    } else {
+                        logger.warn(IDLOG, 'unmuting record of convid ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType);
                         compUtil.net.sendHttp400(IDLOG, res);
                     }
 
@@ -2314,8 +2499,10 @@ var compConfigManager;
         exports.pickup_conv           = astproxy.pickup_conv;
         exports.stop_record           = astproxy.stop_record;
         exports.setCompUser           = setCompUser;
+        exports.mute_record           = astproxy.mute_record;
         exports.start_record          = astproxy.start_record;
         exports.blindtransfer         = astproxy.blindtransfer;
+        exports.unmute_record         = astproxy.unmute_record;
         exports.pickup_parking        = astproxy.pickup_parking;
         exports.setCompOperator       = setCompOperator;
         exports.setCompAstProxy       = setCompAstProxy;
@@ -2519,7 +2706,6 @@ function dndset(req, res, next) {
 
         compAstProxy.setDnd(endpoint, activate, function (err) {
             try {
-
                 if (err) {
                     logger.error(IDLOG, 'setting dnd for extension ' + endpoint + ' of user "' + username + '"');
                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -3112,11 +3298,11 @@ function cfvmSetUnconditional(endpoint, username, activate, to, res) {
 
         // when "activate" is false, "to" can be undefined if the client hasn't specified it.
         // This is not important because in this case, the asterisk command plugin doesn't use "val" value
-        compAstProxy.doCmd({ command: 'cfVmSet', exten: endpoint, activate: activate, val: to }, function (err, resp) {
+        compAstProxy.setUnconditionalCfVm(endpoint, activate, to, function (err1, resp) {
 
-            if (err) {
+            if (err1) {
                 logger.error(IDLOG, 'setting unconditional cfvm for extension ' + endpoint + ' of user "' + username + '"');
-                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                compUtil.net.sendHttp500(IDLOG, res, err1.toString());
                 return;
             }
 
@@ -3305,21 +3491,27 @@ function cfcallSetUnconditional(endpoint, username, activate, to, res) {
 
         // when "activate" is false, "to" can be undefined if the client hasn't specified it.
         // This is not important because in this case, the asterisk command plugin doesn't use "val" value
-        compAstProxy.doCmd({ command: 'cfSet', exten: endpoint, activate: activate, val: to }, function (err, resp) {
+        compAstProxy.setUnconditionalCf(endpoint, activate, to, function (err1, resp) {
+            try {
+                if (err1) {
+                    logger.error(IDLOG, 'setting unconditional cfcall for extension ' + endpoint + ' of user "' + username + '"');
+                    compUtil.net.sendHttp500(IDLOG, res, err1.toString());
+                    return;
+                }
 
-            if (err) {
-                logger.error(IDLOG, 'setting unconditional cfcall for extension ' + endpoint + ' of user "' + username + '"');
-                compUtil.net.sendHttp500(IDLOG, res, err.toString());
-                return;
-            }
+                if (activate) {
+                    logger.info(IDLOG, 'unconditional cfcall "on" to ' + to + ' for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
+                } else {
+                    logger.info(IDLOG, 'unconditional cfcall "off" for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
+                }
+                compUtil.net.sendHttp200(IDLOG, res);
 
-            if (activate) {
-                logger.info(IDLOG, 'unconditional cfcall "on" to ' + to + ' for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
-            } else {
-                logger.info(IDLOG, 'unconditional cfcall "off" for extension ' + endpoint + ' of user "' + username + '" has been set successfully');
+            } catch (err2) {
+                logger.error(IDLOG, err2.stack);
+                compUtil.net.sendHttp500(IDLOG, res, err2.toString());
             }
-            compUtil.net.sendHttp200(IDLOG, res);
         });
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
         compUtil.net.sendHttp500(IDLOG, res, err.toString());

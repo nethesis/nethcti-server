@@ -87,7 +87,10 @@ function config(path) {
         if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
 
         // check file presence
-        if (!fs.existsSync(path)) { throw new Error(path + ' doesn\'t exists'); }
+        if (!fs.existsSync(path)) {
+            logger.warn(IDLOG, path + ' doesn\'t exist');
+            return;
+        }
 
         // read groups part from the JSON file
         var json = require(path).groups;

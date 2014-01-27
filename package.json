@@ -11,7 +11,7 @@
 	"jsplugs":      "0.1.0",
         "winston":      "0.6.2",
 	"iniparser":    "1.0.5",
-        "sequelize":    "2.0.0-beta.0",
+        "sequelize":    "2.0.0-dev1",
         "mysql":        "2.0.0-alpha9",
 	"architect":    "0.1.10",
 	"socket.io":    "0.9.13",

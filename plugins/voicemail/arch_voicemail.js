@@ -76,11 +76,18 @@ module.exports = function (options, imports, register) {
             getVmIdFromDbId: voicemail.getVmIdFromDbId,
 
             /**
-            * It's the _EVT\_NEW\_VOICEMAIL_ property provided by _voicemail_ module.
+            * It's the _EVT\_NEW\_VOICE\_MESSAGE_ property provided by _voicemail_ module.
             *
-            * @method EVT_NEW_VOICEMAIL
+            * @method EVT_NEW_VOICE_MESSAGE
             */
-            EVT_NEW_VOICEMAIL: voicemail.EVT_NEW_VOICEMAIL
+            EVT_NEW_VOICE_MESSAGE: voicemail.EVT_NEW_VOICE_MESSAGE,
+
+            /**
+            * It's the _EVT\_UPDATE\_NEW\_VOICE\_MESSAGES_ property provided by _voicemail_ module.
+            *
+            * @method EVT_UPDATE_NEW_VOICE_MESSAGES
+            */
+            EVT_UPDATE_NEW_VOICE_MESSAGES: voicemail.EVT_UPDATE_NEW_VOICE_MESSAGES
         }
     });
 

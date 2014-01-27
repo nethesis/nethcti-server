@@ -6,8 +6,8 @@
         "consumes": [
             "user",
             "logger",
+            "postit",
             "astProxy",
-            "operator",
             "voicemail",
             "authorization",
             "authentication"

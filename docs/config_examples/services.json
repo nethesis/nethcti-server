@@ -1,11 +1,17 @@
 {
+    "tcp": {
+        "port": "8182",
+        "proto": "http"
+    },
     "websocket": {
-        "port":    "8181"
+        "port":       "8181",
+        "proto":      "wss",
+        "https_key":  "/etc/pki/tls/private/localhost.key",
+        "https_cert": "/etc/pki/tls/certs/localhost.crt"
     },
     "http_proxy": {
         "port":       "8180",
-        "proto":      "http",
-        "hostname":   "HOSTNAME",
+        "proto":      "https",
         "https_key":  "KEY PATH",
         "https_cert": "CRT PATH",
         "router": {
@@ -32,6 +38,9 @@
             "127.0.0.1/all_histcallernote": "http://127.0.0.1:10005/all_histcallernote"
         }
     },
+    "notification_manager": {
+        "custom_templates_notifications": "/home/e-smith/nethcti/templates/notification_manager"
+    },
     "rest": {
         "postit": {
             "port":    "10004",
@@ -47,7 +56,8 @@
         },
         "customer_card": {
             "port":    "10003",
-            "address": "localhost"
+            "address": "localhost",
+            "custom_templates_customercards": "/home/e-smith/nethcti/templates/customer_card"
         },
         "phonebook": {
             "port":    "10001",
@@ -84,7 +94,8 @@
         },
         "static": {
             "port": "10013",
-            "address": "localhost"
+            "address": "localhost",
+            "webroot": "/home/e-smith/nethcti/static"
         }
     }
 }

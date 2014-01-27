@@ -52,8 +52,7 @@ module.exports = function (options, imports, register) {
         var dbconn = imports.dbconn;
 
         customerCard.setLogger(logger);
-        customerCard.config('/etc/nethcti/nethcti.json');
-        customerCard.setCompHttpProxy(imports.httpProxy);
+        customerCard.config('/etc/nethcti/services.json');
         customerCard.setCompAuthorization(imports.authorization);
         customerCard.setDbconn(dbconn);
         customerCard.start();

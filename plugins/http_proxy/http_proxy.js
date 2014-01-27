@@ -75,16 +75,6 @@ var port = '8282';
 */
 var proto = 'http';
 
-
-/**
-* Listening URL of the HTTPS proxy server. It is set by the _config_ method.
-*
-* @property listenUrl
-* @type string
-* @private
-*/
-var listenUrl;
-
 /**
 * The routing of the HTTPS proxy. It's initialized by the _config_ method.
 * It must be customized in the configuration file.
@@ -158,7 +148,7 @@ function config(path) {
     if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
 
     // check file presence
-    if (!fs.existsSync(path)) { throw new Error(path + ' not exists'); }
+    if (!fs.existsSync(path)) { throw new Error(path + ' doesn\'t exist'); }
 
     // read configuration file
     var json = require(path).http_proxy;
@@ -203,13 +193,6 @@ function config(path) {
         logger.warn(IDLOG, 'no HTTPS certificate specified in JSON file ' + path);
     }
 
-    // initialize the listen url of the proxy
-    if (json.hostname && json.port && json.proto) {
-        listenUrl = json.proto + '://' + json.hostname + ':' +  json.port;
-
-    } else {
-        logger.warn(IDLOG, 'building "listenUrl" of https proxy: "hostname" or "proto" or "port" not specified in JSON file ' + path);
-    }
     logger.info(IDLOG, 'configuration by file ' + path + ' ended');
 }
 
@@ -247,7 +230,7 @@ function start() {
             };
         }
         var server = httpProxy.createServer(options, proxyRequest).listen(port);
-        logger.info(IDLOG, proto.toUpperCase() + ' proxy listening on port ' + port);
+        logger.warn(IDLOG, proto.toUpperCase() + ' proxy listening on port ' + port);
 
         // called when some error occurs in the proxy
         server.proxy.on('proxyError', function (err, req, res) {
@@ -343,21 +326,6 @@ function proxyRequest(req, res, proxy) {
 }
 
 /**
-* Returns the url of the proxy.
-*
-* @method getUrl
-* @return {string} The url of the proxy.
-*/
-function getUrl() {
-    try {
-        return listenUrl;
-
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
 * Sets the utility architect component.
 *
 * @method setCompUtil
@@ -374,7 +342,6 @@ function setCompUtil(comp) {
 
 // public interface
 exports.start                 = start;
-exports.getUrl                = getUrl;
 exports.config                = config;
 exports.setLogger             = setLogger;
 exports.setCompUtil           = setCompUtil;

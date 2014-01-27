@@ -42,7 +42,7 @@ exports.EndpointJabber = function (identifier) {
     * Returns the JSON representation of the object.
     *
     *     {
-    *         id: "alessandro.polidori@gmai.com"
+    *         id: "some.user@nethcti.com"
     *     }
     *
     * @method toJSON
