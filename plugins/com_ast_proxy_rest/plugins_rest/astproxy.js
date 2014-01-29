@@ -107,6 +107,9 @@ var compConfigManager;
         * 1. [`astproxy/opgroups`](#opgroupsget)
         * 1. [`astproxy/parkings`](#parkingsget)
         * 1. [`astproxy/extensions`](#extensionsget)
+        * 1. [`astproxy/queues_stats/:day`](#queues_statsget)
+        * 1. [`astproxy/queues_qos/:day`](#queues_qosget)
+        * 1. [`astproxy/agents_qos/:day`](#agents_qosget)
         *
         * ---
         *
@@ -170,6 +173,24 @@ var compConfigManager;
         * ### <a id="extensionset">**`astproxy/extensions`**</a>
         *
         * Gets all the extensions with all their status informations.
+        *
+        * ---
+        *
+        * ### <a id="queues_statsget">**`astproxy/queues_stats/:day`**</a>
+        *
+        * Gets extended statistics about queues. The day must be expressed in YYYYMMDD format.
+        *
+        * ---
+        *
+        * ### <a id="queues_qosget">**`astproxy/queues_qos/:day`**</a>
+        *
+        * Gets QOS info about queues. The day must be expressed in YYYYMMDD format.
+        *
+        * ---
+        *
+        * ### <a id="agents_qosget">**`astproxy/agents_qos/:day`**</a>
+        *
+        * Gets QOS info about agents. The day must be expressed in YYYYMMDD format.
         *
         * <br>
         *
@@ -576,6 +597,9 @@ var compConfigManager;
                 *   @param {string} opgroups               Gets all the user groups of the operator panel
                 *   @param {string} parkings               Gets all the parkings with all their status informations
                 *   @param {string} extensions             Gets all the extensions with all their status informations
+                *   @param {string} queues_stats/:day      Gets extended statistics about queues
+                *   @param {string} queues_qos/:day        Gets QOS info about queues
+                *   @param {string} agents_qos/:day        Gets QOS info about agents
                 *   @param {string} cw/:endpoint           Gets the call waiting status of the endpoint of the user
                 *   @param {string} dnd/:endpoint          Gets the don't disturb status of the endpoint of the user
                 *   @param {string} cfvm/:type/:endpoint   Gets the call forward status to voicemail of the endpoint of the user
@@ -587,6 +611,9 @@ var compConfigManager;
                     'opgroups',
                     'parkings',
                     'extensions',
+                    'queues_stats/:day',
+                    'queues_qos/:day',
+                    'agents_qos/:day',
                     'cw/:endpoint',
                     'dnd/:endpoint',
                     'cfvm/:type/:endpoint',
@@ -861,6 +888,153 @@ var compConfigManager;
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            *  Gets extended statistics about queues with the following REST API:
+            *
+            *     GET  queues_stats
+            *
+            * @method queues_stats
+            * @param {object}   req  The client request.
+            * @param {object}   res  The client response.
+            * @param {function} next Function to run the next handler in the chain.
+            */
+            queues_stats: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+                    var day      = req.params.day;
+
+                    // check if the user has the administration operator panel queues authorization
+                    if (compAuthorization.authorizeOpAdminQueuesUser(username) === true) {
+
+                        logger.info(IDLOG, 'requesting queues statistics: user "' + username + '" has the "admin_queues" authorization');
+                    }
+                    // otherwise check if the user has the operator panel queues authorization
+                    else if (compAuthorization.authorizeOpQueuesUser(username) !== true) {
+
+                        logger.warn(IDLOG, 'requesting queues statistics: authorization failed for user "' + username + '"');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+
+                    // check if the user has the privacy enabled
+
+                    compAstProxy.getJSONQueuesStats(day, function (err1, stats) {
+                        try {
+                            if (err1) { throw err1; }
+
+                            logger.info(IDLOG, 'sent all queues statistics of ' + day + ' in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
+                            res.send(200, stats);
+
+                        } catch (err) {
+                            logger.error(IDLOG, err.stack);
+                            compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                        }
+                    });
+
+                } catch (error) {
+                    logger.error(IDLOG, error.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, error.toString());
+                }
+            },
+
+            /**
+            *  Gets QOS info about queues with the following REST API:
+            *
+            *     GET  queues_qos
+            *
+            * @method queues_qos
+            * @param {object}   req  The client request.
+            * @param {object}   res  The client response.
+            * @param {function} next Function to run the next handler in the chain.
+            */
+            queues_qos: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+                    var day      = req.params.day;
+
+                    // check if the user has the administration operator panel queues authorization
+                    if (compAuthorization.authorizeOpAdminQueuesUser(username) === true) {
+
+                        logger.info(IDLOG, 'requesting queues QOS info: user "' + username + '" has the "admin_queues" authorization');
+                    }
+                    // otherwise check if the user has the operator panel queues authorization
+                    else if (compAuthorization.authorizeOpQueuesUser(username) !== true) {
+
+                        logger.warn(IDLOG, 'requesting queues QOS info: authorization failed for user "' + username + '"');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+
+                    // check if the user has the privacy enabled
+
+                    compAstProxy.getJSONQueuesQOS(day, function (err1, qosinfo) {
+                        try {
+                            if (err1) { throw err1; }
+
+                            logger.info(IDLOG, 'sent all queues QOS info of ' + day + ' in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
+                            res.send(200, qosinfo);
+
+                        } catch (err) {
+                            logger.error(IDLOG, err.stack);
+                            compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                        }
+                    });
+
+                } catch (error) {
+                    logger.error(IDLOG, error.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, error.toString());
+                }
+            },
+
+            /**
+            *  Gets QOS info about agents with the following REST API:
+            *
+            *     GET  agents_qos
+            *
+            * @method agents_qos
+            * @param {object}   req  The client request.
+            * @param {object}   res  The client response.
+            * @param {function} next Function to run the next handler in the chain.
+            */
+            agents_qos: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+                    var day      = req.params.day;
+
+                    // check if the user has the administration operator panel queues authorization
+                    if (compAuthorization.authorizeOpAdminQueuesUser(username) === true) {
+
+                        logger.info(IDLOG, 'requesting queues QOS info: user "' + username + '" has the "admin_queues" authorization');
+                    }
+                    // otherwise check if the user has the operator panel queues authorization
+                    else if (compAuthorization.authorizeOpQueuesUser(username) !== true) {
+
+                        logger.warn(IDLOG, 'requesting queues QOS info: authorization failed for user "' + username + '"');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+
+                    // check if the user has the privacy enabled
+
+                    compAstProxy.getJSONAgentsStats(day, function (err1, agstats) {
+                        try {
+                            if (err1) { throw err1; }
+
+                            logger.info(IDLOG, 'sent all queues agent stats of ' + day + ' in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
+                            res.send(200, agstats);
+
+                        } catch (err) {
+                            logger.error(IDLOG, err.stack);
+                            compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                        }
+                    });
+
+                } catch (error) {
+                    logger.error(IDLOG, error.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, error.toString());
                 }
             },
 
@@ -2338,6 +2512,9 @@ var compConfigManager;
         exports.setLogger             = setLogger;
         exports.txfer_tovm            = astproxy.txfer_tovm;
         exports.extensions            = astproxy.extensions;
+        exports.queues_stats          = astproxy.queues_stats;
+        exports.queues_qos            = astproxy.queues_qos;
+        exports.agents_qos            = astproxy.agents_qos;
         exports.setPrivacy            = setPrivacy;
         exports.setCompUtil           = setCompUtil;
         exports.pickup_conv           = astproxy.pickup_conv;

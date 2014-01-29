@@ -1298,6 +1298,81 @@ function updateQueueMemberLastPauseData(memberName, memberId, queueId) {
 }
 
 /**
+* Return the JSON representation of extended queue statistics.
+*
+* @method getJSONQueuesStats
+* @param  {string}   day      The day expressed in YYYYMMDD format
+* @param  {function} callback The callback function
+* @return {object}   The JSON representation of extended queue statistics.
+*/
+function getJSONQueuesStats(day, callback) {
+    try {
+        // check parameters
+        if (typeof day !== 'string' || typeof callback !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        compDbconn.getQueuesStats(day, function (err1, result) {
+            callback(err1, result);
+        });
+
+    } catch (error) {
+        logger.error(IDLOG, error.stack);
+        callback(error);
+    }
+}
+
+/**
+* Return the JSON representation of queues QOS.
+*
+* @method getJSONQueuesQOS
+* @param  {string}   day      The day expressed in YYYYMMDD format
+* @param  {function} callback The callback function
+* @return {object}   The JSON representation of queues QOS.
+*/
+function getJSONQueuesQOS(day, callback) {
+    try {
+        // check parameters
+        if (typeof day !== 'string' || typeof callback !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        compDbconn.getQueuesQOS(day, function (err1, result) {
+            callback(err1, result);
+        });
+
+    } catch (error) {
+        logger.error(IDLOG, error.stack);
+        callback(error);
+    }
+}
+
+/**
+* Return the JSON representation of agent stats.
+*
+* @method getJSONAgentsStats
+* @param  {string}   day      The day expressed in YYYYMMDD format
+* @param  {function} callback The callback function
+* @return {object}   The JSON representation of agent stats.
+*/
+function getJSONAgentsStats(day, callback) {
+    try {
+        // check parameters
+        if (typeof day !== 'string' || typeof callback !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        compDbconn.getAgentsStats(day, function (err1, result) {
+            callback(err1, result);
+        });
+
+    } catch (error) {
+        logger.error(IDLOG, error.stack);
+        callback(error);
+    }
+}
+
+/**
 * Returns the JSON representation of all queues.
 *
 * @method getJSONQueues
@@ -4730,6 +4805,9 @@ exports.setCompDbconn                   = setCompDbconn;
 exports.getExtensions                   = getExtensions;
 exports.pickupParking                   = pickupParking;
 exports.getJSONQueues                   = getJSONQueues;
+exports.getJSONQueuesStats              = getJSONQueuesStats;
+exports.getJSONQueuesQOS                = getJSONQueuesQOS;
+exports.getJSONAgentsStats              = getJSONAgentsStats;
 exports.getJSONTrunks                   = getJSONTrunks;
 exports.inoutDynQueues                  = inoutDynQueues;
 exports.getJSONParkings                 = getJSONParkings;
