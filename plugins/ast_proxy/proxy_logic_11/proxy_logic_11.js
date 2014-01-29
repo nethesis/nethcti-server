@@ -1863,6 +1863,7 @@ function updateConversationsForAllTrunk(err, resp) {
                 addConversationToTrunk(trunk, resp, chid);
             }
         }
+
     } catch (error) {
         logger.error(IDLOG, error.stack);
     }
@@ -2088,6 +2089,7 @@ function addConversationToTrunk(trunk, resp, chid) {
                     chSource = new Channel(resp[chBridged]);
                 }
             }
+
             // create a new conversation
             var conv = new TrunkConversation(trunk, chSource, chDest);
             var convid = conv.getId();
@@ -2101,6 +2103,10 @@ function addConversationToTrunk(trunk, resp, chid) {
             // add the created conversation to the trunk
             trunks[trunk].addConversation(conv);
             logger.info(IDLOG, 'the conversation ' + convid + ' has been added to trunk ' + trunk);
+
+            // emit the event
+            logger.info(IDLOG, 'emit event ' + EVT_TRUNK_CHANGED + ' for trunk ' + trunk);
+            astProxy.emit(EVT_TRUNK_CHANGED, trunks[trunk]);
 
         } else {
             logger.warn(IDLOG, 'try to add new conversation to a non existent trunk ' + trunk);
@@ -2853,17 +2859,17 @@ function evtConversationDialing(data) {
                 if (extensions[data.chSourceExten]) { updateExtenConversations(err, resp, data.chSourceExten); }
                 if (extensions[data.chDestExten])   { updateExtenConversations(err, resp, data.chDestExten);   }
 
-                // update the conversations of the trunks
-                if (trunks[data.chSourceExten]) { updateTrunkConversations(err, resp, data.chSourceExten); }
-                if (trunks[data.chDestExten])   { updateTrunkConversations(err, resp, data.chDestExten);   }
+                // update conversations of all trunks
+                logger.info(IDLOG, 'update conversations of all trunks');
+                updateConversationsForAllTrunk(err, resp);
 
-            } catch (err) {
-                logger.error(IDLOG, err.stack);
+            } catch (err1) {
+                logger.error(IDLOG, err1.stack);
             }
         });
 
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
+    } catch (error) {
+        logger.error(IDLOG, error.stack);
     }
 }
 

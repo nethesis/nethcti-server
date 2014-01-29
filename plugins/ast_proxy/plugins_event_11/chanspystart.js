@@ -60,9 +60,7 @@ var astProxy;
 
                         logger.info(IDLOG, 'received event ' + data.event);
 
-                        // get the 
-                        var spierId = data.spyerchannel.split('-')[0];
-                        spierId = spierId.split('/')[1];
+                        var spierId = data.spyerchannel.substring(0, data.spyerchannel.lastIndexOf('-')).split('/')[1];
 
                         if (spierId !== undefined) {
 

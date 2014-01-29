@@ -58,8 +58,8 @@ var astProxy;
                         && data.bridgestate === 'Link'
                         && data.event       === 'Bridge') {
 
-                        var channelExten1 = data.channel1.split('-')[0].split('/')[1];
-                        var channelExten2 = data.channel2.split('-')[0].split('/')[1];
+                        var channelExten1 = data.channel1.substring(0, data.channel1.lastIndexOf('-')).split('/')[1];
+                        var channelExten2 = data.channel2.substring(0, data.channel2.lastIndexOf('-')).split('/')[1];
 
                         logger.info(IDLOG, 'received event ' + data.event);
                         astProxy.proxyLogic.evtConversationConnected(channelExten1, channelExten2);

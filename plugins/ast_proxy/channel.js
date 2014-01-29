@@ -130,8 +130,8 @@ exports.Channel = function (obj) {
 
     } else {
 
-        var numChannel        = parseInt(channel.split('-')[1], 16);
-        var numBridgedChannel = parseInt(bridgedChannel.split('-')[1], 16);
+        var numChannel        = parseInt(channel.split('-').pop(), 16);
+        var numBridgedChannel = parseInt(bridgedChannel.split('-').pop(), 16);
 
         if (numChannel < numBridgedChannel) {
             type = TYPE.SOURCE;
@@ -250,7 +250,7 @@ exports.Channel = function (obj) {
     * @return {boolean} True if the channel is of the specified extension identifier
     */
     function isExtension(exten) {
-        if (channel.split('-')[0].split('/')[1] === exten) {
+        if (channel.substring(0, channel.lastIndexOf('-')).split('/')[1] === exten) {
             return true;
         } else {
             return false;

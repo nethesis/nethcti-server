@@ -118,7 +118,11 @@ var CAUSE = {
                         && data.calleridnum && data.channel
                         && data.cause       && data.event === 'Hangup') {
 
-                        var channelExten = data.channel.split('-')[0].split('/')[1];
+                        // extract the extension name from the channel
+                        // e.g. data.channel can be "SIP/614-00000070" or "SIP/Eutelia-07211835565-00000045"
+                        // the first example concerns an extension and its name is "614"
+                        // the second example concerns a trunk and its name is "Eutelia-07211835565"
+                        var channelExten = data.channel.substring(0, data.channel.lastIndexOf('-')).split('/')[1];
 
                         logger.info(IDLOG, 'received event ' + data.event);
                         astProxy.proxyLogic.evtHangupConversation({

@@ -58,8 +58,12 @@ var astProxy;
                         && data.destination  && data.connectedlinenum
                         && data.calleridname && data.event === 'Dial') {
 
-                        var chDestExten   = data.destination.split('/')[1].split('-')[0];
-                        var chSourceExten = data.channel.split('/')[1].split('-')[0];
+                        // extract the extension name from the channels
+                        // e.g. data.destination and data.channel can be "SIP/614-00000070" or "SIP/Eutelia-07211835565-00000045"
+                        // the first example concerns an extension and its name is "614"
+                        // the second example concerns a trunk and its name is "Eutelia-07211835565"
+                        var chDestExten   = data.destination.substring(0, data.destination.lastIndexOf('-')).split('/')[1];
+                        var chSourceExten = data.channel.substring(0, data.channel.lastIndexOf('-')).split('/')[1];
 
                         logger.info(IDLOG, 'received event ' + data.event);
                         astProxy.proxyLogic.evtConversationDialing({
