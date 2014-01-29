@@ -1,5 +1,5 @@
 Name:		nethcti-server
-Version:	1.9.18
+Version:	1.9.19
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI 2
 
@@ -70,6 +70,11 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Wed Jan 29 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 1.9.19-1
+- Manage trunks to display them in the client #2335
+- Adapt "recording" property of extension conversations to manage also "mute" status #2630
+- Supply agents/queues stats #2475
+
 * Tue Jan 21 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 1.9.18-1
 - Beta2 release
 - Automatic ldap reconnection #2498
