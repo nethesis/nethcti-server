@@ -3538,11 +3538,10 @@ function forceHangupConversation(endpointType, endpointId, convid, cb) {
         // check the endpoint existence
         if (endpointType === 'extension' && extensions[endpointId]) {
 
-            var convs      = extensions[endpointId].getAllConversations();
-            var conv       = convs[convid];
-            var chSource   = conv.getSourceChannel();
-            var callerNum  = chSource.getCallerNum();
-            var bridgedNum = chSource.getBridgedNum();
+            var convs    = extensions[endpointId].getAllConversations();
+            var conv     = convs[convid];
+            var chSource = conv.getSourceChannel();
+            var chDest   = conv.getDestinationChannel();
 
             // force hangup is realized with a redirection to a non existent destination.
             var chToHangup;
