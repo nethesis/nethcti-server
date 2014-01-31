@@ -211,6 +211,7 @@ var compConfigManager;
         * 1. [`astproxy/stop_record`](#stop_recordpost)
         * 1. [`astproxy/mute_record`](#mute_recordpost)
         * 1. [`astproxy/start_record`](#start_recordpost)
+        * 1. [`astproxy/force_hangup`](#force_hanguppost)
         * 1. [`astproxy/blindtransfer`](#blindtransferpost)
         * 1. [`astproxy/unmute_record`](#unmute_recordpost)
         * 1. [`astproxy/pickup_parking`](#pickup_parkingpost)
@@ -451,6 +452,20 @@ var compConfigManager;
         *
         * ---
         *
+        * ### <a id="force_hanguppost">**`astproxy/force_hangup`**</a>
+        *
+        * Force hangup of a conversation redirecting it to a non existent destination. The request must contains the following parameters:
+        *
+        * * `convid: the conversation identifier`
+        * * `endpointId: the endpoint identifier that has the conversation to record`
+        * * `endpointType: the type of the endpoint that has the conversation to record`
+        *
+        * E.g. object parameters:
+        *
+        *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "214" }
+        *
+        * ---
+        *
         * ### <a id="mute_recordpost">**`astproxy/mute_record`**</a>
         *
         * Mute the recording of the specified conversation. The request must contains the following parameters:
@@ -641,6 +656,7 @@ var compConfigManager;
                 *   @param {string} stop_record           Stop the recording of a conversation
                 *   @param {string} mute_record           Mute the recording of a conversation
                 *   @param {string} start_record          Start the recording of a conversation
+                *   @param {string} force_hangup          Force hangup of a conversation
                 *   @param {string} blindtransfer         Transfer a conversation with blind type
                 *   @param {string} unmute_record         Unmute the recording of a conversation
                 *   @param {string} pickup_parking        Pickup a parked call
@@ -666,6 +682,7 @@ var compConfigManager;
                     'stop_record',
                     'mute_record',
                     'start_record',
+                    'force_hangup',
                     'blindtransfer',
                     'unmute_record',
                     'pickup_parking',
@@ -2043,6 +2060,81 @@ var compConfigManager;
             },
 
             /**
+            * Force hangup of the specified conversation with the following REST API:
+            *
+            *     POST force_hangup
+            *
+            * @method force_hangup
+            * @param {object}   req  The client request.
+            * @param {object}   res  The client response.
+            * @param {function} next Function to run the next handler in the chain.
+            */
+            force_hangup: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (   typeof req.params              !== 'object' || typeof req.params.convid     !== 'string'
+                        || typeof req.params.endpointType !== 'string' || typeof req.params.endpointId !== 'string') {
+
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    if (req.params.endpointType === 'extension') {
+
+                        // check if the user has the authorization to hangup every calls
+                        if (compAuthorization.authorizeAdminHangupUser(username) === true) {
+
+                            logger.log(IDLOG, 'force hangup convid "' + req.params.convid + '": authorization admin hangup successful for user "' + username + '"');
+                        }
+                        // check if the endpoint of the request is owned by the user
+                        else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) !== true) {
+
+                            logger.warn(IDLOG, 'force hangup convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
+                                               ' the ' + req.params.endpointType + ' ' + req.params.endpointId + ' isn\'t owned by the user');
+                            compUtil.net.sendHttp403(IDLOG, res);
+                            return;
+
+                        } else {
+                            logger.info(IDLOG, 'force hangup convid "' + req.params.convid + '": the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' is owned by "' + username + '"');
+                        }
+
+                        compAstProxy.forceHangupConversation(
+                            req.params.endpointType,
+                            req.params.endpointId,
+                            req.params.convid,
+                            function (err) {
+                                try {
+                                    if (err) {
+                                        logger.warn(IDLOG, 'force hangup convid "' + req.params.convid + '" by user "' + username + '" with ' +
+                                                           req.params.endpointType + ' ' + req.params.endpointId + ' has been failed');
+                                        compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                                        return;
+                                    }
+                                    logger.info(IDLOG, 'convid ' + req.params.convid + ' has been forced hangup successfully by user "' +
+                                                       username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId);
+                                    compUtil.net.sendHttp200(IDLOG, res);
+
+                                } catch (err) {
+                                    logger.error(IDLOG, err.stack);
+                                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                                }
+                            }
+                        );
+
+                    } else {
+                        logger.warn(IDLOG, 'forcing hangup of convid ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType);
+                        compUtil.net.sendHttp400(IDLOG, res);
+                    }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
             * Mute the record of the specified conversation with the following REST API:
             *
             *     POST mute_record
@@ -2522,6 +2614,7 @@ var compConfigManager;
         exports.setCompUser           = setCompUser;
         exports.mute_record           = astproxy.mute_record;
         exports.start_record          = astproxy.start_record;
+        exports.force_hangup          = astproxy.force_hangup;
         exports.blindtransfer         = astproxy.blindtransfer;
         exports.unmute_record         = astproxy.unmute_record;
         exports.pickup_parking        = astproxy.pickup_parking;

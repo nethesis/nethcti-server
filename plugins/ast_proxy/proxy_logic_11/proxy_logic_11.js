@@ -3518,6 +3518,70 @@ function redirectConversation(endpointType, endpointId, convid, to, cb) {
 }
 
 /**
+* Force hangup of the conversation.
+*
+* @method forceHangupConversation
+* @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
+* @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
+* @param {string}   convid       The conversation identifier
+* @param {function} cb           The callback function
+*/
+function forceHangupConversation(endpointType, endpointId, convid, cb) {
+    try {
+        // check parameters
+        if (   typeof convid     !== 'string' || typeof cb           !== 'function'
+            || typeof endpointId !== 'string' || typeof endpointType !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // check the endpoint existence
+        if (endpointType === 'extension' && extensions[endpointId]) {
+
+            var convs      = extensions[endpointId].getAllConversations();
+            var conv       = convs[convid];
+            var chSource   = conv.getSourceChannel();
+            var callerNum  = chSource.getCallerNum();
+            var bridgedNum = chSource.getBridgedNum();
+
+            // force hangup is realized with a redirection to a non existent destination.
+            var chToHangup;
+            if (chSource) {
+                chToHangup = endpointId === chSource.getCallerNum() ? chSource.getChannel() : chSource.getBridgedChannel();
+            } else {
+                chToHangup = endpointId === chDest.getCallerNum() ? chDest.getChannel() : chDest.getBridgedChannel();
+            }
+
+            if (chToHangup !== undefined) {
+
+                var to = 'xyzw';
+
+                // redirect the channel to a non existent destination to force the hangup
+                logger.info(IDLOG, 'force hangup of the channel ' + chToHangup + ' of exten ' + endpointId + ' to non existent destination ' + to);
+                astProxy.doCmd({ command: 'redirectChannel', chToRedirect: chToHangup, to: to }, function (err) {
+                    cb(err);
+                    if (err) { logger.error(IDLOG, 'force hangup channel failed: ' + err.toString()); }
+                    else     { logger.info(IDLOG, 'force hangup channel succesfully'); }
+                });
+
+            } else {
+                var msg = 'getting the channel to force hangup ' + chToHangup;
+                logger.error(IDLOG, msg);
+                cb(msg);
+            }
+
+        } else {
+            var msg = 'force hangup conversation: unknown endpointType ' + endpointType + ' or extension ' + endpointId + ' not present';
+            logger.warn(IDLOG, msg);
+            cb(msg);
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
 * Redirect the waiting caller from the queue to the specified destination.
 *
 * @method redirectWaitingCaller
@@ -4844,8 +4908,9 @@ exports.evtExtenStatusChanged           = evtExtenStatusChanged;
 exports.evtNewVoicemailMessage          = evtNewVoicemailMessage;
 exports.stopRecordConversation          = stopRecordConversation;
 exports.evtConversationDialing          = evtConversationDialing;
-exports.evtSpyStartConversation         = evtSpyStartConversation;
 exports.muteRecordConversation          = muteRecordConversation;
+exports.forceHangupConversation         = forceHangupConversation;
+exports.evtSpyStartConversation         = evtSpyStartConversation;
 exports.startRecordConversation         = startRecordConversation;
 exports.getBaseCallRecAudioPath         = getBaseCallRecAudioPath;
 exports.queueMemberPauseUnpause         = queueMemberPauseUnpause;

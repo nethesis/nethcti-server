@@ -84,6 +84,13 @@ module.exports = function (options, imports, register) {
             hangupConversation: astProxy.proxyLogic.hangupConversation,
 
             /**
+            * It's the _forceHangupConversation_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method forceHangupConversation
+            */
+            forceHangupConversation: astProxy.proxyLogic.forceHangupConversation,
+
+            /**
             * It's the _startRecordConversation_ method provided by _ast\_proxy.proxyLogic_.
             *
             * @method startRecordConversation
