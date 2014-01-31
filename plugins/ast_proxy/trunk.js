@@ -4,12 +4,13 @@
 * **It can throw exceptions.**
 *
 * @class Trunk
-* @param {string} ext The trunk identifier
-* @param {string} chType The channel type, e.g. sip, iax
+* @param {string} ext     The trunk identifier
+* @param {string} chType  The channel type, e.g. sip, iax
+* @param {string} [maxCh] Maximum number of channels supported by the trunk
 * @constructor
 * @return {object} The trunk object.
 */
-exports.Trunk = function (ext, chType) {
+exports.Trunk = function (ext, chType, maxCh) {
     // check the parameters
     if (!ext || !chType || typeof ext !== 'string' || typeof chType !== 'string') {
 
@@ -82,6 +83,15 @@ exports.Trunk = function (ext, chType) {
     * @private
     */
     var status;
+
+    /**
+    * Maximum number of channels supported by the trunk.
+    *
+    * @property maxChannels
+    * @type {number}
+    * @private
+    */
+    var maxChannels = maxCh ? parseInt(maxCh) : 4;
 
     /**
     * The user conversations. The key is the conversation identifier
@@ -274,6 +284,7 @@ exports.Trunk = function (ext, chType) {
     *         name:         "2001",
     *         exten:        "200",
     *         status:       "online",                       // the status can be: "busy", "online", "offline"
+    *         maxChannels:  4,                              // maximum number of channels supported by the trunk
     *         sipuseragent: "Patton SN4638 5BIS",
     *         conversations: { Conversation.toJSON(), ... } // the keys is the conversation identifiers
     *     }
@@ -296,6 +307,7 @@ exports.Trunk = function (ext, chType) {
             exten:         exten,
             status:        status,
             chanType:      chanType,
+            maxChannels:   maxChannels,
             sipuseragent:  sipuseragent,
             conversations: jsonConvs
         }

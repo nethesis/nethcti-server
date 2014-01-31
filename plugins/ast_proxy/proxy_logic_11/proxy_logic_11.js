@@ -1504,7 +1504,7 @@ function initializeSipTrunk() {
             if (struct[k].type    === INI_STRUCT.TYPE.TRUNK
                 && struct[k].tech === INI_STRUCT.TECH.SIP) { // all sip trunks
 
-                trunk = new Trunk(struct[k].extension, struct[k].tech);
+                trunk = new Trunk(struct[k].extension, struct[k].tech, struct[k].max_channels);
                 trunks[trunk.getExten()] = trunk;
 
                 // request sip details for current trunk
