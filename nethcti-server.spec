@@ -1,5 +1,5 @@
 Name:		nethcti-server
-Version:	1.9.19
+Version:	1.9.20
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI 2
 
@@ -70,6 +70,10 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Fri Jan 31 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 1.9.20-1
+- Release for neth-oppanel beta3 version
+- New REST api astproxy/force_hangup #2671
+
 * Wed Jan 29 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 1.9.19-1
 - Manage trunks to display them in the client #2335
 - Adapt "recording" property of extension conversations to manage also "mute" status #2630
