@@ -535,6 +535,55 @@ function sipTrunkStructValidation(err, resp) {
 }
 
 /**
+* Validates all iax trunks of the structure ini file and
+* initialize iax _Trunk_ objects.
+*
+* @method iaxTrunkStructValidation
+* @param {object} err  The error received from the command
+* @param {array}  resp The response received from the command
+* @private
+*/
+function iaxTrunkStructValidation(err, resp) {
+    try {
+        if (err) {
+            logger.error(IDLOG, 'validating iax trunk structure: ' + err.toString());
+            return;
+        }
+
+        // creates temporary object used to rapid check the
+        // existence of a trunk into the asterisk
+        var iaxlist = {};
+        var i;
+        for (i = 0; i < resp.length; i++) { iaxlist[resp[i].exten] = ''; }
+
+        // cycles in all elements of the structure ini file to validate
+        var k;
+        for (k in struct) {
+
+            // validates all iax trunks
+            if (struct[k].tech    === INI_STRUCT.TECH.IAX
+                && struct[k].type === INI_STRUCT.TYPE.TRUNK) {
+
+                // current trunk of the structure ini file isn't present
+                // into the asterisk. So remove it from the structure ini file
+                if (iaxlist[struct[k].extension] === undefined) {
+
+                    delete struct[k];
+                    logger.warn(IDLOG, 'inconsistency between ini structure file and asterisk for ' + k);
+                }
+            }
+        }
+        logger.info(IDLOG, 'all iax trunks have been validated');
+
+        // initialize all iax trunks as 'Trunk' objects into the 'trunks' property
+        initializeIaxTrunk(resp);
+
+    } catch (error) {
+        logger.error(IDLOG, error.stack);
+    }
+}
+
+/**
 * Validates all iax extensions of the structure ini file and
 * initialize iax _Extension_ objects.
 *
@@ -690,8 +739,10 @@ function structValidation() {
         astProxy.doCmd({ command: 'listSipPeers' }, sipExtenStructValidation);
         // validates all iax extensions
         astProxy.doCmd({ command: 'listIaxPeers' }, iaxExtenStructValidation);
-        // validates all SIP trunks
+        // validates all sip trunks
         astProxy.doCmd({ command: 'listSipPeers' }, sipTrunkStructValidation);
+        // validates all iax trunks
+        astProxy.doCmd({ command: 'listIaxPeers' }, iaxTrunkStructValidation);
 
     } catch (err) {
        logger.error(IDLOG, err.stack);
@@ -1511,7 +1562,51 @@ function initializeSipTrunk() {
                 astProxy.doCmd({ command: 'sipDetails', exten: trunk.getExten() }, trunkSipDetails);
 
                 // request the trunk status
-                astProxy.doCmd({ command: 'trunkStatus', trunk: trunk.getExten() }, trunkStatus);
+                astProxy.doCmd({ command: 'sipTrunkStatus', trunk: trunk.getExten() }, sipTrunkStatus);
+            }
+        }
+
+        // request all channels
+        logger.info(IDLOG, 'requests the channel list to initialize sip trunks');
+        astProxy.doCmd({ command: 'listChannels' }, updateConversationsForAllTrunk);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Initialize all iax trunks as _Trunk_ object into the _trunks_ property.
+*
+* @method initializeIaxTrunk
+* @param {object} resp The response of the _listIaxPeers_ command plugin.
+* @private
+*/
+function initializeIaxTrunk(resp) {
+    try {
+        var k, trunk;
+        for (k in struct) {
+
+            if (struct[k].type    === INI_STRUCT.TYPE.TRUNK
+                && struct[k].tech === INI_STRUCT.TECH.IAX) { // all iax trunks
+
+                trunk = new Trunk(struct[k].extension, struct[k].tech, struct[k].max_channels);
+                trunks[trunk.getExten()] = trunk;
+                trunks[trunk.getExten()].setName(struct[k].label);
+            }
+        }
+
+        // set iax informations
+        for (i = 0; i < resp.length; i++) {
+
+            // this check is because some iax extensions can be present in the resp,
+            // so in this function extensions are not considered
+            if (trunks[resp[i].exten]) {
+
+                trunks[resp[i].exten].setIp(resp[i].ip);
+                trunks[resp[i].exten].setPort(resp[i].port);
+                trunks[resp[i].exten].setStatus(resp[i].status);
+                logger.info(IDLOG, 'set iax details for trunk ' + resp[i].exten);
             }
         }
 
@@ -2141,14 +2236,14 @@ function extenStatus(err, resp) {
 }
 
 /**
-* Sets the trunk status received.
+* Sets the sip trunk status received.
 *
-* @method trunkStatus
+* @method sipTrunkStatus
 * @param {object} err  The received error object
 * @param {object} resp The received response object
 * @private
 */
-function trunkStatus(err, resp) {
+function sipTrunkStatus(err, resp) {
     try {
         if (err) {
             logger.error(IDLOG, 'setting trunk status: ' + err.toString());

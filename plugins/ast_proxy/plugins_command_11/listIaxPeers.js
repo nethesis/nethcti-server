@@ -2,6 +2,7 @@
 * @submodule plugins_command_11
 */
 var action = require('../action');
+var AST_PEER_STATUS_2_STR_ADAPTER = require('../proxy_logic_11/peer_status_adapter_11.js').AST_PEER_STATUS_2_STR_ADAPTER;
 
 /**
 * The module identifier used by the logger.
@@ -104,10 +105,16 @@ var IDLOG = '[listIaxPeers]';
                     // store new Extension object
                     // data.objectname is extension number, e.g., 214
                     if (data.event === 'PeerEntry' && data.objectname && data.channeltype) {
+
+                        // status is so calculated because when the peer is online the status is
+                        // composed by the string "OK" plus a time in milliseconds, e.g. "OK (5 ms)"
+                        var status = data.status.split(' ')[0];
+
                         list.push({
                             ip:    data.ipaddress === '(null)' ? '' : data.ipaddress,
                             port:  data.port      === '0'      ? '' : data.port,
-                            exten: data.objectname
+                            exten: data.objectname,
+                            status: AST_PEER_STATUS_2_STR_ADAPTER[status]
                         });
 
                     } else if (map[data.actionid] && data.event === 'PeerlistComplete') {
