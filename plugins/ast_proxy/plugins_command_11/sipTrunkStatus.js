@@ -12,9 +12,9 @@ var AST_TRUNK_STATUS_2_STR_ADAPTER = require('../proxy_logic_11/trunk_status_ada
 * @private
 * @final
 * @readOnly
-* @default [trunkStatus]
+* @default [sipTrunkStatus]
 */
-var IDLOG = '[trunkStatus]';
+var IDLOG = '[sipTrunkStatus]';
 
 (function() {
     try {
@@ -39,18 +39,18 @@ var IDLOG = '[trunkStatus]';
         var map = {};
 
         /**
-        * Command plugin to get the trunk status.
+        * Command plugin to get the sip trunk status.
         *
         * Use it with _ast\_proxy_ module as follow:
         *
-        *     ast_proxy.doCmd({ command: 'trunkStatus', trunk: '3001' }, function (res) {
+        *     ast_proxy.doCmd({ command: 'sipTrunkStatus', trunk: '3001' }, function (res) {
         *         // some code
         *     });
         *
-        * @class trunkStatus
+        * @class sipTrunkStatus
         * @static
         */
-        var trunkStatus = {
+        var sipTrunkStatus = {
 
             /**
             * Execute asterisk action to get the trunk status.
@@ -69,7 +69,7 @@ var IDLOG = '[trunkStatus]';
                     var act = { Action: 'SIPpeerstatus', Peer: args.trunk };
                     
                     // set the action identifier
-                    act.ActionID = action.getActionId('trunkStatus');
+                    act.ActionID = action.getActionId('sipTrunkStatus');
 
                     // add association ActionID-callback
                     map[act.ActionID] = cb;
@@ -161,9 +161,9 @@ var IDLOG = '[trunkStatus]';
         };
 
         // public interface
-        exports.data      = trunkStatus.data;
-        exports.execute   = trunkStatus.execute;
-        exports.setLogger = trunkStatus.setLogger;
+        exports.data      = sipTrunkStatus.data;
+        exports.execute   = sipTrunkStatus.execute;
+        exports.setLogger = sipTrunkStatus.setLogger;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
