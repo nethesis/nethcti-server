@@ -1144,8 +1144,15 @@ function queueDetails(err, resp) {
 
             if (struct[structKey].type === INI_STRUCT.TYPE.QUEUE && q === structQueueId) {
 
+                // check if the "dynmembers" key exist in the configuration file
                 if (struct[structKey].dynmembers === undefined) {
                     logger.warn(IDLOG, 'no "dynmembers" key for "' + structKey + '" in configuration file');
+                    continue;
+                }
+
+                // check if there is at least one dynamic member. If not exist, the key "dynmembers" is en empty string
+                if (struct[structKey].dynmembers === '') {
+                    logger.info(IDLOG, 'queue "' + structQueueId + '" does not have dynamic members');
                     continue;
                 }
 
