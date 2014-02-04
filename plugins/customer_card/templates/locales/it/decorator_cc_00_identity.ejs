@@ -75,8 +75,16 @@
 	                </div>
                 <% } %>
 
+                <% var address = (results[i].workcity !== null ? results[i].workcity : '');                    %>
+                <% if (results[i].workstreet     !== null) { address += ', ' + results[i].workstreet; }        %>
+                <% if (results[i].workprovince   !== null) { address += '(' + results[i].workprovince + ')'; } %>
+                <% if (results[i].workpostalcode !== null) { address += ' - ' + results[i].workpostalcode; }   %>
+
 		<% if(results[i].workstreet) { %>
-                	<div class='numbers'> <div class='label'>Ufficio <a href='http://maps.google.it/maps?q=<%= results[i].workcity %>, <%= results[i].workstreet %> (<%= results[i].workprovince %>) - <%= results[i].workpostalcode %>' target='_blank'><img src='images/24/map.png' title='Cerca su Google Maps'/></a></div> <div class='address'> <%= results[i].workcity %>, <%= results[i].workstreet %> (<%= results[i].workprovince %>) - <%= results[i].workpostalcode %></div> </div>
+                        <div class='numbers'>
+                            <div class='label'>Ufficio <a href='http://maps.google.it/maps/preview/place/<%= address %>' target='_blank'><img src='images/24/map.png' title='Cerca su Google Maps'/></a></div>
+                            <div class='address'> <%= address %></div>
+                        </div>
                 <% } %>
 
 		<% if(results[i].homestreet) { %>
