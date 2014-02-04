@@ -68,13 +68,15 @@ var logger = console;
 * @type object
 * @private
 * @default {
-    "ldap": "ldap",
-    "file": "file"
+    "ldap":            "ldap",
+    "file":            "file",
+    "activeDirectory": "activeDirectory"
 };
 */
 var AUTH_TYPE = {
-    'ldap': 'ldap',
-    'file': 'file'
+    'ldap':            'ldap',
+    'file':            'file',
+    'activeDirectory': 'activeDirectory'
 };
 
 /**
@@ -116,6 +118,15 @@ var ou;
 * @private
 */
 var baseDn;
+
+/**
+* The active directory domain.
+*
+* @property adDomain
+* @type {string}
+* @private
+*/
+var adDomain;
 
 /**
 * The LDAP client.
@@ -226,8 +237,9 @@ function config(path) {
     if (   typeof json      !== 'object'
         || typeof json.type !== 'string' || typeof json.expiration_timeout !== 'string'
         || !AUTH_TYPE[json.type]
-        || (json.type === 'ldap' && typeof json.ldap !== 'object')
-        || (json.type === 'file' && typeof json.file !== 'object')) {
+        || (json.type === AUTH_TYPE.ldap            && typeof json[AUTH_TYPE.ldap]            !== 'object')
+        || (json.type === AUTH_TYPE.file            && typeof json[AUTH_TYPE.file]            !== 'object')
+        || (json.type === AUTH_TYPE.activeDirectory && typeof json[AUTH_TYPE.activeDirectory] !== 'object')) {
 
         throw new Error('wrong configuration file for authentication ' + path);
     }
@@ -243,12 +255,17 @@ function config(path) {
     // configure LDAP authentication
     if (json.type === AUTH_TYPE.ldap) {
         logger.info(IDLOG, 'configure authentication with LDAP');
-        configLDAP(json.ldap);
+        configLDAP(json[AUTH_TYPE.ldap]);
 
     } else if (json.type === AUTH_TYPE.file) {
         // configure authentication with a credentials file
         logger.info(IDLOG, 'configure authentication with credentials file');
-        configFile(json.file);
+        configFile(json[AUTH_TYPE.file]);
+
+    } else if (json.type === AUTH_TYPE.activeDirectory) {
+        // configure authentication with Active Directory
+        logger.info(IDLOG, 'configure authentication with active directory');
+        configActiveDirectory(json[AUTH_TYPE.activeDirectory]);
     }
 
     // emit the event to tell other modules that the component is ready to be used
@@ -328,6 +345,41 @@ function configLDAP(json) {
     });
     logger.info(IDLOG, 'LDAP client created to ' + ldapurl);
     logger.info(IDLOG, 'LDAP authentication configuration ended');
+}
+
+/**
+* Initialize the active directory client.
+*
+* **The method can throw an Exception.**
+*
+* @method configActiveDirectory
+* @param {object} json The object with the active directory parameters
+*/
+function configActiveDirectory(json) {
+    // check the parameter
+    if (typeof json !== 'object' || typeof json.domain !== 'string') {
+        throw new Error('wrong active directory auhtentication configuration');
+    }
+
+    // customize server and port by the configuration file
+    if (json.port)   { port   = json.port;   }
+    if (json.server) { server = json.server; }
+
+    ou       = json.ou;
+    baseDn   = json.baseDn;
+    adDomain = json.domain;
+
+    var adurl = 'ldap://' + server + ':' + port;
+
+    // create active directory client
+    client = ldap.createClient({
+        url:            adurl,
+        timeout:        5000,    // how long the client should let operations live for before timing out. Default is Infinity
+        maxConnections: 10,      // whether or not to enable connection pooling, and if so, how many to maintain
+        connectTimeout: 10000    // how long the client should wait before timing out on TCP connections. Default is up to the OS
+    });
+    logger.info(IDLOG, 'active directory client created to ' + adurl);
+    logger.info(IDLOG, 'active directory authentication configuration ended');
 }
 
 /**
@@ -430,6 +482,11 @@ function authenticate(accessKeydId, password, cb) {
             logger.info(IDLOG, 'authenticate the user "' + accessKeydId + '" by credentials file');
             authByFile(accessKeydId, password, cb);
 
+        } else if (authenticationType === AUTH_TYPE.activeDirectory) {
+            // authenticate the user by active directory
+            logger.info(IDLOG, 'authenticate the user "' + accessKeydId + '" by active directory');
+            authByActiveDirectory(accessKeydId, password, cb);
+
         } else {
             logger.error(IDLOG, 'unknown authentication type "' + authenticationType + '"');
         }
@@ -491,6 +548,35 @@ function authByLDAP(accessKeydId, password, cb) {
         }
 
         var dn = 'uid=' + accessKeydId + ',ou=' + ou + ',' + baseDn;
+
+        // ldap authentication
+        client.bind(dn, password, function (err, result) {
+            bindCb(accessKeydId, err, result, cb);
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Authenticate the user by active directory bind operation.
+*
+* @method authByActiveDirectory
+* @param {string}   accessKeyId The access key used to authenticate, e.g. the username
+* @param {string}   password    The password of the account
+* @param {function} cb          The callback function
+*/
+function authByActiveDirectory(accessKeydId, password, cb) {
+    try {
+        // check parameters
+        if (   typeof cb           !== 'function'
+            || typeof password     !== 'string'
+            || typeof accessKeydId !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        var dn = accessKeydId + '@' + adDomain;
 
         // ldap authentication
         client.bind(dn, password, function (err, result) {
