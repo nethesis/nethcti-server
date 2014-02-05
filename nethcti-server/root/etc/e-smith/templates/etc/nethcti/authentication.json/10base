@@ -1,17 +1,23 @@
 {
-    my $base = ${'nethcti-server'}{'LdapBaseDN'} || esmith::util::ldapBase($DomainName);
-    my $ou = ${'nethcti-server'}{'LdapOu'} || "Users";
-    my $port = ${'nethcti-server'}{'LdapPort'} || "389";
-    my $server = ${'nethcti-server'}{'LdapServer'} || 'localhost';
+    my $ldapBase = ${'nethcti-server'}{'LdapBaseDN'} || esmith::util::ldapBase($DomainName);
+    my $ldapOu = ${'nethcti-server'}{'LdapOu'} || "Users";
+    my $ldapPort = ${'nethcti-server'}{'LdapPort'} || "389";
+    my $ldapServer = ${'nethcti-server'}{'LdapServer'} || "localhost";
+    my $authType = ${'nethcti-server'}{'AuthType'} || "ldap";
+    my $ldap = "";
+
+    if ($authType eq "ldap" or $authType eq "activeDirectory") {
+        $ldap = "\"ldap\": \{
+        \"ou\": \"$ldapOu\",
+        \"baseDn\": \"$ldapBase\",
+        \"port\": \"$ldapPort\",
+        \"server\": \"$ldapServer\"
+    \},";
+    }
 
     $OUT = '{
-    "type":   "ldap",
-    "ldap": {
-        "ou":     "' . $ou . '",
-        "baseDn": "' . $base .'",
-        "port":   "' . $port .'",
-        "server": "' . $server .'"
-    },
+    "type":   "' . $authType . '",
+    ' . $ldap . '
     "file": {
         "path": "/etc/nethcti/users.json"
     },
