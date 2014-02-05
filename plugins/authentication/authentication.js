@@ -237,9 +237,9 @@ function config(path) {
     if (   typeof json      !== 'object'
         || typeof json.type !== 'string' || typeof json.expiration_timeout !== 'string'
         || !AUTH_TYPE[json.type]
-        || (json.type === AUTH_TYPE.ldap            && typeof json[AUTH_TYPE.ldap]            !== 'object')
-        || (json.type === AUTH_TYPE.file            && typeof json[AUTH_TYPE.file]            !== 'object')
-        || (json.type === AUTH_TYPE.activeDirectory && typeof json[AUTH_TYPE.activeDirectory] !== 'object')) {
+        || (json.type === AUTH_TYPE.ldap            && typeof json[AUTH_TYPE.ldap] !== 'object')
+        || (json.type === AUTH_TYPE.file            && typeof json[AUTH_TYPE.file] !== 'object')
+        || (json.type === AUTH_TYPE.activeDirectory && typeof json[AUTH_TYPE.ldap] !== 'object')) {
 
         throw new Error('wrong configuration file for authentication ' + path);
     }
@@ -263,9 +263,10 @@ function config(path) {
         configFile(json[AUTH_TYPE.file]);
 
     } else if (json.type === AUTH_TYPE.activeDirectory) {
-        // configure authentication with Active Directory
+        // configure authentication with Active Directory. It uses ldap configuration
+        // object, because the data are the same
         logger.info(IDLOG, 'configure authentication with active directory');
-        configActiveDirectory(json[AUTH_TYPE.activeDirectory]);
+        configActiveDirectory(json[AUTH_TYPE.ldap]);
     }
 
     // emit the event to tell other modules that the component is ready to be used
@@ -321,16 +322,15 @@ function configFile(json) {
 */
 function configLDAP(json) {
     // check the parameter
-    if (   typeof json    !== 'object'
-        || typeof json.ou !== 'string' || typeof json.baseDn !== 'string') {
+    if (   typeof json        !== 'object'
+        || typeof json.ou     !== 'string' || typeof json.baseDn !== 'string'
+        || typeof json.server !== 'string' || typeof json.port   !== 'string') {
 
         throw new Error('wrong LDAP auhtentication configuration');
     }
 
-    // customize server and port by the configuration file
-    if (json.port)   { port   = json.port;   }
-    if (json.server) { server = json.server; }
-
+    port   = json.port;
+    server = json.server;
     ou     = json.ou;
     baseDn = json.baseDn;
 
@@ -357,17 +357,16 @@ function configLDAP(json) {
 */
 function configActiveDirectory(json) {
     // check the parameter
-    if (typeof json !== 'object' || typeof json.domain !== 'string') {
+    if (   typeof json        !== 'object' || typeof json.baseDn !== 'string'
+        || typeof json.server !== 'string' || typeof json.port   !== 'string') {
+
         throw new Error('wrong active directory auhtentication configuration');
     }
 
-    // customize server and port by the configuration file
-    if (json.port)   { port   = json.port;   }
-    if (json.server) { server = json.server; }
-
-    ou       = json.ou;
-    baseDn   = json.baseDn;
-    adDomain = json.domain;
+    port     = json.port;
+    server   = json.server;
+    var arr  = json.baseDn.split(',');
+    adDomain = arr[0].split('=')[1] + '.' + arr[1].split('=')[1];
 
     var adurl = 'ldap://' + server + ':' + port;
 
@@ -551,7 +550,7 @@ function authByLDAP(accessKeydId, password, cb) {
 
         // ldap authentication
         client.bind(dn, password, function (err, result) {
-            bindCb(accessKeydId, err, result, cb);
+            ldapBindCb(accessKeydId, err, result, cb);
         });
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -580,7 +579,7 @@ function authByActiveDirectory(accessKeydId, password, cb) {
 
         // ldap authentication
         client.bind(dn, password, function (err, result) {
-            bindCb(accessKeydId, err, result, cb);
+            adBindCb(accessKeydId, err, result, cb);
         });
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -590,14 +589,14 @@ function authByActiveDirectory(accessKeydId, password, cb) {
 /**
 * It's the callback of ldap bind operation.
 *
-* @method bindCb
-* @param {string} accessKeydId The access key used for authentication
-* @param {object} err The error response. If the bind is successfull it is null
-* @param {object} result The result of the bind operation
-* @param {function} cb The callback function
+* @method ldapBindCb
+* @param {string}   accessKeydId The access key used for authentication
+* @param {object}   err          The error response. If the bind is successfull it is null
+* @param {object}   result       The result of the bind operation
+* @param {function} cb           The callback function
 * @private
 */
-function bindCb(accessKeydId, err, result, cb) {
+function ldapBindCb(accessKeydId, err, result, cb) {
     try {
         // check parameters
         if(typeof accessKeydId !== 'string' || typeof cb !== 'function') {
@@ -615,6 +614,37 @@ function bindCb(accessKeydId, err, result, cb) {
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb('LDAP authentication failed for user "' + accessKeydId + '"');
+    }
+}
+
+/**
+* It is the callback of ldap bind operation done on Active Directory.
+*
+* @method adBindCb
+* @param {string}   accessKeydId The access key used for authentication
+* @param {object}   err          The error response. If the bind is successfull it is null
+* @param {object}   result       The result of the bind operation
+* @param {function} cb           The callback function
+* @private
+*/
+function adBindCb(accessKeydId, err, result, cb) {
+    try {
+        // check parameters
+        if(typeof accessKeydId !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        if (err) {
+            logger.warn(IDLOG, 'active directory authentication failed for user "' + accessKeydId + '"');
+            cb(err);
+
+        } else {
+            logger.info(IDLOG, 'user "' + accessKeydId + '" has been successfully authenticated with active directory');
+            cb(null);
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb('active directory authentication failed for user "' + accessKeydId + '"');
     }
 }
 
