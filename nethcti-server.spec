@@ -12,6 +12,7 @@ BuildRoot:	/var/tmp/%{name}-%{version}-%{release}-buildroot
 BuildRequires:	e-smith-devtools
 Requires:	nodejs >= 0.8.16
 Requires:	node-forever >= 0.10.9
+Requires:       freepbx >= 2.10.43
 Requires:	smeserver-ejabberd
 Requires:       nethcti-nethvoice-module
 AutoReq:	no
