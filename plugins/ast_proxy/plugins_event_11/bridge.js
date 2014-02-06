@@ -2,6 +2,7 @@
 * @module ast_proxy
 * @submodule plugins_event_11
 */
+var utilChannel11 = require('../proxy_logic_11/util_channel_11');
 
 /**
 * The module identifier used by the logger.
@@ -58,8 +59,8 @@ var astProxy;
                         && data.bridgestate === 'Link'
                         && data.event       === 'Bridge') {
 
-                        var channelExten1 = data.channel1.substring(0, data.channel1.lastIndexOf('-')).split('/')[1];
-                        var channelExten2 = data.channel2.substring(0, data.channel2.lastIndexOf('-')).split('/')[1];
+                        var channelExten1 = utilChannel11.extractExtensionFromChannel(data.channel1);
+                        var channelExten2 = utilChannel11.extractExtensionFromChannel(data.channel2);
 
                         logger.info(IDLOG, 'received event ' + data.event);
                         astProxy.proxyLogic.evtConversationConnected(channelExten1, channelExten2);

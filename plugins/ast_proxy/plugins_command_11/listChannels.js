@@ -1,8 +1,9 @@
 /**
 * @submodule plugins_command_11
 */
-var action = require('../action');
-var AST_CHANNEL_STATE_2_STRING_ADAPTER = require('../proxy_logic_11/channel_status_adapter_11').AST_CHANNEL_STATE_2_STRING_ADAPTER;
+var action        = require('../action');
+var utilChannel11 = require('../proxy_logic_11/util_channel_11');
+var AST_CHANNEL_STATE_2_STRING_ADAPTER = utilChannel11.AST_CHANNEL_STATE_2_STRING_ADAPTER;
 
 /**
 * The module identifier used by the logger.
@@ -108,10 +109,7 @@ var IDLOG = '[listChannels]';
                         && data.calleridnum) {
 
                         // extract the extension name from the channel
-                        // e.g. data.channel can be "SIP/614-00000070" or "SIP/Eutelia-07211835565-00000045"
-                        // the first example concerns an extension and its name is "614"
-                        // the second example concerns a trunk and its name is "Eutelia-07211835565"
-                        var channelExten = data.channel.substring(0, data.channel.lastIndexOf('-')).split('/')[1];
+                        var channelExten = utilChannel11.extractExtensionFromChannel(data.channel);
 
                         var obj = {
                             status:         AST_CHANNEL_STATE_2_STRING_ADAPTER[data.channelstate],

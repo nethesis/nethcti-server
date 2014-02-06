@@ -4,6 +4,7 @@
 * @module ast_proxy
 * @submodule plugins_event_11
 */
+var utilChannel11 = require('../proxy_logic_11/util_channel_11');
 
 /**
 * The module identifier used by the logger.
@@ -55,25 +56,20 @@ var astProxy;
             */
             data: function (data) {
                 try {
-                    if (data
-                        && data.spyerchannel && data.event === 'ChanSpyStart') {
+                    if (data && data.spyerchannel && data.event === 'ChanSpyStart') {
 
                         logger.info(IDLOG, 'received event ' + data.event);
 
-                        var spierId = data.spyerchannel.substring(0, data.spyerchannel.lastIndexOf('-')).split('/')[1];
+                        var spierId = utilChannel11.extractExtensionFromChannel(data.spyerchannel);
 
                         if (spierId !== undefined) {
-
                             astProxy.proxyLogic.evtSpyStartConversation({ spierId: spierId });
-
                         } else {
                             logger.warn(IDLOG, 'event ChanSpyStart with unknown spier channel ' + data.spyerchannel);
                         }
-
                     } else {
                         logger.warn(IDLOG, 'ChanSpyStart event not recognized');
                     }
-
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
                 }

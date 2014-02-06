@@ -4,6 +4,7 @@
 * @module ast_proxy
 * @submodule plugins_event_11
 */
+var utilChannel11 = require('../proxy_logic_11/util_channel_11');
 
 /**
 * The module identifier used by the logger.
@@ -119,10 +120,7 @@ var CAUSE = {
                         && data.cause       && data.event === 'Hangup') {
 
                         // extract the extension name from the channel
-                        // e.g. data.channel can be "SIP/614-00000070" or "SIP/Eutelia-07211835565-00000045"
-                        // the first example concerns an extension and its name is "614"
-                        // the second example concerns a trunk and its name is "Eutelia-07211835565"
-                        var channelExten = data.channel.substring(0, data.channel.lastIndexOf('-')).split('/')[1];
+                        var channelExten = utilChannel11.extractExtensionFromChannel(data.channel);
 
                         logger.info(IDLOG, 'received event ' + data.event);
                         astProxy.proxyLogic.evtHangupConversation({

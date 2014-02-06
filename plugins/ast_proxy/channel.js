@@ -1,3 +1,5 @@
+var utilChannel11 = require('proxy_logic_11/util_channel_11');
+
 /**
 * Abstraction of an asterisk channel.
 *
@@ -250,7 +252,7 @@ exports.Channel = function (obj) {
     * @return {boolean} True if the channel is of the specified extension identifier
     */
     function isExtension(exten) {
-        if (channel.substring(0, channel.lastIndexOf('-')).split('/')[1] === exten) {
+        if (utilChannel11.extractExtensionFromChannel(channel) === exten) {
             return true;
         } else {
             return false;

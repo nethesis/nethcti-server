@@ -2,6 +2,7 @@
 * @module ast_proxy
 * @submodule plugins_event_11
 */
+var utilChannel11 = require('../proxy_logic_11/util_channel_11');
 
 /**
 * The module identifier used by the logger.
@@ -59,11 +60,8 @@ var astProxy;
                         && data.calleridname && data.event === 'Dial') {
 
                         // extract the extension name from the channels
-                        // e.g. data.destination and data.channel can be "SIP/614-00000070" or "SIP/Eutelia-07211835565-00000045"
-                        // the first example concerns an extension and its name is "614"
-                        // the second example concerns a trunk and its name is "Eutelia-07211835565"
-                        var chDestExten   = data.destination.substring(0, data.destination.lastIndexOf('-')).split('/')[1];
-                        var chSourceExten = data.channel.substring(0, data.channel.lastIndexOf('-')).split('/')[1];
+                        var chDestExten   = utilChannel11.extractExtensionFromChannel(data.destination);
+                        var chSourceExten = utilChannel11.extractExtensionFromChannel(data.channel);
 
                         logger.info(IDLOG, 'received event ' + data.event);
                         astProxy.proxyLogic.evtConversationDialing({
