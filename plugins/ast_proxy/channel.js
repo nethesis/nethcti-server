@@ -1,4 +1,4 @@
-var utilChannel11 = require('proxy_logic_11/util_channel_11');
+var utilChannel11 = require('./proxy_logic_11/util_channel_11');
 
 /**
 * Abstraction of an asterisk channel.
