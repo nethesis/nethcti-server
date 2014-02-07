@@ -4672,6 +4672,29 @@ function setRecordStatusConversations(convid, value) {
                 }
             }
         }
+
+        var trunk;
+        for (trunk in trunks) { // cycle in all trunks
+
+            // get all the conversations of the current trunk
+            convs = trunks[trunk].getAllConversations();
+            if (convs) {
+
+                // cycle in all conversations
+                for (cid in convs) {
+                    // if the current conversation identifier is the
+                    // same of that specified, set its recording status
+                    if (cid === convid) {
+                        convs[convid].setRecording(value);
+                        logger.info(IDLOG, 'set recording status ' + value + ' to conversation ' + convid);
+
+                        // emit the event
+                        logger.info(IDLOG, 'emit event ' + EVT_TRUNK_CHANGED + ' for trunk ' + trunk);
+                        astProxy.emit(EVT_TRUNK_CHANGED, trunks[trunk]);
+                    }
+                }
+            }
+        }
     } catch (err) {
        logger.error(IDLOG, err.stack);
     }
@@ -4708,6 +4731,29 @@ function setRecordStatusMuteConversations(convid) {
                         // emit the event
                         logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
                         astProxy.emit(EVT_EXTEN_CHANGED, extensions[exten]);
+                    }
+                }
+            }
+        }
+
+        var trunk;
+        for (trunk in trunks) { // cycle in all trunks
+
+            // get all the conversations of the current trunk
+            convs = trunks[trunk].getAllConversations();
+            if (convs) {
+
+                // cycle in all conversations
+                for (cid in convs) {
+                    // if the current conversation identifier is the
+                    // same of that specified, set its recording status to mute
+                    if (cid === convid) {
+                        convs[convid].setRecordingMute();
+                        logger.info(IDLOG, 'set recording status "mute" to conversation ' + convid);
+
+                        // emit the event
+                        logger.info(IDLOG, 'emit event ' + EVT_TRUNK_CHANGED + ' for trunk ' + trunk);
+                        astProxy.emit(EVT_TRUNK_CHANGED, trunks[trunk]);
                     }
                 }
             }
