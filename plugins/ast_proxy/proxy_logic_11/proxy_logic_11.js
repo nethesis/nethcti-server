@@ -16,6 +16,7 @@ var path                    = require('path');
 var async                   = require('async');
 var Queue                   = require('../queue').Queue;
 var Trunk                   = require('../trunk').Trunk;
+var moment                  = require('moment');
 var Channel                 = require('../channel').Channel;
 var Parking                 = require('../parking').Parking;
 var iniparser               = require('iniparser');
