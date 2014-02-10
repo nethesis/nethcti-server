@@ -1,5 +1,5 @@
 Name:		nethcti-server
-Version:	1.9.20
+Version:	1.9.21
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI 2
 
@@ -71,6 +71,16 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Mon Feb 10 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 1.9.21-1
+- Beta3 release.
+- Bug #2713: write log output only in /var/log/asterisk/nethcti.log.
+- Bug #2712: fix current date time in the log file.
+- Bug #2615: fix customer card null values.
+- Enh #2654: IAX trunk support.
+- Enh #2657 #2633: new "recording" and "maxChannels" properties to trunk objects.
+- Fea #2623: Active Directory login support.
+- New package dependency "freepbx >= 2.10.43"
+
 * Fri Jan 31 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 1.9.20-1
 - Release for neth-oppanel beta3 version
 - New REST api astproxy/force_hangup #2671
