@@ -10,6 +10,7 @@
 * @class arch_logger
 */
 var fs      = require('fs');
+var moment  = require('moment');
 var winston = require('winston');
 
 module.exports = function (options, imports, register) {
@@ -51,11 +52,16 @@ module.exports = function (options, imports, register) {
         */
         var log = new (winston.Logger)({
             transports: [
-                new (winston.transports.Console)({ level: json.loglevel }),
+                new (winston.transports.Console)({
+                    level:     json.loglevel,
+                    colorize:  true,
+                    timestamp: getTimestamp
+                }),
                 new (winston.transports.File)({
-                    filename: json.logfile,
-                    level:    json.loglevel,
-                    json:     false
+                    json:      false,
+                    level:     json.loglevel,
+                    filename:  json.logfile,
+                    timestamp: getTimestamp
                 })
             ]
         });
@@ -66,4 +72,14 @@ module.exports = function (options, imports, register) {
 
     // public interface for other architect components
     register(null, { logger: log });
+}
+
+/**
+* Return a string representation of the date and time.
+*
+* @method getTimestamp
+* @return {string} A date and time.
+*/
+function getTimestamp() {
+    return moment().format();
 }
