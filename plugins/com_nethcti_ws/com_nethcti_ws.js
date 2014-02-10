@@ -963,8 +963,7 @@ function start() {
         var httpServer = httpProxy.createServer(options, function( req , res ){} );
 
         // websocket server
-        server = io.listen(httpServer);
-        server.set('log level', 0); // log only the errors
+        server = io.listen(httpServer, { 'log level': 0 }); // log only the errors
         httpServer.listen(port);
 
 

@@ -52,11 +52,6 @@ module.exports = function (options, imports, register) {
         */
         var log = new (winston.Logger)({
             transports: [
-                new (winston.transports.Console)({
-                    level:     json.loglevel,
-                    colorize:  true,
-                    timestamp: getTimestamp
-                }),
                 new (winston.transports.File)({
                     json:      false,
                     level:     json.loglevel,
