@@ -59,7 +59,6 @@ rm -rf $RPM_BUILD_ROOT
 
 %files -f %{name}-%{version}-filelist
 %defattr(-,asterisk,asterisk,-)
-%config(noreplace) /etc/nethcti/*
 %config(noreplace) /home/e-smith/nethcti/static/img/logo.png
 
 %doc

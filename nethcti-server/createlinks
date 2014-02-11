@@ -15,6 +15,7 @@ service_link_enhanced('nethcti-server', 'K02', '0');
 my $event = "nethcti-server-update";
 templates2events("/etc/asterisk/manager.conf", $event);
 templates2events("/etc/crontab",$event);
+templates2events("/etc/nethcti/asterisk.json",$event);
 templates2events("/etc/nethcti/authentication.json",$event);
 templates2events("/etc/nethcti/services.json",$event);
 templates2events("/etc/nethcti/chat.json",$event);
