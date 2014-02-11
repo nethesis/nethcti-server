@@ -408,6 +408,22 @@ function setCountryCode(code) {
 }
 
 /**
+* Returns the country code used in all outgoing calls. It is the prefix call.
+* It is not used with internal calls between extensions.
+*
+* @method getCountryCode
+* @return {string} code The country code (e.g. italian country code is 0039)
+* @static
+*/
+function getCountryCode() {
+    try {
+        return countryCode;
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Sets the phonebook architect component.
 *
 * @method setCompPhonebook
@@ -5062,6 +5078,7 @@ exports.getExtensions                   = getExtensions;
 exports.pickupParking                   = pickupParking;
 exports.getJSONQueues                   = getJSONQueues;
 exports.setCountryCode                  = setCountryCode;
+exports.getCountryCode                  = getCountryCode;
 exports.getJSONQueuesStats              = getJSONQueuesStats;
 exports.getJSONQueuesQOS                = getJSONQueuesQOS;
 exports.getJSONAgentsStats              = getJSONAgentsStats;

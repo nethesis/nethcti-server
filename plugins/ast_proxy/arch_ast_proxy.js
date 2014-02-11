@@ -77,6 +77,13 @@ module.exports = function (options, imports, register) {
             getExtensions: astProxy.proxyLogic.getExtensions,
 
             /**
+            * It's the _getCountryCode_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method getCountryCode
+            */
+            getCountryCode: astProxy.proxyLogic.getCountryCode,
+
+            /**
             * It's the _hangupConversation_ method provided by _ast\_proxy.proxyLogic_.
             *
             * @method hangupConversation

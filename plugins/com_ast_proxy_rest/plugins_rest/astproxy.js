@@ -107,6 +107,7 @@ var compConfigManager;
         * 1. [`astproxy/opgroups`](#opgroupsget)
         * 1. [`astproxy/parkings`](#parkingsget)
         * 1. [`astproxy/extensions`](#extensionsget)
+        * 1. [`astproxy/country_code`](#country_codeget)
         * 1. [`astproxy/queues_stats/:day`](#queues_statsget)
         * 1. [`astproxy/queues_qos/:day`](#queues_qosget)
         * 1. [`astproxy/agents_qos/:day`](#agents_qosget)
@@ -170,9 +171,15 @@ var compConfigManager;
         *
         * ---
         *
-        * ### <a id="extensionset">**`astproxy/extensions`**</a>
+        * ### <a id="extensionsget">**`astproxy/extensions`**</a>
         *
         * Gets all the extensions with all their status informations.
+        *
+        * ---
+        *
+        * ### <a id="country_codeget">**`astproxy/country_code`**</a>
+        *
+        * Returns the country code used with outgoing external calls.
         *
         * ---
         *
@@ -612,6 +619,7 @@ var compConfigManager;
                 *   @param {string} opgroups               Gets all the user groups of the operator panel
                 *   @param {string} parkings               Gets all the parkings with all their status informations
                 *   @param {string} extensions             Gets all the extensions with all their status informations
+                *   @param {string} country_code           Gets the country code used with outgoing external calls
                 *   @param {string} queues_stats/:day      Gets extended statistics about queues
                 *   @param {string} queues_qos/:day        Gets QOS info about queues
                 *   @param {string} agents_qos/:day        Gets QOS info about agents
@@ -626,6 +634,7 @@ var compConfigManager;
                     'opgroups',
                     'parkings',
                     'extensions',
+                    'country_code',
                     'queues_stats/:day',
                     'queues_qos/:day',
                     'agents_qos/:day',
@@ -901,6 +910,31 @@ var compConfigManager;
 
                     logger.info(IDLOG, 'sent all extensions in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
                     res.send(200, extensions);
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * Gets the country code used with outgoing external calls with the following REST API:
+            *
+            *     GET  country_code
+            *
+            * @method extensions
+            * @param {object} req The client request.
+            * @param {object} res The client response.
+            * @param {function} next Function to run the next handler in the chain.
+            */
+            country_code: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    var countryCode = compAstProxy.getCountryCode();
+
+                    logger.info(IDLOG, 'sent the country code "' + countryCode + '" to user "' + username + '" ' + res.connection.remoteAddress);
+                    res.send(200, { countryCode: countryCode });
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
@@ -2613,6 +2647,7 @@ var compConfigManager;
         exports.stop_record           = astproxy.stop_record;
         exports.setCompUser           = setCompUser;
         exports.mute_record           = astproxy.mute_record;
+        exports.country_code          = astproxy.country_code;
         exports.start_record          = astproxy.start_record;
         exports.force_hangup          = astproxy.force_hangup;
         exports.blindtransfer         = astproxy.blindtransfer;
