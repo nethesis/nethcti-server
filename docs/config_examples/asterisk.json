@@ -2,5 +2,6 @@
     "user": "USER",
     "pass": "PASS",
     "host": "localhost",
-    "port": "5038"
+    "port": "5038",
+    "country_code": "0039"
 }

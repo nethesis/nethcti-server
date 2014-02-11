@@ -228,6 +228,17 @@ var emitter = new EventEmitter();
 var astProxy;
 
 /**
+* The country code to be used in outgoing call. It is not used in
+* internal calls between extensions.
+*
+* @property countryCode
+* @type string
+* @private
+* @default ""
+*/
+var countryCode = '';
+
+/**
 * Contains the informations about the caller. The key is the caller
 * number and the value is the information object. The data are about
 * the created caller notes and the phonebook contacts from the centralized
@@ -369,6 +380,28 @@ function setLogger(log) {
         } else {
             throw new Error('wrong logger object');
         }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the country code to be used in all outgoing calls. It is the prefix call.
+* It does not to be used with internal calls between extensions.
+*
+* @method setCountryCode
+* @param {string} code The country code (e.g. italian country code is 0039)
+* @static
+*/
+function setCountryCode(code) {
+    try {
+        // check parameter
+        if (typeof code !== 'string') { throw new Error('wrong country code type'); }
+
+        countryCode = code;
+
+        logger.info(IDLOG, 'country code has been set to "' + countryCode + '"');
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -3218,6 +3251,11 @@ function call(endpointType, endpointId, to, cb) {
         // check the endpoint existence
         if (endpointType === 'extension' && extensions[endpointId]) {
 
+            // check if the country code is to be added. It is added only for outgoing calls and not
+            // between extensions. So check if the destination is an extension and add the country code
+            // only in negative result
+            if (!extensions[to]) { to = countryCode + to; }
+
             var chType = extensions[endpointId].getChanType();
 
             logger.info(IDLOG, 'execute call from ' + endpointId + ' to ' + to);
@@ -5023,6 +5061,7 @@ exports.setCompDbconn                   = setCompDbconn;
 exports.getExtensions                   = getExtensions;
 exports.pickupParking                   = pickupParking;
 exports.getJSONQueues                   = getJSONQueues;
+exports.setCountryCode                  = setCountryCode;
 exports.getJSONQueuesStats              = getJSONQueuesStats;
 exports.getJSONQueuesQOS                = getJSONQueuesQOS;
 exports.getJSONAgentsStats              = getJSONAgentsStats;

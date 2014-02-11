@@ -137,8 +137,9 @@ function config(path) {
         var json = require(path);
 
         // check the configuration file content
-        if (   typeof json.user !== 'string' || typeof json.pass !== 'string'
-            || typeof json.host !== 'string' || typeof json.port !== 'string') {
+        if (   typeof json.user !== 'string'
+            || typeof json.pass !== 'string' || typeof json.country_code !== 'string'
+            || typeof json.host !== 'string' || typeof json.port         !== 'string') {
 
             throw new Error('wrong configuration file ' + path);
         }
@@ -151,6 +152,8 @@ function config(path) {
             reconnect:       true,      // do you want the ami to reconnect if the connection is dropped, default: false
             reconnect_after: 3000       // how long to wait to reconnect, in miliseconds, default: 3000
         };
+
+        proxyLogic.setCountryCode(json.country_code);
 
         logger.info(IDLOG, 'successfully configured');
 
