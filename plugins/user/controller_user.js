@@ -405,7 +405,7 @@ function on(type, cb) {
 * @method hasExtensionEndpoint
 * @param  {string}  username The name of the user to check
 * @param  {string}  exten    The extension identifier
-* @return {boolean} True if the user has the extension endpoint, false otherwise.
+* @return True if the user has the extension endpoint, false otherwise.
 */
 function hasExtensionEndpoint(username, exten) {
     try {

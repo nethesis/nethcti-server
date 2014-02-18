@@ -564,12 +564,20 @@ function extenChanged(exten) {
         logger.info(IDLOG, 'received event extenChanged for extension ' + exten.getExten());
         logger.info(IDLOG, 'emit event extenUpdate for extension ' + exten.getExten() + ' to websockets');
 
-        // emits the event with clear numbers to all users with privacy disabled
-        server.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_CLEAR).emit('extenUpdate', exten.toJSON());
+        // cycle in each websocket to send the event about an extension update. If the websocket user
+        // is associated with the extension, then it sends the update with clear number, otherwise the
+        // number is obfuscated to respect the privacy authorization
+        var sockid, username;
+        for (sockid in wsid) {
 
-        // emits the event with hide numbers to all users with privacy enabled
-        server.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY).emit('extenUpdate', exten.toJSON(privacyStrReplace));
+            username = wsid[sockid];
 
+            if (compUser.hasExtensionEndpoint(username, exten.getExten())) {
+                server.sockets.sockets[sockid].emit('extenUpdate', exten.toJSON());
+            } else {
+                server.sockets.sockets[sockid].emit('extenUpdate', exten.toJSON(privacyStrReplace));
+            }
+        }
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
