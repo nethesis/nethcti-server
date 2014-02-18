@@ -13,7 +13,8 @@
       $tcp_server = "\"tcp\": \{
         \"port\": \"$tcp_server_port\",
         \"https_key\": \"/etc/pki/tls/private/localhost.key\",
-        \"https_cert\": \"/etc/pki/tls/certs/localhost.crt\"
+        \"https_cert\": \"/etc/pki/tls/certs/localhost.crt\",
+        \"base_templates\": \"http://${SystemName}.${DomainName}/webrest/static/templates/notification_popup\"
     \},";
    }
    return "";
