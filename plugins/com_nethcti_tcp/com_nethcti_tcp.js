@@ -11,8 +11,9 @@
 * @class com_nethcti_tcp
 * @static
 */
-var fs  = require('fs');
-var net = require('net');
+var fs      = require('fs');
+var net     = require('net');
+var pathReq = require('path');
 
 /**
 * The module identifier used by the logger.
@@ -25,6 +26,62 @@ var net = require('net');
 * @default [com_nethcti_tcp]
 */
 var IDLOG = '[com_nethcti_tcp]';
+
+/**
+* The enconding used to write the TCP client sockets.
+*
+* @property ENCODING
+* @type string
+* @private
+* @final
+* @readOnly
+* @default "utf8"
+*/
+var ENCODING = 'utf8';
+
+/**
+* The name of the template file for a call notification popup.
+*
+* @property CALL_NOTIF_TEMPLATE_NAME
+* @type string
+* @private
+* @final
+* @readOnly
+* @default "call.html"
+*/
+var CALL_NOTIF_TEMPLATE_NAME = 'call.html';
+
+/**
+* The name of the template file for a streaming notification popup.
+*
+* @property STREAMING_NOTIF_TEMPLATE_NAME
+* @type string
+* @private
+* @final
+* @readOnly
+* @default "streaming.html"
+*/
+var STREAMING_NOTIF_TEMPLATE_NAME = 'streaming.html';
+
+/**
+* The path of the template file for a call notification popup. It is
+* constructed by the _config_ method.
+*
+* @property callNotifTemplatePath
+* @type string
+* @private
+*/
+var callNotifTemplatePath;
+
+/**
+* The path of the template file for a streaming notification popup. It is
+* constructed by the _config_ method.
+*
+* @property streamingNotifTemplatePath
+* @type string
+* @private
+*/
+var streamingNotifTemplatePath;
 
 /**
 * The TCP server port. It is customized by the configuration file.
@@ -384,6 +441,7 @@ function getFilteredStreamData(username, callerNum) {
             return {
                 id:          streamJSON.id,
                 url:         streamJSON.url,
+                open:        ( (streamJSON.cmdOpen && streamJSON.cmdOpen !== '') ? true : false ),
                 description: streamJSON.description
             };
         }
@@ -422,10 +480,8 @@ function extenDialing(data) {
         // get all users associated with the ringing extension
         var users = compUser.getUsersUsingEndpointExtension(data.dialingExten);
 
-        // check if the caller is a streaming source
-        var isStreaming = compStreaming.isExtenStreamingSource(data.callerIdentity.callerNum);
-
-        // emit the "extenRinging" event for each logged in user associated with the ringing extension
+        // emit the notification event for each logged in user associated
+        // with the ringing extension to open a desktop notification popup
         var sockId, username;
 
         for (sockId in sockets) {
@@ -434,40 +490,136 @@ function extenDialing(data) {
             // and "id" properties added by "connHdlr" and "loginHdlr" methods
             username = sockets[sockId].username;
 
-            // the user is associated with the ringing extension and is logged in, so return the caller data
+            // the user is associated with the ringing extension and is logged in, so send to notification event
             if (users.indexOf(username) !== -1) {
 
-                // the object to return to the client. It contains the source type of the caller, informations
-                // about the caller and the streaming data if the source is a streaming
-                var callerInfo = {
-                    type:         (isStreaming ? 'streaming' : 'call'),
-                    message:      'extenRinging',
-                    callerData:   {},
-                    notification: {
-                        url:          (isStreaming ? 'stream_template_url' : 'call_template_url'),
-                        width:        200,
-                        height:       100,
-                        closeTimeout: 10
-                    }
-                };
+                // check if the caller is a streaming source
+                var isStreaming = compStreaming.isExtenStreamingSource(data.callerIdentity.callerNum);
 
-                if (isStreaming) {
-                    callerInfo.streaming = getFilteredStreamData(username, data.callerIdentity.callerNum);
-                } else {
-                    callerInfo.callerData = getFilteredCallerData(username, data.callerIdentity);
-                }
-
-                // always add this informations without filter them
-                callerInfo.callerData.numCalled  = data.callerIdentity.numCalled;
-                callerInfo.callerData.callerNum  = data.callerIdentity.callerNum;
-                callerInfo.callerData.callerName = data.callerIdentity.callerName;
-
-                // emits the event with the caller identity data
-                logger.info(IDLOG, 'emit event extenRinging for extension ' + data.dialingExten + ' to user "' + username + '" with the caller identity');
-
-                sockets[sockId].write(JSON.stringify(callerInfo));
+                if (isStreaming) { sendStreamingNotificationEvent(username, data, sockets[sockId]); }
+                else             { sendCallNotificationEvent(username, data, sockets[sockId]);      }
             }
         }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sends the event to open a desktop notification popup about a streaming source.
+*
+* @method sendStreamingNotificationEvent
+* @param {string} username The username of the client
+* @param {object} data     The data about the caller
+* @param {object} socket   The TCP socket client
+* @private
+*/
+function sendStreamingNotificationEvent(username, data, socket) {
+    try {
+        // gets the data about the streaming source based on the user authorizations
+        var streamingData = getFilteredStreamData(username, data.callerIdentity.callerNum);
+
+        // check if the user has the relative streaming authorization. If he hasn't the authorization,
+        // the "streamingData" is an empty object. So sends the default notification for a generic call
+        if (Object.keys(streamingData).length === 0) {
+            sendCallNotificationEvent(username, data, socket);
+            return;
+        }
+
+        // always add this informations without filter them
+        var params = 'description=' + streamingData.description +
+                     '&open=' + streamingData.open +
+                     '&url='  + streamingData.url +
+                     '&id='   + streamingData.id;
+
+        // add parameters to the HTTP GET url
+        var url = streamingNotifTemplatePath + '?' + params;
+
+        // temporary to remove
+        // temporary to remove
+        // temporary to remove
+        // temporary to remove
+        // temporary to remove
+        url += '&random=' + new Date().getTime();
+
+        // create the id to identify the notification popup
+        var notifid = data.callerIdentity.numCalled + '<-' + data.callerIdentity.callerNum;
+
+        var notif = {
+            notification: {
+                id:           notifid,
+                url:          url,
+                width:        500,
+                height:       300,
+                action:       'open',
+                closetimeout: 0
+            }
+        };
+
+        socket.write(JSON.stringify(notif), ENCODING, function () {
+            try {
+                logger.info(IDLOG, 'sent "open streaming notification" to ' + socket.username + ' with id ' + socket.id);
+
+            } catch (err1) {
+                logger.error(IDLOG, err1.stack);
+            }
+        });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sends the event to open a desktop notification popup about an incoming call.
+*
+* @method sendCallNotificationEvent
+* @param {string} username The username of the client
+* @param {object} data     The data about the caller
+* @param {object} socket   The TCP socket client
+* @private
+*/
+function sendCallNotificationEvent(username, data, socket) {
+    try {
+        // always add this informations without filter them
+        var params = 'callerNum='   + data.callerIdentity.callerNum +
+                     '&callerName=' + data.callerIdentity.callerName;
+
+        // add parameters to the HTTP GET url
+        var url = callNotifTemplatePath + '?' + params;
+
+        // temporary to remove
+        // temporary to remove
+        // temporary to remove
+        // temporary to remove
+        // temporary to remove
+        // temporary to remove
+        // temporary to remove
+        url += '&random=' + new Date().getTime();
+
+        // create the id to identify the notification popup
+        var notifid = data.callerIdentity.numCalled + '<-' + data.callerIdentity.callerNum;
+
+        var notif = {
+            notification: {
+                id:           notifid,
+                url:          url,
+                width:        500,
+                height:       200,
+                action:       'open',
+                closetimeout: 0
+            }
+        };
+
+        socket.write(JSON.stringify(notif), ENCODING, function () {
+            try {
+                logger.info(IDLOG, 'sent "open call notification" to ' + socket.username + ' with id ' + socket.id);
+
+            } catch (err1) {
+                logger.error(IDLOG, err1.stack);
+            }
+        });
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -497,6 +649,15 @@ function config(path) {
 
         } else {
             logger.warn(IDLOG, 'no TCP port has been specified in JSON file ' + path);
+        }
+
+        // initialize the paths of the notification templates
+        if (json && json.tcp && json.tcp.base_templates) {
+            callNotifTemplatePath      = json.tcp.base_templates + pathReq.sep + CALL_NOTIF_TEMPLATE_NAME;
+            streamingNotifTemplatePath = json.tcp.base_templates + pathReq.sep + STREAMING_NOTIF_TEMPLATE_NAME;
+
+        } else {
+            logger.warn(IDLOG, 'base template notifications url has not been specified in JSON file ' + path);
         }
 
         /*
@@ -536,12 +697,16 @@ function config(path) {
 */
 function start() {
     try {
-
         // check the configuration. The server starts only if the configuration has been done
         // correctly, that is if the /etc/nethcti/services.json file exists and contains
         // the tcp json object
         if (port === undefined) {
             logger.warn(IDLOG, 'tcp server does not start, because the configuration is not present');
+            return;
+        }
+        // also check if the of notification templates file path exist
+        if (!callNotifTemplatePath || !streamingNotifTemplatePath) {
+            logger.warn(IDLOG, 'tcp server does not start, because the templates file path are undefined');
             return;
         }
 
@@ -607,6 +772,7 @@ function connHdlr(socket) {
         socket.setEncoding('utf8');
 
         // add listeners to the new socket connection
+        // Emitted when data is received.
         socket.on('data', function (data) {
             try {
                 var parameters = JSON.parse(data);
@@ -619,6 +785,7 @@ function connHdlr(socket) {
             }
         });
 
+        // Emitted when the other end of the socket sends a FIN packet
         socket.on('end', function () {
             try {
                 disconnHdlr(socket);
@@ -627,6 +794,30 @@ function connHdlr(socket) {
                 logger.error(IDLOG, err1.stack);
             }
         });
+
+        // Emitted once the socket is fully closed. The argument had_error is a
+        // boolean which says if the socket was closed due to a transmission error.
+        socket.on('close', function (had_error) {
+            try {
+                disconnHdlr(socket);
+
+            } catch (err1) {
+                logger.error(IDLOG, err1.stack);
+            }
+        });
+
+        // Emitted when an error occurs. The 'close' event will be called directly following this event.
+        socket.on('error', function (error) {
+            try {
+                logger.error(IDLOG, error.stack);
+
+            } catch (err1) {
+                logger.error(IDLOG, err1.stack);
+            }
+        });
+
+        // Emitted when the write buffer becomes empty. Can be used to throttle uploads.
+        socket.on('drain', function () {} );
 
         logger.info(IDLOG, 'listeners for the new socket connection have been set');
 
@@ -702,6 +893,9 @@ function loginHdlr(socket, obj) {
             // send authenticated successfully response
             sendAutheSuccess(socket);
 
+            // send supported commands by windows notifications
+            sendNotificationSupportedCommands(socket);
+
         } else { // authentication failed
             logger.warn(IDLOG, 'authentication failed for user "' + obj.username + '" from ' + getClientSocketEndpoint(socket));
             unauthorized(socket);
@@ -710,6 +904,42 @@ function loginHdlr(socket, obj) {
     } catch (err) {
         logger.error(IDLOG, err.stack);
         unauthorized(socket);
+    }
+}
+
+/**
+* Send supported commands by the windows notifications of incoming calls.
+*
+* @method sendNotificationSupportedCommands
+* @param {object} socket The client socket
+* @private
+*/
+function sendNotificationSupportedCommands(socket) {
+    try {
+        var cmds = {
+            commands: {
+                url: {
+                    command: 'url',
+                    runwith: ''
+                },
+                notepad: {
+                    command: 'notepad',
+                    runwith: ''
+                }
+            }
+        };
+
+        socket.write(JSON.stringify(cmds), ENCODING, function () {
+            try {
+                logger.info(IDLOG, 'sent notification supported commands to ' + socket.username + ' ' + getClientSocketEndpoint(socket));
+
+            } catch (err1) {
+                logger.error(IDLOG, err1.stack);
+            }
+        });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
     }
 }
 
@@ -778,8 +1008,14 @@ function addSocket(socket) {
 */
 function send401(socket) {
     try {
-        socket.write('401');
-        logger.warn(IDLOG, 'send 401 unauthorized to ' + getClientSocketEndpoint(socket));
+        socket.write('401', ENCODING, function () {
+            try {
+                logger.info(IDLOG, 'sent 401 unauthorized to ' + getClientSocketEndpoint(socket));
+
+            } catch (err1) {
+                logger.error(IDLOG, err1.stack);
+            }
+        });
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -796,9 +1032,14 @@ function sendAutheSuccess(socket) {
     try {
         var data = { message: 'authe_ok' };
         
-        socket.write(JSON.stringify(data));
-        logger.info(IDLOG, 'sent authorized successfully to ' + socket.username + ' ' + getClientSocketEndpoint(socket) + ' with id ' + socket.id);
+        socket.write(JSON.stringify(data), ENCODING, function () {
+            try {
+                logger.info(IDLOG, 'sent authorized successfully to ' + socket.username + ' with id ' + socket.id);
 
+            } catch (err1) {
+                logger.error(IDLOG, err1.stack);
+            }
+        });
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
