@@ -3267,10 +3267,17 @@ function call(endpointType, endpointId, to, cb) {
         // check the endpoint existence
         if (endpointType === 'extension' && extensions[endpointId]) {
 
+            // replace plus sign used in country code with the '00' sequence
+            if (to.substring(0, 1) === '+') { to = to.replace('+', '00'); }
+
             // check if the country code is to be added. It is added only for outgoing calls and not
-            // between extensions. So check if the destination is an extension and add the country code
-            // only in negative result
-            if (!extensions[to]) { to = countryCode + to; }
+            // between extensions. So checks if the destination is an extension and add the country code
+            // only in negative case and if it does not already contain it
+            if (!extensions[to] &&             // the destination is not an extension
+                to.substring(0, 2) !== '00') { // it does not contain the country code
+
+                to = countryCode + to;
+            }
 
             var chType = extensions[endpointId].getChanType();
 
