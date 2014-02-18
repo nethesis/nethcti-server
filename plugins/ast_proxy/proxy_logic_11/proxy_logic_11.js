@@ -1559,6 +1559,28 @@ function getJSONExtensions(privacyStr) {
 }
 
 /**
+* Returns the JSON representation of the extension. If some error
+* occurs it returns an empty object.
+*
+* @method getJSONExtension
+* @param  {string} exten        The extension identifier
+* @param  {string} [privacyStr] If it's specified, it hides the last digits of the phone number
+* @return {object} The JSON representation of the extension.
+*/
+function getJSONExtension(exten, privacyStr) {
+    try {
+        // check the parameter
+        if (typeof exten !== 'string') { throw new Error('wrong parameter'); }
+
+        return extensions[exten].toJSON(privacyStr);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return {};
+    }
+}
+
+/**
 * Initialize all sip extensions as _Extension_ object into the
 * _extensions_ property.
 *
@@ -5096,6 +5118,7 @@ exports.redirectParking                 = redirectParking;
 exports.sendDTMFSequence                = sendDTMFSequence;
 exports.parkConversation                = parkConversation;
 exports.setCompPhonebook                = setCompPhonebook;
+exports.getJSONExtension                = getJSONExtension;
 exports.getJSONExtensions               = getJSONExtensions;
 exports.setCompCallerNote               = setCompCallerNote;
 exports.EVT_EXTEN_CHANGED               = EVT_EXTEN_CHANGED;

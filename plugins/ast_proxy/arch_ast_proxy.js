@@ -217,6 +217,13 @@ module.exports = function (options, imports, register) {
             startSpySpeakConversation: astProxy.proxyLogic.startSpySpeakConversation,
 
             /**
+            * It's the _getJSONExtension_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method getJSONExtension
+            */
+            getJSONExtension: astProxy.proxyLogic.getJSONExtension,
+
+            /**
             * It's the _getJSONExtensions_ method provided by _ast\_proxy.proxyLogic_.
             *
             * @method getJSONExtensions

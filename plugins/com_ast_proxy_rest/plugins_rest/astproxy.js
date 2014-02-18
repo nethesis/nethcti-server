@@ -899,11 +899,19 @@ var compConfigManager;
                         return;
                     }
 
+                    // get all extensions associated with the user
+                    var userExtensions = compUser.getAllEndpointsExtension(username);
+
                     var extensions;
 
                     // check if the user has the privacy enabled
                     if (compAuthorization.isPrivacyEnabled(username) === true) {
                         extensions = compAstProxy.getJSONExtensions(privacyStrReplace);
+
+                        // replace the extensions associated with the user to have clear number for them
+                        var e;
+                        for (e in userExtensions) { extensions[e] = compAstProxy.getJSONExtension(e); }
+
                     } else {
                         extensions = compAstProxy.getJSONExtensions();
                     }
