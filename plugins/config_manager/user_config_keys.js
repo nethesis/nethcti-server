@@ -12,12 +12,15 @@
 * @type {object}
 * @readOnly
 * @default {
-    'notifications': 'notifications'
+    "click2call":        "click2call",
+    "notifications":     "notifications",
+    "default_extension": "default_extension"
 }
 */
 var USER_CONFIG_KEYS = {
-    'click2call':    'click2call',
-    'notifications': 'notifications'
+    'click2call':        'click2call',
+    'notifications':     'notifications',
+    'default_extension': 'default_extension'
 }
 
 /**

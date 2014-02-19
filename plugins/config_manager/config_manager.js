@@ -172,7 +172,8 @@ function getDefaultUserPrefs() {
                         when: 'never'
                     }
                 }
-            }
+            },
+            default_extension: ''
         };
 
         return obj;
@@ -428,6 +429,43 @@ function setUserNotificationConf(data, cb) {
 
         // update the notification settings section in the preference file in the filesystem
         storeAllUserPreferences(data.username, cb);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Saves the specified notification setting for the user.
+*
+* @method setDefaultUserExtensionConf
+* @param {string}   username The username to set the defaul extension
+* @param {string}   exten    The extension identifier
+* @param {function} cb       The callback function
+*/
+function setDefaultUserExtensionConf(username, exten, cb) {
+    try {
+        // check parameters
+        if (   typeof username !== 'string'
+            || typeof exten    !== 'string' || typeof cb !== 'function') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // get the user configuration from the User object to update it
+        var config = compUser.getConfigurations(username);
+
+        // update the User object. Change the specified notification settings.
+        // This update is automatically reported in the User object because
+        // it's a reference link to it.
+        // Also the relative section of "contentConfPrefJson" property is automatically
+        // updated, because the "configUser" function sets the user configurations to be
+        // a reference link to it.
+        logger.info(IDLOG, 'update default extension of user "' + username + '"');
+        config[USER_CONFIG_KEYS.default_extension] = exten;
+
+        // update the default extension setting section in the preference file in the filesystem
+        storeAllUserPreferences(username, cb);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -913,6 +951,7 @@ exports.setUserClick2CallConf                  = setUserClick2CallConf;
 exports.getAllUserEndpointsJSON                = getAllUserEndpointsJSON;
 exports.setUserNotificationConf                = setUserNotificationConf;
 exports.getPostitNotificationSmsTo             = getPostitNotificationSmsTo;
+exports.setDefaultUserExtensionConf            = setDefaultUserExtensionConf;
 exports.getPostitNotificationEmailTo           = getPostitNotificationEmailTo;
 exports.getVoicemailNotificationSmsTo          = getVoicemailNotificationSmsTo;
 exports.getVoicemailNotificationEmailTo        = getVoicemailNotificationEmailTo;

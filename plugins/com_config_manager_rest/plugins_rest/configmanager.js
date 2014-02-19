@@ -202,6 +202,7 @@ function setCompUtil(comp) {
         * 1. [`configmanager/click2call`](#click2callpost)
         * 1. [`configmanager/notification`](#notificationpost)
         * 1. [`configmanager/presence`](#presencepost)
+        * 1. [`configmanager/default_extension`](#default_extensionpost)
         *
         * ---
         *
@@ -251,6 +252,18 @@ function setCompUtil(comp) {
         *
         *     { "type": "nethcti", "device_type": "desktop", "status": "online" }
         *
+        * ---
+        *
+        * ### <a id="default_extensionpost">**`configmanager/default_extension`**</a>
+        *
+        * Sets the default extension of the user. The request must contain the following parameters:
+        *
+        * * `extenId: the extension identifier`
+        *
+        * E.g. object parameters:
+        *
+        *     { "extenId": "614" }
+        *
         * @class plugin_rest_configmanager
         * @static
         */
@@ -287,13 +300,14 @@ function setCompUtil(comp) {
                 * @type {array}
                 *
                 *   @param {string} presence      To set a presence of the user
+                *   @param {string} click2call    To save the click to call mode of the user
                 *   @param {string} notification  To save a user notification setting
-                *   @param {string} click2callave To save the click to call mode of the user
                 */
                 'post' : [
                     'presence',
                     'click2call',
-                    'notification'
+                    'notification',
+                    'default_extension'
                 ],
                 'head':  [],
                 'del' :  []
@@ -515,6 +529,43 @@ function setCompUtil(comp) {
             },
 
             /**
+            * Save the default extension used by a user with the following REST API:
+            *
+            *     default_extension
+            *
+            * @method default_extension
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            default_extension: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (typeof req.params.extenId !== 'string') {
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    compConfigManager.setDefaultUserExtensionConf(username, req.params.extenId, function (err) {
+                        try {
+                            if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
+                            else     { compUtil.net.sendHttp200(IDLOG, res); }
+
+                        } catch (err) {
+                            logger.error(IDLOG, err.stack);
+                            compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                        }
+                    });
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
             * Save a user click to call configuration with the following REST API:
             *
             *     click2call
@@ -628,6 +679,7 @@ function setCompUtil(comp) {
         exports.notification         = configmanager.notification;
         exports.userendpoints        = configmanager.userendpoints;
         exports.alluserendpoints     = configmanager.alluserendpoints;
+        exports.default_extension    = configmanager.default_extension;
         exports.setCompConfigManager = setCompConfigManager;
         exports.setCompAuthorization = setCompAuthorization;
 
