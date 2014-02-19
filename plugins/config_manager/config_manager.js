@@ -266,10 +266,15 @@ function configUser(obj) {
             contentConfPrefJson[username].configurations.notifications.voicemail.email.to = firstEmailEndpoint;
 
             // check if the default extension of the user has already been set, otherwise set it to the first extension endpoint.
-            // Also set it if the firstExtenEndpoint is empty, because it means that the user has no extension endpoint
-            // associated with him
-            if (contentConfPrefJson[username].configurations.default_extension === ''
-                || firstExtenEndpoint === '') { // the user has no extension endpoint associated with him
+            // Also set it if the firstExtenEndpoint is empty, because it means that the user has no extension endpoint associated with him.
+            // Also check if the default extension of the user is associated with him. If it isn't the default extension is set
+            // to the first extension endpoint. Initially the default_extension is empty
+            var defaultExten  = contentConfPrefJson[username].configurations.default_extension;
+            var allUserExtens = contentConfPrefJson[username].endpoints[compUser.ENDPOINT_TYPES.extension]; // all user extensions
+
+            if (   defaultExten       === ''       // the default extension has never been set
+                || firstExtenEndpoint === ''       // the user has no extension endpoint associated with him
+                || !allUserExtens[defaultExten]) { // the default extension is not associated with the user
 
                 contentConfPrefJson[username].configurations.default_extension = firstExtenEndpoint;
             }
@@ -504,7 +509,6 @@ function getDefaultUserExtensionConf(username) {
         // get the user configuration from the User object to update it
         var config = compUser.getConfigurations(username);
         var exten  = config[USER_CONFIG_KEYS.default_extension];
-        console.log('sotto exten = ' , exten);
         return exten;
 
     } catch (err) {
