@@ -436,7 +436,7 @@ function setUserNotificationConf(data, cb) {
 }
 
 /**
-* Saves the specified notification setting for the user.
+* Saves the specified default extension for the user.
 *
 * @method setDefaultUserExtensionConf
 * @param {string}   username The username to set the defaul extension
@@ -466,6 +466,29 @@ function setDefaultUserExtensionConf(username, exten, cb) {
 
         // update the default extension setting section in the preference file in the filesystem
         storeAllUserPreferences(username, cb);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Returns the default extension of the user.
+*
+* @method getDefaultUserExtensionConf
+* @param  {string} username The username to set the defaul extension
+* @return {string} The default extension identifier.
+*/
+function getDefaultUserExtensionConf(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        // get the user configuration from the User object to update it
+        var config = compUser.getConfigurations(username);
+        var exten  = config[USER_CONFIG_KEYS.default_extension];
+        console.log('sotto exten = ' , exten);
+        return exten;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -952,6 +975,7 @@ exports.getAllUserEndpointsJSON                = getAllUserEndpointsJSON;
 exports.setUserNotificationConf                = setUserNotificationConf;
 exports.getPostitNotificationSmsTo             = getPostitNotificationSmsTo;
 exports.setDefaultUserExtensionConf            = setDefaultUserExtensionConf;
+exports.getDefaultUserExtensionConf            = getDefaultUserExtensionConf;
 exports.getPostitNotificationEmailTo           = getPostitNotificationEmailTo;
 exports.getVoicemailNotificationSmsTo          = getVoicemailNotificationSmsTo;
 exports.getVoicemailNotificationEmailTo        = getVoicemailNotificationEmailTo;

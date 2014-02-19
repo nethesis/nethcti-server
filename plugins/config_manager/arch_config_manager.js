@@ -52,6 +52,13 @@ module.exports = function (options, imports, register) {
             setUserNotificationConf: configManager.setUserNotificationConf,
 
             /**
+            * It's the _getDefaultUserExtensionConf_ method provided by _config\_manager_ module.
+            *
+            * @method getDefaultUserExtensionConf
+            */
+            getDefaultUserExtensionConf: configManager.getDefaultUserExtensionConf,
+
+            /**
             * It's the _setDefaultUserExtensionConf_ method provided by _config\_manager_ module.
             *
             * @method setDefaultUserExtensionConf

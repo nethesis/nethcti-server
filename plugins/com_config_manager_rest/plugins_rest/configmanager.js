@@ -164,6 +164,7 @@ function setCompUtil(comp) {
         * 1. [`configmanager/chatserver`](#chatserverget)
         * 1. [`configmanager/userendpoints`](#userendpointsget)
         * 1. [`configmanager/alluserendpoints`](#alluserendpointsget)
+        * 1. [`configmanager/default_extension`](#default_extensionget)
         *
         * ---
         *
@@ -194,6 +195,12 @@ function setCompUtil(comp) {
         * ### <a id="alluserendpointsget">**`configmanager/alluserendpoints`**</a>
         *
         * Returns the endpoints of all users.
+        *
+        * ---
+        *
+        * ### <a id="default_extensionget">**`configmanager/default_extension`**</a>
+        *
+        * Returns the default extension of the user.
         *
         * <br>
         *
@@ -279,18 +286,20 @@ function setCompUtil(comp) {
                 * @property get
                 * @type {array}
                 *
-                *   @param {string} userconf         To get all user configurations
-                *   @param {string} usernames        To get the list of all the username
-                *   @param {string} chatserver       To get the server chat parameters
-                *   @param {string} userendpoints    To get all the endpoints of the user
-                *   @param {string} alluserendpoints To get the endpoints of all users
+                *   @param {string} userconf          To get all user configurations
+                *   @param {string} usernames         To get the list of all the username
+                *   @param {string} chatserver        To get the server chat parameters
+                *   @param {string} userendpoints     To get all the endpoints of the user
+                *   @param {string} alluserendpoints  To get the endpoints of all users
+                *   @param {string} default_extension To get the default extension of the user
                 */
                 'get': [
                     'userconf',
                     'usernames',
                     'chatserver',
                     'userendpoints',
-                    'alluserendpoints'
+                    'alluserendpoints',
+                    'default_extension'
                 ],
 
                 /**
@@ -422,10 +431,33 @@ function setCompUtil(comp) {
                         compUtil.net.sendHttp500(IDLOG, res, strerr);
 
                     } else {
-
-                        logger.info(IDLOG, 'send endpoints of all users');
+                        logger.info(IDLOG, 'send endpoints of all users to ' + username);
                         res.send(200, results);
                     }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * Manages both GET and POST requests to get/set the default_extension of
+            * the user with the following REST API:
+            *
+            *     GET  default_extension
+            *     POST default_extension
+            *
+            * @method default_extension
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            default_extension: function (req, res, next) {
+                try {
+                    if      (req.method.toLowerCase() === 'get' ) { defaultExtensionGet(req, res, next); }
+                    else if (req.method.toLowerCase() === 'post') { defaultExtensionSet(req, res, next); }
+                    else    { logger.warn(IDLOG, 'unknown requested method ' + req.method); }
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
@@ -512,43 +544,6 @@ function setCompUtil(comp) {
                         username: username
                     };
                     compConfigManager.setUserNotificationConf(data, function (err) {
-                        try {
-                            if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
-                            else     { compUtil.net.sendHttp200(IDLOG, res); }
-
-                        } catch (err) {
-                            logger.error(IDLOG, err.stack);
-                            compUtil.net.sendHttp500(IDLOG, res, err.toString());
-                        }
-                    });
-
-                } catch (err) {
-                    logger.error(IDLOG, err.stack);
-                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
-                }
-            },
-
-            /**
-            * Save the default extension used by a user with the following REST API:
-            *
-            *     default_extension
-            *
-            * @method default_extension
-            * @param {object}   req  The client request
-            * @param {object}   res  The client response
-            * @param {function} next Function to run the next handler in the chain
-            */
-            default_extension: function (req, res, next) {
-                try {
-                    var username = req.headers.authorization_user;
-
-                    // check parameters
-                    if (typeof req.params.extenId !== 'string') {
-                        compUtil.net.sendHttp400(IDLOG, res);
-                        return;
-                    }
-
-                    compConfigManager.setDefaultUserExtensionConf(username, req.params.extenId, function (err) {
                         try {
                             if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
                             else     { compUtil.net.sendHttp200(IDLOG, res); }
@@ -687,3 +682,67 @@ function setCompUtil(comp) {
         logger.error(IDLOG, err.stack);
     }
 })();
+
+/**
+* Sets the default extension of the user.
+*
+* @method defaultExtensionSet
+* @param {object} req  The request object
+* @param {object} res  The response object
+* @param {object} next
+*/
+function defaultExtensionSet(req, res, next) {
+    try {
+        var username = req.headers.authorization_user;
+
+        // check parameters
+        if (typeof req.params.extenId !== 'string') {
+            compUtil.net.sendHttp400(IDLOG, res);
+            return;
+        }
+
+        compConfigManager.setDefaultUserExtensionConf(username, req.params.extenId, function (err) {
+            try {
+                if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
+                else     { compUtil.net.sendHttp200(IDLOG, res); }
+
+            } catch (err) {
+                logger.error(IDLOG, err.stack);
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+            }
+        });
+
+    } catch (error) {
+        logger.error(IDLOG, error.stack);
+        compUtil.net.sendHttp500(IDLOG, res, error.toString());
+    }
+}
+
+/**
+* Gets the default extension of the user.
+*
+* @method defaultExtensionGet
+* @param {object} req  The request object
+* @param {object} res  The response object
+* @param {object} next
+*/
+function defaultExtensionGet(req, res, next) {
+    try {
+        var username = req.headers.authorization_user;
+        var exten    = compConfigManager.getDefaultUserExtensionConf(username);
+
+        if (typeof exten !== 'string') {
+            var strerr = 'wrong default extension result for user ' + username;
+            logger.error(IDLOG, strerr);
+            compUtil.net.sendHttp500(IDLOG, res, strerr);
+
+        } else {
+            logger.info(IDLOG, 'send default extension "' + exten + '" to user ' + username);
+            res.send(200, { default_extension: exten });
+        }
+
+    } catch (error) {
+        logger.error(IDLOG, error.stack);
+        compUtil.net.sendHttp500(IDLOG, res, error.toString());
+    }
+}
