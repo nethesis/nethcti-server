@@ -222,8 +222,16 @@ function configUser(obj) {
         }
 
         // merge configurations (from obj.users file) and preferences (from obj.userPrefs file) in one single object
-        var username, emailEndpoints, firstEmailEndpoint, cellphoneEndpoints, firstCellphoneEndpoint;
+        var username, emailEndpoints, firstEmailEndpoint, cellphoneEndpoints, firstCellphoneEndpoint, extenEndpoints, firstExtenEndpoint;
         for (username in contentConfPrefJson) {
+
+            // get the extension endpoints associated with the user. It can be empty
+            // get all extension endpoints of the user
+            extenEndpoints = contentConfPrefJson[username].endpoints[compUser.ENDPOINT_TYPES.extension];
+            // get the first extension endpoint of the user
+            firstExtenEndpoint = Object.keys(extenEndpoints)[0];
+            // check if the endpoint is present
+            firstExtenEndpoint = (firstExtenEndpoint ? firstExtenEndpoint : '');
 
             // get the cellphone endpoint associated with the user. It can be empty
             // get all cellphone endpoints of the user
@@ -256,6 +264,15 @@ function configUser(obj) {
             contentConfPrefJson[username].configurations.notifications.postit.email.to    = firstEmailEndpoint;
             contentConfPrefJson[username].configurations.notifications.voicemail.sms.to   = firstCellphoneEndpoint;
             contentConfPrefJson[username].configurations.notifications.voicemail.email.to = firstEmailEndpoint;
+
+            // check if the default extension of the user has already been set, otherwise set it to the first extension endpoint.
+            // Also set it if the firstExtenEndpoint is empty, because it means that the user has no extension endpoint
+            // associated with him
+            if (contentConfPrefJson[username].configurations.default_extension === ''
+                || firstExtenEndpoint === '') { // the user has no extension endpoint associated with him
+
+                contentConfPrefJson[username].configurations.default_extension = firstExtenEndpoint;
+            }
         }
 
         // check created content of the JSON files
