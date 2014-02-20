@@ -160,7 +160,8 @@ var compAuthorization;
 
 /**
 * Contains all client socket of authenticated clients. The key is the client
-* socket identifier and the value is the socket object.
+* socket identifier and the value is an object containing the socket object
+* and the token of the user.
 *
 * @property sockets
 * @type object
@@ -486,7 +487,7 @@ function extenDialing(data) {
 
         for (sockId in sockets) {
 
-            // "sockets[sockId]" is a socket object that contains the "username"
+            // "sockets[sockId]" is a socket object that contains the "username", "token"
             // and "id" properties added by "connHdlr" and "loginHdlr" methods
             username = sockets[sockId].username;
 
@@ -746,7 +747,7 @@ function updateTokenExpirationOfAllTcpUsers() {
 
         var id;
         for (id in sockets) {
-            compAuthe.updateTokenExpires(sockets[id].username);
+            compAuthe.updateTokenExpires(sockets[id].username, sockets[id].token);
         }
 
     } catch (err) {
@@ -884,7 +885,8 @@ function loginHdlr(socket, obj) {
 
             logger.info(IDLOG, 'user "' + obj.username + '" successfully authenticated from ' + getClientSocketEndpoint(socket));
 
-            // sets username property to the client socket
+            // sets the username and the token property to the client socket
+            socket.token    = obj.token;
             socket.username = obj.username;
 
             // add client socket to future fast authentication for each request from the clients
@@ -972,9 +974,10 @@ function disconnHdlr(socket) {
 function removeClientSocket(socketId) {
     try {
         if (sockets[socketId]) {
-            var temp = sockets[socketId];
+            var tokenTemp    = sockets[socketId].token;
+            var usernameTemp = sockets[socketId].username;
             delete sockets[socketId];
-            logger.info(IDLOG, 'removed client socket ' + socketId + ' for the user ' + temp.username);
+            logger.info(IDLOG, 'removed client socket ' + socketId + ' of the user ' + usernameTemp + ' with token ' + tokenTemp);
         }
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -992,7 +995,7 @@ function removeClientSocket(socketId) {
 function addSocket(socket) {
     try {
         sockets[socket.id] = socket;
-        logger.info(IDLOG, 'added client socket ' + socket.id + ' for user ' + socket.username);
+        logger.info(IDLOG, 'added client socket ' + socket.id + ' for user ' + socket.username + ' with token ' + socket.token);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);

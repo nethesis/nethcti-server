@@ -167,6 +167,16 @@ var port;
 var expires = 3600000;
 
 /**
+* The interval time to remove the expired authentication tokens.
+*
+* @property CHECK_TOKEN_EXPIRED_INTERVAL
+* @type number
+* @private
+* @default 600000 (10 minutes)
+*/
+var CHECK_TOKEN_EXPIRED_INTERVAL = 600000;
+
+/**
 * If true, every authentication request also causes the update of the
 * token expiration value.
 *
@@ -179,8 +189,9 @@ var autoUpdateTokenExpires = true;
 
 /**
 * The temporary permissions assigned to the users. Associates each user
-* with his token. Each permission has an expiration date of _expires_
-* milliseconds.
+* with a list of tokens. Each permission has an expiration date of _expires_
+* milliseconds. Each user can have more than one token because he can login
+* from more than one place.
 *
 * @property grants
 * @type {object}
@@ -269,9 +280,52 @@ function config(path) {
         configActiveDirectory(json[AUTH_TYPE.ldap]);
     }
 
+    startIntervalRemoveExpiredTokens();
+
     // emit the event to tell other modules that the component is ready to be used
     logger.info(IDLOG, 'emit "' + EVT_COMP_READY + '" event');
     emitter.emit(EVT_COMP_READY);
+}
+
+/**
+* Starts the removing of expired authentication tokens each interval of time.
+*
+* @method startIntervalRemoveExpiredTokens
+* @private
+*/
+function startIntervalRemoveExpiredTokens() {
+    try {
+        logger.info(IDLOG, 'start remove expired tokens interval each ' + CHECK_TOKEN_EXPIRED_INTERVAL + ' msec');
+
+        setInterval(function () {
+            try {
+                var username, userTokens, tokenid;
+                var currentTimestamp = (new Date()).getTime();
+
+                // cycle in all users
+                for (username in grants) {
+
+                    userTokens = grants[username]; // all user tokens
+
+                    // cycle in all tokens of the user
+                    for (tokenid in userTokens) {
+
+                        // check the token expiration
+                        if (currentTimestamp > userTokens[tokenid].expires) {
+
+                            logger.info(IDLOG, 'the token "' + tokenid + '" of user "' + username + '" has expired: remove it');
+                            removeToken(username, tokenid); // remove the token
+                        }
+                    }
+                }
+            } catch (err1) {
+                logger.error(IDLOG, err1.stack);
+            }
+        }, CHECK_TOKEN_EXPIRED_INTERVAL);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
 }
 
 /**
@@ -388,8 +442,8 @@ function configActiveDirectory(json) {
 *
 * @method newToken
 * @param {string} accessKeyId The access key identifier, e.g. the username
-* @param {string} password The password of the account
-* @param {string} nonce Used to create the HMAC-SHA1 token.
+* @param {string} password    The password of the account
+* @param {string} nonce       It is used to create the HMAC-SHA1 token
 * @private
 */
 function newToken(accessKeyId, password, nonce) {
@@ -407,11 +461,14 @@ function newToken(accessKeyId, password, nonce) {
         var token  = crypto.createHmac('sha1', password).update(tohash).digest('hex');
 
         // store token
-        grants[accessKeyId] = {
+        if (!grants[accessKeyId]) { grants[accessKeyId] = {}; }
+
+        var newToken = {
             nonce:   nonce,
             token:   token,
             expires: (new Date()).getTime() + expires
         };
+        grants[accessKeyId][token] = newToken;
 
         logger.info(IDLOG, 'new token has been generated for accessKeyId ' + accessKeyId);
 
@@ -651,22 +708,25 @@ function adBindCb(accessKeydId, err, result, cb) {
 /**
 * Removes the grant for an access key.
 *
-* @method removeGrant
-* @param  {string}  accessKeyId The access key.
+* @method removeToken
+* @param  {string}  accessKeyId The access key
+* @param  {string}  token       The token
 * @return {boolean} True if the grant removing has been successful.
 */
-function removeGrant(accessKeyId) {
+function removeToken(accessKeyId, token) {
     try {
-        // check the parameter
-        if (typeof accessKeyId !== 'string') { throw new Error('wrong parameter'); }
+        // check the parameters
+        if (typeof accessKeyId !== 'string' || typeof token !== 'string') {
+            throw new Error('wrong parameters');
+        }
 
         // check the grant presence
         if (grants[accessKeyId]) {
-            delete grants[accessKeyId];
-            logger.info(IDLOG, 'removed grant for accessKeyId ' + accessKeyId);
+            delete grants[accessKeyId][token];
+            logger.info(IDLOG, 'removed token "' + token + '" for accessKeyId ' + accessKeyId);
         }
 
-        if (grants[accessKeyId] === undefined) { return true; }
+        if (grants[accessKeyId][token] === undefined) { return true; }
         return false;
 
     } catch (err) {
@@ -678,16 +738,30 @@ function removeGrant(accessKeyId) {
 * Update the expiration of the token relative to the access key.
 *
 * @method updateTokenExpires
-* @param {string} accessKeyId The access key relative to the token to be updated.
+* @param {string} accessKeyId The access key relative to the token to be updated
+* @param {string} token       The access token
 */
-function updateTokenExpires(accessKeyId) {
+function updateTokenExpires(accessKeyId, token) {
     try {
+        // check parameters
+        if (typeof accessKeyId !== 'string' || typeof token !== 'string') {
+            throw new Error('wrong parameters');
+        }
+
         // check grants presence
         if (!grants[accessKeyId]) {
-            throw new Error('update token expiration failed for accessKeyId: ' + accessKeyId);
+            logger.warn(IDLOG, 'update token expiration "' + token + '" failed: no grants for accessKeyId ' + accessKeyId);
+            return;
         }
-        grants[accessKeyId].expires = (new Date()).getTime() + expires;
-        logger.info(IDLOG, 'token expiration has been updated for accessKeyId ' + accessKeyId);
+
+        // check token presence
+        if (!grants[accessKeyId][token]) {
+            logger.warn(IDLOG, 'update token expiration "' + token + '" failed: token is not present for accessKeyId ' + accessKeyId);
+            return;
+        }
+
+        grants[accessKeyId][token].expires = (new Date()).getTime() + expires;
+        logger.info(IDLOG, 'token expiration "' + token + '" has been updated for accessKeyId ' + accessKeyId);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -712,8 +786,8 @@ function isAutoUpdateTokenExpires() {
 * must be used before this.
 *
 * @method verifyToken
-* @param {string} accessKeyId The access key used to retrieve the token.
-* @param {string} token The token to be checked.
+* @param  {string}  accessKeyId The access key used to retrieve the token
+* @param  {string}  token       The token to be checked
 * @return {boolean} It's true if the user has been authenticated succesfully.
 */
 function verifyToken(accessKeyId, token) {
@@ -730,24 +804,25 @@ function verifyToken(accessKeyId, token) {
             return false;
         }
 
-        // check the tokens equality
-        if (grants[accessKeyId].token !== token) {
+        // check if the user has the token
+        var userTokens = grants[accessKeyId]; // all token of the user
+        if (!userTokens[token]) {
             logger.warn(IDLOG, 'authentication failed for accessKeyId "' + accessKeyId + '": wrong token');
             return false;
         }
 
         // check the token expiration
-        if ((new Date()).getTime() > grants[accessKeyId].expires) {
-            removeGrant(accessKeyId); // remove the grant
-            logger.info(IDLOG, 'the token has expired for accessKeyId ' + accessKeyId);
+        if ((new Date()).getTime() > userTokens[token].expires) {
+            removeToken(accessKeyId, token); // remove the token
+            logger.info(IDLOG, 'the token "' + token + '" has expired for accessKeyId ' + accessKeyId);
             return false;
         }
 
         // check whether update token expiration value
-        if (autoUpdateTokenExpires) { updateTokenExpires(accessKeyId); }
+        if (autoUpdateTokenExpires) { updateTokenExpires(accessKeyId, token); }
 
         // authentication successfull
-        logger.info(IDLOG, 'accessKeyId "' + accessKeyId + '" has been successfully authenticated');
+        logger.info(IDLOG, 'accessKeyId "' + accessKeyId + '" has been successfully authenticated with token "' + token + '"');
         return true;
 
     } catch (err) {
@@ -793,7 +868,7 @@ exports.config                    = config;
 exports.getNonce                  = getNonce;
 exports.setLogger                 = setLogger;
 exports.verifyToken               = verifyToken;
-exports.removeGrant               = removeGrant;
+exports.removeToken               = removeToken;
 exports.authenticate              = authenticate;
 exports.EVT_COMP_READY            = EVT_COMP_READY;
 exports.updateTokenExpires        = updateTokenExpires;

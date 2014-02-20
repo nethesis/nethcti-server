@@ -225,9 +225,10 @@ function setCompUtil(comp) {
             */
             logout: function (req, res, next) {
                 try {
+                    var token    = req.headers.authorization_token;
                     var username = req.headers.authorization_user;
 
-                    if (compAuthe.removeGrant(username) === true) {
+                    if (compAuthe.removeToken(username, token) === true) {
                         logger.info(IDLOG, 'user "' + username + '" has been successfully logged out');
                         compUtil.net.sendHttp200(IDLOG, res);
 

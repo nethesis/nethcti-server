@@ -54,15 +54,15 @@ module.exports = function (options, imports, register) {
             getNonce: authentication.getNonce,
 
             /**
-            * It's the _removeGrant_ method provided by _authentication_ module.
+            * It's the _removeToken_ method provided by _authentication_ module.
             *
-            * @method removeGrant
+            * @method removeToken
             * @param {string} accessKeyId The access key.
             */
-            removeGrant: authentication.removeGrant,
+            removeToken: authentication.removeToken,
 
             /**
-            * It's the _removeGrant_ method provided by _authentication_ module.
+            * It's the _isAutoUpdateTokenExpires_ method provided by _authentication_ module.
             *
             * @method isAutoUpdateTokenExpires
             * @return {boolean} True if the automatic update is active.

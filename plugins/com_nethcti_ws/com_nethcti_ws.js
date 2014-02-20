@@ -183,8 +183,9 @@ var compPostit;
 
 /**
 * Contains all websocket identifiers of authenticated clients.
-* The key is the websocket identifier and the value is the username.
-* It's used for fast authentication for each request.
+* The key is the websocket identifier and the value is an object
+* containing the username and the token of the user. It's used for
+* fast authentication for each request.
 *
 * @property wsid
 * @type object
@@ -438,7 +439,7 @@ function updateNewVoiceMessagesListener(voicemail, list) {
 
         for (socketId in wsid) {
 
-            username = wsid[socketId];
+            username = wsid[socketId].username;
 
             // the user is associated with the voicemail is logged in
             if (users.indexOf(username) !== -1) {
@@ -457,7 +458,7 @@ function updateNewVoiceMessagesListener(voicemail, list) {
         // without any authorization checking
         for (socketId in wsid) {
 
-            username = wsid[socketId];
+            username = wsid[socketId].username;
 
             // emits the event "newVoiceMessageCounter" with the number of new voice messages of the user
             logger.info(IDLOG, 'emit event "newVoiceMessageCounter" ' + list.length + ' to user "' + username + '"');
@@ -492,7 +493,7 @@ function updateNewPostitListener(recipient, list) {
 
         for (socketId in wsid) {
 
-            username = wsid[socketId];
+            username = wsid[socketId].username;
 
             // the user is the recipient of the new post-it message
             if (username === recipient) {
@@ -507,7 +508,7 @@ function updateNewPostitListener(recipient, list) {
         // sent to all users without any authorization checking
         for (socketId in wsid) {
 
-            username = wsid[socketId];
+            username = wsid[socketId].username;
 
             // emits the event with the number of new post-it of the recipient user
             logger.info(IDLOG, 'emit event "newPostitCounter" ' + list.length + ' to recipient user "' + username + '"');
@@ -570,7 +571,7 @@ function extenChanged(exten) {
         var sockid, username;
         for (sockid in wsid) {
 
-            username = wsid[sockid];
+            username = wsid[sockid].username;
 
             if (compUser.hasExtensionEndpoint(username, exten.getExten())) {
                 server.sockets.sockets[sockid].emit('extenUpdate', exten.toJSON());
@@ -775,7 +776,7 @@ function extenDialing(data) {
 
         for (socketId in wsid) {
 
-            username = wsid[socketId];
+            username = wsid[socketId].username;
 
             // the user is associated with the ringing extension and is logged in
             if (users.indexOf(username) !== -1) {
@@ -1003,7 +1004,7 @@ function updateTokenExpirationOfAllWsUsers() {
         logger.info(IDLOG, 'update token expiration of all websocket users');
 
         var id;
-        for (id in wsid) { compAuthe.updateTokenExpires(wsid[id]); }
+        for (id in wsid) { compAuthe.updateTokenExpires(wsid[id].username, wsid[id].token); }
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -1053,7 +1054,7 @@ function dispatchMsg(socket, data) {
                 badRequest(socket);
 
             } else {
-                var username = wsid[socket.id];
+                var username = wsid[socket.id].username;
                 logger.warn(IDLOG, 'requested command ' + data.command + ' from user "' + username + '" (' + getWebsocketEndpoint(socket) + '): the server doesn\'t manage the requests of commands');
 
                 sendError(socket, { error: '501: commands not allowed' });
@@ -1143,9 +1144,9 @@ function unauthorized(socket) {
 *
 * @method loginHdlr
 * @param {object} socket The client websocket
-* @param {object} data The data passed by the client
+* @param {object} data   The data passed by the client
 *   @param {string} data.accessKeyId The username of the account
-*   @param {string} data.token The token received by the authentication REST request
+*   @param {string} data.token       The token received by the authentication REST request
 * @private
 */
 function loginHdlr(socket, obj) {
@@ -1167,7 +1168,7 @@ function loginHdlr(socket, obj) {
                                ' with socket id ' + socket.id);
 
             // add websocket id for future fast authentication for each request from the clients
-            addWebsocketId(obj.accessKeyId, socket.id);
+            addWebsocketId(obj.accessKeyId, obj.token, socket.id);
 
             // set the nethcti endpoint presence of the user to online status
             compUser.setNethctiPresence(obj.accessKeyId, 'desktop', compUser.ENDPOINT_NETHCTI_STATUS.online);
@@ -1258,7 +1259,7 @@ function disconnHdlr(socket) {
         // when the user isn't authenticated but connected by websocket,
         // the "socket.id" isn't present in the "wsid" property
         if (wsid[socket.id]) {
-            var username = wsid[socket.id];
+            var username = wsid[socket.id].username;
             compUser.setNethctiPresence(username, 'desktop', compUser.ENDPOINT_NETHCTI_STATUS.offline);
         }
 
@@ -1280,9 +1281,10 @@ function disconnHdlr(socket) {
 function removeWebsocketId(socketId) {
     try {
         if (wsid[socketId]) {
-            var temp = wsid[socketId];
+            var userTemp  = wsid[socketId].username;
+            var tokenTemp = wsid[socketId].token;
             delete wsid[socketId];
-            logger.info(IDLOG, 'removed client websocket ' + socketId + ' for the user ' + temp);
+            logger.info(IDLOG, 'removed client websocket ' + socketId + ' for the user ' + userTemp + ' with token ' + tokenTemp);
         }
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -1294,14 +1296,15 @@ function removeWebsocketId(socketId) {
 * object _wsid_. If it already exists it will be overwritten.
 *
 * @method addWebsocketId
-* @param {string} user The user used as key
+* @param {string} user     The user used as key
+* @param {string} token    The access token
 * @param {string} socketId The client websocket identifier to store in the memory
 * private
 */
-function addWebsocketId(user, socketId) {
+function addWebsocketId(user, token, socketId) {
     try {
-        wsid[socketId] = user;
-        logger.info(IDLOG, 'added client websocket identifier ' + socketId + ' for user ' + user);
+        wsid[socketId] = { username: user, token: token };
+        logger.info(IDLOG, 'added client websocket identifier ' + socketId + ' for user ' + user + ' with token ' + token);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
