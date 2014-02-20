@@ -399,10 +399,9 @@ function configPrivacy(path) {
 }
 
 /**
-* Call _setPrivacy_ function for all REST plugins.
+* Calls _setPrivacy_ function for all REST plugins.
 *
 * @method setAllRestPluginsPrivacy
-* @private
 * @param {string} str The string used to hide last digits of phone numbers
 * @private
 */

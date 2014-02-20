@@ -19,6 +19,16 @@
 var IDLOG = '[plugins_rest/histcallswitch]';
 
 /**
+* The string used to hide phone numbers in privacy mode.
+*
+* @property privacyStrReplace
+* @type {string}
+* @private
+* @default "xxx"
+*/
+var privacyStrReplace = 'xxx';
+
+/**
 * The logger. It must have at least three methods: _info, warn and error._
 *
 * @property logger
@@ -234,7 +244,7 @@ function setCompAuthorization(ca) {
                     // can view also all data about recording audio files
                     var recording = compAuthorization.authorizeAdminRecordingUser(username);
                     if (recording !== true) {
-                        logger.info(IDLOG, 'user "' + username + '" hasn\'t the "admin recording" authorization');
+                        logger.info(IDLOG, 'user "' + username + '" does not have the "admin recording" authorization');
 
                     } else {
                         logger.info(IDLOG, 'user "' + username + '" has the "admin recording" authorization');
@@ -249,17 +259,24 @@ function setCompAuthorization(ca) {
                     // add filter parameter if it has been specified
                     if (req.params.filter) { obj.filter = req.params.filter; }
 
+                    // if the user has the privacy enabled, it adds the privacy string to be use to hide the phone numbers
+                    if (compAuthorization.isPrivacyEnabled(username)) { obj.privacyStr = privacyStrReplace; }
+
                     // use the history component
                     var data = compHistory.getHistorySwitchCallInterval(obj, function (err, results) {
-
-                        if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
-                        else {
-                            logger.info(IDLOG, 'send ' + results.length   + ' results searching switchboard history call ' +
-                                               'interval between ' + obj.from + ' to ' + obj.to + ' for all endpoints ' +
-                                               'and filter ' + (obj.filter ? obj.filter : '""') +
-                                               (obj.recording ? ' with recording data' : '') +
-                                               ' to user "' + username + '"');
-                            res.send(200, results);
+                        try {
+                            if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
+                            else {
+                                logger.info(IDLOG, 'send ' + results.length   + ' results searching switchboard history call ' +
+                                                   'interval between ' + obj.from + ' to ' + obj.to + ' for all endpoints ' +
+                                                   'and filter ' + (obj.filter ? obj.filter : '""') +
+                                                   (obj.recording ? ' with recording data' : '') +
+                                                   ' to user "' + username + '"');
+                                res.send(200, results);
+                            }
+                        } catch (err) {
+                            logger.error(IDLOG, err.stack);
+                            compUtil.net.sendHttp500(IDLOG, res, err.toString());
                         }
                     });
                 } catch (err) {
@@ -296,6 +313,7 @@ function setCompAuthorization(ca) {
         exports.day                  = histcallswitch.day;
         exports.interval             = histcallswitch.interval;
         exports.setLogger            = setLogger;
+        exports.setPrivacy           = setPrivacy;
         exports.setCompUtil          = setCompUtil;
         exports.setCompHistory       = setCompHistory;
         exports.setCompAuthorization = setCompAuthorization;
@@ -304,3 +322,18 @@ function setCompAuthorization(ca) {
         logger.error(IDLOG, err.stack);
     }
 })();
+
+/**
+* Sets the string to be used to hide last digits of phone numbers in privacy mode.
+*
+* @method setPrivacy
+* @param {object} str The string used to hide last digits of phone numbers.
+*/
+function setPrivacy(str) {
+    try {
+        privacyStrReplace = str;
+        logger.info(IDLOG, 'set privacy with string ' + privacyStrReplace);
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}

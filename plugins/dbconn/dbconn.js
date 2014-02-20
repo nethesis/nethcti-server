@@ -1583,51 +1583,62 @@ function getCtiPbContactsStartsWithDigit(username, cb) {
 * Get the history call of the specified endpoint into the interval time.
 * If the endpoint information is omitted, the results contains the
 * history call of all endpoints. Moreover, it can be possible to filter
-* the results specifying the filter. It search the results into the
+* the results specifying the filter and hide the phone numbers specifying
+* the privacy sequence to be used. It search the results into the
 * _asteriskcdrdb.cdr_ database.
 *
 * @method getHistoryCallInterval
 * @param {object} data
-*   @param {string}  [data.endpoint] The endpoint involved in the research, e.g. the extesion
-*                                    identifier. It is used to filter out the _channel_ and _dstchannel_.
-*                                    It is wrapped with '%' characters. If it is omitted the function treats
-*                                    it as '%' string. The '%' matches any number of characters, even zero character
-*   @param {string}  data.from       The starting date of the interval in the YYYYMMDD format (e.g. 20130521)
-*   @param {string}  data.to         The ending date of the interval in the YYYYMMDD format (e.g. 20130528)
-*   @param {boolean} data.recording  True if the data about recording audio file must be returned
-*   @param {string}  [data.filter]   The filter to be used in the _src, clid_ and _dst_ fields. If it is
-*                                    omitted the function treats it as '%' string
+*   @param {string}  [data.endpoint]   The endpoint involved in the research, e.g. the extesion
+*                                      identifier. It is used to filter out the _channel_ and _dstchannel_.
+*                                      It is wrapped with '%' characters. If it is omitted the function treats
+*                                      it as '%' string. The '%' matches any number of characters, even zero character
+*   @param {string}  data.from         The starting date of the interval in the YYYYMMDD format (e.g. 20130521)
+*   @param {string}  data.to           The ending date of the interval in the YYYYMMDD format (e.g. 20130528)
+*   @param {boolean} data.recording    True if the data about recording audio file must be returned
+*   @param {string}  [data.filter]     The filter to be used in the _src, clid_ and _dst_ fields. If it is
+*                                      omitted the function treats it as '%' string
+*   @param {string}  [data.privacyStr] The sequence to be used to hide the numbers to respect the privacy
 * @param {function} cb The callback function
 */
 function getHistoryCallInterval(data, cb) {
     try {
         // check parameters
         if (typeof data !== 'object'
-            ||  typeof cb            !== 'function' || typeof data.recording !== 'boolean'
-            ||  typeof data.to       !== 'string'   || typeof data.from      !== 'string'
-            || (typeof data.endpoint !== 'string'   && data.endpoint         !== undefined)
-            || (typeof data.filter   !== 'string'   && data.filter           !== undefined)) {
+            ||  typeof cb              !== 'function' || typeof data.recording !== 'boolean'
+            ||  typeof data.to         !== 'string'   || typeof data.from      !== 'string'
+            || (typeof data.endpoint   !== 'string'   && data.endpoint         !== undefined)
+            || (typeof data.filter     !== 'string'   && data.filter           !== undefined)
+            || (typeof data.privacyStr !== 'string'   && data.privacyStr       !== undefined)) {
 
             throw new Error('wrong parameters');
         }
 
         // check optional parameters
-        if (data.filter === undefined) { data.filter = '%'; }
-        if (data.endpoint  === undefined) {
-            data.endpoint  = '%';
-        } else {
-            data.endpoint = '%' + data.endpoint + '%';
-        }
+        if (data.filter   === undefined) { data.filter   = '%'; }
+        if (data.endpoint === undefined) { data.endpoint = '%'; }
+        else { data.endpoint = '%' + data.endpoint + '%'; }
 
         // define the mysql field to be returned. The "recordingfile" field
         // is returned only if the "data.recording" argument is true
         var attributes = [
             [ 'DATE_FORMAT(calldate, "%d/%m/%Y")', 'date'],
             [ 'DATE_FORMAT(calldate, "%H:%i:%S")', 'time'],
-            'clid', 'src', 'dst', 'channel', 'dstchannel', 'uniqueid',
+            'clid', 'channel', 'dstchannel', 'uniqueid',
             'duration', 'billsec', 'disposition', 'dcontext'
         ];
         if (data.recording === true) { attributes.push('recordingfile'); }
+
+        // if the privacy string is present, than hide the numbers
+        if (data.privacyStr) {
+            // the numbers are hidden
+            attributes.push([ 'CONCAT( SUBSTRING(src, 1, LENGTH(src) - ' + data.privacyStr.length + '), "' + data.privacyStr + '")', 'src' ]);
+            attributes.push([ 'CONCAT( SUBSTRING(dst, 1, LENGTH(dst) - ' + data.privacyStr.length + '), "' + data.privacyStr + '")', 'dst' ]);
+        } else {
+            // the numbers are clear
+            attributes.push('src');
+            attributes.push('dst');
+        }
 
         // search
         models[JSON_KEYS.HISTORY_CALL].findAll({
