@@ -100,18 +100,21 @@ function getCallTrace(linkedid, privacyStr, cb) {
 * Get call information from uniqueid.
 *
 * @method getCallInfo
-* @param {string} uniqueid Call identifier
-* @param {function} cb The callback function
+* @param {string}   uniqueid   The call identifier
+* @param {string}   privacyStr The privacy string to be used to hide the phone numbers. It can be undefined
+* @param {function} cb         The callback function
 */
-function getCallInfo(uniqueid, cb) {
+function getCallInfo(uniqueid, privacyStr, cb) {
     try {
         // check parameters
-        if ( typeof uniqueid !== 'string' ||  typeof cb !== 'function' ) {
+        if (    typeof uniqueid   !== 'string' || typeof cb  !== 'function'
+            || (typeof privacyStr !== 'string' && privacyStr !== undefined) ) {
+
             throw new Error('wrong parameters');
         }
 
         logger.info(IDLOG, 'search cel for uniqueid "' + uniqueid + '"');
-        compDbconn.getCallInfo(uniqueid, cb);
+        compDbconn.getCallInfo(uniqueid, privacyStr, cb);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);

@@ -2940,6 +2940,7 @@ function getCallTrace(linkedid, privacyStr, cb) {
 
         } else {
             // the numbers are clear
+            attributes.push('exten');
             attributes.push('accountcode');
             attributes.push([ 'concat(cid_name, " ", cid_num)', 'cid' ]);
         }
@@ -2979,16 +2980,34 @@ function getCallTrace(linkedid, privacyStr, cb) {
 * or _/etc/nethcti/dbdynamic.json_ files.
 *
 * @method getCallInfo
-* @param {string}   link Call uniqueid
-* @param {function} cb   The callback function
+* @param {string}   uniqueid   The call uniqueid
+* @param {string}   privacyStr The privacy string to be used to hide the phone numbers. It can be undefined
+* @param {function} cb         The callback function
 */
-function getCallInfo(uniqueid, cb) {
+function getCallInfo(uniqueid, privacyStr, cb) {
     try {
         // check parameters
-        if (typeof uniqueid   !== 'string'
-            || typeof cb  !== 'function') {
+        if (    typeof uniqueid   !== 'string' || typeof cb  !== 'function'
+            || (typeof privacyStr !== 'string' && privacyStr !== undefined) ) {
 
             throw new Error('wrong parameters');
+        }
+
+        var attributes = ['eventtype', 'eventtime', 'context', 'channame'];
+
+        // if the privacy string is present, than hide the numbers
+        if (privacyStr) {
+            // the numbers are hidden
+            attributes.push([  'CONCAT( SUBSTRING(exten,       1, LENGTH(exten)       - ' + privacyStr.length + '), "' + privacyStr + '")', 'exten'       ]);
+            attributes.push([  'CONCAT( SUBSTRING(accountcode, 1, LENGTH(accountcode) - ' + privacyStr.length + '), "' + privacyStr + '")', 'accountcode' ]);
+            var cidNumHidden = 'CONCAT( SUBSTRING(cid_num,     1, LENGTH(cid_num)     - ' + privacyStr.length + '), "' + privacyStr + '")';
+            attributes.push([ 'concat(cid_name, " ", ' + cidNumHidden + ')', 'cid' ]);
+
+        } else {
+            // the numbers are clear
+            attributes.push('exten');
+            attributes.push('accountcode');
+            attributes.push([ 'concat(cid_name, " ", cid_num)', 'cid' ]);
         }
 
         // search
@@ -2996,11 +3015,8 @@ function getCallInfo(uniqueid, cb) {
             where: [
                 'uniqueid=?', uniqueid
             ],
-            attributes: [
-                'eventtype', 'eventtime',
-                [ 'concat(cid_name," ",cid_num)', 'cid' ],
-                'exten', 'context', 'channame', 'accountcode'
-            ]
+            attributes: attributes
+
         }).success(function (results) {
 
             // extract results to return in the callback function

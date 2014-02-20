@@ -144,12 +144,20 @@ function setCompAuthorization(ca) {
         * # GET requests
         *
         * 1. [`cel/calltrace/:linkedid`](#calltraceget)
+        * 1. [`cel/callinfo/:uniqueid`](#callinfoget)
         *
         * ---
         *
         * ### <a id="calltraceget">**`cel/calltrace/:linkedid`**</a>
         *
         * Returns a call trace of the given linkedid.
+        * If an error occurs an HTTP 500 response is returned.
+        *
+        * ---
+        *
+        * ### <a id="callinfoget">**`cel/callinfo/:uniqueid`**</a>
+        *
+        * Returns call information of the given uniqueid
         * If an error occurs an HTTP 500 response is returned.
         *
         * @class plugin_rest_cel
@@ -167,8 +175,8 @@ function setCompAuthorization(ca) {
                 * @property get
                 * @type {array}
                 *
-                *   @param {string} cel/calltrace/:linkedid To get the call trace associated with the linkedid. 
-                *   @param {string} cel/callinfo/:uniqueid To get call information ssociated with the unqueid. 
+                *   @param {string} cel/calltrace/:linkedid To get the call trace associated with the linkedid
+                *   @param {string} cel/callinfo/:uniqueid  To get call information associated with the unqueid
                 *
                 */
                 'get' : [
@@ -231,9 +239,9 @@ function setCompAuthorization(ca) {
         *     callinfo/:linkedid
         *
         * @method callinfo
-        * @param {object}   req  The client request.
-        * @param {object}   res  The client response.
-        * @param {function} next Function to run the next handler in the chain.
+        * @param {object}   req  The client request
+        * @param {object}   res  The client response
+        * @param {function} next Function to run the next handler in the chain
         */
         callinfo: function (req, res, next) {
                 try {
@@ -251,8 +259,12 @@ function setCompAuthorization(ca) {
 
                     var uniqueid = req.params.uniqueid;
 
+                    // if the user has the privacy enabled, it adds the privacy string to be used to hide the phone numbers
+                    var privacyStr;
+                    if (compAuthorization.isPrivacyEnabled(username)) { privacyStr = privacyStrReplace; }
+
                     // use the history component
-                    compCel.getCallInfo(uniqueid, function (err, results) {
+                    compCel.getCallInfo(uniqueid, privacyStr, function (err, results) {
 
                         if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
                         else {
@@ -266,8 +278,6 @@ function setCompAuthorization(ca) {
                 }
             }
         }
-
-
 
         exports.api                  = cel.api;
         exports.callinfo             = cel.callinfo;
