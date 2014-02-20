@@ -259,7 +259,7 @@ function setCompAuthorization(ca) {
                     // add filter parameter if it has been specified
                     if (req.params.filter) { obj.filter = req.params.filter; }
 
-                    // if the user has the privacy enabled, it adds the privacy string to be use to hide the phone numbers
+                    // if the user has the privacy enabled, it adds the privacy string to be used to hide the phone numbers
                     if (compAuthorization.isPrivacyEnabled(username)) { obj.privacyStr = privacyStrReplace; }
 
                     // use the history component

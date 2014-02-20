@@ -1634,6 +1634,7 @@ function getHistoryCallInterval(data, cb) {
             // the numbers are hidden
             attributes.push([ 'CONCAT( SUBSTRING(src, 1, LENGTH(src) - ' + data.privacyStr.length + '), "' + data.privacyStr + '")', 'src' ]);
             attributes.push([ 'CONCAT( SUBSTRING(dst, 1, LENGTH(dst) - ' + data.privacyStr.length + '), "' + data.privacyStr + '")', 'dst' ]);
+
         } else {
             // the numbers are clear
             attributes.push('src');
@@ -2914,16 +2915,33 @@ function getCustomerCardByNum(type, num, cb) {
 * or _/etc/nethcti/dbdynamic.json_ files.
 *
 * @method getCallTrace
-* @param {string}   link Call linkedid
-* @param {function} cb   The callback function
+* @param {string}   link       The call linkedid
+* @param {string}   privacyStr The privacy string to be used to hide the phone numbers. It can be undefined
+* @param {function} cb         The callback function
 */
-function getCallTrace(linkedid, cb) {
+function getCallTrace(linkedid, privacyStr, cb) {
     try {
         // check parameters
-        if (typeof linkedid   !== 'string'
-            || typeof cb  !== 'function') {
+        if (    typeof linkedid   !== 'string' || typeof cb  !== 'function'
+            || (typeof privacyStr !== 'string' && privacyStr !== undefined) ) {
 
             throw new Error('wrong parameters');
+        }
+
+        var attributes = ['eventtype', 'eventtime', 'context', 'channame'];
+
+        // if the privacy string is present, than hide the numbers
+        if (privacyStr) {
+            // the numbers are hidden
+            attributes.push([  'CONCAT( SUBSTRING(exten,       1, LENGTH(exten)       - ' + privacyStr.length + '), "' + privacyStr + '")', 'exten'       ]);
+            attributes.push([  'CONCAT( SUBSTRING(accountcode, 1, LENGTH(accountcode) - ' + privacyStr.length + '), "' + privacyStr + '")', 'accountcode' ]);
+            var cidNumHidden = 'CONCAT( SUBSTRING(cid_num,     1, LENGTH(cid_num)     - ' + privacyStr.length + '), "' + privacyStr + '")';
+            attributes.push([ 'concat(cid_name, " ", ' + cidNumHidden + ')', 'cid' ]);
+
+        } else {
+            // the numbers are clear
+            attributes.push('accountcode');
+            attributes.push([ 'concat(cid_name, " ", cid_num)', 'cid' ]);
         }
 
         // search
@@ -2931,11 +2949,8 @@ function getCallTrace(linkedid, cb) {
             where: [
                 'linkedid=?', linkedid
             ],
-            attributes: [
-                'eventtype', 'eventtime',
-                [ 'concat(cid_name," ",cid_num)', 'cid' ],
-                'exten', 'context', 'channame', 'accountcode'
-            ]
+            attributes: attributes
+
         }).success(function (results) {
 
             // extract results to return in the callback function

@@ -1,12 +1,12 @@
 /**
-* TODO Provides the cel functions.
+* Provides the cel (Channel Event Logging) functions.
 *
 * @module cel
 * @main arch_cel
 */
 
 /**
-* TODO Provides the mail functionalities.
+* Provides the cel (Channel Event Logging) functions.
 *
 * @class cel
 * @static
@@ -74,18 +74,21 @@ function setLogger(log) {
 * Get call trace from linkedid.
 *
 * @method getCallTrace
-* @param {string} linkedid Call identifier
-* @param {function} cb The callback function
+* @param {string}   linkedid   The call identifier
+* @param {string}   privacyStr The privacy string to be used to hide the phone numbers. It can be undefined
+* @param {function} cb         The callback function
 */
-function getCallTrace(linkedid, cb) {
+function getCallTrace(linkedid, privacyStr, cb) {
     try {
         // check parameters
-        if ( typeof linkedid !== 'string' ||  typeof cb !== 'function' ) {
+        if (    typeof linkedid   !== 'string' || typeof cb  !== 'function'
+            || (typeof privacyStr !== 'string' && privacyStr !== undefined) ) {
+
             throw new Error('wrong parameters');
         }
 
         logger.info(IDLOG, 'search cel for linkedid "' + linkedid + '"');
-        compDbconn.getCallTrace(linkedid, cb);
+        compDbconn.getCallTrace(linkedid, privacyStr, cb);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);

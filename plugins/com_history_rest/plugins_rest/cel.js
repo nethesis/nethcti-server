@@ -19,6 +19,16 @@
 var IDLOG = '[plugins_rest/cel]';
 
 /**
+* The string used to hide phone numbers in privacy mode.
+*
+* @property privacyStrReplace
+* @type {string}
+* @private
+* @default "xxx"
+*/
+var privacyStrReplace = 'xxx';
+
+/**
 * The logger. It must have at least three methods: _info, warn and error._
 *
 * @property logger
@@ -176,9 +186,9 @@ function setCompAuthorization(ca) {
             *     calltrace/:linkedid
             *
             * @method calltrace
-            * @param {object}   req  The client request.
-            * @param {object}   res  The client response.
-            * @param {function} next Function to run the next handler in the chain.
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
             */
             calltrace: function (req, res, next) {
                 try {
@@ -196,8 +206,12 @@ function setCompAuthorization(ca) {
 
                     var linkedid = req.params.linkedid;
 
+                    // if the user has the privacy enabled, it adds the privacy string to be used to hide the phone numbers
+                    var privacyStr;
+                    if (compAuthorization.isPrivacyEnabled(username)) { privacyStr = privacyStrReplace; }
+
                     // use the history component
-                    compCel.getCallTrace(linkedid, function (err, results) {
+                    compCel.getCallTrace(linkedid, privacyStr, function (err, results) {
 
                         if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
                         else {
@@ -259,6 +273,7 @@ function setCompAuthorization(ca) {
         exports.callinfo             = cel.callinfo;
         exports.calltrace            = cel.calltrace;
         exports.setLogger            = setLogger;
+        exports.setPrivacy           = setPrivacy;
         exports.setCompCel           = setCompCel;
         exports.setCompUtil          = setCompUtil;
         exports.setCompAuthorization = setCompAuthorization;
@@ -267,3 +282,18 @@ function setCompAuthorization(ca) {
         logger.error(IDLOG, err.stack);
     }
 })();
+
+/**
+* Sets the string to be used to hide last digits of phone numbers in privacy mode.
+*
+* @method setPrivacy
+* @param {object} str The string used to hide last digits of phone numbers.
+*/
+function setPrivacy(str) {
+    try {
+        privacyStrReplace = str;
+        logger.info(IDLOG, 'set privacy with string ' + privacyStrReplace);
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
