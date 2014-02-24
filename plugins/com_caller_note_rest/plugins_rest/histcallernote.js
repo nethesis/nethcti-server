@@ -37,6 +37,15 @@ var logger = console;
 var compCallerNote;
 
 /**
+* The architect component to be used for authorization.
+*
+* @property compAuthorization
+* @type object
+* @private
+*/
+var compAuthorization;
+
+/**
 * The utility architect component.
 *
 * @property compUtil
@@ -96,6 +105,21 @@ function setCompUtil(comp) {
     try {
         compUtil = comp;
         logger.info(IDLOG, 'set util architect component');
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the authorization architect component.
+*
+* @method setCompAuthorization
+* @param {object} comp The authorization architect component.
+*/
+function setCompAuthorization(comp) {
+    try {
+        compAuthorization = comp;
+        logger.info(IDLOG, 'set authorization architect component');
     } catch (err) {
        logger.error(IDLOG, err.stack);
     }
@@ -185,14 +209,28 @@ function setCompUtil(comp) {
             *     interval/:from/:to/:filter
             *
             * @method interval
-            * @param {object} req The client request.
-            * @param {object} res The client response.
-            * @param {function} next Function to run the next handler in the chain.
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
             */
             interval: function (req, res, next) {
                 try {
                     // get the username from the authorization header added by authentication step
                     var username = req.headers.authorization_user;
+
+                    // check the administration caller note authorization
+                    if (compAuthorization.authorizeAdminCallerNoteUser(username) === true) {
+                        logger.info(IDLOG, 'getting caller note history interval: admin caller note authorization successful for user "' + username + '"');
+
+                    }
+                    // check the caller note authorization
+                    else if (compAuthorization.authorizeCallerNoteUser(username) !== true) {
+                        logger.warn(IDLOG, 'getting caller note history interval: caller note authorization failed for user "' + username + '" !');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+
+                    logger.info(IDLOG, 'caller note authorization successfully for user "' + username + '"');
 
                     var obj = {
                         to:       req.params.to,
@@ -205,18 +243,23 @@ function setCompUtil(comp) {
 
                     // use the history component
                     var data = compCallerNote.getHistoryInterval(obj, function (err, results) {
+                        try {
+                            if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
+                            else {
+                                logger.info(IDLOG, 'send ' + results.length   + ' results searching history caller note' +
+                                                   ' in the interval between ' + obj.from + ' to ' + obj.to +
+                                                   ' and filter "' + (obj.filter ? obj.filter : '""') + ' to user "' + username + '"');
+                                res.send(200, results);
+                            }
 
-                        if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
-                        else {
-                            logger.info(IDLOG, 'send ' + results.length   + ' results searching history caller note' +
-                                               ' in the interval between ' + obj.from + ' to ' + obj.to +
-                                               ' and filter "' + (obj.filter ? obj.filter : '""') + ' to user "' + username + '"');
-                            res.send(200, results);
+                        } catch (err1) {
+                            logger.error(IDLOG, err1.stack);
+                            compUtil.net.sendHttp500(IDLOG, res, err1.toString());
                         }
                     });
-                } catch (err) {
-                    logger.error(IDLOG, err.stack);
-                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                } catch (error) {
+                    logger.error(IDLOG, error.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, error.toString());
                 }
             },
 
@@ -227,9 +270,9 @@ function setCompUtil(comp) {
             *     day/:endpoint/:day/:filter
             *
             * @method day
-            * @param {object} req The client request.
-            * @param {object} res The client response.
-            * @param {function} next Function to run the next handler in the chain.
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
             *
             * It uses _interval_ function.
             */
@@ -244,12 +287,13 @@ function setCompUtil(comp) {
                 }
             }
         }
-        exports.api               = histcallernote.api;
-        exports.day               = histcallernote.day;
-        exports.interval          = histcallernote.interval;
-        exports.setLogger         = setLogger;
-        exports.setCompUtil       = setCompUtil;
-        exports.setCompCallerNote = setCompCallerNote;
+        exports.api                  = histcallernote.api;
+        exports.day                  = histcallernote.day;
+        exports.interval             = histcallernote.interval;
+        exports.setLogger            = setLogger;
+        exports.setCompUtil          = setCompUtil;
+        exports.setCompCallerNote    = setCompCallerNote;
+        exports.setCompAuthorization = setCompAuthorization;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);

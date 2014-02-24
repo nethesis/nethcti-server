@@ -161,6 +161,13 @@ module.exports = function (options, imports, register) {
             authorizeCallerNoteUser: authorization.authorizeCallerNoteUser,
 
             /**
+            * It's the _authorizeAdminCallerNoteUser_ method provided by _authorization_ module.
+            *
+            * @method authorizeAdminCallerNoteUser
+            */
+            authorizeAdminCallerNoteUser: authorization.authorizeAdminCallerNoteUser,
+
+            /**
             * It's the _authorizePostitUser_ method provided by _authorization_ module.
             *
             * @method authorizePostitUser

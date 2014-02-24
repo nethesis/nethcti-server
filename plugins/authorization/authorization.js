@@ -744,6 +744,28 @@ function authorizeCallerNoteUser(username) {
 }
 
 /**
+* Returns true if the specified user has the admin caller note authorization.
+* The admin caller note authorization coincides with admin post-it authorization.
+*
+* @method authorizeAdminCallerNoteUser
+* @param  {string}  username The username
+* @return {boolean} True if the user has the admin caller note authorization.
+*/
+function authorizeAdminCallerNoteUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeAdminPostitUser(username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
 * Return true if the specified user has the chat authorization.
 *
 * @method authorizeChatUser
@@ -1180,6 +1202,7 @@ exports.verifyUserEndpointVoicemail   = verifyUserEndpointVoicemail;
 exports.authorizeAdminRecordingUser   = authorizeAdminRecordingUser;
 exports.getAuthorizedOperatorGroups   = getAuthorizedOperatorGroups;
 exports.authorizeOperatorGroupsUser   = authorizeOperatorGroupsUser;
+exports.authorizeAdminCallerNoteUser  = authorizeAdminCallerNoteUser;
 exports.authorizeStreamingSourceUser  = authorizeStreamingSourceUser;
 exports.getAuthorizedStreamingSources = getAuthorizedStreamingSources;
 exports.authorizeAttendedTransferUser = authorizeAttendedTransferUser;

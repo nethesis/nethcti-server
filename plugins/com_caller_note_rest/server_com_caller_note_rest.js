@@ -59,15 +59,6 @@ var port = "9005";
 var address = "localhost";
 
 /**
-* The architect component to be used for authorization.
-*
-* @property compAuthorization
-* @type object
-* @private
-*/
-var compAuthorization;
-
-/**
 * The utility architect component.
 *
 * @property compUtil
@@ -140,18 +131,9 @@ function execute(req, res, next) {
         var p    = tmp[1];
         var name = tmp[2];
 
-        // check authorization
-        var username = req.headers.authorization_user;
-        if (compAuthorization.authorizeCallerNoteUser(username) === true) {
+        logger.info(IDLOG, 'execute: ' + p + '.' + name);
+        plugins[p][name].apply(plugins[p], [req, res, next]);
 
-            logger.info(IDLOG, 'caller note authorization successfully for user "' + username + '"');
-            logger.info(IDLOG, 'execute: ' + p + '.' + name);
-            plugins[p][name].apply(plugins[p], [req, res, next]);
-
-        } else { // authorization failed
-            logger.warn(IDLOG, 'caller note authorization failed for user "' + username + '"!');
-            compUtil.net.sendHttp403(IDLOG, res);
-        }
         return next();
 
     } catch (err) {
@@ -191,9 +173,6 @@ function setCompAuthorization(comp) {
     try {
         // check parameter
         if (typeof comp !== 'object') { throw new Error('wrong parameter'); }
-
-        compAuthorization = comp;
-        logger.log(IDLOG, 'authorization component has been set');
 
         // set the logger for all REST plugins
         setAllRestPluginsCompAuthorization(comp);

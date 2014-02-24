@@ -351,21 +351,41 @@ function getFilteredCallerNotes(username, callerNotes) {
             create: function (req, res, next) {
                 try {
                     var username = req.headers.authorization_user;
+
+                    // check the administration caller note authorization
+                    if (compAuthorization.authorizeAdminCallerNoteUser(username) === true) {
+                        logger.info(IDLOG, 'creating caller note: admin caller note authorization successful for user "' + username + '"');
+
+                    }
+                    // check the caller note authorization
+                    else if (compAuthorization.authorizeCallerNoteUser(username) !== true) {
+                        logger.warn(IDLOG, 'creating caller note: caller note authorization failed for user "' + username + '" !');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+
+                    logger.info(IDLOG, 'caller note authorization successfully for user "' + username + '"');
+
                     var data     = req.params;
                     data.creator = username;
 
                     compCallerNote.newCallerNote(data, function (err) {
+                        try {
+                            if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
 
-                        if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
+                            else {
+                                logger.info(IDLOG, 'new caller note by "' + username + '" for number "' + data.number + '" has been successfully created');
+                                compUtil.net.sendHttp201(IDLOG, res);
+                            }
 
-                        else {
-                            logger.info(IDLOG, 'new caller note by "' + username + '" for number "' + data.number + '" has been successfully created');
-                            compUtil.net.sendHttp201(IDLOG, res);
+                        } catch (err1) {
+                            logger.error(IDLOG, err1.stack);
+                            compUtil.net.sendHttp500(IDLOG, res, err1.toString());
                         }
                     });
-                } catch (err) {
-                    logger.error(IDLOG, err.stack);
-                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                } catch (error) {
+                    logger.error(IDLOG, error.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, error.toString());
                 }
             },
 
@@ -390,6 +410,20 @@ function getFilteredCallerNotes(username, callerNotes) {
 
                     // extract the username added in the authentication step
                     var username = req.headers.authorization_user;
+
+                    // check the administration caller note authorization
+                    if (compAuthorization.authorizeAdminCallerNoteUser(username) === true) {
+                        logger.info(IDLOG, 'modifying caller note: admin caller note authorization successful for user "' + username + '"');
+
+                    }
+                    // check the caller note authorization
+                    else if (compAuthorization.authorizeCallerNoteUser(username) !== true) {
+                        logger.warn(IDLOG, 'modifying caller note: caller note authorization failed for user "' + username + '" !');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+
+                    logger.info(IDLOG, 'caller note authorization successfully for user "' + username + '"');
 
                     compCallerNote.getCallerNote(data.id, function (err1, result) {
                         try {
@@ -453,6 +487,20 @@ function getFilteredCallerNotes(username, callerNotes) {
 
                     // extract the username added in the authentication step
                     var username = req.headers.authorization_user;
+
+                    // check the administration caller note authorization
+                    if (compAuthorization.authorizeAdminCallerNoteUser(username) === true) {
+                        logger.info(IDLOG, 'deleting caller note history interval: admin caller note authorization successful for user "' + username + '"');
+
+                    }
+                    // check the caller note authorization
+                    else if (compAuthorization.authorizeCallerNoteUser(username) !== true) {
+                        logger.warn(IDLOG, 'deleting caller note history interval: caller note authorization failed for user "' + username + '" !');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+
+                    logger.info(IDLOG, 'caller note authorization successfully for user "' + username + '"');
 
                     compCallerNote.getCallerNote(id, function (err1, result) {
                         try {

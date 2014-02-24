@@ -645,12 +645,12 @@ function setCompAuthorization(ca) {
 
                     // check the administration cdr authorization
                     if (compAuthorization.authorizeAdminCdrUser(username) === true) {
-                        logger.info(IDLOG, 'getting all history interval call: admin cdr authorization successful for user "' + username + '"');
+                        logger.info(IDLOG, 'getting history interval call: admin cdr authorization successful for user "' + username + '"');
 
                     }
                     // check the cdr authorization
                     else if (compAuthorization.authorizeCdrUser(username) !== true) {
-                        logger.warn(IDLOG, 'getting all history interval call: cdr authorization failed for user "' + username + '" !');
+                        logger.warn(IDLOG, 'getting history interval call: cdr authorization failed for user "' + username + '" !');
                         compUtil.net.sendHttp403(IDLOG, res);
                         return;
                     }
