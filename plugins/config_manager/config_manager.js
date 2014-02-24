@@ -688,17 +688,8 @@ function verifySendVoicemailNotification(username, deliveryMethod) {
 
         if      (when === NOTIF_WHEN.always)  { return true;  }
         else if (when === NOTIF_WHEN.never)   { return false; }
-        else if (when === NOTIF_WHEN.offline) {
-            // checks if the presence of all the nethcti user endpoints is offline
-            var nethctiEndpoints = compUser.getAllEndpointsNethcti(username);
-            var end;
-            var allOffline = true;
-            for (end in nethctiEndpoints) {
-                allOffline = allOffline && (nethctiEndpoints[end].getStatus() === NOTIF_WHEN.offline);
-            }
-            return allOffline;
-
-        } else {
+        else if (when === NOTIF_WHEN.offline) { // not supported now }
+        else {
             logger.warn(IDLOG, 'checking if send voicemail notification by "' + deliveryMethod + '" for user "' + username + '": ' +
                                'wrong when value "' + when + '"');
             return false;
@@ -742,23 +733,10 @@ function verifySendPostitNotification(username, deliveryMethod) {
 
         if      (when === NOTIF_WHEN.always)  { return true;  }
         else if (when === NOTIF_WHEN.never)   { return false; }
-        else if (when === NOTIF_WHEN.offline) {
-            // checks if the presence of all the nethcti user endpoints is offline
-
-            // this "offline" must be adapted to report if the recipient user if offline
-            /*
-            var nethctiEndpoints = compUser.getAllEndpointsNethcti(username);
-            var end;
-            var allOffline = true;
-            for (end in nethctiEndpoints) {
-                allOffline = allOffline && (nethctiEndpoints[end].getStatus() === NOTIF_WHEN.offline);
-            }
-            return allOffline;
-            */
-
-        } else {
+        else if (when === NOTIF_WHEN.offline) { // not supported now }
+        else {
             logger.warn(IDLOG, 'checking if send new post-it notification by "' + deliveryMethod + '" for user "' + username + '": ' +
-                               'wrong when value "' + when + '"');
+                               'wrong "when" value "' + when + '"');
             return false;
         }
     } catch (err) {
