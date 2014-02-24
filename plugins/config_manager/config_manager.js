@@ -688,7 +688,7 @@ function verifySendVoicemailNotification(username, deliveryMethod) {
 
         if      (when === NOTIF_WHEN.always)  { return true;  }
         else if (when === NOTIF_WHEN.never)   { return false; }
-        else if (when === NOTIF_WHEN.offline) { // not supported now }
+        else if (when === NOTIF_WHEN.offline) {} // not supported now
         else {
             logger.warn(IDLOG, 'checking if send voicemail notification by "' + deliveryMethod + '" for user "' + username + '": ' +
                                'wrong when value "' + when + '"');
@@ -733,7 +733,7 @@ function verifySendPostitNotification(username, deliveryMethod) {
 
         if      (when === NOTIF_WHEN.always)  { return true;  }
         else if (when === NOTIF_WHEN.never)   { return false; }
-        else if (when === NOTIF_WHEN.offline) { // not supported now }
+        else if (when === NOTIF_WHEN.offline) {} // not supported now
         else {
             logger.warn(IDLOG, 'checking if send new post-it notification by "' + deliveryMethod + '" for user "' + username + '": ' +
                                'wrong "when" value "' + when + '"');
