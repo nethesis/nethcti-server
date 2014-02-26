@@ -89,6 +89,17 @@ var compUser;
 var chatServer = {};
 
 /**
+* The phone urls used to directly intercat with the phone, e.g. to
+* originate a new call.
+*
+* @property phoneUrls
+* @type object
+* @private
+* @default {}
+*/
+var phoneUrls = {};
+
+/**
 * Set the logger to be used.
 *
 * @method setLogger
@@ -347,6 +358,74 @@ function configChat(path) {
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* It reads the JSON configuration file of phone urls used to
+* directly interact with the phones, e.g. to originate a new call.
+*
+* **The method can throw an Exception.**
+*
+* @method configPhoneUrls
+* @param {string} path The path of the configuration file
+*/
+function configPhoneUrls(path) {
+    try {
+        // check parameter
+        if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
+
+        // check file presence
+        if (!fs.existsSync(path)) {
+            logger.warn(IDLOG, path + ' does not exist');
+            return;
+        }
+
+        logger.info(IDLOG, 'configure phone urls reading ' + path);
+
+        // read configuration file
+        var json = require(path);
+
+        // check JSON file
+        if (typeof json !== 'object') {
+            logger.warn(IDLOG, 'wrong JSON file ' + path);
+            return;
+        }
+
+        phoneUrls = json;
+        logger.info(IDLOG, 'phone urls configuration by file ' + path + ' ended');
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* It sequentially test a match of specified agent with the keys of _phoneUrls_
+* object. If the match exists than returns the url phone to originate a new call,
+* otherwise it returns an empty string.
+*
+* @method getCallUrlFromAgent
+* @param  {string} agent The phone user agent
+* @return {string} The phone url used to originate a new call
+*/
+function getCallUrlFromAgent(agent) {
+    try {
+        // check parameter
+        if (typeof agent !== 'string') { throw new TypeError('wrong parameter'); }
+
+        var re;
+        for (re in phoneUrls) {
+            // case insensitive 'i'
+            if (agent.search(new RegExp(re, 'i')) >= 0) {
+                return phoneUrls[re].urls.call;
+            }
+        }
+        return '';
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return '';
     }
 }
 
@@ -648,6 +727,31 @@ function setUserClick2CallConf(data, cb) {
 
         // update the notification settings section in the preference file in the filesystem
         storeAllUserPreferences(data.username, cb);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Returns true if the user has enabled the automatic click2call.
+*
+* @method isAutomaticClick2callEnabled
+* @param  {string}  username The username to check
+* @return {boolean} True if the user has enabled the automatic click2call
+*/
+function isAutomaticClick2callEnabled(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        // get the user configuration from the User object to update it
+        var config = compUser.getConfigurations(username);
+
+        if (config && config[USER_CONFIG_KEYS.click2call].type === 'automatic') {
+            return true;
+        }
+        return false;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -967,6 +1071,8 @@ exports.configUser                             = configUser;
 exports.configChat                             = configChat;
 exports.getChatConf                            = getChatConf;
 exports.setCompUser                            = setCompUser;
+exports.configPhoneUrls                        = configPhoneUrls;
+exports.getCallUrlFromAgent                    = getCallUrlFromAgent;
 exports.getUserEndpointsJSON                   = getUserEndpointsJSON;
 exports.getUserConfigurations                  = getUserConfigurations;
 exports.setUserClick2CallConf                  = setUserClick2CallConf;
@@ -975,6 +1081,7 @@ exports.setUserNotificationConf                = setUserNotificationConf;
 exports.getPostitNotificationSmsTo             = getPostitNotificationSmsTo;
 exports.setDefaultUserExtensionConf            = setDefaultUserExtensionConf;
 exports.getDefaultUserExtensionConf            = getDefaultUserExtensionConf;
+exports.isAutomaticClick2callEnabled           = isAutomaticClick2callEnabled;
 exports.getPostitNotificationEmailTo           = getPostitNotificationEmailTo;
 exports.getVoicemailNotificationSmsTo          = getVoicemailNotificationSmsTo;
 exports.getVoicemailNotificationEmailTo        = getVoicemailNotificationEmailTo;

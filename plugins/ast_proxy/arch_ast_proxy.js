@@ -77,6 +77,20 @@ module.exports = function (options, imports, register) {
             getExtensions: astProxy.proxyLogic.getExtensions,
 
             /**
+            * It's the _getExtensionAgent_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method getExtensionAgent
+            */
+            getExtensionAgent: astProxy.proxyLogic.getExtensionAgent,
+
+            /**
+            * It's the _getExtensionIp_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method getExtensionIp
+            */
+            getExtensionIp: astProxy.proxyLogic.getExtensionIp,
+
+            /**
             * It's the _getCountryCode_ method provided by _ast\_proxy.proxyLogic_.
             *
             * @method getCountryCode

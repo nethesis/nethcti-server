@@ -45,6 +45,13 @@ module.exports = function (options, imports, register) {
             getAllUserEndpointsJSON: configManager.getAllUserEndpointsJSON,
 
             /**
+            * It's the _isAutomaticClick2callEnabled_ method provided by _config\_manager_ module.
+            *
+            * @method isAutomaticClick2callEnabled
+            */
+            isAutomaticClick2callEnabled: configManager.isAutomaticClick2callEnabled,
+
+            /**
             * It's the _setUserNotificationConf_ method provided by _config\_manager_ module.
             *
             * @method setUserNotificationConf
@@ -133,7 +140,14 @@ module.exports = function (options, imports, register) {
             *
             * @method getPostitNotificationSmsTo
             */
-            getPostitNotificationSmsTo: configManager.getPostitNotificationSmsTo
+            getPostitNotificationSmsTo: configManager.getPostitNotificationSmsTo,
+
+            /**
+            * It's the _getCallUrlFromAgent_ method provided by _config\_manager_ module.
+            *
+            * @method getCallUrlFromAgent
+            */
+            getCallUrlFromAgent: configManager.getCallUrlFromAgent
         }
     });
 
@@ -150,6 +164,7 @@ module.exports = function (options, imports, register) {
                 userPrefs: '/etc/nethcti/user_prefs.json'
             });
             configManager.configChat('/etc/nethcti/chat.json');
+            configManager.configPhoneUrls('/etc/nethcti/phone_urls.json');
         });
     } catch (err) {
         logger.error(IDLOG, err.stack);

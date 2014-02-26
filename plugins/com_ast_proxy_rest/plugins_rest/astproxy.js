@@ -1293,21 +1293,10 @@ var compConfigManager;
                             return;
                         }
 
-                        compAstProxy.call(req.params.endpointType, req.params.endpointId, req.params.number, function (err) {
-                            try {
-                                if (err) {
-                                    logger.warn(IDLOG, 'failed call from user "' + username + '" to ' + req.params.number + ' using ' + req.params.endpointType + ' ' + req.params.endpointId);
-                                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
-                                    return;
-                                }
-                                logger.info(IDLOG, 'new call from user "' + username + '" to ' + req.params.number + ' with ' + req.params.endpointType + ' ' + req.params.endpointId + ' has been successful');
-                                compUtil.net.sendHttp200(IDLOG, res);
-
-                            } catch (err) {
-                                logger.error(IDLOG, err.stack);
-                                compUtil.net.sendHttp500(IDLOG, res, err.toString());
-                            }
-                        });
+                        // if the user has enabled the auomatic click2call then make an HTTP request directly to the phone,
+                        // otherwise make a new call by asterisk
+                        if (!compConfigManager.isAutomaticClick2callEnabled(username)) { asteriskCall(username, req, res); }
+                        else { ajaxPhoneCall(username, req, res); }
 
                     } else {
                         logger.warn(IDLOG, 'making new call from user "' + username + '" to ' + req.params.number + ': unknown endpointType ' + req.params.endpointType);
@@ -2675,6 +2664,85 @@ var compConfigManager;
         logger.error(IDLOG, err.stack);
     }
 })();
+
+/**
+* Originates a new call directly on the phone using an ajax request.
+*
+* @method ajaxPhoneCall
+* @param {string} username The username that originate the call
+* @param {object} req      The client request
+* @param {object} res      The client response
+*/
+function ajaxPhoneCall(username, req, res) {
+    try {
+        // check parameters
+        if (typeof username !== 'string' || typeof req !== 'object' || typeof res !== 'object') {
+            throw new Error('wrong parameters');
+        }
+
+        var exten = compConfigManager.getDefaultUserExtensionConf(username);
+        var extenIp = compAstProxy.getExtensionIp(exten);
+        var extenAgent = compAstProxy.getExtensionAgent(exten);
+
+        var url = compConfigManager.getCallUrlFromAgent(extenAgent);
+
+
+    /*
+        compAstProxy.call(req.params.endpointType, req.params.endpointId, req.params.number, function (err) {
+            try {
+                if (err) {
+                    logger.warn(IDLOG, 'failed call from user "' + username + '" to ' + req.params.number + ' using ' + req.params.endpointType + ' ' + req.params.endpointId);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                    return;
+                }
+                logger.info(IDLOG, 'new call from user "' + username + '" to ' + req.params.number + ' with ' + req.params.endpointType + ' ' + req.params.endpointId + ' has been successful');
+                compUtil.net.sendHttp200(IDLOG, res);
+
+            } catch (err) {
+                logger.error(IDLOG, err.stack);
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+            }
+        });
+        */
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Originates a new call by asterisk.
+*
+* @method asteriskCall
+* @param {string} username The username that originate the call
+* @param {object} req      The client request
+* @param {object} res      The client response
+*/
+function asteriskCall(username, req, res) {
+    try {
+        // check parameters
+        if (typeof username !== 'string' || typeof req !== 'object' || typeof res !== 'object') {
+            throw new Error('wrong parameters');
+        }
+
+        compAstProxy.call(req.params.endpointType, req.params.endpointId, req.params.number, function (err) {
+            try {
+                if (err) {
+                    logger.warn(IDLOG, 'failed call from user "' + username + '" to ' + req.params.number + ' using ' + req.params.endpointType + ' ' + req.params.endpointId);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                    return;
+                }
+                logger.info(IDLOG, 'new call from user "' + username + '" to ' + req.params.number + ' with ' + req.params.endpointType + ' ' + req.params.endpointId + ' has been successful');
+                compUtil.net.sendHttp200(IDLOG, res);
+
+            } catch (err) {
+                logger.error(IDLOG, err.stack);
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+            }
+        });
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
 
 /**
 * Sets the string used to hide last digits of phone numbers in privacy mode.

@@ -1581,6 +1581,46 @@ function getJSONExtension(exten, privacyStr) {
 }
 
 /**
+* Returns the IP address of the extension.
+*
+* @method getExtensionIp
+* @param  {string} exten The extension identifier
+* @return {string} The IP address of the extension.
+*/
+function getExtensionIp(exten) {
+    try {
+        // check the parameter
+        if (typeof exten !== 'string') { throw new Error('wrong parameter'); }
+
+        return extensions[exten].getIp();
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return '';
+    }
+}
+
+/**
+* Returns the extension user agent.
+*
+* @method getExtensionAgent
+* @param  {string} exten The extension identifier
+* @return {string} The extension user agent.
+*/
+function getExtensionAgent(exten) {
+    try {
+        // check the parameter
+        if (typeof exten !== 'string') { throw new Error('wrong parameter'); }
+
+        return extensions[exten].getUserAgent();
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return '';
+    }
+}
+
+/**
 * Initialize all sip extensions as _Extension_ object into the
 * _extensions_ property.
 *
@@ -5106,6 +5146,7 @@ exports.setCompDbconn                   = setCompDbconn;
 exports.getExtensions                   = getExtensions;
 exports.pickupParking                   = pickupParking;
 exports.getJSONQueues                   = getJSONQueues;
+exports.getExtensionIp                  = getExtensionIp;
 exports.setCountryCode                  = setCountryCode;
 exports.getCountryCode                  = getCountryCode;
 exports.getJSONQueuesStats              = getJSONQueuesStats;
@@ -5119,6 +5160,7 @@ exports.sendDTMFSequence                = sendDTMFSequence;
 exports.parkConversation                = parkConversation;
 exports.setCompPhonebook                = setCompPhonebook;
 exports.getJSONExtension                = getJSONExtension;
+exports.getExtensionAgent               = getExtensionAgent;
 exports.getJSONExtensions               = getJSONExtensions;
 exports.setCompCallerNote               = setCompCallerNote;
 exports.EVT_EXTEN_CHANGED               = EVT_EXTEN_CHANGED;

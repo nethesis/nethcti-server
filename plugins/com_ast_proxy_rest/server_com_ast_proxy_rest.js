@@ -134,6 +134,47 @@ function execute(req, res, next) {
 }
 
 /**
+* Set configuration manager architect component used by configuration functions.
+*
+* @method setCompConfigManager
+* @param {object} comp The configuration manager architect component.
+*/
+function setCompConfigManager(comp) {
+    try {
+        // check parameter
+        if (typeof comp !== 'object') { throw new Error('wrong parameter'); }
+
+        // set the configuration manager for all the REST plugins
+        setAllRestPluginsCompConfigManager(comp);
+
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the configuration manager for all the REST plugins.
+*
+* @method setAllRestPluginsCompConfigManager
+* @param {object} comp The configuration manager
+* @private
+*/
+function setAllRestPluginsCompConfigManager(comp) {
+    try {
+        var key;
+        for (key in plugins) {
+
+            if (typeof plugins[key].setCompConfigManager === 'function') {
+                plugins[key].setCompConfigManager(comp);
+                logger.info(IDLOG, 'configuration manager component has been set for rest plugin ' + key);
+            }
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Set the operator architect component to be used by REST plugins.
 *
 * @method setCompOperator
@@ -482,3 +523,4 @@ exports.configPrivacy        = configPrivacy;
 exports.setCompOperator      = setCompOperator;
 exports.setCompAstProxy      = setCompAstProxy;
 exports.setCompAuthorization = setCompAuthorization;
+exports.setCompConfigManager = setCompConfigManager;

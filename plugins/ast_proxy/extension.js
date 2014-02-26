@@ -173,6 +173,14 @@ exports.Extension = function (ext, chType) {
     function getIp(ipAddr) { return ip; }
 
     /**
+    * Get the extension user agent.
+    *
+    * @method getUserAgent
+    * @return {string} The user agent.
+    */
+    function getUserAgent() { return sipuseragent; }
+
+    /**
     * Set the extension ip port.
     *
     * @method setPort
@@ -419,6 +427,7 @@ exports.Extension = function (ext, chType) {
         getStatus: getStatus,
         disableCfVm:            disableCfVm,
         getChanType:            getChanType,
+        getUserAgent:           getUserAgent,
         addConversation:        addConversation,
         setSipUserAgent:        setSipUserAgent,
         getConversation:        getConversation,

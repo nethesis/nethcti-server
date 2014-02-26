@@ -9,6 +9,7 @@
             "logger",
             "astProxy",
             "operator",
+            "configManager",
             "authorization"
         ],
         "provides": []
