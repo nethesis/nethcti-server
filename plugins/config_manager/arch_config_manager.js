@@ -38,6 +38,20 @@ module.exports = function (options, imports, register) {
             getUserEndpointsJSON: configManager.getUserEndpointsJSON,
 
             /**
+            * It's the _getC2CAutoPhonePass_ method provided by _config\_manager_ module.
+            *
+            * @method getC2CAutoPhonePass
+            */
+            getC2CAutoPhonePass: configManager.getC2CAutoPhonePass,
+
+            /**
+            * It's the _getC2CAutoPhoneUser_ method provided by _config\_manager_ module.
+            *
+            * @method getC2CAutoPhoneUser
+            */
+            getC2CAutoPhoneUser: configManager.getC2CAutoPhoneUser,
+
+            /**
             * It's the _getAllUserEndpoints_ method provided by _config\_manager_ module.
             *
             * @method getAllUserEndpoints

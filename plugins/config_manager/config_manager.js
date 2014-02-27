@@ -153,17 +153,8 @@ function getDefaultUserPrefs() {
             click2call: {
                 type: 'manual',
                 automatic: {
-                    device: 'yealink',
-                    yealink: {
-                        model: 'T26',
-                        user: 'amdin',
-                        password: 'admin'
-                    },
-                    snom: {
-                        user: 'admin',
-                        password: 'admin'
-                    },
-                    url: ''
+                    user: 'admin',
+                    password: 'admin'
                 }
             },
             notifications: {
@@ -364,6 +355,8 @@ function configChat(path) {
 /**
 * It reads the JSON configuration file of phone urls used to
 * directly interact with the phones, e.g. to originate a new call.
+* The keys contained by file must be sorted from more restrictive
+* to the least, because they are sequentially checked.
 *
 * **The method can throw an Exception.**
 *
@@ -403,7 +396,8 @@ function configPhoneUrls(path) {
 /**
 * It sequentially test a match of specified agent with the keys of _phoneUrls_
 * object. If the match exists than returns the url phone to originate a new call,
-* otherwise it returns an empty string.
+* otherwise it returns an empty string. The keys of _phoneUrls_ are sequentially
+* checked, so they must be present from the more restrictive to the least.
 *
 * @method getCallUrlFromAgent
 * @param  {string} agent The phone user agent
@@ -672,25 +666,21 @@ function updateAllUserPrefsInJSONFile(cb) {
 *
 * @method setUserClick2CallConf
 * @param {object} data
-*   @param {string} data.type     The click to call type
-*   @param {string} data.device   The device brand or the "url" string
-*   @param {string} data.model    The model of the device
-*   @param {string} data.user     The username of the device
-*   @param {string} data.password The password of the device
-*   @param {string} data.url      The HTTP url to use the device for click to call
-* @param {function} cb            The callback function
+*   @param {string} data.type       The click to call type
+*   @param {string} [data.user]     The username of the device
+*   @param {string} [data.password] The password of the device
+* @param {function} cb              The callback function
 */
 function setUserClick2CallConf(data, cb) {
     try {
         // check parameters
-        if (typeof data   !== 'object'    || typeof cb !== 'function' || typeof data.type !== 'string'
-            || (data.type !== 'automatic' && data.type !== 'manual')
-            || (data.type === 'automatic' && typeof data.device !== 'string')
-            || (data.type === 'automatic' && data.device === 'yealink' && (typeof data.user !== 'string' || typeof data.password !== 'string' || typeof data.model !== 'string'))
-            || (data.type === 'automatic' && data.device === 'snom'    && (typeof data.user !== 'string' || typeof data.password !== 'string'))
-            || (data.type === 'automatic' && data.device === 'url'     &&  typeof data.url  !== 'string')) {
+        if (   typeof data      !== 'object'
+            || typeof cb        !== 'function'  || typeof data.type     !== 'string'
+            || (data.type       !== 'automatic' && data.type            !== 'manual')
+            || (data.type       === 'automatic' && typeof data.user     !== 'string')
+            || (data.type       === 'automatic' && typeof data.password !== 'string')) {
 
-            throw new Error('wrong parameter');
+            throw new Error('wrong parameters');
         }
 
         // get the user configuration from the User object to update it
@@ -706,23 +696,9 @@ function setUserClick2CallConf(data, cb) {
 
         config[USER_CONFIG_KEYS.click2call].type = data.type;
 
-        if (data.type === 'automatic' && data.device === 'yealink') {
-            config[USER_CONFIG_KEYS.click2call].automatic.device           = data.device;
-            config[USER_CONFIG_KEYS.click2call].automatic.yealink.user     = data.user;
-            config[USER_CONFIG_KEYS.click2call].automatic.yealink.model    = data.model;
-            config[USER_CONFIG_KEYS.click2call].automatic.yealink.password = data.password;
-
-        } else if (data.type === 'automatic' && data.device === 'snom') {
-            config[USER_CONFIG_KEYS.click2call].automatic.device        = data.device;
-            config[USER_CONFIG_KEYS.click2call].automatic.snom.user     = data.user;
-            config[USER_CONFIG_KEYS.click2call].automatic.snom.password = data.password;
-
-        } else if (data.type === 'automatic' && data.device === 'url') {
-            config[USER_CONFIG_KEYS.click2call].automatic.device = data.device;
-            config[USER_CONFIG_KEYS.click2call].automatic.url    = data.url;
-
-        } else if (data.type !== 'manual') {
-            logger.error(IDLOG, 'setting click2call setting for user "' + data.username + '"');
+        if (data.type === 'automatic') {
+            config[USER_CONFIG_KEYS.click2call].automatic.user     = data.user;
+            config[USER_CONFIG_KEYS.click2call].automatic.password = data.password;
         }
 
         // update the notification settings section in the preference file in the filesystem
@@ -752,6 +728,50 @@ function isAutomaticClick2callEnabled(username) {
             return true;
         }
         return false;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Returns the phone username.
+*
+* @method getC2CAutoPhoneUser
+* @param  {string} username The name of the user
+* @return {string} The phone username used to acces to phone of the user.
+*/
+function getC2CAutoPhoneUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        // get the user configuration from the User object to update it
+        var config = compUser.getConfigurations(username);
+
+        return config[USER_CONFIG_KEYS.click2call].automatic.user;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Returns the phone password.
+*
+* @method getC2CAutoPhonePass
+* @param  {string} username The name of the user
+* @return {string} The phone password used to acces to phone of the user.
+*/
+function getC2CAutoPhonePass(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        // get the user configuration from the User object to update it
+        var config = compUser.getConfigurations(username);
+
+        return config[USER_CONFIG_KEYS.click2call].automatic.password;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -1072,6 +1092,8 @@ exports.configChat                             = configChat;
 exports.getChatConf                            = getChatConf;
 exports.setCompUser                            = setCompUser;
 exports.configPhoneUrls                        = configPhoneUrls;
+exports.getC2CAutoPhoneUser                    = getC2CAutoPhoneUser;
+exports.getC2CAutoPhonePass                    = getC2CAutoPhonePass;
 exports.getCallUrlFromAgent                    = getCallUrlFromAgent;
 exports.getUserEndpointsJSON                   = getUserEndpointsJSON;
 exports.getUserConfigurations                  = getUserConfigurations;

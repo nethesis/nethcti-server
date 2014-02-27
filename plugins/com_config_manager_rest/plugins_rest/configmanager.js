@@ -218,18 +218,13 @@ function setCompUtil(comp) {
         * Saves the user configuration of the click to call. The request must contain the following parameters:
         *
         * * `type: ("manual" | "automatic") the click2call type`
-        * * `[device]: ("yealink" | "snom" | "url") the device brand or the "url" string. It's needed with automatic type`
-        * * `[model]: the yealink model. It's needed with automatic type and yealink device`
-        * * `[user]: the device username. It's needed with automatic type and yealink or snom device`
-        * * `[password]: the device password. It's needed with automatic type and yealink or snom device`
-        * * `[url]: the HTTP url. It's needed with automatic type and url device`
+        * * `[user]: the device username. It's needed with automatic type`
+        * * `[password]: the device password. It's needed with automatic type`
         *
         * E.g. object parameters:
         *
         *     { "type": "manual" }
-        *     { "type": "automatic", "device": "yealink", "model": "t26", "user": "admin", "password": "admin" }
-        *     { "type": "automatic", "device": "snom", "user": "admin", "password": "admin" }
-        *     { "type": "automatic", "device": "url", "url": "http://<IP_PHONE>/cgi-bin/cgiServer.exx?number=<CALL_TO>&outgoing_uri=<FROM_EXT>@<SERVER>" }
+        *     { "type": "automatic", "user": "admin", "password": "admin" }
         *
         * ---
         *
@@ -561,43 +556,35 @@ function setCompUtil(comp) {
             },
 
             /**
-            * Save a user click to call configuration with the following REST API:
+            * Saves a user click to call configuration with the following REST API:
             *
             *     click2call
             *
             * @method notification
-            * @param {object} req The client request.
-            * @param {object} res The client response.
-            * @param {function} next Function to run the next handler in the chain.
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
             */
             click2call: function (req, res, next) {
                 try {
-                    var url      = req.params.url;
                     var type     = req.params.type;
                     var user     = req.params.user;
-                    var model    = req.params.model;
-                    var device   = req.params.device;
                     var password = req.params.password;
                     var username = req.headers.authorization_user;
 
                     // check parameters
-                    if (typeof type !== 'string'
-                        || (type !== 'automatic' && type !== 'manual')
-                        || (type === 'automatic' && typeof device !== 'string')
-                        || (type === 'automatic' && device === 'yealink' && (typeof user !== 'string' || typeof password !== 'string' || typeof model !== 'string'))
-                        || (type === 'automatic' && device === 'snom'    && (typeof user !== 'string' || typeof password !== 'string'))
-                        || (type === 'automatic' && device === 'url'     &&  typeof url  !== 'string')) {
+                    if (   typeof type !== 'string'
+                        || (type !== 'automatic' && type            !== 'manual')
+                        || (type === 'automatic' && typeof user     !== 'string')
+                        || (type === 'automatic' && typeof password !== 'string')){
 
                         compUtil.net.sendHttp400(IDLOG, res);
                         return;
                     }
 
                     var data = {
-                        url:      url,
                         type:     type,
                         user:     user,
-                        model:    model,
-                        device:   device,
                         password: password,
                         username: username
                     };

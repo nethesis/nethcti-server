@@ -4,6 +4,8 @@
 * @module com_ast_proxy_rest
 * @submodule plugins_rest
 */
+var urlReq  = require('url');
+var httpReq = require('http');
 
 /**
 * The module identifier used by the logger.
@@ -2666,7 +2668,7 @@ var compConfigManager;
 })();
 
 /**
-* Originates a new call directly on the phone using an ajax request.
+* Originates a new call sending an HTTP GET request to the phone device.
 *
 * @method ajaxPhoneCall
 * @param {string} username The username that originate the call
@@ -2680,32 +2682,49 @@ function ajaxPhoneCall(username, req, res) {
             throw new Error('wrong parameters');
         }
 
-        var exten = compConfigManager.getDefaultUserExtensionConf(username);
-        var extenIp = compAstProxy.getExtensionIp(exten);
+        var exten      = compConfigManager.getDefaultUserExtensionConf(username);
+        var extenIp    = compAstProxy.getExtensionIp(exten);
         var extenAgent = compAstProxy.getExtensionAgent(exten);
 
+        // get the url to call to originate the new call. If the url is an empty
+        // string, the phone is not supported, so the call fails
         var url = compConfigManager.getCallUrlFromAgent(extenAgent);
+        if (typeof url === 'string' && url !== '') {
 
+            // the credential to access the phone via url
+            var phoneUser = compConfigManager.getC2CAutoPhoneUser(username);
+            var phonePass = compConfigManager.getC2CAutoPhonePass(username);
 
-    /*
-        compAstProxy.call(req.params.endpointType, req.params.endpointId, req.params.number, function (err) {
-            try {
-                if (err) {
-                    logger.warn(IDLOG, 'failed call from user "' + username + '" to ' + req.params.number + ' using ' + req.params.endpointType + ' ' + req.params.endpointId);
+            // replace the parameters of the url template
+            url = url.replace(/\$NUMBER/g,     req.params.number);
+            url = url.replace(/\$PHONE_IP/g,   extenIp);
+            url = url.replace(/\$PHONE_USER/g, phoneUser);
+            url = url.replace(/\$PHONE_PASS/g, phonePass);
+
+            httpReq.get(url, function (httpResp) {
+                try {
+                    logger.info(IDLOG, 'new call to ' + req.params.number + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp + ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
+                    res.send(200, { phoneRespStatusCode: httpResp.statusCode });
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
-                    return;
                 }
-                logger.info(IDLOG, 'new call from user "' + username + '" to ' + req.params.number + ' with ' + req.params.endpointType + ' ' + req.params.endpointId + ' has been successful');
-                compUtil.net.sendHttp200(IDLOG, res);
 
-            } catch (err) {
-                logger.error(IDLOG, err.stack);
-                compUtil.net.sendHttp500(IDLOG, res, err.toString());
-            }
-        });
-        */
-    } catch (err) {
-       logger.error(IDLOG, err.stack);
+            }).on('error', function (err1) {
+
+                logger.error(IDLOG, err1.message);
+                compUtil.net.sendHttp500(IDLOG, res, err1.message);
+            });
+
+        } else {
+            logger.warn(IDLOG, 'failed call to ' + req.params.number + ' via HTTP GET request sent to the phone ' + exten + ' ' + extenIp + ' by the user "' + username + '": ' + extenAgent + ' is not supported');
+            compUtil.net.sendHttp500(IDLOG, res, 'the phone "' + extenAgent + '" is not supported');
+        }
+
+    } catch (error) {
+        logger.error(IDLOG, error.stack);
+        compUtil.net.sendHttp500(IDLOG, res, error.toString());
     }
 }
 
@@ -2734,13 +2753,14 @@ function asteriskCall(username, req, res) {
                 logger.info(IDLOG, 'new call from user "' + username + '" to ' + req.params.number + ' with ' + req.params.endpointType + ' ' + req.params.endpointId + ' has been successful');
                 compUtil.net.sendHttp200(IDLOG, res);
 
-            } catch (err) {
-                logger.error(IDLOG, err.stack);
-                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+            } catch (err1) {
+                logger.error(IDLOG, err1.stack);
+                compUtil.net.sendHttp500(IDLOG, res, err1.toString());
             }
         });
-    } catch (err) {
-       logger.error(IDLOG, err.stack);
+    } catch (error) {
+       logger.error(IDLOG, error.stack);
+       compUtil.net.sendHttp500(IDLOG, res, error.toString());
     }
 }
 
