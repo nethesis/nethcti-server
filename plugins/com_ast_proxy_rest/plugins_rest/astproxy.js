@@ -2682,7 +2682,7 @@ function ajaxPhoneCall(username, req, res) {
             throw new Error('wrong parameters');
         }
 
-        var exten      = compConfigManager.getDefaultUserExtensionConf(username);
+        var exten      = req.params.endpointId;
         var serverIp   = compConfigManager.getServerIP();
         var extenIp    = compAstProxy.getExtensionIp(exten);
         var extenAgent = compAstProxy.getExtensionAgent(exten);
@@ -2690,6 +2690,7 @@ function ajaxPhoneCall(username, req, res) {
         // get the url to call to originate the new call. If the url is an empty
         // string, the phone is not supported, so the call fails
         var url = compConfigManager.getCallUrlFromAgent(extenAgent);
+
         if (typeof url === 'string' && url !== '') {
 
             // the credential to access the phone via url
