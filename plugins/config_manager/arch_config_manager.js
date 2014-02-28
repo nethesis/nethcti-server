@@ -164,6 +164,13 @@ module.exports = function (options, imports, register) {
             getCallUrlFromAgent: configManager.getCallUrlFromAgent,
 
             /**
+            * It's the _getAnswerUrlFromAgent_ method provided by _config\_manager_ module.
+            *
+            * @method getAnswerUrlFromAgent
+            */
+            getAnswerUrlFromAgent: configManager.getAnswerUrlFromAgent,
+
+            /**
             * It's the _getServerIP_ method provided by _config\_manager_ module.
             *
             * @method getServerIP

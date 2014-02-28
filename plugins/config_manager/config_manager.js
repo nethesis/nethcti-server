@@ -483,6 +483,36 @@ function getCallUrlFromAgent(agent) {
 }
 
 /**
+* It sequentially test a match of specified agent with the keys of _phoneUrls_
+* object. If the match exists than returns the url phone to answer a call,
+* otherwise it returns an empty string. The keys of _phoneUrls_ are sequentially
+* checked, so they must be present from the more restrictive to the least.
+*
+* @method getAnswerUrlFromAgent
+* @param  {string} agent The phone user agent
+* @return {string} The phone url used to answer a call
+*/
+function getAnswerUrlFromAgent(agent) {
+    try {
+        // check parameter
+        if (typeof agent !== 'string') { throw new TypeError('wrong parameter'); }
+
+        var re;
+        for (re in phoneUrls) {
+            // case insensitive 'i'
+            if (agent.search(new RegExp(re, 'i')) >= 0) {
+                return phoneUrls[re].urls.answer;
+            }
+        }
+        return '';
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return '';
+    }
+}
+
+/**
 * Return the server chat configurations.
 *
 * @method getChatConf
@@ -1157,6 +1187,7 @@ exports.getC2CAutoPhoneUser                    = getC2CAutoPhoneUser;
 exports.getC2CAutoPhonePass                    = getC2CAutoPhonePass;
 exports.getCallUrlFromAgent                    = getCallUrlFromAgent;
 exports.getUserEndpointsJSON                   = getUserEndpointsJSON;
+exports.getAnswerUrlFromAgent                  = getAnswerUrlFromAgent;
 exports.getUserConfigurations                  = getUserConfigurations;
 exports.setUserClick2CallConf                  = setUserClick2CallConf;
 exports.getAllUserEndpointsJSON                = getAllUserEndpointsJSON;

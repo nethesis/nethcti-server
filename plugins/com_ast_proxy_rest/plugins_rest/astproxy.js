@@ -212,6 +212,7 @@ var compConfigManager;
         * 1. [`astproxy/cfvm`](#cfvmpost)
         * 1. [`astproxy/cfcall`](#cfcallpost)
         * 1. [`astproxy/atxfer`](#atxferpost)
+        * 1. [`astproxy/answer`](#answerpost)
         * 1. [`astproxy/hangup`](#hanguppost)
         * 1. [`astproxy/intrude`](#intrudepost)
         * 1. [`astproxy/start_spy`](#start_spypost)
@@ -380,6 +381,20 @@ var compConfigManager;
         * E.g. object parameters:
         *
         *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "214", "to": "221" }
+        *
+        * ---
+        *
+        * ### <a id="answerpost">**`astproxy/answer`**</a>
+        *
+        * Answer the conversation from the extension. The request must contains the
+        * following parameters:
+        *
+        * * `endpointId: the endpoint identifier of the user who has the conversation to answer`
+        * * `endpointType: the type of the endpoint of the user who has the conversation to answer`
+        *
+        * E.g. object parameters:
+        *
+        *     { "endpointType": "extension", "endpointId": "214" }
         *
         * ---
         *
@@ -659,6 +674,7 @@ var compConfigManager;
                 *   @param {string} cfvm                  Sets the call forward status of the endpoint of the user to a destination voicemail
                 *   @param {string} cfcall                Sets the call forward status of the endpoint of the user to a destination number
                 *   @param {string} atxfer                Transfer a conversation with attended type
+                *   @param {string} answer                Answer a conversation from the extension
                 *   @param {string} hangup                Hangup a conversation
                 *   @param {string} intrude               Spy and speak in a conversation
                 *   @param {string} start_spy             Spy a conversation with only listening
@@ -685,6 +701,7 @@ var compConfigManager;
                     'cfvm',
                     'cfcall',
                     'atxfer',
+                    'answer',
                     'hangup',
                     'intrude',
                     'start_spy',
@@ -1457,6 +1474,52 @@ var compConfigManager;
 
                     } else {
                         logger.warn(IDLOG, 'attended transfering convid ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType);
+                        compUtil.net.sendHttp400(IDLOG, res);
+                    }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * Make a new call with the following REST API:
+            *
+            *     POST call
+            *
+            * @method answer
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            answer: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (   typeof req.params              !== 'object'
+                        || typeof req.params.endpointId   !== 'string'
+                        || typeof req.params.endpointType !== 'string') {
+
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    if (req.params.endpointType === 'extension') {
+
+                        // check if the endpoint is owned by the user
+                        if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+
+                            logger.warn(IDLOG, 'answer to call from ' + req.params.endpointId + ' failed: extension is not owned by user "' + username + '"'); +
+                            compUtil.net.sendHttp403(IDLOG, res);
+                            return;
+                        }
+
+                        ajaxPhoneAnswer(username, req, res);
+
+                    } else {
+                        logger.warn(IDLOG, 'answer to call from ' + req.params.endpointId + ': unknown endpointType ' + req.params.endpointType);
                         compUtil.net.sendHttp400(IDLOG, res);
                     }
 
@@ -2630,6 +2693,7 @@ var compConfigManager;
         exports.trunks                = astproxy.trunks;
         exports.hangup                = astproxy.hangup;
         exports.atxfer                = astproxy.atxfer;
+        exports.answer                = astproxy.answer;
         exports.intrude               = astproxy.intrude;
         exports.opgroups              = astproxy.opgroups;
         exports.parkings              = astproxy.parkings;
@@ -2725,6 +2789,69 @@ function ajaxPhoneCall(username, req, res) {
 
         } else {
             logger.warn(IDLOG, 'failed call to ' + req.params.number + ' via HTTP GET request sent to the phone ' + exten + ' ' + extenIp + ' by the user "' + username + '": ' + extenAgent + ' is not supported');
+            compUtil.net.sendHttp500(IDLOG, res, 'the phone "' + extenAgent + '" is not supported');
+        }
+
+    } catch (error) {
+        logger.error(IDLOG, error.stack);
+        compUtil.net.sendHttp500(IDLOG, res, error.toString());
+    }
+}
+
+/**
+* Answer to call from the extension sending an HTTP GET request to the phone device.
+*
+* @method ajaxPhoneAnswer
+* @param {string} username The username that originate the call
+* @param {object} req      The client request
+* @param {object} res      The client response
+*/
+function ajaxPhoneAnswer(username, req, res) {
+    try {
+        // check parameters
+        if (typeof username !== 'string' || typeof req !== 'object' || typeof res !== 'object') {
+            throw new Error('wrong parameters');
+        }
+
+        var exten      = req.params.endpointId;
+        var serverIp   = compConfigManager.getServerIP();
+        var extenIp    = compAstProxy.getExtensionIp(exten);
+        var extenAgent = compAstProxy.getExtensionAgent(exten);
+
+        // get the url to call to originate the new call. If the url is an empty
+        // string, the phone is not supported, so the call fails
+        var url = compConfigManager.getAnswerUrlFromAgent(extenAgent);
+
+        if (typeof url === 'string' && url !== '') {
+
+            // the credential to access the phone via url
+            var phoneUser = compConfigManager.getC2CAutoPhoneUser(username);
+            var phonePass = compConfigManager.getC2CAutoPhonePass(username);
+
+            // replace the parameters of the url template
+            url = url.replace(/\$PHONE_IP/g,   extenIp);
+            url = url.replace(/\$PHONE_USER/g, phoneUser);
+            url = url.replace(/\$PHONE_PASS/g, phonePass);
+
+            httpReq.get(url, function (httpResp) {
+                try {
+                    logger.info(IDLOG, 'answer to ' + exten + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp + ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
+                    logger.info(IDLOG, url);
+                    res.send(200, { phoneRespStatusCode: httpResp.statusCode });
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+
+            }).on('error', function (err1) {
+
+                logger.error(IDLOG, err1.message);
+                compUtil.net.sendHttp500(IDLOG, res, err1.message);
+            });
+
+        } else {
+            logger.warn(IDLOG, 'failed answer to ' + exten + ' via HTTP GET request sent to the phone ' + exten + ' ' + extenIp + ' by the user "' + username + '": ' + extenAgent + ' is not supported');
             compUtil.net.sendHttp500(IDLOG, res, 'the phone "' + extenAgent + '" is not supported');
         }
 
