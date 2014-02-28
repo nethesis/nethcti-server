@@ -1,4 +1,5 @@
 \{
+    "ip": "{${'LocalIP'}}",
     "logfile": "/var/log/asterisk/nethcti.log",
     "loglevel": "{${'nethcti-server'}{'LogLevel'} || "warn"}",
     "privacy_numbers": "xxx"
