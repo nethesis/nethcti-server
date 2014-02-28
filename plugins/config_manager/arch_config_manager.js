@@ -161,7 +161,14 @@ module.exports = function (options, imports, register) {
             *
             * @method getCallUrlFromAgent
             */
-            getCallUrlFromAgent: configManager.getCallUrlFromAgent
+            getCallUrlFromAgent: configManager.getCallUrlFromAgent,
+
+            /**
+            * It's the _getServerIP_ method provided by _config\_manager_ module.
+            *
+            * @method getServerIP
+            */
+            getServerIP: configManager.getServerIP
         }
     });
 
@@ -173,6 +180,7 @@ module.exports = function (options, imports, register) {
         imports.user.on(imports.user.EVT_USERS_READY, function () {
             configManager.setLogger(logger);
             configManager.setCompUser(imports.user);
+            configManager.config('/etc/nethcti/nethcti.json');
             configManager.configUser({
                 users:     '/etc/nethcti/users.json',
                 userPrefs: '/etc/nethcti/user_prefs.json'

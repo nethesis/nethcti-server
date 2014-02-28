@@ -1,19 +1,19 @@
 {
     "^yealink\\s.*T3.*\\s.+\\.70(\\..+|$)": {
         "urls": {
-            "call": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/cgi-bin/cgiServer.exx?number=$NUMBER",
+            "call": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/cgi-bin/cgiServer.exx?number=$NUMBER&outgoing_uri=$ACCOUNT@$SERVER",
             "answer": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/cgi-bin/cgiServer.exx?key=OK"
         }
     },
     "^yealink\\s.*\\s.+\\.70(\\..+|$)": {
         "urls": {
-            "call": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/cgi-bin/ConfigManApp.com?number=$NUMBER",
+            "call": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/cgi-bin/ConfigManApp.com?number=$NUMBER&outgoing_uri=$ACCOUNT@$SERVER",
             "answer": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/cgi-bin/ConfigManApp.com?key=OK"
         }
     },
     "^yealink\\s.+\\s.+": {
         "urls": {
-            "call": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/servlet?number=$NUMBER",
+            "call": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/servlet?number=$NUMBER&outgoing_uri=$ACCOUNT@$SERVER",
             "answer": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/servlet?key=OK",
             "command": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/servlet?key=$COMMAND"
         }

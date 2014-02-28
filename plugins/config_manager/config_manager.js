@@ -78,6 +78,16 @@ var contentConfPrefJson;
 var compUser;
 
 /**
+* The server IP address. It will be customized by the _config_ method.
+*
+* @property serverIp
+* @type string
+* @private
+* @default ""
+*/
+var serverIp = '';
+
+/**
 * The server chat parameters. It can be customized using the JSON
 * configuration file by means _configChat_ method.
 *
@@ -314,8 +324,6 @@ function configUser(obj) {
 * It reads the configuration file and set the chat options. The
 * file must use the JSON syntax.
 *
-* **The method can throw an Exception.**
-*
 * @method configChat
 * @param {string} path The path of the configuration file
 */
@@ -347,6 +355,57 @@ function configChat(path) {
         chatServer.domain = json.domain;
         logger.info(IDLOG, 'server chat configuration by file ' + path + ' ended');
 
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* It reads the JSON configuration file and set the server ip address.
+*
+* @method config
+* @param {string} path The path of the configuration file
+*/
+function config(path) {
+    try {
+        // check parameter
+        if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
+
+        // check file presence
+        if (!fs.existsSync(path)) {
+            logger.warn(IDLOG, path + ' does not exist');
+            return;
+        }
+
+        logger.info(IDLOG, 'configure server ip address with ' + path);
+
+        // read configuration file
+        var json = require(path);
+
+        // check JSON file
+        if (typeof json !== 'object' || typeof json.ip !== 'string') {
+
+            logger.warn(IDLOG, 'wrong JSON file ' + path);
+            return;
+        }
+
+        serverIp = json.ip;
+        logger.info(IDLOG, 'server IP address configuration by file ' + path + ' ended');
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Returns the server ip address.
+*
+* @method getServerIP
+* @return {string} The server ip address.
+*/
+function getServerIP() {
+    try {
+        return serverIp;
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -1086,9 +1145,11 @@ function getPostitNotificationSmsTo(username) {
 }
 
 // public interface
+exports.config                                 = config;
 exports.setLogger                              = setLogger;
 exports.configUser                             = configUser;
 exports.configChat                             = configChat;
+exports.getServerIP                            = getServerIP;
 exports.getChatConf                            = getChatConf;
 exports.setCompUser                            = setCompUser;
 exports.configPhoneUrls                        = configPhoneUrls;

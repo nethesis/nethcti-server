@@ -2683,6 +2683,7 @@ function ajaxPhoneCall(username, req, res) {
         }
 
         var exten      = compConfigManager.getDefaultUserExtensionConf(username);
+        var serverIp   = compConfigManager.getServerIP();
         var extenIp    = compAstProxy.getExtensionIp(exten);
         var extenAgent = compAstProxy.getExtensionAgent(exten);
 
@@ -2696,14 +2697,18 @@ function ajaxPhoneCall(username, req, res) {
             var phonePass = compConfigManager.getC2CAutoPhonePass(username);
 
             // replace the parameters of the url template
+            url = url.replace(/\$SERVER/g,     serverIp);
             url = url.replace(/\$NUMBER/g,     req.params.number);
+            url = url.replace(/\$ACCOUNT/g,    exten);
             url = url.replace(/\$PHONE_IP/g,   extenIp);
             url = url.replace(/\$PHONE_USER/g, phoneUser);
             url = url.replace(/\$PHONE_PASS/g, phonePass);
+            url = url.replace(/\$SERVER_IP/g,  serverIp);
 
             httpReq.get(url, function (httpResp) {
                 try {
                     logger.info(IDLOG, 'new call to ' + req.params.number + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp + ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
+                    logger.info(IDLOG, url);
                     res.send(200, { phoneRespStatusCode: httpResp.statusCode });
 
                 } catch (err) {
