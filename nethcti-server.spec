@@ -1,5 +1,5 @@
 Name:		nethcti-server
-Version:	1.9.21
+Version:	1.9.22
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI 2
 
@@ -70,6 +70,19 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Mon Mar 03 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 1.9.22-1
+- First RC release
+- Bug #2763 #2497: add privacy in the switchboard history queries.
+- Bug #2756: fix multiple login.
+- Bug #2755: hide call number of extension conversations when the user has the privacy enabled.
+- Enh #2759: automatic remove expired authentication token each interval time.
+- Enh #2724: move asterisk.json to a template.
+- Fea #2776: add support for automatic click2call.
+- Fea #2777: new rest api to directly answer on the phone (astproxy/answer).
+- Fea #2726: new rest api to get the prefix number configured in the server (astproxy/prefix).
+- Fea #2605 #2606: add support for prefix number to be added to all outgoing calls.
+- Fea #2146: add support to chose the default extension endpoint associated with the user.
+
 * Mon Feb 10 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 1.9.21-1
 - Beta3 release.
 - Bug #2713: write log output only in /var/log/asterisk/nethcti.log.
