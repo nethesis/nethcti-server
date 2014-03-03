@@ -21,6 +21,7 @@ templates2events("/etc/nethcti/services.json",$event);
 templates2events("/etc/nethcti/chat.json",$event);
 templates2events("/etc/nethcti/dbstatic.json",$event);
 templates2events("/etc/nethcti/mailer.json",$event);
+templates2events("/etc/nethcti/phone_urls.json",$event);
 templates2events("/etc/nethcti/nethcti.json",$event);
 templates2events("/etc/httpd/conf/httpd.conf",$event);
 templates2events("/etc/nethcti/sms_config.php",$event);
