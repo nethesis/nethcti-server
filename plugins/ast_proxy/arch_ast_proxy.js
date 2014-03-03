@@ -91,11 +91,11 @@ module.exports = function (options, imports, register) {
             getExtensionIp: astProxy.proxyLogic.getExtensionIp,
 
             /**
-            * It's the _getCountryCode_ method provided by _ast\_proxy.proxyLogic_.
+            * It's the _getPrefix_ method provided by _ast\_proxy.proxyLogic_.
             *
-            * @method getCountryCode
+            * @method getPrefix
             */
-            getCountryCode: astProxy.proxyLogic.getCountryCode,
+            getPrefix: astProxy.proxyLogic.getPrefix,
 
             /**
             * It's the _hangupConversation_ method provided by _ast\_proxy.proxyLogic_.

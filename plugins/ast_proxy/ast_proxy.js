@@ -138,8 +138,8 @@ function config(path) {
 
         // check the configuration file content
         if (   typeof json.user !== 'string'
-            || typeof json.pass !== 'string' || typeof json.country_code !== 'string'
-            || typeof json.host !== 'string' || typeof json.port         !== 'string') {
+            || typeof json.pass !== 'string' || typeof json.prefix !== 'string'
+            || typeof json.host !== 'string' || typeof json.port   !== 'string') {
 
             throw new Error('wrong configuration file ' + path);
         }
@@ -153,7 +153,7 @@ function config(path) {
             reconnect_after: 3000       // how long to wait to reconnect, in miliseconds, default: 3000
         };
 
-        proxyLogic.setCountryCode(json.country_code);
+        proxyLogic.setPrefix(json.prefix);
 
         logger.info(IDLOG, 'successfully configured');
 

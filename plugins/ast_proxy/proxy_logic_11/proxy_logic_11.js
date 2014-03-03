@@ -228,15 +228,15 @@ var emitter = new EventEmitter();
 var astProxy;
 
 /**
-* The country code to be used in outgoing call. It is not used in
+* The prefix number to be used in outgoing call. It is not used in
 * internal calls between extensions.
 *
-* @property countryCode
+* @property prefix
 * @type string
 * @private
 * @default ""
 */
-var countryCode = '';
+var prefix = '';
 
 /**
 * Contains the informations about the caller. The key is the caller
@@ -386,21 +386,21 @@ function setLogger(log) {
 }
 
 /**
-* Sets the country code to be used in all outgoing calls. It is the prefix call.
+* Sets the prefix number to be used in all outgoing calls.
 * It does not to be used with internal calls between extensions.
 *
-* @method setCountryCode
-* @param {string} code The country code (e.g. italian country code is 0039)
+* @method setPrefix
+* @param {string} prefix The prefix number.
 * @static
 */
-function setCountryCode(code) {
+function setPrefix(code) {
     try {
         // check parameter
-        if (typeof code !== 'string') { throw new Error('wrong country code type'); }
+        if (typeof code !== 'string') { throw new Error('wrong prefix type'); }
 
-        countryCode = code;
+        prefix = code;
 
-        logger.info(IDLOG, 'country code has been set to "' + countryCode + '"');
+        logger.info(IDLOG, 'prefix number has been set to "' + prefix + '"');
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -408,16 +408,16 @@ function setCountryCode(code) {
 }
 
 /**
-* Returns the country code used in all outgoing calls. It is the prefix call.
+* Returns the prefix number used in all outgoing calls.
 * It is not used with internal calls between extensions.
 *
-* @method getCountryCode
-* @return {string} code The country code (e.g. italian country code is 0039)
+* @method getPrefix
+* @return {string} prefix The prefix number.
 * @static
 */
-function getCountryCode() {
+function getPrefix() {
     try {
-        return countryCode;
+        return prefix;
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -3329,16 +3329,16 @@ function call(endpointType, endpointId, to, cb) {
         // check the endpoint existence
         if (endpointType === 'extension' && extensions[endpointId]) {
 
-            // replace plus sign used in country code with the '00' sequence
+            // replace plus sign used in prefix with the '00' sequence
             if (to.substring(0, 1) === '+') { to = to.replace('+', '00'); }
 
-            // check if the country code is to be added. It is added only for outgoing calls and not
-            // between extensions. So checks if the destination is an extension and add the country code
+            // check if the prefix is to be added. It is added only for outgoing calls and not
+            // between extensions. So checks if the destination is an extension and add the prefix
             // only in negative case and if it does not already contain it
             if (!extensions[to] &&             // the destination is not an extension
-                to.substring(0, 2) !== '00') { // it does not contain the country code
+                to.substring(0, 2) !== '00') { // it does not contain the prefix
 
-                to = countryCode + to;
+                to = prefix + to;
             }
 
             var chType = extensions[endpointId].getChanType();
@@ -5142,13 +5142,13 @@ exports.start                           = start;
 exports.visit                           = visit;
 exports.setDnd                          = setDnd;
 exports.setLogger                       = setLogger;
+exports.setPrefix                       = setPrefix;
+exports.getPrefix                       = getPrefix;
 exports.setCompDbconn                   = setCompDbconn;
 exports.getExtensions                   = getExtensions;
 exports.pickupParking                   = pickupParking;
 exports.getJSONQueues                   = getJSONQueues;
 exports.getExtensionIp                  = getExtensionIp;
-exports.setCountryCode                  = setCountryCode;
-exports.getCountryCode                  = getCountryCode;
 exports.getJSONQueuesStats              = getJSONQueuesStats;
 exports.getJSONQueuesQOS                = getJSONQueuesQOS;
 exports.getJSONAgentsStats              = getJSONAgentsStats;

@@ -103,13 +103,13 @@ var compConfigManager;
         * 1. [`astproxy/cw/:endpoint`](#cwget)
         * 1. [`astproxy/dnd/:endpoint`](#dndget)
         * 1. [`astproxy/cfvm/:type/:endpoint`](#cfvmget)
+        * 1. [`astproxy/prefix`](#prefixget)
         * 1. [`astproxy/cfcall/:type/:endpoint`](#cfcallget)
         * 1. [`astproxy/queues`](#queuesget)
         * 1. [`astproxy/trunks`](#trunksget)
         * 1. [`astproxy/opgroups`](#opgroupsget)
         * 1. [`astproxy/parkings`](#parkingsget)
         * 1. [`astproxy/extensions`](#extensionsget)
-        * 1. [`astproxy/country_code`](#country_codeget)
         * 1. [`astproxy/queues_stats/:day`](#queues_statsget)
         * 1. [`astproxy/queues_qos/:day`](#queues_qosget)
         * 1. [`astproxy/agents_qos/:day`](#agents_qosget)
@@ -179,9 +179,9 @@ var compConfigManager;
         *
         * ---
         *
-        * ### <a id="country_codeget">**`astproxy/country_code`**</a>
+        * ### <a id="prefixget">**`astproxy/prefix`**</a>
         *
-        * Returns the country code used with outgoing external calls.
+        * Returns the prefix number used with outgoing external calls.
         *
         * ---
         *
@@ -633,10 +633,10 @@ var compConfigManager;
                 *
                 *   @param {string} queues                 Gets all the queues of the operator panel of the user
                 *   @param {string} trunks                 Gets all the trunks of the operator panel of the user
+                *   @param {string} prefix                 Gets the prefix number used with outgoing external calls
                 *   @param {string} opgroups               Gets all the user groups of the operator panel
                 *   @param {string} parkings               Gets all the parkings with all their status informations
                 *   @param {string} extensions             Gets all the extensions with all their status informations
-                *   @param {string} country_code           Gets the country code used with outgoing external calls
                 *   @param {string} queues_stats/:day      Gets extended statistics about queues
                 *   @param {string} queues_qos/:day        Gets QOS info about queues
                 *   @param {string} agents_qos/:day        Gets QOS info about agents
@@ -648,10 +648,10 @@ var compConfigManager;
                 'get' : [
                     'queues',
                     'trunks',
+                    'prefix',
                     'opgroups',
                     'parkings',
                     'extensions',
-                    'country_code',
                     'queues_stats/:day',
                     'queues_qos/:day',
                     'agents_qos/:day',
@@ -945,23 +945,23 @@ var compConfigManager;
             },
 
             /**
-            * Gets the country code used with outgoing external calls with the following REST API:
+            * Gets the prefix number used with outgoing external calls with the following REST API:
             *
-            *     GET  country_code
+            *     GET  prefix
             *
             * @method extensions
-            * @param {object} req The client request.
-            * @param {object} res The client response.
-            * @param {function} next Function to run the next handler in the chain.
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
             */
-            country_code: function (req, res, next) {
+            prefix: function (req, res, next) {
                 try {
                     var username = req.headers.authorization_user;
 
-                    var countryCode = compAstProxy.getCountryCode();
+                    var prefix = compAstProxy.getPrefix();
 
-                    logger.info(IDLOG, 'sent the country code "' + countryCode + '" to user "' + username + '" ' + res.connection.remoteAddress);
-                    res.send(200, { countryCode: countryCode });
+                    logger.info(IDLOG, 'sent the prefix number "' + prefix + '" to user "' + username + '" ' + res.connection.remoteAddress);
+                    res.send(200, { prefix: prefix });
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
@@ -2691,6 +2691,7 @@ var compConfigManager;
         exports.cfcall                = astproxy.cfcall;
         exports.queues                = astproxy.queues;
         exports.trunks                = astproxy.trunks;
+        exports.prefix                = astproxy.prefix;
         exports.hangup                = astproxy.hangup;
         exports.atxfer                = astproxy.atxfer;
         exports.answer                = astproxy.answer;
@@ -2710,7 +2711,6 @@ var compConfigManager;
         exports.stop_record           = astproxy.stop_record;
         exports.setCompUser           = setCompUser;
         exports.mute_record           = astproxy.mute_record;
-        exports.country_code          = astproxy.country_code;
         exports.start_record          = astproxy.start_record;
         exports.force_hangup          = astproxy.force_hangup;
         exports.blindtransfer         = astproxy.blindtransfer;
