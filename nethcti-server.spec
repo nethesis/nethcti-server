@@ -1,6 +1,6 @@
 Name:		nethcti-server
 Version:	1.9.22
-Release:	1%{?dist}
+Release:	2%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI 2
 
 Group:		Network	
@@ -59,6 +59,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %files -f %{name}-%{version}-filelist
 %defattr(-,asterisk,asterisk,-)
+%config(noreplace) /etc/nethcti/*
 %config(noreplace) /home/e-smith/nethcti/static/img/logo.png
 
 %doc
@@ -70,6 +71,9 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Tue Mar 04 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 1.9.22-2
+- Re-add %config directive for /etc/nethcti/* path.
+
 * Mon Mar 03 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 1.9.22-1
 - First RC release
 - Bug #2763 #2497: add privacy in the switchboard history queries.
