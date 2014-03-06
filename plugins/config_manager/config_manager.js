@@ -483,6 +483,35 @@ function getCallUrlFromAgent(agent) {
 }
 
 /**
+* Returns true if the specified phone is supported by the automatic click2call.
+* It sequentially test a match of specified agent with the keys of _phoneUrls_
+* object. If the match exists than returns a true value, false otherwise.
+*
+* @method phoneAgentSupportAutoC2C
+* @param  {string}  agent The phone user agent
+* @return {boolean} True is the phone support automatic click2call
+*/
+function phoneAgentSupportAutoC2C(agent) {
+    try {
+        // check parameter
+        if (typeof agent !== 'string') { throw new TypeError('wrong parameter'); }
+
+        var re;
+        for (re in phoneUrls) {
+            // case insensitive 'i'
+            if (agent.search(new RegExp(re, 'i')) >= 0) {
+                return true;
+            }
+        }
+        return false;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return false;
+    }
+}
+
+/**
 * It sequentially test a match of specified agent with the keys of _phoneUrls_
 * object. If the match exists than returns the url phone to answer a call,
 * otherwise it returns an empty string. The keys of _phoneUrls_ are sequentially
@@ -1192,6 +1221,7 @@ exports.getUserConfigurations                  = getUserConfigurations;
 exports.setUserClick2CallConf                  = setUserClick2CallConf;
 exports.getAllUserEndpointsJSON                = getAllUserEndpointsJSON;
 exports.setUserNotificationConf                = setUserNotificationConf;
+exports.phoneAgentSupportAutoC2C               = phoneAgentSupportAutoC2C;
 exports.getPostitNotificationSmsTo             = getPostitNotificationSmsTo;
 exports.setDefaultUserExtensionConf            = setDefaultUserExtensionConf;
 exports.getDefaultUserExtensionConf            = getDefaultUserExtensionConf;

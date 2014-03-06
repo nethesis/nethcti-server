@@ -113,6 +113,7 @@ var compConfigManager;
         * 1. [`astproxy/queues_stats/:day`](#queues_statsget)
         * 1. [`astproxy/queues_qos/:day`](#queues_qosget)
         * 1. [`astproxy/agents_qos/:day`](#agents_qosget)
+        * 1. [`astproxy/is_autoc2c_supported/:endpoint`](#is_autoc2c_supportedget)
         *
         * ---
         *
@@ -200,6 +201,14 @@ var compConfigManager;
         * ### <a id="agents_qosget">**`astproxy/agents_qos/:day`**</a>
         *
         * Gets QOS info about agents. The day must be expressed in YYYYMMDD format.
+        *
+        * ---
+        *
+        * ### <a id="is_autoc2c_supportedget">**`astproxy/is_autoc2c_supported/:endpoint`**</a>
+        *
+        * Returns true if the endpoint is supported by the automatic click2call.
+        *
+        * * `endpoint: the extension identifier`
         *
         * <br>
         *
@@ -631,19 +640,20 @@ var compConfigManager;
                 * @property get
                 * @type {array}
                 *
-                *   @param {string} queues                 Gets all the queues of the operator panel of the user
-                *   @param {string} trunks                 Gets all the trunks of the operator panel of the user
-                *   @param {string} prefix                 Gets the prefix number used with outgoing external calls
-                *   @param {string} opgroups               Gets all the user groups of the operator panel
-                *   @param {string} parkings               Gets all the parkings with all their status informations
-                *   @param {string} extensions             Gets all the extensions with all their status informations
-                *   @param {string} queues_stats/:day      Gets extended statistics about queues
-                *   @param {string} queues_qos/:day        Gets QOS info about queues
-                *   @param {string} agents_qos/:day        Gets QOS info about agents
-                *   @param {string} cw/:endpoint           Gets the call waiting status of the endpoint of the user
-                *   @param {string} dnd/:endpoint          Gets the don't disturb status of the endpoint of the user
-                *   @param {string} cfvm/:type/:endpoint   Gets the call forward status to voicemail of the endpoint of the user
-                *   @param {string} cfcall/:type/:endpoint Gets the call forward status to a destination number of the endpoint of the user
+                *   @param {string} queues                         Gets all the queues of the operator panel of the user
+                *   @param {string} trunks                         Gets all the trunks of the operator panel of the user
+                *   @param {string} prefix                         Gets the prefix number used with outgoing external calls
+                *   @param {string} opgroups                       Gets all the user groups of the operator panel
+                *   @param {string} parkings                       Gets all the parkings with all their status informations
+                *   @param {string} extensions                     Gets all the extensions with all their status informations
+                *   @param {string} queues_stats/:day              Gets extended statistics about queues
+                *   @param {string} queues_qos/:day                Gets QOS info about queues
+                *   @param {string} agents_qos/:day                Gets QOS info about agents
+                *   @param {string} cw/:endpoint                   Gets the call waiting status of the endpoint of the user
+                *   @param {string} dnd/:endpoint                  Gets the don't disturb status of the endpoint of the user
+                *   @param {string} cfvm/:type/:endpoint           Gets the call forward status to voicemail of the endpoint of the user
+                *   @param {string} cfcall/:type/:endpoint         Gets the call forward status to a destination number of the endpoint of the user
+                *   @param {string} is_autoc2c_supported/:endpoint Returns true if the endpoint is supported by the automatic click2call
                 */
                 'get' : [
                     'queues',
@@ -658,7 +668,8 @@ var compConfigManager;
                     'cw/:endpoint',
                     'dnd/:endpoint',
                     'cfvm/:type/:endpoint',
-                    'cfcall/:type/:endpoint'
+                    'cfcall/:type/:endpoint',
+                    'is_autoc2c_supported/:endpoint'
                 ],
 
                 /**
@@ -895,6 +906,34 @@ var compConfigManager;
                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
             },
+
+            /**
+            * Returns true if the endpoint is supported by the automatic click2call with the following REST API:
+            *
+            *     is_autoc2c_supported/:endpoint
+            *
+            * @method is_autoc2c_supported
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            is_autoc2c_supported: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // gets the user agent of the phone
+                    var extenAgent  = compAstProxy.getExtensionAgent(req.params.endpoint);
+                    var isSupported = compConfigManager.phoneAgentSupportAutoC2C(extenAgent);
+
+                    logger.info(IDLOG, 'send "' + isSupported + '" for extension phone (' + req.params.endpoint + ') agent (' + extenAgent + ') support auto click2call to user "' + username + '" ' + res.connection.remoteAddress);
+                    res.send(200, { exten: req.params.endpoint, agent: extenAgent, supported: isSupported });
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
 
             /**
             * Gets all the extensions with all their status informations with the following REST API:
@@ -2722,6 +2761,7 @@ var compConfigManager;
         exports.queuemember_pause     = astproxy.queuemember_pause;
         exports.queuemember_unpause   = astproxy.queuemember_unpause;
         exports.blindtransfer_queue   = astproxy.blindtransfer_queue;
+        exports.is_autoc2c_supported  = astproxy.is_autoc2c_supported;
         exports.setCompAuthorization  = setCompAuthorization;
         exports.setCompConfigManager  = setCompConfigManager;
         exports.blindtransfer_parking = astproxy.blindtransfer_parking;

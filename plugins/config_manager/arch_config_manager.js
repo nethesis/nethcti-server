@@ -164,6 +164,13 @@ module.exports = function (options, imports, register) {
             getCallUrlFromAgent: configManager.getCallUrlFromAgent,
 
             /**
+            * It's the _phoneAgentSupportAutoC2C_ method provided by _config\_manager_ module.
+            *
+            * @method phoneAgentSupportAutoC2C
+            */
+            phoneAgentSupportAutoC2C: configManager.phoneAgentSupportAutoC2C,
+
+            /**
             * It's the _getAnswerUrlFromAgent_ method provided by _config\_manager_ module.
             *
             * @method getAnswerUrlFromAgent
