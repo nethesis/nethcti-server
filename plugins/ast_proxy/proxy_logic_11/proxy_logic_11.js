@@ -5063,6 +5063,20 @@ function callAndSendDTMFSequence(chanType, extension, sequence, cb) {
 }
 
 /**
+* Returns the destination number to compose to make a new echo call.
+*
+* @method getEchoCallDestination
+* @return {string} The destination number to compose to make a new echo call.
+*/
+function getEchoCallDestination() {
+    try {
+        return '*43';
+    } catch (e) {
+       logger.error(IDLOG, e.stack);
+    }
+}
+
+/**
 * Returns the extensions involved in the specified conversation.
 *
 * @method getExtensionsFromConversation
@@ -5181,6 +5195,7 @@ exports.evtQueueMemberRemoved           = evtQueueMemberRemoved;
 exports.redirectWaitingCaller           = redirectWaitingCaller;
 exports.evtHangupConversation           = evtHangupConversation;
 exports.evtExtenStatusChanged           = evtExtenStatusChanged;
+exports.getEchoCallDestination          = getEchoCallDestination;
 exports.evtNewVoicemailMessage          = evtNewVoicemailMessage;
 exports.stopRecordConversation          = stopRecordConversation;
 exports.evtConversationDialing          = evtConversationDialing;

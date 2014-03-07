@@ -55,6 +55,13 @@ module.exports = function (options, imports, register) {
             setDnd: astProxy.proxyLogic.setDnd,
 
             /**
+            * It's the _getEchoCallDestination_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method getEchoCallDestination
+            */
+            getEchoCallDestination: astProxy.proxyLogic.getEchoCallDestination,
+
+            /**
             * It's the _setUnconditionalCfVm_ method provided by _ast\_proxy.proxyLogic_.
             *
             * @method setUnconditionalCfVm

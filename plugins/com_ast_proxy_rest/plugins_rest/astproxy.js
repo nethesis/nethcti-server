@@ -224,6 +224,7 @@ var compConfigManager;
         * 1. [`astproxy/answer`](#answerpost)
         * 1. [`astproxy/hangup`](#hanguppost)
         * 1. [`astproxy/intrude`](#intrudepost)
+        * 1. [`astproxy/call_echo`](#call_echopost)
         * 1. [`astproxy/start_spy`](#start_spypost)
         * 1. [`astproxy/txfer_tovm`](#txfer_tovmpost)
         * 1. [`astproxy/pickup_conv`](#pickup_convpost)
@@ -557,6 +558,19 @@ var compConfigManager;
         *
         * ---
         *
+        * ### <a id="call_echopost">**`astproxy/call_echo`**</a>
+        *
+        * Originates a new echo call.
+        *
+        * * `endpointId: the endpoint identifier`
+        * * `endpointType: the type of the endpoint`
+        *
+        * E.g. object parameters:
+        *
+        *     { "endpointType": "extension", "endpointId": "209" }
+        *
+        * ---
+        *
         * ### <a id="inout_dyn_queuespost">**`astproxy/inout_dyn_queues`**</a>
         *
         * Alternates the logon and logout of the specified extension in all the queues for which it's a dynamic member.
@@ -688,6 +702,7 @@ var compConfigManager;
                 *   @param {string} answer                Answer a conversation from the extension
                 *   @param {string} hangup                Hangup a conversation
                 *   @param {string} intrude               Spy and speak in a conversation
+                *   @param {string} call_echo             Originates a new echo call
                 *   @param {string} start_spy             Spy a conversation with only listening
                 *   @param {string} txfer_tovm            Transfer the conversation to the voicemail
                 *   @param {string} pickup_conv           Pickup a conversation
@@ -715,6 +730,7 @@ var compConfigManager;
                     'answer',
                     'hangup',
                     'intrude',
+                    'call_echo',
                     'start_spy',
                     'txfer_tovm',
                     'pickup_conv',
@@ -2621,6 +2637,58 @@ var compConfigManager;
             },
 
             /**
+            * Originates a new echo call with the following REST API:
+            *
+            *     POST call_echo
+            *
+            * @method call_echo
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            call_echo: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (   typeof req.params              !== 'object'
+                        || typeof req.params.endpointId   !== 'string'
+                        || typeof req.params.endpointType !== 'string') {
+
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    // add the destination number used to originate a new echo call
+                    req.params.number = compAstProxy.getEchoCallDestination();
+
+                    if (req.params.endpointType === 'extension') {
+
+                        // check if the endpoint is owned by the user
+                        if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+
+                            logger.warn(IDLOG, 'make new echo call failed: ' + req.params.endpointId + ' is not owned by user "' + username + '"'); +
+                            compUtil.net.sendHttp403(IDLOG, res);
+                            return;
+                        }
+
+                        // if the user has enabled the auomatic click2call then make an HTTP request directly to the phone,
+                        // otherwise make a new call by asterisk
+                        if (!compConfigManager.isAutomaticClick2callEnabled(username)) { asteriskCall(username, req, res); }
+                        else { ajaxPhoneCall(username, req, res); }
+
+                    } else {
+                        logger.warn(IDLOG, 'making new echo call from user "' + username + '": unknown endpointType ' + req.params.endpointType);
+                        compUtil.net.sendHttp400(IDLOG, res);
+                    }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
             * Spy and speak in a conversation with the following REST API:
             *
             *     POST intrude
@@ -2737,6 +2805,7 @@ var compConfigManager;
         exports.intrude               = astproxy.intrude;
         exports.opgroups              = astproxy.opgroups;
         exports.parkings              = astproxy.parkings;
+        exports.call_echo             = astproxy.call_echo;
         exports.start_spy             = astproxy.start_spy;
         exports.setLogger             = setLogger;
         exports.txfer_tovm            = astproxy.txfer_tovm;
