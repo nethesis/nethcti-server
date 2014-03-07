@@ -291,7 +291,14 @@ module.exports = function (options, imports, register) {
             *
             * @method isPrivacyEnabled
             */
-            isPrivacyEnabled: authorization.isPrivacyEnabled
+            isPrivacyEnabled: authorization.isPrivacyEnabled,
+
+            /**
+            * It's the _getAllUsersAuthorizations_ method provided by _authorization_ module.
+            *
+            * @method getAllUsersAuthorizations
+            */
+            getAllUsersAuthorizations: authorization.getAllUsersAuthorizations
         }
     });
 

@@ -1111,10 +1111,36 @@ function verifyUserEndpointVoicemail(username, endpoint) {
 }
 
 /**
+* Returns the authorizations of all users.
+*
+* @method getAllUsersAuthorizations
+* @return {object} The authorizations of all users.
+*/
+function getAllUsersAuthorizations() {
+    try {
+        // object to return
+        var result = {};
+
+        var usernames = userMod.getUsernames();
+
+        var i;
+        for (i = 0; i < usernames.length; i++) {
+            result[usernames[i]] = getUserAuthorizations(usernames[i]);
+        }
+        return result;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns an empty object for security reasons
+        return {};
+    }
+}
+
+/**
 * Returns all authorizations of the user.
 *
 * @method getUserAuthorizations
-* @param {string} username The username
+* @param  {string} username The username
 * @return {object} All authorizations of the user.
 */
 function getUserAuthorizations(username) {
@@ -1193,6 +1219,7 @@ exports.authorizeOpParkingsUser       = authorizeOpParkingsUser;
 exports.authorizeAdminPostitUser      = authorizeAdminPostitUser;
 exports.authorizeAdminHangupUser      = authorizeAdminHangupUser;
 exports.authorizeAdminPickupUser      = authorizeAdminPickupUser;
+exports.getAllUsersAuthorizations     = getAllUsersAuthorizations;
 exports.authorizeCustomerCardUser     = authorizeCustomerCardUser;
 exports.authorizeOpExtensionsUser     = authorizeOpExtensionsUser;
 exports.authorizeAdminTransferUser    = authorizeAdminTransferUser;

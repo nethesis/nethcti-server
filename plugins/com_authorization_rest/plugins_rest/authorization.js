@@ -110,12 +110,19 @@ function setCompAuthorization(ca) {
         * # GET requests
         *
         * 1. [`authorization/user`](#userget)
+        * 1. [`authorization/allusers`](#allusersget)
         *
         * ---
         *
         * ### <a id="userget">**`authorization/user`**</a>
         *
         * Returns the user authorizations.
+        *
+        * ---
+        *
+        * ### <a id="allusersget">**`authorization/allusers`**</a>
+        *
+        * Returns the authorizations of all users.
         *
         * @class plugin_rest_authorization
         * @static
@@ -132,9 +139,13 @@ function setCompAuthorization(ca) {
                 * @property get
                 * @type {array}
                 *
-                *   @param {string} user To get all user authorizations
+                *   @param {string} user     To get all user authorizations
+                *   @param {string} allusers To get the authorizations of all users
                 */
-                'get':   [ 'user' ],
+                'get':   [
+                    'user',
+                    'allusers'
+                ],
                 'post' : [],
                 'head':  [],
                 'del' :  []
@@ -146,9 +157,9 @@ function setCompAuthorization(ca) {
             *     user
             *
             * @method user
-            * @param {object} req The client request.
-            * @param {object} res The client response.
-            * @param {function} next Function to run the next handler in the chain.
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
             */
             user: function (req, res, next) {
                 try {
@@ -168,10 +179,41 @@ function setCompAuthorization(ca) {
                     logger.error(IDLOG, err.stack);
                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
+            },
+
+            /**
+            * Get the authorizations of all users by the following REST API:
+            *
+            *     allusers
+            *
+            * @method allusers
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            allusers: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+                    var results  = compAuthorization.getAllUsersAuthorizations();
+
+                    if (typeof results !== 'object') {
+                        var str = 'wrong result about authorizations of all users';
+                        logger.error(IDLOG, str);
+                        compUtil.net.sendHttp500(IDLOG, res, str);
+
+                    } else {
+                        logger.info(IDLOG, 'send authorizations of all users');
+                        res.send(200, results);
+                    }
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
             }
         }
         exports.api                  = authorization.api;
         exports.user                 = authorization.user;
+        exports.allusers             = authorization.allusers;
         exports.setLogger            = setLogger;
         exports.setCompUtil          = setCompUtil;
         exports.setCompAuthorization = setCompAuthorization;
