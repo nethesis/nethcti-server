@@ -12,6 +12,7 @@
 * @static
 */
 var fs           = require('fs');
+var odbc         = require('odbc');
 var async        = require('async');
 var moment       = require('moment');
 var iniparser    = require('iniparser');
@@ -761,6 +762,26 @@ function initConnections() {
 
                 dbConn[k] = sequelize;
                 logger.info(IDLOG, 'initialized db connection with ' + dbConfig[k].dbtype + ' ' + dbConfig[k].dbname + ' ' + dbConfig[k].dbhost + ':' + dbConfig[k].dbport);
+
+            } else if (dbConfig[k].dbtype === 'mssql') {
+
+                var db      = new odbc.Database();
+                var options = 'DRIVER={FreeTDS}'                    +
+                              ';SERVER='   + dbConfig[k].dbhost     +
+                              ';PORT='     + dbConfig[k].dbport     +
+                              ';UID='      + dbConfig[k].dbuser     +
+                              ';PWD='      + dbConfig[k].dbpassword +
+                              ';DATABASE=' + dbConfig[k].dbname;
+
+                db.open(options, function (err1) {
+                    if (err1) {
+                        logger.error(IDLOG, 'initializing db connection with ' + dbConfig[k].dbtype + ' ' + dbConfig[k].dbname + ' ' + dbConfig[k].dbhost + ':' + dbConfig[k].dbport + ' - ' + err1.stack);
+
+                    } else {
+                        dbConn[k] = db;
+                        logger.info(IDLOG, 'initialized db connection with ' + dbConfig[k].dbtype + ' ' + dbConfig[k].dbname + ' ' + dbConfig[k].dbhost + ':' + dbConfig[k].dbport);
+                    }
+                });
             }
         }
     } catch (err) {
@@ -2885,26 +2906,43 @@ function getCustomerCardByNum(type, num, cb) {
             return;
         }
 
-        // escape of the number
-        num = dbConn[type].getQueryInterface().escape(num); // e.g. num = '123456'
-        num = num.substring(1, num.length - 1);             // remove external quote e.g. num = 123456
+        if (dbConfig[type].dbtype === 'mysql') {
 
-        // replace the key of the query with paramter
-        var query = dbConfig[type].query.replace(/\$EXTEN/g, num);
+            // escape of the number
+            num = dbConn[type].getQueryInterface().escape(num); // e.g. num = '123456'
+            num = num.substring(1, num.length - 1);             // remove external quote e.g. num = 123456
 
-        dbConn[type].query(query).success(function (results) {
+            // replace the key of the query with paramter
+            var query = dbConfig[type].query.replace(/\$EXTEN/g, num);
 
-            logger.info(IDLOG, results.length + ' results by searching ' + type + ' by num ' + num);
-            cb(null, results);
+            dbConn[type].query(query).success(function (results) {
 
-        }).error(function (err) { // manage the error
+                logger.info(IDLOG, results.length + ' results by searching ' + type + ' by num ' + num);
+                cb(null, results);
 
-            logger.error(IDLOG, 'searching ' + type + ' by num ' + num + ': ' + err.toString());
-            cb(err.toString());
-        });
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-        cb(err.toString());
+            }).error(function (err1) { // manage the error
+
+                logger.error(IDLOG, 'searching ' + type + ' by num ' + num + ': ' + err1.toString());
+                cb(err1.toString());
+            });
+
+        } else if (dbConfig[type].dbtype === 'mssql') {
+
+            dbConn[type].query(dbConfig[type].query, function (err2, rows, moreResultSets) {
+
+                if (err2) {
+                    logger.error(IDLOG, 'searching ' + type + ' by num ' + num + ': ' + err2.toString());
+                    cb(err2.toString());
+
+                } else {
+                    logger.info(IDLOG, rows.length + ' results by searching ' + type + ' by num ' + num);
+                    cb(null, rows);
+                }
+            });
+        }
+    } catch (error) {
+        logger.error(IDLOG, error.stack);
+        cb(error.toString());
     }
 }
 
