@@ -1,0 +1,77 @@
+<html>
+    <head>
+        <style>
+            body {
+                margin: 0px;
+            }
+            .photo {
+                float: left;
+                height: 96px;
+                width: 96px;
+                background: url('img/nophoto.png');
+            }
+            .contact-info {
+                font-family: verdana;
+                margin-top: 5px;
+                margin-left: 15px;
+                float: left;
+            }
+            #contact-name {
+                font-weight: bold;
+                display: block;
+                margin-bottom: 3px;
+            }
+            #contact-num {
+                display: block;
+            }
+            .close {
+                background: url(img/close_ico.png) no-repeat;
+                height: 16px;
+                width: 16px;
+                right: 2px;
+                top: 2px;
+                position: absolute;
+                cursor: pointer;
+            }
+        </style>
+        <script>
+            function getUrlParams() {
+                var match,
+                    pl     = /\+/g,  // Regex for replacing addition symbol with a space
+                    search = /([^&=]+)=?([^&]*)/g,
+                    decode = function (s) { return decodeURIComponent(s.replace(pl, " ")); },
+                    query  = window.location.search.substring(1);
+
+                var urlParams = {};
+                while (match = search.exec(query)) {
+                   urlParams[decode(match[1])] = decode(match[2]);
+                }
+
+                return urlParams;
+            }
+
+            window.onload = function () {
+                var params = getUrlParams();
+
+                if (params.callerName) {
+                    document.getElementById('contact-name').innerHTML = params.callerName;
+                    document.getElementById('contact-num').innerHTML = params.callerNum;
+
+                } else {
+                    document.getElementById('contact-name').innerHTML = params.callerNum;
+                }
+
+            }
+        </script>
+    </head>
+    <body>
+        <div>
+            <div class="photo"></div>
+            <div class="contact-info">
+                <span id="contact-name"></span>
+                <span id="contact-num"></span>
+            </div>
+        </div>
+        <span class="close" close="1" title="Chiudi"></span>
+    </body>
+</html>

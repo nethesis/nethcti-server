@@ -550,8 +550,8 @@ function sendStreamingNotificationEvent(username, data, socket) {
             notification: {
                 id:           notifid,
                 url:          url,
-                width:        500,
-                height:       300,
+                width:        400,
+                height:       400,
                 action:       'open',
                 closetimeout: 0
             }
@@ -606,7 +606,7 @@ function sendCallNotificationEvent(username, data, socket) {
                 id:           notifid,
                 url:          url,
                 width:        500,
-                height:       200,
+                height:       96,
                 action:       'open',
                 closetimeout: 0
             }
