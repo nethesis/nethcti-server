@@ -2,6 +2,7 @@
     <head>
         <style>
             body {
+                cursor: pointer;
                 margin: 0px;
                 overflow-y: auto;
                 overflow-x: hidden;
@@ -12,8 +13,8 @@
             }
             #stream-description {
                 font-family: verdana;
-                font-weight: bold;
                 margin-left: 15px;
+                font-weight: bold;
                 width: 90%;
                 height: 30px;
                 margin-top: 10px;
@@ -37,9 +38,28 @@
             }
             .button {
                 font-family: verdana;
-                color: #8B8B8B;
-                height: 40px;
+                color: #555;
+                width: 50%;
+                float: left;
+                padding: 10px 0px;
                 text-align: center;
+                display: inline-block;
+                cursor: pointer;
+            }
+            #open-stream-but {
+                background-image: url(./img/unlock.png);
+                background-repeat: no-repeat;
+                background-position: 25%;
+                border-right: 1px solid #AAA;
+            }
+            #open-ctistream-but {
+                background-image: url(./img/stream.png);
+                background-repeat: no-repeat;
+                background-position: 25%;
+            }
+            .mouseOverBut {
+                background-color: #AAA;
+                color: #FFF;
             }
         </style>
         <script src="./js/jquery-1.11.0.min.js"></script>
@@ -78,6 +98,14 @@
             }
 
             window.onload = function () {
+
+                $('.button').mouseout(function () {
+                    $(this).removeClass('mouseOverBut');
+                });
+                $('.button').mouseover(function () {
+                    $(this).addClass('mouseOverBut');
+                });
+
                 var params = getUrlParams();
                 
                 document.getElementById('stream-description').innerHTML = params.description;
@@ -85,33 +113,25 @@
 
                 if (!params.open || params.open === 'false') {
                     document.getElementById('open-stream-but').style.display  = 'none';
-                    document.getElementById('open-cti-but').style.width       = '50%';
-                    document.getElementById('open-ctistream-but').style.width = '50%';
-
-                } else {
-                    document.getElementById('open-stream-but').style.width    = '30%';
-                    document.getElementById('open-cti-but').style.width       = '40%';
-                    document.getElementById('open-ctistream-but').style.width = '30%';
+                    document.getElementById('open-ctistream-but').style.width  = '100%';
+                    $('#open-ctistream-but').css('background-position', '35%');
                 }
 
-                var argCtiUrl       = params.ctiProto + '://' + window.location.hostname + (window.location.port ? ':' + window.location.port : '') + '/cti';
                 var argCtiStreamUrl = params.ctiProto + '://' + window.location.hostname + (window.location.port ? ':' + window.location.port : '') + '/cti#streaming';
-
-                $('#open-cti-but').attr('arg', argCtiUrl);
+                $('body').attr('arg', argCtiStreamUrl);
                 $('#open-ctistream-but').attr('arg', argCtiStreamUrl);
             }
         </script>
     </head>
-    <body cmd="notepad" arg="xxx" close="0">
+    <body cmd="url" arg="" close="1" title="Visualizza flusso video">
         <div>
             <div id="stream-description"></div>
             <div class="contact-stream">
                 <img id="stream-img" src="img/nophoto.png">
             </div>
             <div class="contact-action">
-                <button id="open-stream-but" onclick="openStream();" class="button">Apri</button>
-                <button id="open-cti-but" cmd="url" arg="" close="1" class="button">NethCTI</button>
-                <button id="open-ctistream-but" cmd="url" arg="" close="1" class="button">Video</button>
+                <div id="open-stream-but" onclick="openStream();" class="button" title="Comando di apertura">Apri</div>
+                <div id="open-ctistream-but" cmd="url" arg="" close="1" class="button">Video</div>
             </div>
         </div>
         <span class="close" close="1" title="Chiudi"></span>

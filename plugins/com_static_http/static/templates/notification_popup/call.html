@@ -2,6 +2,7 @@
     <head>
         <style>
             body {
+                cursor: pointer;
                 margin: 0px;
             }
             .photo {
@@ -38,10 +39,24 @@
             }
             .button {
                 font-family: verdana;
-                color: #8B8B8B;
-                width: 50%;
-                height: 40px;
-                text-align: center;
+                color: #555;
+                float: left;
+                padding: 10px 0px;
+                text-align: left;
+                display: inline-block;
+                cursor: pointer;
+                border-top: 1px solid #EEE;
+            }
+            #open-cticc-but {
+                padding-left: 50px;
+                width: 100%;
+                background-image: url(./img/custcard.png);
+                background-repeat: no-repeat;
+                background-position: 15px;
+            }
+            .mouseOverBut {
+                background-color: #AAA;
+                color: #FFF;
             }
         </style>
         <script src="./js/jquery-1.11.0.min.js"></script>
@@ -62,6 +77,14 @@
             }
 
             window.onload = function () {
+
+                $('.button').mouseout(function () {
+                    $(this).removeClass('mouseOverBut');
+                });
+                $('.button').mouseover(function () {
+                    $(this).addClass('mouseOverBut');
+                });
+
                 var params = getUrlParams();
 
                 if (params.callerName) {
@@ -74,12 +97,12 @@
                 var argCtiUrl   = params.ctiProto + '://' + window.location.hostname + (window.location.port ? ':' + window.location.port : '') + '/cti';
                 var argCtiCCUrl = params.ctiProto + '://' + window.location.hostname + (window.location.port ? ':' + window.location.port : '') + '/cti#cust_card';
 
-                $('.open-cti-but').attr('arg', argCtiUrl);
-                $('.open-cticc-but').attr('arg', argCtiCCUrl);
+                $('body').attr('arg', argCtiUrl);
+                $('#open-cticc-but').attr('arg', argCtiCCUrl);
             }
         </script>
     </head>
-    <body>
+    <body cmd="url" arg="" close="1" title="Accedi a NethCTI">
         <div>
             <div class="photo"></div>
             <div class="contact-info">
@@ -87,8 +110,7 @@
                 <span id="contact-num"></span>
             </div>
             <div class="contact-action">
-                <button cmd="url" arg="" close="1" class="button open-cti-but">NethCTI</button>
-                <button cmd="url" arg="" close="1" class="button open-cticc-but">Scheda cliente</button>
+                <div id="open-cticc-but" cmd="url" arg="" close="1" class="button" title="">Scheda cliente</div>
             </div>
         </div>
         <span class="close" close="1" title="Chiudi"></span>
