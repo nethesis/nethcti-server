@@ -64,6 +64,50 @@ var CALL_NOTIF_TEMPLATE_NAME = 'call.html';
 var STREAMING_NOTIF_TEMPLATE_NAME = 'streaming.html';
 
 /**
+* The timeout to automatic close notification popup.
+*
+* @property notifCloseTimeout
+* @type string
+* @private
+* @default 10
+*/
+var notifCloseTimeout = 10;
+
+/**
+* The size of the call notification popup. It is
+* customized by the _configWinPopup_ method.
+*
+* @property callNotifSize
+* @type string
+* @private
+* @default {
+    width: 400,
+    heigth: 96
+}
+*/
+var callNotifSize = {
+    width: 400,
+    height: 96
+};
+
+/**
+* The size of the streaming notification popup. It is
+* customized by the _configWinPopup_ method.
+*
+* @property streamNotifSize
+* @type string
+* @private
+* @default {
+    width: 400,
+    heigth: 400
+}
+*/
+var streamNotifSize = {
+    width: 400,
+    height: 400
+};
+
+/**
 * The path of the template file for a call notification popup. It is
 * constructed by the _config_ method.
 *
@@ -550,10 +594,10 @@ function sendStreamingNotificationEvent(username, data, socket) {
             notification: {
                 id:           notifid,
                 url:          url,
-                width:        400,
-                height:       400,
+                width:        streamNotifSize.width,
+                height:       streamNotifSize.height,
                 action:       'open',
-                closetimeout: 0
+                closetimeout: notifCloseTimeout
             }
         };
 
@@ -605,10 +649,10 @@ function sendCallNotificationEvent(username, data, socket) {
             notification: {
                 id:           notifid,
                 url:          url,
-                width:        500,
-                height:       96,
+                width:        callNotifSize.width,
+                height:       callNotifSize.height,
                 action:       'open',
-                closetimeout: 0
+                closetimeout: notifCloseTimeout
             }
         };
 
@@ -639,7 +683,7 @@ function config(path) {
         if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
 
         // check file presence
-        if (!fs.existsSync(path)) { throw new Error(path + ' doesn\'t exist'); }
+        if (!fs.existsSync(path)) { throw new Error(path + ' does not exist'); }
 
         // read configuration file
         var json = require(path);
@@ -661,30 +705,55 @@ function config(path) {
             logger.warn(IDLOG, 'base template notifications url has not been specified in JSON file ' + path);
         }
 
-        /*
-        // initialize the key of the HTTPS proxy
-        if (json.tcp.https_key) {
-            HTTPS_KEY = json.tcp.https_key;
-
-        } else {
-            logger.warn(IDLOG, 'no HTTPS key specified in JSON file ' + path);
-        }
-
-        // initialize the certificate of the HTTPS proxy
-        if (json.tcp.https_cert) {
-            HTTPS_CERT = json.tcp.https_cert;
-
-        } else {
-            logger.warn(IDLOG, 'no HTTPS certificate specified in JSON file ' + path);
-        }
-        */
-
         // initialize the interval at which update the token expiration of all users
         // that are connected by tcp
         var expires = compAuthe.getTokenExpirationTimeout();
         updateTokenExpirationInterval = expires / 2;
 
         logger.info(IDLOG, 'configuration by file ' + path + ' ended');
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Configurates the settings to be used for Windows popup notifications of
+* incoming calls by a configuration file. The file must use the JSON syntax.
+*
+* @method configWinPopup
+* @param {string} path The path of the configuration file
+*/
+function configWinPopup(path) {
+    try {
+        // check parameter
+        if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
+
+        // check file presence
+        if (!fs.existsSync(path)) {
+            logger.warn(IDLOG, 'win popup configuration file ' + path + ' does not exist: use default values');
+            return;
+        }
+
+        // read configuration file
+        var json = require(path);
+
+        if (json && json.stream && json.stream.width) { streamNotifSize.width = json.stream.width; }
+        else { logger.warn(IDLOG, 'no win stream popup width has been specified in ' + path + ': use default ' + streamNotifSize.width); }
+
+        if (json && json.stream && json.stream.height) { streamNotifSize.height = json.stream.height; }
+        else { logger.warn(IDLOG, 'no win stream popup height has been specified in ' + path + ': use default ' + streamNotifSize.height); }
+
+        if (json && json.call && json.call.width) { callNotifSize.width = json.call.width; }
+        else { logger.warn(IDLOG, 'no win call popup width has been specified in ' + path + ': use default ' + callNotifSize.width); }
+
+        if (json && json.call && json.call.height) { callNotifSize.height = json.call.height; }
+        else { logger.warn(IDLOG, 'no win call popup height has been specified in ' + path + ': use default ' + callNotifSize.height); }
+
+        if (json && json.close_timeout) { notifCloseTimeout = json.close_timeout; }
+        else { logger.warn(IDLOG, 'no win close popup timeout has been specified in ' + path + ': use default ' + notifCloseTimeout); }
+
+        logger.info(IDLOG, 'customization of notification popup by file ' + path + ' ended');
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -1055,5 +1124,6 @@ exports.setLogger            = setLogger;
 exports.setAstProxy          = setAstProxy;
 exports.setCompUser          = setCompUser;
 exports.setCompAuthe         = setCompAuthe;
+exports.configWinPopup       = configWinPopup;
 exports.setCompStreaming     = setCompStreaming;
 exports.setCompAuthorization = setCompAuthorization;

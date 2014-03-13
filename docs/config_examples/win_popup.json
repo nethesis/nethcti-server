@@ -1,0 +1,11 @@
+{
+    "call": {
+        "width": "400",
+        "height": "96"
+    },
+    "stream": {
+        "width": "400",
+        "height": "400"
+    },
+    "close_timeout": "10"
+}
