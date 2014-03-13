@@ -580,13 +580,6 @@ function sendStreamingNotificationEvent(username, data, socket) {
         // add parameters to the HTTP GET url
         var url = streamingNotifTemplatePath + '?' + params;
 
-        // temporary to remove
-        // temporary to remove
-        // temporary to remove
-        // temporary to remove
-        // temporary to remove
-        url += '&random=' + new Date().getTime();
-
         // create the id to identify the notification popup
         var notifid = data.callerIdentity.numCalled + '<-' + data.callerIdentity.callerNum;
 
@@ -632,15 +625,6 @@ function sendCallNotificationEvent(username, data, socket) {
 
         // add parameters to the HTTP GET url
         var url = callNotifTemplatePath + '?' + params;
-
-        // temporary to remove
-        // temporary to remove
-        // temporary to remove
-        // temporary to remove
-        // temporary to remove
-        // temporary to remove
-        // temporary to remove
-        url += '&random=' + new Date().getTime();
 
         // create the id to identify the notification popup
         var notifid = data.callerIdentity.numCalled + '<-' + data.callerIdentity.callerNum;
