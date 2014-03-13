@@ -139,6 +139,18 @@ var streamingNotifTemplatePath;
 var port;
 
 /**
+* The protocol used by the cti server. It is used by the windows popup notification
+* to open the NethCTI application using the configured protocol. It is customized
+* by the configuration file.
+*
+* @property ctiProto
+* @type string
+* @private
+* @default "https"
+*/
+var ctiProto = 'https';
+
+/**
 * The logger. It must have at least three methods: _info, warn and error._
 *
 * @property logger
@@ -573,9 +585,10 @@ function sendStreamingNotificationEvent(username, data, socket) {
 
         // always add this informations without filter them
         var params = 'description=' + streamingData.description +
-                     '&open=' + streamingData.open +
-                     '&url='  + streamingData.url +
-                     '&id='   + streamingData.id;
+                     '&ctiProto='   + ctiProto                  +
+                     '&open='       + streamingData.open        +
+                     '&url='        + streamingData.url         +
+                     '&id='         + streamingData.id;
 
         // add parameters to the HTTP GET url
         var url = streamingNotifTemplatePath + '?' + params;
@@ -621,6 +634,7 @@ function sendCallNotificationEvent(username, data, socket) {
     try {
         // always add this informations without filter them
         var params = 'callerNum='   + data.callerIdentity.callerNum +
+                     '&ctiProto='   + ctiProto                      +
                      '&callerName=' + data.callerIdentity.callerName;
 
         // add parameters to the HTTP GET url
@@ -687,6 +701,13 @@ function config(path) {
 
         } else {
             logger.warn(IDLOG, 'base template notifications url has not been specified in JSON file ' + path);
+        }
+
+        // initialize the protocol used by the cti, so the client can open the cti app using the correct protocol
+        if (json && json.http_proxy && json.http_proxy.proto) {
+            ctiProto = json.http_proxy.proto;
+        } else {
+            logger.warn(IDLOG, 'cti http_proxy proto for win popup is not present in ' + path + ': use default ' + ctiProto);
         }
 
         // initialize the interval at which update the token expiration of all users
