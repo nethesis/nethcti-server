@@ -16,6 +16,9 @@
                 margin-left: 15px;
                 float: left;
             }
+            .contact-action {
+                clear: both;
+            }
             #contact-name {
                 font-weight: bold;
                 display: block;
@@ -33,7 +36,15 @@
                 position: absolute;
                 cursor: pointer;
             }
+            .button {
+                font-family: verdana;
+                color: #8B8B8B;
+                width: 50%;
+                height: 40px;
+                text-align: center;
+            }
         </style>
+        <script src="./js/jquery-1.11.0.min.js"></script>
         <script>
             function getUrlParams() {
                 var match,
@@ -55,12 +66,16 @@
 
                 if (params.callerName) {
                     document.getElementById('contact-name').innerHTML = params.callerName;
-                    document.getElementById('contact-num').innerHTML = params.callerNum;
-
+                    document.getElementById('contact-num').innerHTML  = params.callerNum;
                 } else {
                     document.getElementById('contact-name').innerHTML = params.callerNum;
                 }
 
+                var argCtiUrl   = params.ctiProto + '://' + window.location.hostname + (window.location.port ? ':' + window.location.port : '') + '/cti';
+                var argCtiCCUrl = params.ctiProto + '://' + window.location.hostname + (window.location.port ? ':' + window.location.port : '') + '/cti#cust_card';
+
+                $('.open-cti-but').attr('arg', argCtiUrl);
+                $('.open-cticc-but').attr('arg', argCtiCCUrl);
             }
         </script>
     </head>
@@ -70,6 +85,10 @@
             <div class="contact-info">
                 <span id="contact-name"></span>
                 <span id="contact-num"></span>
+            </div>
+            <div class="contact-action">
+                <button cmd="url" arg="" close="1" class="button open-cti-but">NethCTI</button>
+                <button cmd="url" arg="" close="1" class="button open-cticc-but">Scheda cliente</button>
             </div>
         </div>
         <span class="close" close="1" title="Chiudi"></span>
