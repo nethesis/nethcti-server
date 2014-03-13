@@ -78,7 +78,7 @@ var notifCloseTimeout = 10;
 * customized by the _configWinPopup_ method.
 *
 * @property callNotifSize
-* @type string
+* @type object
 * @private
 * @default {
     width: 400,
@@ -95,7 +95,7 @@ var callNotifSize = {
 * customized by the _configWinPopup_ method.
 *
 * @property streamNotifSize
-* @type string
+* @type object
 * @private
 * @default {
     width: 400,
@@ -116,6 +116,17 @@ var streamNotifSize = {
 * @private
 */
 var callNotifTemplatePath;
+
+/**
+* The supported commands for windows popup notifications. It is
+* initialized by the _configWinPopup_ method.
+*
+* @property notifSupportedCommands
+* @type object
+* @private
+* @default {}
+*/
+var notifSupportedCommands = {};
 
 /**
 * The path of the template file for a streaming notification popup. It is
@@ -758,6 +769,9 @@ function configWinPopup(path) {
         if (json && json.close_timeout) { notifCloseTimeout = json.close_timeout; }
         else { logger.warn(IDLOG, 'no win close popup timeout has been specified in ' + path + ': use default ' + notifCloseTimeout); }
 
+        if (json && json.commands && typeof json.commands === 'object') { notifSupportedCommands = json.commands; }
+        else { logger.warn(IDLOG, 'wrong win popup commands in ' + path); }
+
         logger.info(IDLOG, 'customization of notification popup by file ' + path + ' ended');
 
     } catch (err) {
@@ -992,18 +1006,7 @@ function loginHdlr(socket, obj) {
 */
 function sendNotificationSupportedCommands(socket) {
     try {
-        var cmds = {
-            commands: {
-                url: {
-                    command: 'url',
-                    runwith: ''
-                },
-                notepad: {
-                    command: 'notepad',
-                    runwith: ''
-                }
-            }
-        };
+        var cmds = { commands: notifSupportedCommands };
 
         socket.write(JSON.stringify(cmds), ENCODING, function () {
             try {
