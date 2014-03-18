@@ -334,14 +334,16 @@ var compConfigManager;
         *
         * ### <a id="callpost">**`astproxy/call`**</a>
         *
-        * Calls a number from the specified endpoint. The request must contains the following parameters:
+        * Calls a number from the specified endpoint. If the endpoint is not specified it will use the user default. The request must
+        * contains the following parameters:
         *
         * * `number: the number to be called`
-        * * `endpointId: the endpoint identifier that make the new call`
-        * * `endpointType: the type of the endpoint that make the new call`
+        * * `[endpointId]: the endpoint identifier that make the new call. It requires "endpointType".`
+        * * `[endpointType]: the type of the endpoint that make the new call. It requires "endpointId".`
         *
         * E.g. object parameters:
         *
+        *     { "number": "0123456789" }
         *     { "number": "0123456789", "endpointType": "extension", "endpointId": "214" }
         *
         * ---
@@ -1339,22 +1341,29 @@ var compConfigManager;
             *     POST call
             *
             * @method call
-            * @param {object}   req  The client request.
-            * @param {object}   res  The client response.
-            * @param {function} next Function to run the next handler in the chain.
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
             */
             call: function (req, res, next) {
                 try {
                     var username = req.headers.authorization_user;
 
                     // check parameters
-                    if (   typeof req.params              !== 'object'
-                        || typeof req.params.number       !== 'string'
-                        || typeof req.params.endpointId   !== 'string'
-                        || typeof req.params.endpointType !== 'string') {
+                    if (   typeof req.params        !== 'object'
+                        || typeof req.params.number !== 'string'
+                        || (req.params.endpointId  && !req.params.endpointType)
+                        || (!req.params.endpointId && req.params.endpointType)
+                        || (req.params.endpointId  && typeof req.params.endpointId   !== 'string')
+                        || req.params.endpointType && typeof req.params.endpointType !== 'string') {
 
                         compUtil.net.sendHttp400(IDLOG, res);
                         return;
+                    }
+
+                    if (!req.params.endpointId && !req.params.endpointType) {
+                        req.params.endpointType = 'extension';
+                        req.params.endpointId   = compConfigManager.getDefaultUserExtensionConf(username);
                     }
 
                     if (req.params.endpointType === 'extension') {
