@@ -167,16 +167,6 @@ var port;
 var expires = 3600000;
 
 /**
-* The interval time to remove the expired authentication tokens.
-*
-* @property CHECK_TOKEN_EXPIRED_INTERVAL
-* @type number
-* @private
-* @default 600000 (10 minutes)
-*/
-var CHECK_TOKEN_EXPIRED_INTERVAL = 600000;
-
-/**
 * If true, every authentication request also causes the update of the
 * token expiration value.
 *
@@ -288,14 +278,15 @@ function config(path) {
 }
 
 /**
-* Starts the removing of expired authentication tokens each interval of time.
+* Starts the removing of expired authentication tokens each interval of time. The interval time
+* is equal to the expiration time, because the tokens are updated each half of expiration time.
 *
 * @method startIntervalRemoveExpiredTokens
 * @private
 */
 function startIntervalRemoveExpiredTokens() {
     try {
-        logger.info(IDLOG, 'start remove expired tokens interval each ' + CHECK_TOKEN_EXPIRED_INTERVAL + ' msec');
+        logger.info(IDLOG, 'start remove expired tokens interval each ' + expires + ' msec');
 
         setInterval(function () {
             try {
@@ -321,7 +312,7 @@ function startIntervalRemoveExpiredTokens() {
             } catch (err1) {
                 logger.error(IDLOG, err1.stack);
             }
-        }, CHECK_TOKEN_EXPIRED_INTERVAL);
+        }, expires);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
