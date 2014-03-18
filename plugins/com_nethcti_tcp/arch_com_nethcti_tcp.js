@@ -32,6 +32,7 @@ module.exports = function (options, imports, register) {
             comNethctiWs.setLogger(logger);
             comNethctiWs.setCompAuthe(imports.authentication);
             comNethctiWs.config('/etc/nethcti/services.json');
+            comNethctiWs.configWinPopup('/etc/nethcti/win_popup.json');
             comNethctiWs.setCompUser(imports.user);
             comNethctiWs.setAstProxy(imports.astProxy);
             comNethctiWs.setCompAuthorization(imports.authorization);

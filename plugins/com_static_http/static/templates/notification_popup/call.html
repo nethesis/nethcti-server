@@ -1,0 +1,118 @@
+<html>
+    <head>
+        <style>
+            body {
+                cursor: pointer;
+                margin: 0px;
+            }
+            .photo {
+                float: left;
+                height: 96px;
+                width: 96px;
+                background: url('img/nophoto.png');
+            }
+            .contact-info {
+                font-family: verdana;
+                margin-top: 5px;
+                margin-left: 15px;
+                float: left;
+            }
+            .contact-action {
+                clear: both;
+            }
+            #contact-name {
+                font-weight: bold;
+                display: block;
+                margin-bottom: 3px;
+            }
+            #contact-num {
+                display: block;
+            }
+            .close {
+                background: url(img/close_ico.png) no-repeat;
+                height: 16px;
+                width: 16px;
+                right: 2px;
+                top: 2px;
+                position: absolute;
+                cursor: pointer;
+            }
+            .button {
+                font-family: verdana;
+                color: #555;
+                float: left;
+                padding: 10px 0px;
+                text-align: left;
+                display: inline-block;
+                cursor: pointer;
+                border-top: 1px solid #EEE;
+            }
+            #open-cticc-but {
+                padding-left: 50px;
+                width: 100%;
+                background-image: url(./img/custcard.png);
+                background-repeat: no-repeat;
+                background-position: 15px;
+            }
+            .mouseOverBut {
+                background-color: #AAA;
+                color: #FFF;
+            }
+        </style>
+        <script src="./js/jquery-1.11.0.min.js"></script>
+        <script>
+            function getUrlParams() {
+                var match,
+                    pl     = /\+/g,  // Regex for replacing addition symbol with a space
+                    search = /([^&=]+)=?([^&]*)/g,
+                    decode = function (s) { return decodeURIComponent(s.replace(pl, " ")); },
+                    query  = window.location.search.substring(1);
+
+                var urlParams = {};
+                while (match = search.exec(query)) {
+                   urlParams[decode(match[1])] = decode(match[2]);
+                }
+
+                return urlParams;
+            }
+
+            window.onload = function () {
+
+                $('.button').mouseout(function () {
+                    $(this).removeClass('mouseOverBut');
+                });
+                $('.button').mouseover(function () {
+                    $(this).addClass('mouseOverBut');
+                });
+
+                var params = getUrlParams();
+
+                if (params.callerName) {
+                    document.getElementById('contact-name').innerHTML = params.callerName;
+                    document.getElementById('contact-num').innerHTML  = params.callerNum;
+                } else {
+                    document.getElementById('contact-name').innerHTML = params.callerNum;
+                }
+
+                var argCtiUrl   = params.ctiProto + '://' + window.location.hostname + (window.location.port ? ':' + window.location.port : '') + '/cti';
+                var argCtiCCUrl = params.ctiProto + '://' + window.location.hostname + (window.location.port ? ':' + window.location.port : '') + '/cti#cust_card';
+
+                $('body').attr('arg', argCtiUrl);
+                $('#open-cticc-but').attr('arg', argCtiCCUrl);
+            }
+        </script>
+    </head>
+    <body cmd="url" arg="" close="1" title="Accedi a NethCTI">
+        <div>
+            <div class="photo"></div>
+            <div class="contact-info">
+                <span id="contact-name"></span>
+                <span id="contact-num"></span>
+            </div>
+            <div class="contact-action">
+                <div id="open-cticc-but" cmd="url" arg="" close="1" class="button" title="">Scheda cliente</div>
+            </div>
+        </div>
+        <span class="close" close="1" title="Chiudi"></span>
+    </body>
+</html>
