@@ -1,5 +1,5 @@
 Name:		nethcti-server
-Version:	1.9.24
+Version:	2.0
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI 2
 
@@ -70,6 +70,9 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Wed Mar 19 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.0-1
+- Increase the version to 2.0 final release.
+
 * Fri Mar 07 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 1.9.24-1
 - Enh #2824: new rest api astproxy/is_autoc2c_supported/:endpoint.
 - Fea #2828: new rest api astproxy/call_echo.
