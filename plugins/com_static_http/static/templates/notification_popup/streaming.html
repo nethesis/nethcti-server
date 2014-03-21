@@ -117,7 +117,7 @@
                     $('#open-ctistream-but').css('background-position', '35%');
                 }
 
-                var argCtiStreamUrl = params.ctiProto + '://' + window.location.hostname + (window.location.port ? ':' + window.location.port : '') + '/cti#streaming';
+                var argCtiStreamUrl = params.ctiProto + '://' + window.location.hostname + (window.location.port ? ':' + window.location.port : '') + '/cti/#/streaming';
                 $('body').attr('arg', argCtiStreamUrl);
                 $('#open-ctistream-but').attr('arg', argCtiStreamUrl);
             }
