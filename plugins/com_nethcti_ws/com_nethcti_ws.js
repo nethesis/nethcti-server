@@ -1,5 +1,6 @@
 /**
-* Communicates in real time mode with the clients using websocket.
+* Communicates in real time mode with the clients using websocket. It listen
+* It listens on http and https protocols.
 *
 * @module com_nethcti_ws
 * @main com_nethcti_ws
@@ -28,15 +29,16 @@ var httpProxy = require('http-proxy');
 var IDLOG = '[com_nethcti_ws]';
 
 /**
-* Listening protocol, can be 'https' or 'http'. It can be
-* customized in the configuration file.
+* The log level of the websocket library. Log only the errors by default.
 *
-* @property proto
-* @type string
+* @property WS_LOG_LEVEL
+* @type {number}
 * @private
-* @default "http"
+* @final
+* @readOnly
+* @default 0
 */
-var proto = 'http';
+var WS_LOG_LEVEL = 0;
 
 /**
 * The path of the certificate to be used by HTTPS server. It can be
@@ -97,16 +99,24 @@ var WS_ROOM = {
 var privacyStrReplace = 'xxx';
 
 /**
-* The websocket server port.
+* The websocket secure server port.
 *
-* @property port
+* @property wssPort
 * @type string
 * @private
-* @final
-* @readOnly
 * @default "8181"
 */
-var port = '8181';
+var wssPort = '8181';
+
+/**
+* The websocket server port.
+*
+* @property wsPort
+* @type string
+* @private
+* @default "8183"
+*/
+var wsPort = '8183';
 
 /**
 * The logger. It must have at least three methods: _info, warn and error._
@@ -119,13 +129,22 @@ var port = '8181';
 var logger = console;
 
 /**
-* The websocket server.
+* The websocket server secure (https).
 *
-* @property server
+* @property wssServer
 * @type {object}
 * @private
 */
-var server;
+var wssServer;
+
+/**
+* The websocket server (http).
+*
+* @property wsServer
+* @type {object}
+* @private
+*/
+var wsServer;
 
 /**
 * The asterisk proxy.
@@ -182,7 +201,7 @@ var compVoicemail;
 var compPostit;
 
 /**
-* Contains all websocket identifiers of authenticated clients.
+* Contains all websocket identifiers of authenticated clients (http and https).
 * The key is the websocket identifier and the value is an object
 * containing the username and the token of the user. It's used for
 * fast authentication for each request.
@@ -449,7 +468,9 @@ function updateNewVoiceMessagesListener(voicemail, list) {
                 // object to return with the event
                 var obj = {};
                 obj[voicemail] = list;
-                server.sockets.sockets[socketId].emit('updateNewVoiceMessages', obj);
+
+                if (wsServer.sockets.sockets[socketId]) { wsServer.sockets.sockets[socketId].emit('updateNewVoiceMessages', obj); }
+                if (wssServer.sockets.sockets[socketId]) { wssServer.sockets.sockets[socketId].emit('updateNewVoiceMessages', obj); }
             }
         }
 
@@ -462,7 +483,9 @@ function updateNewVoiceMessagesListener(voicemail, list) {
 
             // emits the event "newVoiceMessageCounter" with the number of new voice messages of the user
             logger.info(IDLOG, 'emit event "newVoiceMessageCounter" ' + list.length + ' to user "' + username + '"');
-            server.sockets.sockets[socketId].emit('newVoiceMessageCounter', { voicemail: voicemail, counter: list.length });
+
+            if (wsServer.sockets.sockets[socketId]) { wsServer.sockets.sockets[socketId].emit('newVoiceMessageCounter', { voicemail: voicemail, counter: list.length }); }
+            if (wssServer.sockets.sockets[socketId]) { wssServer.sockets.sockets[socketId].emit('newVoiceMessageCounter', { voicemail: voicemail, counter: list.length }); }
         }
 
     } catch (err) {
@@ -500,7 +523,9 @@ function updateNewPostitListener(recipient, list) {
 
                 // emits the event with the list of all new post-it messages of the user
                 logger.info(IDLOG, 'emit event "updateNewPostit" to the recipient user "' + recipient + '"');
-                server.sockets.sockets[socketId].emit('updateNewPostit', list);
+
+                if (wsServer.sockets.sockets[socketId]) { wsServer.sockets.sockets[socketId].emit('updateNewPostit', list); }
+                if (wssServer.sockets.sockets[socketId]) { wssServer.sockets.sockets[socketId].emit('updateNewPostit', list); }
             }
         }
 
@@ -512,7 +537,9 @@ function updateNewPostitListener(recipient, list) {
 
             // emits the event with the number of new post-it of the recipient user
             logger.info(IDLOG, 'emit event "newPostitCounter" ' + list.length + ' to recipient user "' + username + '"');
-            server.sockets.sockets[socketId].emit('newPostitCounter', { user: recipient, counter: list.length });
+
+            if (wsServer.sockets.sockets[socketId]) { wsServer.sockets.sockets[socketId].emit('newPostitCounter', { user: recipient, counter: list.length }); }
+            if (wssServer.sockets.sockets[socketId]) { wssServer.sockets.sockets[socketId].emit('newPostitCounter', { user: recipient, counter: list.length }); }
         }
 
     } catch (err) {
@@ -543,8 +570,11 @@ function endpointPresenceChangedListener(username, endpointType, endpoint) {
         logger.info(IDLOG, 'emit event "endpointPresenceUpdate" for endpoint "' + endpointType + '" of the user "' + username + '" to websockets');
 
         // emits the event to all users
-        server.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_CLEAR).emit('endpointPresenceUpdate', endpoint);
-        server.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY).emit('endpointPresenceUpdate', endpoint);
+        wsServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_CLEAR).emit('endpointPresenceUpdate', endpoint);
+        wssServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_CLEAR).emit('endpointPresenceUpdate', endpoint);
+
+        wsServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY).emit('endpointPresenceUpdate', endpoint);
+        wssServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY).emit('endpointPresenceUpdate', endpoint);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -574,9 +604,13 @@ function extenChanged(exten) {
             username = wsid[sockid].username;
 
             if (compUser.hasExtensionEndpoint(username, exten.getExten())) {
-                server.sockets.sockets[sockid].emit('extenUpdate', exten.toJSON());
+
+                if (wsServer.sockets.sockets[sockid]) { wsServer.sockets.sockets[sockid].emit('extenUpdate', exten.toJSON()); }
+                if (wssServer.sockets.sockets[sockid]) { wssServer.sockets.sockets[sockid].emit('extenUpdate', exten.toJSON()); }
+
             } else {
-                server.sockets.sockets[sockid].emit('extenUpdate', exten.toJSON(privacyStrReplace));
+                if (wsServer.sockets.sockets[sockid]) { wsServer.sockets.sockets[sockid].emit('extenUpdate', exten.toJSON(privacyStrReplace)); }
+                if (wssServer.sockets.sockets[sockid]) { wssServer.sockets.sockets[sockid].emit('extenUpdate', exten.toJSON(privacyStrReplace)); }
             }
         }
     } catch (err) {
@@ -599,10 +633,12 @@ function queueMemberChanged(member) {
         logger.info(IDLOG, 'emit event queueMemberUpdate for member ' + member.getMember() + ' of queue ' + member.getQueue() + ' to websockets');
 
         // emits the event with clear numbers to all users with privacy disabled
-        server.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_CLEAR).emit('queueMemberUpdate', member.toJSON());
+        wsServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_CLEAR).emit('queueMemberUpdate', member.toJSON());
+        wssServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_CLEAR).emit('queueMemberUpdate', member.toJSON());
 
         // emits the event with hide numbers to all users with privacy enabled
-        server.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY).emit('queueMemberUpdate', member.toJSON(privacyStrReplace));
+        wsServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY).emit('queueMemberUpdate', member.toJSON(privacyStrReplace));
+        wssServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY).emit('queueMemberUpdate', member.toJSON(privacyStrReplace));
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -624,10 +660,12 @@ function trunkChanged(trunk) {
         logger.info(IDLOG, 'emit event trunkUpdate for trunk ' + trunk.getExten() + ' to websockets');
 
         // emits the event with clear numbers to all users with privacy disabled
-        server.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_CLEAR).emit('trunkUpdate', trunk.toJSON());
+        wsServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_CLEAR).emit('trunkUpdate', trunk.toJSON());
+        wssServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_CLEAR).emit('trunkUpdate', trunk.toJSON());
 
         // emits the event with hide numbers to all users with privacy enabled
-        server.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY).emit('trunkUpdate', trunk.toJSON(privacyStrReplace));
+        wsServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY).emit('trunkUpdate', trunk.toJSON(privacyStrReplace));
+        wssServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY).emit('trunkUpdate', trunk.toJSON(privacyStrReplace));
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -785,7 +823,9 @@ function extenDialing(data) {
 
                 // emits the event with the caller identity data
                 logger.info(IDLOG, 'emit event extenRinging for extension ' + data.dialingExten + ' to user "' + username + '" with the caller identity');
-                server.sockets.sockets[socketId].emit('extenRinging', filteredCallerIdentity);
+
+                if (wsServer.sockets.sockets[socketId]) { wsServer.sockets.sockets[socketId].emit('extenRinging', filteredCallerIdentity); }
+                if (wssServer.sockets.sockets[socketId]) { wssServer.sockets.sockets[socketId].emit('extenRinging', filteredCallerIdentity); }
             }
         }
     } catch (err) {
@@ -808,10 +848,12 @@ function queueChanged(queue) {
         logger.info(IDLOG, 'emit event queueUpdate for queue ' + queue.getQueue() + ' to websockets');
 
         // emits the event with clear numbers to all users with privacy disabled
-        server.sockets.in(WS_ROOM.QUEUES_AST_EVT_CLEAR).emit('queueUpdate', queue.toJSON());
+        wsServer.sockets.in(WS_ROOM.QUEUES_AST_EVT_CLEAR).emit('queueUpdate', queue.toJSON());
+        wssServer.sockets.in(WS_ROOM.QUEUES_AST_EVT_CLEAR).emit('queueUpdate', queue.toJSON());
 
         // emits the event with hide numbers to all users with privacy enabled
-        server.sockets.in(WS_ROOM.QUEUES_AST_EVT_PRIVACY).emit('queueUpdate', queue.toJSON(privacyStrReplace));
+        wsServer.sockets.in(WS_ROOM.QUEUES_AST_EVT_PRIVACY).emit('queueUpdate', queue.toJSON(privacyStrReplace));
+        wssServer.sockets.in(WS_ROOM.QUEUES_AST_EVT_PRIVACY).emit('queueUpdate', queue.toJSON(privacyStrReplace));
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -833,10 +875,12 @@ function parkingChanged(parking) {
         logger.info(IDLOG, 'emit event parkingUpdate for parking ' + parking.getParking() + ' to websockets');
 
         // emits the event with clear numbers to all users with privacy disabled
-        server.sockets.in(WS_ROOM.PARKINGS_AST_EVT_CLEAR).emit('parkingUpdate', parking.toJSON());
+        wsServer.sockets.in(WS_ROOM.PARKINGS_AST_EVT_CLEAR).emit('parkingUpdate', parking.toJSON());
+        wssServer.sockets.in(WS_ROOM.PARKINGS_AST_EVT_CLEAR).emit('parkingUpdate', parking.toJSON());
 
         // emits the event with hide numbers to all users with privacy enabled
-        server.sockets.in(WS_ROOM.PARKINGS_AST_EVT_PRIVACY).emit('parkingUpdate', parking.toJSON(privacyStrReplace));
+        wsServer.sockets.in(WS_ROOM.PARKINGS_AST_EVT_PRIVACY).emit('parkingUpdate', parking.toJSON(privacyStrReplace));
+        wssServer.sockets.in(WS_ROOM.PARKINGS_AST_EVT_PRIVACY).emit('parkingUpdate', parking.toJSON(privacyStrReplace));
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -856,25 +900,25 @@ function config(path) {
         if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
 
         // check file presence
-        if (!fs.existsSync(path)) { throw new Error(path + ' doesn\'t exist'); }
+        if (!fs.existsSync(path)) { throw new Error(path + ' does not exist'); }
 
         // read configuration file
         var json = require(path);
 
-        // initialize the port of the websocket server
-        if (json.websocket && json.websocket.port) {
-            port = json.websocket.port;
+        // initialize the port of the websocket secure server (https)
+        if (json.websocket && json.websocket.https_port) {
+            wssPort = json.websocket.https_port;
 
         } else {
-            logger.warn(IDLOG, 'no ws port has been specified in JSON file ' + path);
+            logger.warn(IDLOG, 'no wss port (https) has been specified in JSON file ' + path);
         }
 
-        // initialize the proto of the proxy
-        if (json.websocket.proto) {
-            proto = json.websocket.proto;
+        // initialize the port of the websocket server (http)
+        if (json.websocket && json.websocket.http_port) {
+            wsPort = json.websocket.http_port;
 
         } else {
-            logger.warn(IDLOG, 'no ws proto has been specified in JSON file ' + path);
+            logger.warn(IDLOG, 'no ws port (http) has been specified in JSON file ' + path);
         }
 
         // initialize the key of the HTTPS proxy
@@ -939,7 +983,7 @@ function configPrivacy(path) {
 }
 
 /**
-* Creates the server websocket and adds the listeners for other components.
+* Creates the websocket servers (http and https) and adds the listeners for other components.
 *
 * @method start
 */
@@ -957,34 +1001,15 @@ function start() {
         // set the listener for the user module
         setUserListeners();
 
-        // websocket options
-        var options = {
-            'transports': ['websocket']
-        };
+        // starts the http and https websocket servers
+        startWsServer();
+        startWssServer();
 
-        // create HTTPS proxy
-        if (proto === 'https') {
-            options.https = {
-                key:  fs.readFileSync(HTTPS_KEY,  'utf8'),
-                cert: fs.readFileSync(HTTPS_CERT, 'utf8')
-            };
-        }
-        var httpServer = httpProxy.createServer(options, function( req , res ){} );
-
-        // websocket server
-        server = io.listen(httpServer, { 'log level': 0 }); // log only the errors
-        httpServer.listen(port);
-
-
-        // set the websocket server listener
-        server.on('connection', connHdlr);
-        logger.warn(IDLOG, 'websocket server listening on proto "' + proto + '" on port ' + port);
-
-        // start the automatic update of token expiration of all users that are connected by websocket.
+        // start the automatic update of token expiration of all users that are connected by websocket (http and https).
         // The interval is the half value of expiration provided by authentication component
         setInterval(function () {
 
-            updateTokenExpirationOfAllWsUsers();
+            updateTokenExpirationOfAllWebsocketUsers();
 
         }, updateTokenExpirationInterval);
 
@@ -994,14 +1019,72 @@ function start() {
 }
 
 /**
-* Update the token expiration of all users that are connected by websocket.
+* Creates the websocket server secure (https) and adds the listeners for other components.
 *
-* @method updateTokenExpirationOfAllWsUsers
+* @method startWssServer
 * @private
 */
-function updateTokenExpirationOfAllWsUsers() {
+function startWssServer() {
     try {
-        logger.info(IDLOG, 'update token expiration of all websocket users');
+        // websocket secure options
+        var options = {
+            'transports': ['websocket'],
+            https: {
+                key:  fs.readFileSync(HTTPS_KEY,  'utf8'),
+                cert: fs.readFileSync(HTTPS_CERT, 'utf8')
+            }
+        };
+
+        var httpsServer = httpProxy.createServer(options, function (req , res) {} );
+
+        // websocket server secure (https)
+        wssServer = io.listen(httpsServer, { 'log level': WS_LOG_LEVEL });
+        httpsServer.listen(wssPort);
+
+        // set the websocket server secure listener
+        wssServer.on('connection', wssConnHdlr);
+        logger.warn(IDLOG, 'websocket server secure (https) listening on port ' + wssPort);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Creates the websocket server (http) and adds the listeners for other components.
+*
+* @method startWsServer
+* @private
+*/
+function startWsServer() {
+    try {
+        // websocket options
+        var options = { 'transports': ['websocket'] };
+
+        var httpServer = httpProxy.createServer(options, function (req , res) {} );
+
+        // websocket server (http)
+        wsServer = io.listen(httpServer, { 'log level': WS_LOG_LEVEL });
+        httpServer.listen(wsPort);
+
+        // set the websocket server listener
+        wsServer.on('connection', wsConnHdlr);
+        logger.warn(IDLOG, 'websocket server (http) listening on port ' + wsPort);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Update the token expiration of all users that are connected by websocket (http and https).
+*
+* @method updateTokenExpirationOfAllWebsocketUsers
+* @private
+*/
+function updateTokenExpirationOfAllWebsocketUsers() {
+    try {
+        logger.info(IDLOG, 'update token expiration of all websocket users (http and https)');
 
         var id;
         for (id in wsid) { compAuthe.updateTokenExpires(wsid[id].username, wsid[id].token); }
@@ -1012,21 +1095,20 @@ function updateTokenExpirationOfAllWsUsers() {
 }
 
 /**
-* Websocket connection handler.
+* Websocket secure (https) connection handler.
 *
-* @method connHdlr
+* @method wssConnHdlr
 * @param {object} socket The client websocket.
 * @private
 */
-function connHdlr(socket) {
+function wssConnHdlr(socket) {
     try {
-        logger.info(IDLOG, 'new connection from ' + getWebsocketEndpoint(socket));
+        logger.info(IDLOG, 'new websocket connection (https) from ' + getWebsocketEndpoint(socket));
 
-        // set the listeners for the new socket connection
+        // set the listeners for the new https socket connection
         socket.on('login',      function (data) { loginHdlr(socket, data);   });
-        socket.on('message',    function (data) { dispatchMsg(socket, data); });
         socket.on('disconnect', function (data) { disconnHdlr(socket);       });
-        logger.info(IDLOG, 'listeners for new socket connection have been set');
+        logger.info(IDLOG, 'listeners for new https websocket connection have been set');
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -1034,36 +1116,21 @@ function connHdlr(socket) {
 }
 
 /**
-* Dispatch the received message from the client.
+* Websocket (http) connection handler.
 *
-* @method dispatchMsg
-* @param {object} socket The client websocket
-* @param {object} data The data with the conversation identifier
+* @method wsConnHdlr
+* @param {object} socket The client websocket.
 * @private
 */
-function dispatchMsg(socket, data) {
+function wsConnHdlr(socket) {
     try {
-        // checks the client authentication. It controls the websocket
-        // identifier presence in the _wsid_ object.
-        if (wsid[socket.id]) { // the client is authenticated
+        logger.info(IDLOG, 'new websocket connection (http) from ' + getWebsocketEndpoint(socket));
 
-            // check parameters
-            if (typeof socket !== 'object') { throw new Error('wrong parameter'); }
-            if (typeof data   !== 'object' || typeof data.command !== 'string') {
+        // set the listeners for the new http socket connection
+        socket.on('login',      function (data) { loginHdlr(socket, data);   });
+        socket.on('disconnect', function (data) { disconnHdlr(socket);       });
+        logger.info(IDLOG, 'listeners for new http websocket connection have been set');
 
-                badRequest(socket);
-
-            } else {
-                var username = wsid[socket.id].username;
-                logger.warn(IDLOG, 'requested command ' + data.command + ' from user "' + username + '" (' + getWebsocketEndpoint(socket) + '): the server doesn\'t manage the requests of commands');
-
-                sendError(socket, { error: '501: commands not allowed' });
-            }
-
-        } else {
-            logger.warn(IDLOG, 'received message from unauthenticated client ' + getWebsocketEndpoint(socket));
-            unauthorized(socket);
-        }
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
