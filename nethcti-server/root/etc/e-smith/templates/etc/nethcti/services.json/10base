@@ -9,7 +9,7 @@
         "port": "{$ports[2]}",
         "https_key": "/etc/pki/tls/private/localhost.key",
         "https_cert": "/etc/pki/tls/certs/localhost.crt",
-        "base_templates": "http://$SystemName.$DomainName/webrest/static/templates/notification_popup"
+        "base_templates": "http://{$SystemName}.{$DomainName}/webrest/static/templates/notification_popup"
     \},
     "websocket": \{
         "http_port":    "{$ports[3]}",
