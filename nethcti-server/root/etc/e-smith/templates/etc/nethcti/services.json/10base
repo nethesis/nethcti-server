@@ -1,11 +1,7 @@
 {
-   my $ports_str = ${'nethcti-server'}{TCPPorts} || "8181,8180";
+   my $ports_str = ${'nethcti-server'}{TCPPorts} || "8181,8180,8183";
    our @ports = split(',', $ports_str);
    our $http_proto = ${'nethcti-server'}{'Protocol'} || 'http';
-   our $ws_proto = "http";
-   if ($http_proto eq "https") {
-      $ws_proto = "wss";
-   }
    my $tcp_server_port = ${'nethcti-server-tcp'}{TCPPort} || "8182";
    my $tcp_server_enabled = ${'nethcti-server-tcp'}{status} || "disabled";
    our $tcp_server = "";
@@ -22,8 +18,8 @@
 \{
     {$tcp_server}
     "websocket": \{
-        "port":    "{$ports[0]}",
-        "proto":      "{$ws_proto}",
+        "http_port":    "{$ports[2]}",
+        "https_port":    "{$ports[0]}",
         "https_key":  "/etc/nethcti/nethcti.pem",
         "https_cert": "/etc/nethcti/nethcti.pem"
     \},
