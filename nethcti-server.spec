@@ -36,6 +36,7 @@ mkdir -p root/home/e-smith/nethcti/templates/notification_manager
 mkdir -p root/home/e-smith/nethcti/templates/customer_card
 mkdir -p root/home/e-smith/nethcti/static
 mkdir -p root/usr/lib/node/nethcti-server/store
+rm -rf root/usr/lib/node/nethcti-server/docs/admin-manual/
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -70,8 +71,9 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
-* Wed Mar 19 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.0-1
+* Mon Mar 24 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.0-1
 - Increase the version to 2.0 final release.
+- Enh #2184: WebSocket listen on https 8181 and http 8183 ports.
 
 * Fri Mar 07 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 1.9.24-1
 - Enh #2824: new rest api astproxy/is_autoc2c_supported/:endpoint.
