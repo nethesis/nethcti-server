@@ -1,30 +1,24 @@
 {
-   my $ports_str = ${'nethcti-server'}{TCPPorts} || "8181,8180,8183";
+   my $ports_str = ${'nethcti-server'}{TCPPorts} || "8180,8181,8182,8183";
    our @ports = split(',', $ports_str);
    our $http_proto = ${'nethcti-server'}{'Protocol'} || 'http';
-   my $tcp_server_port = ${'nethcti-server-tcp'}{TCPPort} || "8182";
-   my $tcp_server_enabled = ${'nethcti-server-tcp'}{status} || "disabled";
-   our $tcp_server = "";
-   if ($tcp_server_enabled eq "enabled") {
-      $tcp_server = "\"tcp\": \{
-        \"port\": \"$tcp_server_port\",
-        \"https_key\": \"/etc/pki/tls/private/localhost.key\",
-        \"https_cert\": \"/etc/pki/tls/certs/localhost.crt\",
-        \"base_templates\": \"http://${SystemName}.${DomainName}/webrest/static/templates/notification_popup\"
-    \},";
-   }
    return "";
 }
 \{
-    {$tcp_server}
+    "tcp": \{
+        "port": "{$ports[2]}",
+        "https_key": "/etc/pki/tls/private/localhost.key",
+        "https_cert": "/etc/pki/tls/certs/localhost.crt",
+        "base_templates": "http://$SystemName.$DomainName/webrest/static/templates/notification_popup"
+    \},
     "websocket": \{
-        "http_port":    "{$ports[2]}",
-        "https_port":    "{$ports[0]}",
+        "http_port":    "{$ports[3]}",
+        "https_port":    "{$ports[1]}",
         "https_key":  "/etc/nethcti/nethcti.pem",
         "https_cert": "/etc/nethcti/nethcti.pem"
     \},
     "http_proxy": \{
-        "port":       "{$ports[1]}",
+        "port":       "{$ports[0]}",
         "proto":      "{$http_proto}",
         "https_key":  "/etc/nethcti/nethcti.pem",
         "https_cert": "/etc/nethcti/nethcti.pem",
