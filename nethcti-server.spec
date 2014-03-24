@@ -73,6 +73,7 @@ rm -rf $RPM_BUILD_ROOT
 %changelog
 * Mon Mar 24 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.0-1
 - Increase the version to 2.0 final release.
+- Enh #2861: group all tcp ports in nethcti-server TCPPorts property.
 - Enh #2184: WebSocket listen on https 8181 and http 8183 ports.
 
 * Fri Mar 07 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 1.9.24-1
