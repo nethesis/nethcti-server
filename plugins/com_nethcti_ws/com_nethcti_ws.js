@@ -1028,7 +1028,6 @@ function startWssServer() {
     try {
         // websocket secure options
         var options = {
-            'transports': ['websocket'],
             https: {
                 key:  fs.readFileSync(HTTPS_KEY,  'utf8'),
                 cert: fs.readFileSync(HTTPS_CERT, 'utf8')
@@ -1038,7 +1037,7 @@ function startWssServer() {
         var httpsServer = httpProxy.createServer(options, function (req , res) {} );
 
         // websocket server secure (https)
-        wssServer = io.listen(httpsServer, { 'log level': WS_LOG_LEVEL });
+        wssServer = io.listen(httpsServer, { 'log level': WS_LOG_LEVEL, 'transports': ['websocket'] });
         httpsServer.listen(wssPort);
 
         // set the websocket server secure listener
