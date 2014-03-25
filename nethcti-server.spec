@@ -1,5 +1,5 @@
 Name:		nethcti-server
-Version:	2.0
+Version:	2.0.1
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI 2
 
@@ -71,8 +71,8 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
-* Tue Mar 25 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.0-1
-- Increase the version to 2.0 final release.
+* Tue Mar 25 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.0.1-1
+- Increase the version to 2.0.1 final release.
 - Enh #2862: http_proxy listen in http 8179 and https 8180 ports.
 - Enh #2861: group all tcp ports in nethcti-server TCPPorts property.
 - Enh #2184: WebSocket listen on https 8181 and http 8183 ports.
