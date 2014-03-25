@@ -1,12 +1,12 @@
 /**
-* Provides the HTTPS proxy server for all services.
+* Provides the HTTP and HTTPS proxy servers for all services.
 *
 * @module http_proxy
 * @main http_proxy
 */
 
 /**
-* Provides the HTTPS proxy server.
+* Provides the HTTP and HTTPS proxy server.
 *
 * @class http_proxy
 */
@@ -57,23 +57,23 @@ var compUtil;
 * Listening port of the HTTPS proxy server. It can be
 * customized in the configuration file.
 *
-* @property port
+* @property httpsPort
 * @type string
 * @private
-* @default "8282"
+* @default "8180"
 */
-var port = '8282';
+var httpsPort = '8180';
 
 /**
-* Listening protocol, can be 'https' or 'http'. It can be
+* Listening port of the HTTP proxy server. It can be
 * customized in the configuration file.
 *
-* @property proto
+* @property httpPort
 * @type string
 * @private
-* @default "http"
+* @default "8179"
 */
-var proto = 'http';
+var httpPort = '8179';
 
 /**
 * The routing of the HTTPS proxy. It's initialized by the _config_ method.
@@ -161,20 +161,20 @@ function config(path) {
         logger.warn(IDLOG, 'no router specified in JSON file ' + path);
     }
 
-    // initialize the port of the proxy
-    if (json.port) {
-        port = json.port;
+    // initialize the HTTPS port of the proxy
+    if (json.https_port) {
+        httpsPort = json.https_port;
 
     } else {
-        logger.warn(IDLOG, 'no port specified in JSON file ' + path);
+        logger.warn(IDLOG, 'no HTTPS port specified in JSON file ' + path + ': use the default ' + httpsPort);
     }
 
-    // initialize the proto of the proxy
-    if (json.proto) {
-        proto = json.proto;
+    // initialize the HTTP port of the proxy
+    if (json.http_port) {
+        httpPort = json.http_port;
 
     } else {
-        logger.warn(IDLOG, 'no proto specified in JSON file ' + path);
+        logger.warn(IDLOG, 'no HTTP port specified in JSON file ' + path + ': use the default ' + httpPort);
     }
 
     // initialize the key of the HTTPS proxy
@@ -212,40 +212,53 @@ function setCompAuthentication(ca) {
 }
 
 /**
-* Starts the HTTPS proxy server.
+* Starts the HTTP and HTTPS proxy servers.
 *
 * @method start
 * @static
 */
 function start() {
     try {
+        startHttpProxy();
+        startHttpsProxy();
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Starts the HTTPS proxy server.
+*
+* @method startHttpsProxy
+* @private
+*/
+function startHttpsProxy() {
+    try {
         var options = {
-            router: router
-        };
-        // create HTTPS proxy
-        if (proto === 'https') { 
-            options.https = {
+            router: router,
+            https: {
                 key:  fs.readFileSync(HTTPS_KEY,  'utf8'),
                 cert: fs.readFileSync(HTTPS_CERT, 'utf8')
-            };
-        }
-        var server = httpProxy.createServer(options, proxyRequest).listen(port);
-        logger.warn(IDLOG, proto.toUpperCase() + ' proxy listening on port ' + port);
+            }
+        };
+
+        var server = httpProxy.createServer(options, proxyRequest).listen(httpsPort);
+        logger.warn(IDLOG, 'HTTPS proxy listening on port ' + httpsPort);
 
         // called when some error occurs in the proxy
         server.proxy.on('proxyError', function (err, req, res) {
-            logger.error(IDLOG, getProxyLog(req) + ': ' + err);
+            logger.error(IDLOG, 'https - ' + getProxyLog(req) + ': ' + err);
             compUtil.net.sendHttp500(IDLOG, res, err.toString());
         });
 
         // called at the start of a request
         server.proxy.on('start', function (req, res, three) {
-            logger.info(IDLOG, 'start ' + getProxyLog(req));
+            logger.info(IDLOG, 'start https ' + getProxyLog(req));
         });
 
         // called at the end of a request
         server.proxy.on('end', function (req, res, three) {
-            logger.info(IDLOG, 'end ' + getProxyLog(req));
+            logger.info(IDLOG, 'end https ' + getProxyLog(req));
         });
 
     } catch (err) {
@@ -254,10 +267,44 @@ function start() {
 }
 
 /**
-* Return the string to log the REST request.
+* Starts the HTTP proxy server.
+*
+* @method startHttpProxy
+* @private
+*/
+function startHttpProxy() {
+    try {
+        var options = { router: router };
+
+        var server = httpProxy.createServer(options, proxyRequest).listen(httpPort);
+        logger.warn(IDLOG, 'HTTP proxy listening on port ' + httpPort);
+
+        // called when some error occurs in the proxy
+        server.proxy.on('proxyError', function (err, req, res) {
+            logger.error(IDLOG, 'http - ' + getProxyLog(req) + ': ' + err);
+            compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        });
+
+        // called at the start of a request
+        server.proxy.on('start', function (req, res, three) {
+            logger.info(IDLOG, 'start http ' + getProxyLog(req));
+        });
+
+        // called at the end of a request
+        server.proxy.on('end', function (req, res, three) {
+            logger.info(IDLOG, 'end http ' + getProxyLog(req));
+        });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Returns the string to log the REST request.
 *
 * @method getProxyLog
-* @param {object} req The request object
+* @param  {object} req The request object
 * @return {string} The string describing the REST request.
 * @private
 */
