@@ -1,0 +1,14 @@
+{
+    my $ports_str = ${'nethcti-server'}{TCPPorts} || "8179,8180,8181,8182,8183";
+    my @ports = split(',', $ports_str);
+
+    if (($port eq "80") && ($haveSSL eq 'yes') && ($plainTextAccess ne 'yes'))
+    {
+        $OUT.="    ProxyPass /webrest http://127.0.0.1:$ports[0]\n";
+        $OUT.="    ProxyPassReverse /webrest http://127.0.0.1:$ports[0]\n";
+    } else {
+        $OUT.="    SSLProxyEngine On\n";
+        $OUT.="    ProxyPass /webrest https://127.0.0.1:$ports[1]\n";
+        $OUT.="    ProxyPassReverse /webrest https://127.0.0.1:$ports[1]\n";
+    }
+}
