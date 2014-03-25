@@ -43,9 +43,9 @@ rm -rf $RPM_BUILD_ROOT
 (cd root; find . -depth -print | cpio -dump $RPM_BUILD_ROOT)
 mv root/usr/lib/node/nethcti-server/plugins/com_static_http/static/img  $RPM_BUILD_ROOT/home/e-smith/nethcti/static/
 /sbin/e-smith/genfilelist \
---file /etc/rc.d/init.d/nethcti-server 'attr(0755,asterisk,asterisk)' \
---file /usr/lib/node/nethcti-server/script/sendsms.php 'attr(0755,asterisk,asterisk)' \
---file /usr/lib/node/nethcti-server/sql/update.sh 'attr(0755,asterisk,asterisk)' \
+--file /etc/rc.d/init.d/nethcti-server 'attr(0755,root,root)' \
+--file /usr/lib/node/nethcti-server/script/sendsms.php 'attr(0755,root,root)' \
+--file /usr/lib/node/nethcti-server/sql/update.sh 'attr(0755,root,root)' \
 --dir /var/spool/asterisk/monitor 'attr(0775,asterisk,asterisk)' \
 --dir /var/spool/nethcti/sms 'attr(0775,asterisk,asterisk)' \
 --dir /etc/nethcti 'attr(0775,asterisk,asterisk)' \
@@ -59,7 +59,7 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %files -f %{name}-%{version}-filelist
-%defattr(-,asterisk,asterisk,-)
+%defattr(-,root,root,-)
 %config(noreplace) /home/e-smith/nethcti/static/img/logo.png
 
 %doc
@@ -71,8 +71,9 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
-* Mon Mar 24 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.0-1
+* Tue Mar 25 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.0-1
 - Increase the version to 2.0 final release.
+- Enh #2862: http_proxy listen in http 8179 and https 8180 ports.
 - Enh #2861: group all tcp ports in nethcti-server TCPPorts property.
 - Enh #2184: WebSocket listen on https 8181 and http 8183 ports.
 
