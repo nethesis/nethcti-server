@@ -4895,15 +4895,16 @@ function setRecordStatusMuteConversations(convid) {
 *
 * @method sendDTMFSequence
 * @param {string}   extension The extension identifier
-* @param {boolean}  sequence The DTMF digits to send to the extension
-* @param {function} cb The callback function
+* @param {boolean}  sequence  The DTMF digits to send to the extension
+* @param {string}   callerid  The caller identifier
+* @param {function} cb        The callback function
 * @private
 */
-function sendDTMFSequence(extension, sequence, cb) {
+function sendDTMFSequence(extension, sequence, callerid, cb) {
     try {
         // check parameters
-        if (   typeof extension !== 'string'
-            || typeof sequence  !== 'string' || typeof cb !== 'function') {
+        if (   typeof extension !== 'string' || typeof callerid !== 'string'
+            || typeof sequence  !== 'string' || typeof cb       !== 'function') {
 
             throw new Error('wrong parameters');
         }
@@ -4942,8 +4943,8 @@ function sendDTMFSequence(extension, sequence, cb) {
                     }
                 }
 
-                if (chdtmf) { sendDTMFSequenceToChannel(chdtmf, sequence, cb);            }
-                else        { callAndSendDTMFSequence(chanType, extension, sequence, cb); }
+                if (chdtmf) { sendDTMFSequenceToChannel(chdtmf, sequence, cb);                      }
+                else        { callAndSendDTMFSequence(chanType, extension, sequence, callerid, cb); }
 
             } catch (e) {
                logger.error(IDLOG, e.stack);
@@ -5025,28 +5026,30 @@ function sendDTMFSequenceToChannel(channel, sequence, cb) {
 * @method callAndSendDTMFSequence
 * @param {string}   chanType  The technology of the channel (e.g. SIP, IAX, ...)
 * @param {string}   extension The extension identifier
-* @param {string}   sequence The sequence of DTMF tones
-* @param {function} cb The callback function
+* @param {string}   sequence  The sequence of DTMF tones
+* @param {string}   callerid  The caller identifier
+* @param {function} cb        The callback function
 * @private
 */
-function callAndSendDTMFSequence(chanType, extension, sequence, cb) {
+function callAndSendDTMFSequence(chanType, extension, sequence, callerid, cb) {
     try {
         // check parameters
-        if (   typeof chanType  !== 'string' || typeof cb       !== 'function'
-            || typeof extension !== 'string' || typeof sequence !== 'string') {
+        if (   typeof chanType  !== 'string'
+            || typeof cb        !== 'function' || typeof callerid !== 'string'
+            || typeof extension !== 'string'   || typeof sequence !== 'string') {
 
             throw new Error('wrong parameters');
         }
 
         // call the extension and send DTMF sequence
-        astProxy.doCmd({ command: 'callAndSendDTMF', chanType: chanType, exten: extension, sequence: sequence }, function (err) {
+        astProxy.doCmd({ command: 'callAndSendDTMF', chanType: chanType, exten: extension, sequence: sequence, callerid: callerid }, function (err) {
             try {
                 if (err) {
-                    logger.error(IDLOG, 'calling and sending DTMF sequence "' + sequence + '" to ' + chanType + ' ' + extension);
+                    logger.error(IDLOG, 'calling and sending DTMF sequence "' + sequence + '" to ' + chanType + ' ' + extension + ' with callerid ' + callerid);
                     cb(err);
 
                 } else {
-                    logger.info(IDLOG, 'calling and sending DTMF sequence "' + sequence + '" to ' + chanType + ' ' + extension + ' has successful'); 
+                    logger.info(IDLOG, 'calling and sending DTMF sequence "' + sequence + '" to ' + chanType + ' ' + extension + ' with callerid ' + callerid + ' has successful');
                     cb();
                 }
 

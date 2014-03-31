@@ -56,11 +56,9 @@ var IDLOG = '[callAndSendDTMF]';
             * Execute asterisk action to originate a new call and then send DTMS tones.
             * 
             * @method execute
-            * @param {object} am Asterisk manager to send the action
-            * @param {object} args The object contains optional parameters
-            * passed to _doCmd_ method of the ast_proxy component
-            * @param {function} cb The callback function called at the end
-            * of the command
+            * @param {object}   am   Asterisk manager to send the action
+            * @param {object}   args The object contains optional parameters passed to _doCmd_ method of the ast_proxy component
+            * @param {function} cb   The callback function called at the end of the command
             * @static
             */
             execute: function (am, args, cb) {
@@ -77,6 +75,7 @@ var IDLOG = '[callAndSendDTMF]';
                         Channel:     tyext,
                         Context:     'from-internal',
                         Application: 'SendDTMF',
+                        CallerID:    args.callerid,
                         Data:        'w' + sequence // w is for a half second pause
                     };
                     

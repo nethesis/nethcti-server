@@ -689,7 +689,7 @@ function setDefaultUserExtensionConf(username, exten, cb) {
 * Returns the default extension of the user.
 *
 * @method getDefaultUserExtensionConf
-* @param  {string} username The username to set the defaul extension
+* @param  {string} username The username to get the default extension
 * @return {string} The default extension identifier.
 */
 function getDefaultUserExtensionConf(username) {
@@ -704,6 +704,7 @@ function getDefaultUserExtensionConf(username) {
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
+        return '';
     }
 }
 
