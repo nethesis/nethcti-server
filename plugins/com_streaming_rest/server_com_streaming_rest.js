@@ -154,6 +154,29 @@ function setCompUtil(comp) {
     }
 }
 
+/**
+* Sets the config manager architect component to be used by REST plugins.
+*
+* @method setCompConfigManager
+* @param {object} comp The architect config manager component
+* @static
+*/
+function setCompConfigManager(comp) {
+    try {
+        // check parameter
+        if (typeof comp !== 'object') { throw new Error('wrong parameter'); }
+
+        var p;
+        // set user architect component to all REST plugins
+        for (p in plugins) {
+            if (typeof plugins[p].setCompConfigManager === 'function') {
+                plugins[p].setCompConfigManager(comp);
+            }
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
 
 /**
 * Executed by all REST request. It calls the appropriate REST plugin function.
@@ -349,3 +372,4 @@ exports.setLogger            = setLogger;
 exports.setCompUtil          = setCompUtil;
 exports.setCompStreaming     = setCompStreaming;
 exports.setCompAuthorization = setCompAuthorization;
+exports.setCompConfigManager = setCompConfigManager;

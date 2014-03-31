@@ -55,6 +55,15 @@ var compAuthorization;
 var compUtil;
 
 /**
+* The config manager architect component.
+*
+* @property compConfigManager
+* @type object
+* @private
+*/
+var compConfigManager;
+
+/**
 * Set the logger to be used.
 *
 * @method setLogger
@@ -120,6 +129,21 @@ function setCompAuthorization(ca) {
     try {
         compAuthorization = ca;
         logger.info(IDLOG, 'set authorization architect component');
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets config manager architect component.
+*
+* @method setCompConfigManager
+* @param {object} comp The config manager architect component.
+*/
+function setCompConfigManager(comp) {
+    try {
+        compConfigManager = comp;
+        logger.info(IDLOG, 'set config manager architect component');
     } catch (err) {
        logger.error(IDLOG, err.stack);
     }
@@ -230,15 +254,15 @@ function setCompAuthorization(ca) {
             },
 
             /**
-            * Execute the command associated with the streaming source to open
+            * Executes the command associated with the streaming source to open
             * the associated device, e.g. a door, with the following REST API:
             *
             *     open
             *
             * @method open
-            * @param {object} req The client request.
-            * @param {object} res The client response.
-            * @param {function} next Function to run the next handler in the chain.
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
             */
             open: function (req, res, next) {
                 try {
@@ -253,7 +277,12 @@ function setCompAuthorization(ca) {
 
                         logger.info(IDLOG, 'authorization for user "' + username + '" to open streaming source "' + stream + '" has been successful');
 
-                        compStreaming.open(stream, function (err) {
+                        // create the caller identifier
+                        var defaultExten = compConfigManager.getDefaultUserExtensionConf(username);
+                        if (defaultExten === undefined || defaultExten === null) { defaultExten = ''; }
+                        var callerid = '"' + username + '" <' + defaultExten + '>';
+
+                        compStreaming.open(stream, callerid, function (err) {
 
                             if (err) {
                                 var str = 'opening streaming source "' + stream + '"';
@@ -284,6 +313,7 @@ function setCompAuthorization(ca) {
         exports.setCompUtil          = setCompUtil;
         exports.setCompStreaming     = setCompStreaming;
         exports.setCompAuthorization = setCompAuthorization;
+        exports.setCompConfigManager = setCompConfigManager;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
