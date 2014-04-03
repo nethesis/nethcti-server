@@ -240,7 +240,6 @@ function config(path) {
         if (typeof json === 'object' && json.loglevel.toLowerCase() === 'info') {
             logSequelize = true;
         }
-
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -1645,7 +1644,7 @@ function getHistoryCallInterval(data, cb) {
         var attributes = [
             [ 'DATE_FORMAT(calldate, "%d/%m/%Y")', 'date'],
             [ 'DATE_FORMAT(calldate, "%H:%i:%S")', 'time'],
-            'clid', 'channel', 'dstchannel', 'uniqueid',
+            'channel', 'dstchannel', 'uniqueid',
             'duration', 'billsec', 'disposition', 'dcontext'
         ];
         if (data.recording === true) { attributes.push('recordingfile'); }
@@ -1655,11 +1654,13 @@ function getHistoryCallInterval(data, cb) {
             // the numbers are hidden
             attributes.push([ 'CONCAT( SUBSTRING(src, 1, LENGTH(src) - ' + data.privacyStr.length + '), "' + data.privacyStr + '")', 'src' ]);
             attributes.push([ 'CONCAT( SUBSTRING(dst, 1, LENGTH(dst) - ' + data.privacyStr.length + '), "' + data.privacyStr + '")', 'dst' ]);
+            attributes.push([ 'CONCAT( "", "\\"' + data.privacyStr + '\\"")', 'clid' ]);
 
         } else {
             // the numbers are clear
             attributes.push('src');
             attributes.push('dst');
+            attributes.push('clid');
         }
 
         // search
