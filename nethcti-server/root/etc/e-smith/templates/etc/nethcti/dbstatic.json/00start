@@ -1,1 +1,8 @@
+{
+    use NethServer::Password;
+    our $cdrdb_pwd = NethServer::Password::store('CDRDBPasswd') || die('Could not generate asterisk cdr database password!');
+    our $ctidb_pwd = NethServer::Password::store('CTIDBPasswd') || die('Could not generate cti database password!');
+    our $phonebookdb_pwd = NethServer::Password::store('PhonebookDBPasswd') || die('Could not generate phonbook database password!');
+    return "";
+}
 \{

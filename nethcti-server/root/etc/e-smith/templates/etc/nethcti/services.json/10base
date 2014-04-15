@@ -46,7 +46,7 @@
         \}
     \},
     "notification_manager": \{
-        "custom_templates_notifications": "/home/e-smith/nethcti/templates/notification_manager"
+        "custom_templates_notifications": "/var/lib/nethserver/nethcti/templates/notification_manager"
     \},
     "rest": \{
         "postit": \{
@@ -64,7 +64,7 @@
         "customer_card": \{
             "port":    "10003",
             "address": "localhost",
-            "custom_templates_customercards": "/home/e-smith/nethcti/templates/customer_card"
+            "custom_templates_customercards": "/var/lib/nethserver/nethcti/templates/customer_card"
         \},
         "phonebook": \{
             "port":    "10001",
@@ -102,7 +102,7 @@
         "static": \{
             "port": "10013",
             "address": "localhost",
-            "webroot": "/home/e-smith/nethcti/static"
+            "webroot": "/var/lib/nethserver/nethcti/static"
         \}
     \}
 \}

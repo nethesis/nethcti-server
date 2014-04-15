@@ -1,6 +1,7 @@
 {
-    my $ldapBase = ${'nethcti-server'}{'LdapBaseDN'} || esmith::util::ldapBase($DomainName);
-    my $ldapOu = ${'nethcti-server'}{'LdapOu'} || "Users";
+    use NethServer::Directory;
+    my $ldapBase = ${'nethcti-server'}{'LdapBaseDN'} || NethServer::Directory::getInternalSuffix();
+    my $ldapOu = ${'nethcti-server'}{'LdapOu'} || "People";
     my $ldapPort = ${'nethcti-server'}{'LdapPort'} || "389";
     my $ldapServer = ${'nethcti-server'}{'LdapServer'} || "localhost";
     my $authType = ${'nethcti-server'}{'AuthType'} || "ldap";

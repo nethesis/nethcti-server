@@ -3,6 +3,6 @@
         "dbport":     "/var/lib/mysql/mysql.sock",
         "dbtype":     "mysql",
         "dbuser":     "asteriskuser",
-        "dbpassword": "{$nethvoice{DbPasswd}}",
+        "dbpassword": "{$cdrdb_pwd}",
         "dbname":     "asteriskcdrdb" 
     \}

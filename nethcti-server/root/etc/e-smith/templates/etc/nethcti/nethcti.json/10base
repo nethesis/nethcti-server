@@ -1,6 +1,14 @@
-\{
-    "ip": "{${'LocalIP'}}",
+{
+    use esmith::InterfacesDB;
+
+    my $ndb = esmith::InterfacesDB->open_ro() || die('Can not open esmith::InterfacesDB !');
+    my $LocalIP = $ndb->green()->prop('ipaddr') || die('Can not get green interface from esmith::InterfacesDB !');
+    my $loglevel = ${'nethcti-server'}{'LogLevel'} || "warn";
+
+    $OUT  = '{
+    "ip": "' . $LocalIP . '",
     "logfile": "/var/log/asterisk/nethcti.log",
-    "loglevel": "{${'nethcti-server'}{'LogLevel'} || "warn"}",
+    "loglevel": "' . $loglevel . '",
     "privacy_numbers": "xxx"
-\}
+}';
+}

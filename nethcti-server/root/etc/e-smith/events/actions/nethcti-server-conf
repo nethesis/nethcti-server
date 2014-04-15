@@ -1,30 +1,18 @@
 #!/bin/bash
 
-PASS=`/sbin/e-smith/config getprop nethcti-server DbPasswd`
-if [ "x$PASS" == "x" ]; then
-    PASS=`/usr/bin/openssl rand -base64 6`
-    /sbin/e-smith/config setprop nethcti-server DbPasswd $PASS
-    /sbin/e-smith/expand-template /etc/nethcti/dbstatic.json 
-fi
-
-
 DB=`/usr/bin/mysqlshow | /bin/grep -o nethcti2`
-if [ "$DB" == "nethcti2" ]; then 
+if [ "$DB" == "nethcti2" ]; then
     # update
     if [ -f /usr/lib/node/nethcti-server/docs/db_tables/update.sh ]; then
         ln -s /usr/lib/node/nethcti-server/docs/db_tables/update.sh /etc/e-smith/sql/init/20nethcti2_update
-        /sbin/e-smith/service mysql.init start
+        /sbin/service mysql.init start
     fi
 else
     # install
     ln -s /usr/lib/node/nethcti-server/docs/db_tables/nethcti2.sql /etc/e-smith/sql/init/10nethcti2.sql
-    /sbin/e-smith/service mysql.init start
+    /sbin/service mysql.init start
+    PASS=$(perl -e 'use NethServer::Password; my $ctidb_pwd = NethServer::Password::store("CTIDBPasswd"); print ($ctidb_pwd);')
     mysql -e "GRANT ALL ON nethcti2.* TO nethcti@localhost  IDENTIFIED BY '$PASS';FLUSH PRIVILEGES;"
 fi
 
 /var/lib/asterisk/bin/retrieve_nethcti_from_mysql.pl
-
-
-# Migration from old releases
-mv /home/e-smith/proxycti/template/* /home/e-smith/nethcti/templates/customer_card/ 2>/dev/null
-rm -rf /home/e-smith/proxycti 2> /dev/null

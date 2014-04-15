@@ -5,7 +5,7 @@
    weekly
    create 0644 asterisk asterisk
    postrotate
-       /sbin/e-smith/service nethcti-server restart &> /dev/null
+       /sbin/service nethcti-server restart &> /dev/null
    endscript
 }
 

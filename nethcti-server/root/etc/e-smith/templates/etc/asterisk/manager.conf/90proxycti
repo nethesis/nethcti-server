@@ -1,13 +1,22 @@
 ; nethcti-server access
 
 [proxycti]
-secret = proxycti
-deny=0.0.0.0/0.0.0.0
-permit=127.0.0.1/255.255.255.0
 {
-    my ($network, $broadcast) =  esmith::util::computeNetworkAndBroadcast ($LocalIP, $LocalNetmask);
-    $OUT.="permit=$network/$LocalNetmask"
-}
-read = system,call,log,verbose,command,agent,user,originate,cdr
-write = system,call,log,verbose,command,agent,user,originate,cdr
+    use NethServer::Password;
+    use esmith::NetworksDB;
+    $nethcti_pwd = NethServer::Password::store('NethctiManagerPasswd') || die('Could not generate Nethcti manager password!');
 
+    my $ndb = esmith::NetworksDB->open_ro();
+    my @localAccess = $ndb->local_access_spec();
+
+    $OUT  = "secret=$nethcti_pwd\n";
+    $OUT .= "deny=0.0.0.0/0.0.0.0\n";
+    foreach $local (@localAccess) {
+        if ($local eq '127.0.0.1') {
+             $local = '127.0.0.1/255.255.255.0';
+        }
+        $OUT .= "permit=$local\n";
+    }
+    $OUT .= "read=system,call,log,verbose,command,agent,user,originate,cdr\n";
+    $OUT .= "write=system,call,log,verbose,command,agent,user,originate,cdr\n";
+}

@@ -1,47 +1,45 @@
 Name:		nethcti-server
-Version:	2.0.1
+Version:	2.0.2
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI 2
 
 Group:		Network	
 License:	GPLv2
-Source0:	%{name}-%{version}.tar.gz
-BuildRoot:	/var/tmp/%{name}-%{version}-%{release}-buildroot
+Source0:	%{name}.tar.gz
+Source1:	nethcti-server-source.tar.gz
 
-
-BuildRequires:	e-smith-devtools
-Requires:	nodejs >= 0.8.16
-Requires:	node-forever >= 0.10.9
-Requires:       freepbx >= 2.10.43
-Requires:	smeserver-ejabberd
-Requires:       nethcti-nethvoice-module
+BuildRequires:	nethserver-devtools
+Requires:	nodejs010-nodejs
+Requires:	ejabberd
+Requires:       nethvoice-module-nethcti
 AutoReq:	no
-
-Obsoletes:	proxycti
 
 %description
 Nodejs Asterisk proxy used for NethCTI 2
 
-
 %prep
-%setup
+%setup -n nethcti-server
 
 %build
 perl -w createlinks
+
+mkdir -p root/usr/lib/node/nethcti-server
+tar xzvf %{SOURCE1} -C root/usr/lib/node/nethcti-server/
+
 mkdir -p root/etc/nethcti
 mkdir -p root/var/lib/asterisk/bin
 mkdir -p root/var/spool/asterisk/monitor
 mkdir -p root/var/spool/nethcti/sms
-mkdir -p root/home/e-smith/nethcti/templates/notification_manager
-mkdir -p root/home/e-smith/nethcti/templates/customer_card
-mkdir -p root/home/e-smith/nethcti/static
+mkdir -p root/var/lib/nethserver/nethcti/templates/notification_manager
+mkdir -p root/var/lib/nethserver/nethcti/templates/customer_card
+mkdir -p root/var/lib/nethserver/nethcti/static
 mkdir -p root/usr/lib/node/nethcti-server/store
 rm -rf root/usr/lib/node/nethcti-server/docs/admin-manual/
 
 %install
 rm -rf $RPM_BUILD_ROOT
 (cd root; find . -depth -print | cpio -dump $RPM_BUILD_ROOT)
-mv root/usr/lib/node/nethcti-server/plugins/com_static_http/static/img  $RPM_BUILD_ROOT/home/e-smith/nethcti/static/
+mv root/usr/lib/node/nethcti-server/plugins/com_static_http/static/img  $RPM_BUILD_ROOT/var/lib/nethserver/nethcti/static/
 /sbin/e-smith/genfilelist \
 --file /etc/rc.d/init.d/nethcti-server 'attr(0755,root,root)' \
 --file /usr/lib/node/nethcti-server/script/sendsms.php 'attr(0755,root,root)' \
@@ -49,28 +47,23 @@ mv root/usr/lib/node/nethcti-server/plugins/com_static_http/static/img  $RPM_BUI
 --dir /var/spool/asterisk/monitor 'attr(0775,asterisk,asterisk)' \
 --dir /var/spool/nethcti/sms 'attr(0775,asterisk,asterisk)' \
 --dir /etc/nethcti 'attr(0775,asterisk,asterisk)' \
---dir /home/e-smith/nethcti/static 'attr(0775,asterisk,asterisk)' \
+--dir /var/lib/nethserver/nethcti/static 'attr(0775,asterisk,asterisk)' \
 --dir /var/lib/asterisk 'attr(0775,asterisk,asterisk)' \
 --dir /var/lib/asterisk/bin 'attr(0775,asterisk,asterisk)' $RPM_BUILD_ROOT > %{name}-%{version}-filelist
-
 
 %clean
 rm -rf $RPM_BUILD_ROOT
 
-
 %files -f %{name}-%{version}-filelist
 %defattr(-,root,root,-)
-%config(noreplace) /home/e-smith/nethcti/static/img/logo.png
+%config(noreplace) /var/lib/nethserver/nethcti/static/img/logo.png
 
 %doc
 
-%pre
-
-%post
-/sbin/e-smith/signal-event %{name}-update || exit 0
-
-
 %changelog
+* Tue Apr 15 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.0.2-1
+- First NethServer release.
+
 * Tue Mar 25 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.0.1-1
 - Increase the version to 2.0.1 final release.
 - Enh #2862: http_proxy listen in http 8179 and https 8180 ports.
