@@ -23,8 +23,12 @@ Nodejs Asterisk proxy used for NethCTI 2
 %build
 perl -w createlinks
 
+# create the nethcti-server source directory
 mkdir -p root/usr/lib/node/nethcti-server
+# put the nethcti-server source code
 tar xzvf %{SOURCE1} -C root/usr/lib/node/nethcti-server/
+# clean the nodejs npm modules
+find root/usr/lib/node/nethcti-server/node_modules -iname readme.\* -o -iname benchmark\* -o -iname sample\* -o -iname test\* -o -iname example\* -o -iname changelog\* -o -iname docs -o -iname component.json -o -iname \*.md -o -iname \*.bat -o -iname \*.tgz | xargs rm -rf
 
 mkdir -p root/etc/nethcti
 mkdir -p root/var/lib/asterisk/bin
