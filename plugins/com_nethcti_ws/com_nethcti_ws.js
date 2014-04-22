@@ -596,14 +596,15 @@ function extenChanged(exten) {
         logger.info(IDLOG, 'emit event extenUpdate for extension ' + exten.getExten() + ' to websockets');
 
         // cycle in each websocket to send the event about an extension update. If the websocket user
-        // is associated with the extension, then it sends the update with clear number, otherwise the
-        // number is obfuscated to respect the privacy authorization
+        // is associated with the extension or the user has the privacy permission disabled, then it
+        // sends the update with clear number, otherwise the number is obfuscated to respect the privacy authorization
         var sockid, username;
         for (sockid in wsid) {
 
             username = wsid[sockid].username;
 
-            if (compUser.hasExtensionEndpoint(username, exten.getExten())) {
+            if (   compUser.hasExtensionEndpoint(username, exten.getExten())
+                || !compAuthorization.isPrivacyEnabled(username)) {
 
                 if (wsServer.sockets.sockets[sockid]) { wsServer.sockets.sockets[sockid].emit('extenUpdate', exten.toJSON()); }
                 if (wssServer.sockets.sockets[sockid]) { wssServer.sockets.sockets[sockid].emit('extenUpdate', exten.toJSON()); }
