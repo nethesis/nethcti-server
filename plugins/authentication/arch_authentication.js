@@ -92,6 +92,13 @@ module.exports = function (options, imports, register) {
             getTokenExpirationTimeout: authentication.getTokenExpirationTimeout,
 
             /**
+            * It's the _isUnautheCallEnabled_ method provided by _authentication_ module.
+            *
+            * @method isUnautheCallEnabled
+            */
+            isUnautheCallEnabled: authentication.isUnautheCallEnabled,
+
+            /**
             * It's the _EVT_COMP_READY_ property provided by _authentication_ module.
             *
             * @method EVT_COMP_READY

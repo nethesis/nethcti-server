@@ -103,6 +103,7 @@ var compConfigManager;
         * 1. [`astproxy/cw/:endpoint`](#cwget)
         * 1. [`astproxy/dnd/:endpoint`](#dndget)
         * 1. [`astproxy/cfvm/:type/:endpoint`](#cfvmget)
+        * 1. [`astproxy/unauthe_call/:endpoint/:number`](#unauthe_callget)
         * 1. [`astproxy/prefix`](#prefixget)
         * 1. [`astproxy/cfcall/:type/:endpoint`](#cfcallget)
         * 1. [`astproxy/queues`](#queuesget)
@@ -131,6 +132,16 @@ var compConfigManager;
         *
         * * `endpoint: the extension identifier`
         * * `type: ("unconditional" | "unavailable" | "busy")`
+        *
+        * ---
+        *
+        * ### <a id="unauthe_callget">**`astproxy/unauthe_call/:endpoint/:number`**</a>
+        *
+        * Calls a number from the specified endpoint. This api does not require the authentication.
+        * It is disabled by default, so it must be explicitly enabled by the server configuration.
+        *
+        * * `number: the number to be called`
+        * * `endpoint: the endpoint identifier that makes the new call`
         *
         * ---
         *
@@ -334,12 +345,12 @@ var compConfigManager;
         *
         * ### <a id="callpost">**`astproxy/call`**</a>
         *
-        * Calls a number from the specified endpoint. If the endpoint is not specified it will use the user default. The request must
-        * contains the following parameters:
+        * Calls a number from the specified endpoint. If the endpoint is not specified it will
+        * use the user default. The request must contains the following parameters:
         *
         * * `number: the number to be called`
         * * `[endpointId]: the endpoint identifier that make the new call. It requires "endpointType".`
-        * * `[endpointType]: the type of the endpoint that make the new call. It requires "endpointId".`
+        * * `[endpointType]: the type of the endpoint that makes the new call. It requires "endpointId".`
         *
         * E.g. object parameters:
         *
@@ -669,6 +680,7 @@ var compConfigManager;
                 *   @param {string} dnd/:endpoint                  Gets the don't disturb status of the endpoint of the user
                 *   @param {string} cfvm/:type/:endpoint           Gets the call forward status to voicemail of the endpoint of the user
                 *   @param {string} cfcall/:type/:endpoint         Gets the call forward status to a destination number of the endpoint of the user
+                *   @param {string} unauthe_call/:endpoint/:number Calls the number from the specified endpoint without authentication
                 *   @param {string} is_autoc2c_supported/:endpoint Returns true if the endpoint is supported by the automatic click2call
                 */
                 'get' : [
@@ -685,6 +697,7 @@ var compConfigManager;
                     'dnd/:endpoint',
                     'cfvm/:type/:endpoint',
                     'cfcall/:type/:endpoint',
+                    'unauthe_call/:endpoint/:number',
                     'is_autoc2c_supported/:endpoint'
                 ],
 
@@ -1222,6 +1235,94 @@ var compConfigManager;
             },
 
             /**
+            * Makes a new call with the following REST API:
+            *
+            *     POST call
+            *
+            * @method call
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            call: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (   typeof req.params        !== 'object'
+                        || typeof req.params.number !== 'string'
+                        || (req.params.endpointId  && !req.params.endpointType)
+                        || (!req.params.endpointId && req.params.endpointType)
+                        || (req.params.endpointId  && typeof req.params.endpointId   !== 'string')
+                        || req.params.endpointType && typeof req.params.endpointType !== 'string') {
+
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    if (!req.params.endpointId && !req.params.endpointType) {
+                        req.params.endpointType = 'extension';
+                        req.params.endpointId   = compConfigManager.getDefaultUserExtensionConf(username);
+                    }
+
+                    if (req.params.endpointType === 'extension') {
+
+                        // check if the endpoint is owned by the user
+                        if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+
+                            logger.warn(IDLOG, 'make new call to ' + req.params.number + ' failed: ' + req.params.endpointId + ' is not owned by user "' + username + '"'); +
+                            compUtil.net.sendHttp403(IDLOG, res);
+                            return;
+                        }
+
+                        // if the user has enabled the auomatic click2call then make an HTTP request directly to the phone,
+                        // otherwise make a new call by asterisk
+                        if (!compConfigManager.isAutomaticClick2callEnabled(username)) { asteriskCall(username, req, res); }
+                        else { ajaxPhoneCall(username, req, res); }
+
+                    } else {
+                        logger.warn(IDLOG, 'making new call from user "' + username + '" to ' + req.params.number + ': unknown endpointType ' + req.params.endpointType);
+                        compUtil.net.sendHttp400(IDLOG, res);
+                    }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * Makes a new call to the destination number from the endpoint of the user with the following REST API:
+            *
+            *     GET  unauthe_call/:endpoint/:number
+            *
+            * @method unauthe_call
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            unauthe_call: function (req, res, next) {
+                try {
+                    // check parameters
+                    if (   typeof req.params        !== 'object'
+                        || typeof req.params.number !== 'string' || typeof req.params.endpoint !== 'string') {
+
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    // make a new call by asterisk
+                    req.params.endpointId   = req.params.endpoint;
+                    req.params.endpointType = 'extension';
+                    asteriskCall('unauthe_call rest api', req, res);
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
             * Manages both GET and POST requests for don't disturb status of the endpoint of
             * the user with the following REST API:
             *
@@ -1326,63 +1427,6 @@ var compConfigManager;
 
                     } else {
                         logger.warn(IDLOG, 'parking the conversation ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType);
-                        compUtil.net.sendHttp400(IDLOG, res);
-                    }
-
-                } catch (err) {
-                    logger.error(IDLOG, err.stack);
-                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
-                }
-            },
-
-            /**
-            * Make a new call with the following REST API:
-            *
-            *     POST call
-            *
-            * @method call
-            * @param {object}   req  The client request
-            * @param {object}   res  The client response
-            * @param {function} next Function to run the next handler in the chain
-            */
-            call: function (req, res, next) {
-                try {
-                    var username = req.headers.authorization_user;
-
-                    // check parameters
-                    if (   typeof req.params        !== 'object'
-                        || typeof req.params.number !== 'string'
-                        || (req.params.endpointId  && !req.params.endpointType)
-                        || (!req.params.endpointId && req.params.endpointType)
-                        || (req.params.endpointId  && typeof req.params.endpointId   !== 'string')
-                        || req.params.endpointType && typeof req.params.endpointType !== 'string') {
-
-                        compUtil.net.sendHttp400(IDLOG, res);
-                        return;
-                    }
-
-                    if (!req.params.endpointId && !req.params.endpointType) {
-                        req.params.endpointType = 'extension';
-                        req.params.endpointId   = compConfigManager.getDefaultUserExtensionConf(username);
-                    }
-
-                    if (req.params.endpointType === 'extension') {
-
-                        // check if the endpoint is owned by the user
-                        if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
-
-                            logger.warn(IDLOG, 'make new call to ' + req.params.number + ' failed: ' + req.params.endpointId + ' is not owned by user "' + username + '"'); +
-                            compUtil.net.sendHttp403(IDLOG, res);
-                            return;
-                        }
-
-                        // if the user has enabled the auomatic click2call then make an HTTP request directly to the phone,
-                        // otherwise make a new call by asterisk
-                        if (!compConfigManager.isAutomaticClick2callEnabled(username)) { asteriskCall(username, req, res); }
-                        else { ajaxPhoneCall(username, req, res); }
-
-                    } else {
-                        logger.warn(IDLOG, 'making new call from user "' + username + '" to ' + req.params.number + ': unknown endpointType ' + req.params.endpointType);
                         compUtil.net.sendHttp400(IDLOG, res);
                     }
 
@@ -2829,6 +2873,7 @@ var compConfigManager;
         exports.setCompUser           = setCompUser;
         exports.mute_record           = astproxy.mute_record;
         exports.start_record          = astproxy.start_record;
+        exports.unauthe_call          = astproxy.unauthe_call;
         exports.force_hangup          = astproxy.force_hangup;
         exports.blindtransfer         = astproxy.blindtransfer;
         exports.unmute_record         = astproxy.unmute_record;

@@ -14,5 +14,6 @@
         "server": "localhost",
         "domain": "DOMAIN"
     },
-    "expiration_timeout": "3600"
+    "expiration_timeout": "3600",
+    "unauthe_call": "disabled"
 }

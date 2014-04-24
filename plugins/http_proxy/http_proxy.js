@@ -328,8 +328,8 @@ function getProxyLog(req) {
 * requests must contain the authentication token.
 *
 * @method proxyRequest
-* @param {object} req The request object
-* @param {object} res The response object
+* @param {object} req   The request object
+* @param {object} res   The response object
 * @param {obejct} proxy The proxy to route the request
 */
 function proxyRequest(req, res, proxy) {
@@ -341,7 +341,8 @@ function proxyRequest(req, res, proxy) {
         // 2. a static file request
         if (   req.url.indexOf('/authentication/login')       !== -1
             || req.url.indexOf('/authentication/nostd_login') !== -1
-            || req.url.indexOf('/static') !== -1) {
+            || req.url.indexOf('/static') !== -1
+            || (compAuthentication.isUnautheCallEnabled() === true && req.url.indexOf('/astproxy/unauthe_call') !== -1)) {
 
             proxy.proxyRequest(req, res);
             return;
