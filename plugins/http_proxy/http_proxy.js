@@ -339,9 +339,8 @@ function proxyRequest(req, res, proxy) {
         // bypass the token verification if the request is:
         // 1. an authentication nonce request
         // 2. a static file request
-        if (   req.url.indexOf('/authentication/login')       !== -1
-            || req.url.indexOf('/authentication/nostd_login') !== -1
-            || req.url.indexOf('/static') !== -1
+        if (   req.url.indexOf('/authentication/login') !== -1
+            || req.url.indexOf('/static')               !== -1
             || (compAuthentication.isUnautheCallEnabled() === true && req.url.indexOf('/astproxy/unauthe_call') !== -1)) {
 
             proxy.proxyRequest(req, res);

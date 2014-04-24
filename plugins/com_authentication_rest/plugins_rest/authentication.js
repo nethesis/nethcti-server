@@ -110,7 +110,6 @@ function setCompUtil(comp) {
         *
         * 1. [`authentication/login`](#loginpost)
         * 1. [`authentication/logout`](#logoutpost)
-        * 1. [`authentication/nostd_login`](#nostd_loginpost)
         *
         * ---
         *
@@ -139,21 +138,6 @@ function setCompUtil(comp) {
         *
         *     {}
         *
-        * ---
-        *
-        * ### <a id="nostd_loginpost">**`authentication/nostd_login`**</a>
-        *
-        * The same as _login_, but returns an HTTP 200 response with the _nonce_ value.
-        *
-        * * `username`
-        * * `password`
-        *
-        * E.g. object parameters:
-        *
-        *     { "username": "alessandro", "password": "somepwd" }
-        *
-        *     curl --insecure -i -X POST -d '{ "username": "alessandro", "password": "somepwd" }' https://192.168.5.224:8282/authentication/nostd_login
-        *
         * @class plugin_rest_authentication
         * @static
         */
@@ -176,13 +160,10 @@ function setCompUtil(comp) {
                 *                             token used in the next authentications.
                 *
                 * @param {string} logout      Logout ...
-                *
-                * @param {string} nostd_login The same as _login_, but returns an HTTP 200 response.
                 */
                 'post' : [
                     'login',
-                    'logout',
-                    'nostd_login'
+                    'logout'
                 ],
                 'head':  [],
                 'del' :  []
@@ -233,52 +214,6 @@ function setCompUtil(comp) {
             },
 
             /**
-            * Provides the login function with the following REST API:
-            *
-            *     nostd_login
-            *
-            * @method nostd_login
-            * @param {object}   req  The client request
-            * @param {object}   res  The client response
-            * @param {function} next Function to run the next handler in the chain
-            */
-            nostd_login: function (req, res, next) {
-                try {
-                    var username = req.params.username;
-                    var password = req.params.password;
-
-                    if (!username || !password) {
-                        logger.warn('username or password has not been specified');
-                        compUtil.net.sendHttp401(IDLOG, res);
-                        return;
-                    }
-
-                    compAuthe.authenticate(username, password, function (err) {
-                        try {
-                            if (err) {
-                                logger.warn(IDLOG, 'authentication failed for user "' + username + '"');
-                                compUtil.net.sendHttp401(IDLOG, res);
-                                return;
-
-                            } else {
-                                logger.info(IDLOG, 'user "' + username + '" has been successfully authenticated');
-                                var nonce = compAuthe.getNonce(username, password);
-                                res.writeHead(200, { 'WWW-Authenticate': 'Digest ' + nonce });
-                                logger.info(IDLOG, 'send HTTP 200 response with nonce to ' + res.connection.remoteAddress);
-                                res.end();
-                            }
-                        } catch (err) {
-                            logger.error(IDLOG, err.stack);
-                            compUtil.net.sendHttp401(IDLOG, res);
-                        }
-                    });
-                } catch (err) {
-                    logger.error(IDLOG, err.stack);
-                    compUtil.net.sendHttp401(IDLOG, res);
-                }
-            },
-
-            /**
             * Provides the logout function with the following REST API:
             *
             *     logout
@@ -315,7 +250,6 @@ function setCompUtil(comp) {
         exports.logout                = authentication.logout;
         exports.setLogger             = setLogger;
         exports.setCompUtil           = setCompUtil;
-        exports.nostd_login           = authentication.nostd_login;
         exports.setCompAuthentication = setCompAuthentication;
 
     } catch (err) {
