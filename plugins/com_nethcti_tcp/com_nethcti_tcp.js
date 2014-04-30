@@ -864,7 +864,8 @@ function connHdlr(socket) {
                 var parameters = JSON.parse(data);
 
                 // dispatch the message
-                if (parameters.action === 'login') { loginHdlr(socket, parameters); }
+                if      (parameters.action === 'login') { loginHdlr(socket, parameters); }
+                else if (parameters.action === 'ping')  { pingHdlr(socket); }
 
             } catch (err1) {
                 logger.error(IDLOG, err1.stack);
@@ -991,6 +992,34 @@ function loginHdlr(socket, obj) {
     } catch (err) {
         logger.error(IDLOG, err.stack);
         unauthorized(socket);
+    }
+}
+
+/**
+* TCP socket ping handler. It responds with an "active" message.
+*
+* @method pingHdlr
+* @param {object} socket The client socket
+* @private
+*/
+function pingHdlr(socket) {
+    try {
+        // check parameters
+        if (typeof socket !== 'object') { throw new Error('wrong socket parameter'); }
+
+        var data = { ping: 'active' };
+
+        socket.write(JSON.stringify(data), ENCODING, function () {
+            try {
+                logger.info(IDLOG, 'sent response "active" to ping request to ' + socket.username + ' with id ' + socket.id);
+
+            } catch (err1) {
+                logger.error(IDLOG, err1.stack);
+            }
+        });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
     }
 }
 
