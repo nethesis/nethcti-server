@@ -1,4 +1,6 @@
 {
+    my $popupCtiProto = ${'nethcti-server'}{'PopupCtiProto'} || "https";
+
     $OUT = '{
     "call": {
         "width": "400",
@@ -14,6 +16,7 @@
             "command": "url",
             "runwith": "" 
         }
-    }
+    },
+    "cti_proto": "' . $popupCtiProto .'"
 }';
 }
