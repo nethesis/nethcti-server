@@ -714,13 +714,6 @@ function config(path) {
             logger.warn(IDLOG, 'base template notifications url has not been specified in JSON file ' + path);
         }
 
-        // initialize the protocol used by the cti, so the client can open the cti app using the correct protocol
-        if (json && json.http_proxy && json.http_proxy.proto) {
-            ctiProto = json.http_proxy.proto;
-        } else {
-            logger.warn(IDLOG, 'cti http_proxy proto for win popup is not present in ' + path + ': use default ' + ctiProto);
-        }
-
         // initialize the interval at which update the token expiration of all users
         // that are connected by tcp
         var expires = compAuthe.getTokenExpirationTimeout();
@@ -771,6 +764,10 @@ function configWinPopup(path) {
 
         if (json && json.commands && typeof json.commands === 'object') { notifSupportedCommands = json.commands; }
         else { logger.warn(IDLOG, 'wrong win popup commands in ' + path); }
+
+        // initialize the protocol used by windows notification popup to open the cti app
+        if (json && json.cti_proto && (json.cti_proto === 'https' || json.cti_proto === 'http') ) { ctiProto = json.cti_proto; }
+        else { logger.warn(IDLOG, 'bad "cti_proto" for win popup in ' + path + ': use default ' + ctiProto); }
 
         logger.info(IDLOG, 'customization of notification popup by file ' + path + ' ended');
 

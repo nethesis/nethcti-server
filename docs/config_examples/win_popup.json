@@ -13,5 +13,6 @@
             "command": "url",
             "runwith": ""
         }
-    }
+    },
+    "cti_proto": "https"
 }
