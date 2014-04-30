@@ -866,6 +866,7 @@ function connHdlr(socket) {
                 // dispatch the message
                 if      (parameters.action === 'login') { loginHdlr(socket, parameters); }
                 else if (parameters.action === 'ping')  { pingHdlr(socket); }
+                else if (parameters.action === 'reset' && parameters.type === 'commands') { resetCommandsHdlr(socket, parameters); }
 
             } catch (err1) {
                 logger.error(IDLOG, err1.stack);
@@ -952,8 +953,8 @@ function unauthorized(socket) {
 * @method loginHdlr
 * @param {object} socket The client socket
 * @param {object} obj
-*   @param {string} obj.accessKeyId The username of the account
-*   @param {string} obj.token       The token constructed with the authentication REST request
+*   @param {string} obj.username The username of the account
+*   @param {string} obj.token    The token constructed with the authentication REST request
 * @private
 */
 function loginHdlr(socket, obj) {
@@ -996,6 +997,42 @@ function loginHdlr(socket, obj) {
 }
 
 /**
+* The handler to reset the commands of a nethifier client.
+*
+* @method resetCommandsHdlr
+* @param {object} socket The client socket
+* @param {object} obj
+*   @param {string} obj.username The username of the account
+*   @param {string} obj.token    The token constructed with the authentication REST request
+* @private
+*/
+function resetCommandsHdlr(socket, obj) {
+    try {
+        // check parameters
+        if (   typeof socket    !== 'object' || typeof obj          !== 'object'
+            || typeof obj.token !== 'string' || typeof obj.username !== 'string') {
+
+            logger.warn(IDLOG, 'bad reset commands request from from ' + getClientSocketEndpoint(socket));
+            unauthorized(socket);
+            return;
+        }
+
+        if (compAuthe.verifyToken(obj.username, obj.token) === true) { // user successfully authenticated
+
+            // send the message to reset the supported commands by windows notifications
+            sendResetNotificationSupportedCommands(socket);
+
+        } else { // authentication failed
+            logger.warn(IDLOG, 'unauthorized reset commands request by user "' + obj.username + '" from ' + getClientSocketEndpoint(socket));
+            unauthorized(socket);
+        }
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * TCP socket ping handler. It responds with an "active" message.
 *
 * @method pingHdlr
@@ -1032,6 +1069,9 @@ function pingHdlr(socket) {
 */
 function sendNotificationSupportedCommands(socket) {
     try {
+        // check parameters
+        if (typeof socket !== 'object') { throw new Error('wrong socket parameter'); }
+
         var cmds = { commands: notifSupportedCommands };
 
         socket.write(JSON.stringify(cmds), ENCODING, function () {
@@ -1043,6 +1083,37 @@ function sendNotificationSupportedCommands(socket) {
             }
         });
 
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sends the message to reset the supported commands by the windows notifications client.
+*
+* @method sendResetNotificationSupportedCommands
+* @param {object} socket The client socket
+* @private
+*/
+function sendResetNotificationSupportedCommands(socket) {
+    try {
+        // check parameters
+        if (typeof socket !== 'object') { throw new Error('wrong socket parameter'); }
+
+        var obj = {
+            action:   'reset',
+            type:     'commands',
+            commands: notifSupportedCommands
+        };
+
+        socket.write(JSON.stringify(obj), ENCODING, function () {
+            try {
+                logger.info(IDLOG, 'sent reset notification supported commands to ' + socket.username + ' ' + getClientSocketEndpoint(socket));
+
+            } catch (err1) {
+                logger.error(IDLOG, err1.stack);
+            }
+        });
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
