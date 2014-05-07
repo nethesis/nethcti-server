@@ -2730,6 +2730,17 @@ function getAgentsStats(day, cb) {
 
             }
         }, function(err, results) {
+            var inqueue_outqueue = results.join_leave_queue;
+
+            for (var i in results.logon_logoff) {
+                if (!(i in inqueue_outqueue))
+                   inqueue_outqueue[i] = {};
+
+                inqueue_outqueue[i].push(results.logon_logoff[i]);
+            }
+
+            results['inqueue_outqueue'] = results.join_leave_queue;
+
             cb(null, results);
         });
 
