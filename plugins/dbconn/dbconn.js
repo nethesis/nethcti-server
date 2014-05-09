@@ -2635,35 +2635,92 @@ function getQueuesQOS(day, cb) {
             throw new Error('wrong parameters');
         }
 
-        models[JSON_KEYS.QUEUE_LOG].findAll({
-            where: ['event in ("COMPLETEAGENT","COMPLETECALLER")'
-                + ' AND DATE_FORMAT(time,"%Y%m%d") = \'' + day + '\''
-            ],
-            attributes: [
-                'agent', [ 'DATE_FORMAT(time,"%d-%m-%Y")', 'period' ], 'queuename',
-                [ 'count(id)', 'calls' ],
-                [ 'sum(cast(data2 as unsigned))', 'tot_duration' ],
-                [ 'max(cast(data2 as unsigned))', 'max_duration' ],
-                [ 'min(cast(data2 as unsigned))', 'min_duration' ],
-                [ 'avg(cast(data2 as unsigned))', 'avg_duration' ] ],
-            group: ['agent', 'queuename'],
-            order: ['agent', 'queuename']
+        async.parallel({
+            stats : function (callback) {
+                models[JSON_KEYS.QUEUE_LOG].findAll({
+                    where: ['event in ("COMPLETEAGENT","COMPLETECALLER")'
+                        + ' AND DATE_FORMAT(time,"%Y%m%d") = \'' + day + '\''
+                    ],
+                    attributes: [
+                        'agent',
+                        [ 'DATE_FORMAT(time,"%d-%m-%Y")', 'period' ],
+                        'queuename',
+                        [ 'count(id)', 'calls' ],
+                        [ 'sum(cast(data2 as unsigned))', 'tot_duration' ],
+                        [ 'max(cast(data2 as unsigned))', 'max_duration' ],
+                        [ 'min(cast(data2 as unsigned))', 'min_duration' ],
+                        [ 'avg(cast(data2 as unsigned))', 'avg_duration' ] ],
+                    group: ['agent', 'queuename'],
+                    order: ['agent', 'queuename']
 
-        }).success(function (results) {
+                }).success(function (results) {
+                    if (results) {
+                        logger.info(IDLOG, 'get queues answered qos has been successful');
+                        callback(null, results);
+                    } else {
+                        logger.info(IDLOG, 'get queues answered qos: not found');
+                        callback(null, {});
+                    }
 
-            if (results) {
-                logger.info(IDLOG, 'get queues answered qos has been successful');
+                }).error(function (err1) { // manage the error
+                    logger.error(IDLOG, 'get queues answered qos: ' + err1.toString());
+                    callback(err1, {});
+                });
+            },
+            noanswer : function(callback) {
+                 models[JSON_KEYS.QUEUE_LOG].findAll({
+                    where: ['event = "RINGNOANSWER"'
+                        + ' AND DATE_FORMAT(time,"%Y%m%d") = \'' + day + '\''
+                    ],
+                    attributes: [
+                        'agent',
+                        'queuename',
+                        [ 'count(id)', 'calls' ]
+                    ],
+                    group: ['agent', 'queuename'],
+                    order: ['agent', 'queuename']
+                }).success(function (results) {
+                    if (results) {
+                        logger.info(IDLOG, 'get ring no answered queues qos has been successful');
+                        var res = {};
 
-                cb(null, results);
+                        for (var i in results) {
+                            if (!(results[i].agent in res))
+                                res[results[i].agent] = {};
 
-            } else {
-                logger.info(IDLOG, 'get queues answered qos: not found');
-                cb(null, {});
+                            res[results[i].agent][results[i].queuename] = results[i].calls;
+                        }
+
+                        callback(null, res);
+                    } else {
+                        logger.info(IDLOG, 'get ring no answered queues qos: not found');
+                        callback(null, {});
+                    }
+                }).error(function (err1) { // manage the error
+                    logger.error(IDLOG, 'get ring no answered queues qos: ' + err1.toString());
+                    callback(err1, {});
+                });
+            }
+        }, function(err, results) {
+            var res = [];
+
+            for (var i in results.stats) {
+                var values = {};
+                for (var z in results.stats[i].dataValues)
+                    values[z] = results.stats[i].dataValues[z]
+
+                res.push(values);
             }
 
-        }).error(function (err1) { // manage the error
-            logger.error(IDLOG, 'get queues answered qos: ' + err1.toString());
-            cb(err1);
+            if ('noanswer' in results) {
+                for (var i in res) {
+                    if (res[i].agent in results.noanswer
+                      && res[i].queuename in results.noanswer[res[i].agent])
+                        res[i].ringnoanswers = results.noanswer[res[i].agent][res[i].queuename];
+                }
+            }
+
+            cb(null, res);
         });
 
     } catch (err) {
@@ -2752,6 +2809,17 @@ function getAgentsStats(day, cb) {
 
             }
         }, function(err, results) {
+            var inqueue_outqueue = results.join_leave_queue;
+
+            for (var i in results.logon_logoff) {
+                if (!(i in inqueue_outqueue))
+                   inqueue_outqueue[i] = {};
+
+                inqueue_outqueue[i].push(results.logon_logoff[i]);
+            }
+
+            results['inqueue_outqueue'] = results.join_leave_queue;
+
             cb(null, results);
         });
 
