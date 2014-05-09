@@ -243,6 +243,63 @@ function config(path) {
 }
 
 /**
+* Customize the privacy used to hide phone numbers by a configuration file.
+* The file must use the JSON syntax.
+*
+* **The method can throw an Exception.**
+*
+* @method configPrivacy
+* @param {string} path The path of the configuration file
+*/
+function configPrivacy(path) {
+    try {
+        // check parameter
+        if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
+
+        // check file presence
+        if (!fs.existsSync(path)) { throw new Error(path + ' does not exist'); }
+
+        // read configuration file
+        var json = require(path);
+
+        if (json.privacy_numbers) {
+            // set the privacy for all REST plugins
+            setAllRestPluginsPrivacy(json.privacy_numbers);
+
+        } else {
+            logger.warn(IDLOG, 'no privacy string has been specified in JSON file ' + path);
+        }
+
+        logger.info(IDLOG, 'privacy configuration by file ' + path + ' ended');
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Calls _setPrivacy_ function for all REST plugins.
+*
+* @method setAllRestPluginsPrivacy
+* @param {string} str The string used to hide last digits of phone numbers
+* @private
+*/
+function setAllRestPluginsPrivacy(str) {
+    try {
+        var key;
+        for (key in plugins) {
+
+            if (typeof plugins[key].setPrivacy === 'function') {
+                plugins[key].setPrivacy(str);
+                logger.info(IDLOG, 'privacy has been set for rest plugin ' + key);
+            }
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Start the REST server.
 *
 * @method start
@@ -325,5 +382,6 @@ exports.start                = start;
 exports.config               = config;
 exports.setLogger            = setLogger;
 exports.setCompUtil          = setCompUtil;
+exports.configPrivacy        = configPrivacy;
 exports.setCompCallerNote    = setCompCallerNote;
 exports.setCompAuthorization = setCompAuthorization;

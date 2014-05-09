@@ -18,6 +18,16 @@
 var IDLOG = '[plugins_rest/all_historysms]';
 
 /**
+* The string used to hide phone numbers in privacy mode.
+*
+* @property privacyStrReplace
+* @type {string}
+* @private
+* @default "xxx"
+*/
+var privacyStrReplace = 'xxx';
+
+/**
 * The logger. It must have at least three methods: _info, warn and error._
 *
 * @property logger
@@ -243,6 +253,9 @@ function setCompAuthorization(comp) {
                     // add filter parameter if it has been specified
                     if (req.params.filter) { obj.filter = req.params.filter; }
 
+                    // if the user has the privacy enabled, it adds the privacy string to be used to hide the phone numbers
+                    if (compAuthorization.isPrivacyEnabled(username)) { obj.privacyStr = privacyStrReplace; }
+
                     compSms.getAllUserHistoryInterval(obj, function (err, results) {
 
                         if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
@@ -288,6 +301,7 @@ function setCompAuthorization(comp) {
         exports.setCompUtil          = setCompUtil;
         exports.interval             = all_historysms.interval;
         exports.setLogger            = setLogger;
+        exports.setPrivacy           = setPrivacy;
         exports.setCompSms           = setCompSms;
         exports.setCompAuthorization = setCompAuthorization;
 
@@ -295,3 +309,18 @@ function setCompAuthorization(comp) {
         logger.error(IDLOG, err.stack);
     }
 })();
+
+/**
+* Sets the string to be used to hide last digits of phone numbers in privacy mode.
+*
+* @method setPrivacy
+* @param {object} str The string used to hide last digits of phone numbers.
+*/
+function setPrivacy(str) {
+    try {
+        privacyStrReplace = str;
+        logger.info(IDLOG, 'set privacy with string ' + privacyStrReplace);
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}

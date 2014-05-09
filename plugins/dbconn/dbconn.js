@@ -1892,6 +1892,29 @@ function getHistoryPostitInterval(data, cb) {
             operator = ' LIKE ';
         }
 
+        // define the mysql fields to be returned
+        var attributes = [
+            [ 'DATE_FORMAT(creation, "%d/%m/%Y")', 'creationdate'],
+            [ 'DATE_FORMAT(creation, "%H:%i:%S")', 'creationtime'],
+            [ 'DATE_FORMAT(readdate, "%d/%m/%Y")', 'readdate'],
+            [ 'DATE_FORMAT(readdate, "%H:%i:%S")', 'timeread'],
+            'id'
+        ];
+
+        // if the privacy string is present, than hide the numbers and names
+        if (data.privacyStr) {
+            // the numbers and names are hidden
+            attributes.push([ 'CONCAT( "", "' + data.privacyStr + '")', 'recipient' ]);
+            attributes.push([ 'CONCAT( "", "' + data.privacyStr + '")', 'creator' ]);
+            attributes.push([ 'CONCAT( "", "' + data.privacyStr + '")', 'text' ]);
+
+        } else {
+            // the numbers and names are clear
+            attributes.push('recipient');
+            attributes.push('creator');
+            attributes.push('text');
+        }
+
         // search
         models[JSON_KEYS.POSTIT].findAll({
             where: [
@@ -1902,13 +1925,8 @@ function getHistoryPostitInterval(data, cb) {
                 data.from, data.to,
                 data.filter
             ],
-            attributes: [
-                [ 'DATE_FORMAT(creation, "%d/%m/%Y")', 'creationdate'],
-                [ 'DATE_FORMAT(creation, "%H:%i:%S")', 'creationtime'],
-                [ 'DATE_FORMAT(readdate, "%d/%m/%Y")', 'readdate'],
-                [ 'DATE_FORMAT(readdate, "%H:%i:%S")', 'timeread'],
-                'id', 'text', 'creator', 'recipient'
-            ]
+            attributes: attributes
+
         }).success(function (results) {
 
             // extract results to return in the callback function
@@ -1973,6 +1991,27 @@ function getHistorySmsInterval(data, cb) {
             operator = ' LIKE ';
         }
 
+        // define the mysql fields to be returned
+        var attributes = [
+            [ 'DATE_FORMAT(date, "%d/%m/%Y")', 'datesent'],
+            [ 'DATE_FORMAT(date, "%H:%i:%S")', 'timesent'],
+            'id', 'status'
+        ];
+
+        // if the privacy string is present, than hide the numbers and names
+        if (data.privacyStr) {
+            // the numbers and names are hidden
+            attributes.push([ 'CONCAT( SUBSTRING(destination, 1, LENGTH(destination) - ' + data.privacyStr.length + '), "' + data.privacyStr + '")', 'destination' ]);
+            attributes.push([ 'CONCAT( "", "' + data.privacyStr + '")', 'sender' ]);
+            attributes.push([ 'CONCAT( "", "' + data.privacyStr + '")', 'text' ]);
+
+        } else {
+            // the numbers and names are clear
+            attributes.push('destination');
+            attributes.push('sender');
+            attributes.push('text');
+        }
+
         // search
         models[JSON_KEYS.SMS_HISTORY].findAll({
             where: [
@@ -1983,11 +2022,8 @@ function getHistorySmsInterval(data, cb) {
                 data.from, data.to,
                 data.filter
             ],
-            attributes: [
-                [ 'DATE_FORMAT(date, "%d/%m/%Y")', 'datesent'],
-                [ 'DATE_FORMAT(date, "%H:%i:%S")', 'timesent'],
-                'id', 'text', 'status', 'sender', 'destination'
-            ]
+            attributes: attributes
+
         }).success(function (results) {
 
             // extract results to return in the callback function
@@ -2358,12 +2394,12 @@ function getAllUserHistoryCallerNoteInterval(data, cb) {
 * @method getHistoryCallerNoteInterval
 * @param {object} data
 *   @param {string} [data.username] The user involved in the research. It is used to filter
-*       out the _creator_. If it is omitted the function treats it as '%' string. The '%'
-*       matches any number of characters, even zero character.
-*   @param {string} data.from The starting date of the interval in the YYYYMMDD format (e.g. 20130521)
-*   @param {string} data.to The ending date of the interval in the YYYYMMDD format (e.g. 20130528)
-*   @param {string} [data.filter] The filter to be used in the _number_ field. If it is omitted the
-*       function treats it as '%' string
+*                                   out the _creator_. If it is omitted the function treats it as '%' string. The '%'
+*                                   matches any number of characters, even zero character.
+*
+*   @param {string} data.from       The starting date of the interval in the YYYYMMDD format (e.g. 20130521)
+*   @param {string} data.to         The ending date of the interval in the YYYYMMDD format (e.g. 20130528)
+*   @param {string} [data.filter]   The filter to be used in the _number_ field. If it is omitted the function treats it as '%' string
 * @param {function} cb The callback function
 */
 function getHistoryCallerNoteInterval(data, cb) {
@@ -2389,6 +2425,29 @@ function getHistoryCallerNoteInterval(data, cb) {
             operator = ' LIKE ';
         }
 
+        // define the mysql fields to be returned
+        var attributes = [
+            [ 'DATE_FORMAT(creation,   "%d/%m/%Y")', 'creationdate'   ],
+            [ 'DATE_FORMAT(creation,   "%H:%i:%S")', 'creationtime'   ],
+            [ 'DATE_FORMAT(expiration, "%d/%m/%Y")', 'expirationdate' ],
+            [ 'DATE_FORMAT(expiration, "%H:%i:%S")', 'expirationtime' ],
+            'id', 'public', 'reservation'
+        ];
+
+        // if the privacy string is present, than hide the numbers and names
+        if (data.privacyStr) {
+            // the numbers and names are hidden
+            attributes.push([ 'CONCAT( SUBSTRING(number, 1, LENGTH(number) - ' + data.privacyStr.length + '), "' + data.privacyStr + '")', 'number' ]);
+            attributes.push([ 'CONCAT( "", "' + data.privacyStr + '")', 'creator' ]);
+            attributes.push([ 'CONCAT( "", "' + data.privacyStr + '")', 'text' ]);
+
+        } else {
+            // the numbers and names are clear
+            attributes.push('number');
+            attributes.push('creator');
+            attributes.push('text');
+        }
+
         // search
         models[JSON_KEYS.CALLER_NOTE].findAll({
             where: [
@@ -2400,14 +2459,8 @@ function getHistoryCallerNoteInterval(data, cb) {
                 data.from, data.to,
                 data.filter
             ],
-            attributes: [
-                [ 'DATE_FORMAT(creation,   "%d/%m/%Y")', 'creationdate'   ],
-                [ 'DATE_FORMAT(creation,   "%H:%i:%S")', 'creationtime'   ],
-                [ 'DATE_FORMAT(expiration, "%d/%m/%Y")', 'expirationdate' ],
-                [ 'DATE_FORMAT(expiration, "%H:%i:%S")', 'expirationtime' ],
-                'id',     'text',    'creator', 'number',
-                'public', 'reservation'
-            ]
+            attributes: attributes
+
         }).success(function (results) {
 
             // extract results to return in the callback function
