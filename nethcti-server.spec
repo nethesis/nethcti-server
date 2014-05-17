@@ -80,9 +80,6 @@ rm -rf $RPM_BUILD_ROOT
 - Some template customer card examples.
 - Other bugs.
 
-* Tue Apr 15 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.0.2-1
-- First NethServer release.
-
 * Tue Mar 25 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.0.1-1
 - Increase the version to 2.0.1 final release.
 - Enh #2862: http_proxy listen in http 8179 and https 8180 ports.
