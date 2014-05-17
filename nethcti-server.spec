@@ -45,6 +45,7 @@ rm -rf root/usr/lib/node/nethcti-server/docs/admin-manual/
 rm -rf $RPM_BUILD_ROOT
 (cd root; find . -depth -print | cpio -dump $RPM_BUILD_ROOT)
 mv root/usr/lib/node/nethcti-server/plugins/com_static_http/static/img  $RPM_BUILD_ROOT/var/lib/nethserver/nethcti/static/
+mv root/usr/lib/node/nethcti-server/plugins/com_static_http/static/templates  $RPM_BUILD_ROOT/var/lib/nethserver/nethcti/static/
 /sbin/e-smith/genfilelist \
 --file /etc/rc.d/init.d/nethcti-server 'attr(0755,root,root)' \
 --file /usr/lib/node/nethcti-server/script/sendsms.php 'attr(0755,root,root)' \
