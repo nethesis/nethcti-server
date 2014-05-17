@@ -1,5 +1,5 @@
 Name:		nethcti-server
-Version:	2.0.2
+Version:	2.1
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI 2
 
@@ -67,6 +67,19 @@ rm -rf $RPM_BUILD_ROOT
 %doc
 
 %changelog
+* Mon May 19 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.1-1
+- Enh #2859: obscure history call clid when privacy is enabled.
+- Fea #2850: new rest api to retrieve all users permissions.
+- Fea #2906 #2907: more data about queues.
+- Fea #2685: new rest api to support legacy third-party applications.
+- Fea #2547: windows integration with desktop notifications.
+- Fea #2495: support for MSSQL customer cards.
+- Bug #2918: fix some bugs about the privacy.
+- Bug #2886: obfuscated numbers in the operator panel with privacy disabled.
+- Bug #2872: the "open door" streaming does not work with "MOBOTIX T24 mx10-13-20-46".
+- Some template customer card examples.
+- Other bugs.
+
 * Tue Apr 15 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.0.2-1
 - First NethServer release.
 
