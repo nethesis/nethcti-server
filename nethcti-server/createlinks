@@ -47,7 +47,7 @@ templates2events("/etc/nethcti/nethcti.pem",$event);
 
 #
 # NethServer FIXME
-# use certificate-update event with service restart
+# use certificate-update event with restart service
 # console-save 
 #
 $event = "console-save";
