@@ -1,5 +1,5 @@
 Name:		nethcti-server
-Version:	2.1
+Version:	2.1.1
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI 2
 
@@ -72,6 +72,9 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Mon May 19 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.1.1-1
+- Bug #2943: fix group by queue.
+
 * Mon May 19 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.1-1
 - Enh #2859: obscure history call clid when privacy is enabled.
 - Fea #2850: new rest api to retrieve all users permissions.
