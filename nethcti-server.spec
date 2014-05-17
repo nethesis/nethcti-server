@@ -72,7 +72,7 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
-* Fri May 16 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.1-1
+* Mon May 19 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.1-1
 - Enh #2859: obscure history call clid when privacy is enabled.
 - Fea #2850: new rest api to retrieve all users permissions.
 - Fea #2906 #2907: more data about queues.
