@@ -2799,6 +2799,7 @@ function getAgentsStats(day, cb) {
 
         var query = 'SELECT'
                     + ' a.agent AS agent'
+                    + ', a.queuename AS queue'
                     + ', DATE_FORMAT(a.time, "%k:%i:%s") AS time_in'
                     + ', DATE_FORMAT(MIN(b.time), "%k:%i:%s") AS time_out'
                     + ', UNIX_TIMESTAMP(MIN(b.time))-UNIX_TIMESTAMP(a.time) AS secs'
@@ -2806,11 +2807,12 @@ function getAgentsStats(day, cb) {
                     + ' FROM asteriskcdrdb.queue_log a'
                     + ' LEFT JOIN asteriskcdrdb.queue_log b'
                     + ' ON b.agent = a.agent'
+                        + ' AND b.queuename = a.queuename'
                         + ' AND b.time > a.time'
                         + ' AND $JOINS'
                     + ' WHERE $BINDS'
                     + ' AND DATE_FORMAT(a.time,"%Y%m%d") = \'' + day + '\''
-                    + ' GROUP BY agent, a.time';
+                    + ' GROUP BY agent, queue, a.time';
 
         // Group results by agent
         var __group = function (rows) {
@@ -2818,14 +2820,20 @@ function getAgentsStats(day, cb) {
 
             for (var i in rows) {
                 if (!(rows[i].agent in rows_grouped)) {
-                    rows_grouped[rows[i].agent] = [];
+                    rows_grouped[rows[i].agent] = {};
+                }
+
+                if (!(rows[i].queue in rows_grouped[rows[i].agent])) {
+                    rows_grouped[rows[i].agent][rows[i].queue] = [];
                 }
 
                 var agent = rows[i].agent;
+                var queue = rows[i].queue;
 
                 delete rows[i].agent;
+                delete rows[i].queue;
 
-                rows_grouped[agent].push(rows[i]);
+                rows_grouped[agent][queue].push(rows[i]);
             }
 
             return rows_grouped;
