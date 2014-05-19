@@ -2818,14 +2818,14 @@ function getAgentsStats(day, cb) {
 
             for (var i in rows) {
                 if (!(rows[i].agent in rows_grouped)) {
-                    rows_grouped[rows[i].agent] = {};
+                    rows_grouped[rows[i].agent] = [];
                 }
 
                 var agent = rows[i].agent;
 
                 delete rows[i].agent;
 
-                rows_grouped[agent] = rows;
+                rows_grouped[agent].push(rows[i]);
             }
 
             return rows_grouped;
