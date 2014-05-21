@@ -1262,7 +1262,8 @@ function loginHdlr(socket, obj) {
             }
 
             // if the user has the queues permission, than he will receive the asterisk events that affects the queues
-            if (compAuthorization.authorizeOpQueuesUser(obj.accessKeyId) === true) {
+            if (compAuthorization.authorizeOpQueuesUser(obj.accessKeyId) === true
+                || compAuthorization.authorizeOpAdminQueuesUser(obj.accessKeyId) === true) {
 
                 if (compAuthorization.isPrivacyEnabled(obj.accessKeyId) === true) {
                     // join the user to the websocket room to receive the asterisk events that affects the queues, using hide numbers
