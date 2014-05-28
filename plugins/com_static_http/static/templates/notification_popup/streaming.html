@@ -109,7 +109,7 @@
                 var params = getUrlParams();
                 
                 document.getElementById('stream-description').innerHTML = params.description;
-                document.getElementById('stream-img').src = params.url;
+                document.getElementById('stream-img').src = params.url + '?ie=' + (new Date()).getTime();
 
                 if (!params.open || params.open === 'false') {
                     document.getElementById('open-stream-but').style.display  = 'none';
