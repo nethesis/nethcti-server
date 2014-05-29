@@ -43,6 +43,7 @@ templates2events("/etc/nethcti/chat.json",$event);
 templates2events("/etc/nethcti/mailer.json",$event);
 templates2events("/etc/nethcti/services.json",$event);
 templates2events("/etc/nethcti/nethcti.pem",$event);
+safe_symlink("restart", "root/etc/e-smith/events/$event/services2adjust/nethcti-server");
 
 
 #
@@ -50,7 +51,31 @@ templates2events("/etc/nethcti/nethcti.pem",$event);
 #
 $event = "console-save";
 templates2events("/etc/nethcti/nethcti.pem",$event);
+templates2events("/etc/nethcti/authentication.json",$event);
+templates2events("/etc/nethcti/chat.json",$event);
+templates2events("/etc/nethcti/mailer.json",$event);
+templates2events("/etc/nethcti/services.json",$event);
+safe_symlink("restart", "root/etc/e-smith/events/$event/services2adjust/nethcti-server");
 
+#
+# post-upgrade
+#
+$event = "post-upgrade";
+templates2events("/etc/nethcti/authentication.json",$event);
+templates2events("/etc/nethcti/chat.json",$event);
+templates2events("/etc/nethcti/mailer.json",$event);
+templates2events("/etc/nethcti/services.json",$event);
+safe_symlink("restart", "root/etc/e-smith/events/$event/services2adjust/nethcti-server");
+
+#
+# domain-modify
+#
+$event = "domain-modify";
+templates2events("/etc/nethcti/authentication.json",$event);
+templates2events("/etc/nethcti/chat.json",$event);
+templates2events("/etc/nethcti/mailer.json",$event);
+templates2events("/etc/nethcti/services.json",$event);
+safe_symlink("restart", "root/etc/e-smith/events/$event/services2adjust/nethcti-server");
 
 #
 # logrotate
