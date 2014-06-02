@@ -1,5 +1,5 @@
 Name:		nethcti-server
-Version:	2.1.1
+Version:	2.1.2
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI 2
 
@@ -72,6 +72,9 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Tue Jun 3 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.1.2-1
+- Bug #2960: fix image cache on nethifier streaming popup.
+
 * Mon May 19 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.1.1-1
 - Bug #2943: fix group by queue.
 
