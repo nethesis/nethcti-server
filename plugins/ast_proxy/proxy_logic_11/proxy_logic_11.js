@@ -1155,10 +1155,10 @@ function queueDetails(err, resp) {
 
         // check the parameter
         if (typeof resp !== 'object'
-            || resp.queue               === undefined || resp.members             === undefined
-            || resp.holdtime            === undefined || resp.talktime            === undefined
-            || resp.completedCallsCount === undefined || resp.abandonedCallsCount === undefined
-            || resp.serviceLevel        === undefined) {
+            || resp.queue                  === undefined || resp.members             === undefined
+            || resp.holdtime               === undefined || resp.talktime            === undefined
+            || resp.completedCallsCount    === undefined || resp.abandonedCallsCount === undefined
+            || resp.serviceLevelTimePeriod === undefined) {
 
             throw new Error('wrong parameter');
         }
@@ -1174,9 +1174,9 @@ function queueDetails(err, resp) {
         // set the queue data
         queues[q].setAvgHoldTime(resp.holdtime);
         queues[q].setAvgTalkTime(resp.talktime);
-        queues[q].setServiceLevel(resp.serviceLevel);
         queues[q].setCompletedCallsCount(resp.completedCallsCount);
         queues[q].setAbandonedCallsCount(resp.abandonedCallsCount);
+        queues[q].setServiceLevelTimePeriod(resp.serviceLevelTimePeriod);
 
         // add all static and dynamic members that are logged in
         var m;

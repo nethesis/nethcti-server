@@ -52,11 +52,11 @@ exports.Queue = function (queueNum) {
     /**
     * The service level.
     *
-    * @property serviceLevel
+    * @property serviceLevelTimePeriod
     * @type {string}
     * @private
     */
-    var serviceLevel;
+    var serviceLevelTimePeriod;
 
     /**
     * The number of completed calls.
@@ -198,12 +198,12 @@ exports.Queue = function (queueNum) {
     function getCompletedCallsCount() { return completedCallsCount; }
 
     /**
-    * Sets the service level.
+    * Sets the service level time period.
     *
-    * @method setServiceLevel
-    * @param {string} level The service level.
+    * @method setServiceLevelTimePeriod
+    * @param {string} level The service level time period.
     */
-    function setServiceLevel(level) { serviceLevel = level; }
+    function setServiceLevelTimePeriod(level) { serviceLevelTimePeriod = level; }
 
     /*
     * Sets the number of completed calls.
@@ -326,40 +326,40 @@ exports.Queue = function (queueNum) {
         for (k in waitingCallers) { jsonWCallers[k] = waitingCallers[k].toJSON(privacyStr); }
 
         return {
-            name:                name,
-            queue:               queue,
-            members:             jsonMembers,
-            avgHoldTime:         avgHoldTime,
-            avgTalkTime:         avgTalkTime,
-            serviceLevel:        serviceLevel,
-            waitingCallers:      jsonWCallers,
-            completedCallsCount: completedCallsCount,
-            abandonedCallsCount: abandonedCallsCount
+            name:                   name,
+            queue:                  queue,
+            members:                jsonMembers,
+            avgHoldTime:            avgHoldTime,
+            avgTalkTime:            avgTalkTime,
+            waitingCallers:         jsonWCallers,
+            completedCallsCount:    completedCallsCount,
+            abandonedCallsCount:    abandonedCallsCount,
+            serviceLevelTimePeriod: serviceLevelTimePeriod
         }
     }
 
     // public interface
     return {
-        toJSON:                 toJSON,
-        setName:                setName,
-        getName:                getName,
-        getQueue:               getQueue,
-        toString:               toString,
-        addMember:              addMember,
-        getMember:              getMember,
-        removeMember:           removeMember,
-        getAllMembers:          getAllMembers,
-        getAvgHoldTime:         getAvgHoldTime,
-        setAvgHoldTime:         setAvgHoldTime,
-        setServiceLevel:        setServiceLevel,
-        getAvgTalkTime:         getAvgTalkTime,
-        setAvgTalkTime:         setAvgTalkTime,
-        addWaitingCaller:       addWaitingCaller,
-        removeWaitingCaller:    removeWaitingCaller,
-        getAllWaitingCallers:   getAllWaitingCallers,
-        getCompletedCallsCount: getCompletedCallsCount,
-        setCompletedCallsCount: setCompletedCallsCount,
-        getAbandonedCallsCount: getAbandonedCallsCount,
-        setAbandonedCallsCount: setAbandonedCallsCount
+        toJSON:                    toJSON,
+        setName:                   setName,
+        getName:                   getName,
+        getQueue:                  getQueue,
+        toString:                  toString,
+        addMember:                 addMember,
+        getMember:                 getMember,
+        removeMember:              removeMember,
+        getAllMembers:             getAllMembers,
+        getAvgHoldTime:            getAvgHoldTime,
+        setAvgHoldTime:            setAvgHoldTime,
+        getAvgTalkTime:            getAvgTalkTime,
+        setAvgTalkTime:            setAvgTalkTime,
+        addWaitingCaller:          addWaitingCaller,
+        removeWaitingCaller:       removeWaitingCaller,
+        getAllWaitingCallers:      getAllWaitingCallers,
+        getCompletedCallsCount:    getCompletedCallsCount,
+        setCompletedCallsCount:    setCompletedCallsCount,
+        getAbandonedCallsCount:    getAbandonedCallsCount,
+        setAbandonedCallsCount:    setAbandonedCallsCount,
+        setServiceLevelTimePeriod: setServiceLevelTimePeriod
     };
 }

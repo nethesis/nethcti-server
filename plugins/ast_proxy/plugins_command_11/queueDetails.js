@@ -113,14 +113,14 @@ var IDLOG = '[queueDetails]';
 
                         // create queue details object
                         list[data.actionid] = {
-                            queue:               data.queue,
-                            members:             {},
-                            holdtime:            data.holdtime,
-                            talktime:            data.talktime,
-                            serviceLevel:        data.servicelevel,
-                            waitingCallers:      {},
-                            completedCallsCount: data.completed,
-                            abandonedCallsCount: data.abandoned
+                            queue:                  data.queue,
+                            members:                {},
+                            holdtime:               data.holdtime,
+                            talktime:               data.talktime,
+                            waitingCallers:         {},
+                            completedCallsCount:    data.completed,
+                            abandonedCallsCount:    data.abandoned,
+                            serviceLevelTimePeriod: data.servicelevel
                         };
 
                     // store member information object. This
