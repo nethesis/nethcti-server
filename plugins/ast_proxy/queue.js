@@ -50,13 +50,22 @@ exports.Queue = function (queueNum) {
     var avgTalkTime;
 
     /**
-    * The service level.
+    * The service level time period.
     *
     * @property serviceLevelTimePeriod
     * @type {string}
     * @private
     */
     var serviceLevelTimePeriod;
+
+    /**
+    * The service level percentage.
+    *
+    * @property serviceLevelPercentage
+    * @type {string}
+    * @private
+    */
+    var serviceLevelPercentage;
 
     /**
     * The number of completed calls.
@@ -205,6 +214,14 @@ exports.Queue = function (queueNum) {
     */
     function setServiceLevelTimePeriod(level) { serviceLevelTimePeriod = level; }
 
+    /**
+    * Sets the service level percentage.
+    *
+    * @method setServiceLevelPercentage
+    * @param {string} percentage The service level percentage.
+    */
+    function setServiceLevelPercentage(percentage) { serviceLevelPercentage = percentage; }
+
     /*
     * Sets the number of completed calls.
     *
@@ -297,14 +314,16 @@ exports.Queue = function (queueNum) {
     * Returns the JSON representation of the object.
     *
     *     {
-    *         name:                "Coda401",
-    *         queue:               "401",
-    *         members:             { QueueMember.toJSON(), ... }        // the keys is the extension numbers
-    *         avgHoldTime:         "37"
-    *         avgTalkTime:         "590",
-    *         waitingCallers:      { QueueWaitingCaller.toJSON(), ... } // the keys is the channel identifier
-    *         abandonedCallsCount: "26",
-    *         completedCallsCount: "11"
+    *         name:                   "Coda401",
+    *         queue:                  "401",
+    *         members:                { QueueMember.toJSON(), ... }        // the keys is the extension numbers
+    *         avgHoldTime:            "37"
+    *         avgTalkTime:            "590",
+    *         waitingCallers:         { QueueWaitingCaller.toJSON(), ... } // the keys is the channel identifier
+    *         abandonedCallsCount:    "26",
+    *         completedCallsCount:    "11"
+    *         serviceLevelTimePeriod: "60"
+    *         serviceLevelPercentage: "100.0"
     *     }
     *
     * @method toJSON
@@ -334,7 +353,8 @@ exports.Queue = function (queueNum) {
             waitingCallers:         jsonWCallers,
             completedCallsCount:    completedCallsCount,
             abandonedCallsCount:    abandonedCallsCount,
-            serviceLevelTimePeriod: serviceLevelTimePeriod
+            serviceLevelTimePeriod: serviceLevelTimePeriod,
+            serviceLevelPercentage: serviceLevelPercentage
         }
     }
 
@@ -360,6 +380,7 @@ exports.Queue = function (queueNum) {
         setCompletedCallsCount:    setCompletedCallsCount,
         getAbandonedCallsCount:    getAbandonedCallsCount,
         setAbandonedCallsCount:    setAbandonedCallsCount,
-        setServiceLevelTimePeriod: setServiceLevelTimePeriod
+        setServiceLevelTimePeriod: setServiceLevelTimePeriod,
+        setServiceLevelPercentage: setServiceLevelPercentage
     };
 }

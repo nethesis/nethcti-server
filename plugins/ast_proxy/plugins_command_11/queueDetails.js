@@ -105,11 +105,11 @@ var IDLOG = '[queueDetails]';
                 try {
                     // store new queue information object. This
                     // is the event about queue informations
-                    if (data && data.queue     && data.actionid
-                             && data.holdtime  && data.talktime
-                             && data.completed && data.abandoned
-                             && data.abandoned && data.servicelevel
-                             && data.event === 'QueueParams') {
+                    if (data && data.queue            && data.actionid
+                             && data.holdtime         && data.talktime
+                             && data.completed        && data.abandoned
+                             && data.abandoned        && data.servicelevel
+                             && data.servicelevelperf && data.event === 'QueueParams') {
 
                         // create queue details object
                         list[data.actionid] = {
@@ -120,7 +120,8 @@ var IDLOG = '[queueDetails]';
                             waitingCallers:         {},
                             completedCallsCount:    data.completed,
                             abandonedCallsCount:    data.abandoned,
-                            serviceLevelTimePeriod: data.servicelevel
+                            serviceLevelTimePeriod: data.servicelevel,
+                            serviceLevelPercentage: data.servicelevelperf
                         };
 
                     // store member information object. This

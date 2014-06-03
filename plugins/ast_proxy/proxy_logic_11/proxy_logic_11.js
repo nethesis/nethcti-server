@@ -1177,6 +1177,7 @@ function queueDetails(err, resp) {
         queues[q].setCompletedCallsCount(resp.completedCallsCount);
         queues[q].setAbandonedCallsCount(resp.abandonedCallsCount);
         queues[q].setServiceLevelTimePeriod(resp.serviceLevelTimePeriod);
+        queues[q].setServiceLevelPercentage(resp.serviceLevelPercentage);
 
         // add all static and dynamic members that are logged in
         var m;
