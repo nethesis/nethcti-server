@@ -50,6 +50,15 @@ exports.Queue = function (queueNum) {
     var avgTalkTime;
 
     /**
+    * The service level.
+    *
+    * @property serviceLevel
+    * @type {string}
+    * @private
+    */
+    var serviceLevel;
+
+    /**
     * The number of completed calls.
     *
     * @property completedCallsCount
@@ -189,7 +198,15 @@ exports.Queue = function (queueNum) {
     function getCompletedCallsCount() { return completedCallsCount; }
 
     /**
-    * Set the number of completed calls.
+    * Sets the service level.
+    *
+    * @method setServiceLevel
+    * @param {string} level The service level.
+    */
+    function setServiceLevel(level) { serviceLevel = level; }
+
+    /*
+    * Sets the number of completed calls.
     *
     * @method setCompletedCallsCount
     * @param {number} num The number of completed calls.
@@ -314,6 +331,7 @@ exports.Queue = function (queueNum) {
             members:             jsonMembers,
             avgHoldTime:         avgHoldTime,
             avgTalkTime:         avgTalkTime,
+            serviceLevel:        serviceLevel,
             waitingCallers:      jsonWCallers,
             completedCallsCount: completedCallsCount,
             abandonedCallsCount: abandonedCallsCount
@@ -333,6 +351,7 @@ exports.Queue = function (queueNum) {
         getAllMembers:          getAllMembers,
         getAvgHoldTime:         getAvgHoldTime,
         setAvgHoldTime:         setAvgHoldTime,
+        setServiceLevel:        setServiceLevel,
         getAvgTalkTime:         getAvgTalkTime,
         setAvgTalkTime:         setAvgTalkTime,
         addWaitingCaller:       addWaitingCaller,

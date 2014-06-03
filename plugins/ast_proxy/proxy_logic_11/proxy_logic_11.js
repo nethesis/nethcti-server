@@ -1157,7 +1157,8 @@ function queueDetails(err, resp) {
         if (typeof resp !== 'object'
             || resp.queue               === undefined || resp.members             === undefined
             || resp.holdtime            === undefined || resp.talktime            === undefined
-            || resp.completedCallsCount === undefined || resp.abandonedCallsCount === undefined) {
+            || resp.completedCallsCount === undefined || resp.abandonedCallsCount === undefined
+            || resp.serviceLevel        === undefined) {
 
             throw new Error('wrong parameter');
         }
@@ -1173,6 +1174,7 @@ function queueDetails(err, resp) {
         // set the queue data
         queues[q].setAvgHoldTime(resp.holdtime);
         queues[q].setAvgTalkTime(resp.talktime);
+        queues[q].setServiceLevel(resp.serviceLevel);
         queues[q].setCompletedCallsCount(resp.completedCallsCount);
         queues[q].setAbandonedCallsCount(resp.abandonedCallsCount);
 

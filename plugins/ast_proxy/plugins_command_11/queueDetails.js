@@ -108,7 +108,8 @@ var IDLOG = '[queueDetails]';
                     if (data && data.queue     && data.actionid
                              && data.holdtime  && data.talktime
                              && data.completed && data.abandoned
-                             && data.abandoned && data.event === 'QueueParams') {
+                             && data.abandoned && data.servicelevel
+                             && data.event === 'QueueParams') {
 
                         // create queue details object
                         list[data.actionid] = {
@@ -116,6 +117,7 @@ var IDLOG = '[queueDetails]';
                             members:             {},
                             holdtime:            data.holdtime,
                             talktime:            data.talktime,
+                            serviceLevel:        data.servicelevel,
                             waitingCallers:      {},
                             completedCallsCount: data.completed,
                             abandonedCallsCount: data.abandoned
