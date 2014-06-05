@@ -1,5 +1,5 @@
 Name:		nethcti-server
-Version:	2.1.2
+Version:	2.1.3
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI 2
 
@@ -10,9 +10,9 @@ Source1:	nethcti-server-source.tar.gz
 
 BuildRequires:	nethserver-devtools
 Requires:	nodejs010-nodejs
-Requires:	ejabberd
 Requires:       nethvoice-module-nethcti
 AutoReq:	no
+
 
 %description
 Nodejs Asterisk proxy used for NethCTI 2
@@ -47,7 +47,6 @@ rm -rf $RPM_BUILD_ROOT
 mv root/usr/lib/node/nethcti-server/plugins/com_static_http/static/img  $RPM_BUILD_ROOT/var/lib/nethserver/nethcti/static/
 mv root/usr/lib/node/nethcti-server/plugins/com_static_http/static/templates  $RPM_BUILD_ROOT/var/lib/nethserver/nethcti/static/
 /sbin/e-smith/genfilelist \
---file /etc/rc.d/init.d/nethcti-server 'attr(0755,root,root)' \
 --file /usr/lib/node/nethcti-server/script/sendsms.php 'attr(0755,root,root)' \
 --file /usr/lib/node/nethcti-server/sql/update.sh 'attr(0755,root,root)' \
 --dir /var/spool/asterisk/monitor 'attr(0775,asterisk,asterisk)' \
@@ -67,6 +66,10 @@ rm -rf $RPM_BUILD_ROOT
 %doc
 
 %changelog
+* Thu Jun 05 2014 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 2.1.3-1
+- Fea #2878: remove ejabberd dependency
+- Fea #2878: refactor events
+
 * Tue Jun 3 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.1.2-1
 - Bug #2960: fix image cache on nethifier streaming popup.
 
