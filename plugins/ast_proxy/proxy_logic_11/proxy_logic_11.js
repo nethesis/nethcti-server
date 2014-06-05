@@ -173,6 +173,17 @@ var EVT_UPDATE_VOICE_MESSAGES = 'updateVoiceMessages';
 var BASE_CALL_REC_AUDIO_PATH = '/var/spool/asterisk/monitor';
 
 /**
+* The interval time to update the details of all the queues.
+*
+* @property INTERVAL_UPDATE_QUEUE_DETAILS
+* @type number
+* @private
+* @final
+* @default 60000
+*/
+var INTERVAL_UPDATE_QUEUE_DETAILS = 60000;
+
+/**
 * The logger. It must have at least three methods: _info, warn and error._
 *
 * @property logger
@@ -1132,6 +1143,38 @@ function initializeQueues() {
                 astProxy.doCmd({ command: 'queueDetails', queue: q.getQueue() }, queueDetails);
             }
         }
+
+        startIntervalUpdateQueuesDetails(INTERVAL_UPDATE_QUEUE_DETAILS);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Updates the data about all queues each interval of time.
+*
+* @method startIntervalUpdateQueuesDetails
+* @param {number} interval The interval time to update the details of all the queues.
+* @private
+*/
+function startIntervalUpdateQueuesDetails(interval) {
+    try {
+        // check the parameter
+        if (typeof interval !== 'number') { throw new Error('wrong parameter'); }
+
+        setInterval(function () {
+
+            var q;
+            for (q in queues) {
+
+                // request details for the current queue
+                logger.info(IDLOG, 'update details of queue ' + q);
+                astProxy.doCmd({ command: 'queueDetails', queue: q }, queueDetails);
+            }
+
+        }, interval);
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
