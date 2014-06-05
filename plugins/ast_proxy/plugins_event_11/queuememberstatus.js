@@ -13,9 +13,9 @@ var QUEUE_MEMBER_STATUS_ENUM = require('../queueMember.js').QUEUE_MEMBER_STATUS_
 * @private
 * @final
 * @readOnly
-* @default [queueMemberAdded]
+* @default [queueMemberStatus]
 */
-var IDLOG = '[queueMemberAdded]';
+var IDLOG = '[queueMemberStatus]';
 
 /**
 * The asterisk proxy.
@@ -39,15 +39,15 @@ var astProxy;
         var logger = console;
 
         /**
-        * The plugin that handles the QueueMemberAdded event.
+        * The plugin that handles the QueueMemberStatus event.
         *
-        * @class queueMemberAdded
+        * @class queueMemberStatus
         * @static
         */
-        var queueMemberAdded = {
+        var queueMemberStatus = {
             /**
             * It's called from _ast\_proxy_ component for each
-            * QueueMemberAdded event received from the asterisk.
+            * QueueMemberStatus event received from the asterisk.
             *
             * @method data
             * @param {object} data The asterisk event data
@@ -59,7 +59,7 @@ var astProxy;
                         && data.queue      && data.lastcall 
                         && data.location   && data.membership
                         && data.paused     && data.status
-                        && data.event === 'QueueMemberAdded') {
+                        && data.event === 'QueueMemberStatus') {
 
                         logger.info(IDLOG, 'received event ' + data.event);
 
@@ -67,7 +67,7 @@ var astProxy;
                         var member = data.location.split('@')[0].split('/')[1];
                         var isBusy = (AST_QUEUE_MEMBER_STATUS_2_STR_ADAPTER[data.status] === QUEUE_MEMBER_STATUS_ENUM.BUSY ? true : false);
 
-                        astProxy.proxyLogic.evtQueueMemberAdded({
+                        astProxy.proxyLogic.evtQueueMemberStatus({
                             name:              data.membername,
                             type:              data.membership,
                             busy:              isBusy,                               // true if the agent is busy in a conversation
@@ -79,7 +79,7 @@ var astProxy;
                         });
 
                     } else {
-                        logger.warn(IDLOG, 'QueueMemberAdded event not recognized');
+                        logger.warn(IDLOG, 'QueueMemberStatus event not recognized');
                     }
 
                 } catch (err) {
@@ -131,9 +131,9 @@ var astProxy;
         };
 
         // public interface
-        exports.data      = queueMemberAdded.data;
-        exports.visit     = queueMemberAdded.visit;
-        exports.setLogger = queueMemberAdded.setLogger;
+        exports.data      = queueMemberStatus.data;
+        exports.visit     = queueMemberStatus.visit;
+        exports.setLogger = queueMemberStatus.setLogger;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);

@@ -2509,10 +2509,60 @@ function evtQueueMemberPausedChanged(queueId, memberId, paused, reason) {
 }
 
 /**
+* An event about queue member status has been received from the asterisk.
+* It updates the data about the queue member.
+*
+* @method evtQueueMemberStatus
+* @param {object} data
+*   @param {string}  data.type              The membership type (static or dynamic)
+*   @param {string}  data.name              The name of the member
+*   @param {boolean} data.busy              It is true if the agent is busy in a conversation
+*   @param {string}  data.queueId           The queue identifier
+*   @param {string}  data.member            The queue member identifier
+*   @param {boolean} data.paused            True if the extension has been paused from the queue
+*   @param {number}  data.lastCallTimestamp The timestamp of the last call received by the member
+*   @param {number}  data.callsTakenCount   The number of the taken calls
+* @private
+*/
+function evtQueueMemberStatus(data) {
+    try {
+        // check parameters
+        if (   typeof data         !== 'object'  || typeof data.type              !== 'string'
+            || typeof data.queueId !== 'string'  || typeof data.lastCallTimestamp !== 'number'
+            || typeof data.member  !== 'string'  || typeof data.callsTakenCount   !== 'number'
+            || typeof data.paused  !== 'boolean' || typeof data.name              !== 'string'
+            || typeof data.busy    !== 'boolean') {
+
+            throw new Error('wrong parameters');
+        }
+
+        if (!queues[data.queueId]) {
+            logger.warn(IDLOG, 'received event queue member status (' + data.member + ') for not existent queue "' + queueId + '"');
+            return;
+        }
+
+        // the update of the data is done by two steps:
+        // 1. removing the current member
+        // 2. creating a new one
+        // The alternative could be to update the data of the already present member, or to create a new one
+        // if it is not present. But this is more error prone, especially for the future development if some
+        // data is added: the developer should modify more code
+        queues[data.queueId].removeMember(data.member);
+        // add the new member to the queue
+        addQueueMemberLoggedIn(data, data.queueId);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * An event about queue member added has been received from the asterisk.
 *
 * @method evtQueueMemberAdded
 * @param {object} data
+*   @param {string}  data.type              The membership type (static or dynamic)
+*   @param {string}  data.name              The name of the member
 *   @param {string}  data.queueId           The queue identifier
 *   @param {string}  data.member            The queue member identifier
 *   @param {boolean} data.paused            True if the extension has been paused from the queue
@@ -2526,7 +2576,8 @@ function evtQueueMemberAdded(data) {
         if (   typeof data         !== 'object'  || typeof data.type              !== 'string'
             || typeof data.queueId !== 'string'  || typeof data.lastCallTimestamp !== 'number'
             || typeof data.member  !== 'string'  || typeof data.callsTakenCount   !== 'number'
-            || typeof data.paused  !== 'boolean' || typeof data.name              !== 'string') {
+            || typeof data.paused  !== 'boolean' || typeof data.name              !== 'string'
+            || typeof data.busy    !== 'boolean') {
 
             throw new Error('wrong parameters');
         }
@@ -5196,6 +5247,7 @@ exports.pickupConversation              = pickupConversation;
 exports.evtExtenDndChanged              = evtExtenDndChanged;
 exports.evtQueueMemberAdded             = evtQueueMemberAdded;
 exports.EVT_PARKING_CHANGED             = EVT_PARKING_CHANGED;
+exports.evtQueueMemberStatus            = evtQueueMemberStatus;
 exports.setUnconditionalCfVm            = setUnconditionalCfVm;
 exports.redirectConversation            = redirectConversation;
 exports.EVT_NEW_VOICE_MESSAGE           = EVT_NEW_VOICE_MESSAGE;
