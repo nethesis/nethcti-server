@@ -2,6 +2,8 @@
 * @submodule plugins_command_11
 */
 var action = require('../action');
+var AST_QUEUE_MEMBER_STATUS_2_STR_ADAPTER = require('../proxy_logic_11/queue_member_status_adapter_11.js').AST_QUEUE_MEMBER_STATUS_2_STR_ADAPTER;
+var QUEUE_MEMBER_STATUS_ENUM = require('../queueMember.js').QUEUE_MEMBER_STATUS_ENUM;
 
 /**
 * The module identifier used by the logger.
@@ -126,17 +128,19 @@ var IDLOG = '[queueDetails]';
 
                     // store member information object. This
                     // is the event about a member of the queue
-                    } else if (data.membership
+                    } else if (data.membership  && data.status
                                && data.name     && data.callstaken
                                && data.lastcall && data.event === 'QueueMember') {
 
                         // data.location is in the form: "Local/211@from-queue/n"
                         var member = data.location.split('@')[0].split('/')[1];
+                        var isBusy = (AST_QUEUE_MEMBER_STATUS_2_STR_ADAPTER[data.status] === QUEUE_MEMBER_STATUS_ENUM.BUSY ? true : false);
 
                         // add the member information object
                         list[data.actionid].members[member] = {
                             name:              data.name,
                             type:              data.membership,                    // it can be 'static', 'dynamic' or 'realtime'
+                            busy:              isBusy,                             // true if the agent is busy in a conversation
                             member:            member,
                             paused:            data.paused === '1' ? true : false, // if the extension is paused on queue
                             callsTakenCount:   parseInt(data.callstaken),          // the number of the taken calls

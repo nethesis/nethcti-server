@@ -1298,7 +1298,8 @@ function addQueueMemberLoggedIn(data, queueId) {
         if (   typeof data                 !== 'object' || typeof queueId                !== 'string'
             || typeof data.member          !== 'string' || typeof data.paused            !== 'boolean'
             || typeof data.name            !== 'string' || typeof data.type              !== 'string'
-            || typeof data.callsTakenCount !== 'number' || typeof data.lastCallTimestamp !== 'number') {
+            || typeof data.callsTakenCount !== 'number' || typeof data.lastCallTimestamp !== 'number'
+            || typeof data.busy            !== 'boolean') {
 
             throw new Error('wrong parameters');
         }
@@ -1312,6 +1313,7 @@ function addQueueMemberLoggedIn(data, queueId) {
         var member = new QueueMember(data.member, queueId, data.paused, true);
         member.setName(data.name);
         member.setType(data.type);
+        member.setBusy(data.busy);
         member.setCallsTakenCount(data.callsTakenCount);
         member.setLastCallTimestamp(data.lastCallTimestamp);
 
