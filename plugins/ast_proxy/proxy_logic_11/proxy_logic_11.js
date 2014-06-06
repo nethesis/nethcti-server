@@ -1144,6 +1144,7 @@ function initializeQueues() {
             }
         }
 
+        logger.info(IDLOG, 'start the interval period to update the details of all the queues each ' + INTERVAL_UPDATE_QUEUE_DETAILS + ' msec');
         startIntervalUpdateQueuesDetails(INTERVAL_UPDATE_QUEUE_DETAILS);
 
     } catch (err) {
@@ -1278,6 +1279,10 @@ function queueDetails(err, resp) {
             queues[q].addWaitingCaller(wCaller);
             logger.info(IDLOG, 'added waiting caller ' + wCaller.getName() + ' to queue ' + wCaller.getQueue());
         }
+
+        // emit the event
+        logger.info(IDLOG, 'emit event ' + EVT_QUEUE_CHANGED + ' for queue ' + q);
+        astProxy.emit(EVT_QUEUE_CHANGED, queues[q]);
 
     } catch (error) {
         logger.error(IDLOG, error.stack);
