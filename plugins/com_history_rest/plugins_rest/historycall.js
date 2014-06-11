@@ -207,20 +207,12 @@ function setCompAuthorization(ca) {
         *
         * # GET requests
         *
-        * 1. [`historycall/day/:endpoint/:day`](#dayget)
         * 1. [`historycall/down_callrec/:id`](#down_callrecget)
         * 1. [`historycall/listen_callrec/:id`](#listen_callrecget)
+        * 1. [`historycall/day/:endpoint/:day`](#dayget)
         * 1. [`historycall/day/:endpoint/:day/:filter`](#day_filterget)
         * 1. [`historycall/interval/:endpoint/:from/:to`](#intervalget)
         * 1. [`historycall/interval/:endpoint/:from/:to/:filter`](#interval_filterget)
-        *
-        * ---
-        *
-        * ### <a id="dayget">**`historycall/day/:endpoint/:day`**</a>
-        *
-        * Returns the history call of the day _"day"_ and endpoint _"endpoint"_. E.g. the endpoint can be
-        * the extension number. Date must be expressed in YYYYMMDD format. If an error occurs an HTTP 500
-        * response is returned.
         *
         * ---
         *
@@ -242,11 +234,59 @@ function setCompAuthorization(ca) {
         *
         * ---
         *
+        * ### <a id="dayget">**`historycall/day/:endpoint/:day`**</a>
+        *
+        * Returns the history call of the day _"day"_ and endpoint _"endpoint"_. E.g. the endpoint can be
+        * the extension number. Date must be expressed in YYYYMMDD format. If an error occurs an HTTP 500
+        * response is returned.
+        *
+        * Example JSON response:
+        *
+        *     [
+         {
+            date: "02/01/2014"
+            time: "08:32:57"
+            channel: "SIP/2001-00000000"
+            dstchannel: "SIP/303-0000000b"
+            uniqueid: "1388647977.5182"
+            duration: 29
+            billsec: 21
+            disposition: "ANSWERED"
+            dcontext: "ext-local"
+            recordingfile: ""
+            src: "0721123432"
+            dst: "vms201"
+            clid: ""CHIU: USER" <1233312>"
+         }
+     ]
+        *
+        * ---
+        *
         * ### <a id="day_filterget">**`historycall/day/:endpoint/:day/:filter`**</a>
         *
         * Returns the history call of the day _"day"_ and endpoint _"endpoint"_ filtering by _"filter"_.
         * E.g. the endpoint can be the extension number. Date must be expressed in YYYYMMDD format. If an
         * error occurs an HTTP 500 response is returned.
+        *
+        * Example JSON response:
+        *
+        *     [
+         {
+            date: "02/01/2014"
+            time: "08:32:57"
+            channel: "SIP/2001-00000000"
+            dstchannel: "SIP/303-0000000b"
+            uniqueid: "1388647977.5182"
+            duration: 29
+            billsec: 21
+            disposition: "ANSWERED"
+            dcontext: "ext-local"
+            recordingfile: ""
+            src: "0721123432"
+            dst: "vms201"
+            clid: ""CHIU: USER" <1233312>"
+         }
+     ]
         *
         * ---
         *
@@ -256,6 +296,26 @@ function setCompAuthorization(ca) {
         * E.g. the endpoint can be the extension number. Dates must be expressed in YYYYMMDD format.
         * If an error occurs an HTTP 500 response is returned.
         *
+        * Example JSON response:
+        *
+        *     [
+         {
+            date: "02/01/2014"
+            time: "08:32:57"
+            channel: "SIP/2001-00000000"
+            dstchannel: "SIP/303-0000000b"
+            uniqueid: "1388647977.5182"
+            duration: 29
+            billsec: 21
+            disposition: "ANSWERED"
+            dcontext: "ext-local"
+            recordingfile: ""
+            src: "0721123432"
+            dst: "vms201"
+            clid: ""CHIU: USER" <1233312>"
+         }
+     ]
+        *
         * ---
         *
         * ### <a id="interval_filterget">**`historycall/interval/:endpoint/:from/:to/:filter`**</a>
@@ -263,6 +323,26 @@ function setCompAuthorization(ca) {
         * Returns the history call between _"from"_ date to _"to"_ date for the endpoint _"endpoint"_
         * filtering by _"filter"_. E.g. the endpoint can be the extension number. Date must be expressed
         * in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
+        *
+        * Example JSON response:
+        *
+        *     [
+         {
+            date: "02/01/2014"
+            time: "08:32:57"
+            channel: "SIP/2001-00000000"
+            dstchannel: "SIP/303-0000000b"
+            uniqueid: "1388647977.5182"
+            duration: 29
+            billsec: 21
+            disposition: "ANSWERED"
+            dcontext: "ext-local"
+            recordingfile: ""
+            src: "0721123432"
+            dst: "vms201"
+            clid: ""CHIU: USER" <1233312>"
+         }
+     ]
         *
         * <br>
         *
@@ -278,7 +358,7 @@ function setCompAuthorization(ca) {
         *
         * * `id: the identifier of the call in the database`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "id": "74" }
         *

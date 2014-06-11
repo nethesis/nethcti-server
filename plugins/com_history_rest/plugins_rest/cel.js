@@ -153,12 +153,40 @@ function setCompAuthorization(ca) {
         * Returns a call trace of the given linkedid.
         * If an error occurs an HTTP 500 response is returned.
         *
+        * Example JSON response:
+        *
+        *     [
+         {
+            eventtype: "CHAN_START"
+            eventtime: "2014-01-20T11:51:14.000Z"
+            context: "from-internal"
+            channame: "SIP/209-0000001a"
+            exten: "214"
+            accountcode: "209"
+            cid: "nome209 209"
+         }
+     ]
+        *
         * ---
         *
         * ### <a id="callinfoget">**`cel/callinfo/:uniqueid`**</a>
         *
         * Returns call information of the given uniqueid
         * If an error occurs an HTTP 500 response is returned.
+        *
+        * Example JSON response:
+        *
+        *     [
+         {
+            eventtype: "CHAN_START"
+            eventtime: "2014-01-20T11:51:14.000Z"
+            context: "from-internal"
+            channame: "SIP/209-0000001a"
+            exten: "214"
+            accountcode: "209"
+            cid: "nome209 209"
+         }
+     ]
         *
         * @class plugin_rest_cel
         * @static

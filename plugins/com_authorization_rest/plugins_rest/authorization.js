@@ -118,11 +118,61 @@ function setCompAuthorization(ca) {
         *
         * Returns the user authorizations.
         *
+        * Example JSON response:
+        *
+        *     {
+         "spy": true,
+         "dnd": true,
+         "cdr": true,
+         "sms": true,
+         "chat": true,
+         "no_spy": true,
+         "postit": true,
+         "trunks": true,
+         "queues": true,
+         "intrude": true,
+         "privacy": false,
+         "parkings": true,
+         "admin_cdr": true,
+         "streaming": true,
+         "admin_sms": true,
+         "recording": true,
+         "phonebook": true,
+         "extensions": true,
+         "admin_queues": true,
+         "admin_pickup": true,
+         "admin_postit": true,
+         "admin_hangup": true,
+         "pickup_groups": false,
+         "customer_card": true,
+         "admin_transfer": true,
+         "phone_redirect": true,
+         "operator_groups": true,
+         "admin_recording": true,
+         "attended_transfer": true
+     }
+        *
         * ---
         *
         * ### <a id="allusersget">**`authorization/allusers`**</a>
         *
         * Returns the authorizations of all users.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "alessandro": {
+              "spy": true,
+              "dnd": true,
+              ...
+         },
+         "andrea": {
+              "spy": true,
+              "dnd": true,
+              ...
+         }
+     }
+        *
         *
         * @class plugin_rest_authorization
         * @static

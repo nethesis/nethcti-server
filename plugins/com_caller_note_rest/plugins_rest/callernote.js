@@ -188,6 +188,23 @@ function getFilteredCallerNotes(username, callerNotes) {
         *
         * Gets all the created caller notes by the user and the publics by the others for the specified phone number.
         *
+        * Example JSON response:
+        *
+        *     [
+         {
+            "creationdate": "11/06/2014"
+            "creationtime": "14:26:12"
+            "expirationdate": "12/06/2014"
+            "expirationtime": "10:30:00"
+            "id": 5
+            "public": 1
+            "reservation": 0
+            "number": "609"
+            "creator": "alessandro"
+            "text": "test"
+         }
+     ]
+        *
         * # POST requests
         *
         * 1. [`callernote/create`](#createpost)
@@ -208,7 +225,7 @@ function getFilteredCallerNotes(username, callerNotes) {
         * * `expirationTime: the expiration time of the note. It must be espressed in the format HHmmss. e.g. to express the time of "21:00:45" you must use "210045"`
         * * `reservation: (true | false) if the user want to booking the next call from the specified number`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "text": "some text", "number": "123456", "visibility": "public", "expirationDate": "20131001", "expirationTime": "210045", "reservation": "true" }
         *
@@ -228,7 +245,7 @@ function getFilteredCallerNotes(username, callerNotes) {
         *                      It requires the expirationDate`
         * * `[reservation]:    (true | false) if the user want to booking the next call from the specified number`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "id": "71", "text": "some text" }
         *
@@ -240,7 +257,7 @@ function getFilteredCallerNotes(username, callerNotes) {
         *
         * * `id: the caller note identifier in the NethCTI caller note database`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "id": "71" }
         *

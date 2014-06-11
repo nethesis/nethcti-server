@@ -122,12 +122,114 @@ function setCompUtil(comp) {
         * It returns all database entries that contain the specified _term_ in the fields _name, company,
         * workphone, homephone_ and _cellphone_.
         *
+        * Example JSON response:
+        *
+        *     {
+          "centralized": [
+              {
+                  "id": 1672,
+                  "owner_id": "",
+                  "type": "Cliente",
+                  "homeemail": null,
+                  "workemail": "user@company.com",
+                  "homephone": null,
+                  "workphone": "0512993322",
+                  "cellphone": "",
+                  "fax": "0512993322",
+                  "title": null,
+                  "company": "Ufficio sviluppatori",
+                  "notes": "",
+                  "name": "",
+                  "homestreet": null,
+                  "homepob": null,
+                  "homecity": null,
+                  "homeprovince": null,
+                  "homepostalcode": null,
+                  "homecountry": null,
+                  "workstreet": "S.S.PONTI, 1",
+                  "workpob": null,
+                  "workcity": "Pesaro",
+                  "workprovince": null,
+                  "workpostalcode": null,
+                  "workcountry": null,
+                  "url": "http://www.nethesis.it"
+              }
+          ],
+          "nethcti": [
+              {
+                  "id": 2,
+                  "owner_id": "alessandro",
+                  "type": "public",
+                  "homeemail": "",
+                  "workemail": "",
+                  "homephone": "",
+                  "workphone": "",
+                  "cellphone": "1233245",
+                  "fax": "",
+                  "title": "",
+                  "company": "",
+                  "notes": "",
+                  "name": "alessandro",
+                  "homestreet": "",
+                  "homepob": "",
+                  "homecity": "",
+                  "homeprovince": "",
+                  "homepostalcode": "",
+                  "homecountry": "",
+                  "workstreet": "",
+                  "workpob": "",
+                  "workcity": "",
+                  "workprovince": "",
+                  "workpostalcode": "",
+                  "workcountry": "",
+                  "url": "",
+                  "extension": "",
+                  "speeddial_num": "1233245"
+              }
+          ]
+      }
+        *
         * ---
         *
         * ### <a id="speeddialsget">**`phonebook/speeddials`**</a>
         *
         * The client receives all speeddial contacts owned by him. The contacts are in the _NethCTI_ phonebook.
         * It returns all database entries that have the field _type_ equal to "speeddial".
+        *
+        * Example JSON response:
+        *
+        *     [
+            {
+                  "id": 1
+                  "owner_id": "alessandro"
+                  "type": "speeddial"
+                  "homeemail": ""
+                  "workemail": ""
+                  "homephone": ""
+                  "workphone": ""
+                  "cellphone": "123456"
+                  "fax": ""
+                  "title": ""
+                  "company": ""
+                  "notes": ""
+                  "name": "ale"
+                  "homestreet": ""
+                  "homepob": ""
+                  "homecity": ""
+                  "homeprovince": ""
+                  "homepostalcode": ""
+                  "homecountry": ""
+                  "workstreet": ""
+                  "workpob": ""
+                  "workcity": ""
+                  "workprovince": ""
+                  "workpostalcode": ""
+                  "workcountry": ""
+                  "url": ""
+                  "extension": ""
+                  "speeddial_num": "123456"
+            }
+      ]
         *
         * ---
         *
@@ -136,6 +238,39 @@ function setCompUtil(comp) {
         * The client receives the details of the contact that is in the _NethCTI_ phonebook. The parameter
         * _id_ is the database identifier of the contact.
         *
+        * Example JSON response:
+        *
+        *     {
+        "id": 1,
+        "owner_id": "alessandro",
+        "type": "speeddial",
+        "homeemail": "",
+        "workemail": "",
+        "homephone": "",
+        "workphone": "",
+        "cellphone": "123456",
+        "fax": "",
+        "title": "",
+        "company": "",
+        "notes": "",
+        "name": "ale",
+        "homestreet": "",
+        "homepob": "",
+        "homecity": "",
+        "homeprovince": "",
+        "homepostalcode": "",
+        "homecountry": "",
+        "workstreet": "",
+        "workpob": "",
+        "workcity": "",
+        "workprovince": "",
+        "workpostalcode": "",
+        "workcountry": "",
+        "url": "",
+        "extension": "",
+        "speeddial_num": "123456"
+    }
+        *
         * ---
         *
         * ### <a id="searchstartswithget">**`phonebook/searchstartswith/:term`**</a>
@@ -143,12 +278,146 @@ function setCompUtil(comp) {
         * The client receives all phonebook contacts found in the _centralized_ and _NethCTI_ phonebooks.
         * It returns all database entries whose _name_ and _company_ fields starts with the specified term.
         *
+        * Example JSON response:
+        *
+        *     {
+          "centralized": [
+              {
+                  "id": 488,
+                  "owner_id": "",
+                  "type": "Reseller",
+                  "homeemail": null,
+                  "workemail": "ale@nethesis.it",
+                  "homephone": null,
+                  "workphone": "",
+                  "cellphone": "",
+                  "fax": "",
+                  "title": null,
+                  "company": "Nethesis srl",
+                  "notes": "some notes",
+                  "name": "alert ",
+                  "homestreet": null,
+                  "homepob": null,
+                  "homecity": null,
+                  "homeprovince": null,
+                  "homepostalcode": null,
+                  "homecountry": null,
+                  "workstreet": "Strada degli Olmi",
+                  "workpob": null,
+                  "workcity": "Pesaro",
+                  "workprovince": null,
+                  "workpostalcode": null,
+                  "workcountry": null,
+                  "url": "http://www.nethesis.it"
+              }
+          ],
+          "nethcti": [
+              {
+                  "id": 1,
+                  "owner_id": "alessandro",
+                  "type": "speeddial",
+                  "homeemail": "",
+                  "workemail": "",
+                  "homephone": "",
+                  "workphone": "",
+                  "cellphone": "123456",
+                  "fax": "",
+                  "title": "",
+                  "company": "",
+                  "notes": "",
+                  "name": "ale",
+                  "homestreet": "",
+                  "homepob": "",
+                  "homecity": "",
+                  "homeprovince": "",
+                  "homepostalcode": "",
+                  "homecountry": "",
+                  "workstreet": "",
+                  "workpob": "",
+                  "workcity": "",
+                  "workprovince": "",
+                  "workpostalcode": "",
+                  "workcountry": "",
+                  "url": "",
+                  "extension": "",
+                  "speeddial_num": "123456"
+              }
+          ]
+      }
+        *
         * ---
         *
         * ### <a id="searchstartswith_digitget">**`phonebook/searchstartswith_digit`**</a>
         *
         * The client receives all phonebook contacts found in the _centralized_ and _NethCTI_ phonebooks.
         * It returns all database entries whose _name_ and _company_ fields starts with a digit.
+        *
+        * Example JSON response:
+        *
+        *     {
+          "centralized": [
+              {
+                  "id": 2223,
+                  "owner_id": "",
+                  "type": "Developer",
+                  "homeemail": null,
+                  "workemail": "ale@nethesis.it",
+                  "homephone": null,
+                  "workphone": "0721405516",
+                  "cellphone": "",
+                  "fax": "",
+                  "title": null,
+                  "company": "3 Nethesis",
+                  "notes": "",
+                  "name": "",
+                  "homestreet": null,
+                  "homepob": null,
+                  "homecity": null,
+                  "homeprovince": null,
+                  "homepostalcode": null,
+                  "homecountry": null,
+                  "workstreet": "Strada degli Olmi",
+                  "workpob": null,
+                  "workcity": "Pesaro",
+                  "workprovince": null,
+                  "workpostalcode": null,
+                  "workcountry": null,
+                  "url": "www.nethesis.it"
+              }
+          ],
+          "nethcti": [
+              {
+                  "id": 2,
+                  "owner_id": "alessandro",
+                  "type": "public",
+                  "homeemail": "",
+                  "workemail": "",
+                  "homephone": "",
+                  "workphone": "",
+                  "cellphone": "1233245",
+                  "fax": "",
+                  "title": "",
+                  "company": "",
+                  "notes": "",
+                  "name": "1alessandro",
+                  "homestreet": "",
+                  "homepob": "",
+                  "homecity": "",
+                  "homeprovince": "",
+                  "homepostalcode": "",
+                  "homecountry": "",
+                  "workstreet": "",
+                  "workpob": "",
+                  "workcity": "",
+                  "workprovince": "",
+                  "workpostalcode": "",
+                  "workcountry": "",
+                  "url": "",
+                  "extension": "",
+                  "speeddial_num": "1233245"
+              }
+          ]
+      }
         *
         * <br>
         *
@@ -193,7 +462,7 @@ function setCompUtil(comp) {
         * * `[extension]`
         * * `[speeddial_num]`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "creator": "alessandro", "type": "type", ... }
         *
@@ -206,7 +475,7 @@ function setCompUtil(comp) {
         *
         * * `id: the contact identifier in the NethCTI phonebook database`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "id": "74" }
         *
@@ -247,7 +516,7 @@ function setCompUtil(comp) {
         * * `[extension]`
         * * `[speeddial_num]`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "creator": "alessandro", "type": "type", ... }
         *

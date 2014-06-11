@@ -146,12 +146,51 @@ function setCompUtil(comp) {
         *
         * Gets all the new post-it messages of the user.
         *
+        * Example JSON response:
+        *
+        *     {
+         "recipient": "alessandro",
+         "new": [
+              {
+                  "creationdate": "17/01/2014",
+                  "creationtime": "08:59:31",
+                  "readdate": null,
+                  "timeread": null,
+                  "id": 18,
+                  "text": "3333333333",
+                  "creator": "giovanni",
+                  "recipient": "alessandro"
+              },
+              {
+                  "creationdate": "17/01/2014",
+                  "creationtime": "08:59:28",
+                  "readdate": null,
+                  "timeread": null,
+                  "id": 17,
+                  "text": "22222",
+                  "creator": "giovanni",
+                  "recipient": "alessandro"
+              }
+         ]
+     }
+        *
         * ---
         *
         * ### <a id="readget">**`postit/read/:id`**</a>
         *
         * Gets the specified post-it. This call update the read date status of the post-it.
         * The _id_ is the unique identifier of the message.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "id": 17,
+         "text": "22222",
+         "creator": "giovanni",
+         "readdate": null,
+         "recipient": "alessandro",
+         "creation": "2014-01-17T08:59:28.000Z"
+     }
         *
         * # POST requests
         *
@@ -167,7 +206,7 @@ function setCompUtil(comp) {
         * * `text: the text of the post-it`
         * * `recipient: the destination user of the message`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "text": "message text", "recipient": "john"  }
         *
@@ -179,7 +218,7 @@ function setCompUtil(comp) {
         *
         * * `id: the unique identifier of the post-it`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "id": "76" }
         *

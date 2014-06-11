@@ -144,12 +144,46 @@ function setCompAuthorization(comp) {
         * Returns the history caller note of the day _"day"_. Date must be expressed in YYYYMMDD format.
         * If an error occurs an HTTP 500 response is returned.
         *
+        * Example JSON response:
+        *
+        *     [
+         {
+            "creationdate": "11/06/2014"
+            "creationtime": "14:26:12"
+            "expirationdate": "12/06/2014"
+            "expirationtime": "10:30:00"
+            "id": 5
+            "public": 1
+            "reservation": 0
+            "number": "609"
+            "creator": "alessandro"
+            "text": "test"
+         }
+     ]
+        *
         * ---
         *
         * ### <a id="day_filterget">**`histcallernote/day/:day/:filter`**</a>
         *
         * Returns the history caller note of the day _"day"_ filtering by _"filter"_. Date must be expressed
         * in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
+        *
+        * Example JSON response:
+        *
+        *     [
+         {
+            "creationdate": "11/06/2014"
+            "creationtime": "14:26:12"
+            "expirationdate": "12/06/2014"
+            "expirationtime": "10:30:00"
+            "id": 5
+            "public": 1
+            "reservation": 0
+            "number": "609"
+            "creator": "alessandro"
+            "text": "test"
+         }
+     ]
         *
         * ---
         *
@@ -158,12 +192,46 @@ function setCompAuthorization(comp) {
         * Returns the history of the caller note between _"from"_ date to _"to"_ date. Dates must be
         * expressed in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
         *
+        * Example JSON response:
+        *
+        *     [
+         {
+            "creationdate": "11/06/2014"
+            "creationtime": "14:26:12"
+            "expirationdate": "12/06/2014"
+            "expirationtime": "10:30:00"
+            "id": 5
+            "public": 1
+            "reservation": 0
+            "number": "609"
+            "creator": "alessandro"
+            "text": "test"
+         }
+     ]
+        *
         * ---
         *
         * ### <a id="interval_filterget">**`histcallernote/interval/:from/:to/:filter`**</a>
         *
         * Returns the history caller note between _"from"_ date to _"to"_ date filtering by _"filter"_.
         * Date must be expressed in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
+        *
+        * Example JSON response:
+        *
+        *     [
+         {
+            "creationdate": "11/06/2014"
+            "creationtime": "14:26:12"
+            "expirationdate": "12/06/2014"
+            "expirationtime": "10:30:00"
+            "id": 5
+            "public": 1
+            "reservation": 0
+            "number": "609"
+            "creator": "alessandro"
+            "text": "test"
+         }
+     ]
         *
         * @class plugin_rest_histcallernote
         * @static

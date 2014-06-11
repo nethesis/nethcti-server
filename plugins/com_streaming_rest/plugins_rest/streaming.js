@@ -160,6 +160,22 @@ function setCompConfigManager(comp) {
         *
         * Returns all the streaming sources.
         *
+        * Example JSON response:
+        *
+        *     {
+         "door": {
+              "id": "door",
+              "url": "http://192.168.5.169/enu/camera352x272.jpg",
+              "type": "helios",
+              "user": "",
+              "cmdOpen": "0*",
+              "password": "",
+              "frameRate": "1000",
+              "extension": "609",
+              "description": "door"
+         }
+     }
+        *
         * <br>
         *
         * # POST requests
@@ -175,7 +191,7 @@ function setCompConfigManager(comp) {
         *
         * * `id: the streaming identifier`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "id": "door" }
         *

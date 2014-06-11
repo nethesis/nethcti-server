@@ -124,6 +124,27 @@ var compConfigManager;
         *
         * * `endpoint: the extension identifier`
         *
+        * Example JSON response:
+        *
+        *     {
+         "exten": "614",
+         "cw": "on"
+     }
+        *
+        * ---
+        *
+        * ### <a id="dndget">**`astproxy/dnd/:endpoint`**</a>
+        *
+        * Gets the don't disturb status of the endpoint of the user. The endpoint is
+        * the extension identifier.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "exten": "614"
+         "dnd": "off"
+     }
+        *
         * ---
         *
         * ### <a id="cfvmget">**`astproxy/cfvm/:type/:endpoint`**</a>
@@ -132,6 +153,14 @@ var compConfigManager;
         *
         * * `endpoint: the extension identifier`
         * * `type: ("unconditional" | "unavailable" | "busy")`
+        *
+        * Example JSON response:
+        *
+        *     {
+         "exten": "614"
+         "status": "off"
+         "cf_type": "unconditional"
+     }
         *
         * ---
         *
@@ -145,6 +174,18 @@ var compConfigManager;
         *
         * ---
         *
+        * ### <a id="prefixget">**`astproxy/prefix`**</a>
+        *
+        * Returns the prefix number used with outgoing external calls.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "prefix": "0039"
+     }
+        *
+        * ---
+        *
         * ### <a id="cfcallget">**`astproxy/cfcall/:type/:endpoint`**</a>
         *
         * Gets the call forward status to a destination number of the endpoint of the user
@@ -152,12 +193,13 @@ var compConfigManager;
         * * `endpoint: the extension identifier`
         * * `type: ("unconditional" | "unavailable" | "busy")`
         *
-        * ---
+        * Example JSON response:
         *
-        * ### <a id="dndget">**`astproxy/dnd/:endpoint`**</a>
-        *
-        * Gets the don't disturb status of the endpoint of the user. The endpoint is
-        * the extension identifier.
+        *     {
+         "exten": "614"
+         "status": "off"
+         "type": "unconditional"
+      }
         *
         * ---
         *
@@ -165,11 +207,58 @@ var compConfigManager;
         *
         * Gets the queues of the operator panel of the user.
         *
+        * Example JSON response:
+        *
+        *     {
+         "501": {
+               "name": "hold501",
+               "queue": "501",
+               "members": {
+                  "609": {
+                      "type": "dynamic",
+                      "name": "",
+                      "queue": "501",
+                      "member": "609",
+                      "paused": false,
+                      "loggedIn": false,
+                      "callsTakenCount": 0,
+                      "lastCallTimestamp": 0,
+                      "lastPausedInReason": "",
+                      "lastPausedInTimestamp": 0,
+                      "lastPausedOutTimestamp": 0
+                  }
+               },
+               "avgHoldTime": "0",
+               "avgTalkTime": "0",
+               "waitingCallers": {},
+               "completedCallsCount": "0",
+               "abandonedCallsCount": "0",
+               "serviceLevelTimePeriod": "60",
+               "serviceLevelPercentage": "0.0"
+           }
+     }
+        *
         * ---
         *
         * ### <a id="trunksget">**`astproxy/trunks`**</a>
         *
         * Gets the trunks of the operator panel of the user.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "2001": {
+               "ip": "",
+               "port": "",
+               "name": "",
+               "exten": "2001",
+               "status": "offline",
+               "chanType": "sip",
+               "maxChannels": 4,
+               "sipuseragent": "",
+               "conversations": {}
+         }
+     }
         *
         * ---
         *
@@ -177,11 +266,33 @@ var compConfigManager;
         *
         * Gets the user groups of the operator panel.
         *
+        * Example JSON response:
+        *
+        *     {
+         "Development": {
+              "users": [
+                  "alessandro",
+                  "giovanni",
+                  "stefanof"
+              ]
+          }
+     }
+        *
         * ---
         *
         * ### <a id="parkingsget">**`astproxy/parkings`**</a>
         *
         * Gets all the parkings with all their status informations.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "71": {
+              "name": "71",
+              "parking": "71",
+              "parkedCaller": {}
+          }
+     }
         *
         * ---
         *
@@ -189,11 +300,23 @@ var compConfigManager;
         *
         * Gets all the extensions with all their status informations.
         *
-        * ---
+        * Example JSON response:
         *
-        * ### <a id="prefixget">**`astproxy/prefix`**</a>
-        *
-        * Returns the prefix number used with outgoing external calls.
+        *     {
+         "602": {
+              "ip": "",
+              "cf": "",
+              "dnd": false,
+              "cfVm": "",
+              "port": "",
+              "name": "cristian",
+              "exten": "602",
+              "status": "offline",
+              "chanType": "sip",
+              "sipuseragent": "",
+              "conversations": {}
+          }
+     }
         *
         * ---
         *
@@ -201,17 +324,82 @@ var compConfigManager;
         *
         * Gets extended statistics about queues. The day must be expressed in YYYYMMDD format.
         *
+        * Example JSON response:
+        *
+        *     {
+         "general": {
+              "401": {
+                  "ANSWER": {
+                      "4": 3,
+                      "5": 6,
+                      "7": 3,
+                      "8": 1,
+                      "9": 1,
+                      "13": 1,
+                      "15": 1,
+                      "18": 1,
+                      "28": 1,
+                      "43": 1,
+                      "140": 1
+                  },
+                  "ABANDON": {
+                      "nulled": 6
+                  },
+                  "TIMEOUT": 0
+              }
+          },
+          "answer": {
+              "401": {
+                  "queuename": "401",
+                  "calls": 20,
+                  "max_hold": 140,
+                  "min_hold": 4,
+                  "avg_hold": 16.85,
+                  "max_duration": 1057,
+                  "min_duration": 12,
+                  "avg_duration": 289.9,
+                  "id": null
+              }
+          }
+     }
+        *
         * ---
         *
         * ### <a id="queues_qosget">**`astproxy/queues_qos/:day`**</a>
         *
         * Gets QOS info about queues. The day must be expressed in YYYYMMDD format.
         *
+        * Example JSON response:
+        *
+        *     [
+         {
+               "agent": "Andrea Marchionni"
+               "period: "23-01-2014"
+               "queuename: "401"
+               "calls: 1
+               "tot_duration: 47
+               "max_duration: 47
+               "min_duration: 47
+               "avg_duration: 47
+               "id: null
+               "ringnoanswers: 21
+         }
+     ]
+        *
         * ---
         *
         * ### <a id="agents_qosget">**`astproxy/agents_qos/:day`**</a>
         *
         * Gets QOS info about agents. The day must be expressed in YYYYMMDD format.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "join_leave_queue": {},
+         "pause_unpause": {},
+         "logon_logoff": {},
+         "inqueue_outqueue": {}
+     }
         *
         * ---
         *
@@ -220,6 +408,14 @@ var compConfigManager;
         * Returns true if the endpoint is supported by the automatic click2call.
         *
         * * `endpoint: the extension identifier`
+        *
+        * Example JSON response:
+        *
+        *     {
+         "exten": "614",
+         "agent": "Yealink SIP-T22P 7.72.0.25",
+         "supported": true
+     }
         *
         * <br>
         *
@@ -262,7 +458,7 @@ var compConfigManager;
         * * `endpoint: the extension identifier`
         * * `status: ("on" | "off")`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "endpoint": "214", "status": "on" }
         *
@@ -278,7 +474,7 @@ var compConfigManager;
         * * `type: ("unconditional" | "unavailable" | "busy")`
         * * `[to]: the destination number (optional when the status is off)`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "endpoint": "214", "status": "on", "type": "unconditional", "to": "340123456" }
         *     { "endpoint": "214", "status": "off", "type": "unconditional" }
@@ -301,7 +497,7 @@ var compConfigManager;
         * * `type: ("unconditional" | "unavailable" | "busy")`
         * * `[to]: the destination voicemail identifier (optional when the status is off)`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "endpoint": "214", "status": "on", "type": "unconditional", "to": "209" }
         *     { "endpoint": "214", "status": "off", "type": "unconditional" }
@@ -322,7 +518,7 @@ var compConfigManager;
         * * `status: (on|off)`
         * * `endpoint`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "endpoint": "214", "status": "on" }
         *
@@ -337,7 +533,7 @@ var compConfigManager;
         * * `applicantId: the endpoint identifier who requested the parking. It is assumed that the applicant type is the same of the endpointType`
         * * `endpointType: the type of the endpoint that has the conversation to park`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "221", "applicantId": "216" }
         *
@@ -352,7 +548,7 @@ var compConfigManager;
         * * `[endpointId]: the endpoint identifier that make the new call. It requires "endpointType".`
         * * `[endpointType]: the type of the endpoint that makes the new call. It requires "endpointId".`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "number": "0123456789" }
         *     { "number": "0123456789", "endpointType": "extension", "endpointId": "214" }
@@ -369,7 +565,7 @@ var compConfigManager;
         *                operator the endpointId must to be its endpoint identifier.`
         * * `endpointType: the type of the endpoint that has the conversation to hangup`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "214" }
         *
@@ -385,7 +581,7 @@ var compConfigManager;
         * * `endpointId: the endpoint identifier of the user who has the conversation to blind transfer`
         * * `endpointType: the type of the endpoint of the user who has the conversation to blind transfer`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "214", "to": "0123456789" }
         *
@@ -401,7 +597,7 @@ var compConfigManager;
         * * `endpointId: the endpoint identifier of the user who has the conversation to attended transfer`
         * * `endpointType: the type of the endpoint of the user who has the conversation to attended transfer`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "214", "to": "221" }
         *
@@ -415,7 +611,7 @@ var compConfigManager;
         * * `endpointId: the endpoint identifier of the user who has the conversation to answer`
         * * `endpointType: the type of the endpoint of the user who has the conversation to answer`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "endpointType": "extension", "endpointId": "214" }
         *
@@ -432,7 +628,7 @@ var compConfigManager;
         * * `destId: the endpoint identifier that spy the conversation`
         * * `destType: the type of the endpoint that spy the conversation`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "221", "destType": "extension", "destId": "205" }
         *
@@ -449,7 +645,7 @@ var compConfigManager;
         * * `endpointType: the type of the endpoint of the user who has the conversation to transfer`
         * * `voicemailId:  the voicemail identifier to transfer the conversation. It's assumed that the destination type is the same of the endpoint type`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "username": "user", "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "221", "voicemailId": "214" }
         *
@@ -465,7 +661,7 @@ var compConfigManager;
         * * `endpointId: the endpoint identifier that has the conversation to pickup`
         * * `endpointType: the type of the endpoint that has the conversation to pickup`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "convid": ">SIP/221-000000", "endpointType": "extension", "endpointId": "221", "destType": "extension", "destId": "220"}
         *
@@ -479,7 +675,7 @@ var compConfigManager;
         * * `endpointId: the endpoint identifier that has the conversation to stop recording`
         * * `endpointType: the type of the endpoint that has the conversation to stop recording`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "214" }
         *
@@ -493,7 +689,7 @@ var compConfigManager;
         * * `endpointId: the endpoint identifier that has the conversation to record`
         * * `endpointType: the type of the endpoint that has the conversation to record`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "214" }
         *
@@ -507,7 +703,7 @@ var compConfigManager;
         * * `endpointId: the endpoint identifier that has the conversation to record`
         * * `endpointType: the type of the endpoint that has the conversation to record`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "214" }
         *
@@ -521,7 +717,7 @@ var compConfigManager;
         * * `endpointId: the endpoint identifier that has the conversation to record`
         * * `endpointType: the type of the endpoint that has the conversation to record`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "214" }
         *
@@ -535,7 +731,7 @@ var compConfigManager;
         * * `parking: the parking identifier`
         * * `destType: the endpoint type that pickup the conversation`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "parking": "70", "destType": "extension", "destId": "214" }
         *
@@ -549,7 +745,7 @@ var compConfigManager;
         * * `endpointId: the endpoint identifier that has the conversation to record`
         * * `endpointType: the type of the endpoint that has the conversation to record`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "214" }
         *
@@ -565,7 +761,7 @@ var compConfigManager;
         * * `destId: the endpoint identifier that spy the conversation`
         * * `destType: the endpoint type that spy the conversation`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "convid": "SIP/209-00000060>SIP/211-00000061", "endpointType": "extension", "endpointId": "209", "destType": "extension", "destId": "214" }
         *
@@ -578,7 +774,7 @@ var compConfigManager;
         * * `endpointId: the endpoint identifier`
         * * `endpointType: the type of the endpoint`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "endpointType": "extension", "endpointId": "209" }
         *
@@ -592,7 +788,7 @@ var compConfigManager;
         * * `endpointId:   the endpoint identifier`
         * * `endpointType: the type of the endpoint`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "endpointType": "extension", "endpointId": "209" }
         *
@@ -607,7 +803,7 @@ var compConfigManager;
         * * `[queueId]:    the queue identifier. If omitted the pause is done in all queues`
         * * `[reason]:     the textual description of the reason`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "endpointType": "extension", "endpointId": "209", "queueId": "401", "reason": "some reason" }
         *
@@ -621,7 +817,7 @@ var compConfigManager;
         * * `endpointType: the type of the endpoint`
         * * `[queueId]:    the queue identifier. If omitted the unpause is done in all queues`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "endpointType": "extension", "endpointId": "209", "queueId": "401" }
         *
@@ -635,7 +831,7 @@ var compConfigManager;
         * * `queue: the queue identifier`
         * * `waitingCallerId: the identifier of the waiting caller`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "queue": "401", "waitingCallerId": "SIP/209-00000060", "to": "209" }
         *
@@ -648,7 +844,7 @@ var compConfigManager;
         * * `to: the destination number`
         * * `parking: the parking identifier`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "parking": "71", "to": "209" }
         *

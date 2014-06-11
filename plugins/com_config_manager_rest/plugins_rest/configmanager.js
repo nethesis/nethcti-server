@@ -172,11 +172,59 @@ function setCompUtil(comp) {
         *
         * Returns the configurations of the user.
         *
+        * Example JSON response:
+        *
+        *     {
+         "click2call": {
+              "type": "manual",
+              "automatic": {
+                  "user": "admin",
+                  "password": "admin"
+              }
+         },
+         "notifications": {
+              "postit": {
+                  "sms": {
+                      "when": "never",
+                      "to": "0123456789"
+                  },
+                  "email": {
+                      "when": "never",
+                      "to": "ale@nethesis.it"
+                  }
+              },
+              "voicemail": {
+                  "sms": {
+                      "when": "never",
+                      "to": "0123456789"
+                  },
+                  "email": {
+                      "when": "never",
+                      "to": "ale@nethesis.it"
+                  }
+              }
+         },
+         "default_extension": "614"
+     }
+        *
         * ---
         *
         * ### <a id="usernamesget">**`configmanager/usernames`**</a>
         *
         * Returns the list of all the usernames, each of one with its name and surname.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "giovanni": {
+              "name": "User 1",
+              "surname": "Surname 1"
+         },
+         "alessandro": {
+              "name": "User 2",
+              "surname": "Surname 2"
+         }
+     }
         *
         * ---
         *
@@ -184,11 +232,62 @@ function setCompUtil(comp) {
         *
         * Returns the server chat parameters.
         *
+        * Example JSON response:
+        *
+        *     {
+         "url": "https://ale-nethvoice.mycompany.local/http-bind",
+         "domain": "mycompany.local"
+     }
+        *
         * ---
         *
         * ### <a id="userendpointsget">**`configmanager/userendpoints`**</a>
         *
         * Returns the endpoints of the current user.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "email": {
+              "ale@nethesis.it": {
+                  "id": "ale@nethesis.it"
+              }
+         },
+         "jabber": {
+              "alessandro@mycompany.local": {
+                  "id": "alessandro@mycompany.local"
+              }
+         },
+         "nethcti": {
+              "mobile": {
+                  "id": "mobile",
+                  "status": "offline"
+              },
+              "desktop": {
+                  "id": "desktop",
+                  "status": "online"
+              }
+         },
+         "calendar": {},
+         "extension": {
+              "611": {
+                  "id": "611"
+              },
+              "614": {
+                  "id": "614"
+              }
+         },
+         "cellphone": {
+              "0123456789": {
+                  "id": "0123456789"
+              }
+         },
+         "voicemail": {
+              "614": {
+                  "id": "614"
+              }
+         }
+     }
         *
         * ---
         *
@@ -196,11 +295,101 @@ function setCompUtil(comp) {
         *
         * Returns the endpoints of all users.
         *
+        * Example JSON response:
+        *
+        *     {
+         "alessandro": {
+              "email": {
+                  "ale@nethesis.it": {
+                      "id": "ale@nethesis.it"
+                  }
+              },
+              "jabber": {
+                  "alessandro@mycompany.local": {
+                      "id": "alessandro@mycompany.local"
+                  }
+              },
+              "nethcti": {
+                  "mobile": {
+                      "id": "mobile",
+                      "status": "offline"
+                  },
+                  "desktop": {
+                      "id": "desktop",
+                      "status": "online"
+                  }
+              },
+              "calendar": {},
+              "extension": {
+                  "611": {
+                      "id": "611"
+                  },
+                  "614": {
+                      "id": "614"
+                  }
+              },
+              "cellphone": {
+                  "0123456789": {
+                      "id": "0123456789"
+                  }
+              },
+              "voicemail": {
+                  "614": {
+                      "id": "614"
+                  }
+              }
+         }
+         "andrea": {
+              "email": {
+                  "andrea@mycompany.local": {
+                      "id": "andrea@mycompany.local"
+                  }
+              },
+              "jabber": {
+                  "andrea@mycompany.local": {
+                      "id": "andrea@mycompany.local"
+                  }
+              },
+              "nethcti": {
+                  "mobile": {
+                      "id": "mobile",
+                      "status": "offline"
+                  },
+                  "desktop": {
+                      "id": "desktop",
+                      "status": "offline"
+                  }
+              },
+              "calendar": {},
+              "extension": {
+                  "605": {
+                      "id": "605"
+                  }
+              },
+              "cellphone": {
+                  "555-5555": {
+                      "id": "555-5555"
+                  }
+              },
+              "voicemail": {
+                  "605": {
+                      "id": "605"
+                  }
+              }
+         }
+     }
+        *
         * ---
         *
         * ### <a id="default_extensionget">**`configmanager/default_extension`**</a>
         *
         * Returns the default extension of the user.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "default_extension": "614"
+     }
         *
         * <br>
         *
@@ -221,7 +410,7 @@ function setCompUtil(comp) {
         * * `[user]: the device username. It's needed with automatic type`
         * * `[password]: the device password. It's needed with automatic type`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "type": "manual" }
         *     { "type": "automatic", "user": "admin", "password": "admin" }
@@ -236,7 +425,7 @@ function setCompUtil(comp) {
         * * `method: ("email" | "sms") the delivery method`
         * * `when: ("always" | "never" | "offline") the value to be set for the specified key`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "type": "voicemail", "method": "email", "when": "offline" }
         *
@@ -250,7 +439,7 @@ function setCompUtil(comp) {
         * * `status: ("online" | "offline" | "busy" | "away") the nethcti presence status`
         * * `device_type: ["desktop" | "mobile"] the device type used by the user for nethcti. It's needed when type is equal to "nethcti"`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "type": "nethcti", "device_type": "desktop", "status": "online" }
         *
@@ -262,7 +451,7 @@ function setCompUtil(comp) {
         *
         * * `extenId: the extension identifier`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "extenId": "614" }
         *

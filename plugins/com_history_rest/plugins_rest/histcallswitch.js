@@ -155,12 +155,52 @@ function setCompAuthorization(ca) {
         * Returns the switchboard history call of the day _"day"_ of all endpoints. Date must be expressed
         * in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
         *
+        * Example JSON response:
+        *
+        *     [
+         {
+            date: "02/01/2014"
+            time: "08:32:57"
+            channel: "SIP/2001-00000000"
+            dstchannel: "SIP/303-0000000b"
+            uniqueid: "1388647977.5182"
+            duration: 29
+            billsec: 21
+            disposition: "ANSWERED"
+            dcontext: "ext-local"
+            recordingfile: ""
+            src: "0721123432"
+            dst: "vms201"
+            clid: ""CHIU: USER" <1233312>"
+         }
+     ]
+        *
         * ---
         *
         * ### <a id="day_filterget">**`histcallswitch/day/:day/:filter`**</a>
         *
         * Returns the switchboard history call of the day _"day"_ of all endpoints filtering by _"filter"_.
         * Date must be expressed in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
+        *
+        * Example JSON response:
+        *
+        *     [
+         {
+            date: "02/01/2014"
+            time: "08:32:57"
+            channel: "SIP/2001-00000000"
+            dstchannel: "SIP/303-0000000b"
+            uniqueid: "1388647977.5182"
+            duration: 29
+            billsec: 21
+            disposition: "ANSWERED"
+            dcontext: "ext-local"
+            recordingfile: ""
+            src: "0721123432"
+            dst: "vms201"
+            clid: ""CHIU: USER" <1233312>"
+         }
+     ]
         *
         * ---
         *
@@ -169,6 +209,26 @@ function setCompAuthorization(ca) {
         * Returns the switchboard history call between _"from"_ date to _"to"_ date of all endpoints.
         * Dates must be expressed in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
         *
+        * Example JSON response:
+        *
+        *     [
+         {
+            date: "02/01/2014"
+            time: "08:32:57"
+            channel: "SIP/2001-00000000"
+            dstchannel: "SIP/303-0000000b"
+            uniqueid: "1388647977.5182"
+            duration: 29
+            billsec: 21
+            disposition: "ANSWERED"
+            dcontext: "ext-local"
+            recordingfile: ""
+            src: "0721123432"
+            dst: "vms201"
+            clid: ""CHIU: USER" <1233312>"
+         }
+     ]
+        *
         * ---
         *
         * ### <a id="interval_filterget">**`histcallswitch/interval/:from/:to/:filter`**</a>
@@ -176,6 +236,26 @@ function setCompAuthorization(ca) {
         * Returns the switchboard history call between _"from"_ date to _"to"_ date of all endpoints
         * filtering by _"filter"_. Date must be expressed in YYYYMMDD format. If an error occurs an HTTP 500
         * response is returned.
+        *
+        * Example JSON response:
+        *
+        *     [
+         {
+            date: "02/01/2014"
+            time: "08:32:57"
+            channel: "SIP/2001-00000000"
+            dstchannel: "SIP/303-0000000b"
+            uniqueid: "1388647977.5182"
+            duration: 29
+            billsec: 21
+            disposition: "ANSWERED"
+            dcontext: "ext-local"
+            recordingfile: ""
+            src: "0721123432"
+            dst: "vms201"
+            clid: ""CHIU: USER" <1233312>"
+         }
+     ]
         *
         * @class plugin_rest_histcallswitch
         * @static

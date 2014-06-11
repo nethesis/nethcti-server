@@ -114,7 +114,23 @@ function setCompUtil(comp) {
         *
         * ### <a id="getbynumget">**`custcard/getbynum/:number`**</a>
         *
-        * The client receive all customer cards by number for which he's enabled.
+        * The client receive all customer cards by number for which he has the permission. The _render_ key
+        * contains the customer card in HTML format.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "20": {
+              "name": "calls",
+              "render": "\n\t<div id='cdr' class='...",
+              "number": "0721405516"
+         },
+         "00": {
+              "name": "identity",
+              "render": "\n\n\t<div class=\"contactsVCard\">\n\t<div class='contactsVCardHeader'>...",
+              "number": "0721405516"
+         }
+     }
         *
         * @class plugin_rest_custcard
         * @static

@@ -148,7 +148,7 @@ function setCompAuthorization(comp) {
         * * `to: the destination number of the sms message`
         * * `body: the body of the sms message`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "text": "message text", "to": "0123456789" }
         *

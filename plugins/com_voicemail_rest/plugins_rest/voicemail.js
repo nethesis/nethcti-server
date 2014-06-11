@@ -201,6 +201,24 @@ function setCompAuthorization(comp) {
         *
         * Returns the list of all voicemail messages of the user.
         *
+        * Example JSON response:
+        *
+        *     {
+         "609": {
+              "old": [],
+              "new": [
+                  {
+                      "origtime": 1402502282000,
+                      "duration": "00:13",
+                      "id": 7,
+                      "dir": "/var/spool/asterisk/voicemail/default/609/INBOX",
+                      "callerid": "\"alessandro\" <614>",
+                      "mailboxuser": "609"
+                  }
+              ]
+         }
+     }
+        *
         * ---
         *
         * ### <a id="listenget">**`voicemail/listen/:id`**</a>
@@ -212,6 +230,29 @@ function setCompAuthorization(comp) {
         * ### <a id="new_countersget">**`voicemail/new_counters`**</a>
         *
         * Returns the number of the new voice messages of all voicemails.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "602": {
+              "newMessageCount": "0"
+         },
+         "605": {
+              "newMessageCount": "0"
+         },
+         "608": {
+              "newMessageCount": "0"
+         },
+         "609": {
+              "newMessageCount": "1"
+         },
+         "614": {
+              "newMessageCount": "0"
+         },
+         "615": {
+              "newMessageCount": "0"
+         }
+     }
         *
         * ---
         *
@@ -233,7 +274,7 @@ function setCompAuthorization(comp) {
         *
         * * `id: the voice message identifier of the database`
         *
-        * E.g. object parameters:
+        * Example JSON request parameters:
         *
         *     { "id": "74" }
         *

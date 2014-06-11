@@ -158,6 +158,21 @@ function setCompUtil(comp) {
         *
         * Returns the history of the postit created in the interval time by all the users.
         *
+        * Example JSON response:
+        *
+        *     [
+         {
+            creationdate: "11/06/2014"
+            creationtime: "15:37:52"
+            readdate: null
+            timeread: null
+            id: 31
+            recipient: "giovanni"
+            creator: "alessandro"
+            text: "test post-it"
+         }
+     ]
+        *
         * ---
         *
         * ### <a id="interval_filterget">**`all_historypostit/interval/:from/:to/:filter`**</a>
@@ -165,11 +180,41 @@ function setCompUtil(comp) {
         * Returns the history of the postit created in the interval time by all the users
         * filtering the results.
         *
+        * Example JSON response:
+        *
+        *     [
+         {
+            creationdate: "11/06/2014"
+            creationtime: "15:37:52"
+            readdate: null
+            timeread: null
+            id: 31
+            recipient: "giovanni"
+            creator: "alessandro"
+            text: "test post-it"
+         }
+     ]
+        *
         * ---
         *
         * ### <a id="dayget">**`all_historypostit/day/:day`**</a>
         *
         * Returns the history of the postit created in the specified day by all the users.
+        *
+        * Example JSON response:
+        *
+        *     [
+         {
+            creationdate: "11/06/2014"
+            creationtime: "15:37:52"
+            readdate: null
+            timeread: null
+            id: 31
+            recipient: "giovanni"
+            creator: "alessandro"
+            text: "test post-it"
+         }
+     ]
         *
         * ---
         *
@@ -177,6 +222,21 @@ function setCompUtil(comp) {
         *
         * Returns the history of the postit created in the specified day by all the users
         * filtering the results.
+        *
+        * Example JSON response:
+        *
+        *     [
+         {
+            creationdate: "11/06/2014"
+            creationtime: "15:37:52"
+            readdate: null
+            timeread: null
+            id: 31
+            recipient: "giovanni"
+            creator: "alessandro"
+            text: "test post-it"
+         }
+     ]
         *
         * @class plugin_rest_all_historypostit
         * @static

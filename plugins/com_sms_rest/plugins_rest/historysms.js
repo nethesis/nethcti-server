@@ -148,6 +148,20 @@ function setCompAuthorization(comp) {
         *
         * Returns the history of the sms created in the interval time by the user.
         *
+        * Example JSON response:
+        *
+        *     [
+         {
+            datesent: "11/06/2014"
+            timesent: "17:46:46"
+            id: 7
+            status: 1
+            destination: "00393401234567"
+            sender: "alessandro"
+            text: "test sms"
+         }
+     ]
+        *
         * ---
         *
         * ### <a id="interval_filterget">**`historysms/interval/:from/:to/:filter`**</a>
@@ -155,11 +169,39 @@ function setCompAuthorization(comp) {
         * Returns the history of the sms created in the interval time by the user
         * filtering the results by destination number.
         *
+        * Example JSON response:
+        *
+        *     [
+         {
+            datesent: "11/06/2014"
+            timesent: "17:46:46"
+            id: 7
+            status: 1
+            destination: "00393401234567"
+            sender: "alessandro"
+            text: "test sms"
+         }
+     ]
+        *
         * ---
         *
         * ### <a id="dayget">**`historysms/day/:day`**</a>
         *
         * Returns the history of the sms created in the specified day by the user.
+        *
+        * Example JSON response:
+        *
+        *     [
+         {
+            datesent: "11/06/2014"
+            timesent: "17:46:46"
+            id: 7
+            status: 1
+            destination: "00393401234567"
+            sender: "alessandro"
+            text: "test sms"
+         }
+     ]
         *
         * ---
         *
@@ -167,6 +209,20 @@ function setCompAuthorization(comp) {
         *
         * Returns the history of the sms created in the specified day by the user
         * filtering the results by destination number.
+        *
+        * Example JSON response:
+        *
+        *     [
+         {
+            datesent: "11/06/2014"
+            timesent: "17:46:46"
+            id: 7
+            status: 1
+            destination: "00393401234567"
+            sender: "alessandro"
+            text: "test sms"
+         }
+     ]
         *
         * @class plugin_rest_historysms
         * @static
