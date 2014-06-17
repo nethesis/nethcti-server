@@ -1918,11 +1918,11 @@ function getHistoryPostitInterval(data, cb) {
         // search
         models[JSON_KEYS.POSTIT].findAll({
             where: [
-                'creator' + operator + '? AND ' +
+                '(creator' + operator + '? OR recipient=?) AND ' +
                 '(DATE(creation)>=? AND DATE(creation)<=?) AND ' +
                 '(recipient LIKE ?)',
-                data.username,
-                data.from, data.to,
+                data.username, data.username,
+                data.from,     data.to,
                 data.filter
             ],
             attributes: attributes
