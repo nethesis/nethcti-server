@@ -27,22 +27,16 @@ module.exports = function (options, imports, register) {
     register(null, {
         customerCard: {
             /**
-            * It's the _getCustomerCardByNum_ method provided by _customer\_card_ module.
+            * It is the _getCustomerCardByNum_ method provided by _customer\_card_ module.
             *
             * @method getCustomerCardByNum
-            * @param {string} ccName The name of the customer card to search
-            * @param {string} num The number used to search the customer card.
-            * @param {function} cb The callback function
             */
             getCustomerCardByNum: customerCard.getCustomerCardByNum,
 
             /**
-            * It's the _getAllCustomerCards_ method provided by _customer\_card_ module.
+            * It is the _getAllCustomerCards_ method provided by _customer\_card_ module.
             *
             * @method getAllCustomerCards
-            * @param {string} username The identifier of the user
-            * @param {string} num The number used to search the customer cards.
-            * @param {function} cb The callback function
             */
             getAllCustomerCards: customerCard.getAllCustomerCards
         }

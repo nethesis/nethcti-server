@@ -108,26 +108,29 @@ function setCompUtil(comp) {
         *
         * # GET requests
         *
-        * 1. [`custcard/getbynum/:number`](#getbynumget)
+        * 1. [`custcard/getbynum/:number/:format`](#getbynum_formatget)
         *
         * ---
         *
-        * ### <a id="getbynumget">**`custcard/getbynum/:number`**</a>
+        * ### <a id="getbynum_formatget">**`custcard/getbynum/:number/:format`**</a>
         *
-        * The client receive all customer cards by number for which he has the permission. The _render_ key
-        * contains the customer card in HTML format.
+        * The client receive all customer cards by number for which he has the permission. The _data_ key
+        * contains the customer card in the specified format. The parameters are:
+        *
+        * * `number: the number to use to search the customer cards data`
+        * * `format: ("json" | "html") the format of the received data`
         *
         * Example JSON response:
         *
         *     {
          "20": {
               "name": "calls",
-              "render": "\n\t<div id='cdr' class='...",
+              "data": "\n\t<div id='cdr' class='...",
               "number": "0721405516"
          },
          "00": {
               "name": "identity",
-              "render": "\n\n\t<div class=\"contactsVCard\">\n\t<div class='contactsVCardHeader'>...",
+              "data": "\n\n\t<div class=\"contactsVCard\">\n\t<div class='contactsVCardHeader'>...",
               "number": "0721405516"
          }
      }
@@ -147,18 +150,18 @@ function setCompUtil(comp) {
                 * @property get
                 * @type {array}
                 *
-                *   @param {string} getbynum/:number To get the customer card by specified number
+                *   @param {string} getbynum/:number/:format To get the customer card by specified number and format
                 */
-                'get' : [ 'getbynum/:number' ],
+                'get' : [ 'getbynum/:number/:format' ],
                 'post': [],
                 'head': [],
                 'del' : []
             },
 
             /**
-            * Search the customer card by number with the following REST API:
+            * Searches the customer cards by number with the following REST API:
             *
-            *     getbynum/:number
+            *     getbynum/:number/:format
             *
             * @method getbynum
             * @param {object}   req  The client request.
@@ -169,12 +172,18 @@ function setCompUtil(comp) {
                 try {
                     // authorization_user header field was added in the authentication step
                     var username = req.headers.authorization_user;
+                    var format   = req.params.format;
                     var num      = req.params.number;
 
-                    logger.info(IDLOG, 'get all customer cards of the user "' + username + '" for number ' + num);
-                    compCustomerCard.getAllCustomerCards(username, num, function (err, results) {
-                        try {
+                    if (format !== 'json' && format !== 'html') {
+                        logger.warn(IDLOG, 'incorrect required format "' + format + '" to get customer card');
+                        compUtil.net.sendHttp400(IDLOG, res);
+                    }
 
+                    logger.info(IDLOG, 'get all customer cards of the user "' + username + '" for number ' + num + ' in "' + format + '" format');
+
+                    compCustomerCard.getAllCustomerCards(username, num, req.params.format, function (err, results) {
+                        try {
                             if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
                             else {
                                 var ccreturned = '';
@@ -182,7 +191,7 @@ function setCompUtil(comp) {
                                 for (key in results) { ccreturned += results[key].name + ','; }
                                 ccreturned = ccreturned.substring(0, ccreturned.length - 1);
 
-                                logger.info(IDLOG, 'send ' + Object.keys(results).length + ' customer cards "' + ccreturned + '" for user "' + username + '" searching the number ' + num + ' to ' + res.connection.remoteAddress);
+                                logger.info(IDLOG, 'send ' + Object.keys(results).length + ' customer cards "' + ccreturned + '" in "' + format + '" for user "' + username + '" searching the number ' + num + ' to ' + res.connection.remoteAddress);
                                 res.send(200, results);
                             }
 
@@ -191,6 +200,7 @@ function setCompUtil(comp) {
                             compUtil.net.sendHttp500(IDLOG, res, err.toString());
                         }
                     });
+
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
                     compUtil.net.sendHttp500(IDLOG, res, err.toString());

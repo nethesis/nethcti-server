@@ -172,12 +172,10 @@ function getCustomerCardByNum(ccName, num, cb) {
                     return;
                 }
 
-                var template = ejsTemplates[ccName].content;
-                var render   = ejs.render(template, { results: results });
                 var obj = {
-                    name:   ccName,
-                    index:  ejsTemplates[ccName].index,
-                    render: render
+                    data:  results,
+                    name:  ccName,
+                    index: ejsTemplates[ccName].index
                 }
 
                 cb(null, obj);
@@ -208,18 +206,38 @@ function setCompAuthorization(ca) {
 }
 
 /**
-* Gets all authorized customer cards of the user.
+* Return the customer card in HTML format.
+*
+* @method getCustomerCardHTML
+* @param  {string} name The customer card name
+* @param  {array}  data The customer card data
+* @return {string} The customer card in HTML format or an empty string in error case.
+* @private
+*/
+function getCustomerCardHTML(name, data) {
+    try {
+        return ejs.render(ejsTemplates[name].content, { results: data });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return '';
+    }
+}
+
+/**
+* Gets all authorized customer cards of the user and returns them in the specified format.
 *
 * @method getAllCustomerCards
 * @param {string}   username The identifier of the user
 * @param {string}   num      The number used to search the customer cards.
+* @param {string}   format   The format of the customer card data to be returned. It is contained in the data key of the returned object
 * @param {function} cb       The callback function
 */
-function getAllCustomerCards(username, num, cb) {
+function getAllCustomerCards(username, num, format, cb) {
     try {
         // check parameters
-        if (typeof username !== 'string'
-            || typeof num   !== 'string' || typeof cb !== 'function') {
+        if (   typeof username !== 'string'
+            || typeof num      !== 'string' || typeof cb !== 'function'
+            || (format !== 'json' && format !== 'html') ) {
 
             throw new Error('wrong parameters');
         }
@@ -240,9 +258,14 @@ function getAllCustomerCards(username, num, cb) {
                         logger.error(IDLOG, err);
 
                     } else { // add the result
+
+                        var formattedData;
+                        if      (format === 'html') { formattedData = getCustomerCardHTML(result.name, result.data); }
+                        else if (format === 'json') { formattedData = result.data; }
+
                         obj[result.index] = {
                             name:   result.name,
-                            render: result.render,
+                            data:   formattedData,
                             number: num
                         }
                     }
