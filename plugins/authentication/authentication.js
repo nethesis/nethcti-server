@@ -416,7 +416,8 @@ function configLDAP(json) {
     ou     = json.ou;
     baseDn = json.baseDn;
 
-    var ldapurl = 'ldap://' + server + ':' + port;
+    var proto = (port === '636' ? 'ldaps' : 'ldap');
+    var ldapurl = proto + '://' + server + ':' + port;
 
     // create ldap client
     client = ldap.createClient({
@@ -450,7 +451,8 @@ function configActiveDirectory(json) {
     var arr  = json.baseDn.split(',');
     adDomain = arr[0].split('=')[1] + '.' + arr[1].split('=')[1];
 
-    var adurl = 'ldap://' + server + ':' + port;
+    var proto = (port === '636' ? 'ldaps' : 'ldap');
+    var adurl = proto + '://' + server + ':' + port;
 
     // create active directory client
     client = ldap.createClient({
