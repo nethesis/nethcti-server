@@ -764,25 +764,40 @@ function initConnections() {
 
             } else if (dbConfig[k].dbtype === 'mssql') {
 
-                var db      = new odbc.Database();
-                var options = 'DRIVER={FreeTDS}'                    +
-                              ';SERVER='   + dbConfig[k].dbhost     +
-                              ';PORT='     + dbConfig[k].dbport     +
-                              ';UID='      + dbConfig[k].dbuser     +
-                              ';PWD='      + dbConfig[k].dbpassword +
-                              ';DATABASE=' + dbConfig[k].dbname;
-
-                db.open(options, function (err1) {
-                    if (err1) {
-                        logger.error(IDLOG, 'initializing db connection with ' + dbConfig[k].dbtype + ' ' + dbConfig[k].dbname + ' ' + dbConfig[k].dbhost + ':' + dbConfig[k].dbport + ' - ' + err1.stack);
-
-                    } else {
-                        dbConn[k] = db;
-                        logger.info(IDLOG, 'initialized db connection with ' + dbConfig[k].dbtype + ' ' + dbConfig[k].dbname + ' ' + dbConfig[k].dbhost + ':' + dbConfig[k].dbport);
-                    }
-                });
+                initMssqlConn(k);
             }
         }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Initialize an MSSQL connection.
+*
+* @method initMssqlConn
+* @param {string} name The customer card name
+* @private
+*/
+function initMssqlConn(name) {
+    try {
+        var db      = new odbc.Database();
+        var options = 'DRIVER={FreeTDS}'                    +
+                      ';SERVER='   + dbConfig[name].dbhost     +
+                      ';PORT='     + dbConfig[name].dbport     +
+                      ';UID='      + dbConfig[name].dbuser     +
+                      ';PWD='      + dbConfig[name].dbpassword +
+                      ';DATABASE=' + dbConfig[name].dbname;
+
+        db.open(options, function (err1) {
+            if (err1) {
+                logger.error(IDLOG, 'initializing db connection with ' + dbConfig[name].dbtype + ' ' + dbConfig[name].dbname + ' ' + dbConfig[name].dbhost + ':' + dbConfig[name].dbport + ' - ' + err1.stack);
+
+            } else {
+                dbConn[name] = db;
+                logger.info(IDLOG, 'initialized db connection with ' + dbConfig[name].dbtype + ' ' + dbConfig[name].dbname + ' ' + dbConfig[name].dbhost + ':' + dbConfig[name].dbport);
+            }
+        });
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
