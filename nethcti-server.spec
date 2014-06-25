@@ -1,5 +1,5 @@
 Name:		nethcti-server
-Version:	2.1.3
+Version:	2.1.6
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI 2
 
@@ -66,6 +66,16 @@ rm -rf $RPM_BUILD_ROOT
 %doc
 
 %changelog
+* Wed Jun 25 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.1.6-1
+- Fea #2979: add the number of connected calls to the queues.
+- Fea #2975: the data about the queues are update in real time.
+- Enh #3024: secure LDAP authentication.
+- Enh #2995: history post-it also returns those for which the user is the recipient.
+- Enh #2969: "Service Level Percentage" data has been added to each queue.
+- Enh #2968: "Service Level Time Period" data has been added to each queue.
+- Bug #3019: no display more than one MSSQL customer card.
+- Bug #3011: click on customer card on Nethifier popup does not search the customer card.
+
 * Thu Jun 05 2014 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 2.1.3-1
 - Fea #2878: remove ejabberd dependency
 - Fea #2878: refactor events
