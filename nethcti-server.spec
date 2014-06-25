@@ -1,5 +1,5 @@
 Name:		nethcti-server
-Version:	2.1.2
+Version:	2.1.5
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI 2
 
@@ -72,6 +72,12 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Fri Jun 6 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.1.5-1
+- Fea #2979: add the number of connected calls to the queues.
+- Fea #2975: the data about the queues are update in real time.
+- Enh #2969: "Service Level Percentage" data has been added to each queue.
+- Enh #2968: "Service Level Time Period" data has been added to each queue.
+
 * Tue Jun 3 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.1.2-1
 - Bug #2960: fix image cache on nethifier streaming popup.
 
