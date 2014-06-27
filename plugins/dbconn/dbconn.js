@@ -3073,13 +3073,17 @@ function getCustomerCardByNum(type, num, cb) {
 
         } else if (dbConfig[type].dbtype === 'mssql') {
 
+            var query = dbConfig[type].query.replace(/\$EXTEN/g, num);
+
+            if (err2 && Object.keys(err2).length === 0) { return; }
+
             dbConn[type].query(dbConfig[type].query, function (err2, rows, moreResultSets) {
 
                 if (err2) {
                     logger.error(IDLOG, 'searching ' + type + ' by num ' + num + ': ' + err2.toString());
                     cb(err2.toString());
 
-                } else {
+                } else if (err2 === null) {
                     logger.info(IDLOG, rows.length + ' results by searching ' + type + ' by num ' + num);
                     cb(null, rows);
                 }
