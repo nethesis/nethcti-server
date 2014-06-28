@@ -1,5 +1,5 @@
 Name:		nethcti-server
-Version:	2.1.5
+Version:	2.1.6
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI 2
 
@@ -14,7 +14,7 @@ Requires:	nodejs >= 0.8.16
 Requires:	node-forever >= 0.10.9
 Requires:       freepbx >= 2.10.43
 Requires:	smeserver-ejabberd
-Requires:       nethcti-nethvoice-module
+Requires:       nethcti-nethvoice-module >= 2.1.6
 AutoReq:	no
 
 Obsoletes:	proxycti
@@ -72,6 +72,13 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Wed Jul 2 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.1.6-1
+- Enh #3024: authentication by ldap secure.
+- Enh #2995: history post-it shows also the own recipient post-it.
+- Bug #3028: different implementation of MSSQL using 'mssql' module.
+- Bug #3025: pickup conversations does not work.
+- Bug #3011: fix nethifier template call.html to open customer card and search.
+
 * Fri Jun 6 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.1.5-1
 - Fea #2979: add the number of connected calls to the queues.
 - Fea #2975: the data about the queues are update in real time.
