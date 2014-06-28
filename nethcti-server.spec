@@ -1,5 +1,5 @@
 Name:		nethcti-server
-Version:	2.1.6
+Version:	2.1.7
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI 2
 
@@ -10,7 +10,7 @@ Source1:	nethcti-server-source.tar.gz
 
 BuildRequires:	nethserver-devtools
 Requires:	nodejs010-nodejs
-Requires:       nethvoice-module-nethcti
+Requires:       nethvoice-module-nethcti >= 2.1.6
 AutoReq:	no
 
 
@@ -66,13 +66,15 @@ rm -rf $RPM_BUILD_ROOT
 %doc
 
 %changelog
-* Wed Jun 25 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.1.6-1
+* Thu Jul 3 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.1.7-1
 - Fea #2979: add the number of connected calls to the queues.
 - Fea #2975: the data about the queues are update in real time.
 - Enh #3024: secure LDAP authentication.
 - Enh #2995: history post-it also returns those for which the user is the recipient.
 - Enh #2969: "Service Level Percentage" data has been added to each queue.
 - Enh #2968: "Service Level Time Period" data has been added to each queue.
+- Bug #3028: different implementation of MSSQL using 'mssql' module.
+- Bug #3025: pickup conversations does not work.
 - Bug #3019: no display more than one MSSQL customer card.
 - Bug #3011: click on customer card on Nethifier popup does not search the customer card.
 
