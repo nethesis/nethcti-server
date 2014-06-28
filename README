@@ -2,6 +2,8 @@ To create the package:
 
 1. ./script.sh
 2. cd ..
-3. nethserver-devbox/build-rpm -s rpm-nethcti-server
+3. nethserver-devbox/build-rpm -s rpm-nethcti-server (only sign the package)
+or
+3. nethserver-devbox/build-rpm -csp rpm-nethcti-server (sign and public the package)
 
 If you want to use some specific branch for the source code, change the script.sh.
