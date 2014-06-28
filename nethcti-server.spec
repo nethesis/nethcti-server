@@ -1,5 +1,5 @@
 Name:		nethcti-server
-Version:	2.1.6
+Version:	2.1.7
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI 2
 
@@ -72,6 +72,9 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Mon Jul 7 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.1.7-1
+- Bump version 2.1.7.
+
 * Wed Jul 2 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.1.6-1
 - Enh #3024: authentication by ldap secure.
 - Enh #2995: history post-it shows also the own recipient post-it.
