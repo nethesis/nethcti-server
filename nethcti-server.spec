@@ -1,5 +1,5 @@
 Name:		nethcti-server
-Version:	2.1.7
+Version:	2.1.8
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI 2
 
@@ -66,6 +66,9 @@ rm -rf $RPM_BUILD_ROOT
 %doc
 
 %changelog
+* Fri Jul 11 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.1.8-1
+- Bug #3039: manual click2call with Snom 715 does not works.
+
 * Wed Jul 9 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.1.7-1
 - Fea #2979: add the number of connected calls to the queues.
 - Fea #2975: the data about the queues are update in real time.
