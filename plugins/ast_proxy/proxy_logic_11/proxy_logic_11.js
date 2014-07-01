@@ -3578,12 +3578,12 @@ function pickupParking(parking, destType, destId, cb) {
 * Pickup a conversation.
 *
 * @method pickupConversation
-* @param {string} endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
-* @param {string} endpointId The endpoint identifier (e.g. the extension number)
-* @param {string} convid The conversation identifier
-* @param {string} destType The endpoint type that pickup the conversation
-* @param {string} destId The endpoint identifier that pickup the conversation
-* @param {function} cb The callback function
+* @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
+* @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
+* @param {string}   convid       The conversation identifier
+* @param {string}   destType     The endpoint type that pickup the conversation
+* @param {string}   destId       The endpoint identifier that pickup the conversation
+* @param {function} cb           The callback function
 */
 function pickupConversation(endpointType, endpointId, convid, destType, destId, cb) {
     try {
@@ -3605,7 +3605,7 @@ function pickupConversation(endpointType, endpointId, convid, destType, destId, 
             var chToRedirect;
             var convs      = extensions[endpointId].getAllConversations();
             var conv       = convs[convid];
-            var ch         = conv.getSourceChannel();
+            var ch         = conv.getDestinationChannel();
             var callerNum  = ch.getCallerNum();
             var bridgedNum = ch.getBridgedNum();
 
