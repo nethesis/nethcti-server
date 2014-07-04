@@ -39,7 +39,6 @@ mkdir -p root/var/lib/nethserver/nethcti/templates/notification_manager
 mkdir -p root/var/lib/nethserver/nethcti/templates/customer_card
 mkdir -p root/var/lib/nethserver/nethcti/static
 mkdir -p root/usr/lib/node/nethcti-server/store
-rm -rf root/usr/lib/node/nethcti-server/docs/admin-manual/
 
 %install
 rm -rf $RPM_BUILD_ROOT
