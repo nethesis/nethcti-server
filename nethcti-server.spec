@@ -1,5 +1,5 @@
 Name:		nethcti-server
-Version:	2.1.8
+Version:	2.1.9
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI 2
 
@@ -74,6 +74,19 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Wed Aug 6 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.1.9-1
+- Fea #2979: add the number of connected calls to the queues.
+- Enh #3024: secure Ldap authentication.
+- Enh #2069: add "Service Level Percentage" data for each queue.
+- Enh #2968: add "Service Level Time Period" data for each queue.
+- Bug #3100: http proxy server does not works together with sogo installation.
+- Bug #3096: total failed call of a queue shows always 0.
+- Bug #3040: nethcti-server does not start at the boot of the NethServer system.
+- Bug #3039: manual click2call with Snom 715 does not works.
+- Bug #3028: MSSQL strings is all undefined.
+- Bug #3025: pickup doesn't work with a call in a ring group with more than one member
+- Bug #3011: click on customer card on Nethifier popup does not search the customer card.
+
 * Thu Jul 10 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.1.8-1
 - Bug #3039: manual click2call with Snom 715 does not works.
 
