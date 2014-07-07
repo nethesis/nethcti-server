@@ -27,6 +27,7 @@
             "/postit":             "http://127.0.0.1:10004/postit",
             "/astproxy":           "http://127.0.0.1:10010/astproxy",
             "/custcard":           "http://127.0.0.1:10003/custcard",
+            "/profiling":          "http://127.0.0.1:10014/profiling",
             "/phonebook":          "http://127.0.0.1:10001/phonebook",
             "/streaming":          "http://127.0.0.1:10011/streaming",
             "/voicemail":          "http://127.0.0.1:10008/voicemail",
@@ -55,6 +56,10 @@
         \},
         "history": \{
             "port":    "10002",
+            "address": "localhost"
+        \},
+        "profiling": \{
+            "port":    "10014",
             "address": "localhost"
         \},
         "caller_note": \{
