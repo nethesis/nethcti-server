@@ -135,7 +135,7 @@ var FAIL_REASON = {
                         Channel:  args.chanType + '/' + args.exten,                // extension to be used
                         Context:  'from-internal',
                         Priority: 1,
-                        CallerID: PRE_CALLERID + args.to + '<' + args.to + '>',
+                        CallerID: PRE_CALLERID + args.to,
                         Timeout:  CALL_TIMEOUT,
                         Account:  args.to,
                         Exten:    args.to,                                         // the number to be called
