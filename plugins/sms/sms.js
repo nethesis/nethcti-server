@@ -146,11 +146,15 @@ function config(path) {
         var json = require(path);
 
         // check the configuration
-        if (   typeof json      !== 'object'
-            || typeof json.type !== 'string' || typeof json.prefix !== 'string'
-            || smsDeliveryTypes.isValidDeliveryType(json.type) === false
-            || (json.type === smsDeliveryTypes.TYPES.portech    && !json.portech)
-            || (json.type === smsDeliveryTypes.TYPES.webservice && !json.webservice)) {
+        if (
+            (     typeof json      !== 'object'
+               || typeof json.type !== 'string' || typeof json.prefix !== 'string'
+               || smsDeliveryTypes.isValidDeliveryType(json.type) === false
+               || (json.type === smsDeliveryTypes.TYPES.portech    && !json.portech)
+               || (json.type === smsDeliveryTypes.TYPES.webservice && !json.webservice)
+            )
+            &&
+            (typeof json === 'object' && Object.keys(json).length > 0)) {
 
             logger.warn(IDLOG, 'wrong sms configuration file ' + path);
             return;
