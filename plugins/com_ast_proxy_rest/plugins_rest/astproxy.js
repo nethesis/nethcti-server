@@ -3131,17 +3131,22 @@ function ajaxPhoneCall(username, req, res) {
 
             httpReq.get(url, function (httpResp) {
                 try {
-                    logger.info(IDLOG, 'new call to ' + req.params.number + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp + ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
-                    logger.info(IDLOG, url);
-                    res.send(200, { phoneRespStatusCode: httpResp.statusCode });
+                    if (httpResp.statusCode === 200) {
+                        logger.info(IDLOG, 'new call to ' + req.params.number + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp + ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
+                        logger.info(IDLOG, url);
+                        res.send(200, { phoneRespStatusCode: httpResp.statusCode });
 
+                    } else {
+                        logger.warn(IDLOG, 'new call to ' + req.params.number + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp + ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
+                        logger.warn(IDLOG, url);
+                        res.send(httpResp.statusCode, { phoneRespStatusCode: httpResp.statusCode });
+                    }
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
 
             }).on('error', function (err1) {
-
                 logger.error(IDLOG, err1.message);
                 compUtil.net.sendHttp500(IDLOG, res, err1.message);
             });
