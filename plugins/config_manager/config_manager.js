@@ -793,11 +793,11 @@ function updateAllUserPrefsInJSONFile(cb) {
 function setUserClick2CallConf(data, cb) {
     try {
         // check parameters
-        if (   typeof data      !== 'object'
-            || typeof cb        !== 'function'  || typeof data.type     !== 'string'
-            || (data.type       !== 'automatic' && data.type            !== 'manual')
-            || (data.type       === 'automatic' && typeof data.user     !== 'string')
-            || (data.type       === 'automatic' && typeof data.password !== 'string')) {
+        if (   typeof data !== 'object'
+            || typeof cb   !== 'function'  || typeof data.type     !== 'string'
+            || (data.type  !== 'automatic' && data.type            !== 'manual')
+            || (data.type  === 'automatic' && typeof data.user     !== 'string')
+            || (data.type  === 'automatic' && typeof data.password !== 'string')) {
 
             throw new Error('wrong parameters');
         }
