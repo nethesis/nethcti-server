@@ -65,7 +65,7 @@ var astProxy;
                             channel:    data.channel,
                             position:   data.position,
                             callerNum:  data.calleridnum,
-                            callerName: data.calleridname
+                            callerName: data.calleridname === 'unknown' ? '' : data.calleridname
                         });
                     }
                 } catch (err) {
