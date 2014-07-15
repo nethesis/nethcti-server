@@ -224,6 +224,20 @@ module.exports = function (options, imports, register) {
             queueMemberPauseUnpause: astProxy.proxyLogic.queueMemberPauseUnpause,
 
             /**
+            * It's the _queueMemberAdd_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method queueMemberAdd
+            */
+            queueMemberAdd: astProxy.proxyLogic.queueMemberAdd,
+
+            /**
+            * It's the _queueMemberRemove_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method queueMemberRemove
+            */
+            queueMemberRemove: astProxy.proxyLogic.queueMemberRemove,
+
+            /**
             * It's the _startSpyListenConversation_ method provided by _ast\_proxy.proxyLogic_.
             *
             * @method startSpyListenConversation

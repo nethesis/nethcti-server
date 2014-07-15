@@ -11,9 +11,9 @@ var action = require('../action');
 * @private
 * @final
 * @readOnly
-* @default [queueMemberPauseUnpause]
+* @default [queueMemberRemove]
 */
-var IDLOG = '[queueMemberPauseUnpause]';
+var IDLOG = '[queueMemberRemove]';
 
 (function() {
     try {
@@ -38,26 +38,21 @@ var IDLOG = '[queueMemberPauseUnpause]';
         var map = {};
 
         /**
-        * Command plugin to pause or unpause an extension from the specified queue. The _queue_ parameter
-        * can be omitted. If it's, the pause or unpause is done in all queues.
+        * Command plugin to logout a dynamic agent from the specified queue.
         *
         * Use it with _ast\_proxy_ module as follow:
         *
-        *     ast_proxy.doCmd({ command: 'queueMemberPauseUnpause', queue: '401', exten: '214', reason: 'some reason', paused: true }, function (res) {
+        *     ast_proxy.doCmd({ command: 'queueMemberRemove', queue: '401', exten: '214' }, function (res) {
         *         // some code
         *     });
         *
-        *     ast_proxy.doCmd({ command: 'queueMemberPauseUnpause', exten: '214', reason: 'some reason', paused: true }, function (res) {
-        *         // some code
-        *     });
-        *
-        * @class queueMemberPauseUnpause
+        * @class queueMemberRemove
         * @static
         */
-        var queueMemberPauseUnpause = {
+        var queueMemberRemove = {
 
             /**
-            * Execute asterisk action to pause/unpause an agent of a queue.
+            * Executes asterisk action to remove an agent from a queue.
             * 
             * @method execute
             * @param {object}   am   Asterisk manager to send the action
@@ -72,17 +67,13 @@ var IDLOG = '[queueMemberPauseUnpause]';
 
                     // action for asterisk
                     var act = {
-                        Action:    'QueuePause',
-                        Interface: interf,
-                        Paused:    args.paused,
-                        Reason:    args.reason,
+                        Action:     'QueueRemove',
+                        Queue:      args.queue,
+                        Interface:  interf
                     };
 
-                    // if the parameter "args.queue" is omitted the action is done in all queues
-                    if (args.queue) { act.Queue = args.queue; }
-
                     // set the action identifier
-                    act.ActionID = action.getActionId('queueMemberPauseUnpause');
+                    act.ActionID = action.getActionId('queueMemberRemove');
 
                     // add association ActionID-callback
                     map[act.ActionID] = cb;
@@ -155,9 +146,9 @@ var IDLOG = '[queueMemberPauseUnpause]';
         };
 
         // public interface
-        exports.data      = queueMemberPauseUnpause.data;
-        exports.execute   = queueMemberPauseUnpause.execute;
-        exports.setLogger = queueMemberPauseUnpause.setLogger;
+        exports.data      = queueMemberRemove.data;
+        exports.execute   = queueMemberRemove.execute;
+        exports.setLogger = queueMemberRemove.setLogger;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);

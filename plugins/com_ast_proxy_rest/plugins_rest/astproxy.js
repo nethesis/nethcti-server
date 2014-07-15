@@ -442,8 +442,10 @@ var compConfigManager;
         * 1. [`astproxy/blindtransfer`](#blindtransferpost)
         * 1. [`astproxy/unmute_record`](#unmute_recordpost)
         * 1. [`astproxy/pickup_parking`](#pickup_parkingpost)
+        * 1. [`astproxy/queuemember_add`](#queuemember_addpost)
         * 1. [`astproxy/inout_dyn_queues`](#inout_dyn_queuespost)
         * 1. [`astproxy/queuemember_pause`](#queuemember_pausepost)
+        * 1. [`astproxy/queuemember_remove`](#queuemember_removepost)
         * 1. [`astproxy/queuemember_unpause`](#queuemember_unpausepost)
         * 1. [`astproxy/blindtransfer_queue`](#blindtransfer_queuepost)
         * 1. [`astproxy/blindtransfer_parking`](#blindtransfer_parkingpost)
@@ -780,6 +782,23 @@ var compConfigManager;
         *
         * ---
         *
+        * ### <a id="queuemember_addpost">**`astproxy/queuemember_add`**</a>
+        *
+        * Adds the specified extension to the queue. The request must contains the following parameters:
+        *
+        * * `endpointId:   the endpoint identifier`
+        * * `endpointType: the type of the endpoint`
+        * * `queueId:      the queue identifier`
+        * * `[paused]:     the paused status`
+        * * `[penalty]:    a penalty (number) to apply to the member. Asterisk will distribute calls to members with higher penalties only after attempting to distribute calls to those with lower penalty`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "endpointType": "extension", "endpointId": "209", "queueId": "401" }
+        *     { "endpointType": "extension", "endpointId": "209", "queueId": "401", "paused": true, "penalty": 1 }
+        *
+        * ---
+        *
         * ### <a id="inout_dyn_queuespost">**`astproxy/inout_dyn_queues`**</a>
         *
         * Alternates the logon and logout of the specified extension in all the queues for which it's a dynamic member.
@@ -806,6 +825,20 @@ var compConfigManager;
         * Example JSON request parameters:
         *
         *     { "endpointType": "extension", "endpointId": "209", "queueId": "401", "reason": "some reason" }
+        *
+        * ---
+        *
+        * ### <a id="queuemember_removepost">**`astproxy/queuemember_remove`**</a>
+        *
+        * Removes the specified extension from the queue. The request must contains the following parameters:
+        *
+        * * `endpointId:   the endpoint identifier`
+        * * `endpointType: the type of the endpoint`
+        * * `queueId:      the queue identifier`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "endpointType": "extension", "endpointId": "209", "queueId": "401" }
         *
         * ---
         *
@@ -924,8 +957,10 @@ var compConfigManager;
                 *   @param {string} blindtransfer         Transfer a conversation with blind type
                 *   @param {string} unmute_record         Unmute the recording of a conversation
                 *   @param {string} pickup_parking        Pickup a parked call
+                *   @param {string} queuemember_add       Adds the specified extension to the queue
                 *   @param {string} inout_dyn_queues      Alternates the logon and logout of the extension in all the queues for which it's a dynamic member
                 *   @param {string} queuemember_pause     Pause the specified extension from receive calls from the queue
+                *   @param {string} queuemember_remove    Removes the specified extension from the queue
                 *   @param {string} queuemember_unpause   Unpause the specified extension to receive calls from the queue
                 *   @param {string} blindtransfer_queue   Transfer a waiting caller from a queue to the destination with blind type
                 *   @param {string} blindtransfer_parking Transfer the parked call to the destination with blind type
@@ -952,8 +987,10 @@ var compConfigManager;
                     'blindtransfer',
                     'unmute_record',
                     'pickup_parking',
+                    'queuemember_add',
                     'inout_dyn_queues',
                     'queuemember_pause',
+                    'queuemember_remove',
                     'queuemember_unpause',
                     'blindtransfer_queue',
                     'blindtransfer_parking'
@@ -2759,6 +2796,189 @@ var compConfigManager;
             },
 
             /**
+            * Logon the extension in the queue in which is dynamic member with the following REST API:
+            *
+            *     POST queuemember_add
+            *
+            * @method queuemember_add
+            * @param {object}   req  The client request.
+            * @param {object}   res  The client response.
+            * @param {function} next Function to run the next handler in the chain.
+            */
+            queuemember_add: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    // the "paused" and "penalty" parameters are optional
+                    if (   typeof req.params              !== 'object' || typeof req.params.queueId !== 'string'
+                        || typeof req.params.endpointType !== 'string' || typeof req.params.endpointId !== 'string') {
+
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    // check if the user has the administration operator panel queues authorization
+                    if (compAuthorization.authorizeOpAdminQueuesUser(username) === true) {
+
+                        logger.info(IDLOG, 'logging in "' + req.params.endpointType + '" "' +
+                                           req.params.endpointId + '" in the queue "' + req.params.queueId + '": user "' + username + '" has the "admin_queues" authorization');
+                    }
+                    // otherwise check if the user has the queues operator panel authorization
+                    else if (compAuthorization.authorizeOpQueuesUser(username) !== true) {
+
+                        logger.warn(IDLOG, 'logging in "' + req.params.endpointType + '" "' +
+                                           req.params.endpointId + '" in the queue "' + req.params.queueId + '": authorization failed for user "' + username + '"');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+                    // the user has the "queues" authorization. So check if the endpoint is owned by the user
+                    else {
+
+                        logger.info(IDLOG, 'logging in "' + req.params.endpointType + '" "' +
+                                           req.params.endpointId + '" in the queue "' + req.params.queueId + '": user "' + username + '" has the "queues" authorization');
+
+                        if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+
+                            logger.warn(IDLOG, 'logging in "' + req.params.endpointType + '" "' +
+                                               req.params.endpointId + '" in the queue "' + req.params.queueId + '" by user "' + username + '" has been failed: ' +
+                                               '"' + req.params.endpointId + '" is not owned by the user');
+                            compUtil.net.sendHttp403(IDLOG, res);
+                            return;
+
+                        } else {
+                            logger.info(IDLOG, 'logging in "' + req.params.endpointType + '" "' +
+                                               req.params.endpointId + '" in the queue "' + req.params.queueId + '": "' + req.params.endpointId + '" is owned by user "' + username + '"');
+                        }
+                    }
+
+                    if (req.params.endpointType === 'extension') {
+
+                        compAstProxy.queueMemberAdd(req.params.endpointType, req.params.endpointId, req.params.queueId, req.params.paused, req.params.penalty, function (err) {
+                            try {
+                                if (err) {
+                                    logger.warn(IDLOG, 'logging in "' + req.params.endpointType + '" "' +
+                                                       req.params.endpointId + '" in the queue "' + req.params.queueId + '" by user "' + username +
+                                                       '" has been failed');
+                                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                                    return;
+                                }
+
+                                logger.info(IDLOG, 'logging in "' + req.params.endpointType + '" "' +
+                                                   req.params.endpointId + '" in the queue "' + req.params.queueId + '" by user "' + username +
+                                                   '" has been successf');
+                                compUtil.net.sendHttp200(IDLOG, res);
+
+                            } catch (err) {
+                                logger.error(IDLOG, err.stack);
+                                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                            }
+                        });
+
+                    } else {
+                        logger.warn(IDLOG, 'logging in "' + req.params.endpointType + '" "' +
+                                           req.params.endpointId + '" in the queue "' + req.params.queueId + '": unknown endpointType ' + req.params.endpointType);
+                        compUtil.net.sendHttp400(IDLOG, res);
+                    }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * Logout the extension from the queue in which is dynamic member with the following REST API:
+            *
+            *     POST queuemember_remove
+            *
+            * @method queuemember_add
+            * @param {object}   req  The client request.
+            * @param {object}   res  The client response.
+            * @param {function} next Function to run the next handler in the chain.
+            */
+            queuemember_remove: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (   typeof req.params              !== 'object' || typeof req.params.queueId !== 'string'
+                        || typeof req.params.endpointType !== 'string' || typeof req.params.endpointId !== 'string') {
+
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    // check if the user has the administration operator panel queues authorization
+                    if (compAuthorization.authorizeOpAdminQueuesUser(username) === true) {
+
+                        logger.info(IDLOG, 'logging out "' + req.params.endpointType + '" "' +
+                                           req.params.endpointId + '" from the queue "' + req.params.queueId + '": user "' + username + '" has the "admin_queues" authorization');
+                    }
+                    // otherwise check if the user has the queues operator panel authorization
+                    else if (compAuthorization.authorizeOpQueuesUser(username) !== true) {
+
+                        logger.warn(IDLOG, 'logging out "' + req.params.endpointType + '" "' +
+                                           req.params.endpointId + '" from the queue "' + req.params.queueId + '": authorization failed for user "' + username + '"');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+                    // the user has the "queues" authorization. So check if the endpoint is owned by the user
+                    else {
+
+                        logger.info(IDLOG, 'logging out "' + req.params.endpointType + '" "' +
+                                           req.params.endpointId + '" from the queue "' + req.params.queueId + '": user "' + username + '" has the "queues" authorization');
+
+                        if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+
+                            logger.warn(IDLOG, 'logging out "' + req.params.endpointType + '" "' +
+                                               req.params.endpointId + '" from the queue "' + req.params.queueId + '" by user "' + username + '" has been failed: ' +
+                                               '"' + req.params.endpointId + '" is not owned by the user');
+                            compUtil.net.sendHttp403(IDLOG, res);
+                            return;
+
+                        } else {
+                            logger.info(IDLOG, 'logging out "' + req.params.endpointType + '" "' +
+                                               req.params.endpointId + '" from the queue "' + req.params.queueId + '": "' + req.params.endpointId + '" is owned by user "' + username + '"');
+                        }
+                    }
+
+                    if (req.params.endpointType === 'extension') {
+
+                        compAstProxy.queueMemberRemove(req.params.endpointType, req.params.endpointId, req.params.queueId, function (err) {
+                            try {
+                                if (err) {
+                                    logger.warn(IDLOG, 'logging out "' + req.params.endpointType + '" "' +
+                                                       req.params.endpointId + '" from the queue "' + req.params.queueId + '" by user "' + username +
+                                                       '" has been failed');
+                                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                                    return;
+                                }
+
+                                logger.info(IDLOG, 'logging out "' + req.params.endpointType + '" "' +
+                                                   req.params.endpointId + '" from the queue "' + req.params.queueId + '" by user "' + username +
+                                                   '" has been successf');
+                                compUtil.net.sendHttp200(IDLOG, res);
+
+                            } catch (err) {
+                                logger.error(IDLOG, err.stack);
+                                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                            }
+                        });
+
+                    } else {
+                        logger.warn(IDLOG, 'logging out "' + req.params.endpointType + '" "' +
+                                           req.params.endpointId + '" from the queue "' + req.params.queueId + '": unknown endpointType ' + req.params.endpointType);
+                        compUtil.net.sendHttp400(IDLOG, res);
+                    }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
             * Logon the extension in all the queues in which is dynamic member with the following REST API:
             *
             *     POST inout_dyn_queues
@@ -2774,7 +2994,7 @@ var compConfigManager;
 
                     // check parameters
                     if (   typeof req.params              !== 'object'
-                        || typeof req.params.endpointType !== 'string' || typeof req.params.endpointId  !== 'string') {
+                        || typeof req.params.endpointType !== 'string' || typeof req.params.endpointId !== 'string') {
 
                         compUtil.net.sendHttp400(IDLOG, res);
                         return;
@@ -3076,8 +3296,10 @@ var compConfigManager;
         exports.pickup_parking        = astproxy.pickup_parking;
         exports.setCompOperator       = setCompOperator;
         exports.setCompAstProxy       = setCompAstProxy;
+        exports.queuemember_add       = astproxy.queuemember_add;
         exports.inout_dyn_queues      = astproxy.inout_dyn_queues;
         exports.queuemember_pause     = astproxy.queuemember_pause;
+        exports.queuemember_remove    = astproxy.queuemember_remove;
         exports.queuemember_unpause   = astproxy.queuemember_unpause;
         exports.blindtransfer_queue   = astproxy.blindtransfer_queue;
         exports.is_autoc2c_supported  = astproxy.is_autoc2c_supported;

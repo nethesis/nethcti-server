@@ -4234,6 +4234,127 @@ function queueMemberPauseUnpause(endpointType, endpointId, queueId, reason, paus
 }
 
 /**
+* Adds the member to the queue.
+*
+* @method queueMemberAdd
+* @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
+* @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
+* @param {string}   queueId      The queue identifier
+* @param {string}   [paused]     To pause or not the member initially
+* @param {boolean}  [penalty]    A penalty (number) to apply to this member. Asterisk will distribute calls to members
+*                                with higher penalties only after attempting to distribute calls to those with lower penalty
+* @param {function} cb           The callback function
+*/
+function queueMemberAdd(endpointType, endpointId, queueId, paused, penalty, cb) {
+    try {
+        // check parameters
+        if (   typeof cb           !== 'function'
+            || typeof endpointType !== 'string'   || typeof endpointId !== 'string'
+            || typeof queueId      !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // check the endpoint existence
+        if (endpointType === 'extension' && extensions[endpointId]) {
+
+            var obj = {
+                command:    'queueMemberAdd',
+                queue:      queueId,
+                exten:      endpointId,
+                memberName: extensions[endpointId].getName()
+            };
+
+            // add optional parameters
+            if (paused)  { obj.paused  = paused;  }
+            if (penalty) { obj.penalty = penalty; }
+
+            logger.info(IDLOG, 'execute queue member add of ' + endpointType + ' ' + endpointId + ' to queue ' + queueId);
+            astProxy.doCmd(obj, function (err) {
+                try {
+                    if (err) {
+                        logger.error(IDLOG, 'queue member add of ' + endpointType + ' ' + endpointId + ' to queue ' + queueId + ' has been failed');
+                        cb(err);
+                        return;
+                    }
+                    logger.info(IDLOG, 'queue member add of ' + endpointType + ' ' + endpointId + ' to queue ' + queueId + ' has been successful');
+                    cb(null);
+
+                } catch (err) {
+                   logger.error(IDLOG, err.stack);
+                   cb(err);
+                }
+            });
+
+        } else {
+            var err = 'queue member add of ' + endpointType + ' ' + endpointId + ' to queue ' + queueId + ': unknown "' + endpointType + '" or extension not present';
+            logger.warn(IDLOG, err);
+            cb(err);
+        }
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+       cb(err);
+    }
+}
+
+/**
+* Removes the extension from a specific queue.
+*
+* @method queueMemberRemove
+* @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
+* @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
+* @param {string}   queueId      The queue identifier
+* @param {function} cb           The callback function
+*/
+function queueMemberRemove(endpointType, endpointId, queueId, cb) {
+    try {
+        // check parameters
+        if (   typeof cb           !== 'function'
+            || typeof endpointType !== 'string'   || typeof endpointId !== 'string'
+            || typeof queueId      !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // check the endpoint existence
+        if (endpointType === 'extension' && extensions[endpointId]) {
+
+            var obj = {
+                command: 'queueMemberRemove',
+                queue:   queueId,
+                exten:   endpointId
+            };
+
+            logger.info(IDLOG, 'execute queue member remove of ' + endpointType + ' ' + endpointId + ' from queue ' + queueId);
+            astProxy.doCmd(obj, function (err) {
+                try {
+                    if (err) {
+                        logger.error(IDLOG, 'queue member remove of ' + endpointType + ' ' + endpointId + ' from queue ' + queueId + ' has been failed');
+                        cb(err);
+                        return;
+                    }
+                    logger.info(IDLOG, 'queue member remove of ' + endpointType + ' ' + endpointId + ' from queue ' + queueId + ' has been successful');
+                    cb(null);
+
+                } catch (err) {
+                   logger.error(IDLOG, err.stack);
+                   cb(err);
+                }
+            });
+
+        } else {
+            var err = 'queue member remove of ' + endpointType + ' ' + endpointId + ' from queue ' + queueId + ': unknown "' + endpointType + '" or extension not present';
+            logger.warn(IDLOG, err);
+            cb(err);
+        }
+
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+       cb(err);
+    }
+}
+
+/**
 * Stop the recording of the conversation.
 *
 * @method stopRecordConversation
@@ -5166,12 +5287,11 @@ exports.getExtensions                   = getExtensions;
 exports.pickupParking                   = pickupParking;
 exports.getJSONQueues                   = getJSONQueues;
 exports.getExtensionIp                  = getExtensionIp;
-exports.getJSONQueuesStats              = getJSONQueuesStats;
-exports.getJSONQueuesQOS                = getJSONQueuesQOS;
-exports.getJSONAgentsStats              = getJSONAgentsStats;
 exports.getJSONTrunks                   = getJSONTrunks;
+exports.queueMemberAdd                  = queueMemberAdd;
 exports.inoutDynQueues                  = inoutDynQueues;
 exports.getJSONParkings                 = getJSONParkings;
+exports.getJSONQueuesQOS                = getJSONQueuesQOS;
 exports.redirectParking                 = redirectParking;
 exports.sendDTMFSequence                = sendDTMFSequence;
 exports.parkConversation                = parkConversation;
@@ -5180,10 +5300,13 @@ exports.getJSONExtension                = getJSONExtension;
 exports.getExtensionAgent               = getExtensionAgent;
 exports.getJSONExtensions               = getJSONExtensions;
 exports.setCompCallerNote               = setCompCallerNote;
+exports.queueMemberRemove               = queueMemberRemove;
 exports.EVT_EXTEN_CHANGED               = EVT_EXTEN_CHANGED;
 exports.EVT_TRUNK_CHANGED               = EVT_TRUNK_CHANGED;
 exports.EVT_EXTEN_DIALING               = EVT_EXTEN_DIALING;
 exports.EVT_QUEUE_CHANGED               = EVT_QUEUE_CHANGED;
+exports.getJSONQueuesStats              = getJSONQueuesStats;
+exports.getJSONAgentsStats              = getJSONAgentsStats;
 exports.setUnconditionalCf              = setUnconditionalCf;
 exports.hangupConversation              = hangupConversation;
 exports.evtNewExternalCall              = evtNewExternalCall;
