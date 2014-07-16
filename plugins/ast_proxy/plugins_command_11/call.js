@@ -31,9 +31,9 @@ var CALL_TIMEOUT = 30000;
 * @property PRE_CALLERID
 * @type {string}
 * @private
-* @default CTI->
+* @default "CTI "
 */
-var PRE_CALLERID = 'CTI->';
+var PRE_CALLERID = 'CTI ';
 
 /**
 * Call failure reasons.
@@ -135,7 +135,7 @@ var FAIL_REASON = {
                         Channel:  args.chanType + '/' + args.exten,                // extension to be used
                         Context:  'from-internal',
                         Priority: 1,
-                        CallerID: PRE_CALLERID + args.to + '<' + args.exten + '>',
+                        CallerID: PRE_CALLERID + args.to,
                         Timeout:  CALL_TIMEOUT,
                         Account:  args.to,
                         Exten:    args.to,                                         // the number to be called

@@ -173,6 +173,17 @@ var EVT_UPDATE_VOICE_MESSAGES = 'updateVoiceMessages';
 var BASE_CALL_REC_AUDIO_PATH = '/var/spool/asterisk/monitor';
 
 /**
+* The interval time to update the details of all the queues.
+*
+* @property INTERVAL_UPDATE_QUEUE_DETAILS
+* @type number
+* @private
+* @final
+* @default 60000
+*/
+var INTERVAL_UPDATE_QUEUE_DETAILS = 60000;
+
+/**
 * The logger. It must have at least three methods: _info, warn and error._
 *
 * @property logger
@@ -1132,8 +1143,117 @@ function initializeQueues() {
                 astProxy.doCmd({ command: 'queueDetails', queue: q.getQueue() }, queueDetails);
             }
         }
+
+        logger.info(IDLOG, 'start the interval period to update the details of all the queues each ' + INTERVAL_UPDATE_QUEUE_DETAILS + ' msec');
+        startIntervalUpdateQueuesDetails(INTERVAL_UPDATE_QUEUE_DETAILS);
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Updates the data about all queues each interval of time.
+*
+* @method startIntervalUpdateQueuesDetails
+* @param {number} interval The interval time to update the details of all the queues.
+* @private
+*/
+function startIntervalUpdateQueuesDetails(interval) {
+    try {
+        // check the parameter
+        if (typeof interval !== 'number') { throw new Error('wrong parameter'); }
+
+        setInterval(function () {
+
+            var q;
+            for (q in queues) {
+
+                // request details for the current queue
+                logger.info(IDLOG, 'update details of queue ' + q);
+                astProxy.doCmd({ command: 'queueDetails', queue: q }, queueDetailsUpdate);
+            }
+
+        }, interval);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Updates the details for the queue object.
+*
+* @method queueDetailsUpdate
+* @param {object} err  The error response object
+* @param {object} resp The queue informations object
+* @private
+*/
+function queueDetailsUpdate(err, resp) {
+    try {
+        if (err) {
+            logger.error(IDLOG, 'updating queue details: ' + err.toString());
+            return;
+        }
+
+        // check the parameter
+        if (typeof resp !== 'object'
+            || resp.queue                  === undefined || resp.members                === undefined
+            || resp.holdtime               === undefined || resp.talktime               === undefined
+            || resp.completedCallsCount    === undefined || resp.abandonedCallsCount    === undefined
+            || resp.serviceLevelTimePeriod === undefined || resp.serviceLevelPercentage === undefined) {
+
+            throw new Error('wrong parameter');
+        }
+
+        var q = resp.queue; // the queue number
+
+        // check the existence of the queue
+        if (!queues[q]) {
+            logger.warn(IDLOG, 'try to update details of not existent queue "' + q + '"');
+            return;
+        }
+
+        // update the queue data
+        setQueueData(q, resp);
+
+        // emit the event
+        logger.info(IDLOG, 'emit event ' + EVT_QUEUE_CHANGED + ' for queue ' + q);
+        astProxy.emit(EVT_QUEUE_CHANGED, queues[q]);
+
+    } catch (error) {
+        logger.error(IDLOG, error.stack);
+    }
+}
+
+/**
+* Sets the data for the queue object.
+*
+* @method setQueueData
+* @param {string} q    The queue name
+* @param {object} resp The queue informations object
+* @private
+*/
+function setQueueData(q, resp) {
+    try {
+        // check the parameter
+        if (   typeof q                    !== 'string'  || typeof resp                 !== 'object'
+            || resp.holdtime               === undefined || resp.talktime               === undefined
+            || resp.completedCallsCount    === undefined || resp.abandonedCallsCount    === undefined
+            || resp.serviceLevelTimePeriod === undefined || resp.serviceLevelPercentage === undefined) {
+
+            throw new Error('wrong parameter');
+        }
+
+        queues[q].setAvgHoldTime(resp.holdtime);
+        queues[q].setAvgTalkTime(resp.talktime);
+        queues[q].setCompletedCallsCount(resp.completedCallsCount);
+        queues[q].setAbandonedCallsCount(resp.abandonedCallsCount);
+        queues[q].setServiceLevelTimePeriod(resp.serviceLevelTimePeriod);
+        queues[q].setServiceLevelPercentage(resp.serviceLevelPercentage);
+
+    } catch (error) {
+        logger.error(IDLOG, error.stack);
     }
 }
 
@@ -1155,9 +1275,10 @@ function queueDetails(err, resp) {
 
         // check the parameter
         if (typeof resp !== 'object'
-            || resp.queue               === undefined || resp.members             === undefined
-            || resp.holdtime            === undefined || resp.talktime            === undefined
-            || resp.completedCallsCount === undefined || resp.abandonedCallsCount === undefined) {
+            || resp.queue                  === undefined || resp.members             === undefined
+            || resp.holdtime               === undefined || resp.talktime            === undefined
+            || resp.completedCallsCount    === undefined || resp.abandonedCallsCount === undefined
+            || resp.serviceLevelTimePeriod === undefined) {
 
             throw new Error('wrong parameter');
         }
@@ -1171,10 +1292,7 @@ function queueDetails(err, resp) {
         }
 
         // set the queue data
-        queues[q].setAvgHoldTime(resp.holdtime);
-        queues[q].setAvgTalkTime(resp.talktime);
-        queues[q].setCompletedCallsCount(resp.completedCallsCount);
-        queues[q].setAbandonedCallsCount(resp.abandonedCallsCount);
+        setQueueData(q, resp);
 
         // add all static and dynamic members that are logged in
         var m;
@@ -1295,7 +1413,8 @@ function addQueueMemberLoggedIn(data, queueId) {
         if (   typeof data                 !== 'object' || typeof queueId                !== 'string'
             || typeof data.member          !== 'string' || typeof data.paused            !== 'boolean'
             || typeof data.name            !== 'string' || typeof data.type              !== 'string'
-            || typeof data.callsTakenCount !== 'number' || typeof data.lastCallTimestamp !== 'number') {
+            || typeof data.callsTakenCount !== 'number' || typeof data.lastCallTimestamp !== 'number'
+            || typeof data.busy            !== 'boolean') {
 
             throw new Error('wrong parameters');
         }
@@ -1309,6 +1428,7 @@ function addQueueMemberLoggedIn(data, queueId) {
         var member = new QueueMember(data.member, queueId, data.paused, true);
         member.setName(data.name);
         member.setType(data.type);
+        member.setBusy(data.busy);
         member.setCallsTakenCount(data.callsTakenCount);
         member.setLastCallTimestamp(data.lastCallTimestamp);
 
@@ -2504,10 +2624,60 @@ function evtQueueMemberPausedChanged(queueId, memberId, paused, reason) {
 }
 
 /**
+* An event about queue member status has been received from the asterisk.
+* It updates the data about the queue member.
+*
+* @method evtQueueMemberStatus
+* @param {object} data
+*   @param {string}  data.type              The membership type (static or dynamic)
+*   @param {string}  data.name              The name of the member
+*   @param {boolean} data.busy              It is true if the agent is busy in a conversation
+*   @param {string}  data.queueId           The queue identifier
+*   @param {string}  data.member            The queue member identifier
+*   @param {boolean} data.paused            True if the extension has been paused from the queue
+*   @param {number}  data.lastCallTimestamp The timestamp of the last call received by the member
+*   @param {number}  data.callsTakenCount   The number of the taken calls
+* @private
+*/
+function evtQueueMemberStatus(data) {
+    try {
+        // check parameters
+        if (   typeof data         !== 'object'  || typeof data.type              !== 'string'
+            || typeof data.queueId !== 'string'  || typeof data.lastCallTimestamp !== 'number'
+            || typeof data.member  !== 'string'  || typeof data.callsTakenCount   !== 'number'
+            || typeof data.paused  !== 'boolean' || typeof data.name              !== 'string'
+            || typeof data.busy    !== 'boolean') {
+
+            throw new Error('wrong parameters');
+        }
+
+        if (!queues[data.queueId]) {
+            logger.warn(IDLOG, 'received event queue member status (' + data.member + ') for not existent queue "' + queueId + '"');
+            return;
+        }
+
+        // the update of the data is done by two steps:
+        // 1. removing the current member
+        // 2. creating a new one
+        // The alternative could be to update the data of the already present member, or to create a new one
+        // if it is not present. But this is more error prone, especially for the future development if some
+        // data is added: the developer should modify more code
+        queues[data.queueId].removeMember(data.member);
+        // add the new member to the queue
+        addQueueMemberLoggedIn(data, data.queueId);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * An event about queue member added has been received from the asterisk.
 *
 * @method evtQueueMemberAdded
 * @param {object} data
+*   @param {string}  data.type              The membership type (static or dynamic)
+*   @param {string}  data.name              The name of the member
 *   @param {string}  data.queueId           The queue identifier
 *   @param {string}  data.member            The queue member identifier
 *   @param {boolean} data.paused            True if the extension has been paused from the queue
@@ -2521,7 +2691,8 @@ function evtQueueMemberAdded(data) {
         if (   typeof data         !== 'object'  || typeof data.type              !== 'string'
             || typeof data.queueId !== 'string'  || typeof data.lastCallTimestamp !== 'number'
             || typeof data.member  !== 'string'  || typeof data.callsTakenCount   !== 'number'
-            || typeof data.paused  !== 'boolean' || typeof data.name              !== 'string') {
+            || typeof data.paused  !== 'boolean' || typeof data.name              !== 'string'
+            || typeof data.busy    !== 'boolean') {
 
             throw new Error('wrong parameters');
         }
@@ -3407,12 +3578,12 @@ function pickupParking(parking, destType, destId, cb) {
 * Pickup a conversation.
 *
 * @method pickupConversation
-* @param {string} endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
-* @param {string} endpointId The endpoint identifier (e.g. the extension number)
-* @param {string} convid The conversation identifier
-* @param {string} destType The endpoint type that pickup the conversation
-* @param {string} destId The endpoint identifier that pickup the conversation
-* @param {function} cb The callback function
+* @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
+* @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
+* @param {string}   convid       The conversation identifier
+* @param {string}   destType     The endpoint type that pickup the conversation
+* @param {string}   destId       The endpoint identifier that pickup the conversation
+* @param {function} cb           The callback function
 */
 function pickupConversation(endpointType, endpointId, convid, destType, destId, cb) {
     try {
@@ -3434,7 +3605,7 @@ function pickupConversation(endpointType, endpointId, convid, destType, destId, 
             var chToRedirect;
             var convs      = extensions[endpointId].getAllConversations();
             var conv       = convs[convid];
-            var ch         = conv.getSourceChannel();
+            var ch         = conv.getDestinationChannel();
             var callerNum  = ch.getCallerNum();
             var bridgedNum = ch.getBridgedNum();
 
@@ -5314,6 +5485,7 @@ exports.pickupConversation              = pickupConversation;
 exports.evtExtenDndChanged              = evtExtenDndChanged;
 exports.evtQueueMemberAdded             = evtQueueMemberAdded;
 exports.EVT_PARKING_CHANGED             = EVT_PARKING_CHANGED;
+exports.evtQueueMemberStatus            = evtQueueMemberStatus;
 exports.setUnconditionalCfVm            = setUnconditionalCfVm;
 exports.redirectConversation            = redirectConversation;
 exports.EVT_NEW_VOICE_MESSAGE           = EVT_NEW_VOICE_MESSAGE;

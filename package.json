@@ -5,6 +5,7 @@
     "private": true,
     "dependencies": {
         "ejs":          "0.8.4",
+        "mssql":        "0.5.5",
         "async":        "0.2.9",
         "moment":       "2.1.0",
 	"jsplugs":      "0.1.0",

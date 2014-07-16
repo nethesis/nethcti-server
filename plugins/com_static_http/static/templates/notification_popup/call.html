@@ -95,7 +95,7 @@
                 }
 
                 var argCtiUrl   = params.ctiProto + '://' + window.location.hostname + (window.location.port ? ':' + window.location.port : '') + '/cti';
-                var argCtiCCUrl = params.ctiProto + '://' + window.location.hostname + (window.location.port ? ':' + window.location.port : '') + '/cti/#/customerCard';
+                var argCtiCCUrl = params.ctiProto + '://' + window.location.hostname + (window.location.port ? ':' + window.location.port : '') + '/cti/#/customerCard/search/' + params.callerNum;
 
                 $('body').attr('arg', argCtiUrl);
                 $('#open-cticc-but').attr('arg', argCtiCCUrl);

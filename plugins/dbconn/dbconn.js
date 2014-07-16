@@ -12,7 +12,7 @@
 * @static
 */
 var fs           = require('fs');
-var odbc         = require('odbc');
+var mssql        = require('mssql');
 var async        = require('async');
 var moment       = require('moment');
 var iniparser    = require('iniparser');
@@ -762,27 +762,89 @@ function initConnections() {
                 dbConn[k] = sequelize;
                 logger.info(IDLOG, 'initialized db connection with ' + dbConfig[k].dbtype + ' ' + dbConfig[k].dbname + ' ' + dbConfig[k].dbhost + ':' + dbConfig[k].dbport);
 
-            } else if (dbConfig[k].dbtype === 'mssql') {
+            } else if (isMssqlType(dbConfig[k].dbtype)) {
 
-                var db      = new odbc.Database();
-                var options = 'DRIVER={FreeTDS}'                    +
-                              ';SERVER='   + dbConfig[k].dbhost     +
-                              ';PORT='     + dbConfig[k].dbport     +
-                              ';UID='      + dbConfig[k].dbuser     +
-                              ';PWD='      + dbConfig[k].dbpassword +
-                              ';DATABASE=' + dbConfig[k].dbname;
-
-                db.open(options, function (err1) {
-                    if (err1) {
-                        logger.error(IDLOG, 'initializing db connection with ' + dbConfig[k].dbtype + ' ' + dbConfig[k].dbname + ' ' + dbConfig[k].dbhost + ':' + dbConfig[k].dbport + ' - ' + err1.stack);
-
-                    } else {
-                        dbConn[k] = db;
-                        logger.info(IDLOG, 'initialized db connection with ' + dbConfig[k].dbtype + ' ' + dbConfig[k].dbname + ' ' + dbConfig[k].dbhost + ':' + dbConfig[k].dbport);
-                    }
-                });
+                initMssqlConn(k, getMssqlTdsVersion(dbConfig[k].dbtype));
             }
         }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Returns the TDS version for MSSQL from the database type configuration.
+* The type has the format "mssql:TDS_VERSION", for example "mssql:7_4".
+*
+* @method getMssqlTdsVersion
+* @param  {string} type The database type expressed in the configuration file
+* @return {string} The TDS version to be used for connection.
+* @private
+*/
+function getMssqlTdsVersion(type) {
+    try {
+        return type.split(':')[1];
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return '';
+    }
+}
+
+/**
+* Checks if the configuration database type is MSSQL. When it is true,
+* the type has the format "mssql:TDS_VERSION", for example "mssql:7_4".
+*
+* @method isMssqlType
+* @param  {string}  type The database type expressed in the configuration file
+* @return {boolean} True if the type is MSSQL.
+* @private
+*/
+function isMssqlType(type) {
+    try {
+        if (type.indexOf('mssql') !== -1) { return true; }
+        return false;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return false;
+    }
+}
+
+/**
+* Initialize an MSSQL connection.
+*
+* @method initMssqlConn
+* @param {string} name       The customer card name
+* @param {string} tdsVersion The TDS version to be used in connection
+* @private
+*/
+function initMssqlConn(name, tdsVersion) {
+    try {
+        var config = {
+            server:   dbConfig[name].dbhost,
+            user:     dbConfig[name].dbuser,
+            password: dbConfig[name].dbpassword,
+            database: dbConfig[name].dbname,
+            options: {
+                encrypt:    false,
+                tdsVersion: tdsVersion
+            }
+        };
+
+        var connection = new mssql.Connection(config, function(err1) {
+            try {
+                if (err1) {
+                    logger.error(IDLOG, 'initializing db connection with ' + dbConfig[name].dbtype + ' ' + dbConfig[name].dbname + ' ' + dbConfig[name].dbhost + ':' + dbConfig[name].dbport + ' - ' + err1.stack);
+
+                } else {
+                    dbConn[name] = connection;
+                    logger.info(IDLOG, 'initialized db connection with ' + dbConfig[name].dbtype + ' ' + dbConfig[name].dbname + ' ' + dbConfig[name].dbhost + ':' + dbConfig[name].dbport);
+                }
+            } catch (err2) {
+                logger.error(IDLOG, err2.stack);
+            }
+        });
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -1918,11 +1980,11 @@ function getHistoryPostitInterval(data, cb) {
         // search
         models[JSON_KEYS.POSTIT].findAll({
             where: [
-                'creator' + operator + '? AND ' +
+                '(creator' + operator + '? OR recipient=?) AND ' +
                 '(DATE(creation)>=? AND DATE(creation)<=?) AND ' +
                 '(recipient LIKE ?)',
-                data.username,
-                data.from, data.to,
+                data.username, data.username,
+                data.from,     data.to,
                 data.filter
             ],
             attributes: attributes
@@ -3056,17 +3118,24 @@ function getCustomerCardByNum(type, num, cb) {
                 cb(err1.toString());
             });
 
-        } else if (dbConfig[type].dbtype === 'mssql') {
+        } else if (isMssqlType(dbConfig[type].dbtype)) {
 
-            dbConn[type].query(dbConfig[type].query, function (err2, rows, moreResultSets) {
+            var query = dbConfig[type].query.replace(/\$EXTEN/g, num);
 
-                if (err2) {
-                    logger.error(IDLOG, 'searching ' + type + ' by num ' + num + ': ' + err2.toString());
-                    cb(err2.toString());
+            var request = new mssql.Request(dbConn[type]);
+            request.query(query, function (err2, recordset) {
+                try {
+                    if (err2) {
+                        logger.error(IDLOG, 'searching ' + type + ' by num ' + num + ': ' + err2.toString());
+                        cb(err2.toString());
 
-                } else {
-                    logger.info(IDLOG, rows.length + ' results by searching ' + type + ' by num ' + num);
-                    cb(null, rows);
+                    } else {
+                        logger.info(IDLOG, recordset.length + ' results by searching ' + type + ' by num ' + num);
+                        cb(null, recordset);
+                    }
+                } catch (err3) {
+                    logger.error(IDLOG, err3.stack);
+                    cb(err3.toString());
                 }
             });
         }
