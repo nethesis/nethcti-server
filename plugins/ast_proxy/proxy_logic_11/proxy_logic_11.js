@@ -792,14 +792,14 @@ function parkStructValidation(err, resp) {
 function structValidation() {
     try {
         logger.info(IDLOG, 'start asterisk structure ini file validation');
-        // validates all queues
-        astProxy.doCmd({ command: 'listQueues'   }, queueStructValidation);
-        // validates all parkings
-        astProxy.doCmd({ command: 'listParkings' }, parkStructValidation);
         // validates all sip extensions
         astProxy.doCmd({ command: 'listSipPeers' }, sipExtenStructValidation);
         // validates all iax extensions
         astProxy.doCmd({ command: 'listIaxPeers' }, iaxExtenStructValidation);
+        // validates all queues
+        astProxy.doCmd({ command: 'listQueues'   }, queueStructValidation);
+        // validates all parkings
+        astProxy.doCmd({ command: 'listParkings' }, parkStructValidation);
         // validates all sip trunks
         astProxy.doCmd({ command: 'listSipPeers' }, sipTrunkStructValidation);
         // validates all iax trunks
@@ -1383,6 +1383,8 @@ function addQueueMemberLoggedOut(memberId, queueId) {
         // event is generated from the asterisk and so the member is updated with all the updated values
         var member = new QueueMember(memberId, queueId, false, false);
         member.setType(QUEUE_MEMBER_TYPES_ENUM.DYNAMIC);
+        // set the member name
+        if (extensions[memberId]) { member.setName(extensions[memberId].getName()); }
 
         // add the member to the queue
         queues[queueId].addMember(member);
