@@ -57,6 +57,15 @@ exports.QueueMember = function (memberNum, queueId, pausedValue, loggedInValue) 
     var type;
 
     /**
+    * The member busy status. It is true if the member is busy in a conversation.
+    *
+    * @property busy
+    * @type {boolean}
+    * @private
+    */
+    var busy;
+
+    /**
     * The pause status of the member.
     *
     * @property paused
@@ -225,9 +234,17 @@ exports.QueueMember = function (memberNum, queueId, pausedValue, loggedInValue) 
     * Set the member type.
     *
     * @method setType
-    * @param {string} type The member type
+    * @param {string} value The member type
     */
     function setType(value) { type = value; }
+
+    /**
+    * Sets the busy status.
+    *
+    * @method setBusy
+    * @param {boolean} value True if the member is busy in a conversation
+    */
+    function setBusy(value) { busy = value; }
 
     /**
     * Sets the paused status of the member. If the pause has been started
@@ -313,6 +330,7 @@ exports.QueueMember = function (memberNum, queueId, pausedValue, loggedInValue) 
     *     {
     *         type:                   "static",
     *         name:                   "Name",
+    *         busy:                   true,          // if true the member is busy in a conversation
     *         queue:                  "401",
     *         member:                 "214",
     *         paused:                 true,          // the paused status
@@ -331,6 +349,7 @@ exports.QueueMember = function (memberNum, queueId, pausedValue, loggedInValue) 
         return {
             type:                   type,
             name:                   name,
+            busy:                   busy,
             queue:                  queue,
             member:                 member,
             paused:                 paused,
@@ -346,6 +365,7 @@ exports.QueueMember = function (memberNum, queueId, pausedValue, loggedInValue) 
     // public interface
     return {
         toJSON:               toJSON,
+        setBusy:              setBusy,
         setName:              setName,
         getName:              getName,
         getType:              getType,
@@ -392,4 +412,33 @@ var TYPES_ENUM = {
 * @final
 * @default Equal to the private property TYPES_ENUM
 */
+
 exports.QUEUE_MEMBER_TYPES_ENUM = TYPES_ENUM;
+
+/**
+* The QueueMember status enumeration.
+*
+* @property STATUS_ENUM
+* @type {object}
+* @private
+* @final
+* @default {
+    "FREE": "free",
+    "BUSY": "busy"
+}
+*/
+var STATUS_ENUM = {
+    'FREE': 'free',
+    'BUSY': 'busy'
+};
+
+/**
+* The QueueMember status enumeration. It's the same of
+* private _STATUS\_ENUM_.
+*
+* @property QUEUE_MEMBER_STATUS_ENUM
+* @type {object}
+* @final
+* @default Equal to the private property STATUS_ENUM
+*/
+exports.QUEUE_MEMBER_STATUS_ENUM = STATUS_ENUM;

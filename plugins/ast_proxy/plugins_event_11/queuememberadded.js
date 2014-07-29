@@ -2,6 +2,8 @@
 * @module ast_proxy
 * @submodule plugins_event_11
 */
+var AST_QUEUE_MEMBER_STATUS_2_STR_ADAPTER = require('../proxy_logic_11/queue_member_status_adapter_11.js').AST_QUEUE_MEMBER_STATUS_2_STR_ADAPTER;
+var QUEUE_MEMBER_STATUS_ENUM = require('../queueMember.js').QUEUE_MEMBER_STATUS_ENUM;
 
 /**
 * The module identifier used by the logger.
@@ -56,21 +58,24 @@ var astProxy;
                     if (   data.callstaken && data.membername
                         && data.queue      && data.lastcall 
                         && data.location   && data.membership
-                        && data.paused     && data.event === 'QueueMemberAdded') {
+                        && data.paused     && data.status
+                        && data.event === 'QueueMemberAdded') {
 
                         logger.info(IDLOG, 'received event ' + data.event);
 
                         // extract the queue member identifier. e.g. data.location is: "Local/214@from-queue/n"
                         var member = data.location.split('@')[0].split('/')[1];
+                        var isBusy = (AST_QUEUE_MEMBER_STATUS_2_STR_ADAPTER[data.status] === QUEUE_MEMBER_STATUS_ENUM.BUSY ? true : false);
 
                         astProxy.proxyLogic.evtQueueMemberAdded({
                             name:              data.membername,
                             type:              data.membership,
+                            busy:              isBusy,                               // true if the agent is busy in a conversation
                             paused:            (data.paused === '1' ? true : false),
                             member:            member,
                             queueId:           data.queue,
-                            callsTakenCount:   parseInt(data.callstaken), // the number of the taken calls
-                            lastCallTimestamp: parseInt(data.lastcall)    // timestamp of the last call received by the member
+                            callsTakenCount:   parseInt(data.callstaken),            // the number of the taken calls
+                            lastCallTimestamp: parseInt(data.lastcall)               // timestamp of the last call received by the member
                         });
 
                     } else {
