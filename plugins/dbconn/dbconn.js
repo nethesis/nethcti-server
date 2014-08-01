@@ -2647,7 +2647,7 @@ function getQueuesStats(day, cb) {
                             + ' IF(event = "COMPLETECALLER", "ANSWER",'
                             + ' IF(event = "EXITWITHTIMEOUT", "TIMEOUT", event)))',
                             'action' ],
-                        [ 'IF(event = "ABANDON", IF(cast(data1 as unsigned) <= 50, "nulled", "failed"), cast(data1 as unsigned))', 'hold' ],
+                        [ 'IF(event = "ABANDON", IF(cast(data3 as unsigned) <= 50, "nulled", "failed"), cast(data1 as unsigned))', 'hold' ],
                         [ 'count(id)', 'calls' ]],
                     order: ['queuename', 'action', 'hold']
 
