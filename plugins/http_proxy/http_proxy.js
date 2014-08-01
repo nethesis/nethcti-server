@@ -235,7 +235,8 @@ function start() {
 function startHttpsProxy() {
     try {
         var options = {
-            router: router,
+            pathnameOnly: true,
+            router:       router,
             https: {
                 key:  fs.readFileSync(HTTPS_KEY,  'utf8'),
                 cert: fs.readFileSync(HTTPS_CERT, 'utf8')
