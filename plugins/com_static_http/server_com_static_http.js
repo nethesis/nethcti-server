@@ -208,6 +208,10 @@ function httpServerCb(req, res) {
         req.addListener('end', function () {
 
             try {
+                // remove 'static' from the request
+                // For example "/static/img/logo.png" becomes "//img/logo.png"
+                req.url = req.url.replace('static', '');
+
                 fileStaticRoot.serve(req, res, function(err, result) {
                     // Handle temp files: delete after serving
                     if (path.basename(req.url).indexOf('tmpaudio') >= 0) {
