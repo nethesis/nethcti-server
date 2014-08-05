@@ -122,6 +122,16 @@ var EVT_READ_POSTIT = 'readPostit';
 var logSequelize = false;
 
 /**
+* The type name of the cti contacts imported into the centralized phonebook.
+*
+* @property NETHCTI_CENTRAL_TYPE
+* @type {string}
+* @private
+* @default "nethcti"
+*/
+var NETHCTI_CENTRAL_TYPE = 'nethcti';
+
+/**
 * The prefix for all customer card name.
 *
 * @property CUSTOMER_CARD
@@ -875,11 +885,15 @@ function getPbContactsContains(term, cb) {
 
         models[JSON_KEYS.PHONEBOOK].findAll({
             where: [
-                'name LIKE ? ' +
-                'OR company LIKE ? ' +
-                'OR workphone LIKE ? ' +
-                'OR homephone LIKE ? ' +
-                'OR cellphone LIKE ?',
+                '(' +
+                    'name LIKE ? ' +
+                    'OR company LIKE ? ' +
+                    'OR workphone LIKE ? ' +
+                    'OR homephone LIKE ? ' +
+                    'OR cellphone LIKE ?' +
+                ') AND (' +
+                    'type != "' + NETHCTI_CENTRAL_TYPE + '"' +
+                ')',
                 term, term, term, term, term
             ],
             order: 'name ASC, company ASC'
@@ -926,9 +940,13 @@ function getPbContactsByNum(number, cb) {
 
         models[JSON_KEYS.PHONEBOOK].findAll({
             where: [
-                'workphone=? ' +
-                'OR homephone=? ' +
-                'OR cellphone=?',
+                '(' +
+                    'workphone=? ' +
+                    'OR homephone=? ' +
+                    'OR cellphone=?' +
+                ') AND (' +
+                    'type != "' + NETHCTI_CENTRAL_TYPE + '"' +
+                ')',
                 number, number, number
             ],
             order: 'name ASC, company ASC'
@@ -1032,8 +1050,12 @@ function getPbContactsStartsWith(term, cb) {
 
         models[JSON_KEYS.PHONEBOOK].findAll({
             where: [
-                'name LIKE ? ' +
-                'OR company LIKE ?',
+                '(' +
+                    'name LIKE ? ' +
+                    'OR company LIKE ?' +
+                ') AND (' +
+                    'type != "' + NETHCTI_CENTRAL_TYPE + '"' +
+                ')',
                 term, term
             ],
             order: 'name ASC, company ASC'
@@ -1076,8 +1098,12 @@ function getPbContactsStartsWithDigit(cb) {
 
         models[JSON_KEYS.PHONEBOOK].findAll({
             where: [
-                'name REGEXP "^[0-9]" ' +
-                'OR company REGEXP "^[0-9]"'
+                '(' +
+                    'name REGEXP "^[0-9]" ' +
+                    'OR company REGEXP "^[0-9]"' +
+                ') AND (' +
+                    'type != "' + NETHCTI_CENTRAL_TYPE + '"' +
+                ')'
             ],
             order: 'name ASC, company ASC'
 
