@@ -275,7 +275,10 @@ function startHttpsProxy() {
 */
 function startHttpProxy() {
     try {
-        var options = { router: router };
+        var options = {
+            router:       router,
+            pathnameOnly: true
+        };
 
         var server = httpProxy.createServer(options, proxyRequest).listen(httpPort);
         logger.warn(IDLOG, 'HTTP proxy listening on port ' + httpPort);
