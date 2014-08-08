@@ -140,9 +140,9 @@ var IDLOG = '[queueDetails]';
                         list[data.actionid].members[member] = {
                             name:              data.name,
                             type:              data.membership,                    // it can be 'static', 'dynamic' or 'realtime'
-                            busy:              isBusy,                             // true if the agent is busy in a conversation
                             member:            member,
                             paused:            data.paused === '1' ? true : false, // if the extension is paused on queue
+                            busyAgent:         isBusy,                             // true if the agent is busy in at least one queue
                             callsTakenCount:   parseInt(data.callstaken),          // the number of the taken calls
                             lastCallTimestamp: parseInt(data.lastcall)             // timestamp of the last call received by the member
                         };

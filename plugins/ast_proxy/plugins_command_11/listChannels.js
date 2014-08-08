@@ -122,6 +122,10 @@ var IDLOG = '[listChannels]';
                             channelExten:   channelExten,
                             bridgedChannel: data.bridgedchannel
                         };
+
+                        // add queue information
+                        if (data.context === 'from-queue') { obj.queue = data.extension; }
+
                         list[data.channel] = obj;
 
                     } else if (map[data.actionid] && data.event === 'CoreShowChannelsComplete') {

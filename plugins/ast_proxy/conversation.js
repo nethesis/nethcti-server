@@ -7,7 +7,7 @@
 * @constructor
 * @return {object} The conversation object.
 */
-exports.Conversation = function (ownerId, sourceChan, destChan) {
+exports.Conversation = function (ownerId, sourceChan, destChan, queue) {
     // check parameters
     if (    typeof ownerId  !== 'string'
         || (typeof destChan !== 'object' && typeof sourceChan !== 'object') ) {
@@ -41,6 +41,17 @@ exports.Conversation = function (ownerId, sourceChan, destChan) {
     * @private
     */
     var chDest = destChan;
+
+    /**
+    * The queue identifier if the conversation has gone through a queue,
+    * undefined otherwise.
+    *
+    * @property queueId
+    * @type {string}
+    * @optional
+    * @private
+    */
+    var queueId = queue;
 
     /**
     * The recordig status. It can be one of the "RECORDING_STATUS" property.
@@ -168,6 +179,15 @@ exports.Conversation = function (ownerId, sourceChan, destChan) {
     function getSourceChannel() { return chSource; }
 
     /**
+    * Returns the queue identifier if the conversation involves the queue,
+    * undefined otherwise.
+    *
+    * @method getQueueId
+    * @return {Channel} The queue identifier.
+    */
+    function getQueueId() { return queueId; }
+
+    /**
     * Return the destination channel.
     *
     * @method getDestinationChannel
@@ -278,11 +298,12 @@ exports.Conversation = function (ownerId, sourceChan, destChan) {
     *         id:              "SIP/214-000002f4>SIP/209-000002f5",
     *         owner:           "214",
     *         chDest:          Channel.toJSON(),                    // the source channel of the call
+    *         queueId:         "401",                               // the queue identifier if the conversation has gone through a queue
     *         chSource:        Channel.toJSON(),                    // the destination channel of the call
     *         duration:        26,
     *         recording:       "false",                             // it's "true" or "mute" if the conversation is recording, "false" otherwise
     *         direction:       "in",
-    *         throughQueue:    false,                               // if the call has gone through a queue
+    *         throughQueue:    true,                               // if the call has gone through a queue
     *         counterpartNum:  "209",
     *         counterpartName: "user"
     *     }
@@ -299,6 +320,7 @@ exports.Conversation = function (ownerId, sourceChan, destChan) {
             id:              id,
             owner:           owner,
             chDest:          chDest   ? chDest.toJSON(privacyStr)   : null,
+            queueId:         queueId,
             chSource:        chSource ? chSource.toJSON(privacyStr) : null,
             duration:        duration,
             recording:       recording,
@@ -314,6 +336,7 @@ exports.Conversation = function (ownerId, sourceChan, destChan) {
         getId:                 getId,
         toJSON:                toJSON,
         toString:              toString,
+        getQueueId:            getQueueId,
         isIncoming:            isIncoming,
         getDuration:           getDuration,
         isRecording:           isRecording,
