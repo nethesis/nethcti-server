@@ -56,7 +56,7 @@ var port = '9005';
 * @private
 * @default "localhost"
 */
-var address = "localhost";
+var address = 'localhost';
 
 /**
 * The utility architect component.

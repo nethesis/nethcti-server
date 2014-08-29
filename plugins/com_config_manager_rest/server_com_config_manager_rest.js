@@ -56,7 +56,7 @@ var port = '9006';
 * @private
 * @default "localhost"
 */
-var address = "localhost";
+var address = 'localhost';
 
 /**
 * Set the logger to be used.

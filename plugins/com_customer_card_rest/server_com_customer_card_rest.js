@@ -56,7 +56,7 @@ var port = '9003';
 * @private
 * @default "localhost"
 */
-var address = "localhost";
+var address = 'localhost';
 
 /**
 * The architect component to be used for authorization.
