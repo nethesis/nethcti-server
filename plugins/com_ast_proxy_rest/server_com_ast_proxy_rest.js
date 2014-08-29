@@ -46,7 +46,7 @@ var logger = console;
 * @private
 * @default "9008"
 */
-var port = "9008";
+var port = '9008';
 
 /**
 * Listening address of the REST server. It can be customized by the
