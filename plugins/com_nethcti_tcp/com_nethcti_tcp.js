@@ -1222,13 +1222,30 @@ function sendAutheSuccess(socket) {
     }
 }
 
+/**
+* Returns the number of connected clients.
+*
+* @method getNumConnectedClients
+* @param {number} The number of connected clients.
+* @private
+*/
+function getNumConnectedClients() {
+    try {
+        return Object.keys(sockets).length;
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return -1;
+    }
+}
+
 // public interface
-exports.start                = start;
-exports.config               = config;
-exports.setLogger            = setLogger;
-exports.setAstProxy          = setAstProxy;
-exports.setCompUser          = setCompUser;
-exports.setCompAuthe         = setCompAuthe;
-exports.configWinPopup       = configWinPopup;
-exports.setCompStreaming     = setCompStreaming;
-exports.setCompAuthorization = setCompAuthorization;
+exports.start                  = start;
+exports.config                 = config;
+exports.setLogger              = setLogger;
+exports.setAstProxy            = setAstProxy;
+exports.setCompUser            = setCompUser;
+exports.setCompAuthe           = setCompAuthe;
+exports.configWinPopup         = configWinPopup;
+exports.setCompStreaming       = setCompStreaming;
+exports.setCompAuthorization   = setCompAuthorization;
+exports.getNumConnectedClients = getNumConnectedClients;

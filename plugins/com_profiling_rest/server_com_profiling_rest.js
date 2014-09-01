@@ -1,18 +1,18 @@
 /**
 * Provides the REST server for the configuration manager functions.
 *
-* @module com_config_manager_rest
-* @main arch_com_config_manager_rest
+* @module com_profiling_rest
+* @main arch_com_profiling_rest
 */
 
 /**
 * Provides the REST server.
 *
-* @class server_com_config_manager_rest
+* @class server_com_profiling_rest
 */
 var fs      = require('fs');
 var restify = require('restify');
-var plugins = require('jsplugs')().require('./plugins/com_config_manager_rest/plugins_rest');
+var plugins = require('jsplugs')().require('./plugins/com_profiling_rest/plugins_rest');
 
 /**
 * The module identifier used by the logger.
@@ -22,9 +22,9 @@ var plugins = require('jsplugs')().require('./plugins/com_config_manager_rest/pl
 * @private
 * @final
 * @readOnly
-* @default [server_com_config_manager_rest]
+* @default [server_com_profiling_rest]
 */
-var IDLOG = '[server_com_config_manager_rest]';
+var IDLOG = '[server_com_profiling_rest]';
 
 /**
 * The logger. It must have at least three methods: _info, warn and error._
@@ -43,9 +43,9 @@ var logger = console;
 * @property port
 * @type string
 * @private
-* @default "9006"
+* @default "9012"
 */
-var port = '9006';
+var port = '9012';
 
 /**
 * Listening address of the REST server. It can be customized by the
@@ -135,19 +135,19 @@ function setCompUtil(comp) {
 }
 
 /**
-* Set the authorization architect component for all REST plugins.
+* Sets the profiling architect component for all REST plugins.
 *
-* @method setCompAuthorization
-* @param {object} ca The architect authorization component
+* @method setCompProfiling
+* @param {object} comp The profiling component
 * @static
 */
-function setCompAuthorization(ca) {
+function setCompProfiling(comp) {
     try {
         // check parameter
-        if (typeof ca !== 'object') { throw new Error('wrong parameter'); }
+        if (typeof comp !== 'object') { throw new Error('wrong parameter'); }
 
         // set the authorization for all REST plugins
-        setAllRestPluginsAuthorization(ca);
+        setAllRestPluginsProfiling(comp);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -155,21 +155,21 @@ function setCompAuthorization(ca) {
 }
 
 /**
-* Called by _setCompAuthorization_ function for all REST plugins.
+* Called by _setCompProfiling_ function for all REST plugins.
 *
-* @method setAllRestPluginsAuthorization
+* @method setAllRestPluginsProfiling
 * @private
-* @param ca The architect authorization component
+* @param comp The profiling component
 * @type {object}
 */
-function setAllRestPluginsAuthorization(ca) {
+function setAllRestPluginsProfiling(comp) {
     try {
         var key;
         for (key in plugins) {
 
-            if (typeof plugins[key].setCompAuthorization === 'function') {
-                plugins[key].setCompAuthorization(ca);
-                logger.info(IDLOG, 'authorization component has been set for rest plugin ' + key);
+            if (typeof plugins[key].setCompProfiling === 'function') {
+                plugins[key].setCompProfiling(comp);
+                logger.info(IDLOG, 'profiling component has been set for rest plugin ' + key);
             }
         }
     } catch (err) {
@@ -197,95 +197,6 @@ function execute(req, res, next) {
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
-}
-
-/**
-* Set the config manager architect component to be used by REST plugins.
-*
-* @method setCompConfigManager
-* @param {object} cm The architect configuration manager component
-* @static
-*/
-function setCompConfigManager(cm) {
-    try {
-        // check parameter
-        if (typeof cm !== 'object') { throw new Error('wrong parameter'); }
-
-        var p;
-        // set configuratino manager architect component to all REST plugins
-        for (p in plugins) {
-
-            if (typeof plugins[p].setCompConfigManager === 'function') {
-                plugins[p].setCompConfigManager(cm);
-            }
-        }
-
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Set the user architect component to be used by REST plugins.
-*
-* @method setCompuser
-* @param {object} cu The architect user component
-* @static
-*/
-function setCompUser(cu) {
-    try {
-        // check parameter
-        if (typeof cu !== 'object') { throw new Error('wrong parameter'); }
-
-        var p;
-        // set user architect component to all REST plugins
-        for (p in plugins) {
-
-            if (typeof plugins[p].setCompUser === 'function') {
-                plugins[p].setCompUser(cu);
-            }
-        }
-
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Configurates the REST server properties by a configuration file.
-* The file must use the JSON syntax.
-*
-* **The method can throw an Exception.**
-*
-* @method config
-* @param {string} path The path of the configuration file
-*/
-function config(path) {
-    // check parameter
-    if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
-
-    // check file presence
-    if (!fs.existsSync(path)) { throw new Error(path + ' does not exist'); }
-
-    // read configuration file
-    var json = require(path).rest;
-
-    // initialize the port of the REST server
-    if (json.config_manager && json.config_manager.port) {
-        port = json.config_manager.port;
-
-    } else {
-        logger.warn(IDLOG, 'no port has been specified in JSON file ' + path);
-    }
-
-    // initialize the address of the REST server
-    if (json.config_manager && json.config_manager.address) {
-        address = json.config_manager.address;
-
-    } else {
-        logger.warn(IDLOG, 'no address has been specified in JSON file ' + path);
-    }
-    logger.info(IDLOG, 'configuration by file ' + path + ' ended');
 }
 
 /**
@@ -340,11 +251,46 @@ function start() {
     }
 }
 
+/**
+* Configurates the REST server properties by a configuration file.
+* The file must use the JSON syntax.
+*
+* **The method can throw an Exception.**
+*
+* @method config
+* @param {string} path The path of the configuration file
+*/
+function config(path) {
+    // check parameter
+    if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
+
+    // check file presence
+    if (!fs.existsSync(path)) { throw new Error(path + ' does not exist'); }
+
+    // read configuration file
+    var json = require(path).rest;
+
+    // initialize the port of the REST server
+    if (json.profiling && json.profiling.port) {
+        port = json.profiling.port;
+
+    } else {
+        logger.warn(IDLOG, 'no port has been specified in JSON file ' + path);
+    }
+
+    // initialize the address of the REST server
+    if (json.profiling && json.profiling.address) {
+        address = json.profiling.address;
+
+    } else {
+        logger.warn(IDLOG, 'no address has been specified in JSON file ' + path);
+    }
+    logger.info(IDLOG, 'configuration by file ' + path + ' ended');
+}
+
 // public interface
-exports.start                = start;
-exports.config               = config;
-exports.setLogger            = setLogger;
-exports.setCompUtil          = setCompUtil;
-exports.setCompUser          = setCompUser;
-exports.setCompConfigManager = setCompConfigManager;
-exports.setCompAuthorization = setCompAuthorization;
+exports.start            = start;
+exports.config           = config;
+exports.setLogger        = setLogger;
+exports.setCompUtil      = setCompUtil;
+exports.setCompProfiling = setCompProfiling;

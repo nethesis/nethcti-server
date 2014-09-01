@@ -1413,14 +1413,31 @@ function sendAutheSuccess(socket) {
     }
 }
 
+/**
+* Returns the number of connected clients.
+*
+* @method getNumConnectedClients
+* @param {number} The number of connected clients.
+* @private
+*/
+function getNumConnectedClients() {
+    try {
+        return Object.keys(wsid).length;
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return -1;
+    }
+}
+
 // public interface
-exports.start                = start;
-exports.config               = config;
-exports.setAuthe             = setAuthe;
-exports.setLogger            = setLogger;
-exports.setAstProxy          = setAstProxy;
-exports.setCompUser          = setCompUser;
-exports.configPrivacy        = configPrivacy;
-exports.setCompPostit        = setCompPostit;
-exports.setCompVoicemail     = setCompVoicemail;
-exports.setCompAuthorization = setCompAuthorization;
+exports.start                  = start;
+exports.config                 = config;
+exports.setAuthe               = setAuthe;
+exports.setLogger              = setLogger;
+exports.setAstProxy            = setAstProxy;
+exports.setCompUser            = setCompUser;
+exports.configPrivacy          = configPrivacy;
+exports.setCompPostit          = setCompPostit;
+exports.setCompVoicemail       = setCompVoicemail;
+exports.setCompAuthorization   = setCompAuthorization;
+exports.getNumConnectedClients = getNumConnectedClients;

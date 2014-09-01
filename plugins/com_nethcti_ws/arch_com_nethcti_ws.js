@@ -20,7 +20,16 @@ var IDLOG = '[arch_com_nethcti_ws]';
 
 module.exports = function (options, imports, register) {
     
-    register();
+    register(null, {
+        com_nethcti_ws: {
+            /**
+            * It's the _getNumConnectedClients_ method provided by _com\_nethcti\_ws_ module.
+            *
+            * @method getNumConnectedClients
+            */
+            getNumConnectedClients: comNethctiWs.getNumConnectedClients
+        }
+    });
 
     try {
         var logger = console;

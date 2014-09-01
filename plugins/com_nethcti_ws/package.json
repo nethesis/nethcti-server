@@ -12,6 +12,6 @@
             "authorization",
             "authentication"
         ],
-        "provides": []
+        "provides": [ "com_nethcti_ws" ]
     }
 }

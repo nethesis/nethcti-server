@@ -1,0 +1,173 @@
+/**
+* Provides the mail functions.
+*
+* @module profiling
+* @main arch_profiling
+*/
+var os = require('os');
+
+/**
+* Provides the mail functionalities.
+*
+* @class profiling
+* @static
+*/
+
+/**
+* The module identifier used by the logger.
+*
+* @property IDLOG
+* @type string
+* @private
+* @final
+* @readOnly
+* @default [profiling]
+*/
+var IDLOG = '[profiling]';
+
+/**
+* The logger. It must have at least three methods: _info, warn and error._
+*
+* @property logger
+* @type object
+* @private
+* @default console
+*/
+var logger = console;
+
+/**
+* The communication websocket component.
+*
+* @property compComNethctiWs
+* @type object
+* @private
+*/
+var compComNethctiWs;
+
+/**
+* The communication tcp component.
+*
+* @property compComNethctiTcp
+* @type object
+* @private
+*/
+var compComNethctiTcp;
+
+/**
+* Set the logger to be used.
+*
+* @method setLogger
+* @param {object} log The logger object. It must have at least
+* three methods: _info, warn and error_ as console object.
+* @static
+*/
+function setLogger(log) {
+    try {
+        if (typeof log === 'object'
+            && typeof log.info  === 'function'
+            && typeof log.warn  === 'function'
+            && typeof log.error === 'function') {
+
+            logger = log;
+            logger.info(IDLOG, 'new logger has been set');
+
+        } else {
+            throw new Error('wrong logger object');
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the communication websocket component to be used.
+*
+* @method setCompComNethctiWs
+* @param {object} comp The module to be set
+*/
+function setCompComNethctiWs(comp) {
+    try {
+        // check parameter
+        if (typeof comp !== 'object') { throw new Error('wrong user object'); }
+        compComNethctiWs = comp;
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the communication tcp component to be used.
+*
+* @method setCompComNethctiTcp
+* @param {object} comp The module to be set
+*/
+function setCompComNethctiTcp(comp) {
+    try {
+        // check parameter
+        if (typeof comp !== 'object') { throw new Error('wrong user object'); }
+        compComNethctiTcp = comp;
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Returns the memory quantity used by the process, in particular:
+*
+* * resident set size (rss): the portion of the process's memory held in RAM
+* * total heap size
+* * used heap size
+*
+* @method getProcMem
+* @return {object} The quantity of the memory used by the process: "rss", "heapTotal", "heapUsed" (in byte).
+*/
+function getProcMem() {
+    try {
+        return process.memoryUsage();
+
+    } catch (err) {
+        logger.error(err.stack);
+        return {};
+    }
+}
+
+/**
+* Returns the data about the system cpus.
+*
+* @method getSysCpus
+* @return {array} an array of objects containing information about each CPU/core installed: model, speed (in MHz),
+*                 and times (an object containing the number of milliseconds the CPU/core spent in: user, nice, sys, idle, and irq).
+*/
+function getSysCpus() {
+    try {
+        return os.cpus();
+
+    } catch (err) {
+        logger.error(err.stack);
+        return {};
+    }
+}
+
+/**
+* Returns the total number of connected clients. The connected clients are those
+* connected by websocket and tcp layers.
+*
+* @method getNumConnectedClients
+* @return {number} the total number of connected clients.
+*/
+function getNumConnectedClients() {
+    try {
+        return compComNethctiTcp.getNumConnectedClients() + compComNethctiWs.getNumConnectedClients();
+    } catch (err) {
+        logger.error(err.stack);
+        return {};
+    }
+}
+
+// public interface
+exports.setLogger              = setLogger;
+exports.getProcMem             = getProcMem;
+exports.getSysCpus             = getSysCpus;
+exports.setCompComNethctiWs    = setCompComNethctiWs;
+exports.setCompComNethctiTcp   = setCompComNethctiTcp;
+exports.getNumConnectedClients = getNumConnectedClients;

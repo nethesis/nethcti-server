@@ -22,6 +22,7 @@ try{
         { packagePath: "./plugins/operator"                },
         { packagePath: "./plugins/streaming"               },
         { packagePath: "./plugins/voicemail"               },
+        { packagePath: "./plugins/profiling"               },
         { packagePath: "./plugins/caller_note"             },
         { packagePath: "./plugins/config_manager"          },
         { packagePath: "./plugins/customer_card"           },
@@ -39,6 +40,7 @@ try{
         { packagePath: "./plugins/com_authorization_rest"  },
         { packagePath: "./plugins/com_customer_card_rest"  },
         { packagePath: "./plugins/com_config_manager_rest" },
+        { packagePath: "./plugins/com_profiling_rest"      },
         { packagePath: "./plugins/com_nethcti_tcp"         },
         { packagePath: "./plugins/com_nethcti_ws"          },
         { packagePath: "./plugins/http_proxy"              }
