@@ -250,7 +250,7 @@ function setCompUtil(comp) {
             },
 
             /**
-            * Gets the data number of connected clients with the following REST API:
+            * Gets the number of connected clients with the following REST API:
             *
             *     num_clients
             *
@@ -262,7 +262,10 @@ function setCompUtil(comp) {
             num_clients: function (req, res, next) {
                 try {
                     var username = req.headers.authorization_user;
-                    var results  = { num_clients: compProfiling.getNumConnectedClients() };
+                    var results  = {
+                        ws_num_clients:  compProfiling.getWsNumConnectedClients(),
+                        tcp_num_clients: compProfiling.getTcpNumConnectedClients()
+                    };
 
                     if (typeof results !== 'object') {
                         var strerr = 'wrong connected clients number result for user "' + username + '"';

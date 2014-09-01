@@ -149,25 +149,40 @@ function getSysCpus() {
 }
 
 /**
-* Returns the total number of connected clients. The connected clients are those
-* connected by websocket and tcp layers.
+* Returns the number of connected clients by websocket.
 *
-* @method getNumConnectedClients
-* @return {number} the total number of connected clients.
+* @method getWsNumConnectedClients
+* @return {number} the total number of connected clients by websocket
 */
-function getNumConnectedClients() {
+function getWsNumConnectedClients() {
     try {
-        return compComNethctiTcp.getNumConnectedClients() + compComNethctiWs.getNumConnectedClients();
+        return compComNethctiWs.getNumConnectedClients();
     } catch (err) {
         logger.error(err.stack);
-        return {};
+        return -1;
+    }
+}
+
+/**
+* Returns the number of connected clientsi by tcp.
+*
+* @method getTcpNumConnectedClients
+* @return {number} the total number of connected clients by tcp.
+*/
+function getTcpNumConnectedClients() {
+    try {
+        return compComNethctiTcp.getNumConnectedClients();
+    } catch (err) {
+        logger.error(err.stack);
+        return -1;
     }
 }
 
 // public interface
-exports.setLogger              = setLogger;
-exports.getProcMem             = getProcMem;
-exports.getSysCpus             = getSysCpus;
-exports.setCompComNethctiWs    = setCompComNethctiWs;
-exports.setCompComNethctiTcp   = setCompComNethctiTcp;
-exports.getNumConnectedClients = getNumConnectedClients;
+exports.setLogger                 = setLogger;
+exports.getProcMem                = getProcMem;
+exports.getSysCpus                = getSysCpus;
+exports.setCompComNethctiWs       = setCompComNethctiWs;
+exports.setCompComNethctiTcp      = setCompComNethctiTcp;
+exports.getWsNumConnectedClients  = getWsNumConnectedClients;
+exports.getTcpNumConnectedClients = getTcpNumConnectedClients;
