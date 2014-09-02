@@ -393,37 +393,6 @@ function getFilteredCallerData(username, callerIdentity) {
             throw new Error('wrong parameters');
         }
 
-        /*
-        // if some caller notes are present, filter them
-        var i;
-        var filteredCallerNotes = [];
-
-        if (callerIdentity.callerNotes) {
-
-            // the user can view all the caller notes of all users, both private and public
-            if (compAuthorization.authorizeAdminPostitUser(username) === true) {
-
-                for (i = 0; i < callerIdentity.callerNotes.length; i++) {
-
-                    filteredCallerNotes.push(callerIdentity.callerNotes[i]);
-                }
-            }
-
-            // the user can view only his caller notes and the public of other users
-            else if (compAuthorization.authorizePostitUser(username) === true) {
-
-                for (i = 0; i < callerIdentity.callerNotes.length; i++) {
-
-                    if (   callerIdentity.callerNotes[i].creator === username
-                        || callerIdentity.callerNotes[i].public  === 1) {
-
-                        filteredCallerNotes.push(callerIdentity.callerNotes[i]);
-                    }
-                }
-            }
-        }
-        */
-
         // filter the phonebook contact if it's present
         // chose the phonebook contacts: is first returned the contact of the user from the cti phonebook,
         // than that from the central phonebook and the last is the public contact from the cti phonebook.
