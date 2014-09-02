@@ -608,6 +608,21 @@ function getAllUserEndpointsJSON() {
 }
 
 /**
+* Returns the total number of configured users.
+*
+* @method getTotNumUsers
+* @return {number} The total number of configured users.
+*/
+function getTotNumUsers() {
+    try {
+        return Object.keys(compUser.getAllUsersEndpointsJSON()).length;
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return -1;
+    }
+}
+
+/**
 * Saves the specified notification setting for the user.
 *
 * @method setUserNotificationConf
@@ -1212,6 +1227,7 @@ exports.configChat                             = configChat;
 exports.getServerIP                            = getServerIP;
 exports.getChatConf                            = getChatConf;
 exports.setCompUser                            = setCompUser;
+exports.getTotNumUsers                         = getTotNumUsers;
 exports.configPhoneUrls                        = configPhoneUrls;
 exports.getC2CAutoPhoneUser                    = getC2CAutoPhoneUser;
 exports.getC2CAutoPhonePass                    = getC2CAutoPhonePass;

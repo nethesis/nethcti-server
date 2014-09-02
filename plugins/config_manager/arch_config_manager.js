@@ -59,6 +59,13 @@ module.exports = function (options, imports, register) {
             getAllUserEndpointsJSON: configManager.getAllUserEndpointsJSON,
 
             /**
+            * It's the _getTotNumUsers_ method provided by _config\_manager_ module.
+            *
+            * @method getTotNumUsers
+            */
+            getTotNumUsers: configManager.getTotNumUsers,
+
+            /**
             * It's the _isAutomaticClick2callEnabled_ method provided by _config\_manager_ module.
             *
             * @method isAutomaticClick2callEnabled

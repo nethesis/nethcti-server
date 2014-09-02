@@ -42,6 +42,16 @@ var IDLOG = '[dbconn]';
 var logger = console;
 
 /**
+* The number of executed queries.
+*
+* @property numExecQueries
+* @type number
+* @private
+* @default 0
+*/
+var numExecQueries = 0;
+
+/**
 * The event emitter.
 *
 * @property emitter
@@ -390,6 +400,9 @@ function saveCtiPbContact(data, cb) {
             logger.error(IDLOG, 'saving cti phonebook contact: ' + err.toString());
             cb(err.toString());
         });
+
+        incNumExecQueries();
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -431,6 +444,9 @@ function savePostit(creator, text, recipient, cb) {
             logger.error(IDLOG, 'saving postit: ' + err.toString());
             cb(err.toString());
         });
+
+        incNumExecQueries();
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err);
@@ -474,6 +490,9 @@ function storeSmsSuccess(username, to, body, cb) {
             logger.error(IDLOG, 'saving sms success from user "' + username + '" to ' + to + ': ' + err1.toString());
             cb(err1);
         });
+
+        incNumExecQueries();
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err);
@@ -517,6 +536,9 @@ function storeSmsFailure(username, to, body, cb) {
             logger.error(IDLOG, 'saving sms failure from user "' + username + '" to ' + to + ': ' + err1.toString());
             cb(err1);
         });
+
+        incNumExecQueries();
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err);
@@ -558,6 +580,8 @@ function getPostit(id, cb) {
             logger.error(IDLOG, 'search postit with db id "' + id + '" failed: ' + err1.toString());
             cb(err1.toString());
         });
+
+        incNumExecQueries();
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -608,6 +632,8 @@ function getAllUnreadPostitOfRecipient(username, cb) {
             logger.error(IDLOG, 'search all unread postit of the recipient user "' + username + '" failed: ' + err1.toString());
             cb(err1.toString());
         });
+
+        incNumExecQueries();
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -660,6 +686,8 @@ function updatePostitReadIt(id, cb) {
             cb(err1);
         });
 
+        incNumExecQueries();
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err);
@@ -711,6 +739,9 @@ function saveCallerNote(data, cb) {
             logger.error(IDLOG, 'saving caller note: ' + err.toString());
             cb(err.toString());
         });
+
+        incNumExecQueries();
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -915,6 +946,8 @@ function getPbContactsContains(term, cb) {
             cb(err.toString());
         });
 
+        incNumExecQueries();
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err);
@@ -968,6 +1001,8 @@ function getPbContactsByNum(number, cb) {
             cb(err.toString());
         });
 
+        incNumExecQueries();
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err);
@@ -1017,6 +1052,8 @@ function getCtiPbContactsByNum(number, cb) {
             logger.error(IDLOG, 'searching cti phonebook contacts by number ' + number + ': ' + err.toString());
             cb(err.toString());
         });
+
+        incNumExecQueries();
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -1077,6 +1114,8 @@ function getPbContactsStartsWith(term, cb) {
             cb(err.toString());
         });
 
+        incNumExecQueries();
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -1124,6 +1163,8 @@ function getPbContactsStartsWithDigit(cb) {
             cb(err.toString());
         });
 
+        incNumExecQueries();
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -1163,6 +1204,9 @@ function getCtiPbContact(id, cb) {
             logger.error(IDLOG, 'search cti phonebook contact with db id "' + id + '" failed: ' + err1.toString());
             cb(err1.toString());
         });
+
+        incNumExecQueries();
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err);
@@ -1203,6 +1247,9 @@ function getCallerNote(id, cb) {
             logger.error(IDLOG, 'search caller note with db id "' + id + '" failed: ' + err1.toString());
             cb(err1.toString());
         });
+
+        incNumExecQueries();
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err);
@@ -1246,6 +1293,9 @@ function deleteCtiPbContact(id, cb) {
             logger.error(IDLOG, 'searching cti phonebook contact with db id "' + id + '" to delete: ' + err1.toString());
             cb(err1.toString());
         });
+
+        incNumExecQueries();
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err);
@@ -1294,6 +1344,9 @@ function deletePostit(id, cb) {
             logger.error(IDLOG, 'searching post-it with db id "' + id + '" to delete: ' + err1.toString());
             cb(err1.toString());
         });
+
+        incNumExecQueries();
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err);
@@ -1337,6 +1390,9 @@ function deleteCallerNote(id, cb) {
             logger.error(IDLOG, 'searching caller note with db id "' + id + '" to delete: ' + err1.toString());
             cb(err1.toString());
         });
+
+        incNumExecQueries();
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err);
@@ -1409,6 +1465,9 @@ function modifyCtiPbContact(data, cb) {
             logger.error(IDLOG, 'searching cti phonebook contact with db id "' + data.id + '" to modify: ' + err1.toString());
             cb(err1.toString());
         });
+
+        incNumExecQueries();
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err);
@@ -1465,6 +1524,9 @@ function modifyCallerNote(data, cb) {
             logger.error(IDLOG, 'searching caller note with db id "' + data.id + '" to modify: ' + err1.toString());
             cb(err1.toString());
         });
+
+        incNumExecQueries();
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err);
@@ -1528,6 +1590,8 @@ function getCtiPbContactsContains(term, username, cb) {
             cb(err.toString());
         });
 
+        incNumExecQueries();
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err);
@@ -1576,6 +1640,8 @@ function getCtiPbSpeeddialContacts(username, cb) {
             logger.error(IDLOG, 'searching cti phonebook speeddial contacts of the user "' + username + '": ' + err.toString());
             cb(err.toString());
         });
+
+        incNumExecQueries();
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -1633,6 +1699,8 @@ function getCtiPbContactsStartsWith(term, username, cb) {
             cb(err.toString());
         });
 
+        incNumExecQueries();
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -1681,6 +1749,8 @@ function getCtiPbContactsStartsWithDigit(username, cb) {
             logger.error(IDLOG, 'searching cti phonebook contacts whose names starts with a digit: ' + err.toString());
             cb(err.toString());
         });
+
+        incNumExecQueries();
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -1782,6 +1852,9 @@ function getHistoryCallInterval(data, cb) {
                                 ' for endpoint ' + data.endpoint + ' and filter ' + data.filter + ': ' + err.toString());
             cb(err.toString());
         });
+
+        incNumExecQueries();
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err.toString());
@@ -1839,6 +1912,9 @@ function isAtLeastExtenInCall(uniqueid, extensions, cb) {
             logger.error(IDLOG, 'checking if at least one extension of ' + extensions.toString() + ' is involved in the call with uniqueid ' + uniqueid);
             cb(err.toString());
         });
+
+        incNumExecQueries();
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err.toString());
@@ -1889,6 +1965,9 @@ function getCallRecordingFileData(uniqueid, cb) {
             logger.error(IDLOG, 'getting data informations about recording call with uniqueid ' + uniqueid);
             cb(err.toString());
         });
+
+        incNumExecQueries();
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err.toString());
@@ -2033,6 +2112,9 @@ function getHistoryPostitInterval(data, cb) {
                                 ' for username "' + data.username + '" and filter ' + data.filter + ': ' + err.toString());
             cb(err.toString());
         });
+
+        incNumExecQueries();
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err);
@@ -2130,6 +2212,9 @@ function getHistorySmsInterval(data, cb) {
                                 ' sent by username "' + data.username + '" and filter ' + data.filter + ': ' + err.toString());
             cb(err.toString());
         });
+
+        incNumExecQueries();
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err);
@@ -2188,6 +2273,9 @@ function getVoicemailMsg(vmId, type, cb) {
             logger.error(IDLOG, 'searching ' + type + ' voice messages of voicemail "' + vmId + '"');
             cb(err.toString());
         });
+
+        incNumExecQueries();
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err);
@@ -2230,6 +2318,9 @@ function getVmMailboxFromDbId(dbid, cb) {
             logger.error(IDLOG, 'searching voicemail mailbox from voicemail db id "' + dbid + '"');
             cb(err.toString());
         });
+
+        incNumExecQueries();
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err);
@@ -2292,6 +2383,9 @@ function listenVoiceMessage(dbid, cb) {
             logger.error(IDLOG, 'searching voicemail audio file from voicemail db id "' + dbid + '"');
             cb(err.toString());
         });
+
+        incNumExecQueries();
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err);
@@ -2346,6 +2440,9 @@ function deleteVoiceMessage(dbid, cb) {
             logger.error(IDLOG, 'searching voice message with db id "' + dbid + '" to delete not found: ' + err.toString());
             cb(err.toString());
         });
+
+        incNumExecQueries();
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err);
@@ -2399,6 +2496,9 @@ function deleteCallRecording(uniqueid, cb) {
             logger.error(IDLOG, 'emptying "recordingfile" of the call with uniqueid "' + uniqueid + '" from asteriskcdrdb.cdr table: not found: ' + err.toString());
             cb(err.toString());
         });
+
+        incNumExecQueries();
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err);
@@ -2568,6 +2668,9 @@ function getHistoryCallerNoteInterval(data, cb) {
                                 ' for username "' + data.username + '" and filter ' + data.filter + ': ' + err.toString());
             cb(err.toString());
         });
+
+        incNumExecQueries();
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err);
@@ -2635,6 +2738,8 @@ function getQueueMemberLastPausedInData(memberName, queueId, memberId, cb) {
             logger.error(IDLOG, 'get last "paused in" data of member "' + memberName + '" of the queue "' + queueId + '" failed: ' + err1.toString());
             cb(err1);
         });
+
+        incNumExecQueries();
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -2753,6 +2858,8 @@ function getQueuesStats(day, cb) {
             cb(null, results);
         });
 
+        incNumExecQueries();
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err);
@@ -2864,6 +2971,8 @@ function getQueuesQOS(day, cb) {
             cb(null, res);
         });
 
+        incNumExecQueries();
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err);
@@ -2972,6 +3081,8 @@ function getAgentsStats(day, cb) {
             cb(null, results);
         });
 
+        incNumExecQueries();
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err);
@@ -3037,6 +3148,8 @@ function getQueueMemberLastPausedOutData(memberName, queueId, memberId, cb) {
             cb(err1);
         });
 
+        incNumExecQueries();
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err);
@@ -3086,6 +3199,9 @@ function getAllValidCallerNotesByNum(number, cb) {
             logger.error(IDLOG, 'searching all public and private valid caller notes for number ' + number);
             cb(err.toString());
         });
+
+        incNumExecQueries();
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err);
@@ -3165,6 +3281,9 @@ function getCustomerCardByNum(type, num, cb) {
                 }
             });
         }
+
+        incNumExecQueries();
+
     } catch (error) {
         logger.error(IDLOG, error.stack);
         cb(error.toString());
@@ -3231,6 +3350,9 @@ function getCallTrace(linkedid, privacyStr, cb) {
             logger.error(IDLOG, 'searching CEL on linkedid "' + linkedid + '"');
             cb(err.toString());
         });
+
+        incNumExecQueries();
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err);
@@ -3296,6 +3418,9 @@ function getCallInfo(uniqueid, privacyStr, cb) {
             logger.error(IDLOG, 'searching CEL on uniqueid "' + uniqueid + '"');
             cb(err.toString());
         });
+
+        incNumExecQueries();
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err);
@@ -3319,10 +3444,40 @@ function on(type, cb) {
     }
 }
 
+/**
+* Returns the statistics.
+*
+* @method getStats
+* @return {object} The statistics.
+*/
+function getStats() {
+    try {
+        return { numExecQueries: numExecQueries };
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return {};
+    }
+}
+
+/**
+* Increment the number of executed queries by one unit.
+*
+* @method incNumExecQueries
+* @private
+*/
+function incNumExecQueries() {
+    try {
+        numExecQueries += 1;
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
 // public interface
 exports.on                                  = on;
 exports.start                               = start;
 exports.config                              = config;
+exports.getStats                            = getStats;
 exports.setLogger                           = setLogger;
 exports.getPostit                           = getPostit;
 exports.savePostit                          = savePostit;

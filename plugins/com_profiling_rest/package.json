@@ -5,8 +5,10 @@
     "plugin": {
         "consumes": [
             "util",
+            "dbconn",
             "logger",
-            "profiling"
+            "profiling",
+            "configManager"
         ],
         "provides": []
     }

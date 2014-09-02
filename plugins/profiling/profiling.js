@@ -4,7 +4,8 @@
 * @module profiling
 * @main arch_profiling
 */
-var os = require('os');
+var os           = require('os');
+var childProcess = require('child_process');
 
 /**
 * Provides the mail functionalities.
@@ -178,11 +179,108 @@ function getTcpNumConnectedClients() {
     }
 }
 
+/**
+* Returns the release number of the software packages.
+*
+* @method getCtiPackageRelease
+* @param {function} cb The callback function
+*/
+function getCtiPackageRelease(cb) {
+    try {
+        // check parameters
+        if (typeof cb !== 'function') { throw new Error('wrong parameters'); }
+
+        logger.info(IDLOG, 'get the release package version of nethcti');
+        childProcess.exec('rpm -q nethcti nethcti-server', function (error, stdout, stderr) {
+            try {
+                if (error || stderr) { // some error
+                    logger.error(IDLOG, error + ' ' + stderr);
+                    cb(error);
+
+                } else { // add the result
+                    var arr = stdout.split('\n');
+                    var result = { 'nethcti': arr[0], 'nethcti-server': arr[1] };
+                    cb(null, result);
+                }
+
+            } catch (err) {
+                logger.error(IDLOG, err.stack);
+                cb(err.stack);
+            }
+        });
+
+    } catch (err) {
+        logger.error(err.stack);
+        cb(err.stack);
+    }
+}
+
+/**
+* Returns the information about the system.
+*
+* @method getSystemInfo
+* @param {function} cb The callback function
+*/
+function getSystemInfo(cb) {
+    try {
+        // check parameters
+        if (typeof cb !== 'function') { throw new Error('wrong parameters'); }
+
+        logger.info(IDLOG, 'get the system data');
+        childProcess.exec('cat /etc/redhat-release', function (error, stdout, stderr) {
+            try {
+                if (error || stderr) { // some error
+                    logger.error(IDLOG, error + ' ' + stderr);
+                    cb(error);
+
+                } else { // add the result
+                    var arr = stdout.split('\n');
+                    var result = {
+                        cpus:     getSysCpus(),
+                        arch:     os.arch(),
+                        kernel:   os.release,
+                        distro:   arr[0],
+                        totmem:   os.totalmem(),
+                        freemem:  os.freemem(),
+                        hostname: os.hostname(),
+                    };
+                    cb(null, result);
+                }
+            } catch (err) {
+                logger.error(IDLOG, err.stack);
+                cb(err.stack);
+            }
+        });
+    } catch (err) {
+        logger.error(err.stack);
+        cb(err.stack);
+    }
+}
+
+/**
+* Returns the process PID.
+*
+* @method getProcessPid
+* @return {number} pid The process PID.
+*/
+function getProcessPid() {
+    try {
+        logger.info(IDLOG, 'get the process PID');
+        return process.pid;
+    } catch (err) {
+        logger.error(err.stack);
+        return -1;
+    }
+}
+
 // public interface
 exports.setLogger                 = setLogger;
 exports.getProcMem                = getProcMem;
 exports.getSysCpus                = getSysCpus;
+exports.getSystemInfo             = getSystemInfo;
+exports.getProcessPid             = getProcessPid;
 exports.setCompComNethctiWs       = setCompComNethctiWs;
 exports.setCompComNethctiTcp      = setCompComNethctiTcp;
+exports.getCtiPackageRelease      = getCtiPackageRelease;
 exports.getWsNumConnectedClients  = getWsNumConnectedClients;
 exports.getTcpNumConnectedClients = getTcpNumConnectedClients;

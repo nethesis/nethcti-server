@@ -178,6 +178,91 @@ function setAllRestPluginsProfiling(comp) {
 }
 
 /**
+* Sets the database architect component for all REST plugins.
+*
+* @method setCompDbConn
+* @param {object} comp The database component
+* @static
+*/
+function setCompDbConn(comp) {
+    try {
+        // check parameter
+        if (typeof comp !== 'object') { throw new Error('wrong parameter'); }
+
+        // set the authorization for all REST plugins
+        setAllRestPluginsDbConn(comp);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Called by _setCompDbConn_ function for all REST plugins.
+*
+* @method setAllRestPluginsDbConn
+* @private
+* @param {object} comp The database component
+*/
+function setAllRestPluginsDbConn(comp) {
+    try {
+        var key;
+        for (key in plugins) {
+
+            if (typeof plugins[key].setCompDbConn === 'function') {
+                plugins[key].setCompDbConn(comp);
+                logger.info(IDLOG, 'database component has been set for rest plugin ' + key);
+            }
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the configuration architect component for all REST plugins.
+*
+* @method setCompConfigManager
+* @param {object} comp The configuration component
+* @static
+*/
+function setCompConfigManager(comp) {
+    try {
+        // check parameter
+        if (typeof comp !== 'object') { throw new Error('wrong parameter'); }
+
+        // set the authorization for all REST plugins
+        setAllRestPluginsConfigManager(comp);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Called by _setCompConfigManager_ function for all REST plugins.
+*
+* @method setAllRestPluginsConfigManager
+* @private
+* @param comp The configuration component
+* @type {object}
+*/
+function setAllRestPluginsConfigManager(comp) {
+    try {
+        var key;
+        for (key in plugins) {
+
+            if (typeof plugins[key].setCompConfigManager === 'function') {
+                plugins[key].setCompConfigManager(comp);
+                logger.info(IDLOG, 'configuration component has been set for rest plugin ' + key);
+            }
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Executed by all REST request. It calls the appropriate REST plugin function.
 *
 * @method execute
@@ -289,8 +374,10 @@ function config(path) {
 }
 
 // public interface
-exports.start            = start;
-exports.config           = config;
-exports.setLogger        = setLogger;
-exports.setCompUtil      = setCompUtil;
-exports.setCompProfiling = setCompProfiling;
+exports.start                = start;
+exports.config               = config;
+exports.setLogger            = setLogger;
+exports.setCompUtil          = setCompUtil;
+exports.setCompDbConn        = setCompDbConn;
+exports.setCompProfiling     = setCompProfiling;
+exports.setCompConfigManager = setCompConfigManager;

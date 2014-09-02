@@ -37,6 +37,24 @@ var logger = console;
 var compProfiling;
 
 /**
+* The configuration architect component.
+*
+* @property compConfigManager
+* @type object
+* @private
+*/
+var compConfigManager;
+
+/**
+* The database architect component.
+*
+* @property compDbConn
+* @type object
+* @private
+*/
+var compDbConn;
+
+/**
 * The utility architect component.
 *
 * @property compUtil
@@ -86,6 +104,36 @@ function setCompProfiling(comp) {
 }
 
 /**
+* Sets the database architect component.
+*
+* @method setCompDbConn
+* @param {object} comp The database architect component.
+*/
+function setCompDbConn(comp) {
+    try {
+        compDbConn = comp;
+        logger.info(IDLOG, 'set database architect component');
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the configuration architect component.
+*
+* @method setCompConfigManager
+* @param {object} comp The configuration architect component.
+*/
+function setCompConfigManager(comp) {
+    try {
+        compConfigManager = comp;
+        logger.info(IDLOG, 'set configuration architect component');
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Sets the utility architect component.
 *
 * @method setCompUtil
@@ -107,9 +155,84 @@ function setCompUtil(comp) {
         *
         * # GET requests
         *
+        * 1. [`profiling/proc`](#procget)
+        * 1. [`profiling/system`](#systemget)
+        * 1. [`profiling/pkg_ver`](#pkg_verget)
         * 1. [`profiling/proc_mem`](#proc_memget)
         * 1. [`profiling/sys_cpus`](#sys_cpusget)
-        * 1. [`profiling/num_clients`](#num_clientsget)
+        * 1. [`profiling/db_stats`](#db_statsget)
+        * 1. [`profiling/tot_users`](#tot_usersget)
+        * 1. [`profiling/conn_clients`](#conn_clientsget)
+        *
+        *
+        * ---
+        *
+        * ### <a id="procet">**`profiling/proc`**</a>
+        *
+        * Returns the data about the process.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "pid": 23511,
+         "pkg_ver": {
+             "nethcti": "nethcti-2.1.10.3-1.el5.nh",
+             "nethcti-server": "nethcti-server-2.1.9-1.el5.nh"
+         },
+         "proc_mem": {
+             "rss": 58224640,
+             "heapTotal": 48951456,
+             "heapUsed": 30448624
+         },
+         "db_stats": {
+             "numExecQueries": 7
+         },
+         "tot_users": 7,
+         "conn_clients": {
+             "ws_conn_clients": 1,
+             "tcp_conn_clients": 0
+         }
+     }
+        *
+        * ---
+        *
+        * ### <a id="systemget">**`profiling/system`**</a>
+        *
+        * Returns the data about the system.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "cpus": [
+             {
+                 "model": "AMD Athlon(tm) II X2 260 Processor",
+                 "speed": 3203,
+                 "times": {
+                     "user": 27304700,
+                     "nice": 23400,
+                     "sys": 8106900,
+                     "idle": 2591394200,
+                     "irq": 3706000,
+                 }
+             }
+         ],
+         "arch": "ia32",
+         "distro": "Neth Service release 8.2",
+         "totmem": 527241216,
+         "freemem": 9342976,
+         "hostname": "ale-nethvoice"
+         }
+     }
+        *
+        * ---
+        *
+        * ### <a id="pkg_verget">**`profiling/pkg_ver`**</a>
+        *
+        * Returns the package software version.
+        *
+        * Example JSON response:
+        *
+        *     { "nethcti": "nethcti-2.1.10.3-1.el5.nh", "nethcti-server": "nethcti-server-2.1.9-1.el5.nh" }
         *
         * ---
         *
@@ -147,13 +270,34 @@ function setCompUtil(comp) {
         *
         * ---
         *
-        * ### <a id="num_clientsget">**`profiling/num_clients`**</a>
+        * ### <a id="tot_usersget">**`profiling/tot_users`**</a>
+        *
+        * Returns the total number of the configured users.
+        *
+        * Example JSON response:
+        *
+        *     { tot_users: 15 }
+        *
+        * ---
+        *
+        * ### <a id="conn_clientsget">**`profiling/conn_clients`**</a>
         *
         * Returns the number of connected clients.
         *
         * Example JSON response:
         *
-        *     { num_clients: 4 }
+        *     { ws_conn_clients: 4, tcp_conn_clients: 2 }
+        *
+        * ---
+        *
+        * ### <a id="db_statsget">**`profiling/db_stats`**</a>
+        *
+        * Returns the database statistics.
+        *
+        * Example JSON response:
+        *
+        *     { num_exec_queries: 151 }
+        *
         *
         * @class plugin_rest_profiling
         * @static
@@ -170,19 +314,136 @@ function setCompUtil(comp) {
                 * @property get
                 * @type {array}
                 *
-                *   @param {string} proc_mem    To get the quantity of the memory usage by the process
-                *   @param {string} sys_cpus    To get the data about the cpus of the system
-                *   @param {string} num_clients To get the number of connected clients
+                *   @param {string} proc         To get the data about the process
+                *   @param {string} system       To get the data about the system
+                *   @param {string} pkg_ver      To get version of the packages
+                *   @param {string} proc_mem     To get the quantity of the memory usage by the process
+                *   @param {string} sys_cpus     To get the data about the cpus of the system
+                *   @param {string} db_stats     To get the database statistics
+                *   @param {string} tot_users    To get the total number of the configured users
+                *   @param {string} conn_clients To get the number of connected clients
                 */
                 'get': [
+                    'proc',
+                    'system',
+                    'pkg_ver',
                     'proc_mem',
                     'sys_cpus',
-                    'num_clients'
+                    'db_stats',
+                    'tot_users',
+                    'conn_clients'
                 ],
 
                 'post': [],
                 'head': [],
                 'del' : []
+            },
+
+            /**
+            * Get the data about the process by the following REST API:
+            *
+            *     proc
+            *
+            * @method proc
+            * @param {object}   req The client request
+            * @param {object}   res The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            proc: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+                    compProfiling.getCtiPackageRelease(function (err1, result) {
+                        try {
+                            if (err1) {
+                                logger.error(IDLOG, err1);
+                                compUtil.net.sendHttp500(IDLOG, res, err1);
+                            } else {
+                                logger.info(IDLOG, 'send process data to user "' + username + '"');
+                                var result = {
+                                    pid:          compProfiling.getProcessPid(),
+                                    pkg_ver:      result,
+                                    proc_mem:     compProfiling.getProcMem(),
+                                    db_stats:     compDbConn.getStats(),
+                                    tot_users:    compConfigManager.getTotNumUsers(),
+                                    conn_clients: getConnectedClientsNum()
+                                };
+                                res.send(200, result);
+                            }
+                        } catch (err2) {
+                            logger.error(IDLOG, err2.stack);
+                            compUtil.net.sendHttp500(IDLOG, res, err2.toString());
+                        }
+                    });
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * Get the data about the system by the following REST API:
+            *
+            *     system
+            *
+            * @method system
+            * @param {object}   req The client request
+            * @param {object}   res The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            system: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+                    compProfiling.getSystemInfo(function (err1, result) {
+                        try {
+                            if (err1) {
+                                logger.error(IDLOG, err1);
+                                compUtil.net.sendHttp500(IDLOG, res, err1);
+                            } else {
+                                logger.info(IDLOG, 'send system data to user "' + username + '"');
+                                res.send(200, result);
+                            }
+                        } catch (err2) {
+                            logger.error(IDLOG, err2.stack);
+                            compUtil.net.sendHttp500(IDLOG, res, err2.toString());
+                        }
+                    });
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * Get version of the packages by the following REST API:
+            *
+            *     pkg_ver
+            *
+            * @method pkg_ver
+            * @param {object}   req The client request
+            * @param {object}   res The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            pkg_ver: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+                    compProfiling.getCtiPackageRelease(function (err1, result) {
+                        try {
+                            if (err1) {
+                                logger.error(IDLOG, err1);
+                                compUtil.net.sendHttp500(IDLOG, res, err1);
+                            } else {
+                                logger.info(IDLOG, 'send sw pkg release data to user "' + username + '"');
+                                res.send(200, result);
+                            }
+                        } catch (err2) {
+                            logger.error(IDLOG, err2.stack);
+                            compUtil.net.sendHttp500(IDLOG, res, err2.toString());
+                        }
+                    });
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
             },
 
             /**
@@ -252,20 +513,17 @@ function setCompUtil(comp) {
             /**
             * Gets the number of connected clients with the following REST API:
             *
-            *     num_clients
+            *     conn_clients
             *
-            * @method num_clients
+            * @method conn_clients
             * @param {object}   req  The client request
             * @param {object}   res  The client response
             * @param {function} next Function to run the next handler in the chain
             */
-            num_clients: function (req, res, next) {
+            conn_clients: function (req, res, next) {
                 try {
                     var username = req.headers.authorization_user;
-                    var results  = {
-                        ws_num_clients:  compProfiling.getWsNumConnectedClients(),
-                        tcp_num_clients: compProfiling.getTcpNumConnectedClients()
-                    };
+                    var results = getConnectedClientsNum();
 
                     if (typeof results !== 'object') {
                         var strerr = 'wrong connected clients number result for user "' + username + '"';
@@ -282,17 +540,108 @@ function setCompUtil(comp) {
                     logger.error(IDLOG, err.stack);
                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 }
+            },
+
+            /**
+            * Gets the number of executed queries with the following REST API:
+            *
+            *     db_stats
+            *
+            * @method db_stats
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            db_stats: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+                    var results  = compDbConn.getStats();
+
+                    if (typeof results !== 'object') {
+                        var strerr = 'wrong executed queries number result for user "' + username + '"';
+                        logger.error(IDLOG, strerr);
+                        compUtil.net.sendHttp500(IDLOG, res, strerr);
+
+                    } else {
+
+                        logger.info(IDLOG, 'send executed queries number data to user "' + username + '"');
+                        res.send(200, results);
+                    }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * Gets the total number of the configured users with the following REST API:
+            *
+            *     tot_users
+            *
+            * @method tot_users
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            tot_users: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+                    var results  = { tot_users: compConfigManager.getTotNumUsers() };
+
+                    if (typeof results !== 'object') {
+                        var strerr = 'wrong tot num users result for user "' + username + '"';
+                        logger.error(IDLOG, strerr);
+                        compUtil.net.sendHttp500(IDLOG, res, strerr);
+
+                    } else {
+
+                        logger.info(IDLOG, 'send tot num users data to user "' + username + '"');
+                        res.send(200, results);
+                    }
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
             }
         }
-        exports.api              = profiling.api;
-        exports.sys_cpus         = profiling.sys_cpus;
-        exports.proc_mem         = profiling.proc_mem;
-        exports.setLogger        = setLogger;
-        exports.num_clients      = profiling.num_clients;
-        exports.setCompUtil      = setCompUtil;
-        exports.setCompProfiling = setCompProfiling;
+        exports.api                  = profiling.api;
+        exports.proc                 = profiling.proc;
+        exports.system               = profiling.system;
+        exports.pkg_ver              = profiling.pkg_ver;
+        exports.sys_cpus             = profiling.sys_cpus;
+        exports.proc_mem             = profiling.proc_mem;
+        exports.db_stats             = profiling.db_stats;
+        exports.setLogger            = setLogger;
+        exports.tot_users            = profiling.tot_users;
+        exports.setCompUtil          = setCompUtil;
+        exports.conn_clients         = profiling.conn_clients;
+        exports.setCompDbConn        = setCompDbConn;
+        exports.setCompProfiling     = setCompProfiling;
+        exports.setCompConfigManager = setCompConfigManager;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
 })();
+
+/**
+* Returns the number of connected clients.
+*
+*     getConnectedClientsNum
+*
+* @method getConnectedClientsNum
+* @private
+* @return {object} The number of connected clients by websocket and tcp.
+*/
+function getConnectedClientsNum() {
+    try {
+        return {
+            ws_conn_clients:  compProfiling.getWsNumConnectedClients(),
+            tcp_conn_clients: compProfiling.getTcpNumConnectedClients()
+        };
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return {};
+    }
+}
