@@ -244,7 +244,8 @@ function getSystemInfo(cb) {
                         totmem:   os.totalmem(),
                         freemem:  os.freemem(),
                         hostname: os.hostname(),
-                        node_ver: getNodeVersion()  
+                        node_ver: getNodeVersion(),
+                        load_avg: os.loadavg()
                     };
                     cb(null, result);
                 }

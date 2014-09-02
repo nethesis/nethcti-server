@@ -4,6 +4,7 @@
 * @module com_profiling_rest
 * @submodule plugins_rest
 */
+var moment = require('moment');
 
 /**
 * The module identifier used by the logger.
@@ -178,6 +179,7 @@ function setCompUtil(comp) {
         *
         *     {
          "pid": 23511,
+         "uptime": "0 Days - 00:00:04",
          "pkg_ver": {
              "nethcti": "nethcti-2.1.10.3-1.el5.nh",
              "nethcti-server": "nethcti-server-2.1.9-1.el5.nh"
@@ -243,8 +245,13 @@ function setCompUtil(comp) {
          "distro": "Neth Service release 8.2",
          "totmem": 527241216,
          "freemem": 9342976,
-         "hostname": "ale-nethvoice"
-         }
+         "hostname": "nethvoice",
+         "node_ver": "v0.8.26",
+         "load_avg": [
+             0.1328125,
+             0.24951171875,
+             0.29638671875
+         ]
      }
         *
         * ---
@@ -407,8 +414,26 @@ function setCompUtil(comp) {
                                 compUtil.net.sendHttp500(IDLOG, res, err1);
                             } else {
                                 logger.info(IDLOG, 'send process data to user "' + username + '"');
+
+                                // calculate the uptime
+                                var uptime       = '';
+                                var durationSec  = Math.ceil(process.uptime());
+                                var uptimeSec    = moment.duration(durationSec, 'seconds').seconds();
+                                var uptimeMin    = moment.duration(durationSec, 'seconds').minutes();
+                                var uptimeHours  = moment.duration(durationSec, 'seconds').hours();
+                                var uptimeDays   = moment.duration(durationSec, 'seconds').days();
+                                var uptimeMonths = moment.duration(durationSec, 'seconds').months();
+                                var uptimeYears  = moment.duration(durationSec, 'seconds').years();
+                                if (uptimeSec    < 10)                     { uptimeSec   = '0' + uptimeSec;       }
+                                if (uptimeMin    < 10)                     { uptimeMin   = '0' + uptimeMin;       }
+                                if (uptimeHours  < 10)                     { uptimeHours = '0' + uptimeHours;     }
+                                if (uptimeYears  >  0)                     { uptime += uptimeYears  + ' Years ';  }
+                                if (uptimeYears  >  0 || uptimeMonths > 0) { uptime += uptimeMonths + ' Months '; }
+                                uptime += uptimeDays   + ' Days - ' + uptimeHours + ':' + uptimeMin + ':' + uptimeSec;
+
                                 var result = {
                                     pid:          compProfiling.getProcessPid(),
+                                    uptime:       uptime,
                                     pkg_ver:      result,
                                     proc_mem:     compProfiling.getProcMem(),
                                     db_stats:     compDbConn.getStats(),
