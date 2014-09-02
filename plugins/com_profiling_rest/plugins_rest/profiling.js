@@ -156,6 +156,7 @@ function setCompUtil(comp) {
         * # GET requests
         *
         * 1. [`profiling/proc`](#procget)
+        * 1. [`profiling/ports`](#portset)
         * 1. [`profiling/system`](#systemget)
         * 1. [`profiling/pkg_ver`](#pkg_verget)
         * 1. [`profiling/proc_mem`](#proc_memget)
@@ -167,7 +168,7 @@ function setCompUtil(comp) {
         *
         * ---
         *
-        * ### <a id="procet">**`profiling/proc`**</a>
+        * ### <a id="procget">**`profiling/proc`**</a>
         *
         * Returns the data about the process.
         *
@@ -191,6 +192,26 @@ function setCompUtil(comp) {
          "conn_clients": {
              "ws_conn_clients": 1,
              "tcp_conn_clients": 0
+         }
+     }
+        *
+        * ---
+        *
+        * ### <a id="portsget">**`profiling/ports`**</a>
+        *
+        * Returns the listening network ports.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "tcp": "8182",
+         "websocket": {
+             "http": "8183",
+             "https": "8181"
+         },
+         "http_proxy": {
+             "http": "8179",
+             "https": "8180"
          }
      }
         *
@@ -315,6 +336,7 @@ function setCompUtil(comp) {
                 * @type {array}
                 *
                 *   @param {string} proc         To get the data about the process
+                *   @param {string} ports        To get the listening network ports
                 *   @param {string} system       To get the data about the system
                 *   @param {string} pkg_ver      To get version of the packages
                 *   @param {string} proc_mem     To get the quantity of the memory usage by the process
@@ -325,6 +347,7 @@ function setCompUtil(comp) {
                 */
                 'get': [
                     'proc',
+                    'ports',
                     'system',
                     'pkg_ver',
                     'proc_mem',
@@ -374,6 +397,36 @@ function setCompUtil(comp) {
                             compUtil.net.sendHttp500(IDLOG, res, err2.toString());
                         }
                     });
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * Get the listening network ports by the following REST API:
+            *
+            *     ports
+            *
+            * @method ports
+            * @param {object}   req The client request
+            * @param {object}   res The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            ports: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+                    var results  = compProfiling.getListeningNetPorts();
+
+                    if (typeof results !== 'object') {
+                        var strerr = 'wrong listening ports result for user "' + username + '"';
+                        logger.error(IDLOG, strerr);
+                        compUtil.net.sendHttp500(IDLOG, res, strerr);
+
+                    } else {
+                        logger.info(IDLOG, 'send listening ports data to user "' + username + '"');
+                        res.send(200, results);
+                    }
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -607,6 +660,7 @@ function setCompUtil(comp) {
         }
         exports.api                  = profiling.api;
         exports.proc                 = profiling.proc;
+        exports.ports                = profiling.ports;
         exports.system               = profiling.system;
         exports.pkg_ver              = profiling.pkg_ver;
         exports.sys_cpus             = profiling.sys_cpus;

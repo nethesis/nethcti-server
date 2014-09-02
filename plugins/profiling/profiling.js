@@ -5,6 +5,7 @@
 * @main arch_profiling
 */
 var os           = require('os');
+var fs           = require('fs');
 var childProcess = require('child_process');
 
 /**
@@ -273,6 +274,43 @@ function getProcessPid() {
     }
 }
 
+/**
+* Returns the listening network ports.
+*
+* @method getListeningNetPorts
+* @return {number} pid The process PID.
+*/
+function getListeningNetPorts() {
+    try {
+        logger.info(IDLOG, 'get the listening ports');
+
+        var path = '/etc/nethcti/services.json';
+
+        // check file presence
+        if (!fs.existsSync(path)) { throw new Error(path + ' does not exist'); }
+
+        // read configuration file
+        var json = require(path);
+
+        var result = {
+            tcp: json.tcp.port,
+            websocket: {
+                http:  json.websocket.http_port,
+                https: json.websocket.https_port
+            },
+            http_proxy: {
+                http:  json.http_proxy.http_port,
+                https: json.http_proxy.https_port
+            }
+        };
+        return result;
+
+    } catch (err) {
+        logger.error(err.stack);
+        return -1;
+    }
+}
+
 // public interface
 exports.setLogger                 = setLogger;
 exports.getProcMem                = getProcMem;
@@ -280,6 +318,7 @@ exports.getSysCpus                = getSysCpus;
 exports.getSystemInfo             = getSystemInfo;
 exports.getProcessPid             = getProcessPid;
 exports.setCompComNethctiWs       = setCompComNethctiWs;
+exports.getListeningNetPorts      = getListeningNetPorts;
 exports.setCompComNethctiTcp      = setCompComNethctiTcp;
 exports.getCtiPackageRelease      = getCtiPackageRelease;
 exports.getWsNumConnectedClients  = getWsNumConnectedClients;
