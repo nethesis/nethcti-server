@@ -27,6 +27,56 @@ module.exports = function (options, imports, register) {
         */
         var PATH = '/etc/nethcti/nethcti.json';
 
+        /**
+        * The number of the warning log entries.
+        *
+        * @property warnCounter
+        * @type {number}
+        * @private
+        * @default 0
+        */
+        var warnCounter = 0;
+
+        /**
+        * The number of the error log entries.
+        *
+        * @property errorCounter
+        * @type {number}
+        * @private
+        * @default 0
+        */
+        var errorCounter = 0;
+
+        /**
+        * Returns the number of the warning log entries.
+        *
+        * @method getWarnCounter
+        * @return {number} The number of the warning log entries.
+        */
+        function getWarnCounter() {
+            try {
+                return warnCounter;
+            } catch (err1) {
+                console.log(err1.stack);
+                return -1;
+            }
+        }
+
+        /**
+        * Returns the number of the error log entries.
+        *
+        * @method getErrorCounter
+        * @return {number} The number of the error log entries.
+        */
+        function getErrorCounter() {
+            try {
+                return errorCounter;
+            } catch (err1) {
+                console.log(err1.stack);
+                return -1;
+            }
+        }
+
         // check configuration file presence
         if (!fs.existsSync(PATH)) {
             throw new Error(PATH + ' doesn\'t exist');
@@ -61,6 +111,19 @@ module.exports = function (options, imports, register) {
             ]
         });
 
+        // add the functions to retrieve the counters
+        log.getWarnCounter  = getWarnCounter;
+        log.getErrorCounter = getErrorCounter;
+
+        // a log event will be raised each time a transport successfully logs a message
+        log.on('logging', function (transport, level, msg, meta) {
+            try {
+                if      (level === 'warn')  { warnCounter  += 1; }
+                else if (level === 'error') { errorCounter += 1; }
+            } catch (err1) {
+                console.log(err1.stack);
+            }
+        });
     } catch (err) {
         console.log(err.stack);
     }

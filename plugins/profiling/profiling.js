@@ -244,6 +244,7 @@ function getSystemInfo(cb) {
                         totmem:   os.totalmem(),
                         freemem:  os.freemem(),
                         hostname: os.hostname(),
+                        node_ver: getNodeVersion()  
                     };
                     cb(null, result);
                 }
@@ -259,10 +260,25 @@ function getSystemInfo(cb) {
 }
 
 /**
+* Returns the node version.
+*
+* @method getNodeVersion
+* @return {string} The node version.
+*/
+function getNodeVersion() {
+    try {
+        logger.info(IDLOG, 'get the node version');
+        return process.version;
+    } catch (err) {
+        logger.error(err.stack);
+    }
+}
+
+/**
 * Returns the process PID.
 *
 * @method getProcessPid
-* @return {number} pid The process PID.
+* @return {number} The process PID.
 */
 function getProcessPid() {
     try {
@@ -317,6 +333,7 @@ exports.getProcMem                = getProcMem;
 exports.getSysCpus                = getSysCpus;
 exports.getSystemInfo             = getSystemInfo;
 exports.getProcessPid             = getProcessPid;
+exports.getNodeVersion            = getNodeVersion;
 exports.setCompComNethctiWs       = setCompComNethctiWs;
 exports.getListeningNetPorts      = getListeningNetPorts;
 exports.setCompComNethctiTcp      = setCompComNethctiTcp;

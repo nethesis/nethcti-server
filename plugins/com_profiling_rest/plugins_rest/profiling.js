@@ -159,9 +159,11 @@ function setCompUtil(comp) {
         * 1. [`profiling/ports`](#portset)
         * 1. [`profiling/system`](#systemget)
         * 1. [`profiling/pkg_ver`](#pkg_verget)
+        * 1. [`profiling/node_ver`](#node_verget)
         * 1. [`profiling/proc_mem`](#proc_memget)
         * 1. [`profiling/sys_cpus`](#sys_cpusget)
         * 1. [`profiling/db_stats`](#db_statsget)
+        * 1. [`profiling/log_stats`](#log_statsget)
         * 1. [`profiling/tot_users`](#tot_usersget)
         * 1. [`profiling/conn_clients`](#conn_clientsget)
         *
@@ -257,6 +259,16 @@ function setCompUtil(comp) {
         *
         * ---
         *
+        * ### <a id="node_verget">**`profiling/node_ver`**</a>
+        *
+        * Returns the node version.
+        *
+        * Example JSON response:
+        *
+        *     { "node_ver": "v0.8.26" }
+        *
+        * ---
+        *
         * ### <a id="proc_memget">**`profiling/proc_mem`**</a>
         *
         * Returns the quantity of the memory used by the process in byte.
@@ -319,6 +331,15 @@ function setCompUtil(comp) {
         *
         *     { num_exec_queries: 151 }
         *
+        * ---
+        *
+        * ### <a id="log_statsget">**`profiling/log_stats`**</a>
+        *
+        * Returns the log statistics.
+        *
+        * Example JSON response:
+        *
+        *     { warn: 5, error: 0 }
         *
         * @class plugin_rest_profiling
         * @static
@@ -339,9 +360,11 @@ function setCompUtil(comp) {
                 *   @param {string} ports        To get the listening network ports
                 *   @param {string} system       To get the data about the system
                 *   @param {string} pkg_ver      To get version of the packages
+                *   @param {string} node_ver     To get version of the node
                 *   @param {string} proc_mem     To get the quantity of the memory usage by the process
                 *   @param {string} sys_cpus     To get the data about the cpus of the system
                 *   @param {string} db_stats     To get the database statistics
+                *   @param {string} log_stats    To get the log statistics
                 *   @param {string} tot_users    To get the total number of the configured users
                 *   @param {string} conn_clients To get the number of connected clients
                 */
@@ -350,9 +373,11 @@ function setCompUtil(comp) {
                     'ports',
                     'system',
                     'pkg_ver',
+                    'node_ver',
                     'proc_mem',
                     'sys_cpus',
                     'db_stats',
+                    'log_stats',
                     'tot_users',
                     'conn_clients'
                 ],
@@ -387,6 +412,7 @@ function setCompUtil(comp) {
                                     pkg_ver:      result,
                                     proc_mem:     compProfiling.getProcMem(),
                                     db_stats:     compDbConn.getStats(),
+                                    log_stats:    getLogStats(),
                                     tot_users:    compConfigManager.getTotNumUsers(),
                                     conn_clients: getConnectedClientsNum()
                                 };
@@ -493,6 +519,36 @@ function setCompUtil(comp) {
                             compUtil.net.sendHttp500(IDLOG, res, err2.toString());
                         }
                     });
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * Get the version of the node by the following REST API:
+            *
+            *     node_ver
+            *
+            * @method node_ver
+            * @param {object}   req The client request
+            * @param {object}   res The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            node_ver: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+                    var results  = compProfiling.getNodeVersion();
+
+                    if (typeof results !== 'string') {
+                        var strerr = 'wrong node version result for user "' + username + '"';
+                        logger.error(IDLOG, strerr);
+                        compUtil.net.sendHttp500(IDLOG, res, strerr);
+
+                    } else {
+                        logger.info(IDLOG, 'send node version to user "' + username + '"');
+                        res.send(200, { node_ver: results });
+                    }
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -628,6 +684,35 @@ function setCompUtil(comp) {
             },
 
             /**
+            * Gets the number of warning and error logs with the following REST API:
+            *
+            *     log_stats
+            *
+            * @method log_stats
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            log_stats: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+                    var results  = getLogStats();
+
+                    if (typeof results !== 'object') {
+                        var strerr = 'wrong log stats result for user "' + username + '"';
+                        logger.error(IDLOG, strerr);
+                        compUtil.net.sendHttp500(IDLOG, res, strerr);
+                    } else {
+                        logger.info(IDLOG, 'send log stats data to user "' + username + '"');
+                        res.send(200, results);
+                    }
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
             * Gets the total number of the configured users with the following REST API:
             *
             *     tot_users
@@ -663,9 +748,11 @@ function setCompUtil(comp) {
         exports.ports                = profiling.ports;
         exports.system               = profiling.system;
         exports.pkg_ver              = profiling.pkg_ver;
+        exports.node_ver             = profiling.node_ver;
         exports.sys_cpus             = profiling.sys_cpus;
         exports.proc_mem             = profiling.proc_mem;
         exports.db_stats             = profiling.db_stats;
+        exports.log_stats            = profiling.log_stats,
         exports.setLogger            = setLogger;
         exports.tot_users            = profiling.tot_users;
         exports.setCompUtil          = setCompUtil;
@@ -682,8 +769,6 @@ function setCompUtil(comp) {
 /**
 * Returns the number of connected clients.
 *
-*     getConnectedClientsNum
-*
 * @method getConnectedClientsNum
 * @private
 * @return {object} The number of connected clients by websocket and tcp.
@@ -697,5 +782,24 @@ function getConnectedClientsNum() {
     } catch (err) {
         logger.error(IDLOG, err.stack);
         return {};
+    }
+}
+
+/**
+* Returns the log statistics.
+*
+* @method getLogStats
+* @private
+* @return {object} The log statistics.
+*/
+function getLogStats() {
+    try {
+        return {
+            warn:  logger.getWarnCounter(),
+            error: logger.getErrorCounter()
+        };
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return -1;
     }
 }
