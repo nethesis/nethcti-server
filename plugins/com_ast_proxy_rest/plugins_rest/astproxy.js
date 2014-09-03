@@ -3327,6 +3327,7 @@ function ajaxPhoneCall(username, req, res) {
             throw new Error('wrong parameters');
         }
 
+        var to         = compAstProxy.addPrefix(req.params.number);
         var exten      = req.params.endpointId;
         var serverIp   = compConfigManager.getServerIP();
         var extenIp    = compAstProxy.getExtensionIp(exten);
@@ -3344,7 +3345,7 @@ function ajaxPhoneCall(username, req, res) {
 
             // replace the parameters of the url template
             url = url.replace(/\$SERVER/g,     serverIp);
-            url = url.replace(/\$NUMBER/g,     req.params.number);
+            url = url.replace(/\$NUMBER/g,     to);
             url = url.replace(/\$ACCOUNT/g,    exten);
             url = url.replace(/\$PHONE_IP/g,   extenIp);
             url = url.replace(/\$PHONE_USER/g, phoneUser);
@@ -3354,12 +3355,12 @@ function ajaxPhoneCall(username, req, res) {
             httpReq.get(url, function (httpResp) {
                 try {
                     if (httpResp.statusCode === 200) {
-                        logger.info(IDLOG, 'new call to ' + req.params.number + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp + ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
+                        logger.info(IDLOG, 'new call to ' + to + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp + ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
                         logger.info(IDLOG, url);
                         res.send(200, { phoneRespStatusCode: httpResp.statusCode });
 
                     } else {
-                        logger.warn(IDLOG, 'new call to ' + req.params.number + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp + ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
+                        logger.warn(IDLOG, 'new call to ' + to + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp + ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
                         logger.warn(IDLOG, url);
                         res.send(httpResp.statusCode, { phoneRespStatusCode: httpResp.statusCode });
                     }
@@ -3374,7 +3375,7 @@ function ajaxPhoneCall(username, req, res) {
             });
 
         } else {
-            logger.warn(IDLOG, 'failed call to ' + req.params.number + ' via HTTP GET request sent to the phone ' + exten + ' ' + extenIp + ' by the user "' + username + '": ' + extenAgent + ' is not supported');
+            logger.warn(IDLOG, 'failed call to ' + to + ' via HTTP GET request sent to the phone ' + exten + ' ' + extenIp + ' by the user "' + username + '": ' + extenAgent + ' is not supported');
             compUtil.net.sendHttp500(IDLOG, res, 'the phone "' + extenAgent + '" is not supported');
         }
 

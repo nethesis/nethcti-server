@@ -105,6 +105,13 @@ module.exports = function (options, imports, register) {
             getPrefix: astProxy.proxyLogic.getPrefix,
 
             /**
+            * It's the _addPrefix_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method addPrefix
+            */
+            addPrefix: astProxy.proxyLogic.addPrefix,
+
+            /**
             * It's the _hangupConversation_ method provided by _ast\_proxy.proxyLogic_.
             *
             * @method hangupConversation

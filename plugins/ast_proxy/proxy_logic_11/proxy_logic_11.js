@@ -3511,6 +3511,38 @@ function getExtenIdChannelConversation(exten, convid) {
 }
 
 /**
+* Adds a prefix to the number only if it is not already present and if
+* it is not an extension.
+*
+* @method addPrefix
+* @param  {string} num The number to call
+* @return {string} The number to call
+*/
+function addPrefix(num) {
+    try {
+        // check parameter
+        if (typeof num !== 'string') { throw new Error('wrong parameter'); }
+
+        // replace plus sign used in prefix with the '00' sequence
+        if (num.substring(0, 1) === '+') { num = num.replace('+', '00'); }
+
+        // check if the prefix is to be added. It is added only for outgoing calls and not
+        // between extensions. So checks if the destination is an extension and add the prefix
+        // only in negative case and if it does not already contain it
+        if (!extensions[num] &&             // the destination is not an extension
+            num.substring(0, 2) !== '00') { // it does not contain the prefix
+
+            num = prefix + num;
+        }
+        return num;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return num;
+    }
+}
+
+/**
 * Make a new call.
 *
 * @method call
@@ -3533,18 +3565,7 @@ function call(endpointType, endpointId, to, cb) {
         // check the endpoint existence
         if (endpointType === 'extension' && extensions[endpointId]) {
 
-            // replace plus sign used in prefix with the '00' sequence
-            if (to.substring(0, 1) === '+') { to = to.replace('+', '00'); }
-
-            // check if the prefix is to be added. It is added only for outgoing calls and not
-            // between extensions. So checks if the destination is an extension and add the prefix
-            // only in negative case and if it does not already contain it
-            if (!extensions[to] &&             // the destination is not an extension
-                to.substring(0, 2) !== '00') { // it does not contain the prefix
-
-                to = prefix + to;
-            }
-
+            to         = addPrefix(to);
             var chType = extensions[endpointId].getChanType();
 
             logger.info(IDLOG, 'execute call from ' + endpointId + ' to ' + to);
@@ -5486,6 +5507,7 @@ exports.setDnd                          = setDnd;
 exports.setLogger                       = setLogger;
 exports.setPrefix                       = setPrefix;
 exports.getPrefix                       = getPrefix;
+exports.addPrefix                       = addPrefix;
 exports.setCompDbconn                   = setCompDbconn;
 exports.getExtensions                   = getExtensions;
 exports.pickupParking                   = pickupParking;
