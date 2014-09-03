@@ -2448,6 +2448,18 @@ function addConversationToTrunk(trunk, resp, chid) {
             var conv = new TrunkConversation(trunk, chSource, chDest);
             var convid = conv.getId();
 
+            // check if the name of the internal extension involved in the conversation is empty.
+            // In that case get the name and set it
+            if (conv.getInternalName() === "") {
+
+                var internalNum = conv.getInternalNum();
+
+                if (extensions[internalNum]) {
+                    var name = extensions[internalNum].getName();
+                    conv.setInternalName(name);
+                }
+            }
+
             // if the conversation is recording, sets its recording status
             if (recordingConv[convid] !== undefined) {
                 conv.setRecording(true);

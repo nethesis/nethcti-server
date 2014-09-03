@@ -169,6 +169,7 @@ exports.Conversation = function (ownerId, sourceChan, destChan, queue) {
     } else if (chDest) {
         counterpartName = chDest.getCallerName();
     }
+    if (counterpartName.substring(0, 4) === 'CID:') { counterpartName = ''; }
 
     /**
     * Return the source channel.

@@ -116,20 +116,58 @@ exports.TrunkConversation = function (ownerId, sourceChan, destChan) {
     } else { throughQueue = false; }
 
     /**
-    * The number of the counterpart.
+    * The external number.
     *
-    * @property counterpartNum
+    * @property externalNum
+    * @type {string}
+    * @private
+    */
+    /**
+    * The name of the external number.
+    *
+    * @property externalName
     * @type {string}
     * @private
     */
     // "chSource" and "chDest" are always present at runtime. Instead,
     // during the boot, if there are some ringing calls, they may lack
-    var counterpartNum;
+    var externalNum;
+    var externalName;
     if (chDest && chDest.isExtension(owner) === true) {
-        counterpartNum = chDest.getCallerNum();
+        externalNum  = chDest.getCallerNum();
+        externalName = chDest.getCallerName();
 
     } else if (chSource && chSource.isExtension(owner) === true) {
-        counterpartNum = chSource.getCallerNum();
+        externalNum  = chSource.getCallerNum();
+        externalName = chSource.getCallerName();
+    }
+    if (externalName.substring(0, 4) === 'CID:') { externalName = ''; }
+
+    /**
+    * The internal extension.
+    *
+    * @property internalNum
+    * @type {string}
+    * @private
+    */
+    /**
+    * The name of the internal extension.
+    *
+    * @property internalName
+    * @type {string}
+    * @private
+    */
+    // "chSource" and "chDest" are always present at runtime. Instead,
+    // during the boot, if there are some ringing calls, they may lack
+    var internalNum;
+    var internalName;
+    if (chDest && chDest.isExtension(owner) === true) {
+        internalNum  = chDest.getBridgedNum();
+        internalName = chDest.getBridgedName();
+
+    } else if (chSource && chSource.isExtension(owner) === true) {
+        internalNum  = chSource.getBridgedNum();
+        internalName = chSource.getBridgedName();
     }
 
     /**
@@ -147,6 +185,30 @@ exports.TrunkConversation = function (ownerId, sourceChan, destChan) {
     * @return {Channel} The destination channel object.
     */
     function getDestinationChannel() { return chDest; }
+
+    /**
+    * Returns the number of the extension involved in the conversation.
+    *
+    * @method getInternalNum
+    * @return {string} The number of the extension involved in the conversation.
+    */
+    function getInternalNum() { return internalNum; }
+
+    /**
+    * Returns the name of the extension involved in the conversation.
+    *
+    * @method getInternalName
+    * @return {string} The name of the extension involved in the conversation.
+    */
+    function getInternalName() { return internalName; }
+
+    /**
+    * Sets the name of the extension involved in the conversation.
+    *
+    * @method setInternalName
+    * @param {string} name The name of the extension involved in the conversation.
+    */
+    function setInternalName(name) { internalName = name; }
 
     /**
     * Return the string representation of the conversation.
@@ -229,15 +291,18 @@ exports.TrunkConversation = function (ownerId, sourceChan, destChan) {
     * connected, one between the source channel and the destination channel can be null.
     *
     *     {
-    *         id:             "SIP/214-000002f4>SIP/209-000002f5",
-    *         owner:          "214",
-    *         chDest:         Channel.toJSON(),                    // the source channel of the call
-    *         chSource:       Channel.toJSON(),                    // the destination channel of the call
-    *         duration:       26,
-    *         recording:      false,                               // it's true if the conversation is recording, false otherwise
-    *         direction:      "in",
-    *         throughQueue:   false,                               // if the call has gone through a queue
-    *         counterpartNum: "209"
+    *         id:           "SIP/214-000002f4>SIP/209-000002f5",
+    *         owner:        "214",
+    *         chDest:       Channel.toJSON(),                    // the source channel of the call
+    *         chSource:     Channel.toJSON(),                    // the destination channel of the call
+    *         duration:     26,
+    *         recording:    false,                               // it's true if the conversation is recording, false otherwise
+    *         direction:    "in",
+    *         internalNum:  "209",                               // the internal number
+    *         externalNum:  "0721405516",                        // the external number
+    *         internalName: "Extension Name",                    // the internal name
+    *         externalName: "Nethesis",                          // the external name
+    *         throughQueue: false                                // if the call has gone through a queue
     *     }
     *
     * @method toJSON
@@ -249,15 +314,18 @@ exports.TrunkConversation = function (ownerId, sourceChan, destChan) {
         updateDuration();
 
         return {
-            id:             id,
-            owner:          owner,
-            chDest:         chDest   ? chDest.toJSON(privacyStr)   : null,
-            chSource:       chSource ? chSource.toJSON(privacyStr) : null,
-            duration:       duration,
-            recording:      recording,
-            direction:      direction,
-            throughQueue:   throughQueue,
-            counterpartNum: counterpartNum
+            id:           id,
+            owner:        owner,
+            chDest:       chDest   ? chDest.toJSON(privacyStr)   : null,
+            chSource:     chSource ? chSource.toJSON(privacyStr) : null,
+            duration:     duration,
+            recording:    recording,
+            direction:    direction,
+            internalNum:  internalNum,
+            externalNum:  externalNum,
+            internalName: internalName,
+            externalName: externalName,
+            throughQueue: throughQueue
         };
     }
 
@@ -269,6 +337,9 @@ exports.TrunkConversation = function (ownerId, sourceChan, destChan) {
         getDuration:           getDuration,
         isRecording:           isRecording,
         setRecording:          setRecording,
+        getInternalNum:        getInternalNum,
+        getInternalName:       getInternalName,
+        setInternalName:       setInternalName,
         setRecordingMute:      setRecordingMute,
         getSourceChannel:      getSourceChannel,
         getDestinationChannel: getDestinationChannel
