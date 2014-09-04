@@ -3270,8 +3270,8 @@ function evtConversationDialing(data) {
         // it in the following manner
         astProxy.doCmd({ command: 'listChannels' }, function (err, resp) {
             try {
-                resp[data.chDest].bridgedChannel   = data.chSource;
-                resp[data.chSource].bridgedChannel = data.chDest;
+                if (resp[data.chDest])   { resp[data.chDest].bridgedChannel   = data.chSource; }
+                if (resp[data.chSource]) { resp[data.chSource].bridgedChannel = data.chDest;   }
 
                 // update the conversations of the extensions
                 if (extensions[data.chSourceExten]) { updateExtenConversations(err, resp, data.chSourceExten); }
