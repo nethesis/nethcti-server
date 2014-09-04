@@ -71,7 +71,7 @@ function setLogger(log) {
 function sendHttp201(parentIdLog, resp) {
     try {
         resp.writeHead(201);
-        logger.info(parentIdLog, 'send HTTP 201 response to ' + resp.connection.remoteAddress);
+        logger.info(parentIdLog, 'send HTTP 201 response to ' + getRemoteClientIp(resp));
         resp.end();
     } catch (err) {
         logger.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
@@ -89,7 +89,7 @@ function sendHttp201(parentIdLog, resp) {
 function sendHttp200(parentIdLog, resp) {
     try {
         resp.writeHead(200);
-        logger.info(parentIdLog, 'send HTTP 200 response to ' + resp.connection.remoteAddress);
+        logger.info(parentIdLog, 'send HTTP 200 response to ' + getRemoteClientIp(resp));
         resp.end();
     } catch (err) {
         logger.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
@@ -107,7 +107,7 @@ function sendHttp200(parentIdLog, resp) {
 function sendHttp400(parentIdLog, resp) {
     try {
         resp.writeHead(400);
-        logger.info(parentIdLog, 'send HTTP 400 response to ' + resp.connection.remoteAddress);
+        logger.info(parentIdLog, 'send HTTP 400 response to ' + getRemoteClientIp(resp));
         resp.end();
     } catch (err) {
         logger.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
@@ -125,7 +125,7 @@ function sendHttp400(parentIdLog, resp) {
 function sendHttp401(parentIdLog, resp) {
     try {
         resp.writeHead(401);
-        logger.warn(parentIdLog, 'send HTTP 401 response to ' + resp.connection.remoteAddress);
+        logger.warn(parentIdLog, 'send HTTP 401 response to ' + getRemoteClientIp(resp));
         resp.end();
     } catch (err) {
         logger.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
@@ -144,7 +144,7 @@ function sendHttp401(parentIdLog, resp) {
 function sendHttp401Nonce(parentIdLog, resp, nonce) {
     try {
         resp.writeHead(401, { 'WWW-Authenticate': 'Digest ' + nonce });
-        logger.info(IDLOG, 'send HTTP 401 response with nonce to ' + resp.connection.remoteAddress);
+        logger.info(IDLOG, 'send HTTP 401 response with nonce to ' + getRemoteClientIp(resp));
         resp.end();
     } catch (err) {
         logger.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
@@ -162,7 +162,7 @@ function sendHttp401Nonce(parentIdLog, resp, nonce) {
 function sendHttp403(parentIdLog, resp) {
     try {
         resp.writeHead(403);
-        logger.info(parentIdLog, 'send HTTP 403 response to ' + resp.connection.remoteAddress);
+        logger.info(parentIdLog, 'send HTTP 403 response to ' + getRemoteClientIp(resp));
         resp.end();
     } catch (err) {
         logger.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
@@ -184,10 +184,32 @@ function sendHttp500(parentIdLog, resp, err) {
         typeof err !== 'string' ? text = '' : text = err;
 
         resp.writeHead(500, { error: err });
-        logger.error(parentIdLog, 'send HTTP 500 response to ' + resp.connection.remoteAddress);
+        logger.error(parentIdLog, 'send HTTP 500 response to ' + getRemoteClientIp(resp));
         resp.end();
     } catch (err) {
         logger.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
+    }
+}
+
+/**
+* Returns the remote IP address of the client from the http response object.
+*
+* @method getRemoteClientIp
+* @param  {object} resp The http response object
+* @return {string} The remote ip address of the client
+* @static
+* @private
+*/
+function getRemoteClientIp(resp) {
+    try {
+        // "x-forwarded-for" http header is present when an http proxy is used.
+        // In this case the "resp.connection.remoteAddress" is the IP of the
+        // http proxy, so takes the client IP from the header
+        return (resp.req.headers['x-forwarded-for'] ? resp.req.headers['x-forwarded-for'].split(',')[0] : resp.connection.remoteAddress);
+
+    } catch (err) {
+        logger.error(IDLOG, 'retrieving remote client IP: ' + err.stack);
+        return resp.connection.remoteAddress;
     }
 }
 
