@@ -328,7 +328,7 @@ exports.Conversation = function (ownerId, sourceChan, destChan, queue) {
             direction:       direction,
             throughQueue:    throughQueue,
             counterpartNum:  privacyStr ? ( counterpartNum.slice(0, -privacyStr.length) + privacyStr ) : counterpartNum,
-            counterpartName: privacyStr ? ( counterpartName.slice(0, -privacyStr.length) + privacyStr ) : counterpartName
+            counterpartName: privacyStr ? privacyStr : counterpartName
         };
     }
 

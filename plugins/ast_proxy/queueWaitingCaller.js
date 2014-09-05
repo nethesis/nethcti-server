@@ -185,7 +185,7 @@ exports.QueueWaitingCaller = function (data) {
 
         return {
             num:      privacyStr ? ( num.slice(0, -privacyStr.length) + privacyStr ) : num,
-            name:     name,
+            name:     privacyStr ? privacyStr : name,
             queue:    queue,
             waiting:  waiting,
             channel:  channel,
