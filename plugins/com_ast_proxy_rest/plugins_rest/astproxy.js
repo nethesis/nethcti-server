@@ -607,14 +607,15 @@ var compConfigManager;
         *
         * ### <a id="answerpost">**`astproxy/answer`**</a>
         *
-        * Answer the conversation from the extension. The request must contains the
-        * following parameters:
+        * Answer the conversation from the specified endpoint. If the endpoint is not specified it will use the user default.
+        * The request must contains the following parameters:
         *
-        * * `endpointId: the endpoint identifier of the user who has the conversation to answer`
-        * * `endpointType: the type of the endpoint of the user who has the conversation to answer`
+        * * `[endpointId]: the endpoint identifier of the user who has the conversation to answer. It requires "endpointType".`
+        * * `[endpointType]: the type of the endpoint of the user who has the conversation to answer. It requires "endpointId".`
         *
         * Example JSON request parameters:
         *
+        *     {}
         *     { "endpointType": "extension", "endpointId": "214" }
         *
         * ---
@@ -1502,10 +1503,10 @@ var compConfigManager;
                     // check parameters
                     if (   typeof req.params        !== 'object'
                         || typeof req.params.number !== 'string'
-                        || (req.params.endpointId  && !req.params.endpointType)
-                        || (!req.params.endpointId && req.params.endpointType)
-                        || (req.params.endpointId  && typeof req.params.endpointId   !== 'string')
-                        || req.params.endpointType && typeof req.params.endpointType !== 'string') {
+                        || (req.params.endpointId   && !req.params.endpointType)
+                        || (!req.params.endpointId  &&  req.params.endpointType)
+                        || (req.params.endpointId   && typeof req.params.endpointId   !== 'string')
+                        || (req.params.endpointType && typeof req.params.endpointType !== 'string')) {
 
                         compUtil.net.sendHttp400(IDLOG, res);
                         return;
@@ -1857,12 +1858,19 @@ var compConfigManager;
                     var username = req.headers.authorization_user;
 
                     // check parameters
-                    if (   typeof req.params              !== 'object'
-                        || typeof req.params.endpointId   !== 'string'
-                        || typeof req.params.endpointType !== 'string') {
+                    if (   typeof req.params !== 'object'
+                        || (req.params.endpointId   && !req.params.endpointType)
+                        || (!req.params.endpointId  &&  req.params.endpointType)
+                        || (req.params.endpointId   && typeof req.params.endpointId   !== 'string')
+                        || (req.params.endpointType && typeof req.params.endpointType !== 'string')) {
 
                         compUtil.net.sendHttp400(IDLOG, res);
                         return;
+                    }
+
+                    if (!req.params.endpointId && !req.params.endpointType) {
+                        req.params.endpointType = 'extension';
+                        req.params.endpointId   = compConfigManager.getDefaultUserExtensionConf(username);
                     }
 
                     if (req.params.endpointType === 'extension') {
