@@ -378,16 +378,17 @@ exports.Extension = function (ext, chType) {
     *     }
     *
     * @method toJSON
-    * @param  {string} [privacyStr] If it's specified, it hides the last digits of the phone number
+    * @param  {string} [privacyStrOutQueue] If it is specified, it obfuscates the number of all calls that does not pass through a queue
+    * @param  {string} [privacyStrInQueue]  If it is specified, it obfuscates the number of all calls that pass through a queue
     * @return {object} The JSON representation of the object.
     */
-    function toJSON(privacyStr) {
+    function toJSON(privacyStrOutQueue, privacyStrInQueue) {
 
         var jsonConvs = {};
         var convid;
 
         // JSON representation of the conversations
-        for (convid in conversations) { jsonConvs[convid] = conversations[convid].toJSON(privacyStr); }
+        for (convid in conversations) { jsonConvs[convid] = conversations[convid].toJSON(privacyStrOutQueue, privacyStrInQueue); }
 
         return {
             ip:            ip,

@@ -603,15 +603,24 @@ function extenChanged(exten) {
 
             username = wsid[sockid].username;
 
-            if (   compUser.hasExtensionEndpoint(username, exten.getExten())
-                || !compAuthorization.isPrivacyEnabled(username)) {
+            // checks if the user has the privacy enabled. In case the user has the "privacy" and
+            // "admin_queues" permission enabled, then the privacy is bypassed for all the calls
+            // that pass through a queue, otherwise all the calls are obfuscated
+            if (   compAuthorization.isPrivacyEnabled(username)           === true
+                && compAuthorization.authorizeOpAdminQueuesUser(username) === false) {
 
-                if (wsServer.sockets.sockets[sockid]) { wsServer.sockets.sockets[sockid].emit('extenUpdate', exten.toJSON()); }
-                if (wssServer.sockets.sockets[sockid]) { wssServer.sockets.sockets[sockid].emit('extenUpdate', exten.toJSON()); }
+                if (wsServer.sockets.sockets[sockid])  { wsServer.sockets.sockets[sockid].emit('extenUpdate', exten.toJSON(privacyStrReplace, privacyStrReplace));  }
+                if (wssServer.sockets.sockets[sockid]) { wssServer.sockets.sockets[sockid].emit('extenUpdate', exten.toJSON(privacyStrReplace, privacyStrReplace)); }
+
+            } else if (   compAuthorization.isPrivacyEnabled(username)           === true
+                       && compAuthorization.authorizeOpAdminQueuesUser(username) === true) {
+
+                if (wsServer.sockets.sockets[sockid])  { wsServer.sockets.sockets[sockid].emit('extenUpdate', exten.toJSON(privacyStrReplace));  }
+                if (wssServer.sockets.sockets[sockid]) { wssServer.sockets.sockets[sockid].emit('extenUpdate', exten.toJSON(privacyStrReplace)); }
 
             } else {
-                if (wsServer.sockets.sockets[sockid]) { wsServer.sockets.sockets[sockid].emit('extenUpdate', exten.toJSON(privacyStrReplace)); }
-                if (wssServer.sockets.sockets[sockid]) { wssServer.sockets.sockets[sockid].emit('extenUpdate', exten.toJSON(privacyStrReplace)); }
+                if (wsServer.sockets.sockets[sockid])  { wsServer.sockets.sockets[sockid].emit('extenUpdate', exten.toJSON()); }
+                if (wssServer.sockets.sockets[sockid]) { wssServer.sockets.sockets[sockid].emit('extenUpdate', exten.toJSON()); }
             }
         }
     } catch (err) {
@@ -1265,7 +1274,8 @@ function loginHdlr(socket, obj) {
             if (compAuthorization.authorizeOpQueuesUser(obj.accessKeyId) === true
                 || compAuthorization.authorizeOpAdminQueuesUser(obj.accessKeyId) === true) {
 
-                if (compAuthorization.isPrivacyEnabled(obj.accessKeyId) === true) {
+                if (   compAuthorization.isPrivacyEnabled(obj.accessKeyId)           === true
+                    && compAuthorization.authorizeOpAdminQueuesUser(obj.accessKeyId) === false) {
                     // join the user to the websocket room to receive the asterisk events that affects the queues, using hide numbers
                     socket.join(WS_ROOM.QUEUES_AST_EVT_PRIVACY);
 

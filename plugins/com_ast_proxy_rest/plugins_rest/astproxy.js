@@ -1116,7 +1116,9 @@ var compConfigManager;
                     var queues;
 
                     // check if the user has the privacy enabled
-                    if (compAuthorization.isPrivacyEnabled(username) === true) {
+                    if (compAuthorization.isPrivacyEnabled(username)           === true &&
+                        compAuthorization.authorizeOpAdminQueuesUser(username) === false) {
+
                         queues = compAstProxy.getJSONQueues(privacyStrReplace);
                     } else {
                         queues = compAstProxy.getJSONQueues();
@@ -1226,8 +1228,23 @@ var compConfigManager;
 
                     var extensions;
 
-                    // check if the user has the privacy enabled
-                    if (compAuthorization.isPrivacyEnabled(username) === true) {
+                    // checks if the user has the privacy enabled. In case the user has the "privacy" and
+                    // "admin_queues" permission enabled, then the privacy is bypassed for all the calls
+                    // that pass through a queue, otherwise all the calls are obfuscated
+                    if (   compAuthorization.isPrivacyEnabled(username)           === true
+                        && compAuthorization.authorizeOpAdminQueuesUser(username) === false) {
+
+                        // all the calls are obfuscated, without regard of passing through a queue
+                        extensions = compAstProxy.getJSONExtensions(privacyStrReplace, privacyStrReplace);
+
+                        // replace the extensions associated with the user to have clear number for them
+                        var e;
+                        for (e in userExtensions) { extensions[e] = compAstProxy.getJSONExtension(e); }
+
+                    } else if (   compAuthorization.isPrivacyEnabled(username)           === true
+                               && compAuthorization.authorizeOpAdminQueuesUser(username) === true) { // the privacy is bypassed
+
+                        // only the calls that does not pass through a queue are obfuscated
                         extensions = compAstProxy.getJSONExtensions(privacyStrReplace);
 
                         // replace the extensions associated with the user to have clear number for them
@@ -1235,6 +1252,7 @@ var compConfigManager;
                         for (e in userExtensions) { extensions[e] = compAstProxy.getJSONExtension(e); }
 
                     } else {
+                        // no call is obfuscated
                         extensions = compAstProxy.getJSONExtensions();
                     }
 

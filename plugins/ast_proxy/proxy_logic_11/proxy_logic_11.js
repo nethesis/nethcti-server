@@ -1668,18 +1668,18 @@ function getJSONParkings(privacyStr) {
 }
 
 /**
-* Returns the JSON representation of all the extensions. If some error
-* occurs it returns an empty object.
+* Returns the JSON representation of all the extensions. If some error occurs it returns an empty object.
 *
 * @method getJSONExtensions
-* @param  {string} [privacyStr] If it's specified, it hides the last digits of the phone number
+* @param  {string} [privacyStrOutQueue] If it is specified, it obfuscates the number of all calls that does not pass through a queue
+* @param  {string} [privacyStrInQueue]  If it is specified, it obfuscates the number of all calls that pass through a queue
 * @return {object} The JSON representation of the all extensions.
 */
-function getJSONExtensions(privacyStr) {
+function getJSONExtensions(privacyStrOutQueue, privacyStrInQueue) {
     try {
         var eliteral = {};
         var ext;
-        for (ext in extensions) { eliteral[ext] = extensions[ext].toJSON(privacyStr); }
+        for (ext in extensions) { eliteral[ext] = extensions[ext].toJSON(privacyStrOutQueue, privacyStrInQueue); }
         return eliteral;
 
     } catch (err) {
@@ -1693,16 +1693,17 @@ function getJSONExtensions(privacyStr) {
 * occurs it returns an empty object.
 *
 * @method getJSONExtension
-* @param  {string} exten        The extension identifier
-* @param  {string} [privacyStr] If it's specified, it hides the last digits of the phone number
+* @param  {string} exten                The extension identifier
+* @param  {string} [privacyStrOutQueue] If it is specified, it obfuscates the number of all calls that does not pass through a queue
+* @param  {string} [privacyStrInQueue]  If it is specified, it obfuscates the number of all calls that pass through a queue
 * @return {object} The JSON representation of the extension.
 */
-function getJSONExtension(exten, privacyStr) {
+function getJSONExtension(exten, privacyStrOutQueue, privacyStrInQueue) {
     try {
         // check the parameter
         if (typeof exten !== 'string') { throw new Error('wrong parameter'); }
 
-        return extensions[exten].toJSON(privacyStr);
+        return extensions[exten].toJSON(privacyStrOutQueue, privacyStrInQueue);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);

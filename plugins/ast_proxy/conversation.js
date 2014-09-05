@@ -310,25 +310,41 @@ exports.Conversation = function (ownerId, sourceChan, destChan, queue) {
     *     }
     *
     * @method toJSON
-    * @param  {string} [privacyStr] If it's specified, it hides the last digits of the phone number
+    * @param  {string} [privacyStrOutQueue] If it is specified, it obfuscates the number of all calls that does not pass through a queue
+    * @param  {string} [privacyStrInQueue]  If it is specified, it obfuscates the number of all calls that pass through a queue
     * @return {object} The JSON representation of the object.
     */
-    function toJSON(privacyStr) {
+    function toJSON(privacyStrOutQueue, privacyStrInQueue) {
 
         updateDuration();
+
+        var tempChDest, tempChSource, tempCounterpartNum, tempCounterpartName;
+
+        if (throughQueue) {
+            tempChDest          = chDest            ? chDest.toJSON(privacyStrInQueue)   : null;
+            tempChSource        = chSource          ? chSource.toJSON(privacyStrInQueue) : null;
+            tempCounterpartNum  = privacyStrInQueue ? ( counterpartNum.slice(0, -privacyStrInQueue.length) + privacyStrInQueue ) : counterpartNum;
+            tempCounterpartName = privacyStrInQueue ? privacyStrInQueue : counterpartName;
+
+        } else {
+            tempChDest          = chDest             ? chDest.toJSON(privacyStrOutQueue)   : null;
+            tempChSource        = chSource           ? chSource.toJSON(privacyStrOutQueue) : null;
+            tempCounterpartNum  = privacyStrOutQueue ? ( counterpartNum.slice(0, -privacyStrOutQueue.length) + privacyStrOutQueue ) : counterpartNum;
+            tempCounterpartName = privacyStrOutQueue ? privacyStrOutQueue : counterpartName;
+        }
 
         return {
             id:              id,
             owner:           owner,
-            chDest:          chDest   ? chDest.toJSON(privacyStr)   : null,
+            chDest:          tempChDest,
             queueId:         queueId,
-            chSource:        chSource ? chSource.toJSON(privacyStr) : null,
+            chSource:        tempChSource,
             duration:        duration,
             recording:       recording,
             direction:       direction,
             throughQueue:    throughQueue,
-            counterpartNum:  privacyStr ? ( counterpartNum.slice(0, -privacyStr.length) + privacyStr ) : counterpartNum,
-            counterpartName: privacyStr ? privacyStr : counterpartName
+            counterpartNum:  tempCounterpartNum,
+            counterpartName: tempCounterpartName
         };
     }
 
