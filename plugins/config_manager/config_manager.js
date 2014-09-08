@@ -946,7 +946,11 @@ function verifySendVoicemailNotification(username, deliveryMethod) {
 
         if      (when === NOTIF_WHEN.always)  { return true;  }
         else if (when === NOTIF_WHEN.never)   { return false; }
-        else if (when === NOTIF_WHEN.offline) {} // not supported now
+        else if (when === NOTIF_WHEN.offline) {
+            // check if the user is logged into the cti (desktop & mobile) and returns true only
+            // in the case he is logged out from both
+            if (!compUser.isDesktopLoggedIn(username) && !compUser.isMobileLoggedIn(username)) { return true; }
+        }
         else {
             logger.warn(IDLOG, 'checking if send voicemail notification by "' + deliveryMethod + '" for user "' + username + '": ' +
                                'wrong when value "' + when + '"');
@@ -991,7 +995,11 @@ function verifySendPostitNotification(username, deliveryMethod) {
 
         if      (when === NOTIF_WHEN.always)  { return true;  }
         else if (when === NOTIF_WHEN.never)   { return false; }
-        else if (when === NOTIF_WHEN.offline) {} // not supported now
+        else if (when === NOTIF_WHEN.offline) {
+            // check if the user is logged into the cti (desktop & mobile) and returns true only
+            // in the case he is logged out from both
+            if (!compUser.isDesktopLoggedIn(username) && !compUser.isMobileLoggedIn(username)) { return true; }
+        }
         else {
             logger.warn(IDLOG, 'checking if send new post-it notification by "' + deliveryMethod + '" for user "' + username + '": ' +
                                'wrong "when" value "' + when + '"');

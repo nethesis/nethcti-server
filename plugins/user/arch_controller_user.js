@@ -154,6 +154,20 @@ module.exports = function (options, imports, register) {
             setNethctiPresence: controllerUser.setNethctiPresence,
 
             /**
+            * It's the _isDesktopLoggedIn_ method provided by _controller\_user_ module.
+            *
+            * @method isDesktopLoggedIn
+            */
+            isDesktopLoggedIn: controllerUser.isDesktopLoggedIn,
+
+            /**
+            * It's the _isMobileLoggedIn_ method provided by _controller\_user_ module.
+            *
+            * @method isMobileLoggedIn
+            */
+            isMobileLoggedIn: controllerUser.isMobileLoggedIn,
+
+            /**
             * It's the _isValidEndpointNethctiStatus_ method provided by _endpoint\_types_ module.
             *
             * @method isValidNethctiPresence

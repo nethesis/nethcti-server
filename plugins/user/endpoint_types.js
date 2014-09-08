@@ -115,5 +115,6 @@ function isValidEndpointType(type) {
 exports.TYPES                        = TYPES;
 exports.isValidEndpointType          = isValidEndpointType;
 exports.ENDPOINT_NETHCTI_STATUS      = ENDPOINT_NETHCTI_STATUS;
+exports.ENDPOINT_NETHCTI_DEVICE_TYPE = ENDPOINT_NETHCTI_DEVICE_TYPE;
 exports.isValidEndpointNethctiStatus = isValidEndpointNethctiStatus;
 exports.isValidEndpointNethctiDevice = isValidEndpointNethctiDevice;
