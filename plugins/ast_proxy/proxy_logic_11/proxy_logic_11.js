@@ -1258,6 +1258,51 @@ function setQueueData(q, resp) {
 }
 
 /**
+* Updates waiting callers of the queue object. This is called when a waiting caller
+* leaves a queue (from "evtRemoveQueueWaitingCaller" method). The purpose of this
+* method is to update the position of the queue waiting callers.
+*
+* @method updateQueueWaitingCallers
+* @param {object} err  The error response object
+* @param {object} resp The queue informations object
+* @private
+*/
+function updateQueueWaitingCallers(err, resp) {
+    try {
+        if (err) {
+            logger.error(IDLOG, 'updating queue waiting callers: ' + err.toString());
+            return;
+        }
+
+        // check the parameter
+        if (typeof resp !== 'object' || resp.queue === undefined) { throw new Error('wrong parameter'); }
+
+        var q = resp.queue; // the queue number
+
+        // check the existence of the queue
+        if (!queues[q]) {
+            logger.warn(IDLOG, 'try to update queue waiting callers of queue "' + q + '"');
+            return;
+        }
+
+        // set all waiting callers
+        var ch, wCaller;
+        for (ch in resp.waitingCallers) {
+            wCaller = new QueueWaitingCaller(resp.waitingCallers[ch]);
+            queues[q].addWaitingCaller(wCaller);
+            logger.info(IDLOG, 'updated waiting caller ' + wCaller.getName() + ' of queue ' + wCaller.getQueue());
+        }
+
+        // emit the event
+        logger.info(IDLOG, 'emit event ' + EVT_QUEUE_CHANGED + ' for queue ' + q);
+        astProxy.emit(EVT_QUEUE_CHANGED, queues[q]);
+
+    } catch (error) {
+        logger.error(IDLOG, error.stack);
+    }
+}
+
+/**
 * Sets the details for the queue object. The details include the members and
 * the waiting callers.
 *
@@ -3154,9 +3199,9 @@ function evtRemoveQueueWaitingCaller(data) {
         queues[q].removeWaitingCaller(data.channel);
         logger.info(IDLOG, 'removed queue waiting caller ' + data.channel + ' from queue ' + q);
 
-        // emit the event
-        logger.info(IDLOG, 'emit event ' + EVT_QUEUE_CHANGED + ' for queue ' + q);
-        astProxy.emit(EVT_QUEUE_CHANGED, queues[q]);
+        // request details for the current queue to update the waiting callers.
+        // This is done to update the position of the waiting callers
+        astProxy.doCmd({ command: 'queueDetails', queue: q }, updateQueueWaitingCallers);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
