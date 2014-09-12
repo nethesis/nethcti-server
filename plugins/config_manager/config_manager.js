@@ -185,6 +185,8 @@ function getDefaultUserPrefs() {
                     }
                 }
             },
+            queue_auto_login:  false,
+            queue_auto_logout: false,
             default_extension: ''
         };
 
@@ -714,12 +716,131 @@ function getDefaultUserExtensionConf(username) {
 
         // get the user configuration from the User object to update it
         var config = compUser.getConfigurations(username);
-        var exten  = config[USER_CONFIG_KEYS.default_extension];
-        return exten;
+        return config[USER_CONFIG_KEYS.default_extension];
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
         return '';
+    }
+}
+
+/**
+* Saves the automatic queue logout when user logout from cti.
+*
+* @method setQueueAutoLogoutConf
+* @param {string}   username The username to set the automatic queue logout
+* @param {boolean}  enable   The enable value: true if it is to enable
+* @param {function} cb       The callback function
+*/
+function setQueueAutoLogoutConf(username, enable, cb) {
+    try {
+        // check parameters
+        if (   typeof username !== 'string'
+            || typeof enable   !== 'boolean' || typeof cb !== 'function') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // get the user configuration from the User object to update it
+        var config = compUser.getConfigurations(username);
+
+        // update the User object. Change the specified settings.
+        // This update is automatically reported in the User object because
+        // it's a reference link to it.
+        // Also the relative section of "contentConfPrefJson" property is automatically
+        // updated, because the "configUser" function sets the user configurations to be
+        // a reference link to it.
+        logger.info(IDLOG, 'update automatic queue logout of user "' + username + '"');
+        config[USER_CONFIG_KEYS.queue_auto_logout] = enable;
+
+        // update the default extension setting section in the preference file in the filesystem
+        storeAllUserPreferences(username, cb);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Returns the automatic queue logout value of the user.
+*
+* @method getQueueAutoLogoutConf
+* @param  {string}  username The username to get the value
+* @return {boolean} True if it is enabled.
+*/
+function getQueueAutoLogoutConf(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        // get the user configuration from the User object to update it
+        var config = compUser.getConfigurations(username);
+        var value = config[USER_CONFIG_KEYS.queue_auto_logout] ? config[USER_CONFIG_KEYS.queue_auto_logout] : false;
+        return value;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return false;
+    }
+}
+
+/**
+* Saves the automatic queue login when user login to cti.
+*
+* @method setQueueAutoLoginConf
+* @param {string}   username The username to set the automatic queue login
+* @param {boolean}  enable   The enable value: true if it is to enable
+* @param {function} cb       The callback function
+*/
+function setQueueAutoLoginConf(username, enable, cb) {
+    try {
+        // check parameters
+        if (   typeof username !== 'string'
+            || typeof enable   !== 'boolean' || typeof cb !== 'function') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // get the user configuration from the User object to update it
+        var config = compUser.getConfigurations(username);
+
+        // update the User object. Change the specified settings.
+        // This update is automatically reported in the User object because
+        // it's a reference link to it.
+        // Also the relative section of "contentConfPrefJson" property is automatically
+        // updated, because the "configUser" function sets the user configurations to be
+        // a reference link to it.
+        logger.info(IDLOG, 'update automatic queue login of user "' + username + '"');
+        config[USER_CONFIG_KEYS.queue_auto_login] = enable;
+
+        // update the default extension setting section in the preference file in the filesystem
+        storeAllUserPreferences(username, cb);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Returns the automatic queue login value of the user.
+*
+* @method getQueueAutoLoginConf
+* @param  {string}  username The username to get the value
+* @return {boolean} True if it is enabled.
+*/
+function getQueueAutoLoginConf(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        // get the user configuration from the User object to update it
+        var config = compUser.getConfigurations(username);
+        var value  = config[USER_CONFIG_KEYS.queue_auto_login] ? config[USER_CONFIG_KEYS.queue_auto_login] : false;
+        return value;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return false;
     }
 }
 
@@ -1244,6 +1365,10 @@ exports.getUserEndpointsJSON                   = getUserEndpointsJSON;
 exports.getAnswerUrlFromAgent                  = getAnswerUrlFromAgent;
 exports.getUserConfigurations                  = getUserConfigurations;
 exports.setUserClick2CallConf                  = setUserClick2CallConf;
+exports.getQueueAutoLoginConf                  = getQueueAutoLoginConf;
+exports.setQueueAutoLoginConf                  = setQueueAutoLoginConf;
+exports.getQueueAutoLogoutConf                 = getQueueAutoLogoutConf;
+exports.setQueueAutoLogoutConf                 = setQueueAutoLogoutConf;
 exports.getAllUserEndpointsJSON                = getAllUserEndpointsJSON;
 exports.setUserNotificationConf                = setUserNotificationConf;
 exports.phoneAgentSupportAutoC2C               = phoneAgentSupportAutoC2C;

@@ -94,6 +94,34 @@ module.exports = function (options, imports, register) {
             setDefaultUserExtensionConf: configManager.setDefaultUserExtensionConf,
 
             /**
+            * It's the _setQueueAutoLogoutConf_ method provided by _config\_manager_ module.
+            *
+            * @method setQueueAutoLogoutConf
+            */
+            setQueueAutoLogoutConf: configManager.setQueueAutoLogoutConf,
+
+            /**
+            * It's the _getQueueAutoLogoutConf_ method provided by _config\_manager_ module.
+            *
+            * @method getQueueAutoLogoutConf
+            */
+            getQueueAutoLogoutConf: configManager.getQueueAutoLogoutConf,
+
+            /**
+            * It's the _setQueueAutoLoginConf_ method provided by _config\_manager_ module.
+            *
+            * @method setQueueAutoLoginConf
+            */
+            setQueueAutoLoginConf: configManager.setQueueAutoLoginConf,
+
+            /**
+            * It's the _getQueueAutoLoginConf_ method provided by _config\_manager_ module.
+            *
+            * @method getQueueAutoLoginConf
+            */
+            getQueueAutoLoginConf: configManager.getQueueAutoLoginConf,
+
+            /**
             * It's the _setUserClick2CallConf_ method provided by _config\_manager_ module.
             *
             * @method setUserClick2CallConf

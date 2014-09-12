@@ -163,6 +163,8 @@ function setCompUtil(comp) {
         * 1. [`configmanager/usernames`](#usernamesget)
         * 1. [`configmanager/chatserver`](#chatserverget)
         * 1. [`configmanager/userendpoints`](#userendpointsget)
+        * 1. [`configmanager/queue_autologin`](#queue_autologinpost)
+        * 1. [`configmanager/queue_autologout`](#queue_autologoutpost)
         * 1. [`configmanager/alluserendpoints`](#alluserendpointsget)
         * 1. [`configmanager/default_extension`](#default_extensionget)
         *
@@ -381,6 +383,26 @@ function setCompUtil(comp) {
         *
         * ---
         *
+        * ### <a id="queue_autologinget">**`configmanager/queue_autologin`**</a>
+        *
+        * Returns the automatic queue login of the user.
+        *
+        * Example JSON response:
+        *
+        *     { "queue_autologin": true }
+        *
+        * ---
+        *
+        * ### <a id="queue_autologoutget">**`configmanager/queue_autologout`**</a>
+        *
+        * Returns the automatica queue logout of the user.
+        *
+        * Example JSON response:
+        *
+        *     { "queue_autologout": true }
+        *
+        * ---
+        *
         * ### <a id="default_extensionget">**`configmanager/default_extension`**</a>
         *
         * Returns the default extension of the user.
@@ -398,6 +420,8 @@ function setCompUtil(comp) {
         * 1. [`configmanager/click2call`](#click2callpost)
         * 1. [`configmanager/notification`](#notificationpost)
         * 1. [`configmanager/presence`](#presencepost)
+        * 1. [`configmanager/queue_autologin`](#queue_autologinpost)
+        * 1. [`configmanager/queue_autologout`](#queue_autologoutpost)
         * 1. [`configmanager/default_extension`](#default_extensionpost)
         *
         * ---
@@ -455,6 +479,32 @@ function setCompUtil(comp) {
         *
         *     { "extenId": "614" }
         *
+        * ---
+        *
+        * ### <a id="queue_autologinpost">**`configmanager/queue_autologin`**</a>
+        *
+        * Sets the automatic login of the user in all its dynamic queues when login to cti.
+        * The request must contains the following parameters:
+        *
+        * * `enable: ("true" | "false") true if the automatic login is to be activated`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "enable": "true" }
+        *
+        * ---
+        *
+        * ### <a id="queue_autologoutpost">**`configmanager/queue_autologout`**</a>
+        *
+        * Sets the automatic logout of the user from all its dynamic queues when logout from cti.
+        * The request must contains the following parameters:
+        *
+        * * `enable: ("true" | "false") true if the automatic logout is to be activated`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "enable": "true" }
+        *
         * @class plugin_rest_configmanager
         * @static
         */
@@ -474,6 +524,8 @@ function setCompUtil(comp) {
                 *   @param {string} usernames         To get the list of all the username
                 *   @param {string} chatserver        To get the server chat parameters
                 *   @param {string} userendpoints     To get all the endpoints of the user
+                *   @param {string} queue_autologin   To get the automatic queue login when user login into the cti
+                *   @param {string} queue_autologout  To get the automatic queue logout when user logout from cti
                 *   @param {string} alluserendpoints  To get the endpoints of all users
                 *   @param {string} default_extension To get the default extension of the user
                 */
@@ -482,6 +534,8 @@ function setCompUtil(comp) {
                     'usernames',
                     'chatserver',
                     'userendpoints',
+                    'queue_autologin',
+                    'queue_autologout',
                     'alluserendpoints',
                     'default_extension'
                 ],
@@ -492,14 +546,18 @@ function setCompUtil(comp) {
                 * @property post
                 * @type {array}
                 *
-                *   @param {string} presence      To set a presence of the user
-                *   @param {string} click2call    To save the click to call mode of the user
-                *   @param {string} notification  To save a user notification setting
+                *   @param {string} presence         To set a presence of the user
+                *   @param {string} click2call       To save the click to call mode of the user
+                *   @param {string} notification     To save a user notification setting
+                *   @param {string} queue_autologin  To set the automatic queue login when user login into the cti
+                *   @param {string} queue_autologout To set the automatic queue logout when user logout from cti
                 */
                 'post' : [
                     'presence',
                     'click2call',
                     'notification',
+                    'queue_autologin',
+                    'queue_autologout',
                     'default_extension'
                 ],
                 'head':  [],
@@ -618,6 +676,54 @@ function setCompUtil(comp) {
                         logger.info(IDLOG, 'send endpoints of all users to ' + username);
                         res.send(200, results);
                     }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * Manages both GET and POST requests to get/set the queue_autologin of
+            * the user with the following REST API:
+            *
+            *     GET  queue_autologin
+            *     POST queue_autologin
+            *
+            * @method queue_autologin
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            queue_autologin: function (req, res, next) {
+                try {
+                    if      (req.method.toLowerCase() === 'get' ) { queueAutoLoginGet(req, res, next); }
+                    else if (req.method.toLowerCase() === 'post') { queueAutoLoginSet(req, res, next); }
+                    else    { logger.warn(IDLOG, 'unknown requested method ' + req.method); }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * Manages both GET and POST requests to get/set the queue_autologout of
+            * the user with the following REST API:
+            *
+            *     GET  queue_autologout
+            *     POST queue_autologout
+            *
+            * @method queue_autologout
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            queue_autologout: function (req, res, next) {
+                try {
+                    if      (req.method.toLowerCase() === 'get' ) { queueAutoLogoutGet(req, res, next); }
+                    else if (req.method.toLowerCase() === 'post') { queueAutoLogoutSet(req, res, next); }
+                    else    { logger.warn(IDLOG, 'unknown requested method ' + req.method); }
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
@@ -849,6 +955,8 @@ function setCompUtil(comp) {
         exports.setCompUser          = setCompUser;
         exports.notification         = configmanager.notification;
         exports.userendpoints        = configmanager.userendpoints;
+        exports.queue_autologin      = configmanager.queue_autologin;
+        exports.queue_autologout     = configmanager.queue_autologout;
         exports.alluserendpoints     = configmanager.alluserendpoints;
         exports.default_extension    = configmanager.default_extension;
         exports.setCompConfigManager = setCompConfigManager;
@@ -858,6 +966,134 @@ function setCompUtil(comp) {
         logger.error(IDLOG, err.stack);
     }
 })();
+
+/**
+* Sets the automatic queue logout when user logout from cti.
+*
+* @method queueAutoLogoutSet
+* @param {object} req  The request object
+* @param {object} res  The response object
+* @param {object} next
+*/
+function queueAutoLogoutSet(req, res, next) {
+    try {
+        var username = req.headers.authorization_user;
+
+        // check parameters
+        if (req.params.enable !== 'true' && req.params.enable !== 'false') {
+            compUtil.net.sendHttp400(IDLOG, res);
+            return;
+        }
+
+        var enable = (req.params.enable === 'true' ? true : false);
+
+        compConfigManager.setQueueAutoLogoutConf(username, enable, function (err) {
+            try {
+                if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
+                else     { compUtil.net.sendHttp200(IDLOG, res); }
+
+            } catch (err) {
+                logger.error(IDLOG, err.stack);
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+            }
+        });
+    } catch (error) {
+        logger.error(IDLOG, error.stack);
+        compUtil.net.sendHttp500(IDLOG, res, error.toString());
+    }
+}
+
+/**
+* Gets the automatic queue logout of the user.
+*
+* @method queueAutoLogoutGet
+* @param {object} req  The request object
+* @param {object} res  The response object
+* @param {object} next
+*/
+function queueAutoLogoutGet(req, res, next) {
+    try {
+        var username = req.headers.authorization_user;
+        var enabled  = compConfigManager.getQueueAutoLogoutConf(username);
+
+        if (typeof enabled !== 'boolean') {
+            var strerr = 'wrong queue auto logout result "' + enabled + '" for user ' + username;
+            logger.error(IDLOG, strerr);
+            compUtil.net.sendHttp500(IDLOG, res, strerr);
+
+        } else {
+            logger.info(IDLOG, 'send queue auto logout value "' + enabled + '" to user ' + username);
+            res.send(200, { queue_auto_logout: enabled });
+        }
+    } catch (error) {
+        logger.error(IDLOG, error.stack);
+        compUtil.net.sendHttp500(IDLOG, res, error.toString());
+    }
+}
+
+/**
+* Sets the automatic queue login when user login to cti.
+*
+* @method queueAutoLoginSet
+* @param {object} req  The request object
+* @param {object} res  The response object
+* @param {object} next
+*/
+function queueAutoLoginSet(req, res, next) {
+    try {
+        var username = req.headers.authorization_user;
+
+        // check parameters
+        if (req.params.enable !== 'true' && req.params.enable !== 'false') {
+            compUtil.net.sendHttp400(IDLOG, res);
+            return;
+        }
+
+        var enable = (req.params.enable === 'true' ? true : false);
+
+        compConfigManager.setQueueAutoLoginConf(username, enable, function (err) {
+            try {
+                if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
+                else     { compUtil.net.sendHttp200(IDLOG, res); }
+
+            } catch (err) {
+                logger.error(IDLOG, err.stack);
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+            }
+        });
+    } catch (error) {
+        logger.error(IDLOG, error.stack);
+        compUtil.net.sendHttp500(IDLOG, res, error.toString());
+    }
+}
+
+/**
+* Gets the automatic queue login of the user.
+*
+* @method queueAutoLoginGet
+* @param {object} req  The request object
+* @param {object} res  The response object
+* @param {object} next
+*/
+function queueAutoLoginGet(req, res, next) {
+    try {
+        var username = req.headers.authorization_user;
+        var enabled  = compConfigManager.getQueueAutoLoginConf(username);
+
+        if (typeof enabled !== 'boolean') {
+            var strerr = 'wrong queue auto login value "' + enabled + '" for user ' + username;
+            logger.error(IDLOG, strerr);
+            compUtil.net.sendHttp500(IDLOG, res, strerr);
+
+        } else {
+            logger.info(IDLOG, 'send queue auto login value "' + enabled + '" to user ' + username);
+            res.send(200, { queue_auto_login: enabled });
+        }
+    } catch (error) {
+        logger.error(IDLOG, error.stack);
+        compUtil.net.sendHttp500(IDLOG, res, error.toString());
+    }
+}
 
 /**
 * Sets the default extension of the user.
