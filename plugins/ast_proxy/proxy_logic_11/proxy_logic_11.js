@@ -4544,8 +4544,9 @@ function queueMemberAdd(endpointType, endpointId, queueId, paused, penalty, cb) 
             astProxy.doCmd(obj, function (err) {
                 try {
                     if (err) {
-                        logger.error(IDLOG, 'queue member add of ' + endpointType + ' ' + endpointId + ' to queue ' + queueId + ' has been failed');
-                        cb(err);
+                        var str = 'queue member add of ' + endpointType + ' ' + endpointId + ' to queue ' + queueId + ' has been failed: ' + err.toString();
+                        logger.error(IDLOG, str);
+                        cb(str);
                         return;
                     }
                     logger.info(IDLOG, 'queue member add of ' + endpointType + ' ' + endpointId + ' to queue ' + queueId + ' has been successful');
@@ -4663,7 +4664,7 @@ function getQueueIdsOfExten(extenId) {
 }
 
 /**
-* Check if the specified extension is a dynamic member of the specified queue.
+* Checks if the specified extension is a dynamic member of the specified queue.
 *
 * @method isExtenDynMemberQueue
 * @param  {string}  extenId The extension identifier
@@ -4691,6 +4692,38 @@ function isExtenDynMemberQueue(extenId, queueId) {
         } else {
             logger.warn(IDLOG, 'checking if the exten "' + extenId + '" is a dynamic member of queue "' + queueId + '": it is not its member');
         }
+        return false;
+
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+       return false;
+    }
+}
+
+/**
+* Checks if the specified queue dynamic member is logged into the specified queue.
+*
+* @method isDynMemberLoggedInQueue
+* @param  {string}  extenId The extension identifier
+* @param  {string}  queueId The queue identifier
+* @return {boolean} True if the specified queue dynamic member is logged into the specified queue.
+*/
+function isDynMemberLoggedInQueue(extenId, queueId) {
+    try {
+        // check parameters
+        if (typeof extenId !== 'string' || typeof queueId !== 'string') {
+            throw new Error('wrong parameters extenId "' + extenId + '", queueId "' + queueId + '"');
+        }
+
+        if (!queues[queueId]) {
+            logger.warn(IDLOG, 'checking if the queue dyn member "' + extenId + '" is logged into non existent queue "' + queueId + '"');
+            return false;
+        }
+
+        // all member of the queue
+        var m = queues[queueId].getMember(extenId);
+        if (m) { return m.isLoggedIn(); }
+        else   { logger.warn(IDLOG, 'checking if the queue dyn member "' + extenId + '" is logged into the queue "' + queueId + '": it is not its member'); }
         return false;
 
     } catch (err) {
@@ -5684,6 +5717,7 @@ exports.EVT_QUEUE_MEMBER_CHANGED        = EVT_QUEUE_MEMBER_CHANGED;
 exports.evtNewQueueWaitingCaller        = evtNewQueueWaitingCaller;
 exports.evtConversationConnected        = evtConversationConnected;
 exports.unmuteRecordConversation        = unmuteRecordConversation;
+exports.isDynMemberLoggedInQueue        = isDynMemberLoggedInQueue;
 exports.EVT_UPDATE_VOICE_MESSAGES       = EVT_UPDATE_VOICE_MESSAGES;
 exports.startSpySpeakConversation       = startSpySpeakConversation;
 exports.startSpyListenConversation      = startSpyListenConversation;

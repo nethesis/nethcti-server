@@ -33,6 +33,21 @@ var EventEmitter = require('events').EventEmitter;
 var EVT_WS_CLIENT_DISCONNECTION = 'wsClientDisonnection';
 
 /**
+* Fired when a client has been logged in by a websocket connection.
+*
+* @event wsClientLoggedIn
+* @param {string} username The name of the user that has been logged in.
+*/
+/**
+* The name of the client logged in event.
+*
+* @property EVT_WS_CLIENT_LOGGEDIN
+* @type string
+* @default "wsClientLoggedIn"
+*/
+var EVT_WS_CLIENT_LOGGEDIN = 'wsClientLoggedIn';
+
+/**
 * The module identifier used by the logger.
 *
 * @property IDLOG
@@ -1336,6 +1351,10 @@ function loginHdlr(socket, obj) {
                 }
             }
 
+            // emits the event for a logged in client. This event is emitted when a user has been logged in by a websocket connection
+            logger.info(IDLOG, 'emit event "' + EVT_WS_CLIENT_LOGGEDIN + '" for username "' + obj.accessKeyId + '"');
+            emitter.emit(EVT_WS_CLIENT_LOGGEDIN, obj.accessKeyId);
+
         } else { // authentication failed
             logger.warn(IDLOG, 'authentication failed for user "' + obj.accessKeyId + '" from ' + getWebsocketEndpoint(socket) +
                                ' with id ' + socket.id);
@@ -1504,4 +1523,5 @@ exports.setCompPostit               = setCompPostit;
 exports.setCompVoicemail            = setCompVoicemail;
 exports.setCompAuthorization        = setCompAuthorization;
 exports.getNumConnectedClients      = getNumConnectedClients;
+exports.EVT_WS_CLIENT_LOGGEDIN      = EVT_WS_CLIENT_LOGGEDIN;
 exports.EVT_WS_CLIENT_DISCONNECTION = EVT_WS_CLIENT_DISCONNECTION;

@@ -182,6 +182,16 @@ exports.QueueMember = function (memberNum, queueId, pausedValue, loggedInValue) 
     }
 
     /**
+    * Checks the logged in status of the member.
+    *
+    * **It can throw an Exception**.
+    *
+    * @method isLoggedIn
+    * @return {boolean} True if the member is logged into the queue
+    */
+    function isLoggedIn() { return loggedIn; }
+
+    /**
     * Set the timestamp and the reason of the last started pause.
     *
     * **It can throw an Exception**.
@@ -406,6 +416,7 @@ exports.QueueMember = function (memberNum, queueId, pausedValue, loggedInValue) 
         isDynamic:            isDynamic,
         setPaused:            setPaused,
         getMember:            getMember,
+        isLoggedIn:           isLoggedIn,
         setLoggedIn:          setLoggedIn,
         setBusyAgent:         setBusyAgent,
         setCallsTakenCount:   setCallsTakenCount,

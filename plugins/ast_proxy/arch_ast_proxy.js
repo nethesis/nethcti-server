@@ -349,6 +349,12 @@ module.exports = function (options, imports, register) {
             */
             isExtenDynMemberQueue: astProxy.proxyLogic.isExtenDynMemberQueue,
 
+            /**
+            * It's the _isDynMemberLoggedInQueue_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method isDynMemberLoggedInQueue
+            */
+            isDynMemberLoggedInQueue: astProxy.proxyLogic.isDynMemberLoggedInQueue,
 
             /**
             * It's the _CF\_TYPES_ property provided by _proxy\_logic\_11/util\_call\_forward\_11_.

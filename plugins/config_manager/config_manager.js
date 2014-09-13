@@ -465,8 +465,66 @@ function setComNethctiWsListeners() {
             throw new Error('wrong websocket communication object');
         }
 
+        compComNethctiWs.on(compComNethctiWs.EVT_WS_CLIENT_LOGGEDIN,      wsClientLoggedInListener);
         compComNethctiWs.on(compComNethctiWs.EVT_WS_CLIENT_DISCONNECTION, wsClientDisconnectionListener);
 
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Manages the client logged in event emitted by the websocket communication component.
+* Check the "queue automatic login" setting of the user and if it is enabled it do the login of all
+* dynamic extension of the user into their relative queues.
+*
+* @method wsClientLoggedInListener
+* @param {string} username The name of the user logged in
+* @private
+*/
+function wsClientLoggedInListener(username) {
+    try {
+        // check the event data
+        if (typeof username !== 'string') { throw new Error('wrong username "' + username + '"'); }
+
+        logger.info(IDLOG, 'received "new logged in user by ws" event for username "' + username + '"');
+
+        // get the prefence of the user: automatic login into dynamic queues when login to cti
+        var queueAutoLoginEnabled = contentConfPrefJson[username][CONFIG_FILE_HEAD][USER_CONFIG_KEYS.queue_auto_login];
+        if (queueAutoLoginEnabled) {
+
+            var extens = compUser.getAllEndpointsExtension(username);
+
+            // login all dynamic extensions of the user into the belonging queue
+            var e, q, queueIds;
+            for (e in extens) {
+
+                // get all queues to which the extension belongs
+                queueIds = compAstProxy.getQueueIdsOfExten(e);
+
+                // do the login of the member into the queue only if it is a dynamic member
+                for (q in queueIds) {
+
+                    if (    compAstProxy.isExtenDynMemberQueue(e, q)       // check if the member is of dynamic type
+                        && !compAstProxy.isDynMemberLoggedInQueue(e, q)) { // check if the member is logged out from queue
+
+                        // login dynamic queue member into the relative queue
+                        logger.info(IDLOG, 'login queue member "' + e + '" into the queue "' + q + '" due to automatic login setting');
+                        compAstProxy.queueMemberAdd('extension', e, q, undefined, undefined, function (err, resp) {
+                            try {
+                                if (err) {
+                                    logger.warn(IDLOG, err);
+                                } else {
+                                    logger.info(IDLOG, 'dynamic extension "' + e + '" has been added to queue "' + q + '" due to "queue auto login" setting of user "' + username + '"');
+                                }
+                            } catch (err1) {
+                               logger.error(IDLOG, err1.stack);
+                            }
+                        });
+                    }
+                }
+            }
+        }
     } catch (err) {
        logger.error(IDLOG, err.stack);
     }
@@ -504,8 +562,8 @@ function wsClientDisconnectionListener(username) {
                 // do the logout of the member from the queue only if it is a dynamic member
                 for (q in queueIds) {
 
-                    // check if the member is of dynamic type
-                    if (compAstProxy.isExtenDynMemberQueue(e, q)) {
+                    if (   compAstProxy.isExtenDynMemberQueue(e, q)       // check if the member is of dynamic type
+                        && compAstProxy.isDynMemberLoggedInQueue(e, q)) { // check if the member is logged into the queue) {
 
                         // remove dynamic queue member from the relative queue
                         logger.info(IDLOG, 'remove queue member "' + e + '" from queue "' + q + '" due to automatic logout setting');
