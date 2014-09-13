@@ -78,6 +78,24 @@ var contentConfPrefJson;
 var compUser;
 
 /**
+* The asterisk proxy module.
+*
+* @property compAstProxy
+* @type object
+* @private
+*/
+var compAstProxy;
+
+/**
+* The websocket communication module.
+*
+* @property compComNethctiWs
+* @type object
+* @private
+*/
+var compComNethctiWs;
+
+/**
 * The server IP address. It will be customized by the _config_ method.
 *
 * @property serverIp
@@ -146,6 +164,38 @@ function setCompUser(cu) {
         // check parameter
         if (typeof cu !== 'object') { throw new Error('wrong user object'); }
         compUser = cu;
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the websocket communication module to be used.
+*
+* @method setCompComNethctiWs
+* @param {object} comp The module.
+*/
+function setCompComNethctiWs(comp) {
+    try {
+        // check parameter
+        if (typeof comp !== 'object') { throw new Error('wrong user object'); }
+        compComNethctiWs = comp;
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the asterisk proxy module to be used.
+*
+* @method setCompAstProxy
+* @param {object} comp The module.
+*/
+function setCompAstProxy(comp) {
+    try {
+        // check parameter
+        if (typeof comp !== 'object') { throw new Error('wrong asterisk proxy object'); }
+        compAstProxy = comp;
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -394,8 +444,88 @@ function config(path) {
         serverIp = json.ip;
         logger.info(IDLOG, 'server IP address configuration by file ' + path + ' ended');
 
+        // set the listener for the websocket communication module
+        setComNethctiWsListeners();
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the event listeners for the websocket communication component.
+*
+* @method setComNethctiWsListeners
+* @private
+*/
+function setComNethctiWsListeners() {
+    try {
+        // check component object
+        if (!compComNethctiWs || typeof compComNethctiWs.on !== 'function') {
+            throw new Error('wrong websocket communication object');
+        }
+
+        compComNethctiWs.on(compComNethctiWs.EVT_WS_CLIENT_DISCONNECTION, wsClientDisconnectionListener);
+
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Manages the client websocket disconnection event emitted by the websocket communication component.
+* Check the "queue automatic logout" setting of the user and if it is enabled it do the logout of all
+* dynamic extension of the user from their relative queues.
+*
+* @method wsClientDisconnectionListener
+* @param {string} username The name of the user disonnected
+* @private
+*/
+function wsClientDisconnectionListener(username) {
+    try {
+        // check the event data
+        if (typeof username !== 'string') { throw new Error('wrong username "' + username + '"'); }
+
+        logger.info(IDLOG, 'received "new websocket disconnection" event for username "' + username + '"');
+
+        // get the prefence of the user: automatic logout from dynamic queues when logout from cti
+        var queueAutoLogoutEnabled = contentConfPrefJson[username][CONFIG_FILE_HEAD][USER_CONFIG_KEYS.queue_auto_logout];
+        if (queueAutoLogoutEnabled) {
+
+            var extens = compUser.getAllEndpointsExtension(username);
+
+            // logout all dynamic extensions of the user from the belonging queue
+            var e, q, queueIds;
+            for (e in extens) {
+
+                // get all queues to which the extension belongs
+                queueIds = compAstProxy.getQueueIdsOfExten(e);
+
+                // do the logout of the member from the queue only if it is a dynamic member
+                for (q in queueIds) {
+
+                    // check if the member is of dynamic type
+                    if (compAstProxy.isExtenDynMemberQueue(e, q)) {
+
+                        // remove dynamic queue member from the relative queue
+                        logger.info(IDLOG, 'remove queue member "' + e + '" from queue "' + q + '" due to automatic logout setting');
+                        compAstProxy.queueMemberRemove('extension', e, q, function (err, resp) {
+                            try {
+                                if (err) {
+                                    logger.warn(IDLOG, err);
+                                } else {
+                                    logger.info(IDLOG, 'removed dynamic extension "' + e + '" from queue "' + q + '" due to "queue auto logout" setting of user "' + username + '"');
+                                }
+                            } catch (err1) {
+                               logger.error(IDLOG, err1.stack);
+                            }
+                        });
+                    }
+                }
+            }
+        }
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
     }
 }
 
@@ -1357,7 +1487,9 @@ exports.getServerIP                            = getServerIP;
 exports.getChatConf                            = getChatConf;
 exports.setCompUser                            = setCompUser;
 exports.getTotNumUsers                         = getTotNumUsers;
+exports.setCompAstProxy                        = setCompAstProxy;
 exports.configPhoneUrls                        = configPhoneUrls;
+exports.setCompComNethctiWs                    = setCompComNethctiWs;
 exports.getC2CAutoPhoneUser                    = getC2CAutoPhoneUser;
 exports.getC2CAutoPhonePass                    = getC2CAutoPhonePass;
 exports.getCallUrlFromAgent                    = getCallUrlFromAgent;

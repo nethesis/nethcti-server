@@ -12,9 +12,25 @@
 * @class com_nethcti_ws
 * @static
 */
-var fs        = require('fs');
-var io        = require('socket.io');
-var httpProxy = require('http-proxy');
+var fs           = require('fs');
+var io           = require('socket.io');
+var httpProxy    = require('http-proxy');
+var EventEmitter = require('events').EventEmitter;
+
+/**
+* Fired when a websocket client connection has been closed.
+*
+* @event wsClientDisonnection
+* @param {string} username The name of the user that has closed the connection
+*/
+/**
+* The name of the client websocket disconnection event.
+*
+* @property EVT_WS_CLIENT_DISCONNECTION
+* @type string
+* @default "wsClientDisonnection"
+*/
+var EVT_WS_CLIENT_DISCONNECTION = 'wsClientDisonnection';
 
 /**
 * The module identifier used by the logger.
@@ -85,6 +101,15 @@ var WS_ROOM = {
     EXTENSIONS_AST_EVT_CLEAR:   'extensions_ast_evt_clear',
     EXTENSIONS_AST_EVT_PRIVACY: 'extensions_ast_evt_privacy'
 };
+
+/**
+* The event emitter.
+*
+* @property emitter
+* @type object
+* @private
+*/
+var emitter = new EventEmitter();
 
 /**
 * The string used to hide phone numbers in privacy mode.
@@ -1334,15 +1359,25 @@ function disconnHdlr(socket) {
     try {
         logger.info(IDLOG, 'client websocket disconnected ' + getWebsocketEndpoint(socket));
 
+        var username;
+
         // when the user isn't authenticated but connected by websocket,
         // the "socket.id" isn't present in the "wsid" property
         if (wsid[socket.id]) {
-            var username = wsid[socket.id].username;
+            username = wsid[socket.id].username;
             compUser.setNethctiPresence(username, 'desktop', compUser.ENDPOINT_NETHCTI_STATUS.offline);
         }
 
         // remove trusted identifier of the websocket
         removeWebsocketId(socket.id);
+
+        // emits the event for a disconnected client. This event is emitted when a websocket connection has been closed
+        // The event is emitted only if the username exists. As reported above, when the user isn't authenticated but
+        // connected by websocket, the "socket.id" isn't present in the "wsid" property and the username is undefined
+        if (username) {
+            logger.info(IDLOG, 'emit event "' + EVT_WS_CLIENT_DISCONNECTION + '" for username ' + username);
+            emitter.emit(EVT_WS_CLIENT_DISCONNECTION, username);
+        }
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -1439,15 +1474,34 @@ function getNumConnectedClients() {
     }
 }
 
+/**
+* Subscribe a callback function to a custom event fired by this object.
+* It's the same of nodejs _events.EventEmitter.on_ method.
+*
+* @method on
+* @param {string} type The name of the event
+* @param {function} cb The callback to execute in response to the event
+* @return {object} A subscription handle capable of detaching that subscription.
+*/
+function on(type, cb) {
+    try {
+        return emitter.on(type, cb);
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
 // public interface
-exports.start                  = start;
-exports.config                 = config;
-exports.setAuthe               = setAuthe;
-exports.setLogger              = setLogger;
-exports.setAstProxy            = setAstProxy;
-exports.setCompUser            = setCompUser;
-exports.configPrivacy          = configPrivacy;
-exports.setCompPostit          = setCompPostit;
-exports.setCompVoicemail       = setCompVoicemail;
-exports.setCompAuthorization   = setCompAuthorization;
-exports.getNumConnectedClients = getNumConnectedClients;
+exports.on                          = on;
+exports.start                       = start;
+exports.config                      = config;
+exports.setAuthe                    = setAuthe;
+exports.setLogger                   = setLogger;
+exports.setAstProxy                 = setAstProxy;
+exports.setCompUser                 = setCompUser;
+exports.configPrivacy               = configPrivacy;
+exports.setCompPostit               = setCompPostit;
+exports.setCompVoicemail            = setCompVoicemail;
+exports.setCompAuthorization        = setCompAuthorization;
+exports.getNumConnectedClients      = getNumConnectedClients;
+exports.EVT_WS_CLIENT_DISCONNECTION = EVT_WS_CLIENT_DISCONNECTION;

@@ -4600,8 +4600,9 @@ function queueMemberRemove(endpointType, endpointId, queueId, cb) {
             astProxy.doCmd(obj, function (err) {
                 try {
                     if (err) {
-                        logger.error(IDLOG, 'queue member remove of ' + endpointType + ' ' + endpointId + ' from queue ' + queueId + ' has been failed');
-                        cb(err);
+                        var str = 'queue member remove of ' + endpointType + ' ' + endpointId + ' from queue ' + queueId + ' has been failed: ' + err.toString();
+                        logger.error(IDLOG, str);
+                        cb(str);
                         return;
                     }
                     logger.info(IDLOG, 'queue member remove of ' + endpointType + ' ' + endpointId + ' from queue ' + queueId + ' has been successful');
@@ -4622,6 +4623,79 @@ function queueMemberRemove(endpointType, endpointId, queueId, cb) {
     } catch (err) {
        logger.error(IDLOG, err.stack);
        cb(err);
+    }
+}
+
+/**
+* Returns all the queue identifiers to which the specified extension belongs.
+*
+* @method getQueueIdsOfExten
+* @param  {string} extenId The extension identifier
+* @return {object} The queue identifier list as keys of an object.
+*/
+function getQueueIdsOfExten(extenId) {
+    try {
+        // check parameters
+        if (typeof extenId !== 'string') { throw new Error('wrong parameter extenId "' + extenId + '"'); }
+
+        var q, allMembers;
+        var result = {};
+
+        // check the endpoint existence
+        if (extensions[extenId]) {
+
+            for (q in queues) {
+
+                // all member of current queue
+                allMembers = queues[q].getAllMembers();
+
+                // check if the specified extension is present in the member list of current queue.
+                // If it is, it is added to the result to be returned
+                if (extenId in allMembers) { result[q] = ""; }
+            }
+        }
+        return result;
+
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+       return {};
+    }
+}
+
+/**
+* Check if the specified extension is a dynamic member of the specified queue.
+*
+* @method isExtenDynMemberQueue
+* @param  {string}  extenId The extension identifier
+* @param  {string}  queueId The queue identifier
+* @return {boolean} True if the specified extension is a dynamic member of the specified queue.
+*/
+function isExtenDynMemberQueue(extenId, queueId) {
+    try {
+        // check parameters
+        if (typeof extenId !== 'string' || typeof queueId !== 'string') {
+            throw new Error('wrong parameters extenId "' + extenId + '", queueId "' + queueId + '"');
+        }
+
+        if (!queues[queueId]) {
+            logger.warn(IDLOG, 'checking if the exten "' + extenId + '" is dynamic member of non existent queue "' + queueId + '"');
+            return false;
+        }
+
+        // all member of the queue
+        var allMembers = queues[queueId].getAllMembers();
+        if (extenId in allMembers) {
+
+            return allMembers[extenId].isDynamic();
+
+        } else {
+            logger.warn(IDLOG, 'checking if the exten "' + extenId + '" is a dynamic member of queue "' + queueId + '": it is not its member');
+        }
+        return false;
+
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+       return false;
     }
 }
 
@@ -5577,6 +5651,7 @@ exports.EVT_EXTEN_CHANGED               = EVT_EXTEN_CHANGED;
 exports.EVT_TRUNK_CHANGED               = EVT_TRUNK_CHANGED;
 exports.EVT_EXTEN_DIALING               = EVT_EXTEN_DIALING;
 exports.EVT_QUEUE_CHANGED               = EVT_QUEUE_CHANGED;
+exports.getQueueIdsOfExten              = getQueueIdsOfExten;
 exports.getJSONQueuesStats              = getJSONQueuesStats;
 exports.getJSONAgentsStats              = getJSONAgentsStats;
 exports.setUnconditionalCf              = setUnconditionalCf;
@@ -5589,6 +5664,7 @@ exports.EVT_PARKING_CHANGED             = EVT_PARKING_CHANGED;
 exports.evtQueueMemberStatus            = evtQueueMemberStatus;
 exports.setUnconditionalCfVm            = setUnconditionalCfVm;
 exports.redirectConversation            = redirectConversation;
+exports.isExtenDynMemberQueue           = isExtenDynMemberQueue;
 exports.EVT_NEW_VOICE_MESSAGE           = EVT_NEW_VOICE_MESSAGE;
 exports.evtQueueMemberRemoved           = evtQueueMemberRemoved;
 exports.redirectWaitingCaller           = redirectWaitingCaller;

@@ -5,7 +5,9 @@
     "plugin": {
         "consumes": [
             "user",
-            "logger"
+            "logger",
+            "astProxy",
+            "com_nethcti_ws"
         ],
         "provides": [ "configManager" ]
     }

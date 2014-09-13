@@ -336,6 +336,21 @@ module.exports = function (options, imports, register) {
             getBaseCallRecAudioPath: astProxy.proxyLogic.getBaseCallRecAudioPath,
 
             /**
+            * It's the _getQueueIdsOfExten_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method getQueueIdsOfExten
+            */
+            getQueueIdsOfExten: astProxy.proxyLogic.getQueueIdsOfExten,
+
+            /**
+            * It's the _isExtenDynMemberQueue_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method isExtenDynMemberQueue
+            */
+            isExtenDynMemberQueue: astProxy.proxyLogic.isExtenDynMemberQueue,
+
+
+            /**
             * It's the _CF\_TYPES_ property provided by _proxy\_logic\_11/util\_call\_forward\_11_.
             *
             * @method CF_TYPES

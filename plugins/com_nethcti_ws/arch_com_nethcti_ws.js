@@ -27,7 +27,21 @@ module.exports = function (options, imports, register) {
             *
             * @method getNumConnectedClients
             */
-            getNumConnectedClients: comNethctiWs.getNumConnectedClients
+            getNumConnectedClients: comNethctiWs.getNumConnectedClients,
+
+            /**
+            * It's the _on_ method provided by _com\_nethcti\_ws_ module.
+            *
+            * @method on
+            */
+            on: comNethctiWs.on,
+
+            /**
+            * It's the _EVT\_WS\_CLIENT\_DISCONNECTION_ property provided by _com\_nethcti\_ws_ module.
+            *
+            * @method EVT_WS_CLIENT_DISCONNECTION
+            */
+            EVT_WS_CLIENT_DISCONNECTION: comNethctiWs.EVT_WS_CLIENT_DISCONNECTION
         }
     });
 

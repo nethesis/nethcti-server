@@ -303,6 +303,17 @@ exports.QueueMember = function (memberNum, queueId, pausedValue, loggedInValue) 
     function getType() { return type; }
 
     /**
+    * Checks if the member is dynamic.
+    *
+    * @method isDynamic
+    * @return {boolean} True if the member is dynamic.
+    */
+    function isDynamic() {
+        if (type === TYPES_ENUM.DYNAMIC){ return true; }
+        return false;
+    }
+
+    /**
     * Return the name of the queue membership.
     *
     * @method getQueue
@@ -392,6 +403,7 @@ exports.QueueMember = function (memberNum, queueId, pausedValue, loggedInValue) 
         setType:              setType,
         getQueue:             getQueue,
         toString:             toString,
+        isDynamic:            isDynamic,
         setPaused:            setPaused,
         getMember:            getMember,
         setLoggedIn:          setLoggedIn,
