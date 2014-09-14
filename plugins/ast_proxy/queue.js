@@ -175,6 +175,15 @@ exports.Queue = function (queueNum) {
     }
 
     /**
+    * Removes all the waiting callers from the private _waitingCallers_ object property.
+    *
+    * **It can throw an Exception.**
+    *
+    * @method removeAllWaitingCallers
+    */
+    function removeAllWaitingCallers() { waitingCallers = {}; }
+
+    /**
     * Update the waiting time of all waiting callers of all queues.
     *
     * @method updateWaitingTimeOfWaitingCallers
@@ -380,6 +389,7 @@ exports.Queue = function (queueNum) {
         setCompletedCallsCount:    setCompletedCallsCount,
         getAbandonedCallsCount:    getAbandonedCallsCount,
         setAbandonedCallsCount:    setAbandonedCallsCount,
+        removeAllWaitingCallers:   removeAllWaitingCallers,
         setServiceLevelTimePeriod: setServiceLevelTimePeriod,
         setServiceLevelPercentage: setServiceLevelPercentage
     };

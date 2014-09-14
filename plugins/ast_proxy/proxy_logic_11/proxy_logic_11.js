@@ -1258,9 +1258,7 @@ function setQueueData(q, resp) {
 }
 
 /**
-* Updates waiting callers of the queue object. This is called when a waiting caller
-* leaves a queue (from "evtRemoveQueueWaitingCaller" method). The purpose of this
-* method is to update the position of the queue waiting callers.
+* Updates waiting callers of the queue object.
 *
 * @method updateQueueWaitingCallers
 * @param {object} err  The error response object
@@ -1281,11 +1279,17 @@ function updateQueueWaitingCallers(err, resp) {
 
         // check the existence of the queue
         if (!queues[q]) {
-            logger.warn(IDLOG, 'try to update queue waiting callers of queue "' + q + '"');
+            logger.warn(IDLOG, 'try to update queue waiting callers of the queue "' + q + '"');
             return;
         }
 
-        // set all waiting callers
+        logger.info(IDLOG, 'update all waiting callers of queue "' + q + '"');
+
+        // remove all current waiting callers
+        queues[q].removeAllWaitingCallers();
+
+        // set all waiting callers. If the waiting callers is already present in the queue, it will be
+        // overwrite. In this manner the position is updated
         var ch, wCaller;
         for (ch in resp.waitingCallers) {
             wCaller = new QueueWaitingCaller(resp.waitingCallers[ch]);
@@ -2790,6 +2794,25 @@ function evtQueueMemberAdded(data) {
 }
 
 /**
+* An event about channel renaming has been received from the asterisk. It updates
+* the waiting callers of all queues.
+*
+* @method evtRename
+* @private
+*/
+function evtRename() {
+    try {
+        // request details for the current queue to update the waiting callers. This is done
+        // because during a transfer ("Rename" event) the names changing
+        var q;
+        for (q in queues) { astProxy.doCmd({ command: 'queueDetails', queue: q }, updateQueueWaitingCallers); }
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * An event about queue member removed has been received from the asterisk.
 * So updates the queue member status.
 *
@@ -3179,7 +3202,7 @@ function evtUpdateVoicemailMessages(data) {
 }
 
 /**
-* Removes a waiting caller from a queue and emit the _EVT\_QUEUE\_CHANGED_ event.
+* A queue waiting caller has left the queue. So update all queue waiting callers.
 *
 * @method evtRemoveQueueWaitingCaller
 * @param {object} data The response object received from the event plugin _leave_.
@@ -3187,21 +3210,15 @@ function evtUpdateVoicemailMessages(data) {
 function evtRemoveQueueWaitingCaller(data) {
     try {
         // check parameter
-        if (typeof data !== 'object'
-            || typeof data.queue   !== 'string'
-            || typeof data.channel !== 'string') {
-
+        if (typeof data !== 'object' || typeof data.queue !== 'string') {
             throw new Error('wrong parameter');
         }
 
-        var q = data.queue;
-
-        queues[q].removeWaitingCaller(data.channel);
-        logger.info(IDLOG, 'removed queue waiting caller ' + data.channel + ' from queue ' + q);
+        logger.info(IDLOG, 'queue waiting caller ' + data.channel + ' has left the queue ' + data.queue);
 
         // request details for the current queue to update the waiting callers.
-        // This is done to update the position of the waiting callers
-        astProxy.doCmd({ command: 'queueDetails', queue: q }, updateQueueWaitingCallers);
+        // This is done to remove the current one and update the position of the remaining waiting callers
+        astProxy.doCmd({ command: 'queueDetails', queue: data.queue }, updateQueueWaitingCallers);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -5661,6 +5678,7 @@ exports.setLogger                       = setLogger;
 exports.setPrefix                       = setPrefix;
 exports.getPrefix                       = getPrefix;
 exports.addPrefix                       = addPrefix;
+exports.evtRename                       = evtRename;
 exports.setCompDbconn                   = setCompDbconn;
 exports.getExtensions                   = getExtensions;
 exports.pickupParking                   = pickupParking;
