@@ -2212,6 +2212,10 @@ function updateConversationsForAllExten(err, resp) {
                 && extensions[ext]) { // the extension exists
 
                 addConversationToExten(ext, resp, chid);
+
+                // emit the event
+                logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + ext);
+                astProxy.emit(EVT_EXTEN_CHANGED, extensions[ext]);
             }
         }
     } catch (error) {
@@ -2806,6 +2810,10 @@ function evtRename() {
         // because during a transfer ("Rename" event) the names changing
         var q;
         for (q in queues) { astProxy.doCmd({ command: 'queueDetails', queue: q }, updateQueueWaitingCallers); }
+
+        // request all channels to update the conversations of all extensions
+        logger.info(IDLOG, 'requests the channel list to update the conversations of all extensions');
+        astProxy.doCmd({ command: 'listChannels' }, updateConversationsForAllExten);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
