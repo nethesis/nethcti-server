@@ -2815,6 +2815,10 @@ function evtRename() {
         logger.info(IDLOG, 'requests the channel list to update the conversations of all extensions');
         astProxy.doCmd({ command: 'listChannels' }, updateConversationsForAllExten);
 
+        // request all channels to update the conversations of all trunks
+        logger.info(IDLOG, 'requests the channel list to update the conversations of all trunks');
+        astProxy.doCmd({ command: 'listChannels' }, updateConversationsForAllTrunk);
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
