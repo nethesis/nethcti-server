@@ -881,10 +881,22 @@ function downCallRecording(id, username, data, res) {
                     var basepath = compAstProxy.getBaseCallRecAudioPath();
                     var filepath = path.join(basepath, data.year, data.month, data.day, data.filename);
 
-                    compStaticHttp.copyFile(filepath, filename);
-                    res.send(200, filename);
-                }
+                    compStaticHttp.copyFile(filepath, filename, function (err1) {
+                        try {
+                            if (err1) {
+                                logger.warn(IDLOG, 'copying static file "' + filepath + '" -> "' + filename + '": ' + err1.toString());
+                                compUtil.net.sendHttp500(IDLOG, res, err1.toString());
 
+                            } else {
+                                logger.info(IDLOG, 'send recording filename to download "' + filename + '" to user "' + username + '"');
+                                res.send(200, filename);
+                            }
+                        } catch (err3) {
+                            logger.error(IDLOG, err3.stack);
+                            compUtil.net.sendHttp500(IDLOG, res, err3.toString());
+                        }
+                    });
+                }
             } catch (err2) {
                 logger.error(IDLOG, err2.stack);
                 compUtil.net.sendHttp500(IDLOG, res, err2.toString());

@@ -182,9 +182,7 @@ function config(path) {
 function start() {
     try {
         // initialize node-static server instance
-        fileStaticRoot = new (nodeStatic.Server)(webroot, { 
-            cache: 3600
-        });
+        fileStaticRoot = new (nodeStatic.Server)(webroot, { cache: 3600 });
 
         // create http server
         var server = http.createServer(httpServerCb).listen(port, address);
@@ -212,18 +210,20 @@ function httpServerCb(req, res) {
                 // For example "/static/img/logo.png" becomes "//img/logo.png"
                 req.url = req.url.replace('static', '');
 
-                fileStaticRoot.serve(req, res, function(err, result) {
+                fileStaticRoot.serve(req, res, function(err1, result) {
+
+                    if (err1) { logger.error(IDLOG, 'serving temp file ' + req.url + ': ' + err1); }
+
                     // Handle temp files: delete after serving
                     if (path.basename(req.url).indexOf('tmpaudio') >= 0) {
-                        logger.info(IDLOG, 'deleting temp file ' + path.join(webroot,req.url));
-                        fs.unlink(path.join(webroot,req.url), function(err) {
-                            if (err) {
-                                logger.error(IDLOG, 'deleting temp file ' + req.url + ': ' + err);
-                            }
+
+                        fs.unlink(path.join(webroot, req.url), function (err2) {
+
+                            if (err2) { logger.error(IDLOG, 'deleting temp file ' + path.join(webroot, req.url) + ': ' + err2); }
+                            else      { logger.info(IDLOG,  'temp file ' + path.join(webroot, req.url) + ' has been deleted'); }
                         });
                     }
                 });
-
             } catch (err1) {
                 logger.error(IDLOG, 'serving static file ' + req.url + ': ' + err1.stack);
                 compUtil.net.sendHttp500(IDLOG, res, err1.toString());
@@ -262,19 +262,46 @@ function saveFile(dstpath, data) {
 * Copy given file path to a local file inside the webroot directory.
 *
 * @method copyFile
-* @param {string} srcpath Original file path
-* @param {string} dstpath Name of symlink
+* @param {string}   srcpath Original file path
+* @param {string}   dstpath Name of symlink
+* @param {function} cb      The callback function
 */
-function copyFile(srcpath, dstpath) {
+function copyFile(srcpath, dstpath, cb) {
     try {
+        // check parameters
+        if (typeof srcpath !== 'string' || typeof dstpath !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
         var dstpath = path.join(webroot, dstpath);
+
+        // create source stream
+        var src = fs.createReadStream(srcpath);
+        src.on('error', function (err1) {
+            var str = 'creating readable stream from "' + srcpath + '": ' + err1.toString();
+            logger.error(IDLOG, str);
+            cb(str);
+        });
+
+        // create destination stream
+        var dest = fs.createWriteStream(dstpath);
+        dest.on('close', function () {
+            logger.info(IDLOG, '"' + srcpath + '" has been copied into "' + dstpath + '"');
+            cb();
+        });
+        dest.on('error', function (err2) {
+            var str = 'copying "' + srcpath + '" into "' + dstpath + '": ' + err2.toString();
+            logger.error(IDLOG, str);
+            cb(str);
+        });
+
         // copy file
-        fs.createReadStream(srcpath).pipe(fs.createWriteStream(dstpath));
+        src.pipe(dest);
+
     } catch (err) {
-        logger.error(IDLOG, 'serving static file ' + req.url + ': ' + err.stack);
+        logger.error(IDLOG, 'copying static file ' + srcpath + ' -> ' + dstpath + ': ' + err.stack);
     }
 }
-
 
 // public interface
 exports.start       = start;
