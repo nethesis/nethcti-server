@@ -2918,7 +2918,7 @@ var compConfigManager;
             *
             *     POST queuemember_remove
             *
-            * @method queuemember_add
+            * @method queuemember_remove
             * @param {object}   req  The client request.
             * @param {object}   res  The client response.
             * @param {function} next Function to run the next handler in the chain.

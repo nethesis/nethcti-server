@@ -4544,43 +4544,94 @@ function queueMemberAdd(endpointType, endpointId, queueId, paused, penalty, cb) 
         // check the endpoint existence
         if (endpointType === 'extension' && extensions[endpointId]) {
 
-            var obj = {
-                command:    'queueMemberAdd',
-                queue:      queueId,
-                exten:      endpointId,
-                memberName: extensions[endpointId].getName()
-            };
+            var obj = {};
 
-            // add optional parameters
-            if (paused)  { obj.paused  = paused;  }
-            if (penalty) { obj.penalty = penalty; }
+            // sequentially executes two operations:
+            // 1. add the member to the queue
+            // 2. add a new entry into the "asteriskcdrdb.queue_log" database with the name of the member
+            // This is used by "queue report" application. Without the second operation asterisk only add
+            // an entry with extension identifier data
+            async.series([
 
-            logger.info(IDLOG, 'execute queue member add of ' + endpointType + ' ' + endpointId + ' to queue ' + queueId);
-            astProxy.doCmd(obj, function (err) {
-                try {
-                    if (err) {
-                        var str = 'queue member add of ' + endpointType + ' ' + endpointId + ' to queue ' + queueId + ' has been failed: ' + err.toString();
-                        logger.error(IDLOG, str);
-                        cb(str);
-                        return;
-                    }
-                    logger.info(IDLOG, 'queue member add of ' + endpointType + ' ' + endpointId + ' to queue ' + queueId + ' has been successful');
-                    cb(null);
+                // add the member to the queue
+                function(callback) {
 
-                } catch (err) {
-                   logger.error(IDLOG, err.stack);
-                   cb(err);
+                    obj = {
+                        command:    'queueMemberAdd',
+                        queue:      queueId,
+                        exten:      endpointId,
+                        memberName: extensions[endpointId].getName()
+                    };
+
+                    // add optional parameters
+                    if (paused)  { obj.paused  = paused;  }
+                    if (penalty) { obj.penalty = penalty; }
+
+                    logger.info(IDLOG, 'execute queue member add of ' + endpointType + ' ' + endpointId + ' to queue ' + queueId);
+                    astProxy.doCmd(obj, function (err1) {
+                        try {
+                            if (err1) {
+                                var str = 'queue member add of ' + endpointType + ' ' + endpointId + ' to queue ' + queueId + ' has been failed: ' + err1.toString();
+                                callback(str);
+
+                            } else {
+                                logger.info(IDLOG, 'queue member add of ' + endpointType + ' ' + endpointId + ' to queue ' + queueId + ' has been successful');
+                                callback();
+                            }
+
+                        } catch (err2) {
+                           logger.error(IDLOG, err2.stack);
+                           callback(err2.stack);
+                        }
+                    });
+                },
+
+                // add the entry into the "asteriskcdrdb.queue_log" database
+                function(callback) {
+
+                    var name = extensions[endpointId].getName();
+
+                    obj = {
+                        command:   'queueLog',
+                        queue:     queueId,
+                        event:     'ADDMEMBER',
+                        interface: name
+                    };
+
+                    logger.info(IDLOG, 'add new entry in queue_log asterisk db: interface "' + name + '", queue "' + queueId + '" and event "ADDMEMBER"');
+                    astProxy.doCmd(obj, function (err3) {
+                        try {
+                            if (err3) {
+                                var str = 'add new entry in "queue_log" asterisk db has been failed: interface "' + name + '", queue "' + queueId + '" and event "ADDMEMBER": ' + err3.toString();
+                                callback(str);
+
+                            } else {
+                                logger.info(IDLOG, 'add new entry in "queue_log" asterisk db has been successful: interface "' + name + '", queue "' + queueId + '" and event "ADDMEMBER"');
+                                callback();
+                            }
+
+                        } catch (err4) {
+                           logger.error(IDLOG, err4.stack);
+                           callback(err4.stack);
+                        }
+                    });
                 }
+
+            ], function (err5) {
+
+                if (err5) { logger.error(IDLOG, err5); }
+
+                cb(err5);
             });
 
         } else {
-            var err = 'queue member add of ' + endpointType + ' ' + endpointId + ' to queue ' + queueId + ': unknown "' + endpointType + '" or extension not present';
-            logger.warn(IDLOG, err);
-            cb(err);
+            var str = 'queue member add of ' + endpointType + ' ' + endpointId + ' to queue ' + queueId + ': unknown "' + endpointType + '" or extension not present';
+            logger.warn(IDLOG, str);
+            cb(str);
         }
     } catch (err) {
        logger.error(IDLOG, err.stack);
-       cb(err);
+       cb(err.stack);
     }
 }
 

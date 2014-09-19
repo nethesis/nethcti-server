@@ -3048,8 +3048,8 @@ function getAgentsStats(day, cb) {
                 });
             },
             join_leave_queue : function (callback) {
-                var binds = "a.event = 'ADDMEMBER' AND a.callid = 'MANAGER'";
-                var joins = "b.event = 'REMOVEMEMBER' AND b.callid = 'MANAGER'";
+                var binds = "a.event = 'ADDMEMBER' AND a.callid = 'QUEUE_REPORT'";
+                var joins = "b.event = 'REMOVEMEMBER' AND b.callid = 'QUEUE_REPORT'";
                 dbConn[JSON_KEYS.QUEUE_LOG].query(query.replace(/\$BINDS/g, binds)
                     .replace(/\$JOINS/g, joins))
                     .success(function (rows) {
