@@ -4657,28 +4657,79 @@ function queueMemberRemove(endpointType, endpointId, queueId, cb) {
         // check the endpoint existence
         if (endpointType === 'extension' && extensions[endpointId]) {
 
-            var obj = {
-                command: 'queueMemberRemove',
-                queue:   queueId,
-                exten:   endpointId
-            };
+            var obj = {};
 
-            logger.info(IDLOG, 'execute queue member remove of ' + endpointType + ' ' + endpointId + ' from queue ' + queueId);
-            astProxy.doCmd(obj, function (err) {
-                try {
-                    if (err) {
-                        var str = 'queue member remove of ' + endpointType + ' ' + endpointId + ' from queue ' + queueId + ' has been failed: ' + err.toString();
-                        logger.error(IDLOG, str);
-                        cb(str);
-                        return;
-                    }
-                    logger.info(IDLOG, 'queue member remove of ' + endpointType + ' ' + endpointId + ' from queue ' + queueId + ' has been successful');
-                    cb(null);
+            // sequentially executes two operations:
+            // 1. add the member to the queue
+            // 2. add a new entry into the "asteriskcdrdb.queue_log" database with the name of the member
+            // This is used by "queue report" application. Without the second operation asterisk only add
+            // an entry with extension identifier data
+            async.series([
 
-                } catch (err) {
-                   logger.error(IDLOG, err.stack);
-                   cb(err);
+                // add the member to the queue
+                function(callback) {
+
+                    obj = {
+                        command: 'queueMemberRemove',
+                        queue:   queueId,
+                        exten:   endpointId
+                    };
+
+                    logger.info(IDLOG, 'execute queue member remove of ' + endpointType + ' ' + endpointId + ' from queue ' + queueId);
+                    astProxy.doCmd(obj, function (err1) {
+                        try {
+                            if (err1) {
+                                var str = 'queue member remove of ' + endpointType + ' ' + endpointId + ' from queue ' + queueId + ' has been failed: ' + err1.toString();
+                                callback(str);
+
+                            } else {
+                                logger.info(IDLOG, 'queue member remove of ' + endpointType + ' ' + endpointId + ' from queue ' + queueId + ' has been successful');
+                                callback();
+                            }
+
+                        } catch (err2) {
+                           logger.error(IDLOG, err2.stack);
+                           cb(err2.stack);
+                        }
+                    });
+                },
+
+                // add the entry into the "asteriskcdrdb.queue_log" database
+                function(callback) {
+
+                    var name = extensions[endpointId].getName();
+
+                    obj = {
+                        command:   'queueLog',
+                        queue:     queueId,
+                        event:     'REMOVEMEMBER',
+                        interface: name
+                    };
+
+                    logger.info(IDLOG, 'add new entry in queue_log asterisk db: interface "' + name + '", queue "' + queueId + '" and event "REMOVEMEMBER"');
+                    astProxy.doCmd(obj, function (err3) {
+                        try {
+                            if (err3) {
+                                var str = 'add new entry in "queue_log" asterisk db has been failed: interface "' + name + '", queue "' + queueId + '" and event "REMOVEMEMBER": ' + err3.toString();
+                                callback(str);
+
+                            } else {
+                                logger.info(IDLOG, 'add new entry in "queue_log" asterisk db has been successful: interface "' + name + '", queue "' + queueId + '" and event "REMOVEMEMBER"');
+                                callback();
+                            }
+
+                        } catch (err4) {
+                           logger.error(IDLOG, err4.stack);
+                           callback(err4.stack);
+                        }
+                    });
                 }
+
+            ], function (err5) {
+
+                if (err5) { logger.error(IDLOG, err5); }
+
+                cb(err5);
             });
 
         } else {
