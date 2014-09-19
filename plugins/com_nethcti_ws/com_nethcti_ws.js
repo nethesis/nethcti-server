@@ -72,6 +72,20 @@ var IDLOG = '[com_nethcti_ws]';
 var WS_LOG_LEVEL = 0;
 
 /**
+* The user agent used to recognize cti client application. The user agent is set
+* to the socket properties when client login (loginHdlr) and checked when disconnect
+* (disconnHdlr) to set the offline presence of the client user.
+*
+* @property USER_AGENT
+* @type {string}
+* @private
+* @final
+* @readOnly
+* @default "nethcti"
+*/
+var USER_AGENT = 'nethcti';
+
+/**
 * The path of the certificate to be used by HTTPS server. It can be
 * customized in the configuration file.
 *
@@ -1286,13 +1300,28 @@ function loginHdlr(socket, obj) {
             // add websocket id for future fast authentication for each request from the clients
             addWebsocketId(obj.accessKeyId, obj.token, socket.id);
 
-            // set the nethcti endpoint presence of the user to online status
-            compUser.setNethctiPresence(obj.accessKeyId, 'desktop', compUser.ENDPOINT_NETHCTI_STATUS.online);
+            // sets the socket object that will contains the cti data
+            if (!socket.nethcti) { socket.nethcti = {}; }
+
+            // set the nethcti endpoint presence of the user to online status. Not only cti use the websocket
+            // connection, so check the referrer url of the client to understand if the connection comes from
+            // the cti application and set the online status only in this case
+            if (   socket.handshake
+                && socket.handshake.headers
+                && socket.handshake.headers.referer
+                && socket.handshake.headers.referer.split('/')[3]
+                && socket.handshake.headers.referer.split('/')[3].indexOf('cti') > -1) {
+
+                compUser.setNethctiPresence(obj.accessKeyId, 'desktop', compUser.ENDPOINT_NETHCTI_STATUS.online);
+                logger.info(IDLOG, '"' + compUser.ENDPOINT_NETHCTI_STATUS.online + '" cti desktop presence has been set for user "' + obj.accessKeyId + '"');
+
+                // sets the origin application (cti) property to the client socket
+                socket.nethcti.userAgent = USER_AGENT;
+                logger.info(IDLOG, 'setted userAgent property "' + USER_AGENT + '" to the socket ' + socket.id);
+            }
 
             // sets username property to the client socket
-            socket.set('username', obj.accessKeyId, function () {
-                logger.info(IDLOG, 'setted username property ' + obj.accessKeyId + ' to socket ' + socket.id);
-            });
+            socket.nethcti.username = obj.accessKeyId;
 
             // send authenticated successfully response
             sendAutheSuccess(socket);
@@ -1378,13 +1407,30 @@ function disconnHdlr(socket) {
     try {
         logger.info(IDLOG, 'client websocket disconnected ' + getWebsocketEndpoint(socket));
 
-        var username;
+        var sid;
+        var count    = 0; // counter of the user socket connections that involve cti application
+        var username = wsid[socket.id].username;
 
-        // when the user isn't authenticated but connected by websocket,
-        // the "socket.id" isn't present in the "wsid" property
-        if (wsid[socket.id]) {
+        // count the number of cti sockets for the user
+        for (sid in wssServer.sockets.sockets) {
+
+            if (   wssServer.sockets.sockets[sid].nethcti.username  === username
+                && wssServer.sockets.sockets[sid].nethcti.userAgent === USER_AGENT) {
+
+                count += 1;
+            }
+        }
+
+        // set the offline cti presence only if the socket is the last and comes from the cti application
+        var username;
+        if (socket.nethcti.userAgent === USER_AGENT // the socket connection comes from the cti application
+            && count === 1                          // only last socket connection is present
+            && wsid[socket.id]) {                   // when the user is not authenticated but connected by websocket,
+                                                    // the "socket.id" is not present in the "wsid" property
+
             username = wsid[socket.id].username;
             compUser.setNethctiPresence(username, 'desktop', compUser.ENDPOINT_NETHCTI_STATUS.offline);
+            logger.info(IDLOG, '"' + compUser.ENDPOINT_NETHCTI_STATUS.offline + '" cti desktop presence has been set for user "' + username + '"');
         }
 
         // remove trusted identifier of the websocket
@@ -1397,7 +1443,6 @@ function disconnHdlr(socket) {
             logger.info(IDLOG, 'emit event "' + EVT_WS_CLIENT_DISCONNECTION + '" for username ' + username);
             emitter.emit(EVT_WS_CLIENT_DISCONNECTION, username);
         }
-
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -1469,9 +1514,7 @@ function send401(socket) {
 function sendAutheSuccess(socket) {
     try {
         socket.emit('authe_ok', { message: 'authorized successfully' });
-        socket.get('username', function (err, name) {
-            logger.info(IDLOG, 'sent authorized successfully to ' + name + ' ' + getWebsocketEndpoint(socket) + ' with id ' + socket.id);
-        });
+        logger.info(IDLOG, 'sent authorized successfully to "' + socket.nethcti.username + '" ' + getWebsocketEndpoint(socket) + ' with id ' + socket.id);
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
