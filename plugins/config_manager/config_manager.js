@@ -465,8 +465,8 @@ function setComNethctiWsListeners() {
             throw new Error('wrong websocket communication object');
         }
 
-        compComNethctiWs.on(compComNethctiWs.EVT_WS_CLIENT_LOGGEDIN,      wsClientLoggedInListener);
-        compComNethctiWs.on(compComNethctiWs.EVT_WS_CLIENT_DISCONNECTION, wsClientDisconnectionListener);
+        compComNethctiWs.on(compComNethctiWs.EVT_WS_CLIENT_LOGGEDIN,          wsClientLoggedInListener);
+        compComNethctiWs.on(compComNethctiWs.EVT_ALL_WS_CLIENT_DISCONNECTION, wsClientDisconnectionListener);
 
     } catch (err) {
        logger.error(IDLOG, err.stack);

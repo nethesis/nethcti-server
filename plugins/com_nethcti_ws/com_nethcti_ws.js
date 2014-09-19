@@ -26,11 +26,11 @@ var EventEmitter = require('events').EventEmitter;
 /**
 * The name of the client websocket disconnection event.
 *
-* @property EVT_WS_CLIENT_DISCONNECTION
+* @property EVT_ALL_WS_CLIENT_DISCONNECTION
 * @type string
-* @default "wsClientDisonnection"
+* @default "allWsClientDisonnection"
 */
-var EVT_WS_CLIENT_DISCONNECTION = 'wsClientDisonnection';
+var EVT_ALL_WS_CLIENT_DISCONNECTION = 'allWsClientDisonnection';
 
 /**
 * Fired when a client has been logged in by a websocket connection.
@@ -1435,19 +1435,17 @@ function disconnHdlr(socket) {
                 username = wsid[socket.id].username;
                 compUser.setNethctiPresence(username, 'desktop', compUser.ENDPOINT_NETHCTI_STATUS.offline);
                 logger.info(IDLOG, '"' + compUser.ENDPOINT_NETHCTI_STATUS.offline + '" cti desktop presence has been set for user "' + username + '"');
+
+                // emits the event for the disconnected client. This event is emitted when
+                // all the websocket connections of the user has been closed.
+                logger.info(IDLOG, 'emit event "' + EVT_ALL_WS_CLIENT_DISCONNECTION + '" for username ' + username);
+                emitter.emit(EVT_ALL_WS_CLIENT_DISCONNECTION, username);
             }
         }
 
         // remove trusted identifier of the websocket
         removeWebsocketId(socket.id);
 
-        // emits the event for a disconnected client. This event is emitted when a websocket connection has been closed
-        // The event is emitted only if the username exists. As reported above, when the user isn't authenticated but
-        // connected by websocket, the "socket.id" isn't present in the "wsid" property and the username is undefined
-        if (username) {
-            logger.info(IDLOG, 'emit event "' + EVT_WS_CLIENT_DISCONNECTION + '" for username ' + username);
-            emitter.emit(EVT_WS_CLIENT_DISCONNECTION, username);
-        }
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -1559,17 +1557,17 @@ function on(type, cb) {
 }
 
 // public interface
-exports.on                          = on;
-exports.start                       = start;
-exports.config                      = config;
-exports.setAuthe                    = setAuthe;
-exports.setLogger                   = setLogger;
-exports.setAstProxy                 = setAstProxy;
-exports.setCompUser                 = setCompUser;
-exports.configPrivacy               = configPrivacy;
-exports.setCompPostit               = setCompPostit;
-exports.setCompVoicemail            = setCompVoicemail;
-exports.setCompAuthorization        = setCompAuthorization;
-exports.getNumConnectedClients      = getNumConnectedClients;
-exports.EVT_WS_CLIENT_LOGGEDIN      = EVT_WS_CLIENT_LOGGEDIN;
-exports.EVT_WS_CLIENT_DISCONNECTION = EVT_WS_CLIENT_DISCONNECTION;
+exports.on                              = on;
+exports.start                           = start;
+exports.config                          = config;
+exports.setAuthe                        = setAuthe;
+exports.setLogger                       = setLogger;
+exports.setAstProxy                     = setAstProxy;
+exports.setCompUser                     = setCompUser;
+exports.configPrivacy                   = configPrivacy;
+exports.setCompPostit                   = setCompPostit;
+exports.setCompVoicemail                = setCompVoicemail;
+exports.setCompAuthorization            = setCompAuthorization;
+exports.getNumConnectedClients          = getNumConnectedClients;
+exports.EVT_WS_CLIENT_LOGGEDIN          = EVT_WS_CLIENT_LOGGEDIN;
+exports.EVT_ALL_WS_CLIENT_DISCONNECTION = EVT_ALL_WS_CLIENT_DISCONNECTION;
