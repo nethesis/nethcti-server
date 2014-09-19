@@ -4482,32 +4482,86 @@ function queueMemberPauseUnpause(endpointType, endpointId, queueId, reason, paus
         // check the endpoint existence
         if (endpointType === 'extension' && extensions[endpointId]) {
 
-            var obj = {
-                command: 'queueMemberPauseUnpause',
-                exten:   endpointId,
-                reason:  reason,
-                paused:  paused
-            };
+            var obj = {};
 
-            // if queueId is omitted the action is done on all queues
-            queueId ? obj.queue = queueId : '';
+            // sequentially executes two operations:
+            // 1. pause or resume the member to/from the queue
+            // 2. add a new entry into the "asteriskcdrdb.queue_log" database with the name of the member
+            // This is used by "queue report" application. Without the second operation asterisk only add
+            // an entry with extension identifier data
+            async.series([
 
-            logger.info(IDLOG, 'execute ' + logWord + ' ' + endpointType + ' ' + endpointId + ' of ' + logQueue);
-            astProxy.doCmd(obj, function (err) {
-                try {
-                    if (err) {
-                        logger.error(IDLOG, logWord + ' extension ' + endpointId + ' from ' + logQueue + ' has been failed');
-                        cb(err);
-                        return;
-                    }
-                    logger.info(IDLOG, logWord + ' extension ' + endpointId + ' from ' + logQueue + ' has been successful');
-                    cb(null);
+                // add the member to the queue
+                function(callback) {
 
-                } catch (err) {
-                   logger.error(IDLOG, err.stack);
-                   cb(err);
+                    obj = {
+                        command: 'queueMemberPauseUnpause',
+                        exten:   endpointId,
+                        reason:  reason,
+                        paused:  paused
+                    };
+
+                    // if queueId is omitted the action is done on all queues
+                    queueId ? obj.queue = queueId : '';
+
+                    logger.info(IDLOG, 'execute ' + logWord + ' ' + endpointType + ' ' + endpointId + ' of ' + logQueue);
+                    astProxy.doCmd(obj, function (err1) {
+                        try {
+                            if (err1) {
+                                var str = logWord + ' extension ' + endpointId + ' from ' + logQueue + ' has been failed: ' + err1.toString();
+                                callback(str);
+
+                            } else {
+                                logger.info(IDLOG, logWord + ' extension ' + endpointId + ' from ' + logQueue + ' has been successful');
+                                callback();
+                            }
+                        } catch (err2) {
+                           logger.error(IDLOG, err2.stack);
+                           cb(err2.stack);
+                        }
+                    });
+                },
+
+                // add the entry into the "asteriskcdrdb.queue_log" database
+                function(callback) {
+
+                    var name          = extensions[endpointId].getName();
+                    var queueLogEvent = (paused ? 'PAUSE' : 'UNPAUSE');
+
+                    obj = {
+                        command:   'queueLog',
+                        queue:     queueId ? queueId : 'all', // queueId is optional and if omitted it means all queues
+                        event:     queueLogEvent,
+                        message:   reason,
+                        interface: name
+                    };
+
+                    logger.info(IDLOG, 'add new entry in queue_log asterisk db: interface "' + name + '", queue "' + queueId + '", event "' + queueLogEvent + '" and reason "' + reason + '"');
+                    astProxy.doCmd(obj, function (err3) {
+                        try {
+                            if (err3) {
+                                var str = 'add new entry in "queue_log" asterisk db has been failed: interface "' + name + '", queue "' + queueId + '", event "' + queueLogEvent + '" and reason "' + reason + '": ' + err3.toString();
+                                callback(str);
+
+                            } else {
+                                logger.info(IDLOG, 'add new entry in "queue_log" asterisk db has been successful: interface "' + name + '", queue "' + queueId + '", event "' + queueLogEvent + '" and reason "' + reason + '"');
+                                callback();
+                            }
+
+                        } catch (err4) {
+                           logger.error(IDLOG, err4.stack);
+                           callback(err4.stack);
+                        }
+                    });
                 }
+
+            ], function (err5) {
+
+                if (err5) { logger.error(IDLOG, err5); }
+
+                cb(err5);
             });
+
         } else {
             var err = logWord + ' queue member: unknown endpointType ' + endpointType + ' or extension not present';
             logger.warn(IDLOG, err);
@@ -4660,7 +4714,7 @@ function queueMemberRemove(endpointType, endpointId, queueId, cb) {
             var obj = {};
 
             // sequentially executes two operations:
-            // 1. add the member to the queue
+            // 1. remove the member from the queue
             // 2. add a new entry into the "asteriskcdrdb.queue_log" database with the name of the member
             // This is used by "queue report" application. Without the second operation asterisk only add
             // an entry with extension identifier data
