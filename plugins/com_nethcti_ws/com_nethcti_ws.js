@@ -1417,12 +1417,21 @@ function disconnHdlr(socket) {
             var count = 0; // counter of the user socket connections that involve cti application
             username  = wsid[socket.id].username;
 
-            // count the number of cti sockets for the user
+            // count the number of cti sockets for the user from both websocket secure and not
             for (sid in wssServer.sockets.sockets) {
 
                 if (   wssServer.sockets.sockets[sid].nethcti
                     && wssServer.sockets.sockets[sid].nethcti.username  === username
                     && wssServer.sockets.sockets[sid].nethcti.userAgent === USER_AGENT) {
+
+                    count += 1;
+                }
+            }
+            for (sid in wsServer.sockets.sockets) {
+
+                if (   wsServer.sockets.sockets[sid].nethcti
+                    && wsServer.sockets.sockets[sid].nethcti.username  === username
+                    && wsServer.sockets.sockets[sid].nethcti.userAgent === USER_AGENT) {
 
                     count += 1;
                 }
