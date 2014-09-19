@@ -3039,8 +3039,8 @@ function getAgentsStats(day, cb) {
         // Launch agents queries
         async.parallel({
             pause_unpause : function (callback) {
-                var binds = "a.event = 'PAUSE' AND a.callid = 'NONE'";
-                var joins = "b.event = 'UNPAUSE' AND b.callid = 'NONE'";
+                var binds = "a.event = 'PAUSE' AND a.callid = 'QUEUE_REPORT'";
+                var joins = "b.event = 'UNPAUSE' AND b.callid = 'QUEUE_REPORT'";
                 dbConn[JSON_KEYS.QUEUE_LOG].query(query.replace(/\$BINDS/g, binds)
                     .replace(/\$JOINS/g, joins))
                     .success(function (rows) {
