@@ -1420,7 +1420,8 @@ function disconnHdlr(socket) {
             // count the number of cti sockets for the user
             for (sid in wssServer.sockets.sockets) {
 
-                if (   wssServer.sockets.sockets[sid].nethcti.username  === username
+                if (   wssServer.sockets.sockets[sid].nethcti
+                    && wssServer.sockets.sockets[sid].nethcti.username  === username
                     && wssServer.sockets.sockets[sid].nethcti.userAgent === USER_AGENT) {
 
                     count += 1;
