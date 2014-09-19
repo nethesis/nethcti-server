@@ -1407,30 +1407,34 @@ function disconnHdlr(socket) {
     try {
         logger.info(IDLOG, 'client websocket disconnected ' + getWebsocketEndpoint(socket));
 
-        var sid;
-        var count    = 0; // counter of the user socket connections that involve cti application
-        var username = wsid[socket.id].username;
-
-        // count the number of cti sockets for the user
-        for (sid in wssServer.sockets.sockets) {
-
-            if (   wssServer.sockets.sockets[sid].nethcti.username  === username
-                && wssServer.sockets.sockets[sid].nethcti.userAgent === USER_AGENT) {
-
-                count += 1;
-            }
-        }
-
-        // set the offline cti presence only if the socket is the last and comes from the cti application
         var username;
-        if (socket.nethcti.userAgent === USER_AGENT // the socket connection comes from the cti application
-            && count === 1                          // only last socket connection is present
-            && wsid[socket.id]) {                   // when the user is not authenticated but connected by websocket,
-                                                    // the "socket.id" is not present in the "wsid" property
 
-            username = wsid[socket.id].username;
-            compUser.setNethctiPresence(username, 'desktop', compUser.ENDPOINT_NETHCTI_STATUS.offline);
-            logger.info(IDLOG, '"' + compUser.ENDPOINT_NETHCTI_STATUS.offline + '" cti desktop presence has been set for user "' + username + '"');
+        // when the user is not authenticated but connected by websocket,
+        // the "socket.id" is not present in the "wsid" property
+        if (wsid[socket.id]) {
+
+            var sid;
+            var count = 0; // counter of the user socket connections that involve cti application
+            username  = wsid[socket.id].username;
+
+            // count the number of cti sockets for the user
+            for (sid in wssServer.sockets.sockets) {
+
+                if (   wssServer.sockets.sockets[sid].nethcti.username  === username
+                    && wssServer.sockets.sockets[sid].nethcti.userAgent === USER_AGENT) {
+
+                    count += 1;
+                }
+            }
+
+            // set the offline cti presence only if the socket is the last and comes from the cti application
+            if (socket.nethcti.userAgent === USER_AGENT // the socket connection comes from the cti application
+                && count === 1) {                       // only last socket connection is present
+
+                username = wsid[socket.id].username;
+                compUser.setNethctiPresence(username, 'desktop', compUser.ENDPOINT_NETHCTI_STATUS.offline);
+                logger.info(IDLOG, '"' + compUser.ENDPOINT_NETHCTI_STATUS.offline + '" cti desktop presence has been set for user "' + username + '"');
+            }
         }
 
         // remove trusted identifier of the websocket
