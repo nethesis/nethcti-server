@@ -57,25 +57,6 @@ exports.QueueMember = function (memberNum, queueId, pausedValue, loggedInValue) 
     var type;
 
     /**
-    * The agent busy status. It is true if the member is busy in at least one queue.
-    *
-    * @property busyAgent
-    * @type {boolean}
-    * @private
-    */
-    var busyAgent;
-
-    /**
-    * The agent busy status. It is true if the member is busy in the specific queue to which it belongs.
-    *
-    * @property busy
-    * @type {boolean}
-    * @private
-    * @default false
-    */
-    var busy = false;
-
-    /**
     * The pause status of the member.
     *
     * @property paused
@@ -259,22 +240,6 @@ exports.QueueMember = function (memberNum, queueId, pausedValue, loggedInValue) 
     function setType(value) { type = value; }
 
     /**
-    * Sets the busy status of the agent.
-    *
-    * @method setBusyAgent
-    * @param {boolean} value True if the agent is busy in at least one queue.
-    */
-    function setBusyAgent(value) { busyAgent = value; }
-
-    /**
-    * Sets the busy status of the agent in the specific queue to which it belongs.
-    *
-    * @method setBusy
-    * @param {boolean} value True if the agent is busy in the specific queue to which it belongs.
-    */
-    function setBusy(value) { busy = value; }
-
-    /**
     * Sets the paused status of the member. If the pause has been started
     * a reason description is needed. It updates the _lastPausedInTimestamp_
     * or _lastPausedOutTimestamp_ property consequently.
@@ -369,12 +334,10 @@ exports.QueueMember = function (memberNum, queueId, pausedValue, loggedInValue) 
     *     {
     *         type:                   "static",
     *         name:                   "Name",
-    *         busy:                   true,          // if true the agent is busy in the specific queue to which it belongs
     *         queue:                  "401",
     *         member:                 "214",
     *         paused:                 true,          // the paused status
     *         loggedIn:               true,          // if the member is logged in or not
-    *         busyAgent:              true,          // if true the agent is busy in at least one queue
     *         callsTakenCount:        0,             // the number of taken calls
     *         lastCallTimestamp:      1365590191     // the timestamp of the last taken call
     *         lastPausedInReason:     "some reason"  // the reason description of the last started pause
@@ -389,12 +352,10 @@ exports.QueueMember = function (memberNum, queueId, pausedValue, loggedInValue) 
         return {
             type:                   type,
             name:                   name,
-            busy:                   busy,
             queue:                  queue,
             member:                 member,
             paused:                 paused,
             loggedIn:               loggedIn,
-            busyAgent:              busyAgent,
             callsTakenCount:        callsTakenCount,
             lastCallTimestamp:      lastCallTimestamp,
             lastPausedInReason:     lastPausedInReason,
@@ -408,7 +369,6 @@ exports.QueueMember = function (memberNum, queueId, pausedValue, loggedInValue) 
         toJSON:               toJSON,
         setName:              setName,
         getName:              getName,
-        setBusy:              setBusy,
         getType:              getType,
         setType:              setType,
         getQueue:             getQueue,
@@ -418,7 +378,6 @@ exports.QueueMember = function (memberNum, queueId, pausedValue, loggedInValue) 
         getMember:            getMember,
         isLoggedIn:           isLoggedIn,
         setLoggedIn:          setLoggedIn,
-        setBusyAgent:         setBusyAgent,
         setCallsTakenCount:   setCallsTakenCount,
         getCallsTakenCount:   getCallsTakenCount,
         setLastPausedInData:  setLastPausedInData,

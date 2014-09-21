@@ -143,6 +143,14 @@ exports.Channel = function (obj) {
     }
 
     /**
+    * Returns true if the channel status is "up".
+    *
+    * @method isStatusUp
+    * @return {boolean} True if the channel status is "up".
+    */
+    function isStatusUp() { return (channelStatus === utilChannel11.AST_CHANNEL_STATE_2_STRING_ADAPTER['6']); }
+
+    /**
     * Return the channel identifier.
     *
     * @method getChannel
@@ -297,6 +305,7 @@ exports.Channel = function (obj) {
         toJSON:              toJSON,
         toString:            toString,
         isSource:            isSource,
+        isStatusUp:          isStatusUp,
         getChannel:          getChannel,
         getUniqueId:         getUniqueId,
         isExtension:         isExtension,

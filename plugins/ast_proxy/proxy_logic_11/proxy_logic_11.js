@@ -1453,7 +1453,6 @@ function addQueueMemberLoggedOut(memberId, queueId) {
 *    @param {boolean} data.paused            The paused status of the member
 *    @param {string}  data.name              The name of the member
 *    @param {string}  data.type              The type of the member (dynamic, static, realtime)
-*    @param {string}  data.busyAgent         True if the agent is busy in at least one queue
 *    @param {number}  data.callsTakenCount   The number of the taken calls
 *    @param {number}  data.lastCallTimestamp The timestamp of the last call received by the member
 * @param {string} queueId The queue identifier
@@ -1465,8 +1464,7 @@ function addQueueMemberLoggedIn(data, queueId) {
         if (   typeof data                 !== 'object' || typeof queueId                !== 'string'
             || typeof data.member          !== 'string' || typeof data.paused            !== 'boolean'
             || typeof data.name            !== 'string' || typeof data.type              !== 'string'
-            || typeof data.callsTakenCount !== 'number' || typeof data.lastCallTimestamp !== 'number'
-            || typeof data.busyAgent       !== 'boolean') {
+            || typeof data.callsTakenCount !== 'number' || typeof data.lastCallTimestamp !== 'number') {
 
             throw new Error('wrong parameters');
         }
@@ -1480,16 +1478,8 @@ function addQueueMemberLoggedIn(data, queueId) {
         var member = new QueueMember(data.member, queueId, data.paused, true);
         member.setName(data.name);
         member.setType(data.type);
-        member.setBusyAgent(data.busyAgent);
         member.setCallsTakenCount(data.callsTakenCount);
         member.setLastCallTimestamp(data.lastCallTimestamp);
-
-        // set busy status to true only if the member is busy in the specific queue to which it belongs
-        var convs = extensions[data.member].getAllConversations();
-        var c;
-        for (c in convs) {
-            if (convs[c].getQueueId() === queueId) { member.setBusy(true); }
-        }
 
         // add the member to the queue
         queues[queueId].addMember(member);
@@ -2720,7 +2710,6 @@ function evtQueueMemberPausedChanged(queueId, memberId, paused, reason) {
 *   @param {string}  data.queueId           The queue identifier
 *   @param {string}  data.member            The queue member identifier
 *   @param {boolean} data.paused            True if the extension has been paused from the queue
-*   @param {boolean} data.busyAgent         It is true if the agent is busy in at least one queue
 *   @param {number}  data.lastCallTimestamp The timestamp of the last call received by the member
 *   @param {number}  data.callsTakenCount   The number of the taken calls
 * @private
@@ -2731,8 +2720,7 @@ function evtQueueMemberStatus(data) {
         if (   typeof data           !== 'object'  || typeof data.type              !== 'string'
             || typeof data.queueId   !== 'string'  || typeof data.lastCallTimestamp !== 'number'
             || typeof data.member    !== 'string'  || typeof data.callsTakenCount   !== 'number'
-            || typeof data.paused    !== 'boolean' || typeof data.name              !== 'string'
-            || typeof data.busyAgent !== 'boolean') {
+            || typeof data.paused    !== 'boolean' || typeof data.name              !== 'string') {
 
             throw new Error('wrong parameters');
         }
@@ -2767,7 +2755,6 @@ function evtQueueMemberStatus(data) {
 *   @param {string}  data.queueId           The queue identifier
 *   @param {string}  data.member            The queue member identifier
 *   @param {boolean} data.paused            True if the extension has been paused from the queue
-*   @param {boolean} data.busyAgent         True if the agent is busy in at least one queue
 *   @param {number}  data.lastCallTimestamp The timestamp of the last call received by the member
 *   @param {number}  data.callsTakenCount   The number of the taken calls
 * @private
@@ -2778,8 +2765,7 @@ function evtQueueMemberAdded(data) {
         if (   typeof data           !== 'object'  || typeof data.type              !== 'string'
             || typeof data.queueId   !== 'string'  || typeof data.lastCallTimestamp !== 'number'
             || typeof data.member    !== 'string'  || typeof data.callsTakenCount   !== 'number'
-            || typeof data.paused    !== 'boolean' || typeof data.name              !== 'string'
-            || typeof data.busyAgent !== 'boolean') {
+            || typeof data.paused    !== 'boolean' || typeof data.name              !== 'string') {
 
             throw new Error('wrong parameters');
         }

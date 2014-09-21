@@ -172,6 +172,15 @@ exports.Conversation = function (ownerId, sourceChan, destChan, queue) {
     if (counterpartName.substring(0, 4) === 'CID:') { counterpartName = ''; }
 
     /**
+    * It is true only if the parties involved in the conversation are connected.
+    *
+    * @property connected
+    * @type {boolean}
+    * @private
+    */
+    var connected = (chSource && chDest && chSource.isStatusUp() && chDest.isStatusUp());
+
+    /**
     * Return the source channel.
     *
     * @method getSourceChannel
@@ -340,6 +349,7 @@ exports.Conversation = function (ownerId, sourceChan, destChan, queue) {
             queueId:         queueId,
             chSource:        tempChSource,
             duration:        duration,
+            connected:       connected,
             recording:       recording,
             direction:       direction,
             throughQueue:    throughQueue,
