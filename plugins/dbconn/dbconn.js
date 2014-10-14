@@ -2948,6 +2948,39 @@ function getQueuesQOS(day, cb) {
                     logger.error(IDLOG, 'get ring no answered queues qos: ' + err1.toString());
                     callback(err1, {});
                 });
+            },
+            last_call : function(callback) {
+                models[JSON_KEYS.QUEUE_LOG].findAll({
+                    where: ['event = "CONNECT"'],
+                    attributes: [
+                        'agent',
+                        'queuename',
+                        //FIXME: if named different than 'calls' it does not value it!
+                        [ 'max(time)', 'calls' ]
+                    ],
+                    group: ['agent', 'queuename'],
+                    order: ['agent', 'queuename']
+                }).success(function(results) {
+                    if (results) {
+                        logger.info(IDLOG, 'get last call time queues qos has been successful');
+                        var res = {};
+
+                        for (var i in results) {
+                            if (!(results[i].agent in res))
+                                res[results[i].agent] = {};
+
+                            res[results[i].agent][results[i].queuename] = results[i].calls;
+                        }
+
+                        callback(null, res);
+                    } else {
+                        logger.error(IDLOG, 'get last call time queues qos: not found');
+                        callback(null, {});
+                    }
+                }).error(function (err1) { // manage the error
+                    logger.info(IDLOG, 'get last call time queues qos: ' + err1.toString());
+                    callback(err1, {});
+                });
             }
         }, function(err, results) {
             var res = [];
@@ -2960,12 +2993,16 @@ function getQueuesQOS(day, cb) {
                 res.push(values);
             }
 
-            if ('noanswer' in results) {
-                for (var i in res) {
-                    if (res[i].agent in results.noanswer
-                      && res[i].queuename in results.noanswer[res[i].agent])
-                        res[i].ringnoanswers = results.noanswer[res[i].agent][res[i].queuename];
-                }
+            for (var i in res) {
+                if ('noanswer' in results &&
+                  res[i].agent in results.noanswer &&
+                  res[i].queuename in results.noanswer[res[i].agent])
+                    res[i].ringnoanswers = results.noanswer[res[i].agent][res[i].queuename];
+
+                if ('last_call' in results &&
+                  res[i].agent in results.last_call &&
+                  res[i].queuename in results.last_call[res[i].agent])
+                    res[i].last_call = results.last_call[res[i].agent][res[i].queuename];
             }
 
             cb(null, res);
