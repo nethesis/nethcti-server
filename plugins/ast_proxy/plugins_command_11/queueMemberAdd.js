@@ -72,10 +72,11 @@ var IDLOG = '[queueMemberAdd]';
 
                     // action for asterisk
                     var act = {
-                        Action:     'QueueAdd',
-                        Queue:      args.queue,
-                        Interface:  interf,
-                        MemberName: args.memberName
+                        Action:         'QueueAdd',
+                        Queue:          args.queue,
+                        Interface:      interf,
+                        MemberName:     args.memberName,
+			StateInterface: 'hint:' + args.exten + '@ext-local'
                     };
 
                     // optional parameters
