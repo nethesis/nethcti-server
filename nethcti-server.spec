@@ -1,5 +1,5 @@
 Name:		nethcti-server
-Version:	2.1.9.001.34ed02
+Version:	2.2.1
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI 2
 
@@ -68,6 +68,39 @@ rm -rf $RPM_BUILD_ROOT
 %doc
 
 %changelog
+* Tue Oct 28 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.2.1-1
+- Fea #3187: add last call time in /astproxy/queues_qos
+- Fea #3184: write an entry in queue_log database each time login/logout/pause/unpause in/from the queue
+- Fea #3145: new rest api to save two user options: automatic queue login/logout
+- Fea #3140: logout from cti, browser tab closure if possible and browser closure if possible, must logout also from queue for dynamic agent
+- Fea #3120: add the names of the parts involved in the trunks conversations
+- Fea #3112: MSSQL support for NethServer
+- Fea #3098: different privacy for Call Center Supervisior
+- Fea #2991: new rest api to retrieve the customer cards in JSON format
+- Fea #2896: new heartbeat ping to enable KeepAlive for Nethifier
+- Fea #2888: stats: provides server status information through REST API
+- Fea #2845: add open CTI / CTI cust card / CTI stream to windows popup notification templates
+- Fea #2547: TCP layer communication to broadcast the extension ringing events for windows popup notifications
+- Fea #2471: logout action for dynamic queue agents
+- Fea #2470: login action for dynamic queue agents
+- Enh #3167: new method to calculate queues connected calls
+- Enh #3125: add "offline" notification method
+- Enh #3117: add new configuration "profiling" section into the /etc/nethcti/services.json file
+- Enh #3106: NethCTI contacts appear duplicated
+- Enh #3079: better output for error and warning logs
+- Enh #2788: adapt astproxy/answer to support or not a specific extension to use
+- Bug #3216: login to a queue from cti does not allow the pbx to monitor extension state
+- Bug #3177: automatic logout from queues when logout from oppanel or queueman
+- Bug #3159: wrong CTI presence for /configmanager/alluserendpoints REST API
+- Bug #3148: when a call is transferred from an extension to a queue, the call is not managed
+- Bug #3131: waiting calls position is not updated
+- Bug #3121: with privacy enabled the waiting caller names of the queues are clear
+- Bug #3067: configured prefix is not used with automatic click2call
+- Bug #3063: asterisk "join" event does not checks for "unknown" caller name
+- Bug #3057: client requests streaming sources and operator panel groups also without permission
+- Bug #3051: log wrong sms configuration when it is empty
+- Bug #3035: sendsms.php send an empty email to admin every 5 minutes
+
 * Wed Aug 6 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.1.9-1
 - Fea #2979: add the number of connected calls to the queues.
 - Enh #3024: secure Ldap authentication.
