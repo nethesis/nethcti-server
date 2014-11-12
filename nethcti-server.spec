@@ -1,6 +1,6 @@
 Name:		nethcti-server
 Version:	2.2.1
-Release:	1%{?dist}
+Release:	2%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI 2
 
 Group:		Network	
@@ -68,6 +68,9 @@ rm -rf $RPM_BUILD_ROOT
 %doc
 
 %changelog
+* Wed Dec 03 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.2.2-1
+- Bug #3332: some configuration files does not belong to the backup
+
 * Tue Oct 28 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.2.1-1
 - Fea #3187: add last call time in /astproxy/queues_qos
 - Fea #3184: write an entry in queue_log database each time login/logout/pause/unpause in/from the queue
