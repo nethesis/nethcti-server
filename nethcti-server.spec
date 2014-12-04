@@ -1,6 +1,6 @@
 Name:		nethcti-server
-Version:	2.2.1
-Release:	2%{?dist}
+Version: 2.2.2
+Release: 1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI 2
 
 Group:		Network	
@@ -68,7 +68,7 @@ rm -rf $RPM_BUILD_ROOT
 %doc
 
 %changelog
-* Wed Dec 03 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.2.2-1
+* Thu Dec 04 2014 Alessandro Polidori <alessandro.polidori@gmail.com> - 2.2.2-1.ns6
 - Bug #3332: some configuration files does not belong to the backup
 
 * Tue Oct 28 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.2.1-1
