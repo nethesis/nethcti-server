@@ -31,3 +31,9 @@ safe_symlink("restart", "root/etc/e-smith/events/$event/services2adjust/nethcti-
 $event = "certificate-update";
 templates2events("/etc/nethcti/nethcti.pem",$event);
 
+#
+# actions for migration-import event
+# 80 is needed because it must happens after nethserver-nethvoice-migrate action (it is "75")
+#
+$event = "migration-import";
+event_actions($event, 'nethcti-server-migrate' => 80);
