@@ -23,7 +23,7 @@ exports.Parking = function (parkingNum) {
     var parking = parkingNum;
 
     /**
-    * The parkingNum name.
+    * The parking name.
     *
     * @property name
     * @type {string}
