@@ -11,6 +11,7 @@ templates2events("/etc/nethcti/asterisk.json",$event);
 templates2events("/etc/nethcti/authentication.json",$event);
 templates2events("/etc/nethcti/services.json",$event);
 templates2events("/etc/nethcti/chat.json",$event);
+templates2events("/etc/nethcti/exec_string.json",$event);
 templates2events("/etc/nethcti/dbstatic.json",$event);
 templates2events("/etc/nethcti/mailer.json",$event);
 templates2events("/etc/nethcti/phone_urls.json",$event);
