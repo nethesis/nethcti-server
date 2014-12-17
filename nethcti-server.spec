@@ -1,5 +1,5 @@
 Name:		nethcti-server
-Version:	2.2.2
+Version:	2.2.3
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI 2
 
@@ -68,6 +68,9 @@ rm -rf $RPM_BUILD_ROOT
 %doc
 
 %changelog
+* Wed Dec 17 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.2.3-1
+- Fea #3355: migration from NethService 8.2 to NethServer
+
 * Wed Dec 03 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.2.2-1
 - Bug #3332: some configuration files does not belong to the backup
 
