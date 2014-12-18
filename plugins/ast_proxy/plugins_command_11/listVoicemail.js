@@ -123,7 +123,9 @@ var IDLOG = '[listVoicemail]';
                         };
                         list[data.actionid][data.voicemailbox] = obj;
 
-                    } else if (map[data.actionid] && data && data.event === 'VoicemailUserEntryComplete') {
+                    } else if (   (map[data.actionid] && data && data.event === 'VoicemailUserEntryComplete')
+                               || (data.response === 'Success' && data.message === 'There are no voicemail users currently defined.')) {
+
                         map[data.actionid](null, list[data.actionid]); // callback execution
                     }
 
