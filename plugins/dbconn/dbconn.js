@@ -927,7 +927,7 @@ function getPbContactsContains(term, cb) {
                 ')',
                 term, term, term, term, term
             ],
-            order: 'company ASC'
+            order: 'company ASC, name ASC'
 
         }).success(function (results) {
 
@@ -1095,7 +1095,7 @@ function getPbContactsStartsWith(term, cb) {
                 ')',
                 term, term
             ],
-            order: 'company ASC'
+            order: 'company ASC, name ASC'
 
         }).success(function (results) {
 
@@ -1144,7 +1144,7 @@ function getPbContactsStartsWithDigit(cb) {
                     'type != "' + NETHCTI_CENTRAL_TYPE + '"' +
                 ')'
             ],
-            order: 'company ASC'
+            order: 'company ASC, name ASC'
 
         }).success(function (results) {
 
@@ -1571,7 +1571,7 @@ function getCtiPbContactsContains(term, username, cb) {
                 ')',
                 username, term, term, term, term, term, term
             ],
-            order: 'company ASC'
+            order: 'company ASC, name ASC'
 
         }).success(function (results) {
 
@@ -1680,7 +1680,7 @@ function getCtiPbContactsStartsWith(term, username, cb) {
                 '(name LIKE ? OR company LIKE ?)',
                 username, term, term
             ],
-            order: 'company ASC'
+            order: 'company ASC, name ASC'
 
         }).success(function (results) {
 
@@ -1731,7 +1731,7 @@ function getCtiPbContactsStartsWithDigit(username, cb) {
                 '(name REGEXP "^[0-9]" OR company REGEXP "^[0-9]")',
                 username
             ],
-            order: 'company ASC'
+            order: 'company ASC, name ASC'
 
         }).success(function (results) {
 
