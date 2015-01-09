@@ -7,6 +7,6 @@
             "logger",
             "astProxy"
         ],
-        "provides": [ "" ]
+        "provides": []
     }
 }
