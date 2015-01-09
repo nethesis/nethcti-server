@@ -2860,6 +2860,9 @@ function evtQueueMemberRemoved(data) {
         member.setLoggedIn(false);
         logger.info(IDLOG, 'set the member "' + data.member + '" of queue "' + data.queueId + '" to logged off');
 
+        member.setPaused(false);
+        logger.info(IDLOG, 'set the member "' + data.member + '" of queue "' + data.queueId + '" to paused false');
+
         // emit the event
         logger.info(IDLOG, 'emit event ' + EVT_QUEUE_MEMBER_CHANGED + ' for queue member ' + data.member + ' of queue ' + data.queueId);
         astProxy.emit(EVT_QUEUE_MEMBER_CHANGED, member);
@@ -4782,7 +4785,7 @@ function queueMemberRemove(endpointType, endpointId, queueId, cb) {
             // an entry with extension identifier data
             async.series([
 
-                // add the member to the queue
+                // remove the member from the queue
                 function(callback) {
 
                     obj = {
