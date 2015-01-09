@@ -26,6 +26,7 @@ try{
         { packagePath: "./plugins/caller_note"             },
         { packagePath: "./plugins/config_manager"          },
         { packagePath: "./plugins/customer_card"           },
+        { packagePath: "./plugins/exec_script"             },
         { packagePath: "./plugins/notification_manager"    },
         { packagePath: "./plugins/com_static_http"         },
         { packagePath: "./plugins/com_authentication_rest" },

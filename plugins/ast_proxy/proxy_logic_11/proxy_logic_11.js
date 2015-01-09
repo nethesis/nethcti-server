@@ -147,6 +147,21 @@ var EVT_QUEUE_CHANGED = 'queueChanged';
 var EVT_NEW_VOICE_MESSAGE = 'newVoiceMessage';
 
 /**
+* Fired when new call detail records (cdr) has been logged into the call history.
+*
+* @event newCdr
+* @param {object} msg The call detail records.
+*/
+/**
+* The name of the new call detail records (cdr) event.
+*
+* @property EVT_NEW_CDR
+* @type string
+* @default "newCdr"
+*/
+var EVT_NEW_CDR = 'newCdr';
+
+/**
 * Something has appen in the voice messages of the voicemail, for example the listen
 * of a new voice message from the phone.
 *
@@ -3172,6 +3187,53 @@ function evtNewVoicemailMessage(data) {
 }
 
 /**
+* New call detail records (cdr) has been logged into the call history. So it emits the _EVT\_NEW\_CDR_ event.
+*
+* @method evtNewCdr
+* @param {object} data
+*  @param {string} data.source             The calling party’s caller ID number
+*  @param {string} data.channel            The calling party’s channel
+*  @param {string} data.endtime            The end time of the call
+*  @param {string} data.duration           The number of seconds between the start and end times for the call
+*  @param {string} data.amaflags           The Automatic Message Accounting (AMA) flag associated with this call. This may be one of the following: OMIT, BILLING, DOCUMENTATION, or Unknown
+*  @param {string} data.uniqueid           The unique ID for the src channel
+*  @param {string} data.callerid           The full caller ID, including the name, of the calling party
+*  @param {string} data.starttime          The start time of the call
+*  @param {string} data.answertime         The answered time of the call
+*  @param {string} data.destination        The destination extension for the call
+*  @param {string} data.disposition        An indication of what happened to the call. This may be NO ANSWER, FAILED, BUSY, ANSWERED, or UNKNOWN
+*  @param {string} data.lastapplication    The last dialplan application that was executed
+*  @param {string} data.billableseconds    The number of seconds between the answer and end times for the call
+*  @param {string} data.destinationcontext The destination context for the call
+*  @param {string} data.destinationchannel The called party’s channel
+* @private
+*/
+function evtNewCdr(data) {
+    try {
+        // check parameter
+        if (   typeof data                    !== 'object'
+            && typeof data.source             !== 'string' && typeof data.channel            !== 'string'
+            && typeof data.endtime            !== 'string' && typeof data.duration           !== 'string'
+            && typeof data.amaflags           !== 'string' && typeof data.uniqueid           !== 'string'
+            && typeof data.callerid           !== 'string' && typeof data.starttime          !== 'string'
+            && typeof data.answertime         !== 'string' && typeof data.destination        !== 'string'
+            && typeof data.disposition        !== 'string' && typeof data.lastapplication    !== 'string'
+            && typeof data.billableseconds    !== 'string' && typeof data.destinationcontext !== 'string'
+            && typeof data.destinationchannel !== 'string') {
+
+            throw new Error('wrong parameter');
+        }
+
+        // emit the event
+        logger.info(IDLOG, 'emit event ' + EVT_NEW_CDR + ' with uniqueid "' + data.uniqueid + '"');
+        astProxy.emit(EVT_NEW_CDR, data);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Something has appens in the voice messages of the voicemail, for example the listen
 * of a new voice message from the phone. So it emits the _EVT\_UPDATE\_VOICE\_MESSAGES_ event.
 *
@@ -5833,6 +5895,8 @@ exports.setPrefix                       = setPrefix;
 exports.getPrefix                       = getPrefix;
 exports.addPrefix                       = addPrefix;
 exports.evtRename                       = evtRename;
+exports.evtNewCdr                       = evtNewCdr;
+exports.EVT_NEW_CDR                     = EVT_NEW_CDR;
 exports.setCompDbconn                   = setCompDbconn;
 exports.getExtensions                   = getExtensions;
 exports.pickupParking                   = pickupParking;

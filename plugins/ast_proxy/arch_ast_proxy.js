@@ -371,6 +371,13 @@ module.exports = function (options, imports, register) {
             EVT_EXTEN_CHANGED: astProxy.proxyLogic.EVT_EXTEN_CHANGED,
 
             /**
+            * It's the _EVT\_NEW\_CDR_ property provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method EVT_NEW_CDR
+            */
+            EVT_NEW_CDR: astProxy.proxyLogic.EVT_NEW_CDR,
+
+            /**
             * It's the _EVT\_QUEUE\_MEMBER\_CHANGED_ property provided by _ast\_proxy.proxyLogic_.
             *
             * @method EVT_QUEUE_MEMBER_CHANGED
