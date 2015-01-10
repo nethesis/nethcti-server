@@ -756,7 +756,8 @@ var compConfigManager;
         *
         * ### <a id="intrudepost">**`astproxy/intrude`**</a>
         *
-        * Intrudes into the specified conversation. The request must contains the following parameters:
+        * Intrudes into the specified conversation. Only the endpointId can listen and speak with
+        * the spier, its counterpart can not do that. The request must contains the following parameters:
         *
         * * `convid: the conversation identifier`
         * * `endpointId: the endpoint identifier that has the conversation to spy and speak`
