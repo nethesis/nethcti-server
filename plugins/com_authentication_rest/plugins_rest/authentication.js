@@ -46,6 +46,15 @@ var compAuthe;
 var compUtil;
 
 /**
+* The user architect component.
+*
+* @property compUser
+* @type object
+* @private
+*/
+var compUser;
+
+/**
 * Set the logger to be used.
 *
 * @method setLogger
@@ -96,6 +105,21 @@ function setCompUtil(comp) {
     try {
         compUtil = comp;
         logger.info(IDLOG, 'set util architect component');
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the user architect component.
+*
+* @method setCompUser
+* @param {object} comp The user architect component.
+*/
+function setCompUser(comp) {
+    try {
+        compUser = comp;
+        logger.info(IDLOG, 'set user architect component');
     } catch (err) {
        logger.error(IDLOG, err.stack);
     }
@@ -194,6 +218,12 @@ function setCompUtil(comp) {
                         return;
                     }
 
+                    if (!compUser.isUserPresent(username)) {
+                        var errmsg = 'user "' + username + '" is not configured';
+                        compUtil.net.sendHttp401(IDLOG, res, errmsg);
+                        return;
+                    }
+
                     compAuthe.authenticate(username, password, function (err) {
                         try {
                             if (err) {
@@ -254,6 +284,7 @@ function setCompUtil(comp) {
         exports.logout                = authentication.logout;
         exports.setLogger             = setLogger;
         exports.setCompUtil           = setCompUtil;
+        exports.setCompUser           = setCompUser;
         exports.setCompAuthentication = setCompAuthentication;
 
     } catch (err) {

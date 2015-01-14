@@ -563,6 +563,29 @@ function getUsernames() {
 }
 
 /**
+* Checks if the user exists. To be present, it must be configured.
+*
+* @method isUserPresent
+* @param  {string}  username  The name of the user to be checked.
+* @return {boolean} True if the user exists.
+*/
+function isUserPresent(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') {
+            throw new Error('wrong parameter');
+        }
+
+        if (users[username]) { return true; }
+        return false;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return false;
+    }
+}
+
+/**
 * Returns the list of all the usernames with their names and surnames.
 *
 * @method getUsernamesWithData
@@ -866,6 +889,7 @@ exports.on                             = on;
 exports.config                         = config;
 exports.setLogger                      = setLogger;
 exports.getUsernames                   = getUsernames;
+exports.isUserPresent                  = isUserPresent;
 exports.EVT_USERS_READY                = EVT_USERS_READY;
 exports.getEndpointsJSON               = getEndpointsJSON;
 exports.getVoicemailList               = getVoicemailList;

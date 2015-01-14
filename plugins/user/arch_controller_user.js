@@ -63,6 +63,13 @@ module.exports = function (options, imports, register) {
             getConfigurations: controllerUser.getConfigurations,
 
             /**
+            * It's the _isUserPresent_ method provided by _controller\_user_ module.
+            *
+            * @method isUserPresent
+            */
+            isUserPresent: controllerUser.isUserPresent,
+
+            /**
             * It's the _hasExtensionEndpoint_ method provided by _controller\_user_ module.
             *
             * @method hasExtensionEndpoint

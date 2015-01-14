@@ -266,6 +266,30 @@ function setCompUtil(comp) {
 }
 
 /**
+* Set the user architect component to be used by REST plugins.
+*
+* @method setCompUser
+* @param {object} comp The user component
+* @static
+*/
+function setCompUser(comp) {
+    try {
+        // check parameter
+        if (typeof comp !== 'object') { throw new Error('wrong parameter'); }
+
+        var p;
+        // set utility architect component to all REST plugins
+        for (p in plugins) {
+            if (typeof plugins[p].setCompUser === 'function') {
+                plugins[p].setCompUser(comp);
+            }
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Configurates the REST server properties by a configuration file.
 * The file must use the JSON syntax.
 *
@@ -315,4 +339,5 @@ exports.start                 = start;
 exports.config                = config;
 exports.setLogger             = setLogger;
 exports.setCompUtil           = setCompUtil;
+exports.setCompUser           = setCompUser;
 exports.setCompAuthentication = setCompAuthentication;

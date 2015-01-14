@@ -120,12 +120,16 @@ function sendHttp400(parentIdLog, resp) {
 * @method sendHttp401
 * @param {string} parentIdLog The identifier of the component that uses the utility
 * @param {object} resp        The client response object
+* @param {string} [err]       An error message
 * @static
 */
-function sendHttp401(parentIdLog, resp) {
+function sendHttp401(parentIdLog, resp, err) {
     try {
-        resp.writeHead(401);
-        logger.warn(parentIdLog, 'send HTTP 401 response to ' + getRemoteClientIp(resp));
+        if (!err) { resp.writeHead(401); }
+        else      { resp.writeHead(401,  { 'message': err }); }
+
+        logger.warn(parentIdLog, 'send HTTP 401 response to ' + getRemoteClientIp(resp) +
+                                 (err ? ' with message \'' + err + '\'' : ''));
         resp.end();
     } catch (err) {
         logger.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
