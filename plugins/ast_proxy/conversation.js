@@ -349,6 +349,7 @@ exports.Conversation = function (ownerId, sourceChan, destChan, queue) {
             queueId:         queueId,
             chSource:        tempChSource,
             duration:        duration,
+            startTime:       startime,
             connected:       connected,
             recording:       recording,
             direction:       direction,

@@ -278,6 +278,7 @@ exports.Channel = function (obj) {
     *         callerName:     "sip214ale"
     *         bridgedNum:     "221"               // the number of the connected caller/called
     *         bridgedName:    "sip221ale"         // the name of the connected caller/called
+    *         channelStatus:  "up"                // the channel status
     *         bridgedChannel: "SIP/221-0000034e", // the connected channel identifier
     *     }
     *
@@ -291,6 +292,7 @@ exports.Channel = function (obj) {
             type:           type,
             channel:        channel,
             callerNum:      privacyStr ? ( callerNum.slice(0, -privacyStr.length) + privacyStr ) : callerNum,
+            startTime:      startTime,
             callerName:     callerName,
             bridgedNum:     privacyStr ? ( bridgedNum.slice(0, -privacyStr.length) + privacyStr ) : bridgedNum,
             bridgedName:    bridgedName,

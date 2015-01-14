@@ -167,12 +167,13 @@ exports.QueueWaitingCaller = function (data) {
     * Returns the JSON representation of the object.
     *
     *     {
-    *         num:      "214",
-    *         name:     "Alessandro",
-    *         queue:    "401",
-    *         channel:  "IAX2/214-2273",
-    *         waiting:  18,              // the waiting time in seconds
-    *         position: "1"              // the position in the queue
+    *         num:         "214",
+    *         name:        "Alessandro",
+    *         queue:       "401",
+    *         channel:     "IAX2/214-2273",
+    *         waiting:     18,              // the waiting time in seconds
+    *         position:    "1",             // the position in the queue
+    *         waitingTime: 1421245942957    // the timestamp of the starting waiting time
     *     }
     *
     * @method toJSON
@@ -184,12 +185,13 @@ exports.QueueWaitingCaller = function (data) {
         updateWaiting();
 
         return {
-            num:      privacyStr ? ( num.slice(0, -privacyStr.length) + privacyStr ) : num,
-            name:     privacyStr ? privacyStr : name,
-            queue:    queue,
-            waiting:  waiting,
-            channel:  channel,
-            position: position
+            num:         privacyStr ? ( num.slice(0, -privacyStr.length) + privacyStr ) : num,
+            name:        privacyStr ? privacyStr : name,
+            queue:       queue,
+            waiting:     waiting,
+            channel:     channel,
+            position:    position,
+            waitingTime: waitingTime
         }
     }
 
