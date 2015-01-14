@@ -96,14 +96,14 @@ var compAstProxy;
 var compComNethctiWs;
 
 /**
-* The server IP address. It will be customized by the _config_ method.
+* The hostname of the server. It will be customized by the _config_ method.
 *
-* @property serverIp
+* @property serverHostname
 * @type string
 * @private
 * @default ""
 */
-var serverIp = '';
+var serverHostname = '';
 
 /**
 * The server chat parameters. It can be customized using the JSON
@@ -435,14 +435,14 @@ function config(path) {
         var json = require(path);
 
         // check JSON file
-        if (typeof json !== 'object' || typeof json.ip !== 'string') {
+        if (typeof json !== 'object' || typeof json.hostname !== 'string') {
 
             logger.warn(IDLOG, 'wrong JSON file ' + path);
             return;
         }
 
-        serverIp = json.ip;
-        logger.info(IDLOG, 'server IP address configuration by file ' + path + ' ended');
+        serverHostname = json.hostname;
+        logger.info(IDLOG, 'server hostname configuration by file ' + path + ' ended');
 
         // set the listener for the websocket communication module
         setComNethctiWsListeners();
@@ -588,14 +588,14 @@ function wsClientDisconnectionListener(username) {
 }
 
 /**
-* Returns the server ip address.
+* Returns the server hostname.
 *
-* @method getServerIP
-* @return {string} The server ip address.
+* @method getServerHostname
+* @return {string} The server hostname.
 */
-function getServerIP() {
+function getServerHostname() {
     try {
-        return serverIp;
+        return serverHostname;
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -1541,12 +1541,12 @@ exports.config                                 = config;
 exports.setLogger                              = setLogger;
 exports.configUser                             = configUser;
 exports.configChat                             = configChat;
-exports.getServerIP                            = getServerIP;
 exports.getChatConf                            = getChatConf;
 exports.setCompUser                            = setCompUser;
 exports.getTotNumUsers                         = getTotNumUsers;
 exports.setCompAstProxy                        = setCompAstProxy;
 exports.configPhoneUrls                        = configPhoneUrls;
+exports.getServerHostname                      = getServerHostname;
 exports.setCompComNethctiWs                    = setCompComNethctiWs;
 exports.getC2CAutoPhoneUser                    = getC2CAutoPhoneUser;
 exports.getC2CAutoPhonePass                    = getC2CAutoPhonePass;

@@ -213,11 +213,11 @@ module.exports = function (options, imports, register) {
             getAnswerUrlFromAgent: configManager.getAnswerUrlFromAgent,
 
             /**
-            * It's the _getServerIP_ method provided by _config\_manager_ module.
+            * It's the _getServerHostname_ method provided by _config\_manager_ module.
             *
-            * @method getServerIP
+            * @method getServerHostname
             */
-            getServerIP: configManager.getServerIP
+            getServerHostname: configManager.getServerHostname
         }
     });
 

@@ -3354,11 +3354,11 @@ function ajaxPhoneCall(username, req, res) {
             throw new Error('wrong parameters');
         }
 
-        var to         = compAstProxy.addPrefix(req.params.number);
-        var exten      = req.params.endpointId;
-        var serverIp   = compConfigManager.getServerIP();
-        var extenIp    = compAstProxy.getExtensionIp(exten);
-        var extenAgent = compAstProxy.getExtensionAgent(exten);
+        var to             = compAstProxy.addPrefix(req.params.number);
+        var exten          = req.params.endpointId;
+        var extenIp        = compAstProxy.getExtensionIp(exten);
+        var extenAgent     = compAstProxy.getExtensionAgent(exten);
+        var serverHostname = compConfigManager.getServerHostname();
 
         // get the url to call to originate the new call. If the url is an empty
         // string, the phone is not supported, so the call fails
@@ -3371,13 +3371,12 @@ function ajaxPhoneCall(username, req, res) {
             var phonePass = compConfigManager.getC2CAutoPhonePass(username);
 
             // replace the parameters of the url template
-            url = url.replace(/\$SERVER/g,     serverIp);
+            url = url.replace(/\$SERVER/g,     serverHostname);
             url = url.replace(/\$NUMBER/g,     to);
             url = url.replace(/\$ACCOUNT/g,    exten);
             url = url.replace(/\$PHONE_IP/g,   extenIp);
             url = url.replace(/\$PHONE_USER/g, phoneUser);
             url = url.replace(/\$PHONE_PASS/g, phonePass);
-            url = url.replace(/\$SERVER_IP/g,  serverIp);
 
             httpReq.get(url, function (httpResp) {
                 try {
@@ -3428,7 +3427,6 @@ function ajaxPhoneAnswer(username, req, res) {
         }
 
         var exten      = req.params.endpointId;
-        var serverIp   = compConfigManager.getServerIP();
         var extenIp    = compAstProxy.getExtensionIp(exten);
         var extenAgent = compAstProxy.getExtensionAgent(exten);
 
