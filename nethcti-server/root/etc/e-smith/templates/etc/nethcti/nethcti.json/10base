@@ -2,12 +2,12 @@
     use esmith::InterfacesDB;
 
     my $ndb = esmith::InterfacesDB->open_ro() || die('Can not open esmith::InterfacesDB !');
-    my $LocalIP = $ndb->green()->prop('ipaddr') || die('Can not get green interface from esmith::InterfacesDB !');
+    my $hostname = "${SystemName}.${DomainName}" || die('Can not get the hostname !');
     my $loglevel = ${'nethcti-server'}{'LogLevel'} || "warn";
 
     $OUT  = '{
-    "ip": "' . $LocalIP . '",
     "logfile": "/var/log/asterisk/nethcti.log",
+    "hostname": "' . $hostname . '",
     "loglevel": "' . $loglevel . '",
     "privacy_numbers": "xxx"
 }';

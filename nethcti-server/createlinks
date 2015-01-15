@@ -31,6 +31,7 @@ safe_symlink("restart", "root/etc/e-smith/events/$event/services2adjust/nethcti-
 #
 $event = "hostname-modify";
 templates2events("/etc/nethcti/chat.json",$event);
+templates2events("/etc/nethcti/nethcti.json",$event);
 templates2events("/etc/nethcti/mailer.json",$event);
 templates2events("/etc/nethcti/services.json",$event);
 safe_symlink("restart", "root/etc/e-smith/events/$event/services2adjust/nethcti-server");
