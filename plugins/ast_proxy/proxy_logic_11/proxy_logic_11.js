@@ -2063,6 +2063,7 @@ function extSipDetails(err, resp) {
         extensions[data.exten].setIp(data.ip);
         extensions[data.exten].setPort(data.port);
         extensions[data.exten].setName(data.name);
+        extensions[data.exten].useWebsocket(data.useWebsocket);
         extensions[data.exten].setSipUserAgent(data.sipuseragent);
         logger.info(IDLOG, 'set sip details for ext ' + data.exten);
 

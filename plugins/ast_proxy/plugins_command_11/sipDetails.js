@@ -92,8 +92,7 @@ var IDLOG = '[sipDetails]';
             data: function (data) {
                 try {
                     // check callback and info presence and execute it
-                    if (map[data.actionid]
-                        && data.response === 'Success') {
+                    if (map[data.actionid] && data.response === 'Success') {
 
                         // fix the ip address if it's null
                         var ip = data.addressip === '(null)' ? '' : data.addressip;
@@ -112,6 +111,15 @@ var IDLOG = '[sipDetails]';
                         }
                         // removes quotes, initial and final whitespaces
                         name = name.replace(/["]/g,'').trim();
+
+                        // check if the extension has been set to use websocket
+                        var useWs = false;
+                        if (   data.regcontact
+                            && typeof data.regcontact === 'string'
+                            && data.regcontact.indexOf('transport=ws') > -1) {
+
+                            useWs = true;
+                        }
                         
                         // execute callback
                         map[data.actionid](null, {
@@ -121,6 +129,7 @@ var IDLOG = '[sipDetails]';
                                 port:         port,
                                 exten:        data.objectname,
                                 chantype:     data.channeltype,
+                                useWebsocket: useWs,
                                 sipuseragent: data.sipuseragent
                             }
                         });

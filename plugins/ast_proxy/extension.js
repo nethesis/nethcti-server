@@ -111,6 +111,15 @@ exports.Extension = function (ext, chType) {
     var status;
 
     /**
+    * True if the extension uses websocket.
+    *
+    * @property useWebsocket
+    * @type string
+    * @private
+    */
+    var useWebsocket;
+
+    /**
     * The user conversations. The key is the conversation identifier
     * and the value is the _conversation_ object.
     *
@@ -163,6 +172,14 @@ exports.Extension = function (ext, chType) {
     * @param {string} ipAddr The ip address
     */
     function setIp(ipAddr) { ip = ipAddr; }
+
+    /**
+    * Set if the extension uses websocket.
+    *
+    * @method useWebsocket
+    * @param {boolean} value True if the extension uses websocket
+    */
+    function useWebsocket(value) { useWebsocket = value; }
 
     /**
     * Get the extension ip address.
@@ -373,6 +390,7 @@ exports.Extension = function (ext, chType) {
     *         name:         "Alessandro",
     *         exten:        "214",
     *         status:       "online",                       // the status can be: "dnd", "busy", "online", "onhold", "offline", "ringing", "busy_ringing"
+    *         useWebsocket: false,                          // if the extension use websocket
     *         sipuseragent: "Twinkle/1.4.2",
     *         conversations: { Conversation.toJSON(), ... } // the keys is the conversation identifiers
     *     }
@@ -400,6 +418,7 @@ exports.Extension = function (ext, chType) {
             exten:         exten,
             status:        status,
             chanType:      chanType,
+            useWebsocket:  useWebsocket,
             sipuseragent:  sipuseragent,
             conversations: jsonConvs
         }
@@ -429,6 +448,7 @@ exports.Extension = function (ext, chType) {
         disableCfVm:            disableCfVm,
         getChanType:            getChanType,
         getUserAgent:           getUserAgent,
+        useWebsocket:           useWebsocket,
         addConversation:        addConversation,
         setSipUserAgent:        setSipUserAgent,
         getConversation:        getConversation,
