@@ -2,13 +2,33 @@
 
 DB=`/usr/bin/mysqlshow --defaults-file=/root/.my.cnf | /bin/grep -o nethcti2`
 if [ "$DB" == "nethcti2" ]; then
-    # update
-    if [ -f /usr/lib/node/nethcti-server/docs/db_tables/update.sh ]; then
-        ln -s /usr/lib/node/nethcti-server/docs/db_tables/update.sh /etc/e-smith/sql/init/20nethcti2_update
+    # it is an update
+    # migrate user preferences from /etc/nethcti/user_prefs.json to mysql db table nethcti2.user_settings
+    DB_USER_SETTINGS=`/usr/bin/mysqlshow --defaults-file=/root/.my.cnf nethcti2 | grep -o user_settings`
+    if [ -f /etc/nethcti/user_prefs.json ] && [ "$DB_USER_SETTINGS" != "user_settings" ]; then
+        # file exists and the db table does not exist
+
+        # create db table nethcti2.user_settings
+        ln -s /usr/lib/node/nethcti-server/docs/db_tables/nethcti2.sql /etc/e-smith/sql/init/10nethcti2.sql
         /sbin/service mysql.init start
+
+        # launch the migration script
+        TMP=`mktemp`
+        /usr/bin/scl enable nodejs010 '/opt/rh/nodejs010/root/usr/bin/node /usr/lib/node/nethcti-server/scripts/migrate_user_prefs.js' > $TMP
+        if [ $? -gt 0 ]; then
+            exit 1
+        fi
+
+        # execute the migration
+        /usr/bin/mysql --defaults-file=/root/.my.cnf < $TMP
+        if [ $? -eq 0 ]; then
+            rm -f /etc/nethcti/user_prefs.json
+            rm -f $TMP
+        fi
     fi
+
 else
-    # install
+    # new installation
     ln -s /usr/lib/node/nethcti-server/docs/db_tables/nethcti2.sql /etc/e-smith/sql/init/10nethcti2.sql
     /sbin/service mysql.init start
     PASS=$(perl -e 'use NethServer::Password; my $ctidb_pwd = NethServer::Password::store("CTIDBPasswd"); print ($ctidb_pwd);')
