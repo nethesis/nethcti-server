@@ -784,7 +784,7 @@ var compConfigManager;
         *
         * ### <a id="send_dtmfpost">**`astproxy/send_dtmf`**</a>
         *
-        * Sends the dtmf tone to the destination.
+        * Sends the dtmf tone to the destination. The request must contains the following parameters:
         *
         * * `tone: the tone to send. Permitted values are: 0 1 2 3 4 5 6 7 8 9 * #`
         * * `convid: the conversation identifier`
