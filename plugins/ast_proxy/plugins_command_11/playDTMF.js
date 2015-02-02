@@ -70,8 +70,6 @@ var IDLOG = '[playDTMF]';
                         Digit:   args.digit
                     };
 
-                    logger.info('\n\n\nact=', act);
-
                     // set the action identifier
                     act.ActionID = action.getActionId('playDTMF');
 

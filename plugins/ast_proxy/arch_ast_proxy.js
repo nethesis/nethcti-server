@@ -203,6 +203,13 @@ module.exports = function (options, imports, register) {
             call: astProxy.proxyLogic.call,
 
             /**
+            * It's the _sendDtmfToConversation_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method sendDtmfToConversation
+            */
+            sendDtmfToConversation: astProxy.proxyLogic.sendDtmfToConversation,
+
+            /**
             * It's the _pickupConv_ method provided by _ast\_proxy.proxyLogic_.
             *
             * @method pickupConv

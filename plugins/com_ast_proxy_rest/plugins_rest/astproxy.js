@@ -40,6 +40,16 @@ var privacyStrReplace = 'xxx';
 var logger = console;
 
 /**
+* Dtmf tones permitted.
+*
+* @property dtmfTonesPermitted
+* @type object
+* @private
+* @default [ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '*', '#' ]
+*/
+var dtmfTonesPermitted = [ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '*', '#' ];
+
+/**
 * The architect component to be used for authorization.
 *
 * @property compAuthorization
@@ -431,6 +441,7 @@ var compConfigManager;
         * 1. [`astproxy/answer`](#answerpost)
         * 1. [`astproxy/hangup`](#hanguppost)
         * 1. [`astproxy/intrude`](#intrudepost)
+        * 1. [`astproxy/send_dtmf`](#send_dtmfpost)
         * 1. [`astproxy/call_echo`](#call_echopost)
         * 1. [`astproxy/start_spy`](#start_spypost)
         * 1. [`astproxy/txfer_tovm`](#txfer_tovmpost)
@@ -771,6 +782,21 @@ var compConfigManager;
         *
         * ---
         *
+        * ### <a id="send_dtmfpost">**`astproxy/send_dtmf`**</a>
+        *
+        * Sends the dtmf tone to the destination.
+        *
+        * * `tone: the tone to send. Permitted values are: 0 1 2 3 4 5 6 7 8 9 * #`
+        * * `convid: the conversation identifier`
+        * * `endpointId: the endpoint identifier`
+        * * `endpointType: the type of the endpoint`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "tone": "5", "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "214" }
+        *
+        * ---
+        *
         * ### <a id="call_echopost">**`astproxy/call_echo`**</a>
         *
         * Originates a new echo call.
@@ -949,6 +975,7 @@ var compConfigManager;
                 *   @param {string} hangup                Hangup a conversation
                 *   @param {string} intrude               Spy and speak in a conversation
                 *   @param {string} call_echo             Originates a new echo call
+                *   @param {string} send_dtmf             Sends the dtmf tone to the destination
                 *   @param {string} start_spy             Spy a conversation with only listening
                 *   @param {string} txfer_tovm            Transfer the conversation to the voicemail
                 *   @param {string} pickup_conv           Pickup a conversation
@@ -979,6 +1006,7 @@ var compConfigManager;
                     'hangup',
                     'intrude',
                     'call_echo',
+                    'send_dtmf',
                     'start_spy',
                     'txfer_tovm',
                     'pickup_conv',
@@ -3133,6 +3161,83 @@ var compConfigManager;
             },
 
             /**
+            * Sends the dtmf code to the destination with the following REST API:
+            *
+            *     POST send_dtmf
+            *
+            * @method send_dtmf
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            send_dtmf: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (   typeof req.params            !== 'object'
+                        || typeof req.params.convid     !== 'string' || typeof req.params.tone         !== 'string'
+                        || typeof req.params.endpointId !== 'string' || typeof req.params.endpointType !== 'string'
+                        || dtmfTonesPermitted.indexOf(req.params.tone) === -1) {
+
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    if (req.params.endpointType === 'extension') {
+
+                        // check if the endpoint of the request is owned by the user
+                        if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+
+                            logger.warn(IDLOG, 'send dtmf tone "' + req.params.tone + '" to the convid "' + req.params.convid +
+                                               '" by user "' + username + '" has been failed: ' + ' the ' + req.params.endpointType +
+                                               ' ' + req.params.endpointId + ' is not owned by the user');
+                            compUtil.net.sendHttp403(IDLOG, res);
+                            return;
+
+                        } else {
+                            logger.info(IDLOG, 'send dtmf tone "' + req.params.tone + '" to the convid "' + req.params.convid +
+                                               '": the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId +
+                                               ' is owned by "' + username + '"');
+                        }
+
+                        compAstProxy.sendDtmfToConversation(
+                            req.params.endpointType,
+                            req.params.endpointId,
+                            req.params.convid,
+                            req.params.tone,
+                            function (err) {
+                                try {
+                                    if (err) {
+                                        logger.warn(IDLOG, 'send dtmf tone "' + req.params.tone + '" to the convid "' + req.params.convid +
+                                                           '" by user "' + username + '" with ' + req.params.endpointType + ' ' +
+                                                           req.params.endpointId + ' has been failed');
+                                        compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                                        return;
+                                    }
+                                    logger.info(IDLOG, 'dtmf tone "' + req.params.tone + '" has been sent successfully to the convid ' + req.params.convid +
+                                                       ' by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId);
+                                    compUtil.net.sendHttp200(IDLOG, res);
+
+                                } catch (err) {
+                                    logger.error(IDLOG, err.stack);
+                                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                                }
+                            }
+                        );
+
+                    } else {
+                        logger.warn(IDLOG, 'sending dtmf tone the convid ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType);
+                        compUtil.net.sendHttp400(IDLOG, res);
+                    }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
             * Originates a new echo call with the following REST API:
             *
             *     POST call_echo
@@ -3302,6 +3407,7 @@ var compConfigManager;
         exports.opgroups              = astproxy.opgroups;
         exports.parkings              = astproxy.parkings;
         exports.call_echo             = astproxy.call_echo;
+        exports.send_dtmf             = astproxy.send_dtmf;
         exports.start_spy             = astproxy.start_spy;
         exports.setLogger             = setLogger;
         exports.txfer_tovm            = astproxy.txfer_tovm;
