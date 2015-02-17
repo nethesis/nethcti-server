@@ -1079,7 +1079,7 @@ function getUserSettings(username, cb) {
         }
 
         models[JSON_KEYS.USER_SETTINGS].findAll({
-            where: [ 'username LIKE ? ', username ]
+            where: [ 'username=?', username ]
 
         }).success(function (results) {
 

@@ -723,12 +723,13 @@ function fromDbUserSettingsToJSON(arr, username) {
             throw new Error('wrong parameter');
         }
 
-        // get the first cellphone endpoint of the user
+        // get the first extension, cellphone and email endpoint of the user
+        var firstExten     = Object.keys(compUser.getAllEndpointsExtension(username))[0];
+        var firstEmail     = Object.keys(compUser.getAllEndpointsEmail(username))[0];
         var firstCellphone = Object.keys(compUser.getAllEndpointsCellphone(username))[0];
-        firstCellphone = (firstCellphone ? firstCellphone : '');
-        // get the first email endpoint of the user
-        var firstEmail = Object.keys(compUser.getAllEndpointsEmail(username))[0];
-        firstEmail = (firstEmail ? firstEmail : '');
+        firstExten         = (firstExten     ? firstExten     : '');
+        firstEmail         = (firstEmail     ? firstEmail     : '');
+        firstCellphone     = (firstCellphone ? firstCellphone : '');
 
         // initialize default values. They are used if the user has never set
         // any values from the client, so no data are present into the database
@@ -752,7 +753,7 @@ function fromDbUserSettingsToJSON(arr, username) {
             },
             queue_auto_login:  false,
             queue_auto_logout: false,
-            default_extension: ''
+            default_extension: firstExten
         };
 
         // overwrite default values with those taken from the database
