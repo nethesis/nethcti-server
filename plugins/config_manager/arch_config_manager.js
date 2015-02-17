@@ -24,11 +24,11 @@ module.exports = function (options, imports, register) {
     register(null, {
         configManager: {
             /**
-            * It's the _getUserConfigurations_ method provided by _config\_manager_ module.
+            * It's the _getUserSettings_ method provided by _config\_manager_ module.
             *
-            * @method getUserConfigurations
+            * @method getUserSettings
             */
-            getUserConfigurations: configManager.getUserConfigurations,
+            getUserSettings: configManager.getUserSettings,
 
             /**
             * It's the _getUserEndpoints_ method provided by _config\_manager_ module.
@@ -73,11 +73,11 @@ module.exports = function (options, imports, register) {
             isAutomaticClick2callEnabled: configManager.isAutomaticClick2callEnabled,
 
             /**
-            * It's the _setUserNotificationConf_ method provided by _config\_manager_ module.
+            * It's the _setUserNotifySetting_ method provided by _config\_manager_ module.
             *
-            * @method setUserNotificationConf
+            * @method setUserNotifySetting
             */
-            setUserNotificationConf: configManager.setUserNotificationConf,
+            setUserNotifySetting: configManager.setUserNotifySetting,
 
             /**
             * It's the _getDefaultUserExtensionConf_ method provided by _config\_manager_ module.
@@ -229,13 +229,11 @@ module.exports = function (options, imports, register) {
         imports.user.on(imports.user.EVT_USERS_READY, function () {
             configManager.setLogger(logger);
             configManager.setCompUser(imports.user);
+            configManager.setCompDbconn(imports.dbconn);
             configManager.setCompAstProxy(imports.astProxy);
             configManager.setCompComNethctiWs(imports.com_nethcti_ws);
             configManager.config('/etc/nethcti/nethcti.json');
-            configManager.configUser({
-                users:     '/etc/nethcti/users.json',
-                userPrefs: '/etc/nethcti/user_prefs.json'
-            });
+            configManager.configUser('/etc/nethcti/users.json');
             configManager.configChat('/etc/nethcti/chat.json');
             configManager.configPhoneUrls('/etc/nethcti/phone_urls.json');
         });

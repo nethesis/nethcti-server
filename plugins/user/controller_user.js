@@ -772,9 +772,65 @@ function getAllEndpointsNethcti(username) {
             return {};
         }
 
-        // gets all endpoints, extracts the nethcti endpoint and then sets its status
+        // gets all endpoints, extracts the nethcti endpoint
         var endpoints = users[username].getAllEndpoints();
         return endpoints[endpointTypes.TYPES.nethcti];
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return {};
+    }
+}
+
+/**
+* Returns all the email endpoints of the user.
+*
+* @method getAllEndpointsEmail
+* @param  {string} username The username
+* @return {object} Returns all the email endpoints of the user.
+*/
+function getAllEndpointsEmail(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        // check the user existence
+        if (typeof users[username] !== 'object') {
+            logger.warn(IDLOG, 'gettings all the email endpoints: the user "' + username + '" doesn\'t exist');
+            return {};
+        }
+
+        // gets all endpoints, extracts the email endpoints
+        var endpoints = users[username].getAllEndpoints();
+        return endpoints[endpointTypes.TYPES.email];
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return {};
+    }
+}
+
+/**
+* Returns all the cellphone endpoints of the user.
+*
+* @method getAllEndpointsCellphone
+* @param  {string} username The username
+* @return {object} Returns all the cellphone endpoints of the user.
+*/
+function getAllEndpointsCellphone(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        // check the user existence
+        if (typeof users[username] !== 'object') {
+            logger.warn(IDLOG, 'gettings all the cellphone endpoints: the user "' + username + '" doesn\'t exist');
+            return {};
+        }
+
+        // gets all endpoints, extracts the cellphone endpoints
+        var endpoints = users[username].getAllEndpoints();
+        return endpoints[endpointTypes.TYPES.cellphone];
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -800,7 +856,7 @@ function getAllEndpointsExtension(username) {
             return {};
         }
 
-        // gets all endpoints, extracts the extension endpoints and then sets its status
+        // gets all endpoints, extracts the extension endpoints
         var endpoints = users[username].getAllEndpoints();
         return endpoints[endpointTypes.TYPES.extension];
 
@@ -905,6 +961,8 @@ exports.hasVoicemailEndpoint           = hasVoicemailEndpoint;
 exports.getUsernamesWithData           = getUsernamesWithData;
 exports.getAllEndpointsNethcti         = getAllEndpointsNethcti;
 exports.getAllEndpointsExtension       = getAllEndpointsExtension;
+exports.getAllEndpointsCellphone       = getAllEndpointsCellphone;
+exports.getAllEndpointsEmail           = getAllEndpointsEmail;
 exports.getAllUsersEndpointsJSON       = getAllUsersEndpointsJSON;
 exports.EVT_ENDPOINT_PRESENCE_CHANGED  = EVT_ENDPOINT_PRESENCE_CHANGED;
 exports.getUsersUsingEndpointExtension = getUsersUsingEndpointExtension;

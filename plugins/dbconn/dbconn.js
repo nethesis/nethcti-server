@@ -169,7 +169,8 @@ var CUSTOMER_CARD = {
     SMS_HISTORY:   "sms_history",
     CALLER_NOTE:   "caller_note",
     HISTORY_CALL:  "history_call",
-    CTI_PHONEBOOK: "cti_phonebook"
+    CTI_PHONEBOOK: "cti_phonebook",
+    USER_SETTINGS: "user_settings"
 }
 */
 var JSON_KEYS = {
@@ -181,7 +182,8 @@ var JSON_KEYS = {
     SMS_HISTORY:   'sms_history',
     CALLER_NOTE:   'caller_note',
     HISTORY_CALL:  'history_call',
-    CTI_PHONEBOOK: 'cti_phonebook'
+    CTI_PHONEBOOK: 'cti_phonebook',
+    USER_SETTINGS: 'user_settings'
 };
 
 /**
@@ -343,7 +345,7 @@ function start() {
 
 /**
 * Saves the new contact in the NethCTI phonebook that is in the
-* _nethcti.cti\_phonebook_ database table.
+* _cti\_phonebook_ database table.
 *
 * @method saveCtiPbContact
 * @param {object} data All the contact information to save in the database
@@ -454,7 +456,7 @@ function savePostit(creator, text, recipient, cb) {
 }
 
 /**
-* Save a successfully sms sending in the _nethcti.sms\_history_ database table.
+* Save a successfully sms sending in the _sms\_history_ database table.
 *
 * @method storeSmsSuccess
 * @param {string}   username The name of the user who sent the sms
@@ -500,7 +502,7 @@ function storeSmsSuccess(username, to, body, cb) {
 }
 
 /**
-* Save a failure in sms sending in the _nethcti.sms\_history_ database table.
+* Save a failure in sms sending in the _sms\_history_ database table.
 *
 * @method storeSmsFailure
 * @param {string}   username The name of the user who sent the sms
@@ -546,12 +548,12 @@ function storeSmsFailure(username, to, body, cb) {
 }
 
 /**
-* Returns the post-it from the _nethcti.postit_ database table using its unique database identifier.
+* Returns the post-it from the _postit_ database table using its unique database identifier.
 * Then it sets the status read for the required postit updating the _readdate_ column of the
-* _nethcti.postit_ database table.
+* _postit_ database table.
 *
 * @method getPostit
-* @param {string}   id The post-it unique identifier. It's the _id_ column of the _nethcti.postit_ database table
+* @param {string}   id The post-it unique identifier. It's the _id_ column of the _postit_ database table
 * @param {function} cb The callback function
 */
 function getPostit(id, cb) {
@@ -590,7 +592,7 @@ function getPostit(id, cb) {
 }
 
 /**
-* Returns all the unread post-it of the recipient user from the _nethcti.postit_ database table.
+* Returns all the unread post-it of the recipient user from the _postit_ database table.
 *
 * @method getAllUnreadPostitOfRecipient
 * @param {string}   username The username of the recipient
@@ -645,7 +647,7 @@ function getAllUnreadPostitOfRecipient(username, cb) {
 * Updates the _readdate_ column of the specified postit with the current date.
 *
 * @method updatePostitReadIt
-* @param {string}  id The post-it unique identifier. It's the _id_ column of the _nethcti.postit_ database table
+* @param {string}  id The post-it unique identifier. It's the _id_ column of the _postit_ database table
 * @param {funcion} cb The callback function
 */
 function updatePostitReadIt(id, cb) {
@@ -1013,7 +1015,7 @@ function getPbContactsByNum(number, cb) {
 * Gets the phonebook contacts from the cti address book.
 * It searches the number in the fields: _workphone, homephone, cellphone_
 * and _extension_. It orders the results by _name_ and _company_ ascending.
-* The cti address book is the mysql _nethcti.cti\_phonebook_.
+* The cti address book is the mysql _cti\_phonebook_.
 *
 * @method getCtiPbContactsByNum
 * @param {string}   number The phone number term to search
@@ -1051,6 +1053,323 @@ function getCtiPbContactsByNum(number, cb) {
 
             logger.error(IDLOG, 'searching cti phonebook contacts by number ' + number + ': ' + err.toString());
             cb(err.toString());
+        });
+
+        incNumExecQueries();
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Gets the settings of the user. The settings are
+* stored in mysql table _user\_settings_.
+*
+* @method getUserSettings
+* @param {string}   username The user identifier
+* @param {function} cb       The callback function
+*/
+function getUserSettings(username, cb) {
+    try {
+        // check parameters
+        if (typeof username !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        models[JSON_KEYS.USER_SETTINGS].findAll({
+            where: [ 'username LIKE ? ', username ]
+
+        }).success(function (results) {
+
+            // extract results to return in the callback function
+            var i;
+            for (i = 0; i < results.length; i++) {
+                results[i] = results[i].selectedValues;
+            }
+
+            logger.info(IDLOG, results.length + ' results getting settings of user "' + username + '"');
+            cb(null, results);
+
+        }).error(function (err) { // manage the error
+
+            logger.error(IDLOG, 'getting settings of user "' + username + '": ' + err.toString());
+            cb(err.toString());
+        });
+
+        incNumExecQueries();
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Save the user notification settings. The settings are
+* stored in mysql table _user\_settings_.
+*
+* @method saveUserNotifySetting
+* @param {object}   data
+*   @param {string} data.type     The type of the notification, e.g. "voicemail"
+*   @param {string} data.when     When receive the notification type
+*   @param {string} data.method   The method to use by the notification, e.g. "email"
+*   @param {string} data.username The username to set the notification setting
+* @param {function} cb            The callback function
+*/
+function saveUserNotifySetting(data, cb) {
+    try {
+        // check parameter
+        if (   typeof data          !== 'object' || typeof data.type   !== 'string'
+            || typeof data.when     !== 'string' || typeof data.method !== 'string'
+            || typeof data.username !== 'string' || typeof cb          !== 'function') {
+
+            throw new Error('wrong parameter');
+        }
+
+        // key name used into the database field "key_name"
+        var keyName = 'notify_' + data.type + '_' + data.method + '_when';
+        saveUserSetting(data.username, keyName, data.when, cb);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Save the user default extension setting into mysql table _user\_settings_.
+*
+* @method saveUserDefaultExtension
+* @param {object}   data
+*   @param {string} data.username The username to set the notification setting
+*   @param {string} data.exten    The extension identifier
+* @param {function} cb            The callback function
+*/
+function saveUserDefaultExtension(data, cb) {
+    try {
+        // check parameter
+        if (   typeof data       !== 'object' || typeof data.username !== 'string'
+            || typeof data.exten !== 'string' || typeof cb            !== 'function') {
+
+            throw new Error('wrong parameter');
+        }
+
+        saveUserSetting(data.username, 'default_extension', data.exten, cb);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Save the user automatic queue logout setting into mysql table _user\_settings_.
+*
+* @method saveUserAutoQueueLogout
+* @param {object}   data
+*   @param {string} data.username The username to set the notification setting
+*   @param {string} data.enable   The value
+* @param {function} cb            The callback function
+*/
+function saveUserAutoQueueLogout(data, cb) {
+    try {
+        // check parameter
+        if (   typeof data        !== 'object'  || typeof data.username !== 'string'
+            || typeof data.enable !== 'boolean' || typeof cb            !== 'function') {
+
+            throw new Error('wrong parameter');
+        }
+
+        var value = (data.enable ? 'true' : 'false');
+        saveUserSetting(data.username, 'auto_queue_logout', value, cb);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Save the user automatic queue login setting into mysql table _user\_settings_.
+*
+* @method saveUserAutoQueueLogin
+* @param {object}   data
+*   @param {string} data.username The username to set the notification setting
+*   @param {string} data.enable   The value
+* @param {function} cb            The callback function
+*/
+function saveUserAutoQueueLogin(data, cb) {
+    try {
+        // check parameter
+        if (   typeof data        !== 'object'  || typeof data.username !== 'string'
+            || typeof data.enable !== 'boolean' || typeof cb            !== 'function') {
+
+            throw new Error('wrong parameter');
+        }
+
+        var value = (data.enable ? 'true' : 'false');
+        saveUserSetting(data.username, 'auto_queue_login', value, cb);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Save the user click 2 call setting into mysql table _user\_settings_.
+*
+* @method saveUserClick2CallSetting
+* @param {object} data
+*   @param {string} data.username   The user identifier
+*   @param {string} data.type       The click to call type
+*   @param {string} [data.user]     The username of the device
+*   @param {string} [data.password] The password of the device
+* @param {function} cb              The callback function
+*/
+function saveUserClick2CallSetting(data, cb) {
+    try {
+        // check parameters
+        if (   typeof data !== 'object'    || typeof data.username !== 'string'
+            || typeof cb   !== 'function'  || typeof data.type     !== 'string'
+            || (data.type  !== 'automatic' && data.type            !== 'manual')
+            || (data.type  === 'automatic' && typeof data.user     !== 'string')
+            || (data.type  === 'automatic' && typeof data.password !== 'string')) {
+
+            throw new Error('wrong parameters');
+        }
+
+        if (data.type === 'manual') {
+            saveUserSetting(data.username, 'click2call_type', data.type, cb);
+
+        } else if (data.type === 'automatic') {
+
+            async.parallel([
+                function (callback) {
+                    saveUserSetting(data.username, 'click2call_type', data.type, function (err) {
+                        try {
+                            if (err) {
+                                logger.error(IDLOG, err);
+                                callback(err);
+                            }
+                            else { callback(); }
+
+                        } catch (err) {
+                            logger.error(IDLOG, err.stack);
+                            callback(err);
+                        }
+                    });
+                },
+                function (callback) {
+                    saveUserSetting(data.username, 'click2call_auto_user', data.user, function (err) {
+                        try {
+                            if (err) {
+                                logger.error(IDLOG, err);
+                                callback(err);
+                            }
+                            else { callback(); }
+
+                        } catch (err) {
+                            logger.error(IDLOG, err.stack);
+                            callback(err);
+                        }
+                    });
+                },
+                function (callback) {
+                    saveUserSetting(data.username, 'click2call_auto_pwd', data.password, function (err) {
+                        try {
+                            if (err) {
+                                logger.error(IDLOG, err);
+                                callback(err);
+                            }
+                            else { callback(); }
+
+                        } catch (err) {
+                            logger.error(IDLOG, err.stack);
+                            callback(err);
+                        }
+                    });
+                }
+
+            ], function (err) {
+                if (err) { logger.error(IDLOG, err); }
+                cb(err);
+            });
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Saves a key-value pair representing a user setting. The setting are
+* stored in mysql table _user\_settings_.
+*
+* @method saveUserSetting
+* @param {string}   username The username to set the setting
+* @param {string}   keyName  The name of the key to store
+* @param {string}   value    The value of the key
+* @param {function} cb       The callback function
+*/
+function saveUserSetting(username, keyName, value, cb) {
+    try {
+        // check parameters
+        if (   typeof username !== 'string' || typeof keyName !== 'string'
+            || typeof value    !== 'string' || typeof cb      !== 'function') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // sequelize does not support mysql "INSERT ... ON DUPLICATE KEY UPDATE" statement
+        // so if the entry is already present update it, otherwise create a new one
+        models[JSON_KEYS.USER_SETTINGS].find({
+            where: [ 'username=? AND key_name=?', username, keyName ]
+
+        }).success(function (result) {
+
+            if (!result) {
+                // the key-value pair is not already present, so save the model into the database
+
+                // get the sequelize model already loaded
+                var userSetting = models[JSON_KEYS.USER_SETTINGS].build({
+                    username: username,
+                    key_name: keyName,
+                    value:    value
+                });
+
+                userSetting.save()
+                .success(function () { // the save was successful
+                    logger.info(IDLOG, 'setting "' + keyName + ': ' + value + '" of user "' + username + '" saved successfully');
+                    cb(null);
+
+                }).error(function (err) { // manage the error
+                    logger.error(IDLOG, 'saving settings "' + keyName + ': ' + value + '" of user "' + username + '": ' + err.toString());
+                    cb(err.toString());
+                });
+
+                incNumExecQueries();
+
+            } else {
+                // the entry is already present, so updates it
+                result.updateAttributes({
+                    key_name: keyName,
+                    value:    value
+
+                }).success(function () {
+                    logger.info(IDLOG, 'settings "' + keyName + ': ' + value + '" of user "' + username + '" has been updated successfully');
+                    cb();
+                });
+
+                incNumExecQueries();
+            }
+
+        }).error(function (err1) { // manage the error
+
+            logger.error(IDLOG, 'search setting "' + keyName + '" for user "' + username + '" failed: ' + err1.toString());
+            cb(err1.toString());
         });
 
         incNumExecQueries();
@@ -1172,7 +1491,7 @@ function getPbContactsStartsWithDigit(cb) {
 
 /**
 * Returns the cti phonebook contact. It searches the _id_ field in the
-* _nethcti.cti\_phonebook_ database table.
+* _cti\_phonebook_ database table.
 *
 * @method getCtiPbContact
 * @param {string}   id The cti database contact identifier
@@ -1215,7 +1534,7 @@ function getCtiPbContact(id, cb) {
 
 /**
 * Returns the caller note. It searches the _id_ field in the
-* _nethcti.caller\_note_ database table.
+* _caller\_note_ database table.
 *
 * @method getCallerNote
 * @param {string}   id The caller note identifier
@@ -1257,7 +1576,7 @@ function getCallerNote(id, cb) {
 }
 
 /**
-* Deletes the specified phonebook contact from the _nethcti.cti\_phonebook_ database table.
+* Deletes the specified phonebook contact from the _cti\_phonebook_ database table.
 *
 * @method deleteCtiPbContact
 * @param {string}   id The cti database contact identifier
@@ -1303,7 +1622,7 @@ function deleteCtiPbContact(id, cb) {
 }
 
 /**
-* Deletes the specified postit from the _nethcti.cti\postit_ database table.
+* Deletes the specified postit from the _cti\postit_ database table.
 *
 * @method deletePostit
 * @param {string}   id The post-it identifier
@@ -1354,7 +1673,7 @@ function deletePostit(id, cb) {
 }
 
 /**
-* Deletes the specified caller note from the _nethcti.caller\_note_ database table.
+* Deletes the specified caller note from the _caller\_note_ database table.
 *
 * @method deleteCallerNote
 * @param {string}   id The database caller note identifier
@@ -1400,7 +1719,7 @@ function deleteCallerNote(id, cb) {
 }
 
 /**
-* Modify the specified phonebook contact in the _nethcti.cti\_phonebook_ database table.
+* Modify the specified phonebook contact in the _cti\_phonebook_ database table.
 *
 * @method modifyCtiPbContact
 * @param {object} data
@@ -1475,7 +1794,7 @@ function modifyCtiPbContact(data, cb) {
 }
 
 /**
-* Modify the specified caller note in the _nethcti.caller\_note_ database table.
+* Modify the specified caller note in the _caller\_note_ database table.
 *
 * @method modifyCallerNote
 * @param {object} data
@@ -1538,7 +1857,7 @@ function modifyCallerNote(data, cb) {
 * The specified term is wrapped with '%' characters, so it searches
 * any occurrences of the term in the following fields: _name, company, workphone,
 * homephone, cellphone and extension_. It orders the results by _name_ and _company_
-* ascending. The NethCTI phonebook is the mysql _nethcti.cti\_phonebook_.
+* ascending. The NethCTI phonebook is the mysql _cti\_phonebook_.
 *
 * @method getCtiPbContactsContains
 * @param {string}   term     The term to search. It can be a name or a number
@@ -1603,7 +1922,7 @@ function getCtiPbContactsContains(term, username, cb) {
 * the NethCTI phonebook database. It searches all entries of he user
 * where _type_ field is equal to "speeddial". It orders the results by
 * _name_ and _company_ ascending. The NethCTI phonebook is the mysql
-* _nethcti.cti\_phonebook_.
+* _cti\_phonebook_.
 *
 * @method getCtiPbSpeeddialContacts
 * @param {string}   username The name of the user used to search speeddial contacts
@@ -1654,7 +1973,7 @@ function getCtiPbSpeeddialContacts(username, cb) {
 * At the end of the specified term is added the '%' character, so it searches
 * the entries whose fields _name_ and _company_ starts with the term.
 * It orders the results by _name_ and _company_ ascending. The NethCTI phonebook
-* is the mysql _nethcti.cti\_phonebook_.
+* is the mysql _cti\_phonebook_.
 *
 * @method getCtiPbContactsStartsWith
 * @param {string}   term     The term to search. It can be a name or a number
@@ -1710,7 +2029,7 @@ function getCtiPbContactsStartsWith(term, username, cb) {
 * Gets the phonebook contacts searching in the NethCTI phonebook database.
 * Tt searches the entries whose fields _name_ and _company_ starts with a digit.
 * It orders the results by _name_ and _company_ ascending. The NethCTI
-* phonebook is the mysql _nethcti.cti\_phonebook_.
+* phonebook is the mysql _cti\_phonebook_.
 *
 * @method getCtiPbContactsStartsWithDigit
 * @param {string}   username The name of the user used to search contacts
@@ -1977,7 +2296,7 @@ function getCallRecordingFileData(uniqueid, cb) {
 /**
 * Gets all the history post-it of all the users into the interval time.
 * It can be possible to filter out the results specifying the filter. It search
-* the results into the _nethcti.postit_ database.
+* the results into the _postit_ database.
 *
 * @method getAllUserHistoryPostitInterval
 * @param {object} data
@@ -1999,7 +2318,7 @@ function getAllUserHistoryPostitInterval(data, cb) {
 /**
 * Gets all the history sms of all the users into the interval time.
 * It can be possible to filter out the results specifying the filter. It search
-* the results into the _nethcti.sms\_history_ database.
+* the results into the _sms\_history_ database.
 *
 * @method getAllUserHistorySmsInterval
 * @param {object} data
@@ -2023,7 +2342,7 @@ function getAllUserHistorySmsInterval(data, cb) {
 * If the username information is omitted, the results contains the
 * history post-it of all users. Moreover, it can be possible to filter
 * the results specifying the filter. It search the results into the
-* _nethcti.postit_ database.
+* _postit_ database.
 *
 * @method getHistoryPostitInterval
 * @param {object} data
@@ -2126,7 +2445,7 @@ function getHistoryPostitInterval(data, cb) {
 * If the username information is omitted, the results contains the
 * history sms of all users. Moreover, it can be possible to filter
 * the results specifying the filter. It search the results into the
-* _nethcti.sms_history_ database.
+* _sms_history_ database.
 *
 * @method getHistorySmsInterval
 * @param {object} data
@@ -2553,7 +2872,7 @@ function getVoicemailOldMsg(vmId, cb) {
 /**
 * Gets the history caller note of all the users into the interval time.
 * It can be possible to filter the results specifying the filter. It search
-* the results into the _nethcti.caller\_note_ database.
+* the results into the _caller\_note_ database.
 *
 * @method getAllUserHistoryCallerNoteInterval
 * @param {object} data
@@ -2577,7 +2896,7 @@ function getAllUserHistoryCallerNoteInterval(data, cb) {
 * If the username information is omitted, the results contains the
 * history caller note of all users. Moreover, it can be possible to filter
 * the results specifying the filter. It search the results into the
-* _nethcti.caller\_note_ database.
+* _caller\_note_ database.
 *
 * @method getHistoryCallerNoteInterval
 * @param {object} data
@@ -3519,16 +3838,17 @@ exports.setLogger                           = setLogger;
 exports.getPostit                           = getPostit;
 exports.savePostit                          = savePostit;
 exports.getCallInfo                         = getCallInfo;
+exports.getQueuesQOS                        = getQueuesQOS;
 exports.deletePostit                        = deletePostit;
 exports.getCallTrace                        = getCallTrace
 exports.getCallerNote                       = getCallerNote;
+exports.getQueuesStats                      = getQueuesStats;
+exports.getAgentsStats                      = getAgentsStats;
 exports.saveCallerNote                      = saveCallerNote;
 exports.configDbStatic                      = configDbStatic;
+exports.getUserSettings                     = getUserSettings;
 exports.configDbDynamic                     = configDbDynamic;
 exports.storeSmsFailure                     = storeSmsFailure;
-exports.getQueuesStats                      = getQueuesStats;
-exports.getQueuesQOS                        = getQueuesQOS;
-exports.getAgentsStats                      = getAgentsStats;
 exports.storeSmsSuccess                     = storeSmsSuccess;
 exports.getCtiPbContact                     = getCtiPbContact;
 exports.saveCtiPbContact                    = saveCtiPbContact;
@@ -3549,12 +3869,17 @@ exports.isAtLeastExtenInCall                = isAtLeastExtenInCall;
 exports.getCustomerCardByNum                = getCustomerCardByNum;
 exports.getHistorySmsInterval               = getHistorySmsInterval;
 exports.getPbContactsContains               = getPbContactsContains;
+exports.saveUserNotifySetting               = saveUserNotifySetting;
 exports.getCtiPbContactsByNum               = getCtiPbContactsByNum;
+exports.saveUserAutoQueueLogin              = saveUserAutoQueueLogin;
 exports.getHistoryCallInterval              = getHistoryCallInterval;
 exports.getPbContactsStartsWith             = getPbContactsStartsWith;
+exports.saveUserAutoQueueLogout             = saveUserAutoQueueLogout;
 exports.getCallRecordingFileData            = getCallRecordingFileData;
+exports.saveUserDefaultExtension            = saveUserDefaultExtension;
 exports.getHistoryPostitInterval            = getHistoryPostitInterval;
 exports.getCtiPbContactsContains            = getCtiPbContactsContains;
+exports.saveUserClick2CallSetting           = saveUserClick2CallSetting;
 exports.getCtiPbSpeeddialContacts           = getCtiPbSpeeddialContacts;
 exports.EVT_DELETED_VOICE_MESSAGE           = EVT_DELETED_VOICE_MESSAGE;
 exports.EVT_LISTENED_VOICE_MESSAGE          = EVT_LISTENED_VOICE_MESSAGE;

@@ -206,6 +206,8 @@ function setCompUtil(comp) {
                   }
               }
          },
+         "queue_auto_login": false,
+         "queue_auto_logout": false,
          "default_extension": "614"
      }
         *
@@ -570,26 +572,24 @@ function setCompUtil(comp) {
             *     userconf
             *
             * @method userconf
-            * @param {object} req The client request.
-            * @param {object} res The client response.
-            * @param {function} next Function to run the next handler in the chain.
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
             */
             userconf: function (req, res, next) {
                 try {
                     var username = req.headers.authorization_user;
-                    var results  = compConfigManager.getUserConfigurations(username);
+                    var results  = compConfigManager.getUserSettings(username);
 
                     if (typeof results !== 'object') {
-                        var strerr = 'wrong configurations result for user "' + username + '"';
+                        var strerr = 'wrong settings result for user "' + username + '"';
                         logger.error(IDLOG, strerr);
                         compUtil.net.sendHttp500(IDLOG, res, strerr);
 
                     } else {
-
-                        logger.info(IDLOG, 'send configuration of user "' + username + '"');
+                        logger.info(IDLOG, 'send settings of user "' + username + '"');
                         res.send(200, results);
                     }
-
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -833,7 +833,7 @@ function setCompUtil(comp) {
                         method:   method,
                         username: username
                     };
-                    compConfigManager.setUserNotificationConf(data, function (err) {
+                    compConfigManager.setUserNotifySetting(data, function (err) {
                         try {
                             if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
                             else     { compUtil.net.sendHttp200(IDLOG, res); }

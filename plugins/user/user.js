@@ -87,37 +87,6 @@ exports.User = function (uname, na, sur) {
     }
 
     /**
-    * The user configurations.
-    *
-    * @property configurations
-    * @private
-    * @default {}
-    */
-    var configurations = {};
-
-    /**
-    * Returns the user configurations.
-    *
-    * @method getConfigurations
-    * @return {object} The configuration of the user
-    */
-    function getConfigurations() { return configurations; }
-
-    /**
-    * Sets the user configurations.
-    *
-    * **It can throw an Exception.**
-    *
-    * @method setConfigurations
-    * @return {object} The configuration of the user
-    */
-    function setConfigurations(c) {
-        // check parameter
-        if (typeof c !== 'object') { throw new Error('wrong parameter'); }
-        configurations = c;
-    }
-
-    /**
     * Returns the username of the user.
     *
     * @method getUsername
@@ -299,18 +268,16 @@ exports.User = function (uname, na, sur) {
 
     // public interface
     return {
-        toJSON:                toJSON,
-        getName:               getName,
-        toString:              toString,
-        getSurname:            getSurname,
-        getUsername:           getUsername,
-        addEndpoint:           addEndpoint,
-        getAllEndpoints:       getAllEndpoints,
-        setAuthorization:      setAuthorization,
-        getAuthorization:      getAuthorization,
-        getConfigurations:     getConfigurations,
-        setConfigurations:     setConfigurations,
-        getAllEndpointsJSON:   getAllEndpointsJSON,
-        getAllAuthorizations:  getAllAuthorizations
+        toJSON:               toJSON,
+        getName:              getName,
+        toString:             toString,
+        getSurname:           getSurname,
+        getUsername:          getUsername,
+        addEndpoint:          addEndpoint,
+        getAllEndpoints:      getAllEndpoints,
+        setAuthorization:     setAuthorization,
+        getAuthorization:     getAuthorization,
+        getAllEndpointsJSON:  getAllEndpointsJSON,
+        getAllAuthorizations: getAllAuthorizations
     };
 }

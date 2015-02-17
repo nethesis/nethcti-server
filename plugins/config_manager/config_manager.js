@@ -40,33 +40,13 @@ var IDLOG = '[config_manager]';
 var logger = console;
 
 /**
-* The path of the file that contains the user preferences.
+* The dbconn module.
 *
-* @property userPrefsPath
-* @type string
-* @private
-*/
-var userPrefsPath;
-
-/**
-* The head key of the JSON configuration file that contains all user
-* configuration settings.
-*
-* @property CONFIG_FILE_HEAD
-* @type string
-* @private
-* @default "configurations"
-*/
-var CONFIG_FILE_HEAD = 'configurations';
-
-/**
-* The content of the JSON preferences and configurations file.
-*
-* @property contentConfPrefJson
+* @property compDbconn
 * @type object
 * @private
 */
-var contentConfPrefJson;
+var compDbconn;
 
 /**
 * The user module.
@@ -128,6 +108,19 @@ var chatServer = {};
 var phoneUrls = {};
 
 /**
+* The settings of all users. It is needed because methods to retrieve
+* user settings from db are asynchronous while some components needs
+* a synchronous response. Each time a user save a new setting, the data
+* are stored into the db _nethcti2.user\_settings_ and into this object.
+*
+* @property userSettings
+* @type object
+* @private
+* @default {}
+*/
+var userSettings = {};
+
+/**
 * Set the logger to be used.
 *
 * @method setLogger
@@ -154,16 +147,32 @@ function setLogger(log) {
 }
 
 /**
+* Set the dbconn module to be used.
+*
+* @method setCompDbconn
+* @param {object} comp The dbconn module.
+*/
+function setCompDbconn(comp) {
+    try {
+        // check parameter
+        if (typeof comp !== 'object') { throw new Error('wrong dbconn object'); }
+        compDbconn = comp;
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Set the user module to be used.
 *
 * @method setCompUser
-* @param {object} cu The user module.
+* @param {object} comp The user module.
 */
-function setCompUser(cu) {
+function setCompUser(comp) {
     try {
         // check parameter
-        if (typeof cu !== 'object') { throw new Error('wrong user object'); }
-        compUser = cu;
+        if (typeof comp !== 'object') { throw new Error('wrong user object'); }
+        compUser = comp;
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -202,45 +211,27 @@ function setCompAstProxy(comp) {
 }
 
 /**
-* Returns the default user preferences.
+* It reads the configuration file and set the options in the User
+* objects using the _user_ module.
 *
-* @method getDefaultUserPrefs
-* @return {object} The default user preferences
+* @method configUser
+* @param {string} path The path of the configuration file with user endpoints, authorizations, ...
 */
-function getDefaultUserPrefs() {
+function configUser(path) {
     try {
-        var obj = {
-            click2call: {
-                type: 'manual',
-                automatic: {
-                    user: 'admin',
-                    password: 'admin'
-                }
-            },
-            notifications: {
-                postit: {
-                    sms: {
-                        when: 'never'
-                    },
-                    email: {
-                        when: 'never'
-                    }
-                },
-                voicemail: {
-                    sms: {
-                        when: 'never'
-                    },
-                    email: {
-                        when: 'never'
-                    }
-                }
-            },
-            queue_auto_login:  false,
-            queue_auto_logout: false,
-            default_extension: ''
-        };
+        // check parameter
+        if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
 
-        return obj;
+        // check file presence
+        if (!fs.existsSync(path)) { throw new Error(path + ' does not exist'); }
+
+        logger.info(IDLOG, 'configure users with ' + path);
+
+        // read the user configuration file (endpoint associations, authorizations, ...)
+        contentConfJson = require(path);
+        logger.info(IDLOG, 'user configurations by ' + path + ' ended');
+
+        loadAllUsersSettings();
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -248,125 +239,33 @@ function getDefaultUserPrefs() {
 }
 
 /**
-* It reads the configuration file and set the options in the User
-* objects using the _user_ module.
+* Load settings of all the users in memory. See documentation about the
+* _userSettings_ property.
 *
-* **The method can throw an Exception.**
-*
-* @method configUser
-* @param {object} obj
-*   @param {string} obj.users     The path of the configuration file with user endpoints, authorizations, ...
-*   @param {string} obj.userPrefs The path of the user preferences file, e.g. notification preferences
+* @method loadAllUsersSettings
+* @private
 */
-function configUser(obj) {
+function loadAllUsersSettings() {
     try {
-        // check parameter
-        if (typeof obj !== 'object' || typeof obj.users !== 'string' || typeof obj.userPrefs !== 'string') {
-            throw new TypeError('wrong parameter');
+        // initialize settings of all the users getting data from db
+        var i, username;
+        var users = compUser.getUsernames();
+        for (i = 0; i < users.length; i++) {
+            (function (username) {
+
+                compDbconn.getUserSettings(username, function (err, results) {
+                    try {
+                        if (err) { logger.error(IDLOG, 'getting settings of user "' + username + '" from db: ' + err); }
+                        else {
+                            userSettings[username] = fromDbUserSettingsToJSON(results, username);
+                        }
+                    } catch (err) {
+                        logger.error(IDLOG, err.stack);
+                        cb(err);
+                    }
+                });
+            })(users[i]);
         }
-
-        // check file presence
-        if (!fs.existsSync(obj.users)) { throw new Error(obj.users + ' doesn\'t exist'); }
-
-        // global property used also by other methods
-        userPrefsPath = obj.userPrefs;
-        logger.info(IDLOG, 'configure user prefs with ' + userPrefsPath + ' and configs with ' + obj.users);
-
-        // read the user configuration file (endpoint associations, authorizations, ...)
-        contentConfPrefJson = require(obj.users);
-
-        // read the user preferences file. If the user has never saved its preferences,
-        // the file doesn't exist and so default preference values are used
-        var userPrefs = {};
-        if (!fs.existsSync(obj.userPrefs)) {
-            logger.info(obj.userPrefs + ' doesn\'t exist');
-
-        } else {
-            userPrefs = require(userPrefsPath);
-        }
-
-        // merge configurations (from obj.users file) and preferences (from obj.userPrefs file) in one single object
-        var username, emailEndpoints, firstEmailEndpoint, cellphoneEndpoints, firstCellphoneEndpoint, extenEndpoints, firstExtenEndpoint;
-        for (username in contentConfPrefJson) {
-
-            // get the extension endpoints associated with the user. It can be empty
-            // get all extension endpoints of the user
-            extenEndpoints = contentConfPrefJson[username].endpoints[compUser.ENDPOINT_TYPES.extension];
-            // get the first extension endpoint of the user
-            firstExtenEndpoint = Object.keys(extenEndpoints)[0];
-            // check if the endpoint is present
-            firstExtenEndpoint = (firstExtenEndpoint ? firstExtenEndpoint : '');
-
-            // get the cellphone endpoint associated with the user. It can be empty
-            // get all cellphone endpoints of the user
-            cellphoneEndpoints = contentConfPrefJson[username].endpoints[compUser.ENDPOINT_TYPES.cellphone];
-            // get the first cellphone endpoint of the user
-            firstCellphoneEndpoint = Object.keys(cellphoneEndpoints)[0];
-            // check if the endpoint is present
-            firstCellphoneEndpoint = (firstCellphoneEndpoint ? firstCellphoneEndpoint : '');
-
-            // get the email endpoint associated with the user. It can be empty
-            // get all email endpoints of the user
-            emailEndpoints = contentConfPrefJson[username].endpoints[compUser.ENDPOINT_TYPES.email];
-            // get the first email endpoint of the user
-            firstEmailEndpoint = Object.keys(emailEndpoints)[0];
-            // check if the endpoint is present
-            firstEmailEndpoint = (firstEmailEndpoint ? firstEmailEndpoint : '');
-
-            // the user has never saved his preferences and so they doesn't exist in the
-            // file of the preferences. So a default values are used
-            if (!userPrefs[username]) {
-                contentConfPrefJson[username].configurations = getDefaultUserPrefs();
-            }
-            // the user preferences are present in the file
-            else {
-                contentConfPrefJson[username].configurations = userPrefs[username].configurations;
-            }
-
-            // add the cellphone and email endpoints destination to the user configuration
-            contentConfPrefJson[username].configurations.notifications.postit.sms.to      = firstCellphoneEndpoint;
-            contentConfPrefJson[username].configurations.notifications.postit.email.to    = firstEmailEndpoint;
-            contentConfPrefJson[username].configurations.notifications.voicemail.sms.to   = firstCellphoneEndpoint;
-            contentConfPrefJson[username].configurations.notifications.voicemail.email.to = firstEmailEndpoint;
-
-            // check if the default extension of the user has already been set, otherwise set it to the first extension endpoint.
-            // Also set it if the firstExtenEndpoint is empty, because it means that the user has no extension endpoint associated with him.
-            // Also check if the default extension of the user is associated with him. If it isn't the default extension is set
-            // to the first extension endpoint. Initially the default_extension is empty
-            var defaultExten  = contentConfPrefJson[username].configurations.default_extension;
-            var allUserExtens = contentConfPrefJson[username].endpoints[compUser.ENDPOINT_TYPES.extension]; // all user extensions
-
-            if (   defaultExten       === ''       // the default extension has never been set
-                || firstExtenEndpoint === ''       // the user has no extension endpoint associated with him
-                || !allUserExtens[defaultExten]) { // the default extension is not associated with the user
-
-                contentConfPrefJson[username].configurations.default_extension = firstExtenEndpoint;
-            }
-        }
-
-        // check created content of the JSON files
-        if (typeof contentConfPrefJson !== 'object') {
-            throw new Error('bad user confs and prefs object: check ' + userPrefsPath + ' and ' + obj.users);
-        }
-
-        // cycle user configurations and set the configuration in the User objects using user module
-        for (username in contentConfPrefJson) {
-
-            // check the configuration object of the user
-            if (   typeof contentConfPrefJson[username]                   === 'object'
-                && typeof contentConfPrefJson[username][CONFIG_FILE_HEAD] === 'object') {
-
-                // with this operation, the configuration set in the User object is a reference link to the
-                // "contentConfPrefJson" property. So the future change in the configurations of the User
-                // object is reported in the "contentConfPrefJson" property
-                compUser.setConfigurations(username, contentConfPrefJson[username][CONFIG_FILE_HEAD]);
-
-            } else {
-                logger.error(IDLOG, 'wrong preferences for user "' + username + '" in file ' + userPrefsPath);
-            }
-        }
-        logger.info(IDLOG, 'user preferences by ' + userPrefsPath + ' and configurations by ' + obj.users + ' ended');
-
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -490,7 +389,7 @@ function wsClientLoggedInListener(username) {
         logger.info(IDLOG, 'received "new logged in user by ws" event for username "' + username + '"');
 
         // get the prefence of the user: automatic login into dynamic queues when login to cti
-        var queueAutoLoginEnabled = contentConfPrefJson[username][CONFIG_FILE_HEAD][USER_CONFIG_KEYS.queue_auto_login];
+        var queueAutoLoginEnabled = userSettings[username][USER_CONFIG_KEYS.queue_auto_login];
         if (queueAutoLoginEnabled) {
 
             var extens = compUser.getAllEndpointsExtension(username);
@@ -547,7 +446,7 @@ function wsClientDisconnectionListener(username) {
         logger.info(IDLOG, 'received "new websocket disconnection" event for username "' + username + '"');
 
         // get the prefence of the user: automatic logout from dynamic queues when logout from cti
-        var queueAutoLogoutEnabled = contentConfPrefJson[username][CONFIG_FILE_HEAD][USER_CONFIG_KEYS.queue_auto_logout];
+        var queueAutoLogoutEnabled = userSettings[username][USER_CONFIG_KEYS.queue_auto_logout];
         if (queueAutoLogoutEnabled) {
 
             var extens = compUser.getAllEndpointsExtension(username);
@@ -746,21 +645,157 @@ function getChatConf() {
 }
 
 /**
-* Return the user configurations.
+* Saves the specified notification setting for the user.
 *
-* @method getUserConfigurations
-* @param {string} user The user identifier
-* @return {object} The user configurations.
+* @method setUserNotifySetting
+* @param {object}   data
+*   @param {string} data.type     The type of the notification, e.g. "voicemail"
+*   @param {string} data.when     When receive the notification type
+*   @param {string} data.method   The method to use by the notification, e.g. "email"
+*   @param {string} data.username The username to set the notification setting
+* @param {function} cb            The callback function
 */
-function getUserConfigurations(user) {
+function setUserNotifySetting(data, cb) {
+    try {
+        // check parameter
+        if (   typeof data          !== 'object' || typeof data.type   !== 'string'
+            || typeof data.when     !== 'string' || typeof data.method !== 'string'
+            || typeof data.username !== 'string' || typeof cb          !== 'function') {
+
+            throw new Error('wrong parameter');
+        }
+
+        // save the setting into the database
+        compDbconn.saveUserNotifySetting(data, function (err) {
+            try {
+                if (err) {
+                    logger.error(IDLOG, 'saving setting "' + data.method + '" notification for "' + data.type + '" to "' + data.when + '" for user "' + data.username + '"');
+                    cb(err);
+                } else {
+
+                    // update the configuration in mem
+                    userSettings[data.username][USER_CONFIG_KEYS.notifications][data.type][data.method]['when'] = data.when;
+                    cb(null);
+                }
+            } catch (err) {
+                logger.error(IDLOG, err.stack);
+                cb(err);
+            }
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err.stack);
+    }
+}
+
+/**
+* Returns the user settings.
+*
+* @method getUserSettings
+* @param  {string} user The user identifier
+* @return {object} The user settings.
+*/
+function getUserSettings(user) {
     try {
         // check parameter
         if (typeof user !== 'string') { throw new Error('wrong parameter'); }
 
-        return compUser.getConfigurations(user);
+        return userSettings[user] || {};
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
+        return {};
+    }
+}
+
+/**
+* Adapts user settings taken from db to JSON format.
+*
+* @method fromDbUserSettingsToJSON
+* @param  {array}  arr      The user settings received from the database
+* @param  {string} username The name of the user
+* @return {object} The user settings in JSON format.
+*/
+function fromDbUserSettingsToJSON(arr, username) {
+    try {
+        // check parameter
+        if (!(arr instanceof Array) || typeof username !== 'string') {
+            throw new Error('wrong parameter');
+        }
+
+        // get the first cellphone endpoint of the user
+        var firstCellphone = Object.keys(compUser.getAllEndpointsCellphone(username))[0];
+        firstCellphone = (firstCellphone ? firstCellphone : '');
+        // get the first email endpoint of the user
+        var firstEmail = Object.keys(compUser.getAllEndpointsEmail(username))[0];
+        firstEmail = (firstEmail ? firstEmail : '');
+
+        // initialize default values. They are used if the user has never set
+        // any values from the client, so no data are present into the database
+        var json = {
+            click2call: {
+                type: 'manual',
+                automatic: {
+                    user:     'admin',
+                    password: 'admin'
+                }
+            },
+            notifications: {
+                postit: {
+                    sms:   { when: 'never', to: firstCellphone },
+                    email: { when: 'never', to: firstEmail     }
+                },
+                voicemail: {
+                    sms:   { when: 'never', to: firstCellphone },
+                    email: { when: 'never', to: firstEmail     }
+                }
+            },
+            queue_auto_login:  false,
+            queue_auto_logout: false,
+            default_extension: ''
+        };
+
+        // overwrite default values with those taken from the database
+        // if they are present
+        var i;
+        for (i = 0; i < arr.length; i++) {
+
+            if (arr[i].key_name === 'auto_queue_login') {
+                json['queue_auto_login'] = (arr[i].value === 'true');
+
+            } else if (arr[i].key_name === 'auto_queue_logout') {
+                json['queue_auto_logout'] = (arr[i].value === 'true');
+
+            } else if (arr[i].key_name === 'default_extension') {
+                json['default_extension'] = arr[i].value;
+
+            } else if (arr[i].key_name === 'notify_postit_email_when') {
+                json.notifications.postit.email.when = arr[i].value;
+
+            } else if (arr[i].key_name === 'notify_postit_sms_when') {
+                json.notifications.postit.sms.when = arr[i].value;
+
+            } else if (arr[i].key_name === 'notify_voicemail_email_when') {
+                json.notifications.voicemail.email.when = arr[i].value;
+
+            } else if (arr[i].key_name === 'notify_voicemail_sms_when') {
+                json.notifications.voicemail.sms.when = arr[i].value;
+
+            } else if (arr[i].key_name === 'click2call_auto_pwd') {
+                json.click2call.automatic.password = arr[i].value;
+
+            } else if (arr[i].key_name === 'click2call_auto_user') {
+                json.click2call.automatic.user = arr[i].value;
+
+            } else if (arr[i].key_name === 'click2call_type') {
+                json.click2call.type = arr[i].value;
+            }
+        }
+        return json;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return {};
     }
 }
 
@@ -813,47 +848,6 @@ function getTotNumUsers() {
 }
 
 /**
-* Saves the specified notification setting for the user.
-*
-* @method setUserNotificationConf
-* @param {object}   data
-*   @param {string} data.type     The type of the notification, e.g. "voicemail"
-*   @param {string} data.when     When receive the notification type
-*   @param {string} data.method   The method to use by the notification, e.g. "email"
-*   @param {string} data.username The username to set the notification setting
-* @param {function} cb            The callback function
-*/
-function setUserNotificationConf(data, cb) {
-    try {
-        // check parameter
-        if (   typeof data          !== 'object' || typeof data.type   !== 'string'
-            || typeof data.when     !== 'string' || typeof data.method !== 'string'
-            || typeof data.username !== 'string' || typeof cb          !== 'function') {
-
-            throw new Error('wrong parameter');
-        }
-
-        // get the user configuration from the User object to update it
-        var config = compUser.getConfigurations(data.username);
-
-        // update the User object. Change the specified notification settings.
-        // This update is automatically reported in the User object because
-        // it's a reference link to it.
-        // Also the relative section of "contentConfPrefJson" property is automatically
-        // updated, because the "configUser" function sets the user configurations to be
-        // a reference link to it.
-        logger.info(IDLOG, 'update notifications settings of user "' + data.username + '"');
-        config[USER_CONFIG_KEYS.notifications][data.type][data.method].when = data.when;
-
-        // update the notification settings section in the preference file in the filesystem
-        storeAllUserPreferences(data.username, cb);
-
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
 * Saves the specified default extension for the user.
 *
 * @method setDefaultUserExtensionConf
@@ -870,23 +864,25 @@ function setDefaultUserExtensionConf(username, exten, cb) {
             throw new Error('wrong parameters');
         }
 
-        // get the user configuration from the User object to update it
-        var config = compUser.getConfigurations(username);
-
-        // update the User object. Change the specified notification settings.
-        // This update is automatically reported in the User object because
-        // it's a reference link to it.
-        // Also the relative section of "contentConfPrefJson" property is automatically
-        // updated, because the "configUser" function sets the user configurations to be
-        // a reference link to it.
-        logger.info(IDLOG, 'update default extension of user "' + username + '"');
-        config[USER_CONFIG_KEYS.default_extension] = exten;
-
-        // update the default extension setting section in the preference file in the filesystem
-        storeAllUserPreferences(username, cb);
-
+        // save the setting into the database
+        compDbconn.saveUserDefaultExtension({ username: username, exten: exten }, function (err) {
+            try {
+                if (err) {
+                    logger.error(IDLOG, 'saving setting "default extension: ' + exten + '" for user "' + username + '"');
+                    cb(err);
+                } else {
+                    // update the configuration in mem
+                    userSettings[username][USER_CONFIG_KEYS.default_extension] = exten;
+                    cb(null);
+                }
+            } catch (err) {
+                logger.error(IDLOG, err.stack);
+                cb(err);
+            }
+        });
     } catch (err) {
         logger.error(IDLOG, err.stack);
+        cb(err.stack);
     }
 }
 
@@ -902,9 +898,7 @@ function getDefaultUserExtensionConf(username) {
         // check parameter
         if (typeof username !== 'string') { throw new Error('wrong parameter'); }
 
-        // get the user configuration from the User object to update it
-        var config = compUser.getConfigurations(username);
-        return config[USER_CONFIG_KEYS.default_extension];
+        return userSettings[username][USER_CONFIG_KEYS.default_extension];
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -929,23 +923,25 @@ function setQueueAutoLogoutConf(username, enable, cb) {
             throw new Error('wrong parameters');
         }
 
-        // get the user configuration from the User object to update it
-        var config = compUser.getConfigurations(username);
-
-        // update the User object. Change the specified settings.
-        // This update is automatically reported in the User object because
-        // it's a reference link to it.
-        // Also the relative section of "contentConfPrefJson" property is automatically
-        // updated, because the "configUser" function sets the user configurations to be
-        // a reference link to it.
-        logger.info(IDLOG, 'update automatic queue logout of user "' + username + '"');
-        config[USER_CONFIG_KEYS.queue_auto_logout] = enable;
-
-        // update the default extension setting section in the preference file in the filesystem
-        storeAllUserPreferences(username, cb);
-
+        // save the setting into the database
+        compDbconn.saveUserAutoQueueLogout({ username: username, enable: enable }, function (err) {
+            try {
+                if (err) {
+                    logger.error(IDLOG, 'saving setting "auto queue logout: ' + enable + '" for user "' + username + '"');
+                    cb(err);
+                } else {
+                    // update the configuration in mem
+                    userSettings[username][USER_CONFIG_KEYS.queue_auto_logout] = enable;
+                    cb(null);
+                }
+            } catch (err) {
+                logger.error(IDLOG, err.stack);
+                cb(err);
+            }
+        });
     } catch (err) {
         logger.error(IDLOG, err.stack);
+        cb(err.stack);
     }
 }
 
@@ -961,10 +957,7 @@ function getQueueAutoLogoutConf(username) {
         // check parameter
         if (typeof username !== 'string') { throw new Error('wrong parameter'); }
 
-        // get the user configuration from the User object to update it
-        var config = compUser.getConfigurations(username);
-        var value = config[USER_CONFIG_KEYS.queue_auto_logout] ? config[USER_CONFIG_KEYS.queue_auto_logout] : false;
-        return value;
+        return userSettings[username][USER_CONFIG_KEYS.queue_auto_logout];
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -989,23 +982,25 @@ function setQueueAutoLoginConf(username, enable, cb) {
             throw new Error('wrong parameters');
         }
 
-        // get the user configuration from the User object to update it
-        var config = compUser.getConfigurations(username);
-
-        // update the User object. Change the specified settings.
-        // This update is automatically reported in the User object because
-        // it's a reference link to it.
-        // Also the relative section of "contentConfPrefJson" property is automatically
-        // updated, because the "configUser" function sets the user configurations to be
-        // a reference link to it.
-        logger.info(IDLOG, 'update automatic queue login of user "' + username + '"');
-        config[USER_CONFIG_KEYS.queue_auto_login] = enable;
-
-        // update the default extension setting section in the preference file in the filesystem
-        storeAllUserPreferences(username, cb);
-
+        // save the setting into the database
+        compDbconn.saveUserAutoQueueLogin({ username: username, enable: enable }, function (err) {
+            try {
+                if (err) {
+                    logger.error(IDLOG, 'saving setting "auto queue login: ' + enable + '" for user "' + username + '"');
+                    cb(err);
+                } else {
+                    // update the configuration in mem
+                    userSettings[username][USER_CONFIG_KEYS.queue_auto_login] = enable;
+                    cb(null);
+                }
+            } catch (err) {
+                logger.error(IDLOG, err.stack);
+                cb(err);
+            }
+        });
     } catch (err) {
         logger.error(IDLOG, err.stack);
+        cb(err.stack);
     }
 }
 
@@ -1021,10 +1016,7 @@ function getQueueAutoLoginConf(username) {
         // check parameter
         if (typeof username !== 'string') { throw new Error('wrong parameter'); }
 
-        // get the user configuration from the User object to update it
-        var config = compUser.getConfigurations(username);
-        var value  = config[USER_CONFIG_KEYS.queue_auto_login] ? config[USER_CONFIG_KEYS.queue_auto_login] : false;
-        return value;
+        return userSettings[username][USER_CONFIG_KEYS.queue_auto_login];
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -1033,82 +1025,11 @@ function getQueueAutoLoginConf(username) {
 }
 
 /**
-* Stores the preferences of all the users.
-*
-* @method storeAllUserPreferences
-* @param {object}   username The username to update the notification settings
-* @param {function} cb       The callback function
-* @private
-*/
-function storeAllUserPreferences(username, cb) {
-    try {
-        // check parameter
-        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
-
-        // store the configurations of all the users in the JSON configuration file
-        updateAllUserPrefsInJSONFile(cb);
-
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Stores the configurations of all the users in the JSON configuration file.
-*
-* @method updateAllUserPrefsInJSONFile
-* @param {function} cb The callback function
-* @private
-*/
-function updateAllUserPrefsInJSONFile(cb) {
-    try {
-        // check parameter
-        if (typeof cb !== 'function') { throw new Error('wrong parameter'); }
-
-        // get only the preferences from the "contentConfPrefJson" property, because it
-        // contains also the configurations as endpoints, authorizations, ...
-        var content = {};
-        var username;
-        for (username in contentConfPrefJson) {
-            content[username] = {};
-            content[username][CONFIG_FILE_HEAD] = JSON.parse(JSON.stringify(contentConfPrefJson[username][CONFIG_FILE_HEAD])); // object copy
-
-            // remove the cellphone and email destination, because in the /etc/nethcti/usr_prefs.json file they
-            // don't be present. These informations are present in the /etc/nethcti/users.json file
-            delete content[username][CONFIG_FILE_HEAD].notifications.postit.sms.to;
-            delete content[username][CONFIG_FILE_HEAD].notifications.postit.email.to;
-            delete content[username][CONFIG_FILE_HEAD].notifications.voicemail.sms.to;
-            delete content[username][CONFIG_FILE_HEAD].notifications.voicemail.email.to;
-        }
-
-        // updated JSON preferences file. It's updated changing the configuration settings of the users
-        fs.writeFile(userPrefsPath, JSON.stringify(content, null, 4), function (err) {
-            try {
-                if (err) {
-                    logger.error(IDLOG, 'updating preferences file ' + userPrefsPath);
-                    cb(err.toString());
-
-                } else {
-                    logger.info(IDLOG, userPrefsPath + ' has been updated successfully');
-                    cb(null);
-                }
-
-            } catch (err) {
-               logger.error(IDLOG, err.stack);
-               cb(err);
-            }
-        });
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-        cb(err);
-    }
-}
-
-/**
 * Saves the specified notification setting for the user.
 *
 * @method setUserClick2CallConf
 * @param {object} data
+*   @param {string} data.username   The user identifier
 *   @param {string} data.type       The click to call type
 *   @param {string} [data.user]     The username of the device
 *   @param {string} [data.password] The password of the device
@@ -1117,7 +1038,7 @@ function updateAllUserPrefsInJSONFile(cb) {
 function setUserClick2CallConf(data, cb) {
     try {
         // check parameters
-        if (   typeof data !== 'object'
+        if (   typeof data !== 'object'    || typeof data.username !== 'string'
             || typeof cb   !== 'function'  || typeof data.type     !== 'string'
             || (data.type  !== 'automatic' && data.type            !== 'manual')
             || (data.type  === 'automatic' && typeof data.user     !== 'string')
@@ -1126,29 +1047,30 @@ function setUserClick2CallConf(data, cb) {
             throw new Error('wrong parameters');
         }
 
-        // get the user configuration from the User object to update it
-        var config = compUser.getConfigurations(data.username);
+        // save the setting into the database
+        compDbconn.saveUserClick2CallSetting(data, function (err) {
+            try {
+                if (err) {
+                    logger.error(IDLOG, 'saving click2call setting for user "' + data.username + '"');
+                    cb(err);
 
-        // update the User object. Change the specified click2call setting.
-        // This update is automatically reported in the User object because
-        // it's a reference link to it.
-        // Also the relative section of "contentConfPrefJson" property is automatically
-        // updated, because the "configUser" function sets the user configurations to be
-        // a reference link to it.
-        logger.info(IDLOG, 'update click2call setting of user "' + data.username + '"');
-
-        config[USER_CONFIG_KEYS.click2call].type = data.type;
-
-        if (data.type === 'automatic') {
-            config[USER_CONFIG_KEYS.click2call].automatic.user     = data.user;
-            config[USER_CONFIG_KEYS.click2call].automatic.password = data.password;
-        }
-
-        // update the notification settings section in the preference file in the filesystem
-        storeAllUserPreferences(data.username, cb);
-
+                } else {
+                    // update the configuration in mem
+                    userSettings[data.username][USER_CONFIG_KEYS.click2call]['type'] = data.type;
+                    if (data.type === 'automatic') {
+                        userSettings[data.username][USER_CONFIG_KEYS.click2call]['automatic'].user     = data.user;
+                        userSettings[data.username][USER_CONFIG_KEYS.click2call]['automatic'].password = data.password;
+                    }
+                    cb(null);
+                }
+            } catch (err) {
+                logger.error(IDLOG, err.stack);
+                cb(err);
+            }
+        });
     } catch (err) {
         logger.error(IDLOG, err.stack);
+        cb(err.stack);
     }
 }
 
@@ -1164,12 +1086,7 @@ function isAutomaticClick2callEnabled(username) {
         // check parameter
         if (typeof username !== 'string') { throw new Error('wrong parameter'); }
 
-        // get the user configuration from the User object to update it
-        var config = compUser.getConfigurations(username);
-
-        if (config && config[USER_CONFIG_KEYS.click2call].type === 'automatic') {
-            return true;
-        }
+        if (userSettings[username][USER_CONFIG_KEYS.click2call]['type'] === 'automatic') { return true; }
         return false;
 
     } catch (err) {
@@ -1189,10 +1106,7 @@ function getC2CAutoPhoneUser(username) {
         // check parameter
         if (typeof username !== 'string') { throw new Error('wrong parameter'); }
 
-        // get the user configuration from the User object to update it
-        var config = compUser.getConfigurations(username);
-
-        return config[USER_CONFIG_KEYS.click2call].automatic.user;
+        return userSettings[username][USER_CONFIG_KEYS.click2call]['automatic'].user;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -1211,10 +1125,7 @@ function getC2CAutoPhonePass(username) {
         // check parameter
         if (typeof username !== 'string') { throw new Error('wrong parameter'); }
 
-        // get the user configuration from the User object to update it
-        var config = compUser.getConfigurations(username);
-
-        return config[USER_CONFIG_KEYS.click2call].automatic.password;
+        return userSettings[username][USER_CONFIG_KEYS.click2call]['automatic'].password;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -1229,7 +1140,7 @@ function getC2CAutoPhonePass(username) {
 * @param  {string}  username       The username identifier
 * @param  {string}  deliveryMethod The delivery method, e.g. email or sms
 * @return {boolean} True if the user wants to receive the voicemail notification
-*   by the specified delivery method.
+*                   by the specified delivery method.
 */
 function verifySendVoicemailNotification(username, deliveryMethod) {
     try {
@@ -1238,20 +1149,19 @@ function verifySendVoicemailNotification(username, deliveryMethod) {
             throw new Error('wrong parameters');
         }
 
-        var conf = compUser.getConfigurations(username);
-
         // check the configurations of the user
-        if (   typeof conf                                                           !== 'object'
-            || typeof conf[USER_CONFIG_KEYS.notifications]                           !== 'object'
-            || typeof conf[USER_CONFIG_KEYS.notifications].voicemail                 !== 'object'
-            || typeof conf[USER_CONFIG_KEYS.notifications].voicemail[deliveryMethod] !== 'object') {
+        if (   typeof userSettings                                                                     !== 'object'
+            || typeof userSettings[username]                                                           !== 'object'
+            || typeof userSettings[username][USER_CONFIG_KEYS.notifications]                           !== 'object'
+            || typeof userSettings[username][USER_CONFIG_KEYS.notifications].voicemail                 !== 'object'
+            || typeof userSettings[username][USER_CONFIG_KEYS.notifications].voicemail[deliveryMethod] !== 'object') {
 
             logger.warn(IDLOG, 'checking if send voicemail notification by "' + deliveryMethod + '" for user "' + username + '": ' +
                                'wrong notification configurations');
             return false;
         }
 
-        var when = conf[USER_CONFIG_KEYS.notifications].voicemail[deliveryMethod].when;
+        var when = userSettings[username][USER_CONFIG_KEYS.notifications].voicemail[deliveryMethod].when;
 
         if      (when === NOTIF_WHEN.always)  { return true;  }
         else if (when === NOTIF_WHEN.never)   { return false; }
@@ -1262,7 +1172,7 @@ function verifySendVoicemailNotification(username, deliveryMethod) {
         }
         else {
             logger.warn(IDLOG, 'checking if send voicemail notification by "' + deliveryMethod + '" for user "' + username + '": ' +
-                               'wrong when value "' + when + '"');
+                               'wrong "when" value "' + when + '"');
             return false;
         }
     } catch (err) {
@@ -1287,20 +1197,19 @@ function verifySendPostitNotification(username, deliveryMethod) {
             throw new Error('wrong parameters');
         }
 
-        var conf = compUser.getConfigurations(username);
-
         // check the configurations of the user
-        if (   typeof conf                                                        !== 'object'
-            || typeof conf[USER_CONFIG_KEYS.notifications]                        !== 'object'
-            || typeof conf[USER_CONFIG_KEYS.notifications].postit                 !== 'object'
-            || typeof conf[USER_CONFIG_KEYS.notifications].postit[deliveryMethod] !== 'object') {
+        if (   typeof userSettings                                                                  !== 'object'
+            || typeof userSettings[username]                                                        !== 'object'
+            || typeof userSettings[username][USER_CONFIG_KEYS.notifications]                        !== 'object'
+            || typeof userSettings[username][USER_CONFIG_KEYS.notifications].postit                 !== 'object'
+            || typeof userSettings[username][USER_CONFIG_KEYS.notifications].postit[deliveryMethod] !== 'object') {
 
             logger.warn(IDLOG, 'checking if send new post-it notification by "' + deliveryMethod + '" for user "' + username + '": ' +
                                'wrong notification configurations');
             return false;
         }
 
-        var when = conf[USER_CONFIG_KEYS.notifications].postit[deliveryMethod].when;
+        var when = userSettings[username][USER_CONFIG_KEYS.notifications].postit[deliveryMethod].when;
 
         if      (when === NOTIF_WHEN.always)  { return true;  }
         else if (when === NOTIF_WHEN.never)   { return false; }
@@ -1416,20 +1325,18 @@ function getVoicemailNotificationEmailTo(username) {
         // check parameter
         if (typeof username !== 'string') { throw new Error('wrong parameter'); }
 
-        var conf = compUser.getConfigurations(username);
-
         // check the configurations of the user
-        if (   typeof conf                                                    !== 'object'
-            || typeof conf[USER_CONFIG_KEYS.notifications]                    !== 'object'
-            || typeof conf[USER_CONFIG_KEYS.notifications].voicemail          !== 'object'
-            || typeof conf[USER_CONFIG_KEYS.notifications].voicemail.email    !== 'object'
-            || typeof conf[USER_CONFIG_KEYS.notifications].voicemail.email.to !== 'string') {
+        if (   typeof userSettings                                                              !== 'object'
+            || typeof userSettings[username]                                                    !== 'object'
+            || typeof userSettings[username][USER_CONFIG_KEYS.notifications]                    !== 'object'
+            || typeof userSettings[username][USER_CONFIG_KEYS.notifications].voicemail          !== 'object'
+            || typeof userSettings[username][USER_CONFIG_KEYS.notifications].voicemail.email    !== 'object'
+            || typeof userSettings[username][USER_CONFIG_KEYS.notifications].voicemail.email.to !== 'string') {
 
             logger.warn(IDLOG, 'getting email destination for voicemail notification of user "' + username + '": wrong configurations');
             return '';
         }
-
-        return conf[USER_CONFIG_KEYS.notifications].voicemail.email.to;
+        return userSettings[username][USER_CONFIG_KEYS.notifications].voicemail.email.to
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -1449,20 +1356,18 @@ function getPostitNotificationEmailTo(username) {
         // check parameter
         if (typeof username !== 'string') { throw new Error('wrong parameter'); }
 
-        var conf = compUser.getConfigurations(username);
-
         // check the configurations of the user
-        if (   typeof conf                                                 !== 'object'
-            || typeof conf[USER_CONFIG_KEYS.notifications]                 !== 'object'
-            || typeof conf[USER_CONFIG_KEYS.notifications].postit          !== 'object'
-            || typeof conf[USER_CONFIG_KEYS.notifications].postit.email    !== 'object'
-            || typeof conf[USER_CONFIG_KEYS.notifications].postit.email.to !== 'string') {
+        if (   typeof userSettings                                                           !== 'object'
+            || typeof userSettings[username]                                                 !== 'object'
+            || typeof userSettings[username][USER_CONFIG_KEYS.notifications]                 !== 'object'
+            || typeof userSettings[username][USER_CONFIG_KEYS.notifications].postit          !== 'object'
+            || typeof userSettings[username][USER_CONFIG_KEYS.notifications].postit.email    !== 'object'
+            || typeof userSettings[username][USER_CONFIG_KEYS.notifications].postit.email.to !== 'string') {
 
             logger.warn(IDLOG, 'getting email destination for new post-it notification of user "' + username + '": wrong configurations');
             return '';
         }
-
-        return conf[USER_CONFIG_KEYS.notifications].postit.email.to;
+        return userSettings[username][USER_CONFIG_KEYS.notifications].postit.email.to;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -1482,20 +1387,18 @@ function getVoicemailNotificationSmsTo(username) {
         // check parameter
         if (typeof username !== 'string') { throw new Error('wrong parameter'); }
 
-        var conf = compUser.getConfigurations(username);
-
         // check the configurations of the user
-        if (   typeof conf                                                  !== 'object'
-            || typeof conf[USER_CONFIG_KEYS.notifications]                  !== 'object'
-            || typeof conf[USER_CONFIG_KEYS.notifications].voicemail        !== 'object'
-            || typeof conf[USER_CONFIG_KEYS.notifications].voicemail.sms    !== 'object'
-            || typeof conf[USER_CONFIG_KEYS.notifications].voicemail.sms.to !== 'string') {
+        if (   typeof userSettings                                                            !== 'object'
+            || typeof userSettings[username]                                                  !== 'object'
+            || typeof userSettings[username][USER_CONFIG_KEYS.notifications]                  !== 'object'
+            || typeof userSettings[username][USER_CONFIG_KEYS.notifications].voicemail        !== 'object'
+            || typeof userSettings[username][USER_CONFIG_KEYS.notifications].voicemail.sms    !== 'object'
+            || typeof userSettings[username][USER_CONFIG_KEYS.notifications].voicemail.sms.to !== 'string') {
 
             logger.warn(IDLOG, 'getting sms destination number for voicemail notification of user "' + username + '": wrong configurations');
             return '';
         }
-
-        return conf[USER_CONFIG_KEYS.notifications].voicemail.sms.to;
+        return userSettings[username][USER_CONFIG_KEYS.notifications].voicemail.sms.to
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -1515,20 +1418,18 @@ function getPostitNotificationSmsTo(username) {
         // check parameter
         if (typeof username !== 'string') { throw new Error('wrong parameter'); }
 
-        var conf = compUser.getConfigurations(username);
-
         // check the configurations of the user
-        if (   typeof conf                                               !== 'object'
-            || typeof conf[USER_CONFIG_KEYS.notifications]               !== 'object'
-            || typeof conf[USER_CONFIG_KEYS.notifications].postit        !== 'object'
-            || typeof conf[USER_CONFIG_KEYS.notifications].postit.sms    !== 'object'
-            || typeof conf[USER_CONFIG_KEYS.notifications].postit.sms.to !== 'string') {
+        if (   typeof userSettings                                                         !== 'object'
+            || typeof userSettings[username]                                               !== 'object'
+            || typeof userSettings[username][USER_CONFIG_KEYS.notifications]               !== 'object'
+            || typeof userSettings[username][USER_CONFIG_KEYS.notifications].postit        !== 'object'
+            || typeof userSettings[username][USER_CONFIG_KEYS.notifications].postit.sms    !== 'object'
+            || typeof userSettings[username][USER_CONFIG_KEYS.notifications].postit.sms.to !== 'string') {
 
             logger.warn(IDLOG, 'getting sms destination number for post-it notification of user "' + username + '": wrong configurations');
             return '';
         }
-
-        return conf[USER_CONFIG_KEYS.notifications].postit.sms.to;
+        return userSettings[username][USER_CONFIG_KEYS.notifications].postit.sms.to
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -1543,7 +1444,9 @@ exports.configUser                             = configUser;
 exports.configChat                             = configChat;
 exports.getChatConf                            = getChatConf;
 exports.setCompUser                            = setCompUser;
+exports.setCompDbconn                          = setCompDbconn;
 exports.getTotNumUsers                         = getTotNumUsers;
+exports.getUserSettings                        = getUserSettings;
 exports.setCompAstProxy                        = setCompAstProxy;
 exports.configPhoneUrls                        = configPhoneUrls;
 exports.getServerHostname                      = getServerHostname;
@@ -1552,15 +1455,14 @@ exports.getC2CAutoPhoneUser                    = getC2CAutoPhoneUser;
 exports.getC2CAutoPhonePass                    = getC2CAutoPhonePass;
 exports.getCallUrlFromAgent                    = getCallUrlFromAgent;
 exports.getUserEndpointsJSON                   = getUserEndpointsJSON;
+exports.setUserNotifySetting                   = setUserNotifySetting;
 exports.getAnswerUrlFromAgent                  = getAnswerUrlFromAgent;
-exports.getUserConfigurations                  = getUserConfigurations;
 exports.setUserClick2CallConf                  = setUserClick2CallConf;
 exports.getQueueAutoLoginConf                  = getQueueAutoLoginConf;
 exports.setQueueAutoLoginConf                  = setQueueAutoLoginConf;
 exports.getQueueAutoLogoutConf                 = getQueueAutoLogoutConf;
 exports.setQueueAutoLogoutConf                 = setQueueAutoLogoutConf;
 exports.getAllUserEndpointsJSON                = getAllUserEndpointsJSON;
-exports.setUserNotificationConf                = setUserNotificationConf;
 exports.phoneAgentSupportAutoC2C               = phoneAgentSupportAutoC2C;
 exports.getPostitNotificationSmsTo             = getPostitNotificationSmsTo;
 exports.setDefaultUserExtensionConf            = setDefaultUserExtensionConf;

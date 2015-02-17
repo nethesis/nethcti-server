@@ -203,6 +203,20 @@ module.exports = function (options, imports, register) {
             getAllEndpointsExtension: controllerUser.getAllEndpointsExtension,
 
             /**
+            * It's the _getAllEndpointsCellphone_ method provided by _controller\_user_ module.
+            *
+            * @method getAllEndpointsCellphone
+            */
+            getAllEndpointsCellphone: controllerUser.getAllEndpointsCellphone,
+
+            /**
+            * It's the _getAllEndpointsEmail_ method provided by _controller\_user_ module.
+            *
+            * @method getAllEndpointsEmail
+            */
+            getAllEndpointsEmail: controllerUser.getAllEndpointsEmail,
+
+            /**
             * It's the _getUsersUsingEndpointExtension_ method provided by _controller\_user_ module.
             *
             * @method getUsersUsingEndpointExtension

@@ -5,7 +5,7 @@
         "dbtype":     "mysql",
         "dbuser":     "USER",
         "dbpassword": "PASS",
-        "dbname":     "nethcti"
+        "dbname":     "nethcti2"
     },
     "phonebook": {
         "dbhost":     "localhost",
@@ -21,7 +21,7 @@
         "dbtype":     "mysql",
         "dbuser":     "USER",
         "dbpassword": "PASS",
-        "dbname":     "nethcti"
+        "dbname":     "nethcti2"
     },
     "sms_history": {
         "dbhost":     "localhost",
@@ -29,7 +29,7 @@
         "dbtype":     "mysql",
         "dbuser":     "USER",
         "dbpassword": "PASS",
-        "dbname":     "nethcti"
+        "dbname":     "nethcti2"
     },
     "cel": {
         "dbhost":     "localhost",
@@ -63,13 +63,21 @@
         "dbpassword": "PASS",
         "dbname":     "asteriskcdrdb"
     },
+    "user_settings": {
+        "dbhost":     "localhost",
+        "dbport":     "/var/lib/mysql/mysql.sock",
+        "dbtype":     "mysql",
+        "dbuser":     "USER",
+        "dbpassword": "PASS",
+        "dbname":     "nethcti2"
+    },
     "cti_phonebook": {
         "dbhost":     "localhost",
         "dbport":     "/var/lib/mysql/mysql.sock",
         "dbtype":     "mysql",
         "dbuser":     "USER",
         "dbpassword": "PASS",
-        "dbname":     "nethcti"
+        "dbname":     "nethcti2"
     },
     "customer_card_identity": {
         "dbhost":     "localhost",
