@@ -1823,6 +1823,13 @@ function initializeSipExten() {
                 exten = new Extension(struct[k].extension, struct[k].tech);
                 extensions[exten.getExten()] = exten;
 
+                // set extension websocket transport usage
+                if (struct[k].transport.indexOf('ws') > -1) {
+                    exten.useWebsocket(true);
+                } else {
+                    exten.useWebsocket(false);
+                }
+
                 // request sip details for current extension
                 astProxy.doCmd({ command: 'sipDetails', exten: exten.getExten() }, extSipDetails);
                 // request the extension status
@@ -2063,7 +2070,6 @@ function extSipDetails(err, resp) {
         extensions[data.exten].setIp(data.ip);
         extensions[data.exten].setPort(data.port);
         extensions[data.exten].setName(data.name);
-        extensions[data.exten].useWebsocket(data.useWebsocket);
         extensions[data.exten].setSipUserAgent(data.sipuseragent);
         logger.info(IDLOG, 'set sip details for ext ' + data.exten);
 

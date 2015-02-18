@@ -112,15 +112,6 @@ var IDLOG = '[sipDetails]';
                         // removes quotes, initial and final whitespaces
                         name = name.replace(/["]/g,'').trim();
 
-                        // check if the extension has been set to use websocket
-                        var useWs = false;
-                        if (   data.regcontact
-                            && typeof data.regcontact === 'string'
-                            && data.regcontact.indexOf('transport=ws') > -1) {
-
-                            useWs = true;
-                        }
-                        
                         // execute callback
                         map[data.actionid](null, {
                             exten: {
@@ -129,7 +120,6 @@ var IDLOG = '[sipDetails]';
                                 port:         port,
                                 exten:        data.objectname,
                                 chantype:     data.channeltype,
-                                useWebsocket: useWs,
                                 sipuseragent: data.sipuseragent
                             }
                         });
