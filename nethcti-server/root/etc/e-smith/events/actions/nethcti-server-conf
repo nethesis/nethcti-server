@@ -25,6 +25,12 @@ if [ "$DB" == "nethcti2" ]; then
             rm -f /etc/nethcti/user_prefs.json
             rm -f $TMP
         fi
+
+    elif [ ! -f /etc/nethcti/user_prefs.json ] && [ "$DB_USER_SETTINGS" != "user_settings" ]; then
+        # it is an update
+        # users has never set any options, so it creates the database table user_settings
+        ln -s /usr/lib/node/nethcti-server/docs/db_tables/nethcti2.sql /etc/e-smith/sql/init/10nethcti2.sql
+        /sbin/service mysql.init start
     fi
 
 else
