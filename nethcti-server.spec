@@ -1,5 +1,5 @@
 Name:		nethcti-server
-Version:	2.2.3
+Version:	2.3
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI 2
 
@@ -68,6 +68,20 @@ rm -rf $RPM_BUILD_ROOT
 %doc
 
 %changelog
+* Wed Feb 18 2015 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.3-1
+- Fea #3403: new Rest Api to send DTMF tones
+- Fea #3342: add old removed feature to execute an external script on "cdr" asterisk event
+- Enh #3392: add boolean "useWebsocket" data to all extensions
+- Enh #3386: replace "ip" with "hostname" in /etc/nethcti/nethcti.json
+- Enh #3342: sort phonebook search results only by company
+- Bug #3384: an existent and not configured user login causes many error messages into the log file
+- Bug #3331: sometimes "user_prefs.json" has one or more braces that causes malformed JSON file
+- Bug #3330: adapt all mysql command to use "--defaults-file=/root/.my.cnf" option
+- Bug #3321: on domain modify on NethService NG NethCTI does not update config files
+- Bug #3218: with no voicemail configured cti tries anyway to get voicemail number
+- Bug #3188: call wait and duration in call center phone bar is wrong
+- Bug #3176: wrong queue agent "paused" value
+
 * Wed Dec 17 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.2.3-1
 - Fea #3355: migration from NethService 8.2 to NethServer
 
