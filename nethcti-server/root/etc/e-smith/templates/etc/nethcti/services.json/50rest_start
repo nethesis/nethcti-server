@@ -1,0 +1,55 @@
+    "rest": \{
+        "postit": \{
+            "port":    "10004",
+            "address": "localhost"
+        \},
+        "history": \{
+            "port":    "10002",
+            "address": "localhost"
+        \},
+        "profiling": \{
+            "port":    "10014",
+            "address": "localhost"
+        \},
+        "caller_note": \{
+            "port":    "10005",
+            "address": "localhost"
+        \},
+        "customer_card": \{
+            "port":    "10003",
+            "address": "localhost",
+            "custom_templates_customercards": "/var/lib/nethserver/nethcti/templates/customer_card"
+        \},
+        "phonebook": \{
+            "port":    "10001",
+            "address": "localhost"
+        \},
+        "authentication": \{
+            "port":    "10000",
+            "proto":   "http",
+            "address": "localhost"
+        \},
+        "config_manager": \{
+            "port":    "10006",
+            "address": "localhost"
+        \},
+        "authorization": \{
+            "port":    "10007",
+            "address": "localhost"
+        \},
+        "voicemail": \{
+            "port": "10008",
+            "address": "localhost"
+        \},
+        "asterisk_proxy": \{
+            "port": "10010",
+            "address": "localhost"
+        \},
+        "streaming": \{
+            "port": "10011",
+            "address": "localhost"
+        \},
+        "sms": \{
+            "port": "10012",
+            "address": "localhost"
+        \},
