@@ -28,9 +28,6 @@ rm -rf root/usr/lib/node/nethcti-server
 mkdir -p root/usr/lib/node/nethcti-server
 # put the nethcti-server source code
 tar xzvf %{SOURCE1} -C root/usr/lib/node/nethcti-server/
-# clean the nodejs npm modules
-find root/usr/lib/node/nethcti-server/node_modules -iname readme.\* -o -iname benchmark\* -o -iname sample\* -o -iname test\* -o -iname example\* -o -iname changelog\* -o -iname docs -o -iname component.json -o -iname \*.md -o -iname \*.bat -o -iname \*.tgz | xargs rm -rf
-
 mkdir -p root/etc/nethcti
 mkdir -p root/var/lib/asterisk/bin
 mkdir -p root/var/spool/asterisk/monitor
@@ -42,6 +39,9 @@ mkdir -p root/usr/lib/node/nethcti-server/store
 mv root/usr/lib/node/nethcti-server/nethserver_node_modules/* root/usr/lib/node/nethcti-server/node_modules
 rm -rf root/usr/lib/node/nethcti-server/nethservice_node_modules
 rm -rf root/usr/lib/node/nethcti-server/nethserver_node_modules
+
+# clean the nodejs npm modules
+find root/usr/lib/node/nethcti-server/node_modules -iname readme.\* -o -iname benchmark\* -o -iname sample\* -o -iname test\* -o -iname example\* -o -iname changelog\* -o -iname docs -o -iname component.json -o -iname \*.md -o -iname \*.bat -o -iname \*.tgz | xargs rm -rf
 
 %install
 rm -rf $RPM_BUILD_ROOT
