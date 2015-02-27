@@ -229,13 +229,16 @@ module.exports = function (options, imports, register) {
         imports.user.on(imports.user.EVT_USERS_READY, function () {
             configManager.setLogger(logger);
             configManager.setCompUser(imports.user);
-            configManager.setCompDbconn(imports.dbconn);
             configManager.setCompAstProxy(imports.astProxy);
             configManager.setCompComNethctiWs(imports.com_nethcti_ws);
             configManager.config('/etc/nethcti/nethcti.json');
             configManager.configUser('/etc/nethcti/users.json');
             configManager.configChat('/etc/nethcti/chat.json');
             configManager.configPhoneUrls('/etc/nethcti/phone_urls.json');
+        });
+
+        imports.dbconn.on(imports.dbconn.EVT_READY, function () {
+            configManager.setCompDbconn(imports.dbconn);
         });
     } catch (err) {
         logger.error(IDLOG, err.stack);

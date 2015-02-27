@@ -50,9 +50,11 @@ module.exports = function (options, imports, register) {
         var logger = console;
         if (imports.logger) { logger = imports.logger; }
 
-        sms.setLogger(logger);
-        sms.config('/etc/nethcti/sms.json');
-        sms.setCompDbconn(imports.dbconn);
+        imports.dbconn.on(imports.dbconn.EVT_READY, function () {
+            sms.setLogger(logger);
+            sms.config('/etc/nethcti/sms.json');
+            sms.setCompDbconn(imports.dbconn);
+        });
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }

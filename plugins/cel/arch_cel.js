@@ -43,8 +43,10 @@ module.exports = function (options, imports, register) {
         var logger = console;
         if (imports.logger) { logger = imports.logger; }
 
-        cel.setLogger(logger);
-        cel.setCompDbconn(imports.dbconn);
+        imports.dbconn.on(imports.dbconn.EVT_READY, function () {
+            cel.setLogger(logger);
+            cel.setCompDbconn(imports.dbconn);
+        });
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }

@@ -92,13 +92,17 @@ module.exports = function (options, imports, register) {
     });
 
     try {
+        voicemail.setLogger(logger);
+
         // wait for the creation of the users
         imports.user.on(imports.user.EVT_USERS_READY, function () {
-            voicemail.setLogger(logger);
-            voicemail.setDbconn(imports.dbconn);
             voicemail.setCompUser(imports.user);
             voicemail.setAstProxy(imports.astProxy);
             voicemail.start();
+        });
+
+        imports.dbconn.on(imports.dbconn.EVT_READY, function () {
+            voicemail.setDbconn(imports.dbconn);
         });
     } catch (err) {
         logger.error(IDLOG, err.stack);

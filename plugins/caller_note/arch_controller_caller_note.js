@@ -78,10 +78,10 @@ module.exports = function (options, imports, register) {
         var logger = console;
         if (imports.logger) { logger = imports.logger; }
 
-        var dbconn = imports.dbconn;
-
-        controllerCallerNote.setLogger(logger);
-        controllerCallerNote.setDbconn(dbconn);
+        imports.dbconn.on(imports.dbconn.EVT_READY, function () {
+            controllerCallerNote.setLogger(logger);
+            controllerCallerNote.setDbconn(imports.dbconn);
+        });
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }

@@ -71,9 +71,11 @@ module.exports = function (options, imports, register) {
     });
 
     try {
-        history.setLogger(logger);
-        history.setDbconn(imports.dbconn);
-        history.setCompAstProxy(imports.astProxy);
+        imports.dbconn.on(imports.dbconn.EVT_READY, function () {
+            history.setLogger(logger);
+            history.setDbconn(imports.dbconn);
+            history.setCompAstProxy(imports.astProxy);
+        });
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }

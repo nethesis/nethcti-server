@@ -92,10 +92,10 @@ module.exports = function (options, imports, register) {
     });
 
     try {
-        var dbconn = imports.dbconn;
-
-        phonebook.setLogger(logger);
-        phonebook.setDbconn(dbconn);
+        imports.dbconn.on(imports.dbconn.EVT_READY, function () {
+            phonebook.setLogger(logger);
+            phonebook.setDbconn(imports.dbconn);
+        });
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }

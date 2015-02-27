@@ -43,13 +43,13 @@ module.exports = function (options, imports, register) {
     });
 
     try {
-        var dbconn = imports.dbconn;
-
-        customerCard.setLogger(logger);
-        customerCard.config('/etc/nethcti/services.json');
-        customerCard.setCompAuthorization(imports.authorization);
-        customerCard.setDbconn(dbconn);
-        customerCard.start();
+        imports.dbconn.on(imports.dbconn.EVT_READY, function () {
+            customerCard.setLogger(logger);
+            customerCard.config('/etc/nethcti/services.json');
+            customerCard.setCompAuthorization(imports.authorization);
+            customerCard.setDbconn(imports.dbconn);
+            customerCard.start();
+        });
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }

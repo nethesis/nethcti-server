@@ -99,11 +99,12 @@ module.exports = function (options, imports, register) {
         var logger = console;
         if (imports.logger) { logger = imports.logger; }
 
-        var dbconn = imports.dbconn;
+        imports.dbconn.on(imports.dbconn.EVT_READY, function () {
 
-        controllerPostit.setLogger(logger);
-        controllerPostit.setDbconn(dbconn);
-        controllerPostit.start();
+            controllerPostit.setLogger(logger);
+            controllerPostit.setDbconn(imports.dbconn);
+            controllerPostit.start();
+        });
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
