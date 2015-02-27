@@ -4,7 +4,8 @@
 * @class arch_dbconn
 * @module dbconn
 */
-var dbconn = require('./dbconn');
+var dbconnMain           = require('./dbconn_main');
+var dbconnPluginsManager = require('./dbconn_plugins_manager');
 
 /**
 * The module identifier used by the logger.
@@ -23,15 +24,22 @@ module.exports = function (options, imports, register) {
     var logger = console;
     if (imports.logger) { logger = imports.logger; }
 
+    // attach some extra static apis
+    dbconnPluginsManager.apiDbconn.on        = dbconnMain.on;
+    dbconnPluginsManager.apiDbconn.EVT_READY = dbconnMain.EVT_READY;
+
     // public interface for other architect components
-    register(null, { dbconn: dbconn });
+    register(null, { dbconn: dbconnPluginsManager.apiDbconn });
 
     try {
-        dbconn.setLogger(logger);
-        dbconn.config('/etc/nethcti/nethcti.json');
-        dbconn.configDbStatic('/etc/nethcti/dbstatic.json');
-        dbconn.configDbDynamic('/etc/nethcti/dbdynamic.json');
-        dbconn.start();
+        dbconnMain.setLogger(logger);
+        dbconnMain.config('/etc/nethcti/nethcti.json');
+        dbconnMain.configDbStatic('/etc/nethcti/dbstatic.json');
+        dbconnMain.configDbDynamic('/etc/nethcti/dbdynamic.json');
+        dbconnMain.start();
+        dbconnPluginsManager.setLogger(logger);
+        dbconnPluginsManager.setCompDbconnMain(dbconnMain);
+        dbconnPluginsManager.start();
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
