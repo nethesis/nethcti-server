@@ -209,8 +209,12 @@ function getRemoteClientIp(resp) {
         // "x-forwarded-for" http header is present when an http proxy is used.
         // In this case the "resp.connection.remoteAddress" is the IP of the
         // http proxy, so takes the client IP from the header
-        return (resp.req.headers['x-forwarded-for'] ? resp.req.headers['x-forwarded-for'].split(',')[0] : resp.connection.remoteAddress);
+        if (resp.req && resp.req.headers['x-forwarded-for']) {
+            return resp.req.headers['x-forwarded-for'].split(',')[0];
 
+        } else {
+            return resp.connection.remoteAddress;
+        }
     } catch (err) {
         logger.error(IDLOG, 'retrieving remote client IP: ' + err.stack);
         return resp.connection.remoteAddress;
