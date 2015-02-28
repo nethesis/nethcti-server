@@ -14,9 +14,9 @@ var async = require('async');
 * @private
 * @final
 * @readOnly
-* @default [plugins/template]
+* @default [plugins/dbconn_ast_proxy]
 */
-var IDLOG = '[plugins/template]';
+var IDLOG = '[plugins/dbconn_ast_proxy]';
 
 /**
 * The logger. It must have at least three methods: _info, warn and error._
