@@ -303,6 +303,27 @@ function authorizeOpAdminQueuesUser(username) {
 }
 
 /**
+* Returns true if the specified user has the offhour authorization.
+*
+* @method authorizeOffhourUser
+* @param  {string}  username The username
+* @return {boolean} True if the user has the offhour authorization.
+*/
+function authorizeOffhourUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.offhour, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
 * Returns true if the specified user has the administration hangup authorization.
 *
 * @method authorizeAdminHangupUser
@@ -1204,6 +1225,7 @@ exports.authorizeChatUser             = authorizeChatUser;
 exports.authorizePickupUser           = authorizePickupUser;
 exports.authorizePostitUser           = authorizePostitUser;
 exports.authorizeIntrudeUser          = authorizeIntrudeUser;
+exports.authorizeOffhourUser          = authorizeOffhourUser;
 exports.authorizeOpTrunksUser         = authorizeOpTrunksUser;
 exports.authorizeAdminSmsUser         = authorizeAdminSmsUser;
 exports.authorizeOpQueuesUser         = authorizeOpQueuesUser;

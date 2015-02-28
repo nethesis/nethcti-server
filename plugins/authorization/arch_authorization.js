@@ -49,6 +49,13 @@ module.exports = function (options, imports, register) {
             authorizeAdminSmsUser: authorization.authorizeAdminSmsUser,
 
             /**
+            * It's the _authorizeOffhourUser_ method provided by _authorization_ module.
+            *
+            * @method authorizeOffhourUser
+            */
+            authorizeOffhourUser: authorization.authorizeOffhourUser,
+
+            /**
             * It's the _authorizeOpExtensionsUser_ method provided by _authorization_ module.
             *
             * @method authorizeOpExtensionsUser

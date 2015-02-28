@@ -23,6 +23,7 @@ var AUTHORIZATION_TYPES = {
     'postit':            'postit',
     'trunks':            'trunks',
     'queues':            'queues',
+    'offhour':           'offhour',
     'intrude':           'intrude',
     'privacy':           'privacy',
     'parkings':          'parkings',
