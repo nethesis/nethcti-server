@@ -213,10 +213,8 @@ function httpServerCb(req, res) {
             fs.exists(files.files.path, function (exists) {
                 if (exists) {
                     logger.info(IDLOG, 'file "' + files.files.name + '" (size: ' + form.bytesReceived + ') has been uploaded by user "' + username + '"');
-                    console.log(IDLOG, 'file "' + files.files.name + '" (size: ' + form.bytesReceived + ') has been uploaded by user "' + username + '"');
                 } else {
                     logger.warn(IDLOG, 'uploading file "' + files.files.name + '" (size: ' + form.bytesReceived + ') by user "' + username + '": failed');
-                    console.log(IDLOG, 'uploading file "' + files.files.name + '" (size: ' + form.bytesReceived + ') by user "' + username + '": failed');
                 }
             });
         });
