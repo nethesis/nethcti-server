@@ -1,0 +1,14 @@
+{
+    "name": "com_upload_http",
+    "main": "arch_com_upload_http.js",
+    "private": true,
+    "plugin": {
+        "consumes": [
+            "util",
+            "logger"
+        ],
+        "provides": [
+            "uploadHttp"
+        ]
+    }
+}
