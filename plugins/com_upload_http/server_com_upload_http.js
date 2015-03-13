@@ -197,10 +197,10 @@ function httpServerCb(req, res) {
         form.on('file',      function (field, file) { files.push(file); });
         form.on('end',       function () {});
         form.on('error',     function (err) {
-            logger.warn(IDLOG, 'uploading file "' + file.name + '" (' + form.bytesExpected + ' bytes) by user "' + username + '": ' + err);
+            logger.warn(IDLOG, 'uploading file by user "' + username + '": ' + err);
         });
         form.on('aborted',   function () {
-            logger.warn(IDLOG, 'uploading file "' + file.name + '" (' + form.bytesExpected + ' bytes) by user "' + username + '": aborted');
+            logger.warn(IDLOG, 'uploading file by user "' + username + '": aborted');
         });
         form.on('fileBegin', function (name, file)  {
             logger.info(IDLOG, 'user "' + username + '" uploading file "' + file.name + '" (' + form.bytesExpected + ' bytes)');
@@ -224,8 +224,23 @@ function httpServerCb(req, res) {
     }
 }
 
+/**
+* Returns the destination path of the uploaded files.
+*
+* @method getUploadRootPath
+* @return {string} The destination path of the uploaded files.
+*/
+function getUploadRootPath(req, res) {
+    try {
+        return uploadRoot;
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
 // public interface
-exports.start       = start;
-exports.config      = config;
-exports.setLogger   = setLogger;
-exports.setCompUtil = setCompUtil;
+exports.start             = start;
+exports.config            = config;
+exports.setLogger         = setLogger;
+exports.setCompUtil       = setCompUtil;
+exports.getUploadRootPath = getUploadRootPath;
