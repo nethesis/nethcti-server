@@ -5,6 +5,7 @@
     "plugin": {
         "consumes": [
             "user",
+            "dbconn",
             "logger"
         ],
         "provides": [ "authorization" ]

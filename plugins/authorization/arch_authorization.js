@@ -312,7 +312,14 @@ module.exports = function (options, imports, register) {
             *
             * @method getAllUsersAuthorizations
             */
-            getAllUsersAuthorizations: authorization.getAllUsersAuthorizations
+            getAllUsersAuthorizations: authorization.getAllUsersAuthorizations,
+
+            /**
+            * It's the _verifyUserAnnouncement_ method provided by _authorization_ module.
+            *
+            * @method verifyUserAnnouncement
+            */
+            verifyUserAnnouncement: authorization.verifyUserAnnouncement
         }
     });
 
@@ -320,6 +327,7 @@ module.exports = function (options, imports, register) {
         imports.user.on(imports.user.EVT_USERS_READY, function () {
             authorization.setLogger(logger);
             authorization.setUserModule(imports.user);
+            authorization.setCompDbconn(imports.dbconn);
             authorization.config({ type: 'file', path: '/etc/nethcti/users.json' });
         });
     } catch (err) {
