@@ -315,11 +315,18 @@ module.exports = function (options, imports, register) {
             getAllUsersAuthorizations: authorization.getAllUsersAuthorizations,
 
             /**
-            * It's the _verifyUserAnnouncement_ method provided by _authorization_ module.
+            * It's the _verifyOffhourUserAnnouncement_ method provided by _authorization_ module.
             *
-            * @method verifyUserAnnouncement
+            * @method verifyOffhourUserAnnouncement
             */
-            verifyUserAnnouncement: authorization.verifyUserAnnouncement
+            verifyOffhourUserAnnouncement: authorization.verifyOffhourUserAnnouncement,
+
+            /**
+            * It's the _verifyOffhourListenAnnouncement_ method provided by _authorization_ module.
+            *
+            * @method verifyOffhourListenAnnouncement
+            */
+            verifyOffhourListenAnnouncement: authorization.verifyOffhourListenAnnouncement
         }
     });
 
