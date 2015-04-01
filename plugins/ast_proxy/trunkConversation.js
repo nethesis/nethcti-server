@@ -321,10 +321,10 @@ exports.TrunkConversation = function (ownerId, sourceChan, destChan) {
             duration:     duration,
             recording:    recording,
             direction:    direction,
-            internalNum:  internalNum,
-            externalNum:  externalNum,
-            internalName: internalName,
-            externalName: externalName,
+            internalNum:  privacyStr ? ( internalNum.slice(0, -privacyStr.length) + privacyStr ) : internalNum,
+            externalNum:  privacyStr ? ( externalNum.slice(0, -privacyStr.length) + privacyStr ) : externalNum,
+            internalName: privacyStr ? privacyStr : internalName,
+            externalName: privacyStr ? privacyStr : externalName,
             throughQueue: throughQueue
         };
     }

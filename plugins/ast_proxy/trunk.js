@@ -290,15 +290,16 @@ exports.Trunk = function (ext, chType, maxCh) {
     *     }
     *
     * @method toJSON
+    * @param  {string} [privacyStr] If it's specified, it hides the last digits of the phone number
     * @return {object} The JSON representation of the object.
     */
-    function toJSON() {
+    function toJSON(privacyStr) {
 
         var jsonConvs = {};
         var convid;
 
         // JSON representation of the conversations
-        for (convid in conversations) { jsonConvs[convid] = conversations[convid].toJSON(); }
+        for (convid in conversations) { jsonConvs[convid] = conversations[convid].toJSON(privacyStr); }
 
         return {
             ip:            ip,

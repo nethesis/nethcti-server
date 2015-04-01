@@ -167,7 +167,7 @@ exports.ParkedCaller = function (data) {
 
         return {
             num:     privacyStr ? ( num.slice(0, -privacyStr.length) + privacyStr ) : num,
-            name:    name,
+            name:    privacyStr ? privacyStr : name,
             parking: parking,
             channel: channel,
             timeout: timeout

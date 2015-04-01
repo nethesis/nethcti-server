@@ -293,9 +293,9 @@ exports.Channel = function (obj) {
             channel:        channel,
             callerNum:      privacyStr ? ( callerNum.slice(0, -privacyStr.length) + privacyStr ) : callerNum,
             startTime:      startTime,
-            callerName:     callerName,
+            callerName:     privacyStr ? privacyStr : callerName,
             bridgedNum:     privacyStr ? ( bridgedNum.slice(0, -privacyStr.length) + privacyStr ) : bridgedNum,
-            bridgedName:    bridgedName,
+            bridgedName:    privacyStr ? privacyStr : bridgedName,
             channelStatus:  channelStatus,
             bridgedChannel: bridgedChannel
         };
