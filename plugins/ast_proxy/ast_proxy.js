@@ -94,6 +94,15 @@ var emitter = new EventEmitter();
 var astConf;
 
 /**
+* The sip WebRCT configuration.
+*
+* @property sipWebrtcConf
+* @type object
+* @private
+*/
+var sipWebrtcConf;
+
+/**
 * Sets the component's visitors.
 *
 * @method accept
@@ -119,8 +128,6 @@ var astConf;
 
 /**
 * Sets the configuration to be use to establish the telnet asterisk connection.
-*
-* **The method can throw an Exception.**
 *
 * @method config
 * @param {string} path The file path of the JSON configuration file that contains the
@@ -156,6 +163,36 @@ function config(path) {
         proxyLogic.setPrefix(json.prefix);
 
         logger.info(IDLOG, 'successfully configured');
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the configuration to be used by sip WebRTC.
+*
+* @method configSipWebrtc
+* @param {string} path The file path of the JSON configuration file
+*/
+function configSipWebrtc(path) {
+    try {
+        if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
+
+        // check the file presence
+        if (!fs.existsSync(path)) { throw new Error(path + ' does not exist'); }
+
+        // read the configuration file
+        var json = require(path);
+
+        // check the configuration file content
+        if (typeof json !== 'object' || typeof json.stun_addr !== 'string') {
+            throw new Error('wrong configuration file ' + path);
+        }
+
+        sipWebrtcConf = { stun_server_address: json.stun_addr };
+
+        logger.info(IDLOG, 'sip webrtc successfully configured');
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -465,11 +502,27 @@ function emit(ev, data) {
     }
 }
 
+/**
+* Returns the sip WebRTC configuration.
+*
+* @method getSipWebrtcConf
+* @return {object} The sip WebRTC configuration.
+*/
+function getSipWebrtcConf() {
+    try {
+        return sipWebrtcConf;
+    } catch (e) {
+        logger.error(IDLOG, e.stack);
+    }
+}
+
 // public interface
-exports.on         = on;
-exports.emit       = emit;
-exports.doCmd      = doCmd;
-exports.start      = start;
-exports.config     = config;
-exports.setLogger  = setLogger;
-exports.proxyLogic = proxyLogic;
+exports.on               = on;
+exports.emit             = emit;
+exports.doCmd            = doCmd;
+exports.start            = start;
+exports.config           = config;
+exports.setLogger        = setLogger;
+exports.proxyLogic       = proxyLogic;
+exports.configSipWebrtc  = configSipWebrtc;
+exports.getSipWebrtcConf = getSipWebrtcConf;

@@ -121,6 +121,7 @@ var compConfigManager;
         * 1. [`astproxy/opgroups`](#opgroupsget)
         * 1. [`astproxy/parkings`](#parkingsget)
         * 1. [`astproxy/extensions`](#extensionsget)
+        * 1. [`astproxy/sip_webrtc`](#sip_webrtcget)
         * 1. [`astproxy/queues_stats/:day`](#queues_statsget)
         * 1. [`astproxy/queues_qos/:day`](#queues_qosget)
         * 1. [`astproxy/agents_qos/:day`](#agents_qosget)
@@ -326,6 +327,18 @@ var compConfigManager;
               "sipuseragent": "",
               "conversations": {}
           }
+     }
+        *
+        * ---
+        *
+        * ### <a id="sip_webrtcget">**`astproxy/sip_webrtc`**</a>
+        *
+        * Gets all the configuration about the sip WebRTC.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "stun_server_address": "stun.l.google.com:19302"
      }
         *
         * ---
@@ -930,6 +943,7 @@ var compConfigManager;
                 *   @param {string} opgroups                       Gets all the user groups of the operator panel
                 *   @param {string} parkings                       Gets all the parkings with all their status informations
                 *   @param {string} extensions                     Gets all the extensions with all their status informations
+                *   @param {string} sip_webrtc                     Gets all the configuration about the sip WebRTC
                 *   @param {string} queues_stats/:day              Gets extended statistics about queues
                 *   @param {string} queues_qos/:day                Gets QOS info about queues
                 *   @param {string} agents_qos/:day                Gets QOS info about agents
@@ -947,6 +961,7 @@ var compConfigManager;
                     'opgroups',
                     'parkings',
                     'extensions',
+                    'sip_webrtc',
                     'queues_stats/:day',
                     'queues_qos/:day',
                     'agents_qos/:day',
@@ -1230,7 +1245,6 @@ var compConfigManager;
                 }
             },
 
-
             /**
             * Gets all the extensions with all their status informations with the following REST API:
             *
@@ -1288,6 +1302,30 @@ var compConfigManager;
 
                     logger.info(IDLOG, 'sent all extensions in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
                     res.send(200, extensions);
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * Gets all the configuration about the sip WebRTC with the following REST API:
+            *
+            *     GET  sip_webrtc
+            *
+            * @method sip_webrtc
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            sip_webrtc: function (req, res, next) {
+                try {
+                    var username  = req.headers.authorization_user;
+                    var sipWebrtc = compAstProxy.getSipWebrtcConf();
+
+                    logger.info(IDLOG, 'sent sip webrtc configuration to user "' + username + '" ' + res.connection.remoteAddress);
+                    res.send(200, sipWebrtc);
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
@@ -3412,6 +3450,7 @@ var compConfigManager;
         exports.setLogger             = setLogger;
         exports.txfer_tovm            = astproxy.txfer_tovm;
         exports.extensions            = astproxy.extensions;
+        exports.sip_webrtc            = astproxy.sip_webrtc;
         exports.queues_stats          = astproxy.queues_stats;
         exports.queues_qos            = astproxy.queues_qos;
         exports.agents_qos            = astproxy.agents_qos;

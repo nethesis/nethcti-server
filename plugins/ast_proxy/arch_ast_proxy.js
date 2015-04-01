@@ -48,6 +48,13 @@ module.exports = function (options, imports, register) {
             doCmd: astProxy.doCmd,
 
             /**
+            * It's the _getSipWebrtcConf_ method provided by _ast\_proxy_.
+            *
+            * @method getSipWebrtcConf
+            */
+            getSipWebrtcConf: astProxy.getSipWebrtcConf,
+
+            /**
             * It's the _setDnd_ method provided by _ast\_proxy.proxyLogic_.
             *
             * @method setDnd
@@ -446,6 +453,7 @@ module.exports = function (options, imports, register) {
         imports.dbconn.on(imports.dbconn.EVT_READY, function () {
             astProxy.setLogger(logger);
             astProxy.config('/etc/nethcti/asterisk.json');
+            astProxy.configSipWebrtc('/etc/nethcti/sip_webrtc.json');
             astProxy.proxyLogic.setCompDbconn(imports.dbconn);
             astProxy.proxyLogic.setCompPhonebook(imports.phonebook);
             astProxy.proxyLogic.setCompCallerNote(imports.callerNote);
