@@ -46,6 +46,15 @@ var logger = console;
 var userMod;
 
 /**
+* The dbconn module.
+*
+* @property compDbconn
+* @type object
+* @private
+*/
+var compDbconn;
+
+/**
 * Set the logger to be used.
 *
 * @method setLogger
@@ -94,6 +103,24 @@ function config(data) {
         }
 
         if (data.type === 'file') { configByFile(data.path); }
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Set dbconn module to be used.
+*
+* @method setCompDbconn
+* @param {object} comp The dbconn module
+* private
+*/
+function setCompDbconn(comp) {
+    try {
+        // check parameter
+        if (typeof comp !== 'object') { throw new TypeError('wrong parameter'); }
+        compDbconn = comp;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -315,6 +342,27 @@ function authorizeOffhourUser(username) {
         if (typeof username !== 'string') { throw new Error('wrong parameter'); }
 
         return authorizeUser(authorizationTypes.TYPES.offhour, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
+* Returns true if the specified user has the admin_offhour authorization.
+*
+* @method authorizeAdminOffhourUser
+* @param  {string}  username The username
+* @return {boolean} True if the user has the admin offhour authorization.
+*/
+function authorizeAdminOffhourUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.admin_offhour, username);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -1211,47 +1259,132 @@ function getUserAuthorizations(username) {
     }
 }
 
+/**
+* Check if the user has the permission to listen audio file of announcement.
+* Returns true if the announcement is owned by the specified user or has the
+* "public" visibility.
+*
+* @method verifyOffhourListenAnnouncement
+* @param {string}   username       The user to verify
+* @param {string}   announcementId The announcement identifier
+* @param {function} cb             The callback function
+*/
+function verifyOffhourListenAnnouncement(username, announcementId, cb) {
+    try {
+        // check parameters
+        if (   typeof username       !== 'string'
+            || typeof announcementId !== 'string' || typeof cb !== 'function') {
+
+            throw new Error('wrong parameters');
+        }
+
+        compDbconn.getAnnouncement(announcementId, function (err, result) {
+            try {
+                if (err) {
+                    var str = 'checking audio announcement id "' + announcementId + '" for user "' + username + '": ' + err;
+                    logger.warn(IDLOG, str);
+                    cb(err);
+
+                } else {
+                    if (result.privacy === 'public' || result.username === username) { cb(null, true); }
+                    else { cb(null, false); }
+                }
+            } catch (err) {
+                logger.error(IDLOG, err.stack);
+                cb(err);
+            }
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Check if the user has the permission on audio file for announcement.
+* Returns true if the announcement is owned by the specified user.
+*
+* @method verifyOffhourUserAnnouncement
+* @param {string}   username       The user to verify
+* @param {string}   announcementId The announcement identifier
+* @param {function} cb             The callback function
+*/
+function verifyOffhourUserAnnouncement(username, announcementId, cb) {
+    try {
+        // check parameters
+        if (   typeof username       !== 'string'
+            || typeof announcementId !== 'string' || typeof cb !== 'function') {
+
+            throw new Error('wrong parameters');
+        }
+
+        compDbconn.getAnnouncement(announcementId, function (err, result) {
+            try {
+                if (err) {
+                    var str = 'checking audio announcement id "' + announcementId + '" for user "' + username + '": ' + err;
+                    logger.warn(IDLOG, str);
+                    cb(err);
+
+                } else {
+                    if (result.username === username) { cb(null, true); }
+                    else { cb(null, false); }
+                }
+            } catch (err) {
+                logger.error(IDLOG, err.stack);
+                cb(err);
+            }
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
 // public interface
-exports.config                        = config;
-exports.setLogger                     = setLogger;
-exports.setUserModule                 = setUserModule;
-exports.hasNoSpyEnabled               = hasNoSpyEnabled;
-exports.authorizeSpyUser              = authorizeSpyUser;
-exports.authorizeDndUser              = authorizeDndUser;
-exports.authorizeCdrUser              = authorizeCdrUser;
-exports.isPrivacyEnabled              = isPrivacyEnabled;
-exports.authorizeSmsUser              = authorizeSmsUser;
-exports.authorizeChatUser             = authorizeChatUser;
-exports.authorizePickupUser           = authorizePickupUser;
-exports.authorizePostitUser           = authorizePostitUser;
-exports.authorizeIntrudeUser          = authorizeIntrudeUser;
-exports.authorizeOffhourUser          = authorizeOffhourUser;
-exports.authorizeOpTrunksUser         = authorizeOpTrunksUser;
-exports.authorizeAdminSmsUser         = authorizeAdminSmsUser;
-exports.authorizeOpQueuesUser         = authorizeOpQueuesUser;
-exports.authorizeAdminCdrUser         = authorizeAdminCdrUser;
-exports.getUserAuthorizations         = getUserAuthorizations;
-exports.authorizeRecordingUser        = authorizeRecordingUser;
-exports.authorizePhonebookUser        = authorizePhonebookUser;
-exports.authorizeStreamingUser        = authorizeStreamingUser;
-exports.authorizeCallerNoteUser       = authorizeCallerNoteUser;
-exports.authorizedCustomerCards       = authorizedCustomerCards;
-exports.verifyUserEndpointExten       = verifyUserEndpointExten;
-exports.authorizeOpParkingsUser       = authorizeOpParkingsUser;
-exports.authorizeAdminPostitUser      = authorizeAdminPostitUser;
-exports.authorizeAdminHangupUser      = authorizeAdminHangupUser;
-exports.authorizeAdminPickupUser      = authorizeAdminPickupUser;
-exports.getAllUsersAuthorizations     = getAllUsersAuthorizations;
-exports.authorizeCustomerCardUser     = authorizeCustomerCardUser;
-exports.authorizeOpExtensionsUser     = authorizeOpExtensionsUser;
-exports.authorizeAdminTransferUser    = authorizeAdminTransferUser;
-exports.authorizeOpAdminQueuesUser    = authorizeOpAdminQueuesUser;
-exports.authorizePhoneRedirectUser    = authorizePhoneRedirectUser;
-exports.verifyUserEndpointVoicemail   = verifyUserEndpointVoicemail;
-exports.authorizeAdminRecordingUser   = authorizeAdminRecordingUser;
-exports.getAuthorizedOperatorGroups   = getAuthorizedOperatorGroups;
-exports.authorizeOperatorGroupsUser   = authorizeOperatorGroupsUser;
-exports.authorizeAdminCallerNoteUser  = authorizeAdminCallerNoteUser;
-exports.authorizeStreamingSourceUser  = authorizeStreamingSourceUser;
-exports.getAuthorizedStreamingSources = getAuthorizedStreamingSources;
-exports.authorizeAttendedTransferUser = authorizeAttendedTransferUser;
+exports.config                          = config;
+exports.setLogger                       = setLogger;
+exports.setUserModule                   = setUserModule;
+exports.setCompDbconn                   = setCompDbconn;
+exports.hasNoSpyEnabled                 = hasNoSpyEnabled;
+exports.authorizeSpyUser                = authorizeSpyUser;
+exports.authorizeDndUser                = authorizeDndUser;
+exports.authorizeCdrUser                = authorizeCdrUser;
+exports.isPrivacyEnabled                = isPrivacyEnabled;
+exports.authorizeSmsUser                = authorizeSmsUser;
+exports.authorizeChatUser               = authorizeChatUser;
+exports.authorizePickupUser             = authorizePickupUser;
+exports.authorizePostitUser             = authorizePostitUser;
+exports.authorizeIntrudeUser            = authorizeIntrudeUser;
+exports.authorizeOffhourUser            = authorizeOffhourUser;
+exports.authorizeOpTrunksUser           = authorizeOpTrunksUser;
+exports.authorizeAdminSmsUser           = authorizeAdminSmsUser;
+exports.authorizeOpQueuesUser           = authorizeOpQueuesUser;
+exports.authorizeAdminCdrUser           = authorizeAdminCdrUser;
+exports.getUserAuthorizations           = getUserAuthorizations;
+exports.authorizeRecordingUser          = authorizeRecordingUser;
+exports.authorizePhonebookUser          = authorizePhonebookUser;
+exports.authorizeStreamingUser          = authorizeStreamingUser;
+exports.authorizeCallerNoteUser         = authorizeCallerNoteUser;
+exports.authorizedCustomerCards         = authorizedCustomerCards;
+exports.verifyUserEndpointExten         = verifyUserEndpointExten;
+exports.authorizeOpParkingsUser         = authorizeOpParkingsUser;
+exports.authorizeAdminPostitUser        = authorizeAdminPostitUser;
+exports.authorizeAdminHangupUser        = authorizeAdminHangupUser;
+exports.authorizeAdminPickupUser        = authorizeAdminPickupUser;
+exports.getAllUsersAuthorizations       = getAllUsersAuthorizations;
+exports.authorizeCustomerCardUser       = authorizeCustomerCardUser;
+exports.authorizeOpExtensionsUser       = authorizeOpExtensionsUser;
+exports.authorizeAdminOffhourUser       = authorizeAdminOffhourUser;
+exports.authorizeAdminTransferUser      = authorizeAdminTransferUser;
+exports.authorizeOpAdminQueuesUser      = authorizeOpAdminQueuesUser;
+exports.authorizePhoneRedirectUser      = authorizePhoneRedirectUser;
+exports.verifyUserEndpointVoicemail     = verifyUserEndpointVoicemail;
+exports.authorizeAdminRecordingUser     = authorizeAdminRecordingUser;
+exports.getAuthorizedOperatorGroups     = getAuthorizedOperatorGroups;
+exports.authorizeOperatorGroupsUser     = authorizeOperatorGroupsUser;
+exports.authorizeAdminCallerNoteUser    = authorizeAdminCallerNoteUser;
+exports.authorizeStreamingSourceUser    = authorizeStreamingSourceUser;
+exports.getAuthorizedStreamingSources   = getAuthorizedStreamingSources;
+exports.verifyOffhourUserAnnouncement   = verifyOffhourUserAnnouncement;
+exports.authorizeAttendedTransferUser   = authorizeAttendedTransferUser;
+exports.verifyOffhourListenAnnouncement = verifyOffhourListenAnnouncement;

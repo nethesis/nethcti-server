@@ -4522,6 +4522,46 @@ function parkConversation(endpointType, endpointId, convid, applicantId, cb) {
 }
 
 /**
+* Record an audio file.
+*
+* @method recordAudioFile
+* @param {object} data
+*   @param {string} data.exten    The extension to be used for recording
+*   @param {string} data.filepath The path of the audio file to be stored
+* @param {function} cb            The callback function
+*/
+function recordAudioFile(data, cb) {
+    try {
+        // check parameters
+        if (   typeof data       !== 'object' || typeof cb            !== 'function'
+            || typeof data.exten !== 'string' || typeof data.filepath !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        logger.info(IDLOG, 'execute record audio file "' + data.filepath + '" with exten "' + data.exten + '"');
+        astProxy.doCmd({ command: 'recordAudioFile', exten: data.exten, filepath: data.filepath }, function (err) {
+            try {
+                if (err) {
+                    logger.error(IDLOG, 'recording audio file "' + data.filepath + '" with exten "' + data.exten + '"');
+                    cb(err);
+                    return;
+                }
+                logger.info(IDLOG, 'record audio file "' + data.filepath + '" with exten "' + data.exten + '" has been started');
+                cb(null);
+
+            } catch (err) {
+               logger.error(IDLOG, err.stack);
+               cb(err);
+            }
+        });
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+       cb(err);
+    }
+}
+
+/**
 * Alternates the logon and logout of the specified extension in all the queues
 * for which it's a dynamic member.
 *
@@ -5962,6 +6002,7 @@ exports.getJSONTrunks                   = getJSONTrunks;
 exports.queueMemberAdd                  = queueMemberAdd;
 exports.inoutDynQueues                  = inoutDynQueues;
 exports.getJSONParkings                 = getJSONParkings;
+exports.recordAudioFile                 = recordAudioFile;
 exports.getJSONQueuesQOS                = getJSONQueuesQOS;
 exports.redirectParking                 = redirectParking;
 exports.sendDTMFSequence                = sendDTMFSequence;

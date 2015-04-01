@@ -350,6 +350,13 @@ module.exports = function (options, imports, register) {
             getQueueIdsOfExten: astProxy.proxyLogic.getQueueIdsOfExten,
 
             /**
+            * It's the _recordAudioFile_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method recordAudioFile
+            */
+            recordAudioFile: astProxy.proxyLogic.recordAudioFile,
+
+            /**
             * It's the _isExtenDynMemberQueue_ method provided by _ast\_proxy.proxyLogic_.
             *
             * @method isExtenDynMemberQueue

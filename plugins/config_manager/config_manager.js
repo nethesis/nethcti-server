@@ -462,7 +462,7 @@ function wsClientDisconnectionListener(username) {
                 for (q in queueIds) {
 
                     if (   compAstProxy.isExtenDynMemberQueue(e, q)       // check if the member is of dynamic type
-                        && compAstProxy.isDynMemberLoggedInQueue(e, q)) { // check if the member is logged into the queue) {
+                        && compAstProxy.isDynMemberLoggedInQueue(e, q)) { // check if the member is logged into the queue
 
                         // remove dynamic queue member from the relative queue
                         logger.info(IDLOG, 'remove queue member "' + e + '" from queue "' + q + '" due to automatic logout setting');

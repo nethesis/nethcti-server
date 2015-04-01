@@ -20,7 +20,16 @@ var IDLOG = '[arch_com_upload_http]';
 
 module.exports = function (options, imports, register) {
 
-    register(null, { uploadHttp: {} });
+    register(null, {
+        uploadHttp: {
+            /**
+            * It's the _getUploadRootPath_ method provided by _server\_com\_upload\_http_ module.
+            *
+            * @method getUploadRootPath
+            */
+            getUploadRootPath: serverRest.getUploadRootPath
+        }
+    });
 
     var logger = console;
     if (imports.logger) { logger = imports.logger; }

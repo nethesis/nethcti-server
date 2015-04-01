@@ -56,6 +56,13 @@ module.exports = function (options, imports, register) {
             authorizeOffhourUser: authorization.authorizeOffhourUser,
 
             /**
+            * It's the _authorizeAdminOffhourUser_ method provided by _authorization_ module.
+            *
+            * @method authorizeAdminOffhourUser
+            */
+            authorizeAdminOffhourUser: authorization.authorizeAdminOffhourUser,
+
+            /**
             * It's the _authorizeOpExtensionsUser_ method provided by _authorization_ module.
             *
             * @method authorizeOpExtensionsUser
@@ -305,7 +312,21 @@ module.exports = function (options, imports, register) {
             *
             * @method getAllUsersAuthorizations
             */
-            getAllUsersAuthorizations: authorization.getAllUsersAuthorizations
+            getAllUsersAuthorizations: authorization.getAllUsersAuthorizations,
+
+            /**
+            * It's the _verifyOffhourUserAnnouncement_ method provided by _authorization_ module.
+            *
+            * @method verifyOffhourUserAnnouncement
+            */
+            verifyOffhourUserAnnouncement: authorization.verifyOffhourUserAnnouncement,
+
+            /**
+            * It's the _verifyOffhourListenAnnouncement_ method provided by _authorization_ module.
+            *
+            * @method verifyOffhourListenAnnouncement
+            */
+            verifyOffhourListenAnnouncement: authorization.verifyOffhourListenAnnouncement
         }
     });
 
@@ -313,6 +334,7 @@ module.exports = function (options, imports, register) {
         imports.user.on(imports.user.EVT_USERS_READY, function () {
             authorization.setLogger(logger);
             authorization.setUserModule(imports.user);
+            authorization.setCompDbconn(imports.dbconn);
             authorization.config({ type: 'file', path: '/etc/nethcti/users.json' });
         });
     } catch (err) {

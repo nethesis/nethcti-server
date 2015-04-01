@@ -37,6 +37,7 @@ var AUTHORIZATION_TYPES = {
     'admin_pickup':      'admin_pickup',
     'admin_postit':      'admin_postit',
     'admin_hangup':      'admin_hangup',
+    'admin_offhour':     'admin_offhour',
     'pickup_groups':     'pickup_groups',
     'customer_card':     'customer_card',
     'admin_transfer':    'admin_transfer',
