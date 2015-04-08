@@ -135,6 +135,47 @@ function getUserSettings(username, cb) {
 }
 
 /**
+* Gets default extension of all users. The settings are
+* stored in mysql table _user\_settings_.
+*
+* @method getAllUsersDefaultExtension
+* @param {function} cb The callback function
+*/
+function getAllUsersDefaultExtension(cb) {
+    try {
+        // check parameter
+        if (typeof cb !== 'function') { throw new Error('wrong parameter'); }
+
+        compDbconnMain.models[compDbconnMain.JSON_KEYS.USER_SETTINGS].findAll({
+            where: [ 'key_name="default_extension"' ],
+            attributes: [ 'username', ['value', 'default_exten'] ]
+
+        }).success(function (results) {
+
+            // extract results to return in the callback function
+            var i;
+            for (i = 0; i < results.length; i++) {
+                results[i] = results[i].selectedValues;
+            }
+
+            logger.info(IDLOG, results.length + ' results getting all users default extension');
+            cb(null, results);
+
+        }).error(function (err) { // manage the error
+
+            logger.error(IDLOG, 'getting all users default extension: ' + err.toString());
+            cb(err.toString());
+        });
+
+        compDbconnMain.incNumExecQueries();
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
 * Save the user notification settings. The settings are
 * stored in mysql table _user\_settings_.
 *
@@ -408,12 +449,13 @@ function saveUserSetting(username, keyName, value, cb) {
     }
 }
 
-apiList.getUserSettings           = getUserSettings;
-apiList.saveUserNotifySetting     = saveUserNotifySetting;
-apiList.saveUserAutoQueueLogin    = saveUserAutoQueueLogin;
-apiList.saveUserAutoQueueLogout   = saveUserAutoQueueLogout;
-apiList.saveUserDefaultExtension  = saveUserDefaultExtension;
-apiList.saveUserClick2CallSetting = saveUserClick2CallSetting;
+apiList.getUserSettings             = getUserSettings;
+apiList.saveUserNotifySetting       = saveUserNotifySetting;
+apiList.saveUserAutoQueueLogin      = saveUserAutoQueueLogin;
+apiList.saveUserAutoQueueLogout     = saveUserAutoQueueLogout;
+apiList.saveUserDefaultExtension    = saveUserDefaultExtension;
+apiList.saveUserClick2CallSetting   = saveUserClick2CallSetting;
+apiList.getAllUsersDefaultExtension = getAllUsersDefaultExtension;
 
 // public interface
 exports.apiList           = apiList;

@@ -232,7 +232,7 @@ module.exports = function (options, imports, register) {
             configManager.setCompAstProxy(imports.astProxy);
             configManager.setCompComNethctiWs(imports.com_nethcti_ws);
             configManager.config('/etc/nethcti/nethcti.json');
-            configManager.configUser('/etc/nethcti/users.json');
+            configManager.configUser();
             configManager.configChat('/etc/nethcti/chat.json');
             configManager.configPhoneUrls('/etc/nethcti/phone_urls.json');
         });

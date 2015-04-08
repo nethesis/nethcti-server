@@ -867,6 +867,29 @@ function getAllEndpointsExtension(username) {
 }
 
 /**
+* Returns all the extension endpoints of all users.
+*
+* @method getAllUsersEndpointsExtension
+* @return {object} Returns all the extension endpoints of all users.
+*/
+function getAllUsersEndpointsExtension() {
+    try {
+        var res = {};
+        var username, endpoints;
+
+        for (username in users) {
+            endpoints     = users[username].getAllEndpoints();
+            res[username] = endpoints[endpointTypes.TYPES.extension];
+        }
+        return res;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return {};
+    }
+}
+
+/**
 * Returns all users associated with the specified extension endpoint.
 *
 * @method getUsersUsingEndpointExtension
@@ -964,6 +987,7 @@ exports.getAllEndpointsExtension       = getAllEndpointsExtension;
 exports.getAllEndpointsCellphone       = getAllEndpointsCellphone;
 exports.getAllEndpointsEmail           = getAllEndpointsEmail;
 exports.getAllUsersEndpointsJSON       = getAllUsersEndpointsJSON;
+exports.getAllUsersEndpointsExtension  = getAllUsersEndpointsExtension;
 exports.EVT_ENDPOINT_PRESENCE_CHANGED  = EVT_ENDPOINT_PRESENCE_CHANGED;
 exports.getUsersUsingEndpointExtension = getUsersUsingEndpointExtension;
 exports.getUsersUsingEndpointVoicemail = getUsersUsingEndpointVoicemail;

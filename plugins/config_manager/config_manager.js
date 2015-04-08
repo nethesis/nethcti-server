@@ -5,6 +5,7 @@
 * @main arch_config_manager
 */
 var fs               = require('fs');
+var async            = require('async');
 var NOTIF_WHEN       = require('./user_config_keys').NOTIF_WHEN;
 var USER_CONFIG_KEYS = require('./user_config_keys').USER_CONFIG_KEYS;
 
@@ -211,27 +212,116 @@ function setCompAstProxy(comp) {
 }
 
 /**
-* It reads the configuration file and set the options in the User
-* objects using the _user_ module.
+* Initialize all user settings reading data from the _nethcti2.user\_settings_ database.
 *
 * @method configUser
-* @param {string} path The path of the configuration file with user endpoints, authorizations, ...
 */
 function configUser(path) {
     try {
-        // check parameter
-        if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
+        // sequentially executes two operations:
+        //     1. sanitize default user extensions on "nethcti2.user_settings" db
+        //     2. load all users settings
+        //
+        // sanitize is needed because when the admin changes a user extension association
+        // the default user extension into "nethcti2.user_settings" db is wrong. So it checks
+        // if the default user extension belongs to the user and if is not it replaces the value
+        // with an associated extension of the user
+        async.waterfall([
 
-        // check file presence
-        if (!fs.existsSync(path)) { throw new Error(path + ' does not exist'); }
+            // get all users default extension from db nethcti2.user_settings
+            function (callbackWaterfall) {
+                compDbconn.getAllUsersDefaultExtension(function (err, results) {
+                    try {
+                        if (err) {
+                            logger.error(IDLOG, 'getting all users default extension from db: ' + err);
+                            callbackWaterfall(err);
 
-        logger.info(IDLOG, 'configure users with ' + path);
+                        } else {
+                            callbackWaterfall(null, results);
+                        }
+                    } catch (err) {
+                        logger.error(IDLOG, err.stack);
+                        callbackWaterfall(err);
+                    }
+                });
+            },
 
-        // read the user configuration file (endpoint associations, authorizations, ...)
-        contentConfJson = require(path);
-        logger.info(IDLOG, 'user configurations by ' + path + ' ended');
+            // for each user check if the default extension belongs to him. If it's not it
+            // fixes it into the database with an associated extension of the user
+            function (arrDbAllUsersDefaultExtension, callbackWaterfall) {
+                try {
+                    logger.info(IDLOG, 'consistency checking of db default extensions');
+                    var i, username, defaultExten, replaceValue;
 
-        loadAllUsersSettings();
+                    // contains default extensions to be fixed into the database
+                    // each object contains the following keys:
+                    //     1. "username"
+                    //     2. "replaceValue": value to be used to replace the wrong value
+                    var arrUsersToBeFixed = [];
+
+                    for (i = 0; i < arrDbAllUsersDefaultExtension.length; i++) {
+
+                        username     = arrDbAllUsersDefaultExtension[i].username;
+                        defaultExten = arrDbAllUsersDefaultExtension[i].default_exten;
+
+                        if (!compUser.hasExtensionEndpoint(username, defaultExten)) {
+
+                            // default extension present into the db does not belong to its user, so it
+                            // is wrong and must be replaced with an extension associated with the user
+                            replaceValue = Object.keys(compUser.getAllEndpointsExtension(username))[0];
+                            arrUsersToBeFixed.push({ username: username, replaceValue: replaceValue });
+                        }
+                    }
+
+                    if (arrUsersToBeFixed.length === 0) {
+                        logger.info(IDLOG, 'no db default extension to fix');
+                        callbackWaterfall(null);
+
+                    } else {
+                        logger.info(IDLOG, 'found #' + arrUsersToBeFixed.length + ' db default extension to be fixed');
+
+                        // replace value into the database
+                        async.eachSeries(arrUsersToBeFixed, function (obj, seriesCb) {
+
+                            compDbconn.saveUserDefaultExtension({ username: obj.username, exten: obj.replaceValue }, function (err) {
+                                try {
+                                    if (err) {
+                                        logger.error(IDLOG, 'fixing db default extension "' + obj.replaceValue + '" for user "' + obj.username + '"');
+                                        seriesCb(err);
+                                    } else {
+                                        logger.info(IDLOG, 'fixed db default extension "' + obj.replaceValue + '" for user "' + obj.username + '"');
+                                        seriesCb(null);
+                                    }
+                                } catch (err) {
+                                    logger.error(IDLOG, err.stack);
+                                    seriesCb(err);
+                                }
+                            });
+
+                        }, function (err) {
+
+                            if (err) {
+                                logger.error(IDLOG, 'fixing db default extension: ' + err.toString());
+                                callbackWaterfall(err);
+                            }
+                            else {
+                                callbackWaterfall(null);
+                            }
+                        });
+                    }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    callbackWaterfall(err);
+                }
+            }
+
+        ], function (err) {
+
+            if (err) { logger.error(IDLOG, err); }
+            logger.info(IDLOG, 'checking database default extensions completed');
+            loadAllUsersSettings();
+        });
 
     } catch (err) {
         logger.error(IDLOG, err.stack);

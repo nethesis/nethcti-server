@@ -1132,12 +1132,12 @@ function authorizedCustomerCards(username) {
 }
 
 /**
-* Checks if the endpoint is owned by the specified user.
+* Checks if the extension endpoint is owned by the specified user.
 *
 * @method verifyUserEndpointExten
 * @param  {string}  username The username
-* @param  {string}  endpoint The identifier of the endpoint
-* @return {boolean} True if the endpoint is owned by the user, false otherwise.
+* @param  {string}  endpoint The identifier of the extension endpoint
+* @return {boolean} True if the extension endpoint is owned by the user, false otherwise.
 */
 function verifyUserEndpointExten(username, endpoint) {
     try {
