@@ -186,11 +186,18 @@ function configSipWebrtc(path) {
         var json = require(path);
 
         // check the configuration file content
-        if (typeof json !== 'object' || typeof json.stun_addr !== 'string') {
+        if (   typeof json                              !== 'object'
+            || typeof json.stun_server_address          !== 'string'
+            || typeof json.enabled                      !== 'string'
+            || (json.enabled !== 'true' && json.enabled !== 'false')) {
+
             throw new Error('wrong configuration file ' + path);
         }
 
-        sipWebrtcConf = { stun_server_address: json.stun_addr };
+        sipWebrtcConf = {
+            enabled:             json.enabled,
+            stun_server_address: json.stun_server_address
+        };
 
         logger.info(IDLOG, 'sip webrtc successfully configured');
 
