@@ -1,18 +1,22 @@
 {
-   my $ports_str = ${'nethcti-server'}{TCPPorts} || "8179,8180,8181,8182,8183";
+   my $ports_str = ${'nethcti-server'}{TCPPorts} || "8179,8180";
+   my $ports_str_unsecure = ${'nethcti-server-unsecure'}{TCPPorts} || "8182,8183";
+   my $ports_str_secure = ${'nethcti-server-secure'}{TCPPorts} || "8181";
    our @ports = split(',', $ports_str);
+   our @ports_unsecure = split(',', $ports_str_unsecure);
+   our @ports_secure = split(',', $ports_str_secure);
    return "";
 }
 \{
     "tcp": \{
-        "port":           "{$ports[3]}",
+        "port":           "{$ports_unsecure[0]}",
         "https_key":      "/etc/pki/tls/private/localhost.key",
         "https_cert":     "/etc/pki/tls/certs/localhost.crt",
         "base_templates": "http://{$SystemName}.{$DomainName}/webrest/static/templates/notification_popup"
     \},
     "websocket": \{
-        "http_port":  "{$ports[4]}",
-        "https_port": "{$ports[2]}",
+        "http_port":  "{$ports_unsecure[1]}",
+        "https_port": "{$ports_secure[0]}",
         "https_key":  "/etc/nethcti/nethcti.pem",
         "https_cert": "/etc/nethcti/nethcti.pem"
     \},
