@@ -1,0 +1,7 @@
+        "static": \{
+            "port": "10013",
+            "address": "localhost",
+            "webroot": "/var/lib/nethserver/nethcti/static"
+        \}
+    \}
+\}
