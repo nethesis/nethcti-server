@@ -32,6 +32,7 @@ mkdir -p root/etc/nethcti
 mkdir -p root/var/lib/asterisk/bin
 mkdir -p root/var/spool/asterisk/monitor
 mkdir -p root/var/spool/nethcti/sms
+mkdir -p root/var/lib/nethserver/nethcti/upload
 mkdir -p root/var/lib/nethserver/nethcti/templates/notification_manager
 mkdir -p root/var/lib/nethserver/nethcti/templates/customer_card
 mkdir -p root/var/lib/nethserver/nethcti/static
