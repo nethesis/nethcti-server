@@ -57,8 +57,8 @@ mv root/usr/lib/node/nethcti-server/plugins/com_static_http/static/templates  $R
 --dir /etc/nethcti 'attr(0775,asterisk,asterisk)' \
 --dir /var/lib/nethserver/nethcti/static 'attr(0775,asterisk,asterisk)' \
 --dir /var/lib/asterisk 'attr(0775,asterisk,asterisk)' \
---dir /var/lib/asterisk/bin 'attr(0775,asterisk,asterisk)' $RPM_BUILD_ROOT > %{name}-%{version}-filelist
 --dir /var/lib/nethserver/nethcti/upload 'attr(0775,asterisk,asterisk)' \
+--dir /var/lib/asterisk/bin 'attr(0775,asterisk,asterisk)' $RPM_BUILD_ROOT > %{name}-%{version}-filelist
 
 %clean
 rm -rf $RPM_BUILD_ROOT
