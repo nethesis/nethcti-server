@@ -65,7 +65,6 @@ rm -rf $RPM_BUILD_ROOT
 
 %files -f %{name}-%{version}-filelist
 %defattr(-,root,root,-)
-%config(noreplace) /var/lib/nethserver/nethcti/static/img/logo.png
 
 %doc
 
