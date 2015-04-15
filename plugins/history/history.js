@@ -157,7 +157,7 @@ function getHistoryCallInterval(data, cb) {
 *   @param {boolean} data.recording    True if the data about recording audio file must be returned
 *   @param {string}  [data.filter]     The filter to be used
 *   @param {string}  [data.privacyStr] The sequence to be used to hide the numbers to respect the privacy
-* @param {function} cb         The callback function
+* @param {function} cb                 The callback function
 */
 function getHistorySwitchCallInterval(data, cb) {
     try {
@@ -174,10 +174,22 @@ function getHistorySwitchCallInterval(data, cb) {
         logger.info(IDLOG, 'search switchboard history call between ' + data.from + ' to ' + data.to + ' for ' +
                            'all endpoints and filter ' + (data.filter ? data.filter : '""') +
                            (data.recording ? ' with recording data' : '') );
-        dbconn.getHistoryCallInterval(data, cb);
+
+        // add trunks name to the results as explained in #3621
+        // It will be removed when #3622 will be done: when calls direction
+        // will be calculated by the server
+        var k;
+        var trunkNames = compAstProxy.getJSONTrunks();
+        // remove trunk details
+        for (k in trunkNames) { trunkNames[k] = ''; }
+
+        dbconn.getHistoryCallInterval(data, function (err, results) {
+            cb(err, { results: results, trunkNames: trunkNames });
+        });
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
+        cb(err);
     }
 }
 
