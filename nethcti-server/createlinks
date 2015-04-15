@@ -41,6 +41,7 @@ safe_symlink("restart", "root/etc/e-smith/events/$event/services2adjust/nethcti-
 #
 $event = "certificate-update";
 templates2events("/etc/nethcti/nethcti.pem",$event);
+safe_symlink("restart", "root/etc/e-smith/events/$event/services2adjust/nethcti-server");
 
 #
 # actions for migration-import event
