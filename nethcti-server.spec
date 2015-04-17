@@ -10,7 +10,7 @@ Source1:	nethcti-server-source.tar.gz
 
 BuildRequires:	nethserver-devtools
 Requires:	nodejs010-nodejs
-Requires:       nethvoice-module-nethcti > 2.2.1
+Requires:       nethvoice-module-nethcti > 2.2.1-1.6
 AutoReq:	no
 
 
