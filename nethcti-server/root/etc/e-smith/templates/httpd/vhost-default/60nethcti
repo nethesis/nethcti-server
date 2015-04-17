@@ -2,7 +2,7 @@
 # 60NethCTI
 #
 {
-    my $ports_str = ${'nethcti-server'}{TCPPorts} || "8179,8180";
+    my $ports_str = ${'nethcti-server'}{TCPPorts} || "8179,8180,8181,8182,8183";
     my @ports = split(',', $ports_str);
 
     if ($Port == 80 || ! defined $SslMode)
