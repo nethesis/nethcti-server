@@ -210,6 +210,20 @@ module.exports = function (options, imports, register) {
             call: astProxy.proxyLogic.call,
 
             /**
+            * It's the _muteConversation_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method mute
+            */
+            muteConversation: astProxy.proxyLogic.muteConversation,
+
+            /**
+            * It's the _unmuteConversation_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method unmute
+            */
+            unmuteConversation: astProxy.proxyLogic.unmuteConversation,
+
+            /**
             * It's the _sendDtmfToConversation_ method provided by _ast\_proxy.proxyLogic_.
             *
             * @method sendDtmfToConversation

@@ -449,6 +449,8 @@ var compConfigManager;
         * 1. [`astproxy/park`](#parkpost)
         * 1. [`astproxy/call`](#callpost)
         * 1. [`astproxy/cfvm`](#cfvmpost)
+        * 1. [`astproxy/mute`](#mutepost)
+        * 1. [`astproxy/unmute`](#unmutepost)
         * 1. [`astproxy/cfcall`](#cfcallpost)
         * 1. [`astproxy/atxfer`](#atxferpost)
         * 1. [`astproxy/answer`](#answerpost)
@@ -533,6 +535,36 @@ var compConfigManager;
         * status to _off_ for _astproxy/cfcall_ type, automatically set to _off_ also the _astproxy/cfvm_
         * type and vice versa. Or setting to _on_ the _astproxy/cfcall_ type, automatically set to
         * _off_ the _astproxy/cfvm_ type.
+        *
+        * ---
+        *
+        * ### <a id="mutepost">**`astproxy/mute`**</a>
+        *
+        * Mute audio of the conversation on both sides. The request must contains
+        * the following parameters:
+        *
+        * * `convid: the conversation identifier`
+        * * `endpointId: the endpoint identifier that has the conversation to mute. The user must be the owner of the endpoint.`
+        * * `endpointType: the type of the endpoint that has the conversation to mute`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "214" }
+        *
+        * ---
+        *
+        * ### <a id="unmutepost">**`astproxy/unmute`**</a>
+        *
+        * Unmute audio of the conversation on both sides. The request must contains
+        * the following parameters:
+        *
+        * * `convid: the conversation identifier`
+        * * `endpointId: the endpoint identifier that has the conversation to unmute. The user must be the owner of the endpoint.`
+        * * `endpointType: the type of the endpoint that has the conversation to unmute`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "214" }
         *
         * ---
         *
@@ -983,7 +1015,9 @@ var compConfigManager;
                 *   @param {string} dnd                   Sets the don't disturb status of the endpoint of the user
                 *   @param {string} park                  Park a conversation of the user
                 *   @param {string} call                  Make a new call
+                *   @param {string} mute                  Mute a call
                 *   @param {string} cfvm                  Sets the call forward status of the endpoint of the user to a destination voicemail
+                *   @param {string} unmute                Unmute a call
                 *   @param {string} cfcall                Sets the call forward status of the endpoint of the user to a destination number
                 *   @param {string} atxfer                Transfer a conversation with attended type
                 *   @param {string} answer                Answer a conversation from the extension
@@ -1014,7 +1048,9 @@ var compConfigManager;
                     'dnd',
                     'park',
                     'call',
+                    'mute',
                     'cfvm',
+                    'unmute',
                     'cfcall',
                     'atxfer',
                     'answer',
@@ -1816,6 +1852,138 @@ var compConfigManager;
 
                     } else {
                         logger.warn(IDLOG, 'parking the conversation ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType);
+                        compUtil.net.sendHttp400(IDLOG, res);
+                    }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * Mute a conversation with the following REST API:
+            *
+            *     POST mute
+            *
+            * @method mute
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            mute: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (   typeof req.params              !== 'object'
+                        || typeof req.params.convid       !== 'string'
+                        || typeof req.params.endpointId   !== 'string'
+                        || typeof req.params.endpointType !== 'string') {
+
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    if (req.params.endpointType === 'extension') {
+
+                        // check if the endpoint of the request is owned by the user
+                        if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) !== true) {
+
+                            logger.warn(IDLOG, 'mute convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
+                                               ' the ' + req.params.endpointType + ' ' + req.params.endpointId + ' is not owned by the user');
+                            compUtil.net.sendHttp403(IDLOG, res);
+                            return;
+
+                        } else {
+                            logger.info(IDLOG, 'mute convid "' + req.params.convid + '": the endpoint ' + req.params.endpointType +
+                                               ' ' + req.params.endpointId + ' is owned by "' + username + '"');
+                        }
+
+                        compAstProxy.muteConversation(req.params.endpointType, req.params.endpointId, req.params.convid, function (err, response) {
+                            try {
+                                if (err) {
+                                    logger.warn(IDLOG, 'mute convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId + ' has been failed');
+                                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                                    return;
+                                }
+                                logger.info(IDLOG, 'convid ' + req.params.convid + ' has been muted successfully by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId);
+                                compUtil.net.sendHttp200(IDLOG, res);
+
+                            } catch (err) {
+                                logger.error(IDLOG, err.stack);
+                                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                            }
+                        });
+
+                    } else {
+                        logger.warn(IDLOG, 'mute the conversation ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType);
+                        compUtil.net.sendHttp400(IDLOG, res);
+                    }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * Unmute a conversation with the following REST API:
+            *
+            *     POST unmute
+            *
+            * @method mute
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            unmute: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (   typeof req.params              !== 'object'
+                        || typeof req.params.convid       !== 'string'
+                        || typeof req.params.endpointId   !== 'string'
+                        || typeof req.params.endpointType !== 'string') {
+
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    if (req.params.endpointType === 'extension') {
+
+                        // check if the endpoint of the request is owned by the user
+                        if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) !== true) {
+
+                            logger.warn(IDLOG, 'unmute convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
+                                               ' the ' + req.params.endpointType + ' ' + req.params.endpointId + ' is not owned by the user');
+                            compUtil.net.sendHttp403(IDLOG, res);
+                            return;
+
+                        } else {
+                            logger.info(IDLOG, 'unmute convid "' + req.params.convid + '": the endpoint ' + req.params.endpointType +
+                                               ' ' + req.params.endpointId + ' is owned by "' + username + '"');
+                        }
+
+                        compAstProxy.unmuteConversation(req.params.endpointType, req.params.endpointId, req.params.convid, function (err, response) {
+                            try {
+                                if (err) {
+                                    logger.warn(IDLOG, 'unmute convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId + ' has been failed');
+                                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                                    return;
+                                }
+                                logger.info(IDLOG, 'convid ' + req.params.convid + ' has been unmuted successfully by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId);
+                                compUtil.net.sendHttp200(IDLOG, res);
+
+                            } catch (err) {
+                                logger.error(IDLOG, err.stack);
+                                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                            }
+                        });
+
+                    } else {
+                        logger.warn(IDLOG, 'unmute the conversation ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType);
                         compUtil.net.sendHttp400(IDLOG, res);
                     }
 
@@ -3433,7 +3601,9 @@ var compConfigManager;
         exports.dnd                   = astproxy.dnd;
         exports.park                  = astproxy.park;
         exports.call                  = astproxy.call;
+        exports.mute                  = astproxy.mute;
         exports.cfvm                  = astproxy.cfvm;
+        exports.unmute                = astproxy.unmute;
         exports.cfcall                = astproxy.cfcall;
         exports.queues                = astproxy.queues;
         exports.trunks                = astproxy.trunks;
