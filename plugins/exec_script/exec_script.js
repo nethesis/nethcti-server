@@ -6,7 +6,6 @@
 */
 var fs           = require('fs');
 var childProcess = require('child_process');
-var EventEmitter = require('events').EventEmitter;
 
 /**
 * Provides the functionalities to execute scripts.
