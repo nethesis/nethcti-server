@@ -26,6 +26,7 @@ module.exports = function (options, imports, register) {
 
     // attach some extra static apis
     dbconnPluginsManager.apiDbconn.on        = dbconnMain.on;
+    dbconnPluginsManager.apiDbconn.getStats  = dbconnMain.getStats;
     dbconnPluginsManager.apiDbconn.EVT_READY = dbconnMain.EVT_READY;
 
     // public interface for other architect components

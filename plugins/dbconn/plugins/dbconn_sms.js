@@ -4,6 +4,7 @@
 * @module dbconn
 * @submodule plugins
 */
+var moment = require('moment');
 
 /**
 * The module identifier used by the logger.

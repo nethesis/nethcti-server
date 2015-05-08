@@ -15,9 +15,9 @@ module.exports = function (sequelize, DataTypes) {
         max_hold:     DataTypes.FLOAT,
         min_hold:     DataTypes.FLOAT,
         avg_hold:     DataTypes.FLOAT,
-        tot_duration:     DataTypes.FLOAT,
-        max_duration:     DataTypes.FLOAT,
-        min_duration:     DataTypes.FLOAT,
-        avg_duration:     DataTypes.FLOAT
+        tot_duration: DataTypes.FLOAT,
+        max_duration: DataTypes.FLOAT,
+        min_duration: DataTypes.FLOAT,
+        avg_duration: DataTypes.FLOAT
     });
 }
