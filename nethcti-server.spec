@@ -1,5 +1,5 @@
 Name:		nethcti-server
-Version:	2.3
+Version:	2.4
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI 2
 
@@ -69,6 +69,22 @@ rm -rf $RPM_BUILD_ROOT
 %doc
 
 %changelog
+* Fri May 15 2015 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.4-1
+- Fea #3588: new support to specify a stun server address
+- Fea #3552: new asterisk action command to record a new audio file by phone
+- Fea #3498: new upload service
+- Fea #3447: extend database component to be pluggable
+- Fea #363: new "offhour" service for night service customization
+- Enh #3686: rpm: removed requires of nethcti
+- Enh #3667: new fragment template to open websocket secure port (8181) with lokkit and shorewall firewall
+- Enh #3641: always set mysql password for nethcti2 db when signal-event nethcti-server-update
+- Enh #3621: histcallswitch rest api must returns also the trunk names list
+- Bug #3671: wrong status of user in the operator panel when setting dnd from the phone
+- Bug #3633: server cti does not restart when certificate-update event.
+- Bug #3602: wrong default extension
+- Bug #3575: phonebook problems with null values
+- Bug #3491: no sip phone webrtc audio ringing
+
 * Wed Feb 18 2015 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.3-1
 - Fea #3403: new Rest Api to send DTMF tones
 - Fea #3342: add old removed feature to execute an external script on "cdr" asterisk event
