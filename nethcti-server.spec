@@ -1,5 +1,5 @@
 Name:		nethcti-server
-Version:	2.4.0
+Version:	2.4.1
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI 2
 
@@ -69,6 +69,9 @@ rm -rf $RPM_BUILD_ROOT
 %doc
 
 %changelog
+* Wed Jun 10 2015 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.4.1-1
+- Enh #3743: add favicon file into http static component
+
 * Fri May 15 2015 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.4-1
 - Fea #3588: new support to specify a stun server address
 - Fea #3552: new asterisk action command to record a new audio file by phone
