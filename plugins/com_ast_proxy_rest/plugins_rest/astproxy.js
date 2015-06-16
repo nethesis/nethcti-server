@@ -540,8 +540,8 @@ var compConfigManager;
         *
         * ### <a id="mutepost">**`astproxy/mute`**</a>
         *
-        * Mute audio of the conversation on both sides. The request must contains
-        * the following parameters:
+        * Mute audio of the conversation in one direction only. The specified endpointId is able to listen.
+        * The request must contains the following parameters:
         *
         * * `convid: the conversation identifier`
         * * `endpointId: the endpoint identifier that has the conversation to mute. The user must be the owner of the endpoint.`
@@ -1015,7 +1015,7 @@ var compConfigManager;
                 *   @param {string} dnd                   Sets the don't disturb status of the endpoint of the user
                 *   @param {string} park                  Park a conversation of the user
                 *   @param {string} call                  Make a new call
-                *   @param {string} mute                  Mute a call
+                *   @param {string} mute                  Mute a call in one direction only. The specified endpointId is able to listen
                 *   @param {string} cfvm                  Sets the call forward status of the endpoint of the user to a destination voicemail
                 *   @param {string} unmute                Unmute a call
                 *   @param {string} cfcall                Sets the call forward status of the endpoint of the user to a destination number
@@ -1862,7 +1862,8 @@ var compConfigManager;
             },
 
             /**
-            * Mute a conversation with the following REST API:
+            * Mute a conversation in one direction only. The specified endpointId is able to listen.
+            * It does this with the following REST API:
             *
             *     POST mute
             *

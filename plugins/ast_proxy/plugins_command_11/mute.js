@@ -38,7 +38,7 @@ var IDLOG = '[mute]';
         var map = {};
 
         /**
-        * Command plugin to mute a call.
+        * Command plugin to mute a call in one direction only. The specified channel is able to listen.
         *
         * Use it with _ast\_proxy_ module as follow:
         *
@@ -53,7 +53,7 @@ var IDLOG = '[mute]';
         var mute = {
 
             /**
-            * Execute asterisk action to mute a call.
+            * Execute asterisk action to mute a call in one direction only. The specified channel is able to listen.
             * 
             * @method execute
             * @param {object}   am   Asterisk manager to send the action
@@ -67,7 +67,7 @@ var IDLOG = '[mute]';
                     var act = {
                         Action:    'MuteAudio',
                         Channel:   args.channel,
-                        Direction: 'all',
+                        Direction: 'in',
                         State:     'on'
                     };
                     
