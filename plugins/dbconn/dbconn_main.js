@@ -491,6 +491,7 @@ exports.getStats          = getStats;
 exports.EVT_READY         = EVT_READY;
 exports.JSON_KEYS         = JSON_KEYS;
 exports.setLogger         = setLogger;
+exports.isMssqlType       = isMssqlType;
 exports.configDbStatic    = configDbStatic;
 exports.configDbDynamic   = configDbDynamic;
 exports.incNumExecQueries = incNumExecQueries;
