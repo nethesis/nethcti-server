@@ -1,5 +1,5 @@
 Name:		nethcti-server
-Version:	2.4.1.0
+Version:	2.4.2
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI 2
 
@@ -69,6 +69,9 @@ rm -rf $RPM_BUILD_ROOT
 %doc
 
 %changelog
+* Mon Jun 22 2015 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.4.2-1
+- Bug #3775: mssql customer cards does not work
+
 * Wed Jun 10 2015 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.4.1-1
 - Enh #3743: add favicon file into http static component
 
