@@ -4,6 +4,7 @@
 * @module dbconn
 * @submodule plugins
 */
+var mssql = require('mssql');
 
 /**
 * The module identifier used by the logger.
@@ -154,7 +155,7 @@ function getCustomerCardByNum(type, num, cb) {
                 cb(err1.toString());
             });
 
-        } else if (isMssqlType(compDbconnMain.dbConfig[type].dbtype)) {
+        } else if (compDbconnMain.isMssqlType(compDbconnMain.dbConfig[type].dbtype)) {
 
             var query = compDbconnMain.dbConfig[type].query.replace(/\$EXTEN/g, num);
 
