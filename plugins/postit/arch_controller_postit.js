@@ -66,6 +66,13 @@ module.exports = function (options, imports, register) {
             deletePostit: controllerPostit.deletePostit,
 
             /**
+            * It's the _modifyPostit_ method provided by _controller\_postit_ module.
+            *
+            * @method modifyPostit
+            */
+            modifyPostit: controllerPostit.modifyPostit,
+
+            /**
             * It's the _getHistoryInterval_ method provided by _controller\_postit_ module.
             *
             * @method getHistoryInterval

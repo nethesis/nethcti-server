@@ -34,6 +34,21 @@ var IDLOG = '[plugins/dbconn_postit]';
 var EVT_DELETED_POSTIT = 'deletedPostit';
 
 /**
+* Fired when a post-it has been modified from the database by the _modifyPostit_ method.
+*
+* @event modifiedPostit
+* @param {object} user The recipient of the modified post-it
+*/
+/**
+* The name of the modified post-it message event.
+*
+* @property EVT_MODIFIED_POSTIT
+* @type string
+* @default "modifiedPostit"
+*/
+var EVT_MODIFIED_POSTIT = 'modifiedPostit';
+
+/**
 * Fired when the read status of a post-it has been set in the database by the _updatePostitReadIt_ method.
 *
 * @event postitReadIt
@@ -211,7 +226,7 @@ function getPostit(id, cb) {
 }
 
 /**
-* Deletes the specified postit from the _cti\postit_ database table.
+* Deletes the specified postit from the cti _postit_ database table.
 *
 * @method deletePostit
 * @param {string}   id The post-it identifier
@@ -250,6 +265,57 @@ function deletePostit(id, cb) {
         }).error(function (err1) { // manage the error
 
             logger.error(IDLOG, 'searching post-it with db id "' + id + '" to delete: ' + err1.toString());
+            cb(err1.toString());
+        });
+
+        compDbconnMain.incNumExecQueries();
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Changes the specified postit from the cti _postit_ database table.
+*
+* @method modifyPostit
+* @param {string}   id   The post-it identifier
+* @param {string}   text The text of the post-it
+* @param {function} cb   The callback function
+*/
+function modifyPostit(id, text, cb) {
+    try {
+        // check parameters
+        if (typeof id !== 'string' || typeof text !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        compDbconnMain.models[compDbconnMain.JSON_KEYS.POSTIT].find({
+            where: [ 'id=?', id  ]
+
+        }).success(function (task) {
+
+            if (task) {
+
+                task.updateAttributes({ text: text }).success(function () {
+                    logger.info(IDLOG, 'post-it with db id "' + id + '" has been modified successfully');
+                    cb();
+
+                    // emits the event for a deleted post-it
+                    logger.info(IDLOG, 'emit event "' + EVT_MODIFIED_POSTIT + '" of post-it with db id ' + id + ' of recipient user ' + task.selectedValues.recipient);
+                    emitter.emit(EVT_MODIFIED_POSTIT, task.selectedValues.recipient);
+                });
+
+            } else {
+                var str = 'modifying post-it with db id "' + id + '": entry not found';
+                logger.warn(IDLOG, str);
+                cb(str);
+            }
+
+        }).error(function (err1) { // manage the error
+
+            logger.error(IDLOG, 'searching post-it with db id "' + id + '" to modify: ' + err1.toString());
             cb(err1.toString());
         });
 
@@ -494,8 +560,10 @@ function getAllUserHistoryPostitInterval(data, cb) {
 apiList.getPostit                       = getPostit;
 apiList.savePostit                      = savePostit;
 apiList.deletePostit                    = deletePostit;
+apiList.modifyPostit                    = modifyPostit;
 apiList.updatePostitReadIt              = updatePostitReadIt;
 apiList.EVT_DELETED_POSTIT              = EVT_DELETED_POSTIT;
+apiList.EVT_MODIFIED_POSTIT             = EVT_MODIFIED_POSTIT;
 apiList.getHistoryPostitInterval        = getHistoryPostitInterval;
 apiList.getAllUnreadPostitOfRecipient   = getAllUnreadPostitOfRecipient;
 apiList.getAllUserHistoryPostitInterval = getAllUserHistoryPostitInterval;

@@ -262,6 +262,29 @@ function deletePostit(id, cb) {
 }
 
 /**
+* Changes the post-it with the specified unique identifier.
+*
+* @method modifyPostit
+* @param {string}   id   The unique identifier of the post-it message
+* @param {string}   text The text of the post-it message
+* @param {function} cb   The callback function
+*/
+function modifyPostit(id, text, cb) {
+    try {
+        // check parameters
+        if (typeof id !== 'string' || typeof text !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        logger.info(IDLOG, 'modify postit with id "' + id + '" by means dbconn module');
+        dbconn.modifyPostit(id, text, cb);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Creates a new post-it and save it in the database.
 *
 * @method newPostit
@@ -621,6 +644,7 @@ exports.setDbconn                 = setDbconn;
 exports.readPostit                = readPostit;
 exports.getNewPostit              = getNewPostit;
 exports.deletePostit              = deletePostit;
+exports.modifyPostit              = modifyPostit;
 exports.EVT_NEW_POSTIT            = EVT_NEW_POSTIT;
 exports.getHistoryInterval        = getHistoryInterval;
 exports.EVT_UPDATE_NEW_POSTIT     = EVT_UPDATE_NEW_POSTIT;
