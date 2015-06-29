@@ -195,6 +195,7 @@ function setCompUtil(comp) {
         * # POST requests
         *
         * 1. [`postit/create`](#createpost)
+        * 1. [`postit/modify`](#modifypost)
         * 1. [`postit/delete`](#deletepost)
         *
         * ---
@@ -209,6 +210,19 @@ function setCompUtil(comp) {
         * Example JSON request parameters:
         *
         *     { "text": "message text", "recipient": "john"  }
+        *
+        * ---
+        *
+        * ### <a id="modifypost">**`postit/modify`**</a>
+        *
+        * The client changes his post-it.
+        *
+        * * `id: the database identifier of the post-it`
+        * * `text: the text of the post-it`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "id": "76", text": "modified text" }
         *
         * ---
         *
@@ -252,10 +266,12 @@ function setCompUtil(comp) {
                 * @type {array}
                 *
                 *   @param {string} create To create a new post-it for a user
+                *   @param {string} modify To modify a post-it of a user
                 *   @param {string} delete To delete the post-it
                 */
                 'post' : [
                     'create',
+                    'modify',
                     'delete'
                 ],
                 'head':  [],
@@ -457,6 +473,80 @@ function setCompUtil(comp) {
             },
 
             /**
+            * Changes the specified post-it by the following REST API:
+            *
+            *     modify
+            *
+            * @method modify
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            modify: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (   typeof req.params      !== 'object'
+                        || typeof req.params.id   !== 'string'
+                        || typeof req.params.text !== 'string') {
+
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    var id      = req.params.id;
+                    var newText = req.params.text;
+
+                    // check the postit & administration postit authorization
+                    if (   compAuthorization.authorizePostitUser(username)      !== true
+                        && compAuthorization.authorizeAdminPostitUser(username) !== true) {
+
+                        logger.warn(IDLOG, 'modifying postit: "postit" & "admin_postit" authorizations failed for user "' + username + '" !');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+
+                    if (compAuthorization.authorizeAdminPostitUser(username) === true) {
+                        logger.info(IDLOG, 'modifying postit: "admin_postit" authorization successfully for user "' + username + '"');
+                    }
+
+                    if (compAuthorization.authorizePostitUser(username) === true) {
+                        logger.info(IDLOG, 'modifying postit: "postit" authorization successfully for user "' + username + '"');
+                    }
+
+                    compPostit.getPostit(id, function (err, result) {
+
+                        if (err) {
+                            logger.error(IDLOG, 'getting post-it with db id "' + id + '" to modify by user "' + username + '"');
+                            compUtil.net.sendHttp500(IDLOG, res, err.toString());
+
+                        } else {
+                            // check the user authorization. If the user has the "admin_postit" authorization he can modify the postit.
+                            // If the user has only the "postit" authorization he can modify only his created postit
+                            if (compAuthorization.authorizeAdminPostitUser(username) === true
+                                || (
+                                    compAuthorization.authorizePostitUser(username) === true
+                                    && result.creator === username
+                                   )
+                                ) {
+
+                                logger.info(IDLOG, 'modify postit with db id "' + id + '" by user "' + username + '"');
+                                modifyPostit(id, newText, username, res);
+
+                            } else {
+                                logger.warn(IDLOG, 'modifying postit with db id "' + id  + '": user "' + username + '" has not the permission');
+                                compUtil.net.sendHttp403(IDLOG, res);
+                            }
+                        }
+                    });
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
             * Deletes the specified post-it by the following REST API:
             *
             *     delete
@@ -530,6 +620,7 @@ function setCompUtil(comp) {
         exports.new                  = postit.new;
         exports.read                 = postit.read;
         exports.create               = postit.create;
+        exports.modify               = postit.modify;
         exports.delete               = postit.delete;
         exports.setLogger            = setLogger;
         exports.setCompUtil          = setCompUtil;
@@ -562,6 +653,44 @@ function deletePostit(id, username, res) {
                 if (err) { throw err; }
 
                 logger.info(IDLOG, 'postit with db id "' + id + '" has been successfully deleted by user "' + username + '"');
+                compUtil.net.sendHttp200(IDLOG, res);
+
+            } catch (err1) {
+                logger.error(IDLOG, err1.stack);
+                compUtil.net.sendHttp500(IDLOG, res, err1.toString());
+            }
+        });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        compUtil.net.sendHttp500(IDLOG, res, err.toString());
+    }
+}
+
+/**
+* Modify the specified post-it.
+*
+* @method modifyPostit
+* @param {string} id       The unique identifier of the post-it
+* @param {string} text     The replacing text of the post-it
+* @param {string} username The name of the user
+* @param {object} res      The client response
+* @static
+*/
+function modifyPostit(id, text, username, res) {
+    try {
+        // check parameters
+        if (   typeof id       !== 'string' || typeof text !== 'string'
+            || typeof username !== 'string' || typeof res  !== 'object') {
+
+            throw new Error('wrong parameters');
+        }
+
+        compPostit.modifyPostit(id, text, function (err) {
+            try {
+                if (err) { throw err; }
+
+                logger.info(IDLOG, 'postit with db id "' + id + '" has been successfully modified by user "' + username + '"');
                 compUtil.net.sendHttp200(IDLOG, res);
 
             } catch (err1) {
