@@ -435,6 +435,41 @@ function hasExtensionEndpoint(username, exten) {
 }
 
 /**
+* Check if the user has the cellphone endpoint.
+*
+* @method hasCellphoneEndpoint
+* @param  {string}  username The name of the user to check
+* @param  {string}  exten    The cellphone identifier
+* @return True if the user has the cellphone endpoint, false otherwise.
+*/
+function hasCellphoneEndpoint(username, cellphone) {
+    try {
+        // check parameters
+        if (typeof username !== 'string' || typeof cellphone !== 'string') {
+            throw new Error('wrong parameters');
+        }
+
+        if (users[username] === undefined) { // the user is not present
+            logger.warn(IDLOG, 'checking the user-cellphone endpoint association: no user "' + username + '" is present');
+            return false;
+        }
+
+        var cel;
+        var obj = users[username].getAllEndpoints();
+        obj     = obj[endpointTypes.TYPES.cellphone];
+        for (cel in obj) {
+            if (cel === cellphone) { return true; }
+        }
+
+        return false;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return false;
+    }
+}
+
+/**
 * Check if the user has the specified voicemail endpoint.
 *
 * @method hasVoicemailEndpoint
@@ -980,6 +1015,7 @@ exports.getConfigurations              = getConfigurations;
 exports.setConfigurations              = setConfigurations;
 exports.setNethctiPresence             = setNethctiPresence;
 exports.hasExtensionEndpoint           = hasExtensionEndpoint;
+exports.hasCellphoneEndpoint           = hasCellphoneEndpoint;
 exports.hasVoicemailEndpoint           = hasVoicemailEndpoint;
 exports.getUsernamesWithData           = getUsernamesWithData;
 exports.getAllEndpointsNethcti         = getAllEndpointsNethcti;

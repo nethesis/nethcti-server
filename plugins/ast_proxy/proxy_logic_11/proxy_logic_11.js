@@ -3695,23 +3695,20 @@ function call(endpointType, endpointId, to, cb) {
             throw new Error('wrong parameters');
         }
 
-        // check the endpoint existence
-        if (endpointType === 'extension' && extensions[endpointId]) {
-
-            to         = addPrefix(to);
-            var chType = extensions[endpointId].getChanType();
-
-            logger.info(IDLOG, 'execute call from ' + endpointId + ' to ' + to);
-            astProxy.doCmd({ command: 'call', chanType: chType, exten: endpointId, to: to }, function (error) {
-                cb(error);
-                callCb(error);
-            });
-
-        } else {
+        if (endpointType === 'extension' && !extensions[endpointId]) {
             var err = 'making new call from non existent extension ' + endpointId;
             logger.warn(IDLOG, err);
             cb(err);
+            return;
         }
+
+        to = addPrefix(to);
+
+        logger.info(IDLOG, 'execute call from ' + endpointId + ' to ' + to);
+        astProxy.doCmd({ command: 'call', from: endpointId, to: to }, function (error) {
+            cb(error);
+            callCb(error);
+        });
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
