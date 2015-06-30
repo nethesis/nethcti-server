@@ -106,7 +106,7 @@ var FAIL_REASON = {
         *
         * Use it with _ast\_proxy_ module as follow:
         *
-        *     ast_proxy.doCmd({ command: 'call', chanType: 'sip', exten: '214', to: '12345' }, function (res) {
+        *     ast_proxy.doCmd({ command: 'call', from: '214', to: '12345' }, function (res) {
         *         // some code
         *     });
         *
@@ -117,14 +117,12 @@ var FAIL_REASON = {
         var call = {
 
             /**
-            * Execute asterisk action to originate a new call.
+            * Executes asterisk action to originate a new call.
             * 
             * @method execute
-            * @param {object} am Asterisk manager to send the action
-            * @param {object} args The object contains optional parameters
-            * passed to _doCmd_ method of the ast_proxy component
-            * @param {function} cb The callback function called at the end
-            * of the command
+            * @param {object}   am   Asterisk manager to send the action
+            * @param {object}   args The object contains optional parameters passed to _doCmd_ method of the ast_proxy component
+            * @param {function} cb   The callback function called at the end of the command
             * @static
             */
             execute: function (am, args, cb) {
@@ -132,13 +130,13 @@ var FAIL_REASON = {
                     // action for asterisk
                     var act = {
                         Action:   'Originate',
-                        Channel:  args.chanType + '/' + args.exten,                // extension to be used
+                        Channel:  'Local/' + args.from + '@from-internal', // the caller
                         Context:  'from-internal',
                         Priority: 1,
                         CallerID: PRE_CALLERID + args.to,
                         Timeout:  CALL_TIMEOUT,
                         Account:  args.to,
-                        Exten:    args.to,                                         // the number to be called
+                        Exten:    args.to, // the number to be called
                         Async:    true
                     };
                     

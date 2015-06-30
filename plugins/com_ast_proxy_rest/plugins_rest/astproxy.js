@@ -604,7 +604,7 @@ var compConfigManager;
         *
         * * `number: the number to be called`
         * * `[endpointId]: the endpoint identifier that make the new call. It requires "endpointType".`
-        * * `[endpointType]: the type of the endpoint that makes the new call. It requires "endpointId".`
+        * * `[endpointType]: ("extension" | "cellphone") the type of the endpoint that makes the new call. It requires "endpointId".`
         *
         * Example JSON request parameters:
         *
@@ -1625,15 +1625,30 @@ var compConfigManager;
                         // check if the endpoint is owned by the user
                         if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
-                            logger.warn(IDLOG, 'make new call to ' + req.params.number + ' failed: ' + req.params.endpointId + ' is not owned by user "' + username + '"'); +
+                            logger.warn(IDLOG, 'make new call to ' + req.params.number + ' failed: ' + req.params.endpointType +
+                                               ' "' + req.params.endpointId + '" is not owned by user "' + username + '"');
                             compUtil.net.sendHttp403(IDLOG, res);
                             return;
                         }
 
-                        // if the user has enabled the auomatic click2call then make an HTTP request directly to the phone,
+                        // if the user has enabled the automatic click2call then make an HTTP request directly to the phone,
                         // otherwise make a new call by asterisk
                         if (!compConfigManager.isAutomaticClick2callEnabled(username)) { asteriskCall(username, req, res); }
                         else { ajaxPhoneCall(username, req, res); }
+
+                    } else if (req.params.endpointType === 'cellphone') {
+
+                        // check if the endpoint is owned by the user
+                        if (compAuthorization.verifyUserEndpointCellphone(username, req.params.endpointId) === false) {
+
+                            logger.warn(IDLOG, 'make new call to ' + req.params.number + ' failed: ' + req.params.endpointType +
+                                               ' "' + req.params.endpointId + '" is not owned by user "' + username + '"');
+                            compUtil.net.sendHttp403(IDLOG, res);
+                            return;
+                        }
+
+                        // make a new call by asterisk
+                        asteriskCall(username, req, res);
 
                     } else {
                         logger.warn(IDLOG, 'making new call from user "' + username + '" to ' + req.params.number + ': unknown endpointType ' + req.params.endpointType);

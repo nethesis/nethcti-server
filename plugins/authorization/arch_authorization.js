@@ -252,6 +252,13 @@ module.exports = function (options, imports, register) {
             verifyUserEndpointExten: authorization.verifyUserEndpointExten,
 
             /**
+            * It's the _verifyUserEndpointCellphone_ method provided by _authorization_ module.
+            *
+            * @method verifyUserEndpointCellphone
+            */
+            verifyUserEndpointCellphone: authorization.verifyUserEndpointCellphone,
+
+            /**
             * It's the _verifyUserEndpointVoicemail_ method provided by _authorization_ module.
             *
             * @method verifyUserEndpointVoicemail

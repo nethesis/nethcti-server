@@ -1156,6 +1156,30 @@ function verifyUserEndpointExten(username, endpoint) {
 }
 
 /**
+* Checks if the cellphone endpoint is owned by the specified user.
+*
+* @method verifyUserEndpointCellphone
+* @param  {string}  username The username
+* @param  {string}  endpoint The identifier of the cellphone endpoint
+* @return {boolean} True if the cellphone endpoint is owned by the user, false otherwise.
+*/
+function verifyUserEndpointCellphone(username, endpoint) {
+    try {
+        // check parameters
+        if (typeof username !== 'string' || typeof endpoint !== 'string') {
+            throw new Error('wrong parameters');
+        }
+
+        return userMod.hasCellphoneEndpoint(username, endpoint);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false value for security reasons
+        return false;
+    }
+}
+
+/**
 * Checks if the voicemail endpoint is owned by the specified user.
 *
 * @method verifyUserEndpointVoicemail
@@ -1382,6 +1406,7 @@ exports.verifyUserEndpointVoicemail     = verifyUserEndpointVoicemail;
 exports.authorizeAdminRecordingUser     = authorizeAdminRecordingUser;
 exports.getAuthorizedOperatorGroups     = getAuthorizedOperatorGroups;
 exports.authorizeOperatorGroupsUser     = authorizeOperatorGroupsUser;
+exports.verifyUserEndpointCellphone     = verifyUserEndpointCellphone;
 exports.authorizeAdminCallerNoteUser    = authorizeAdminCallerNoteUser;
 exports.authorizeStreamingSourceUser    = authorizeStreamingSourceUser;
 exports.getAuthorizedStreamingSources   = getAuthorizedStreamingSources;

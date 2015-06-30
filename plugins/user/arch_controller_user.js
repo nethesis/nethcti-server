@@ -77,6 +77,13 @@ module.exports = function (options, imports, register) {
             hasExtensionEndpoint: controllerUser.hasExtensionEndpoint,
 
             /**
+            * It's the _hasCellphoneEndpoint_ method provided by _controller\_user_ module.
+            *
+            * @method hasCellphoneEndpoint
+            */
+            hasCellphoneEndpoint: controllerUser.hasCellphoneEndpoint,
+
+            /**
             * It's the _hasVoicemailEndpoint_ method provided by _controller\_user_ module.
             *
             * @method hasVoicemailEndpoint
