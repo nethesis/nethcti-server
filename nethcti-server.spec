@@ -1,5 +1,5 @@
 Name:		nethcti-server
-Version:	2.4.2.0git
+Version:	2.4.3
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI 2
 
@@ -69,6 +69,10 @@ rm -rf $RPM_BUILD_ROOT
 %doc
 
 %changelog
+* Mon Jul 06 2015 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.4.3-1
+- Fea #3797: add asterisk callback call support
+- Fea #3784: new rest api to modify a post-it
+
 * Mon Jun 22 2015 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.4.2-1
 - Bug #3775: mssql customer cards does not work
 
