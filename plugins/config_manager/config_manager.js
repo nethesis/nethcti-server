@@ -267,8 +267,10 @@ function configUser(path) {
                         if (!compUser.hasExtensionEndpoint(username, defaultExten)) {
 
                             // default extension present into the db does not belong to its user, so it
-                            // is wrong and must be replaced with an extension associated with the user
-                            replaceValue = Object.keys(compUser.getAllEndpointsExtension(username))[0];
+                            // is wrong and must be replaced with an extension associated with the user.
+                            // The value can be undefined in the case the user is no longer configured
+                            // for the cti, but it is present into the database
+                            replaceValue = Object.keys(compUser.getAllEndpointsExtension(username))[0] || '';
                             arrUsersToBeFixed.push({ username: username, replaceValue: replaceValue });
                         }
                     }
