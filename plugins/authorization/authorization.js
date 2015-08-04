@@ -791,6 +791,28 @@ function authorizeAdminCdrUser(username) {
 }
 
 /**
+* Returns true if the specified user has the authorization to park
+* any call and to pickup any parked call using any extension as destination.
+*
+* @method authorizeAdminParkingsUser
+* @param  {string}  username The username
+* @return {boolean} True if the user has the admin_parkings authorization.
+*/
+function authorizeAdminParkingsUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.admin_parkings, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
 * Returns true if the specified user has the authorization to answer
 * a call from any extension.
 *
@@ -1430,7 +1452,6 @@ exports.authorizeOpQueuesUser           = authorizeOpQueuesUser;
 exports.authorizeAdminCdrUser           = authorizeAdminCdrUser;
 exports.getUserAuthorizations           = getUserAuthorizations;
 exports.authorizeAdminCallUser          = authorizeAdminCallUser;
-exports.authorizeAdminAnswerUser        = authorizeAdminAnswerUser;
 exports.authorizeRecordingUser          = authorizeRecordingUser;
 exports.authorizePhonebookUser          = authorizePhonebookUser;
 exports.authorizeStreamingUser          = authorizeStreamingUser;
@@ -1441,10 +1462,12 @@ exports.authorizeOpParkingsUser         = authorizeOpParkingsUser;
 exports.authorizeAdminPostitUser        = authorizeAdminPostitUser;
 exports.authorizeAdminHangupUser        = authorizeAdminHangupUser;
 exports.authorizeAdminPickupUser        = authorizeAdminPickupUser;
+exports.authorizeAdminAnswerUser        = authorizeAdminAnswerUser;
 exports.getAllUsersAuthorizations       = getAllUsersAuthorizations;
 exports.authorizeCustomerCardUser       = authorizeCustomerCardUser;
 exports.authorizeOpExtensionsUser       = authorizeOpExtensionsUser;
 exports.authorizeAdminOffhourUser       = authorizeAdminOffhourUser;
+exports.authorizeAdminParkingsUser      = authorizeAdminParkingsUser;
 exports.authorizeAdminTransferUser      = authorizeAdminTransferUser;
 exports.authorizeOpAdminQueuesUser      = authorizeOpAdminQueuesUser;
 exports.authorizePhoneRedirectUser      = authorizePhoneRedirectUser;

@@ -42,6 +42,7 @@ var AUTHORIZATION_TYPES = {
     'admin_offhour':     'admin_offhour',
     'pickup_groups':     'pickup_groups',
     'customer_card':     'customer_card',
+    'admin_parkings':    'admin_parkings',
     'admin_transfer':    'admin_transfer',
     'phone_redirect':    'phone_redirect',
     'operator_groups':   'operator_groups',
