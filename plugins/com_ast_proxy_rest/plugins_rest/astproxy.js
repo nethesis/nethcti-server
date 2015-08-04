@@ -1967,10 +1967,14 @@ var compConfigManager;
 
                     if (req.params.endpointType === 'extension') {
 
-                        // check if the endpoint is owned by the user
-                        if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+                        if (compAuthorization.authorizeAdminAnswerUser(username) === true) {
 
-                            logger.warn(IDLOG, 'answer to call from ' + req.params.endpointId + ' failed: extension is not owned by user "' + username + '"'); +
+                            logger.info(IDLOG, 'answer to call from ' + req.params.endpointType + ' "' + req.params.endpointId + '" by user "' + username + '": he has the admin_answer permission');
+                        }
+                        // check if the endpoint is owned by the user
+                        else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+
+                            logger.warn(IDLOG, 'answer to call from ' + req.params.endpointType + ' "' + req.params.endpointId + '" failed: extension is not owned by user "' + username + '"');
                             compUtil.net.sendHttp403(IDLOG, res);
                             return;
                         }
@@ -3331,7 +3335,7 @@ var compConfigManager;
                         // check if the endpoint is owned by the user
                         if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
-                            logger.warn(IDLOG, 'make new echo call failed: ' + req.params.endpointId + ' is not owned by user "' + username + '"'); +
+                            logger.warn(IDLOG, 'make new echo call failed: ' + req.params.endpointId + ' is not owned by user "' + username + '"');
                             compUtil.net.sendHttp403(IDLOG, res);
                             return;
                         }
