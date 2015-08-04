@@ -1741,9 +1741,13 @@ var compConfigManager;
 
                     if (req.params.endpointType === 'extension') {
 
+                        if (compAuthorization.authorizeAdminParkingsUser(username) === true) {
+
+                            logger.info(IDLOG, 'park of the conversation "' + req.params.convid + '" from user "' + username + '": he has the admin_parkings permission');
+                        }
                         // check if the applicant of the request is owned by the user: the user can only park a conversation
                         // that belong to him. The belonging is verfied later by the asterisk proxy component
-                        if (compAuthorization.verifyUserEndpointExten(username, req.params.applicantId) === false) {
+                        else if (compAuthorization.verifyUserEndpointExten(username, req.params.applicantId) === false) {
 
                             logger.warn(IDLOG, 'park of the conversation "' + req.params.convid + '" from user "' + username + '" has been failed: the applicant ' +
                                                    '"' + req.params.applicantId + '" isn\'t owned by him');
@@ -2866,7 +2870,8 @@ var compConfigManager;
                     }
 
                     // check if the user has the authorization to pickup a parked call
-                    if (compAuthorization.authorizeOpParkingsUser(username) !== true) {
+                    if (compAuthorization.authorizeOpParkingsUser(username)    !== true &&
+                        compAuthorization.authorizeAdminParkingsUser(username) !== true) {
 
                         logger.warn(IDLOG, 'pickup parking "' + req.params.parking + '": authorization failed for user "' + username + '"');
                         compUtil.net.sendHttp403(IDLOG, res);
@@ -2875,8 +2880,12 @@ var compConfigManager;
 
                     if (req.params.destType === 'extension') {
 
+                        if (compAuthorization.authorizeAdminParkingsUser(username) === true) {
+
+                            logger.info(IDLOG, 'pickup parking "' + req.params.parking + '" by user "' + username + '": he has the admin_parkings permission');
+                        }
                         // check if the destination endpoint is owned by the user
-                        if (compAuthorization.verifyUserEndpointExten(username, req.params.destId) === false) {
+                        else if (compAuthorization.verifyUserEndpointExten(username, req.params.destId) === false) {
 
                             logger.warn(IDLOG, 'pickup parking "' + req.params.parking + '" by user "' + username + '" has been failed: ' +
                                                ' the destination ' + req.params.destType + ' ' + req.params.destId + ' isn\'t owned by the user');
