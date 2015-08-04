@@ -86,7 +86,7 @@ function setLogger(log) {
 * **The method can throw an Exception.**
 *
 * @method config
-* @param {object} data 
+* @param {object} data
 *   @param {string} data.file Authorization ini file path. The file must
 * have the authorization name as section and 'users' key with the username
 * list as value. In the case of customer card and streaming sections, the
@@ -98,7 +98,7 @@ function config(data) {
         if (    typeof data      !== 'object'
             ||  typeof data.type !== 'string'
             || (typeof data.type === 'file' && typeof data.path !== 'string')) {
-        
+
             throw new TypeError('wrong parameter');
         }
 
@@ -176,7 +176,7 @@ function configByFile(path) {
 * @method initializeEndpointsUsersByJSON
 * @param {object} json The JSON configuration
 * @private
-*/  
+*/
 function initializeAuthorizationUsersByJSON(json) {
     try {
         // check parameter
@@ -187,7 +187,7 @@ function initializeAuthorizationUsersByJSON(json) {
 
             // set the authorizations to the user
             for (typeAutho in json[userid].authorizations) {
-    
+
                 // check the validity of the authorization type
                 if (authorizationTypes.isValidAuthorizationType(typeAutho) === false) {
                     logger.error(IDLOG, 'invalid authorization type "' + typeAutho + '" in json file of the users');
@@ -791,6 +791,28 @@ function authorizeAdminCdrUser(username) {
 }
 
 /**
+* Returns true if the specified user has the authorization to originate
+* a call from any extension.
+*
+* @method authorizeAdminCallUser
+* @param  {string}  username The username
+* @return {boolean} True if the user has the admin_call authorization.
+*/
+function authorizeAdminCallUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.admin_call, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
 * Return true if the specified user has the caller note authorization. The caller
 * note authorization coincides with post-it authorization.
 *
@@ -1385,6 +1407,7 @@ exports.authorizeAdminSmsUser           = authorizeAdminSmsUser;
 exports.authorizeOpQueuesUser           = authorizeOpQueuesUser;
 exports.authorizeAdminCdrUser           = authorizeAdminCdrUser;
 exports.getUserAuthorizations           = getUserAuthorizations;
+exports.authorizeAdminCallUser          = authorizeAdminCallUser;
 exports.authorizeRecordingUser          = authorizeRecordingUser;
 exports.authorizePhonebookUser          = authorizePhonebookUser;
 exports.authorizeStreamingUser          = authorizeStreamingUser;

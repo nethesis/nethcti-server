@@ -11,7 +11,7 @@
 * @property AUTHORIZATION_TYPES
 * @type {object}
 * @readOnly
-* @default 
+* @default
 */
 var AUTHORIZATION_TYPES = {
     'spy':               'spy',
@@ -33,6 +33,7 @@ var AUTHORIZATION_TYPES = {
     'recording':         'recording',
     'phonebook':         'phonebook',
     'extensions':        'extensions',
+    'admin_call':        'admin_call',
     'admin_queues':      'admin_queues',
     'admin_pickup':      'admin_pickup',
     'admin_postit':      'admin_postit',
@@ -45,7 +46,7 @@ var AUTHORIZATION_TYPES = {
     'operator_groups':   'operator_groups',
     'admin_recording':   'admin_recording',
     'attended_transfer': 'attended_transfer'
-}
+};
 
 /**
 * Check if the authorization type is valid.

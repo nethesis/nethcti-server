@@ -1586,8 +1586,13 @@ var compConfigManager;
 
                     if (req.params.endpointType === 'extension') {
 
+                        if (compAuthorization.authorizeAdminCallUser(username) === true) {
+
+                            logger.info(IDLOG, 'make new call to "' + req.params.number + '" from ' + req.params.endpointType +
+                                               ' "' + req.params.endpointId + '" by user "' + username + '": he has the "admin_call" permission');
+                        }
                         // check if the endpoint is owned by the user
-                        if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+                        else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
                             logger.warn(IDLOG, 'make new call to ' + req.params.number + ' failed: ' + req.params.endpointType +
                                                ' "' + req.params.endpointId + '" is not owned by user "' + username + '"');
@@ -1602,8 +1607,13 @@ var compConfigManager;
 
                     } else if (req.params.endpointType === 'cellphone') {
 
+                        if (compAuthorization.authorizeAdminCallUser(username) === true) {
+
+                            logger.info(IDLOG, 'make new call to "' + req.params.number + '" from ' + req.params.endpointType +
+                                               ' "' + req.params.endpointId + '" by user "' + username + '": he has the "admin_call" permission');
+                        }
                         // check if the endpoint is owned by the user
-                        if (compAuthorization.verifyUserEndpointCellphone(username, req.params.endpointId) === false) {
+                        else if (compAuthorization.verifyUserEndpointCellphone(username, req.params.endpointId) === false) {
 
                             logger.warn(IDLOG, 'make new call to ' + req.params.number + ' failed: ' + req.params.endpointType +
                                                ' "' + req.params.endpointId + '" is not owned by user "' + username + '"');

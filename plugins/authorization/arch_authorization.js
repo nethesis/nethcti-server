@@ -20,7 +20,7 @@ var authorizationTypes = require('./authorization_types');
 var IDLOG = '[arch_authorization]';
 
 module.exports = function (options, imports, register) {
-    
+
     var logger = console;
     if (imports.logger) { logger = imports.logger; }
 
@@ -159,6 +159,13 @@ module.exports = function (options, imports, register) {
             * @method authorizeAdminCdrUser
             */
             authorizeAdminCdrUser: authorization.authorizeAdminCdrUser,
+
+            /**
+            * It's the _authorizeAdminCallUser_ method provided by _authorization_ module.
+            *
+            * @method authorizeAdminCallUser
+            */
+            authorizeAdminCallUser: authorization.authorizeAdminCallUser,
 
             /**
             * It's the _authorizePhonebookUser_ method provided by _authorization_ module.
