@@ -1,5 +1,5 @@
 Name:		nethcti-server
-Version:	2.4.3.0git
+Version:	2.4.4.0git
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI 2
 
@@ -10,7 +10,7 @@ Source1:	nethcti-server-source.tar.gz
 
 BuildRequires:	nethserver-devtools
 Requires:	nodejs010-nodejs
-Requires:       nethvoice-module-nethcti > 2.4.0-1
+Requires:       nethvoice-module-nethcti >= 2.4.1
 AutoReq:	no
 
 
