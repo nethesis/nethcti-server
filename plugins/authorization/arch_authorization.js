@@ -161,6 +161,13 @@ module.exports = function (options, imports, register) {
             authorizeAdminCdrUser: authorization.authorizeAdminCdrUser,
 
             /**
+            * It's the _authorizeAdminAnswerUser_ method provided by _authorization_ module.
+            *
+            * @method authorizeAdminAnswerUser
+            */
+            authorizeAdminAnswerUser: authorization.authorizeAdminAnswerUser,
+
+            /**
             * It's the _authorizeAdminCallUser_ method provided by _authorization_ module.
             *
             * @method authorizeAdminCallUser

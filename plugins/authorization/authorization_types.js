@@ -34,6 +34,7 @@ var AUTHORIZATION_TYPES = {
     'phonebook':         'phonebook',
     'extensions':        'extensions',
     'admin_call':        'admin_call',
+    'admin_answer':      'admin_answer',
     'admin_queues':      'admin_queues',
     'admin_pickup':      'admin_pickup',
     'admin_postit':      'admin_postit',
