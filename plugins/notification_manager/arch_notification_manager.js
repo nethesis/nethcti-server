@@ -36,6 +36,7 @@ module.exports = function (options, imports, register) {
         notificationManager.setCompUser(imports.user);
         notificationManager.setCompMailer(imports.mailer);
         notificationManager.setCompPostit(imports.postit);
+        notificationManager.setCompMobile(imports.mobile);
         notificationManager.setCompVoicemail(imports.voicemail);
         notificationManager.setCompAuthorization(imports.authorization);
         notificationManager.setCompConfigManager(imports.configManager);

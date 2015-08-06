@@ -8,6 +8,7 @@
             "user",
             "logger",
             "postit",
+            "mobile",
             "mailer",
             "voicemail",
             "authorization",
