@@ -849,8 +849,6 @@ function sendNewPostitNotificationMobile(recipient, cb) {
 
             throw new Error('wrong parameters');
         }
-
-        logger.info(IDLOG, 'send new post-it notification to mobile apps of user "' + recipient + '"');
         compMobile.sendNewPostitNotification(recipient);
 
     } catch (err) {

@@ -27,17 +27,17 @@ var httpsReq = require('https');
 var IDLOG = '[mobile]';
 
 /**
-* The keys of mobile devices apps logged into the cti. The keys are usernames
+* The tokens of mobile devices apps logged into the cti. The keys are usernames
 * and the values are objects. Each value object has application types as keys
 * (for example "ionic") and another object as values. This last object contains
-* device keys as object keys and the language as its value.
+* device tokens as object keys and the language as its value.
 *
-* @property deviceKeys
+* @property deviceTokens
 * @type object
 * @private
 * @default {}
 */
-var deviceKeys = {};
+var deviceTokens = {};
 
 /**
 * The logger. It must have at least three methods: _info, warn and error._
@@ -114,21 +114,22 @@ function setCompUser(comp) {
 }
 
 /**
-* Sets the mobile device key of the application.
+* Enable/disable push notifications for a mobile device
 *
-* @method setDeviceKey
-* @param  {string}  key      The device key
+* @method setPushNotifications
+* @param  {string}  token    The device token identifier
 * @param  {string}  appType  The type of the application (e.g. "ionic")
 * @param  {string}  lang     The mobile application language
+* @param  {string}  enable   True/false to enable/disable notifications
 * @param  {string}  username The name of the user
 * @return {boolean} True if the execution was successful
 */
-function setDeviceKey(key, appType, lang, username) {
+function setPushNotifications(token, appType, lang, enable, username) {
     try {
         // check parameters
-        if (typeof key      !== 'string' || typeof lang !== 'string' ||
-            typeof appType  !== 'string' || appType     !== 'ionic'  ||
-            typeof username !== 'string') {
+        if (typeof token    !== 'string' || typeof lang   !== 'string' ||
+            typeof appType  !== 'string' || appType       !== 'ionic'  ||
+            typeof username !== 'string' || typeof enable !== 'boolean') {
 
             throw new Error('wrong parameters');
         }
@@ -136,16 +137,32 @@ function setDeviceKey(key, appType, lang, username) {
         // check if the user exists
         if (compUser.isUserPresent(username) === true) {
 
-            // add the key
-            if (!deviceKeys[username]) { deviceKeys[username] = {}; }
-            if (!deviceKeys[username][appType]) { deviceKeys[username][appType] = {}; }
-            deviceKeys[username][appType][key] = lang;
-            logger.info(IDLOG, 'mobile device key "' + key + '" for appType "' + appType +
-                               '" has been set for user "' + username + '" with lang "' + lang + '"');
+            // delete all presence of the token. This is necessary also in case
+            // of "enable" true, because a device token can be associated at
+            // only one user at time
+            var u, k;
+            for (u in deviceTokens) {
+                for (k in deviceTokens[u][appType]) {
+                    if (k === token) { delete deviceTokens[u][appType][k]; }
+                }
+            }
+
+            if (enable) {
+                // add the token to enable push notifications
+                if (!deviceTokens[username]) { deviceTokens[username] = {}; }
+                if (!deviceTokens[username][appType]) { deviceTokens[username][appType] = {}; }
+                deviceTokens[username][appType][token] = lang;
+                logger.info(IDLOG, 'enabled push notifications for mobile device token "' + token +
+                                   '" for appType "' + appType + '" of user "' + username + '" with lang "' + lang + '"');
+            } else {
+                logger.info(IDLOG, 'disabled push notifications for mobile device token "' + token +
+                                   '" for appType "' + appType + '" of user "' + username + '" with lang "' + lang + '"');
+            }
             return true;
 
         } else {
-            logger.warn(IDLOG, 'setting device key "' + key + '" for appType "' + appType + '" by username "' + username + '": user not present');
+            logger.warn(IDLOG, 'setting push notifications of device token "' + token + '" for appType "' + appType +
+                               '" by username "' + username + '": user not present');
         }
         return false;
 
@@ -194,14 +211,14 @@ function sendNotification(username, msgToI18n) {
 
         var appType, deviceK, toSend, msg, lang;
 
-        for (appType in deviceKeys[username]) {
+        for (appType in deviceTokens[username]) {
 
             // send notification to all ionic mobile apps of the user
             if (appType === 'ionic') {
 
-                for (deviceK in deviceKeys[username].ionic) {
+                for (deviceK in deviceTokens[username].ionic) {
 
-                    lang = deviceKeys[username].ionic[deviceK];
+                    lang = deviceTokens[username].ionic[deviceK];
                     msg  = i18n[lang][msgToI18n];
 
                     toSend = {
@@ -266,5 +283,5 @@ function ionicPushReqErrorCb(error) {
 // public interface
 exports.setLogger                 = setLogger;
 exports.setCompUser               = setCompUser;
-exports.setDeviceKey              = setDeviceKey;
+exports.setPushNotifications      = setPushNotifications;
 exports.sendNewPostitNotification = sendNewPostitNotification;

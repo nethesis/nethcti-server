@@ -108,22 +108,24 @@ function setCompMobile(comp) {
         *
         * # POST requests
         *
-        * 1. [`mobile/device_key`](#device_keypost)
+        * 1. [`mobile/push_notifications`](#push_notificationspost)
         *
         * ---
         *
-        * ### <a id="#device_keypost">**`mobile/device_key`**</a>
+        * ### <a id="#push_notificationspost">**`mobile/push_notifications`**</a>
         *
-        * Sets the mobile device key used to push notifications. The request must contain the following parameters:
+        * Enable/disable push notifications for a mobile device. The request
+        * must contain the following parameters:
         *
-        * * `key: the mobile device key`
+        * * `token: the mobile device token identifier`
         * * `type: ("ionic") the type of the mobile application`
+        * * `enable: ("true" | "false") if to enable/disable notifications`
         * * `[lang]: ("en" | "it") the language of mobile application`
         *
         * Example JSON request parameters:
         *
-        *     { "key": "xyz", "type": "ionic" }
-        *     { "key": "xyz", "type": "ionic", "lang": "en" }
+        *     { "token": "xyz", "type": "ionic", "enable": "true" }
+        *     { "token": "xyz", "type": "ionic", "enable": "true", "lang": "en" }
         *
         * @class plugin_rest_mobile
         * @static
@@ -141,55 +143,53 @@ function setCompMobile(comp) {
                 * @property post
                 * @type {array}
                 *
-                *   @param {string} device_key To set the mobile device key
+                *   @param {string} push_notifications To enable/disable push notifications for a mobile device
                 */
-                'post' : [ 'device_key' ],
+                'post' : [ 'push_notifications' ],
                 'head':  [],
                 'del' :  []
             },
 
             /**
-            * Sets the mobile device key with the following REST API:
+            * Enable/disable push notifications for a mobile device with the following REST API:
             *
-            *     device_key
+            *     push_notifications
             *
-            * @method device_key
+            * @method push_notifications
             * @param {object}   req  The client request
             * @param {object}   res  The client response
             * @param {function} next Function to run the next handler in the chain.
             */
-            device_key: function (req, res, next) {
+            push_notifications: function (req, res, next) {
                 try {
-                    var key      = req.params.key;
                     var lang     = req.params.lang;
+                    var token    = req.params.token;
+                    var enable   = req.params.enable;
                     var appType  = req.params.type;
                     var username = req.headers.authorization_user;
 
                     // check parameters
-                    if (typeof key     !== 'string' ||
-                        typeof appType !== 'string' ||
-                        appType        !== 'ionic') {
+                    if (typeof token   !== 'string' || typeof enable !== 'string' ||
+                        typeof appType !== 'string' || appType       !== 'ionic'  ||
+                        (enable !== 'true' && enable !== 'false')) {
 
                         compUtil.net.sendHttp400(IDLOG, res);
                         return;
                     }
 
                     if (lang !== 'en' && lang !== 'it') { lang = 'en'; }
+                    enable = ( enable === 'true' ? true : false);
 
-                    if (appType === 'ionic') {
+                    if (compMobile.setPushNotifications(token, appType, lang, enable, username) === true) {
+                        logger.info(IDLOG, (enable ? 'enabled' : 'disabled') + ' push notifications for mobile device token "' + token +
+                                           '" for app "' + appType + '" of user "' + username + '" with lang "' + lang + '"');
+                        compUtil.net.sendHttp200(IDLOG, res);
 
-                        if (compMobile.setDeviceKey(key, appType, lang, username) === true) {
-                            logger.info(IDLOG, 'mobile device key "' + key + '" for app type "' + appType +
-                                               '" has been set by user "' + username + '" with lang "' + lang + '"');
-                            compUtil.net.sendHttp200(IDLOG, res);
-
-                        }  else {
-                            logger.warn(IDLOG, 'setting mobile device key "' + key + '" for app type "' + appType +
-                                               '" by user "' + username + '" with lang "' + lang + '"');
-                            compUtil.net.sendHttp500(IDLOG, res, 'some errors have occured');
-                        }
+                    }  else {
+                        logger.warn(IDLOG, (enable ? 'enabling' : 'disabling') + ' push notifications for mobile device token "' + token +
+                                            '" for app type "' + appType + '" by user "' + username + '" with lang "' + lang + '"');
+                        compUtil.net.sendHttp500(IDLOG, res, 'some errors have occured');
                     }
-
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -197,11 +197,11 @@ function setCompMobile(comp) {
             }
         };
 
-        exports.api           = mobile.api;
-        exports.setLogger     = setLogger;
-        exports.device_key    = mobile.device_key;
-        exports.setCompUtil   = setCompUtil;
-        exports.setCompMobile = setCompMobile;
+        exports.api                = mobile.api;
+        exports.setLogger          = setLogger;
+        exports.setCompUtil        = setCompUtil;
+        exports.setCompMobile      = setCompMobile;
+        exports.push_notifications = mobile.push_notifications;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
