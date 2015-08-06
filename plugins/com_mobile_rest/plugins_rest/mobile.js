@@ -118,10 +118,12 @@ function setCompMobile(comp) {
         *
         * * `key: the mobile device key`
         * * `type: ("ionic") the type of the mobile application`
+        * * `[lang]: ("en" | "it") the language of mobile application`
         *
         * Example JSON request parameters:
         *
         *     { "key": "xyz", "type": "ionic" }
+        *     { "key": "xyz", "type": "ionic", "lang": "en" }
         *
         * @class plugin_rest_mobile
         * @static
@@ -159,6 +161,7 @@ function setCompMobile(comp) {
             device_key: function (req, res, next) {
                 try {
                     var key      = req.params.key;
+                    var lang     = req.params.lang;
                     var appType  = req.params.type;
                     var username = req.headers.authorization_user;
 
@@ -171,14 +174,18 @@ function setCompMobile(comp) {
                         return;
                     }
 
+                    if (lang !== 'en' && lang !== 'it') { lang = 'en'; }
+
                     if (appType === 'ionic') {
 
-                        if (compMobile.setDeviceKey(key, appType, username) === true) {
-                            logger.info(IDLOG, 'mobile device key "' + key + '" for app type "' + appType + '" has been set by user "' + username + '"');
+                        if (compMobile.setDeviceKey(key, appType, lang, username) === true) {
+                            logger.info(IDLOG, 'mobile device key "' + key + '" for app type "' + appType +
+                                               '" has been set by user "' + username + '" with lang "' + lang + '"');
                             compUtil.net.sendHttp200(IDLOG, res);
 
                         }  else {
-                            logger.warn(IDLOG, 'setting mobile device key "' + key + '" for app type "' + appType + '" by user "' + username + '"');
+                            logger.warn(IDLOG, 'setting mobile device key "' + key + '" for app type "' + appType +
+                                               '" by user "' + username + '" with lang "' + lang + '"');
                             compUtil.net.sendHttp500(IDLOG, res, 'some errors have occured');
                         }
                     }

@@ -851,25 +851,13 @@ function sendNewPostitNotificationMobile(recipient, cb) {
         }
 
         logger.info(IDLOG, 'send new post-it notification to mobile apps of user "' + recipient + '"');
-        var msg = 'new post-it';
-        compMobile.sendNotification(recipient, msg, function (err, resp) {
-            try {
-                if (err) {
-                    throw new Error('sending new post-it notification from creator "' + creator + '" to sms cellphone ' + to + ' of user "' + recipient + '"');
-                }
-                cb(null, resp);
-            } catch (err) {
-                logger.error(IDLOG, err.stack);
-                cb(err);
-            }
-        });
+        compMobile.sendNewPostitNotification(recipient);
 
     } catch (err) {
        logger.error(IDLOG, err.stack);
        cb(err);
     }
 }
-
 
 /**
 * Sends a post-it notification to the user by sms.

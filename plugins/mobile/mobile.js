@@ -4,6 +4,7 @@
 * @module mobile
 * @main arch_mobile
 */
+var i18n     = require('./i18n').i18n;
 var httpsReq = require('https');
 
 /**
@@ -28,8 +29,8 @@ var IDLOG = '[mobile]';
 /**
 * The keys of mobile devices apps logged into the cti. The keys are usernames
 * and the values are objects. Each value object has application types as keys
-* (for example "ionic") and another object as values. This last object contain
-* device keys as object keys (its value are unused).
+* (for example "ionic") and another object as values. This last object contains
+* device keys as object keys and the language as its value.
 *
 * @property deviceKeys
 * @type object
@@ -118,14 +119,15 @@ function setCompUser(comp) {
 * @method setDeviceKey
 * @param  {string}  key      The device key
 * @param  {string}  appType  The type of the application (e.g. "ionic")
+* @param  {string}  lang     The mobile application language
 * @param  {string}  username The name of the user
 * @return {boolean} True if the execution was successful
 */
-function setDeviceKey(key, appType, username) {
+function setDeviceKey(key, appType, lang, username) {
     try {
         // check parameters
-        if (typeof key      !== 'string' ||
-            typeof appType  !== 'string' || appType !== 'ionic' ||
+        if (typeof key      !== 'string' || typeof lang !== 'string' ||
+            typeof appType  !== 'string' || appType     !== 'ionic'  ||
             typeof username !== 'string') {
 
             throw new Error('wrong parameters');
@@ -137,9 +139,9 @@ function setDeviceKey(key, appType, username) {
             // add the key
             if (!deviceKeys[username]) { deviceKeys[username] = {}; }
             if (!deviceKeys[username][appType]) { deviceKeys[username][appType] = {}; }
-            deviceKeys[username][appType][key] = '';
-            logger.info(IDLOG, 'mobile device key "' + key + '" for appType "' + appType + '" has been set for user "' + username + '"');
-
+            deviceKeys[username][appType][key] = lang;
+            logger.info(IDLOG, 'mobile device key "' + key + '" for appType "' + appType +
+                               '" has been set for user "' + username + '" with lang "' + lang + '"');
             return true;
 
         } else {
@@ -153,38 +155,65 @@ function setDeviceKey(key, appType, username) {
 }
 
 /**
+* Sends a new post-it notification to all mobile apps of the user.
+*
+* @method sendNewPostitNotification
+* @param  {string} username The name of the user to notify
+*/
+function sendNewPostitNotification(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') {
+            throw new Error('wrong parameter');
+        }
+        // second argument will be translated by the function
+        sendNotification(username, 'new_postit');
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Sends a notification to all mobile apps of the user. The choise to not
 * receive notifications has to be managed by the device itself.
 *
 * @method sendNotification
-* @param  {string} msg      The notification message to send
-* @param  {string} username The name of the user to notify
+* @param  {string} username  The name of the user to notify
+* @param  {string} msgToI18n The notification message to be translated before sending
+* @private
 */
-function sendNotification(username, msg) {
+function sendNotification(username, msgToI18n) {
     try {
         // check parameters
-        if (typeof msg      !== 'string' ||
-            typeof username !== 'string') {
+        if (typeof username  !== 'string' ||
+            typeof msgToI18n !== 'string') {
 
             throw new Error('wrong parameters');
         }
 
-        var appType, allUserDevicesKeys;
-        var toSend = { notification: { alert: msg } };
+        var appType, deviceK, toSend, msg, lang;
 
         for (appType in deviceKeys[username]) {
 
             // send notification to all ionic mobile apps of the user
             if (appType === 'ionic') {
 
-                // get all devices keys used to send notification
-                allUserDevicesKeys = Object.keys(deviceKeys[username].ionic);
-                toSend.tokens = allUserDevicesKeys;
+                for (deviceK in deviceKeys[username].ionic) {
 
-                var req = httpsReq.request(ionicPushOptions, ionicPushReqCb);
-                req.on('error', ionicPushReqErrorCb);
-                req.write(JSON.stringify(toSend));
-                req.end();
+                    lang = deviceKeys[username].ionic[deviceK];
+                    msg  = i18n[lang][msgToI18n];
+
+                    toSend = {
+                        tokens: [ deviceK ],
+                        notification: { alert: msg }
+                    };
+
+                    var req = httpsReq.request(ionicPushOptions, ionicPushReqCb);
+                    req.on('error', ionicPushReqErrorCb);
+                    req.write(JSON.stringify(toSend));
+                    req.end();
+                }
             }
         }
     } catch (err) {
@@ -235,7 +264,7 @@ function ionicPushReqErrorCb(error) {
 }
 
 // public interface
-exports.setLogger        = setLogger;
-exports.setCompUser      = setCompUser;
-exports.setDeviceKey     = setDeviceKey;
-exports.sendNotification = sendNotification;
+exports.setLogger                 = setLogger;
+exports.setCompUser               = setCompUser;
+exports.setDeviceKey              = setDeviceKey;
+exports.sendNewPostitNotification = sendNewPostitNotification;
