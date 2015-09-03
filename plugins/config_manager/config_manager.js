@@ -456,8 +456,10 @@ function setComNethctiWsListeners() {
             throw new Error('wrong websocket communication object');
         }
 
-        compComNethctiWs.on(compComNethctiWs.EVT_WS_CLIENT_LOGGEDIN,          wsClientLoggedInListener);
-        compComNethctiWs.on(compComNethctiWs.EVT_ALL_WS_CLIENT_DISCONNECTION, wsClientDisconnectionListener);
+        compComNethctiWs.on(compComNethctiWs.EVT_WS_CLIENT_LOGGEDIN,          checkQueueAutoLogin);
+        compComNethctiWs.on(compComNethctiWs.EVT_WS_CLIENT_LOGGEDIN,          checkAutoDndOffLogin);
+        compComNethctiWs.on(compComNethctiWs.EVT_ALL_WS_CLIENT_DISCONNECTION, checkQueueAutoLogout);
+        compComNethctiWs.on(compComNethctiWs.EVT_ALL_WS_CLIENT_DISCONNECTION, checkAutoDndOnLogout);
 
     } catch (err) {
        logger.error(IDLOG, err.stack);
@@ -465,15 +467,14 @@ function setComNethctiWsListeners() {
 }
 
 /**
-* Manages the client logged in event emitted by the websocket communication component.
-* Check the "queue automatic login" setting of the user and if it is enabled it do the login of all
-* dynamic extension of the user into their relative queues.
+* Check the "queue automatic login" setting of the user and if it is enabled it
+* does the login of all dynamic extension of the user into their relative queues.
 *
-* @method wsClientLoggedInListener
+* @method checkQueueAutoLogin
 * @param {string} username The name of the user logged in
 * @private
 */
-function wsClientLoggedInListener(username) {
+function checkQueueAutoLogin(username) {
     try {
         // check the event data
         if (typeof username !== 'string') { throw new Error('wrong username "' + username + '"'); }
@@ -522,15 +523,55 @@ function wsClientLoggedInListener(username) {
 }
 
 /**
-* Manages the client websocket disconnection event emitted by the websocket communication component.
-* Check the "queue automatic logout" setting of the user and if it is enabled it do the logout of all
-* dynamic extension of the user from their relative queues.
+* Checks the "auto dnd off on login" setting of the user and if it
+* is enabled it does the DND OFF of all user extensions.
 *
-* @method wsClientDisconnectionListener
+* @method checkAutoDndOffLogin
+* @param {string} username The name of the user logged in
+* @private
+*/
+function checkAutoDndOffLogin(username) {
+    try {
+        // check the event data
+        if (typeof username !== 'string') { throw new Error('wrong username "' + username + '"'); }
+
+        logger.info(IDLOG, 'received "new logged in user by ws" event for username "' + username + '"');
+
+        // get the prefence of the user: automatic dnd off when login to cti
+        var autoDndOffLoginEnabled = userSettings[username][USER_CONFIG_KEYS.auto_dndoff_login];
+        if (autoDndOffLoginEnabled) {
+
+            var extens = compUser.getAllEndpointsExtension(username);
+            var e;
+            for (e in extens) {
+
+                logger.info(IDLOG, 'set DND OFF for exten "' + e + '" due to automatic DND OFF on login setting');
+                compAstProxy.setDnd(e, false, function (err, resp) {
+                    try {
+                        if (err) { logger.warn(IDLOG, err); }
+                        else {
+                            logger.info(IDLOG, 'DND OFF has been set for exten "' + e + '" due to "auto dnd off login" setting of user "' + username + '"');
+                        }
+                    } catch (err1) {
+                       logger.error(IDLOG, err1.stack);
+                    }
+                });
+            }
+        }
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Checks the "queue automatic logout" setting of the user and if it is enabled it
+* does the logout of all dynamic extension of the user from their relative queues.
+*
+* @method checkQueueAutoLogout
 * @param {string} username The name of the user disonnected
 * @private
 */
-function wsClientDisconnectionListener(username) {
+function checkQueueAutoLogout(username) {
     try {
         // check the event data
         if (typeof username !== 'string') { throw new Error('wrong username "' + username + '"'); }
@@ -571,6 +612,47 @@ function wsClientDisconnectionListener(username) {
                         });
                     }
                 }
+            }
+        }
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Checks the "auto dnd on logout" setting of the user and if it is enabled it
+* does the DND ON on all user extensions.
+*
+* @method checkAutoDndOnLogout
+* @param {string} username The name of the user disonnected
+* @private
+*/
+function checkAutoDndOnLogout(username) {
+    try {
+        // check the event data
+        if (typeof username !== 'string') { throw new Error('wrong username "' + username + '"'); }
+
+        logger.info(IDLOG, 'received "new websocket disconnection" event for username "' + username + '"');
+
+        // get the prefence of the user: automatic dnd on when logout from cti
+        var autoDndOnLogoutEnabled = userSettings[username][USER_CONFIG_KEYS.auto_dndon_logout];
+        if (autoDndOnLogoutEnabled) {
+
+            var extens = compUser.getAllEndpointsExtension(username);
+            var e;
+            for (e in extens) {
+
+                logger.info(IDLOG, 'set DND ON for exten "' + e + '" due to automatic DND ON on logout setting');
+                compAstProxy.setDnd(e, true, function (err, resp) {
+                    try {
+                        if (err) { logger.warn(IDLOG, err); }
+                        else {
+                            logger.info(IDLOG, 'DND ON has been set for exten "' + e + '" due to "auto dnd on logout" setting of user "' + username + '"');
+                        }
+                    } catch (err1) {
+                       logger.error(IDLOG, err1.stack);
+                    }
+                });
             }
         }
     } catch (err) {

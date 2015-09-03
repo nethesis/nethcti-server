@@ -210,6 +210,8 @@ function setCompUtil(comp) {
          },
          "queue_auto_login": false,
          "queue_auto_logout": false,
+         "auto_dndon_logout": false,
+         "auto_dndoff_login": false,
          "default_extension": "614"
      }
         *

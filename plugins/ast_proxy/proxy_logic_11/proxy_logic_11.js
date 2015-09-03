@@ -3054,8 +3054,9 @@ function evtExtenUnconditionalCfVmChanged(exten, enabled, vm) {
 }
 
 /**
-* Enable/disable the don't disturb status of the endpoint. The used plugin command _dndSet_
-* doesn't generate any asterisk events, so simulates it.
+* Enable/disable the do not disturb status of the endpoint.
+* The used plugin command _dndSet_ does not generate any
+* asterisk events, so simulates it.
 *
 * @method setDnd
 * @param {string}   exten    The extension number

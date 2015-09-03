@@ -16,6 +16,8 @@
     "notifications":     "notifications",
     "queue_auto_login":  "queue_auto_login",
     "queue_auto_logout": "queue_auto_logout",
+    "auto_dndon_logout": "auto_dndon_logout",
+    "auto_dndoff_login": "auto_dndoff_login",
     "default_extension": "default_extension"
 }
 */
