@@ -845,6 +845,8 @@ function fromDbUserSettingsToJSON(arr, username) {
             },
             queue_auto_login:  false,
             queue_auto_logout: false,
+            auto_dndon_logout: false,
+            auto_dndoff_login: false,
             default_extension: firstExten
         };
 
@@ -858,6 +860,12 @@ function fromDbUserSettingsToJSON(arr, username) {
 
             } else if (arr[i].key_name === 'auto_queue_logout') {
                 json['queue_auto_logout'] = (arr[i].value === 'true');
+
+            } else if (arr[i].key_name === 'auto_dndon_logout') {
+                json['auto_dndon_logout'] = (arr[i].value === 'true');
+
+            } else if (arr[i].key_name === 'auto_dndoff_login') {
+                json['auto_dndoff_login'] = (arr[i].value === 'true');
 
             } else if (arr[i].key_name === 'default_extension') {
                 json['default_extension'] = arr[i].value;
@@ -1039,6 +1047,84 @@ function setQueueAutoLogoutConf(username, enable, cb) {
 }
 
 /**
+* Saves the automatic DND OFF status when user login to cti.
+*
+* @method setAutoDndOffLoginConf
+* @param {string}   username The username to set the automatic DND OFF status
+* @param {boolean}  enable   The enable value: true if it is to enable
+* @param {function} cb       The callback function
+*/
+function setAutoDndOffLoginConf(username, enable, cb) {
+    try {
+        // check parameters
+        if (   typeof username !== 'string'
+            || typeof enable   !== 'boolean' || typeof cb !== 'function') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // save the setting into the database
+        compDbconn.saveUserAutoDndOffLogin({ username: username, enable: enable }, function (err) {
+            try {
+                if (err) {
+                    logger.error(IDLOG, 'saving setting "auto DND OFF login": ' + enable + '" for user "' + username + '"');
+                    cb(err);
+                } else {
+                    // update the configuration in mem
+                    userSettings[username][USER_CONFIG_KEYS.auto_dndoff_login] = enable;
+                    cb(null);
+                }
+            } catch (err) {
+                logger.error(IDLOG, err.stack);
+                cb(err);
+            }
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err.stack);
+    }
+}
+
+/**
+* Saves the automatic DND ON status when user logout from cti.
+*
+* @method setAutoDndOnLogoutConf
+* @param {string}   username The username to set the automatic DND ON status
+* @param {boolean}  enable   The enable value: true if it is to enable
+* @param {function} cb       The callback function
+*/
+function setAutoDndOnLogoutConf(username, enable, cb) {
+    try {
+        // check parameters
+        if (   typeof username !== 'string'
+            || typeof enable   !== 'boolean' || typeof cb !== 'function') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // save the setting into the database
+        compDbconn.saveUserAutoDndOnLogout({ username: username, enable: enable }, function (err) {
+            try {
+                if (err) {
+                    logger.error(IDLOG, 'saving setting "auto DND ON logout": ' + enable + '" for user "' + username + '"');
+                    cb(err);
+                } else {
+                    // update the configuration in mem
+                    userSettings[username][USER_CONFIG_KEYS.auto_dndon_logout] = enable;
+                    cb(null);
+                }
+            } catch (err) {
+                logger.error(IDLOG, err.stack);
+                cb(err);
+            }
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err.stack);
+    }
+}
+
+/**
 * Returns the automatic queue logout value of the user.
 *
 * @method getQueueAutoLogoutConf
@@ -1051,6 +1137,47 @@ function getQueueAutoLogoutConf(username) {
         if (typeof username !== 'string') { throw new Error('wrong parameter'); }
 
         return userSettings[username][USER_CONFIG_KEYS.queue_auto_logout];
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return false;
+    }
+}
+
+/**
+* Returns the automatic DND ON status when user logout from cti.
+*
+* @method getAutoDndOnLogoutConf
+* @param  {string}  username The username to get the value
+* @return {boolean} True if it is enabled.
+*/
+function getAutoDndOnLogoutConf(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return userSettings[username][USER_CONFIG_KEYS.auto_dndon_logout];
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return false;
+    }
+}
+
+
+/**
+* Returns the automatic DND OFF status when user login to cti.
+*
+* @method getAutoDndOffLoginConf
+* @param  {string}  username The username to get the value
+* @return {boolean} True if it is enabled.
+*/
+function getAutoDndOffLoginConf(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return userSettings[username][USER_CONFIG_KEYS.auto_dndoff_login];
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -1553,8 +1680,12 @@ exports.getAnswerUrlFromAgent                  = getAnswerUrlFromAgent;
 exports.setUserClick2CallConf                  = setUserClick2CallConf;
 exports.getQueueAutoLoginConf                  = getQueueAutoLoginConf;
 exports.setQueueAutoLoginConf                  = setQueueAutoLoginConf;
+exports.setAutoDndOffLoginConf                 = setAutoDndOffLoginConf;
+exports.setAutoDndOnLogoutConf                 = setAutoDndOnLogoutConf;
 exports.getQueueAutoLogoutConf                 = getQueueAutoLogoutConf;
 exports.setQueueAutoLogoutConf                 = setQueueAutoLogoutConf;
+exports.getAutoDndOffLoginConf                 = getAutoDndOffLoginConf;
+exports.getAutoDndOnLogoutConf                 = getAutoDndOnLogoutConf;
 exports.getAllUserEndpointsJSON                = getAllUserEndpointsJSON;
 exports.phoneAgentSupportAutoC2C               = phoneAgentSupportAutoC2C;
 exports.getPostitNotificationSmsTo             = getPostitNotificationSmsTo;

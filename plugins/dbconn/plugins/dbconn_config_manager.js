@@ -235,6 +235,60 @@ function saveUserAutoQueueLogin(data, cb) {
 }
 
 /**
+* Save the user automatic DND ON status when user logout from cti into mysql table _user\_settings_.
+*
+* @method saveUserAutoDndOnLogout
+* @param {object}   data
+*   @param {string} data.username The username to set the notification setting
+*   @param {string} data.enable   The value
+* @param {function} cb            The callback function
+*/
+function saveUserAutoDndOnLogout(data, cb) {
+    try {
+        // check parameter
+        if (   typeof data        !== 'object'  || typeof data.username !== 'string'
+            || typeof data.enable !== 'boolean' || typeof cb            !== 'function') {
+
+            throw new Error('wrong parameter');
+        }
+
+        var value = (data.enable ? 'true' : 'false');
+        saveUserSetting(data.username, 'auto_dndon_logout', value, cb);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Save the user automatic DND OFF status when user login to cti into mysql table _user\_settings_.
+*
+* @method saveUserAutoDndOffLogin
+* @param {object}   data
+*   @param {string} data.username The username to set the notification setting
+*   @param {string} data.enable   The value
+* @param {function} cb            The callback function
+*/
+function saveUserAutoDndOffLogin(data, cb) {
+    try {
+        // check parameter
+        if (   typeof data        !== 'object'  || typeof data.username !== 'string'
+            || typeof data.enable !== 'boolean' || typeof cb            !== 'function') {
+
+            throw new Error('wrong parameter');
+        }
+
+        var value = (data.enable ? 'true' : 'false');
+        saveUserSetting(data.username, 'auto_dndoff_login', value, cb);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
 * Save the user automatic queue logout setting into mysql table _user\_settings_.
 *
 * @method saveUserAutoQueueLogout
@@ -453,6 +507,8 @@ apiList.getUserSettings             = getUserSettings;
 apiList.saveUserNotifySetting       = saveUserNotifySetting;
 apiList.saveUserAutoQueueLogin      = saveUserAutoQueueLogin;
 apiList.saveUserAutoQueueLogout     = saveUserAutoQueueLogout;
+apiList.saveUserAutoDndOnLogout     = saveUserAutoDndOnLogout;
+apiList.saveUserAutoDndOffLogin     = saveUserAutoDndOffLogin;
 apiList.saveUserDefaultExtension    = saveUserDefaultExtension;
 apiList.saveUserClick2CallSetting   = saveUserClick2CallSetting;
 apiList.getAllUsersDefaultExtension = getAllUsersDefaultExtension;
