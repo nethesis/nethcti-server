@@ -115,6 +115,15 @@ var compVoicemail;
 var compPostit;
 
 /**
+* The mobile architect component used for mobile functions.
+*
+* @property compMobile
+* @type object
+* @private
+*/
+var compMobile;
+
+/**
 * The architect component to be used for user functions.
 *
 * @property compUser
@@ -216,6 +225,24 @@ function setCompPostit(comp) {
 
         compPostit = comp;
         logger.info(IDLOG, 'set postit architect component');
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the mobile architect component.
+*
+* @method setCompMobile
+* @param {object} comp The mobile architect component.
+*/
+function setCompMobile(comp) {
+    try {
+        // check parameter
+        if (typeof comp !== 'object') { throw new Error('wrong parameter'); }
+
+        compMobile = comp;
+        logger.info(IDLOG, 'set mobile architect component');
     } catch (err) {
        logger.error(IDLOG, err.stack);
     }
@@ -579,6 +606,8 @@ function newPostitListener(creator, recipient, list) {
                 logger.info(IDLOG, 'don\'t send new post-it notification to user "' + recipient + '" by sms');
             }
 
+            // send notifications to the user mobile applications
+            sendNewPostitNotificationMobile(recipient, sendNewPostitNotificationMobileCb);
 
         } else {
             logger.info(IDLOG, 'recipient user "' + recipient + '" hasn\'t the post-it authorization: don\'t send any notification to him');
@@ -651,6 +680,23 @@ function sendNewVoicemailNotificationSmsCb(err, resp) {
 function sendNewPostitNotificationSmsCb(err, resp) {
     try {
         if (err) { logger.error(IDLOG, 'sending sms notification for new post-it message'); }
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* The callback function of the send notification of a new post-it message
+* to mobile apps. It's called at the end of the mobile app dispatch.
+*
+* @method sendNewPostitNotificationMobileCb
+* @param {object} err  The error object
+* @param {object} resp The response of the action
+* @private
+*/
+function sendNewPostitNotificationMobileCb(err, resp) {
+    try {
+        if (err) { logger.error(IDLOG, 'sending mobile apps notification for new post-it message'); }
     } catch (err) {
        logger.error(IDLOG, err.stack);
     }
@@ -780,6 +826,30 @@ function sendNewVoicemailNotificationSms(username, voicemail, list, cb) {
                 cb(err);
             }
         });
+
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+       cb(err);
+    }
+}
+
+/**
+* Sends a post-it notification to the mobile apps of the user.
+*
+* @method sendNewPostitNotificationMobile
+* @param {string}   recipient The recipient username of the new post-it message
+* @param {function} cb        The callback function
+* @private
+*/
+function sendNewPostitNotificationMobile(recipient, cb) {
+    try {
+        // check the parameters
+        if (typeof recipient !== 'string' ||
+            typeof cb        !== 'function') {
+
+            throw new Error('wrong parameters');
+        }
+        compMobile.sendNewPostitNotification(recipient);
 
     } catch (err) {
        logger.error(IDLOG, err.stack);
@@ -1037,7 +1107,6 @@ function getPostitNotificationSmsBody(creator, recipient, list) {
             throw new Error('wrong parameters');
         }
 
-
         var lastPostit = extractNewPostitMostRecent(list);
         lastPostit.creationDate = moment(lastPostit.creation).format('LLLL');
 
@@ -1126,6 +1195,7 @@ exports.setCompSms           = setCompSms;
 exports.setCompUser          = setCompUser;
 exports.setCompMailer        = setCompMailer;
 exports.setCompPostit        = setCompPostit;
+exports.setCompMobile        = setCompMobile;
 exports.setCompVoicemail     = setCompVoicemail;
 exports.setCompAuthorization = setCompAuthorization;
 exports.setCompConfigManager = setCompConfigManager;

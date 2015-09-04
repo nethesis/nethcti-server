@@ -1,0 +1,13 @@
+{
+    "name": "com_mobile_rest",
+    "main": "arch_com_mobile_rest.js",
+    "private": true,
+    "plugin": {
+        "consumes": [
+            "util",
+            "logger",
+            "mobile"
+        ],
+        "provides": []
+    }
+}

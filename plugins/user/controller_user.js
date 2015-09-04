@@ -415,7 +415,7 @@ function hasExtensionEndpoint(username, exten) {
         }
 
         if (users[username] === undefined) { // the user is not present
-            logger.warn('checking the user-extension endpoint association: no user "' + username + '" is present');
+            logger.warn(IDLOG, 'checking the user-extension endpoint association: no user "' + username + '" is present');
             return false;
         }
 

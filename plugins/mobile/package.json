@@ -1,0 +1,12 @@
+{
+    "name": "mobile",
+    "main": "arch_mobile.js",
+    "private": true,
+    "plugin": {
+        "consumes": [
+            "user",
+            "logger"
+        ],
+        "provides": [ "mobile" ]
+    }
+}

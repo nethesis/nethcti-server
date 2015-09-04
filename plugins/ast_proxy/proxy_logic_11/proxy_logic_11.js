@@ -3054,8 +3054,9 @@ function evtExtenUnconditionalCfVmChanged(exten, enabled, vm) {
 }
 
 /**
-* Enable/disable the don't disturb status of the endpoint. The used plugin command _dndSet_
-* doesn't generate any asterisk events, so simulates it.
+* Enable/disable the do not disturb status of the endpoint.
+* The used plugin command _dndSet_ does not generate any
+* asterisk events, so simulates it.
 *
 * @method setDnd
 * @param {string}   exten    The extension number
@@ -3717,6 +3718,94 @@ function call(endpointType, endpointId, to, cb) {
 }
 
 /**
+* Mute a call.
+*
+* @method muteConversation
+* @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
+* @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
+* @param {string}   convid       The conversation identifier to be muted
+* @param {function} cb           The callback function
+*/
+function muteConversation(endpointType, endpointId, convid, cb) {
+    try {
+        // check parameters
+        if (   typeof cb           !== 'function'
+            || typeof convid       !== 'string'
+            || typeof endpointId   !== 'string'
+            || typeof endpointType !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // check the endpoint existence
+        if (endpointType === 'extension' && extensions[endpointId]) {
+
+            // get the channel to mute
+            var ch = getExtenIdChannelConversation(endpointId, convid);
+
+            logger.info(IDLOG, 'execute mute of convid "' + convid + '" by "' + endpointType + '" "' + endpointId + '"');
+            astProxy.doCmd({ command: 'mute', channel: ch }, function (error) {
+                cb(error);
+                muteCb(error);
+            });
+
+        } else {
+            var err = 'muting conversation "' + convid + '" by a non existent extension ' + endpointId;
+            logger.warn(IDLOG, err);
+            cb(err);
+        }
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Unmute a call.
+*
+* @method unmuteConversation
+* @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
+* @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
+* @param {string}   convid       The conversation identifier to be unmuted
+* @param {function} cb           The callback function
+*/
+function unmuteConversation(endpointType, endpointId, convid, cb) {
+    try {
+        // check parameters
+        if (   typeof cb           !== 'function'
+            || typeof convid       !== 'string'
+            || typeof endpointId   !== 'string'
+            || typeof endpointType !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // check the endpoint existence
+        if (endpointType === 'extension' && extensions[endpointId]) {
+
+            // get the channel to mute
+            var ch = getExtenIdChannelConversation(endpointId, convid);
+
+            logger.info(IDLOG, 'execute unmute of convid "' + convid + '" by "' + endpointType + '" "' + endpointId + '"');
+            astProxy.doCmd({ command: 'unmute', channel: ch }, function (error) {
+                cb(error);
+                muteCb(error);
+            });
+
+        } else {
+            var err = 'unmuting conversation "' + convid + '" by a non existent extension ' + endpointId;
+            logger.warn(IDLOG, err);
+            cb(err);
+        }
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
 * Sends the dtmf tone to the conversation destination.
 *
 * @method sendDtmfToConversation
@@ -4024,6 +4113,23 @@ function callCb(error) {
     try {
         if (error) { logger.warn(IDLOG, 'call failed: ' + error.message); }
         else       { logger.info(IDLOG, 'call succesfully');              }
+
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* This is the callback of the mute command plugin.
+*
+* @method muteCb
+* @param {object} error The error object of the operation
+* @private
+*/
+function muteCb(error) {
+    try {
+        if (error) { logger.warn(IDLOG, 'mute failed: ' + error.message); }
+        else       { logger.info(IDLOG, 'mute succesfully');              }
 
     } catch (err) {
        logger.error(IDLOG, err.stack);
@@ -6002,6 +6108,7 @@ exports.getJSONParkings                 = getJSONParkings;
 exports.recordAudioFile                 = recordAudioFile;
 exports.getJSONQueuesQOS                = getJSONQueuesQOS;
 exports.redirectParking                 = redirectParking;
+exports.muteConversation                = muteConversation;
 exports.sendDTMFSequence                = sendDTMFSequence;
 exports.parkConversation                = parkConversation;
 exports.setCompPhonebook                = setCompPhonebook;
@@ -6017,6 +6124,7 @@ exports.EVT_QUEUE_CHANGED               = EVT_QUEUE_CHANGED;
 exports.getQueueIdsOfExten              = getQueueIdsOfExten;
 exports.getJSONQueuesStats              = getJSONQueuesStats;
 exports.getJSONAgentsStats              = getJSONAgentsStats;
+exports.unmuteConversation              = unmuteConversation;
 exports.setUnconditionalCf              = setUnconditionalCf;
 exports.hangupConversation              = hangupConversation;
 exports.evtNewExternalCall              = evtNewExternalCall;
