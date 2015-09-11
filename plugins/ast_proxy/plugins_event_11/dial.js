@@ -54,10 +54,10 @@ var astProxy;
             */
             data: function (data) {
                 try {
-                    if (data.subevent === 'Begin'
-                        && data.channel      && data.calleridnum
-                        && data.destination  && data.connectedlinenum
-                        && data.calleridname && data.event === 'Dial') {
+                    if (data.subevent === 'Begin'                  &&
+                        data.channel      && data.calleridnum      &&
+                        data.destination  && data.connectedlinenum &&
+                        data.calleridname && data.event === 'Dial') {
 
                         // extract the extension name from the channels
                         var chDestExten   = utilChannel11.extractExtensionFromChannel(data.destination);
@@ -89,10 +89,10 @@ var astProxy;
             */
             setLogger: function (log) {
                 try {
-                    if (typeof log === 'object'
-                        && typeof log.info  === 'function'
-                        && typeof log.warn  === 'function'
-                        && typeof log.error === 'function') {
+                    if (typeof log       === 'object'   &&
+                        typeof log.info  === 'function' &&
+                        typeof log.warn  === 'function' &&
+                        typeof log.error === 'function') {
 
                         logger = log;
                     } else {

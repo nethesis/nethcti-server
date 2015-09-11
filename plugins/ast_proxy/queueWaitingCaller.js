@@ -14,13 +14,13 @@
 */
 exports.QueueWaitingCaller = function (data) {
     // check the parameter
-    if (!data
-        || typeof data.wait       !== 'number'
-        || typeof data.queue      !== 'string'
-        || typeof data.channel    !== 'string'
-        || typeof data.position   !== 'string'
-        || typeof data.callerNum  !== 'string'
-        || typeof data.callerName !== 'string') {
+    if (!data ||
+        typeof data.wait       !== 'number' ||
+        typeof data.queue      !== 'string' ||
+        typeof data.channel    !== 'string' ||
+        typeof data.position   !== 'string' ||
+        typeof data.callerNum  !== 'string' ||
+        typeof data.callerName !== 'string') {
 
         throw new Error('wrong parameter');
     }
@@ -192,7 +192,7 @@ exports.QueueWaitingCaller = function (data) {
             channel:     channel,
             position:    position,
             waitingTime: waitingTime
-        }
+        };
     }
 
     // public interface
@@ -207,4 +207,4 @@ exports.QueueWaitingCaller = function (data) {
         getPosition:   getPosition,
         updateWaiting: updateWaiting
     };
-}
+};

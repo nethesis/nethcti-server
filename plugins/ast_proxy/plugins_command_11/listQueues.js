@@ -103,10 +103,10 @@ var IDLOG = '[listQueues]';
                 try {
                     // store new queue information object
                     // data.queue is the queue number, e.g., 401
-                    if (data
-                        && data.queue
-                        && data.queue !== 'default' // discard queue with 'default' number
-                        && data.event === 'QueueSummary') {
+                    if (data &&
+                        data.queue &&
+                        data.queue !== 'default' && // discard queue with 'default' number
+                        data.event === 'QueueSummary') {
 
                         list.push({ queue: data.queue });
 
@@ -138,10 +138,10 @@ var IDLOG = '[listQueues]';
             */
             setLogger: function (log) {
                 try {
-                    if (typeof log === 'object'
-                        && typeof log.info  === 'function'
-                        && typeof log.warn  === 'function'
-                        && typeof log.error === 'function') {
+                    if (typeof log       === 'object'   &&
+                        typeof log.info  === 'function' &&
+                        typeof log.warn  === 'function' &&
+                        typeof log.error === 'function') {
 
                         logger = log;
                     } else {

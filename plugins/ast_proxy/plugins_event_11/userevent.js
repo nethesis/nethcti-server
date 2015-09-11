@@ -53,30 +53,31 @@ var astProxy;
             */
             data: function (data) {
                 try {
+                    var enabled;
                     // it is the don't disturb event
-                    if (   data.agent
-                        && data.userevent === 'UpdateDB' && data.key   === 'DND'
-                        && data.value                    && data.event === 'UserEvent') {
+                    if (data.agent &&
+                        data.userevent === 'UpdateDB' && data.key   === 'DND' &&
+                        data.value                    && data.event === 'UserEvent') {
 
                         logger.info(IDLOG, 'received event ' + data.event + ' with ' + data.key + ' ' + data.value + ' for exten ' + data.agent);
-                        var enabled = ( data.value === 'ON' ? true : false );
+                        enabled = ( data.value === 'ON' ? true : false );
                         astProxy.proxyLogic.evtExtenDndChanged(data.agent, enabled);
 
                     }
                     // it is the call forward event
-                    else if (   data.agent
-                               && data.userevent === 'UpdateDB' && data.key   === 'CF'
-                               && data.value                    && data.event === 'UserEvent') {
+                    else if (data.agent &&
+                             data.userevent === 'UpdateDB' && data.key   === 'CF' &&
+                             data.value                    && data.event === 'UserEvent') {
 
                         // data.destination is not undefined only if call forward is enable, that is data.value is equal to ON
                         logger.info(IDLOG, 'received event ' + data.event + ' with ' + data.key + ' ' + data.value + ' for exten ' + data.agent +
                                            (data.destination ? (' to ' + data.destination) : '') );
 
-                        var enabled = ( data.value === 'ON' ? true : false );
+                        enabled = ( data.value === 'ON' ? true : false );
                         astProxy.proxyLogic.evtExtenUnconditionalCfChanged(data.agent, enabled, data.destination);
 
-                    } else if (   data.value
-                               && data.userevent === 'CallIn' && data.event === 'UserEvent') {
+                    } else if (data.value &&
+                               data.userevent === 'CallIn' && data.event === 'UserEvent') {
 
                         logger.info('UserEvent "CallIn" from number "' + data.value + '"');
                         astProxy.proxyLogic.evtNewExternalCall(data.value);
@@ -96,10 +97,10 @@ var astProxy;
             */
             setLogger: function (log) {
                 try {
-                    if (typeof log === 'object'
-                        && typeof log.info  === 'function'
-                        && typeof log.warn  === 'function'
-                        && typeof log.error === 'function') {
+                    if (typeof log       === 'object'   &&
+                        typeof log.info  === 'function' &&
+                        typeof log.warn  === 'function' &&
+                        typeof log.error === 'function') {
 
                         logger = log;
                     } else {

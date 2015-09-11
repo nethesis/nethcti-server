@@ -165,16 +165,16 @@ var FAIL_REASON = {
             data: function (data) {
                 try {
                     // check callback and info presence and execute it
-                    if (map[data.actionid]
-                        && data.event    === 'OriginateResponse'
-                        && data.response === 'Success') {
+                    if (map[data.actionid]                    &&
+                        data.event    === 'OriginateResponse' &&
+                        data.response === 'Success') {
 
                         map[data.actionid](null);
                         delete map[data.actionid]; // remove association ActionID-callback
 
-                    } else if (map[data.actionid]
-                               && data.event    === 'OriginateResponse'
-                               && data.response === 'Failure') {
+                    } else if (map[data.actionid]                    &&
+                               data.event    === 'OriginateResponse' &&
+                               data.response === 'Failure') {
 
                         map[data.actionid](new Error(FAIL_REASON[data.reason]));
                         delete map[data.actionid]; // remove association ActionID-callback
@@ -199,10 +199,10 @@ var FAIL_REASON = {
             */
             setLogger: function (log) {
                 try {
-                    if (typeof log === 'object'
-                        && typeof log.info  === 'function'
-                        && typeof log.warn  === 'function'
-                        && typeof log.error === 'function') {
+                    if (typeof log       === 'object'   &&
+                        typeof log.info  === 'function' &&
+                        typeof log.warn  === 'function' &&
+                        typeof log.error === 'function') {
 
                         logger = log;
                     } else {

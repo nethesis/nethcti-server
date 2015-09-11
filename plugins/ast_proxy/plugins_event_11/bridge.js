@@ -54,10 +54,10 @@ var astProxy;
             */
             data: function (data) {
                 try {
-                    if (   data.channel1
-                        && data.channel2
-                        && data.bridgestate === 'Link'
-                        && data.event       === 'Bridge') {
+                    if (data.channel1 &&
+                        data.channel2 &&
+                        data.bridgestate === 'Link' &&
+                        data.event       === 'Bridge') {
 
                         var channelExten1 = utilChannel11.extractExtensionFromChannel(data.channel1);
                         var channelExten2 = utilChannel11.extractExtensionFromChannel(data.channel2);
@@ -80,10 +80,10 @@ var astProxy;
             */
             setLogger: function (log) {
                 try {
-                    if (typeof log === 'object'
-                        && typeof log.info  === 'function'
-                        && typeof log.warn  === 'function'
-                        && typeof log.error === 'function') {
+                    if (typeof log       === 'object'   &&
+                        typeof log.info  === 'function' &&
+                        typeof log.warn  === 'function' &&
+                        typeof log.error === 'function') {
 
                         logger = log;
                     } else {

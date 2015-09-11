@@ -144,9 +144,9 @@ function config(path) {
         var json = require(path);
 
         // check the configuration file content
-        if (   typeof json.user !== 'string'
-            || typeof json.pass !== 'string' || typeof json.prefix !== 'string'
-            || typeof json.host !== 'string' || typeof json.port   !== 'string') {
+        if (typeof json.user !== 'string' ||
+            typeof json.pass !== 'string' || typeof json.prefix !== 'string' ||
+            typeof json.host !== 'string' || typeof json.port   !== 'string') {
 
             throw new Error('wrong configuration file ' + path);
         }
@@ -186,10 +186,10 @@ function configSipWebrtc(path) {
         var json = require(path);
 
         // check the configuration file content
-        if (   typeof json                              !== 'object'
-            || typeof json.stun_server_address          !== 'string'
-            || typeof json.enabled                      !== 'string'
-            || (json.enabled !== 'true' && json.enabled !== 'false')) {
+        if (typeof json                              !== 'object' ||
+            typeof json.stun_server_address          !== 'string' ||
+            typeof json.enabled                      !== 'string' ||
+            (json.enabled !== 'true' && json.enabled !== 'false')) {
 
             throw new Error('wrong configuration file ' + path);
         }
@@ -320,8 +320,8 @@ function onData(data) {
         // check the command plugin presence. This event is generated in
         // response to a command request. It passes the event handler to
         // the appropriate command plugin.
-        if (pluginsCmd[cmd]
-            && typeof pluginsCmd[cmd].data === 'function') {
+        if (pluginsCmd[cmd] &&
+            typeof pluginsCmd[cmd].data === 'function') {
 
             pluginsCmd[cmd].data(data);
         }
@@ -330,11 +330,11 @@ function onData(data) {
         // it passes the event to the 'listParking' command plugin, because
         // it isn't possible to associate the event with the correct command
         // plugin, without the 'ActionID'
-        else if (data.event === 'Parkinglot'
-                 && pluginsCmd['listParkings']
-                 && typeof pluginsCmd['listParkings'].data === 'function') {
+        else if (data.event === 'Parkinglot' &&
+                 pluginsCmd.listParkings     &&
+                 typeof pluginsCmd.listParkings.data === 'function') {
 
-            pluginsCmd['listParkings'].data(data);
+            pluginsCmd.listParkings.data(data);
 
         } else if (data.event) { // check if data is an event
 
@@ -342,8 +342,8 @@ function onData(data) {
             // check the event plugin presence. This event is an asterisk
             // event generated in response to some action. It passes the
             // event handler to the appropriate event plugin.
-            if (pluginsEvent[ev]
-                && typeof pluginsEvent[ev].data === 'function') {
+            if (pluginsEvent[ev] &&
+                typeof pluginsEvent[ev].data === 'function') {
 
                 pluginsEvent[ev].data(data);
 
@@ -386,8 +386,8 @@ function onData(data) {
 */
 function doCmd(obj, cb) {
     try {
-        if (pluginsCmd[obj.command]
-            && typeof pluginsCmd[obj.command].execute === 'function') {
+        if (pluginsCmd[obj.command] &&
+            typeof pluginsCmd[obj.command].execute === 'function') {
 
             logger.info(IDLOG, 'execute ' + obj.command + '.execute');
             pluginsCmd[obj.command].execute(am, obj, cb);
@@ -410,10 +410,10 @@ function doCmd(obj, cb) {
 */
 function setLogger(log) {
     try {
-        if (typeof log === 'object'
-            && typeof log.info  === 'function'
-            && typeof log.warn  === 'function'
-            && typeof log.error === 'function') {
+        if (typeof log       === 'object'   &&
+            typeof log.info  === 'function' &&
+            typeof log.warn  === 'function' &&
+            typeof log.error === 'function') {
 
             logger = log;
             logger.info(IDLOG, 'new logger has been set');

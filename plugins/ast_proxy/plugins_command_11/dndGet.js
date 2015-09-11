@@ -96,10 +96,10 @@ var IDLOG = '[dndGet]';
                     var exten = data.actionid.split('_')[1];
 
                     // check callback and info presence and execute it
-                    if (map[data.actionid]
-                        && data.val
-                        && data.event  === 'DBGetResponse'
-                        && data.family === 'DND') {
+                    if (map[data.actionid] &&
+                        data.val &&
+                        data.event  === 'DBGetResponse' &&
+                        data.family === 'DND') {
 
                         map[data.actionid](null, { exten: exten, dnd: 'on' });
                         delete map[data.actionid]; // remove association ActionID-callback
@@ -128,10 +128,10 @@ var IDLOG = '[dndGet]';
             */
             setLogger: function (log) {
                 try {
-                    if (typeof log === 'object'
-                        && typeof log.info  === 'function'
-                        && typeof log.warn  === 'function'
-                        && typeof log.error === 'function') {
+                    if (typeof log       === 'object'   &&
+                        typeof log.info  === 'function' &&
+                        typeof log.warn  === 'function' &&
+                        typeof log.error === 'function') {
 
                         logger = log;
                     } else {

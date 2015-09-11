@@ -99,14 +99,14 @@ var IDLOG = '[redirectChannel]';
             data: function (data) {
                 try {
                     // check callback and info presence and execute it
-                    if (map[data.actionid]
-                        && data.response === 'Success') {
+                    if (map[data.actionid] &&
+                        data.response === 'Success') {
 
                         map[data.actionid](null);
 
-                    } else if (map[data.actionid]
-                               && data.message
-                               && data.response === 'Error') {
+                    } else if (map[data.actionid] &&
+                               data.message       &&
+                               data.response === 'Error') {
 
                         map[data.actionid](new Error(data.message));
 
@@ -134,10 +134,10 @@ var IDLOG = '[redirectChannel]';
             */
             setLogger: function (log) {
                 try {
-                    if (typeof log === 'object'
-                        && typeof log.info  === 'function'
-                        && typeof log.warn  === 'function'
-                        && typeof log.error === 'function') {
+                    if (typeof log       === 'object'   &&
+                        typeof log.info  === 'function' &&
+                        typeof log.warn  === 'function' &&
+                        typeof log.error === 'function') {
 
                         logger = log;
                     } else {

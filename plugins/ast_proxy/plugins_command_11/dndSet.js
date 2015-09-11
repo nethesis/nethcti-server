@@ -67,11 +67,12 @@ var IDLOG = '[dndSet]';
             */
             execute: function (am, args, cb) {
                 try {
+                    var act;
                     // action for asterisk
                     if (args.activate) {
-                        var act = { Action: 'DBPut', Family: 'DND', Key: args.exten, Val: 'YES' };
+                        act = { Action: 'DBPut', Family: 'DND', Key: args.exten, Val: 'YES' };
                     } else {
-                        var act = { Action: 'DBDel', Family: 'DND', Key: args.exten };
+                        act = { Action: 'DBDel', Family: 'DND', Key: args.exten };
                     }
                     
                     // set the action identifier
@@ -99,12 +100,12 @@ var IDLOG = '[dndSet]';
             data: function (data) {
                 try {
                     // check callback and info presence and execute it
-                    if (map[data.actionid]
-                        && (
-                            data.message    === 'Updated database successfully'
-                            || data.message === 'Key deleted successfully'
-                        )
-                        && data.response === 'Success') {
+                    if (map[data.actionid] &&
+                        (
+                            data.message === 'Updated database successfully' ||
+                            data.message === 'Key deleted successfully'
+                        ) &&
+                        data.response === 'Success') {
 
                         map[data.actionid](null);
                         delete map[data.actionid]; // remove association ActionID-callback
@@ -133,10 +134,10 @@ var IDLOG = '[dndSet]';
             */
             setLogger: function (log) {
                 try {
-                    if (typeof log === 'object'
-                        && typeof log.info  === 'function'
-                        && typeof log.warn  === 'function'
-                        && typeof log.error === 'function') {
+                    if (typeof log       === 'object'   &&
+                        typeof log.info  === 'function' &&
+                        typeof log.warn  === 'function' &&
+                        typeof log.error === 'function') {
 
                         logger = log;
                     } else {

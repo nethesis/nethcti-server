@@ -53,10 +53,10 @@ var astProxy;
             */
             data: function (data) {
                 try {
-                    if (data.channel
-                        && data.count    && data.calleridnum
-                        && data.queue    && data.calleridname
-                        && data.position && data.event === 'Join') {
+                    if (data.channel  &&
+                        data.count    && data.calleridnum  &&
+                        data.queue    && data.calleridname &&
+                        data.position && data.event === 'Join') {
 
                         logger.info(IDLOG, 'received event ' + data.event);
                         astProxy.proxyLogic.evtNewQueueWaitingCaller({
@@ -83,10 +83,10 @@ var astProxy;
             */
             setLogger: function (log) {
                 try {
-                    if (typeof log === 'object'
-                        && typeof log.info  === 'function'
-                        && typeof log.warn  === 'function'
-                        && typeof log.error === 'function') {
+                    if (typeof log       === 'object'   &&
+                        typeof log.info  === 'function' &&
+                        typeof log.warn  === 'function' &&
+                        typeof log.error === 'function') {
 
                         logger = log;
                     } else {

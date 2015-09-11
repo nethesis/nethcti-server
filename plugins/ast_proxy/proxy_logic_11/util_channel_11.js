@@ -38,7 +38,7 @@ var AST_CHANNEL_STATE_2_STRING_ADAPTER = {
     7: 'busy',
     8: 'dialing_offhook',
     9: 'prering'
-}
+};
 
 /**
 * Extracts the extension name from the channel

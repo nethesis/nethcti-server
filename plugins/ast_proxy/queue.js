@@ -364,7 +364,7 @@ exports.Queue = function (queueNum) {
             abandonedCallsCount:    abandonedCallsCount,
             serviceLevelTimePeriod: serviceLevelTimePeriod,
             serviceLevelPercentage: serviceLevelPercentage
-        }
+        };
     }
 
     // public interface
@@ -393,4 +393,4 @@ exports.Queue = function (queueNum) {
         setServiceLevelTimePeriod: setServiceLevelTimePeriod,
         setServiceLevelPercentage: setServiceLevelPercentage
     };
-}
+};

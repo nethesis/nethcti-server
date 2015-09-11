@@ -104,10 +104,10 @@ var IDLOG = '[listVoicemail]';
                     // store new voicemail information object
                     // data.objectname is the extension number, e.g., 214
                     // data.email can be an empty string, so check that it is not undefined
-                    if (   data                 && data.event === 'VoicemailUserEntry'
-                        && data.fullname        && data.email !== undefined
-                        && data.vmcontext       && data.voicemailbox
-                        && data.maxmessagecount && data.maxmessagelength && data.newmessagecount) {
+                    if (data                 && data.event === 'VoicemailUserEntry' &&
+                        data.fullname        && data.email !== undefined            &&
+                        data.vmcontext       && data.voicemailbox                   &&
+                        data.maxmessagecount && data.maxmessagelength && data.newmessagecount) {
 
                         // initialize result only in the first event received
                         if (!list[data.actionid]) { list[data.actionid] = {}; }
@@ -123,8 +123,8 @@ var IDLOG = '[listVoicemail]';
                         };
                         list[data.actionid][data.voicemailbox] = obj;
 
-                    } else if (   (map[data.actionid] && data && data.event === 'VoicemailUserEntryComplete')
-                               || (data.response === 'Success' && data.message === 'There are no voicemail users currently defined.')) {
+                    } else if ((map[data.actionid] && data && data.event === 'VoicemailUserEntryComplete') ||
+                               (data.response === 'Success' && data.message === 'There are no voicemail users currently defined.')) {
 
                         map[data.actionid](null, list[data.actionid]); // callback execution
                     }
@@ -153,10 +153,10 @@ var IDLOG = '[listVoicemail]';
             */
             setLogger: function (log) {
                 try {
-                    if (typeof log === 'object'
-                        && typeof log.info  === 'function'
-                        && typeof log.warn  === 'function'
-                        && typeof log.error === 'function') {
+                    if (typeof log       === 'object'   &&
+                        typeof log.info  === 'function' &&
+                        typeof log.warn  === 'function' &&
+                        typeof log.error === 'function') {
 
                         logger = log;
                     } else {

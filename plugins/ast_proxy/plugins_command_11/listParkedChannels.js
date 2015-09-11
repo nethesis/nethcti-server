@@ -92,13 +92,14 @@ var IDLOG = '[listParkedChannels]';
             */
             data: function (data) {
                 try {
+                    // the list of parked channels
+                    var list = {};
+
                     // store new channel object
-                    if (data.response     === 'Follows'
-                        && data.privilege === 'Command') {
+                    if (data.response  === 'Follows' &&
+                        data.privilege === 'Command') {
                         // the answer received in the event is a string. So analize it
 
-                        // the list of parked channels
-                        var list = {};
 
                         // search the value that contains parked channels informations
                         var k, value;
@@ -118,7 +119,7 @@ var IDLOG = '[listParkedChannels]';
                         var numParkedCh = parseInt(arr[arr.length - 2].split(' ')[0]);
 
                         // there are some parked channels
-                        if (numParkedCh !== NaN && numParkedCh > 0) {
+                        if (isNaN(numParkedCh) === false && numParkedCh > 0) {
 
                             var startIndex = arr.length - (4 + numParkedCh); // start array index of the parked channels
                             arr = arr.slice(startIndex, numParkedCh + 1);    // get only the array elements relative to parked channels
@@ -172,10 +173,10 @@ var IDLOG = '[listParkedChannels]';
             */
             setLogger: function (log) {
                 try {
-                    if (typeof log === 'object'
-                        && typeof log.info  === 'function'
-                        && typeof log.warn  === 'function'
-                        && typeof log.error === 'function') {
+                    if (typeof log       === 'object'   &&
+                        typeof log.info  === 'function' &&
+                        typeof log.warn  === 'function' &&
+                        typeof log.error === 'function') {
 
                         logger = log;
                     } else {

@@ -9,8 +9,8 @@
 */
 exports.Conversation = function (ownerId, sourceChan, destChan, queue) {
     // check parameters
-    if (    typeof ownerId  !== 'string'
-        || (typeof destChan !== 'object' && typeof sourceChan !== 'object') ) {
+    if ( typeof ownerId  !== 'string' ||
+        (typeof destChan !== 'object' && typeof sourceChan !== 'object') ) {
 
         throw new Error('wrong parameters');
     }
@@ -116,8 +116,8 @@ exports.Conversation = function (ownerId, sourceChan, destChan, queue) {
     * @private
     */
     var throughQueue;
-    if (   (chSource && (chSource.getChannel().indexOf('from-queue') !== -1 || chSource.getBridgedChannel().indexOf('from-queue') !== -1))
-        || (chDest   && (chDest.getChannel().indexOf('from-queue')   !== -1 || chDest.getBridgedChannel().indexOf('from-queue')   !== -1))
+    if ((chSource && (chSource.getChannel().indexOf('from-queue') !== -1 || chSource.getBridgedChannel().indexOf('from-queue') !== -1)) ||
+        (chDest   && (chDest.getChannel().indexOf('from-queue')   !== -1 || chDest.getBridgedChannel().indexOf('from-queue')   !== -1))
        ) {
 
         throughQueue = true;
@@ -374,7 +374,7 @@ exports.Conversation = function (ownerId, sourceChan, destChan, queue) {
         getCounterpartNum:     getCounterpartNum,
         getDestinationChannel: getDestinationChannel
     };
-}
+};
 
 /**
 * The possible values for conversation direction.

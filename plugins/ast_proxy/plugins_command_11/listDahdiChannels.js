@@ -102,11 +102,9 @@ var IDLOG = '[listDahdiChannels]';
             data: function (data) {
                 try {
                     // store new channel object
-                    if (data.event === 'DAHDIShowChannels'
-                        && data.dahdichannel && data.alarm) {
+                    if (data.event === 'DAHDIShowChannels' &&
+                        data.dahdichannel && data.alarm) {
 
-                        AST_DAHDI_TRUNK_CH_STATUS_2_STR_ADAPTER[data.alarm.toLowerCase()]
-			
                         var obj = {
                             status:  AST_DAHDI_TRUNK_CH_STATUS_2_STR_ADAPTER[data.alarm.toLowerCase()],
                             channel: data.dahdichannel
@@ -141,10 +139,10 @@ var IDLOG = '[listDahdiChannels]';
             */
             setLogger: function (log) {
                 try {
-                    if (typeof log === 'object'
-                        && typeof log.info  === 'function'
-                        && typeof log.warn  === 'function'
-                        && typeof log.error === 'function') {
+                    if (typeof log       === 'object'   &&
+                        typeof log.info  === 'function' &&
+                        typeof log.warn  === 'function' &&
+                        typeof log.error === 'function') {
 
                         logger = log;
                     } else {

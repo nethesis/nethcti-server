@@ -65,6 +65,7 @@ var IDLOG = '[cfuVmSet]';
             */
             execute: function (am, args, cb) {
                 try {
+                    var act;
                     // action for asterisk
                     if (args.activate) {
 
@@ -73,10 +74,10 @@ var IDLOG = '[cfuVmSet]';
                         // the call forward to a voicemail adds a prefix code to the destination
                         // voicemail number
                         var to  = CFVM_PREFIX_CODE.vmu + args.val;
-                        var act = { Action: 'DBPut', Family: 'CFU', Key: args.exten, Val: to };
+                        act = { Action: 'DBPut', Family: 'CFU', Key: args.exten, Val: to };
 
                     } else {
-                        var act = { Action: 'DBDel', Family: 'CFU', Key: args.exten };
+                        act = { Action: 'DBDel', Family: 'CFU', Key: args.exten };
                     }
                     
                     // set the action identifier
@@ -104,12 +105,12 @@ var IDLOG = '[cfuVmSet]';
             data: function (data) {
                 try {
                     // check callback and info presence and execute it
-                    if (map[data.actionid]
-                        && (
-                            data.message    === 'Updated database successfully'
-                            || data.message === 'Key deleted successfully'
-                        )
-                        && data.response === 'Success') {
+                    if (map[data.actionid] &&
+                        (
+                            data.message === 'Updated database successfully' ||
+                            data.message === 'Key deleted successfully'
+                        ) &&
+                        data.response === 'Success') {
 
                         map[data.actionid](null);
                         delete map[data.actionid]; // remove association ActionID-callback
@@ -138,10 +139,10 @@ var IDLOG = '[cfuVmSet]';
             */
             setLogger: function (log) {
                 try {
-                    if (typeof log === 'object'
-                        && typeof log.info  === 'function'
-                        && typeof log.warn  === 'function'
-                        && typeof log.error === 'function') {
+                    if (typeof log       === 'object'   &&
+                        typeof log.info  === 'function' &&
+                        typeof log.warn  === 'function' &&
+                        typeof log.error === 'function') {
 
                         logger = log;
                     } else {

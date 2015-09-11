@@ -93,20 +93,20 @@ var IDLOG = '[cfuGet]';
             */
             data: function (data) {
                 try {
+                    var pre;
                     // get the extension number from the action id
                     var exten = data.actionid.split('_')[1];
 
                     // check callback and info presence and execute it
-                    if (map[data.actionid] && data.event === 'DBGetResponse'
-                        && data.family === 'CF'
-                        && data.val) {
+                    if (map[data.actionid]   && data.event === 'DBGetResponse' &&
+                        data.family === 'CF' &&
+                        data.val) {
 
                         // check if the destination of the call forward is a something different
                         // from a voicemail. If it's to voicemail then the result is false. This
                         // is because the call forward to voicemail is checked with another
                         // command plugin. The call forward and the call forward to voicemail use
                         // the same key database: CF, but the second adds a prefix to it
-                        var pre;
                         var isCf2Vm = false;
                         for (pre in CFVM_PREFIX_CODE) { // cycle in each cf to voicemail prefix code
 
@@ -130,19 +130,18 @@ var IDLOG = '[cfuGet]';
 
 
                     // get the extension number from the action id
-                    var exten = data.actionid.split('_')[1];
+                    exten = data.actionid.split('_')[1];
 
                     // check callback and info presence and execute it
-                    if (map[data.actionid] && data.event === 'DBGetResponse'
-                        && data.family === 'CFU'
-                        && data.val) {
+                    if (map[data.actionid]    && data.event === 'DBGetResponse' &&
+                        data.family === 'CFU' &&
+                        data.val) {
 
                         // check if the destination of the call forward is a something different
                         // from a voicemail. If it's to voicemail then the result is false. This
                         // is because the call forward to voicemail is checked with another
                         // command plugin. The call forward unavailable and the call forward unavailable to voicemail use
                         // the same key database: CFU, but the second adds a prefix to it
-                        var pre;
                         var isCfu2Vm = false;
                         for (pre in CFVM_PREFIX_CODE) { // cycle in each cf to voicemail prefix code
 
@@ -183,10 +182,10 @@ var IDLOG = '[cfuGet]';
             */
             setLogger: function (log) {
                 try {
-                    if (typeof log === 'object'
-                        && typeof log.info  === 'function'
-                        && typeof log.warn  === 'function'
-                        && typeof log.error === 'function') {
+                    if (typeof log       === 'object'   &&
+                        typeof log.info  === 'function' &&
+                        typeof log.warn  === 'function' &&
+                        typeof log.error === 'function') {
 
                         logger = log;
                     } else {

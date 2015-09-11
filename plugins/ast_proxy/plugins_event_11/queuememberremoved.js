@@ -53,8 +53,8 @@ var astProxy;
             */
             data: function (data) {
                 try {
-                    if (   data.queue
-                        && data.location && data.event === 'QueueMemberRemoved') {
+                    if (data.queue &&
+                        data.location && data.event === 'QueueMemberRemoved') {
 
                         logger.info(IDLOG, 'received event ' + data.event);
 
@@ -85,10 +85,10 @@ var astProxy;
             */
             setLogger: function (log) {
                 try {
-                    if (typeof log === 'object'
-                        && typeof log.info  === 'function'
-                        && typeof log.warn  === 'function'
-                        && typeof log.error === 'function') {
+                    if (typeof log       === 'object'   &&
+                        typeof log.info  === 'function' &&
+                        typeof log.warn  === 'function' &&
+                        typeof log.error === 'function') {
 
                         logger = log;
                     } else {

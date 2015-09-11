@@ -104,8 +104,8 @@ var IDLOG = '[sipDetails]';
                         // removes extension number if it's present
                         // e.g. '"User" <214>' becomes 'User'
                         var name;
-                        if (data.callerid.indexOf('<')    !== -1
-                            && data.callerid.indexOf('>') !== -1) {
+                        if (data.callerid.indexOf('<') !== -1 &&
+                            data.callerid.indexOf('>') !== -1) {
 
                             name = data.callerid.split('<')[0];
                         }
@@ -124,9 +124,9 @@ var IDLOG = '[sipDetails]';
                             }
                         });
 
-                    } else if (map[data.actionid]
-                               && data.message
-                               && data.response === 'Error') {
+                    } else if (map[data.actionid] &&
+                               data.message       &&
+                               data.response === 'Error') {
 
                         map[data.actionid](new Error(data.message));
 
@@ -156,10 +156,10 @@ var IDLOG = '[sipDetails]';
             */
             setLogger: function (log) {
                 try {
-                    if (typeof log === 'object'
-                        && typeof log.info  === 'function'
-                        && typeof log.warn  === 'function'
-                        && typeof log.error === 'function') {
+                    if (typeof log       === 'object'   &&
+                        typeof log.info  === 'function' &&
+                        typeof log.warn  === 'function' &&
+                        typeof log.error === 'function') {
 
                         logger = log;
                     } else {

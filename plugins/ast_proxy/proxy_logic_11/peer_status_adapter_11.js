@@ -25,6 +25,6 @@ var AST_PEER_STATUS_2_STR_ADAPTER = {
     'Reachable':   ONLINE,
     'Unreachable': OFFLINE,
     'Unmonitored': OFFLINE
-}
+};
 
 exports.AST_PEER_STATUS_2_STR_ADAPTER = AST_PEER_STATUS_2_STR_ADAPTER;

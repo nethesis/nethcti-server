@@ -97,9 +97,9 @@ var IDLOG = '[iaxDetails]';
 
                     // store new Extension object
                     // data.objectname is extension number, e.g., 214
-                    if (data.event === 'PeerEntry'
-                        && data.objectname && data.port && data.ipaddress
-                        && data.objectname === exten) {
+                    if (data.event === 'PeerEntry'                     &&
+                        data.objectname && data.port && data.ipaddress &&
+                        data.objectname === exten) {
 
                         map[data.actionid](null, {
                             ip:    data.ipaddress === '(null)' ? '' : data.ipaddress,
@@ -128,10 +128,10 @@ var IDLOG = '[iaxDetails]';
             */
             setLogger: function (log) {
                 try {
-                    if (typeof log === 'object'
-                        && typeof log.info  === 'function'
-                        && typeof log.warn  === 'function'
-                        && typeof log.error === 'function') {
+                    if (typeof log       === 'object'   &&
+                        typeof log.info  === 'function' &&
+                        typeof log.warn  === 'function' &&
+                        typeof log.error === 'function') {
 
                         logger = log;
                     } else {
