@@ -311,7 +311,7 @@ exports.Trunk = function (ext, chType, maxCh) {
             maxChannels:   maxChannels,
             sipuseragent:  sipuseragent,
             conversations: jsonConvs
-        }
+        };
     }
 
     // public interface
@@ -337,7 +337,7 @@ exports.Trunk = function (ext, chType, maxCh) {
         getAllConversations:    getAllConversations,
         removeAllConversations: removeAllConversations
     };
-}
+};
 
 /**
 * The trunk status enumeration.

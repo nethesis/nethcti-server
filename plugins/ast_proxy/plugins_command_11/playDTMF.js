@@ -100,8 +100,8 @@ var IDLOG = '[playDTMF]';
                         map[data.actionid](null);
                         delete map[data.actionid]; // remove association ActionID-callback
 
-                    } else if (map[data.actionid]
-                               && data.response === 'Error' && data.message) {
+                    } else if (map[data.actionid] &&
+                               data.response === 'Error' && data.message) {
 
                         map[data.actionid](new Error(data.message));
                         delete map[data.actionid]; // remove association ActionID-callback
@@ -131,10 +131,10 @@ var IDLOG = '[playDTMF]';
             */
             setLogger: function (log) {
                 try {
-                    if (typeof log === 'object'
-                        && typeof log.info  === 'function'
-                        && typeof log.warn  === 'function'
-                        && typeof log.error === 'function') {
+                    if (typeof log       === 'object'   &&
+                        typeof log.info  === 'function' &&
+                        typeof log.warn  === 'function' &&
+                        typeof log.error === 'function') {
 
                         logger = log;
                     } else {

@@ -97,8 +97,8 @@ var IDLOG = '[cfbGet]';
                     var exten = data.actionid.split('_')[1];
 
                     // check callback and info presence and execute it
-                    if (map[data.actionid]       && data.event === 'DBGetResponse'
-                        && data.family === 'CFB' && data.val) {
+                    if (map[data.actionid]    && data.event === 'DBGetResponse' &&
+                        data.family === 'CFB' && data.val) {
 
                         // check if the destination of the call forward is a something different
                         // from a voicemail. If it's to voicemail then the result is false. This
@@ -147,10 +147,10 @@ var IDLOG = '[cfbGet]';
             */
             setLogger: function (log) {
                 try {
-                    if (typeof log === 'object'
-                        && typeof log.info  === 'function'
-                        && typeof log.warn  === 'function'
-                        && typeof log.error === 'function') {
+                    if (typeof log       === 'object'   &&
+                        typeof log.info  === 'function' &&
+                        typeof log.warn  === 'function' &&
+                        typeof log.error === 'function') {
 
                         logger = log;
                     } else {

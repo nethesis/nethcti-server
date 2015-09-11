@@ -64,10 +64,10 @@ var compDbconn;
 */
 function setLogger(log) {
     try {
-        if (typeof log === 'object'
-            && typeof log.info  === 'function'
-            && typeof log.warn  === 'function'
-            && typeof log.error === 'function') {
+        if (typeof log       === 'object'   &&
+            typeof log.info  === 'function' &&
+            typeof log.warn  === 'function' &&
+            typeof log.error === 'function') {
 
             logger = log;
             logger.info(IDLOG, 'new logger has been set');
@@ -87,17 +87,17 @@ function setLogger(log) {
 *
 * @method config
 * @param {object} data 
-*   @param {string} data.file Authorization ini file path. The file must
-* have the authorization name as section and 'users' key with the username
-* list as value. In the case of customer card and streaming sections, the
-* key is the name of customer card or video streaming.
+*   @param {string} data.type Authorization ini file path. The file must have the authorization name
+*                             as section and 'users' key with the username list as value. In the case
+*                             of customer card and streaming sections, the key is the name of customer
+*                             card or video streaming.
 */
 function config(data) {
     try {
         // check parameter
-        if (    typeof data      !== 'object'
-            ||  typeof data.type !== 'string'
-            || (typeof data.type === 'file' && typeof data.path !== 'string')) {
+        if (typeof data      !== 'object' ||
+            typeof data.type !== 'string' ||
+                  (data.type === 'file'   && typeof data.path !== 'string')) {
         
             throw new TypeError('wrong parameter');
         }
@@ -1256,13 +1256,13 @@ function getUserAuthorizations(username) {
 
                 // authorization values can be a boolean or an object with the list
                 // of how is permitted as keys, e.g. the customer card authorizations
-                if (   (typeof obj[type] === 'boolean' && obj[type] === true)
-                    || (typeof obj[type] === 'object'  && Object.keys(obj[type]).length > 0)) {
+                if ((typeof obj[type] === 'boolean' && obj[type] === true) ||
+                    (typeof obj[type] === 'object'  && Object.keys(obj[type]).length > 0)) {
 
                     result[type] = true;
 
-                } else if (   (typeof obj[type] === 'boolean' && obj[type] === false)
-                           || (typeof obj[type] === 'object'  && Object.keys(obj[type]).length === 0)) {
+                } else if ((typeof obj[type] === 'boolean' && obj[type] === false) ||
+                           (typeof obj[type] === 'object'  && Object.keys(obj[type]).length === 0)) {
 
                     result[type] = false;
 
@@ -1296,8 +1296,8 @@ function getUserAuthorizations(username) {
 function verifyOffhourListenAnnouncement(username, announcementId, cb) {
     try {
         // check parameters
-        if (   typeof username       !== 'string'
-            || typeof announcementId !== 'string' || typeof cb !== 'function') {
+        if (typeof username       !== 'string' ||
+            typeof announcementId !== 'string' || typeof cb !== 'function') {
 
             throw new Error('wrong parameters');
         }
@@ -1336,8 +1336,8 @@ function verifyOffhourListenAnnouncement(username, announcementId, cb) {
 function verifyOffhourUserAnnouncement(username, announcementId, cb) {
     try {
         // check parameters
-        if (   typeof username       !== 'string'
-            || typeof announcementId !== 'string' || typeof cb !== 'function') {
+        if (typeof username       !== 'string' ||
+            typeof announcementId !== 'string' || typeof cb !== 'function') {
 
             throw new Error('wrong parameters');
         }

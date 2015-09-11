@@ -210,10 +210,10 @@ var grants = {};
 */
 function setLogger(log) {
     try {
-        if (typeof log === 'object'
-            && typeof log.info  === 'function'
-            && typeof log.warn  === 'function'
-            && typeof log.error === 'function') {
+        if (typeof log       === 'object'   &&
+            typeof log.info  === 'function' &&
+            typeof log.warn  === 'function' &&
+            typeof log.error === 'function') {
 
             logger = log;
             logger.info(IDLOG, 'new logger has been set');
@@ -246,12 +246,12 @@ function config(path) {
     // read configuration file
     var json = require(path);
 
-    if (   typeof json      !== 'object'
-        || typeof json.type !== 'string' || typeof json.expiration_timeout !== 'string'
-        || !AUTH_TYPE[json.type]
-        || (json.type === AUTH_TYPE.ldap            && typeof json[AUTH_TYPE.ldap] !== 'object')
-        || (json.type === AUTH_TYPE.file            && typeof json[AUTH_TYPE.file] !== 'object')
-        || (json.type === AUTH_TYPE.activeDirectory && typeof json[AUTH_TYPE.ldap] !== 'object')) {
+    if (typeof json      !== 'object' ||
+        typeof json.type !== 'string' || typeof json.expiration_timeout !== 'string' ||
+        !AUTH_TYPE[json.type]         ||
+        (json.type === AUTH_TYPE.ldap            && typeof json[AUTH_TYPE.ldap] !== 'object') ||
+        (json.type === AUTH_TYPE.file            && typeof json[AUTH_TYPE.file] !== 'object') ||
+        (json.type === AUTH_TYPE.activeDirectory && typeof json[AUTH_TYPE.ldap] !== 'object')) {
 
         throw new Error('wrong configuration file for authentication ' + path);
     }
@@ -281,8 +281,8 @@ function config(path) {
         configActiveDirectory(json[AUTH_TYPE.ldap]);
     }
 
-    if (   typeof json.unauthe_call !== 'string'
-        || (json.unauthe_call !== 'disabled' && json.unauthe_call !== 'enabled')) {
+    if ( typeof json.unauthe_call !== 'string'   ||
+        (json.unauthe_call        !== 'disabled' && json.unauthe_call !== 'enabled')) {
 
         logger.warn(IDLOG, 'bad "unauthe_call" configuration in ' + path + ': use default "' + unauthenticatedCall + '"');
 
@@ -368,8 +368,8 @@ function startIntervalRemoveExpiredTokens() {
 */
 function configFile(json) {
     // check the parameter
-    if (typeof  json !== 'object'
-        || json.path === undefined || json.path === '') {
+    if (typeof json !== 'object'  ||
+        json.path   === undefined || json.path === '') {
 
         throw new Error('wrong file authentication configuration');
     }
@@ -404,9 +404,9 @@ function configFile(json) {
 */
 function configLDAP(json) {
     // check the parameter
-    if (   typeof json        !== 'object'
-        || typeof json.ou     !== 'string' || typeof json.baseDn !== 'string'
-        || typeof json.server !== 'string' || typeof json.port   !== 'string') {
+    if (typeof json        !== 'object' ||
+        typeof json.ou     !== 'string' || typeof json.baseDn !== 'string' ||
+        typeof json.server !== 'string' || typeof json.port   !== 'string') {
 
         throw new Error('wrong LDAP auhtentication configuration');
     }
@@ -440,8 +440,8 @@ function configLDAP(json) {
 */
 function configActiveDirectory(json) {
     // check the parameter
-    if (   typeof json        !== 'object' || typeof json.baseDn !== 'string'
-        || typeof json.server !== 'string' || typeof json.port   !== 'string') {
+    if (typeof json        !== 'object' || typeof json.baseDn !== 'string' ||
+        typeof json.server !== 'string' || typeof json.port   !== 'string') {
 
         throw new Error('wrong active directory auhtentication configuration');
     }
@@ -479,9 +479,9 @@ function configActiveDirectory(json) {
 function newToken(accessKeyId, password, nonce) {
     try {
         // check parameters
-        if (typeof accessKeyId !== 'string'
-            || typeof nonce    !== 'string'
-            || typeof password !== 'string') {
+        if (typeof accessKeyId !== 'string' ||
+            typeof nonce       !== 'string' ||
+            typeof password    !== 'string') {
 
             throw new Error('wrong parameters');
         }
@@ -493,12 +493,12 @@ function newToken(accessKeyId, password, nonce) {
         // store token
         if (!grants[accessKeyId]) { grants[accessKeyId] = {}; }
 
-        var newToken = {
+        var newTokenObj = {
             nonce:   nonce,
             token:   token,
             expires: (new Date()).getTime() + expires
         };
-        grants[accessKeyId][token] = newToken;
+        grants[accessKeyId][token] = newTokenObj;
 
         logger.info(IDLOG, 'new token has been generated for accessKeyId ' + accessKeyId);
 
@@ -551,9 +551,9 @@ function getNonce(accessKeyId, password) {
 function authenticate(accessKeydId, password, cb) {
     try {
         // check parameters
-        if (typeof cb !== 'function'
-            || typeof password     !== 'string'
-            || typeof accessKeydId !== 'string') {
+        if (typeof cb           !== 'function' ||
+            typeof password     !== 'string'   ||
+            typeof accessKeydId !== 'string') {
 
             throw new Error('wrong parameters');
         }
@@ -593,9 +593,9 @@ function authenticate(accessKeydId, password, cb) {
 function authByFile(accessKeydId, password, cb) {
     try {
         // check parameters
-        if (typeof cb !== 'function'
-            || typeof password     !== 'string'
-            || typeof accessKeydId !== 'string') {
+        if (typeof cb           !== 'function' ||
+            typeof password     !== 'string'   ||
+            typeof accessKeydId !== 'string') {
 
             throw new Error('wrong parameters');
         }
@@ -626,9 +626,9 @@ function authByFile(accessKeydId, password, cb) {
 function authByLDAP(accessKeydId, password, cb) {
     try {
         // check parameters
-        if (typeof cb !== 'function'
-            || typeof password     !== 'string'
-            || typeof accessKeydId !== 'string') {
+        if (typeof cb           !== 'function' ||
+            typeof password     !== 'string'   ||
+            typeof accessKeydId !== 'string') {
 
             throw new Error('wrong parameters');
         }
@@ -655,9 +655,9 @@ function authByLDAP(accessKeydId, password, cb) {
 function authByActiveDirectory(accessKeydId, password, cb) {
     try {
         // check parameters
-        if (   typeof cb           !== 'function'
-            || typeof password     !== 'string'
-            || typeof accessKeydId !== 'string') {
+        if (typeof cb           !== 'function' ||
+            typeof password     !== 'string'   ||
+            typeof accessKeydId !== 'string') {
 
             throw new Error('wrong parameters');
         }

@@ -347,4 +347,4 @@ module.exports = function (options, imports, register) {
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
-}
+};

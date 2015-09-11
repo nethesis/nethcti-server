@@ -96,9 +96,9 @@ var IDLOG = '[cwGet]';
                     var exten = data.actionid.split('_')[1];
 
                     // check callback and info presence and execute it
-                    if (map[data.actionid] && data.event === 'DBGetResponse'
-                        && data.family === 'CW'
-                        && data.val) {
+                    if (map[data.actionid] && data.event === 'DBGetResponse' &&
+                        data.family === 'CW' &&
+                        data.val) {
 
                         map[data.actionid](null, { exten: exten, cw: 'on' });
                         delete map[data.actionid]; // remove association ActionID-callback
@@ -127,10 +127,10 @@ var IDLOG = '[cwGet]';
             */
             setLogger: function (log) {
                 try {
-                    if (typeof log === 'object'
-                        && typeof log.info  === 'function'
-                        && typeof log.warn  === 'function'
-                        && typeof log.error === 'function') {
+                    if (typeof log       === 'object'   &&
+                        typeof log.info  === 'function' &&
+                        typeof log.warn  === 'function' &&
+                        typeof log.error === 'function') {
 
                         logger = log;
                     } else {

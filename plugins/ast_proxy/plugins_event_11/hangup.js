@@ -115,9 +115,9 @@ var CAUSE = {
             */
             data: function (data) {
                 try {
-                    if (data
-                        && data.calleridnum && data.channel
-                        && data.cause       && data.event === 'Hangup') {
+                    if (data             &&
+                        data.calleridnum && data.channel &&
+                        data.cause       && data.event === 'Hangup') {
 
                         // extract the extension name from the channel
                         var channelExten = utilChannel11.extractExtensionFromChannel(data.channel);
@@ -149,10 +149,10 @@ var CAUSE = {
             */
             setLogger: function (log) {
                 try {
-                    if (typeof log === 'object'
-                        && typeof log.info  === 'function'
-                        && typeof log.warn  === 'function'
-                        && typeof log.error === 'function') {
+                    if (typeof log       === 'object'   &&
+                        typeof log.info  === 'function' &&
+                        typeof log.warn  === 'function' &&
+                        typeof log.error === 'function') {
 
                         logger = log;
                     } else {

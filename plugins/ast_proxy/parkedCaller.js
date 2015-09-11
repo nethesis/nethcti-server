@@ -15,12 +15,12 @@
 */
 exports.ParkedCaller = function (data) {
     // check the parameter
-    if (!data
-        || typeof data.parking    !== 'string'
-        || typeof data.channel    !== 'string'
-        || typeof data.timeout    !== 'number'
-        || typeof data.callerNum  !== 'string'
-        || typeof data.callerName !== 'string') {
+    if (!data ||
+        typeof data.parking    !== 'string' ||
+        typeof data.channel    !== 'string' ||
+        typeof data.timeout    !== 'number' ||
+        typeof data.callerNum  !== 'string' ||
+        typeof data.callerName !== 'string') {
 
         throw new Error('wrong parameter');
     }
@@ -144,7 +144,7 @@ exports.ParkedCaller = function (data) {
     * @method toString
     * @return {string} The readable description of the parked caller.
     */
-    function toString() { return 'Parked caller: ' + getNumber() + ' in the parking ' + getParking() }
+    function toString() { return 'Parked caller: ' + getNumber() + ' in the parking ' + getParking(); }
 
     /**
     * Returns the JSON representation of the object.
@@ -171,7 +171,7 @@ exports.ParkedCaller = function (data) {
             parking: parking,
             channel: channel,
             timeout: timeout
-        }
+        };
     }
 
     // public interface
@@ -184,4 +184,4 @@ exports.ParkedCaller = function (data) {
         getChannel:      getChannel,
         getParking:      getParking
     };
-}
+};

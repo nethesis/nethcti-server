@@ -395,10 +395,10 @@ var INI_STRUCT = {
 */
 function setLogger(log) {
     try {
-        if (typeof log === 'object'
-            && typeof log.info  === 'function'
-            && typeof log.warn  === 'function'
-            && typeof log.error === 'function') {
+        if (typeof log       === 'object'   &&
+            typeof log.info  === 'function' &&
+            typeof log.warn  === 'function' &&
+            typeof log.error === 'function') {
 
             logger = log;
             logger.info(IDLOG, 'new logger has been set');
@@ -539,8 +539,8 @@ function sipExtenStructValidation(err, resp) {
         for (k in struct) {
 
             // validates all sip extensions
-            if (struct[k].tech    === INI_STRUCT.TECH.SIP
-                && struct[k].type === INI_STRUCT.TYPE.EXTEN) {
+            if (struct[k].tech === INI_STRUCT.TECH.SIP &&
+                struct[k].type === INI_STRUCT.TYPE.EXTEN) {
 
                 // current extension of the structure ini file isn't present
                 // into the asterisk. So remove it from the structure ini file
@@ -588,8 +588,8 @@ function sipTrunkStructValidation(err, resp) {
         for (k in struct) {
 
             // validates all sip trunks
-            if (struct[k].tech    === INI_STRUCT.TECH.SIP
-                && struct[k].type === INI_STRUCT.TYPE.TRUNK) {
+            if (struct[k].tech === INI_STRUCT.TECH.SIP &&
+                struct[k].type === INI_STRUCT.TYPE.TRUNK) {
 
                 // current trunk of the structure ini file isn't present
                 // into the asterisk. So remove it from the structure ini file
@@ -637,8 +637,8 @@ function iaxTrunkStructValidation(err, resp) {
         for (k in struct) {
 
             // validates all iax trunks
-            if (struct[k].tech    === INI_STRUCT.TECH.IAX
-                && struct[k].type === INI_STRUCT.TYPE.TRUNK) {
+            if (struct[k].tech === INI_STRUCT.TECH.IAX &&
+                struct[k].type === INI_STRUCT.TYPE.TRUNK) {
 
                 // current trunk of the structure ini file isn't present
                 // into the asterisk. So remove it from the structure ini file
@@ -686,8 +686,8 @@ function iaxExtenStructValidation(err, resp) {
         for (k in struct) {
 
             // validates all sip extensions
-            if (struct[k].tech    === INI_STRUCT.TECH.IAX
-                && struct[k].type === INI_STRUCT.TYPE.EXTEN) {
+            if (struct[k].tech === INI_STRUCT.TECH.IAX &&
+                struct[k].type === INI_STRUCT.TYPE.EXTEN) {
 
                 // current extension of the structure ini file isn't present
                 // into the asterisk. So remove it from the structure ini file
@@ -859,8 +859,8 @@ function initializeIaxExten(resp) {
         var i, k, exten;
         for (k in struct) {
 
-            if (struct[k].type    === INI_STRUCT.TYPE.EXTEN
-                && struct[k].tech === INI_STRUCT.TECH.IAX) { // all iax extensions
+            if (struct[k].type === INI_STRUCT.TYPE.EXTEN &&
+                struct[k].tech === INI_STRUCT.TECH.IAX) { // all iax extensions
 
                 exten = new Extension(struct[k].extension, struct[k].tech);
                 extensions[exten.getExten()] = exten;
@@ -1212,11 +1212,11 @@ function queueDetailsUpdate(err, resp) {
         }
 
         // check the parameter
-        if (typeof resp !== 'object'
-            || resp.queue                  === undefined || resp.members                === undefined
-            || resp.holdtime               === undefined || resp.talktime               === undefined
-            || resp.completedCallsCount    === undefined || resp.abandonedCallsCount    === undefined
-            || resp.serviceLevelTimePeriod === undefined || resp.serviceLevelPercentage === undefined) {
+        if (typeof resp !== 'object' ||
+            resp.queue                  === undefined || resp.members                === undefined ||
+            resp.holdtime               === undefined || resp.talktime               === undefined ||
+            resp.completedCallsCount    === undefined || resp.abandonedCallsCount    === undefined ||
+            resp.serviceLevelTimePeriod === undefined || resp.serviceLevelPercentage === undefined) {
 
             throw new Error('wrong parameter');
         }
@@ -1252,10 +1252,10 @@ function queueDetailsUpdate(err, resp) {
 function setQueueData(q, resp) {
     try {
         // check the parameter
-        if (   typeof q                    !== 'string'  || typeof resp                 !== 'object'
-            || resp.holdtime               === undefined || resp.talktime               === undefined
-            || resp.completedCallsCount    === undefined || resp.abandonedCallsCount    === undefined
-            || resp.serviceLevelTimePeriod === undefined || resp.serviceLevelPercentage === undefined) {
+        if (typeof q                    !== 'string'  || typeof resp                 !== 'object'  ||
+            resp.holdtime               === undefined || resp.talktime               === undefined ||
+            resp.completedCallsCount    === undefined || resp.abandonedCallsCount    === undefined ||
+            resp.serviceLevelTimePeriod === undefined || resp.serviceLevelPercentage === undefined) {
 
             throw new Error('wrong parameter');
         }
@@ -1338,11 +1338,11 @@ function queueDetails(err, resp) {
         }
 
         // check the parameter
-        if (typeof resp !== 'object'
-            || resp.queue                  === undefined || resp.members             === undefined
-            || resp.holdtime               === undefined || resp.talktime            === undefined
-            || resp.completedCallsCount    === undefined || resp.abandonedCallsCount === undefined
-            || resp.serviceLevelTimePeriod === undefined) {
+        if (typeof resp !== 'object' ||
+            resp.queue                  === undefined || resp.members             === undefined ||
+            resp.holdtime               === undefined || resp.talktime            === undefined ||
+            resp.completedCallsCount    === undefined || resp.abandonedCallsCount === undefined ||
+            resp.serviceLevelTimePeriod === undefined) {
 
             throw new Error('wrong parameter');
         }
@@ -1476,10 +1476,10 @@ function addQueueMemberLoggedOut(memberId, queueId) {
 function addQueueMemberLoggedIn(data, queueId) {
     try {
         // check parameters
-        if (   typeof data                 !== 'object' || typeof queueId                !== 'string'
-            || typeof data.member          !== 'string' || typeof data.paused            !== 'boolean'
-            || typeof data.name            !== 'string' || typeof data.type              !== 'string'
-            || typeof data.callsTakenCount !== 'number' || typeof data.lastCallTimestamp !== 'number') {
+        if (typeof data                 !== 'object' || typeof queueId                !== 'string'  ||
+            typeof data.member          !== 'string' || typeof data.paused            !== 'boolean' ||
+            typeof data.name            !== 'string' || typeof data.type              !== 'string'  ||
+            typeof data.callsTakenCount !== 'number' || typeof data.lastCallTimestamp !== 'number') {
 
             throw new Error('wrong parameters');
         }
@@ -1520,8 +1520,8 @@ function addQueueMemberLoggedIn(data, queueId) {
 function updateQueueMemberLastPauseData(memberName, memberId, queueId) {
     try {
         // check parameters
-        if (   typeof memberName !== 'string'
-            || typeof memberId   !== 'string' || typeof queueId !== 'string') {
+        if (typeof memberName !== 'string' ||
+            typeof memberId   !== 'string' || typeof queueId !== 'string') {
 
             throw new Error('wrong parameters');
         }
@@ -1817,17 +1817,17 @@ function initializeSipExten() {
         var k, exten;
         for (k in struct) {
 
-            if (struct[k].type    === INI_STRUCT.TYPE.EXTEN
-                && struct[k].tech === INI_STRUCT.TECH.SIP) { // all sip extensions
+            if (struct[k].type === INI_STRUCT.TYPE.EXTEN &&
+                struct[k].tech === INI_STRUCT.TECH.SIP) { // all sip extensions
 
                 exten = new Extension(struct[k].extension, struct[k].tech);
                 extensions[exten.getExten()] = exten;
 
                 // set extension websocket transport usage
                 if (struct[k].transport.indexOf('ws') > -1) {
-                    exten.useWebsocket(true);
+                    exten.setUseWebsocket(true);
                 } else {
-                    exten.useWebsocket(false);
+                    exten.setUseWebsocket(false);
                 }
 
                 // request sip details for current extension
@@ -1863,8 +1863,8 @@ function initializeSipTrunk() {
         var k, trunk;
         for (k in struct) {
 
-            if (struct[k].type    === INI_STRUCT.TYPE.TRUNK
-                && struct[k].tech === INI_STRUCT.TECH.SIP) { // all sip trunks
+            if (struct[k].type === INI_STRUCT.TYPE.TRUNK &&
+                struct[k].tech === INI_STRUCT.TECH.SIP) { // all sip trunks
 
                 trunk = new Trunk(struct[k].extension, struct[k].tech, struct[k].max_channels);
                 trunks[trunk.getExten()] = trunk;
@@ -1898,8 +1898,8 @@ function initializeIaxTrunk(resp) {
         var k, trunk;
         for (k in struct) {
 
-            if (struct[k].type    === INI_STRUCT.TYPE.TRUNK
-                && struct[k].tech === INI_STRUCT.TECH.IAX) { // all iax trunks
+            if (struct[k].type === INI_STRUCT.TYPE.TRUNK &&
+                struct[k].tech === INI_STRUCT.TECH.IAX) { // all iax trunks
 
                 trunk = new Trunk(struct[k].extension, struct[k].tech, struct[k].max_channels);
                 trunks[trunk.getExten()] = trunk;
@@ -1944,8 +1944,8 @@ function setCfStatus(err, resp) {
         if (err) { throw err; }
 
         // check parameter
-        if (   typeof resp       !== 'object'
-            || typeof resp.exten !== 'string' || typeof resp.status !== 'string') {
+        if (typeof resp       !== 'object' ||
+            typeof resp.exten !== 'string' || typeof resp.status !== 'string') {
 
             throw new Error('wrong parameter');
         }
@@ -1984,8 +1984,8 @@ function setCfVmStatus(err, resp) {
         if (err) { throw err; }
 
         // check parameter
-        if (   typeof resp       !== 'object'
-            || typeof resp.exten !== 'string' || typeof resp.status !== 'string') {
+        if (typeof resp       !== 'object' ||
+            typeof resp.exten !== 'string' || typeof resp.status !== 'string') {
 
             throw new Error('wrong parameter');
         }
@@ -2219,9 +2219,9 @@ function updateConversationsForAllExten(err, resp) {
             // add new conversation to the extension. Queue channel is not considered,
             // otherwise an extension has also wrong conversation (e.g. 214 has the
             // conversation SIP/221-00000592>Local/221@from-queue-000009dc;2)
-            if (chid.indexOf('Local')    === -1
-                && chid.indexOf('@from') === -1
-                && extensions[ext]) { // the extension exists
+            if (chid.indexOf('Local') === -1 &&
+                chid.indexOf('@from') === -1 &&
+                extensions[ext]) { // the extension exists
 
                 addConversationToExten(ext, resp, chid);
 
@@ -2266,9 +2266,9 @@ function updateConversationsForAllTrunk(err, resp) {
             // add new conversation to the trunk. Queue channel is not considered,
             // otherwise a trunk has also wrong conversation (e.g. 3001 has the
             // conversation SIP/3001-00000592>Local/221@from-queue-000009dc;1)
-            if (chid.indexOf('Local')    === -1
-                && chid.indexOf('@from') === -1
-                && trunks[trunk]) { // the trunk exists
+            if (chid.indexOf('Local') === -1 &&
+                chid.indexOf('@from') === -1 &&
+                trunks[trunk]) { // the trunk exists
 
                 addConversationToTrunk(trunk, resp, chid);
             }
@@ -2315,9 +2315,9 @@ function updateExtenConversations(err, resp, exten) {
                 // add new conversation to the extension. Queue channel is not considered,
                 // otherwise an extension has also wrong conversation (e.g. 214 has the
                 // conversation SIP/221-00000592>Local/221@from-queue-000009dc;2)
-                if (chid.indexOf('Local')    === -1
-                    && chid.indexOf('@from') === -1
-                    && ext === exten) { // the current extension is of interest
+                if (chid.indexOf('Local') === -1 &&
+                    chid.indexOf('@from') === -1 &&
+                    ext === exten) { // the current extension is of interest
 
                     addConversationToExten(ext, resp, chid);
                 }
@@ -2372,9 +2372,9 @@ function updateTrunkConversations(err, resp, trunk) {
                 // add new conversation to the trunk. Queue channel is not considered,
                 // otherwise a trunk has also wrong conversation (e.g. 3001 has the
                 // conversation SIP/3001-00000592>Local/221@from-queue-000009dc;2)
-                if (chid.indexOf('Local')    === -1
-                    && chid.indexOf('@from') === -1
-                    && trunkid === trunk) { // the current trunk is of interest
+                if (chid.indexOf('Local') === -1 &&
+                    chid.indexOf('@from') === -1 &&
+                    trunkid === trunk) { // the current trunk is of interest
 
                     addConversationToTrunk(trunkid, resp, chid);
                 }
@@ -2405,9 +2405,9 @@ function updateTrunkConversations(err, resp, trunk) {
 function addConversationToExten(exten, resp, chid) {
     try {
         // check parameters
-        if (typeof exten !== 'string'
-            || typeof resp !== 'object'
-            || typeof chid !== 'string') {
+        if (typeof exten !== 'string' ||
+            typeof resp  !== 'object' ||
+            typeof chid  !== 'string') {
 
             throw new Error('wrong parameters');
         }
@@ -2436,9 +2436,9 @@ function addConversationToExten(exten, resp, chid) {
             }
 
             var queue;
-            if (   resp[chid].bridgedChannel.slice(-2) === ';2'
-                && resp[chid].bridgedChannel.indexOf('Local/')      !== -1
-                && resp[chid].bridgedChannel.indexOf('@from-queue') !== -1) {
+            if (resp[chid].bridgedChannel.slice(-2)              === ';2' &&
+                resp[chid].bridgedChannel.indexOf('Local/')      !== -1   &&
+                resp[chid].bridgedChannel.indexOf('@from-queue') !== -1) {
 
                 var tempChid = resp[chid].bridgedChannel.substring(0, resp[chid].bridgedChannel.length - 2) + ';1';
                 queue        = resp[tempChid].queue;
@@ -2479,9 +2479,9 @@ function addConversationToExten(exten, resp, chid) {
 function addConversationToTrunk(trunk, resp, chid) {
     try {
         // check parameters
-        if (   typeof trunk !== 'string'
-            || typeof resp  !== 'object'
-            || typeof chid  !== 'string') {
+        if (typeof trunk !== 'string' ||
+            typeof resp  !== 'object' ||
+            typeof chid  !== 'string') {
 
             throw new Error('wrong parameters');
         }
@@ -2690,8 +2690,8 @@ function evtExtenStatusChanged(exten, status) {
 function evtQueueMemberPausedChanged(queueId, memberId, paused, reason) {
     try {
         // check parameters
-        if (   typeof queueId  !== 'string' || typeof reason !== 'string'
-            || typeof memberId !== 'string' || typeof paused !== 'boolean') {
+        if (typeof queueId  !== 'string' || typeof reason !== 'string' ||
+            typeof memberId !== 'string' || typeof paused !== 'boolean') {
 
             throw new Error('wrong parameters');
         }
@@ -2739,10 +2739,10 @@ function evtQueueMemberPausedChanged(queueId, memberId, paused, reason) {
 function evtQueueMemberStatus(data) {
     try {
         // check parameters
-        if (   typeof data           !== 'object'  || typeof data.type              !== 'string'
-            || typeof data.queueId   !== 'string'  || typeof data.lastCallTimestamp !== 'number'
-            || typeof data.member    !== 'string'  || typeof data.callsTakenCount   !== 'number'
-            || typeof data.paused    !== 'boolean' || typeof data.name              !== 'string') {
+        if (typeof data         !== 'object'  || typeof data.type              !== 'string' ||
+            typeof data.queueId !== 'string'  || typeof data.lastCallTimestamp !== 'number' ||
+            typeof data.member  !== 'string'  || typeof data.callsTakenCount   !== 'number' ||
+            typeof data.paused  !== 'boolean' || typeof data.name              !== 'string') {
 
             throw new Error('wrong parameters');
         }
@@ -2784,10 +2784,10 @@ function evtQueueMemberStatus(data) {
 function evtQueueMemberAdded(data) {
     try {
         // check parameters
-        if (   typeof data           !== 'object'  || typeof data.type              !== 'string'
-            || typeof data.queueId   !== 'string'  || typeof data.lastCallTimestamp !== 'number'
-            || typeof data.member    !== 'string'  || typeof data.callsTakenCount   !== 'number'
-            || typeof data.paused    !== 'boolean' || typeof data.name              !== 'string') {
+        if (typeof data         !== 'object'  || typeof data.type              !== 'string' ||
+            typeof data.queueId !== 'string'  || typeof data.lastCallTimestamp !== 'number' ||
+            typeof data.member  !== 'string'  || typeof data.callsTakenCount   !== 'number' ||
+            typeof data.paused  !== 'boolean' || typeof data.name              !== 'string') {
 
             throw new Error('wrong parameters');
         }
@@ -2845,8 +2845,8 @@ function evtRename() {
 function evtQueueMemberRemoved(data) {
     try {
         // check parameters
-        if (   typeof data         !== 'object'
-            || typeof data.queueId !== 'string' || typeof data.member !== 'string') {
+        if (typeof data         !== 'object' ||
+            typeof data.queueId !== 'string' || typeof data.member !== 'string') {
 
             throw new Error('wrong parameters');
         }
@@ -3180,9 +3180,9 @@ function setUnconditionalCfVm(exten, activate, to, cb) {
 function evtNewVoicemailMessage(data) {
     try {
         // check parameter
-        if (   typeof data           !== 'object'
-            && typeof data.voicemail !== 'string' && typeof data.context  !== 'string'
-            && typeof data.countOld  !== 'string' && typeof data.countNew !== 'string') {
+        if (typeof data           !== 'object' &&
+            typeof data.voicemail !== 'string' && typeof data.context  !== 'string' &&
+            typeof data.countOld  !== 'string' && typeof data.countNew !== 'string') {
 
             throw new Error('wrong parameter');
         }
@@ -3221,15 +3221,15 @@ function evtNewVoicemailMessage(data) {
 function evtNewCdr(data) {
     try {
         // check parameter
-        if (   typeof data                    !== 'object'
-            && typeof data.source             !== 'string' && typeof data.channel            !== 'string'
-            && typeof data.endtime            !== 'string' && typeof data.duration           !== 'string'
-            && typeof data.amaflags           !== 'string' && typeof data.uniqueid           !== 'string'
-            && typeof data.callerid           !== 'string' && typeof data.starttime          !== 'string'
-            && typeof data.answertime         !== 'string' && typeof data.destination        !== 'string'
-            && typeof data.disposition        !== 'string' && typeof data.lastapplication    !== 'string'
-            && typeof data.billableseconds    !== 'string' && typeof data.destinationcontext !== 'string'
-            && typeof data.destinationchannel !== 'string') {
+        if (typeof data                    !== 'object' &&
+            typeof data.source             !== 'string' && typeof data.channel            !== 'string' &&
+            typeof data.endtime            !== 'string' && typeof data.duration           !== 'string' &&
+            typeof data.amaflags           !== 'string' && typeof data.uniqueid           !== 'string' &&
+            typeof data.callerid           !== 'string' && typeof data.starttime          !== 'string' &&
+            typeof data.answertime         !== 'string' && typeof data.destination        !== 'string' &&
+            typeof data.disposition        !== 'string' && typeof data.lastapplication    !== 'string' &&
+            typeof data.billableseconds    !== 'string' && typeof data.destinationcontext !== 'string' &&
+            typeof data.destinationchannel !== 'string') {
 
             throw new Error('wrong parameter');
         }
@@ -3256,8 +3256,8 @@ function evtNewCdr(data) {
 function evtUpdateVoicemailMessages(data) {
     try {
         // check parameter
-        if (   typeof data           !== 'object'
-            && typeof data.voicemail !== 'string' && typeof data.context  !== 'string') {
+        if (typeof data           !== 'object' &&
+            typeof data.voicemail !== 'string' && typeof data.context !== 'string') {
 
             throw new Error('wrong parameter');
         }
@@ -3357,12 +3357,12 @@ function evtSpyStartConversation(data) {
 function evtConversationDialing(data) {
     try {
         // check parameter
-        if (typeof data !== 'object'
-            && typeof data.chDest        !== 'string'
-            && typeof data.chSource      !== 'string'
-            && typeof data.callerNum     !== 'string'
-            && typeof data.chDestExten   !== 'string'
-            && typeof data.chSourceExten !== 'string') {
+        if (typeof data               !== 'object' &&
+            typeof data.chDest        !== 'string' &&
+            typeof data.chSource      !== 'string' &&
+            typeof data.callerNum     !== 'string' &&
+            typeof data.chDestExten   !== 'string' &&
+            typeof data.chSourceExten !== 'string') {
 
             throw new Error('wrong parameter');
         }
@@ -3687,10 +3687,10 @@ function addPrefix(num) {
 function call(endpointType, endpointId, to, cb) {
     try {
         // check parameters
-        if (   typeof cb           !== 'function'
-            || typeof to           !== 'string'
-            || typeof endpointId   !== 'string'
-            || typeof endpointType !== 'string') {
+        if (typeof cb           !== 'function' ||
+            typeof to           !== 'string'   ||
+            typeof endpointId   !== 'string'   ||
+            typeof endpointType !== 'string') {
 
             throw new Error('wrong parameters');
         }
@@ -3728,10 +3728,10 @@ function call(endpointType, endpointId, to, cb) {
 function muteConversation(endpointType, endpointId, convid, cb) {
     try {
         // check parameters
-        if (   typeof cb           !== 'function'
-            || typeof convid       !== 'string'
-            || typeof endpointId   !== 'string'
-            || typeof endpointType !== 'string') {
+        if (typeof cb           !== 'function' ||
+            typeof convid       !== 'string'   ||
+            typeof endpointId   !== 'string'   ||
+            typeof endpointType !== 'string') {
 
             throw new Error('wrong parameters');
         }
@@ -3772,10 +3772,10 @@ function muteConversation(endpointType, endpointId, convid, cb) {
 function unmuteConversation(endpointType, endpointId, convid, cb) {
     try {
         // check parameters
-        if (   typeof cb           !== 'function'
-            || typeof convid       !== 'string'
-            || typeof endpointId   !== 'string'
-            || typeof endpointType !== 'string') {
+        if (typeof cb           !== 'function' ||
+            typeof convid       !== 'string'   ||
+            typeof endpointId   !== 'string'   ||
+            typeof endpointType !== 'string') {
 
             throw new Error('wrong parameters');
         }
@@ -3817,9 +3817,9 @@ function unmuteConversation(endpointType, endpointId, convid, cb) {
 function sendDtmfToConversation(endpointType, endpointId, convid, tone, cb) {
     try {
         // check parameters
-        if (   typeof cb         !== 'function'
-            || typeof tone       !== 'string'   || typeof convid       !== 'string'
-            || typeof endpointId !== 'string'   || typeof endpointType !== 'string') {
+        if (typeof cb         !== 'function' ||
+            typeof tone       !== 'string'   || typeof convid       !== 'string' ||
+            typeof endpointId !== 'string'   || typeof endpointType !== 'string') {
 
             throw new Error('wrong parameters');
         }
@@ -3862,10 +3862,10 @@ function sendDtmfToConversation(endpointType, endpointId, convid, tone, cb) {
 function pickupParking(parking, destType, destId, cb) {
     try {
         // check parameters
-        if (typeof cb          !== 'function'
-            || typeof destId   !== 'string'
-            || typeof parking  !== 'string'
-            || typeof destType !== 'string') {
+        if (typeof cb       !== 'function' ||
+            typeof destId   !== 'string'   ||
+            typeof parking  !== 'string'   ||
+            typeof destType !== 'string') {
 
             throw new Error('wrong parameters');
         }
@@ -3906,19 +3906,19 @@ function pickupParking(parking, destType, destId, cb) {
 function pickupConversation(endpointType, endpointId, convid, destType, destId, cb) {
     try {
         // check parameters
-        if (typeof convid !== 'string'
-            || typeof cb           !== 'function'
-            || typeof destId       !== 'string'
-            || typeof destType     !== 'string'
-            || typeof endpointId   !== 'string'
-            || typeof endpointType !== 'string') {
+        if (typeof convid       !== 'string'   ||
+            typeof cb           !== 'function' ||
+            typeof destId       !== 'string'   ||
+            typeof destType     !== 'string'   ||
+            typeof endpointId   !== 'string'   ||
+            typeof endpointType !== 'string') {
 
             throw new Error('wrong parameters');
         }
 
         // check the endpoint existence
-        if (endpointType === 'extension' && extensions[endpointId]
-            && destType  === 'extension' && extensions[destId]) {
+        if (endpointType === 'extension' && extensions[endpointId] &&
+            destType     === 'extension' && extensions[destId]) {
 
             var chToRedirect;
             var convs      = extensions[endpointId].getAllConversations();
@@ -3966,9 +3966,9 @@ function pickupConversation(endpointType, endpointId, convid, destType, destId, 
 function evtHangupConversation(data) {
     try {
         // check parameter
-        if (   typeof data              !== 'object'
-            || typeof data.channel      !== 'string'
-            || typeof data.channelExten !== 'string') {
+        if (typeof data              !== 'object' ||
+            typeof data.channel      !== 'string' ||
+            typeof data.channelExten !== 'string') {
 
             throw new Error('wrong parameter');
         }
@@ -4012,12 +4012,13 @@ function evtHangupConversation(data) {
 function hangupConversation(endpointType, endpointId, convid, cb) {
     try {
         // check parameters
-        if (   typeof convid       !== 'string' || typeof cb           !== 'function'
-            || typeof endpointId   !== 'string' || typeof endpointType !== 'string') {
+        if (typeof convid     !== 'string' || typeof cb           !== 'function' ||
+            typeof endpointId !== 'string' || typeof endpointType !== 'string') {
 
             throw new Error('wrong parameters');
         }
 
+        var err;
         // check the endpoint existence
         if (endpointType === 'extension' && extensions[endpointId]) {
 
@@ -4033,13 +4034,13 @@ function hangupConversation(endpointType, endpointId, convid, cb) {
                 });
 
             } else {
-                var err = 'no channel to hangup of conversation ' + convid + ' of exten ' + endpointId;
+                err = 'no channel to hangup of conversation ' + convid + ' of exten ' + endpointId;
                 logger.warn(IDLOG, err);
                 cb(err);
             }
 
         } else {
-            var err = 'try to hangup conversation for the non existent endpoint ' + endpointType + ' ' + endpointId;
+            err = 'try to hangup conversation for the non existent endpoint ' + endpointType + ' ' + endpointId;
             logger.warn(IDLOG, err);
             cb(err);
         }
@@ -4201,15 +4202,16 @@ function hangupConvCb(err) {
 function redirectConversation(endpointType, endpointId, convid, to, cb) {
     try {
         // check parameters
-        if (typeof convid !== 'string'
-            || typeof cb           !== 'function'
-            || typeof to           !== 'string'
-            || typeof endpointId   !== 'string'
-            || typeof endpointType !== 'string') {
+        if (typeof convid       !== 'string'   ||
+            typeof cb           !== 'function' ||
+            typeof to           !== 'string'   ||
+            typeof endpointId   !== 'string'   ||
+            typeof endpointType !== 'string') {
 
             throw new Error('wrong parameters');
         }
 
+        var msg;
         // check the endpoint existence
         if (endpointType === 'extension' && extensions[endpointId]) {
 
@@ -4233,13 +4235,13 @@ function redirectConversation(endpointType, endpointId, convid, to, cb) {
                 });
 
             } else {
-                var msg = 'getting the channel to redirect ' + chToRedirect;
+                msg = 'getting the channel to redirect ' + chToRedirect;
                 logger.error(IDLOG, msg);
                 cb(msg);
             }
 
         } else {
-            var msg = 'redirect conversation: unknown endpointType ' + endpointType + ' or extension ' + endpointId + ' not present';
+            msg = 'redirect conversation: unknown endpointType ' + endpointType + ' or extension ' + endpointId + ' not present';
             logger.warn(IDLOG, msg);
             cb(msg);
         }
@@ -4261,12 +4263,13 @@ function redirectConversation(endpointType, endpointId, convid, to, cb) {
 function forceHangupConversation(endpointType, endpointId, convid, cb) {
     try {
         // check parameters
-        if (   typeof convid     !== 'string' || typeof cb           !== 'function'
-            || typeof endpointId !== 'string' || typeof endpointType !== 'string') {
+        if (typeof convid     !== 'string' || typeof cb           !== 'function' ||
+            typeof endpointId !== 'string' || typeof endpointType !== 'string') {
 
             throw new Error('wrong parameters');
         }
 
+        var msg;
         // check the endpoint existence
         if (endpointType === 'extension' && extensions[endpointId]) {
 
@@ -4296,13 +4299,13 @@ function forceHangupConversation(endpointType, endpointId, convid, cb) {
                 });
 
             } else {
-                var msg = 'getting the channel to force hangup ' + chToHangup;
+                msg = 'getting the channel to force hangup ' + chToHangup;
                 logger.error(IDLOG, msg);
                 cb(msg);
             }
 
         } else {
-            var msg = 'force hangup conversation: unknown endpointType ' + endpointType + ' or extension ' + endpointId + ' not present';
+            msg = 'force hangup conversation: unknown endpointType ' + endpointType + ' or extension ' + endpointId + ' not present';
             logger.warn(IDLOG, msg);
             cb(msg);
         }
@@ -4324,8 +4327,8 @@ function forceHangupConversation(endpointType, endpointId, convid, cb) {
 function redirectWaitingCaller(waitingCallerId, queue, to, cb) {
     try {
         // check parameters
-        if (   typeof cb              !== 'function' || typeof to    !== 'string'
-            || typeof waitingCallerId !== 'string'   || typeof queue !== 'string') {
+        if (typeof cb              !== 'function' || typeof to    !== 'string' ||
+            typeof waitingCallerId !== 'string'   || typeof queue !== 'string') {
 
             throw new Error('wrong parameters');
         }
@@ -4371,8 +4374,8 @@ function redirectWaitingCaller(waitingCallerId, queue, to, cb) {
 function redirectParking(parking, to, cb) {
     try {
         // check parameters
-        if (   typeof cb      !== 'function'
-            || typeof parking !== 'string'   || typeof to !== 'string') {
+        if (typeof cb      !== 'function' ||
+            typeof parking !== 'string'   || typeof to !== 'string') {
 
             throw new Error('wrong parameters');
         }
@@ -4420,13 +4423,14 @@ function redirectParking(parking, to, cb) {
 function attendedTransferConversation(endpointType, endpointId, convid, to, cb) {
     try {
         // check parameters
-        if (   typeof convid     !== 'string'
-            || typeof cb         !== 'function' || typeof to           !== 'string'
-            || typeof endpointId !== 'string'   || typeof endpointType !== 'string') {
+        if (typeof convid     !== 'string'   ||
+            typeof cb         !== 'function' || typeof to           !== 'string' ||
+            typeof endpointId !== 'string'   || typeof endpointType !== 'string') {
 
             throw new Error('wrong parameters');
         }
 
+        var msg;
         // check the endpoint existence
         if (endpointType === 'extension' && extensions[endpointId]) {
 
@@ -4434,7 +4438,7 @@ function attendedTransferConversation(endpointType, endpointId, convid, to, cb) 
             var conv  = convs[convid];
 
             if (!conv) {
-                var msg = 'attended transfer convid "' + convid + '": no conversation present in extension ' + endpointId;
+                msg = 'attended transfer convid "' + convid + '": no conversation present in extension ' + endpointId;
                 logger.warn(IDLOG, msg);
                 cb(msg);
                 return;
@@ -4458,13 +4462,13 @@ function attendedTransferConversation(endpointType, endpointId, convid, to, cb) 
                 });
 
             } else {
-                var msg = 'attended transfer: no channel to transfer ' + chToTransfer;
+                msg = 'attended transfer: no channel to transfer ' + chToTransfer;
                 logger.error(IDLOG, msg);
                 cb(msg);
             }
 
         } else {
-            var msg = 'attended transfer conversation: unknown endpointType ' + endpointType + ' or extension ' + endpointId + ' not present';
+            msg = 'attended transfer conversation: unknown endpointType ' + endpointType + ' or extension ' + endpointId + ' not present';
             logger.warn(IDLOG, msg);
             cb(msg);
         }
@@ -4487,13 +4491,14 @@ function attendedTransferConversation(endpointType, endpointId, convid, to, cb) 
 function transferConversationToVoicemail(endpointType, endpointId, convid, voicemail, cb) {
     try {
         // check parameters
-        if (   typeof convid     !== 'string'
-            || typeof cb         !== 'function' || typeof voicemail    !== 'string'
-            || typeof endpointId !== 'string'   || typeof endpointType !== 'string') {
+        if (typeof convid     !== 'string'   ||
+            typeof cb         !== 'function' || typeof voicemail    !== 'string' ||
+            typeof endpointId !== 'string'   || typeof endpointType !== 'string') {
 
             throw new Error('wrong parameters');
         }
 
+        var msg;
         // check the endpoint existence
         if (endpointType === 'extension' && extensions[endpointId]) {
 
@@ -4501,7 +4506,7 @@ function transferConversationToVoicemail(endpointType, endpointId, convid, voice
             var conv  = convs[convid];
 
             if (!conv) {
-                var msg = 'transfer convid "' + convid + '" to voicemail "' + voicemail + '": no conversation present in extension ' + endpointId;
+                msg = 'transfer convid "' + convid + '" to voicemail "' + voicemail + '": no conversation present in extension ' + endpointId;
                 logger.warn(IDLOG, msg);
                 cb(msg);
                 return;
@@ -4524,13 +4529,13 @@ function transferConversationToVoicemail(endpointType, endpointId, convid, voice
                 });
 
             } else {
-                var msg = 'transfer to voicemail: no channel to transfer ' + chToTransfer;
+                msg = 'transfer to voicemail: no channel to transfer ' + chToTransfer;
                 logger.error(IDLOG, msg);
                 cb(msg);
             }
 
         } else {
-            var msg = 'transfer conversation to voicemail: unknown endpointType ' + endpointType + ' or extension ' + endpointId + ' not present';
+            msg = 'transfer conversation to voicemail: unknown endpointType ' + endpointType + ' or extension ' + endpointId + ' not present';
             logger.warn(IDLOG, msg);
             cb(msg);
         }
@@ -4553,9 +4558,9 @@ function transferConversationToVoicemail(endpointType, endpointId, convid, voice
 function parkConversation(endpointType, endpointId, convid, applicantId, cb) {
     try {
         // check parameters
-        if (   typeof convid       !== 'string'
-            || typeof cb           !== 'function' || typeof endpointId   !== 'string'
-            || typeof applicantId  !== 'string'   || typeof endpointType !== 'string') {
+        if (typeof convid       !== 'string'   ||
+            typeof cb           !== 'function' || typeof endpointId   !== 'string' ||
+            typeof applicantId  !== 'string'   || typeof endpointType !== 'string') {
 
             throw new Error('wrong parameters');
         }
@@ -4566,9 +4571,10 @@ function parkConversation(endpointType, endpointId, convid, applicantId, cb) {
             var convs = extensions[endpointId].getAllConversations();
             var conv  = convs[convid];
 
+            var err;
             // check the presence of the conversation
             if (typeof conv !== 'object') {
-                var err = 'parking the conversation ' + convid + ': no conversation present in the endpointId ' + endpointId;
+                err = 'parking the conversation ' + convid + ': no conversation present in the endpointId ' + endpointId;
                 logger.warn(IDLOG, err);
                 cb(err);
                 return;
@@ -4581,7 +4587,7 @@ function parkConversation(endpointType, endpointId, convid, applicantId, cb) {
             // check if the applicant of the request is an intermediary of the conversation.
             // This is because only caller or called can park the conversation
             if (callerNum !== applicantId && bridgedNum !== applicantId) {
-                var err = 'applicant extension "' + applicantId + '" not allowed to park a conversation not owned by him ' + convid;
+                err = 'applicant extension "' + applicantId + '" not allowed to park a conversation not owned by him ' + convid;
                 logger.warn(IDLOG, err);
                 cb(err);
                 return;
@@ -4612,7 +4618,7 @@ function parkConversation(endpointType, endpointId, convid, applicantId, cb) {
                 });
 
             } else {
-                var err = 'getting the channel to park ' + chToPark;
+                err = 'getting the channel to park ' + chToPark;
                 logger.error(IDLOG, err);
                 cb(err);
             }
@@ -4635,8 +4641,8 @@ function parkConversation(endpointType, endpointId, convid, applicantId, cb) {
 function recordAudioFile(data, cb) {
     try {
         // check parameters
-        if (   typeof data       !== 'object' || typeof cb            !== 'function'
-            || typeof data.exten !== 'string' || typeof data.filepath !== 'string') {
+        if (typeof data       !== 'object' || typeof cb            !== 'function' ||
+            typeof data.exten !== 'string' || typeof data.filepath !== 'string') {
 
             throw new Error('wrong parameters');
         }
@@ -4675,8 +4681,8 @@ function recordAudioFile(data, cb) {
 function inoutDynQueues(endpointType, endpointId, cb) {
     try {
         // check parameters
-        if (   typeof cb           !== 'function'
-            || typeof endpointType !== 'string' || typeof endpointId !== 'string') {
+        if (typeof cb           !== 'function' ||
+            typeof endpointType !== 'string'   || typeof endpointId !== 'string') {
 
             throw new Error('wrong parameters');
         }
@@ -4725,10 +4731,10 @@ function inoutDynQueues(endpointType, endpointId, cb) {
 function queueMemberPauseUnpause(endpointType, endpointId, queueId, reason, paused, cb) {
     try {
         // check parameters
-        if (    typeof cb           !== 'function' || typeof paused     !== 'boolean'
-            ||  typeof endpointType !== 'string'   || typeof endpointId !== 'string'
-            || (typeof queueId      !== 'string'   && queueId)
-            ||  typeof reason       !== 'string') {
+        if ( typeof cb           !== 'function' || typeof paused     !== 'boolean' ||
+             typeof endpointType !== 'string'   || typeof endpointId !== 'string'  ||
+            (typeof queueId      !== 'string'   && queueId) ||
+             typeof reason       !== 'string') {
 
             throw new Error('wrong parameters');
         }
@@ -4762,7 +4768,7 @@ function queueMemberPauseUnpause(endpointType, endpointId, queueId, reason, paus
                     };
 
                     // if queueId is omitted the action is done on all queues
-                    queueId ? obj.queue = queueId : '';
+                    if (queueId) { obj.queue = queueId; }
 
                     logger.info(IDLOG, 'execute ' + logWord + ' ' + endpointType + ' ' + endpointId + ' of ' + logQueue);
                     astProxy.doCmd(obj, function (err1) {
@@ -4848,9 +4854,9 @@ function queueMemberPauseUnpause(endpointType, endpointId, queueId, reason, paus
 function queueMemberAdd(endpointType, endpointId, queueId, paused, penalty, cb) {
     try {
         // check parameters
-        if (   typeof cb           !== 'function'
-            || typeof endpointType !== 'string'   || typeof endpointId !== 'string'
-            || typeof queueId      !== 'string') {
+        if (typeof cb           !== 'function' ||
+            typeof endpointType !== 'string'   || typeof endpointId !== 'string' ||
+            typeof queueId      !== 'string') {
 
             throw new Error('wrong parameters');
         }
@@ -4961,9 +4967,9 @@ function queueMemberAdd(endpointType, endpointId, queueId, paused, penalty, cb) 
 function queueMemberRemove(endpointType, endpointId, queueId, cb) {
     try {
         // check parameters
-        if (   typeof cb           !== 'function'
-            || typeof endpointType !== 'string'   || typeof endpointId !== 'string'
-            || typeof queueId      !== 'string') {
+        if (typeof cb           !== 'function' ||
+            typeof endpointType !== 'string'   || typeof endpointId !== 'string' ||
+            typeof queueId      !== 'string') {
 
             throw new Error('wrong parameters');
         }
@@ -5175,14 +5181,15 @@ function isDynMemberLoggedInQueue(extenId, queueId) {
 function stopRecordConversation(endpointType, endpointId, convid, cb) {
     try {
         // check parameters
-        if (typeof convid !== 'string'
-            || typeof cb           !== 'function'
-            || typeof endpointId   !== 'string'
-            || typeof endpointType !== 'string') {
+        if (typeof convid       !== 'string'   ||
+            typeof cb           !== 'function' ||
+            typeof endpointId   !== 'string'   ||
+            typeof endpointType !== 'string') {
 
             throw new Error('wrong parameters');
         }
 
+        var str;
         // check the endpoint existence
         if (endpointType === 'extension' && extensions[endpointId]) {
 
@@ -5190,7 +5197,7 @@ function stopRecordConversation(endpointType, endpointId, convid, cb) {
             var chid = getExtenIdSourceChannelConversation(endpointId, convid);
 
             if (recordingConv[convid] === undefined) {
-                var str = 'the conversation ' + convid + ' is not recording';
+                str = 'the conversation ' + convid + ' is not recording';
                 logger.info(IDLOG, str);
                 cb(str);
 
@@ -5203,13 +5210,13 @@ function stopRecordConversation(endpointType, endpointId, convid, cb) {
                 });
 
             } else {
-                var str = 'no channel to stop record of conversation ' + convid + ' of exten ' + endpointId;
+                str = 'no channel to stop record of conversation ' + convid + ' of exten ' + endpointId;
                 logger.warn(IDLOG, str);
                 cb(str);
             }
 
         } else {
-            var str = 'try to stop record conversation for the non existent endpoint ' + endpointType;
+            str = 'try to stop record conversation for the non existent endpoint ' + endpointType;
             logger.warn(IDLOG, str);
             cb(str);
         }
@@ -5234,19 +5241,19 @@ function stopRecordConversation(endpointType, endpointId, convid, cb) {
 function startSpySpeakConversation(endpointType, endpointId, convid, destType, destId, cb) {
     try {
         // check parameters
-        if (typeof convid !== 'string'
-            || typeof cb           !== 'function'
-            || typeof destId       !== 'string'
-            || typeof destType     !== 'string'
-            || typeof endpointId   !== 'string'
-            || typeof endpointType !== 'string') {
+        if (typeof convid       !== 'string'   ||
+            typeof cb           !== 'function' ||
+            typeof destId       !== 'string'   ||
+            typeof destType     !== 'string'   ||
+            typeof endpointId   !== 'string'   ||
+            typeof endpointType !== 'string') {
 
             throw new Error('wrong parameters');
         }
 
         // check the endpoint and dest
-        if (endpointType === 'extension' && extensions[endpointId] // the extension to spy exists
-            && destType  === 'extension' && extensions[destId]) {  // the extension that want to spy exists
+        if (endpointType === 'extension' && extensions[endpointId] && // the extension to spy exists
+            destType     === 'extension' && extensions[destId]) {  // the extension that want to spy exists
 
             var convs       = extensions[endpointId].getAllConversations();
             var conv        = convs[convid];
@@ -5287,19 +5294,19 @@ function startSpySpeakConversation(endpointType, endpointId, convid, destType, d
 function startSpyListenConversation(endpointType, endpointId, convid, destType, destId, cb) {
     try {
         // check parameters
-        if (typeof convid !== 'string'
-            || typeof cb           !== 'function'
-            || typeof destId       !== 'string'
-            || typeof destType     !== 'string'
-            || typeof endpointId   !== 'string'
-            || typeof endpointType !== 'string') {
+        if (typeof convid       !== 'string'   ||
+            typeof cb           !== 'function' ||
+            typeof destId       !== 'string'   ||
+            typeof destType     !== 'string'   ||
+            typeof endpointId   !== 'string'   ||
+            typeof endpointType !== 'string') {
 
             throw new Error('wrong parameters');
         }
 
         // check the endpoint and dest
-        if (endpointType === 'extension' && extensions[endpointId] // the extension to spy exists
-            && destType  === 'extension' && extensions[destId]) {  // the extension that want to spy exists
+        if (endpointType === 'extension' && extensions[endpointId] && // the extension to spy exists
+            destType  === 'extension' && extensions[destId]) {  // the extension that want to spy exists
 
             var convs       = extensions[endpointId].getAllConversations();
             var conv        = convs[convid];
@@ -5339,14 +5346,15 @@ function startSpyListenConversation(endpointType, endpointId, convid, destType, 
 function muteRecordConversation(endpointType, endpointId, convid, cb) {
     try {
         // check parameters
-        if (   typeof convid       !== 'string'
-            || typeof cb           !== 'function'
-            || typeof endpointId   !== 'string'
-            || typeof endpointType !== 'string') {
+        if (typeof convid       !== 'string'   ||
+            typeof cb           !== 'function' ||
+            typeof endpointId   !== 'string'   ||
+            typeof endpointType !== 'string') {
 
             throw new Error('wrong parameters');
         }
 
+        var str;
         // check the endpoint existence
         if (endpointType === 'extension' && extensions[endpointId]) {
 
@@ -5384,13 +5392,13 @@ function muteRecordConversation(endpointType, endpointId, convid, cb) {
                 });
 
             } else {
-                var str = 'no channel to mute record of conversation ' + convid + ' of exten ' + endpointId;
+                str = 'no channel to mute record of conversation ' + convid + ' of exten ' + endpointId;
                 logger.warn(IDLOG, str);
                 cb(str);
             }
 
         } else {
-            var str = 'try to mute the record conversation for the non existent endpoint ' + endpointType;
+            str = 'try to mute the record conversation for the non existent endpoint ' + endpointType;
             logger.warn(IDLOG, str);
             cb(str);
         }
@@ -5413,14 +5421,15 @@ function muteRecordConversation(endpointType, endpointId, convid, cb) {
 function unmuteRecordConversation(endpointType, endpointId, convid, cb) {
     try {
         // check parameters
-        if (   typeof convid       !== 'string'
-            || typeof cb           !== 'function'
-            || typeof endpointId   !== 'string'
-            || typeof endpointType !== 'string') {
+        if (typeof convid       !== 'string'   ||
+            typeof cb           !== 'function' ||
+            typeof endpointId   !== 'string'   ||
+            typeof endpointType !== 'string') {
 
             throw new Error('wrong parameters');
         }
 
+        var str;
         // check the endpoint existence
         if (endpointType === 'extension' && extensions[endpointId]) {
 
@@ -5458,13 +5467,13 @@ function unmuteRecordConversation(endpointType, endpointId, convid, cb) {
                 });
 
             } else {
-                var str = 'no channel to unmute record of conversation ' + convid + ' of exten ' + endpointId;
+                str = 'no channel to unmute record of conversation ' + convid + ' of exten ' + endpointId;
                 logger.warn(IDLOG, str);
                 cb(str);
             }
 
         } else {
-            var str = 'try to unmute the record conversation for the non existent endpoint ' + endpointType;
+            str = 'try to unmute the record conversation for the non existent endpoint ' + endpointType;
             logger.warn(IDLOG, str);
             cb(str);
         }
@@ -5487,14 +5496,15 @@ function unmuteRecordConversation(endpointType, endpointId, convid, cb) {
 function startRecordConversation(endpointType, endpointId, convid, cb) {
     try {
         // check parameters
-        if (   typeof convid       !== 'string'
-            || typeof cb           !== 'function'
-            || typeof endpointId   !== 'string'
-            || typeof endpointType !== 'string') {
+        if (typeof convid       !== 'string'   ||
+            typeof cb           !== 'function' ||
+            typeof endpointId   !== 'string'   ||
+            typeof endpointType !== 'string') {
 
             throw new Error('wrong parameters');
         }
 
+        var str;
         // check the endpoint existence
         if (endpointType === 'extension' && extensions[endpointId]) {
 
@@ -5627,13 +5637,13 @@ function startRecordConversation(endpointType, endpointId, convid, cb) {
                 });
 
             } else {
-                var str = 'no channel to record of conversation ' + convid + ' of exten ' + endpointId;
+                str = 'no channel to record of conversation ' + convid + ' of exten ' + endpointId;
                 logger.warn(IDLOG, str);
                 cb(str);
             }
 
         } else {
-            var str = 'try to record conversation for the non existent endpoint ' + endpointType;
+            str = 'try to record conversation for the non existent endpoint ' + endpointType;
             logger.warn(IDLOG, str);
             cb(str);
         }
@@ -5833,8 +5843,8 @@ function setRecordStatusMuteConversations(convid) {
 function sendDTMFSequence(extension, sequence, callerid, cb) {
     try {
         // check parameters
-        if (   typeof extension !== 'string' || typeof callerid !== 'string'
-            || typeof sequence  !== 'string' || typeof cb       !== 'function') {
+        if (typeof extension !== 'string' || typeof callerid !== 'string' ||
+            typeof sequence  !== 'string' || typeof cb       !== 'function') {
 
             throw new Error('wrong parameters');
         }
@@ -5900,8 +5910,8 @@ function sendDTMFSequence(extension, sequence, callerid, cb) {
 function sendDTMFSequenceToChannel(channel, sequence, cb) {
     try {
         // check parameters
-        if (   typeof channel  !== 'string'
-            || typeof sequence !== 'string' || typeof cb !== 'function') {
+        if (typeof channel  !== 'string' ||
+            typeof sequence !== 'string' || typeof cb !== 'function') {
 
             throw new Error('wrong parameters');
         }
@@ -5964,9 +5974,9 @@ function sendDTMFSequenceToChannel(channel, sequence, cb) {
 function callAndSendDTMFSequence(chanType, extension, sequence, callerid, cb) {
     try {
         // check parameters
-        if (   typeof chanType  !== 'string'
-            || typeof cb        !== 'function' || typeof callerid !== 'string'
-            || typeof extension !== 'string'   || typeof sequence !== 'string') {
+        if (typeof chanType  !== 'string'   ||
+            typeof cb        !== 'function' || typeof callerid !== 'string' ||
+            typeof extension !== 'string'   || typeof sequence !== 'string') {
 
             throw new Error('wrong parameters');
         }

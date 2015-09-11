@@ -105,8 +105,8 @@ var IDLOG = '[listChannels]';
             data: function (data) {
                 try {
                     // store new channel object
-                    if (data.event === 'CoreShowChannel'
-                        && data.calleridnum) {
+                    if (data.event === 'CoreShowChannel' &&
+                        data.calleridnum) {
 
                         // extract the extension name from the channel
                         var channelExten = utilChannel11.extractExtensionFromChannel(data.channel);
@@ -156,10 +156,10 @@ var IDLOG = '[listChannels]';
             */
             setLogger: function (log) {
                 try {
-                    if (typeof log === 'object'
-                        && typeof log.info  === 'function'
-                        && typeof log.warn  === 'function'
-                        && typeof log.error === 'function') {
+                    if (typeof log       === 'object'   &&
+                        typeof log.info  === 'function' &&
+                        typeof log.warn  === 'function' &&
+                        typeof log.error === 'function') {
 
                         logger = log;
                     } else {

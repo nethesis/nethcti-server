@@ -107,7 +107,7 @@ exports.Parking = function (parkingNum) {
             name:         name,
             parking:      parking,
             parkedCaller: parkedCaller ? parkedCaller.toJSON(privacyStr) : {}
-        }
+        };
     }
 
     // public interface
@@ -121,4 +121,4 @@ exports.Parking = function (parkingNum) {
         getParkedCaller:    getParkedCaller,
         removeParkedCaller: removeParkedCaller
     };
-}
+};

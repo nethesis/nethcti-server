@@ -104,7 +104,7 @@ var IDLOG = '[listParkings]';
                     if (data.event === 'Parkinglot' && data.startexten && data.stopexten && data.timeout) {
                         var i;
                         // create the parking list
-                        for (i = parseInt(data.startexten); i <= parseInt(data.stopexten); i++) { list[i] = '' + i + '' };
+                        for (i = parseInt(data.startexten); i <= parseInt(data.stopexten); i++) { list[i] = '' + i + ''; }
 
                     } else if (data.event === 'ParkinglotsComplete') {
                         // invoke all callback in the 'map' object, because the current
@@ -133,10 +133,10 @@ var IDLOG = '[listParkings]';
             */
             setLogger: function (log) {
                 try {
-                    if (typeof log === 'object'
-                        && typeof log.info  === 'function'
-                        && typeof log.warn  === 'function'
-                        && typeof log.error === 'function') {
+                    if (typeof log       === 'object'   &&
+                        typeof log.info  === 'function' &&
+                        typeof log.warn  === 'function' &&
+                        typeof log.error === 'function') {
 
                         logger = log;
                     } else {

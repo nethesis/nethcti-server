@@ -45,7 +45,7 @@ var AUTHORIZATION_TYPES = {
     'operator_groups':   'operator_groups',
     'admin_recording':   'admin_recording',
     'attended_transfer': 'attended_transfer'
-}
+};
 
 /**
 * Check if the authorization type is valid.

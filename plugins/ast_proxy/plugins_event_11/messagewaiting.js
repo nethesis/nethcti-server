@@ -55,15 +55,16 @@ var astProxy;
             */
             data: function (data) {
                 try {
+                    var context, voicemail;
                     // a new voice message has been left in a voicemail
-                    if (   data     && data.mailbox && data.new
-                        && data.old && data.event === 'MessageWaiting') {
+                    if (data     && data.mailbox && data.new &&
+                        data.old && data.event === 'MessageWaiting') {
 
                         logger.info(IDLOG, 'received event ' + data.event);
 
                         // extract the informations
-                        var context   = data.mailbox.split('@')[1]
-                        var voicemail = data.mailbox.split('@')[0];
+                        context   = data.mailbox.split('@')[1];
+                        voicemail = data.mailbox.split('@')[0];
 
                         astProxy.proxyLogic.evtNewVoicemailMessage({
                             context:   context,
@@ -75,14 +76,14 @@ var astProxy;
                     }
                     // some operation has been made on a voicemail message by the phone,
                     // for example listen or delete
-                    else if (   data         && data.mailbox
-                             && data.waiting && data.event === 'MessageWaiting') {
+                    else if (data         && data.mailbox &&
+                             data.waiting && data.event === 'MessageWaiting') {
 
                         logger.info(IDLOG, 'received event ' + data.event);
 
                         // extract the informations
-                        var context   = data.mailbox.split('@')[1]
-                        var voicemail = data.mailbox.split('@')[0];
+                        context   = data.mailbox.split('@')[1];
+                        voicemail = data.mailbox.split('@')[0];
 
                         astProxy.proxyLogic.evtUpdateVoicemailMessages({
                             context:   context,
@@ -105,10 +106,10 @@ var astProxy;
             */
             setLogger: function (log) {
                 try {
-                    if (typeof log === 'object'
-                        && typeof log.info  === 'function'
-                        && typeof log.warn  === 'function'
-                        && typeof log.error === 'function') {
+                    if (typeof log       === 'object'   &&
+                        typeof log.info  === 'function' &&
+                        typeof log.warn  === 'function' &&
+                        typeof log.error === 'function') {
 
                         logger = log;
                     } else {

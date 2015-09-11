@@ -25,7 +25,7 @@
 var CFVM_PREFIX_CODE = {
     '*':   '*',
     'vmu': 'vmu'
-}
+};
 
 /**
 * The call forward types.

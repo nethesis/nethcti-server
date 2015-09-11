@@ -107,11 +107,11 @@ var IDLOG = '[queueDetails]';
                 try {
                     // store new queue information object. This
                     // is the event about queue informations
-                    if (data && data.queue            && data.actionid
-                             && data.holdtime         && data.talktime
-                             && data.completed        && data.abandoned
-                             && data.abandoned        && data.servicelevel
-                             && data.servicelevelperf && data.event === 'QueueParams') {
+                    if (data && data.queue    && data.actionid     &&
+                        data.holdtime         && data.talktime     &&
+                        data.completed        && data.abandoned    &&
+                        data.abandoned        && data.servicelevel &&
+                        data.servicelevelperf && data.event === 'QueueParams') {
 
                         // create queue details object
                         list[data.actionid] = {
@@ -128,9 +128,9 @@ var IDLOG = '[queueDetails]';
 
                     // store member information object. This
                     // is the event about a member of the queue
-                    } else if (data.membership  && data.status
-                               && data.name     && data.callstaken
-                               && data.lastcall && data.event === 'QueueMember') {
+                    } else if (data.membership && data.status     &&
+                               data.name       && data.callstaken &&
+                               data.lastcall   && data.event === 'QueueMember') {
 
                         // data.location is in the form: "Local/211@from-queue/n"
                         var member = data.location.split('@')[0].split('/')[1];
@@ -147,9 +147,9 @@ var IDLOG = '[queueDetails]';
                             lastCallTimestamp: parseInt(data.lastcall)             // timestamp of the last call received by the member
                         };
 
-                    } else if (data.wait            && data.queue
-                               && data.position     && data.calleridnum
-                               && data.calleridname && data.event === 'QueueEntry') { // the event for each waiting call
+                    } else if (data.wait         && data.queue       &&
+                               data.position     && data.calleridnum &&
+                               data.calleridname && data.event === 'QueueEntry') { // the event for each waiting call
 
                         // add the informations about a waiting caller
                         list[data.actionid].waitingCallers[data.channel] = {
@@ -189,10 +189,10 @@ var IDLOG = '[queueDetails]';
             */
             setLogger: function (log) {
                 try {
-                    if (typeof log === 'object'
-                        && typeof log.info  === 'function'
-                        && typeof log.warn  === 'function'
-                        && typeof log.error === 'function') {
+                    if (typeof log       === 'object'   &&
+                        typeof log.info  === 'function' &&
+                        typeof log.warn  === 'function' &&
+                        typeof log.error === 'function') {
 
                         logger = log;
                     } else {

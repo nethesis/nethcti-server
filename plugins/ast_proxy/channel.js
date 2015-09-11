@@ -19,14 +19,14 @@ var utilChannel11 = require('./proxy_logic_11/util_channel_11');
 */
 exports.Channel = function (obj) {
     // check parameter
-    if (obj.channel           === undefined
-        || obj.status         === undefined
-        || obj.uniqueid       === undefined
-        || obj.callerNum      === undefined
-        || obj.callerName     === undefined
-        || obj.bridgedNum     === undefined
-        || obj.bridgedName    === undefined
-        || obj.bridgedChannel === undefined) {
+    if (obj.channel        === undefined ||
+        obj.status         === undefined ||
+        obj.uniqueid       === undefined ||
+        obj.callerNum      === undefined ||
+        obj.callerName     === undefined ||
+        obj.bridgedNum     === undefined ||
+        obj.bridgedName    === undefined ||
+        obj.bridgedChannel === undefined) {
 
         throw new Error('wrong parameter');
     }
@@ -319,7 +319,7 @@ exports.Channel = function (obj) {
         getChannelStatus:    getChannelStatus,
         getBridgedChannel:   getBridgedChannel,
     };
-}
+};
 
 /**
 * The possible values for channel type.

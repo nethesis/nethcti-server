@@ -174,12 +174,12 @@ exports.Extension = function (ext, chType) {
     function setIp(ipAddr) { ip = ipAddr; }
 
     /**
-    * Set if the extension uses websocket.
+    * Sets if the extension uses websocket.
     *
-    * @method useWebsocket
+    * @method setUseWebsocket
     * @param {boolean} value True if the extension uses websocket
     */
-    function useWebsocket(value) { useWebsocket = value; }
+    function setUseWebsocket(value) { useWebsocket = value; }
 
     /**
     * Get the extension ip address.
@@ -421,7 +421,7 @@ exports.Extension = function (ext, chType) {
             useWebsocket:  useWebsocket,
             sipuseragent:  sipuseragent,
             conversations: jsonConvs
-        }
+        };
     }
 
     // public interface
@@ -448,7 +448,7 @@ exports.Extension = function (ext, chType) {
         disableCfVm:            disableCfVm,
         getChanType:            getChanType,
         getUserAgent:           getUserAgent,
-        useWebsocket:           useWebsocket,
+        setUseWebsocket:        setUseWebsocket,
         addConversation:        addConversation,
         setSipUserAgent:        setSipUserAgent,
         getConversation:        getConversation,
@@ -457,7 +457,7 @@ exports.Extension = function (ext, chType) {
         getAllConversations:    getAllConversations,
         removeAllConversations: removeAllConversations
     };
-}
+};
 
 /**
 * The Extension status enumeration.

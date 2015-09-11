@@ -13,8 +13,8 @@
 */
 exports.QueueMember = function (memberNum, queueId, pausedValue, loggedInValue) {
     // check the parameters
-    if (   typeof queueId   !== 'string' || typeof loggedInValue !== 'boolean'
-        || typeof memberNum !== 'string' || typeof pausedValue   !== 'boolean') {
+    if (typeof queueId   !== 'string' || typeof loggedInValue !== 'boolean' ||
+        typeof memberNum !== 'string' || typeof pausedValue   !== 'boolean') {
 
         throw new Error('wrong parameters');
     }
@@ -183,8 +183,8 @@ exports.QueueMember = function (memberNum, queueId, pausedValue, loggedInValue) 
     */
     function setLastPausedInData(timestamp, reason) {
         // check the parameters
-        if (   typeof timestamp !== 'number'
-            || typeof reason    !== 'string') {
+        if (typeof timestamp !== 'number' ||
+            typeof reason    !== 'string') {
 
             throw new Error('wrong parameters');
         }
@@ -252,8 +252,8 @@ exports.QueueMember = function (memberNum, queueId, pausedValue, loggedInValue) 
     */
     function setPaused(value, reason) {
         // check the parameters
-        if (    typeof value  !== 'boolean'
-            || (typeof reason !== 'string' && value === true) ) {
+        if ( typeof value  !== 'boolean' ||
+            (typeof reason !== 'string' && value === true) ) {
 
             throw new Error('wrong parameters');
         }
@@ -361,7 +361,7 @@ exports.QueueMember = function (memberNum, queueId, pausedValue, loggedInValue) 
             lastPausedInReason:     lastPausedInReason,
             lastPausedInTimestamp:  lastPausedInTimestamp,
             lastPausedOutTimestamp: lastPausedOutTimestamp
-        }
+        };
     }
 
     // public interface
@@ -385,7 +385,7 @@ exports.QueueMember = function (memberNum, queueId, pausedValue, loggedInValue) 
         setLastCallTimestamp: setLastCallTimestamp,
         getLastCallTimestamp: getLastCallTimestamp
     };
-}
+};
 
 /**
 * The queue member types enumeration.

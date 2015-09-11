@@ -54,9 +54,8 @@ var astProxy;
             */
             data: function (data) {
                 try {
-                    if (data.status
-                        && data.exten
-                        && data.event === 'ExtensionStatus') {
+                    if (data.status && data.exten  &&
+                        data.event === 'ExtensionStatus') {
 
                         logger.info(IDLOG, 'received event ' + data.event);
                         astProxy.proxyLogic.evtExtenStatusChanged(data.exten, AST_EXTEN_STATUS_2_STR_ADAPTER[data.status]);
@@ -80,10 +79,10 @@ var astProxy;
             */
             setLogger: function (log) {
                 try {
-                    if (typeof log === 'object'
-                        && typeof log.info  === 'function'
-                        && typeof log.warn  === 'function'
-                        && typeof log.error === 'function') {
+                    if (typeof log       === 'object'   &&
+                        typeof log.info  === 'function' &&
+                        typeof log.warn  === 'function' &&
+                        typeof log.error === 'function') {
 
                         logger = log;
                     } else {

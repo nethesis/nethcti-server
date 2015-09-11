@@ -93,10 +93,10 @@ var IDLOG = '[extenStatus]';
             data: function (data) {
                 try {
                     // check callback and info presence and execute it
-                    if (map[data.actionid]
-                        && data.exten
-                        && data.status   !== '-1' // extension not found
-                        && data.response === 'Success') {
+                    if (map[data.actionid]     &&
+                        data.exten             &&
+                        data.status   !== '-1' && // extension not found
+                        data.response === 'Success') {
 
                         // execute callback
                         map[data.actionid](null, {
@@ -104,15 +104,15 @@ var IDLOG = '[extenStatus]';
                             status: AST_EXTEN_STATUS_2_STR_ADAPTER[data.status]
                         });
 
-                    } else if (map[data.actionid]
-                               && data.message
-                               && data.response === 'Error') { // extension not specified
+                    } else if (map[data.actionid] &&
+                               data.message       &&
+                               data.response === 'Error') { // extension not specified
 
                         map[data.actionid](new Error(data.message));
 
-                    } else if (map[data.actionid]
-                               && data.exten
-                               && data.status === '-1') { // extension not found
+                    } else if (map[data.actionid] &&
+                               data.exten         &&
+                               data.status === '-1') { // extension not found
 
                         map[data.actionid](new Error('Extension ' + data.exten + ' not found'));
 
@@ -143,10 +143,10 @@ var IDLOG = '[extenStatus]';
             */
             setLogger: function (log) {
                 try {
-                    if (typeof log === 'object'
-                        && typeof log.info  === 'function'
-                        && typeof log.warn  === 'function'
-                        && typeof log.error === 'function') {
+                    if (typeof log       === 'object'   &&
+                        typeof log.info  === 'function' &&
+                        typeof log.warn  === 'function' &&
+                        typeof log.error === 'function') {
 
                         logger = log;
                     } else {
