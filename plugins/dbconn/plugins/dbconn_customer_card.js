@@ -135,7 +135,8 @@ function getCustomerCardByNum(type, num, cb) {
             return;
         }
 
-        if (compDbconnMain.dbConfig[type].dbtype === 'mysql') {
+        if (compDbconnMain.dbConfig[type].dbtype === 'mysql' ||
+            compDbconnMain.dbConfig[type].dbtype === 'postgres') {
 
             // escape of the number
             num = compDbconnMain.dbConn[type].getQueryInterface().escape(num); // e.g. num = '123456'

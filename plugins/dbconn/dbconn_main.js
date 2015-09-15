@@ -310,7 +310,8 @@ function initConnections() {
         var k, sequelize;
         for (k in dbConfig) {
 
-            if (dbConfig[k].dbtype === 'mysql') {
+            if (dbConfig[k].dbtype === 'mysql' ||
+                dbConfig[k].dbtype === 'postgres') {
 
                 var config = {
                     port:    dbConfig[k].dbport,
