@@ -1,5 +1,5 @@
 Name:		nethcti-server
-Version:	2.4.4.0git
+Version:	2.4.5
 Release:	1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI 2
 
@@ -69,6 +69,11 @@ rm -rf $RPM_BUILD_ROOT
 %doc
 
 %changelog
+* Wed Sep 30 2015 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.4.5-1
+- Fea #3830: new permissions admin_call, admin_parkings & admin_answer
+- Fea #3827: new push notification service for mobile
+- Bug #3807: wrong default extension into nethcti2.user_settings db
+
 * Mon Jul 06 2015 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.4.3-1
 - Fea #3797: add asterisk callback call support
 - Fea #3784: new rest api to modify a post-it
