@@ -1,9 +1,0 @@
-{
-    my $webrtc = $nethvoice{'AllowExternalWebRTC'} || 'disabled';
-    if ($webrtc eq 'enabled') {
-        $OUT.="# Enable NethCTI from any interface\n";
-        $OUT.="--port=8181:tcp\n";
-    }
-
-    '';
-}
