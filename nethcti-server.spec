@@ -1,6 +1,6 @@
 Name:		nethcti-server
-Version:	2.4.5
-Release:	1%{?dist}
+Version: 2.4.8
+Release: 1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI 2
 
 Group:		Network	
@@ -69,6 +69,8 @@ rm -rf $RPM_BUILD_ROOT
 %doc
 
 %changelog
+* Fri Nov 06 2015 Stefano Fancello <stefano.fancello@nethesis.it> - 2.4.8-1
+
 * Wed Sep 30 2015 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.4.5-1
 - Fea #3830: new permissions admin_call, admin_parkings & admin_answer
 - Fea #3827: new push notification service for mobile
