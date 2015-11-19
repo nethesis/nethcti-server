@@ -95,6 +95,15 @@ var compAstProxy;
 var compUtil;
 
 /**
+* The remote sites communication architect component.
+*
+* @property compComNethctiRemotes
+* @type object
+* @private
+*/
+var compComNethctiRemotes;
+
+/**
 * The configuration manager architect component used for configuration functions.
 *
 * @property compConfigManager
@@ -119,6 +128,7 @@ var compConfigManager;
         * 1. [`astproxy/queues`](#queuesget)
         * 1. [`astproxy/trunks`](#trunksget)
         * 1. [`astproxy/opgroups`](#opgroupsget)
+        * 1. [`astproxy/remote_opgroups`](#remote_opgroupsget)
         * 1. [`astproxy/parkings`](#parkingsget)
         * 1. [`astproxy/extensions`](#extensionsget)
         * 1. [`astproxy/sip_webrtc`](#sip_webrtcget)
@@ -270,23 +280,51 @@ var compConfigManager;
                "conversations": {}
          }
      }
-        *
         * ---
         *
         * ### <a id="opgroupsget">**`astproxy/opgroups`**</a>
         *
-        * Gets the user groups of the operator panel.
+        * Gets the user groups of the operator panel of the local site.
         *
         * Example JSON response:
         *
         *     {
          "Development": {
               "users": [
-                  "alessandro",
-                  "giovanni",
-                  "stefanof"
+                  "name5",
+                  "name6",
+                  "name7"
               ]
           }
+     }
+        *
+        * ---
+        *
+        * ### <a id="remote_opgroupsget">**`astproxy/remote_opgroups`**</a>
+        *
+        * Gets the user groups of the operator panel of all remote sites.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "nethesis",
+             "Development": {
+                  "users": [
+                      "name5",
+                      "name6",
+                      "name7"
+                  ]
+              }
+         },
+         "ranocchi",
+             "Support": {
+                  "users": [
+                      "name1",
+                      "name2",
+                      "name3"
+                  ]
+              }
+         }
      }
         *
         * ---
@@ -973,6 +1011,7 @@ var compConfigManager;
                 *   @param {string} trunks                         Gets all the trunks of the operator panel of the user
                 *   @param {string} prefix                         Gets the prefix number used with outgoing external calls
                 *   @param {string} opgroups                       Gets all the user groups of the operator panel
+                *   @param {string} remote_opgroups                Gets all the user groups of all remote sites
                 *   @param {string} parkings                       Gets all the parkings with all their status informations
                 *   @param {string} extensions                     Gets all the extensions with all their status informations
                 *   @param {string} sip_webrtc                     Gets all the configuration about the sip WebRTC
@@ -994,6 +1033,7 @@ var compConfigManager;
                     'parkings',
                     'extensions',
                     'sip_webrtc',
+                    'remote_opgroups',
                     'queues_stats/:day',
                     'queues_qos/:day',
                     'agents_qos/:day',
@@ -1081,7 +1121,7 @@ var compConfigManager;
             },
 
             /**
-            * Gets the operator panel user groups with the following REST API:
+            * Gets the operator panel user groups of the local site with the following REST API:
             *
             *     GET  opgroups
             *
@@ -1093,17 +1133,28 @@ var compConfigManager;
             opgroups: function (req, res, next) {
                 try {
                     var username = req.headers.authorization_user;
+                    var token    = req.headers.authorization_token;
 
-                    // check if the user has the operator panel authorization
-                    if (compAuthorization.authorizeOperatorGroupsUser(username) !== true) {
+                    // check if the request coming from a remote site
+                    if (compComNethctiRemotes.isClientRemote(username, token)) {
 
-                        logger.warn(IDLOG, 'requesting operator groups: authorization failed for user "' + username + '"');
-                        compUtil.net.sendHttp403(IDLOG, res);
-                        return;
+                        var remoteSiteName = compComNethctiRemotes.getSiteName(username, token);
+                        // get all operator groups enabled for remote site
+                        var opGroups = compAuthorization.getAuthorizedRemoteOperatorGroups(remoteSiteName);
+                        logger.info(IDLOG, 'op groups enabled for remote site "' + remoteSiteName + '" is "' + Object.keys(opGroups) + '"');
                     }
+                    else {
+                        // check if the user has the operator panel authorization
+                        if (compAuthorization.authorizeOperatorGroupsUser(username) !== true) {
 
-                    // get all authorized operator groups of the user
-                    var userOpGroups = compAuthorization.getAuthorizedOperatorGroups(username);
+                            logger.warn(IDLOG, 'requesting operator groups: authorization failed for user "' + username + '"');
+                            compUtil.net.sendHttp403(IDLOG, res);
+                            return;
+                        }
+                        // get all authorized operator groups of the user
+                        var opGroups = compAuthorization.getAuthorizedOperatorGroups(username);
+                        logger.info(IDLOG, 'op groups enabled for user "' + username + '" is "' + Object.keys(opGroups) + '"');
+                    }
 
                     // get all operator groups
                     var allOpGroups = compOperator.getJSONGroups();
@@ -1113,14 +1164,61 @@ var compConfigManager;
                     var group;
                     for (group in allOpGroups) {
 
-                        if (userOpGroups[group] === true) {
+                        if (opGroups[group] === true) {
                             list[group] = allOpGroups[group];
                         }
                     }
-
-                    logger.info(IDLOG, 'sent authorized operator groups ' + Object.keys(list) + ' to user "' + username + '" ' + res.connection.remoteAddress);
+                    logger.info(IDLOG, 'sent authorized operator groups ' + Object.keys(list) +
+                                       ' to user "' + username + '" ' + res.connection.remoteAddress);
                     res.send(200, list);
 
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * It serves only the local clients: the remote sites can not ask for it.
+            * Gets the operator panel user groups of all remote sites with the following REST API:
+            *
+            *     GET  remote_opgroups
+            *
+            * @method remote_opgroups
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            remote_opgroups: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+                    var token    = req.headers.authorization_token;
+
+                    // check if the request coming from a remote site
+                    if (compComNethctiRemotes.isClientRemote(username, token)) {
+
+                        var remoteSiteName = compComNethctiRemotes.getSiteName(username, token);
+                        logger.warn(IDLOG, 'requesting all remote sites op groups by remote site "' + remoteSiteName + '": ' +
+                                           'authorization failed for user "' + username + '"');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+                    else {
+                        // check if the user has the operator panel authorization
+                        if (compAuthorization.authorizeRemoteSiteUser(username) !== true) {
+
+                            logger.warn(IDLOG, 'requesting all remote sites operator groups: authorization failed for user "' + username + '"');
+                            console.warn(IDLOG+ 'requesting all remote sites operator groups: authorization failed for user "' + username + '"');
+                            compUtil.net.sendHttp403(IDLOG, res);
+                            return;
+                        }
+
+                        // get all operator panel groups of all remote sites
+                        var allRemoteOpGroups = compComNethctiRemotes.getAllRemoteSitesOperatorGroups();
+                        logger.info(IDLOG, 'sent all remote sites operator groups "' + Object.keys(allRemoteOpGroups) + '" ' +
+                                           'to user "' + username + '" ' + res.connection.remoteAddress);
+                        res.send(200, allRemoteOpGroups);
+                    }
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -1382,8 +1480,7 @@ var compConfigManager;
             prefix: function (req, res, next) {
                 try {
                     var username = req.headers.authorization_user;
-
-                    var prefix = compAstProxy.getPrefix();
+                    var prefix   = compAstProxy.getPrefix();
 
                     logger.info(IDLOG, 'sent the prefix number "' + prefix + '" to user "' + username + '" ' + res.connection.remoteAddress);
                     res.send(200, { prefix: prefix });
@@ -1709,7 +1806,7 @@ var compConfigManager;
             *     GET  cw/:endpoint
             *     POST cw
             *
-            * @method dnd
+            * @method cw
             * @param {object} req The client request.
             * @param {object} res The client response.
             * @param {function} next Function to run the next handler in the chain.
@@ -3635,58 +3732,60 @@ var compConfigManager;
                 }
             }
         }
-        exports.cw                    = astproxy.cw;
-        exports.api                   = astproxy.api;
-        exports.dnd                   = astproxy.dnd;
-        exports.park                  = astproxy.park;
-        exports.call                  = astproxy.call;
-        exports.mute                  = astproxy.mute;
-        exports.cfvm                  = astproxy.cfvm;
-        exports.unmute                = astproxy.unmute;
-        exports.cfcall                = astproxy.cfcall;
-        exports.queues                = astproxy.queues;
-        exports.trunks                = astproxy.trunks;
-        exports.prefix                = astproxy.prefix;
-        exports.hangup                = astproxy.hangup;
-        exports.atxfer                = astproxy.atxfer;
-        exports.answer                = astproxy.answer;
-        exports.intrude               = astproxy.intrude;
-        exports.opgroups              = astproxy.opgroups;
-        exports.parkings              = astproxy.parkings;
-        exports.call_echo             = astproxy.call_echo;
-        exports.send_dtmf             = astproxy.send_dtmf;
-        exports.start_spy             = astproxy.start_spy;
-        exports.setLogger             = setLogger;
-        exports.txfer_tovm            = astproxy.txfer_tovm;
-        exports.extensions            = astproxy.extensions;
-        exports.sip_webrtc            = astproxy.sip_webrtc;
-        exports.queues_stats          = astproxy.queues_stats;
-        exports.queues_qos            = astproxy.queues_qos;
-        exports.agents_qos            = astproxy.agents_qos;
-        exports.setPrivacy            = setPrivacy;
-        exports.setCompUtil           = setCompUtil;
-        exports.pickup_conv           = astproxy.pickup_conv;
-        exports.stop_record           = astproxy.stop_record;
-        exports.setCompUser           = setCompUser;
-        exports.mute_record           = astproxy.mute_record;
-        exports.start_record          = astproxy.start_record;
-        exports.unauthe_call          = astproxy.unauthe_call;
-        exports.force_hangup          = astproxy.force_hangup;
-        exports.blindtransfer         = astproxy.blindtransfer;
-        exports.unmute_record         = astproxy.unmute_record;
-        exports.pickup_parking        = astproxy.pickup_parking;
-        exports.setCompOperator       = setCompOperator;
-        exports.setCompAstProxy       = setCompAstProxy;
-        exports.queuemember_add       = astproxy.queuemember_add;
-        exports.inout_dyn_queues      = astproxy.inout_dyn_queues;
-        exports.queuemember_pause     = astproxy.queuemember_pause;
-        exports.queuemember_remove    = astproxy.queuemember_remove;
-        exports.queuemember_unpause   = astproxy.queuemember_unpause;
-        exports.blindtransfer_queue   = astproxy.blindtransfer_queue;
-        exports.is_autoc2c_supported  = astproxy.is_autoc2c_supported;
-        exports.setCompAuthorization  = setCompAuthorization;
-        exports.setCompConfigManager  = setCompConfigManager;
-        exports.blindtransfer_parking = astproxy.blindtransfer_parking;
+        exports.cw                       = astproxy.cw;
+        exports.api                      = astproxy.api;
+        exports.dnd                      = astproxy.dnd;
+        exports.park                     = astproxy.park;
+        exports.call                     = astproxy.call;
+        exports.mute                     = astproxy.mute;
+        exports.cfvm                     = astproxy.cfvm;
+        exports.unmute                   = astproxy.unmute;
+        exports.cfcall                   = astproxy.cfcall;
+        exports.queues                   = astproxy.queues;
+        exports.trunks                   = astproxy.trunks;
+        exports.prefix                   = astproxy.prefix;
+        exports.hangup                   = astproxy.hangup;
+        exports.atxfer                   = astproxy.atxfer;
+        exports.answer                   = astproxy.answer;
+        exports.intrude                  = astproxy.intrude;
+        exports.opgroups                 = astproxy.opgroups;
+        exports.parkings                 = astproxy.parkings;
+        exports.call_echo                = astproxy.call_echo;
+        exports.send_dtmf                = astproxy.send_dtmf;
+        exports.start_spy                = astproxy.start_spy;
+        exports.setLogger                = setLogger;
+        exports.txfer_tovm               = astproxy.txfer_tovm;
+        exports.extensions               = astproxy.extensions;
+        exports.sip_webrtc               = astproxy.sip_webrtc;
+        exports.queues_stats             = astproxy.queues_stats;
+        exports.queues_qos               = astproxy.queues_qos;
+        exports.agents_qos               = astproxy.agents_qos;
+        exports.setPrivacy               = setPrivacy;
+        exports.setCompUtil              = setCompUtil;
+        exports.pickup_conv              = astproxy.pickup_conv;
+        exports.stop_record              = astproxy.stop_record;
+        exports.setCompUser              = setCompUser;
+        exports.mute_record              = astproxy.mute_record;
+        exports.start_record             = astproxy.start_record;
+        exports.unauthe_call             = astproxy.unauthe_call;
+        exports.force_hangup             = astproxy.force_hangup;
+        exports.blindtransfer            = astproxy.blindtransfer;
+        exports.unmute_record            = astproxy.unmute_record;
+        exports.pickup_parking           = astproxy.pickup_parking;
+        exports.remote_opgroups          = astproxy.remote_opgroups;
+        exports.setCompOperator          = setCompOperator;
+        exports.setCompAstProxy          = setCompAstProxy;
+        exports.queuemember_add          = astproxy.queuemember_add;
+        exports.inout_dyn_queues         = astproxy.inout_dyn_queues;
+        exports.queuemember_pause        = astproxy.queuemember_pause;
+        exports.queuemember_remove       = astproxy.queuemember_remove;
+        exports.queuemember_unpause      = astproxy.queuemember_unpause;
+        exports.blindtransfer_queue      = astproxy.blindtransfer_queue;
+        exports.is_autoc2c_supported     = astproxy.is_autoc2c_supported;
+        exports.setCompAuthorization     = setCompAuthorization;
+        exports.setCompConfigManager     = setCompConfigManager;
+        exports.blindtransfer_parking    = astproxy.blindtransfer_parking;
+        exports.setCompComNethctiRemotes = setCompComNethctiRemotes;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -3873,6 +3972,21 @@ function setPrivacy(str) {
     try {
         privacyStrReplace = str;
         logger.info(IDLOG, 'set privacy with string ' + privacyStrReplace);
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Set remote sites communication architect component.
+*
+* @method setCompComNethctiRemotes
+* @param {object} comp The remote sites communication architect component.
+*/
+function setCompComNethctiRemotes(comp) {
+    try {
+        compComNethctiRemotes = comp;
+        logger.info(IDLOG, 'set remote sites communication architect component');
     } catch (err) {
        logger.error(IDLOG, err.stack);
     }

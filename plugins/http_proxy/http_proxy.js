@@ -343,9 +343,10 @@ function proxyRequest(req, res, proxy) {
         // bypass the token verification if the request is:
         // 1. an authentication nonce request
         // 2. a static file request
-        if (   req.url.indexOf('/authentication/login') !== -1
-            || req.url.indexOf('/static')               !== -1
-            || (compAuthentication.isUnautheCallEnabled() === true && req.url.indexOf('/astproxy/unauthe_call') !== -1)) {
+        if (req.url.indexOf('/authentication/login')       !== -1 ||
+            req.url.indexOf('/authentication/remotelogin') !== -1 ||
+            req.url.indexOf('/static')                     !== -1 ||
+            (compAuthentication.isUnautheCallEnabled() === true && req.url.indexOf('/astproxy/unauthe_call') !== -1)) {
 
             proxy.proxyRequest(req, res);
             return;
@@ -361,7 +362,7 @@ function proxyRequest(req, res, proxy) {
         // arr[0] is the username
         // arr[1] is the token
         var arr = req.headers.authorization.split(':');
-        if (compAuthentication.verifyToken(arr[0], arr[1]) === true) {
+        if (compAuthentication.verifyToken(arr[0], arr[1], (req.headers.nethcti_remote === 'true' ? true : false)) === true) {
 
             // add header used by the authorization module
             req.headers.authorization_user  = arr[0];

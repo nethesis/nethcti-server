@@ -134,6 +134,31 @@ function execute(req, res, next) {
 }
 
 /**
+* Sets the component that communicates with remote sites.
+*
+* @method setCompComNethctiRemotes
+* @param {object} comp The remote sites communication architect component.
+*/
+function setCompComNethctiRemotes(comp) {
+    try {
+        // check parameter
+        if (typeof comp !== 'object') { throw new Error('wrong parameter'); }
+
+        // set the remote sites communication component for all the REST plugins
+        var key;
+        for (key in plugins) {
+
+            if (typeof plugins[key].setCompComNethctiRemotes === 'function') {
+                plugins[key].setCompComNethctiRemotes(comp);
+                logger.info(IDLOG, 'remote sites communication component has been set for rest plugin ' + key);
+            }
+        }
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Set configuration manager architect component used by configuration functions.
 *
 * @method setCompConfigManager
@@ -514,13 +539,14 @@ function start() {
 }
 
 // public interface
-exports.start                = start;
-exports.config               = config;
-exports.setLogger            = setLogger;
-exports.setCompUtil          = setCompUtil;
-exports.setCompUser          = setCompUser;
-exports.configPrivacy        = configPrivacy;
-exports.setCompOperator      = setCompOperator;
-exports.setCompAstProxy      = setCompAstProxy;
-exports.setCompAuthorization = setCompAuthorization;
-exports.setCompConfigManager = setCompConfigManager;
+exports.start                    = start;
+exports.config                   = config;
+exports.setLogger                = setLogger;
+exports.setCompUtil              = setCompUtil;
+exports.setCompUser              = setCompUser;
+exports.configPrivacy            = configPrivacy;
+exports.setCompOperator          = setCompOperator;
+exports.setCompAstProxy          = setCompAstProxy;
+exports.setCompAuthorization     = setCompAuthorization;
+exports.setCompConfigManager     = setCompConfigManager;
+exports.setCompComNethctiRemotes = setCompComNethctiRemotes;

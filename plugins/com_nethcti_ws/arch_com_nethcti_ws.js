@@ -44,6 +44,13 @@ module.exports = function (options, imports, register) {
             EVT_ALL_WS_CLIENT_DISCONNECTION: comNethctiWs.EVT_ALL_WS_CLIENT_DISCONNECTION,
 
             /**
+            * It's the _EVT\_WSS\_CLIENT\_CONNECTED_ property provided by _com\_nethcti\_ws_ module.
+            *
+            * @method EVT_WSS_CLIENT_CONNECTED
+            */
+            EVT_WSS_CLIENT_CONNECTED: comNethctiWs.EVT_WSS_CLIENT_CONNECTED,
+
+            /**
             * It's the _EVT\_WS\_CLIENT\_LOGGEDIN_ property provided by _com\_nethcti\_ws_ module.
             *
             * @method EVT_WS_CLIENT_LOGGEDIN

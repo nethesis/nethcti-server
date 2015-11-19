@@ -133,15 +133,43 @@ function setCompUser(comp) {
         * # POST requests
         *
         * 1. [`authentication/login`](#loginpost)
+        * 1. [`authentication/remotelogin`](#remoteloginpost)
         * 1. [`authentication/logout`](#logoutpost)
         *
         * ---
         *
         * ### <a id="loginpost">**`authentication/login`**</a>
         *
-        * If the user is successfully authenticated, he receives an HTTP 401 response with an
-        * _nonce_ in the WWW-Authenticate header. The _nonce_ is a string and it is used by the
-        * client to construct the token for the next authentications. The request must contains the following parameters:
+        * Authenticates a local client. If the user is successfully authenticated, he receives
+        * an HTTP 401 response with an _nonce_ in the WWW-Authenticate header. The _nonce_ is a
+        * string and it is used by the client to construct the token for the next authentications.
+        * The request must contains the following parameters:
+        *
+        * * `username`
+        * * `password`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "username": "alessandro", "password": "somepwd" }
+        *
+        * Example of a response of a successful login:
+        *
+        *     Connection:close
+     Content-Length:0
+     Content-Type:text/plain; charset=UTF-8
+     Date:Wed, 11 Jun 2014 14:14:18 GMT
+     www-authenticate:Digest a4b888b2d096249ce5b5ad63413842d5df335f17
+        *
+        * where the nonce is the string _a4b888b2d096249ce5b5ad63413842d5df335f17_.
+        *
+        * ---
+        *
+        * ### <a id="remoteloginpost">**`authentication/remotelogin`**</a>
+        *
+        * Authenticates a remote site. If the user is successfully authenticated, he receives
+        * an HTTP 401 response with an _nonce_ in the WWW-Authenticate header. The _nonce_ is a
+        * string and it is used by the client to construct the token for the next authentications.
+        * The request must contains the following parameters:
         *
         * * `username`
         * * `password`
@@ -182,7 +210,12 @@ function setCompUser(comp) {
                 * @property post
                 * @type {array}
                 *
-                * @param {string} login       Authenticate with username and password and if it goes well
+                * @param {string} login       Authenticate a local client with username and password and if it goes well
+                *                             the client receive an HTTP 401 response with _nonce_ in
+                *                             WWW-Authenticate header. The nonce is used to construct the
+                *                             token used in the next authentications.
+                *
+                * @param {string} remotelogin Authenticate a remote site with username and password and if it goes well
                 *                             the client receive an HTTP 401 response with _nonce_ in
                 *                             WWW-Authenticate header. The nonce is used to construct the
                 *                             token used in the next authentications.
@@ -191,6 +224,7 @@ function setCompUser(comp) {
                 */
                 'post' : [
                     'login',
+                    'remotelogin',
                     'logout'
                 ],
                 'head':  [],
@@ -224,16 +258,66 @@ function setCompUser(comp) {
                         return;
                     }
 
+                    // authentication
                     compAuthe.authenticate(username, password, function (err) {
                         try {
                             if (err) {
                                 logger.warn(IDLOG, 'authentication failed for user "' + username + '"');
                                 compUtil.net.sendHttp401(IDLOG, res);
                                 return;
-
-                            } else {
+                            }
+                            else {
                                 logger.info(IDLOG, 'user "' + username + '" has been successfully authenticated');
-                                var nonce = compAuthe.getNonce(username, password);
+                                var nonce = compAuthe.getNonce(username, password, false);
+                                compUtil.net.sendHttp401Nonce(IDLOG, res, nonce);
+                            }
+                        } catch (err) {
+                            logger.error(IDLOG, err.stack);
+                            compUtil.net.sendHttp401(IDLOG, res);
+                        }
+                    });
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp401(IDLOG, res);
+                }
+            },
+
+            /**
+            * Provides the remotelogin function with the following REST API:
+            *
+            *     remotelogin
+            *
+            * @method remotelogin
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            remotelogin: function (req, res, next) {
+                try {
+                    var username = req.params.username;
+                    var password = req.params.password;
+                    // the request pass through the proxy. So the original ip is expressed in the header
+                    // e.g. of x-forwarded-for header: 'x-forwarded-for': '192.168.5.250,127.0.0.1'
+                    var remoteIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+                    remoteIp = remoteIp.split(',')[0];
+
+                    if (!username || !password) {
+                        logger.warn('username or password has not been specified');
+                        compUtil.net.sendHttp401(IDLOG, res);
+                        return;
+                    }
+
+                    // authentication of a remote site
+                    compAuthe.authenticateRemoteSite(username, password, remoteIp, function (err) {
+                        try {
+                            if (err) {
+                                logger.warn(IDLOG, 'remote site authentication failed for user "' + username + '" ' + remoteIp);
+                                compUtil.net.sendHttp401(IDLOG, res);
+                                return;
+                            }
+                            else {
+                                logger.info(IDLOG, 'remote site "' + username + '" ' + remoteIp + ' has been successfully authenticated');
+                                var nonce = compAuthe.getNonce(username, password, true);
                                 compUtil.net.sendHttp401Nonce(IDLOG, res, nonce);
                             }
                         } catch (err) {
@@ -283,6 +367,7 @@ function setCompUser(comp) {
         exports.login                 = authentication.login;
         exports.logout                = authentication.logout;
         exports.setLogger             = setLogger;
+        exports.remotelogin           = authentication.remotelogin;
         exports.setCompUtil           = setCompUtil;
         exports.setCompUser           = setCompUser;
         exports.setCompAuthentication = setCompAuthentication;

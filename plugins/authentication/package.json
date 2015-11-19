@@ -3,7 +3,7 @@
     "main": "arch_authentication.js",
     "private": true,
     "plugin": {
-        "consumes": ["logger"],
-        "provides": ["authentication"]
+        "consumes": [ "logger" ],
+        "provides": [ "authentication" ]
     }
 }

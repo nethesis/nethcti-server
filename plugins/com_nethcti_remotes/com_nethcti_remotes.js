@@ -1,19 +1,27 @@
 /**
 * Communicates in real time mode with the clients using websocket. It listen
 * It listens on http and https protocols.
+* .........................................
+* .........................................
+* .........................................
+* .........................................
+* .........................................
 *
-* @module com_nethcti_ws
-* @main com_nethcti_ws
+* @module com_nethcti_remotes
+* @main com_nethcti_remotes
 */
 
 /**
 * Core module that communicates with the clients using websocket.
 *
-* @class com_nethcti_ws
+* @class com_nethcti_remotes
 * @static
 */
 var fs           = require('fs');
-var io           = require('socket.io');
+var https        = require('https');
+var crypto       = require('crypto');
+var request      = require('request');
+var ioClient     = require('socket.io-client');
 var httpProxy    = require('http-proxy');
 var EventEmitter = require('events').EventEmitter;
 
@@ -31,20 +39,6 @@ var EventEmitter = require('events').EventEmitter;
 * @default "allWsClientDisonnection"
 */
 var EVT_ALL_WS_CLIENT_DISCONNECTION = 'allWsClientDisonnection';
-
-/**
-* Fired when a client websocket has been connected.
-*
-* @event wssClientConnected
-*/
-/**
-* The name of the event emitted when a client websocket has been connected.
-*
-* @property EVT_WSS_CLIENT_CONNECTED
-* @type string
-* @default "wssClientConnected"
-*/
-var EVT_WSS_CLIENT_CONNECTED = 'wssClientConnected';
 
 /**
 * Fired when a client has been logged in by a websocket connection.
@@ -69,9 +63,9 @@ var EVT_WS_CLIENT_LOGGEDIN = 'wsClientLoggedIn';
 * @private
 * @final
 * @readOnly
-* @default [com_nethcti_ws]
+* @default [com_nethcti_remotes]
 */
-var IDLOG = '[com_nethcti_ws]';
+var IDLOG = '[com_nethcti_remotes]';
 
 /**
 * The log level of the websocket library. Log only the errors by default.
@@ -100,26 +94,38 @@ var WS_LOG_LEVEL = 0;
 var USER_AGENT = 'nethcti';
 
 /**
-* The path of the certificate to be used by HTTPS server. It can be
-* customized in the configuration file.
+* Maximum delay waited between two reconnection attempts to a remote site.
 *
-* @property HTTPS_CERT
-* @type string
+* @property MAX_RECONNECTION_DELAY
+* @type {number}
 * @private
-* @default "/etc/pki/tls/certs/localhost.crt"
+* @final
+* @readOnly
+* @default 10000
 */
-var HTTPS_CERT = '/etc/pki/tls/certs/localhost.crt';
+var MAX_RECONNECTION_DELAY = 10000;
 
 /**
-* The path of key to be used by HTTPS server. It can be
-* customized in the configuration file.
+* Remote connection timeout.
 *
-* @property HTTPS_KEY
+* @property CONNECTION_TIMEOUT
+* @type {number}
+* @private
+* @final
+* @readOnly
+* @default 10000
+*/
+var CONNECTION_TIMEOUT = 10000;
+
+/**
+* The protocol to be used for rest api calls.
+*
+* @property REST_PROTO
 * @type string
 * @private
-* @default "/etc/pki/tls/private/localhost.key"
+* @default "https"
 */
-var HTTPS_KEY = '/etc/pki/tls/private/localhost.key';
+var REST_PROTO = 'https';
 
 /**
 * The websocket rooms used to update clients with asterisk events.
@@ -155,6 +161,38 @@ var WS_ROOM = {
 var emitter = new EventEmitter();
 
 /**
+* Contains remote sites to be connected. It is populated by
+* JSON configuration file.
+*
+* @property remoteSites
+* @type {object}
+* @private
+*/
+var remoteSites;
+
+/**
+* Contains all operator panel groups of all remote sites.
+*
+* @property allSitesOpGroups
+* @type {object}
+* @default {}
+* @private
+*/
+var allSitesOpGroups = {};
+
+/**
+* Contains all client websockets logged in the remote sites.
+* The keys are the usernames and the values are the respective
+* websocket objects.
+*
+* @property wssClients
+* @type {object}
+* @default {}
+* @private
+*/
+var wssClients = {};
+
+/**
 * The string used to hide phone numbers in privacy mode.
 *
 * @property privacyStrReplace
@@ -167,26 +205,6 @@ var emitter = new EventEmitter();
 var privacyStrReplace = 'xxx';
 
 /**
-* The websocket secure server port.
-*
-* @property wssPort
-* @type string
-* @private
-* @default "8181"
-*/
-var wssPort = '8181';
-
-/**
-* The websocket server port.
-*
-* @property wsPort
-* @type string
-* @private
-* @default "8183"
-*/
-var wsPort = '8183';
-
-/**
 * The logger. It must have at least three methods: _info, warn and error._
 *
 * @property logger
@@ -197,33 +215,6 @@ var wsPort = '8183';
 var logger = console;
 
 /**
-* The websocket server secure (https).
-*
-* @property wssServer
-* @type {object}
-* @private
-*/
-var wssServer;
-
-/**
-* The websocket server (http).
-*
-* @property wsServer
-* @type {object}
-* @private
-*/
-var wsServer;
-
-/**
-* The asterisk proxy.
-*
-* @property astProxy
-* @type object
-* @private
-*/
-var astProxy;
-
-/**
 * The user component.
 *
 * @property compUser
@@ -231,6 +222,15 @@ var astProxy;
 * @private
 */
 var compUser;
+
+/**
+* The websocket communication module.
+*
+* @property compComNethctiWs
+* @type object
+* @private
+*/
+var compComNethctiWs;
 
 /**
 * The authentication module.
@@ -342,6 +342,22 @@ function setCompUser(comp) {
     try {
         if (typeof comp !== 'object') { throw new Error('wrong user object'); }
         compUser = comp;
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the websocket communication module to be used.
+*
+* @method setCompComNethctiWs
+* @param {object} comp The module.
+*/
+function setCompComNethctiWs(comp) {
+    try {
+        // check parameter
+        if (typeof comp !== 'object') { throw new Error('wrong object'); }
+        compComNethctiWs = comp;
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -966,8 +982,9 @@ function parkingChanged(parking) {
 }
 
 /**
-* Configurates the websocket server properties by a configuration file.
+* Customize the privacy used to hide phone numbers by a configuration file.
 * The file must use the JSON syntax.
+* ...............
 *
 * @method config
 * @param {string} path The path of the configuration file
@@ -978,49 +995,27 @@ function config(path) {
         if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
 
         // check file presence
-        if (!fs.existsSync(path)) { throw new Error(path + ' does not exist'); }
+        if (!fs.existsSync(path)) {
+            logger.error(path + ' does not exist');
+            return;
+        }
+
+        logger.info(IDLOG, 'configure remote sites by file ' + path);
 
         // read configuration file
         var json = require(path);
 
-        // initialize the port of the websocket secure server (https)
-        if (json.websocket && json.websocket.https_port) {
-            wssPort = json.websocket.https_port;
-
-        } else {
-            logger.warn(IDLOG, 'no wss port (https) has been specified in JSON file ' + path);
+        // check the file content
+        if (typeof json !== 'object') {
+            logger.error(IDLOG, path + ' invalid content');
+            return;
         }
+        remoteSites = json;
 
-        // initialize the port of the websocket server (http)
-        if (json.websocket && json.websocket.http_port) {
-            wsPort = json.websocket.http_port;
+        // set the listener for the websocket communication module
+        setComNethctiWsListeners();
 
-        } else {
-            logger.warn(IDLOG, 'no ws port (http) has been specified in JSON file ' + path);
-        }
-
-        // initialize the key of the HTTPS proxy
-        if (json.websocket.https_key) {
-            HTTPS_KEY = json.websocket.https_key;
-
-        } else {
-            logger.warn(IDLOG, 'no ws HTTPS key has been specified in JSON file ' + path);
-        }
-
-        // initialize the certificate of the HTTPS proxy
-        if (json.websocket.https_cert) {
-            HTTPS_CERT = json.websocket.https_cert;
-
-        } else {
-            logger.warn(IDLOG, 'no ws HTTPS certificate has been specified in JSON file ' + path);
-        }
-
-        // initialize the interval at which update the token expiration of all users
-        // that are connected by websocket
-        var expires = compAuthe.getTokenExpirationTimeout();
-        updateTokenExpirationInterval = expires / 2;
-
-        logger.info(IDLOG, 'configuration by file ' + path + ' ended');
+        logger.info(IDLOG, 'remote sites configuration by file ' + path + ' ended');
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -1028,32 +1023,346 @@ function config(path) {
 }
 
 /**
-* Customize the privacy used to hide phone numbers by a configuration file.
-* The file must use the JSON syntax.
+* Sets the event listeners for the websocket communication component.
 *
-* @method configPrivacy
-* @param {string} path The path of the configuration file
+* @method setComNethctiWsListeners
+* @private
 */
-function configPrivacy(path) {
+function setComNethctiWsListeners() {
     try {
-        // check parameter
-        if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
-
-        // check file presence
-        if (!fs.existsSync(path)) { throw new Error(path + ' does not exist'); }
-
-        // read configuration file
-        var json = require(path);
-
-        // initialize the string used to hide last digits of phone numbers
-        if (json.privacy_numbers) {
-            privacyStrReplace = json.privacy_numbers;
-
-        } else {
-            logger.warn(IDLOG, 'no privacy string has been specified in JSON file ' + path);
+        // check component object
+        if (!compComNethctiWs || typeof compComNethctiWs.on !== 'function') {
+            throw new Error('wrong websocket communication object');
         }
 
-        logger.info(IDLOG, 'privacy configuration by file ' + path + ' ended');
+        compComNethctiWs.on(compComNethctiWs.EVT_WSS_CLIENT_CONNECTED, wssConnHdlr);
+//        compComNethctiWs.on(compComNethctiWs.EVT_WS_CLIENT_LOGGEDIN,          checkQueueAutoLogin);
+//        compComNethctiWs.on(compComNethctiWs.EVT_WS_CLIENT_LOGGEDIN,          checkAutoDndOffLogin);
+//        compComNethctiWs.on(compComNethctiWs.EVT_ALL_WS_CLIENT_DISCONNECTION, checkQueueAutoLogout);
+//        compComNethctiWs.on(compComNethctiWs.EVT_ALL_WS_CLIENT_DISCONNECTION, checkAutoDndOnLogout);
+
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Does login operation through websocket to a remote site.
+*
+* @method wssLogin
+* @param {object} clientWss                 The client socket connected to remote site
+*   @param {string} clientWss.ctiTokenAuthe The authentication token
+* @param {string} user                      The username
+* @param {string} hostname                  The remote hostname
+* @private
+*/
+function wssLogin(clientWss, user, hostname) {
+    try {
+        if (typeof clientWss !== 'object'  ||
+            typeof user      !== 'string'  ||
+            typeof hostname  !== 'string'  ||
+            typeof clientWss.ctiTokenAuthe !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+        logger.info(IDLOG, 'client wss login to "' + hostname + '" by user "' + user + '" with token');
+        clientWss.emit('login', { accessKeyId: user, token: clientWss.ctiTokenAuthe });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Does a generic rest api the login through the rest api to obtain a nonce to
+* construct the authentication token.
+*
+* @method restApi
+* ......................
+* @param {string}   site     The remote site name
+* @param {string}   url      The url to be invoked
+* @param {string}   method   The request method (GET or POST)
+* @param {object}   headers  The headers of the request
+* @param {object}   data     The data to be passed
+* @param {function} cb       The callback function
+* @private
+*/
+function restApi(site, url, method, headers, data, cb) {
+    try {
+        // check arguments
+        if (typeof url !== 'string' || typeof site !== 'string' ||
+            (method  !== 'get' && method !== 'GET' && method !== 'post' && method !== 'POST') ||
+            (headers && typeof headers !== 'object') ||
+            (data    && typeof data    !== 'object') ||
+            typeof cb !== 'function') {
+
+            throw new Error('wrong parameters');
+        }
+
+        logger.info(IDLOG, 'rest api call ' + url);
+
+        // check headers
+        var headers = headers ? headers : {};
+        headers.nethcti_remote = true;
+        // add authentication header if the client has already logged in to the remote site
+        if (remoteSites[site] &&
+            typeof remoteSites[site].user     === 'string' &&
+            typeof remoteSites[site].hostname === 'string' &&
+            wssClients[remoteSites[site].user]             &&
+            typeof wssClients[remoteSites[site].user].ctiTokenAuthe){
+
+            headers.Authorization = remoteSites[site].user + ':' + wssClients[remoteSites[site].user].ctiTokenAuthe;
+        }
+
+        var opts = {
+            url:     url,
+            method:  method,
+            headers: headers
+        };
+        // check data
+        if (data) { opts.form = data; }
+
+        request(opts, function (err, res, body) {
+            if (err) {
+                var str = url + ' error: ' + err;
+                logger.error(IDLOG, str);
+            }
+            else if (res.statusCode !== 200 &&
+                        !(res.statusCode === 401 && res.headers['www-authenticate'])) {
+
+                logger.warn(IDLOG, url + ' failed as user "' + remoteSites[site].user + '": res.statusCode ' + res.statusCode);
+            }
+            cb(err, res, body);
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Does the login through the rest api to obtain a nonce to
+* construct the authentication token.
+*
+* @method clientRestApiLogin
+* @param {object} clientWss The client websocket socket secure connected to remote site
+* @param {string} site      The remote site name
+* @private
+*/
+function clientRestApiLogin(clientWss, site) {
+    try {
+        if (typeof clientWss !== 'object' || typeof site !== 'string') {
+            throw new Error('wrong parameters');
+        }
+        var hostname = remoteSites[site].hostname;
+        var user     = remoteSites[site].user;
+        var password = remoteSites[site].password;
+        var url      = REST_PROTO + '://' + hostname + '/webrest/authentication/remotelogin';
+        var headers  = { 'Content-Type': 'application/x-www-form-urlencoded' };
+        var data = {
+            username: user,
+            password: password
+        };
+        restApi(site, url, 'POST', headers, data, function (err, res, body) {
+            if (!err &&
+                res.statusCode === 401 &&
+                res.headers['www-authenticate']) {
+
+                var nonce = res.headers['www-authenticate'].split('Digest');
+                logger.info(IDLOG, 'received nonce for authentication from "' + hostname + '" for user "' + user + '"');
+                nonce = (nonce.length > 1 ? nonce[1].trim() : undefined);
+                var token = compAuthe.calculateToken(user, password, nonce);
+                logger.info(IDLOG, 'created authentication token for "' + hostname + '" by user "' + user + '"');
+                clientWss.ctiTokenAuthe = token;
+                wssLogin(clientWss, user, hostname);
+            }
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Check if the user is an authenticated remote site that has already logged in.
+*
+* @method getSiteName
+* @param  {string} username The username of the remote site
+* @param  {string} token    The authentication token used by remote site
+* @return {string} The name of the remote site.
+*/
+function getSiteName(username, token) {
+    try {
+        // check arguments
+        if (typeof username !== 'string' || typeof token !== 'string') {
+            throw new Error('wrong parameters');
+        }
+        var sid;
+        for (sid in wsid) {
+            if (wsid[sid] &&
+                wsid[sid].username === username &&
+                wsid[sid].token    === token    &&
+                typeof wsid[sid].siteName === 'string') {
+
+                return wsid[sid].siteName;
+                break;
+            }
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Check if the user is an authenticated remote site that has already logged in.
+*
+* @method isClientRemote
+* @param  {string}  username The username of the remote site
+* @param  {string}  token    The authentication token used by remote site
+* @return {boolean} True if the remote site username has already logged in.
+*/
+function isClientRemote(username, token) {
+    try {
+        // check arguments
+        if (typeof username !== 'string' || typeof token !== 'string') {
+            throw new Error('wrong parameters');
+        }
+        var sid;
+        for (sid in wsid) {
+            if (wsid[sid] &&
+                wsid[sid].username === username &&
+                wsid[sid].token    === token) {
+
+                return true;
+                break;
+            }
+        }
+        return false;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return false;
+    }
+}
+
+/**
+* Returns the perator panel groups of all remote sites.
+*
+* @method getAllRemoteSitesOperatorGroups
+* @return {object} Operator panel groups of all remote sites.
+*/
+function getAllRemoteSitesOperatorGroups() {
+    try {
+        return allSitesOpGroups;
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Does the login through the rest api to obtain a nonce to
+* construct the authentication token.
+* ...................
+*
+* @method restApiSiteOpGroups
+* @param {string} site The remote site name
+* @private
+*/
+function restApiSiteOpGroups(site) {
+    try {
+        // check argument
+        if (typeof site !== 'string') {
+            throw new Error('wrong parameter');
+        }
+
+        var url = REST_PROTO + '://' + remoteSites[site].hostname + '/webrest/astproxy/opgroups';
+        restApi(site, url, 'GET', undefined, undefined, function (err, res, body) {
+            try {
+                var results = JSON.parse(body);
+                if (typeof results !== 'object') {
+                    logger.warn(IDLOG, 'received bad results getting op groups of remote site "' + site + '": body =' + body);
+                    return;
+                }
+
+                if (Object.keys(results).length === 0) {
+                    logger.info(IDLOG, 'received 0 op groups of remote site "' + site + '"');
+                }
+                else {
+                    logger.info(IDLOG, 'received ' + Object.keys(results).length +
+                                       ' op groups of remote site "' + site + '": "' + Object.keys(results) + '"');
+                    allSitesOpGroups[site] = results;
+                }
+            } catch (err) {
+                logger.error(IDLOG, 'received bad results getting op groups of remote site "' + site + '": body =' + body);
+                logger.error(IDLOG, err.stack);
+            }
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Handler for a client websocket disconnection.
+*
+* @method clientWssDisconnectHdlr
+* @param {string} site The site name
+* @private
+*/
+function clientWssDisconnectHdlr(site) {
+    try {
+        if (typeof site !== 'string') { throw new Error('wrong parameters'); }
+        logger.warn(IDLOG, 'client wss disconnected from site "' + site + '" "' + remoteSites[site].hostname + '"');
+        console.warn(IDLOG+ 'client wss disconnected from site "' + site + '" "' + remoteSites[site].hostname + '"');
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Handler for a failed login operation through client websocket.
+*
+* @method clientWss401Hdlr
+* @param {object} data The data received from the event
+* @param {string} site The site name
+* @private
+*/
+function clientWss401Hdlr(data, site) {
+    try {
+        if (typeof data !== 'object' || typeof site !== 'string') {
+            throw new Error('wrong parameters');
+        }
+        logger.warn(IDLOG, 'client wss login failed to site "' + site + '" "' + remoteSites[site].hostname + '"');
+        console.warn(IDLOG+ 'client wss login failed to site "' + site + '" "' + remoteSites[site].hostname + '"');
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Handler for a successful logged in through a client websocket.
+*
+* @method clientWssLoggedInHdlr
+* @param {object} data     The data received from the event
+* @param {object} clSocket The client socket connected to remote site
+*   @param {string} clSocket.ctiTokenAuthe The 
+* @param {string} site     The site name
+* @private
+*/
+function clientWssLoggedInHdlr(data, clSocket, site) {
+    try {
+        if (typeof clSocket !== 'object' ||
+            typeof data     !== 'object' ||
+            typeof site     !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+        logger.info(IDLOG, 'client wss logged in successfully to site "' + site + '" "' + remoteSites[site].hostname + '"');
+        wssClients[remoteSites[site].user] = clSocket;
+        logger.info(IDLOG, 'authenticated client websocket to site "' + site + '" added in memory');
+
+        restApiSiteOpGroups(site);
+
+
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -1067,87 +1376,48 @@ function configPrivacy(path) {
 */
 function start() {
     try {
-        // set the listener for the aterisk proxy module
-        setAstProxyListeners();
+        if (Object.keys(remoteSites).length === 0) {
+            logger.info(IDLOG, 'no remote sites configured');
+            return;
+        }
 
-        // set the listener for the voicemail module
-        setVoicemailListeners();
+        https.globalAgent.options.rejectUnauthorized = false;
 
-        // set the listener for the post-it module
-        setPostitListeners();
-
-        // set the listener for the user module
-        setUserListeners();
-
-        // starts the http and https websocket servers
-        startWsServer();
-        startWssServer();
-
-        // start the automatic update of token expiration of all users that are connected by websocket (http and https).
-        // The interval is the half value of expiration provided by authentication component
-        setInterval(function () {
-
-            updateTokenExpirationOfAllWebsocketUsers();
-
-        }, updateTokenExpirationInterval);
-
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Creates the websocket server secure (https) and adds the listeners for other components.
-*
-* @method startWssServer
-* @private
-*/
-function startWssServer() {
-    try {
-        // websocket secure options
-        var options = {
-            https: {
-                key:  fs.readFileSync(HTTPS_KEY,  'utf8'),
-                cert: fs.readFileSync(HTTPS_CERT, 'utf8')
-            }
+        var opts = {
+            agent: https.globalAgent,
+            timeout: CONNECTION_TIMEOUT,
+            reconnection: true,
+            randomizationFactor: 0.5,
+            reconnectionDelayMax: MAX_RECONNECTION_DELAY,
+            query: 'type=remote'
         };
+        var site, address;
 
-        var httpsServer = httpProxy.createServer(options, function (req , res) {} );
+        // try to connect to all remote sites
+        for (site in remoteSites) {
 
-        // websocket server secure (https)
-        wssServer = io.listen(httpsServer, { 'log level': WS_LOG_LEVEL, 'transports': ['websocket'] });
-        httpsServer.listen(wssPort);
+            if (typeof remoteSites[site].hostname !== 'string' ||
+                typeof remoteSites[site].port     !== 'string' ||
+                typeof remoteSites[site].user     !== 'string' ||
+                typeof remoteSites[site].prefix   !== 'string' ||
+                typeof remoteSites[site].password !== 'string') {
 
-        // set the websocket server secure listener
-        wssServer.on('connection', wssConnHdlr);
-        logger.warn(IDLOG, 'websocket server secure (https) listening on port ' + wssPort);
+                logger.warn(IDLOG, 'wrong configuration for remote site "' + site + '": skipped');
+                continue;
+            }
 
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Creates the websocket server (http) and adds the listeners for other components.
-*
-* @method startWsServer
-* @private
-*/
-function startWsServer() {
-    try {
-        // websocket options
-        var options = { 'transports': ['websocket'] };
-
-        var httpServer = httpProxy.createServer(options, function (req , res) {} );
-
-        // websocket server (http)
-        wsServer = io.listen(httpServer, { 'log level': WS_LOG_LEVEL });
-        httpServer.listen(wsPort);
-
-        // set the websocket server listener
-        wsServer.on('connection', wsConnHdlr);
-        logger.warn(IDLOG, 'websocket server (http) listening on port ' + wsPort);
-
+            // websocket connection
+            address  = 'https://' + remoteSites[site].hostname + ':' + remoteSites[site].port;
+            logger.info(IDLOG, 'wss connecting to remote site "' + site + '" ' + address);
+            var clientWss = ioClient.connect(address, opts);
+            clientWss.on('connect', function () {
+                logger.info(IDLOG, 'wss connected to remote site "' + site + '" ' + address);
+                clientRestApiLogin(clientWss, site);
+            });
+            clientWss.on('authe_ok',   function (data) { clientWssLoggedInHdlr(data, clientWss, site); });
+            clientWss.on('401',        function (data) { clientWss401Hdlr(data, site);  });
+            clientWss.on('disconnect', function ()     { clientWssDisconnectHdlr(site); });
+        }
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -1180,44 +1450,19 @@ function updateTokenExpirationOfAllWebsocketUsers() {
 */
 function wssConnHdlr(socket) {
     try {
-        // this event is emitted when a client websocket has been connected
-        logger.info(IDLOG, 'emit event "' + EVT_WSS_CLIENT_CONNECTED + '"');
-        emitter.emit(EVT_WSS_CLIENT_CONNECTED, socket);
-
-        // manage client wss connection only if it comes from a local site
+        // manage client wss connection only if it comes from a remote site
         if (socket.manager &&
             socket.manager.handshaken &&
             socket.manager.handshaken[socket.id] &&
             socket.manager.handshaken[socket.id].query &&
-            (!socket.manager.handshaken[socket.id].query.type || socket.manager.handshaken[socket.id].query.type === 'local')) {
+            socket.manager.handshaken[socket.id].query.type === 'remote') {
 
-            logger.info(IDLOG, 'new local websocket connection (https) from ' + getWebsocketEndpoint(socket));
+            logger.info(IDLOG, 'new remote websocket connection (https) from ' + getWebsocketEndpoint(socket));
             // set the listeners for the new https socket connection
             socket.on('login',      function (data) { loginHdlr(socket, data); });
             socket.on('disconnect', function (data) { disconnHdlr(socket);     });
             logger.info(IDLOG, 'listeners for new https websocket connection have been set');
         }
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Websocket (http) connection handler.
-*
-* @method wsConnHdlr
-* @param {object} socket The client websocket.
-* @private
-*/
-function wsConnHdlr(socket) {
-    try {
-        logger.info(IDLOG, 'new websocket connection (http) from ' + getWebsocketEndpoint(socket));
-
-        // set the listeners for the new http socket connection
-        socket.on('login',      function (data) { loginHdlr(socket, data);   });
-        socket.on('disconnect', function (data) { disconnHdlr(socket);       });
-        logger.info(IDLOG, 'listeners for new http websocket connection have been set');
-
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -1306,49 +1551,35 @@ function unauthorized(socket) {
 function loginHdlr(socket, obj) {
     try {
         // check parameters
-        if (typeof socket             !== 'object'
-            || typeof obj             !== 'object'
-            || typeof obj.token       !== 'string'
-            || typeof obj.accessKeyId !== 'string') {
+        if (typeof socket          !== 'object' ||
+            typeof obj             !== 'object' ||
+            typeof obj.token       !== 'string' ||
+            typeof obj.accessKeyId !== 'string') {
 
             logger.warn(IDLOG, 'bad authentication login request from ' + getWebsocketEndpoint(socket));
             unauthorized(socket);
             return;
         }
 
-        if (compAuthe.verifyToken(obj.accessKeyId, obj.token, false) === true) { // user successfully authenticated
+        if (compAuthe.verifyToken(obj.accessKeyId, obj.token, true) === true) { // user successfully authenticated
 
             logger.info(IDLOG, 'user "' + obj.accessKeyId + '" successfully authenticated from ' + getWebsocketEndpoint(socket) +
                                ' with socket id ' + socket.id);
 
             // add websocket id for future fast authentication for each request from the clients
-            addWebsocketId(obj.accessKeyId, obj.token, socket.id);
+            var siteName = compAuthe.getRemoteSiteName(obj.accessKeyId, obj.token);
+            addWebsocketId(obj.accessKeyId, obj.token, socket.id, siteName);
 
             // sets the socket object that will contains the cti data
             if (!socket.nethcti) { socket.nethcti = {}; }
-
-            // set the nethcti endpoint presence of the user to online status. Not only cti use the websocket
-            // connection, so check the referrer url of the client to understand if the connection comes from
-            // the cti application and set the online status only in this case
-            if (   socket.handshake
-                && socket.handshake.headers
-                && socket.handshake.headers.referer
-                && socket.handshake.headers.referer.split('/')[3]
-                && socket.handshake.headers.referer.split('/')[3].indexOf('cti') > -1) {
-
-                compUser.setNethctiPresence(obj.accessKeyId, 'desktop', compUser.ENDPOINT_NETHCTI_STATUS.online);
-                logger.info(IDLOG, '"' + compUser.ENDPOINT_NETHCTI_STATUS.online + '" cti desktop presence has been set for user "' + obj.accessKeyId + '"');
-
-                // sets the origin application (cti) property to the client socket
-                socket.nethcti.userAgent = USER_AGENT;
-                logger.info(IDLOG, 'setted userAgent property "' + USER_AGENT + '" to the socket ' + socket.id);
-            }
 
             // sets username property to the client socket
             socket.nethcti.username = obj.accessKeyId;
 
             // send authenticated successfully response
             sendAutheSuccess(socket);
+
+            /*
 
             // if the user has the extensions permission, than he will receive the asterisk events that affects the extensions
             if (compAuthorization.authorizeOpExtensionsUser(obj.accessKeyId) === true) {
@@ -1407,11 +1638,12 @@ function loginHdlr(socket, obj) {
             // emits the event for a logged in client. This event is emitted when a user has been logged in by a websocket connection
             logger.info(IDLOG, 'emit event "' + EVT_WS_CLIENT_LOGGEDIN + '" for username "' + obj.accessKeyId + '"');
             emitter.emit(EVT_WS_CLIENT_LOGGEDIN, obj.accessKeyId);
+            */
 
         } else { // authentication failed
             logger.warn(IDLOG, 'authentication failed for user "' + obj.accessKeyId + '" from ' + getWebsocketEndpoint(socket) +
                                ' with id ' + socket.id);
-            console.warn(IDLOG+ 'authentication failed for user "' + obj.accessKeyId + '" from ' + getWebsocketEndpoint(socket) +
+            console.warn(IDLOG+'authentication failed for user "' + obj.accessKeyId + '" from ' + getWebsocketEndpoint(socket) +
                                ' with id ' + socket.id);
             unauthorized(socket);
         }
@@ -1432,7 +1664,6 @@ function loginHdlr(socket, obj) {
 function disconnHdlr(socket) {
     try {
         logger.info(IDLOG, 'client websocket disconnected ' + getWebsocketEndpoint(socket));
-
         var username;
 
         // when the user is not authenticated but connected by websocket,
@@ -1514,12 +1745,13 @@ function removeWebsocketId(socketId) {
 * @param {string} user     The user used as key
 * @param {string} token    The access token
 * @param {string} socketId The client websocket identifier to store in the memory
+* @param {string} siteName The remote site name
 * private
 */
-function addWebsocketId(user, token, socketId) {
+function addWebsocketId(user, token, socketId, siteName) {
     try {
-        wsid[socketId] = { username: user, token: token };
-        logger.info(IDLOG, 'added client websocket identifier ' + socketId + ' for user ' + user + ' with token ' + token);
+        wsid[socketId] = { username: user, token: token, siteName: siteName };
+        logger.info(IDLOG, 'added client websocket identifier ' + socketId + ' for user ' + user + ' of remote site "' + siteName + '" with token ' + token);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -1599,11 +1831,13 @@ exports.setAuthe                        = setAuthe;
 exports.setLogger                       = setLogger;
 exports.setAstProxy                     = setAstProxy;
 exports.setCompUser                     = setCompUser;
-exports.configPrivacy                   = configPrivacy;
+exports.getSiteName                     = getSiteName;
 exports.setCompPostit                   = setCompPostit;
+exports.isClientRemote                  = isClientRemote;
 exports.setCompVoicemail                = setCompVoicemail;
+exports.setCompComNethctiWs             = setCompComNethctiWs;
 exports.setCompAuthorization            = setCompAuthorization;
 exports.getNumConnectedClients          = getNumConnectedClients;
 exports.EVT_WS_CLIENT_LOGGEDIN          = EVT_WS_CLIENT_LOGGEDIN;
-exports.EVT_WSS_CLIENT_CONNECTED        = EVT_WSS_CLIENT_CONNECTED;
 exports.EVT_ALL_WS_CLIENT_DISCONNECTION = EVT_ALL_WS_CLIENT_DISCONNECTION;
+exports.getAllRemoteSitesOperatorGroups = getAllRemoteSitesOperatorGroups;

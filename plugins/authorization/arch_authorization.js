@@ -49,6 +49,13 @@ module.exports = function (options, imports, register) {
             authorizeAdminSmsUser: authorization.authorizeAdminSmsUser,
 
             /**
+            * It's the _authorizeRemoteSiteUser_ method provided by _authorization_ module.
+            *
+            * @method authorizeRemoteSiteUser
+            */
+            authorizeRemoteSiteUser: authorization.authorizeRemoteSiteUser,
+
+            /**
             * It's the _authorizeOffhourUser_ method provided by _authorization_ module.
             *
             * @method authorizeOffhourUser
@@ -245,6 +252,13 @@ module.exports = function (options, imports, register) {
             authorizeStreamingSourceUser: authorization.authorizeStreamingSourceUser,
 
             /**
+            * It's the _getAuthorizedRemoteOperatorGroups_ method provided by _authorization_ module.
+            *
+            * @method getAuthorizedRemoteOperatorGroups
+            */
+            getAuthorizedRemoteOperatorGroups: authorization.getAuthorizedRemoteOperatorGroups,
+
+            /**
             * It's the _getAuthorizedStreamingSources_ method provided by _authorization_ module.
             *
             * @method getAuthorizedStreamingSources
@@ -364,6 +378,7 @@ module.exports = function (options, imports, register) {
             authorization.setUserModule(imports.user);
             authorization.setCompDbconn(imports.dbconn);
             authorization.config({ type: 'file', path: '/etc/nethcti/users.json' });
+            authorization.configRemoteOperators('/etc/nethcti/remote_operators.json');
         });
     } catch (err) {
         logger.error(IDLOG, err.stack);

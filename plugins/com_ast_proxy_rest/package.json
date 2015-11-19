@@ -10,7 +10,8 @@
             "astProxy",
             "operator",
             "configManager",
-            "authorization"
+            "authorization",
+            "comNethctiRemotes"
         ],
         "provides": []
     }

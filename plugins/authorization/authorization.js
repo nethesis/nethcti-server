@@ -46,6 +46,15 @@ var logger = console;
 var userMod;
 
 /**
+* The permission to view local operator panel groups for each remote site.
+*
+* @property remoteOperatorsAutho
+* @type object
+* @private
+*/
+var remoteOperatorsAutho;
+
+/**
 * The dbconn module.
 *
 * @property compDbconn
@@ -114,7 +123,7 @@ function config(data) {
 *
 * @method setCompDbconn
 * @param {object} comp The dbconn module
-* private
+* @private
 */
 function setCompDbconn(comp) {
     try {
@@ -132,7 +141,7 @@ function setCompDbconn(comp) {
 *
 * @method setUserModule
 * @param {object} module The user module
-* private
+* @private
 */
 function setUserModule(module) {
     try {
@@ -146,11 +155,45 @@ function setUserModule(module) {
 }
 
 /**
+* Set the remote sites authorizations to view the operator panel groups
+* by file. The file must use the JSON syntax.
+*
+* @method configRemoteOperators
+* @param {string} path The path of the authorization file for operator panel
+*                      groups to be allowed for each remote site
+*/
+function configRemoteOperators(path) {
+    try {
+        if (typeof path !== 'string') { throw new Error('wrong parameter'); }
+
+        if (!fs.existsSync(path)) {
+            logger.error(path + ' does not exist');
+            return;
+        }
+
+        // read the file
+        var json = require(path);
+
+        if (typeof json        !== 'object' ||
+            typeof json.groups !== 'object') {
+
+            logger.warn(IDLOG, 'wrong content in ' + path);
+            return;
+        }
+        remoteOperatorsAutho = json.groups;
+        logger.info(IDLOG, 'configuration of operator authorizations for remote sites by file ' + path + ' ended');
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Set the user authorization by file. The file must use the JSON syntax.
 *
 * @method configByFile
 * @param {string} path The path of the authorization file
-* private
+* @private
 */
 function configByFile(path) {
     try {
@@ -715,6 +758,28 @@ function authorizeOpTrunksUser(username) {
 }
 
 /**
+* Returns true if the specified user has the authorization to operate
+* with remote sites.
+*
+* @method authorizeRemoteSiteUser
+* @param  {string}  username The username
+* @return {boolean} True if the user has the authorization to view all queues.
+*/
+function authorizeRemoteSiteUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.remote_site, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
 * Returns true if the specified user has the authorization to view all queues
 * with their complete status informations.
 *
@@ -1132,6 +1197,34 @@ function getAuthorizedStreamingSources(username) {
 }
 
 /**
+* Returns all the authorized groups of the operator panel for the specified remote site.
+*
+* @method getAuthorizedRemoteOperatorGroups
+* @param  {string} site The remote site name
+* @return {object} All the authorized operator panel groups for the specified remote site.
+*/
+function getAuthorizedRemoteOperatorGroups(site) {
+    try {
+        // check parameter
+        if (typeof site !== 'string') { throw new Error('wrong parameter'); }
+
+        var gname;
+        var result = {};
+        for (gname in remoteOperatorsAutho) {
+            if (remoteOperatorsAutho[gname].remote_site.indexOf(site) > -1) {
+                result[gname] = true;
+            }
+        }
+        return result;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns and empty object
+        return {};
+    }
+}
+
+/**
 * Returns all the authorized groups of the operator panel of the user.
 *
 * @method getAuthorizedOperatorGroups
@@ -1446,6 +1539,7 @@ exports.authorizePickupUser             = authorizePickupUser;
 exports.authorizePostitUser             = authorizePostitUser;
 exports.authorizeIntrudeUser            = authorizeIntrudeUser;
 exports.authorizeOffhourUser            = authorizeOffhourUser;
+exports.configRemoteOperators           = configRemoteOperators;
 exports.authorizeOpTrunksUser           = authorizeOpTrunksUser;
 exports.authorizeAdminSmsUser           = authorizeAdminSmsUser;
 exports.authorizeOpQueuesUser           = authorizeOpQueuesUser;
@@ -1455,6 +1549,7 @@ exports.authorizeAdminCallUser          = authorizeAdminCallUser;
 exports.authorizeRecordingUser          = authorizeRecordingUser;
 exports.authorizePhonebookUser          = authorizePhonebookUser;
 exports.authorizeStreamingUser          = authorizeStreamingUser;
+exports.authorizeRemoteSiteUser         = authorizeRemoteSiteUser;
 exports.authorizeCallerNoteUser         = authorizeCallerNoteUser;
 exports.authorizedCustomerCards         = authorizedCustomerCards;
 exports.verifyUserEndpointExten         = verifyUserEndpointExten;
@@ -1482,3 +1577,4 @@ exports.getAuthorizedStreamingSources   = getAuthorizedStreamingSources;
 exports.verifyOffhourUserAnnouncement   = verifyOffhourUserAnnouncement;
 exports.authorizeAttendedTransferUser   = authorizeAttendedTransferUser;
 exports.verifyOffhourListenAnnouncement = verifyOffhourListenAnnouncement;
+exports.getAuthorizedRemoteOperatorGroups = getAuthorizedRemoteOperatorGroups;

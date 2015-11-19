@@ -35,6 +35,7 @@ module.exports = function (options, imports, register) {
         serverRest.setCompAstProxy(imports.astProxy);
         serverRest.setCompAuthorization(imports.authorization);
         serverRest.setCompConfigManager(imports.configManager);
+        serverRest.setCompComNethctiRemotes(imports.comNethctiRemotes);
         serverRest.start();
     } catch (err) {
        logger.error(IDLOG, err.stack);

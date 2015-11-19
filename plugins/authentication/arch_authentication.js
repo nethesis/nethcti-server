@@ -34,6 +34,13 @@ module.exports = function (options, imports, register) {
             on: authentication.on,
 
             /**
+            * It's the _getRemoteSiteName_ method provided by _authentication_ module.
+            *
+            * @method getRemoteSiteName
+            */
+            getRemoteSiteName: authentication.getRemoteSiteName,
+
+            /**
             * It's the _authenticate_ method provided by _authentication_ module.
             *
             * @method authenticate
@@ -42,6 +49,26 @@ module.exports = function (options, imports, register) {
             * @param {function} cb The callback function
             */
             authenticate: authentication.authenticate,
+
+            /**
+            * It's the _authenticateRemoteSite_ method provided by _authentication_ module.
+            *
+            * @method authenticateRemoteSite
+            * @param {string} accessKeyId The access key used to authenticate, e.g. the username
+            * @param {string} password The password of the account
+            * @param {function} cb The callback function
+            */
+            authenticateRemoteSite: authentication.authenticateRemoteSite,
+
+            /**
+            * It's the _calculateToken_ method provided by _authentication_ module.
+            *
+            * @method calculateToken
+            * @param {string} accessKeyId The access key used to authenticate, e.g. the username
+            * @param {string} password    The password of the account
+            * @param {string} nonce       It is used to create the HMAC-SHA1 token
+            */
+            calculateToken: authentication.calculateToken,
 
             /**
             * It's the _getNonce_ method provided by _authentication_ module.
@@ -109,6 +136,7 @@ module.exports = function (options, imports, register) {
 
     try {
         authentication.setLogger(logger);
+        authentication.configRemoteAuthentications('/etc/nethcti/remote_authentications.json');
         authentication.config('/etc/nethcti/authentication.json');
     } catch (err) {
         logger.error(IDLOG, err.stack);

@@ -113,6 +113,16 @@ var authenticationType;
 var authFileCredentials = {};
 
 /**
+* The credentials used by remote sites.
+*
+* @property authRemoteSites
+* @type object
+* @private
+* @default {}
+*/
+var authRemoteSites = {};
+
+/**
 * The LDAP organizational unit.
 *
 * @property ou
@@ -227,6 +237,59 @@ function setLogger(log) {
 }
 
 /**
+* It reads the authentication configuration file for remote
+* sites. The file must use the JSON syntax.
+*
+* **The method can throw an Exception.**
+*
+* @method configRemoteAuthentications
+* @param {string} path The path of the configuration file
+*/
+function configRemoteAuthentications(path) {
+    try {
+        // check parameter
+        if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
+
+        // check file presence
+        if (!fs.existsSync(path)) {
+            logger.error(IDLOG, path + ' does not exist');
+            return;
+        }
+
+        logger.info(IDLOG, 'configure authentication for remote sites by file ' + path);
+
+        // read configuration file
+        var json = require(path);
+
+        if (typeof json !== 'object') {
+            logger.error(IDLOG, 'wrong content in ' + path);
+            return;
+        }
+
+        var user;
+        for (user in json) {
+            if (typeof json[user].username !== 'string' ||
+                typeof json[user].password !== 'string' ||
+                (json[user].allowed_ip instanceof Array) !== true) {
+
+                logger.error(IDLOG, 'wrong authentication content for "' + user + '" in ' + path);
+            }
+            else {
+                authRemoteSites[user] = {
+                    username:   json[user].username,
+                    password:   json[user].password,
+                    allowed_ip: json[user].allowed_ip
+                };
+            }
+        }
+        logger.info(IDLOG, 'configuration authentication for remote sites by file ' + path + ' ended');
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * It reads the authentication configuration file and call
 * the appropriate function to configure authentication by
 * LDAP or by file. The file must use the JSON syntax.
@@ -241,7 +304,7 @@ function config(path) {
     if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
 
     // check file presence
-    if (!fs.existsSync(path)) { throw new Error(path + ' doesn\'t exist'); }
+    if (!fs.existsSync(path)) { throw new Error(path + ' does not exist'); }
 
     // read configuration file
     var json = require(path);
@@ -466,17 +529,14 @@ function configActiveDirectory(json) {
 }
 
 /**
-* Creates an HMAC-SHA1 token to be used in the authentication and store it
-* into the private _grants_ object. The _accessKeyId_ must be present into
-* the _creds_ property.
+* Calculates the HMAC-SHA1 token to be used in the authentication.
 *
-* @method newToken
+* @method calculateToken
 * @param {string} accessKeyId The access key identifier, e.g. the username
 * @param {string} password    The password of the account
 * @param {string} nonce       It is used to create the HMAC-SHA1 token
-* @private
 */
-function newToken(accessKeyId, password, nonce) {
+function calculateToken(accessKeyId, password, nonce) {
     try {
         // check parameters
         if (typeof accessKeyId !== 'string' ||
@@ -485,21 +545,88 @@ function newToken(accessKeyId, password, nonce) {
 
             throw new Error('wrong parameters');
         }
-
         // generate token HMAC-SHA1
         var tohash = accessKeyId + ':' + password + ':' + nonce;
-        var token  = crypto.createHmac('sha1', password).update(tohash).digest('hex');
+        return crypto.createHmac('sha1', password).update(tohash).digest('hex');
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Returns the remote site name.
+*
+* @method getRemoteSiteName
+* @param  {string} accessKeyId The access key identifier, e.g. the username
+* @param  {string} token       The authentication token
+* @return {string} The name of the remote site
+*/
+function getRemoteSiteName(accessKeyId, token) {
+    try {
+        // check parameters
+        if (typeof accessKeyId !== 'string' || typeof token !== 'string') {
+            throw new Error('wrong parameters');
+        }
+        if (grants[accessKeyId] &&
+            grants[accessKeyId][token] &&
+            grants[accessKeyId][token].remoteSite === true &&
+            typeof grants[accessKeyId][token].siteName === 'string') {
+
+            return grants[accessKeyId][token].siteName;
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Creates an HMAC-SHA1 token to be used in the authentication and store it
+* into the private _grants_ object.
+*
+* @method newToken
+* @param {string}  accessKeyId  The access key identifier, e.g. the username
+* @param {string}  password     The password of the account
+* @param {string}  nonce        It is used to create the HMAC-SHA1 token
+* @param {boolean} isRemoteSite True if the request is for a remote site
+* @private
+*/
+function newToken(accessKeyId, password, nonce, isRemoteSite) {
+    try {
+        // check parameters
+        if (typeof accessKeyId  !== 'string' ||
+            typeof nonce        !== 'string' ||
+            typeof password     !== 'string' ||
+            typeof isRemoteSite !== 'boolean') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // generate token HMAC-SHA1
+        var token  = calculateToken(accessKeyId, password, nonce);
 
         // store token
         if (!grants[accessKeyId]) { grants[accessKeyId] = {}; }
 
         var newTokenObj = {
-            nonce:   nonce,
-            token:   token,
-            expires: (new Date()).getTime() + expires
+            nonce:      nonce,
+            token:      token,
+            expires:    (new Date()).getTime() + expires,
+            remoteSite: isRemoteSite
         };
-        grants[accessKeyId][token] = newTokenObj;
 
+        if (isRemoteSite) {
+            var siteName;
+            for (siteName in authRemoteSites) {
+                if (authRemoteSites[siteName].username === accessKeyId &&
+                    authRemoteSites[siteName].password === password) {
+
+                    newTokenObj.siteName = siteName;
+                    break;
+                }
+            }
+        }
+        grants[accessKeyId][token] = newTokenObj;
         logger.info(IDLOG, 'new token has been generated for accessKeyId ' + accessKeyId);
 
     } catch (err) {
@@ -511,14 +638,18 @@ function newToken(accessKeyId, password, nonce) {
 * Creates an SHA1 nonce to be used in the authentication.
 *
 * @method getNonce
-* @param {string} accessKeyId The access key identifier used to create the token.
-* @param {string} password The password of the account
-* @return {string} The SHA1 nonce.
+* @param  {string}  accessKeyId  The access key identifier used to create the token.
+* @param  {string}  password     The password of the account
+* @param  {boolean} isRemoteSite True if the request is for a remote site
+* @return {string}  The SHA1 nonce.
 */
-function getNonce(accessKeyId, password) {
+function getNonce(accessKeyId, password, isRemoteSite) {
     try {
         // check parameters
-        if (typeof accessKeyId !== 'string' || typeof password !== 'string') {
+        if (typeof accessKeyId  !== 'string' ||
+            typeof password     !== 'string' ||
+            typeof isRemoteSite !== 'boolean') {
+
             throw new Error('wrong parameters');
         }
 
@@ -528,13 +659,42 @@ function getNonce(accessKeyId, password) {
         var nonce  = shasum.update(random).digest('hex');
 
         // create new token
-        newToken(accessKeyId, password, nonce);
+        newToken(accessKeyId, password, nonce, isRemoteSite);
 
         logger.info(IDLOG, 'nonce has been generated for accessKeyId ' + accessKeyId);
         return nonce;
 
     } catch (err) {
         logger.error(err.stack);
+    }
+}
+
+/**
+* Authenticate remote site using the credentials specified in the configuration file.
+*
+* @method authenticateRemoteSite
+* @param {string}   accessKeyId The access key used to authenticate, e.g. the username
+* @param {string}   password    The password of the account
+* @param {string}   remoteIp    The remote ip address
+* @param {function} cb          The callback function
+*/
+function authenticateRemoteSite(accessKeydId, password, remoteIp, cb) {
+    try {
+        // check parameters
+        if (typeof cb           !== 'function' ||
+            typeof remoteIp     !== 'string'   ||
+            typeof password     !== 'string'   ||
+            typeof accessKeydId !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // authenticate remote site by credentials read from the file
+        logger.info(IDLOG, 'authenticate remote site "' + accessKeydId + '" "' + remoteIp + '" by credentials file');
+        authRemoteSiteByFile(accessKeydId, password, remoteIp, cb);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
     }
 }
 
@@ -558,8 +718,8 @@ function authenticate(accessKeydId, password, cb) {
             throw new Error('wrong parameters');
         }
 
-        // authenticate the user by LDAP
         if (authenticationType === AUTH_TYPE.ldap) {
+            // authenticate the user by LDAP
             logger.info(IDLOG, 'authenticate the user "' + accessKeydId + '" by LDAP');
             authByLDAP(accessKeydId, password, cb);
 
@@ -589,6 +749,7 @@ function authenticate(accessKeydId, password, cb) {
 * @param {string} accessKeyId The access key used to authenticate, e.g. the username
 * @param {string} password The password of the account
 * @param {function} cb The callback function
+* @private
 */
 function authByFile(accessKeydId, password, cb) {
     try {
@@ -616,12 +777,59 @@ function authByFile(accessKeydId, password, cb) {
 }
 
 /**
+* Authenticate the remote site user by the credentials read from the file.
+*
+* @method authRemoteSiteByFile
+* @param {string}   accessKeyId The access key used to authenticate, e.g. the username
+* @param {string}   password    The password of the account
+* @param {string}   remoteIp    The remote ip address
+* @param {function} cb          The callback function
+* @private
+*/
+function authRemoteSiteByFile(accessKeydId, password, remoteIp, cb) {
+    try {
+        // check parameters
+        if (typeof cb           !== 'function' ||
+            typeof remoteIp     !== 'string'   ||
+            typeof password     !== 'string'   ||
+            typeof accessKeydId !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        var site;
+        var authenticated = false;
+        for (site in authRemoteSites) {
+            if (authRemoteSites[site].username === accessKeydId &&
+                authRemoteSites[site].password === password     &&
+                authRemoteSites[site].allowed_ip.indexOf(remoteIp) > -1) {
+
+                authenticated = true;
+                break;
+            }
+        }
+        if (authenticated) {
+            logger.info(IDLOG, 'remote site "' + accessKeydId + '" ' + remoteIp + ' has been authenticated successfully with file');
+            cb(null);
+        }
+        else {
+            var strerr = 'file authentication failed for remote site "' + accessKeydId + '"';
+            logger.warn(IDLOG, strerr);
+            cb(strerr);
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb('file authentication failed for remote site "' + accessKeydId + '"');
+    }
+}
+
+/**
 * Authenticate the user by LDAP bind operation.
 *
 * @method authByLDAP
-* @param {string} accessKeyId The access key used to authenticate, e.g. the username
-* @param {string} password The password of the account
-* @param {function} cb The callback function
+* @param {string}   accessKeyId The access key used to authenticate, e.g. the username
+* @param {string}   password    The password of the account
+* @param {function} cb          The callback function
 */
 function authByLDAP(accessKeydId, password, cb) {
     try {
@@ -811,40 +1019,44 @@ function isAutoUpdateTokenExpires() {
 }
 
 /**
-* Authenticate the user through checking the token with the one
+* Authenticates the user through checking the token with the one
 * that must be present in the _grants_ object. The _getNonce_ method
 * must be used before this.
 *
 * @method verifyToken
 * @param  {string}  accessKeyId The access key used to retrieve the token
 * @param  {string}  token       The token to be checked
-* @return {boolean} It's true if the user has been authenticated succesfully.
+* @param  {boolean} isRemote    True if the token belongs to a remote site
+* @return {boolean} True if the user has been authenticated succesfully.
 */
-function verifyToken(accessKeyId, token) {
+function verifyToken(accessKeyId, token, isRemote) {
     try {
-        // check parameter
-        if (typeof accessKeyId !== 'string' || typeof token !== 'string') {
-            throw new Error('wrong parameter');
-        }
+        // check parameters
+        if (typeof accessKeyId !== 'string' ||
+            typeof token       !== 'string' ||
+            typeof isRemote    !== 'boolean') {
 
+            throw new Error('wrong parameters');
+        }
         // check the grant presence
         if (!grants[accessKeyId]) {
-
-            logger.warn(IDLOG, 'authentication failed for accessKeyId: "' + accessKeyId + '": no grant is present');
+            logger.warn(IDLOG, 'authentication failed for ' + (isRemote ? 'remote site ' : 'local ') + 'accessKeyId: "' + accessKeyId + '": no grant is present');
             return false;
         }
 
         // check if the user has the token
         var userTokens = grants[accessKeyId]; // all token of the user
-        if (!userTokens[token]) {
-            logger.warn(IDLOG, 'authentication failed for accessKeyId "' + accessKeyId + '": wrong token');
+        if (!userTokens[token] ||
+            (userTokens[token] && userTokens[token].remoteSite !== isRemote)) {
+
+            logger.warn(IDLOG, 'authentication failed for ' + (isRemote ? 'remote site ' : 'local ') + 'accessKeyId "' + accessKeyId + '": wrong token');
             return false;
         }
 
         // check the token expiration
         if ((new Date()).getTime() > userTokens[token].expires) {
             removeToken(accessKeyId, token); // remove the token
-            logger.info(IDLOG, 'the token "' + token + '" has expired for accessKeyId ' + accessKeyId);
+            logger.info(IDLOG, 'the token "' + token + '" has expired for ' + (isRemote ? 'remote site ' : 'local ') + 'accessKeyId ' + accessKeyId);
             return false;
         }
 
@@ -852,7 +1064,7 @@ function verifyToken(accessKeyId, token) {
         if (autoUpdateTokenExpires) { updateTokenExpires(accessKeyId, token); }
 
         // authentication successfull
-        logger.info(IDLOG, 'accessKeyId "' + accessKeyId + '" has been successfully authenticated with token "' + token + '"');
+        logger.info(IDLOG, (isRemote ? 'remote site ' : 'local ') + 'accessKeyId "' + accessKeyId + '" has been successfully authenticated with token "' + token + '"');
         return true;
 
     } catch (err) {
@@ -893,15 +1105,19 @@ function on(type, cb) {
 }
 
 // public interface
-exports.on                        = on;
-exports.config                    = config;
-exports.getNonce                  = getNonce;
-exports.setLogger                 = setLogger;
-exports.verifyToken               = verifyToken;
-exports.removeToken               = removeToken;
-exports.authenticate              = authenticate;
-exports.EVT_COMP_READY            = EVT_COMP_READY;
-exports.updateTokenExpires        = updateTokenExpires;
-exports.isUnautheCallEnabled      = isUnautheCallEnabled;
-exports.isAutoUpdateTokenExpires  = isAutoUpdateTokenExpires;
-exports.getTokenExpirationTimeout = getTokenExpirationTimeout;
+exports.on                          = on;
+exports.config                      = config;
+exports.getNonce                    = getNonce;
+exports.setLogger                   = setLogger;
+exports.verifyToken                 = verifyToken;
+exports.removeToken                 = removeToken;
+exports.authenticate                = authenticate;
+exports.EVT_COMP_READY              = EVT_COMP_READY;
+exports.calculateToken              = calculateToken;
+exports.getRemoteSiteName           = getRemoteSiteName;
+exports.updateTokenExpires          = updateTokenExpires;
+exports.isUnautheCallEnabled        = isUnautheCallEnabled;
+exports.authenticateRemoteSite      = authenticateRemoteSite;
+exports.isAutoUpdateTokenExpires    = isAutoUpdateTokenExpires;
+exports.getTokenExpirationTimeout   = getTokenExpirationTimeout;
+exports.configRemoteAuthentications = configRemoteAuthentications;
