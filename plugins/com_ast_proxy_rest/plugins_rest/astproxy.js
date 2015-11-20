@@ -131,6 +131,7 @@ var compConfigManager;
         * 1. [`astproxy/remote_opgroups`](#remote_opgroupsget)
         * 1. [`astproxy/parkings`](#parkingsget)
         * 1. [`astproxy/extensions`](#extensionsget)
+        * 1. [`astproxy/remote_extensions`](#remote_extensionsget)
         * 1. [`astproxy/sip_webrtc`](#sip_webrtcget)
         * 1. [`astproxy/queues_stats/:day`](#queues_statsget)
         * 1. [`astproxy/queues_qos/:day`](#queues_qosget)
@@ -365,6 +366,32 @@ var compConfigManager;
               "sipuseragent": "",
               "conversations": {}
           }
+     }
+        *
+        * ---
+        *
+        * ### <a id="remote_extensionsget">**`astproxy/remote_extensions`**</a>
+        *
+        * Gets all the extensions with all their status informations of all remote sites.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "nethesis": {
+             "602": {
+                  "ip": "",
+                  "cf": "",
+                  "dnd": false,
+                  "cfVm": "",
+                  "port": "",
+                  "name": "cristian",
+                  "exten": "602",
+                  "status": "offline",
+                  "chanType": "sip",
+                  "sipuseragent": "",
+                  "conversations": {}
+              }
+         }
      }
         *
         * ---
@@ -1015,6 +1042,7 @@ var compConfigManager;
                 *   @param {string} parkings                       Gets all the parkings with all their status informations
                 *   @param {string} extensions                     Gets all the extensions with all their status informations
                 *   @param {string} sip_webrtc                     Gets all the configuration about the sip WebRTC
+                *   @param {string} remote_extensions              Gets all the extensions with all their status informations of all remote sites
                 *   @param {string} queues_stats/:day              Gets extended statistics about queues
                 *   @param {string} queues_qos/:day                Gets QOS info about queues
                 *   @param {string} agents_qos/:day                Gets QOS info about agents
@@ -1034,6 +1062,7 @@ var compConfigManager;
                     'extensions',
                     'sip_webrtc',
                     'remote_opgroups',
+                    'remote_extensions',
                     'queues_stats/:day',
                     'queues_qos/:day',
                     'agents_qos/:day',
@@ -1134,13 +1163,15 @@ var compConfigManager;
                 try {
                     var username = req.headers.authorization_user;
                     var token    = req.headers.authorization_token;
+                    var isRemote = compComNethctiRemotes.isClientRemote(username, token);
+                    var opGroups, remoteSiteName;
 
                     // check if the request coming from a remote site
-                    if (compComNethctiRemotes.isClientRemote(username, token)) {
+                    if (isRemote) {
 
-                        var remoteSiteName = compComNethctiRemotes.getSiteName(username, token);
+                        remoteSiteName = compComNethctiRemotes.getSiteName(username, token);
                         // get all operator groups enabled for remote site
-                        var opGroups = compAuthorization.getAuthorizedRemoteOperatorGroups(remoteSiteName);
+                        opGroups = compAuthorization.getAuthorizedRemoteOperatorGroups(remoteSiteName);
                         logger.info(IDLOG, 'op groups enabled for remote site "' + remoteSiteName + '" is "' + Object.keys(opGroups) + '"');
                     }
                     else {
@@ -1152,7 +1183,7 @@ var compConfigManager;
                             return;
                         }
                         // get all authorized operator groups of the user
-                        var opGroups = compAuthorization.getAuthorizedOperatorGroups(username);
+                        opGroups = compAuthorization.getAuthorizedOperatorGroups(username);
                         logger.info(IDLOG, 'op groups enabled for user "' + username + '" is "' + Object.keys(opGroups) + '"');
                     }
 
@@ -1168,8 +1199,9 @@ var compConfigManager;
                             list[group] = allOpGroups[group];
                         }
                     }
-                    logger.info(IDLOG, 'sent authorized operator groups ' + Object.keys(list) +
-                                       ' to user "' + username + '" ' + res.connection.remoteAddress);
+                    logger.info(IDLOG, 'sent authorized operator groups "' + Object.keys(list) + '" to ' +
+                                       (isRemote ? ('remote site "' + remoteSiteName + '"') : '') + ' user "' +
+                                       username + '" ' + res.connection.remoteAddress);
                     res.send(200, list);
 
                 } catch (err) {
@@ -1208,7 +1240,6 @@ var compConfigManager;
                         if (compAuthorization.authorizeRemoteSiteUser(username) !== true) {
 
                             logger.warn(IDLOG, 'requesting all remote sites operator groups: authorization failed for user "' + username + '"');
-                            console.warn(IDLOG+ 'requesting all remote sites operator groups: authorization failed for user "' + username + '"');
                             compUtil.net.sendHttp403(IDLOG, res);
                             return;
                         }
@@ -1380,6 +1411,52 @@ var compConfigManager;
             },
 
             /**
+            * Gets all the extensions with all their status informations of all remote sites with the following REST API:
+            *
+            *     GET  remote_extensions
+            *
+            * @method remote_extensions
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            remote_extensions: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+                    var token    = req.headers.authorization_token;
+
+                    // check if the request coming from a remote site
+                    if (compComNethctiRemotes.isClientRemote(username, token)) {
+
+                        var remoteSiteName = compComNethctiRemotes.getSiteName(username, token);
+                        logger.warn(IDLOG, 'requesting all remote sites extensions by remote site "' + remoteSiteName + '": ' +
+                                           'authorization failed for user "' + username + '"');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+                    else {
+                        // check if the user has the operator panel authorization
+                        if (compAuthorization.authorizeRemoteSiteUser(username)   !== true ||
+                            compAuthorization.authorizeOpExtensionsUser(username) !== true) {
+
+                            logger.warn(IDLOG, 'requesting all remote sites extensions: authorization failed for user "' + username + '"');
+                            compUtil.net.sendHttp403(IDLOG, res);
+                            return;
+                        }
+
+                        // get all extensions of all remote sites
+                        var allRemoteOpExtensions = compComNethctiRemotes.getAllRemoteSitesOperatorExtensions();
+                        logger.info(IDLOG, 'sent all remote sites extensions "' + Object.keys(allRemoteOpExtensions) + '" ' +
+                                           'to user "' + username + '" ' + res.connection.remoteAddress);
+                        res.send(200, allRemoteOpExtensions);
+                    }
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
             * Gets all the extensions with all their status informations with the following REST API:
             *
             *     GET  extensions
@@ -1392,51 +1469,61 @@ var compConfigManager;
             extensions: function (req, res, next) {
                 try {
                     var username = req.headers.authorization_user;
+                    var token    = req.headers.authorization_token;
 
-                    // check if the user has the authorization to view the extensions
-                    if (compAuthorization.authorizeOpExtensionsUser(username) !== true) {
+                    // check if the request coming from a remote site
+                    if (compComNethctiRemotes.isClientRemote(username, token)) {
 
-                        logger.warn(IDLOG, 'requesting extensions: authorization failed for user "' + username + '"');
-                        compUtil.net.sendHttp403(IDLOG, res);
-                        return;
+                        var remoteSiteName = compComNethctiRemotes.getSiteName(username, token);
+                        var extensions     = compAstProxy.getJSONExtensions();
+                        logger.info(IDLOG, 'sent all extensions in JSON format to remote site "' + remoteSiteName +
+                                           '" user "' + username + '" ' + res.connection.remoteAddress);
+                        res.send(200, extensions);
                     }
+                    else {
+                        // check if the user has the authorization to view the extensions
+                        if (compAuthorization.authorizeOpExtensionsUser(username) !== true) {
 
-                    // get all extensions associated with the user
-                    var userExtensions = compUser.getAllEndpointsExtension(username);
+                            logger.warn(IDLOG, 'requesting extensions: authorization failed for user "' + username + '"');
+                            compUtil.net.sendHttp403(IDLOG, res);
+                            return;
+                        }
 
-                    var extensions;
+                        // get all extensions associated with the user
+                        var userExtensions = compUser.getAllEndpointsExtension(username);
+                        var extensions;
 
-                    // checks if the user has the privacy enabled. In case the user has the "privacy" and
-                    // "admin_queues" permission enabled, then the privacy is bypassed for all the calls
-                    // that pass through a queue, otherwise all the calls are obfuscated
-                    if (   compAuthorization.isPrivacyEnabled(username)           === true
-                        && compAuthorization.authorizeOpAdminQueuesUser(username) === false) {
+                        // checks if the user has the privacy enabled. In case the user has the "privacy" and
+                        // "admin_queues" permission enabled, then the privacy is bypassed for all the calls
+                        // that pass through a queue, otherwise all the calls are obfuscated
+                        if (   compAuthorization.isPrivacyEnabled(username)           === true
+                            && compAuthorization.authorizeOpAdminQueuesUser(username) === false) {
 
-                        // all the calls are obfuscated, without regard of passing through a queue
-                        extensions = compAstProxy.getJSONExtensions(privacyStrReplace, privacyStrReplace);
+                            // all the calls are obfuscated, without regard of passing through a queue
+                            extensions = compAstProxy.getJSONExtensions(privacyStrReplace, privacyStrReplace);
 
-                        // replace the extensions associated with the user to have clear number for them
-                        var e;
-                        for (e in userExtensions) { extensions[e] = compAstProxy.getJSONExtension(e); }
+                            // replace the extensions associated with the user to have clear number for them
+                            var e;
+                            for (e in userExtensions) { extensions[e] = compAstProxy.getJSONExtension(e); }
 
-                    } else if (   compAuthorization.isPrivacyEnabled(username)           === true
-                               && compAuthorization.authorizeOpAdminQueuesUser(username) === true) { // the privacy is bypassed
+                        } else if (   compAuthorization.isPrivacyEnabled(username)           === true
+                                   && compAuthorization.authorizeOpAdminQueuesUser(username) === true) { // the privacy is bypassed
 
-                        // only the calls that does not pass through a queue are obfuscated
-                        extensions = compAstProxy.getJSONExtensions(privacyStrReplace);
+                            // only the calls that does not pass through a queue are obfuscated
+                            extensions = compAstProxy.getJSONExtensions(privacyStrReplace);
 
-                        // replace the extensions associated with the user to have clear number for them
-                        var e;
-                        for (e in userExtensions) { extensions[e] = compAstProxy.getJSONExtension(e); }
+                            // replace the extensions associated with the user to have clear number for them
+                            var e;
+                            for (e in userExtensions) { extensions[e] = compAstProxy.getJSONExtension(e); }
 
-                    } else {
-                        // no call is obfuscated
-                        extensions = compAstProxy.getJSONExtensions();
+                        } else {
+                            // no call is obfuscated
+                            extensions = compAstProxy.getJSONExtensions();
+                        }
+
+                        logger.info(IDLOG, 'sent all extensions in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
+                        res.send(200, extensions);
                     }
-
-                    logger.info(IDLOG, 'sent all extensions in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
-                    res.send(200, extensions);
-
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -3777,6 +3864,7 @@ var compConfigManager;
         exports.setCompAstProxy          = setCompAstProxy;
         exports.queuemember_add          = astproxy.queuemember_add;
         exports.inout_dyn_queues         = astproxy.inout_dyn_queues;
+        exports.remote_extensions        = astproxy.remote_extensions;
         exports.queuemember_pause        = astproxy.queuemember_pause;
         exports.queuemember_remove       = astproxy.queuemember_remove;
         exports.queuemember_unpause      = astproxy.queuemember_unpause;

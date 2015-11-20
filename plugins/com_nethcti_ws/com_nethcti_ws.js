@@ -1411,8 +1411,6 @@ function loginHdlr(socket, obj) {
         } else { // authentication failed
             logger.warn(IDLOG, 'authentication failed for user "' + obj.accessKeyId + '" from ' + getWebsocketEndpoint(socket) +
                                ' with id ' + socket.id);
-            console.warn(IDLOG+ 'authentication failed for user "' + obj.accessKeyId + '" from ' + getWebsocketEndpoint(socket) +
-                               ' with id ' + socket.id);
             unauthorized(socket);
         }
 

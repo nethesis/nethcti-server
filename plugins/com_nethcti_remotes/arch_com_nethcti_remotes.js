@@ -38,6 +38,13 @@ module.exports = function (options, imports, register) {
             getSiteName: comNethctiRemotes.getSiteName,
 
             /**
+            * It's the _getAllRemoteSitesOperatorExtensions_ method provided by _com\_nethcti\_ws_ module.
+            *
+            * @method getAllRemoteSitesOperatorExtensions
+            */
+            getAllRemoteSitesOperatorExtensions: comNethctiRemotes.getAllRemoteSitesOperatorExtensions,
+
+            /**
             * It's the _getAllRemoteSitesOperatorGroups_ method provided by _com\_nethcti\_ws_ module.
             *
             * @method getAllRemoteSitesOperatorGroups

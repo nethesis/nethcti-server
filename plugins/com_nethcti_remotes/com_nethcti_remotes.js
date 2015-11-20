@@ -171,6 +171,16 @@ var emitter = new EventEmitter();
 var remoteSites;
 
 /**
+* Contains all operator extensions of all remote sites.
+*
+* @property allSitesOpExtensions
+* @type {object}
+* @default {}
+* @private
+*/
+var allSitesOpExtensions = {};
+
+/**
 * Contains all operator panel groups of all remote sites.
 *
 * @property allSitesOpGroups
@@ -1245,6 +1255,20 @@ function isClientRemote(username, token) {
 }
 
 /**
+* Returns the perator panel extensions of all remote sites.
+*
+* @method getAllRemoteSitesOperatorExtensions
+* @return {object} Operator panel extensions of all remote sites.
+*/
+function getAllRemoteSitesOperatorExtensions() {
+    try {
+        return allSitesOpExtensions;
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Returns the perator panel groups of all remote sites.
 *
 * @method getAllRemoteSitesOperatorGroups
@@ -1259,9 +1283,48 @@ function getAllRemoteSitesOperatorGroups() {
 }
 
 /**
-* Does the login through the rest api to obtain a nonce to
-* construct the authentication token.
-* ...................
+* Gets all the extensions from the specified remote site.
+*
+* @method restApiSiteOpExtensions
+* @param {string} site The remote site name
+* @private
+*/
+function restApiSiteOpExtensions(site) {
+    try {
+        // check argument
+        if (typeof site !== 'string') {
+            throw new Error('wrong parameter');
+        }
+
+        var url = REST_PROTO + '://' + remoteSites[site].hostname + '/webrest/astproxy/extensions';
+        restApi(site, url, 'GET', undefined, undefined, function (err, res, body) {
+            try {
+                var results = JSON.parse(body);
+                if (typeof results !== 'object') {
+                    logger.warn(IDLOG, 'received bad results getting op extensions of remote site "' + site + '": body =' + body);
+                    return;
+                }
+
+                if (Object.keys(results).length === 0) {
+                    logger.info(IDLOG, 'received 0 op extensions of remote site "' + site + '"');
+                }
+                else {
+                    logger.info(IDLOG, 'received ' + Object.keys(results).length +
+                                       ' op extensions of remote site "' + site + '": "' + Object.keys(results) + '"');
+                    allSitesOpExtensions[site] = results;
+                }
+            } catch (err) {
+                logger.error(IDLOG, 'received bad results getting op extensions of remote site "' + site + '": body =' + body);
+                logger.error(IDLOG, err.stack);
+            }
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Gets all the operator group panels from the specified remote site.
 *
 * @method restApiSiteOpGroups
 * @param {string} site The remote site name
@@ -1312,7 +1375,6 @@ function clientWssDisconnectHdlr(site) {
     try {
         if (typeof site !== 'string') { throw new Error('wrong parameters'); }
         logger.warn(IDLOG, 'client wss disconnected from site "' + site + '" "' + remoteSites[site].hostname + '"');
-        console.warn(IDLOG+ 'client wss disconnected from site "' + site + '" "' + remoteSites[site].hostname + '"');
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -1332,7 +1394,6 @@ function clientWss401Hdlr(data, site) {
             throw new Error('wrong parameters');
         }
         logger.warn(IDLOG, 'client wss login failed to site "' + site + '" "' + remoteSites[site].hostname + '"');
-        console.warn(IDLOG+ 'client wss login failed to site "' + site + '" "' + remoteSites[site].hostname + '"');
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -1361,8 +1422,7 @@ function clientWssLoggedInHdlr(data, clSocket, site) {
         logger.info(IDLOG, 'authenticated client websocket to site "' + site + '" added in memory');
 
         restApiSiteOpGroups(site);
-
-
+        restApiSiteOpExtensions(site);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -1643,8 +1703,6 @@ function loginHdlr(socket, obj) {
         } else { // authentication failed
             logger.warn(IDLOG, 'authentication failed for user "' + obj.accessKeyId + '" from ' + getWebsocketEndpoint(socket) +
                                ' with id ' + socket.id);
-            console.warn(IDLOG+'authentication failed for user "' + obj.accessKeyId + '" from ' + getWebsocketEndpoint(socket) +
-                               ' with id ' + socket.id);
             unauthorized(socket);
         }
 
@@ -1841,3 +1899,4 @@ exports.getNumConnectedClients          = getNumConnectedClients;
 exports.EVT_WS_CLIENT_LOGGEDIN          = EVT_WS_CLIENT_LOGGEDIN;
 exports.EVT_ALL_WS_CLIENT_DISCONNECTION = EVT_ALL_WS_CLIENT_DISCONNECTION;
 exports.getAllRemoteSitesOperatorGroups = getAllRemoteSitesOperatorGroups;
+exports.getAllRemoteSitesOperatorExtensions = getAllRemoteSitesOperatorExtensions;
