@@ -37,6 +37,15 @@ var logger = console;
 var compAuthorization;
 
 /**
+* The remote sites communication architect component.
+*
+* @property compComNethctiRemotes
+* @type object
+* @private
+*/
+var compComNethctiRemotes;
+
+/**
 * The architect component to be used for user functions.
 *
 * @property compUser
@@ -105,6 +114,21 @@ function setCompConfigManager(cm) {
 }
 
 /**
+* Set remote sites communication architect component.
+*
+* @method setCompComNethctiRemotes
+* @param {object} comp The remote sites communication architect component.
+*/
+function setCompComNethctiRemotes(comp) {
+    try {
+        compComNethctiRemotes = comp;
+        logger.info(IDLOG, 'set remote sites communication architect component');
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Set user architect component used for user functions.
 *
 * @method setCompUser
@@ -161,6 +185,7 @@ function setCompUtil(comp) {
         *
         * 1. [`configmanager/userconf`](#userconfget)
         * 1. [`configmanager/usernames`](#usernamesget)
+        * 1. [`configmanager/remote_usernames`](#remote_usernamesget)
         * 1. [`configmanager/chatserver`](#chatserverget)
         * 1. [`configmanager/userendpoints`](#userendpointsget)
         * 1. [`configmanager/queue_autologin`](#queue_autologinget)
@@ -231,6 +256,37 @@ function setCompUtil(comp) {
          "alessandro": {
               "name": "User 2",
               "surname": "Surname 2"
+         }
+     }
+        *
+        * ---
+        *
+        * ### <a id="remote_usernamesget">**`configmanager/remote_usernames`**</a>
+        *
+        * Returns the list of all the usernames of all remote sites, each of one with its name and surname.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "nethesis": {
+             "giovanni": {
+                  "name": "User 1",
+                  "surname": "Surname 1"
+             },
+             "alessandro": {
+                  "name": "User 2",
+                  "surname": "Surname 2"
+             }
+         },
+         "ranocchi": {
+             "user3": {
+                  "name": "User 3",
+                  "surname": "Surname 3"
+             },
+             "user4": {
+                  "name": "User 4",
+                  "surname": "Surname 4"
+             }
          }
      }
         *
@@ -580,6 +636,7 @@ function setCompUtil(comp) {
                 *   @param {string} userendpoints     To get all the endpoints of the user
                 *   @param {string} queue_autologin   To get the automatic queue login when user login into the cti
                 *   @param {string} queue_autologout  To get the automatic queue logout when user logout from cti
+                *   @param {string} remote_usernames  To get the list of all the username of all remote sites
                 *   @param {string} alluserendpoints  To get the endpoints of all users
                 *   @param {string} default_extension To get the default extension of the user
                 *   @param {string} auto_dndon_logout To get the automatic dnd ON status when user logout from cti
@@ -592,6 +649,7 @@ function setCompUtil(comp) {
                     'userendpoints',
                     'queue_autologin',
                     'queue_autologout',
+                    'remote_usernames',
                     'alluserendpoints',
                     'default_extension',
                     'auto_dndon_logout',
@@ -669,11 +727,59 @@ function setCompUtil(comp) {
             usernames: function (req, res, next) {
                 try {
                     var username         = req.headers.authorization_user;
+                    var token            = req.headers.authorization_token;
                     var usernameWithData = compUser.getUsernamesWithData();
 
-                    logger.info(IDLOG, 'send the list of all the usernames with data to the user "' + username + '"');
+                    // check if the request coming from a remote site
+                    if (compComNethctiRemotes.isClientRemote(username, token)) {
+
+                        var remoteSiteName = compComNethctiRemotes.getSiteName(username, token);
+                        logger.info(IDLOG, 'send the list of all the usernames with data to remote site "' + remoteSiteName +
+                                           '" user "' + username + '"');
+                    }
+                    else {
+                        logger.info(IDLOG, 'send the list of all the usernames with data to the user "' + username + '"');
+                    }
                     res.send(200, usernameWithData);
 
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * Gets the list of all the username of all remote sites each of one with
+            * its name and surname with the following REST API:
+            *
+            *     remote_usernames
+            *
+            * @method userslist
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            remote_usernames: function (req, res, next) {
+                try {
+                    var username         = req.headers.authorization_user;
+                    var token            = req.headers.authorization_token;
+                    var usernameWithData = compUser.getUsernamesWithData();
+
+                    // check if the request coming from a remote site
+                    if (compComNethctiRemotes.isClientRemote(username, token)) {
+
+                        var remoteSiteName = compComNethctiRemotes.getSiteName(username, token);
+                        logger.warn(IDLOG, 'requesting all remote usernames by remote site "' + remoteSiteName + '": ' +
+                                           'authorization failed for user "' + username + '"');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+                    else {
+                        var allRemoteUsernames = compComNethctiRemotes.getAllRemoteSitesUsernames();
+                        logger.info(IDLOG, 'sent all remote sites usernames "' + Object.keys(allRemoteUsernames) + '" ' +
+                                           'to user "' + username + '" ' + res.connection.remoteAddress);
+                        res.send(200, allRemoteUsernames);
+                    }
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -1064,6 +1170,7 @@ function setCompUtil(comp) {
         exports.notification         = configmanager.notification;
         exports.userendpoints        = configmanager.userendpoints;
         exports.queue_autologin      = configmanager.queue_autologin;
+        exports.remote_usernames     = configmanager.remote_usernames;
         exports.queue_autologout     = configmanager.queue_autologout;
         exports.alluserendpoints     = configmanager.alluserendpoints;
         exports.default_extension    = configmanager.default_extension;
@@ -1071,6 +1178,7 @@ function setCompUtil(comp) {
         exports.auto_dndoff_login    = configmanager.auto_dndoff_login;
         exports.setCompConfigManager = setCompConfigManager;
         exports.setCompAuthorization = setCompAuthorization;
+        exports.setCompComNethctiRemotes = setCompComNethctiRemotes;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);

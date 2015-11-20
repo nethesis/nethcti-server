@@ -8,7 +8,8 @@
             "util",
             "logger",
             "authorization",
-            "configManager"
+            "configManager",
+            "comNethctiRemotes"
         ],
         "provides": []
     }

@@ -181,6 +181,16 @@ var remoteSites;
 var allSitesOpExtensions = {};
 
 /**
+* Contains all usernames of all remote sites.
+*
+* @property allSitesUsernames
+* @type {object}
+* @default {}
+* @private
+*/
+var allSitesUsernames = {};
+
+/**
 * Contains all operator panel groups of all remote sites.
 *
 * @property allSitesOpGroups
@@ -1084,17 +1094,15 @@ function wssLogin(clientWss, user, hostname) {
 }
 
 /**
-* Does a generic rest api the login through the rest api to obtain a nonce to
-* construct the authentication token.
+* Does a generic rest api call.
 *
 * @method restApi
-* ......................
-* @param {string}   site     The remote site name
-* @param {string}   url      The url to be invoked
-* @param {string}   method   The request method (GET or POST)
-* @param {object}   headers  The headers of the request
-* @param {object}   data     The data to be passed
-* @param {function} cb       The callback function
+* @param {string}   site    The remote site name
+* @param {string}   url     The url to be called
+* @param {string}   method  The request method (GET or POST)
+* @param {object}   headers The headers to be added to the request
+* @param {object}   data    The data to be passed
+* @param {function} cb      The callback function
 * @private
 */
 function restApi(site, url, method, headers, data, cb) {
@@ -1269,7 +1277,21 @@ function getAllRemoteSitesOperatorExtensions() {
 }
 
 /**
-* Returns the perator panel groups of all remote sites.
+* Returns the usernames of all remote sites.
+*
+* @method getAllRemoteSitesUsernames
+* @return {object} Usernames of all remote sites.
+*/
+function getAllRemoteSitesUsernames() {
+    try {
+        return allSitesUsernames;
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Returns the operator panel groups of all remote sites.
 *
 * @method getAllRemoteSitesOperatorGroups
 * @return {object} Operator panel groups of all remote sites.
@@ -1277,6 +1299,47 @@ function getAllRemoteSitesOperatorExtensions() {
 function getAllRemoteSitesOperatorGroups() {
     try {
         return allSitesOpGroups;
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Gets all the usernames from the specified remote site.
+*
+* @method restApiSiteUsernames
+* @param {string} site The remote site name
+* @private
+*/
+function restApiSiteUsernames(site) {
+    try {
+        // check argument
+        if (typeof site !== 'string') {
+            throw new Error('wrong parameter');
+        }
+
+        var url = REST_PROTO + '://' + remoteSites[site].hostname + '/webrest/configmanager/usernames'
+        restApi(site, url, 'GET', undefined, undefined, function (err, res, body) {
+            try {
+                var results = JSON.parse(body);
+                if (typeof results !== 'object') {
+                    logger.warn(IDLOG, 'received bad results getting usernames of remote site "' + site + '": body =' + body);
+                    return;
+                }
+
+                if (Object.keys(results).length === 0) {
+                    logger.info(IDLOG, 'received 0 usernames of remote site "' + site + '"');
+                }
+                else {
+                    logger.info(IDLOG, 'received ' + Object.keys(results).length +
+                                       ' usernames of remote site "' + site + '": "' + Object.keys(results) + '"');
+                    allSitesUsernames[site] = results;
+                }
+            } catch (err) {
+                logger.error(IDLOG, 'received bad results getting usernames of remote site "' + site + '": body =' + body);
+                logger.error(IDLOG, err.stack);
+            }
+        });
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -1423,6 +1486,7 @@ function clientWssLoggedInHdlr(data, clSocket, site) {
 
         restApiSiteOpGroups(site);
         restApiSiteOpExtensions(site);
+        restApiSiteUsernames(site);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -1897,6 +1961,7 @@ exports.setCompComNethctiWs             = setCompComNethctiWs;
 exports.setCompAuthorization            = setCompAuthorization;
 exports.getNumConnectedClients          = getNumConnectedClients;
 exports.EVT_WS_CLIENT_LOGGEDIN          = EVT_WS_CLIENT_LOGGEDIN;
+exports.getAllRemoteSitesUsernames      = getAllRemoteSitesUsernames;
 exports.EVT_ALL_WS_CLIENT_DISCONNECTION = EVT_ALL_WS_CLIENT_DISCONNECTION;
 exports.getAllRemoteSitesOperatorGroups = getAllRemoteSitesOperatorGroups;
 exports.getAllRemoteSitesOperatorExtensions = getAllRemoteSitesOperatorExtensions;
