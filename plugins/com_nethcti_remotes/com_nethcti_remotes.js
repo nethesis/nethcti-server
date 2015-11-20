@@ -181,6 +181,16 @@ var remoteSites;
 var allSitesOpExtensions = {};
 
 /**
+* Contains all user endpoints of all remote sites.
+*
+* @property allSitesUserEndpoints
+* @type {object}
+* @default {}
+* @private
+*/
+var allSitesUserEndpoints = {};
+
+/**
 * Contains all usernames of all remote sites.
 *
 * @property allSitesUsernames
@@ -1277,6 +1287,20 @@ function getAllRemoteSitesOperatorExtensions() {
 }
 
 /**
+* Returns the user endpoints of all remote sites.
+*
+* @method getAllRemoteSitesUserEndpoints
+* @return {object} User endpoints of all remote sites.
+*/
+function getAllRemoteSitesUserEndpoints() {
+    try {
+        return allSitesUserEndpoints;
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Returns the usernames of all remote sites.
 *
 * @method getAllRemoteSitesUsernames
@@ -1299,6 +1323,47 @@ function getAllRemoteSitesUsernames() {
 function getAllRemoteSitesOperatorGroups() {
     try {
         return allSitesOpGroups;
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Gets all the user endpoints from the specified remote site.
+*
+* @method restApiSiteUserEndpoint
+* @param {string} site The remote site name
+* @private
+*/
+function restApiSiteUserEndpoint(site) {
+    try {
+        // check argument
+        if (typeof site !== 'string') {
+            throw new Error('wrong parameter');
+        }
+
+        var url = REST_PROTO + '://' + remoteSites[site].hostname + '/webrest/configmanager/alluserendpoints'
+        restApi(site, url, 'GET', undefined, undefined, function (err, res, body) {
+            try {
+                var results = JSON.parse(body);
+                if (typeof results !== 'object') {
+                    logger.warn(IDLOG, 'received bad results getting user endpoints of remote site "' + site + '": body =' + body);
+                    return;
+                }
+
+                if (Object.keys(results).length === 0) {
+                    logger.info(IDLOG, 'received 0 user endpoints of remote site "' + site + '"');
+                }
+                else {
+                    logger.info(IDLOG, 'received ' + Object.keys(results).length +
+                                       ' user endpoints of remote site "' + site + '": "' + Object.keys(results) + '"');
+                    allSitesUserEndpoints[site] = results;
+                }
+            } catch (err) {
+                logger.error(IDLOG, 'received bad results getting user endpoints of remote site "' + site + '": body =' + body);
+                logger.error(IDLOG, err.stack);
+            }
+        });
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -1487,6 +1552,7 @@ function clientWssLoggedInHdlr(data, clSocket, site) {
         restApiSiteOpGroups(site);
         restApiSiteOpExtensions(site);
         restApiSiteUsernames(site);
+        restApiSiteUserEndpoint(site);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -1962,6 +2028,7 @@ exports.setCompAuthorization            = setCompAuthorization;
 exports.getNumConnectedClients          = getNumConnectedClients;
 exports.EVT_WS_CLIENT_LOGGEDIN          = EVT_WS_CLIENT_LOGGEDIN;
 exports.getAllRemoteSitesUsernames      = getAllRemoteSitesUsernames;
+exports.getAllRemoteSitesUserEndpoints  = getAllRemoteSitesUserEndpoints;
 exports.EVT_ALL_WS_CLIENT_DISCONNECTION = EVT_ALL_WS_CLIENT_DISCONNECTION;
 exports.getAllRemoteSitesOperatorGroups = getAllRemoteSitesOperatorGroups;
 exports.getAllRemoteSitesOperatorExtensions = getAllRemoteSitesOperatorExtensions;

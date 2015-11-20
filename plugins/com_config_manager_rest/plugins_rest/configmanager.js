@@ -191,6 +191,7 @@ function setCompUtil(comp) {
         * 1. [`configmanager/queue_autologin`](#queue_autologinget)
         * 1. [`configmanager/queue_autologout`](#queue_autologoutget)
         * 1. [`configmanager/alluserendpoints`](#alluserendpointsget)
+        * 1. [`configmanager/remote_alluserendpoints`](#remote_alluserendpointsget)
         * 1. [`configmanager/auto_dndon_logout`](#auto_dndon_logoutget)
         * 1. [`configmanager/auto_dndoff_login`](#auto_dndoff_loginget)
         * 1. [`configmanager/default_extension`](#default_extensionget)
@@ -350,6 +351,63 @@ function setCompUtil(comp) {
               "614": {
                   "id": "614"
               }
+         }
+     }
+        *
+        * ---
+        *
+        * ### <a id="remote_alluserendpointsget">**`configmanager/remote_alluserendpoints`**</a>
+        *
+        * Returns the endpoints of all users of all remote sites.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "nethesis": {
+             "alessandro": {
+                  "email": {
+                      "ale@nethesis.it": {
+                          "id": "ale@nethesis.it"
+                      }
+                  },
+                  "jabber": {
+                      "alessandro@mycompany.local": {
+                          "id": "alessandro@mycompany.local"
+                      }
+                  },
+                  ...
+             }
+             "andrea": {
+                  "email": {
+                      "andrea@mycompany.local": {
+                          "id": "andrea@mycompany.local"
+                      }
+                  },
+                  ...
+             }
+         },
+         "ranocchi": {
+             "user3": {
+                  "email": {
+                      "ale@nethesis.it": {
+                          "id": "ale@nethesis.it"
+                      }
+                  },
+                  "jabber": {
+                      "alessandro@mycompany.local": {
+                          "id": "alessandro@mycompany.local"
+                      }
+                  },
+                  ...
+             }
+             "user4": {
+                  "email": {
+                      "andrea@mycompany.local": {
+                          "id": "andrea@mycompany.local"
+                      }
+                  },
+                  ...
+             }
          }
      }
         *
@@ -630,17 +688,18 @@ function setCompUtil(comp) {
                 * @property get
                 * @type {array}
                 *
-                *   @param {string} userconf          To get all user configurations
-                *   @param {string} usernames         To get the list of all the username
-                *   @param {string} chatserver        To get the server chat parameters
-                *   @param {string} userendpoints     To get all the endpoints of the user
-                *   @param {string} queue_autologin   To get the automatic queue login when user login into the cti
-                *   @param {string} queue_autologout  To get the automatic queue logout when user logout from cti
-                *   @param {string} remote_usernames  To get the list of all the username of all remote sites
-                *   @param {string} alluserendpoints  To get the endpoints of all users
-                *   @param {string} default_extension To get the default extension of the user
-                *   @param {string} auto_dndon_logout To get the automatic dnd ON status when user logout from cti
-                *   @param {string} auto_dndoff_login To get the automatic dnd OFF status when user login to cti
+                *   @param {string} userconf                To get all user configurations
+                *   @param {string} usernames               To get the list of all the username
+                *   @param {string} chatserver              To get the server chat parameters
+                *   @param {string} userendpoints           To get all the endpoints of the user
+                *   @param {string} queue_autologin         To get the automatic queue login when user login into the cti
+                *   @param {string} queue_autologout        To get the automatic queue logout when user logout from cti
+                *   @param {string} remote_usernames        To get the list of all the username of all remote sites
+                *   @param {string} alluserendpoints        To get the endpoints of all users
+                *   @param {string} remote_alluserendpoints To get the endpoints of all users of all remote sites
+                *   @param {string} default_extension       To get the default extension of the user
+                *   @param {string} auto_dndon_logout       To get the automatic dnd ON status when user logout from cti
+                *   @param {string} auto_dndoff_login       To get the automatic dnd OFF status when user login to cti
                 */
                 'get': [
                     'userconf',
@@ -653,7 +712,8 @@ function setCompUtil(comp) {
                     'alluserendpoints',
                     'default_extension',
                     'auto_dndon_logout',
-                    'auto_dndoff_login'
+                    'auto_dndoff_login',
+                    'remote_alluserendpoints'
                 ],
 
                 /**
@@ -831,18 +891,63 @@ function setCompUtil(comp) {
             alluserendpoints: function (req, res, next) {
                 try {
                     var username = req.headers.authorization_user;
+                    var token    = req.headers.authorization_token;
                     var results  = compConfigManager.getAllUserEndpointsJSON();
 
                     if (typeof results !== 'object') {
                         var strerr = 'wrong endpoints result of all users';
                         logger.error(IDLOG, strerr);
                         compUtil.net.sendHttp500(IDLOG, res, strerr);
-
-                    } else {
-                        logger.info(IDLOG, 'send endpoints of all users to ' + username);
-                        res.send(200, results);
+                        return;
                     }
 
+                    // check if the request coming from a remote site
+                    if (compComNethctiRemotes.isClientRemote(username, token)) {
+
+                        var remoteSiteName = compComNethctiRemotes.getSiteName(username, token);
+                        logger.info(IDLOG, 'send endpoints of all users to remote site "' + remoteSiteName + '" user "' + username + '"');
+                    }
+                    else {
+                        logger.info(IDLOG, 'send endpoints of all users to ' + username);
+                    }
+                    res.send(200, results);
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * Returns the endpoints of all users of all remote sites by the following REST API:
+            *
+            *     remote_alluserendpoints
+            *
+            * @method remote_alluserendpoints
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            remote_alluserendpoints: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+                    var token    = req.headers.authorization_token;
+
+                    // check if the request coming from a remote site
+                    if (compComNethctiRemotes.isClientRemote(username, token)) {
+
+                        var remoteSiteName = compComNethctiRemotes.getSiteName(username, token);
+                        logger.warn(IDLOG, 'requesting all remote user endpoints by remote site "' + remoteSiteName + '": ' +
+                                           'authorization failed for user "' + username + '"');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+                    else {
+                        var allRemoteUserEndpoints = compComNethctiRemotes.getAllRemoteSitesUserEndpoints();
+                        logger.info(IDLOG, 'sent all remote sites user endpoints "' + Object.keys(allRemoteUserEndpoints) + '" ' +
+                                           'to user "' + username + '" ' + res.connection.remoteAddress);
+                        res.send(200, allRemoteUserEndpoints);
+                    }
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -1178,6 +1283,7 @@ function setCompUtil(comp) {
         exports.auto_dndoff_login    = configmanager.auto_dndoff_login;
         exports.setCompConfigManager = setCompConfigManager;
         exports.setCompAuthorization = setCompAuthorization;
+        exports.remote_alluserendpoints  = configmanager.remote_alluserendpoints;
         exports.setCompComNethctiRemotes = setCompComNethctiRemotes;
 
     } catch (err) {

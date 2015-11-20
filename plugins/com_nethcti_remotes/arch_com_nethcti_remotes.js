@@ -45,6 +45,13 @@ module.exports = function (options, imports, register) {
             getAllRemoteSitesOperatorExtensions: comNethctiRemotes.getAllRemoteSitesOperatorExtensions,
 
             /**
+            * It's the _getAllRemoteSitesUserEndpoints_ method provided by _com\_nethcti\_ws_ module.
+            *
+            * @method getAllRemoteSitesUserEndpoints
+            */
+            getAllRemoteSitesUserEndpoints: comNethctiRemotes.getAllRemoteSitesUserEndpoints,
+
+            /**
             * It's the _getAllRemoteSitesUsernames_ method provided by _com\_nethcti\_ws_ module.
             *
             * @method getAllRemoteSitesUsernames
