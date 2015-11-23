@@ -41,6 +41,13 @@ module.exports = function (options, imports, register) {
             getRemoteSiteName: authentication.getRemoteSiteName,
 
             /**
+            * It's the _isRemoteSiteAlreadyLoggedIn_ method provided by _authentication_ module.
+            *
+            * @method isRemoteSiteAlreadyLoggedIn
+            */
+            isRemoteSiteAlreadyLoggedIn: authentication.isRemoteSiteAlreadyLoggedIn,
+
+            /**
             * It's the _authenticate_ method provided by _authentication_ module.
             *
             * @method authenticate

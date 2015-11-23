@@ -635,6 +635,44 @@ function newToken(accessKeyId, password, nonce, isRemoteSite) {
 }
 
 /**
+* Checks if the remote username has already been logged in.
+*
+* @method isRemoteSiteAlreadyLoggedIn
+* @param  {string}  accessKeyId  The access key identifier, e.g. the username
+* @return {boolean} True if the remote username has been already logged in
+* @private
+*/
+function isRemoteSiteAlreadyLoggedIn(accessKeyId) {
+    try {
+        // check parameter
+        if (typeof accessKeyId  !== 'string') {
+            throw new Error('wrong parameter');
+        }
+
+        var tk, user, tokens;
+        for (user in grants) { // cycle all users
+            if (user === accessKeyId) {
+                tokens = grants[user]; // all tokens of the user
+
+                for (tk in tokens) { // cycle in all tokens
+                    if (tokens[tk].remoteSite === true) {
+                        // an authentication token for the specified user has been found,
+                        // so the remote site has already been logged in
+                        return true;
+                    }
+                }
+            }
+        }
+        // no token has been found, so the remote site has not been logged in
+        return false;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return false;
+    }
+}
+
+/**
 * Creates an SHA1 nonce to be used in the authentication.
 *
 * @method getNonce
@@ -1121,3 +1159,4 @@ exports.authenticateRemoteSite      = authenticateRemoteSite;
 exports.isAutoUpdateTokenExpires    = isAutoUpdateTokenExpires;
 exports.getTokenExpirationTimeout   = getTokenExpirationTimeout;
 exports.configRemoteAuthentications = configRemoteAuthentications;
+exports.isRemoteSiteAlreadyLoggedIn = isRemoteSiteAlreadyLoggedIn;

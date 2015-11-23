@@ -307,6 +307,14 @@ function setCompUser(comp) {
                         return;
                     }
 
+                    // check if the remote site has already been logged in
+                    if (compAuthe.isRemoteSiteAlreadyLoggedIn(username) === true) {
+                        var str = 'remote site authentication not allowed: user "' + username + '" has been already logged in';
+                        logger.warn(IDLOG, str);
+                        compUtil.net.sendHttp401(IDLOG, res, str);
+                        return;
+                    }
+
                     // authentication of a remote site
                     compAuthe.authenticateRemoteSite(username, password, remoteIp, function (err) {
                         try {
