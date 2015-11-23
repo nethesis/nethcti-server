@@ -650,6 +650,43 @@ function endpointPresenceChangedListener(username, endpointType, endpoint) {
 }
 
 /**
+* It send an event to all the local websocket clients. It accepts also an optional
+* function to be verified before perform the sending.
+*
+* @method sendEventToAllClients
+* @param {string}   evname The event name
+* @param {object}   data   The event data object
+* @param {function} fn     The function to be passed to perform the sending. It will be
+*                          called passing the "username" associated with websocket
+*/
+function sendEventToAllClients(evname, data, fn) {
+    try {
+        if (typeof evname !== 'string' ||
+            typeof data   !== 'object' ||
+            typeof fn     !== 'function') {
+
+            throw new Error('wrong parameters');
+        }
+        logger.info(IDLOG, 'emit event "' + evname + '" to all local clients with permission enabled');
+
+        // cycle in each websocket to send the event
+        var sockid, username;
+        for (sockid in wsid) {
+
+            username = wsid[sockid].username;
+
+            // check the authorization
+            if (fn(username) === true) {
+                if (wsServer.sockets.sockets[sockid])  { wsServer.sockets.sockets[sockid].emit(evname, data); }
+                if (wssServer.sockets.sockets[sockid]) { wssServer.sockets.sockets[sockid].emit(evname, data); }
+            }
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Handler for the _extenChanged_ event emitted by _ast\_proxy_
 * component. Something has changed in the extension, so notifies
 * all interested clients.
@@ -1601,6 +1638,7 @@ exports.configPrivacy                   = configPrivacy;
 exports.setCompPostit                   = setCompPostit;
 exports.setCompVoicemail                = setCompVoicemail;
 exports.setCompAuthorization            = setCompAuthorization;
+exports.sendEventToAllClients           = sendEventToAllClients;
 exports.getNumConnectedClients          = getNumConnectedClients;
 exports.EVT_WS_CLIENT_LOGGEDIN          = EVT_WS_CLIENT_LOGGEDIN;
 exports.EVT_WSS_CLIENT_CONNECTED        = EVT_WSS_CLIENT_CONNECTED;

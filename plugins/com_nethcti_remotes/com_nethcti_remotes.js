@@ -1,59 +1,20 @@
 /**
-* Communicates in real time mode with the clients using websocket. It listen
-* It listens on http and https protocols.
-* .........................................
-* .........................................
-* .........................................
-* .........................................
-* .........................................
+* Communicates in real time mode with remote sites using secure websocket.
 *
 * @module com_nethcti_remotes
 * @main com_nethcti_remotes
 */
 
 /**
-* Core module that communicates with the clients using websocket.
+* Core module that communicates with remote sites using websocket.
 *
 * @class com_nethcti_remotes
 * @static
 */
-var fs           = require('fs');
-var https        = require('https');
-var crypto       = require('crypto');
-var request      = require('request');
-var ioClient     = require('socket.io-client');
-var httpProxy    = require('http-proxy');
-var EventEmitter = require('events').EventEmitter;
-
-/**
-* Fired when a websocket client connection has been closed.
-*
-* @event wsClientDisonnection
-* @param {string} username The name of the user that has closed the connection
-*/
-/**
-* The name of the client websocket disconnection event.
-*
-* @property EVT_ALL_WS_CLIENT_DISCONNECTION
-* @type string
-* @default "allWsClientDisonnection"
-*/
-var EVT_ALL_WS_CLIENT_DISCONNECTION = 'allWsClientDisonnection';
-
-/**
-* Fired when a client has been logged in by a websocket connection.
-*
-* @event wsClientLoggedIn
-* @param {string} username The name of the user that has been logged in.
-*/
-/**
-* The name of the client logged in event.
-*
-* @property EVT_WS_CLIENT_LOGGEDIN
-* @type string
-* @default "wsClientLoggedIn"
-*/
-var EVT_WS_CLIENT_LOGGEDIN = 'wsClientLoggedIn';
+var fs       = require('fs');
+var https    = require('https');
+var request  = require('request');
+var ioClient = require('socket.io-client');
 
 /**
 * The module identifier used by the logger.
@@ -66,32 +27,6 @@ var EVT_WS_CLIENT_LOGGEDIN = 'wsClientLoggedIn';
 * @default [com_nethcti_remotes]
 */
 var IDLOG = '[com_nethcti_remotes]';
-
-/**
-* The log level of the websocket library. Log only the errors by default.
-*
-* @property WS_LOG_LEVEL
-* @type {number}
-* @private
-* @final
-* @readOnly
-* @default 0
-*/
-var WS_LOG_LEVEL = 0;
-
-/**
-* The user agent used to recognize cti client application. The user agent is set
-* to the socket properties when client login (loginHdlr) and checked when disconnect
-* (disconnHdlr) to set the offline presence of the client user.
-*
-* @property USER_AGENT
-* @type {string}
-* @private
-* @final
-* @readOnly
-* @default "nethcti"
-*/
-var USER_AGENT = 'nethcti';
 
 /**
 * Maximum delay waited between two reconnection attempts to a remote site.
@@ -128,39 +63,6 @@ var CONNECTION_TIMEOUT = 10000;
 var REST_PROTO = 'https';
 
 /**
-* The websocket rooms used to update clients with asterisk events.
-*
-* @property WS_ROOM
-* @type {object}
-* @private
-* @final
-* @readOnly
-* @default {
-    AST_EVT_CLEAR:   "ast_evt_clear",
-    AST_EVT_PRIVACY: "ast_evt_privacy"
-}
-*/
-var WS_ROOM = {
-    QUEUES_AST_EVT_CLEAR:       'queues_ast_evt_clear',
-    QUEUES_AST_EVT_PRIVACY:     'queues_ast_evt_privacy',
-    TRUNKS_AST_EVT_CLEAR:       'trunks_ast_evt_clear',
-    TRUNKS_AST_EVT_PRIVACY:     'trunks_ast_evt_privacy',
-    PARKINGS_AST_EVT_CLEAR:     'parkings_ast_evt_clear',
-    PARKINGS_AST_EVT_PRIVACY:   'parkings_ast_evt_privacy',
-    EXTENSIONS_AST_EVT_CLEAR:   'extensions_ast_evt_clear',
-    EXTENSIONS_AST_EVT_PRIVACY: 'extensions_ast_evt_privacy'
-};
-
-/**
-* The event emitter.
-*
-* @property emitter
-* @type object
-* @private
-*/
-var emitter = new EventEmitter();
-
-/**
 * Contains remote sites to be connected. It is populated by
 * JSON configuration file.
 *
@@ -169,6 +71,15 @@ var emitter = new EventEmitter();
 * @private
 */
 var remoteSites;
+
+/**
+* The asterisk proxy.
+*
+* @property astProxy
+* @type object
+* @private
+*/
+var astProxy;
 
 /**
 * Contains all operator extensions of all remote sites.
@@ -221,18 +132,6 @@ var allSitesOpGroups = {};
 * @private
 */
 var wssClients = {};
-
-/**
-* The string used to hide phone numbers in privacy mode.
-*
-* @property privacyStrReplace
-* @type {string}
-* @private
-* @final
-* @readOnly
-* @default "xxx"
-*/
-var privacyStrReplace = 'xxx';
 
 /**
 * The logger. It must have at least three methods: _info, warn and error._
@@ -299,10 +198,16 @@ var compVoicemail;
 var compPostit;
 
 /**
-* Contains all websocket identifiers of authenticated clients (http and https).
-* The key is the websocket identifier and the value is an object
-* containing the username and the token of the user. It's used for
-* fast authentication for each request.
+* Contains all the secure websocket of authenticated remote sites.
+* The keys are the websocket identifiers and the values are objects
+* containing:
+*
+* * username
+* * token
+* * remote site name
+* * socket object
+*
+* It is used for fast authentication for each request.
 *
 * @property wsid
 * @type object
@@ -465,18 +370,11 @@ function setAstProxy(ap) {
 function setAstProxyListeners() {
     try {
         // check astProxy object
-        if (!astProxy
-            || typeof astProxy.on !== 'function') {
-
+        if (!astProxy || typeof astProxy.on !== 'function') {
             throw new Error('wrong astProxy object');
         }
-
-        astProxy.on(astProxy.EVT_EXTEN_CHANGED,        extenChanged);       // an extension has changed
-        astProxy.on(astProxy.EVT_EXTEN_DIALING,        extenDialing);       // an extension ringing
-        astProxy.on(astProxy.EVT_TRUNK_CHANGED,        trunkChanged);       // a trunk has changed
-        astProxy.on(astProxy.EVT_QUEUE_CHANGED,        queueChanged);       // a queue has changed
-        astProxy.on(astProxy.EVT_PARKING_CHANGED,      parkingChanged);     // a parking has changed
-        astProxy.on(astProxy.EVT_QUEUE_MEMBER_CHANGED, queueMemberChanged); // a queue member has changed
+        astProxy.on(astProxy.EVT_EXTEN_CHANGED, extenChanged);
+        astProxy.on(astProxy.EVT_EXTEN_DIALING, extenDialing);
 
     } catch (err) {
        logger.error(IDLOG, err.stack);
@@ -698,7 +596,7 @@ function endpointPresenceChangedListener(username, endpointType, endpoint) {
 /**
 * Handler for the _extenChanged_ event emitted by _ast\_proxy_
 * component. Something has changed in the extension, so notifies
-* all interested clients.
+* all remote sites.
 *
 * @method extenChanged
 * @param {object} exten The extension object
@@ -706,91 +604,20 @@ function endpointPresenceChangedListener(username, endpointType, endpoint) {
 */
 function extenChanged(exten) {
     try {
-        logger.info(IDLOG, 'received event extenChanged for extension ' + exten.getExten());
-        logger.info(IDLOG, 'emit event extenUpdate for extension ' + exten.getExten() + ' to websockets');
+        logger.info(IDLOG, 'received local event extenChanged for extension ' + exten.getExten());
 
-        // cycle in each websocket to send the event about an extension update. If the websocket user
-        // is associated with the extension or the user has the privacy permission disabled, then it
-        // sends the update with clear number, otherwise the number is obfuscated to respect the privacy authorization
+        // cycle in each remote site websocket to send the event about an extension update.
+        // If the data sent has some conversations, they have phone numbers in clear text.
         var sockid, username;
         for (sockid in wsid) {
 
-            username = wsid[sockid].username;
+            if (wsid[sockid] && wsid[sockid].socket && wsid[sockid].socket.emit) {
 
-            // checks if the user has the privacy enabled. In case the user has the "privacy" and
-            // "admin_queues" permission enabled, then the privacy is bypassed for all the calls
-            // that pass through a queue, otherwise all the calls are obfuscated
-            if (   compAuthorization.isPrivacyEnabled(username)           === true
-                && compAuthorization.authorizeOpAdminQueuesUser(username) === false) {
-
-                if (wsServer.sockets.sockets[sockid])  { wsServer.sockets.sockets[sockid].emit('extenUpdate', exten.toJSON(privacyStrReplace, privacyStrReplace));  }
-                if (wssServer.sockets.sockets[sockid]) { wssServer.sockets.sockets[sockid].emit('extenUpdate', exten.toJSON(privacyStrReplace, privacyStrReplace)); }
-
-            } else if (   compAuthorization.isPrivacyEnabled(username)           === true
-                       && compAuthorization.authorizeOpAdminQueuesUser(username) === true) {
-
-                if (wsServer.sockets.sockets[sockid])  { wsServer.sockets.sockets[sockid].emit('extenUpdate', exten.toJSON(privacyStrReplace));  }
-                if (wssServer.sockets.sockets[sockid]) { wssServer.sockets.sockets[sockid].emit('extenUpdate', exten.toJSON(privacyStrReplace)); }
-
-            } else {
-                if (wsServer.sockets.sockets[sockid])  { wsServer.sockets.sockets[sockid].emit('extenUpdate', exten.toJSON()); }
-                if (wssServer.sockets.sockets[sockid]) { wssServer.sockets.sockets[sockid].emit('extenUpdate', exten.toJSON()); }
+                wsid[sockid].socket.emit('remoteExtenUpdate', exten.toJSON());
+                logger.info(IDLOG, 'emit event "remoteExtenUpdate" of exten "' + exten.getExten() + '" to remote site "' + wsid[sockid].siteName + '"');
             }
+
         }
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Handler for the _queueMemberChanged_ event emitted by _ast\_proxy_
-* component. Something has changed in the queue member, so notifies
-* all interested clients.
-*
-* @method queueMemberChanged
-* @param {object} member The queue member object
-* @private
-*/
-function queueMemberChanged(member) {
-    try {
-        logger.info(IDLOG, 'received event queueMemberChanged for member ' + member.getMember() + ' of queue ' + member.getQueue());
-        logger.info(IDLOG, 'emit event queueMemberUpdate for member ' + member.getMember() + ' of queue ' + member.getQueue() + ' to websockets');
-
-        // emits the event with clear numbers to all users with privacy disabled
-        wsServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_CLEAR).emit('queueMemberUpdate', member.toJSON());
-        wssServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_CLEAR).emit('queueMemberUpdate', member.toJSON());
-
-        // emits the event with hide numbers to all users with privacy enabled
-        wsServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY).emit('queueMemberUpdate', member.toJSON(privacyStrReplace));
-        wssServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY).emit('queueMemberUpdate', member.toJSON(privacyStrReplace));
-
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Handler for the _trunkChanged_ event emitted by _ast\_proxy_
-* component. Something has changed in the trunk, so notifies
-* all interested clients.
-*
-* @method trunkChanged
-* @param {object} trunk The trunk object
-* @private
-*/
-function trunkChanged(trunk) {
-    try {
-        logger.info(IDLOG, 'received event trunkChanged for trunk ' + trunk.getExten());
-        logger.info(IDLOG, 'emit event trunkUpdate for trunk ' + trunk.getExten() + ' to websockets');
-
-        // emits the event with clear numbers to all users with privacy disabled
-        wsServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_CLEAR).emit('trunkUpdate', trunk.toJSON());
-        wssServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_CLEAR).emit('trunkUpdate', trunk.toJSON());
-
-        // emits the event with hide numbers to all users with privacy enabled
-        wsServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY).emit('trunkUpdate', trunk.toJSON(privacyStrReplace));
-        wssServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY).emit('trunkUpdate', trunk.toJSON(privacyStrReplace));
-
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -958,63 +785,8 @@ function extenDialing(data) {
 }
 
 /**
-* Handler for the _queueChanged_ event emitted by _ast\_proxy_
-* component. Something has changed in the queue, so notifies
-* all interested clients.
-*
-* @method queueChanged
-* @param {object} queue The queue object
-* @private
-*/
-function queueChanged(queue) {
-    try {
-        logger.info(IDLOG, 'received event queueChanged for queue ' + queue.getQueue());
-        logger.info(IDLOG, 'emit event queueUpdate for queue ' + queue.getQueue() + ' to websockets');
-
-        // emits the event with clear numbers to all users with privacy disabled
-        wsServer.sockets.in(WS_ROOM.QUEUES_AST_EVT_CLEAR).emit('queueUpdate', queue.toJSON());
-        wssServer.sockets.in(WS_ROOM.QUEUES_AST_EVT_CLEAR).emit('queueUpdate', queue.toJSON());
-
-        // emits the event with hide numbers to all users with privacy enabled
-        wsServer.sockets.in(WS_ROOM.QUEUES_AST_EVT_PRIVACY).emit('queueUpdate', queue.toJSON(privacyStrReplace));
-        wssServer.sockets.in(WS_ROOM.QUEUES_AST_EVT_PRIVACY).emit('queueUpdate', queue.toJSON(privacyStrReplace));
-
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Handler for the _parkingChanged_ event emitted by _ast\_proxy_
-* component. Something has changed in the parking, so notifies
-* all interested clients.
-*
-* @method parkingChanged
-* @param {object} parking The parking object
-* @private
-*/
-function parkingChanged(parking) {
-    try {
-        logger.info(IDLOG, 'received event parkingChanged for parking ' + parking.getParking());
-        logger.info(IDLOG, 'emit event parkingUpdate for parking ' + parking.getParking() + ' to websockets');
-
-        // emits the event with clear numbers to all users with privacy disabled
-        wsServer.sockets.in(WS_ROOM.PARKINGS_AST_EVT_CLEAR).emit('parkingUpdate', parking.toJSON());
-        wssServer.sockets.in(WS_ROOM.PARKINGS_AST_EVT_CLEAR).emit('parkingUpdate', parking.toJSON());
-
-        // emits the event with hide numbers to all users with privacy enabled
-        wsServer.sockets.in(WS_ROOM.PARKINGS_AST_EVT_PRIVACY).emit('parkingUpdate', parking.toJSON(privacyStrReplace));
-        wssServer.sockets.in(WS_ROOM.PARKINGS_AST_EVT_PRIVACY).emit('parkingUpdate', parking.toJSON(privacyStrReplace));
-
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Customize the privacy used to hide phone numbers by a configuration file.
+* Configures the properties used by the component by a configuration file.
 * The file must use the JSON syntax.
-* ...............
 *
 * @method config
 * @param {string} path The path of the configuration file
@@ -1045,6 +817,11 @@ function config(path) {
         // set the listener for the websocket communication module
         setComNethctiWsListeners();
 
+        // initialize the interval at which update the token expiration of
+        // all remote sites that are connected by wss
+        var expires = compAuthe.getTokenExpirationTimeout();
+        updateTokenExpirationInterval = expires / 2;
+
         logger.info(IDLOG, 'remote sites configuration by file ' + path + ' ended');
 
     } catch (err) {
@@ -1066,10 +843,6 @@ function setComNethctiWsListeners() {
         }
 
         compComNethctiWs.on(compComNethctiWs.EVT_WSS_CLIENT_CONNECTED, wssConnHdlr);
-//        compComNethctiWs.on(compComNethctiWs.EVT_WS_CLIENT_LOGGEDIN,          checkQueueAutoLogin);
-//        compComNethctiWs.on(compComNethctiWs.EVT_WS_CLIENT_LOGGEDIN,          checkAutoDndOffLogin);
-//        compComNethctiWs.on(compComNethctiWs.EVT_ALL_WS_CLIENT_DISCONNECTION, checkQueueAutoLogout);
-//        compComNethctiWs.on(compComNethctiWs.EVT_ALL_WS_CLIENT_DISCONNECTION, checkAutoDndOnLogout);
 
     } catch (err) {
        logger.error(IDLOG, err.stack);
@@ -1158,7 +931,8 @@ function restApi(site, url, method, headers, data, cb) {
             else if (res.statusCode !== 200 &&
                         !(res.statusCode === 401 && res.headers['www-authenticate'])) {
 
-                logger.warn(IDLOG, url + ' failed as user "' + remoteSites[site].user + '": res.statusCode ' + res.statusCode);
+                logger.warn(IDLOG, url + ' failed as user "' + remoteSites[site].user + '": res.statusCode ' + res.statusCode +
+                                   (res.headers && res.headers.message ? (' - message: ' + res.headers.message) : ''));
             }
             cb(err, res, body);
         });
@@ -1546,6 +1320,9 @@ function clientWssLoggedInHdlr(data, clSocket, site) {
             throw new Error('wrong parameters');
         }
         logger.info(IDLOG, 'client wss logged in successfully to site "' + site + '" "' + remoteSites[site].hostname + '"');
+
+        clSocket.on('remoteExtenUpdate', function (dataObj) { clientWssRemoteExtenUpdateHdlr(dataObj, site); });
+
         wssClients[remoteSites[site].user] = clSocket;
         logger.info(IDLOG, 'authenticated client websocket to site "' + site + '" added in memory');
 
@@ -1560,17 +1337,48 @@ function clientWssLoggedInHdlr(data, clSocket, site) {
 }
 
 /**
-* Creates the websocket servers (http and https) and adds the listeners for other components.
+* Handler of a remote extension update received from a remote site.
 *
-* @method start
+* @method clientWssRemoteExtenUpdateHdlr
+* @param {object} data The data received from the event
+* @param {string} site The site name
+* @private
 */
-function start() {
+function clientWssRemoteExtenUpdateHdlr(data, site) {
+    try {
+        if (typeof data !== 'object' || typeof site !== 'string') {
+            throw new Error('wrong parameters');
+        }
+        logger.info(IDLOG, 'received event "remoteExtenUpdate" from remote site "' + site + '" "' + remoteSites[site].hostname + '" about exten "' + data.exten + '"');
+
+        if (typeof data.exten === 'string' &&
+            allSitesOpExtensions[site] &&
+            allSitesOpExtensions[site][data.exten]) {
+
+            allSitesOpExtensions[site][data.exten] = data;
+            logger.info(IDLOG, 'updated exten "' + data.exten + '" data about remote site "' + site + '" "' + remoteSites[site].hostname + '"');
+
+            compComNethctiWs.sendEventToAllClients('remoteExtenUpdate', { remoteSite: site, data: data }, function (username) {
+                return (compAuthorization.authorizeRemoteSiteUser(username) && compAuthorization.authorizeOpExtensionsUser(username));
+            });
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Connects to all remote sites configured.
+*
+* @method connectAllRemoteSites
+* @private
+*/
+function connectAllRemoteSites() {
     try {
         if (Object.keys(remoteSites).length === 0) {
             logger.info(IDLOG, 'no remote sites configured');
             return;
         }
-
         https.globalAgent.options.rejectUnauthorized = false;
 
         var opts = {
@@ -1614,14 +1422,38 @@ function start() {
 }
 
 /**
-* Update the token expiration of all users that are connected by websocket (http and https).
+* Starts the component connecting to all remote sites
+* configured and adds the listeners for other components.
+*
+* @method start
+*/
+function start() {
+    try {
+        setAstProxyListeners();
+        connectAllRemoteSites();
+
+        // start the automatic update of token expiration of all remote sites that are connected by wss.
+        // The interval is the half value of expiration provided by authentication component.
+        setInterval(function () {
+
+            updateTokenExpirationOfAllWebsocketUsers();
+
+        }, updateTokenExpirationInterval);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Update the token expiration of remote sites that are connected by wss.
 *
 * @method updateTokenExpirationOfAllWebsocketUsers
 * @private
 */
 function updateTokenExpirationOfAllWebsocketUsers() {
     try {
-        logger.info(IDLOG, 'update token expiration of all websocket users (http and https)');
+        logger.info(IDLOG, 'update token expiration of all wss remote sites');
 
         var id;
         for (id in wsid) { compAuthe.updateTokenExpires(wsid[id].username, wsid[id].token); }
@@ -1758,7 +1590,7 @@ function loginHdlr(socket, obj) {
 
             // add websocket id for future fast authentication for each request from the clients
             var siteName = compAuthe.getRemoteSiteName(obj.accessKeyId, obj.token);
-            addWebsocketId(obj.accessKeyId, obj.token, socket.id, siteName);
+            addWebsocketId(obj.accessKeyId, obj.token, socket.id, siteName, socket);
 
             // sets the socket object that will contains the cti data
             if (!socket.nethcti) { socket.nethcti = {}; }
@@ -1768,67 +1600,6 @@ function loginHdlr(socket, obj) {
 
             // send authenticated successfully response
             sendAutheSuccess(socket);
-
-            /*
-
-            // if the user has the extensions permission, than he will receive the asterisk events that affects the extensions
-            if (compAuthorization.authorizeOpExtensionsUser(obj.accessKeyId) === true) {
-
-                if (compAuthorization.isPrivacyEnabled(obj.accessKeyId) === true) {
-                    // join the user to the websocket room to receive the asterisk events that affects the extensions, using hide numbers
-                    socket.join(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY);
-
-                } else {
-                    // join the user to the websocket room to receive the asterisk events that affects the extensions, using clear numbers
-                    socket.join(WS_ROOM.EXTENSIONS_AST_EVT_CLEAR);
-                }
-            }
-
-            // if the user has the queues permission, than he will receive the asterisk events that affects the queues
-            if (compAuthorization.authorizeOpQueuesUser(obj.accessKeyId) === true
-                || compAuthorization.authorizeOpAdminQueuesUser(obj.accessKeyId) === true) {
-
-                if (   compAuthorization.isPrivacyEnabled(obj.accessKeyId)           === true
-                    && compAuthorization.authorizeOpAdminQueuesUser(obj.accessKeyId) === false) {
-                    // join the user to the websocket room to receive the asterisk events that affects the queues, using hide numbers
-                    socket.join(WS_ROOM.QUEUES_AST_EVT_PRIVACY);
-
-                } else {
-                    // join the user to the websocket room to receive the asterisk events that affects the queues, using hide numbers
-                    socket.join(WS_ROOM.QUEUES_AST_EVT_CLEAR);
-                }
-            }
-
-            // if the user has the trunks permission, than he will receive the asterisk events that affects the trunks
-            if (compAuthorization.authorizeOpTrunksUser(obj.accessKeyId) === true) {
-
-                if (compAuthorization.isPrivacyEnabled(obj.accessKeyId) === true) {
-                    // join the user to the websocket room to receive the asterisk events that affects the trunks, using hide numbers
-                    socket.join(WS_ROOM.TRUNKS_AST_EVT_PRIVACY);
-
-                } else {
-                    // join the user to the websocket room to receive the asterisk events that affects the trunks, using clear numbers
-                    socket.join(WS_ROOM.TRUNKS_AST_EVT_CLEAR);
-                }
-            }
-
-            // if the user has the parkings permission, than he will receive the asterisk events that affects the parkings
-            if (compAuthorization.authorizeOpParkingsUser(obj.accessKeyId) === true) {
-
-                if (compAuthorization.isPrivacyEnabled(obj.accessKeyId) === true) {
-                    // join the user to the websocket room to receive the asterisk events that affects the parkings, using hide numbers
-                    socket.join(WS_ROOM.PARKINGS_AST_EVT_PRIVACY);
-
-                } else {
-                    // join the user to the websocket room to receive the asterisk events that affects the parkings, using clear numbers
-                    socket.join(WS_ROOM.PARKINGS_AST_EVT_CLEAR);
-                }
-            }
-
-            // emits the event for a logged in client. This event is emitted when a user has been logged in by a websocket connection
-            logger.info(IDLOG, 'emit event "' + EVT_WS_CLIENT_LOGGEDIN + '" for username "' + obj.accessKeyId + '"');
-            emitter.emit(EVT_WS_CLIENT_LOGGEDIN, obj.accessKeyId);
-            */
 
         } else { // authentication failed
             logger.warn(IDLOG, 'authentication failed for user "' + obj.accessKeyId + '" from ' + getWebsocketEndpoint(socket) +
@@ -1852,52 +1623,6 @@ function loginHdlr(socket, obj) {
 function disconnHdlr(socket) {
     try {
         logger.info(IDLOG, 'client websocket disconnected ' + getWebsocketEndpoint(socket));
-        var username;
-
-        // when the user is not authenticated but connected by websocket,
-        // the "socket.id" is not present in the "wsid" property
-        if (wsid[socket.id]) {
-
-            var sid;
-            var count = 0; // counter of the user socket connections that involve cti application
-            username  = wsid[socket.id].username;
-
-            // count the number of cti sockets for the user from both websocket secure and not
-            for (sid in wssServer.sockets.sockets) {
-
-                if (   wssServer.sockets.sockets[sid].nethcti
-                    && wssServer.sockets.sockets[sid].nethcti.username  === username
-                    && wssServer.sockets.sockets[sid].nethcti.userAgent === USER_AGENT) {
-
-                    count += 1;
-                }
-            }
-            for (sid in wsServer.sockets.sockets) {
-
-                if (   wsServer.sockets.sockets[sid].nethcti
-                    && wsServer.sockets.sockets[sid].nethcti.username  === username
-                    && wsServer.sockets.sockets[sid].nethcti.userAgent === USER_AGENT) {
-
-                    count += 1;
-                }
-            }
-
-            // set the offline cti presence only if the socket is the last and comes from the cti application
-            if (socket.nethcti.userAgent === USER_AGENT // the socket connection comes from the cti application
-                && count === 1) {                       // only last socket connection is present
-
-                username = wsid[socket.id].username;
-                compUser.setNethctiPresence(username, 'desktop', compUser.ENDPOINT_NETHCTI_STATUS.offline);
-                logger.info(IDLOG, '"' + compUser.ENDPOINT_NETHCTI_STATUS.offline + '" cti desktop presence has been set for user "' + username + '"');
-
-                // emits the event for the disconnected client. This event is emitted when
-                // all the websocket connections of the user has been closed.
-                logger.info(IDLOG, 'emit event "' + EVT_ALL_WS_CLIENT_DISCONNECTION + '" for username ' + username);
-                emitter.emit(EVT_ALL_WS_CLIENT_DISCONNECTION, username);
-            }
-        }
-
-        // remove trusted identifier of the websocket
         removeWebsocketId(socket.id);
 
     } catch (err) {
@@ -1934,11 +1659,12 @@ function removeWebsocketId(socketId) {
 * @param {string} token    The access token
 * @param {string} socketId The client websocket identifier to store in the memory
 * @param {string} siteName The remote site name
+* @param {object} socket   The connected socket
 * private
 */
-function addWebsocketId(user, token, socketId, siteName) {
+function addWebsocketId(user, token, socketId, siteName, socket) {
     try {
-        wsid[socketId] = { username: user, token: token, siteName: siteName };
+        wsid[socketId] = { username: user, token: token, siteName: siteName, socket: socket };
         logger.info(IDLOG, 'added client websocket identifier ' + socketId + ' for user ' + user + ' of remote site "' + siteName + '" with token ' + token);
 
     } catch (err) {
@@ -1994,25 +1720,7 @@ function getNumConnectedClients() {
     }
 }
 
-/**
-* Subscribe a callback function to a custom event fired by this object.
-* It's the same of nodejs _events.EventEmitter.on_ method.
-*
-* @method on
-* @param {string} type The name of the event
-* @param {function} cb The callback to execute in response to the event
-* @return {object} A subscription handle capable of detaching that subscription.
-*/
-function on(type, cb) {
-    try {
-        return emitter.on(type, cb);
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
 // public interface
-exports.on                              = on;
 exports.start                           = start;
 exports.config                          = config;
 exports.setAuthe                        = setAuthe;
@@ -2026,9 +1734,7 @@ exports.setCompVoicemail                = setCompVoicemail;
 exports.setCompComNethctiWs             = setCompComNethctiWs;
 exports.setCompAuthorization            = setCompAuthorization;
 exports.getNumConnectedClients          = getNumConnectedClients;
-exports.EVT_WS_CLIENT_LOGGEDIN          = EVT_WS_CLIENT_LOGGEDIN;
 exports.getAllRemoteSitesUsernames      = getAllRemoteSitesUsernames;
 exports.getAllRemoteSitesUserEndpoints  = getAllRemoteSitesUserEndpoints;
-exports.EVT_ALL_WS_CLIENT_DISCONNECTION = EVT_ALL_WS_CLIENT_DISCONNECTION;
 exports.getAllRemoteSitesOperatorGroups = getAllRemoteSitesOperatorGroups;
 exports.getAllRemoteSitesOperatorExtensions = getAllRemoteSitesOperatorExtensions;

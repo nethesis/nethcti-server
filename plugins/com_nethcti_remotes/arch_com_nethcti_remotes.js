@@ -104,15 +104,13 @@ module.exports = function (options, imports, register) {
         imports.authentication.on(imports.authentication.EVT_COMP_READY, function () {
             comNethctiRemotes.setLogger(logger);
             comNethctiRemotes.setAuthe(imports.authentication);
-            //comNethctiRemotes.config('/etc/nethcti/services.json');
-            //comNethctiRemotes.configPrivacy('/etc/nethcti/nethcti.json');
+            comNethctiRemotes.setAstProxy(imports.astProxy);
             comNethctiRemotes.setCompComNethctiWs(imports.com_nethcti_ws);
+            comNethctiRemotes.setCompAuthorization(imports.authorization);
             comNethctiRemotes.config('/etc/nethcti/remote_sites.json');
             //comNethctiRemotes.setCompUser(imports.user);
             //comNethctiRemotes.setCompPostit(imports.postit);
-            //comNethctiRemotes.setAstProxy(imports.astProxy);
             //comNethctiRemotes.setCompVoicemail(imports.voicemail);
-            //comNethctiRemotes.setCompAuthorization(imports.authorization);
             comNethctiRemotes.start();
         });
     } catch (err) {

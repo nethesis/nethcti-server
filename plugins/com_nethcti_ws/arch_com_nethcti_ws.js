@@ -30,6 +30,13 @@ module.exports = function (options, imports, register) {
             getNumConnectedClients: comNethctiWs.getNumConnectedClients,
 
             /**
+            * It's the _sendEventToAllClients_ method provided by _com\_nethcti\_ws_ module.
+            *
+            * @method sendEventToAllClients
+            */
+            sendEventToAllClients: comNethctiWs.sendEventToAllClients,
+
+            /**
             * It's the _on_ method provided by _com\_nethcti\_ws_ module.
             *
             * @method on
