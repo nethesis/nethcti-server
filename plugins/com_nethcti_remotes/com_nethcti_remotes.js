@@ -1375,6 +1375,7 @@ function clientWssDisconnectHdlr(site) {
     try {
         if (typeof site !== 'string') { throw new Error('wrong parameters'); }
         logger.warn(IDLOG, 'client wss disconnected from site "' + site + '" "' + remoteSites[site].hostname + '"');
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -1721,6 +1722,14 @@ function loginHdlr(socket, obj) {
 function disconnHdlr(socket) {
     try {
         logger.info(IDLOG, 'client websocket disconnected ' + getWebsocketEndpoint(socket));
+
+        if (wsid[socket.id] && wsid[socket.id].token && wsid[socket.id].username) {
+
+            if (compAuthe.removeToken(wsid[socket.id].username, wsid[socket.id].token)) {
+                logger.info(IDLOG, 'removed authentication token of remote user "' + wsid[socket.id].username + '" ' +
+                                   'of remote site "' + wsid[socket.id].siteName + '"');
+            }
+        }
         removeWebsocketId(socket.id);
 
     } catch (err) {
