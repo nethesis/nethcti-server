@@ -32,6 +32,7 @@ module.exports = function (options, imports, register) {
         serverRest.setCompUtil(imports.util);
         serverRest.setCompAuthorization(imports.authorization);
         serverRest.setCompPostit(imports.postit);
+        serverRest.setCompComNethctiRemotes(imports.comNethctiRemotes);
         serverRest.start();
     } catch (err) {
        logger.error(IDLOG, err.stack);

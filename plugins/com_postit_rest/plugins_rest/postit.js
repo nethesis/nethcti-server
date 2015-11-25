@@ -37,6 +37,15 @@ var logger = console;
 var compPostit;
 
 /**
+* The remote sites communication architect component.
+*
+* @property compComNethctiRemotes
+* @type object
+* @private
+*/
+var compComNethctiRemotes;
+
+/**
 * The architect component to be used for authorization.
 *
 * @property compAuthorization
@@ -90,6 +99,21 @@ function setCompPostit(cp) {
     try {
         compPostit = cp;
         logger.info(IDLOG, 'set postit architect component');
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Set remote sites communication architect component.
+*
+* @method setCompComNethctiRemotes
+* @param {object} comp The remote sites communication architect component.
+*/
+function setCompComNethctiRemotes(comp) {
+    try {
+        compComNethctiRemotes = comp;
+        logger.info(IDLOG, 'set remote sites communication architect component');
     } catch (err) {
        logger.error(IDLOG, err.stack);
     }
@@ -195,6 +219,7 @@ function setCompUtil(comp) {
         * # POST requests
         *
         * 1. [`postit/create`](#createpost)
+        * 1. [`postit/remote_create`](#remote_createpost)
         * 1. [`postit/modify`](#modifypost)
         * 1. [`postit/delete`](#deletepost)
         *
@@ -206,10 +231,27 @@ function setCompUtil(comp) {
         *
         * * `text: the text of the post-it`
         * * `recipient: the destination user of the message`
+        * * `[creator]: the username of the creator. It is needed for requests coming from remote users of remote sites`
         *
         * Example JSON request parameters:
         *
-        *     { "text": "message text", "recipient": "john"  }
+        *     { "text": "message text", "recipient": "john" }
+        *     { "text": "message text", "recipient": "john", "creator": "user" }
+        *
+        * ---
+        *
+        * ### <a id="remote_createpost">**`postit/remote_create`**</a>
+        *
+        * The client crete a new post-it for a recipient of a remote site. It is callable
+        * only from a local clients.
+        *
+        * * `text: the text of the post-it`
+        * * `recipient: the destination user of the message`
+        * * `site: the name of the remote site`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "text": "message text", "recipient": "john", "site": "ranocchi" }
         *
         * ---
         *
@@ -265,12 +307,14 @@ function setCompUtil(comp) {
                 * @property post
                 * @type {array}
                 *
-                *   @param {string} create To create a new post-it for a user
-                *   @param {string} modify To modify a post-it of a user
-                *   @param {string} delete To delete the post-it
+                *   @param {string} create        To create a new post-it for a user
+                *   @param {string} remote_create To create a new post-it for a user of a remote site
+                *   @param {string} modify        To modify a post-it of a user
+                *   @param {string} delete        To delete the post-it
                 */
                 'post' : [
                     'create',
+                    'remote_create',
                     'modify',
                     'delete'
                 ],
@@ -415,57 +459,155 @@ function setCompUtil(comp) {
             *     create
             *
             * @method create
-            * @param {object}   req  The client request.
-            * @param {object}   res  The client response.
-            * @param {function} next Function to run the next handler in the chain.
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
             */
             create: function (req, res, next) {
                 try {
                     var username = req.headers.authorization_user;
+                    var token    = req.headers.authorization_token;
 
                     // check parameters
-                    if (   typeof req.params           !== 'object'
-                        || typeof req.params.text      !== 'string'
-                        || typeof req.params.recipient !== 'string') {
+                    if (typeof req.params           !== 'object' ||
+                        typeof req.params.text      !== 'string' ||
+                        typeof req.params.recipient !== 'string') {
 
                         compUtil.net.sendHttp400(IDLOG, res);
                         return;
                     }
+                    // if client comes from a remote site the params "creator" is needed
+                    if (compComNethctiRemotes.isClientRemote(username, token) &&
+                        typeof req.params.creator !== 'string') {
 
-                    // check the postit & administration postit authorization
-                    if (   compAuthorization.authorizePostitUser(username)      !== true
-                        && compAuthorization.authorizeAdminPostitUser(username) !== true) {
-
-                        logger.warn(IDLOG, '"postit" & "admin_postit" authorizations failed for user "' + username + '" !');
-                        compUtil.net.sendHttp403(IDLOG, res);
+                        var remoteSiteName = compComNethctiRemotes.getSiteName(username, token);
+                        logger.warn(IDLOG, 'creating new post-it from remote site "' + remoteSiteName + '" user "' + username + '" ' +
+                                           'for recipient user "' + req.params.recipient + '": bad request');
+                        compUtil.net.sendHttp400(IDLOG, res);
                         return;
                     }
 
-                    if (compAuthorization.authorizeAdminPostitUser(username) === true) {
-                        logger.info(IDLOG, '"admin_postit" authorization successfully for user "' + username + '"');
-                    }
+                    var creator, remoteSiteName;
+                    var isRemote = false;
 
-                    if (compAuthorization.authorizePostitUser(username) === true) {
-                        logger.info(IDLOG, '"postit" authorization successfully for user "' + username + '"');
+                    // check if the request coming from a remote site
+                    if (compComNethctiRemotes.isClientRemote(username, token)) {
+
+                        remoteSiteName = compComNethctiRemotes.getSiteName(username, token);
+                        creator  = req.params.creator + '@' + remoteSiteName;
+                        isRemote = true;
+                    }
+                    else {
+                        // check the postit & administration postit authorization
+                        if (compAuthorization.authorizePostitUser(username)      !== true &&
+                            compAuthorization.authorizeAdminPostitUser(username) !== true) {
+
+                            logger.warn(IDLOG, '"postit" & "admin_postit" authorizations failed for user "' + username + '" !');
+                            compUtil.net.sendHttp403(IDLOG, res);
+                            return;
+                        }
+                        creator = username;
                     }
 
                     var data = {
                         text:      req.params.text,
-                        creator:   username,
+                        creator:   creator,
                         recipient: req.params.recipient
                     };
 
                     compPostit.newPostit(data, function (err) {
-
                         if (err) {
-                            logger.error(IDLOG, 'creating new post-it from user "' + username + '" for recipient "' + req.params.recipient + '"');
+                            logger.error(IDLOG, 'creating new postit from ' +
+                                               (isRemote ?
+                                                   'remote site "' + remoteSiteName + '" user "' + username + '" creator "' + creator + '" ' :
+                                                   'user "' + username + '" '
+                                               ) +
+                                               'to "' + data.recipient + '"');
                             compUtil.net.sendHttp500(IDLOG, res, err.toString());
 
                         } else {
-                            logger.info(IDLOG, 'new postit by "' + username + '" to "' + data.recipient + '" has been successfully crated');
+                            logger.info(IDLOG, 'new postit from ' +
+                                               (isRemote ?
+                                                   'remote site "' + remoteSiteName + '" user "' + username + '" creator "' + creator + '" ' :
+                                                   'user "' + username + '" '
+                                               ) +
+                                               'to "' + data.recipient + '" has been successfully created');
                             compUtil.net.sendHttp201(IDLOG, res);
                         }
                     });
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * Create a new post-it for a recipient of a remote site by the following REST API:
+            *
+            *     remote_create
+            *
+            * @method remote_create
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            remote_create: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+                    var token    = req.headers.authorization_token;
+
+                    // check parameters
+                    if (typeof req.params           !== 'object' ||
+                        typeof req.params.text      !== 'string' ||
+                        typeof req.params.site      !== 'string' ||
+                        typeof req.params.recipient !== 'string') {
+
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+                    var remoteSiteName = compComNethctiRemotes.getSiteName(username, token);
+
+                    // check if the request coming from a remote site
+                    if (compComNethctiRemotes.isClientRemote(username, token)) {
+
+                        logger.warn(IDLOG, 'creating new postit for a remote user "' + req.params.recipient + '" ' +
+                                           'of the remote site "' + req.params.site + '" by the remote site "' + remoteSiteName + '": ' +
+                                           'authorization failed for user "' + username + '"');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+                    else {
+                        // check the remote_site, postit & administration postit authorizations
+                        if (compAuthorization.authorizeRemoteSiteUser(username)      !== true ||
+                               (compAuthorization.authorizePostitUser(username)      !== true &&
+                                compAuthorization.authorizeAdminPostitUser(username) !== true)) {
+
+                            logger.warn(IDLOG, '"remote_site" or ("postit" & "admin_postit") authorizations failed for user "' + username + '"');
+                            compUtil.net.sendHttp403(IDLOG, res);
+                            return;
+                        }
+
+                        var data = {
+                            site:      req.params.site,
+                            text:      req.params.text,
+                            creator:   username,
+                            recipient: req.params.recipient
+                        };
+
+                        // get all extensions of all remote sites
+                        compComNethctiRemotes.newRemotePostit(data, function (err) {
+                            if (err) {
+                                logger.error(IDLOG, 'creating new remote post-it from user "' + username +
+                                                    '" for remote user "' + data.recipient + '" of remote site "' + data.site + '": ' + err);
+                                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                            }
+                            else {
+                                logger.info(IDLOG, 'new remote postit by "' + username + '" to remote user "' + data.recipient + '" ' +
+                                                   ' of remote site "' + data.site + '" has been successfully created');
+                                compUtil.net.sendHttp201(IDLOG, res);
+                            }
+                        });
+                    }
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -625,7 +767,9 @@ function setCompUtil(comp) {
         exports.setLogger            = setLogger;
         exports.setCompUtil          = setCompUtil;
         exports.setCompPostit        = setCompPostit;
+        exports.remote_create        = postit.remote_create;
         exports.setCompAuthorization = setCompAuthorization;
+        exports.setCompComNethctiRemotes = setCompComNethctiRemotes;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);

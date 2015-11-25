@@ -107,7 +107,7 @@ function sendHttp200(parentIdLog, resp) {
 function sendHttp400(parentIdLog, resp) {
     try {
         resp.writeHead(400);
-        logger.info(parentIdLog, 'send HTTP 400 response to ' + getRemoteClientIp(resp));
+        logger.warn(parentIdLog, 'send HTTP 400 response to ' + getRemoteClientIp(resp));
         resp.end();
     } catch (err) {
         logger.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);

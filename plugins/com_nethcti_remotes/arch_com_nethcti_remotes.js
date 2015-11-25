@@ -38,6 +38,13 @@ module.exports = function (options, imports, register) {
             getSiteName: comNethctiRemotes.getSiteName,
 
             /**
+            * It's the _newRemotePostit_ method provided by _com\_nethcti\_ws_ module.
+            *
+            * @method newRemotePostit
+            */
+            newRemotePostit: comNethctiRemotes.newRemotePostit,
+
+            /**
             * It's the _getAllRemoteSitesOperatorExtensions_ method provided by _com\_nethcti\_ws_ module.
             *
             * @method getAllRemoteSitesOperatorExtensions

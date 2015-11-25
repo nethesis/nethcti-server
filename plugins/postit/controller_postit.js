@@ -297,8 +297,8 @@ function modifyPostit(id, text, cb) {
 function newPostit(data, cb) {
     try {
         // check parameter
-        if (typeof data            !== 'object' || typeof data.text      !== 'string'
-            || typeof data.creator !== 'string' || typeof data.recipient !== 'string') {
+        if (typeof data         !== 'object' || typeof data.text      !== 'string' ||
+            typeof data.creator !== 'string' || typeof data.recipient !== 'string') {
 
             throw new Error('wrong parameter');
         }
@@ -325,8 +325,8 @@ function newPostit(data, cb) {
 function save(data, cb) {
     try {
         // check parameter
-        if (typeof data            !== 'object' || typeof data.text      !== 'string'
-            || typeof data.creator !== 'string' || typeof data.recipient !== 'string') {
+        if (typeof data         !== 'object' || typeof data.text      !== 'string' ||
+            typeof data.creator !== 'string' || typeof data.recipient !== 'string') {
 
             throw new Error('wrong parameter');
         }
@@ -381,8 +381,8 @@ function newPostitCb(err, creator, recipient, results) {
         }
 
         // check the parameters
-        if (   typeof creator   !== 'string'
-            || typeof recipient !== 'string' || results instanceof Array === false) {
+        if (typeof creator   !== 'string' ||
+            typeof recipient !== 'string' || results instanceof Array === false) {
 
             throw new Error('wrong parameters');
         }

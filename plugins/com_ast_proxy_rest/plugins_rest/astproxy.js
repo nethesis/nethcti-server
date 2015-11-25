@@ -1435,7 +1435,7 @@ var compConfigManager;
                         return;
                     }
                     else {
-                        // check if the user has the operator panel authorization
+                        // check if the user has the operator panel and remote site authorizations
                         if (compAuthorization.authorizeRemoteSiteUser(username)   !== true ||
                             compAuthorization.authorizeOpExtensionsUser(username) !== true) {
 

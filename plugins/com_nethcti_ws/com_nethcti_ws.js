@@ -18,6 +18,22 @@ var httpProxy    = require('http-proxy');
 var EventEmitter = require('events').EventEmitter;
 
 /**
+* Emitted to a websocket client connection on extension update.
+*
+* @event extenUpdate
+* @param {object} exten The data about the extension
+*
+*/
+/**
+* The name of the extension update event.
+*
+* @property EVT_EXTEN_UPDATE
+* @type string
+* @default "extenUpdate"
+*/
+var EVT_EXTEN_UPDATE = 'extenUpdate';
+
+/**
 * Fired when a websocket client connection has been closed.
 *
 * @event wsClientDisonnection
@@ -698,7 +714,7 @@ function sendEventToAllClients(evname, data, fn) {
 function extenChanged(exten) {
     try {
         logger.info(IDLOG, 'received event extenChanged for extension ' + exten.getExten());
-        logger.info(IDLOG, 'emit event extenUpdate for extension ' + exten.getExten() + ' to websockets');
+        logger.info(IDLOG, 'emit event "' + EVT_EXTEN_UPDATE + '" for extension ' + exten.getExten() + ' to websockets');
 
         // cycle in each websocket to send the event about an extension update. If the websocket user
         // is associated with the extension or the user has the privacy permission disabled, then it
@@ -714,18 +730,18 @@ function extenChanged(exten) {
             if (   compAuthorization.isPrivacyEnabled(username)           === true
                 && compAuthorization.authorizeOpAdminQueuesUser(username) === false) {
 
-                if (wsServer.sockets.sockets[sockid])  { wsServer.sockets.sockets[sockid].emit('extenUpdate', exten.toJSON(privacyStrReplace, privacyStrReplace));  }
-                if (wssServer.sockets.sockets[sockid]) { wssServer.sockets.sockets[sockid].emit('extenUpdate', exten.toJSON(privacyStrReplace, privacyStrReplace)); }
+                if (wsServer.sockets.sockets[sockid])  { wsServer.sockets.sockets[sockid].emit(EVT_EXTEN_UPDATE, exten.toJSON(privacyStrReplace, privacyStrReplace));  }
+                if (wssServer.sockets.sockets[sockid]) { wssServer.sockets.sockets[sockid].emit(EVT_EXTEN_UPDATE, exten.toJSON(privacyStrReplace, privacyStrReplace)); }
 
             } else if (   compAuthorization.isPrivacyEnabled(username)           === true
                        && compAuthorization.authorizeOpAdminQueuesUser(username) === true) {
 
-                if (wsServer.sockets.sockets[sockid])  { wsServer.sockets.sockets[sockid].emit('extenUpdate', exten.toJSON(privacyStrReplace));  }
-                if (wssServer.sockets.sockets[sockid]) { wssServer.sockets.sockets[sockid].emit('extenUpdate', exten.toJSON(privacyStrReplace)); }
+                if (wsServer.sockets.sockets[sockid])  { wsServer.sockets.sockets[sockid].emit(EVT_EXTEN_UPDATE, exten.toJSON(privacyStrReplace));  }
+                if (wssServer.sockets.sockets[sockid]) { wssServer.sockets.sockets[sockid].emit(EVT_EXTEN_UPDATE, exten.toJSON(privacyStrReplace)); }
 
             } else {
-                if (wsServer.sockets.sockets[sockid])  { wsServer.sockets.sockets[sockid].emit('extenUpdate', exten.toJSON()); }
-                if (wssServer.sockets.sockets[sockid]) { wssServer.sockets.sockets[sockid].emit('extenUpdate', exten.toJSON()); }
+                if (wsServer.sockets.sockets[sockid])  { wsServer.sockets.sockets[sockid].emit(EVT_EXTEN_UPDATE, exten.toJSON()); }
+                if (wssServer.sockets.sockets[sockid]) { wssServer.sockets.sockets[sockid].emit(EVT_EXTEN_UPDATE, exten.toJSON()); }
             }
         }
     } catch (err) {

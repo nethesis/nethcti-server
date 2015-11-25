@@ -835,6 +835,14 @@ function setCompUtil(comp) {
                         return;
                     }
                     else {
+                        // check if the user has the remote site authorizations
+                        if (compAuthorization.authorizeRemoteSiteUser(username) !== true) {
+
+                            logger.warn(IDLOG, 'requesting all remote usernames: authorization failed for user "' + username + '"');
+                            compUtil.net.sendHttp403(IDLOG, res);
+                            return;
+                        }
+
                         var allRemoteUsernames = compComNethctiRemotes.getAllRemoteSitesUsernames();
                         logger.info(IDLOG, 'sent all remote sites usernames "' + Object.keys(allRemoteUsernames) + '" ' +
                                            'to user "' + username + '" ' + res.connection.remoteAddress);
@@ -943,6 +951,14 @@ function setCompUtil(comp) {
                         return;
                     }
                     else {
+                        // check if the user has the remote site authorization
+                        if (compAuthorization.authorizeRemoteSiteUser(username) !== true) {
+
+                            logger.warn(IDLOG, 'requesting all remote user endpoints: authorization failed for user "' + username + '"');
+                            compUtil.net.sendHttp403(IDLOG, res);
+                            return;
+                        }
+
                         var allRemoteUserEndpoints = compComNethctiRemotes.getAllRemoteSitesUserEndpoints();
                         logger.info(IDLOG, 'sent all remote sites user endpoints "' + Object.keys(allRemoteUserEndpoints) + '" ' +
                                            'to user "' + username + '" ' + res.connection.remoteAddress);

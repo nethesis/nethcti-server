@@ -153,6 +153,32 @@ function setCompPostit(compPostit) {
     }
 }
 
+
+/**
+* Sets the component that communicates with remote sites.
+*
+* @method setCompComNethctiRemotes
+* @param {object} comp The remote sites communication architect component.
+*/
+function setCompComNethctiRemotes(comp) {
+    try {
+        // check parameter
+        if (typeof comp !== 'object') { throw new Error('wrong parameter'); }
+
+        // set the remote sites communication component for all the REST plugins
+        var key;
+        for (key in plugins) {
+
+            if (typeof plugins[key].setCompComNethctiRemotes === 'function') {
+                plugins[key].setCompComNethctiRemotes(comp);
+                logger.info(IDLOG, 'remote sites communication component has been set for rest plugin ' + key);
+            }
+        }
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
 /**
 * Set the utility architect component to be used by REST plugins.
 *
@@ -373,3 +399,4 @@ exports.setCompUtil          = setCompUtil;
 exports.configPrivacy        = configPrivacy;
 exports.setCompPostit        = setCompPostit;
 exports.setCompAuthorization = setCompAuthorization;
+exports.setCompComNethctiRemotes = setCompComNethctiRemotes;

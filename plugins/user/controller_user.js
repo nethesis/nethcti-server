@@ -356,11 +356,10 @@ function getAuthorization(userid, type) {
         }
 
         if (users[userid] !== undefined) { // the user exits
-
             return users[userid].getAuthorization(type);
-
-        } else {
-            logger.error(IDLOG, 'getting authorization "' + type + '" of unknown user "' + userid + '"');
+        }
+        else {
+            logger.warn(IDLOG, 'getting authorization "' + type + '" of unknown user "' + userid + '"');
         }
     } catch (err) {
         logger.error(IDLOG, err.stack);

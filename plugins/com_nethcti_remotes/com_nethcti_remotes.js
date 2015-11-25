@@ -17,6 +17,22 @@ var request  = require('request');
 var ioClient = require('socket.io-client');
 
 /**
+* Emitted to a all websocket client connection on remote extension update.
+*
+* @event remoteExtenUpdate
+* @param {object} exten The data about the remote extension
+*
+*/
+/**
+* The name of the remote extension update event.
+*
+* @property EVT_REMOTE_EXTEN_UPDATE
+* @type string
+* @default "remoteExtenUpdate"
+*/
+var EVT_REMOTE_EXTEN_UPDATE = 'remoteExtenUpdate';
+
+/**
 * The module identifier used by the logger.
 *
 * @property IDLOG
@@ -613,8 +629,8 @@ function extenChanged(exten) {
 
             if (wsid[sockid] && wsid[sockid].socket && wsid[sockid].socket.emit) {
 
-                wsid[sockid].socket.emit('remoteExtenUpdate', exten.toJSON());
-                logger.info(IDLOG, 'emit event "remoteExtenUpdate" of exten "' + exten.getExten() + '" to remote site "' + wsid[sockid].siteName + '"');
+                wsid[sockid].socket.emit(EVT_REMOTE_EXTEN_UPDATE, exten.toJSON());
+                logger.info(IDLOG, 'emit event "' + EVT_REMOTE_EXTEN_UPDATE + '" of exten "' + exten.getExten() + '" to remote site "' + wsid[sockid].siteName + '"');
             }
 
         }
@@ -928,8 +944,12 @@ function restApi(site, url, method, headers, data, cb) {
                 var str = url + ' error: ' + err;
                 logger.error(IDLOG, str);
             }
-            else if (res.statusCode !== 200 &&
-                        !(res.statusCode === 401 && res.headers['www-authenticate'])) {
+            else if (
+                      // log the warning message only if the response status code is a
+                      // client or server error and it is not the authentication response
+                      (res.statusCode.toString().charAt(0) === '4' || res.statusCode.toString().charAt(0) === '5') &&
+                      !(res.statusCode === 401 && res.headers['www-authenticate'])
+                ) {
 
                 logger.warn(IDLOG, url + ' failed as user "' + remoteSites[site].user + '": res.statusCode ' + res.statusCode +
                                    (res.headers && res.headers.message ? (' - message: ' + res.headers.message) : ''));
@@ -1097,6 +1117,63 @@ function getAllRemoteSitesUsernames() {
 function getAllRemoteSitesOperatorGroups() {
     try {
         return allSitesOpGroups;
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Checks if a remote site exists.
+*
+* @method remoteSiteExists
+* @return {boolean} True if the remote site exists
+* @private
+*/
+function remoteSiteExists(site) {
+    try {
+        // check argument
+        if (typeof site !== 'string') {
+            throw new Error('wrong parameter');
+        }
+
+        if (remoteSites[site]) { return true; }
+        return false;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return false;
+    }
+}
+
+/**
+* Creates a new post-it for a remote user of a remote site.
+*
+* @method newRemotePostit
+* @param {object} data             The object with parameters
+*   @param {string} data.creator   The username of the creator
+*   @param {string} data.site      The remote site name
+*   @param {string} data.recipient The recipient username
+*   @param {string} data.text      The text of the message
+* @param {string} cb               The callback function
+*/
+function newRemotePostit(data, cb) {
+    try {
+        // check arguments
+        if (typeof data           !== 'object' ||
+            typeof data.creator   !== 'string' || typeof data.site !== 'string' ||
+            typeof data.recipient !== 'string' || typeof data.text !== 'string' ||
+            typeof cb             !== 'function') {
+
+            throw new Error('wrong parameters');
+        }
+
+        if (remoteSiteExists(data.site)) {
+            var url = REST_PROTO + '://' + remoteSites[data.site].hostname + '/webrest/postit/create'
+            restApi(data.site, url, 'POST', undefined, data, cb);
+        }
+        else {
+            cb('nonexistent remote site "' + data.site + '"');
+        }
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -1321,7 +1398,7 @@ function clientWssLoggedInHdlr(data, clSocket, site) {
         }
         logger.info(IDLOG, 'client wss logged in successfully to site "' + site + '" "' + remoteSites[site].hostname + '"');
 
-        clSocket.on('remoteExtenUpdate', function (dataObj) { clientWssRemoteExtenUpdateHdlr(dataObj, site); });
+        clSocket.on(EVT_REMOTE_EXTEN_UPDATE, function (dataObj) { clientWssRemoteExtenUpdateHdlr(dataObj, site); });
 
         wssClients[remoteSites[site].user] = clSocket;
         logger.info(IDLOG, 'authenticated client websocket to site "' + site + '" added in memory');
@@ -1349,7 +1426,7 @@ function clientWssRemoteExtenUpdateHdlr(data, site) {
         if (typeof data !== 'object' || typeof site !== 'string') {
             throw new Error('wrong parameters');
         }
-        logger.info(IDLOG, 'received event "remoteExtenUpdate" from remote site "' + site + '" "' + remoteSites[site].hostname + '" about exten "' + data.exten + '"');
+        logger.info(IDLOG, 'received event "' + EVT_REMOTE_EXTEN_UPDATE + '" from remote site "' + site + '" "' + remoteSites[site].hostname + '" about exten "' + data.exten + '"');
 
         if (typeof data.exten === 'string' &&
             allSitesOpExtensions[site] &&
@@ -1358,7 +1435,7 @@ function clientWssRemoteExtenUpdateHdlr(data, site) {
             allSitesOpExtensions[site][data.exten] = data;
             logger.info(IDLOG, 'updated exten "' + data.exten + '" data about remote site "' + site + '" "' + remoteSites[site].hostname + '"');
 
-            compComNethctiWs.sendEventToAllClients('remoteExtenUpdate', { remoteSite: site, data: data }, function (username) {
+            compComNethctiWs.sendEventToAllClients(EVT_REMOTE_EXTEN_UPDATE, { remoteSite: site, data: data }, function (username) {
                 return (compAuthorization.authorizeRemoteSiteUser(username) && compAuthorization.authorizeOpExtensionsUser(username));
             });
         }
@@ -1730,6 +1807,7 @@ exports.setCompUser                     = setCompUser;
 exports.getSiteName                     = getSiteName;
 exports.setCompPostit                   = setCompPostit;
 exports.isClientRemote                  = isClientRemote;
+exports.newRemotePostit                 = newRemotePostit;
 exports.setCompVoicemail                = setCompVoicemail;
 exports.setCompComNethctiWs             = setCompComNethctiWs;
 exports.setCompAuthorization            = setCompAuthorization;
