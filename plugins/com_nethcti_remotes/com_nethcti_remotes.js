@@ -20,8 +20,9 @@ var ioClient = require('socket.io-client');
 * Emitted to a all websocket client connection on remote extension update.
 *
 * @event remoteExtenUpdate
-* @param {object} exten The data about the remote extension
-*
+* @param {object} obj The data about the remote extension
+*   @param {object} obj.remoteSite The remote site name
+*   @param {object} obj.data       The extension data
 */
 /**
 * The name of the remote extension update event.
