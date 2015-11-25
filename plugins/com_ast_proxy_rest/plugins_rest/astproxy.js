@@ -513,6 +513,7 @@ var compConfigManager;
         * 1. [`astproxy/dnd`](#dndpost)
         * 1. [`astproxy/park`](#parkpost)
         * 1. [`astproxy/call`](#callpost)
+        * 1. [`astproxy/remote_call`](#remote_callpost)
         * 1. [`astproxy/cfvm`](#cfvmpost)
         * 1. [`astproxy/mute`](#mutepost)
         * 1. [`astproxy/unmute`](#unmutepost)
@@ -675,6 +676,22 @@ var compConfigManager;
         *
         *     { "number": "0123456789" }
         *     { "number": "0123456789", "endpointType": "extension", "endpointId": "214" }
+        *
+        * ---
+        *
+        * ### <a id="remote_callpost">**`astproxy/remote_call`**</a>
+        *
+        * Calls a remote extension of a remote site from a local extension. If the local extension is
+        * not specified it will uses the user default. The request must contains the following parameters:
+        *
+        * * `site: the remote site name`
+        * * `remoteExtenId: the remote extension to be called`
+        * * `[fromExtenId]: the local extension identifier that make the new call`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "site": "ranocchi", "remoteExtenId": "200" }
+        *     { "site": "ranocchi", "remoteExtenId": "200", "fromExtenId": "300" }
         *
         * ---
         *
@@ -1129,6 +1146,7 @@ var compConfigManager;
                     'send_dtmf',
                     'start_spy',
                     'txfer_tovm',
+                    'remote_call',
                     'pickup_conv',
                     'stop_record',
                     'mute_record',
@@ -1849,6 +1867,90 @@ var compConfigManager;
                         compUtil.net.sendHttp400(IDLOG, res);
                     }
 
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * Makes a new call to a remote extension of a remote site with the following REST API:
+            *
+            *     POST remote_call
+            *
+            * @method remot_call
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            remote_call: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+                    var token    = req.headers.authorization_token;
+
+                    // check parameters
+                    if (typeof req.params               !== 'object' ||
+                        typeof req.params.site          !== 'string' ||
+                        typeof req.params.remoteExtenId !== 'string' ||
+                        (req.params.fromExtenId && typeof req.params.fromExtenId !== 'string')) {
+
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    // check if the request coming from a remote site
+                    if (compComNethctiRemotes.isClientRemote(username, token)) {
+
+                        var remoteSiteName = compComNethctiRemotes.getSiteName(username, token);
+                        logger.warn(IDLOG, 'calling remote exten "' + req.params.remoteExtenId + '" from remote site ' +
+                                           '"' + remoteSiteName + '" user "' + username + '": not allowed from remote');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+                    else {
+                        if (typeof req.params.fromExtenId !== 'string') {
+                            req.params.fromExtenId = compConfigManager.getDefaultUserExtensionConf(username);
+                        }
+
+                        // checks permissions and endpoint ownership
+                        if (compAuthorization.authorizeAdminCallUser(username)  === true &&
+                            compAuthorization.authorizeRemoteSiteUser(username) === true) {
+
+                            logger.info(IDLOG, 'make new call to remote exten "' + req.params.remoteExtenId + '" ' +
+                                               ' of remote site "' + req.params.site + '" from local exten "' + req.params.fromExtenId +
+                                               '" by user "' + username + '": he has the "admin_call" & "remote_site" permissions');
+                        }
+                        else if (compAuthorization.verifyUserEndpointExten(username, req.params.fromExtenId) === false ||
+                                 compAuthorization.authorizeRemoteSiteUser(username) === false) {
+
+                            logger.warn(IDLOG, 'calling remote exten "' + req.params.remoteExtenId + '" ' +
+                                               'of remote site "' + req.params.site + '" from local exten "' + req.params.fromExtenId +
+                                               '" by user "' + username + '" failed: local exten "' + req.params.fromExtenId +
+                                               '" is not owned by user "' + username + '"');
+                            compUtil.net.sendHttp403(IDLOG, res);
+                            return;
+                        }
+
+                        // check the remote site existence
+                        if (!compComNethctiRemotes.remoteSiteExists(req.params.site)) {
+
+                            logger.warn(IDLOG, 'calling remote exten "' + req.params.remoteExtenId + '" ' +
+                                               'of remote site "' + req.params.site + '" from local exten "' + req.params.fromExtenId +
+                                               '" by user "' + username + '" failed: non existent remote site "' + req.params.site + '"');
+                            compUtil.net.sendHttp500(IDLOG, res, 'non existent remote site "' + req.params.site + '"');
+                            return;
+                        }
+
+                        var sitePrefixCall      = compComNethctiRemotes.getSitePrefixCall(req.params.site);
+                        req.params.number       = sitePrefixCall + req.params.remoteExtenId;
+                        req.params.endpointId   = req.params.fromExtenId;
+                        req.params.endpointType = 'extension';
+
+                        // if the user has enabled the automatic click2call then make an HTTP request
+                        // directly to the phone, otherwise make a new call by asterisk
+                        if (!compConfigManager.isAutomaticClick2callEnabled(username)) { asteriskCall(username, req, res); }
+                        else { ajaxPhoneCall(username, req, res); }
+                    }
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -3850,6 +3952,7 @@ var compConfigManager;
         exports.setPrivacy               = setPrivacy;
         exports.setCompUtil              = setCompUtil;
         exports.pickup_conv              = astproxy.pickup_conv;
+        exports.remote_call              = astproxy.remote_call;
         exports.stop_record              = astproxy.stop_record;
         exports.setCompUser              = setCompUser;
         exports.mute_record              = astproxy.mute_record;

@@ -1036,6 +1036,27 @@ function getSiteName(username, token) {
 }
 
 /**
+* Returns the prefix used to call the extensions of the remote site.
+*
+* @method getSitePrefixCall
+* @param  {string} site The name of the remote site
+* @return {string} The prefix used to call the remote site.
+*/
+function getSitePrefixCall(site) {
+    try {
+        // check argument
+        if (typeof site !== 'string') {
+            throw new Error('wrong parameter');
+        }
+        if (remoteSites[site] && typeof remoteSites[site].prefix ==='string') {
+            return remoteSites[site].prefix;
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Check if the user is an authenticated remote site that has already logged in.
 *
 * @method isClientRemote
@@ -1128,7 +1149,6 @@ function getAllRemoteSitesOperatorGroups() {
 *
 * @method remoteSiteExists
 * @return {boolean} True if the remote site exists
-* @private
 */
 function remoteSiteExists(site) {
     try {
@@ -1809,7 +1829,9 @@ exports.getSiteName                     = getSiteName;
 exports.setCompPostit                   = setCompPostit;
 exports.isClientRemote                  = isClientRemote;
 exports.newRemotePostit                 = newRemotePostit;
+exports.remoteSiteExists                = remoteSiteExists;
 exports.setCompVoicemail                = setCompVoicemail;
+exports.getSitePrefixCall               = getSitePrefixCall;
 exports.setCompComNethctiWs             = setCompComNethctiWs;
 exports.setCompAuthorization            = setCompAuthorization;
 exports.getNumConnectedClients          = getNumConnectedClients;

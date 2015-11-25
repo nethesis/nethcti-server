@@ -38,6 +38,20 @@ module.exports = function (options, imports, register) {
             getSiteName: comNethctiRemotes.getSiteName,
 
             /**
+            * It's the _remoteSiteExists_ method provided by _com\_nethcti\_ws_ module.
+            *
+            * @method remoteSiteExists
+            */
+            remoteSiteExists: comNethctiRemotes.remoteSiteExists,
+
+            /**
+            * It's the _getSitePrefixCall_ method provided by _com\_nethcti\_ws_ module.
+            *
+            * @method getSitePrefixCall
+            */
+            getSitePrefixCall: comNethctiRemotes.getSitePrefixCall,
+
+            /**
             * It's the _newRemotePostit_ method provided by _com\_nethcti\_ws_ module.
             *
             * @method newRemotePostit
