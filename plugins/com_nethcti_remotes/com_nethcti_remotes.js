@@ -1507,14 +1507,30 @@ function connectAllRemoteSites() {
             address  = 'https://' + remoteSites[site].hostname + ':' + remoteSites[site].port;
             logger.info(IDLOG, 'wss connecting to remote site "' + site + '" ' + address);
             var clientWss = ioClient.connect(address, opts);
-            clientWss.on('connect', function () {
-                logger.info(IDLOG, 'wss connected to remote site "' + site + '" ' + address);
-                clientRestApiLogin(clientWss, site);
-            });
+            clientWss.on('connect',    (function (siteName) { clientWssConnHdlr(clientWss, siteName, address); })(site));
             clientWss.on('authe_ok',   function (data) { clientWssLoggedInHdlr(data, clientWss, site); });
             clientWss.on('401',        function (data) { clientWss401Hdlr(data, site);  });
             clientWss.on('disconnect', function ()     { clientWssDisconnectHdlr(site); });
         }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Handler for a client websocket connection.
+*
+* @method clientWssConnHdlr
+* @param {object} clientWss The secure client websocket
+* @param {site}   site      The remote site name
+* @param {string} address   The url rest api
+* @private
+*/
+function clientWssConnHdlr(clientWss, site, address) {
+    try {
+        logger.info(IDLOG, 'wss connected to remote site "' + site + '" ' + address);
+        clientRestApiLogin(clientWss, site);
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
