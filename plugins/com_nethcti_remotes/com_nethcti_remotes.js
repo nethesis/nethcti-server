@@ -1488,7 +1488,7 @@ function connectAllRemoteSites() {
             reconnectionDelayMax: MAX_RECONNECTION_DELAY,
             query: 'type=remote'
         };
-        var site, address;
+        var site;
 
         // try to connect to all remote sites
         for (site in remoteSites) {
@@ -1502,16 +1502,31 @@ function connectAllRemoteSites() {
                 logger.warn(IDLOG, 'wrong configuration for remote site "' + site + '": skipped');
                 continue;
             }
-
-            // websocket connection
-            address  = 'https://' + remoteSites[site].hostname + ':' + remoteSites[site].port;
-            logger.info(IDLOG, 'wss connecting to remote site "' + site + '" ' + address);
-            var clientWss = ioClient.connect(address, opts);
-            clientWss.on('connect',    (function (siteName) { clientWssConnHdlr(clientWss, siteName, address); })(site));
-            clientWss.on('authe_ok',   function (data) { clientWssLoggedInHdlr(data, clientWss, site); });
-            clientWss.on('401',        function (data) { clientWss401Hdlr(data, site);  });
-            clientWss.on('disconnect', function ()     { clientWssDisconnectHdlr(site); });
+            connectRemoteSite(site, opts);
         }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Connects to a remote sites configured.
+*
+* @method connectRemoteSite
+* @param {string} site The remote site name
+* @param {object} opts The options used by websocket connection
+* @private
+*/
+function connectRemoteSite(site, opts) {
+    try {
+        var address  = 'https://' + remoteSites[site].hostname + ':' + remoteSites[site].port;
+        logger.info(IDLOG, 'wss connecting to remote site "' + site + '" ' + address);
+        var clientWss = ioClient.connect(address, opts);
+        clientWss.on('connect',    function ()     { clientWssConnHdlr(clientWss, site, address); });
+        clientWss.on('authe_ok',   function (data) { clientWssLoggedInHdlr(data, clientWss, site); });
+        clientWss.on('401',        function (data) { clientWss401Hdlr(data, site);  });
+        clientWss.on('disconnect', function ()     { clientWssDisconnectHdlr(site); });
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
