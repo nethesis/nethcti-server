@@ -9,7 +9,7 @@
         "async":            "0.2.9",
         "moment":           "2.1.0",
         "jsplugs":          "0.1.0",
-        "winston":          "0.7.3",
+        "winston":          "2.1.1",
         "iniparser":        "1.0.5",
         "sequelize":        "2.0.0-dev1",
         "mysql":            "2.0.0-alpha9",
