@@ -1505,6 +1505,12 @@ function clientWssDisconnectHdlr(site, address, clientWss) {
         clientWss.ctiReconnectAttempts = 0;
         logger.warn(IDLOG, 'client wss disconnected from site "' + site + '" "' + address + '"');
 
+        logger.info(IDLOG, 'remove all info about remote site "' + site + '"');
+        delete allSitesOpGroups[site];
+        delete allSitesUsernames[site];
+        delete allSitesOpExtensions[site];
+        delete allSitesUserEndpoints[site];
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
