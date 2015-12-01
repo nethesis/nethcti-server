@@ -47,15 +47,29 @@ var IDLOG = '[com_nethcti_remotes]';
 
 /**
 * Maximum delay waited between two reconnection attempts to a remote site.
+* It is incremented by a random amount of time between 0 and _MAX\_RANDOM\_DELAY_.
 *
 * @property MAX_RECONNECTION_DELAY
 * @type {number}
 * @private
 * @final
 * @readOnly
-* @default 10000
+* @default 60000
 */
-var MAX_RECONNECTION_DELAY = 10000;
+var MAX_RECONNECTION_DELAY = 60000;
+
+/**
+* Maximum amount of time used to product a random number
+* used for reconnection attempts.
+*
+* @property MAX_RANDOM_DELAY
+* @type {number}
+* @private
+* @final
+* @readOnly
+* @default 5000
+*/
+var MAX_RANDOM_DELAY = 5000;
 
 /**
 * Remote connection timeout.
@@ -1365,16 +1379,131 @@ function restApiSiteOpGroups(site) {
 }
 
 /**
+* Handler for a client websocket connecting.
+*
+* @method clientWssConnecting
+* @param {string} site    The remote site name
+* @param {string} address The remote site address
+* @private
+*/
+function clientWssConnecting(site, address) {
+    try {
+        logger.warn(IDLOG, 'client wss connecting to remote site "' + site + '" "' + address + '"');
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Returns a random integer between min (included) and max (included)
+* using Math.round() will give you a non-uniform distribution!
+*
+* @method getRandomIntInclusive
+* @param  {number} min Start interval number
+* @param  {number} max End interval number
+* @return {number} A random integer number between min (included) and max (included)
+* @private
+*/
+function getRandomIntInclusive(min, max) {
+    try {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Handler for a client websocket reconnection
+*
+* @method clientWssReconnecting
+* @param {string} site      The remote site name
+* @param {string} address   The remote site address
+* @param {object} clientWss The client websocket secure
+* @private
+*/
+function clientWssReconnecting(site, address, clientWss) {
+    try {
+        clientWss.ctiReconnectAttempts += 1;
+        var delay = MAX_RECONNECTION_DELAY + getRandomIntInclusive(0, MAX_RANDOM_DELAY);
+        logger.warn(IDLOG, 'client wss reconnecting to remote site "' + site + '" "' + address + '": ' +
+                           'delay "' + delay + '" msec attempt #' + clientWss.ctiReconnectAttempts);
+        clientWss.socket.reconnectionDelay = delay;
+        clientWss.socket.reconnectionAttempts -= 1;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Handler for a client websocket reconnection.
+*
+* @method clientWssReconnect
+* @param {string} site      The remote site name
+* @param {string} address   The remote site address
+* @param {object} clientWss The client websocket secure
+* @private
+*/
+function clientWssReconnect(site, address, clientWss) {
+    try {
+        logger.warn(IDLOG, 'client wss reconnection success to remote site "' + site + '" "' + address + '": attempt #' + clientWss.ctiReconnectAttempts);
+        clientWss.ctiReconnectAttempts = 0;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Handler for a client websocket error.
+*
+* @method clientWssError
+* @param {object} err       The error object
+* @param {string} site      The remote site name
+* @param {string} address   The remote site address
+* @param {object} clientWss The client websocket secure
+* @private
+*/
+function clientWssError(err, site, address, clientWss) {
+    try {
+        clientWss.ctiReconnectAttempts = 0;
+        logger.error(IDLOG, 'client wss error of remote site "' + site + '" "' + address + '": ' + err);
+
+        // the failure of a wss connection during the boot does not start the reconnection,
+        // so it is needed to restart the connection with the following. Otherwise, a disconnection
+        // at runtime cause the automatic reconnection
+        if (clientWss.socket.connected    === false &&
+            clientWss.socket.connecting   === false &&
+            clientWss.socket.reconnecting === false) {
+
+            var delay = MAX_RECONNECTION_DELAY + getRandomIntInclusive(0, MAX_RANDOM_DELAY);
+            logger.warn(IDLOG, 'try to reconnect to remote site "' + site + '" "' + address + '" in ' + delay + ' msec');
+            setTimeout(function () {
+                clientWss.socket.connect();
+            }, delay);
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Handler for a client websocket disconnection.
 *
 * @method clientWssDisconnectHdlr
-* @param {string} site The site name
+* @param {string} site      The site name
+* @param {string} address   The remote site address
+* @param {object} clientWss The client websocket secure
 * @private
 */
-function clientWssDisconnectHdlr(site) {
+function clientWssDisconnectHdlr(site, address, clientWss) {
     try {
-        if (typeof site !== 'string') { throw new Error('wrong parameters'); }
-        logger.warn(IDLOG, 'client wss disconnected from site "' + site + '" "' + remoteSites[site].hostname + '"');
+        if (typeof clientWss !== 'object' || typeof site !== 'string' || typeof address !== 'string') {
+            throw new Error('wrong parameters');
+        }
+        clientWss.ctiReconnectAttempts = 0;
+        logger.warn(IDLOG, 'client wss disconnected from site "' + site + '" "' + address + '"');
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -1385,16 +1514,21 @@ function clientWssDisconnectHdlr(site) {
 * Handler for a failed login operation through client websocket.
 *
 * @method clientWss401Hdlr
-* @param {object} data The data received from the event
-* @param {string} site The site name
+* @param {object} data      The data received from the event
+* @param {string} site      The site name
+* @param {string} address   The remote site address
+* @param {object} clientWss The client websocket secure
 * @private
 */
-function clientWss401Hdlr(data, site) {
+function clientWss401Hdlr(data, site, address, clientWss) {
     try {
-        if (typeof data !== 'object' || typeof site !== 'string') {
+        if (typeof data    !== 'object' || typeof site      !== 'string' ||
+            typeof address !== 'string' || typeof clientWss !== 'object') {
+
             throw new Error('wrong parameters');
         }
-        logger.warn(IDLOG, 'client wss login failed to site "' + site + '" "' + remoteSites[site].hostname + '"');
+        clientWss.ctiReconnectAttempts = 0;
+        logger.warn(IDLOG, 'client wss login failed to site "' + site + '" "' + address + '"');
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -1406,19 +1540,19 @@ function clientWss401Hdlr(data, site) {
 * @method clientWssLoggedInHdlr
 * @param {object} data     The data received from the event
 * @param {object} clSocket The client socket connected to remote site
-*   @param {string} clSocket.ctiTokenAuthe The 
+*   @param {string} clSocket.ctiTokenAuthe The authentication token
 * @param {string} site     The site name
+* @param {string} address  The remote site address
 * @private
 */
-function clientWssLoggedInHdlr(data, clSocket, site) {
+function clientWssLoggedInHdlr(data, clSocket, site, address) {
     try {
-        if (typeof clSocket !== 'object' ||
-            typeof data     !== 'object' ||
-            typeof site     !== 'string') {
+        if (typeof clSocket !== 'object' || typeof address !== 'string' ||
+            typeof data     !== 'object' || typeof site    !== 'string') {
 
             throw new Error('wrong parameters');
         }
-        logger.info(IDLOG, 'client wss logged in successfully to site "' + site + '" "' + remoteSites[site].hostname + '"');
+        logger.warn(IDLOG, 'client wss logged in successfully to site "' + site + '" "' + address + '"');
 
         clSocket.on(EVT_REMOTE_EXTEN_UPDATE, function (dataObj) { clientWssRemoteExtenUpdateHdlr(dataObj, site); });
 
@@ -1481,12 +1615,12 @@ function connectAllRemoteSites() {
         https.globalAgent.options.rejectUnauthorized = false;
 
         var opts = {
-            agent: https.globalAgent,
-            timeout: CONNECTION_TIMEOUT,
-            reconnection: true,
-            randomizationFactor: 0.5,
-            reconnectionDelayMax: MAX_RECONNECTION_DELAY,
-            query: 'type=remote'
+            'transports': [ 'websocket' ],
+            'connect timeout': CONNECTION_TIMEOUT,
+            'try multiple transports': false,
+            'reconnect': true,
+            'reconnection delay': MAX_RECONNECTION_DELAY,
+            'query': 'type=remote'
         };
         var site;
 
@@ -1522,10 +1656,15 @@ function connectRemoteSite(site, opts) {
         var address  = 'https://' + remoteSites[site].hostname + ':' + remoteSites[site].port;
         logger.info(IDLOG, 'wss connecting to remote site "' + site + '" ' + address);
         var clientWss = ioClient.connect(address, opts);
-        clientWss.on('connect',    function ()     { clientWssConnHdlr(clientWss, site, address); });
-        clientWss.on('authe_ok',   function (data) { clientWssLoggedInHdlr(data, clientWss, site); });
-        clientWss.on('401',        function (data) { clientWss401Hdlr(data, site);  });
-        clientWss.on('disconnect', function ()     { clientWssDisconnectHdlr(site); });
+        clientWss.ctiReconnectAttempts = 0;
+        clientWss.on('connect',      function ()     { clientWssConnHdlr(clientWss, site, address); });
+        clientWss.on('authe_ok',     function (data) { clientWssLoggedInHdlr(data, clientWss, site, address); });
+        clientWss.on('401',          function (data) { clientWss401Hdlr(data, site, address, clientWss); });
+        clientWss.on('disconnect',   function ()     { clientWssDisconnectHdlr(site, address, clientWss); });
+        clientWss.on('error',        function (err)  { clientWssError(err, site, address, clientWss); });
+        clientWss.on('connecting',   function ()     { clientWssConnecting(site, address); });
+        clientWss.on('reconnect',    function ()     { clientWssReconnect(site, address, clientWss); });
+        clientWss.on('reconnecting', function ()     { clientWssReconnecting(site, address, clientWss); });
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -1543,7 +1682,8 @@ function connectRemoteSite(site, opts) {
 */
 function clientWssConnHdlr(clientWss, site, address) {
     try {
-        logger.info(IDLOG, 'wss connected to remote site "' + site + '" ' + address);
+        clientWss.ctiReconnectAttempts = 0;
+        logger.warn(IDLOG, 'client wss connected to remote site "' + site + '" ' + address);
         clientRestApiLogin(clientWss, site);
 
     } catch (err) {
