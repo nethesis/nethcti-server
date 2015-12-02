@@ -18,7 +18,7 @@ var request  = require('request');
 var ioClient = require('socket.io-client');
 
 /**
-* Emitted to a all websocket client connection on remote extension update.
+* Emitted to all websocket client connection on remote extension update.
 *
 * @event remoteExtenUpdate
 * @param {object} obj The data about the remote extension
@@ -33,6 +33,22 @@ var ioClient = require('socket.io-client');
 * @default "remoteExtenUpdate"
 */
 var EVT_REMOTE_EXTEN_UPDATE = 'remoteExtenUpdate';
+
+/**
+* Emitted to all websocket client connection on user endpoint presence update.
+*
+* @event remoteEndpointPresenceUpdate
+* @param {object} data The data about the user endpoint presence
+*
+*/
+/**
+* The name of the remote endpoint presence update event.
+*
+* @property EVT_REMOTE_ENDPOINT_PRESENCE_UPDATE
+* @type string
+* @default "remoteEndpointPresenceUpdate"
+*/
+var EVT_REMOTE_ENDPOINT_PRESENCE_UPDATE = 'remoteEndpointPresenceUpdate';
 
 /**
 * Emitted to a all websocket client connection on remote site update.
@@ -609,7 +625,7 @@ function updateNewPostitListener(recipient, list) {
 
 /**
 * Handler for the _endpointPresenceChanged_ event emitted by _user_
-* component. The endpoint presence has changed, so notifies all clients.
+* component. The endpoint presence has changed, so notifies all remote sites.
 *
 * @method endpointPresenceChangedListener
 * @param {string} username     The username of the endpoint owner
@@ -620,22 +636,25 @@ function updateNewPostitListener(recipient, list) {
 function endpointPresenceChangedListener(username, endpointType, endpoint) {
     try {
         // check parameters
-        if (   typeof username     !== 'string'
-            || typeof endpointType !== 'string' || typeof endpoint !== 'object') {
+        if (typeof username     !== 'string' ||
+            typeof endpointType !== 'string' || typeof endpoint !== 'object') {
 
             throw new Error('wrong parameters');
         }
 
-        logger.info(IDLOG, 'received event "endpointPresenceChanged" for endpoint "' + endpointType + '" of the user "' + username + '"');
-        logger.info(IDLOG, 'emit event "endpointPresenceUpdate" for endpoint "' + endpointType + '" of the user "' + username + '" to websockets');
+        logger.info(IDLOG, 'received event "' + compUser.EVT_ENDPOINT_PRESENCE_CHANGED + '" for endpoint "' + endpointType + '" of the user "' + username + '"');
 
-        // emits the event to all users
-        wsServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_CLEAR).emit('endpointPresenceUpdate', endpoint);
-        wssServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_CLEAR).emit('endpointPresenceUpdate', endpoint);
+        // cycle in each remote site websocket to send the event about the user endpoint presence update.
+        var sockid;
+        for (sockid in wsid) {
 
-        wsServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY).emit('endpointPresenceUpdate', endpoint);
-        wssServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY).emit('endpointPresenceUpdate', endpoint);
+            if (wsid[sockid] && wsid[sockid].socket && wsid[sockid].socket.emit) {
 
+                wsid[sockid].socket.emit(EVT_REMOTE_ENDPOINT_PRESENCE_UPDATE, endpoint);
+                logger.info(IDLOG, 'emit event "' + EVT_REMOTE_ENDPOINT_PRESENCE_UPDATE + '" for endpoint "' + endpointType + '" ' +
+                                   'of the user "' + username + '" to remote site "' + wsid[sockid].siteName + '"');
+            }
+        }
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -652,11 +671,11 @@ function endpointPresenceChangedListener(username, endpointType, endpoint) {
 */
 function extenChanged(exten) {
     try {
-        logger.info(IDLOG, 'received local event extenChanged for extension ' + exten.getExten());
+        logger.info(IDLOG, 'received local event "' + astProxy.EVT_EXTEN_CHANGED + '" for extension ' + exten.getExten());
 
         // cycle in each remote site websocket to send the event about an extension update.
         // If the data sent has some conversations, they have phone numbers in clear text.
-        var sockid, username;
+        var sockid;
         for (sockid in wsid) {
 
             if (wsid[sockid] && wsid[sockid].socket && wsid[sockid].socket.emit) {
@@ -664,7 +683,6 @@ function extenChanged(exten) {
                 wsid[sockid].socket.emit(EVT_REMOTE_EXTEN_UPDATE, exten.toJSON());
                 logger.info(IDLOG, 'emit event "' + EVT_REMOTE_EXTEN_UPDATE + '" of exten "' + exten.getExten() + '" to remote site "' + wsid[sockid].siteName + '"');
             }
-
         }
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -1513,6 +1531,7 @@ function clientWssLoggedInHdlr(data, clSocket, site, address) {
         logger.warn(IDLOG, 'client wss logged in successfully to site "' + site + '" "' + address + '"');
 
         clSocket.on(EVT_REMOTE_EXTEN_UPDATE, function (dataObj) { clientWssRemoteExtenUpdateHdlr(dataObj, site); });
+        clSocket.on(EVT_REMOTE_ENDPOINT_PRESENCE_UPDATE, function (dataObj) { clientWssRemoteEndpointPresenceUpdateHdlr(dataObj, site); });
 
         wssClients[site] = clSocket;
         logger.info(IDLOG, 'authenticated client websocket to site "' + site + '" added in memory');
@@ -1570,6 +1589,41 @@ function clientWssRemoteExtenUpdateHdlr(data, site) {
 
             compComNethctiWs.sendEventToAllClients(EVT_REMOTE_EXTEN_UPDATE, { remoteSite: site, data: data }, function (username) {
                 return (compAuthorization.authorizeRemoteSiteUser(username) && compAuthorization.authorizeOpExtensionsUser(username));
+            });
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Handler of a remote endpoint presence update received from a remote site.
+*
+* @method clientWssRemoteEndpointPresenceUpdateHdlr
+* @param {object} data The data received from the event
+* @param {string} site The site name
+* @private
+*/
+function clientWssRemoteEndpointPresenceUpdateHdlr(data, site) {
+    try {
+        if (typeof data !== 'object' || typeof site !== 'string') {
+            throw new Error('wrong parameters');
+        }
+        var remoteUser   = (Object.keys(data))[0];
+        var endpointType = (Object.keys(data[remoteUser]))[0];
+
+        logger.info(IDLOG, 'received event "' + EVT_REMOTE_ENDPOINT_PRESENCE_UPDATE + '" from remote site "' + site + '" ' +
+                           '"' + remoteSites[site].hostname + '" about remote user "' + remoteUser + '" of endpointType "' + endpointType + '"');
+
+        if (allSitesUserEndpoints[site] &&
+            allSitesUserEndpoints[site][remoteUser] &&
+            allSitesUserEndpoints[site][remoteUser][endpointType]) {
+
+            allSitesUserEndpoints[site][remoteUser][endpointType] = data[remoteUser][endpointType];
+            logger.info(IDLOG, 'updated endpoint "' + endpointType + '" presence status of remote user "' + remoteUser + '" of remote site "' + site + '"');
+
+            compComNethctiWs.sendEventToAllClients(EVT_REMOTE_ENDPOINT_PRESENCE_UPDATE, { remoteSite: site, data: data }, function (username) {
+                return compAuthorization.authorizeRemoteSiteUser(username);
             });
         }
     } catch (err) {
@@ -1677,6 +1731,7 @@ function clientWssConnHdlr(clientWss, site, address) {
 function start() {
     try {
         setAstProxyListeners();
+        setUserListeners();
         connectAllRemoteSites();
 
         // start the automatic update of token expiration of all remote sites that are connected by wss.

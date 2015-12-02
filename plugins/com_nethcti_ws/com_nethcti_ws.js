@@ -34,6 +34,22 @@ var EventEmitter = require('events').EventEmitter;
 var EVT_EXTEN_UPDATE = 'extenUpdate';
 
 /**
+* Emitted to a websocket client connection on user endpoint presence update.
+*
+* @event endpointPresenceUpdate
+* @param {object} data The data about the user endpoint presence
+*
+*/
+/**
+* The name of the endpoint presence update event.
+*
+* @property EVT_ENDPOINT_PRESENCE_UPDATE
+* @type string
+* @default "endpointPresenceUpdate"
+*/
+var EVT_ENDPOINT_PRESENCE_UPDATE = 'endpointPresenceUpdate';
+
+/**
 * Fired when a websocket client connection has been closed.
 *
 * @event wsClientDisonnection
@@ -650,15 +666,16 @@ function endpointPresenceChangedListener(username, endpointType, endpoint) {
             throw new Error('wrong parameters');
         }
 
-        logger.info(IDLOG, 'received event "endpointPresenceChanged" for endpoint "' + endpointType + '" of the user "' + username + '"');
-        logger.info(IDLOG, 'emit event "endpointPresenceUpdate" for endpoint "' + endpointType + '" of the user "' + username + '" to websockets');
+        logger.info(IDLOG, 'received event "' + compUser.EVT_ENDPOINT_PRESENCE_CHANGED + '" for endpoint "' + endpointType + '" of the user "' + username + '"');
+        logger.info(IDLOG, 'emit event "' + EVT_ENDPOINT_PRESENCE_UPDATE + '" for endpoint "' +
+                           endpointType + '" of the user "' + username + '" to websockets');
 
         // emits the event to all users
-        wsServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_CLEAR).emit('endpointPresenceUpdate', endpoint);
-        wssServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_CLEAR).emit('endpointPresenceUpdate', endpoint);
+        wsServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_CLEAR).emit(EVT_ENDPOINT_PRESENCE_UPDATE, endpoint);
+        wssServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_CLEAR).emit(EVT_ENDPOINT_PRESENCE_UPDATE, endpoint);
 
-        wsServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY).emit('endpointPresenceUpdate', endpoint);
-        wssServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY).emit('endpointPresenceUpdate', endpoint);
+        wsServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY).emit(EVT_ENDPOINT_PRESENCE_UPDATE, endpoint);
+        wssServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY).emit(EVT_ENDPOINT_PRESENCE_UPDATE, endpoint);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -713,7 +730,7 @@ function sendEventToAllClients(evname, data, fn) {
 */
 function extenChanged(exten) {
     try {
-        logger.info(IDLOG, 'received event extenChanged for extension ' + exten.getExten());
+        logger.info(IDLOG, 'received event "' + astProxy.EVT_EXTEN_CHANGED + '" for extension ' + exten.getExten());
         logger.info(IDLOG, 'emit event "' + EVT_EXTEN_UPDATE + '" for extension ' + exten.getExten() + ' to websockets');
 
         // cycle in each websocket to send the event about an extension update. If the websocket user

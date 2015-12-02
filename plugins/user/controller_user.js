@@ -40,7 +40,7 @@ var IDLOG = '[controller_user]';
 /**
 * The name of the user endpoint presence changed event.
 *
-* @property EVT_USER_ENDPOINT_CHANGED
+* @property EVT_ENDPOINT_PRESENCE_CHANGED
 * @type string
 * @default "endpointPresenceChanged"
 */

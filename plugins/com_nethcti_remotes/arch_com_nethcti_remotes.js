@@ -136,7 +136,7 @@ module.exports = function (options, imports, register) {
             comNethctiRemotes.setCompComNethctiWs(imports.com_nethcti_ws);
             comNethctiRemotes.setCompAuthorization(imports.authorization);
             comNethctiRemotes.config('/etc/nethcti/remote_sites.json');
-            //comNethctiRemotes.setCompUser(imports.user);
+            comNethctiRemotes.setCompUser(imports.user);
             //comNethctiRemotes.setCompPostit(imports.postit);
             //comNethctiRemotes.setCompVoicemail(imports.voicemail);
             comNethctiRemotes.start();
