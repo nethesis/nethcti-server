@@ -12,6 +12,7 @@
 * @static
 */
 var fs       = require('fs');
+var async    = require('async');
 var https    = require('https');
 var request  = require('request');
 var ioClient = require('socket.io-client');
@@ -32,6 +33,23 @@ var ioClient = require('socket.io-client');
 * @default "remoteExtenUpdate"
 */
 var EVT_REMOTE_EXTEN_UPDATE = 'remoteExtenUpdate';
+
+/**
+* Emitted to a all websocket client connection on remote site update.
+*
+* @event remoteSiteUpdate
+* @param {object} obj The data about the remote site
+*   @param {object} obj.remoteSite The remote site name
+*   @param {object} obj.data       The remote site data
+*/
+/**
+* The name of the remote site update event.
+*
+* @property EVT_REMOTE_SITE_UPDATE
+* @type string
+* @default "remoteSiteUpdate"
+*/
+var EVT_REMOTE_SITE_UPDATE = 'remoteSiteUpdate';
 
 /**
 * The module identifier used by the logger.
@@ -654,6 +672,34 @@ function extenChanged(exten) {
 }
 
 /**
+* Returns the status data about the remote site.
+*
+* @method getRemoteSiteStatus
+* @param  {string} site The remote site name
+* @return {object} The status data about the remote site.
+* @private
+*/
+function getRemoteSiteStatus(site) {
+    try {
+        if (typeof site !== 'string') { throw new Error('wrong parameter'); }
+
+        // check if there is the client websocket connected to the remote site
+        if (wssClients[site] &&
+            wssClients[site].socket &&
+            wssClients[site].socket.connected === true) {
+
+            return { connected: true };
+        }
+        else {
+            return { connected: false };
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return {};
+    }
+}
+
+/**
 * Returns the list of all remote sites status data.
 *
 * @method getAllRemoteSites
@@ -665,19 +711,7 @@ function getAllRemoteSites() {
         var result = {};
 
         for (site in remoteSites) {
-
-            result[site] = {};
-
-            // check if there is the client websocket connected to the remote site
-            if (wssClients[site] &&
-                wssClients[site].socket &&
-                wssClients[site].socket.connected === true) {
-
-                result[site].connected = true;
-            }
-            else {
-                result[site].connected = false;
-            }
+            result[site] = getRemoteSiteStatus(site);
         }
         return result;
 
@@ -1090,14 +1124,15 @@ function newRemotePostit(data, cb) {
 * Gets all the user endpoints from the specified remote site.
 *
 * @method restApiSiteUserEndpoint
-* @param {string} site The remote site name
+* @param {string}   site The remote site name
+* @param {function} cb   The callback function
 * @private
 */
-function restApiSiteUserEndpoint(site) {
+function restApiSiteUserEndpoint(site, cb) {
     try {
-        // check argument
-        if (typeof site !== 'string') {
-            throw new Error('wrong parameter');
+        // check arguments
+        if (typeof site !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
         }
 
         var url = REST_PROTO + '://' + remoteSites[site].hostname + '/webrest/configmanager/alluserendpoints'
@@ -1106,6 +1141,7 @@ function restApiSiteUserEndpoint(site) {
                 var results = JSON.parse(body);
                 if (typeof results !== 'object') {
                     logger.warn(IDLOG, 'received bad results getting user endpoints of remote site "' + site + '": body =' + body);
+                    cb('wrong results');
                     return;
                 }
 
@@ -1117,13 +1153,16 @@ function restApiSiteUserEndpoint(site) {
                                        ' user endpoints of remote site "' + site + '": "' + Object.keys(results) + '"');
                     allSitesUserEndpoints[site] = results;
                 }
+                cb();
             } catch (err) {
                 logger.error(IDLOG, 'received bad results getting user endpoints of remote site "' + site + '": body =' + body);
                 logger.error(IDLOG, err.stack);
+                cb(err);
             }
         });
     } catch (err) {
         logger.error(IDLOG, err.stack);
+        cb(err);
     }
 }
 
@@ -1131,14 +1170,15 @@ function restApiSiteUserEndpoint(site) {
 * Gets all the usernames from the specified remote site.
 *
 * @method restApiSiteUsernames
-* @param {string} site The remote site name
+* @param {string}   site The remote site name
+* @param {function} cb   The callback function
 * @private
 */
-function restApiSiteUsernames(site) {
+function restApiSiteUsernames(site, cb) {
     try {
-        // check argument
-        if (typeof site !== 'string') {
-            throw new Error('wrong parameter');
+        // check arguments
+        if (typeof site !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
         }
 
         var url = REST_PROTO + '://' + remoteSites[site].hostname + '/webrest/configmanager/usernames'
@@ -1147,6 +1187,7 @@ function restApiSiteUsernames(site) {
                 var results = JSON.parse(body);
                 if (typeof results !== 'object') {
                     logger.warn(IDLOG, 'received bad results getting usernames of remote site "' + site + '": body =' + body);
+                    cb('wrong results');
                     return;
                 }
 
@@ -1158,13 +1199,16 @@ function restApiSiteUsernames(site) {
                                        ' usernames of remote site "' + site + '": "' + Object.keys(results) + '"');
                     allSitesUsernames[site] = results;
                 }
+                cb();
             } catch (err) {
                 logger.error(IDLOG, 'received bad results getting usernames of remote site "' + site + '": body =' + body);
                 logger.error(IDLOG, err.stack);
+                cb(err);
             }
         });
     } catch (err) {
         logger.error(IDLOG, err.stack);
+        cb(err);
     }
 }
 
@@ -1172,14 +1216,15 @@ function restApiSiteUsernames(site) {
 * Gets all the extensions from the specified remote site.
 *
 * @method restApiSiteOpExtensions
-* @param {string} site The remote site name
+* @param {string}   site The remote site name
+* @param {function} cb   The callback function
 * @private
 */
-function restApiSiteOpExtensions(site) {
+function restApiSiteOpExtensions(site, cb) {
     try {
-        // check argument
-        if (typeof site !== 'string') {
-            throw new Error('wrong parameter');
+        // check arguments
+        if (typeof site !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
         }
 
         var url = REST_PROTO + '://' + remoteSites[site].hostname + '/webrest/astproxy/extensions';
@@ -1188,6 +1233,7 @@ function restApiSiteOpExtensions(site) {
                 var results = JSON.parse(body);
                 if (typeof results !== 'object') {
                     logger.warn(IDLOG, 'received bad results getting op extensions of remote site "' + site + '": body =' + body);
+                    cb('wrong results');
                     return;
                 }
 
@@ -1199,13 +1245,16 @@ function restApiSiteOpExtensions(site) {
                                        ' op extensions of remote site "' + site + '": "' + Object.keys(results) + '"');
                     allSitesOpExtensions[site] = results;
                 }
+                cb();
             } catch (err) {
                 logger.error(IDLOG, 'received bad results getting op extensions of remote site "' + site + '": body =' + body);
                 logger.error(IDLOG, err.stack);
+                cb(err);
             }
         });
     } catch (err) {
         logger.error(IDLOG, err.stack);
+        cb(err);
     }
 }
 
@@ -1213,14 +1262,15 @@ function restApiSiteOpExtensions(site) {
 * Gets all the operator group panels from the specified remote site.
 *
 * @method restApiSiteOpGroups
-* @param {string} site The remote site name
+* @param {string}   site The remote site name
+* @param {function} cb   The callback function
 * @private
 */
-function restApiSiteOpGroups(site) {
+function restApiSiteOpGroups(site, cb) {
     try {
-        // check argument
-        if (typeof site !== 'string') {
-            throw new Error('wrong parameter');
+        // check arguments
+        if (typeof site !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
         }
 
         var url = REST_PROTO + '://' + remoteSites[site].hostname + '/webrest/astproxy/opgroups';
@@ -1229,6 +1279,7 @@ function restApiSiteOpGroups(site) {
                 var results = JSON.parse(body);
                 if (typeof results !== 'object') {
                     logger.warn(IDLOG, 'received bad results getting op groups of remote site "' + site + '": body =' + body);
+                    cb('wrong results');
                     return;
                 }
 
@@ -1240,13 +1291,16 @@ function restApiSiteOpGroups(site) {
                                        ' op groups of remote site "' + site + '": "' + Object.keys(results) + '"');
                     allSitesOpGroups[site] = results;
                 }
+                cb();
             } catch (err) {
                 logger.error(IDLOG, 'received bad results getting op groups of remote site "' + site + '": body =' + body);
                 logger.error(IDLOG, err.stack);
+                cb(err);
             }
         });
     } catch (err) {
         logger.error(IDLOG, err.stack);
+        cb(err);
     }
 }
 
@@ -1384,6 +1438,31 @@ function clientWssDisconnectHdlr(site, address, clientWss) {
         delete allSitesUserEndpoints[site];
         delete wssClients[site];
 
+        sendClientWssRemoteSiteUpdateStatus(site);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Updates all local clients about the status data of the remote site.
+*
+* @method sendClientWssRemoteSiteUpdateStatus
+* @param {string} site The remote site name
+* @private
+*/
+function sendClientWssRemoteSiteUpdateStatus(site) {
+    try {
+        if (typeof site !== 'string') { throw new Error('wrong parameter'); }
+
+        var data = {};
+        data[site] = getRemoteSiteStatus(site);
+
+        compComNethctiWs.sendEventToAllClients(EVT_REMOTE_SITE_UPDATE, data, function (username) {
+            return compAuthorization.authorizeRemoteSiteUser(username);
+        });
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -1438,11 +1517,30 @@ function clientWssLoggedInHdlr(data, clSocket, site, address) {
         wssClients[site] = clSocket;
         logger.info(IDLOG, 'authenticated client websocket to site "' + site + '" added in memory');
 
-        restApiSiteOpGroups(site);
-        restApiSiteOpExtensions(site);
-        restApiSiteUsernames(site);
-        restApiSiteUserEndpoint(site);
-
+        async.parallel([
+            function (callback) {
+                restApiSiteOpGroups(site, function (err) {
+                    callback();
+                });
+            },
+            function (callback) {
+                restApiSiteOpExtensions(site, function (err) {
+                    callback();
+                });
+            },
+            function (callback) {
+                restApiSiteUsernames(site, function (err) {
+                    callback();
+                });
+            },
+            function (callback) {
+                restApiSiteUserEndpoint(site, function (err) {
+                    callback();
+                });
+            }
+        ], function () {
+            sendClientWssRemoteSiteUpdateStatus(site);
+        });
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
