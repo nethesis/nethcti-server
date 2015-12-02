@@ -185,6 +185,7 @@ function setCompUtil(comp) {
         *
         * 1. [`configmanager/userconf`](#userconfget)
         * 1. [`configmanager/usernames`](#usernamesget)
+        * 1. [`configmanager/remote_sites`](#remote_sitesget)
         * 1. [`configmanager/remote_usernames`](#remote_usernamesget)
         * 1. [`configmanager/chatserver`](#chatserverget)
         * 1. [`configmanager/userendpoints`](#userendpointsget)
@@ -257,6 +258,23 @@ function setCompUtil(comp) {
          "alessandro": {
               "name": "User 2",
               "surname": "Surname 2"
+         }
+     }
+        *
+        * ---
+        *
+        * ### <a id="remote_sitesget">**`configmanager/remote_sites`**</a>
+        *
+        * Returns the list of all the remote sites with their staus data.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "nethesis": {
+             "connected": true
+         },
+         "ranocchi": {
+             "connected": false
          }
      }
         *
@@ -691,6 +709,7 @@ function setCompUtil(comp) {
                 *   @param {string} userconf                To get all user configurations
                 *   @param {string} usernames               To get the list of all the username
                 *   @param {string} chatserver              To get the server chat parameters
+                *   @param {string} remote_sites            To get the list of all remote sites with their status data
                 *   @param {string} userendpoints           To get all the endpoints of the user
                 *   @param {string} queue_autologin         To get the automatic queue login when user login into the cti
                 *   @param {string} queue_autologout        To get the automatic queue logout when user logout from cti
@@ -705,6 +724,7 @@ function setCompUtil(comp) {
                     'userconf',
                     'usernames',
                     'chatserver',
+                    'remote_sites',
                     'userendpoints',
                     'queue_autologin',
                     'queue_autologout',
@@ -821,9 +841,8 @@ function setCompUtil(comp) {
             */
             remote_usernames: function (req, res, next) {
                 try {
-                    var username         = req.headers.authorization_user;
-                    var token            = req.headers.authorization_token;
-                    var usernameWithData = compUser.getUsernamesWithData();
+                    var username = req.headers.authorization_user;
+                    var token    = req.headers.authorization_token;
 
                     // check if the request coming from a remote site
                     if (compComNethctiRemotes.isClientRemote(username, token)) {
@@ -847,6 +866,50 @@ function setCompUtil(comp) {
                         logger.info(IDLOG, 'sent all remote sites usernames "' + Object.keys(allRemoteUsernames) + '" ' +
                                            'to user "' + username + '" ' + res.connection.remoteAddress);
                         res.send(200, allRemoteUsernames);
+                    }
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * Gets the list of all remote sites with their status data with the following REST API:
+            *
+            *     remote_sites
+            *
+            * @method remote_sites
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            remote_sites: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+                    var token    = req.headers.authorization_token;
+
+                    // check if the request coming from a remote site
+                    if (compComNethctiRemotes.isClientRemote(username, token)) {
+
+                        var remoteSiteName = compComNethctiRemotes.getSiteName(username, token);
+                        logger.warn(IDLOG, 'requesting all remote sites status data by remote site "' + remoteSiteName + '": ' +
+                                           'authorization failed for user "' + username + '"');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+                    else {
+                        // check if the user has the remote site authorizations
+                        if (compAuthorization.authorizeRemoteSiteUser(username) !== true) {
+
+                            logger.warn(IDLOG, 'requesting all remote sites status data: authorization failed for user "' + username + '"');
+                            compUtil.net.sendHttp403(IDLOG, res);
+                            return;
+                        }
+
+                        var allRemoteSites = compComNethctiRemotes.getAllRemoteSites();
+                        logger.info(IDLOG, 'sent all remote sites status data "' + Object.keys(allRemoteSites) + '" ' +
+                                           'to user "' + username + '" ' + res.connection.remoteAddress);
+                        res.send(200, allRemoteSites);
                     }
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
@@ -1288,6 +1351,7 @@ function setCompUtil(comp) {
         exports.chatserver           = configmanager.chatserver;
         exports.setCompUtil          = setCompUtil;
         exports.setCompUser          = setCompUser;
+        exports.remote_sites         = configmanager.remote_sites;
         exports.notification         = configmanager.notification;
         exports.userendpoints        = configmanager.userendpoints;
         exports.queue_autologin      = configmanager.queue_autologin;

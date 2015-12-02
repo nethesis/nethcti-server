@@ -153,8 +153,8 @@ var allSitesUsernames = {};
 var allSitesOpGroups = {};
 
 /**
-* Contains all client websockets logged in the remote sites.
-* The keys are the usernames and the values are the respective
+* Contains all client websockets logged into the remote sites.
+* The keys are the remote site names and the values are the respective
 * websocket objects.
 *
 * @property wssClients
@@ -654,6 +654,40 @@ function extenChanged(exten) {
 }
 
 /**
+* Returns the list of all remote sites status data.
+*
+* @method getAllRemoteSites
+* @return {object} The list of all remote sites status data
+*/
+function getAllRemoteSites() {
+    try {
+        var site;
+        var result = {};
+
+        for (site in remoteSites) {
+
+            result[site] = {};
+
+            // check if there is the client websocket connected to the remote site
+            if (wssClients[site] &&
+                wssClients[site].socket &&
+                wssClients[site].socket.connected === true) {
+
+                result[site].connected = true;
+            }
+            else {
+                result[site].connected = false;
+            }
+        }
+        return result;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return {};
+    }
+}
+
+/**
 * Configures the properties used by the component by a configuration file.
 * The file must use the JSON syntax.
 *
@@ -778,10 +812,10 @@ function restApi(site, url, method, headers, data, cb) {
         if (remoteSites[site] &&
             typeof remoteSites[site].user     === 'string' &&
             typeof remoteSites[site].hostname === 'string' &&
-            wssClients[remoteSites[site].user]             &&
-            typeof wssClients[remoteSites[site].user].ctiTokenAuthe){
+            wssClients[site] &&
+            typeof wssClients[site].ctiTokenAuthe){
 
-            headers.Authorization = remoteSites[site].user + ':' + wssClients[remoteSites[site].user].ctiTokenAuthe;
+            headers.Authorization = remoteSites[site].user + ':' + wssClients[site].ctiTokenAuthe;
         }
 
         var opts = {
@@ -1348,6 +1382,7 @@ function clientWssDisconnectHdlr(site, address, clientWss) {
         delete allSitesUsernames[site];
         delete allSitesOpExtensions[site];
         delete allSitesUserEndpoints[site];
+        delete wssClients[site];
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -1400,7 +1435,7 @@ function clientWssLoggedInHdlr(data, clSocket, site, address) {
 
         clSocket.on(EVT_REMOTE_EXTEN_UPDATE, function (dataObj) { clientWssRemoteExtenUpdateHdlr(dataObj, site); });
 
-        wssClients[remoteSites[site].user] = clSocket;
+        wssClients[site] = clSocket;
         logger.info(IDLOG, 'authenticated client websocket to site "' + site + '" added in memory');
 
         restApiSiteOpGroups(site);
@@ -1855,6 +1890,7 @@ exports.isClientRemote                  = isClientRemote;
 exports.newRemotePostit                 = newRemotePostit;
 exports.remoteSiteExists                = remoteSiteExists;
 exports.setCompVoicemail                = setCompVoicemail;
+exports.getAllRemoteSites               = getAllRemoteSites;
 exports.getSitePrefixCall               = getSitePrefixCall;
 exports.setCompComNethctiWs             = setCompComNethctiWs;
 exports.setCompAuthorization            = setCompAuthorization;
