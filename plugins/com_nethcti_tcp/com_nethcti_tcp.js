@@ -937,7 +937,7 @@ function loginHdlr(socket, obj) {
             return;
         }
 
-        if (compAuthe.verifyToken(obj.username, obj.token) === true) { // user successfully authenticated
+        if (compAuthe.verifyToken(obj.username, obj.token, false) === true) { // user successfully authenticated
 
             logger.info(IDLOG, 'user "' + obj.username + '" successfully authenticated from ' + getClientSocketEndpoint(socket));
 
@@ -986,7 +986,7 @@ function resetCommandsHdlr(socket, obj) {
             return;
         }
 
-        if (compAuthe.verifyToken(obj.username, obj.token) === true) { // user successfully authenticated
+        if (compAuthe.verifyToken(obj.username, obj.token, false) === true) { // user successfully authenticated
 
             // send the message to reset the supported commands by windows notifications
             sendResetNotificationSupportedCommands(socket);
