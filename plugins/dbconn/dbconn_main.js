@@ -393,6 +393,7 @@ function initMssqlConn(name, tdsVersion) {
     try {
         var config = {
             server:   dbConfig[name].dbhost,
+            port:     dbConfig[name].dbport,
             user:     dbConfig[name].dbuser,
             password: dbConfig[name].dbpassword,
             database: dbConfig[name].dbname,
