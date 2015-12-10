@@ -6,7 +6,6 @@ Summary:	Nodejs Asterisk proxy for NethCTI 2
 Group:		Network	
 License:	GPLv2
 Source0:	%{name}-%{version}.tar.gz
-Source1:	http://git.nethesis.it/nethcti-server.git/snapshot/nethcti-server-master.tar.gz
 
 BuildRequires:	nethserver-devtools
 Requires:	nodejs010-nodejs
@@ -23,9 +22,6 @@ Nodejs Asterisk proxy used for NethCTI 2
 %build
 perl -w createlinks
 
-mkdir -p root/usr/lib/node/nethcti-server
-# put the nethcti-server source code
-tar xzvf %{SOURCE1} -C root/usr/lib/node/nethcti-server --strip-components=1
 mkdir -p root/etc/nethcti
 mkdir -p root/var/lib/asterisk/bin
 mkdir -p root/var/spool/asterisk/monitor
@@ -221,7 +217,7 @@ rm -rf $RPM_BUILD_ROOT
 - Removed static file nethcti-server/root/etc/nethcti/asterisk.json (it is only a template)
 
 * Tue Mar 04 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 1.9.22-2
-- Re-add %config directive for /etc/nethcti/* path.
+- Re-add config directive for /etc/nethcti/* path.
 
 * Mon Mar 03 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 1.9.22-1
 - First RC release
@@ -270,10 +266,10 @@ rm -rf $RPM_BUILD_ROOT
 * Mon Jan 13 2014 Alessandro Polidori <alessandro.polidori@nethesis.it> 1.9.16-1
 - Alpha2 release with new functions #2512 #2222 #2557 for neth-oppanel beta2 release
 
-* Tue Jan 08 2014 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.9.13-1
+* Wed Jan 08 2014 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.9.13-1
 - Fix installation problem #2555
 
-* Fri Nov 13 2013  Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.9.0-1
+* Wed Nov 13 2013  Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.9.0-1
 - Alpha1 release
 
 
