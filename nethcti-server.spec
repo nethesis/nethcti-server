@@ -1,12 +1,12 @@
 Name:		nethcti-server
-Version: 2.4.8
-Release: 1%{?dist}
+Version:        2.4.8
+Release:        1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI 2
 
 Group:		Network	
 License:	GPLv2
-Source0:	%{name}.tar.gz
-Source1:	nethcti-server-source.tar.gz
+Source0:	%{name}-%{version}.tar.gz
+Source1:	http://git.nethesis.it/nethcti-server.git/snapshot/nethcti-server-master.tar.gz
 
 BuildRequires:	nethserver-devtools
 Requires:	nodejs010-nodejs
@@ -18,16 +18,14 @@ AutoReq:	no
 Nodejs Asterisk proxy used for NethCTI 2
 
 %prep
-%setup -n nethcti-server
+%setup
 
 %build
 perl -w createlinks
 
-# clean the nethcti-server source directory
-rm -rf root/usr/lib/node/nethcti-server
 mkdir -p root/usr/lib/node/nethcti-server
 # put the nethcti-server source code
-tar xzvf %{SOURCE1} -C root/usr/lib/node/nethcti-server/
+tar xzvf %{SOURCE1} -C root/usr/lib/node/nethcti-server --strip-components=1
 mkdir -p root/etc/nethcti
 mkdir -p root/var/lib/asterisk/bin
 mkdir -p root/var/spool/asterisk/monitor
@@ -70,6 +68,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %changelog
 * Fri Nov 06 2015 Stefano Fancello <stefano.fancello@nethesis.it> - 2.4.8-1
+- Testing release
 
 * Thu Oct 22 2015 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.4.6-1
 - Release for NethServer 6.7
