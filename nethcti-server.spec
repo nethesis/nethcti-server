@@ -71,6 +71,10 @@ rm -rf $RPM_BUILD_ROOT
 %changelog
 * Fri Nov 06 2015 Stefano Fancello <stefano.fancello@nethesis.it> - 2.4.8-1
 
+* Thu Oct 22 2015 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.4.6-1
+- Release for NethServer 6.7
+- Fea #3912: removed unused template for lokkit rules
+
 * Wed Sep 30 2015 Alessandro Polidori <alessandro.polidori@nethesis.it> 2.4.5-1
 - Fea #3830: new permissions admin_call, admin_parkings & admin_answer
 - Fea #3827: new push notification service for mobile
