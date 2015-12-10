@@ -1,0 +1,18 @@
+{
+    "name": "com_nethcti_remotes",
+    "main": "arch_com_nethcti_remotes.js",
+    "private": true,
+    "plugin": {
+        "consumes": [
+            "user",
+            "logger",
+            "postit",
+            "astProxy",
+            "voicemail",
+            "authorization",
+            "authentication",
+            "com_nethcti_ws"
+        ],
+        "provides": [ "comNethctiRemotes" ]
+    }
+}

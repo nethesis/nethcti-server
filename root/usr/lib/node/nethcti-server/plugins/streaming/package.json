@@ -1,0 +1,12 @@
+{
+    "name": "streaming",
+    "main": "arch_controller_streaming.js",
+    "private": true,
+    "plugin": {
+        "consumes": [
+            "logger",
+            "astProxy"
+        ],
+        "provides": ["streaming"]
+    }
+}

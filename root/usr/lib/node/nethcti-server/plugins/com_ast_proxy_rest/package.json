@@ -1,0 +1,18 @@
+{
+    "name": "com_ast_proxy_rest",
+    "main": "arch_com_ast_proxy_rest.js",
+    "private": true,
+    "plugin": {
+        "consumes": [
+            "user",
+            "util",
+            "logger",
+            "astProxy",
+            "operator",
+            "configManager",
+            "authorization",
+            "comNethctiRemotes"
+        ],
+        "provides": []
+    }
+}

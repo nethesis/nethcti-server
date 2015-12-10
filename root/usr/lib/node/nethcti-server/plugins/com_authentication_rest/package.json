@@ -1,0 +1,14 @@
+{
+    "name": "com_authentication_rest",
+    "main": "arch_com_authentication_rest.js",
+    "private": true,
+    "plugin": {
+	"consumes": [
+            "util",
+            "user",
+            "logger",
+            "authentication"
+        ],
+	"provides": []
+    }
+}

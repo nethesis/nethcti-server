@@ -1,0 +1,15 @@
+{
+    "name": "com_postit_rest",
+    "main": "arch_com_postit_rest.js",
+    "private": true,
+    "plugin": {
+        "consumes": [
+            "util",
+            "logger",
+            "postit",
+            "authorization",
+            "comNethctiRemotes"
+        ],
+        "provides": []
+    }
+}

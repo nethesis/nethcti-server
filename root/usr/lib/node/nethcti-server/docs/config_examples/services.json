@@ -1,0 +1,101 @@
+{
+    "tcp": {
+        "port": "8182",
+        "proto": "http"
+    },
+    "websocket": {
+        "port":       "8181",
+        "proto":      "wss",
+        "https_key":  "/etc/pki/tls/private/localhost.key",
+        "https_cert": "/etc/pki/tls/certs/localhost.crt"
+    },
+    "http_proxy": {
+        "port":       "8180",
+        "proto":      "https",
+        "https_key":  "KEY PATH",
+        "https_cert": "CRT PATH",
+        "router": {
+            "127.0.0.1/sms":                "http://127.0.0.1:10012/sms",
+            "127.0.0.1/cel":                "http://127.0.0.1:10002/cel",
+            "127.0.0.1/static":             "http://127.0.0.1:10013",
+            "127.0.0.1/postit":             "http://127.0.0.1:10004/postit",
+            "127.0.0.1/astproxy":           "http://127.0.0.1:10010/astproxy",
+            "127.0.0.1/custcard":           "http://127.0.0.1:10003/custcard",
+            "127.0.0.1/phonebook":          "http://127.0.0.1:10001/phonebook",
+            "127.0.0.1/streaming":          "http://127.0.0.1:10011/streaming",
+            "127.0.0.1/voicemail":          "http://127.0.0.1:10008/voicemail",
+            "127.0.0.1/callernote":         "http://127.0.0.1:10005/callernote",
+            "127.0.0.1/historysms":         "http://127.0.0.1:10012/historysms",
+            "127.0.0.1/historycall":        "http://127.0.0.1:10002/historycall",
+            "127.0.0.1/histcallswitch":     "http://127.0.0.1:10002/histcallswitch",
+            "127.0.0.1/authorization":      "http://127.0.0.1:10007/authorization",
+            "127.0.0.1/configmanager":      "http://127.0.0.1:10006/configmanager",
+            "127.0.0.1/historypostit":      "http://127.0.0.1:10004/historypostit",
+            "127.0.0.1/histcallernote":     "http://127.0.0.1:10005/histcallernote",
+            "127.0.0.1/authentication":     "http://127.0.0.1:10000/authentication",
+            "127.0.0.1/all_historysms":     "http://127.0.0.1:10012/all_historysms",
+            "127.0.0.1/all_historypostit":  "http://127.0.0.1:10004/all_historypostit",
+            "127.0.0.1/all_histcallernote": "http://127.0.0.1:10005/all_histcallernote"
+        }
+    },
+    "notification_manager": {
+        "custom_templates_notifications": "/home/e-smith/nethcti/templates/notification_manager"
+    },
+    "rest": {
+        "postit": {
+            "port":    "10004",
+            "address": "localhost"
+        },
+        "history": {
+            "port":    "10002",
+            "address": "localhost"
+        },
+        "caller_note": {
+            "port":    "10005",
+            "address": "localhost"
+        },
+        "customer_card": {
+            "port":    "10003",
+            "address": "localhost",
+            "custom_templates_customercards": "/home/e-smith/nethcti/templates/customer_card"
+        },
+        "phonebook": {
+            "port":    "10001",
+            "address": "localhost"
+        },
+        "authentication": {
+            "port":    "10000",
+            "proto":   "http",
+            "address": "localhost"
+        },
+        "config_manager": {
+            "port":    "10006",
+            "address": "localhost"
+        },
+        "authorization": {
+            "port":    "10007",
+            "address": "localhost"
+        },
+        "voicemail": {
+            "port": "10008",
+            "address": "localhost"
+        },
+        "asterisk_proxy": {
+            "port": "10010",
+            "address": "localhost"
+        },
+        "streaming": {
+            "port": "10011",
+            "address": "localhost"
+        },
+        "sms": {
+            "port": "10012",
+            "address": "localhost"
+        },
+        "static": {
+            "port": "10013",
+            "address": "localhost",
+            "webroot": "/home/e-smith/nethcti/static"
+        }
+    }
+}

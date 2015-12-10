@@ -1,0 +1,15 @@
+{
+    "name": "config_manager",
+    "main": "arch_config_manager.js",
+    "private": true,
+    "plugin": {
+        "consumes": [
+            "user",
+            "dbconn",
+            "logger",
+            "astProxy",
+            "com_nethcti_ws"
+        ],
+        "provides": [ "configManager" ]
+    }
+}

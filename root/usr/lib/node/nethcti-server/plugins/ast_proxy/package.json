@@ -1,0 +1,14 @@
+{
+    "name": "ast_proxy",
+    "main": "arch_ast_proxy.js",
+    "private": true,
+    "plugin": {
+        "consumes": [
+            "dbconn",
+            "logger",
+            "phonebook",
+            "callerNote"
+        ],
+        "provides": [ "astProxy" ]
+    }
+}

@@ -1,0 +1,17 @@
+{
+    "type":   "portech",
+    "prefix": "COUNTRY_CODE",
+    "portech": {
+        "url":        "IP",
+        "user":       "USER",
+        "password":   "PASS",
+        "simnumber":  "1",
+        "queue_path": "/var/spool/nethcti/sms"
+    },
+    "webservice": {
+        "url": "",
+        "user": "",
+        "method": "get",
+        "password": ""
+    }
+}

@@ -1,0 +1,19 @@
+{
+    "name": "notification_manager",
+    "main": "arch_notification_manager.js",
+    "private": true,
+    "plugin": {
+        "consumes": [
+            "sms",
+            "user",
+            "logger",
+            "postit",
+            "mobile",
+            "mailer",
+            "voicemail",
+            "authorization",
+            "configManager"
+        ],
+        "provides": []
+    }
+}

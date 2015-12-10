@@ -1,0 +1,6 @@
+{
+    "ip": "192.168.5.111",
+    "logfile": "/var/log/asterisk/nethcti.log",
+    "loglevel": "warn",
+    "privacy_numbers": "xxx"
+}

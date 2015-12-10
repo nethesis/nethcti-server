@@ -1,0 +1,16 @@
+{
+    "name": "com_config_manager_rest",
+    "main": "arch_com_config_manager_rest.js",
+    "private": true,
+    "plugin": {
+        "consumes": [
+            "user",
+            "util",
+            "logger",
+            "authorization",
+            "configManager",
+            "comNethctiRemotes"
+        ],
+        "provides": []
+    }
+}
