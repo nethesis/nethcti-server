@@ -31,9 +31,6 @@ mkdir -p root/var/lib/nethserver/nethcti/templates/notification_manager
 mkdir -p root/var/lib/nethserver/nethcti/templates/customer_card
 mkdir -p root/var/lib/nethserver/nethcti/static
 mkdir -p root/usr/lib/node/nethcti-server/store
-mv root/usr/lib/node/nethcti-server/nethserver_node_modules/* root/usr/lib/node/nethcti-server/node_modules
-rm -rf root/usr/lib/node/nethcti-server/nethservice_node_modules
-rm -rf root/usr/lib/node/nethcti-server/nethserver_node_modules
 
 # clean the nodejs npm modules
 find root/usr/lib/node/nethcti-server/node_modules -iname readme.\* -o -iname benchmark\* -o -iname sample\* -o -iname test\* -o -iname example\* -o -iname changelog\* -o -iname docs -o -iname component.json -o -iname \*.md -o -iname \*.bat -o -iname \*.tgz | xargs rm -rf
