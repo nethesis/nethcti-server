@@ -1,6 +1,6 @@
 Name:		nethcti-server
-Version:        2.4.8
-Release:        1%{?dist}
+Version: 2.5
+Release: 1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI 2
 
 Group:		Network	
@@ -60,6 +60,15 @@ rm -rf $RPM_BUILD_ROOT
 %doc
 
 %changelog
+* Fri Dec 18 2015 Alessandro Polidori <alessandro.polidori@gmail.com> - 2.5-1
+  - fix spec after moved nethserver nodejs modules
+  - remove old nodejs modules for nethservice
+  - moved nodejs modules for nethserver to node_modules
+  - add nodejs modules for postgresql support. refs #3860
+  - Fix requires tag
+  - inc Requires nethvoice-module-nethcti > 2.4.2
+  - spec: remove external source
+
 * Fri Nov 06 2015 Stefano Fancello <stefano.fancello@nethesis.it> - 2.4.8-1
 - Testing release
 
