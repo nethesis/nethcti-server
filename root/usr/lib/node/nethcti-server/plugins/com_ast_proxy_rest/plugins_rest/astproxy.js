@@ -134,6 +134,9 @@ var compConfigManager;
         * 1. [`astproxy/remote_extensions`](#remote_extensionsget)
         * 1. [`astproxy/sip_webrtc`](#sip_webrtcget)
         * 1. [`astproxy/queues_stats/:day`](#queues_statsget)
+        * 1. [`astproxy/queue_recall/:qid`](#queue_recallget)
+        * 1. [`astproxy/qrecall_info/:cid`](#qrecall_infoget)
+        * 1. [`astproxy/qrecall_check/:num`](#qrecall_checkget)
         * 1. [`astproxy/queues_qos/:day`](#queues_qosget)
         * 1. [`astproxy/agents_qos/:day`](#agents_qosget)
         * 1. [`astproxy/is_autoc2c_supported/:endpoint`](#is_autoc2c_supportedget)
@@ -449,6 +452,50 @@ var compConfigManager;
                   "id": null
               }
           }
+     }
+        *
+        * ---
+        *
+        * ### <a id="queue_recallget">**`astproxy/queue_recall/:qid`**</a>
+        *
+        * Gets the recall data about the queue. _qid_ is the queue identifier.
+        *
+        * Example JSON response:
+        *
+        *     {
+         company: "Nethesis",
+         cid: "0721405516",
+         action: "RECALL",
+         time: "2015-12-30 17:21:45.2990102,
+         qname: 2401"
+     }
+        *
+        * ---
+        *
+        * ### <a id="qrecall_checkget">**`astproxy/qrecall_check/:num`**</a>
+        *
+        * Check if the number is already in a conversation. The _num_ is the number to be checked.
+        *
+        * Example JSON response:
+        *
+        *     {
+         inConversation: true
+     }
+        *
+        * ---
+        *
+        * ### <a id="qrecall_infoget">**`astproxy/qrecall_info/:cid`**</a>
+        *
+        * Gets details about the queue call. The _cid_ is the caller identifier.
+        *
+        * Example JSON response:
+        *
+        *     {
+         action: "DONE"
+         cid: "0721405516"
+         company: "Nethesis"
+         qname: "IN"
+         time: "2015-12-30T12:57:18.000Z"
      }
         *
         * ---
@@ -1061,6 +1108,9 @@ var compConfigManager;
                 *   @param {string} sip_webrtc                     Gets all the configuration about the sip WebRTC
                 *   @param {string} remote_extensions              Gets all the extensions with all their status informations of all remote sites
                 *   @param {string} queues_stats/:day              Gets extended statistics about queues
+                *   @param {string} queue_recall/:qid              Gets the recall data about the queue
+                *   @param {string} qrecall_info/:cid              Gets the details about the queue recall
+                *   @param {string} qrecall_check/:num             Checks if the number is in conversation
                 *   @param {string} queues_qos/:day                Gets QOS info about queues
                 *   @param {string} agents_qos/:day                Gets QOS info about agents
                 *   @param {string} cw/:endpoint                   Gets the call waiting status of the endpoint of the user
@@ -1081,6 +1131,9 @@ var compConfigManager;
                     'remote_opgroups',
                     'remote_extensions',
                     'queues_stats/:day',
+                    'queue_recall/:qid',
+                    'qrecall_info/:cid',
+                    'qrecall_check/:num',
                     'queues_qos/:day',
                     'agents_qos/:day',
                     'cw/:endpoint',
@@ -1639,6 +1692,121 @@ var compConfigManager;
                         }
                     });
 
+                } catch (error) {
+                    logger.error(IDLOG, error.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, error.toString());
+                }
+            },
+
+            /**
+            *  Gets the recall data about the queue with the following REST API:
+            *
+            *     GET  queue_recall
+            *
+            * @method queue_recall
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            queue_recall: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    if (typeof req.params.qid !== 'string') {
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    compAstProxy.getQueueRecallData(req.params.qid, function (err, results) {
+                        try {
+                            if (err) { throw err; }
+
+                            logger.info(IDLOG, 'sent recall data about queue ' + req.params.qid +
+                                               ' in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
+                            res.send(200, results);
+
+                        } catch (err) {
+                            logger.error(IDLOG, err.stack);
+                            compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                        }
+                    });
+
+                } catch (error) {
+                    logger.error(IDLOG, error.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, error.toString());
+                }
+            },
+
+            /**
+            *  Checks if some user has just recalled the number with the following REST API:
+            *
+            *     GET  qrecall_check
+            *
+            * @method qrecall_check
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            qrecall_check: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    if (typeof req.params.num !== 'string') {
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    compAstProxy.checkQueueRecallingStatus(req.params.num, function (err, result) {
+                        try {
+                            if (err) { throw err; }
+
+                            logger.info(IDLOG, 'sent queue recalling status "' + result + '" of num "' + req.params.num + '"' +
+                                               ' to user "' + username + '" ' + res.connection.remoteAddress);
+                            res.send(200, { inConversation: result });
+
+                        } catch (err) {
+                            logger.error(IDLOG, err.stack);
+                            compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                        }
+                    });
+                } catch (error) {
+                    logger.error(IDLOG, error.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, error.toString());
+                }
+            },
+
+            /**
+            *  Gets the details about the queue recall with the following REST API:
+            *
+            *     GET  qrecall_info
+            *
+            * @method qrecall_info
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            qrecall_info: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    if (typeof req.params.cid !== 'string') {
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    compAstProxy.getQueueRecallInfo(req.params.cid, function (err, results) {
+                        try {
+                            if (err) { throw err; }
+
+                            logger.info(IDLOG, 'sent details about queue recall of caller id "' + req.params.cid + '"' +
+                                               ' in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
+                            res.send(200, results);
+
+                        } catch (err) {
+                            logger.error(IDLOG, err.stack);
+                            compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                        }
+                    });
                 } catch (error) {
                     logger.error(IDLOG, error.stack);
                     compUtil.net.sendHttp500(IDLOG, res, error.toString());
@@ -3946,7 +4114,6 @@ var compConfigManager;
         exports.txfer_tovm               = astproxy.txfer_tovm;
         exports.extensions               = astproxy.extensions;
         exports.sip_webrtc               = astproxy.sip_webrtc;
-        exports.queues_stats             = astproxy.queues_stats;
         exports.queues_qos               = astproxy.queues_qos;
         exports.agents_qos               = astproxy.agents_qos;
         exports.setPrivacy               = setPrivacy;
@@ -3956,6 +4123,10 @@ var compConfigManager;
         exports.stop_record              = astproxy.stop_record;
         exports.setCompUser              = setCompUser;
         exports.mute_record              = astproxy.mute_record;
+        exports.queue_recall             = astproxy.queue_recall;
+        exports.qrecall_info             = astproxy.qrecall_info;
+        exports.qrecall_check            = astproxy.qrecall_check;
+        exports.queues_stats             = astproxy.queues_stats;
         exports.start_record             = astproxy.start_record;
         exports.unauthe_call             = astproxy.unauthe_call;
         exports.force_hangup             = astproxy.force_hangup;

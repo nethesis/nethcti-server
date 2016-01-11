@@ -310,6 +310,92 @@ function getQueuesQOS(day, cb) {
 }
 
 /**
+* Gets the details about caller id from queue_recall db table.
+*
+* @method getQueueRecallInfo
+* @param {string}   cid The caller identifier
+* @param {function} cb  The callback function
+*/
+function getQueueRecallInfo(cid, cb) {
+    try {
+        // check parameters
+        if (typeof cb !== 'function' || typeof cid !== 'string') {
+            throw new Error('wrong parameters');
+        }
+
+        compDbconnMain.models[compDbconnMain.JSON_KEYS.QUEUE_RECALL].findAll({
+            where: [ 'cid=?', cid ]
+
+        }).success(function (results) {
+
+            var i;
+            for (i = 0; i < results.length; i++) {
+                results[i] = results[i].selectedValues;
+            }
+
+            logger.info(IDLOG, results.length + ' results searching details about queue recall on cid "' + cid + '"');
+            cb(null, results);
+
+        }).error(function (err) { // manage the error
+
+            logger.error(IDLOG, 'searching details about queue recall on cid "' + cid + '"');
+            cb(err.toString());
+        });
+
+        compDbconnMain.incNumExecQueries();
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Gets the last 8 hours calls from queue_recall db table.
+*
+* @method getQueueRecall
+* @param {string}   qid The queue identifier
+* @param {function} cb  The callback function
+*/
+function getQueueRecall(qid, cb) {
+    try {
+        // check parameters
+        if (typeof cb !== 'function' || typeof qid !== 'string') {
+            throw new Error('wrong parameters');
+        }
+
+        var query = [
+            'SELECT b.company, ',
+                   'cid, ',
+                   'action, ',
+                   'time, ',
+                   'direction, ',
+                   'queuename ',
+            'FROM   queue_recall a ',
+            'LEFT JOIN phonebook.phonebook b ON a.cid = b.workphone ',
+            'WHERE queuename="' + qid + '" ',
+            'GROUP BY cid ',
+            'ORDER BY time DESC'
+        ].join('');
+
+        compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.QUEUE_RECALL].query(query).success(function (results) {
+            logger.info(IDLOG, 'get queue ' + qid + ' recall has been successful: ' + results.length + ' results');
+            cb(null, results);
+
+        }).error(function (err1) {
+            logger.error(IDLOG, 'get queue ' + qid +' recall: ' + err1.toString());
+            cb(err1, {});
+        });
+
+        compDbconnMain.incNumExecQueries();
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
 * Get call trace of speciefied linkedid. It searches the results into the
 * database specified into the key names of one of the _/etc/nethcti/dbstatic.json_
 * or _/etc/nethcti/dbdynamic.json_ files.
@@ -857,6 +943,8 @@ apiList.getQueuesQOS                    = getQueuesQOS;
 apiList.getCallTrace                    = getCallTrace
 apiList.getQueuesStats                  = getQueuesStats;
 apiList.getAgentsStats                  = getAgentsStats;
+apiList.getQueueRecall                  = getQueueRecall;
+apiList.getQueueRecallInfo              = getQueueRecallInfo;
 apiList.deleteCallRecording             = deleteCallRecording;
 apiList.getCallRecordingFileData        = getCallRecordingFileData;
 apiList.getQueueMemberLastPausedInData  = getQueueMemberLastPausedInData;

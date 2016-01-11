@@ -1590,6 +1590,30 @@ function updateQueueMemberLastPauseData(memberName, memberId, queueId) {
 }
 
 /**
+* Returns the details about the queue recall of the caller id.
+*
+* @method getQueueRecallInfo
+* @param  {string}   cid The caller identifier
+* @param  {function} cb  The callback function
+*/
+function getQueueRecallInfo(cid, cb) {
+    try {
+        // check parameters
+        if (typeof cid !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        compDbconn.getQueueRecallInfo(cid, function (err, results) {
+            cb(err, results);
+        });
+
+    } catch (error) {
+        logger.error(IDLOG, error.stack);
+        callback(error);
+    }
+}
+
+/**
 * Return the JSON representation of extended queue statistics.
 *
 * @method getJSONQueuesStats
@@ -6133,6 +6157,7 @@ exports.EVT_EXTEN_DIALING               = EVT_EXTEN_DIALING;
 exports.EVT_QUEUE_CHANGED               = EVT_QUEUE_CHANGED;
 exports.getQueueIdsOfExten              = getQueueIdsOfExten;
 exports.getJSONQueuesStats              = getJSONQueuesStats;
+exports.getQueueRecallInfo              = getQueueRecallInfo;
 exports.getJSONAgentsStats              = getJSONAgentsStats;
 exports.unmuteConversation              = unmuteConversation;
 exports.setUnconditionalCf              = setUnconditionalCf;

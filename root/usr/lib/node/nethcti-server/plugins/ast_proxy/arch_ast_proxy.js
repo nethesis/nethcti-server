@@ -4,6 +4,7 @@
 * @class arch_ast_proxy
 */
 var astProxy = require('./ast_proxy');
+var queueRecallingManager = require('./queue_recalling_manager');
 
 /**
 * The module identifier used by the logger.
@@ -301,6 +302,13 @@ module.exports = function (options, imports, register) {
             getJSONExtensions: astProxy.proxyLogic.getJSONExtensions,
 
             /**
+            * It's the _getQueueRecallInfo_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method getQueueRecallInfo
+            */
+            getQueueRecallInfo: astProxy.proxyLogic.getQueueRecallInfo,
+
+            /**
             * It's the _getJSONQueues_ method provided by _ast\_proxy.proxyLogic_.
             *
             * @method getJSONQueues
@@ -459,7 +467,21 @@ module.exports = function (options, imports, register) {
             *
             * @method EVT_UPDATE_VOICE_MESSAGES
             */
-            EVT_UPDATE_VOICE_MESSAGES: astProxy.proxyLogic.EVT_UPDATE_VOICE_MESSAGES
+            EVT_UPDATE_VOICE_MESSAGES: astProxy.proxyLogic.EVT_UPDATE_VOICE_MESSAGES,
+
+            /**
+            * It's the _getQueueRecallData_ method provided by _queue\_recalling\_manager_.
+            *
+            * @method getQueueRecallData
+            */
+            getQueueRecallData: queueRecallingManager.getQueueRecallData,
+
+            /**
+            * It is the _checkQueueRecallingStatus_ method provided by _queue\_recalling\_manager_.
+            *
+            * @method checkQueueRecallingStatus
+            */
+            checkQueueRecallingStatus: queueRecallingManager.checkQueueRecallingStatus
         }
     });
 
@@ -472,6 +494,9 @@ module.exports = function (options, imports, register) {
             astProxy.proxyLogic.setCompPhonebook(imports.phonebook);
             astProxy.proxyLogic.setCompCallerNote(imports.callerNote);
             astProxy.start();
+            queueRecallingManager.setLogger(logger);
+            queueRecallingManager.setCompAstProxy(astProxy);
+            queueRecallingManager.setCompDbconn(imports.dbconn);
         });
     } catch (err) {
         logger.error(err.stack);

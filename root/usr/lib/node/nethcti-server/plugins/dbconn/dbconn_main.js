@@ -100,6 +100,7 @@ var logSequelize = false;
     QUEUE_LOG:     "queue_log",
     SMS_HISTORY:   "sms_history",
     CALLER_NOTE:   "caller_note",
+    QUEUE_RECALL:  "queue_recall",
     HISTORY_CALL:  "history_call",
     CTI_PHONEBOOK: "cti_phonebook",
     USER_SETTINGS: "user_settings"
@@ -112,6 +113,7 @@ var JSON_KEYS = {
     PHONEBOOK:     'phonebook',
     QUEUE_LOG:     'queue_log',
     SMS_HISTORY:   'sms_history',
+    QUEUE_RECALL:  'queue_recall',
     CALLER_NOTE:   'caller_note',
     HISTORY_CALL:  'history_call',
     CTI_PHONEBOOK: 'cti_phonebook',
