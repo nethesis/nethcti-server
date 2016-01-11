@@ -302,13 +302,6 @@ module.exports = function (options, imports, register) {
             getJSONExtensions: astProxy.proxyLogic.getJSONExtensions,
 
             /**
-            * It's the _getQueueRecallInfo_ method provided by _ast\_proxy.proxyLogic_.
-            *
-            * @method getQueueRecallInfo
-            */
-            getQueueRecallInfo: astProxy.proxyLogic.getQueueRecallInfo,
-
-            /**
             * It's the _getJSONQueues_ method provided by _ast\_proxy.proxyLogic_.
             *
             * @method getJSONQueues
@@ -475,6 +468,13 @@ module.exports = function (options, imports, register) {
             * @method getQueueRecallData
             */
             getQueueRecallData: queueRecallingManager.getQueueRecallData,
+
+            /**
+            * It's the _getQueueRecallInfo_ method provided by _queue\_recalling\_manager_.
+            *
+            * @method getQueueRecallInfo
+            */
+            getQueueRecallInfo: queueRecallingManager.getQueueRecallInfo,
 
             /**
             * It is the _checkQueueRecallingStatus_ method provided by _queue\_recalling\_manager_.

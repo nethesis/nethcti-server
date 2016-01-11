@@ -323,23 +323,27 @@ function getQueueRecallInfo(cid, cb) {
             throw new Error('wrong parameters');
         }
 
-        compDbconnMain.models[compDbconnMain.JSON_KEYS.QUEUE_RECALL].findAll({
-            where: [ 'cid=?', cid ]
+        var query = [
+            'SELECT queuename, ',
+                   'direction, ',
+                   'action, ',
+                   'CAST(time as CHAR(50)) as time, ',
+                   'position, ',
+                   'duration, ',
+                   'hold, ',
+                   'cid, ',
+                   'agent ',
+            'FROM   queue_recall ',
+            'WHERE cid="' + cid+ '" '
+        ].join('');
 
-        }).success(function (results) {
-
-            var i;
-            for (i = 0; i < results.length; i++) {
-                results[i] = results[i].selectedValues;
-            }
-
+        compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.QUEUE_RECALL].query(query).success(function (results) {
             logger.info(IDLOG, results.length + ' results searching details about queue recall on cid "' + cid + '"');
             cb(null, results);
 
-        }).error(function (err) { // manage the error
-
+        }).error(function (err1) {
             logger.error(IDLOG, 'searching details about queue recall on cid "' + cid + '"');
-            cb(err.toString());
+            cb(err.toString(), {});
         });
 
         compDbconnMain.incNumExecQueries();
@@ -354,36 +358,102 @@ function getQueueRecallInfo(cid, cb) {
 * Gets the last 8 hours calls from queue_recall db table.
 *
 * @method getQueueRecall
-* @param {string}   qid The queue identifier
-* @param {function} cb  The callback function
+* @param {object}   data
+*   @param {string} data.qid   The queue identifier
+*   @param {number} data.hours The amount of last hours to be analized
+* @param {function} cb   The callback function
 */
-function getQueueRecall(qid, cb) {
+function getQueueRecall(data, cb) {
     try {
         // check parameters
-        if (typeof cb !== 'function' || typeof qid !== 'string') {
+        if (typeof data     !== 'object' ||
+            typeof data.qid !== 'string' ||
+            (data.hours && typeof data.hours !== 'number') ||
+            typeof cb !== 'function') {
+
             throw new Error('wrong parameters');
         }
 
+        if (!data.hours) { data.hours = 8; }
+
         var query = [
-            'SELECT b.company, ',
-                   'cid, ',
-                   'action, ',
-                   'time, ',
-                   'direction, ',
-                   'queuename ',
-            'FROM   queue_recall a ',
-            'LEFT JOIN phonebook.phonebook b ON a.cid = b.workphone ',
-            'WHERE queuename="' + qid + '" ',
+            'SELECT b.company,',
+                  ' cid,',
+                  ' action,',
+                  ' CAST(time as CHAR(50)) as time,',
+                  ' direction,',
+                  ' queuename ',
+            'FROM (',
+                       'SELECT TIMESTAMP(time) AS time,',
+                             ' queuename,',
+                             ' "IN" AS direction,',
+                             ' "TIMEOUT" AS action,',
+                             ' CAST(data1 AS UNSIGNED) AS position,',
+                             ' CAST(data2 AS UNSIGNED) AS duration,',
+                             ' CAST(data3 AS UNSIGNED) AS hold,',
+                             ' (',
+                                   'SELECT data2 ',
+                                   'FROM   queue_log z ',
+                                   'WHERE  z.event="ENTERQUEUE" AND z.callid=a.callid',
+                             ' ) AS cid,',
+                             ' agent ',
+                       'FROM   queue_log a ',
+                       'WHERE  event IN ("ABANDON", "EXITWITHTIMEOUT", "EXITWITHKEY", "EXITEMPTY")',
+                             ' AND TIMESTAMPDIFF(HOUR,time,now())<', data.hours,
+
+                 ' UNION ALL ',
+
+                       'SELECT TIMESTAMP(time) AS time,',
+                             ' queuename,',
+                             ' "IN" AS direction,',
+                             ' "DONE" AS action,',
+                             ' CAST(data3 AS UNSIGNED) AS position,',
+                             ' CAST(data2 AS UNSIGNED) AS duration,',
+                             ' CAST(data1 AS UNSIGNED) AS hold,',
+                             ' (',
+                                   'SELECT data2 ',
+                                   'FROM   queue_log z ',
+                                   'WHERE  z.event="ENTERQUEUE"',
+                                         ' AND z.callid=a.callid',
+                             ' ) AS cid,',
+                             ' agent ',
+                       'FROM   queue_log a ',
+                       'WHERE  event IN ("COMPLETEAGENT", "COMPLETECALLER")',
+                             ' AND TIMESTAMPDIFF(HOUR,time,now())<', data.hours,
+
+                 ' UNION ALL ',
+
+                       'SELECT TIMESTAMP(calldate) AS time,',
+                             ' l.queuename as queuename,',
+                             ' "OUT" AS direction,',
+                             ' IF (disposition="ANSWERED", "DONE", disposition) AS action,',
+                             ' 0 AS position,',
+                             ' 0 AS duration,',
+                             ' 0 AS hold,',
+                             ' dst AS cid,',
+                             ' src AS agent ',
+                       'FROM   cdr c ',
+                       'INNER JOIN queue_log l ON c.dst=l.data2 ',
+                       'WHERE  l.event="ENTERQUEUE" ',
+                             ' AND TIMESTAMPDIFF(HOUR, calldate, now())<', data.hours,
+                             ' AND TIMESTAMPDIFF(HOUR, time, now())<', data.hours, ' ',
+
+                   'ORDER BY time DESC',
+
+            ') queue_recall ',
+            'LEFT JOIN phonebook.phonebook b ON queue_recall.cid=b.workphone ',
+            'WHERE queuename="' + data.qid + '" ',
             'GROUP BY cid ',
-            'ORDER BY time DESC'
+            'ORDER BY time DESC;'
         ].join('');
 
-        compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.QUEUE_RECALL].query(query).success(function (results) {
-            logger.info(IDLOG, 'get queue ' + qid + ' recall has been successful: ' + results.length + ' results');
+        compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.QUEUE_LOG].query(query).success(function (results) {
+            logger.info(IDLOG, 'get queue ' + data.qid + ' recall of last ' + data.hours +
+                               ' hours has been successful: ' + results.length + ' results');
             cb(null, results);
 
         }).error(function (err1) {
-            logger.error(IDLOG, 'get queue ' + qid +' recall: ' + err1.toString());
+            logger.error(IDLOG, 'get queue ' + data.qid + ' recall of last ' + data.hours + ' hours: ' + err1.toString());
             cb(err1, {});
         });
 

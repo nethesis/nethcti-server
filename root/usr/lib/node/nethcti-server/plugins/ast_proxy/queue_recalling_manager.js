@@ -177,7 +177,35 @@ function getQueueRecallData(qid, cb) {
             throw new Error('wrong parameters');
         }
 
-        compDbconn.getQueueRecall(qid, function (err, results) {
+        compDbconn.getQueueRecall({
+            qid: qid,
+            hours: 8
+        },
+        function (err, results) {
+            cb(err, results);
+        });
+
+    } catch (error) {
+        logger.error(IDLOG, error.stack);
+        callback(error);
+    }
+}
+
+/**
+* Returns the details about the queue recall of the caller id.
+*
+* @method getQueueRecallInfo
+* @param  {string}   cid The caller identifier
+* @param  {function} cb  The callback function
+*/
+function getQueueRecallInfo(cid, cb) {
+    try {
+        // check parameters
+        if (typeof cid !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        compDbconn.getQueueRecallInfo(cid, function (err, results) {
             cb(err, results);
         });
 
@@ -190,5 +218,6 @@ function getQueueRecallData(qid, cb) {
 exports.setLogger = setLogger;
 exports.setCompDbconn = setCompDbconn;
 exports.setCompAstProxy = setCompAstProxy;
+exports.getQueueRecallInfo = getQueueRecallInfo;
 exports.getQueueRecallData = getQueueRecallData;
 exports.checkQueueRecallingStatus = checkQueueRecallingStatus;

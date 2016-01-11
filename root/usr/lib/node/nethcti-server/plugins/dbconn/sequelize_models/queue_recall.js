@@ -1,6 +1,6 @@
 module.exports = function (sequelize, DataTypes) {
     return sequelize.define('queue_recall', {
-        time:      DataTypes.DATE,
+        time:      DataTypes.STRING,
         direction: DataTypes.STRING,
         queuename: DataTypes.STRING,
         action:    DataTypes.STRING,
