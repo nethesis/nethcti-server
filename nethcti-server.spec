@@ -1,5 +1,5 @@
 Name:		nethcti-server
-Version: 2.5
+Version: 2.5.1
 Release: 1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI 2
 
@@ -60,6 +60,10 @@ rm -rf $RPM_BUILD_ROOT
 %doc
 
 %changelog
+* Mon Jan 11 2016 Alessandro Polidori <alessandro.polidori@gmail.com> - 2.5.1-1
+- update nethvoice-module-nethcti requires ver. refs #3208
+- manage new permission "hide_everyone". refs #4006
+
 * Fri Dec 18 2015 Alessandro Polidori <alessandro.polidori@gmail.com> - 2.5-1
   - fix spec after moved nethserver nodejs modules
   - remove old nodejs modules for nethservice
