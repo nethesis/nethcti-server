@@ -167,19 +167,26 @@ function analizeQueueRecallingStatus(results, num, cb) {
 * Returns the recall data about the queue.
 *
 * @method getQueueRecallData
-* @param  {string}   qid The queue identifier
-* @param  {function} cb  The callback function
+* @param  {string}   type The search type: can be "hours" or "day"
+* @param  {string}   val  The amount of interval time to be searched
+* @param  {string}   qid  The queue identifier
+* @param  {function} cb   The callback function
 */
-function getQueueRecallData(qid, cb) {
+function getQueueRecallData(type, val, qid, cb) {
     try {
         // check parameters
-        if (typeof qid !== 'string' || typeof cb !== 'function') {
+        if (typeof qid !== 'string'   ||
+            typeof val !== 'string'   ||
+            typeof cb  !== 'function' ||
+            (type !== 'hours' && type !== 'day')) {
+
             throw new Error('wrong parameters');
         }
 
         compDbconn.getQueueRecall({
-            qid: qid,
-            hours: 8
+            type: type,
+            val: val,
+            qid: qid
         },
         function (err, results) {
             cb(err, results);
@@ -195,17 +202,28 @@ function getQueueRecallData(qid, cb) {
 * Returns the details about the queue recall of the caller id.
 *
 * @method getQueueRecallInfo
-* @param  {string}   cid The caller identifier
-* @param  {function} cb  The callback function
+* @param  {string}   type The search type: can be "hours" or "day"
+* @param  {string}   val  The amount of interval time to be searched
+* @param  {string}   cid  The caller identifier
+* @param  {function} cb   The callback function
 */
-function getQueueRecallInfo(cid, cb) {
+function getQueueRecallInfo(type, val, cid, cb) {
     try {
         // check parameters
-        if (typeof cid !== 'string' || typeof cb !== 'function') {
+        if (typeof cid !== 'string'   ||
+            typeof cb  !== 'function' ||
+            typeof val !== 'string'   ||
+            (type !== 'hours' && type !== 'day')) {
+
             throw new Error('wrong parameters');
         }
 
-        compDbconn.getQueueRecallInfo(cid, function (err, results) {
+        compDbconn.getQueueRecallInfo({
+            type: type,
+            val: val,
+            cid: cid
+        },
+        function (err, results) {
             cb(err, results);
         });
 

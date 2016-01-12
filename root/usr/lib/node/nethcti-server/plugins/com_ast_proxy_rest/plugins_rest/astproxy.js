@@ -134,8 +134,8 @@ var compConfigManager;
         * 1. [`astproxy/remote_extensions`](#remote_extensionsget)
         * 1. [`astproxy/sip_webrtc`](#sip_webrtcget)
         * 1. [`astproxy/queues_stats/:day`](#queues_statsget)
-        * 1. [`astproxy/queue_recall/:qid`](#queue_recallget)
-        * 1. [`astproxy/qrecall_info/:cid`](#qrecall_infoget)
+        * 1. [`astproxy/queue_recall/:type/:val/:qid`](#queue_recallget)
+        * 1. [`astproxy/qrecall_info/:type/:val/:cid`](#qrecall_infoget)
         * 1. [`astproxy/qrecall_check/:num`](#qrecall_checkget)
         * 1. [`astproxy/queues_qos/:day`](#queues_qosget)
         * 1. [`astproxy/agents_qos/:day`](#agents_qosget)
@@ -456,9 +456,15 @@ var compConfigManager;
         *
         * ---
         *
-        * ### <a id="queue_recallget">**`astproxy/queue_recall/:qid`**</a>
+        * ### <a id="queue_recallget">**`astproxy/queue_recall/:type/:val/:qid`**</a>
         *
-        * Gets the recall data about the queue. _qid_ is the queue identifier.
+        * Gets the recall data about the queue. The request must contains
+        * the following parameters:
+        *
+        * * `type: ("day | "hours") the type of the interval time to be searched`
+        * * `val: in case of _type=hours_ is the amount of last hours to be searched, while in case
+        *         of _type=day_ is the single day date expressed using the format YYYYMMDD`
+        * * `qid: the queue identifier`
         *
         * Example JSON response:
         *
@@ -484,9 +490,15 @@ var compConfigManager;
         *
         * ---
         *
-        * ### <a id="qrecall_infoget">**`astproxy/qrecall_info/:cid`**</a>
+        * ### <a id="qrecall_infoget">**`astproxy/qrecall_info/:type/:val/:cid`**</a>
         *
-        * Gets details about the queue call. The _cid_ is the caller identifier.
+        * Gets details about the queue call. The request must contains
+        * the following parameters:
+        *
+        * * `type: ("day | "hours") the type of the interval time to be searched`
+        * * `val: in case of _type=hours_ is the amount of last hours to be searched, while in case
+        *         of _type=day_ is the single day date expressed using the format YYYYMMDD`
+        * * `cid: the caller identifier`
         *
         * Example JSON response:
         *
@@ -1108,8 +1120,8 @@ var compConfigManager;
                 *   @param {string} sip_webrtc                     Gets all the configuration about the sip WebRTC
                 *   @param {string} remote_extensions              Gets all the extensions with all their status informations of all remote sites
                 *   @param {string} queues_stats/:day              Gets extended statistics about queues
-                *   @param {string} queue_recall/:qid              Gets the recall data about the queue
-                *   @param {string} qrecall_info/:cid              Gets the details about the queue recall
+                *   @param {string} queue_recall/:type/:val/:qid   Gets the recall data about the queue
+                *   @param {string} qrecall_info/:type/:val/:cid   Gets the details about the queue recall
                 *   @param {string} qrecall_check/:num             Checks if the number is in conversation
                 *   @param {string} queues_qos/:day                Gets QOS info about queues
                 *   @param {string} agents_qos/:day                Gets QOS info about agents
@@ -1131,8 +1143,8 @@ var compConfigManager;
                     'remote_opgroups',
                     'remote_extensions',
                     'queues_stats/:day',
-                    'queue_recall/:qid',
-                    'qrecall_info/:cid',
+                    'queue_recall/:type/:val/:qid',
+                    'qrecall_info/:type/:val/:cid',
                     'qrecall_check/:num',
                     'queues_qos/:day',
                     'agents_qos/:day',
@@ -1712,12 +1724,15 @@ var compConfigManager;
                 try {
                     var username = req.headers.authorization_user;
 
-                    if (typeof req.params.qid !== 'string') {
+                    if (typeof req.params.qid !== 'string' ||
+                        typeof req.params.val !== 'string' ||
+                        (req.params.type !== 'hours' && req.params.type !== 'day')) {
+
                         compUtil.net.sendHttp400(IDLOG, res);
                         return;
                     }
 
-                    compAstProxy.getQueueRecallData(req.params.qid, function (err, results) {
+                    compAstProxy.getQueueRecallData(req.params.type, req.params.val, req.params.qid, function (err, results) {
                         try {
                             if (err) { throw err; }
 
@@ -1789,16 +1804,24 @@ var compConfigManager;
                 try {
                     var username = req.headers.authorization_user;
 
-                    if (typeof req.params.cid !== 'string') {
+                    if (typeof req.params.cid !== 'string' ||
+                        typeof req.params.val !== 'string' ||
+                        (req.params.type !== 'hours' && req.params.type !== 'day')) {
+
                         compUtil.net.sendHttp400(IDLOG, res);
                         return;
                     }
 
-                    compAstProxy.getQueueRecallInfo(req.params.cid, function (err, results) {
+                    compAstProxy.getQueueRecallInfo(req.params.type, req.params.val, req.params.cid, function (err, results) {
                         try {
                             if (err) { throw err; }
 
-                            logger.info(IDLOG, 'sent details about queue recall of caller id "' + req.params.cid + '"' +
+                            logger.info(IDLOG, 'sent details about queue recall of cid "' + req.params.cid + '" from ' +
+                                               (req.params.type === 'hours' ?
+                                                                             'last ' + req.params.val + ' hours'
+                                                                            :
+                                                                             'day ' + req.params.val
+                                               ) +
                                                ' in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
                             res.send(200, results);
 

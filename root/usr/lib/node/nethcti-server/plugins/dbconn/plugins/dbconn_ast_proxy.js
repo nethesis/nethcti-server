@@ -313,13 +313,21 @@ function getQueuesQOS(day, cb) {
 * Gets the details about caller id from queue_recall db table.
 *
 * @method getQueueRecallInfo
-* @param {string}   cid The caller identifier
+* @param {object}   data
+*   @param {string} data.type The type of search ("hours" || "day")
+*   @param {string} data.val  The value of the interval time to be searched
+*   @param {string} data.cid  The caller identifier
 * @param {function} cb  The callback function
 */
-function getQueueRecallInfo(cid, cb) {
+function getQueueRecallInfo(data, cb) {
     try {
         // check parameters
-        if (typeof cb !== 'function' || typeof cid !== 'string') {
+        if (typeof data     !== 'object'   ||
+            typeof cb       !== 'function' ||
+            typeof data.val !== 'string'   ||
+            typeof data.cid !== 'string'   ||
+            (data.type !== 'hours' && data.type !== 'day')) {
+
             throw new Error('wrong parameters');
         }
 
@@ -333,16 +341,16 @@ function getQueueRecallInfo(cid, cb) {
                    'hold, ',
                    'cid, ',
                    'agent ',
-            'FROM   queue_recall ',
-            'WHERE cid="' + cid+ '" '
+            'FROM ', getQueueRecallQueryTable(data.type, data.val), ' ',
+            'WHERE cid="', data.cid, '"'
         ].join('');
 
         compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.QUEUE_RECALL].query(query).success(function (results) {
-            logger.info(IDLOG, results.length + ' results searching details about queue recall on cid "' + cid + '"');
+            logger.info(IDLOG, results.length + ' results searching details about queue recall on cid "' + data.cid + '"');
             cb(null, results);
 
         }).error(function (err1) {
-            logger.error(IDLOG, 'searching details about queue recall on cid "' + cid + '"');
+            logger.error(IDLOG, 'searching details about queue recall on cid "' + data.cid + '"');
             cb(err.toString(), {});
         });
 
@@ -355,26 +363,127 @@ function getQueueRecallInfo(cid, cb) {
 }
 
 /**
-* Gets the last 8 hours calls from queue_recall db table.
+* Gets the query that returns the entries corresponding to queue recalls table.
 *
-* @method getQueueRecall
-* @param {object}   data
-*   @param {string} data.qid   The queue identifier
-*   @param {number} data.hours The amount of last hours to be analized
-* @param {function} cb   The callback function
+* @method getQueueRecallQueryTable
+* @param  {string} type The type of search ("hours" || "day")
+* @param  {string} val  The value of the interval time to be searched
+* @return {string} The query to obtain the entries about queue recall table
+* @private
 */
-function getQueueRecall(data, cb) {
+function getQueueRecallQueryTable(type, val) {
     try {
         // check parameters
-        if (typeof data     !== 'object' ||
-            typeof data.qid !== 'string' ||
-            (data.hours && typeof data.hours !== 'number') ||
-            typeof cb !== 'function') {
+        if (typeof val !== 'string' ||
+            (type !== 'hours' && type !== 'day')) {
 
             throw new Error('wrong parameters');
         }
 
-        if (!data.hours) { data.hours = 8; }
+        var timeConditionQl,  // time condition on queue_log
+            timeConditionCdr; // time condition on cdr
+
+        if (type === 'hours') {
+            timeConditionQl  = 'TIMESTAMPDIFF(HOUR, time, now()) < '     + val;
+            timeConditionCdr = 'TIMESTAMPDIFF(HOUR, calldate, now()) < ' + val;
+        }
+        else {
+            timeConditionQl  = 'DATE(time) = "'     + val + '"';
+            timeConditionCdr = 'DATE(calldate) = "' + val + '"';
+        }
+
+        var query = [
+         '(',
+               'SELECT TIMESTAMP(time) AS time,',
+                     ' queuename,',
+                     ' "IN" AS direction,',
+                     ' "TIMEOUT" AS action,',
+                     ' CAST(data1 AS UNSIGNED) AS position,',
+                     ' CAST(data2 AS UNSIGNED) AS duration,',
+                     ' CAST(data3 AS UNSIGNED) AS hold,',
+                     ' (',
+                           'SELECT data2 ',
+                           'FROM   queue_log z ',
+                           'WHERE  z.event="ENTERQUEUE" AND z.callid=a.callid',
+                     ' ) AS cid,',
+                     ' agent ',
+               'FROM   queue_log a ',
+               'WHERE  event IN ("ABANDON", "EXITWITHTIMEOUT", "EXITWITHKEY", "EXITEMPTY")',
+                     ' AND ', timeConditionQl,
+
+         ' UNION ALL ',
+
+               'SELECT TIMESTAMP(time) AS time,',
+                     ' queuename,',
+                     ' "IN" AS direction,',
+                     ' "DONE" AS action,',
+                     ' CAST(data3 AS UNSIGNED) AS position,',
+                     ' CAST(data2 AS UNSIGNED) AS duration,',
+                     ' CAST(data1 AS UNSIGNED) AS hold,',
+                     ' (',
+                           'SELECT data2 ',
+                           'FROM   queue_log z ',
+                           'WHERE  z.event="ENTERQUEUE"',
+                                 ' AND z.callid=a.callid',
+                     ' ) AS cid,',
+                     ' agent ',
+               'FROM   queue_log a ',
+               'WHERE  event IN ("COMPLETEAGENT", "COMPLETECALLER")',
+                     ' AND ', timeConditionQl,
+
+         ' UNION ALL ',
+
+               'SELECT TIMESTAMP(calldate) AS time,',
+                     ' l.queuename as queuename,',
+                     ' "OUT" AS direction,',
+                     ' IF (disposition="ANSWERED", "DONE", disposition) AS action,',
+                     ' 0 AS position,',
+                     ' 0 AS duration,',
+                     ' 0 AS hold,',
+                     ' dst AS cid,',
+                     ' src AS agent ',
+               'FROM   cdr c ',
+               'INNER JOIN queue_log l ON c.dst=l.data2 ',
+               'WHERE  l.event="ENTERQUEUE" ',
+                     ' AND ', timeConditionCdr,
+                     ' AND ', timeConditionQl,
+
+         ' ORDER BY time DESC',
+
+         ') queue_recall'
+
+        ].join('');
+
+        return query;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return '';
+    }
+}
+
+/**
+* Gets the last calls from queue_recall db table basing the search
+* into the last X hours or a specific day in YYYYMMDD format.
+*
+* @method getQueueRecall
+* @param {object}   data
+*   @param {string} data.type The type of search ("hours" || "day")
+*   @param {string} data.val  The value of the interval time to be searched (or X hours or YYYYMMDD specific day)
+*   @param {string} data.qid  The queue identifier
+* @param {function} cb        The callback function
+*/
+function getQueueRecall(data, cb) {
+    try {
+        // check parameters
+        if (typeof data     !== 'object'   ||
+            typeof cb       !== 'function' ||
+            typeof data.val !== 'string'   ||
+            typeof data.qid !== 'string'   ||
+            (data.type !== 'hours' && data.type !== 'day')) {
+
+            throw new Error('wrong parameters');
+        }
 
         var query = [
             'SELECT b.company,',
@@ -383,64 +492,7 @@ function getQueueRecall(data, cb) {
                   ' CAST(time as CHAR(50)) as time,',
                   ' direction,',
                   ' queuename ',
-            'FROM (',
-                       'SELECT TIMESTAMP(time) AS time,',
-                             ' queuename,',
-                             ' "IN" AS direction,',
-                             ' "TIMEOUT" AS action,',
-                             ' CAST(data1 AS UNSIGNED) AS position,',
-                             ' CAST(data2 AS UNSIGNED) AS duration,',
-                             ' CAST(data3 AS UNSIGNED) AS hold,',
-                             ' (',
-                                   'SELECT data2 ',
-                                   'FROM   queue_log z ',
-                                   'WHERE  z.event="ENTERQUEUE" AND z.callid=a.callid',
-                             ' ) AS cid,',
-                             ' agent ',
-                       'FROM   queue_log a ',
-                       'WHERE  event IN ("ABANDON", "EXITWITHTIMEOUT", "EXITWITHKEY", "EXITEMPTY")',
-                             ' AND TIMESTAMPDIFF(HOUR,time,now())<', data.hours,
-
-                 ' UNION ALL ',
-
-                       'SELECT TIMESTAMP(time) AS time,',
-                             ' queuename,',
-                             ' "IN" AS direction,',
-                             ' "DONE" AS action,',
-                             ' CAST(data3 AS UNSIGNED) AS position,',
-                             ' CAST(data2 AS UNSIGNED) AS duration,',
-                             ' CAST(data1 AS UNSIGNED) AS hold,',
-                             ' (',
-                                   'SELECT data2 ',
-                                   'FROM   queue_log z ',
-                                   'WHERE  z.event="ENTERQUEUE"',
-                                         ' AND z.callid=a.callid',
-                             ' ) AS cid,',
-                             ' agent ',
-                       'FROM   queue_log a ',
-                       'WHERE  event IN ("COMPLETEAGENT", "COMPLETECALLER")',
-                             ' AND TIMESTAMPDIFF(HOUR,time,now())<', data.hours,
-
-                 ' UNION ALL ',
-
-                       'SELECT TIMESTAMP(calldate) AS time,',
-                             ' l.queuename as queuename,',
-                             ' "OUT" AS direction,',
-                             ' IF (disposition="ANSWERED", "DONE", disposition) AS action,',
-                             ' 0 AS position,',
-                             ' 0 AS duration,',
-                             ' 0 AS hold,',
-                             ' dst AS cid,',
-                             ' src AS agent ',
-                       'FROM   cdr c ',
-                       'INNER JOIN queue_log l ON c.dst=l.data2 ',
-                       'WHERE  l.event="ENTERQUEUE" ',
-                             ' AND TIMESTAMPDIFF(HOUR, calldate, now())<', data.hours,
-                             ' AND TIMESTAMPDIFF(HOUR, time, now())<', data.hours, ' ',
-
-                   'ORDER BY time DESC',
-
-            ') queue_recall ',
+            'FROM ', getQueueRecallQueryTable(data.type, data.val), ' ',
             'LEFT JOIN phonebook.phonebook b ON queue_recall.cid=b.workphone ',
             'WHERE queuename="' + data.qid + '" ',
             'GROUP BY cid ',
