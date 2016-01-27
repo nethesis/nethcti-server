@@ -345,7 +345,7 @@ function getQueueRecallInfo(data, cb) {
             'WHERE cid="', data.cid, '"'
         ].join('');
 
-        compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.QUEUE_RECALL].query(query).success(function (results) {
+        compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.QUEUE_LOG].query(query).success(function (results) {
             logger.info(IDLOG, results.length + ' results searching details about queue recall on cid "' + data.cid + '"');
             cb(null, results);
 
