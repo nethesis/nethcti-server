@@ -995,6 +995,25 @@ function getSitePrefixCall(site) {
 }
 
 /**
+* Returns the prefix of all remote sites.
+*
+* @method getAllSitesPrefixCall
+* @return {object} The keys are the remote site names and the values the corresponding prefixes.
+*/
+function getAllSitesPrefixCall() {
+    try {
+        var site;
+        var res = {};
+        for (site in remoteSites) {
+            res[site] = remoteSites[site].prefix;
+        }
+        return res;
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Check if the user is an authenticated remote site that has already logged in.
 *
 * @method isClientRemote
@@ -2047,6 +2066,7 @@ exports.getAllRemoteSites               = getAllRemoteSites;
 exports.getSitePrefixCall               = getSitePrefixCall;
 exports.setCompComNethctiWs             = setCompComNethctiWs;
 exports.setCompAuthorization            = setCompAuthorization;
+exports.getAllSitesPrefixCall           = getAllSitesPrefixCall;
 exports.getNumConnectedClients          = getNumConnectedClients;
 exports.getAllRemoteSitesUsernames      = getAllRemoteSitesUsernames;
 exports.getAllRemoteSitesUserEndpoints  = getAllRemoteSitesUserEndpoints;

@@ -124,6 +124,7 @@ var compConfigManager;
         * 1. [`astproxy/cfvm/:type/:endpoint`](#cfvmget)
         * 1. [`astproxy/unauthe_call/:endpoint/:number`](#unauthe_callget)
         * 1. [`astproxy/prefix`](#prefixget)
+        * 1. [`astproxy/remote_prefixes`](#remote_prefixesget)
         * 1. [`astproxy/cfcall/:type/:endpoint`](#cfcallget)
         * 1. [`astproxy/queues`](#queuesget)
         * 1. [`astproxy/trunks`](#trunksget)
@@ -207,6 +208,19 @@ var compConfigManager;
         *
         *     {
          "prefix": "0039"
+     }
+        *
+        * ---
+        *
+        * ### <a id="remote_prefixesget">**`astproxy/remote_prefixes`**</a>
+        *
+        * Returns the prefix number of all remote sites used with outgoing external calls.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "site1": "6",
+         "site2": "7"
      }
         *
         * ---
@@ -1113,6 +1127,7 @@ var compConfigManager;
                 *   @param {string} queues                         Gets all the queues of the operator panel of the user
                 *   @param {string} trunks                         Gets all the trunks of the operator panel of the user
                 *   @param {string} prefix                         Gets the prefix number used with outgoing external calls
+                *   @param {string} remote_prefixes                Gets prefix number of all remote sites used with outgoing external calls
                 *   @param {string} opgroups                       Gets all the user groups of the operator panel
                 *   @param {string} remote_opgroups                Gets all the user groups of all remote sites
                 *   @param {string} parkings                       Gets all the parkings with all their status informations
@@ -1141,6 +1156,7 @@ var compConfigManager;
                     'extensions',
                     'sip_webrtc',
                     'remote_opgroups',
+                    'remote_prefixes',
                     'remote_extensions',
                     'queues_stats/:day',
                     'queue_recall/:type/:val/:qid',
@@ -1642,7 +1658,7 @@ var compConfigManager;
             *
             *     GET  prefix
             *
-            * @method extensions
+            * @method prefix
             * @param {object}   req  The client request
             * @param {object}   res  The client response
             * @param {function} next Function to run the next handler in the chain
@@ -1654,6 +1670,36 @@ var compConfigManager;
 
                     logger.info(IDLOG, 'sent the prefix number "' + prefix + '" to user "' + username + '" ' + res.connection.remoteAddress);
                     res.send(200, { prefix: prefix });
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * Gets the prefix number of all remote sites used with outgoing external calls with the following REST API:
+            *
+            *     GET  remote_prefixes
+            *
+            * @method remote_prefixes
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            remote_prefixes: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    if (compAuthorization.authorizeRemoteSiteUser(username) !== true) {
+                        logger.warn(IDLOG, 'requesting prefixes of all remote sites: authorization failed for user "' + username + '"');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+                    var prefixes = compComNethctiRemotes.getAllSitesPrefixCall();
+
+                    logger.info(IDLOG, 'sent prefixes of all remote sites to user "' + username + '" ' + res.connection.remoteAddress);
+                    res.send(200, prefixes);
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
@@ -4160,6 +4206,7 @@ var compConfigManager;
         exports.setCompOperator          = setCompOperator;
         exports.setCompAstProxy          = setCompAstProxy;
         exports.queuemember_add          = astproxy.queuemember_add;
+        exports.remote_prefixes          = astproxy.remote_prefixes;
         exports.inout_dyn_queues         = astproxy.inout_dyn_queues;
         exports.remote_extensions        = astproxy.remote_extensions;
         exports.queuemember_pause        = astproxy.queuemember_pause;

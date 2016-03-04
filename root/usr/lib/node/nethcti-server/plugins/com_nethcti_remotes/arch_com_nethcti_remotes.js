@@ -24,98 +24,105 @@ module.exports = function (options, imports, register) {
     register(null, {
         comNethctiRemotes: {
             /**
-            * It's the _getNumConnectedClients_ method provided by _com\_nethcti\_ws_ module.
+            * It's the _getNumConnectedClients_ method provided by _com\_nethcti\_remotes_ module.
             *
             * @method getNumConnectedClients
             */
             getNumConnectedClients: comNethctiRemotes.getNumConnectedClients,
 
             /**
-            * It's the _getSiteName_ method provided by _com\_nethcti\_ws_ module.
+            * It's the _getSiteName_ method provided by _com\_nethcti\_remotes_ module.
             *
             * @method getSiteName
             */
             getSiteName: comNethctiRemotes.getSiteName,
 
             /**
-            * It's the _remoteSiteExists_ method provided by _com\_nethcti\_ws_ module.
+            * It's the _remoteSiteExists_ method provided by _com\_nethcti\_remotes_ module.
             *
             * @method remoteSiteExists
             */
             remoteSiteExists: comNethctiRemotes.remoteSiteExists,
 
             /**
-            * It's the _getSitePrefixCall_ method provided by _com\_nethcti\_ws_ module.
+            * It's the _getSitePrefixCall_ method provided by _com\_nethcti\_remotes_ module.
             *
             * @method getSitePrefixCall
             */
             getSitePrefixCall: comNethctiRemotes.getSitePrefixCall,
 
             /**
-            * It's the _newRemotePostit_ method provided by _com\_nethcti\_ws_ module.
+            * It's the _getAllSitesPrefixCall_ method provided by _com\_nethcti\_remotes_ module.
+            *
+            * @method getAllSitesPrefixCall
+            */
+            getAllSitesPrefixCall: comNethctiRemotes.getAllSitesPrefixCall,
+
+            /**
+            * It's the _newRemotePostit_ method provided by _com\_nethcti\_remotes_ module.
             *
             * @method newRemotePostit
             */
             newRemotePostit: comNethctiRemotes.newRemotePostit,
 
             /**
-            * It's the _getAllRemoteSitesOperatorExtensions_ method provided by _com\_nethcti\_ws_ module.
+            * It's the _getAllRemoteSitesOperatorExtensions_ method provided by _com\_nethcti\_remotes_ module.
             *
             * @method getAllRemoteSitesOperatorExtensions
             */
             getAllRemoteSitesOperatorExtensions: comNethctiRemotes.getAllRemoteSitesOperatorExtensions,
 
             /**
-            * It's the _getAllRemoteSitesUserEndpoints_ method provided by _com\_nethcti\_ws_ module.
+            * It's the _getAllRemoteSitesUserEndpoints_ method provided by _com\_nethcti\_remotes_ module.
             *
             * @method getAllRemoteSitesUserEndpoints
             */
             getAllRemoteSitesUserEndpoints: comNethctiRemotes.getAllRemoteSitesUserEndpoints,
 
             /**
-            * It's the _getAllRemoteSitesUsernames_ method provided by _com\_nethcti\_ws_ module.
+            * It's the _getAllRemoteSitesUsernames_ method provided by _com\_nethcti\_remotes_ module.
             *
             * @method getAllRemoteSitesUsernames
             */
             getAllRemoteSitesUsernames: comNethctiRemotes.getAllRemoteSitesUsernames,
 
             /**
-            * It's the _getAllRemoteSites_ method provided by _com\_nethcti\_ws_ module.
+            * It's the _getAllRemoteSites_ method provided by _com\_nethcti\_remotes_ module.
             *
             * @method getAllRemoteSites
             */
             getAllRemoteSites: comNethctiRemotes.getAllRemoteSites,
 
             /**
-            * It's the _getAllRemoteSitesOperatorGroups_ method provided by _com\_nethcti\_ws_ module.
+            * It's the _getAllRemoteSitesOperatorGroups_ method provided by _com\_nethcti\_remotes_ module.
             *
             * @method getAllRemoteSitesOperatorGroups
             */
             getAllRemoteSitesOperatorGroups: comNethctiRemotes.getAllRemoteSitesOperatorGroups,
 
             /**
-            * It's the _isClientRemote_ method provided by _com\_nethcti\_ws_ module.
+            * It's the _isClientRemote_ method provided by _com\_nethcti\_remotes_ module.
             *
             * @method isClientRemote
             */
             isClientRemote: comNethctiRemotes.isClientRemote,
 
             /**
-            * It's the _on_ method provided by _com\_nethcti\_ws_ module.
+            * It's the _on_ method provided by _com\_nethcti\_remotes_ module.
             *
             * @method on
             */
             on: comNethctiRemotes.on,
 
             /**
-            * It's the _EVT\_ALL\_WS\_CLIENT\_DISCONNECTION_ property provided by _com\_nethcti\_ws_ module.
+            * It's the _EVT\_ALL\_WS\_CLIENT\_DISCONNECTION_ property provided by _com\_nethcti\_remotes_ module.
             *
             * @method EVT_ALL_WS_CLIENT_DISCONNECTION
             */
             EVT_ALL_WS_CLIENT_DISCONNECTION: comNethctiRemotes.EVT_ALL_WS_CLIENT_DISCONNECTION,
 
             /**
-            * It's the _EVT\_WS\_CLIENT\_LOGGEDIN_ property provided by _com\_nethcti\_ws_ module.
+            * It's the _EVT\_WS\_CLIENT\_LOGGEDIN_ property provided by _com\_nethcti\_remotes_ module.
             *
             * @method EVT_WS_CLIENT_LOGGEDIN
             */
