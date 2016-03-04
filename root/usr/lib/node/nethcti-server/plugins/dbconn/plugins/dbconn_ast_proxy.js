@@ -487,6 +487,7 @@ function getQueueRecall(data, cb) {
 
         var query = [
             'SELECT b.company,',
+                  ' b.name,',
                   ' cid,',
                   ' action,',
                   ' CAST(time as CHAR(50)) as time,',
