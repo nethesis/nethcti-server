@@ -4,6 +4,7 @@
     my $ldapOu = ${'nethcti-server'}{'LdapOu'} || "People";
     my $ldapPort = ${'nethcti-server'}{'LdapPort'} || "389";
     my $ldapServer = ${'nethcti-server'}{'LdapServer'} || "localhost";
+    my $ldapsSelfSigned = ${'nethcti-server'}{'LdapsSelfSigned'} || "false";
     my $authType = ${'nethcti-server'}{'AuthType'} || "ldap";
     my $unAutheCall = ${'nethcti-server'}{'UnAutheCall'} || "disabled";
     my $ldap = "";
@@ -13,7 +14,8 @@
         \"ou\": \"$ldapOu\",
         \"baseDn\": \"$ldapBase\",
         \"port\": \"$ldapPort\",
-        \"server\": \"$ldapServer\"
+        \"server\": \"$ldapServer\",
+        \"selfSigned\": \"$ldapsSelfSigned\"
     \},";
     }
 

@@ -132,6 +132,16 @@ var authRemoteSites = {};
 var ou;
 
 /**
+* True if self-signed certificate for ldaps must be accepted.
+*
+* @property ldapsSelfSigned
+* @type {boolean}
+* @default false
+* @private
+*/
+var ldapsSelfSigned = false;
+
+/**
 * The LDAP base DN.
 *
 * @property baseDn
@@ -467,7 +477,7 @@ function configFile(json) {
 */
 function configLDAP(json) {
     // check the parameter
-    if (typeof json        !== 'object' ||
+    if (typeof json        !== 'object' || typeof json.selfSigned !== 'boolean' ||
         typeof json.ou     !== 'string' || typeof json.baseDn !== 'string' ||
         typeof json.server !== 'string' || typeof json.port   !== 'string') {
 
@@ -478,6 +488,7 @@ function configLDAP(json) {
     server = json.server;
     ou     = json.ou;
     baseDn = json.baseDn;
+    ldapsSelfSigned = json.selfSigned;
 
     var proto = (port === '636' ? 'ldaps' : 'ldap');
     var ldapurl = proto + '://' + server + ':' + port;
@@ -485,6 +496,7 @@ function configLDAP(json) {
     // create ldap client
     client = ldap.createClient({
         url:            ldapurl,
+        tlsOptions:     { 'rejectUnauthorized': ldapsSelfSigned },
         timeout:        5000,    // how long the client should let operations live for before timing out. Default is Infinity
         maxConnections: 10,      // whether or not to enable connection pooling, and if so, how many to maintain
         connectTimeout: 10000    // how long the client should wait before timing out on TCP connections. Default is up to the OS
@@ -513,6 +525,7 @@ function configActiveDirectory(json) {
     server   = json.server;
     var arr  = json.baseDn.split(',');
     adDomain = arr[0].split('=')[1] + '.' + arr[1].split('=')[1];
+    ldapsSelfSigned = json.selfSigned;
 
     var proto = (port === '636' ? 'ldaps' : 'ldap');
     var adurl = proto + '://' + server + ':' + port;
@@ -520,6 +533,7 @@ function configActiveDirectory(json) {
     // create active directory client
     client = ldap.createClient({
         url:            adurl,
+        tlsOptions:     { 'rejectUnauthorized': ldapsSelfSigned },
         timeout:        5000,    // how long the client should let operations live for before timing out. Default is Infinity
         maxConnections: 10,      // whether or not to enable connection pooling, and if so, how many to maintain
         connectTimeout: 10000    // how long the client should wait before timing out on TCP connections. Default is up to the OS
