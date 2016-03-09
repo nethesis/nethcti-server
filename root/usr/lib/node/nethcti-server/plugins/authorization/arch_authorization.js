@@ -189,6 +189,13 @@ module.exports = function (options, imports, register) {
             authorizeAdminCallUser: authorization.authorizeAdminCallUser,
 
             /**
+            * It's the _authorizeLostQueueCallsUser_ method provided by _authorization_ module.
+            *
+            * @method authorizeLostQueueCallsUser
+            */
+            authorizeLostQueueCallsUser: authorization.authorizeLostQueueCallsUser,
+
+            /**
             * It's the _authorizePhonebookUser_ method provided by _authorization_ module.
             *
             * @method authorizePhonebookUser

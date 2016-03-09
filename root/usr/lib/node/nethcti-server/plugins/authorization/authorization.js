@@ -289,6 +289,27 @@ function authorizeRecordingUser(username) {
 }
 
 /**
+* Returns true if the specified user has the authorization to view the lost calls of the queues.
+*
+* @method authorizeLostQueueCallsUser
+* @param  {string}  username The username
+* @return {boolean} True if the user has the authorization to view the lost calls of the queues.
+*/
+function authorizeLostQueueCallsUser(username) {
+    try {
+        // check parameter
+        if (typeof username !== 'string') { throw new Error('wrong parameter'); }
+
+        return authorizeUser(authorizationTypes.TYPES.lost_queue_calls, username);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        // in the case of exception it returns false for security reasons
+        return false;
+    }
+}
+
+/**
 * Returns true if the specified user has the administration recording authorization.
 *
 * @method authorizeAdminRecordingUser
@@ -1567,6 +1588,7 @@ exports.authorizeAdminTransferUser      = authorizeAdminTransferUser;
 exports.authorizeOpAdminQueuesUser      = authorizeOpAdminQueuesUser;
 exports.authorizePhoneRedirectUser      = authorizePhoneRedirectUser;
 exports.verifyUserEndpointVoicemail     = verifyUserEndpointVoicemail;
+exports.authorizeLostQueueCallsUser     = authorizeLostQueueCallsUser;
 exports.authorizeAdminRecordingUser     = authorizeAdminRecordingUser;
 exports.getAuthorizedOperatorGroups     = getAuthorizedOperatorGroups;
 exports.authorizeOperatorGroupsUser     = authorizeOperatorGroupsUser;

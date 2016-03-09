@@ -1778,6 +1778,13 @@ var compConfigManager;
                         return;
                     }
 
+                    if (compAuthorization.authorizeLostQueueCallsUser(username) !== true) {
+                        logger.warn(IDLOG, 'requesting last ' + req.params.val + ' ' + req.params.type + ' ' +
+                                           'recalls info of queue "' + req.params.qid + '": authorization failed for user "' + username + '"');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+
                     compAstProxy.getQueueRecallData(req.params.type, req.params.val, req.params.qid, function (err, results) {
                         try {
                             if (err) { throw err; }
@@ -1814,6 +1821,13 @@ var compConfigManager;
 
                     if (typeof req.params.num !== 'string') {
                         compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    if (compAuthorization.authorizeLostQueueCallsUser(username) !== true) {
+                        logger.warn(IDLOG, 'requesting check for recall of num ' + req.params.num + ': ' +
+                                           'authorization failed for user "' + username + '"');
+                        compUtil.net.sendHttp403(IDLOG, res);
                         return;
                     }
 
@@ -1855,6 +1869,14 @@ var compConfigManager;
                         (req.params.type !== 'hours' && req.params.type !== 'day')) {
 
                         compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    if (compAuthorization.authorizeLostQueueCallsUser(username) !== true) {
+                        logger.warn(IDLOG, 'requesting detailed info of last ' + req.params.val + ' ' + req.params.type + ' ' +
+                                           'recall cid ' + req.params.cid + ' of queue: ' +
+                                           'authorization failed for user "' + username + '"');
+                        compUtil.net.sendHttp403(IDLOG, res);
                         return;
                     }
 

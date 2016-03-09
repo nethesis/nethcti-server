@@ -49,6 +49,7 @@ var AUTHORIZATION_TYPES = {
     'phone_redirect':    'phone_redirect',
     'operator_groups':   'operator_groups',
     'admin_recording':   'admin_recording',
+    'lost_queue_calls':  'lost_queue_calls',
     'attended_transfer': 'attended_transfer'
 };
 
