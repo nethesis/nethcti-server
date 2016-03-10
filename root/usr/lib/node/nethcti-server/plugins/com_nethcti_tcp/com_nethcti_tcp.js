@@ -564,10 +564,10 @@ function sendStreamingNotificationEvent(username, data, socket) {
         }
 
         // always add this informations without filter them
-        var params = 'description=' + streamingData.description +
+        var params = 'description=' + escape(streamingData.description) +
                      '&ctiProto='   + ctiProto                  +
                      '&open='       + streamingData.open        +
-                     '&url='        + streamingData.url         +
+                     '&url='        + escape(streamingData.url) +
                      '&id='         + streamingData.id;
 
         // add parameters to the HTTP GET url
