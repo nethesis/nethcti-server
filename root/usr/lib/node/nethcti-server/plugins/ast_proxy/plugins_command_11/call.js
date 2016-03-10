@@ -133,7 +133,7 @@ var FAIL_REASON = {
                         Channel:  'Local/' + args.from + '@from-internal', // the caller
                         Context:  'from-internal',
                         Priority: 1,
-                        CallerID: PRE_CALLERID + args.to,
+                        CallerID: args.from,
                         Timeout:  CALL_TIMEOUT,
                         Account:  args.to,
                         Exten:    args.to, // the number to be called
