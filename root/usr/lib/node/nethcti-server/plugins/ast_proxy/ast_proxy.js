@@ -42,7 +42,7 @@ var IDLOG = '[ast_proxy]';
 * @private
 * @final
 * @readOnly
-* @default []
+* @default "/etc/nethcti/structure.ini"
 */
 var INI_PATH_STRUCT = '/etc/nethcti/structure.ini';
 

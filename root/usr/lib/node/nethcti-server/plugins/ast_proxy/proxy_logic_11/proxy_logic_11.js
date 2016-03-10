@@ -1868,6 +1868,7 @@ function initializeSipTrunk() {
 
                 trunk = new Trunk(struct[k].extension, struct[k].tech, struct[k].max_channels);
                 trunks[trunk.getExten()] = trunk;
+                trunks[trunk.getExten()].setName(struct[k].label);
 
                 // request sip details for current trunk
                 astProxy.doCmd({ command: 'sipDetails', exten: trunk.getExten() }, trunkSipDetails);
@@ -2102,7 +2103,6 @@ function trunkSipDetails(err, resp) {
         // set the extension informations
         trunks[data.exten].setIp(data.ip);
         trunks[data.exten].setPort(data.port);
-        trunks[data.exten].setName(data.name);
         trunks[data.exten].setSipUserAgent(data.sipuseragent);
         logger.info(IDLOG, 'set sip details for trunk ' + data.exten);
 
