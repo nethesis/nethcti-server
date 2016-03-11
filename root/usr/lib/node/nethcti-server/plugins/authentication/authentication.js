@@ -477,9 +477,10 @@ function configFile(json) {
 */
 function configLDAP(json) {
     // check the parameter
-    if (typeof json        !== 'object' || typeof json.selfSigned !== 'boolean' ||
+    if (typeof json        !== 'object' ||
         typeof json.ou     !== 'string' || typeof json.baseDn !== 'string' ||
-        typeof json.server !== 'string' || typeof json.port   !== 'string') {
+        typeof json.server !== 'string' || typeof json.port   !== 'string' ||
+        (json.selfSigned   !== 'true'   && json.selfSigned    !== 'false')) {
 
         throw new Error('wrong LDAP auhtentication configuration');
     }
@@ -488,7 +489,7 @@ function configLDAP(json) {
     server = json.server;
     ou     = json.ou;
     baseDn = json.baseDn;
-    ldapsSelfSigned = json.selfSigned;
+    ldapsSelfSigned = (json.selfSigned === 'true' ? true : false);
 
     var proto = (port === '636' ? 'ldaps' : 'ldap');
     var ldapurl = proto + '://' + server + ':' + port;
@@ -516,7 +517,8 @@ function configLDAP(json) {
 function configActiveDirectory(json) {
     // check the parameter
     if (typeof json        !== 'object' || typeof json.baseDn !== 'string' ||
-        typeof json.server !== 'string' || typeof json.port   !== 'string') {
+        typeof json.server !== 'string' || typeof json.port   !== 'string' ||
+        (json.selfSigned   !== 'true'   && json.selfSigned    !== 'false')) {
 
         throw new Error('wrong active directory auhtentication configuration');
     }
@@ -525,7 +527,7 @@ function configActiveDirectory(json) {
     server   = json.server;
     var arr  = json.baseDn.split(',');
     adDomain = arr[0].split('=')[1] + '.' + arr[1].split('=')[1];
-    ldapsSelfSigned = json.selfSigned;
+    ldapsSelfSigned = (json.selfSigned === 'true' ? true : false);
 
     var proto = (port === '636' ? 'ldaps' : 'ldap');
     var adurl = proto + '://' + server + ':' + port;
