@@ -1,5 +1,5 @@
 Name:		nethcti-server
-Version: 2.5.1
+Version: 2.5.2
 Release: 1%{?dist}
 Summary:	Nodejs Asterisk proxy for NethCTI 2
 
@@ -60,6 +60,20 @@ rm -rf $RPM_BUILD_ROOT
 %doc
 
 %changelog
+* Fri Mar 11 2016 Alessandro Polidori <alessandro.polidori@gmail.com> - 2.5.2-1
+- fix LdapsSelfSigned. refs #4056
+- fix trunk sip label. refs #4082
+- streaming nethifier: fix to suport streaming url with arguments list. refs #4036
+- fix callerid of call.js to fix callback of mobile app. refs #4055
+- queue_recall_lost: use "lost_queue_calls" permission. refs #4080
+- add prop LdapsSelfSigned to accept self-signed certificates for ldaps. refs #4056
+- dbconn_ast_proxy: lost queue recall return also "name" field. refs #4040
+- new rest asproxy/remote_prefixes. refs #3995
+- dbconn: fix query for queue recall info. refs #4010
+- queue_recall: replace queue_recall view with more complex query. refs #4010
+- queue_recall: fix recall query to not use queue_recall view. refs #4010
+- add new queue_recalling_manager component for "call center phone bar" service. refs #4010
+
 * Mon Jan 11 2016 Alessandro Polidori <alessandro.polidori@gmail.com> - 2.5.1-1
 - update nethvoice-module-nethcti requires ver. refs #3208
 - manage new permission "hide_everyone". refs #4006
