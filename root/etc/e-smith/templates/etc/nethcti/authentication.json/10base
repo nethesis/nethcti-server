@@ -1,6 +1,5 @@
 {
-    use NethServer::Directory;
-    my $ldapBase = ${'nethcti-server'}{'LdapBaseDN'} || NethServer::Directory::getInternalSuffix();
+    my $ldapBase = ${'nethcti-server'}{'LdapBaseDN'} || 'dc=directory,dc=nh';
     my $ldapOu = ${'nethcti-server'}{'LdapOu'} || "People";
     my $ldapPort = ${'nethcti-server'}{'LdapPort'} || "389";
     my $ldapServer = ${'nethcti-server'}{'LdapServer'} || "localhost";
