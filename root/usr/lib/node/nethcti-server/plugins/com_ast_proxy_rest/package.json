@@ -11,6 +11,7 @@
             "operator",
             "configManager",
             "authorization",
+            "com_nethcti_ws",
             "comNethctiRemotes"
         ],
         "provides": []

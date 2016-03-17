@@ -5139,6 +5139,33 @@ function isExtenDynMemberQueue(extenId, queueId) {
 }
 
 /**
+* Checks if the specified extension is a WebRTC using websocket.
+*
+* @method isExtenWebrtc
+* @param  {string}  extenId The extension identifier
+* @return {boolean} True if the specified extension is a WebRTC.
+*/
+function isExtenWebrtc(extenId) {
+    try {
+        // check parameter
+        if (typeof extenId !== 'string') {
+            throw new Error('wrong parameter extenId "' + extenId + '"');
+        }
+        if (extensions[extenId]) {
+            return extensions[extenId].usingWebsocket();
+        }
+        else {
+            logger.warn(IDLOG, 'checking if the exten "' + extenId + '" is webrtc: it does not exist');
+        }
+        return false;
+
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+       return false;
+    }
+}
+
+/**
 * Checks if the specified queue dynamic member is logged into the specified queue.
 *
 * @method isDynMemberLoggedInQueue
@@ -6109,6 +6136,7 @@ exports.EVT_NEW_CDR                     = EVT_NEW_CDR;
 exports.setCompDbconn                   = setCompDbconn;
 exports.getExtensions                   = getExtensions;
 exports.pickupParking                   = pickupParking;
+exports.isExtenWebrtc                   = isExtenWebrtc;
 exports.getJSONQueues                   = getJSONQueues;
 exports.getExtensionIp                  = getExtensionIp;
 exports.getJSONTrunks                   = getJSONTrunks;

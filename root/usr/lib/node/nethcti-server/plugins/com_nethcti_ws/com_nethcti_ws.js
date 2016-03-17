@@ -34,6 +34,22 @@ var EventEmitter = require('events').EventEmitter;
 var EVT_EXTEN_UPDATE = 'extenUpdate';
 
 /**
+* Emitted to a websocket client connection to answer an incoming call to webrtc extension.
+*
+* @event answerWebrtc
+* @param {string} exten The WebRTC extension identifier
+*
+*/
+/**
+* The name of the event for answer webrtc extension
+*
+* @property EVT_ANSWER_WEBRTC
+* @type string
+* @default "answerWebrtc"
+*/
+var EVT_ANSWER_WEBRTC = 'answerWebrtc';
+
+/**
 * Emitted to a websocket client connection on user endpoint presence update.
 *
 * @event endpointPresenceUpdate
@@ -933,6 +949,37 @@ function getFilteredCallerIndentity(username, callerIdentity) {
 }
 
 /**
+* Sends an event to the client to answer the incoming call of webrtc extension.
+*
+* @method sendAnswerWebrtcToClient
+* @param {string} username The name of the client user
+* @param {string} extenId  The extension identifier
+*/
+function sendAnswerWebrtcToClient(username, extenId) {
+    try {
+        // check parameters
+        if (typeof username !== 'string' ||
+            typeof extenId  !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+        // emit the EVT_ANSWER_WEBRTC event for each logged in user associated with the ringing extension
+        var socketId;
+        for (socketId in wsid) {
+
+            if (wsid[socketId].username === username) {
+                logger.info(IDLOG, 'emit event "' + EVT_ANSWER_WEBRTC + '" for webrtc extension ' + extenId + ' to user "' + username + '"');
+
+                if (wsServer.sockets.sockets[socketId]) { wsServer.sockets.sockets[socketId].emit(EVT_ANSWER_WEBRTC, extenId); }
+                if (wssServer.sockets.sockets[socketId]) { wssServer.sockets.sockets[socketId].emit(EVT_ANSWER_WEBRTC, extenId); }
+            }
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Handler for the _extenDialing_ event emitted by _ast\_proxy_ component.
 * The extension ringing, so notify all users associated with it, with the
 * identity data of the caller.
@@ -1675,4 +1722,5 @@ exports.sendEventToAllClients           = sendEventToAllClients;
 exports.getNumConnectedClients          = getNumConnectedClients;
 exports.EVT_WS_CLIENT_LOGGEDIN          = EVT_WS_CLIENT_LOGGEDIN;
 exports.EVT_WSS_CLIENT_CONNECTED        = EVT_WSS_CLIENT_CONNECTED;
+exports.sendAnswerWebrtcToClient        = sendAnswerWebrtcToClient;
 exports.EVT_ALL_WS_CLIENT_DISCONNECTION = EVT_ALL_WS_CLIENT_DISCONNECTION;

@@ -50,6 +50,15 @@ var logger = console;
 var dtmfTonesPermitted = [ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '*', '#' ];
 
 /**
+* The architect component to be used for websocket communication.
+*
+* @property compComNethctiWs
+* @type object
+* @private
+*/
+var compComNethctiWs;
+
+/**
 * The architect component to be used for authorization.
 *
 * @property compAuthorization
@@ -593,6 +602,7 @@ var compConfigManager;
         * 1. [`astproxy/cfcall`](#cfcallpost)
         * 1. [`astproxy/atxfer`](#atxferpost)
         * 1. [`astproxy/answer`](#answerpost)
+        * 1. [`astproxy/answer_webrtc`](#answer_webrtcpost)
         * 1. [`astproxy/hangup`](#hanguppost)
         * 1. [`astproxy/intrude`](#intrudepost)
         * 1. [`astproxy/send_dtmf`](#send_dtmfpost)
@@ -828,6 +838,19 @@ var compConfigManager;
         *
         *     {}
         *     { "endpointType": "extension", "endpointId": "214" }
+        *
+        * ---
+        *
+        * ### <a id="answer_webrtcpost">**`astproxy/answer_webrtc`**</a>
+        *
+        * Answer the conversation from the specified webrtc endpoint. The server sends the answer command to the client that
+        * will answer the call. The request must contains the following parameters:
+        *
+        * * `endpointId: the webrtc endpoint identifier of the user who has the conversation to answer.`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "endpointId": "214" }
         *
         * ---
         *
@@ -1199,6 +1222,7 @@ var compConfigManager;
                 *   @param {string} mute_record           Mute the recording of a conversation
                 *   @param {string} start_record          Start the recording of a conversation
                 *   @param {string} force_hangup          Force hangup of a conversation
+                *   @param {string} answer_webrtc         Answer a conversation from the webrtc extension sending the command to the client
                 *   @param {string} blindtransfer         Transfer a conversation with blind type
                 *   @param {string} unmute_record         Unmute the recording of a conversation
                 *   @param {string} pickup_parking        Pickup a parked call
@@ -1233,6 +1257,7 @@ var compConfigManager;
                     'mute_record',
                     'start_record',
                     'force_hangup',
+                    'answer_webrtc',
                     'blindtransfer',
                     'unmute_record',
                     'pickup_parking',
@@ -2654,9 +2679,9 @@ var compConfigManager;
             },
 
             /**
-            * Make a new call with the following REST API:
+            * Answers to a call with the following REST API:
             *
-            *     POST call
+            *     POST answer
             *
             * @method answer
             * @param {object}   req  The client request
@@ -2704,6 +2729,52 @@ var compConfigManager;
                         compUtil.net.sendHttp400(IDLOG, res);
                     }
 
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * Answers a call directed to a webrtc extension sending the relative command to the client with the following REST API:
+            *
+            *     POST answer_webrtc
+            *
+            * @method answer_webrtc
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            answer_webrtc: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (typeof req.params !== 'object' ||
+                        typeof req.params.endpointId !== 'string') {
+
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    if (compAuthorization.authorizeAdminAnswerUser(username) === true) {
+
+                        logger.info(IDLOG, 'answer call from webrtc extension "' + req.params.endpointId + '" by user "' + username + '": he has the admin_answer permission');
+                    }
+                    // check if the endpoint is owned by the user
+                    else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+
+                        logger.warn(IDLOG, 'answer call from webrtc extension "' + req.params.endpointId + '" failed: extension is not owned by user "' + username + '"');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+
+                    if (compAstProxy.isExtenWebrtc(req.params.endpointId)) {
+                        compComNethctiWs.sendAnswerWebrtcToClient(username, req.params.endpointId);
+                    }
+                    else {
+                        logger.warn(IDLOG, 'answer call from webrtc extension "' + req.params.endpointId + '" by user "' + username + '" failed: it is not webrtc');
+                    }
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -4223,6 +4294,7 @@ var compConfigManager;
         exports.force_hangup             = astproxy.force_hangup;
         exports.blindtransfer            = astproxy.blindtransfer;
         exports.unmute_record            = astproxy.unmute_record;
+        exports.answer_webrtc            = astproxy.answer_webrtc;
         exports.pickup_parking           = astproxy.pickup_parking;
         exports.remote_opgroups          = astproxy.remote_opgroups;
         exports.setCompOperator          = setCompOperator;
@@ -4235,6 +4307,7 @@ var compConfigManager;
         exports.queuemember_remove       = astproxy.queuemember_remove;
         exports.queuemember_unpause      = astproxy.queuemember_unpause;
         exports.blindtransfer_queue      = astproxy.blindtransfer_queue;
+        exports.setCompComNethctiWs      = setCompComNethctiWs;
         exports.is_autoc2c_supported     = astproxy.is_autoc2c_supported;
         exports.setCompAuthorization     = setCompAuthorization;
         exports.setCompConfigManager     = setCompConfigManager;
@@ -4516,6 +4589,26 @@ function setCompAuthorization(comp) {
 
         compAuthorization = comp;
         logger.log(IDLOG, 'authorization component has been set');
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Set the websocket communication architect component.
+*
+* @method setCompComNethctiWs
+* @param {object} comp The architect websocket communication component
+* @static
+*/
+function setCompComNethctiWs(comp) {
+    try {
+        // check parameter
+        if (typeof comp !== 'object') { throw new Error('wrong parameter'); }
+
+        compComNethctiWs = comp;
+        logger.log(IDLOG, 'websocket communication component has been set');
 
     } catch (err) {
         logger.error(IDLOG, err.stack);

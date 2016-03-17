@@ -19,7 +19,7 @@ var comNethctiWs = require('./com_nethcti_ws');
 var IDLOG = '[arch_com_nethcti_ws]';
 
 module.exports = function (options, imports, register) {
-    
+
     register(null, {
         com_nethcti_ws: {
             /**
@@ -28,6 +28,13 @@ module.exports = function (options, imports, register) {
             * @method getNumConnectedClients
             */
             getNumConnectedClients: comNethctiWs.getNumConnectedClients,
+
+            /**
+            * It's the _sendAnswerWebrtcToClient_ method provided by _com\_nethcti\_ws_ module.
+            *
+            * @method sendAnswerWebrtcToClient
+            */
+            sendAnswerWebrtcToClient: comNethctiWs.sendAnswerWebrtcToClient,
 
             /**
             * It's the _sendEventToAllClients_ method provided by _com\_nethcti\_ws_ module.

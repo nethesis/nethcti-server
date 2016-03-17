@@ -159,6 +159,31 @@ function setCompComNethctiRemotes(comp) {
 }
 
 /**
+* Sets the component that communicates with clients using websocket.
+*
+* @method setCompComNethctiWs
+* @param {object} comp The websocket communication architect component.
+*/
+function setCompComNethctiWs(comp) {
+    try {
+        // check parameter
+        if (typeof comp !== 'object') { throw new Error('wrong parameter'); }
+
+        // set the remote sites communication component for all the REST plugins
+        var key;
+        for (key in plugins) {
+
+            if (typeof plugins[key].setCompComNethctiWs === 'function') {
+                plugins[key].setCompComNethctiWs(comp);
+                logger.info(IDLOG, 'websocket communication component has been set for rest plugin ' + key);
+            }
+        }
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Set configuration manager architect component used by configuration functions.
 *
 * @method setCompConfigManager
@@ -547,6 +572,7 @@ exports.setCompUser              = setCompUser;
 exports.configPrivacy            = configPrivacy;
 exports.setCompOperator          = setCompOperator;
 exports.setCompAstProxy          = setCompAstProxy;
+exports.setCompComNethctiWs      = setCompComNethctiWs;
 exports.setCompAuthorization     = setCompAuthorization;
 exports.setCompConfigManager     = setCompConfigManager;
 exports.setCompComNethctiRemotes = setCompComNethctiRemotes;

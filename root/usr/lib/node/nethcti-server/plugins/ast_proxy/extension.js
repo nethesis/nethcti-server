@@ -114,7 +114,7 @@ exports.Extension = function (ext, chType) {
     * True if the extension uses websocket.
     *
     * @property useWebsocket
-    * @type string
+    * @type boolean
     * @private
     */
     var useWebsocket;
@@ -180,6 +180,14 @@ exports.Extension = function (ext, chType) {
     * @param {boolean} value True if the extension uses websocket
     */
     function setUseWebsocket(value) { useWebsocket = value; }
+
+    /**
+    * Returns true if the extension uses websocket.
+    *
+    * @method usingWebsocket
+    * @return {boolean} True if the extension uses websocket.
+    */
+    function usingWebsocket() { return useWebsocket; }
 
     /**
     * Get the extension ip address.
@@ -448,6 +456,7 @@ exports.Extension = function (ext, chType) {
         disableCfVm:            disableCfVm,
         getChanType:            getChanType,
         getUserAgent:           getUserAgent,
+        usingWebsocket:         usingWebsocket,
         setUseWebsocket:        setUseWebsocket,
         addConversation:        addConversation,
         setSipUserAgent:        setSipUserAgent,

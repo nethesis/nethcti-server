@@ -22,7 +22,7 @@ module.exports = function (options, imports, register) {
 
     var logger = console;
     if (imports.logger) { logger = imports.logger; }
-    
+
     // public interface for other architect components
     register(null, {
         astProxy: {
@@ -384,6 +384,13 @@ module.exports = function (options, imports, register) {
             * @method isExtenDynMemberQueue
             */
             isExtenDynMemberQueue: astProxy.proxyLogic.isExtenDynMemberQueue,
+
+            /**
+            * It's the _isExtenWebrtc_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method isExtenWebrtc
+            */
+            isExtenWebrtc: astProxy.proxyLogic.isExtenWebrtc,
 
             /**
             * It's the _isDynMemberLoggedInQueue_ method provided by _ast\_proxy.proxyLogic_.
