@@ -602,7 +602,6 @@ var compConfigManager;
         * 1. [`astproxy/cfcall`](#cfcallpost)
         * 1. [`astproxy/atxfer`](#atxferpost)
         * 1. [`astproxy/answer`](#answerpost)
-        * 1. [`astproxy/answer_webrtc`](#answer_webrtcpost)
         * 1. [`astproxy/hangup`](#hanguppost)
         * 1. [`astproxy/intrude`](#intrudepost)
         * 1. [`astproxy/send_dtmf`](#send_dtmfpost)
@@ -614,8 +613,10 @@ var compConfigManager;
         * 1. [`astproxy/mute_record`](#mute_recordpost)
         * 1. [`astproxy/start_record`](#start_recordpost)
         * 1. [`astproxy/force_hangup`](#force_hanguppost)
+        * 1. [`astproxy/answer_webrtc`](#answer_webrtcpost)
         * 1. [`astproxy/blindtransfer`](#blindtransferpost)
         * 1. [`astproxy/unmute_record`](#unmute_recordpost)
+        * 1. [`astproxy/hangup_channel`](#hangup_channelpost)
         * 1. [`astproxy/pickup_parking`](#pickup_parkingpost)
         * 1. [`astproxy/queuemember_add`](#queuemember_addpost)
         * 1. [`astproxy/inout_dyn_queues`](#inout_dyn_queuespost)
@@ -791,6 +792,22 @@ var compConfigManager;
         * Example JSON request parameters:
         *
         *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "214" }
+        *
+        * ---
+        *
+        * ### <a id="hangup_channelpost">**`astproxy/hangup_channel`**</a>
+        *
+        * Hangup the specified asterisk channel. The user can hangup only if he has the appropriate
+        * permission, otherwise he can hangup only his conversations. The request must contains the following parameters:
+        *
+        * * `channel: the asterisk channel identifier`
+        * * `endpointId: the endpoint identifier that has the channel to hangup. If the user hasn't the permission of the advanced
+        *                operator the endpointId must to be its endpoint identifier.`
+        * * `endpointType: the type of the endpoint that has the conversation to hangup`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "channel": "SIP/221-000003d6", "endpointType": "extension", "endpointId": "214" }
         *
         * ---
         *
@@ -1225,6 +1242,7 @@ var compConfigManager;
                 *   @param {string} answer_webrtc         Answer a conversation from the webrtc extension sending the command to the client
                 *   @param {string} blindtransfer         Transfer a conversation with blind type
                 *   @param {string} unmute_record         Unmute the recording of a conversation
+                *   @param {string} hangup_channel        Hangup the asterisk channel
                 *   @param {string} pickup_parking        Pickup a parked call
                 *   @param {string} queuemember_add       Adds the specified extension to the queue
                 *   @param {string} inout_dyn_queues      Alternates the logon and logout of the extension in all the queues for which it's a dynamic member
@@ -1260,6 +1278,7 @@ var compConfigManager;
                     'answer_webrtc',
                     'blindtransfer',
                     'unmute_record',
+                    'hangup_channel',
                     'pickup_parking',
                     'queuemember_add',
                     'inout_dyn_queues',
@@ -2450,7 +2469,74 @@ var compConfigManager;
                         });
 
                     } else {
-                        logger.warn(IDLOG, 'parking the conversation ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType);
+                        logger.warn(IDLOG, 'hanging up the conversation ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType);
+                        compUtil.net.sendHttp400(IDLOG, res);
+                    }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * Hangup the asterisk channel with the following REST API:
+            *
+            *     POST hangup_channel
+            *
+            * @method hangup_channel
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain.
+            */
+            hangup_channel: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (typeof req.params              !== 'object' ||
+                        typeof req.params.channel      !== 'string' ||
+                        typeof req.params.endpointId   !== 'string' ||
+                        typeof req.params.endpointType !== 'string') {
+
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    if (req.params.endpointType === 'extension') {
+
+                        // check if the user has the authorization to hangup every calls
+                        if (compAuthorization.authorizeAdminHangupUser(username) === true) {
+                            logger.log(IDLOG, 'hangup asterisk channel "' + req.params.channel + '": authorization admin hangup successful for user "' + username + '"');
+                        }
+                        // check if the endpoint of the request is owned by the user
+                        else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) !== true) {
+                            logger.warn(IDLOG, 'hangup asterisk channel "' + req.params.channel + '" by user "' + username + '" has been failed: ' +
+                                               ' the ' + req.params.endpointType + ' ' + req.params.endpointId + ' is not owned by the user');
+                            compUtil.net.sendHttp403(IDLOG, res);
+                            return;
+                        }
+                        else {
+                            logger.info(IDLOG, 'hangup asterisk channel "' + req.params.channel + '": the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' is owned by "' + username + '"');
+                        }
+
+                        compAstProxy.hangupChannel(req.params.endpointType, req.params.endpointId, req.params.channel, function (err, response) {
+                            try {
+                                if (err) {
+                                    logger.warn(IDLOG, 'hangup asterisk channel ' + req.params.channel + ' by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId + ' has been failed');
+                                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                                    return;
+                                }
+                                logger.info(IDLOG, 'asterisk channel ' + req.params.channel + ' has been hangup successfully by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId);
+                                compUtil.net.sendHttp200(IDLOG, res);
+                            }
+                            catch (err) {
+                                logger.error(IDLOG, err.stack);
+                                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                            }
+                        });
+                    } else {
+                        logger.warn(IDLOG, 'hanging up the asterisk channel ' + req.params.channel + ': unknown endpointType ' + req.params.endpointType);
                         compUtil.net.sendHttp400(IDLOG, res);
                     }
 
@@ -4295,6 +4381,7 @@ var compConfigManager;
         exports.blindtransfer            = astproxy.blindtransfer;
         exports.unmute_record            = astproxy.unmute_record;
         exports.answer_webrtc            = astproxy.answer_webrtc;
+        exports.hangup_channel           = astproxy.hangup_channel;
         exports.pickup_parking           = astproxy.pickup_parking;
         exports.remote_opgroups          = astproxy.remote_opgroups;
         exports.setCompOperator          = setCompOperator;

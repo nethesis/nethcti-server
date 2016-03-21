@@ -120,6 +120,13 @@ module.exports = function (options, imports, register) {
             addPrefix: astProxy.proxyLogic.addPrefix,
 
             /**
+            * It's the _hangupChannel_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method hangupChannel
+            */
+            hangupChannel: astProxy.proxyLogic.hangupChannel,
+
+            /**
             * It's the _hangupConversation_ method provided by _ast\_proxy.proxyLogic_.
             *
             * @method hangupConversation

@@ -4058,6 +4058,46 @@ function hangupConversation(endpointType, endpointId, convid, cb) {
 }
 
 /**
+* Hangup the asterisk channel of the endpoint.
+*
+* @method hangupChannel
+* @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
+* @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
+* @param {string}   ch           The channel identifier
+* @param {function} cb           The callback function
+*/
+function hangupChannel(endpointType, endpointId, ch, cb) {
+    try {
+        // check parameters
+        if (typeof ch         !== 'string' || typeof cb           !== 'function' ||
+            typeof endpointId !== 'string' || typeof endpointType !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        var err;
+        // check the endpoint existence
+        if (endpointType === 'extension' && extensions[endpointId]) {
+
+            logger.info(IDLOG, 'execute hangup of the channel ' + ch + ' of exten ' + endpointId);
+            astProxy.doCmd({ command: 'hangup', channel: ch }, function (err) {
+                cb(err);
+                hangupConvCb(err);
+            });
+
+        } else {
+            err = 'try to hangup asterisk channel for the non existent endpoint ' + endpointType + ' ' + endpointId;
+            logger.warn(IDLOG, err);
+            cb(err);
+        }
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
 * This is the callback of the _redirectChannel_ command plugin.
 *
 * @method redirectConvCb
@@ -6140,6 +6180,7 @@ exports.evtNewCdr                       = evtNewCdr;
 exports.EVT_NEW_CDR                     = EVT_NEW_CDR;
 exports.setCompDbconn                   = setCompDbconn;
 exports.getExtensions                   = getExtensions;
+exports.hangupChannel                   = hangupChannel;
 exports.pickupParking                   = pickupParking;
 exports.isExtenWebrtc                   = isExtenWebrtc;
 exports.getJSONQueues                   = getJSONQueues;
