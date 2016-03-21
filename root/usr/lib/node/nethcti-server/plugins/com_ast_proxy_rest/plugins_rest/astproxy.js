@@ -2857,9 +2857,11 @@ var compConfigManager;
 
                     if (compAstProxy.isExtenWebrtc(req.params.endpointId)) {
                         compComNethctiWs.sendAnswerWebrtcToClient(username, req.params.endpointId);
+                        compUtil.net.sendHttp200(IDLOG, res);
                     }
                     else {
                         logger.warn(IDLOG, 'answer call from webrtc extension "' + req.params.endpointId + '" by user "' + username + '" failed: it is not webrtc');
+                        compUtil.net.sendHttp500(IDLOG, res, req.params.endpointId + ' it is not webrtc');
                     }
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
