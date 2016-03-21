@@ -190,6 +190,15 @@ var server;
 var compAstProxy;
 
 /**
+* The config manager module.
+*
+* @property compConfigManager
+* @type object
+* @private
+*/
+var compConfigManager;
+
+/**
 * The streaming component.
 *
 * @property compStreaming
@@ -283,6 +292,22 @@ function setCompAuthe(autheMod) {
             throw new Error('wrong authentication object');
         }
         compAuthe = autheMod;
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the config manager module to be used.
+*
+* @method setCompConfigManager
+* @param {object} comp The config manager module.
+*/
+function setCompConfigManager(comp) {
+    try {
+        // check parameter
+        if (typeof comp !== 'object') { throw new Error('wrong config manager object'); }
+        compConfigManager = comp;
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -506,8 +531,8 @@ function getFilteredStreamData(username, callerNum) {
 function extenDialing(data) {
     try {
         // check parameters
-        if (   typeof data              !== 'object'
-            || typeof data.dialingExten !== 'string' || typeof data.callerIdentity !== 'object') {
+        if (typeof data              !== 'object' || typeof data.channel        !== 'string' ||
+            typeof data.dialingExten !== 'string' || typeof data.callerIdentity !== 'object') {
 
             throw new Error('wrong parameters');
         }
@@ -612,10 +637,27 @@ function sendStreamingNotificationEvent(username, data, socket) {
 */
 function sendCallNotificationEvent(username, data, socket) {
     try {
-        // always add this informations without filter them
-        var params = 'callerNum='   + data.callerIdentity.callerNum +
-                     '&ctiProto='   + ctiProto                      +
-                     '&callerName=' + data.callerIdentity.callerName;
+        var answerAction = false;
+        var agent = compAstProxy.getExtensionAgent(data.dialingExten);
+        var supported = compConfigManager.phoneAgentSupportAutoC2C(agent);
+        var enabled = compConfigManager.isAutomaticClick2callEnabled(username);
+
+        // check if the answer button is to be displayed
+        if ((supported && enabled) || compAstProxy.isExtenWebrtc(data.dialingExten)) {
+            answerAction = true;
+        }
+
+        // always add this information without filter them
+        var params = [
+            'callerNum=', data.callerIdentity.callerNum,
+            '&ctiProto=', ctiProto,
+            '&callerName=', data.callerIdentity.callerName,
+            '&channel=', data.channel,
+            '&dialExten=', data.dialingExten,
+            '&answerAction=', answerAction,
+            '&webrtc=', compAstProxy.isExtenWebrtc(data.dialingExten),
+            '&random=', (new Date()).getTime()
+        ].join('');
 
         // add parameters to the HTTP GET url
         var url = callNotifTemplatePath + '?' + params;
@@ -1177,7 +1219,7 @@ function send401(socket) {
 function sendAutheSuccess(socket) {
     try {
         var data = { message: 'authe_ok' };
-        
+
         socket.write(JSON.stringify(data), ENCODING, function () {
             try {
                 logger.info(IDLOG, 'sent authorized successfully to ' + socket.username + ' with id ' + socket.id);
@@ -1216,5 +1258,6 @@ exports.setCompUser            = setCompUser;
 exports.setCompAuthe           = setCompAuthe;
 exports.configWinPopup         = configWinPopup;
 exports.setCompStreaming       = setCompStreaming;
+exports.setCompConfigManager   = setCompConfigManager;
 exports.setCompAuthorization   = setCompAuthorization;
 exports.getNumConnectedClients = getNumConnectedClients;

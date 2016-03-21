@@ -3396,7 +3396,12 @@ function evtConversationDialing(data) {
 
             // emit the event
             logger.info(IDLOG, 'emit event ' + EVT_EXTEN_DIALING + ' for extension ' + dialingExten + ' with caller identity');
-            astProxy.emit(EVT_EXTEN_DIALING, { dialingExten: dialingExten, callerIdentity: obj });
+            astProxy.emit(EVT_EXTEN_DIALING,
+            {
+                dialingExten: dialingExten,
+                callerIdentity: obj,
+                channel: data.chDest
+            });
         }
 
         // when dialing each channel received from listChannels command

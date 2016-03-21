@@ -19,7 +19,7 @@ var comNethctiTcp = require('./com_nethcti_tcp');
 var IDLOG = '[arch_com_nethcti_tcp]';
 
 module.exports = function (options, imports, register) {
-    
+
     register(null, {
         com_nethcti_tcp: {
             /**
@@ -45,6 +45,7 @@ module.exports = function (options, imports, register) {
             comNethctiTcp.setCompUser(imports.user);
             comNethctiTcp.setAstProxy(imports.astProxy);
             comNethctiTcp.setCompAuthorization(imports.authorization);
+            comNethctiTcp.setCompConfigManager(imports.configManager);
             comNethctiTcp.setCompStreaming(imports.streaming);
             comNethctiTcp.start();
         });
