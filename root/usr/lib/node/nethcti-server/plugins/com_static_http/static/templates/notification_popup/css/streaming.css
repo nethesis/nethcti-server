@@ -1,0 +1,67 @@
+body {
+  cursor: pointer;
+  margin: 0px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+#stream-img {
+  width: 100%;
+  height: 310px;
+}
+
+#stream-description {
+  font-family: verdana;
+  margin-left: 15px;
+  font-weight: bold;
+  width: 90%;
+  height: 30px;
+  margin-top: 10px;
+  word-break: break-word;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contact-stream, .contact-action {
+  clear: both;
+}
+
+.close {
+  background: url('../img/close_ico.png?__inline=true') no-repeat;
+  height: 16px;
+  width: 16px;
+  right: 2px;
+  top: 2px;
+  position: absolute;
+  cursor: pointer;
+}
+
+.button {
+  font-family: verdana;
+  color: #555;
+  width: 50%;
+  float: left;
+  padding: 10px 0px;
+  text-align: center;
+  display: inline-block;
+  cursor: pointer;
+}
+
+#open-stream-but {
+  background-image: url('../img/unlock.png?__inline=true');
+  background-repeat: no-repeat;
+  background-position: 25%;
+  border-right: 1px solid #AAA;
+}
+
+#open-ctistream-but {
+  background-image: url('../img/stream.png?__inline=true');
+  background-repeat: no-repeat;
+  background-position: 25%;
+}
+
+.mouseOverBut {
+  background-color: #AAA;
+  color: #FFF;
+}

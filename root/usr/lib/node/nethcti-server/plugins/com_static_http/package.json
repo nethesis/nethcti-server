@@ -1,14 +1,18 @@
 {
-    "name": "com_static_http",
-    "main": "arch_com_static_http.js",
-    "private": true,
-    "plugin": {
-        "consumes": [
-            "util",
-            "logger"
-        ],
-        "provides": [
-            "staticHttp"
-        ]
-    }
+  "name": "com_static_http",
+  "main": "arch_com_static_http.js",
+  "private": true,
+  "plugin": {
+    "consumes": [
+      "util",
+      "logger"
+    ],
+    "provides": [
+      "staticHttp"
+    ]
+  },
+  "devDependencies": {
+    "grunt": "^0.4.5",
+    "grunt-inline": "^0.3.6"
+  }
 }

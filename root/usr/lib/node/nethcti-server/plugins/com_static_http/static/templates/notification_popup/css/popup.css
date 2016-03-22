@@ -1,0 +1,81 @@
+
+body {
+  cursor: pointer;
+  margin: 0;
+}
+
+.photo {
+  float: left;
+  height: 96px;
+  width: 96px;
+  background: url('../img/nophoto.png?__inline=true');
+}
+
+.contact-info {
+  font-family: verdana;
+  margin-top: 5px;
+  margin-left: 15px;
+  float: left;
+}
+
+.contact-action {
+  clear: both;
+}
+
+.call-actions {
+
+}
+
+.call-actions .button {
+  float: left;
+  width: 50%;
+  text-align: center;
+}
+
+#answer {
+  display:none;
+}
+
+#contact-name {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 3px;
+}
+
+#contact-num {
+  display: block;
+}
+
+.close {
+  background: url("../img/close_ico.png?__inline=true") no-repeat;
+  height: 16px;
+  width: 16px;
+  right: 2px;
+  top: 2px;
+  position: absolute;
+  cursor: pointer;
+}
+
+.button {
+  font-family: verdana;
+  color: #555;
+  float: left;
+  padding: 10px 0;
+  text-align: left;
+  display: inline-block;
+  cursor: pointer;
+  border-top: 1px solid #EEE;
+}
+
+#open-cticc-but {
+  padding-left: 50px;
+  width: 100%;
+  background-image: url("../img/custcard.png?__inline=true");
+  background-repeat: no-repeat;
+  background-position: 15px;
+}
+
+.mouseOverBut {
+  background-color: #AAA;
+  color: #FFF;
+}
