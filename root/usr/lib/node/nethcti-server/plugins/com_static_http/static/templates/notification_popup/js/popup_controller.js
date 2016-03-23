@@ -32,8 +32,10 @@ window.onload = function () {
   $('body').attr('arg', argCtiUrl);
   $('#open-cticc-but').attr('arg', argCtiCCUrl);
 
-  if (!(params.webrtc === 'true'))
+  if (!(params.webrtc === 'true')) {
+    $('#answer').attr('cmd', 'url');
     $('#answer').attr('arg', argCtiCCUrl);
+  }
 
   // Handle Hangup button click
   $('#hangup').click(function () {
