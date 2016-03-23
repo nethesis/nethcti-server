@@ -29,12 +29,21 @@ window.onload = function () {
     (window.location.port ? ':' + window.location.port : '') +
     '/cti/#/customerCard/search/' + params.callerNum;
 
-  $('body').attr('arg', argCtiUrl);
-  $('#open-cticc-but').attr('arg', argCtiCCUrl);
-
+  // Open browser only if not webrtc
   if (!(params.webrtc === 'true')) {
+    $('body').attr('arg', argCtiUrl);
+    $('body').attr('cmd', 'url');
+    $('body').attr('title', 'Accedi a NethCTI');
+
+    $('#open-cticc-but').attr('arg', argCtiCCUrl);
+
     $('#answer').attr('cmd', 'url');
     $('#answer').attr('arg', argCtiCCUrl);
+  }
+
+  // Hide customer card button if webrtc
+  if (params.webrtc === 'true') {
+    $('#customer-card-button').hide();
   }
 
   // Handle Hangup button click

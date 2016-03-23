@@ -1,11 +1,18 @@
 
-callServerAPI(
-  window.location.protocol,
-  window.location.hostname,
-  window.location.port ? ':' + window.location.port : '',
-  '/webrest/streaming/open',
-  { id: params.id }
-);
+var openStream = function () {
+  var params = getUrlParams();
+
+  if (params.webrtc === 'true')
+    return;
+
+  callServerAPI(
+    window.location.protocol,
+    window.location.hostname,
+    window.location.port ? ':' + window.location.port : '',
+    '/webrest/streaming/open',
+    { id: params.id }
+  );
+};
 
 window.onload = function () {
   $('.button').mouseout(function () {
@@ -29,6 +36,15 @@ window.onload = function () {
 
   var argCtiStreamUrl = params.ctiProto + '://' + window.location.hostname +
     (window.location.port ? ':' + window.location.port : '') + '/cti/#/streaming';
-  $('body').attr('arg', argCtiStreamUrl);
-  $('#open-ctistream-but').attr('arg', argCtiStreamUrl);
+
+  // Open browser only if not webrtc
+  if (!(params.webrtc === 'true')) {
+    $('body').attr('arg', argCtiStreamUrl);
+    $('body').attr('cmd', 'url');
+    $('body').attr('title', 'Visualizza flusso video');
+
+    $('#open-ctistream-but').attr('cmd', 'url');
+    $('#open-ctistream-but').attr('arg', argCtiStreamUrl);
+  }
+
 };

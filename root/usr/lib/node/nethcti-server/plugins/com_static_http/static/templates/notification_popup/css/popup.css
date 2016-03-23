@@ -23,7 +23,7 @@ body {
 }
 
 .call-actions {
-
+  clear: left;
 }
 
 .call-actions .button {
