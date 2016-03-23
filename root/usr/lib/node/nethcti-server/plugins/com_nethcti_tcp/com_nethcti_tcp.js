@@ -589,11 +589,14 @@ function sendStreamingNotificationEvent(username, data, socket) {
         }
 
         // always add this informations without filter them
-        var params = 'description=' + escape(streamingData.description) +
-                     '&ctiProto='   + ctiProto                  +
-                     '&open='       + streamingData.open        +
-                     '&url='        + escape(streamingData.url) +
-                     '&id='         + streamingData.id;
+        var params = [
+            'description=', escape(streamingData.description),
+            '&ctiProto=', ctiProto,
+            '&open=', streamingData.open,
+            '&url=', escape(streamingData.url),
+            '&webrtc=', compAstProxy.isExtenWebrtc(data.dialingExten),
+            '&id=', streamingData.id
+        ].join('');
 
         // add parameters to the HTTP GET url
         var url = streamingNotifTemplatePath + '?' + params;
