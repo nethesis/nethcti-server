@@ -2,9 +2,6 @@
 var openStream = function () {
   var params = getUrlParams();
 
-  if (params.webrtc === 'true')
-    return;
-
   callServerAPI(
     window.location.protocol,
     window.location.hostname,
