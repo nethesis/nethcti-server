@@ -44,4 +44,9 @@ window.onload = function () {
     $('#open-ctistream-but').attr('arg', argCtiStreamUrl);
   }
 
+  // Hide video button for webrtc
+  if (params.webrtc === 'true') {
+    $('#open-ctistream-but').hide();
+  }
+
 };
