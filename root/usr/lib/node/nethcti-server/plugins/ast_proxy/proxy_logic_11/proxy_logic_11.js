@@ -2071,6 +2071,7 @@ function extSipDetails(err, resp) {
         extensions[data.exten].setIp(data.ip);
         extensions[data.exten].setPort(data.port);
         extensions[data.exten].setName(data.name);
+        extensions[data.exten].setContext(data.context);
         extensions[data.exten].setSipUserAgent(data.sipuseragent);
         logger.info(IDLOG, 'set sip details for ext ' + data.exten);
 
@@ -3711,7 +3712,7 @@ function call(endpointType, endpointId, to, cb) {
         to = addPrefix(to);
 
         logger.info(IDLOG, 'execute call from ' + endpointId + ' to ' + to);
-        astProxy.doCmd({ command: 'call', from: endpointId, to: to }, function (error) {
+        astProxy.doCmd({ command: 'call', context: extensions[endpointId].getContext(), from: endpointId, to: to }, function (error) {
             cb(error);
             callCb(error);
         });

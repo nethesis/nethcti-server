@@ -46,6 +46,15 @@ exports.Extension = function (ext, chType) {
     var ip;
 
     /**
+    * The extension context.
+    *
+    * @property context
+    * @type {string}
+    * @private
+    */
+    var context;
+
+    /**
     * The don't disturb status.
     *
     * @property dnd
@@ -139,6 +148,14 @@ exports.Extension = function (ext, chType) {
     function getExten() { return exten; }
 
     /**
+    * Returns the extension context.
+    *
+    * @method getContext
+    * @return {string} The extension context
+    */
+    function getContext() { return context; }
+
+    /**
     * Return the readable string of the extension.
     *
     * @method toString
@@ -172,6 +189,14 @@ exports.Extension = function (ext, chType) {
     * @param {string} ipAddr The ip address
     */
     function setIp(ipAddr) { ip = ipAddr; }
+
+    /**
+    * Set the extension context.
+    *
+    * @method setContext
+    * @param {string} ctx The context
+    */
+    function setContext(ctx) { context = ctx; }
 
     /**
     * Sets if the extension uses websocket.
@@ -398,6 +423,7 @@ exports.Extension = function (ext, chType) {
     *         name:         "Alessandro",
     *         exten:        "214",
     *         status:       "online",                       // the status can be: "dnd", "busy", "online", "onhold", "offline", "ringing", "busy_ringing"
+    *         context:      "from-internal",                // the context
     *         useWebsocket: false,                          // if the extension use websocket
     *         sipuseragent: "Twinkle/1.4.2",
     *         conversations: { Conversation.toJSON(), ... } // the keys is the conversation identifiers
@@ -425,6 +451,7 @@ exports.Extension = function (ext, chType) {
             name:          name,
             exten:         exten,
             status:        status,
+            context:       context,
             chanType:      chanType,
             useWebsocket:  useWebsocket,
             sipuseragent:  sipuseragent,
@@ -453,6 +480,8 @@ exports.Extension = function (ext, chType) {
         disableCf: disableCf,
         setStatus: setStatus,
         getStatus: getStatus,
+        setContext:             setContext,
+        getContext:             getContext,
         disableCfVm:            disableCfVm,
         getChanType:            getChanType,
         getUserAgent:           getUserAgent,

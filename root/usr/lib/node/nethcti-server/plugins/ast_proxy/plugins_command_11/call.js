@@ -106,7 +106,7 @@ var FAIL_REASON = {
         *
         * Use it with _ast\_proxy_ module as follow:
         *
-        *     ast_proxy.doCmd({ command: 'call', from: '214', to: '12345' }, function (res) {
+        *     ast_proxy.doCmd({ command: 'call', context: context, from: '214', to: '12345' }, function (res) {
         *         // some code
         *     });
         *
@@ -118,7 +118,7 @@ var FAIL_REASON = {
 
             /**
             * Executes asterisk action to originate a new call.
-            * 
+            *
             * @method execute
             * @param {object}   am   Asterisk manager to send the action
             * @param {object}   args The object contains optional parameters passed to _doCmd_ method of the ast_proxy component
@@ -131,7 +131,7 @@ var FAIL_REASON = {
                     var act = {
                         Action:   'Originate',
                         Channel:  'Local/' + args.from + '@from-internal', // the caller
-                        Context:  'from-internal',
+                        Context:  args.context,
                         Priority: 1,
                         CallerID: args.from,
                         Timeout:  CALL_TIMEOUT,
@@ -139,7 +139,7 @@ var FAIL_REASON = {
                         Exten:    args.to, // the number to be called
                         Async:    true
                     };
-                    
+
                     // set the action identifier
                     act.ActionID = action.getActionId('call');
 

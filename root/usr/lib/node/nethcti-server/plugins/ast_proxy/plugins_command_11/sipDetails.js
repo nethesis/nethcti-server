@@ -53,7 +53,7 @@ var IDLOG = '[sipDetails]';
 
             /**
             * Execute asterisk action to get the details of a SIP extension.
-            * 
+            *
             * @method execute
             * @param {object} am Asterisk manager to send the action
             * @param {object} args The object contains optional parameters
@@ -66,7 +66,7 @@ var IDLOG = '[sipDetails]';
                 try {
                     // action for asterisk
                     var act = { Action: 'SIPshowpeer', Peer: args.exten };
-                    
+
                     // set the action identifier
                     act.ActionID = action.getActionId('sipDetails');
 
@@ -119,6 +119,7 @@ var IDLOG = '[sipDetails]';
                                 name:         name,
                                 port:         port,
                                 exten:        data.objectname,
+                                context:      data.context || '',
                                 chantype:     data.channeltype,
                                 sipuseragent: data.sipuseragent
                             }
