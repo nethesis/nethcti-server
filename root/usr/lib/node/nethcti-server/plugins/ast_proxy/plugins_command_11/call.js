@@ -130,7 +130,7 @@ var FAIL_REASON = {
                     // action for asterisk
                     var act = {
                         Action:   'Originate',
-                        Channel:  'Local/' + args.from + '@from-internal', // the caller
+                        Channel:  'Local/' + args.from + '@' + args.context, // the caller
                         Context:  args.context,
                         Priority: 1,
                         CallerID: args.from,
