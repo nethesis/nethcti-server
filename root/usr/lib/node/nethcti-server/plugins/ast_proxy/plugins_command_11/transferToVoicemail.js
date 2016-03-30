@@ -42,7 +42,7 @@ var IDLOG = '[transferToVoicemail]';
         *
         * Use it with _ast\_proxy_ module as follow:
         *
-        *     ast_proxy.doCmd({ command: 'transferToVoicemail', chToTransfer: 'SIP/214-0000012', voicemail: '220' }, function (res) {
+        *     ast_proxy.doCmd({ command: 'transferToVoicemail', context: 'from-internal', chToTransfer: 'SIP/214-0000012', voicemail: '220' }, function (res) {
         *         // some code
         *     });
         *
@@ -54,7 +54,7 @@ var IDLOG = '[transferToVoicemail]';
 
             /**
             * Execute asterisk action to transfer a call to the voicemail.
-            * 
+            *
             * @method execute
             * @param {object}   am   The asterisk manager to send the action
             * @param {object}   args The object contains optional parameters passed to _doCmd_ method of the ast_proxy component
@@ -67,11 +67,11 @@ var IDLOG = '[transferToVoicemail]';
                     var act = {
                         Action:   'Redirect',
                         Exten:    'vmu' + args.voicemail, // voicemail to transfer to
-                        Context:  'from-internal',        // context to transfer to
+                        Context:  args.context,           // context to transfer to
                         Channel:  args.chToTransfer,      // channel to transfer
                         Priority: 1                       // priority to transfer to
                     };
-                    
+
                     // set the action identifier
                     act.ActionID = action.getActionId('transferToVoicemail');
 

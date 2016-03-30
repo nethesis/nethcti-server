@@ -4562,6 +4562,7 @@ function transferConversationToVoicemail(endpointType, endpointId, convid, voice
             var chSource   = conv.getSourceChannel();
             var callerNum  = chSource.getCallerNum();
             var bridgedNum = chSource.getBridgedNum();
+            var ctx        = extensions[endpointId].getContext();
 
             // when the endpointId is the caller, the channel to transfer is the destination channel
             var chToTransfer = endpointId === chSource.getCallerNum() ? chSource.getBridgedChannel() : chSource.getChannel();
@@ -4570,7 +4571,7 @@ function transferConversationToVoicemail(endpointType, endpointId, convid, voice
 
                 // transfer the channel to the voicemail
                 logger.info(IDLOG, 'transfer of the channel ' + chToTransfer + ' of exten ' + endpointId + ' to voicemail ' + voicemail);
-                astProxy.doCmd({ command: 'transferToVoicemail', chToTransfer: chToTransfer, voicemail: voicemail }, function (err) {
+                astProxy.doCmd({ command: 'transferToVoicemail', context: ctx, chToTransfer: chToTransfer, voicemail: voicemail }, function (err) {
                     cb(err);
                     transferConvToVoicemailCb(err);
                 });
