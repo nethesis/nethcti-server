@@ -42,7 +42,7 @@ var IDLOG = '[redirectChannel]';
         *
         * Use it with _ast\_proxy_ module as follow:
         *
-        *     ast_proxy.doCmd({ command: 'redirectChannel', chToRedirect: 'SIP/214-00000', to: '220' }, function (res) {
+        *     ast_proxy.doCmd({ command: 'redirectChannel', context: 'from-internal', chToRedirect: 'SIP/214-00000', to: '220' }, function (res) {
         *         // some code
         *     });
         *
@@ -54,7 +54,7 @@ var IDLOG = '[redirectChannel]';
 
             /**
             * Execute asterisk action to redirect a call.
-            * 
+            *
             * @method execute
             * @param {object} am Asterisk manager to send the action
             * @param {object} args The object contains optional parameters
@@ -69,11 +69,11 @@ var IDLOG = '[redirectChannel]';
                     var act = {
                         Action:   'Redirect',
                         Exten:    args.to,           // extension to transfer to
-                        Context:  'from-internal',   // context to transfer to
+                        Context:  args.context,      // context to transfer to
                         Channel:  args.chToRedirect, // channel to redirect
                         Priority: 1                  // priority to transfer to
                     };
-                    
+
                     // set the action identifier
                     act.ActionID = action.getActionId('redirectChannel');
 

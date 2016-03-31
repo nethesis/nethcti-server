@@ -3883,7 +3883,7 @@ function pickupParking(parking, destType, destId, cb) {
 
             // the pickup operation is made by redirect operation
             logger.info(IDLOG, 'pickup from ' + destType + ' ' + destId + ' of the channel ' + ch + ' of parking ' + parking);
-            astProxy.doCmd({ command: 'redirectChannel', chToRedirect: ch, to: destId }, function (err) {
+            astProxy.doCmd({ command: 'redirectChannel', context: extensions[destId].getContext(), chToRedirect: ch, to: destId }, function (err) {
                cb(err);
                redirectConvCb(err);
             });
