@@ -106,7 +106,7 @@ var FAIL_REASON = {
         *
         * Use it with _ast\_proxy_ module as follow:
         *
-        *     ast_proxy.doCmd({ command: 'call', context: context, from: '214', to: '12345' }, function (res) {
+        *     ast_proxy.doCmd({ command: 'call', context: 'from-internal', from: '214', to: '12345' }, function (res) {
         *         // some code
         *     });
         *

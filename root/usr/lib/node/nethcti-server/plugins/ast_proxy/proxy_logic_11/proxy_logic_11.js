@@ -4562,7 +4562,7 @@ function transferConversationToVoicemail(endpointType, endpointId, convid, voice
             var chSource   = conv.getSourceChannel();
             var callerNum  = chSource.getCallerNum();
             var bridgedNum = chSource.getBridgedNum();
-            var ctx        = extensions[endpointId].getContext();
+            var ctx        = extensions[voicemail].getContext();
 
             // when the endpointId is the caller, the channel to transfer is the destination channel
             var chToTransfer = endpointId === chSource.getCallerNum() ? chSource.getBridgedChannel() : chSource.getChannel();
