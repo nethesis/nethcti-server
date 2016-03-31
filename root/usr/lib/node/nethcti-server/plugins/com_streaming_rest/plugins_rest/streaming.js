@@ -42,7 +42,7 @@ var compStreaming;
 * @property compAuthorization
 * @type object
 * @private
-*/  
+*/
 var compAuthorization;
 
 /**
@@ -298,7 +298,7 @@ function setCompConfigManager(comp) {
                         if (defaultExten === undefined || defaultExten === null) { defaultExten = ''; }
                         var callerid = '"' + username + '" <' + defaultExten + '>';
 
-                        compStreaming.open(stream, callerid, function (err) {
+                        compStreaming.open(stream, callerid, defaultExten, function (err) {
 
                             if (err) {
                                 var str = 'opening streaming source "' + stream + '"';

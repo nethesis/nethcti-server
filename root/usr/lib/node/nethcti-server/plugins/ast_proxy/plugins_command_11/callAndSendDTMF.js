@@ -42,7 +42,7 @@ var IDLOG = '[callAndSendDTMF]';
         *
         * Use it with _ast\_proxy_ module as follow:
         *
-        *     ast_proxy.doCmd({ command: 'callAndSendDTMF', chanType: 'sip', exten: '301', sequence: '0*' }, function (res) {
+        *     ast_proxy.doCmd({ command: 'callAndSendDTMF', context: 'from-internal', chanType: 'sip', exten: '301', sequence: '0*' }, function (res) {
         *         // some code
         *     });
         *
@@ -54,7 +54,7 @@ var IDLOG = '[callAndSendDTMF]';
 
             /**
             * Execute asterisk action to originate a new call and then send DTMS tones.
-            * 
+            *
             * @method execute
             * @param {object}   am   Asterisk manager to send the action
             * @param {object}   args The object contains optional parameters passed to _doCmd_ method of the ast_proxy component
@@ -67,18 +67,19 @@ var IDLOG = '[callAndSendDTMF]';
                     var exten    = args.exten;
                     var chanType = args.chanType;
                     var sequence = args.sequence;
+                    var context  = args.context;
                     var tyext    = chanType + '/' + exten;
 
                     // action for asterisk
                     var act = {
                         Action:      'Originate',
                         Channel:     tyext,
-                        Context:     'from-internal',
+                        Context:     context,
                         Application: 'SendDTMF',
                         CallerID:    args.callerid,
                         Data:        'w' + sequence // w is for a half second pause
                     };
-                    
+
                     // set the action identifier
                     act.ActionID = action.getActionId('callAndSendDTMF');
 

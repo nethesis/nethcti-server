@@ -130,7 +130,7 @@ function config(path) {
         var id;
         var newStreaming;
         for (id in json) {
-            
+
             // add the identifier to the current object. It's needed
             // to create the new Streaming object
             json[id].id = id;
@@ -237,15 +237,16 @@ function isExtenStreamingSource(extenId) {
 * the associated device, e.g. a door.
 *
 * @method open
-* @param {string}   streamId The streaming source identifier
-* @param {string}   callerid The caller identifier
-* @param {function} cb       The callback function
+* @param {string}   streamId  The streaming source identifier
+* @param {string}   callerid  The caller identifier
+* @param {string}   fromExten The extension identifier from which the command has to be sent
+* @param {function} cb        The callback function
 */
-function open(streamId, callerid, cb) {
+function open(streamId, callerid, fromExten, cb) {
     try {
         // check parameters
-        if (   typeof streamId !== 'string'
-            || typeof callerid !== 'string' || typeof cb !== 'function') {
+        if (typeof streamId !== 'string' || typeof fromExten !== 'string' ||
+            typeof callerid !== 'string' || typeof cb        !== 'function') {
 
             throw new Error('wrong parameters');
         }
@@ -272,7 +273,7 @@ function open(streamId, callerid, cb) {
 
         // sends the DTMF tones to the extension device associated
         // with the streaming source to open it
-        compAstProxy.sendDTMFSequence(exten, opencmd, callerid, function (err) {
+        compAstProxy.sendDTMFSequence(exten, opencmd, callerid, fromExten, function (err) {
 
             if (err) {
                 logger.error(IDLOG, 'sending DTMF sequence "' + opencmd + '" to extension ' + exten);
