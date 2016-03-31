@@ -53,7 +53,7 @@ var IDLOG = '[recordAudioFile]';
         *
         * Use it with _ast\_proxy_ module as follow:
         *
-        *     ast_proxy.doCmd({ command: 'recordAudioFile', exten: '609', filepath: '/var/spool/asterisk/tmp/test.wav' }, function (err) {
+        *     ast_proxy.doCmd({ command: 'recordAudioFile', context: 'from-internal', exten: '609', filepath: '/var/spool/asterisk/tmp/test.wav' }, function (err) {
         *         // some code
         *     });
         *
@@ -65,7 +65,7 @@ var IDLOG = '[recordAudioFile]';
 
             /**
             * Execute asterisk action to record an audio file.
-            * 
+            *
             * @method execute
             * @param {object}   am   Asterisk manager to send the action
             * @param {object}   args The object contains optional parameters passed to _doCmd_ method of the ast_proxy component
@@ -78,12 +78,12 @@ var IDLOG = '[recordAudioFile]';
                     var act = {
                         Data:        args.filepath + ',,,k', // keep recorded file upon hangup
                         Action:      'Originate',
-                        Context:     'from-internal',
+                        Context:     args.context,
                         Channel:     'SIP/' + args.exten,
                         Callerid:    PREFIX + ' <' + args.exten + '>',
                         Application: 'Record'
                     };
-                    
+
                     // set the action identifier
                     act.ActionID = action.getActionId('recordAudioFile');
 

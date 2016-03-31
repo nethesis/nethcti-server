@@ -4696,7 +4696,13 @@ function recordAudioFile(data, cb) {
         }
 
         logger.info(IDLOG, 'execute record audio file "' + data.filepath + '" with exten "' + data.exten + '"');
-        astProxy.doCmd({ command: 'recordAudioFile', exten: data.exten, filepath: data.filepath }, function (err) {
+        var cmd = {
+            command: 'recordAudioFile',
+            context: extensions[data.exten].getContext(),
+            exten: data.exten,
+            filepath: data.filepath
+        };
+        astProxy.doCmd(cmd, function (err) {
             try {
                 if (err) {
                     logger.error(IDLOG, 'recording audio file "' + data.filepath + '" with exten "' + data.exten + '"');
