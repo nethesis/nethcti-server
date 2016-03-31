@@ -3997,8 +3997,8 @@ var compConfigManager;
                     var username = req.headers.authorization_user;
 
                     // check parameters
-                    if (   typeof req.params              !== 'object'
-                        || typeof req.params.endpointType !== 'string' || typeof req.params.endpointId !== 'string') {
+                    if (typeof req.params              !== 'object' ||
+                        typeof req.params.endpointType !== 'string' || typeof req.params.endpointId !== 'string') {
 
                         compUtil.net.sendHttp400(IDLOG, res);
                         return;

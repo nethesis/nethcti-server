@@ -4739,7 +4739,7 @@ function inoutDynQueues(endpointType, endpointId, cb) {
         if (endpointType === 'extension' && extensions[endpointId]) {
 
             logger.info(IDLOG, 'execute inout to all queues in which the ' + endpointType + ' ' + endpointId + ' is dynamic');
-            astProxy.doCmd({ command: 'inoutDynQueues', exten: endpointId }, function (err) {
+            astProxy.doCmd({ command: 'inoutDynQueues', context: extensions[endpointId].getContext(), exten: endpointId }, function (err) {
                 try {
                     if (err) {
                         logger.error(IDLOG, 'inout to all queues for which exten ' + endpointId + ' is dynamic');

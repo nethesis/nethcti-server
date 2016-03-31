@@ -53,7 +53,7 @@ var PRE_CALLERID = '"CTI"';
         *
         * Use it with _ast\_proxy_ module as follow:
         *
-        *     ast_proxy.doCmd({ command: 'inoutDynQueues', exten: '214' }, function (res) {
+        *     ast_proxy.doCmd({ command: 'inoutDynQueues', context: 'from-internal', exten: '214' }, function (res) {
         *         // some code
         *     });
         *
@@ -65,7 +65,7 @@ var PRE_CALLERID = '"CTI"';
 
             /**
             * Execute asterisk action to originate a new call.
-            * 
+            *
             * @method execute
             * @param {object}   am   Asterisk manager to send the action
             * @param {object}   args The object contains optional parameters passed to _doCmd_ method of the ast_proxy component
@@ -77,13 +77,13 @@ var PRE_CALLERID = '"CTI"';
                     // action for asterisk
                     var act = {
                         Action:   'Originate',
-                        Channel:  'Local/*45@from-internal', // *45 is the code to be used
+                        Channel:  'Local/*45@' + args.context, // *45 is the code to be used
                         Context:  'app-blackhole',
                         CallerID: PRE_CALLERID + ' <' + args.exten + '>',
                         Priority: 1,
                         Exten:    'ring'
                     };
-                    
+
                     // set the action identifier
                     act.ActionID = action.getActionId('inoutDynQueues');
 
