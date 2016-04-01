@@ -9,7 +9,7 @@ Source0:	%{name}-%{version}.tar.gz
 
 BuildRequires:	nethserver-devtools
 Requires:	nodejs010-nodejs
-Requires:       nethvoice-module-nethcti >= 2.5.0-1.3
+Requires:       nethvoice-module-nethcti >= 2.5.3
 AutoReq:	no
 
 
