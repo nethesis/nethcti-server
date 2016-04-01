@@ -1,16 +1,16 @@
-Name:		nethcti-server
+Name: nethcti-server
 Version: 2.5.2
 Release: 1%{?dist}
-Summary:	Nodejs Asterisk proxy for NethCTI 2
+Summary: Nodejs Asterisk proxy for NethCTI 2
 
-Group:		Network
-License:	GPLv2
-Source0:	%{name}-%{version}.tar.gz
+Group: Network
+License: GPLv2
+Source0: %{name}-%{version}.tar.gz
 
-BuildRequires:	nethserver-devtools
-Requires:	nodejs010-nodejs
-Requires:       nethvoice-module-nethcti >= 2.5.3
-AutoReq:	no
+BuildRequires: nethserver-devtools
+Requires: nodejs010-nodejs
+Requires: nethvoice-module-nethcti >= 2.5.3
+AutoReq: no
 
 
 %description
