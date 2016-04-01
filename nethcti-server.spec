@@ -51,6 +51,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %files -f %{name}-%{version}-filelist
 %defattr(-,root,root,-)
+%config(noreplace) /usr/lib/node/nethcti-server/plugins/com_static_http/static/templates/notification_popup/*
 
 %doc
 
