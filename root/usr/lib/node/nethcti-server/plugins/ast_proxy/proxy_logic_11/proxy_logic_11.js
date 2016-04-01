@@ -3861,29 +3861,37 @@ function sendDtmfToConversation(endpointType, endpointId, convid, tone, cb) {
 * Pickup a parked caller.
 *
 * @method pickupParking
-* @param {string} parking The number of the parking
-* @param {string} destType The endpoint type that pickup the conversation
-* @param {string} destId The endpoint identifier that pickup the conversation
-* @param {function} cb The callback function
+* @param {string}   parking   The number of the parking
+* @param {string}   destType  The endpoint type that pickup the conversation
+* @param {string}   destId    The endpoint identifier that pickup the conversation
+* @param {string}   extForCtx The extension identifier used to get the context
+* @param {function} cb        The callback function
 */
-function pickupParking(parking, destType, destId, cb) {
+function pickupParking(parking, destType, destId, extForCtx, cb) {
     try {
         // check parameters
-        if (typeof cb       !== 'function' ||
-            typeof destId   !== 'string'   ||
-            typeof parking  !== 'string'   ||
-            typeof destType !== 'string') {
+        if (typeof cb        !== 'function' ||
+            typeof destId    !== 'string'   ||
+            typeof parking   !== 'string'   ||
+            typeof extForCtx !== 'string'   ||
+            typeof destType  !== 'string') {
 
             throw new Error('wrong parameters');
         }
 
+        if (!extensions[extForCtx]) {
+            throw new Error('no extension to get context for pickup parking (extForCtx="' + extForCtx + '")');
+        }
+
+        var ctx = extensions[extForCtx].getContext();
         var ch = parkings[parking].getParkedCaller().getChannel();
 
         if (destType === 'extension' && extensions[destId] && ch !== undefined) {
 
             // the pickup operation is made by redirect operation
-            logger.info(IDLOG, 'pickup from ' + destType + ' ' + destId + ' of the channel ' + ch + ' of parking ' + parking);
-            astProxy.doCmd({ command: 'redirectChannel', context: extensions[destId].getContext(), chToRedirect: ch, to: destId }, function (err) {
+            logger.info(IDLOG, 'pickup from ' + destType + ' ' + destId + ' of the channel ' + ch + ' of parking ' + parking + ' ' +
+                               'using context "' + ctx + '"');
+            astProxy.doCmd({ command: 'redirectChannel', context: ctx, chToRedirect: ch, to: destId }, function (err) {
                cb(err);
                redirectConvCb(err);
             });
@@ -3908,15 +3916,17 @@ function pickupParking(parking, destType, destId, cb) {
 * @param {string}   convid       The conversation identifier
 * @param {string}   destType     The endpoint type that pickup the conversation
 * @param {string}   destId       The endpoint identifier that pickup the conversation
+* @param {string}   extForCtx    The extension identifier used to get the context
 * @param {function} cb           The callback function
 */
-function pickupConversation(endpointType, endpointId, convid, destType, destId, cb) {
+function pickupConversation(endpointType, endpointId, convid, destType, destId, extForCtx, cb) {
     try {
         // check parameters
         if (typeof convid       !== 'string'   ||
             typeof cb           !== 'function' ||
             typeof destId       !== 'string'   ||
             typeof destType     !== 'string'   ||
+            typeof extForCtx    !== 'string'   ||
             typeof endpointId   !== 'string'   ||
             typeof endpointType !== 'string') {
 
@@ -3934,11 +3944,17 @@ function pickupConversation(endpointType, endpointId, convid, destType, destId, 
             var callerNum  = ch.getCallerNum();
             var bridgedNum = ch.getBridgedNum();
 
+            if (!extensions[extForCtx]) {
+                throw new Error('no extension to get context for pickup conversation (extForCtx="' + extForCtx + '")');
+            }
+
+            var ctx = extensions[extForCtx].getContext();
+
             // get the channel to redirect
             if (callerNum === endpointId) {
                 chToRedirect = ch.getBridgedChannel();
-
-            } else if (bridgedNum === endpointId) {
+            }
+            else if (bridgedNum === endpointId) {
                 chToRedirect = ch.getChannel();
             }
 
@@ -3946,7 +3962,7 @@ function pickupConversation(endpointType, endpointId, convid, destType, destId, 
 
                 // the pickup operation is made by redirect operation
                 logger.info(IDLOG, 'pickup from ' + destType + ' ' + destId + ' of the channel ' + chToRedirect + ' of ' + endpointType + ' ' + endpointId);
-                astProxy.doCmd({ command: 'redirectChannel', chToRedirect: chToRedirect, to: destId }, function (err) {
+                astProxy.doCmd({ command: 'redirectChannel', context: ctx, chToRedirect: chToRedirect, to: destId }, function (err) {
                     cb(err);
                     redirectConvCb(err);
                 });
@@ -4240,18 +4256,20 @@ function hangupConvCb(err) {
 * Redirect the conversation.
 *
 * @method redirectConversation
-* @param {string} endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
-* @param {string} endpointId The endpoint identifier (e.g. the extension number)
-* @param {string} convid The conversation identifier
-* @param {string} to The destination number to redirect the conversation
-* @param {function} cb The callback function
+* @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
+* @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
+* @param {string}   convid       The conversation identifier
+* @param {string}   to           The destination number to redirect the conversation
+* @param {string}   extForCtx    The extension identifier used to get the context
+* @param {function} cb           The callback function
 */
-function redirectConversation(endpointType, endpointId, convid, to, cb) {
+function redirectConversation(endpointType, endpointId, convid, to, extForCtx, cb) {
     try {
         // check parameters
         if (typeof convid       !== 'string'   ||
             typeof cb           !== 'function' ||
             typeof to           !== 'string'   ||
+            typeof extForCtx    !== 'string'   ||
             typeof endpointId   !== 'string'   ||
             typeof endpointType !== 'string') {
 
@@ -4262,6 +4280,11 @@ function redirectConversation(endpointType, endpointId, convid, to, cb) {
         // check the endpoint existence
         if (endpointType === 'extension' && extensions[endpointId]) {
 
+            if (!extensions[extForCtx]) {
+                throw new Error('no extension to get context for redirect conversation (extForCtx="' + extForCtx + '")');
+            }
+
+            var ctx        = extensions[extForCtx].getContext();
             var convs      = extensions[endpointId].getAllConversations();
             var conv       = convs[convid];
             var chSource   = conv.getSourceChannel();
@@ -4276,7 +4299,7 @@ function redirectConversation(endpointType, endpointId, convid, to, cb) {
 
                 // redirect the channel
                 logger.info(IDLOG, 'redirect of the channel ' + chToRedirect + ' of exten ' + endpointId + ' to ' + to);
-                astProxy.doCmd({ command: 'redirectChannel', chToRedirect: chToRedirect, to: to }, function (err) {
+                astProxy.doCmd({ command: 'redirectChannel', context: ctx, chToRedirect: chToRedirect, to: to }, function (err) {
                     cb(err);
                     redirectConvCb(err);
                 });
@@ -4305,13 +4328,15 @@ function redirectConversation(endpointType, endpointId, convid, to, cb) {
 * @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
 * @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
 * @param {string}   convid       The conversation identifier
+* @param {string}   extForCtx    The extension identifier used to get the context
 * @param {function} cb           The callback function
 */
-function forceHangupConversation(endpointType, endpointId, convid, cb) {
+function forceHangupConversation(endpointType, endpointId, convid, extForCtx, cb) {
     try {
         // check parameters
-        if (typeof convid     !== 'string' || typeof cb           !== 'function' ||
-            typeof endpointId !== 'string' || typeof endpointType !== 'string') {
+        if (typeof convid     !== 'string'   ||
+            typeof cb         !== 'function' || typeof extForCtx    !== 'string' ||
+            typeof endpointId !== 'string'   || typeof endpointType !== 'string') {
 
             throw new Error('wrong parameters');
         }
@@ -4320,6 +4345,11 @@ function forceHangupConversation(endpointType, endpointId, convid, cb) {
         // check the endpoint existence
         if (endpointType === 'extension' && extensions[endpointId]) {
 
+            if (!extensions[extForCtx]) {
+                throw new Error('no extension to get context for force hangup conversation (extForCtx="' + extForCtx + '")');
+            }
+
+            var ctx      = extensions[extForCtx].getContext();
             var convs    = extensions[endpointId].getAllConversations();
             var conv     = convs[convid];
             var chSource = conv.getSourceChannel();
@@ -4339,7 +4369,7 @@ function forceHangupConversation(endpointType, endpointId, convid, cb) {
 
                 // redirect the channel to a non existent destination to force the hangup
                 logger.info(IDLOG, 'force hangup of the channel ' + chToHangup + ' of exten ' + endpointId + ' to non existent destination ' + to);
-                astProxy.doCmd({ command: 'redirectChannel', chToRedirect: chToHangup, to: to }, function (err) {
+                astProxy.doCmd({ command: 'redirectChannel', context: ctx, chToRedirect: chToHangup, to: to }, function (err) {
                     cb(err);
                     if (err) { logger.error(IDLOG, 'force hangup channel failed: ' + err.toString()); }
                     else     { logger.info(IDLOG, 'force hangup channel succesfully'); }
@@ -4369,13 +4399,15 @@ function forceHangupConversation(endpointType, endpointId, convid, cb) {
 * @param {string}   waitingCallerId The identifier of the waiting caller
 * @param {string}   queue           The identifier of the queue in which the caller waiting
 * @param {string}   to              The destination number to redirect the conversation
+* @param {string}   extForCtx       The extension identifier used to get the context
 * @param {function} cb              The callback function
 */
-function redirectWaitingCaller(waitingCallerId, queue, to, cb) {
+function redirectWaitingCaller(waitingCallerId, queue, to, extForCtx, cb) {
     try {
         // check parameters
-        if (typeof cb              !== 'function' || typeof to    !== 'string' ||
-            typeof waitingCallerId !== 'string'   || typeof queue !== 'string') {
+        if (typeof cb              !== 'function' ||
+            typeof waitingCallerId !== 'string'   || typeof queue !== 'string' ||
+            typeof extForCtx       !== 'string'   || typeof to    !== 'string') {
 
             throw new Error('wrong parameters');
         }
@@ -4383,12 +4415,17 @@ function redirectWaitingCaller(waitingCallerId, queue, to, cb) {
         // check the queue existence
         if (queues[queue]) {
 
+            if (!extensions[extForCtx]) {
+                throw new Error('no extension to get context for redirect waiting caller (extForCtx="' + extForCtx + '")');
+            }
+
+            var ctx = extensions[extForCtx].getContext();
             var ch = queues[queue].getAllWaitingCallers()[waitingCallerId].getChannel();
 
             if (ch !== undefined) {
 
                 logger.info(IDLOG, 'redirect channel ' + ch + ' of waitingCaller ' + waitingCallerId + ' from queue ' + queue + ' to ' + to);
-                astProxy.doCmd({ command: 'redirectChannel', chToRedirect: ch, to: to }, function (err) {
+                astProxy.doCmd({ command: 'redirectChannel', context: ctx, chToRedirect: ch, to: to }, function (err) {
                    cb(err);
                    redirectConvCb(err);
                 });
@@ -4411,18 +4448,19 @@ function redirectWaitingCaller(waitingCallerId, queue, to, cb) {
 }
 
 /**
-* Redirect the parkde call to the specified destination.
+* Redirect the parked call to the specified destination.
 *
 * @method redirectParking
-* @param {string}   parking The identifier of the parking
-* @param {string}   to      The destination number to redirect the parked call
-* @param {function} cb      The callback function
+* @param {string}   parking   The identifier of the parking
+* @param {string}   to        The destination number to redirect the parked call
+* @param {string}   extForCtx The extension identifier used to get the context
+* @param {function} cb        The callback function
 */
-function redirectParking(parking, to, cb) {
+function redirectParking(parking, to, extForCtx, cb) {
     try {
         // check parameters
-        if (typeof cb      !== 'function' ||
-            typeof parking !== 'string'   || typeof to !== 'string') {
+        if (typeof cb      !== 'function' || typeof extForCtx !== 'string' ||
+            typeof parking !== 'string'   || typeof to        !== 'string') {
 
             throw new Error('wrong parameters');
         }
@@ -4430,12 +4468,17 @@ function redirectParking(parking, to, cb) {
         // check the parking existence
         if (parkings[parking]) {
 
+            if (!extensions[extForCtx]) {
+                throw new Error('no extension to get context for pickup parking (extForCtx="' + extForCtx + '")');
+            }
+
+            var ctx = extensions[extForCtx].getContext();
             var ch = parkings[parking].getParkedCaller().getChannel();
 
             if (ch !== undefined) {
 
                 logger.info(IDLOG, 'redirect channel ' + ch + ' from parking ' + parking + ' to ' + to);
-                astProxy.doCmd({ command: 'redirectChannel', chToRedirect: ch, to: to }, function (err) {
+                astProxy.doCmd({ command: 'redirectChannel', context: ctx, chToRedirect: ch, to: to }, function (err) {
                    cb(err);
                    redirectConvCb(err);
                 });
@@ -4533,12 +4576,13 @@ function attendedTransferConversation(endpointType, endpointId, convid, to, cb) 
 * @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
 * @param {string}   convid       The conversation identifier
 * @param {string}   voicemail    The destination voicemail number to transfer the conversation
+* @param {string}   extForCtx    The extension identifier used to get the context
 * @param {function} cb           The callback function
 */
-function transferConversationToVoicemail(endpointType, endpointId, convid, voicemail, cb) {
+function transferConversationToVoicemail(endpointType, endpointId, convid, voicemail, extForCtx, cb) {
     try {
         // check parameters
-        if (typeof convid     !== 'string'   ||
+        if (typeof convid     !== 'string'   || typeof extForCtx    !== 'string' ||
             typeof cb         !== 'function' || typeof voicemail    !== 'string' ||
             typeof endpointId !== 'string'   || typeof endpointType !== 'string') {
 
@@ -4549,6 +4593,11 @@ function transferConversationToVoicemail(endpointType, endpointId, convid, voice
         // check the endpoint existence
         if (endpointType === 'extension' && extensions[endpointId]) {
 
+            if (!extensions[extForCtx]) {
+                throw new Error('no extension to get context for transfer conv to vm (extForCtx="' + extForCtx + '")');
+            }
+
+            var ctx   = extensions[extForCtx].getContext();
             var convs = extensions[endpointId].getAllConversations();
             var conv  = convs[convid];
 
@@ -4562,7 +4611,6 @@ function transferConversationToVoicemail(endpointType, endpointId, convid, voice
             var chSource   = conv.getSourceChannel();
             var callerNum  = chSource.getCallerNum();
             var bridgedNum = chSource.getBridgedNum();
-            var ctx        = extensions[voicemail].getContext();
 
             // when the endpointId is the caller, the channel to transfer is the destination channel
             var chToTransfer = endpointId === chSource.getCallerNum() ? chSource.getBridgedChannel() : chSource.getChannel();

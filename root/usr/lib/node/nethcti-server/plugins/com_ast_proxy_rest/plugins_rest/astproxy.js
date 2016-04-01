@@ -2884,9 +2884,9 @@ var compConfigManager;
                     var username = req.headers.authorization_user;
 
                     // check parameters
-                    if (   typeof req.params            !== 'object'
-                        || typeof req.params.convid     !== 'string' || typeof req.params.to           !== 'string'
-                        || typeof req.params.endpointId !== 'string' || typeof req.params.endpointType !== 'string') {
+                    if (typeof req.params            !== 'object' ||
+                        typeof req.params.convid     !== 'string' || typeof req.params.to           !== 'string' ||
+                        typeof req.params.endpointId !== 'string' || typeof req.params.endpointType !== 'string') {
 
                         compUtil.net.sendHttp400(IDLOG, res);
                         return;
@@ -2906,17 +2906,20 @@ var compConfigManager;
                                                ' the ' + req.params.endpointType + ' ' + req.params.endpointId + ' isn\'t owned by the user');
                             compUtil.net.sendHttp403(IDLOG, res);
                             return;
-
-                        } else {
+                        }
+                        else {
                             logger.info(IDLOG, 'blind transfer convid "' + req.params.convid + '": the endpoint ' + req.params.endpointType +
                                                ' ' + req.params.endpointId + ' is owned by "' + username + '"');
                         }
+
+                        var extForCtx = compConfigManager.getDefaultUserExtensionConf(username);
 
                         compAstProxy.redirectConversation(
                             req.params.endpointType,
                             req.params.endpointId,
                             req.params.convid,
                             req.params.to,
+                            extForCtx,
                             function (err) {
                                 try {
                                     if (err) {
@@ -2962,29 +2965,30 @@ var compConfigManager;
                     var username = req.headers.authorization_user;
 
                     // check parameters
-                    if (   typeof req.params                 !== 'object' || typeof req.params.queue !== 'string'
-                        || typeof req.params.waitingCallerId !== 'string' || typeof req.params.to    !== 'string') {
+                    if (typeof req.params                 !== 'object' || typeof req.params.queue !== 'string' ||
+                        typeof req.params.waitingCallerId !== 'string' || typeof req.params.to    !== 'string') {
 
                         compUtil.net.sendHttp400(IDLOG, res);
                         return;
                     }
 
-
                     // check if the user has the authorization to blind transfer the waiting callers from all queues
                     if (compAuthorization.authorizeAdminTransferUser(username) === true) {
-
                         logger.info(IDLOG, 'blind transfer waiting caller "' + req.params.waitingCallerId + '" from queue ' + req.params.queue + ' to ' + req.params.to + ': "admin_transfer" authorization successful for user "' + username + '"');
-
-                    } else {
+                    }
+                    else {
                         logger.warn(IDLOG, 'blind transfer waiting caller "' + req.params.waitingCallerId + '" from queue ' + req.params.queue + ' to ' + req.params.to + ': "admin_transfer" authorization failed for user "' + username + '"');
                         compUtil.net.sendHttp403(IDLOG, res);
                         return;
                     }
 
+                    var extForCtx = compConfigManager.getDefaultUserExtensionConf(username);
+
                     compAstProxy.redirectWaitingCaller(
                         req.params.waitingCallerId,
                         req.params.queue,
                         req.params.to,
+                        extForCtx,
                         function (err) {
                             try {
                                 if (err) {
@@ -2996,7 +3000,7 @@ var compConfigManager;
                                 }
 
                                 logger.info(IDLOG, 'waiting caller ' + req.params.waitingCallerId + ' has been blind transfered successfully ' +
-                                                   'by user "' + username + '" from queue ' + req.params.queue + ' to ' + req.params.to);
+                                                   'by user "' + username + '" ("' + defext + '") from queue ' + req.params.queue + ' to ' + req.params.to);
                                 compUtil.net.sendHttp200(IDLOG, res);
 
                             } catch (err) {
@@ -3005,7 +3009,6 @@ var compConfigManager;
                             }
                         }
                     );
-
             } catch (err) {
                 logger.error(IDLOG, err.stack);
                 compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -3027,8 +3030,8 @@ var compConfigManager;
                     var username = req.headers.authorization_user;
 
                     // check parameters
-                    if (   typeof req.params         !== 'object'
-                        || typeof req.params.parking !== 'string' || typeof req.params.to !== 'string') {
+                    if (typeof req.params         !== 'object' ||
+                        typeof req.params.parking !== 'string' || typeof req.params.to !== 'string') {
 
                         compUtil.net.sendHttp400(IDLOG, res);
                         return;
@@ -3039,16 +3042,19 @@ var compConfigManager;
                     if (compAuthorization.authorizeAdminTransferUser(username) === true) {
 
                         logger.info(IDLOG, 'blind transfer parking "' + req.params.parking + '" to ' + req.params.to + ': "admin_transfer" authorization successful for user "' + username + '"');
-
-                    } else {
+                    }
+                    else {
                         logger.warn(IDLOG, 'blind transfer parking "' + req.params.parking + '" to ' + req.params.to + ': "admin_transfer" authorization failed for user "' + username + '"');
                         compUtil.net.sendHttp403(IDLOG, res);
                         return;
                     }
 
+                    var extForCtx = compConfigManager.getDefaultUserExtensionConf(username);
+
                     compAstProxy.redirectParking(
                         req.params.parking,
                         req.params.to,
+                        extForCtx,
                         function (err) {
                             try {
                                 if (err) {
@@ -3192,9 +3198,9 @@ var compConfigManager;
                     var username = req.headers.authorization_user;
 
                     // check parameters
-                    if (   typeof req.params            !== 'object' || typeof req.params.username     !== 'string'
-                        || typeof req.params.convid     !== 'string' || typeof req.params.voicemailId  !== 'string'
-                        || typeof req.params.endpointId !== 'string' || typeof req.params.endpointType !== 'string') {
+                    if (typeof req.params            !== 'object' || typeof req.params.username     !== 'string' ||
+                        typeof req.params.convid     !== 'string' || typeof req.params.voicemailId  !== 'string' ||
+                        typeof req.params.endpointId !== 'string' || typeof req.params.endpointType !== 'string') {
 
                         compUtil.net.sendHttp400(IDLOG, res);
                         return;
@@ -3231,11 +3237,14 @@ var compConfigManager;
                                                req.params.voicemailId + '": by user "' + username + '" the voicemail ' + req.params.voicemailId + ' is owned by user "' + req.params.username + '"');
                         }
 
+                        var extForCtx = compConfigManager.getDefaultUserExtensionConf(username);
+
                         compAstProxy.transferConversationToVoicemail(
                             req.params.endpointType,
                             req.params.endpointId,
                             req.params.convid,
                             req.params.voicemailId,
+                            extForCtx,
                             function (err) {
                                 try {
                                     if (err) {
@@ -3295,7 +3304,6 @@ var compConfigManager;
                         if (compAuthorization.authorizeAdminPickupUser(username) === true) {
 
                             logger.log(IDLOG, 'pickup convid "' + req.params.convid + '": admin pickup authorization successful for user "' + username + '"');
-
                         }
                         // check if the user has the authorization to pickup conversation of specified extension
                         else if (compAuthorization.authorizePickupUser(username, req.params.endpointId) !== true) {
@@ -3318,7 +3326,17 @@ var compConfigManager;
                                                ' ' + req.params.destId + ' is owned by "' + username + '"');
                         }
 
-                        compAstProxy.pickupConversation(req.params.endpointType, req.params.endpointId, req.params.convid, req.params.destType, req.params.destId, function (err) {
+                        var extForCtx = compConfigManager.getDefaultUserExtensionConf(username);
+
+                        compAstProxy.pickupConversation(
+                            req.params.endpointType,
+                            req.params.endpointId,
+                            req.params.convid,
+                            req.params.destType,
+                            req.params.destId,
+                            extForCtx,
+                            function (err) {
+
                             try {
                                 if (err) {
                                     logger.warn(IDLOG, 'pickup convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.destType + ' ' + req.params.destId + ' has been failed');
@@ -3510,8 +3528,8 @@ var compConfigManager;
                     var username = req.headers.authorization_user;
 
                     // check parameters
-                    if (   typeof req.params              !== 'object' || typeof req.params.convid     !== 'string'
-                        || typeof req.params.endpointType !== 'string' || typeof req.params.endpointId !== 'string') {
+                    if (typeof req.params              !== 'object' || typeof req.params.convid     !== 'string' ||
+                        typeof req.params.endpointType !== 'string' || typeof req.params.endpointId !== 'string') {
 
                         compUtil.net.sendHttp400(IDLOG, res);
                         return;
@@ -3531,15 +3549,18 @@ var compConfigManager;
                                                ' the ' + req.params.endpointType + ' ' + req.params.endpointId + ' isn\'t owned by the user');
                             compUtil.net.sendHttp403(IDLOG, res);
                             return;
-
-                        } else {
+                        }
+                        else {
                             logger.info(IDLOG, 'force hangup convid "' + req.params.convid + '": the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' is owned by "' + username + '"');
                         }
+
+                        var extForCtx = compConfigManager.getDefaultUserExtensionConf(username);
 
                         compAstProxy.forceHangupConversation(
                             req.params.endpointType,
                             req.params.endpointId,
                             req.params.convid,
+                            extForCtx,
                             function (err) {
                                 try {
                                     if (err) {
@@ -3726,17 +3747,17 @@ var compConfigManager;
             *     POST pickup_parking
             *
             * @method pickup_parking
-            * @param {object}   req  The client request.
-            * @param {object}   res  The client response.
-            * @param {function} next Function to run the next handler in the chain.
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
             */
             pickup_parking: function (req, res, next) {
                 try {
                     var username = req.headers.authorization_user;
 
                     // check parameters
-                    if (   typeof req.params          !== 'object' || typeof req.params.parking !== 'string'
-                        || typeof req.params.destType !== 'string' || typeof req.params.destId  !== 'string') {
+                    if (typeof req.params          !== 'object' || typeof req.params.parking !== 'string' ||
+                        typeof req.params.destType !== 'string' || typeof req.params.destId  !== 'string') {
 
                         compUtil.net.sendHttp400(IDLOG, res);
                         return;
@@ -3764,13 +3785,15 @@ var compConfigManager;
                                                ' the destination ' + req.params.destType + ' ' + req.params.destId + ' isn\'t owned by the user');
                             compUtil.net.sendHttp403(IDLOG, res);
                             return;
-
-                        } else {
+                        }
+                        else {
                             logger.info(IDLOG, 'pickup parking "' + req.params.parking + '": the destination endpoint ' + req.params.destType +
                                                ' ' + req.params.destId + ' is owned by "' + username + '"');
                         }
 
-                        compAstProxy.pickupParking(req.params.parking, req.params.destType, req.params.destId, function (err) {
+                        var extForCtx = compConfigManager.getDefaultUserExtensionConf(username);
+
+                        compAstProxy.pickupParking(req.params.parking, req.params.destType, req.params.destId, extForCtx, function (err) {
                             try {
                                 if (err) {
                                     logger.warn(IDLOG, 'pickup parking ' + req.params.parking + ' by user "' + username + '" with ' +
@@ -3787,7 +3810,6 @@ var compConfigManager;
                                 compUtil.net.sendHttp500(IDLOG, res, err.toString());
                             }
                         });
-
                     } else {
                         logger.warn(IDLOG, 'picking up parking ' + req.params.parking + ': unknown destType ' + req.params.destType);
                         compUtil.net.sendHttp400(IDLOG, res);
