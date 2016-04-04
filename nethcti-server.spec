@@ -1,16 +1,16 @@
-Name:		nethcti-server
+Name: nethcti-server
 Version: 2.5.2
 Release: 1%{?dist}
-Summary:	Nodejs Asterisk proxy for NethCTI 2
+Summary: Nodejs Asterisk proxy for NethCTI 2
 
-Group:		Network	
-License:	GPLv2
-Source0:	%{name}-%{version}.tar.gz
+Group: Network
+License: GPLv2
+Source0: %{name}-%{version}.tar.gz
 
-BuildRequires:	nethserver-devtools
-Requires:	nodejs010-nodejs
-Requires:       nethvoice-module-nethcti >= 2.5.0-1.3
-AutoReq:	no
+BuildRequires: nethserver-devtools
+Requires: nodejs010-nodejs
+Requires: nethvoice-module-nethcti >= 2.5.3
+AutoReq: no
 
 
 %description
@@ -29,8 +29,6 @@ mkdir -p root/var/spool/nethcti/sms
 mkdir -p root/var/lib/nethserver/nethcti/upload
 mkdir -p root/var/lib/nethserver/nethcti/templates/notification_manager
 mkdir -p root/var/lib/nethserver/nethcti/templates/customer_card
-mkdir -p root/var/lib/nethserver/nethcti/static
-mkdir -p root/usr/lib/node/nethcti-server/store
 
 # clean the nodejs npm modules
 find root/usr/lib/node/nethcti-server/node_modules -iname readme.\* -o -iname benchmark\* -o -iname sample\* -o -iname test\* -o -iname example\* -o -iname changelog\* -o -iname docs -o -iname component.json -o -iname \*.md -o -iname \*.bat -o -iname \*.tgz | xargs rm -rf
@@ -38,15 +36,12 @@ find root/usr/lib/node/nethcti-server/node_modules -iname readme.\* -o -iname be
 %install
 rm -rf $RPM_BUILD_ROOT
 (cd root; find . -depth -print | cpio -dump $RPM_BUILD_ROOT)
-mv root/usr/lib/node/nethcti-server/plugins/com_static_http/static/img  $RPM_BUILD_ROOT/var/lib/nethserver/nethcti/static/
-mv root/usr/lib/node/nethcti-server/plugins/com_static_http/static/templates  $RPM_BUILD_ROOT/var/lib/nethserver/nethcti/static/
 /sbin/e-smith/genfilelist \
 --file /usr/lib/node/nethcti-server/script/sendsms.php 'attr(0755,root,root)' \
 --file /usr/lib/node/nethcti-server/sql/update.sh 'attr(0755,root,root)' \
 --dir /var/spool/asterisk/monitor 'attr(0775,asterisk,asterisk)' \
 --dir /var/spool/nethcti/sms 'attr(0775,asterisk,asterisk)' \
 --dir /etc/nethcti 'attr(0775,asterisk,asterisk)' \
---dir /var/lib/nethserver/nethcti/static 'attr(0775,asterisk,asterisk)' \
 --dir /var/lib/asterisk 'attr(0775,asterisk,asterisk)' \
 --dir /var/lib/nethserver/nethcti/upload 'attr(0775,asterisk,asterisk)' \
 --dir /var/lib/asterisk/bin 'attr(0775,asterisk,asterisk)' $RPM_BUILD_ROOT > %{name}-%{version}-filelist
@@ -56,6 +51,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %files -f %{name}-%{version}-filelist
 %defattr(-,root,root,-)
+%config(noreplace) /usr/lib/node/nethcti-server/plugins/com_static_http/static/templates/notification_popup/*
 
 %doc
 
@@ -295,5 +291,3 @@ rm -rf $RPM_BUILD_ROOT
 
 * Wed Nov 13 2013  Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> 1.9.0-1
 - Alpha1 release
-
-

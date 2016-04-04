@@ -47,9 +47,9 @@ var ENCODING = 'utf8';
 * @private
 * @final
 * @readOnly
-* @default "dist/call.html"
+* @default "call.html"
 */
-var CALL_NOTIF_TEMPLATE_NAME = 'dist/call.html';
+var CALL_NOTIF_TEMPLATE_NAME = 'call.html';
 
 /**
 * The name of the template file for a streaming notification popup.
@@ -59,9 +59,9 @@ var CALL_NOTIF_TEMPLATE_NAME = 'dist/call.html';
 * @private
 * @final
 * @readOnly
-* @default "dist/streaming.html"
+* @default "streaming.html"
 */
-var STREAMING_NOTIF_TEMPLATE_NAME = 'dist/streaming.html';
+var STREAMING_NOTIF_TEMPLATE_NAME = 'streaming.html';
 
 /**
 * The timeout to automatic close notification popup.
