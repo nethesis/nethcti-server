@@ -57,7 +57,7 @@ exports.MeetmeConference = function (extOwner) {
     * @method addUser
     * @param {object} obj A _MeetmeConfUser_ object
     */
-    function addUser(obj) { users[obj.getId()] = obj; }
+    function addUser(obj) { users[obj.getExtenId()] = obj; }
 
     /**
     * Removes a user from the conference.
