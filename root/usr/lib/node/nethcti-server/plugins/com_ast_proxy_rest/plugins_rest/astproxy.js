@@ -635,6 +635,8 @@ var compConfigManager;
         * 1. [`astproxy/mute_record`](#mute_recordpost)
         * 1. [`astproxy/start_record`](#start_recordpost)
         * 1. [`astproxy/force_hangup`](#force_hanguppost)
+        * 1. [`astproxy/mute_userconf`](#mute_userconfpost)
+        * 1. [`astproxy/unmute_userconf`](#unmute_userconfpost)
         * 1. [`astproxy/answer_webrtc`](#answer_webrtcpost)
         * 1. [`astproxy/blindtransfer`](#blindtransferpost)
         * 1. [`astproxy/unmute_record`](#unmute_recordpost)
@@ -985,6 +987,32 @@ var compConfigManager;
         *
         * ---
         *
+        * ### <a id="mute_userconfpost">**`astproxy/mute_userconf`**</a>
+        *
+        * Mute a user of a meetme conference. The request must contains the following parameters:
+        *
+        * * `confId: the conference identifier`
+        * * `userId: the user identifier to be muted`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "confId": "202", "userId": "2" }
+        *
+        * ---
+        *
+        * ### <a id="unmute_userconfpost">**`astproxy/unmute_userconf`**</a>
+        *
+        * Unmute a user of a meetme conference. The request must contains the following parameters:
+        *
+        * * `confId: the conference identifier`
+        * * `userId: the user identifier to be muted`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "confId": "202", "userId": "2" }
+        *
+        * ---
+        *
         * ### <a id="mute_recordpost">**`astproxy/mute_record`**</a>
         *
         * Mute the recording of the specified conversation. The request must contains the following parameters:
@@ -1263,11 +1291,13 @@ var compConfigManager;
                 *   @param {string} mute_record           Mute the recording of a conversation
                 *   @param {string} start_record          Start the recording of a conversation
                 *   @param {string} force_hangup          Force hangup of a conversation
+                *   @param {string} mute_userconf         Mute a user of a meetme conference
                 *   @param {string} answer_webrtc         Answer a conversation from the webrtc extension sending the command to the client
                 *   @param {string} blindtransfer         Transfer a conversation with blind type
                 *   @param {string} unmute_record         Unmute the recording of a conversation
                 *   @param {string} hangup_channel        Hangup the asterisk channel
                 *   @param {string} pickup_parking        Pickup a parked call
+                *   @param {string} unmute_userconf       Unmute a user of a meetme conference
                 *   @param {string} queuemember_add       Adds the specified extension to the queue
                 *   @param {string} inout_dyn_queues      Alternates the logon and logout of the extension in all the queues for which it's a dynamic member
                 *   @param {string} queuemember_pause     Pause the specified extension from receive calls from the queue
@@ -1299,11 +1329,13 @@ var compConfigManager;
                     'mute_record',
                     'start_record',
                     'force_hangup',
+                    'mute_userconf',
                     'answer_webrtc',
                     'blindtransfer',
                     'unmute_record',
                     'hangup_channel',
                     'pickup_parking',
+                    'unmute_userconf',
                     'queuemember_add',
                     'inout_dyn_queues',
                     'queuemember_pause',
@@ -1465,10 +1497,7 @@ var compConfigManager;
                     }
                     else {
                         var conf = compAstProxy.getConference(extenId);
-                        console.log('extenId=', extenId, 'conf=', conf);
                         logger.info(IDLOG, 'sent conference data of exten "' + extenId + '" ' +
-                                           'to user "' + username + '" ' + res.connection.remoteAddress);
-                        console.log(IDLOG, 'sent conference data of exten "' + extenId + '" ' +
                                            'to user "' + username + '" ' + res.connection.remoteAddress);
                         res.send(200, conf);
                     }
@@ -3671,6 +3700,132 @@ var compConfigManager;
             },
 
             /**
+            * Mute a user of a meetme conference with the following REST API:
+            *
+            *     POST mute_userconf
+            *
+            * @method mute_userconf
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            mute_userconf: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (typeof req.params        !== 'object' ||
+                        typeof req.params.confId !== 'string' ||
+                        typeof req.params.userId !== 'string') {
+
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    // check if the conference belongs to the user
+                    if (compAuthorization.verifyUserEndpointExten(username, req.params.confId) !== true) {
+
+                        logger.warn(IDLOG, 'muting user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '" ' +
+                                           'by user "' + username + '" has been failed: ' + req.params.confId + ' is not owned by the user');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+                    else {
+                        logger.info(IDLOG, 'muting user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '": ' +
+                                           req.params.confId + ' is owned by "' + username + '"');
+                    }
+
+                    compAstProxy.muteUserMeetmeConf(
+                        req.params.confId,
+                        req.params.userId,
+                        function (err) {
+                            try {
+                                if (err) {
+                                    logger.warn(IDLOG, 'muting user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '" ' +
+                                                       ' has been failed');
+                                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                                    return;
+                                }
+                                logger.info(IDLOG, 'user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '" ' +
+                                                   'has been muted successfully by user "' + username + '"');
+                                compUtil.net.sendHttp200(IDLOG, res);
+
+                            } catch (err) {
+                                logger.error(IDLOG, err.stack);
+                                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                            }
+                        }
+                    );
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * Unmute a user of a meetme conference with the following REST API:
+            *
+            *     POST unmute_userconf
+            *
+            * @method unmute_userconf
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            unmute_userconf: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (typeof req.params        !== 'object' ||
+                        typeof req.params.confId !== 'string' ||
+                        typeof req.params.userId !== 'string') {
+
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    // check if the conference belongs to the user
+                    if (compAuthorization.verifyUserEndpointExten(username, req.params.confId) !== true) {
+
+                        logger.warn(IDLOG, 'unmuting user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '" ' +
+                                           'by user "' + username + '" has been failed: ' + req.params.confId + ' is not owned by the user');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+                    else {
+                        logger.info(IDLOG, 'unmuting user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '": ' +
+                                           req.params.confId + ' is owned by "' + username + '"');
+                    }
+
+                    compAstProxy.unmuteUserMeetmeConf(
+                        req.params.confId,
+                        req.params.userId,
+                        function (err) {
+                            try {
+                                if (err) {
+                                    logger.warn(IDLOG, 'unmuting user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '" ' +
+                                                       ' has been failed');
+                                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                                    return;
+                                }
+                                logger.info(IDLOG, 'user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '" ' +
+                                                   'has been unmuted successfully by user "' + username + '"');
+                                compUtil.net.sendHttp200(IDLOG, res);
+
+                            } catch (err) {
+                                logger.error(IDLOG, err.stack);
+                                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                            }
+                        }
+                    );
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
             * Mute the record of the specified conversation with the following REST API:
             *
             *     POST mute_record
@@ -4482,12 +4637,14 @@ var compConfigManager;
         exports.start_record             = astproxy.start_record;
         exports.unauthe_call             = astproxy.unauthe_call;
         exports.force_hangup             = astproxy.force_hangup;
+        exports.mute_userconf            = astproxy.mute_userconf;
         exports.blindtransfer            = astproxy.blindtransfer;
         exports.unmute_record            = astproxy.unmute_record;
         exports.answer_webrtc            = astproxy.answer_webrtc;
         exports.hangup_channel           = astproxy.hangup_channel;
         exports.pickup_parking           = astproxy.pickup_parking;
         exports.remote_opgroups          = astproxy.remote_opgroups;
+        exports.unmute_userconf          = astproxy.unmute_userconf;
         exports.setCompOperator          = setCompOperator;
         exports.setCompAstProxy          = setCompAstProxy;
         exports.queuemember_add          = astproxy.queuemember_add;

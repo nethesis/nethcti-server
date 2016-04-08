@@ -4081,6 +4081,78 @@ function unmuteConversation(endpointType, endpointId, convid, cb) {
 }
 
 /**
+* Mute a user of a meetme conference.
+*
+* @method muteUserMeetmeConf
+* @param {string}   confId The meetme conference identifier
+* @param {string}   userId The user indentifier into the conference
+* @param {function} cb     The callback function
+*/
+function muteUserMeetmeConf(confId, userId, cb) {
+    try {
+        // check parameters
+        if (typeof cb     !== 'function' ||
+            typeof confId !== 'string'   ||
+            typeof userId !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        logger.info(IDLOG, 'execute mute of user "' + userId + '" of meetme conf "' + confId + '"');
+        astProxy.doCmd({
+            command: 'meetmeConfUserMute',
+            confId: confId,
+            usernum: userId,
+            meetmeConfCode: getMeetmeConfCode()
+        },
+        function (error) {
+            cb(error);
+            muteUserMeetmeConfCb(error);
+        });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Unmute a user of a meetme conference.
+*
+* @method unmuteUserMeetmeConf
+* @param {string}   confId The meetme conference identifier
+* @param {string}   userId The user indentifier into the conference
+* @param {function} cb     The callback function
+*/
+function unmuteUserMeetmeConf(confId, userId, cb) {
+    try {
+        // check parameters
+        if (typeof cb     !== 'function' ||
+            typeof confId !== 'string'   ||
+            typeof userId !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        logger.info(IDLOG, 'execute unmute of user "' + userId + '" of meetme conf "' + confId + '"');
+        astProxy.doCmd({
+            command: 'meetmeConfUserUnmute',
+            confId: confId,
+            usernum: userId,
+            meetmeConfCode: getMeetmeConfCode()
+        },
+        function (error) {
+            cb(error);
+            unmuteUserMeetmeConfCb(error);
+        });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
 * Sends the dtmf tone to the conversation destination.
 *
 * @method sendDtmfToConversation
@@ -4462,6 +4534,40 @@ function muteCb(error) {
     try {
         if (error) { logger.warn(IDLOG, 'mute failed: ' + error.message); }
         else       { logger.info(IDLOG, 'mute succesfully');              }
+
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* This is the callback of the mute user of a meetme conference command plugin.
+*
+* @method muteUserMeetmeConfCb
+* @param {object} error The error object of the operation
+* @private
+*/
+function muteUserMeetmeConfCb(error) {
+    try {
+        if (error) { logger.warn(IDLOG, 'mute user of meetme conf failed: ' + error.message); }
+        else       { logger.info(IDLOG, 'mute user of meetme conf succesfully');              }
+
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* This is the callback of the unmute user of a meetme conference command plugin.
+*
+* @method unmuteUserMeetmeConfCb
+* @param {object} error The error object of the operation
+* @private
+*/
+function unmuteUserMeetmeConfCb(error) {
+    try {
+        if (error) { logger.warn(IDLOG, 'unmute user of meetme conf failed: ' + error.message); }
+        else       { logger.info(IDLOG, 'unmute user of meetme conf succesfully');              }
 
     } catch (err) {
        logger.error(IDLOG, err.stack);
@@ -6552,10 +6658,12 @@ exports.hangupConversation              = hangupConversation;
 exports.evtNewExternalCall              = evtNewExternalCall;
 exports.pickupConversation              = pickupConversation;
 exports.evtExtenDndChanged              = evtExtenDndChanged;
+exports.muteUserMeetmeConf              = muteUserMeetmeConf;
 exports.evtRemoveMeetmeConf             = evtRemoveMeetmeConf;
 exports.evtQueueMemberAdded             = evtQueueMemberAdded;
 exports.EVT_MEETME_CONF_END             = EVT_MEETME_CONF_END;
 exports.EVT_PARKING_CHANGED             = EVT_PARKING_CHANGED;
+exports.unmuteUserMeetmeConf            = unmuteUserMeetmeConf;
 exports.evtAddMeetmeUserConf            = evtAddMeetmeUserConf;
 exports.evtQueueMemberStatus            = evtQueueMemberStatus;
 exports.setUnconditionalCfVm            = setUnconditionalCfVm;

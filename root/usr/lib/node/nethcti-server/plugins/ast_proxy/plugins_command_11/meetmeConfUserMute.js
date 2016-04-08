@@ -11,9 +11,9 @@ var action = require('../action');
 * @private
 * @final
 * @readOnly
-* @default [meetmeMute]
+* @default [meetmeConfUserMute]
 */
-var IDLOG = '[meetmeMute]';
+var IDLOG = '[meetmeConfUserMute]';
 
 (function() {
     try {
@@ -42,15 +42,15 @@ var IDLOG = '[meetmeMute]';
         *
         * Use it with _ast\_proxy_ module as follow:
         *
-        *     ast_proxy.doCmd({ command: 'meetmeMute', confId: '6666202', usernum: '2' }, function (res) {
+        *     ast_proxy.doCmd({ command: 'meetmeConfUserMute', confId: '6666202', usernum: '2', meetmeConfCode: '1234' }, function (res) {
         *         // some code
         *     });
         *
         *
-        * @class meetmeMute
+        * @class meetmeConfUserMute
         * @static
         */
-        var meetmeMute = {
+        var meetmeConfUserMute = {
 
             /**
             * Execute asterisk action to mute a meetme user.
@@ -66,12 +66,12 @@ var IDLOG = '[meetmeMute]';
                     // action for asterisk
                     var act = {
                         Action:  'MeetmeMute',
-                        Meetme:  args.confId,
+                        Meetme:  args.meetmeConfCode + args.confId,
                         Usernum: args.usernum
                     };
 
                     // set the action identifier
-                    act.ActionID = action.getActionId('meetmeMute');
+                    act.ActionID = action.getActionId('meetmeConfUserMute');
 
                     // add association ActionID-callback
                     map[act.ActionID] = cb;
@@ -146,9 +146,9 @@ var IDLOG = '[meetmeMute]';
         };
 
         // public interface
-        exports.data      = meetmeMute.data;
-        exports.execute   = meetmeMute.execute;
-        exports.setLogger = meetmeMute.setLogger;
+        exports.data      = meetmeConfUserMute.data;
+        exports.execute   = meetmeConfUserMute.execute;
+        exports.setLogger = meetmeConfUserMute.setLogger;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);

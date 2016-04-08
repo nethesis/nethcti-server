@@ -77,6 +77,20 @@ module.exports = function (options, imports, register) {
             getEchoCallDestination: astProxy.proxyLogic.getEchoCallDestination,
 
             /**
+            * It's the _unmuteUserMeetmeConf_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method unmuteUserMeetmeConf
+            */
+            unmuteUserMeetmeConf: astProxy.proxyLogic.unmuteUserMeetmeConf,
+
+            /**
+            * It's the _muteUserMeetmeConf_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method muteUserMeetmeConf
+            */
+            muteUserMeetmeConf: astProxy.proxyLogic.muteUserMeetmeConf,
+
+            /**
             * It's the _setUnconditionalCfVm_ method provided by _ast\_proxy.proxyLogic_.
             *
             * @method setUnconditionalCfVm

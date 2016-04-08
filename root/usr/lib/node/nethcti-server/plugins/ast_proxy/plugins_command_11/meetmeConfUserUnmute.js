@@ -11,9 +11,9 @@ var action = require('../action');
 * @private
 * @final
 * @readOnly
-* @default [meetmeUnmute]
+* @default [meetmeConfUserUnmute]
 */
-var IDLOG = '[meetmeUnmute]';
+var IDLOG = '[meetmeConfUserUnmute]';
 
 (function() {
     try {
@@ -42,15 +42,15 @@ var IDLOG = '[meetmeUnmute]';
         *
         * Use it with _ast\_proxy_ module as follow:
         *
-        *     ast_proxy.doCmd({ command: 'meetmeUnmute', confId: '6666202', usernum: '2' }, function (res) {
+        *     ast_proxy.doCmd({ command: 'meetmeConfUserUnmute', confId: '6666202', usernum: '2', meetmeConfCode: '1234' }, function (res) {
         *         // some code
         *     });
         *
         *
-        * @class meetmeUnmute
+        * @class meetmeConfUserUnmute
         * @static
         */
-        var meetmeUnmute = {
+        var meetmeConfUserUnmute = {
 
             /**
             * Execute asterisk action to unmute a meetme user.
@@ -65,13 +65,13 @@ var IDLOG = '[meetmeUnmute]';
                 try {
                     // action for asterisk
                     var act = {
-                        Action:  'meetmeUnmute',
-                        Meetme:  args.confId,
+                        Action:  'MeetmeUnmute',
+                        Meetme:  args.meetmeConfCode + args.confId,
                         Usernum: args.usernum
                     };
 
                     // set the action identifier
-                    act.ActionID = action.getActionId('meetmeUnmute');
+                    act.ActionID = action.getActionId('meetmeConfUserUnmute');
 
                     // add association ActionID-callback
                     map[act.ActionID] = cb;
@@ -146,9 +146,9 @@ var IDLOG = '[meetmeUnmute]';
         };
 
         // public interface
-        exports.data      = meetmeUnmute.data;
-        exports.execute   = meetmeUnmute.execute;
-        exports.setLogger = meetmeUnmute.setLogger;
+        exports.data      = meetmeConfUserUnmute.data;
+        exports.execute   = meetmeConfUserUnmute.execute;
+        exports.setLogger = meetmeConfUserUnmute.setLogger;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
