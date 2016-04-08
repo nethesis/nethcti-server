@@ -57,7 +57,10 @@ var astProxy;
                         data.event === 'MeetmeEnd') {
 
                         logger.info(IDLOG, 'received event ' + data.event);
-                        // astProxy.proxyLogic....(...);
+
+                        var MEETME_CONF_CODE = astProxy.proxyLogic.getMeetmeConfCode();
+                        var extOwnerId = data.meetme.substring(MEETME_CONF_CODE.length, data.meetme.length);
+                        astProxy.proxyLogic.evtRemoveMeetmeConf({ confId: extOwnerId });
 
                     } else {
                         logger.warn(IDLOG, 'MeetmeEnd event not recognized');

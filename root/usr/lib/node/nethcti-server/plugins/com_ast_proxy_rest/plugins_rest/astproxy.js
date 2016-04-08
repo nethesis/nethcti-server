@@ -138,6 +138,7 @@ var compConfigManager;
         * 1. [`astproxy/queues`](#queuesget)
         * 1. [`astproxy/trunks`](#trunksget)
         * 1. [`astproxy/opgroups`](#opgroupsget)
+        * 1. [`astproxy/conference/:endpoint`](#conferenceget)
         * 1. [`astproxy/remote_opgroups`](#remote_opgroupsget)
         * 1. [`astproxy/parkings`](#parkingsget)
         * 1. [`astproxy/extensions`](#extensionsget)
@@ -351,6 +352,27 @@ var compConfigManager;
                       "name3"
                   ]
               }
+         }
+     }
+        *
+        * ---
+        *
+        * ### <a id="conferenceget">**`astproxy/conference/:endpoint`**</a>
+        *
+        * Gets the data about the extension meetme conference.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "id": "202",
+         "users": {
+             "1": {
+                 "id": "1",
+                 "name": "202",
+                 "owner": true,
+                 "muted": false,
+                 "extenId": "202"
+             }
          }
      }
         *
@@ -1170,6 +1192,7 @@ var compConfigManager;
                 *   @param {string} remote_prefixes                Gets prefix number of all remote sites used with outgoing external calls
                 *   @param {string} opgroups                       Gets all the user groups of the operator panel
                 *   @param {string} remote_opgroups                Gets all the user groups of all remote sites
+                *   @param {string} conference/:endpoint           Gets data about the meetme conference of the extension
                 *   @param {string} parkings                       Gets all the parkings with all their status informations
                 *   @param {string} extensions                     Gets all the extensions with all their status informations
                 *   @param {string} sip_webrtc                     Gets all the configuration about the sip WebRTC
@@ -1196,6 +1219,7 @@ var compConfigManager;
                     'extensions',
                     'sip_webrtc',
                     'remote_opgroups',
+                    'conference/:endpoint',
                     'remote_prefixes',
                     'remote_extensions',
                     'queues_stats/:day',
@@ -1392,6 +1416,61 @@ var compConfigManager;
                         logger.info(IDLOG, 'sent all remote sites operator groups "' + Object.keys(allRemoteOpGroups) + '" ' +
                                            'to user "' + username + '" ' + res.connection.remoteAddress);
                         res.send(200, allRemoteOpGroups);
+                    }
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * It serves only the local clients: the remote sites can not ask for it.
+            * Gets the meetme conference of the extension with the following REST API:
+            *
+            *     GET  conference/:endpoint
+            *
+            * @method conference
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            conference: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+                    var token    = req.headers.authorization_token;
+                    var extenId  = req.params.endpoint;
+
+                    // check parameter
+                    if (typeof extenId !== 'string') {
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    // check if the request coming from a remote site
+                    if (compComNethctiRemotes.isClientRemote(username, token)) {
+
+                        var remoteSiteName = compComNethctiRemotes.getSiteName(username, token);
+                        logger.warn(IDLOG, 'requesting conference data by remote site "' + remoteSiteName + '": ' +
+                                           'authorization failed for user "' + username + '"');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+                    // check if the endpoint is owned by the user
+                    if (compAuthorization.verifyUserEndpointExten(username, extenId) === false) {
+
+                        logger.warn(IDLOG, 'getting conference data of exten "' + extenId + '" failed: ' +
+                                           '"' + extenId + '" is not owned by user "' + username + '"');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+                    else {
+                        var conf = compAstProxy.getConference(extenId);
+                        console.log('extenId=', extenId, 'conf=', conf);
+                        logger.info(IDLOG, 'sent conference data of exten "' + extenId + '" ' +
+                                           'to user "' + username + '" ' + res.connection.remoteAddress);
+                        console.log(IDLOG, 'sent conference data of exten "' + extenId + '" ' +
+                                           'to user "' + username + '" ' + res.connection.remoteAddress);
+                        res.send(200, conf);
                     }
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
@@ -4384,6 +4463,7 @@ var compConfigManager;
         exports.start_spy                = astproxy.start_spy;
         exports.setLogger                = setLogger;
         exports.txfer_tovm               = astproxy.txfer_tovm;
+        exports.conference               = astproxy.conference;
         exports.extensions               = astproxy.extensions;
         exports.sip_webrtc               = astproxy.sip_webrtc;
         exports.queues_qos               = astproxy.queues_qos;

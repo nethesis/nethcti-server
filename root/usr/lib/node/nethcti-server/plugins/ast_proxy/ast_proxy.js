@@ -161,6 +161,7 @@ function config(path) {
         };
 
         proxyLogic.setPrefix(json.prefix);
+        proxyLogic.setAstCodes(json.codes);
 
         logger.info(IDLOG, 'successfully configured');
 

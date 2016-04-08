@@ -25,6 +25,8 @@ var QueueMember             = require('../queueMember').QueueMember;
 var EventEmitter            = require('events').EventEmitter;
 var ParkedCaller            = require('../parkedCaller').ParkedCaller;
 var Conversation            = require('../conversation').Conversation;
+var MeetmeConfUser          = require('../meetmeConfUser').MeetmeConfUser;
+var MeetmeConference        = require('../meetmeConference').MeetmeConference;
 var TrunkConversation       = require('../trunkConversation').TrunkConversation;
 var QueueWaitingCaller      = require('../queueWaitingCaller').QueueWaitingCaller;
 var QUEUE_MEMBER_TYPES_ENUM = require('../queueMember').QUEUE_MEMBER_TYPES_ENUM;
@@ -130,6 +132,36 @@ var EVT_PARKING_CHANGED = 'parkingChanged';
 * @default "queueChanged"
 */
 var EVT_QUEUE_CHANGED = 'queueChanged';
+
+/**
+* Fired when something changed in a meetme conference.
+*
+* @event meetmeConfChanged
+* @param {object} msg The conference object
+*/
+/**
+* The name of the meetme conference changed event.
+*
+* @property EVT_MEETME_CONF_CHANGED
+* @type string
+* @default "meetmeConfChanged"
+*/
+var EVT_MEETME_CONF_CHANGED = 'meetmeConfChanged';
+
+/**
+* Fired when something a meetme conference has been ended.
+*
+* @event meetmeConfEnd
+* @param {string} id The conference identifier
+*/
+/**
+* The name of the meetme conference end event.
+*
+* @property EVT_MEETME_CONF_END
+* @type string
+* @default "meetmeConfEnd"
+*/
+var EVT_MEETME_CONF_END = 'meetmeConfEnd';
 
 /**
 * Fired when new voicemail message has been left.
@@ -265,18 +297,28 @@ var astProxy;
 var prefix = '';
 
 /**
-* Contains the informations about the caller. The key is the caller
+* The asterisk codes.
+*
+* @property astCodes
+* @type object
+* @private
+* @default {}
+*/
+var astCodes = {};
+
+/**
+* Contains the information about the caller. The key is the caller
 * number and the value is the information object. The data are about
 * the created caller notes and the phonebook contacts from the centralized
-* and nethcti address book that match on the caller number. The informations
+* and nethcti address book that match on the caller number. The information
 * are retrieved when a _UserEvent_ is received and are used when _Dialing_
 * events occurs. This is because when a call is directed to a queue, only
 * one _UserEvent_ is emitted and many _Dialing_ events for each members of
 * the queue. So it executes only one query per call. Due to asynchronous nature
 * of the query, it may happen that when _Dialing_ event occurs the query is
-* not completed. In this case the informations of the caller are those returned
+* not completed. In this case the information of the caller are those returned
 * by the asterisk event. In this manner we give more importance to the speed
-* rather than to informations completeness.
+* rather than to information completeness.
 *
 * @property callerIdentityData
 * @type object
@@ -294,6 +336,16 @@ var callerIdentityData = {};
 * @private
 */
 var extensions = {};
+
+/**
+* All mettme conferences. The key is the extension owner number and the value
+* is the _MeetmeConference_ object.
+*
+* @property conferences
+* @type object
+* @private
+*/
+var conferences = {};
 
 /**
 * All trunks. The key is the trunk number and the value
@@ -329,7 +381,7 @@ var parkings = {};
 * It is used to store the parked channels to be used in conjunction
 * with "listChannels" command plugin to get the number and name
 * of the parked channels. The key is the parking number and the value
-* is an object with the parked channel informations.
+* is an object with the parked channel information.
 *
 * @property parkedChannels
 * @type object
@@ -353,7 +405,7 @@ var struct;
 * is the conversation identifier and the value is an empty string.
 * The presence of the key means that the conversation is recording,
 * otherwise not. It's necessary because asterisk hasn't the recording
-* informations. So, when conversation list is refreshed, it is used to
+* information. So, when conversation list is refreshed, it is used to
 * set recording status to a conversation.
 *
 * @property recordingConv
@@ -427,6 +479,43 @@ function setPrefix(code) {
         prefix = code;
 
         logger.info(IDLOG, 'prefix number has been set to "' + prefix + '"');
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the code numbers to be used.
+*
+* @method setAstCodes
+* @param {object} codes The asterisk codes.
+* @static
+*/
+function setAstCodes(codes) {
+    try {
+        // check parameter
+        if (typeof codes !== 'object') { throw new Error('wrong asterisk codes'); }
+
+        astCodes = codes;
+
+        logger.info(IDLOG, 'asterisk codes has been set');
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Returns the code used to start a meetme conference.
+*
+* @method getMeetmeConfCode
+* @return {object} The code used to start a meetme conference.
+* @static
+*/
+function getMeetmeConfCode() {
+    try {
+        return astCodes.meetme_conf;
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -840,6 +929,8 @@ function start(inipath) {
         struct = iniparser.parseSync(inipath);
         // validates the content of the ini file
         structValidation();
+        // initializes meetme conferences
+        initMeetmeConf();
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -868,7 +959,7 @@ function initializeIaxExten(resp) {
             }
         }
 
-        // set iax informations
+        // set iax information
         for (i = 0; i < resp.length; i++) {
 
             // this check is because some iax trunks can be present in the resp,
@@ -1013,7 +1104,7 @@ function updateParkedChannelOfOneParking(err, resp, parking) {
 
             // request all channels to get the caller number information of
             // the parked channel of the specified parking
-            logger.info(IDLOG, 'request all channels to update parked caller informations for parking ' + parking);
+            logger.info(IDLOG, 'request all channels to update parked caller information for parking ' + parking);
             astProxy.doCmd({ command: 'listChannels' }, function (err, resp) {
                 // update the parked caller of one parking in "parkings" object list
                 updateParkedCallerOfOneParking(err, resp, parking);
@@ -1201,7 +1292,7 @@ function startIntervalUpdateQueuesDetails(interval) {
 *
 * @method queueDetailsUpdate
 * @param {object} err  The error response object
-* @param {object} resp The queue informations object
+* @param {object} resp The queue information object
 * @private
 */
 function queueDetailsUpdate(err, resp) {
@@ -1246,7 +1337,7 @@ function queueDetailsUpdate(err, resp) {
 *
 * @method setQueueData
 * @param {string} q    The queue name
-* @param {object} resp The queue informations object
+* @param {object} resp The queue information object
 * @private
 */
 function setQueueData(q, resp) {
@@ -1277,7 +1368,7 @@ function setQueueData(q, resp) {
 *
 * @method updateQueueWaitingCallers
 * @param {object} err  The error response object
-* @param {object} resp The queue informations object
+* @param {object} resp The queue information object
 * @private
 */
 function updateQueueWaitingCallers(err, resp) {
@@ -1327,7 +1418,7 @@ function updateQueueWaitingCallers(err, resp) {
 *
 * @method queueDetails
 * @param {object} err  The error response object
-* @param {object} resp The queue informations object
+* @param {object} resp The queue information object
 * @private
 */
 function queueDetails(err, resp) {
@@ -1852,6 +1943,91 @@ function initializeSipExten() {
 }
 
 /**
+* Updates data about all meetme conferences.
+*
+* @method updateMeetmeConferences
+* @param {object} err  The error response object
+* @param {object} data The meetme conferences information object
+* @private
+*/
+function updateMeetmeConferences(err, data) {
+    try {
+        if (err) {
+            logger.error(IDLOG, 'updating data about all meetme conferences: ' + err.toString());
+            return;
+        }
+
+        if (typeof data === 'object') {
+
+            var extOwnerId;
+            for (extOwnerId in data) {
+                updateMeetmeConf(null, data[extOwnerId]);
+            }
+        }
+        logger.info(IDLOG, 'updated all meetme conferences: #' + Object.keys(conferences).length);
+
+    } catch (error) {
+        logger.error(IDLOG, error.stack);
+    }
+}
+
+/**
+* Updates data about a single meetme conference.
+*
+* @method updateMeetmeConf
+* @param {object} err  The error response object
+* @param {object} data The meetme conference information object
+* @private
+*/
+function updateMeetmeConf(err, data) {
+    try {
+        if (err) {
+            logger.error(IDLOG, 'updating data about single meetme conference: ' + err.toString());
+            return;
+        }
+
+        // data can be undefined when no conference is present. This case is
+        // managed by "meetmeend" event
+        if (typeof data === 'object') {
+
+            var i;
+            var newConf = new MeetmeConference(data.confId);
+            for (i = 0; i < data.users.length; i++) {
+                var newUserConf = new MeetmeConfUser(data.users[i].id, data.users[i].extenId, data.users[i].isOwner);
+                newUserConf.setName(data.users[i].name);
+                newUserConf.setMuted(data.users[i].muted);
+                newConf.addUser(newUserConf);
+            }
+            conferences[data.confId] = newConf;
+
+            logger.info(IDLOG, 'updated meetme conference "' + data.confId + '": users #' + data.users.length);
+
+            // emit the event
+            logger.info(IDLOG, 'emit event ' + EVT_MEETME_CONF_CHANGED + ' for conf ' + data.confId);
+            astProxy.emit(EVT_MEETME_CONF_CHANGED, conferences[data.confId]);
+        }
+
+    } catch (error) {
+        logger.error(IDLOG, error.stack);
+    }
+}
+
+/**
+* Initializes all meetme conferences.
+*
+* @method initMeetmeConf
+* @private
+*/
+function initMeetmeConf() {
+    try {
+        astProxy.doCmd({ command: 'listMeetmeConf', meetmeConfCode: getMeetmeConfCode() }, updateMeetmeConferences);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Initialize all sip trunks as _Trunk_ object into the
 * _trunks_ property.
 *
@@ -1908,7 +2084,7 @@ function initializeIaxTrunk(resp) {
             }
         }
 
-        // set iax informations
+        // set iax information
         for (i = 0; i < resp.length; i++) {
 
             // this check is because some iax extensions can be present in the resp,
@@ -2051,7 +2227,7 @@ function setDndStatus(err, resp) {
 *
 * @method extSipDetails
 * @param {object} err  The error object
-* @param {object} resp The extension informations object
+* @param {object} resp The extension information object
 * @private
 */
 function extSipDetails(err, resp) {
@@ -2067,7 +2243,7 @@ function extSipDetails(err, resp) {
         // extract extension object from the response
         var data = resp.exten;
 
-        // set the extension informations
+        // set the extension information
         extensions[data.exten].setIp(data.ip);
         extensions[data.exten].setPort(data.port);
         extensions[data.exten].setName(data.name);
@@ -2085,7 +2261,7 @@ function extSipDetails(err, resp) {
 *
 * @method trunkSipDetails
 * @param {object} err  The error object
-* @param {object} resp The trunk informations object
+* @param {object} resp The trunk information object
 * @private
 */
 function trunkSipDetails(err, resp) {
@@ -2101,7 +2277,7 @@ function trunkSipDetails(err, resp) {
         // extract extension object from the response
         var data = resp.exten;
 
-        // set the extension informations
+        // set the extension information
         trunks[data.exten].setIp(data.ip);
         trunks[data.exten].setPort(data.port);
         trunks[data.exten].setSipUserAgent(data.sipuseragent);
@@ -2117,7 +2293,7 @@ function trunkSipDetails(err, resp) {
 *
 * @method updateExtIaxDetails
 * @param {object} err  The error object
-* @param {object} resp The iax extension informations object
+* @param {object} resp The iax extension information object
 * @private
 */
 function updateExtIaxDetails(err, resp) {
@@ -2127,7 +2303,7 @@ function updateExtIaxDetails(err, resp) {
             return;
         }
 
-        // set extension informations
+        // set extension information
         extIaxDetails(resp);
 
         // emit the event
@@ -2143,7 +2319,7 @@ function updateExtIaxDetails(err, resp) {
 * Sets the details for the iax extension object.
 *
 * @method extIaxDetails
-* @param {object} resp The extension informations object
+* @param {object} resp The extension information object
 * @private
 */
 function extIaxDetails(resp) {
@@ -2151,7 +2327,7 @@ function extIaxDetails(resp) {
         // check parameter
         if (typeof resp !== 'object') { throw new Error('wrong parameter'); }
 
-        // set the extension informations
+        // set the extension information
         extensions[resp.exten].setIp(resp.ip);
         extensions[resp.exten].setPort(resp.port);
         extensions[resp.exten].setIp(resp.ip);
@@ -2167,7 +2343,7 @@ function extIaxDetails(resp) {
 *
 * @method updateExtSipDetails
 * @param {object} err  The error object
-* @param {object} resp The extension informations object
+* @param {object} resp The extension information object
 * @private
 */
 function updateExtSipDetails(err, resp) {
@@ -2177,7 +2353,7 @@ function updateExtSipDetails(err, resp) {
             return;
         }
 
-        // set extension informations
+        // set extension information
         extSipDetails(null, resp);
 
         // emit the event
@@ -2628,6 +2804,20 @@ function getExtensions() {
 }
 
 /**
+* Returns a conference of the extension.
+*
+* @method getConference
+* @return {object} The _MeetmeConference_ object.
+*/
+function getConference(extenId) {
+    try {
+        return conferences[extenId] || {};
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Updates the extension status and any other information except
 * the channel list. To update the channel list it request all channels
 * to analize through "listChannels" command plugin.
@@ -2650,8 +2840,8 @@ function evtExtenStatusChanged(exten, status) {
             extensions[exten].setStatus(status);
             logger.info(IDLOG, 'set status ' + status + ' for extension ' + exten);
 
-            // update extension informations. This is because when the extension becomes
-            // offline/online ip, port and other informations needs to be updated
+            // update extension information. This is because when the extension becomes
+            // offline/online ip, port and other information needs to be updated
             if (extensions[exten].getChanType() === 'sip') {
 
                 astProxy.doCmd({ command: 'sipDetails', exten: exten }, updateExtSipDetails);
@@ -3291,6 +3481,85 @@ function evtRemoveQueueWaitingCaller(data) {
         // request details for the current queue to update the waiting callers.
         // This is done to remove the current one and update the position of the remaining waiting callers
         astProxy.doCmd({ command: 'queueDetails', queue: data.queue }, updateQueueWaitingCallers);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* A user extension has left the meetme conference. So update info about the conference.
+*
+* @method evtRemoveMeetmeUserConf
+* @param {object} data The response object received from the event plugin _meetmeleave_.
+*/
+function evtRemoveMeetmeUserConf(data) {
+    try {
+        // check parameter
+        if (typeof data         !== 'object' ||
+            typeof data.userId  !== 'string' ||
+            typeof data.extenId !== 'string' ||
+            typeof data.confId  !== 'string') {
+
+            throw new Error('wrong parameter');
+        }
+        logger.info(IDLOG, 'user id "' + data.userId + '" with exten id "' + data.extenId + '" has left the meetme conf ' + data.confId);
+        astProxy.doCmd({ command: 'listMeetmeConf', meetmeConfCode: getMeetmeConfCode(), confId: data.confId }, function (err, resp) {
+            updateMeetmeConf(err, resp[ (Object.keys(resp))[0] ]);
+        });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* A meetme conference has been ended. So update info about the conference.
+*
+* @method evtRemoveMeetmeConf
+* @param {object} data The response object received from the event plugin _meetmeend_.
+*/
+function evtRemoveMeetmeConf(data) {
+    try {
+        // check parameter
+        if (typeof data        !== 'object' ||
+            typeof data.confId !== 'string') {
+
+            throw new Error('wrong parameter');
+        }
+        logger.info(IDLOG, 'meetme conf "' + data.confId + '" has been ended');
+        delete conferences[data.confId];
+
+        // emit the event
+        logger.info(IDLOG, 'emit event ' + EVT_MEETME_CONF_END + ' for conf ' + data.confId);
+        astProxy.emit(EVT_MEETME_CONF_END, data.confId);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* A user extension has joined the meetme conference. So update info about the conference.
+*
+* @method evtAddMeetmeUserConf
+* @param {object} data The response object received from the event plugin _meetmejoin_.
+*/
+function evtAddMeetmeUserConf(data) {
+    try {
+        // check parameter
+        if (typeof data         !== 'object' ||
+            typeof data.name    !== 'string' ||
+            typeof data.userId  !== 'string' ||
+            typeof data.extenId !== 'string' ||
+            typeof data.confId  !== 'string') {
+
+            throw new Error('wrong parameter');
+        }
+        logger.info(IDLOG, 'user id "' + data.userId + '" with exten id "' + data.extenId + '" has joined the meetme conf ' + data.confId);
+        astProxy.doCmd({ command: 'listMeetmeConf', meetmeConfCode: getMeetmeConfCode(), confId: data.confId }, function (err, resp) {
+            updateMeetmeConf(err, resp[ (Object.keys(resp))[0] ]);
+        });
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -6243,9 +6512,11 @@ exports.getPrefix                       = getPrefix;
 exports.addPrefix                       = addPrefix;
 exports.evtRename                       = evtRename;
 exports.evtNewCdr                       = evtNewCdr;
+exports.setAstCodes                     = setAstCodes;
 exports.EVT_NEW_CDR                     = EVT_NEW_CDR;
 exports.setCompDbconn                   = setCompDbconn;
 exports.getExtensions                   = getExtensions;
+exports.getConference                   = getConference;
 exports.hangupChannel                   = hangupChannel;
 exports.pickupParking                   = pickupParking;
 exports.isExtenWebrtc                   = isExtenWebrtc;
@@ -6264,6 +6535,7 @@ exports.parkConversation                = parkConversation;
 exports.setCompPhonebook                = setCompPhonebook;
 exports.getJSONExtension                = getJSONExtension;
 exports.getExtensionAgent               = getExtensionAgent;
+exports.getMeetmeConfCode               = getMeetmeConfCode;
 exports.getJSONExtensions               = getJSONExtensions;
 exports.setCompCallerNote               = setCompCallerNote;
 exports.queueMemberRemove               = queueMemberRemove;
@@ -6280,8 +6552,11 @@ exports.hangupConversation              = hangupConversation;
 exports.evtNewExternalCall              = evtNewExternalCall;
 exports.pickupConversation              = pickupConversation;
 exports.evtExtenDndChanged              = evtExtenDndChanged;
+exports.evtRemoveMeetmeConf             = evtRemoveMeetmeConf;
 exports.evtQueueMemberAdded             = evtQueueMemberAdded;
+exports.EVT_MEETME_CONF_END             = EVT_MEETME_CONF_END;
 exports.EVT_PARKING_CHANGED             = EVT_PARKING_CHANGED;
+exports.evtAddMeetmeUserConf            = evtAddMeetmeUserConf;
 exports.evtQueueMemberStatus            = evtQueueMemberStatus;
 exports.setUnconditionalCfVm            = setUnconditionalCfVm;
 exports.redirectConversation            = redirectConversation;
@@ -6297,11 +6572,13 @@ exports.evtNewVoicemailMessage          = evtNewVoicemailMessage;
 exports.stopRecordConversation          = stopRecordConversation;
 exports.evtConversationDialing          = evtConversationDialing;
 exports.muteRecordConversation          = muteRecordConversation;
+exports.evtRemoveMeetmeUserConf         = evtRemoveMeetmeUserConf;
 exports.forceHangupConversation         = forceHangupConversation;
 exports.evtSpyStartConversation         = evtSpyStartConversation;
 exports.startRecordConversation         = startRecordConversation;
 exports.getBaseCallRecAudioPath         = getBaseCallRecAudioPath;
 exports.queueMemberPauseUnpause         = queueMemberPauseUnpause;
+exports.EVT_MEETME_CONF_CHANGED         = EVT_MEETME_CONF_CHANGED;
 exports.EVT_QUEUE_MEMBER_CHANGED        = EVT_QUEUE_MEMBER_CHANGED;
 exports.evtNewQueueWaitingCaller        = evtNewQueueWaitingCaller;
 exports.evtConversationConnected        = evtConversationConnected;

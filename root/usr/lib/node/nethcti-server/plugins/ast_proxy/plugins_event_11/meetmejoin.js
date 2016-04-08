@@ -52,6 +52,7 @@ var astProxy;
             * @static
             */
             data: function (data) {
+                try {
                     if (data.meetme &&
                         data.usernum &&
                         data.calleridnum &&
@@ -59,7 +60,15 @@ var astProxy;
                         data.event === 'MeetmeJoin') {
 
                         logger.info(IDLOG, 'received event ' + data.event);
-                        // astProxy.proxyLogic...(...);
+
+                        var MEETME_CONF_CODE = astProxy.proxyLogic.getMeetmeConfCode();
+                        var extOwnerId = data.meetme.substring(MEETME_CONF_CODE.length, data.meetme.length);
+                        astProxy.proxyLogic.evtAddMeetmeUserConf({
+                            name: data.calleridname,
+                            confId: extOwnerId,
+                            userId: data.usernum,
+                            extenId: data.calleridnum
+                        });
 
                     } else {
                         logger.warn(IDLOG, 'MeetmeJoin event not recognized');

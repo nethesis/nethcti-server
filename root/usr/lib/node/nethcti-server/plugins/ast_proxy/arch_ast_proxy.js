@@ -63,6 +63,13 @@ module.exports = function (options, imports, register) {
             setDnd: astProxy.proxyLogic.setDnd,
 
             /**
+            * It's the _getConference_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method getConference
+            */
+            getConference: astProxy.proxyLogic.getConference,
+
+            /**
             * It's the _getEchoCallDestination_ method provided by _ast\_proxy.proxyLogic_.
             *
             * @method getEchoCallDestination
@@ -433,6 +440,20 @@ module.exports = function (options, imports, register) {
             * @method EVT_QUEUE_MEMBER_CHANGED
             */
             EVT_QUEUE_MEMBER_CHANGED: astProxy.proxyLogic.EVT_QUEUE_MEMBER_CHANGED,
+
+            /**
+            * It's the _EVT\_MEETME\_CONF\_END_ property provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method EVT_MEETME_CONF_END
+            */
+            EVT_MEETME_CONF_END: astProxy.proxyLogic.EVT_MEETME_CONF_END,
+
+            /**
+            * It's the _EVT\_MEETME\_CONF\_CHANGED_ property provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method EVT_MEETME_CONF_CHANGED
+            */
+            EVT_MEETME_CONF_CHANGED: astProxy.proxyLogic.EVT_MEETME_CONF_CHANGED,
 
             /**
             * It's the _EVT\_TRUNK\_CHANGED_ property provided by _ast\_proxy.proxyLogic_.

@@ -467,8 +467,8 @@ function setAstProxy(ap) {
 function setAstProxyListeners() {
     try {
         // check astProxy object
-        if (!astProxy
-            || typeof astProxy.on !== 'function') {
+        if (!astProxy ||
+            typeof astProxy.on !== 'function') {
 
             throw new Error('wrong astProxy object');
         }
@@ -478,6 +478,8 @@ function setAstProxyListeners() {
         astProxy.on(astProxy.EVT_TRUNK_CHANGED,        trunkChanged);       // a trunk has changed
         astProxy.on(astProxy.EVT_QUEUE_CHANGED,        queueChanged);       // a queue has changed
         astProxy.on(astProxy.EVT_PARKING_CHANGED,      parkingChanged);     // a parking has changed
+        astProxy.on(astProxy.EVT_MEETME_CONF_END,      meetmeConfEnd);      // a meetme conference has been ended
+        astProxy.on(astProxy.EVT_MEETME_CONF_CHANGED,  meetmeConfChanged);  // a meetme conference has changed
         astProxy.on(astProxy.EVT_QUEUE_MEMBER_CHANGED, queueMemberChanged); // a queue member has changed
 
     } catch (err) {
@@ -804,6 +806,64 @@ function queueMemberChanged(member) {
         wsServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY).emit('queueMemberUpdate', member.toJSON(privacyStrReplace));
         wssServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY).emit('queueMemberUpdate', member.toJSON(privacyStrReplace));
 
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Handler for the _astProxy.EVT\_MEETME\_CONF\_CHANGED_ event emitted by _ast\_proxy_
+* component. Something has changed in the meetme conference, so notifies
+* all clients associated with the conference extension.
+*
+* @method meetmeConfChanged
+* @param {object} conf The conference object
+* @private
+*/
+function meetmeConfChanged(conf) {
+    try {
+        logger.info(IDLOG, 'received event "' + astProxy.EVT_MEETME_CONF_CHANGED + '" for conf id ' + conf.getId());
+        logger.info(IDLOG, 'emit event "meetmeConfUpdate" for conf id ' + conf.getId() + ' to websockets');
+
+        var socketList = wssServer.sockets.sockets;
+        var key, username;
+        for (key in socketList) {
+
+            username = socketList[key].nethcti.username;
+
+            if (compAuthorization.verifyUserEndpointExten(username, conf.getId()) === true) {
+                socketList[key].emit('meetmeConfUpdate', conf.toJSON());
+            }
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Handler for the _astProxy.EVT\_MEETME\_CONF\_END_ event emitted by _ast\_proxy_
+* component. A meetme conference has been ended, so notifies
+* all clients associated with the conference extension.
+*
+* @method meetmeConfEnd
+* @param {string} confId The conference identifier
+* @private
+*/
+function meetmeConfEnd(confId) {
+    try {
+        logger.info(IDLOG, 'received event "' + astProxy.EVT_MEETME_CONF_END + '" for conf id ' + confId);
+        logger.info(IDLOG, 'emit event "meetmeConfEnd" for conf id ' + confId + ' to websockets');
+
+        var socketList = wssServer.sockets.sockets;
+        var key, username;
+        for (key in socketList) {
+
+            username = socketList[key].nethcti.username;
+
+            if (compAuthorization.verifyUserEndpointExten(username, confId) === true) {
+                socketList[key].emit('meetmeConfEnd', { id: confId });
+            }
+        }
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }

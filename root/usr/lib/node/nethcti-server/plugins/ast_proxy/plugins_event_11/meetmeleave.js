@@ -60,7 +60,14 @@ var astProxy;
                         data.event === 'MeetmeLeave') {
 
                         logger.info(IDLOG, 'received event ' + data.event);
-                        // astProxy.proxyLogic...(...);
+
+                        var MEETME_CONF_CODE = astProxy.proxyLogic.getMeetmeConfCode();
+                        var extOwnerId = data.meetme.substring(MEETME_CONF_CODE.length, data.meetme.length);
+                        astProxy.proxyLogic.evtRemoveMeetmeUserConf({
+                            confId: extOwnerId,
+                            userId: data.usernum,
+                            extenId: data.calleridnum
+                        });
 
                     } else {
                         logger.warn(IDLOG, 'MeetmeLeave event not recognized');
