@@ -59,7 +59,14 @@ var astProxy;
                         data.event === 'MeetmeMute') {
 
                         logger.info(IDLOG, 'received event ' + data.event);
-                        // astProxy.proxyLogic...(...);
+
+                        var MEETME_CONF_CODE = astProxy.proxyLogic.getMeetmeConfCode();
+                        var extOwnerId = data.meetme.substring(MEETME_CONF_CODE.length, data.meetme.length);
+                        astProxy.proxyLogic.evtMeetmeUserConfMute({
+                            mute: data.status === 'on' ? true : false,
+                            confId: extOwnerId,
+                            userId: data.usernum
+                        });
 
                     } else {
                         logger.warn(IDLOG, 'MeetmeMute event not recognized');

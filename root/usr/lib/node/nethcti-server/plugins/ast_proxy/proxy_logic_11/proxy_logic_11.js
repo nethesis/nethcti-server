@@ -3567,6 +3567,32 @@ function evtAddMeetmeUserConf(data) {
 }
 
 /**
+* The mute status of a meetme user conference has been changed. So update info about the conference.
+*
+* @method evtMeetmeUserConfMute
+* @param {object} data The response object received from the event plugin _meetmemute_.
+*/
+function evtMeetmeUserConfMute(data) {
+    try {
+        // check parameter
+        if (typeof data        !== 'object'  ||
+            typeof data.mute   !== 'boolean' ||
+            typeof data.userId !== 'string'  ||
+            typeof data.confId !== 'string') {
+
+            throw new Error('wrong parameter');
+        }
+        logger.info(IDLOG, 'mute status of user id "' + data.userId + '" of meetme conf "' + data.confId + '" has been changed to ' + data.mute);
+        astProxy.doCmd({ command: 'listMeetmeConf', meetmeConfCode: getMeetmeConfCode(), confId: data.confId }, function (err, resp) {
+            updateMeetmeConf(err, resp[ (Object.keys(resp))[0] ]);
+        });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Adds a new waiting caller to a queue.
 *
 * @method evtNewQueueWaitingCaller
@@ -6668,6 +6694,7 @@ exports.evtAddMeetmeUserConf            = evtAddMeetmeUserConf;
 exports.evtQueueMemberStatus            = evtQueueMemberStatus;
 exports.setUnconditionalCfVm            = setUnconditionalCfVm;
 exports.redirectConversation            = redirectConversation;
+exports.evtMeetmeUserConfMute           = evtMeetmeUserConfMute;
 exports.isExtenDynMemberQueue           = isExtenDynMemberQueue;
 exports.EVT_NEW_VOICE_MESSAGE           = EVT_NEW_VOICE_MESSAGE;
 exports.evtQueueMemberRemoved           = evtQueueMemberRemoved;
