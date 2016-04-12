@@ -131,6 +131,7 @@ var IDLOG = '[listMeetmeConf]';
                         delete map[data.actionid]; // remove association ActionID-callback
 
                     } else if (map[data.actionid] &&
+                               data.channel       &&
                                data.conference    &&
                                data.usernumber    &&
                                data.calleridnum   &&
@@ -144,7 +145,8 @@ var IDLOG = '[listMeetmeConf]';
                             name: data.calleridname,
                             muted: data.muted.toLowerCase() === 'no' ? false : true,
                             extenId: data.calleridnum,
-                            isOwner: extenOwner === data.calleridnum ? true : false
+                            isOwner: extenOwner === data.calleridnum ? true : false,
+                            channel: data.channel
                         };
 
                         if (!list[extenOwner]) {

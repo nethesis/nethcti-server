@@ -60,6 +60,15 @@ exports.MeetmeConference = function (extOwner) {
     function addUser(obj) { users[obj.getExtenId()] = obj; }
 
     /**
+    * Returns the user of the conference.
+    *
+    * @method getUser
+    * @param  {string} extenId The extension identifier
+    * @return {object} The user of the conference.
+    */
+    function getUser(extenId) { return users[extenId]; }
+
+    /**
     * Returns true if the extension is into the conference.
     *
     * @method hasExten
@@ -70,14 +79,6 @@ exports.MeetmeConference = function (extOwner) {
         if (users[extenId]) { return true; }
         return false;
     }
-
-    /**
-    * Removes a user from the conference.
-    *
-    * @method removeUser
-    * @param {string} id The user identifier
-    */
-    function removeUser(id) { delete users[id]; }
 
     /**
     * Returns the readable string of the conference.
@@ -117,9 +118,9 @@ exports.MeetmeConference = function (extOwner) {
         getId: getId,
         toJSON: toJSON,
         addUser: addUser,
+        getUser: getUser,
         hasExten: hasExten,
         toString: toString,
-        removeUser: removeUser,
         getUsersCount: getUsersCount
     };
 };

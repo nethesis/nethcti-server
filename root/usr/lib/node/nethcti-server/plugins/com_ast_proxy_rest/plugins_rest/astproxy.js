@@ -637,6 +637,7 @@ var compConfigManager;
         * 1. [`astproxy/start_record`](#start_recordpost)
         * 1. [`astproxy/force_hangup`](#force_hanguppost)
         * 1. [`astproxy/mute_userconf`](#mute_userconfpost)
+        * 1. [`astproxy/hangup_userconf`](#hangup_userconfpost)
         * 1. [`astproxy/unmute_userconf`](#unmute_userconfpost)
         * 1. [`astproxy/answer_webrtc`](#answer_webrtcpost)
         * 1. [`astproxy/blindtransfer`](#blindtransferpost)
@@ -1028,6 +1029,19 @@ var compConfigManager;
         *
         * ---
         *
+        * ### <a id="hangup_userconfpost">**`astproxy/hangup_userconf`**</a>
+        *
+        * Hangup a user of a meetme conference. The request must contains the following parameters:
+        *
+        * * `confId: the conference identifier`
+        * * `extenId: the extension identifier to be hanged up`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "confId": "202", "extenId": "201" }
+        *
+        * ---
+        *
         * ### <a id="mute_recordpost">**`astproxy/mute_record`**</a>
         *
         * Mute the recording of the specified conversation. The request must contains the following parameters:
@@ -1314,6 +1328,7 @@ var compConfigManager;
                 *   @param {string} hangup_channel        Hangup the asterisk channel
                 *   @param {string} pickup_parking        Pickup a parked call
                 *   @param {string} unmute_userconf       Unmute a user of a meetme conference
+                *   @param {string} hangup_userconf       Hangup a user of a meetme conference
                 *   @param {string} queuemember_add       Adds the specified extension to the queue
                 *   @param {string} inout_dyn_queues      Alternates the logon and logout of the extension in all the queues for which it's a dynamic member
                 *   @param {string} queuemember_pause     Pause the specified extension from receive calls from the queue
@@ -1353,6 +1368,7 @@ var compConfigManager;
                     'hangup_channel',
                     'pickup_parking',
                     'unmute_userconf',
+                    'hangup_userconf',
                     'queuemember_add',
                     'inout_dyn_queues',
                     'queuemember_pause',
@@ -3934,12 +3950,75 @@ var compConfigManager;
                             try {
                                 if (err) {
                                     logger.warn(IDLOG, 'unmuting user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '" ' +
-                                                       ' has been failed');
+                                                       'has been failed');
                                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
                                     return;
                                 }
                                 logger.info(IDLOG, 'user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '" ' +
                                                    'has been unmuted successfully by user "' + username + '"');
+                                compUtil.net.sendHttp200(IDLOG, res);
+
+                            } catch (err) {
+                                logger.error(IDLOG, err.stack);
+                                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                            }
+                        }
+                    );
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * Hangup a user of a meetme conference with the following REST API:
+            *
+            *     POST hangup_userconf
+            *
+            * @method hangup_userconf
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            hangup_userconf: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (typeof req.params         !== 'object' ||
+                        typeof req.params.confId  !== 'string' ||
+                        typeof req.params.extenId !== 'string') {
+
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    // check if the conference belongs to the user
+                    if (compAuthorization.verifyUserEndpointExten(username, req.params.confId) !== true) {
+
+                        logger.warn(IDLOG, 'hanging up user "' + req.params.extenId + '" of meetme conf "' + req.params.confId + '" ' +
+                                           'by user "' + username + '" has been failed: ' + req.params.confId + ' is not owned by the user');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+                    else {
+                        logger.info(IDLOG, 'hanging up user "' + req.params.extenId + '" of meetme conf "' + req.params.confId + '": ' +
+                                           req.params.confId + ' is owned by "' + username + '"');
+                    }
+
+                    compAstProxy.hangupUserMeetmeConf(
+                        req.params.confId,
+                        req.params.extenId,
+                        function (err) {
+                            try {
+                                if (err) {
+                                    logger.warn(IDLOG, 'hanging up user "' + req.params.extenId + '" of meetme conf "' + req.params.confId + '" ' +
+                                                       'has been failed');
+                                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                                    return;
+                                }
+                                logger.info(IDLOG, 'user "' + req.params.extenId + '" of meetme conf "' + req.params.confId + '" ' +
+                                                   'has been hanged up successfully by user "' + username + '"');
                                 compUtil.net.sendHttp200(IDLOG, res);
 
                             } catch (err) {
@@ -4775,6 +4854,7 @@ var compConfigManager;
         exports.pickup_parking           = astproxy.pickup_parking;
         exports.remote_opgroups          = astproxy.remote_opgroups;
         exports.unmute_userconf          = astproxy.unmute_userconf;
+        exports.hangup_userconf          = astproxy.hangup_userconf;
         exports.setCompOperator          = setCompOperator;
         exports.setCompAstProxy          = setCompAstProxy;
         exports.queuemember_add          = astproxy.queuemember_add;

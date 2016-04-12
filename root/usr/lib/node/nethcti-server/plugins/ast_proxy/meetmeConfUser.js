@@ -7,13 +7,15 @@
 * @param  {string}  userId      The user identifier in the conference
 * @param  {string}  extId       The extension identifier
 * @param  {string}  ownerValue  True if the user is the owner of the conference
+* @param  {string}  ch          The asterisk channel of the extension
 * @return {object}  The conference user object.
 * @constructor
 */
-exports.MeetmeConfUser = function (userId, extId, ownerValue) {
+exports.MeetmeConfUser = function (userId, extId, ownerValue, ch) {
     // check the parameters
     if (typeof userId     !== 'string'  ||
         typeof ownerValue !== 'boolean' ||
+        typeof ch         !== 'string'  ||
         typeof extId      !== 'string') {
 
         throw new Error('wrong parameters');
@@ -46,6 +48,15 @@ exports.MeetmeConfUser = function (userId, extId, ownerValue) {
     * @private
     */
     var extenId = extId;
+
+    /**
+    * The asterisk channel of the extension.
+    *
+    * @property channel
+    * @type {string}
+    * @private
+    */
+    var channel = ch;
 
     /**
     * True if the user is the owner of the conference.
@@ -96,6 +107,14 @@ exports.MeetmeConfUser = function (userId, extId, ownerValue) {
     * @return {string} The extension id.
     */
     function getExtenId() { return extenId; }
+
+    /**
+    * Returns the asterisk channel of the extension.
+    *
+    * @method getChannel
+    * @return {string} The asterisk channel of the extension.
+    */
+    function getChannel() { return channel; }
 
     /**
     * Returns the user name.
@@ -162,6 +181,7 @@ exports.MeetmeConfUser = function (userId, extId, ownerValue) {
         getName: getName,
         isOwner: isOwner,
         setMuted: setMuted,
+        getChannel: getChannel,
         getExtenId: getExtenId
     };
 };

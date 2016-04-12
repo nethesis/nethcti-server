@@ -1993,7 +1993,7 @@ function updateMeetmeConf(err, data) {
             var i;
             var newConf = new MeetmeConference(data.confId);
             for (i = 0; i < data.users.length; i++) {
-                var newUserConf = new MeetmeConfUser(data.users[i].id, data.users[i].extenId, data.users[i].isOwner);
+                var newUserConf = new MeetmeConfUser(data.users[i].id, data.users[i].extenId, data.users[i].isOwner, data.users[i].channel);
                 newUserConf.setName(data.users[i].name);
                 newUserConf.setMuted(data.users[i].muted);
                 newConf.addUser(newUserConf);
@@ -4181,6 +4181,56 @@ function unmuteUserMeetmeConf(confId, userId, cb) {
         function (error) {
             cb(error);
             unmuteUserMeetmeConfCb(error);
+        });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Hangup a user of a meetme conference.
+*
+* @method hangupUserMeetmeConf
+* @param {string}   confId  The meetme conference identifier
+* @param {string}   extenId The extension indentifier into the conference
+* @param {function} cb      The callback function
+*/
+function hangupUserMeetmeConf(confId, extenId, cb) {
+    try {
+        // check parameters
+        if (typeof cb      !== 'function' ||
+            typeof confId  !== 'string'   ||
+            typeof extenId !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+        logger.info(IDLOG, 'execute hangup of user "' + extenId + '" of meetme conf "' + confId + '"');
+
+        if (!conferences[confId]) {
+            var warn = 'hanging up extenId "' + extenId + '" of conf id "' + confId + '": conference does not exist';
+            cb(warn);
+            return;
+        }
+        var user = conferences[confId].getUser(extenId);
+        if (!user) {
+            var warn = 'hanging up user extenId "' + extenId + '" of conf id "' + confId + '": user does not exist';
+            cb(warn);
+            return;
+        }
+        var ch = user.getChannel();
+        if (!ch) {
+            var warn = 'hanging up user extenId "' + extenId + '" of conf id "' + confId + '": no channel to hangup';
+            cb(warn);
+            return;
+        }
+
+        // execute the hangup
+        logger.info(IDLOG, 'execute hangup of the channel ' + ch + ' of exten ' + extenId);
+        astProxy.doCmd({ command: 'hangup', channel: ch }, function (err) {
+            cb(err);
+            hangupConvCb(err);
         });
 
     } catch (err) {
@@ -6784,6 +6834,7 @@ exports.evtQueueMemberAdded             = evtQueueMemberAdded;
 exports.EVT_MEETME_CONF_END             = EVT_MEETME_CONF_END;
 exports.EVT_PARKING_CHANGED             = EVT_PARKING_CHANGED;
 exports.unmuteUserMeetmeConf            = unmuteUserMeetmeConf;
+exports.hangupUserMeetmeConf            = hangupUserMeetmeConf;
 exports.evtAddMeetmeUserConf            = evtAddMeetmeUserConf;
 exports.evtQueueMemberStatus            = evtQueueMemberStatus;
 exports.setUnconditionalCfVm            = setUnconditionalCfVm;

@@ -91,6 +91,13 @@ module.exports = function (options, imports, register) {
             unmuteUserMeetmeConf: astProxy.proxyLogic.unmuteUserMeetmeConf,
 
             /**
+            * It's the _hangupUserMeetmeConf_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method hangupUserMeetmeConf
+            */
+            hangupUserMeetmeConf: astProxy.proxyLogic.hangupUserMeetmeConf,
+
+            /**
             * It's the _muteUserMeetmeConf_ method provided by _ast\_proxy.proxyLogic_.
             *
             * @method muteUserMeetmeConf
