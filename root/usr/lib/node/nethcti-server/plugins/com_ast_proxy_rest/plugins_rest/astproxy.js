@@ -3451,6 +3451,7 @@ var compConfigManager;
                                 }
                                 req.params.number = req.params.addEndpointId;
                                 req.params.endpointId = req.params.ownerEndpointId;
+                                req.params.endpointType = 'extension';
                                 // if the user has enabled the auomatic click2call then make an HTTP request directly to the phone,
                                 // otherwise make a new call by asterisk
                                 if (!compConfigManager.isAutomaticClick2callEnabled(username)) { asteriskCall(username, req, res); }
@@ -3489,6 +3490,7 @@ var compConfigManager;
                                     else { req.params.number = req.params.addEndpointId; }
 
                                     req.params.endpointId = req.params.ownerEndpointId;
+                                    req.params.endpointType = 'extension';
                                     // if the user has enabled the auomatic click2call then make an HTTP request directly to the phone,
                                     // otherwise make a new call by asterisk
                                     if (!compConfigManager.isAutomaticClick2callEnabled(username)) { asteriskCall(username, req, res); }
