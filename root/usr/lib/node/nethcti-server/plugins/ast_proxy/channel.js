@@ -135,7 +135,8 @@ exports.Channel = function (obj) {
         var numChannel        = parseInt(channel.split('-').pop(), 16);
         var numBridgedChannel = parseInt(bridgedChannel.split('-').pop(), 16);
 
-        if (numChannel < numBridgedChannel) {
+        // numBridgedChannel is NaN when the call is directed to a meetme conference
+        if (numChannel < numBridgedChannel || isNaN(numBridgedChannel)) {
             type = TYPE.SOURCE;
         } else {
             type = TYPE.DEST;
@@ -205,7 +206,7 @@ exports.Channel = function (obj) {
     * @return {string} The connected channel identifier.
     */
     function getBridgedChannel() { return bridgedChannel; }
-    
+
     /**
     * Return the channel status description.
     *

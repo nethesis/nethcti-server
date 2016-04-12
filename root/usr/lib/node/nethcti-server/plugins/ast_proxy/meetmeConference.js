@@ -60,6 +60,18 @@ exports.MeetmeConference = function (extOwner) {
     function addUser(obj) { users[obj.getExtenId()] = obj; }
 
     /**
+    * Returns true if the extension is into the conference.
+    *
+    * @method hasExten
+    * @param  {string}  extenId The extension identifier
+    * @return {boolean} True if the extension is into the conference.
+    */
+    function hasExten(extenId) {
+        if (users[extenId]) { return true; }
+        return false;
+    }
+
+    /**
     * Removes a user from the conference.
     *
     * @method removeUser
@@ -105,6 +117,7 @@ exports.MeetmeConference = function (extOwner) {
         getId: getId,
         toJSON: toJSON,
         addUser: addUser,
+        hasExten: hasExten,
         toString: toString,
         removeUser: removeUser,
         getUsersCount: getUsersCount

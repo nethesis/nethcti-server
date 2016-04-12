@@ -3543,7 +3543,11 @@ function evtRemoveMeetmeConf(data) {
 * A user extension has joined the meetme conference. So update info about the conference.
 *
 * @method evtAddMeetmeUserConf
-* @param {object} data The response object received from the event plugin _meetmejoin_.
+* @param {object} data           The response object received from the event plugin _meetmejoin_.
+*   @param {string} data.name    The name of the user
+*   @param {string} data.userId  The user identifier in the conference
+*   @param {string} data.extenId The extension identifier in the conference
+*   @param {string} data.confId  The conference identifier
 */
 function evtAddMeetmeUserConf(data) {
     try {
@@ -3559,6 +3563,13 @@ function evtAddMeetmeUserConf(data) {
         logger.info(IDLOG, 'user id "' + data.userId + '" with exten id "' + data.extenId + '" has joined the meetme conf ' + data.confId);
         astProxy.doCmd({ command: 'listMeetmeConf', meetmeConfCode: getMeetmeConfCode(), confId: data.confId }, function (err, resp) {
             updateMeetmeConf(err, resp[ (Object.keys(resp))[0] ]);
+        });
+
+        // request all channels
+        logger.info(IDLOG, 'requests the channel list to update the extension ' + data.extenId);
+        astProxy.doCmd({ command: 'listChannels' }, function (err, resp) {
+            // update the conversations of the extension
+            updateExtenConversations(err, resp, data.extenId);
         });
 
     } catch (err) {
@@ -4391,6 +4402,89 @@ function evtHangupConversation(data) {
 }
 
 /**
+* Starts a meetme conference. Its behaviour change based on owner
+* extension status of the conference.
+*
+* @method startMeetmeConference
+* @param {string}   convid       The conversation identifier of the owner to be added to the conference
+* @param {string}   ownerExtenId The extension owner of the conference
+* @param {string}   addExtenId   The extension identifier to be added to the conference
+* @param {function} cb           The callback function
+*/
+function startMeetmeConference(convid, ownerExtenId, addExtenId, cb) {
+    try {
+        // check parameters
+        if (typeof ownerExtenId !== 'string' ||
+            typeof convid       !== 'string' ||
+            typeof addExtenId   !== 'string' ||
+            typeof cb           !== 'function') {
+
+            throw new Error('wrong parameters');
+        }
+        var warn;
+
+        // check the extension existence to add
+        if (!extensions[addExtenId]) {
+            warn = 'starting meetme conf of owner exten "' + ownerExtenId + '" failed: exten to be added "' + addExtenId + '" non existent';
+            logger.warn(IDLOG, warn);
+            cb(warn);
+            return;
+        }
+        // check the extension existence
+        if (!extensions[ownerExtenId]) {
+            warn = 'starting meetme conf of owner exten "' + ownerExtenId + '" failed: exten non existent';
+            logger.warn(IDLOG, warn);
+            cb(warn);
+            return;
+        }
+        // check the conversation existence
+        var conv = extensions[ownerExtenId].getConversation(convid);
+
+        if (!conv) {
+            warn = 'starting meetme conf of owner exten "' + ownerExtenId + '" failed: convid "' + convid + '" non existent';
+            logger.warn(IDLOG, warn);
+            cb(warn);
+            return;
+        }
+
+        // redirect the channel of the counterpart to the conference number of the owner extension
+        var confnum = getMeetmeConfCode() + ownerExtenId;
+        redirectConversation('extension', ownerExtenId, convid, confnum, ownerExtenId, function (err) {
+            // newUser is true if the conversation "convid"
+            // involves both "ownerExtenId" and "addExtenId"
+            var newUser = conv.getCounterpartNum() === addExtenId;
+            cb(err, newUser);
+        });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Returns true if the extension is already into its meetme conference.
+*
+* @method isExtenInMeetmeConf
+* @param  {string}  ownerExtenId The extension owner of the conference
+* @return {boolean} True if the extension is already into its meetme conference.
+*/
+function isExtenInMeetmeConf(ownerExtenId) {
+    try {
+        // check parameters
+        if (typeof ownerExtenId !== 'string') {
+            throw new Error('wrong parameters');
+        }
+        if (conferences[ownerExtenId]) {
+            return conferences[ownerExtenId].hasExten(ownerExtenId);
+        }
+        return false;
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Hangup the conversation of the endpoint.
 *
 * @method hangupConversation
@@ -4695,7 +4789,6 @@ function redirectConversation(endpointType, endpointId, convid, to, extForCtx, c
             // redirect is only possible on own calls. So when the endpointId is the caller, the
             // channel to redirect is the destination channel. It's the source channel otherwise
             var chToRedirect = endpointId === chSource.getCallerNum() ? chSource.getBridgedChannel() : chSource.getChannel();
-
             if (chToRedirect !== undefined) {
 
                 // redirect the channel
@@ -6685,6 +6778,7 @@ exports.evtNewExternalCall              = evtNewExternalCall;
 exports.pickupConversation              = pickupConversation;
 exports.evtExtenDndChanged              = evtExtenDndChanged;
 exports.muteUserMeetmeConf              = muteUserMeetmeConf;
+exports.isExtenInMeetmeConf             = isExtenInMeetmeConf;
 exports.evtRemoveMeetmeConf             = evtRemoveMeetmeConf;
 exports.evtQueueMemberAdded             = evtQueueMemberAdded;
 exports.EVT_MEETME_CONF_END             = EVT_MEETME_CONF_END;
@@ -6700,6 +6794,7 @@ exports.EVT_NEW_VOICE_MESSAGE           = EVT_NEW_VOICE_MESSAGE;
 exports.evtQueueMemberRemoved           = evtQueueMemberRemoved;
 exports.redirectWaitingCaller           = redirectWaitingCaller;
 exports.evtHangupConversation           = evtHangupConversation;
+exports.startMeetmeConference           = startMeetmeConference;
 exports.evtExtenStatusChanged           = evtExtenStatusChanged;
 exports.sendDtmfToConversation          = sendDtmfToConversation;
 exports.getEchoCallDestination          = getEchoCallDestination;

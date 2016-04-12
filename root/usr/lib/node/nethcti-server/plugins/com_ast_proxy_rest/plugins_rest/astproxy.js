@@ -630,6 +630,7 @@ var compConfigManager;
         * 1. [`astproxy/call_echo`](#call_echopost)
         * 1. [`astproxy/start_spy`](#start_spypost)
         * 1. [`astproxy/txfer_tovm`](#txfer_tovmpost)
+        * 1. [`astproxy/start_conf`](#start_confpost)
         * 1. [`astproxy/pickup_conv`](#pickup_convpost)
         * 1. [`astproxy/stop_record`](#stop_recordpost)
         * 1. [`astproxy/mute_record`](#mute_recordpost)
@@ -926,6 +927,20 @@ var compConfigManager;
         * Example JSON request parameters:
         *
         *     { "username": "user", "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "221", "voicemailId": "214" }
+        *
+        * ---
+        *
+        * ### <a id="start_confpost">**`astproxy/start_conf`**</a>
+        *
+        * Starts a meetme conference. The request must contains the following parameters:
+        *
+        * * `convid: the conversation identifier of the owner to be added to the conference`
+        * * `addEndpointId: the identifier of the extension to be added to the conference`
+        * * `ownerEndpointId: the extension identifier who wants to start the meetme conference`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "ownerEndpointId": "202", "addEndpointId": "201" }
         *
         * ---
         *
@@ -1286,6 +1301,7 @@ var compConfigManager;
                 *   @param {string} send_dtmf             Sends the dtmf tone to the destination
                 *   @param {string} start_spy             Spy a conversation with only listening
                 *   @param {string} txfer_tovm            Transfer the conversation to the voicemail
+                *   @param {string} start_conf            Starts a meetme conference
                 *   @param {string} pickup_conv           Pickup a conversation
                 *   @param {string} stop_record           Stop the recording of a conversation
                 *   @param {string} mute_record           Mute the recording of a conversation
@@ -1323,6 +1339,7 @@ var compConfigManager;
                     'send_dtmf',
                     'start_spy',
                     'txfer_tovm',
+                    'start_conf',
                     'remote_call',
                     'pickup_conv',
                     'stop_record',
@@ -3384,6 +3401,116 @@ var compConfigManager;
             },
 
             /**
+            * Transfer a conversation to the specified voicemail with the following REST API:
+            *
+            *     POST start_conf
+            *
+            * @method start_conf
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            start_conf: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (typeof req.params                 !== 'object' ||
+                        typeof req.params.convid          !== 'string' ||
+                        typeof req.params.addEndpointId   !== 'string' ||
+                        typeof req.params.ownerEndpointId !== 'string') {
+
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    if (compAuthorization.verifyUserEndpointExten(username, req.params.ownerEndpointId) === false) {
+
+                        logger.warn(IDLOG, 'starting meetme conf from "' + req.params.ownerEndpointId + '" ' +
+                                           'by user "' + username + '" has been failed: the "' + req.params.ownerEndpointId + '" is not owned by him');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+                    else {
+                        logger.info(IDLOG, 'starting meetme conf from "' + req.params.ownerEndpointId + '" ' +
+                                           'by user "' + username + '": the ' + req.params.ownerEndpointId + ' is owned by him');
+                    }
+
+                    // case 1
+                    // the owner of the conference is already into its conference. So hangup
+                    // its conversation and call the extension to be added
+                    if (compAstProxy.isExtenInMeetmeConf(req.params.ownerEndpointId)) {
+
+                        compAstProxy.hangupConversation('extension', req.params.ownerEndpointId, req.params.convid, function (err) {
+                            try {
+                                if (err) {
+                                    logger.warn(IDLOG, 'starting meetme conf from "' + req.params.ownerEndpointId + '" ' +
+                                                       'by user "' + username + '" has been failed: ' + err.toString());
+                                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                                    return;
+                                }
+                                req.params.number = req.params.addEndpointId;
+                                req.params.endpointId = req.params.ownerEndpointId;
+                                // if the user has enabled the auomatic click2call then make an HTTP request directly to the phone,
+                                // otherwise make a new call by asterisk
+                                if (!compConfigManager.isAutomaticClick2callEnabled(username)) { asteriskCall(username, req, res); }
+                                else { ajaxPhoneCall(username, req, res); }
+
+                                logger.info(IDLOG, 'started meetme conf from "' + req.params.ownerEndpointId + '" ' +
+                                                   'by user "' + username + '" adding exten "' + req.params.addEndpointId + '"');
+
+                            } catch (err) {
+                                logger.error(IDLOG, err.stack);
+                                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                            }
+                        })
+                    }
+                    // case 2
+                    // the owner of the conference is not into the conference
+                    else {
+                        compAstProxy.startMeetmeConference(
+                            req.params.convid,
+                            req.params.ownerEndpointId,
+                            req.params.addEndpointId,
+                            function (err, newUser) {
+                                try {
+                                    if (err) {
+                                        logger.warn(IDLOG, 'starting meetme conf from "' + req.params.ownerEndpointId + '" ' +
+                                                           'by user "' + username + '" has been failed: ' + err.toString());
+                                        compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                                        return;
+                                    }
+                                    // case 2a
+                                    // the owner is busy with extension to be added. Both enter into the conference
+                                    if (newUser) { req.params.number = compAstProxy.getMeetmeConfCode() + req.params.ownerEndpointId; }
+                                    // case 2b
+                                    // the owner is busy with another extension different from that to be added.
+                                    // So call the extension to be added
+                                    else { req.params.number = req.params.addEndpointId; }
+
+                                    req.params.endpointId = req.params.ownerEndpointId;
+                                    // if the user has enabled the auomatic click2call then make an HTTP request directly to the phone,
+                                    // otherwise make a new call by asterisk
+                                    if (!compConfigManager.isAutomaticClick2callEnabled(username)) { asteriskCall(username, req, res); }
+                                    else { ajaxPhoneCall(username, req, res); }
+
+                                    logger.info(IDLOG, 'started meetme conf from "' + req.params.ownerEndpointId + '" ' +
+                                                       'by user "' + username + '" adding exten "' + req.params.addEndpointId + '"');
+
+                                } catch (err) {
+                                    logger.error(IDLOG, err.stack);
+                                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                                }
+                            }
+                        );
+                    }
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
             * Pickup a conversation with the following REST API:
             *
             *     POST pickup_conv
@@ -4618,6 +4745,7 @@ var compConfigManager;
         exports.start_spy                = astproxy.start_spy;
         exports.setLogger                = setLogger;
         exports.txfer_tovm               = astproxy.txfer_tovm;
+        exports.start_conf               = astproxy.start_conf;
         exports.conference               = astproxy.conference;
         exports.extensions               = astproxy.extensions;
         exports.sip_webrtc               = astproxy.sip_webrtc;

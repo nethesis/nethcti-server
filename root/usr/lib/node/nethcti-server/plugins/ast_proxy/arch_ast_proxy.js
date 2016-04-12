@@ -77,6 +77,13 @@ module.exports = function (options, imports, register) {
             getEchoCallDestination: astProxy.proxyLogic.getEchoCallDestination,
 
             /**
+            * It's the _getMeetmeConfCode_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method getMeetmeConfCode
+            */
+            getMeetmeConfCode: astProxy.proxyLogic.getMeetmeConfCode,
+
+            /**
             * It's the _unmuteUserMeetmeConf_ method provided by _ast\_proxy.proxyLogic_.
             *
             * @method unmuteUserMeetmeConf
@@ -91,11 +98,25 @@ module.exports = function (options, imports, register) {
             muteUserMeetmeConf: astProxy.proxyLogic.muteUserMeetmeConf,
 
             /**
+            * It's the _isExtenInMeetmeConf_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method isExtenInMeetmeConf
+            */
+            isExtenInMeetmeConf: astProxy.proxyLogic.isExtenInMeetmeConf,
+
+            /**
             * It's the _setUnconditionalCfVm_ method provided by _ast\_proxy.proxyLogic_.
             *
             * @method setUnconditionalCfVm
             */
             setUnconditionalCfVm: astProxy.proxyLogic.setUnconditionalCfVm,
+
+            /**
+            * It's the _startMeetmeConference_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method startMeetmeConference
+            */
+            startMeetmeConference: astProxy.proxyLogic.startMeetmeConference,
 
             /**
             * It's the _setUnconditionalCf_ method provided by _ast\_proxy.proxyLogic_.
