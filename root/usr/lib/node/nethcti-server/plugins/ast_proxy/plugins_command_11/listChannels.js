@@ -66,7 +66,7 @@ var IDLOG = '[listChannels]';
 
             /**
             * Execute asterisk action to get the list of all channels.
-            * 
+            *
             * @method execute
             * @param {object} am Asterisk manager to send the action
             * @param {object} args The object contains optional parameters
@@ -79,7 +79,7 @@ var IDLOG = '[listChannels]';
                 try {
                     // action for asterisk
                     var act = { Action: 'CoreShowChannels' };
-                    
+
                     // set the action identifier
                     act.ActionID = action.getActionId('listChannels');
 
@@ -119,6 +119,7 @@ var IDLOG = '[listChannels]';
                             callerName:     data.calleridname,
                             bridgedNum:     data.connectedlinenum,
                             bridgedName:    data.connectedlinename,
+                            inConference:   data.application === 'MeetMe' ? true : false,
                             channelExten:   channelExten,
                             bridgedChannel: data.bridgedchannel
                         };

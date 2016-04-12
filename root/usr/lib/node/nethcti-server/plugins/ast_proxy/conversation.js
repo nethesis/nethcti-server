@@ -74,6 +74,15 @@ exports.Conversation = function (ownerId, sourceChan, destChan, queue) {
     var startime = chSource ? chSource.getStartTime() : chDest.getStartTime();
 
     /**
+    * The timestamp of the starting time. This is necessary to
+    *
+    * @property inConference
+    * @type {boolean}
+    * @private
+    */
+    var inConference = chSource ? chSource.isInConference() : ( chDest ? chDest.isInConference() : false );
+
+    /**
     * The duration of the conversation in seconds.
     *
     * @property duration
@@ -178,7 +187,7 @@ exports.Conversation = function (ownerId, sourceChan, destChan, queue) {
     * @type {boolean}
     * @private
     */
-    var connected = (chSource && chDest && chSource.isStatusUp() && chDest.isStatusUp());
+    var connected = (chSource && chDest && chSource.isStatusUp() && chDest.isStatusUp()) || inConference;
 
     /**
     * Return the source channel.
@@ -239,6 +248,14 @@ exports.Conversation = function (ownerId, sourceChan, destChan, queue) {
         if (recording === RECORDING_STATUS.FALSE) { return false; }
         return true;
     }
+
+    /**
+    * True if the conversation involves a meetme conference.
+    *
+    * @method isInConference
+    * @return {boolean} Returns true if the conversation involves a meetme conference.
+    */
+    function isInConference() { return inConference; }
 
     /**
     * Sets the recording status.
@@ -313,6 +330,7 @@ exports.Conversation = function (ownerId, sourceChan, destChan, queue) {
     *         duration:        26,
     *         recording:       "false",                             // it's "true" or "mute" if the conversation is recording, "false" otherwise
     *         direction:       "in",
+    *         inConference:    true,                               // if the conversation involves a meetme conference
     *         throughQueue:    true,                               // if the call has gone through a queue
     *         counterpartNum:  "209",
     *         counterpartName: "user"
@@ -353,6 +371,7 @@ exports.Conversation = function (ownerId, sourceChan, destChan, queue) {
             connected:       connected,
             recording:       recording,
             direction:       direction,
+            inConference:    inConference,
             throughQueue:    throughQueue,
             counterpartNum:  tempCounterpartNum,
             counterpartName: tempCounterpartName
@@ -369,6 +388,7 @@ exports.Conversation = function (ownerId, sourceChan, destChan, queue) {
         getDuration:           getDuration,
         isRecording:           isRecording,
         setRecording:          setRecording,
+        isInConference:        isInConference,
         setRecordingMute:      setRecordingMute,
         getSourceChannel:      getSourceChannel,
         getCounterpartNum:     getCounterpartNum,
