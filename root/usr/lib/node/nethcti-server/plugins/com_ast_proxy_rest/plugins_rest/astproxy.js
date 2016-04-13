@@ -626,6 +626,7 @@ var compConfigManager;
         * 1. [`astproxy/answer`](#answerpost)
         * 1. [`astproxy/hangup`](#hanguppost)
         * 1. [`astproxy/intrude`](#intrudepost)
+        * 1. [`astproxy/end_conf`](#end_confpost)
         * 1. [`astproxy/send_dtmf`](#send_dtmfpost)
         * 1. [`astproxy/call_echo`](#call_echopost)
         * 1. [`astproxy/start_spy`](#start_spypost)
@@ -1029,6 +1030,18 @@ var compConfigManager;
         *
         * ---
         *
+        * ### <a id="end_confpost">**`astproxy/end_conf`**</a>
+        *
+        * Ends the entire meetme conference. The request must contains the following parameters:
+        *
+        * * `confId: the conference identifier`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "confId": "202" }
+        *
+        * ---
+        *
         * ### <a id="hangup_userconfpost">**`astproxy/hangup_userconf`**</a>
         *
         * Hangup a user of a meetme conference. The request must contains the following parameters:
@@ -1311,6 +1324,7 @@ var compConfigManager;
                 *   @param {string} answer                Answer a conversation from the extension
                 *   @param {string} hangup                Hangup a conversation
                 *   @param {string} intrude               Spy and speak in a conversation
+                *   @param {string} end_conf              Ends the entire meetme conference
                 *   @param {string} call_echo             Originates a new echo call
                 *   @param {string} send_dtmf             Sends the dtmf tone to the destination
                 *   @param {string} start_spy             Spy a conversation with only listening
@@ -1350,6 +1364,7 @@ var compConfigManager;
                     'answer',
                     'hangup',
                     'intrude',
+                    'end_conf',
                     'call_echo',
                     'send_dtmf',
                     'start_spy',
@@ -3971,6 +3986,66 @@ var compConfigManager;
             },
 
             /**
+            * Ends the entire meetme conference with the following REST API:
+            *
+            *     POST end_conf
+            *
+            * @method end_conf
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            end_conf: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (typeof req.params        !== 'object' ||
+                        typeof req.params.confId !== 'string') {
+
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    // check if the conference belongs to the user
+                    if (compAuthorization.verifyUserEndpointExten(username, req.params.confId) !== true) {
+
+                        logger.warn(IDLOG, 'ending meetme conf "' + req.params.confId + '" ' +
+                                           'by user "' + username + '" has been failed: ' + req.params.confId + ' is not owned by the user');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+                    else {
+                        logger.info(IDLOG, 'ending meetme conf "' + req.params.confId + '": ' +
+                                           req.params.confId + ' is owned by "' + username + '"');
+                    }
+
+                    compAstProxy.endMeetmeConf(
+                        req.params.confId,
+                        function (err) {
+                            try {
+                                if (err) {
+                                    logger.warn(IDLOG, 'ending meetme conf "' + req.params.confId + '" by user "' + username + '" has been failed');
+                                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                                    return;
+                                }
+                                logger.info(IDLOG, 'meetme conf "' + req.params.confId + '" ' +
+                                                   'has been ended successfully by user "' + username + '"');
+                                compUtil.net.sendHttp200(IDLOG, res);
+
+                            } catch (err) {
+                                logger.error(IDLOG, err.stack);
+                                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                            }
+                        }
+                    );
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
             * Hangup a user of a meetme conference with the following REST API:
             *
             *     POST hangup_userconf
@@ -4819,6 +4894,7 @@ var compConfigManager;
         exports.atxfer                   = astproxy.atxfer;
         exports.answer                   = astproxy.answer;
         exports.intrude                  = astproxy.intrude;
+        exports.end_conf                 = astproxy.end_conf;
         exports.opgroups                 = astproxy.opgroups;
         exports.parkings                 = astproxy.parkings;
         exports.call_echo                = astproxy.call_echo;

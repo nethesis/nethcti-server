@@ -4512,6 +4512,73 @@ function startMeetmeConference(convid, ownerExtenId, addExtenId, cb) {
 }
 
 /**
+* Ends the entire meetme conference.
+*
+* @method endMeetmeConf
+* @param {string}   confId The conference identifier
+* @param {function} cb     The callback function
+*/
+function endMeetmeConf(confId, cb) {
+    try {
+        // check parameters
+        if (typeof confId !== 'string' ||
+            typeof cb     !== 'function') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // check the conference existence
+        if (!conferences[confId]) {
+            var warn = 'ending entire meetme conf "' + confId + '" failed: conf does not exist';
+            logger.warn(IDLOG, warn);
+            cb(warn);
+            return;
+        }
+
+        var extenId;
+        var arrUsers = [];
+        var users = conferences[confId].getAllUsers();
+        for (extenId in users) {
+            arrUsers.push(users[extenId]);
+        }
+
+        logger.info(IDLOG, 'starting end entire meetme conf "' + confId + '"');
+        async.each(arrUsers, function (u, seriesCb) {
+
+            var ch = u.getChannel();
+            var uid = u.getId();
+            var eid = u.getExtenId();
+
+            astProxy.doCmd({ command: 'hangup', channel: ch }, function (err) {
+                if (err) {
+                    logger.error(IDLOG, 'hanging up channel "' + ch + '" of user "' + uid + '" ' +
+                                        'exten "' + eid + '" of conf "' + confId + '"');
+                    seriesCb(err);
+                }
+                else {
+                    logger.info(IDLOG, 'channel "' + ch + '" of user "' + uid + '" ' +
+                                        'exten "' + eid + '" of conf "' + confId + '" has been hanged up successfully');
+                    seriesCb();
+                }
+            });
+        }, function (err) {
+
+            if (err) {
+                logger.error(IDLOG, 'ending entire meetme conf "' + confId + '": ' + err.toString());
+                cb(err);
+            }
+            else {
+                logger.info(IDLOG, 'entire meetme conf "' + confId + '" has been ended successfully');
+                cb(null);
+            }
+        });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Returns true if the extension is already into its meetme conference.
 *
 * @method isExtenInMeetmeConf
@@ -6796,14 +6863,15 @@ exports.hangupChannel                   = hangupChannel;
 exports.pickupParking                   = pickupParking;
 exports.isExtenWebrtc                   = isExtenWebrtc;
 exports.getJSONQueues                   = getJSONQueues;
-exports.getExtensionIp                  = getExtensionIp;
+exports.endMeetmeConf                   = endMeetmeConf;
 exports.getJSONTrunks                   = getJSONTrunks;
+exports.getExtensionIp                  = getExtensionIp;
 exports.queueMemberAdd                  = queueMemberAdd;
 exports.inoutDynQueues                  = inoutDynQueues;
 exports.getJSONParkings                 = getJSONParkings;
 exports.recordAudioFile                 = recordAudioFile;
-exports.getJSONQueuesQOS                = getJSONQueuesQOS;
 exports.redirectParking                 = redirectParking;
+exports.getJSONQueuesQOS                = getJSONQueuesQOS;
 exports.muteConversation                = muteConversation;
 exports.sendDTMFSequence                = sendDTMFSequence;
 exports.parkConversation                = parkConversation;

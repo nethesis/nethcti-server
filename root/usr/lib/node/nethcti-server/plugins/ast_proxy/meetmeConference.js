@@ -69,6 +69,14 @@ exports.MeetmeConference = function (extOwner) {
     function getUser(extenId) { return users[extenId]; }
 
     /**
+    * Returns all the users of the conference.
+    *
+    * @method getAllUsers
+    * @return {object} All the users of the conference.
+    */
+    function getAllUsers() { return users; }
+
+    /**
     * Returns true if the extension is into the conference.
     *
     * @method hasExten
@@ -121,6 +129,7 @@ exports.MeetmeConference = function (extOwner) {
         getUser: getUser,
         hasExten: hasExten,
         toString: toString,
+        getAllUsers: getAllUsers,
         getUsersCount: getUsersCount
     };
 };
