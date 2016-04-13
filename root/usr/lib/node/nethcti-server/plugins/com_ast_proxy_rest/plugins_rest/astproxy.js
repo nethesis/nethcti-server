@@ -632,6 +632,7 @@ var compConfigManager;
         * 1. [`astproxy/start_spy`](#start_spypost)
         * 1. [`astproxy/txfer_tovm`](#txfer_tovmpost)
         * 1. [`astproxy/start_conf`](#start_confpost)
+        * 1. [`astproxy/join_myconf`](#join_myconfpost)
         * 1. [`astproxy/pickup_conv`](#pickup_convpost)
         * 1. [`astproxy/stop_record`](#stop_recordpost)
         * 1. [`astproxy/mute_record`](#mute_recordpost)
@@ -1042,6 +1043,18 @@ var compConfigManager;
         *
         * ---
         *
+        * ### <a id="join_myconfpost">**`astproxy/join_myconf`**</a>
+        *
+        * Joins the extension owner to his meetme conference. The request must contains the following parameters:
+        *
+        * * `endpointId: the endpoint identifier`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "endpointId": "202" }
+        *
+        * ---
+        *
         * ### <a id="hangup_userconfpost">**`astproxy/hangup_userconf`**</a>
         *
         * Hangup a user of a meetme conference. The request must contains the following parameters:
@@ -1330,6 +1343,7 @@ var compConfigManager;
                 *   @param {string} start_spy             Spy a conversation with only listening
                 *   @param {string} txfer_tovm            Transfer the conversation to the voicemail
                 *   @param {string} start_conf            Starts a meetme conference
+                *   @param {string} join_myconf           Joins the extension owner to his meetme conference
                 *   @param {string} pickup_conv           Pickup a conversation
                 *   @param {string} stop_record           Stop the recording of a conversation
                 *   @param {string} mute_record           Mute the recording of a conversation
@@ -1373,6 +1387,7 @@ var compConfigManager;
                     'remote_call',
                     'pickup_conv',
                     'stop_record',
+                    'join_myconf',
                     'mute_record',
                     'start_record',
                     'force_hangup',
@@ -4046,6 +4061,56 @@ var compConfigManager;
             },
 
             /**
+            * Joins the extension owner to his meetme conference with the following REST API:
+            *
+            *     POST join_myconf
+            *
+            * @method join_myconf
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            join_myconf: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (typeof req.params            !== 'object' ||
+                        typeof req.params.endpointId !== 'string') {
+
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    // check if the conference belongs to the user
+                    if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) !== true) {
+
+                        logger.warn(IDLOG, 'joining meetme conf "' + req.params.endpointId + '" ' +
+                                           'by user "' + username + '" has been failed: ' + req.params.endpointId + ' is not owned by the user');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+                    else {
+                        logger.info(IDLOG, 'joining meetme conf "' + req.params.endpointId + '": ' +
+                                           req.params.endpointId + ' is owned by "' + username + '"');
+                    }
+
+                    logger.warn(IDLOG, 'starting join exten "' + req.params.endpointId + '" to its meetme conf ' +
+                                       'by user "' + username + '"');
+                    req.params.number = compAstProxy.getMeetmeConfCode() + req.params.endpointId;
+                    req.params.endpointType = 'extension';
+                    // if the user has enabled the auomatic click2call then make an HTTP request directly to the phone,
+                    // otherwise make a new call by asterisk
+                    if (!compConfigManager.isAutomaticClick2callEnabled(username)) { asteriskCall(username, req, res); }
+                    else { ajaxPhoneCall(username, req, res); }
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
             * Hangup a user of a meetme conference with the following REST API:
             *
             *     POST hangup_userconf
@@ -4910,6 +4975,7 @@ var compConfigManager;
         exports.agents_qos               = astproxy.agents_qos;
         exports.setPrivacy               = setPrivacy;
         exports.setCompUtil              = setCompUtil;
+        exports.join_myconf              = astproxy.join_myconf;
         exports.pickup_conv              = astproxy.pickup_conv;
         exports.remote_call              = astproxy.remote_call;
         exports.stop_record              = astproxy.stop_record;
