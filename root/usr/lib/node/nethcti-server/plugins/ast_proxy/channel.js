@@ -50,6 +50,15 @@ exports.Channel = function (obj) {
     var uniqueid = obj.uniqueid;
 
     /**
+    * True if the channel involves a meetme conference.
+    *
+    * @property {boolean} inConference
+    * @required
+    * @private
+    */
+    var inConference = obj.inConference;
+
+    /**
     * The creation time in milliseconds from Jan 1, 1970.
     *
     * @property {number} startTime
@@ -135,7 +144,8 @@ exports.Channel = function (obj) {
         var numChannel        = parseInt(channel.split('-').pop(), 16);
         var numBridgedChannel = parseInt(bridgedChannel.split('-').pop(), 16);
 
-        if (numChannel < numBridgedChannel) {
+        // numBridgedChannel is NaN when the call is directed to a meetme conference
+        if (numChannel < numBridgedChannel || isNaN(numBridgedChannel)) {
             type = TYPE.SOURCE;
         } else {
             type = TYPE.DEST;
@@ -205,7 +215,7 @@ exports.Channel = function (obj) {
     * @return {string} The connected channel identifier.
     */
     function getBridgedChannel() { return bridgedChannel; }
-    
+
     /**
     * Return the channel status description.
     *
@@ -240,6 +250,14 @@ exports.Channel = function (obj) {
         if (type === TYPE.SOURCE) { return true; }
         return false;
     }
+
+    /**
+    * True if the channel involves a meetme conference.
+    *
+    * @method isInConference
+    * @return {boolean} Returns true if the channel involves a meetme conference.
+    */
+    function isInConference() { return inConference; }
 
     /**
     * Check if the channel status id "down".
@@ -278,6 +296,7 @@ exports.Channel = function (obj) {
     *         callerName:     "sip214ale"
     *         bridgedNum:     "221"               // the number of the connected caller/called
     *         bridgedName:    "sip221ale"         // the name of the connected caller/called
+    *         inConference:   true,               // true if the channel involves a meetme conference
     *         channelStatus:  "up"                // the channel status
     *         bridgedChannel: "SIP/221-0000034e", // the connected channel identifier
     *     }
@@ -296,6 +315,7 @@ exports.Channel = function (obj) {
             callerName:     privacyStr ? privacyStr : callerName,
             bridgedNum:     privacyStr ? ( bridgedNum.slice(0, -privacyStr.length) + privacyStr ) : bridgedNum,
             bridgedName:    privacyStr ? privacyStr : bridgedName,
+            inConference:   inConference,
             channelStatus:  channelStatus,
             bridgedChannel: bridgedChannel
         };
@@ -315,6 +335,7 @@ exports.Channel = function (obj) {
         getCallerNum:        getCallerNum,
         getCallerName:       getCallerName,
         getBridgedNum:       getBridgedNum,
+        isInConference:      isInConference,
         getBridgedName:      getBridgedName,
         getChannelStatus:    getChannelStatus,
         getBridgedChannel:   getBridgedChannel,

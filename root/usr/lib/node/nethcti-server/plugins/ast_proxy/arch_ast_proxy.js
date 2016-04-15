@@ -63,6 +63,13 @@ module.exports = function (options, imports, register) {
             setDnd: astProxy.proxyLogic.setDnd,
 
             /**
+            * It's the _getConference_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method getConference
+            */
+            getConference: astProxy.proxyLogic.getConference,
+
+            /**
             * It's the _getEchoCallDestination_ method provided by _ast\_proxy.proxyLogic_.
             *
             * @method getEchoCallDestination
@@ -70,11 +77,60 @@ module.exports = function (options, imports, register) {
             getEchoCallDestination: astProxy.proxyLogic.getEchoCallDestination,
 
             /**
+            * It's the _getMeetmeConfCode_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method getMeetmeConfCode
+            */
+            getMeetmeConfCode: astProxy.proxyLogic.getMeetmeConfCode,
+
+            /**
+            * It's the _unmuteUserMeetmeConf_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method unmuteUserMeetmeConf
+            */
+            unmuteUserMeetmeConf: astProxy.proxyLogic.unmuteUserMeetmeConf,
+
+            /**
+            * It's the _hangupUserMeetmeConf_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method hangupUserMeetmeConf
+            */
+            hangupUserMeetmeConf: astProxy.proxyLogic.hangupUserMeetmeConf,
+
+            /**
+            * It's the _endMeetmeConf_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method endMeetmeConf
+            */
+            endMeetmeConf: astProxy.proxyLogic.endMeetmeConf,
+
+            /**
+            * It's the _muteUserMeetmeConf_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method muteUserMeetmeConf
+            */
+            muteUserMeetmeConf: astProxy.proxyLogic.muteUserMeetmeConf,
+
+            /**
+            * It's the _isExtenInMeetmeConf_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method isExtenInMeetmeConf
+            */
+            isExtenInMeetmeConf: astProxy.proxyLogic.isExtenInMeetmeConf,
+
+            /**
             * It's the _setUnconditionalCfVm_ method provided by _ast\_proxy.proxyLogic_.
             *
             * @method setUnconditionalCfVm
             */
             setUnconditionalCfVm: astProxy.proxyLogic.setUnconditionalCfVm,
+
+            /**
+            * It's the _startMeetmeConference_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method startMeetmeConference
+            */
+            startMeetmeConference: astProxy.proxyLogic.startMeetmeConference,
 
             /**
             * It's the _setUnconditionalCf_ method provided by _ast\_proxy.proxyLogic_.
@@ -435,6 +491,20 @@ module.exports = function (options, imports, register) {
             EVT_QUEUE_MEMBER_CHANGED: astProxy.proxyLogic.EVT_QUEUE_MEMBER_CHANGED,
 
             /**
+            * It's the _EVT\_MEETME\_CONF\_END_ property provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method EVT_MEETME_CONF_END
+            */
+            EVT_MEETME_CONF_END: astProxy.proxyLogic.EVT_MEETME_CONF_END,
+
+            /**
+            * It's the _EVT\_MEETME\_CONF\_CHANGED_ property provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method EVT_MEETME_CONF_CHANGED
+            */
+            EVT_MEETME_CONF_CHANGED: astProxy.proxyLogic.EVT_MEETME_CONF_CHANGED,
+
+            /**
             * It's the _EVT\_TRUNK\_CHANGED_ property provided by _ast\_proxy.proxyLogic_.
             *
             * @method EVT_TRUNK_CHANGED
@@ -503,6 +573,7 @@ module.exports = function (options, imports, register) {
         imports.dbconn.on(imports.dbconn.EVT_READY, function () {
             astProxy.setLogger(logger);
             astProxy.config('/etc/nethcti/asterisk.json');
+            astProxy.configAstCodes('/etc/nethcti/asterisk_codes.json');
             astProxy.configSipWebrtc('/etc/nethcti/sip_webrtc.json');
             astProxy.proxyLogic.setCompDbconn(imports.dbconn);
             astProxy.proxyLogic.setCompPhonebook(imports.phonebook);

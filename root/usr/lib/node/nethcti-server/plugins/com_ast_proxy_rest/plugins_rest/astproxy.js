@@ -138,6 +138,7 @@ var compConfigManager;
         * 1. [`astproxy/queues`](#queuesget)
         * 1. [`astproxy/trunks`](#trunksget)
         * 1. [`astproxy/opgroups`](#opgroupsget)
+        * 1. [`astproxy/conference/:endpoint`](#conferenceget)
         * 1. [`astproxy/remote_opgroups`](#remote_opgroupsget)
         * 1. [`astproxy/parkings`](#parkingsget)
         * 1. [`astproxy/extensions`](#extensionsget)
@@ -351,6 +352,27 @@ var compConfigManager;
                       "name3"
                   ]
               }
+         }
+     }
+        *
+        * ---
+        *
+        * ### <a id="conferenceget">**`astproxy/conference/:endpoint`**</a>
+        *
+        * Gets the data about the extension meetme conference.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "id": "202",
+         "users": {
+             "1": {
+                 "id": "1",
+                 "name": "202",
+                 "owner": true,
+                 "muted": false,
+                 "extenId": "202"
+             }
          }
      }
         *
@@ -604,15 +626,21 @@ var compConfigManager;
         * 1. [`astproxy/answer`](#answerpost)
         * 1. [`astproxy/hangup`](#hanguppost)
         * 1. [`astproxy/intrude`](#intrudepost)
+        * 1. [`astproxy/end_conf`](#end_confpost)
         * 1. [`astproxy/send_dtmf`](#send_dtmfpost)
         * 1. [`astproxy/call_echo`](#call_echopost)
         * 1. [`astproxy/start_spy`](#start_spypost)
         * 1. [`astproxy/txfer_tovm`](#txfer_tovmpost)
+        * 1. [`astproxy/start_conf`](#start_confpost)
+        * 1. [`astproxy/join_myconf`](#join_myconfpost)
         * 1. [`astproxy/pickup_conv`](#pickup_convpost)
         * 1. [`astproxy/stop_record`](#stop_recordpost)
         * 1. [`astproxy/mute_record`](#mute_recordpost)
         * 1. [`astproxy/start_record`](#start_recordpost)
         * 1. [`astproxy/force_hangup`](#force_hanguppost)
+        * 1. [`astproxy/mute_userconf`](#mute_userconfpost)
+        * 1. [`astproxy/hangup_userconf`](#hangup_userconfpost)
+        * 1. [`astproxy/unmute_userconf`](#unmute_userconfpost)
         * 1. [`astproxy/answer_webrtc`](#answer_webrtcpost)
         * 1. [`astproxy/blindtransfer`](#blindtransferpost)
         * 1. [`astproxy/unmute_record`](#unmute_recordpost)
@@ -905,6 +933,20 @@ var compConfigManager;
         *
         * ---
         *
+        * ### <a id="start_confpost">**`astproxy/start_conf`**</a>
+        *
+        * Starts a meetme conference. The request must contains the following parameters:
+        *
+        * * `convid: the conversation identifier of the owner to be added to the conference`
+        * * `addEndpointId: the identifier of the extension to be added to the conference`
+        * * `ownerEndpointId: the extension identifier who wants to start the meetme conference`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "ownerEndpointId": "202", "addEndpointId": "201" }
+        *
+        * ---
+        *
         * ### <a id="pickup_convpost">**`astproxy/pickup_conv`**</a>
         *
         * Pickup the specified conversation. The request must contains the following parameters:
@@ -960,6 +1002,69 @@ var compConfigManager;
         * Example JSON request parameters:
         *
         *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "214" }
+        *
+        * ---
+        *
+        * ### <a id="mute_userconfpost">**`astproxy/mute_userconf`**</a>
+        *
+        * Mute a user of a meetme conference. The request must contains the following parameters:
+        *
+        * * `confId: the conference identifier`
+        * * `userId: the user identifier to be muted`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "confId": "202", "userId": "2" }
+        *
+        * ---
+        *
+        * ### <a id="unmute_userconfpost">**`astproxy/unmute_userconf`**</a>
+        *
+        * Unmute a user of a meetme conference. The request must contains the following parameters:
+        *
+        * * `confId: the conference identifier`
+        * * `userId: the user identifier to be muted`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "confId": "202", "userId": "2" }
+        *
+        * ---
+        *
+        * ### <a id="end_confpost">**`astproxy/end_conf`**</a>
+        *
+        * Ends the entire meetme conference. The request must contains the following parameters:
+        *
+        * * `confId: the conference identifier`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "confId": "202" }
+        *
+        * ---
+        *
+        * ### <a id="join_myconfpost">**`astproxy/join_myconf`**</a>
+        *
+        * Joins the extension owner to his meetme conference. The request must contains the following parameters:
+        *
+        * * `endpointId: the endpoint identifier`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "endpointId": "202" }
+        *
+        * ---
+        *
+        * ### <a id="hangup_userconfpost">**`astproxy/hangup_userconf`**</a>
+        *
+        * Hangup a user of a meetme conference. The request must contains the following parameters:
+        *
+        * * `confId: the conference identifier`
+        * * `extenId: the extension identifier to be hanged up`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "confId": "202", "extenId": "201" }
         *
         * ---
         *
@@ -1170,6 +1275,7 @@ var compConfigManager;
                 *   @param {string} remote_prefixes                Gets prefix number of all remote sites used with outgoing external calls
                 *   @param {string} opgroups                       Gets all the user groups of the operator panel
                 *   @param {string} remote_opgroups                Gets all the user groups of all remote sites
+                *   @param {string} conference/:endpoint           Gets data about the meetme conference of the extension
                 *   @param {string} parkings                       Gets all the parkings with all their status informations
                 *   @param {string} extensions                     Gets all the extensions with all their status informations
                 *   @param {string} sip_webrtc                     Gets all the configuration about the sip WebRTC
@@ -1196,6 +1302,7 @@ var compConfigManager;
                     'extensions',
                     'sip_webrtc',
                     'remote_opgroups',
+                    'conference/:endpoint',
                     'remote_prefixes',
                     'remote_extensions',
                     'queues_stats/:day',
@@ -1230,20 +1337,26 @@ var compConfigManager;
                 *   @param {string} answer                Answer a conversation from the extension
                 *   @param {string} hangup                Hangup a conversation
                 *   @param {string} intrude               Spy and speak in a conversation
+                *   @param {string} end_conf              Ends the entire meetme conference
                 *   @param {string} call_echo             Originates a new echo call
                 *   @param {string} send_dtmf             Sends the dtmf tone to the destination
                 *   @param {string} start_spy             Spy a conversation with only listening
                 *   @param {string} txfer_tovm            Transfer the conversation to the voicemail
+                *   @param {string} start_conf            Starts a meetme conference
+                *   @param {string} join_myconf           Joins the extension owner to his meetme conference
                 *   @param {string} pickup_conv           Pickup a conversation
                 *   @param {string} stop_record           Stop the recording of a conversation
                 *   @param {string} mute_record           Mute the recording of a conversation
                 *   @param {string} start_record          Start the recording of a conversation
                 *   @param {string} force_hangup          Force hangup of a conversation
+                *   @param {string} mute_userconf         Mute a user of a meetme conference
                 *   @param {string} answer_webrtc         Answer a conversation from the webrtc extension sending the command to the client
                 *   @param {string} blindtransfer         Transfer a conversation with blind type
                 *   @param {string} unmute_record         Unmute the recording of a conversation
                 *   @param {string} hangup_channel        Hangup the asterisk channel
                 *   @param {string} pickup_parking        Pickup a parked call
+                *   @param {string} unmute_userconf       Unmute a user of a meetme conference
+                *   @param {string} hangup_userconf       Hangup a user of a meetme conference
                 *   @param {string} queuemember_add       Adds the specified extension to the queue
                 *   @param {string} inout_dyn_queues      Alternates the logon and logout of the extension in all the queues for which it's a dynamic member
                 *   @param {string} queuemember_pause     Pause the specified extension from receive calls from the queue
@@ -1265,21 +1378,27 @@ var compConfigManager;
                     'answer',
                     'hangup',
                     'intrude',
+                    'end_conf',
                     'call_echo',
                     'send_dtmf',
                     'start_spy',
                     'txfer_tovm',
+                    'start_conf',
                     'remote_call',
                     'pickup_conv',
                     'stop_record',
+                    'join_myconf',
                     'mute_record',
                     'start_record',
                     'force_hangup',
+                    'mute_userconf',
                     'answer_webrtc',
                     'blindtransfer',
                     'unmute_record',
                     'hangup_channel',
                     'pickup_parking',
+                    'unmute_userconf',
+                    'hangup_userconf',
                     'queuemember_add',
                     'inout_dyn_queues',
                     'queuemember_pause',
@@ -1392,6 +1511,58 @@ var compConfigManager;
                         logger.info(IDLOG, 'sent all remote sites operator groups "' + Object.keys(allRemoteOpGroups) + '" ' +
                                            'to user "' + username + '" ' + res.connection.remoteAddress);
                         res.send(200, allRemoteOpGroups);
+                    }
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * It serves only the local clients: the remote sites can not ask for it.
+            * Gets the meetme conference of the extension with the following REST API:
+            *
+            *     GET  conference/:endpoint
+            *
+            * @method conference
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            conference: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+                    var token    = req.headers.authorization_token;
+                    var extenId  = req.params.endpoint;
+
+                    // check parameter
+                    if (typeof extenId !== 'string') {
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    // check if the request coming from a remote site
+                    if (compComNethctiRemotes.isClientRemote(username, token)) {
+
+                        var remoteSiteName = compComNethctiRemotes.getSiteName(username, token);
+                        logger.warn(IDLOG, 'requesting conference data by remote site "' + remoteSiteName + '": ' +
+                                           'authorization failed for user "' + username + '"');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+                    // check if the endpoint is owned by the user
+                    if (compAuthorization.verifyUserEndpointExten(username, extenId) === false) {
+
+                        logger.warn(IDLOG, 'getting conference data of exten "' + extenId + '" failed: ' +
+                                           '"' + extenId + '" is not owned by user "' + username + '"');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+                    else {
+                        var conf = compAstProxy.getConference(extenId);
+                        logger.info(IDLOG, 'sent conference data of exten "' + extenId + '" ' +
+                                           'to user "' + username + '" ' + res.connection.remoteAddress);
+                        res.send(200, conf);
                     }
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
@@ -2140,11 +2311,7 @@ var compConfigManager;
                             compUtil.net.sendHttp403(IDLOG, res);
                             return;
                         }
-
-                        // if the user has enabled the automatic click2call then make an HTTP request directly to the phone,
-                        // otherwise make a new call by asterisk
-                        if (!compConfigManager.isAutomaticClick2callEnabled(username)) { asteriskCall(username, req, res); }
-                        else { ajaxPhoneCall(username, req, res); }
+                        call(username, req, res);
 
                     } else if (req.params.endpointType === 'cellphone') {
 
@@ -2248,11 +2415,7 @@ var compConfigManager;
                         req.params.number       = sitePrefixCall + req.params.remoteExtenId;
                         req.params.endpointId   = req.params.fromExtenId;
                         req.params.endpointType = 'extension';
-
-                        // if the user has enabled the automatic click2call then make an HTTP request
-                        // directly to the phone, otherwise make a new call by asterisk
-                        if (!compConfigManager.isAutomaticClick2callEnabled(username)) { asteriskCall(username, req, res); }
-                        else { ajaxPhoneCall(username, req, res); }
+                        call(username, req, res);
                     }
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
@@ -3276,6 +3439,112 @@ var compConfigManager;
             },
 
             /**
+            * Transfer a conversation to the specified voicemail with the following REST API:
+            *
+            *     POST start_conf
+            *
+            * @method start_conf
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            start_conf: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (typeof req.params                 !== 'object' ||
+                        typeof req.params.convid          !== 'string' ||
+                        typeof req.params.addEndpointId   !== 'string' ||
+                        typeof req.params.ownerEndpointId !== 'string') {
+
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    if (compAuthorization.verifyUserEndpointExten(username, req.params.ownerEndpointId) === false) {
+
+                        logger.warn(IDLOG, 'starting meetme conf from "' + req.params.ownerEndpointId + '" ' +
+                                           'by user "' + username + '" has been failed: the "' + req.params.ownerEndpointId + '" is not owned by him');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+                    else {
+                        logger.info(IDLOG, 'starting meetme conf from "' + req.params.ownerEndpointId + '" ' +
+                                           'by user "' + username + '": the ' + req.params.ownerEndpointId + ' is owned by him');
+                    }
+
+                    // case 1
+                    // the owner of the conference is already into its conference. So hangup
+                    // its conversation and call the extension to be added
+                    if (compAstProxy.isExtenInMeetmeConf(req.params.ownerEndpointId)) {
+
+                        compAstProxy.hangupConversation('extension', req.params.ownerEndpointId, req.params.convid, function (err) {
+                            try {
+                                if (err) {
+                                    logger.warn(IDLOG, 'starting meetme conf from "' + req.params.ownerEndpointId + '" ' +
+                                                       'by user "' + username + '" has been failed: ' + err.toString());
+                                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                                    return;
+                                }
+                                req.params.number = req.params.addEndpointId;
+                                req.params.endpointId = req.params.ownerEndpointId;
+                                req.params.endpointType = 'extension';
+                                call(username, req, res);
+
+                                logger.info(IDLOG, 'started meetme conf from "' + req.params.ownerEndpointId + '" ' +
+                                                   'by user "' + username + '" adding exten "' + req.params.addEndpointId + '"');
+
+                            } catch (err) {
+                                logger.error(IDLOG, err.stack);
+                                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                            }
+                        })
+                    }
+                    // case 2
+                    // the owner of the conference is not into the conference
+                    else {
+                        compAstProxy.startMeetmeConference(
+                            req.params.convid,
+                            req.params.ownerEndpointId,
+                            req.params.addEndpointId,
+                            function (err, newUser) {
+                                try {
+                                    if (err) {
+                                        logger.warn(IDLOG, 'starting meetme conf from "' + req.params.ownerEndpointId + '" ' +
+                                                           'by user "' + username + '" has been failed: ' + err.toString());
+                                        compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                                        return;
+                                    }
+                                    // case 2a
+                                    // the owner is busy with extension to be added. Both enter into the conference
+                                    if (newUser) { req.params.number = compAstProxy.getMeetmeConfCode() + req.params.ownerEndpointId; }
+                                    // case 2b
+                                    // the owner is busy with another extension different from that to be added.
+                                    // So call the extension to be added
+                                    else { req.params.number = req.params.addEndpointId; }
+
+                                    req.params.endpointId = req.params.ownerEndpointId;
+                                    req.params.endpointType = 'extension';
+                                    call(username, req, res);
+
+                                    logger.info(IDLOG, 'started meetme conf from "' + req.params.ownerEndpointId + '" ' +
+                                                       'by user "' + username + '" adding exten "' + req.params.addEndpointId + '"');
+
+                                } catch (err) {
+                                    logger.error(IDLOG, err.stack);
+                                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                                }
+                            }
+                        );
+                    }
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
             * Pickup a conversation with the following REST API:
             *
             *     POST pickup_conv
@@ -3585,6 +3854,302 @@ var compConfigManager;
                         compUtil.net.sendHttp400(IDLOG, res);
                     }
 
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * Mute a user of a meetme conference with the following REST API:
+            *
+            *     POST mute_userconf
+            *
+            * @method mute_userconf
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            mute_userconf: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (typeof req.params        !== 'object' ||
+                        typeof req.params.confId !== 'string' ||
+                        typeof req.params.userId !== 'string') {
+
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    // check if the conference belongs to the user
+                    if (compAuthorization.verifyUserEndpointExten(username, req.params.confId) !== true) {
+
+                        logger.warn(IDLOG, 'muting user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '" ' +
+                                           'by user "' + username + '" has been failed: ' + req.params.confId + ' is not owned by the user');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+                    else {
+                        logger.info(IDLOG, 'muting user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '": ' +
+                                           req.params.confId + ' is owned by "' + username + '"');
+                    }
+
+                    compAstProxy.muteUserMeetmeConf(
+                        req.params.confId,
+                        req.params.userId,
+                        function (err) {
+                            try {
+                                if (err) {
+                                    logger.warn(IDLOG, 'muting user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '" ' +
+                                                       ' has been failed');
+                                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                                    return;
+                                }
+                                logger.info(IDLOG, 'user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '" ' +
+                                                   'has been muted successfully by user "' + username + '"');
+                                compUtil.net.sendHttp200(IDLOG, res);
+
+                            } catch (err) {
+                                logger.error(IDLOG, err.stack);
+                                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                            }
+                        }
+                    );
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * Unmute a user of a meetme conference with the following REST API:
+            *
+            *     POST unmute_userconf
+            *
+            * @method unmute_userconf
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            unmute_userconf: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (typeof req.params        !== 'object' ||
+                        typeof req.params.confId !== 'string' ||
+                        typeof req.params.userId !== 'string') {
+
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    // check if the conference belongs to the user
+                    if (compAuthorization.verifyUserEndpointExten(username, req.params.confId) !== true) {
+
+                        logger.warn(IDLOG, 'unmuting user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '" ' +
+                                           'by user "' + username + '" has been failed: ' + req.params.confId + ' is not owned by the user');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+                    else {
+                        logger.info(IDLOG, 'unmuting user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '": ' +
+                                           req.params.confId + ' is owned by "' + username + '"');
+                    }
+
+                    compAstProxy.unmuteUserMeetmeConf(
+                        req.params.confId,
+                        req.params.userId,
+                        function (err) {
+                            try {
+                                if (err) {
+                                    logger.warn(IDLOG, 'unmuting user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '" ' +
+                                                       'has been failed');
+                                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                                    return;
+                                }
+                                logger.info(IDLOG, 'user "' + req.params.userId + '" of meetme conf "' + req.params.confId + '" ' +
+                                                   'has been unmuted successfully by user "' + username + '"');
+                                compUtil.net.sendHttp200(IDLOG, res);
+
+                            } catch (err) {
+                                logger.error(IDLOG, err.stack);
+                                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                            }
+                        }
+                    );
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * Ends the entire meetme conference with the following REST API:
+            *
+            *     POST end_conf
+            *
+            * @method end_conf
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            end_conf: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (typeof req.params        !== 'object' ||
+                        typeof req.params.confId !== 'string') {
+
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    // check if the conference belongs to the user
+                    if (compAuthorization.verifyUserEndpointExten(username, req.params.confId) !== true) {
+
+                        logger.warn(IDLOG, 'ending meetme conf "' + req.params.confId + '" ' +
+                                           'by user "' + username + '" has been failed: ' + req.params.confId + ' is not owned by the user');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+                    else {
+                        logger.info(IDLOG, 'ending meetme conf "' + req.params.confId + '": ' +
+                                           req.params.confId + ' is owned by "' + username + '"');
+                    }
+
+                    compAstProxy.endMeetmeConf(
+                        req.params.confId,
+                        function (err) {
+                            try {
+                                if (err) {
+                                    logger.warn(IDLOG, 'ending meetme conf "' + req.params.confId + '" by user "' + username + '" has been failed');
+                                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                                    return;
+                                }
+                                logger.info(IDLOG, 'meetme conf "' + req.params.confId + '" ' +
+                                                   'has been ended successfully by user "' + username + '"');
+                                compUtil.net.sendHttp200(IDLOG, res);
+
+                            } catch (err) {
+                                logger.error(IDLOG, err.stack);
+                                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                            }
+                        }
+                    );
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * Joins the extension owner to his meetme conference with the following REST API:
+            *
+            *     POST join_myconf
+            *
+            * @method join_myconf
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            join_myconf: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (typeof req.params            !== 'object' ||
+                        typeof req.params.endpointId !== 'string') {
+
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    // check if the conference belongs to the user
+                    if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) !== true) {
+
+                        logger.warn(IDLOG, 'joining meetme conf "' + req.params.endpointId + '" ' +
+                                           'by user "' + username + '" has been failed: ' + req.params.endpointId + ' is not owned by the user');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+                    else {
+                        logger.info(IDLOG, 'joining meetme conf "' + req.params.endpointId + '": ' +
+                                           req.params.endpointId + ' is owned by "' + username + '"');
+                    }
+
+                    logger.warn(IDLOG, 'starting join exten "' + req.params.endpointId + '" to its meetme conf ' +
+                                       'by user "' + username + '"');
+                    req.params.number = compAstProxy.getMeetmeConfCode() + req.params.endpointId;
+                    req.params.endpointType = 'extension';
+                    call(username, req, res);
+
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * Hangup a user of a meetme conference with the following REST API:
+            *
+            *     POST hangup_userconf
+            *
+            * @method hangup_userconf
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            hangup_userconf: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // check parameters
+                    if (typeof req.params         !== 'object' ||
+                        typeof req.params.confId  !== 'string' ||
+                        typeof req.params.extenId !== 'string') {
+
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+
+                    // check if the conference belongs to the user
+                    if (compAuthorization.verifyUserEndpointExten(username, req.params.confId) !== true) {
+
+                        logger.warn(IDLOG, 'hanging up user "' + req.params.extenId + '" of meetme conf "' + req.params.confId + '" ' +
+                                           'by user "' + username + '" has been failed: ' + req.params.confId + ' is not owned by the user');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+                    else {
+                        logger.info(IDLOG, 'hanging up user "' + req.params.extenId + '" of meetme conf "' + req.params.confId + '": ' +
+                                           req.params.confId + ' is owned by "' + username + '"');
+                    }
+
+                    compAstProxy.hangupUserMeetmeConf(
+                        req.params.confId,
+                        req.params.extenId,
+                        function (err) {
+                            try {
+                                if (err) {
+                                    logger.warn(IDLOG, 'hanging up user "' + req.params.extenId + '" of meetme conf "' + req.params.confId + '" ' +
+                                                       'has been failed');
+                                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                                    return;
+                                }
+                                logger.info(IDLOG, 'user "' + req.params.extenId + '" of meetme conf "' + req.params.confId + '" ' +
+                                                   'has been hanged up successfully by user "' + username + '"');
+                                compUtil.net.sendHttp200(IDLOG, res);
+
+                            } catch (err) {
+                                logger.error(IDLOG, err.stack);
+                                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                            }
+                        }
+                    );
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -4243,11 +4808,7 @@ var compConfigManager;
                             compUtil.net.sendHttp403(IDLOG, res);
                             return;
                         }
-
-                        // if the user has enabled the auomatic click2call then make an HTTP request directly to the phone,
-                        // otherwise make a new call by asterisk
-                        if (!compConfigManager.isAutomaticClick2callEnabled(username)) { asteriskCall(username, req, res); }
-                        else { ajaxPhoneCall(username, req, res); }
+                        call(username, req, res);
 
                     } else {
                         logger.warn(IDLOG, 'making new echo call from user "' + username + '": unknown endpointType ' + req.params.endpointType);
@@ -4377,6 +4938,7 @@ var compConfigManager;
         exports.atxfer                   = astproxy.atxfer;
         exports.answer                   = astproxy.answer;
         exports.intrude                  = astproxy.intrude;
+        exports.end_conf                 = astproxy.end_conf;
         exports.opgroups                 = astproxy.opgroups;
         exports.parkings                 = astproxy.parkings;
         exports.call_echo                = astproxy.call_echo;
@@ -4384,12 +4946,15 @@ var compConfigManager;
         exports.start_spy                = astproxy.start_spy;
         exports.setLogger                = setLogger;
         exports.txfer_tovm               = astproxy.txfer_tovm;
+        exports.start_conf               = astproxy.start_conf;
+        exports.conference               = astproxy.conference;
         exports.extensions               = astproxy.extensions;
         exports.sip_webrtc               = astproxy.sip_webrtc;
         exports.queues_qos               = astproxy.queues_qos;
         exports.agents_qos               = astproxy.agents_qos;
         exports.setPrivacy               = setPrivacy;
         exports.setCompUtil              = setCompUtil;
+        exports.join_myconf              = astproxy.join_myconf;
         exports.pickup_conv              = astproxy.pickup_conv;
         exports.remote_call              = astproxy.remote_call;
         exports.stop_record              = astproxy.stop_record;
@@ -4402,12 +4967,15 @@ var compConfigManager;
         exports.start_record             = astproxy.start_record;
         exports.unauthe_call             = astproxy.unauthe_call;
         exports.force_hangup             = astproxy.force_hangup;
+        exports.mute_userconf            = astproxy.mute_userconf;
         exports.blindtransfer            = astproxy.blindtransfer;
         exports.unmute_record            = astproxy.unmute_record;
         exports.answer_webrtc            = astproxy.answer_webrtc;
         exports.hangup_channel           = astproxy.hangup_channel;
         exports.pickup_parking           = astproxy.pickup_parking;
         exports.remote_opgroups          = astproxy.remote_opgroups;
+        exports.unmute_userconf          = astproxy.unmute_userconf;
+        exports.hangup_userconf          = astproxy.hangup_userconf;
         exports.setCompOperator          = setCompOperator;
         exports.setCompAstProxy          = setCompAstProxy;
         exports.queuemember_add          = astproxy.queuemember_add;
@@ -4429,6 +4997,32 @@ var compConfigManager;
         logger.error(IDLOG, err.stack);
     }
 })();
+
+/**
+* Originates a new call.
+*
+* @method call
+* @param {string} username The username that originate the call
+* @param {object} req      The client request
+* @param {object} res      The client response
+*/
+function call(username, req, res) {
+    try {
+        // check parameters
+        if (typeof username !== 'string' || typeof req !== 'object' || typeof res !== 'object') {
+            throw new Error('wrong parameters');
+        }
+
+        // if the user has enabled the automatic click2call then make an HTTP
+        // request directly to the phone, otherwise make a new call by asterisk
+        if (!compConfigManager.isAutomaticClick2callEnabled(username)) { asteriskCall(username, req, res); }
+        else { ajaxPhoneCall(username, req, res); }
+
+    } catch (error) {
+        logger.error(IDLOG, error.stack);
+        compUtil.net.sendHttp500(IDLOG, res, error.toString());
+    }
+}
 
 /**
 * Originates a new call sending an HTTP GET request to the phone device.
