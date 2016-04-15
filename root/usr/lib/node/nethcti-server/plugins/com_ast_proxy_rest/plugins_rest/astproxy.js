@@ -2311,11 +2311,7 @@ var compConfigManager;
                             compUtil.net.sendHttp403(IDLOG, res);
                             return;
                         }
-
-                        // if the user has enabled the automatic click2call then make an HTTP request directly to the phone,
-                        // otherwise make a new call by asterisk
-                        if (!compConfigManager.isAutomaticClick2callEnabled(username)) { asteriskCall(username, req, res); }
-                        else { ajaxPhoneCall(username, req, res); }
+                        call(username, req, res);
 
                     } else if (req.params.endpointType === 'cellphone') {
 
@@ -2419,11 +2415,7 @@ var compConfigManager;
                         req.params.number       = sitePrefixCall + req.params.remoteExtenId;
                         req.params.endpointId   = req.params.fromExtenId;
                         req.params.endpointType = 'extension';
-
-                        // if the user has enabled the automatic click2call then make an HTTP request
-                        // directly to the phone, otherwise make a new call by asterisk
-                        if (!compConfigManager.isAutomaticClick2callEnabled(username)) { asteriskCall(username, req, res); }
-                        else { ajaxPhoneCall(username, req, res); }
+                        call(username, req, res);
                     }
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
@@ -3498,10 +3490,7 @@ var compConfigManager;
                                 req.params.number = req.params.addEndpointId;
                                 req.params.endpointId = req.params.ownerEndpointId;
                                 req.params.endpointType = 'extension';
-                                // if the user has enabled the auomatic click2call then make an HTTP request directly to the phone,
-                                // otherwise make a new call by asterisk
-                                if (!compConfigManager.isAutomaticClick2callEnabled(username)) { asteriskCall(username, req, res); }
-                                else { ajaxPhoneCall(username, req, res); }
+                                call(username, req, res);
 
                                 logger.info(IDLOG, 'started meetme conf from "' + req.params.ownerEndpointId + '" ' +
                                                    'by user "' + username + '" adding exten "' + req.params.addEndpointId + '"');
@@ -3537,10 +3526,7 @@ var compConfigManager;
 
                                     req.params.endpointId = req.params.ownerEndpointId;
                                     req.params.endpointType = 'extension';
-                                    // if the user has enabled the auomatic click2call then make an HTTP request directly to the phone,
-                                    // otherwise make a new call by asterisk
-                                    if (!compConfigManager.isAutomaticClick2callEnabled(username)) { asteriskCall(username, req, res); }
-                                    else { ajaxPhoneCall(username, req, res); }
+                                    call(username, req, res);
 
                                     logger.info(IDLOG, 'started meetme conf from "' + req.params.ownerEndpointId + '" ' +
                                                        'by user "' + username + '" adding exten "' + req.params.addEndpointId + '"');
@@ -4099,10 +4085,7 @@ var compConfigManager;
                                        'by user "' + username + '"');
                     req.params.number = compAstProxy.getMeetmeConfCode() + req.params.endpointId;
                     req.params.endpointType = 'extension';
-                    // if the user has enabled the auomatic click2call then make an HTTP request directly to the phone,
-                    // otherwise make a new call by asterisk
-                    if (!compConfigManager.isAutomaticClick2callEnabled(username)) { asteriskCall(username, req, res); }
-                    else { ajaxPhoneCall(username, req, res); }
+                    call(username, req, res);
 
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
@@ -4825,11 +4808,7 @@ var compConfigManager;
                             compUtil.net.sendHttp403(IDLOG, res);
                             return;
                         }
-
-                        // if the user has enabled the auomatic click2call then make an HTTP request directly to the phone,
-                        // otherwise make a new call by asterisk
-                        if (!compConfigManager.isAutomaticClick2callEnabled(username)) { asteriskCall(username, req, res); }
-                        else { ajaxPhoneCall(username, req, res); }
+                        call(username, req, res);
 
                     } else {
                         logger.warn(IDLOG, 'making new echo call from user "' + username + '": unknown endpointType ' + req.params.endpointType);
@@ -5018,6 +4997,32 @@ var compConfigManager;
         logger.error(IDLOG, err.stack);
     }
 })();
+
+/**
+* Originates a new call.
+*
+* @method call
+* @param {string} username The username that originate the call
+* @param {object} req      The client request
+* @param {object} res      The client response
+*/
+function call(username, req, res) {
+    try {
+        // check parameters
+        if (typeof username !== 'string' || typeof req !== 'object' || typeof res !== 'object') {
+            throw new Error('wrong parameters');
+        }
+
+        // if the user has enabled the automatic click2call then make an HTTP
+        // request directly to the phone, otherwise make a new call by asterisk
+        if (!compConfigManager.isAutomaticClick2callEnabled(username)) { asteriskCall(username, req, res); }
+        else { ajaxPhoneCall(username, req, res); }
+
+    } catch (error) {
+        logger.error(IDLOG, error.stack);
+        compUtil.net.sendHttp500(IDLOG, res, error.toString());
+    }
+}
 
 /**
 * Originates a new call sending an HTTP GET request to the phone device.
