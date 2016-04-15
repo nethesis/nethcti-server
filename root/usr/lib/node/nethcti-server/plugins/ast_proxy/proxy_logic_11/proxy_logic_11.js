@@ -4543,7 +4543,7 @@ function endMeetmeConf(confId, cb) {
         }
 
         logger.info(IDLOG, 'starting end entire meetme conf "' + confId + '"');
-        async.each(arrUsers, function (u, seriesCb) {
+        async.each(arrUsers, function (u, eachCb) {
 
             var ch = u.getChannel();
             var uid = u.getId();
@@ -4553,12 +4553,12 @@ function endMeetmeConf(confId, cb) {
                 if (err) {
                     logger.error(IDLOG, 'hanging up channel "' + ch + '" of user "' + uid + '" ' +
                                         'exten "' + eid + '" of conf "' + confId + '"');
-                    seriesCb(err);
+                    eachCb(err);
                 }
                 else {
                     logger.info(IDLOG, 'channel "' + ch + '" of user "' + uid + '" ' +
                                         'exten "' + eid + '" of conf "' + confId + '" has been hanged up successfully');
-                    seriesCb();
+                    eachCb();
                 }
             });
         }, function (err) {
