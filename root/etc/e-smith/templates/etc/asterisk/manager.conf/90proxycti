@@ -17,6 +17,6 @@
         }
         $OUT .= "permit=$local\n";
     }
-    $OUT .= "read=system,call,log,verbose,command,agent,user,originate,cdr\n";
-    $OUT .= "write=system,call,log,verbose,command,agent,user,originate,cdr\n";
+    $OUT .= "read=all,system,call,log,verbose,command,agent,user,originate,cdr\n";
+    $OUT .= "write=all,system,call,log,verbose,command,agent,user,originate,cdr\n";
 }
