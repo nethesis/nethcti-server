@@ -824,17 +824,8 @@ function meetmeConfChanged(conf) {
     try {
         logger.info(IDLOG, 'received event "' + astProxy.EVT_MEETME_CONF_CHANGED + '" for conf id ' + conf.getId());
         logger.info(IDLOG, 'emit event "meetmeConfUpdate" for conf id ' + conf.getId() + ' to websockets');
+        sendEvtToUserWithExtenId('meetmeConfUpdate', conf.toJSON(), conf.getId());
 
-        var socketList = wssServer.sockets.sockets;
-        var key, username;
-        for (key in socketList) {
-
-            username = socketList[key].nethcti.username;
-
-            if (compAuthorization.verifyUserEndpointExten(username, conf.getId()) === true) {
-                socketList[key].emit('meetmeConfUpdate', conf.toJSON());
-            }
-        }
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -853,15 +844,39 @@ function meetmeConfEnd(confId) {
     try {
         logger.info(IDLOG, 'received event "' + astProxy.EVT_MEETME_CONF_END + '" for conf id ' + confId);
         logger.info(IDLOG, 'emit event "meetmeConfEnd" for conf id ' + confId + ' to websockets');
+        sendEvtToUserWithExtenId('meetmeConfEnd', { id: confId }, confId);
 
-        var socketList = wssServer.sockets.sockets;
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sends the event only to users with associated extension.
+*
+* @method sendEvtToUserWithExtenId
+* @param {string} evtName The name of the event
+* @param {object} evtObj  The event data object
+* @param {string} extenId The extension identifier
+* @private
+*/
+function sendEvtToUserWithExtenId(evtName, evtObj, extenId) {
+    try {
+        // send to wss
+        var socketsList = wssServer.sockets.sockets;
         var key, username;
-        for (key in socketList) {
-
-            username = socketList[key].nethcti.username;
-
-            if (compAuthorization.verifyUserEndpointExten(username, confId) === true) {
-                socketList[key].emit('meetmeConfEnd', { id: confId });
+        for (key in socketsList) {
+            username = socketsList[key].nethcti.username;
+            if (compAuthorization.verifyUserEndpointExten(username, extenId) === true) {
+                socketsList[key].emit(evtName, evtObj);
+            }
+        }
+        // send to ws
+        socketsList = wsServer.sockets.sockets;
+        for (key in socketsList) {
+            username = socketsList[key].nethcti.username;
+            if (compAuthorization.verifyUserEndpointExten(username, extenId) === true) {
+                socketsList[key].emit(evtName, evtObj);
             }
         }
     } catch (err) {
