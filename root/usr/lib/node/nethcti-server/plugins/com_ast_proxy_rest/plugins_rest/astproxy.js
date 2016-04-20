@@ -5173,14 +5173,26 @@ function asteriskCall(username, req, res) {
             throw new Error('wrong parameters');
         }
 
-        compAstProxy.call(req.params.endpointType, req.params.endpointId, req.params.number, function (err) {
+        // extension to be used to get the "context" to make the new call.
+        // "endpointType" can be a cellphone in "callback call" mode (e.g. using the mobile app)
+        // In this case the "context" to be used for the call must to be of the default extension of the user
+        var extenForContext = req.params.endpointId;
+        if (req.params.endpointType === 'cellphone') {
+            extenForContext = compConfigManager.getDefaultUserExtensionConf(username);
+        }
+
+        compAstProxy.call(req.params.endpointType, req.params.endpointId, req.params.number, extenForContext, function (err) {
             try {
                 if (err) {
-                    logger.warn(IDLOG, 'failed call from user "' + username + '" to ' + req.params.number + ' using ' + req.params.endpointType + ' ' + req.params.endpointId);
+                    logger.warn(IDLOG, 'failed call from user "' + username + '" to ' + req.params.number + ' ' +
+                                       'using ' + req.params.endpointType + ' ' + req.params.endpointId + ' ' +
+                                       'with exten for context ' + extenForContext);
                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
                     return;
                 }
-                logger.info(IDLOG, 'new call from user "' + username + '" to ' + req.params.number + ' with ' + req.params.endpointType + ' ' + req.params.endpointId + ' has been successful');
+                logger.info(IDLOG, 'new call from user "' + username + '" to ' + req.params.number + ' with ' +
+                                   req.params.endpointType + ' ' + req.params.endpointId + ' and exten for ' +
+                                   'context "' + extenForContext + '" has been successful');
                 compUtil.net.sendHttp200(IDLOG, res);
 
             } catch (err1) {

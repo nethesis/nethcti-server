@@ -3992,18 +3992,20 @@ function addPrefix(num) {
 * Make a new call.
 *
 * @method call
-* @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
-* @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
-* @param {string}   to           The destination number
-* @param {function} cb           The callback function
+* @param {string}   endpointType    The type of the endpoint (e.g. extension, queue, parking, trunk...)
+* @param {string}   endpointId      The endpoint identifier (e.g. the extension number)
+* @param {string}   to              The destination number
+* @param {string}   extenForContext The extension to be used to get the "context" to make the new call
+* @param {function} cb              The callback function
 */
-function call(endpointType, endpointId, to, cb) {
+function call(endpointType, endpointId, to, extenForContext, cb) {
     try {
         // check parameters
-        if (typeof cb           !== 'function' ||
-            typeof to           !== 'string'   ||
-            typeof endpointId   !== 'string'   ||
-            typeof endpointType !== 'string') {
+        if (typeof cb              !== 'function' ||
+            typeof to              !== 'string'   ||
+            typeof endpointId      !== 'string'   ||
+            typeof endpointType    !== 'string'   ||
+            typeof extenForContext !== 'string') {
 
             throw new Error('wrong parameters');
         }
@@ -4014,11 +4016,17 @@ function call(endpointType, endpointId, to, cb) {
             cb(err);
             return;
         }
+        if (!extensions[extenForContext]) {
+            var err = 'making new call: no extenForContext "' + extenForContext + '" to get the "context" for the call';
+            logger.warn(IDLOG, err);
+            cb(err);
+            return;
+        }
 
         to = addPrefix(to);
 
         logger.info(IDLOG, 'execute call from ' + endpointId + ' to ' + to);
-        astProxy.doCmd({ command: 'call', context: extensions[endpointId].getContext(), from: endpointId, to: to }, function (error) {
+        astProxy.doCmd({ command: 'call', context: extensions[extenForContext].getContext(), from: endpointId, to: to }, function (error) {
             cb(error);
             callCb(error);
         });
