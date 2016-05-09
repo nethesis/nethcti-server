@@ -50,6 +50,22 @@ var EVT_EXTEN_UPDATE = 'extenUpdate';
 var EVT_ANSWER_WEBRTC = 'answerWebrtc';
 
 /**
+* Emitted to a websocket client connection to call a number using webrtc extension.
+*
+* @event callWebrtc
+* @param {string} to The destination number to be called using WebRTC extension
+*
+*/
+/**
+* The name of the event to call number using WebRTC extension
+*
+* @property EVT_CALL_WEBRTC
+* @type string
+* @default "callWebrtc"
+*/
+var EVT_CALL_WEBRTC = 'callWebrtc';
+
+/**
 * Emitted to a websocket client connection on user endpoint presence update.
 *
 * @event endpointPresenceUpdate
@@ -1055,6 +1071,37 @@ function sendAnswerWebrtcToClient(username, extenId) {
 }
 
 /**
+* Sends an event to the client to call the number using webrtc extension.
+*
+* @method sendCallWebrtcToClient
+* @param {string} username The name of the client user
+* @param {string} to       The destination number to be called using client webrtc phone
+*/
+function sendCallWebrtcToClient(username, to) {
+    try {
+        // check parameters
+        if (typeof username !== 'string' ||
+            typeof to       !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+        // emit the EVT_CALL_WEBRTC event for each logged in user
+        var socketId;
+        for (socketId in wsid) {
+
+            if (wsid[socketId].username === username) {
+                logger.info(IDLOG, 'emit event "' + EVT_CALL_WEBRTC + '" to number ' + to + ' to user "' + username + '"');
+
+                if (wsServer.sockets.sockets[socketId]) { wsServer.sockets.sockets[socketId].emit(EVT_CALL_WEBRTC, to); }
+                if (wssServer.sockets.sockets[socketId]) { wssServer.sockets.sockets[socketId].emit(EVT_CALL_WEBRTC, to); }
+            }
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Handler for the _extenDialing_ event emitted by _ast\_proxy_ component.
 * The extension ringing, so notify all users associated with it, with the
 * identity data of the caller.
@@ -1794,6 +1841,7 @@ exports.setCompPostit                   = setCompPostit;
 exports.setCompVoicemail                = setCompVoicemail;
 exports.setCompAuthorization            = setCompAuthorization;
 exports.sendEventToAllClients           = sendEventToAllClients;
+exports.sendCallWebrtcToClient          = sendCallWebrtcToClient;
 exports.getNumConnectedClients          = getNumConnectedClients;
 exports.EVT_WS_CLIENT_LOGGEDIN          = EVT_WS_CLIENT_LOGGEDIN;
 exports.EVT_WSS_CLIENT_CONNECTED        = EVT_WSS_CLIENT_CONNECTED;

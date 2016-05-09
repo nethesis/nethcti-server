@@ -5013,9 +5013,16 @@ function call(username, req, res) {
             throw new Error('wrong parameters');
         }
 
-        // if the user has enabled the automatic click2call then make an HTTP
+
+        // if source extension is of webrtc type it sends a websocket event to make
+        // the client to originate the call: this is used with conference.
+        // If the user has enabled the automatic click2call then make an HTTP
         // request directly to the phone, otherwise make a new call by asterisk
-        if (!compConfigManager.isAutomaticClick2callEnabled(username)) { asteriskCall(username, req, res); }
+        if (compAstProxy.isExtenWebrtc(req.params.endpointId)) {
+            compComNethctiWs.sendCallWebrtcToClient(username, req.params.number);
+            compUtil.net.sendHttp200(IDLOG, res);
+        }
+        else if (!compConfigManager.isAutomaticClick2callEnabled(username)) { asteriskCall(username, req, res); }
         else { ajaxPhoneCall(username, req, res); }
 
     } catch (error) {
