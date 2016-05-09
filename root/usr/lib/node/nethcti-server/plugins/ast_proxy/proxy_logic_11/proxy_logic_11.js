@@ -4481,13 +4481,6 @@ function startMeetmeConference(convid, ownerExtenId, addExtenId, cb) {
         }
         var warn;
 
-        // check the extension existence to add
-        if (!extensions[addExtenId]) {
-            warn = 'starting meetme conf of owner exten "' + ownerExtenId + '" failed: exten to be added "' + addExtenId + '" non existent';
-            logger.warn(IDLOG, warn);
-            cb(warn);
-            return;
-        }
         // check the extension existence
         if (!extensions[ownerExtenId]) {
             warn = 'starting meetme conf of owner exten "' + ownerExtenId + '" failed: exten non existent';
