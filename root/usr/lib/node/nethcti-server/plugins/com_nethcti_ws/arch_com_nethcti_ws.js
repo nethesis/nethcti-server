@@ -30,6 +30,13 @@ module.exports = function (options, imports, register) {
             getNumConnectedClients: comNethctiWs.getNumConnectedClients,
 
             /**
+            * It's the _sendCallWebrtcToClient_ method provided by _com\_nethcti\_ws_ module.
+            *
+            * @method sendCallWebrtcToClient
+            */
+            sendCallWebrtcToClient: comNethctiWs.sendCallWebrtcToClient,
+
+            /**
             * It's the _sendAnswerWebrtcToClient_ method provided by _com\_nethcti\_ws_ module.
             *
             * @method sendAnswerWebrtcToClient
