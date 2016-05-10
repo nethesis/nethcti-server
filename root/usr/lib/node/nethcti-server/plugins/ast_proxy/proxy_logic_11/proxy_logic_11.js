@@ -2025,6 +2025,7 @@ function updateMeetmeConf(err, data) {
                 var newUserConf = new MeetmeConfUser(data.users[i].id, data.users[i].extenId, data.users[i].isOwner, data.users[i].channel);
                 newUserConf.setName(data.users[i].name);
                 newUserConf.setMuted(data.users[i].muted);
+                newUserConf.setRemoteSitePrefix(data.users[i].prefix);
                 newUserConf.setRemoteSiteName(data.users[i].site);
                 newConf.addUser(newUserConf);
             }

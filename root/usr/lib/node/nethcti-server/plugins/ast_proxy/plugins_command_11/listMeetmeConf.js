@@ -157,11 +157,12 @@ var IDLOG = '[listMeetmeConf]';
                         // it starts with phone prefix of remote site. So it checks the first character
                         // number to be a remote site prefix. If it is, it will be removed
                         // e.g. calleridnum = 4208 - 4 is the prefix and 208 is the remote extension
-                        var remoteSite;
+                        var remoteSite, prefix;
                         if (typeof remoteSitesPrefixes === 'object' &&
                             remoteSitesPrefixes[data.calleridnum.substring(0, 1)] !== undefined) {
 
-                            remoteSite = remoteSitesPrefixes[data.calleridnum.substring(0, 1)];
+                            prefix = data.calleridnum.substring(0, 1);
+                            remoteSite = remoteSitesPrefixes[prefix];
                             data.calleridnum = data.calleridnum.substring(1, data.calleridnum.length);
                         }
 
@@ -171,6 +172,7 @@ var IDLOG = '[listMeetmeConf]';
                             name: data.calleridname === '<no name>' ? undefined : data.calleridname,
                             site: remoteSite,
                             muted: data.muted.toLowerCase() === 'no' ? false : true,
+                            prefix: prefix,
                             extenId: data.calleridnum,
                             isOwner: extenOwner === data.calleridnum ? true : false,
                             channel: data.channel
