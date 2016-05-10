@@ -574,6 +574,7 @@ module.exports = function (options, imports, register) {
             astProxy.setLogger(logger);
             astProxy.config('/etc/nethcti/asterisk.json');
             astProxy.configAstCodes('/etc/nethcti/asterisk_codes.json');
+            astProxy.configRemoteSitesPrefixes('/etc/nethcti/remote_sites.json');
             astProxy.configSipWebrtc('/etc/nethcti/sip_webrtc.json');
             astProxy.proxyLogic.setCompDbconn(imports.dbconn);
             astProxy.proxyLogic.setCompPhonebook(imports.phonebook);

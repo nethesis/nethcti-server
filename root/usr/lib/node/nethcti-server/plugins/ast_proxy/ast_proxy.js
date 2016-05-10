@@ -198,6 +198,43 @@ function configAstCodes(path) {
 }
 
 /**
+* Sets the remote sites to have remote sites prefixes.
+*
+* @method configRemoteSitePrefixes
+* @param {string} path The file path of the JSON configuration file that contains the remote sites
+*/
+function configRemoteSitesPrefixes(path) {
+    try {
+        if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
+
+        // check the file presence
+        if (!fs.existsSync(path)) {
+            logger.warn(IDLOG, path + ' does not exist');
+            return;
+        }
+
+        // read the configuration file
+        var json = require(path);
+
+        // check the configuration file content
+        if (typeof json !== 'object') {
+            throw new Error('wrong configuration file ' + path);
+        }
+
+        var site;
+        var prefixes = {};
+        for (site in json) {
+            prefixes[json[site].prefix] = site;
+        }
+        proxyLogic.setRemoteSitesPrefixes(prefixes);
+        logger.info(IDLOG, 'remote sites prefixes successfully configured');
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Sets the configuration to be used by sip WebRTC.
 *
 * @method configSipWebrtc
@@ -562,3 +599,4 @@ exports.proxyLogic       = proxyLogic;
 exports.configAstCodes   = configAstCodes;
 exports.configSipWebrtc  = configSipWebrtc;
 exports.getSipWebrtcConf = getSipWebrtcConf;
+exports.configRemoteSitesPrefixes = configRemoteSitesPrefixes;

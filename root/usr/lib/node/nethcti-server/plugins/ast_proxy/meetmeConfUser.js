@@ -50,6 +50,15 @@ exports.MeetmeConfUser = function (userId, extId, ownerValue, ch) {
     var extenId = extId;
 
     /**
+    * The remote site name.
+    *
+    * @property site
+    * @type {string}
+    * @private
+    */
+    var site;
+
+    /**
     * The asterisk channel of the extension.
     *
     * @property channel
@@ -133,6 +142,14 @@ exports.MeetmeConfUser = function (userId, extId, ownerValue, ch) {
     function setName(value) { name = value; }
 
     /**
+    * Sets the remote site name.
+    *
+    * @method setRemoteSiteName
+    * @param {string} value The name
+    */
+    function setRemoteSiteName(value) { site = value; }
+
+    /**
     * Sets the muted status.
     *
     * @method setMuted
@@ -154,6 +171,7 @@ exports.MeetmeConfUser = function (userId, extId, ownerValue, ch) {
     *     {
     *         id: "1",
     *         name: "202",
+    *         site: "nethesis",
     *         owner: true,
     *         muted: false,
     *         extenId: "202"
@@ -166,6 +184,7 @@ exports.MeetmeConfUser = function (userId, extId, ownerValue, ch) {
         return {
             id: id,
             name: name,
+            site: site,
             owner: owner,
             muted: muted,
             extenId: extenId
@@ -182,6 +201,7 @@ exports.MeetmeConfUser = function (userId, extId, ownerValue, ch) {
         isOwner: isOwner,
         setMuted: setMuted,
         getChannel: getChannel,
-        getExtenId: getExtenId
+        getExtenId: getExtenId,
+        setRemoteSiteName: setRemoteSiteName
     };
 };
