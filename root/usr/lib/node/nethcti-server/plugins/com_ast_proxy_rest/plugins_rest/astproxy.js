@@ -937,6 +937,7 @@ var compConfigManager;
         *
         * Starts a meetme conference. The request must contains the following parameters:
         *
+        * * `[site]: remote site name of the endpoint "addEndpointId" to be added. It can be absent or "local" to indicate local site`
         * * `convid: the conversation identifier of the owner to be added to the conference`
         * * `addEndpointId: the identifier of the extension to be added to the conference`
         * * `ownerEndpointId: the extension identifier who wants to start the meetme conference`
@@ -944,6 +945,7 @@ var compConfigManager;
         * Example JSON request parameters:
         *
         *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "ownerEndpointId": "202", "addEndpointId": "201" }
+        *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "ownerEndpointId": "202", "addEndpointId": "201", "site": "nethesis" }
         *
         * ---
         *
@@ -3462,6 +3464,10 @@ var compConfigManager;
                         return;
                     }
 
+                    // if site is "local" set it to undefined to avoid following if statements
+                    if (req.params.site && req.params.site.toLowerCase() === 'local') { req.params.site = undefined; }
+                    // if (req.params.site && req.params.site === 'local') { req.params.site = undefined; }
+
                     if (compAuthorization.verifyUserEndpointExten(username, req.params.ownerEndpointId) === false) {
 
                         logger.warn(IDLOG, 'starting meetme conf from "' + req.params.ownerEndpointId + '" ' +
@@ -3472,6 +3478,26 @@ var compConfigManager;
                     else {
                         logger.info(IDLOG, 'starting meetme conf from "' + req.params.ownerEndpointId + '" ' +
                                            'by user "' + username + '": the ' + req.params.ownerEndpointId + ' is owned by him');
+                    }
+
+                    // check remote site existence
+                    if (req.params.site && compAuthorization.authorizeRemoteSiteUser(username) === false) {
+
+                        logger.warn(IDLOG, 'starting meetme conf from "' + req.params.ownerEndpointId + '" ' +
+                                           'with remote endpoint "' + req.params.addEndpointId + '" of remote site "' + req.params.site + '" ' +
+                                           'by user "' + username + '" has been failed: no remote site permission');
+                        compUtil.net.sendHttp403(IDLOG, res);
+                        return;
+                    }
+
+                    // check the remote site existence
+                    if (req.params.site && !compComNethctiRemotes.remoteSiteExists(req.params.site)) {
+
+                        logger.warn(IDLOG, 'starting meetme conf from "' + req.params.ownerEndpointId + '" ' +
+                                           'with remote endpoint "' + req.params.addEndpointId + '" of remote site "' + req.params.site + '" ' +
+                                           'by user "' + username + '" has been failed: remote site does not exist');
+                        compUtil.net.sendHttp500(IDLOG, res, 'non existent remote site "' + req.params.site + '"');
+                        return;
                     }
 
                     // case 1
@@ -3487,19 +3513,22 @@ var compConfigManager;
                                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
                                     return;
                                 }
+
                                 req.params.number = req.params.addEndpointId;
+                                // add remote site prefix if it has been requested
+                                if (req.params.site) { req.params.number = compComNethctiRemotes.getSitePrefixCall(req.params.site) + req.params.number; }
                                 req.params.endpointId = req.params.ownerEndpointId;
                                 req.params.endpointType = 'extension';
                                 call(username, req, res);
 
                                 logger.info(IDLOG, 'started meetme conf from "' + req.params.ownerEndpointId + '" ' +
-                                                   'by user "' + username + '" adding exten "' + req.params.addEndpointId + '"');
-
+                                                   'by user "' + username + '" adding exten "' + req.params.addEndpointId + '" ' +
+                                                   ( req.params.site ? ('of remote site ' + req.params.site) : '' ));
                             } catch (err) {
                                 logger.error(IDLOG, err.stack);
                                 compUtil.net.sendHttp500(IDLOG, res, err.toString());
                             }
-                        })
+                        });
                     }
                     // case 2
                     // the owner of the conference is not into the conference
@@ -3522,15 +3551,19 @@ var compConfigManager;
                                     // case 2b
                                     // the owner is busy with another extension different from that to be added.
                                     // So call the extension to be added
-                                    else { req.params.number = req.params.addEndpointId; }
+                                    else {
+                                        req.params.number = req.params.addEndpointId;
+                                        // add remote site prefix if it has been requested
+                                        if (req.params.site) { req.params.number = compComNethctiRemotes.getSitePrefixCall(req.params.site) + req.params.number; }
+                                    }
 
                                     req.params.endpointId = req.params.ownerEndpointId;
                                     req.params.endpointType = 'extension';
                                     call(username, req, res);
 
                                     logger.info(IDLOG, 'started meetme conf from "' + req.params.ownerEndpointId + '" ' +
-                                                       'by user "' + username + '" adding exten "' + req.params.addEndpointId + '"');
-
+                                                       'by user "' + username + '" adding exten "' + req.params.addEndpointId + '" ' +
+                                                       ( req.params.site ? ('of remote site ' + req.params.site) : '' ));
                                 } catch (err) {
                                     logger.error(IDLOG, err.stack);
                                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -5179,27 +5212,14 @@ function asteriskCall(username, req, res) {
         if (typeof username !== 'string' || typeof req !== 'object' || typeof res !== 'object') {
             throw new Error('wrong parameters');
         }
-
-        // extension to be used to get the "context" to make the new call.
-        // "endpointType" can be a cellphone in "callback call" mode (e.g. using the mobile app)
-        // In this case the "context" to be used for the call must to be of the default extension of the user
-        var extenForContext = req.params.endpointId;
-        if (req.params.endpointType === 'cellphone') {
-            extenForContext = compConfigManager.getDefaultUserExtensionConf(username);
-        }
-
-        compAstProxy.call(req.params.endpointType, req.params.endpointId, req.params.number, extenForContext, function (err) {
+        compAstProxy.call(req.params.endpointType, req.params.endpointId, req.params.number, function (err) {
             try {
                 if (err) {
-                    logger.warn(IDLOG, 'failed call from user "' + username + '" to ' + req.params.number + ' ' +
-                                       'using ' + req.params.endpointType + ' ' + req.params.endpointId + ' ' +
-                                       'with exten for context ' + extenForContext);
+                    logger.warn(IDLOG, 'failed call from user "' + username + '" to ' + req.params.number + ' using ' + req.params.endpointType + ' ' + req.params.endpointId);
                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
                     return;
                 }
-                logger.info(IDLOG, 'new call from user "' + username + '" to ' + req.params.number + ' with ' +
-                                   req.params.endpointType + ' ' + req.params.endpointId + ' and exten for ' +
-                                   'context "' + extenForContext + '" has been successful');
+                logger.info(IDLOG, 'new call from user "' + username + '" to ' + req.params.number + ' with ' + req.params.endpointType + ' ' + req.params.endpointId + ' has been successful');
                 compUtil.net.sendHttp200(IDLOG, res);
 
             } catch (err1) {

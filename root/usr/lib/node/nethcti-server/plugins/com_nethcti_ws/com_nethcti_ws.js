@@ -880,18 +880,22 @@ function sendEvtToUserWithExtenId(evtName, evtObj, extenId) {
     try {
         // send to wss
         var socketsList = wssServer.sockets.sockets;
-        var key, username;
+        var key;
         for (key in socketsList) {
-            username = socketsList[key].nethcti.username;
-            if (compAuthorization.verifyUserEndpointExten(username, extenId) === true) {
+            if (socketsList[key] &&
+                socketsList[key].nethcti &&
+                compAuthorization.verifyUserEndpointExten(socketsList[key].nethcti.username, extenId) === true) {
+
                 socketsList[key].emit(evtName, evtObj);
             }
         }
         // send to ws
         socketsList = wsServer.sockets.sockets;
         for (key in socketsList) {
-            username = socketsList[key].nethcti.username;
-            if (compAuthorization.verifyUserEndpointExten(username, extenId) === true) {
+            if (socketsList[key] &&
+                socketsList[key].nethcti &&
+                compAuthorization.verifyUserEndpointExten(socketsList[key].nethcti.username, extenId) === true) {
+
                 socketsList[key].emit(evtName, evtObj);
             }
         }

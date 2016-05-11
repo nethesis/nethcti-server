@@ -297,6 +297,15 @@ var astProxy;
 var prefix = '';
 
 /**
+* The remote sites phone prefixes.
+*
+* @property remoteSitesPrefixes
+* @type object
+* @private
+*/
+var remoteSitesPrefixes;
+
+/**
 * The asterisk codes.
 *
 * @property astCodes
@@ -500,6 +509,26 @@ function setAstCodes(codes) {
         astCodes = codes;
 
         logger.info(IDLOG, 'asterisk codes has been set');
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Sets the remote sites phone prefixes used to filter the meetme conference members.
+*
+* @method setRemoteSitesPrefixes
+* @param {object} obj The remote sites prefixes data.
+* @static
+*/
+function setRemoteSitesPrefixes(obj) {
+    try {
+        // check parameter
+        if (typeof obj !== 'object') { throw new Error('wrong remote sites object: ' + obj); }
+
+        remoteSitesPrefixes = obj;
+        logger.info(IDLOG, 'remote sites has been set');
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -1996,6 +2025,8 @@ function updateMeetmeConf(err, data) {
                 var newUserConf = new MeetmeConfUser(data.users[i].id, data.users[i].extenId, data.users[i].isOwner, data.users[i].channel);
                 newUserConf.setName(data.users[i].name);
                 newUserConf.setMuted(data.users[i].muted);
+                newUserConf.setRemoteSitePrefix(data.users[i].prefix);
+                newUserConf.setRemoteSiteName(data.users[i].site);
                 newConf.addUser(newUserConf);
             }
             conferences[data.confId] = newConf;
@@ -2020,7 +2051,7 @@ function updateMeetmeConf(err, data) {
 */
 function initMeetmeConf() {
     try {
-        astProxy.doCmd({ command: 'listMeetmeConf', meetmeConfCode: getMeetmeConfCode() }, updateMeetmeConferences);
+        astProxy.doCmd({ command: 'listMeetmeConf', meetmeConfCode: getMeetmeConfCode(), remoteSitesPrefixes: remoteSitesPrefixes }, updateMeetmeConferences);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -2503,11 +2534,7 @@ function updateExtenConversations(err, resp, exten) {
             // emit the event
             logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
             astProxy.emit(EVT_EXTEN_CHANGED, extensions[exten]);
-
-        } else {
-            logger.warn(IDLOG, 'try to update channel list of the non existent extension ' + exten);
         }
-
     } catch (error) {
         logger.error(IDLOG, error.stack);
     }
@@ -3504,7 +3531,7 @@ function evtRemoveMeetmeUserConf(data) {
             throw new Error('wrong parameter');
         }
         logger.info(IDLOG, 'user id "' + data.userId + '" with exten id "' + data.extenId + '" has left the meetme conf ' + data.confId);
-        astProxy.doCmd({ command: 'listMeetmeConf', meetmeConfCode: getMeetmeConfCode(), confId: data.confId }, function (err, resp) {
+        astProxy.doCmd({ command: 'listMeetmeConf', meetmeConfCode: getMeetmeConfCode(), confId: data.confId, remoteSitesPrefixes: remoteSitesPrefixes }, function (err, resp) {
             updateMeetmeConf(err, resp[ (Object.keys(resp))[0] ]);
         });
 
@@ -3561,16 +3588,18 @@ function evtAddMeetmeUserConf(data) {
             throw new Error('wrong parameter');
         }
         logger.info(IDLOG, 'user id "' + data.userId + '" with exten id "' + data.extenId + '" has joined the meetme conf ' + data.confId);
-        astProxy.doCmd({ command: 'listMeetmeConf', meetmeConfCode: getMeetmeConfCode(), confId: data.confId }, function (err, resp) {
+        astProxy.doCmd({ command: 'listMeetmeConf', meetmeConfCode: getMeetmeConfCode(), confId: data.confId, remoteSitesPrefixes: remoteSitesPrefixes }, function (err, resp) {
             updateMeetmeConf(err, resp[ (Object.keys(resp))[0] ]);
         });
 
         // request all channels
-        logger.info(IDLOG, 'requests the channel list to update the extension ' + data.extenId);
-        astProxy.doCmd({ command: 'listChannels' }, function (err, resp) {
-            // update the conversations of the extension
-            updateExtenConversations(err, resp, data.extenId);
-        });
+        if (extensions[data.extenId]) {
+            logger.info(IDLOG, 'requests the channel list to update the extension ' + data.extenId);
+            astProxy.doCmd({ command: 'listChannels' }, function (err, resp) {
+                // update the conversations of the extension
+                updateExtenConversations(err, resp, data.extenId);
+            });
+        }
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -3594,7 +3623,7 @@ function evtMeetmeUserConfMute(data) {
             throw new Error('wrong parameter');
         }
         logger.info(IDLOG, 'mute status of user id "' + data.userId + '" of meetme conf "' + data.confId + '" has been changed to ' + data.mute);
-        astProxy.doCmd({ command: 'listMeetmeConf', meetmeConfCode: getMeetmeConfCode(), confId: data.confId }, function (err, resp) {
+        astProxy.doCmd({ command: 'listMeetmeConf', meetmeConfCode: getMeetmeConfCode(), confId: data.confId, remoteSitesPrefixes: remoteSitesPrefixes }, function (err, resp) {
             updateMeetmeConf(err, resp[ (Object.keys(resp))[0] ]);
         });
 
@@ -3992,20 +4021,18 @@ function addPrefix(num) {
 * Make a new call.
 *
 * @method call
-* @param {string}   endpointType    The type of the endpoint (e.g. extension, queue, parking, trunk...)
-* @param {string}   endpointId      The endpoint identifier (e.g. the extension number)
-* @param {string}   to              The destination number
-* @param {string}   extenForContext The extension to be used to get the "context" to make the new call
-* @param {function} cb              The callback function
+* @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
+* @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
+* @param {string}   to           The destination number
+* @param {function} cb           The callback function
 */
-function call(endpointType, endpointId, to, extenForContext, cb) {
+function call(endpointType, endpointId, to, cb) {
     try {
         // check parameters
-        if (typeof cb              !== 'function' ||
-            typeof to              !== 'string'   ||
-            typeof endpointId      !== 'string'   ||
-            typeof endpointType    !== 'string'   ||
-            typeof extenForContext !== 'string') {
+        if (typeof cb           !== 'function' ||
+            typeof to           !== 'string'   ||
+            typeof endpointId   !== 'string'   ||
+            typeof endpointType !== 'string') {
 
             throw new Error('wrong parameters');
         }
@@ -4016,17 +4043,11 @@ function call(endpointType, endpointId, to, extenForContext, cb) {
             cb(err);
             return;
         }
-        if (!extensions[extenForContext]) {
-            var err = 'making new call: no extenForContext "' + extenForContext + '" to get the "context" for the call';
-            logger.warn(IDLOG, err);
-            cb(err);
-            return;
-        }
 
         to = addPrefix(to);
 
         logger.info(IDLOG, 'execute call from ' + endpointId + ' to ' + to);
-        astProxy.doCmd({ command: 'call', context: extensions[extenForContext].getContext(), from: endpointId, to: to }, function (error) {
+        astProxy.doCmd({ command: 'call', context: extensions[endpointId].getContext(), from: endpointId, to: to }, function (error) {
             cb(error);
             callCb(error);
         });
@@ -6916,6 +6937,7 @@ exports.redirectWaitingCaller           = redirectWaitingCaller;
 exports.evtHangupConversation           = evtHangupConversation;
 exports.startMeetmeConference           = startMeetmeConference;
 exports.evtExtenStatusChanged           = evtExtenStatusChanged;
+exports.setRemoteSitesPrefixes          = setRemoteSitesPrefixes;
 exports.sendDtmfToConversation          = sendDtmfToConversation;
 exports.getEchoCallDestination          = getEchoCallDestination;
 exports.evtNewVoicemailMessage          = evtNewVoicemailMessage;

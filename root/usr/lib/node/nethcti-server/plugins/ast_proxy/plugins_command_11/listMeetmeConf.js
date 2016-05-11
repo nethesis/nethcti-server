@@ -48,6 +48,15 @@ var IDLOG = '[listMeetmeConf]';
         var list = {};
 
         /**
+        * Remote sites phone prefixes.
+        *
+        * @property remoteSitesPrefixes
+        * @type {array}
+        * @private
+        */
+        var remoteSitesPrefixes;
+
+        /**
         * Asterisk phone code used to start a meetme conference.
         *
         * @property MEETME_CONF_CODE
@@ -57,7 +66,7 @@ var IDLOG = '[listMeetmeConf]';
         var MEETME_CONF_CODE;
 
         /**
-        * Command plugin to mute a meetme user.
+        * Command plugin to list all members of all or single meetme conference.
         *
         * Use it with _ast\_proxy_ module as follow:
         *
@@ -66,6 +75,10 @@ var IDLOG = '[listMeetmeConf]';
         *     });
         *
         *     ast_proxy.doCmd({ command: 'listMeetmeConf', meetmeConfCode: '1234', confId: '202' }, function (res) {
+        *         // some code
+        *     });
+        *
+        *     ast_proxy.doCmd({ command: 'listMeetmeConf', meetmeConfCode: '1234', confId: '202', remoteSitesPrefixes: { "6": "nethesis", "4": "nethesis2" } }, function (res) {
         *         // some code
         *     });
         *
@@ -87,6 +100,7 @@ var IDLOG = '[listMeetmeConf]';
             execute: function (am, args, cb) {
                 try {
                     MEETME_CONF_CODE = args.meetmeConfCode;
+                    remoteSitesPrefixes = args.remoteSitesPrefixes;
 
                     // action for asterisk
                     var act = {
@@ -139,11 +153,26 @@ var IDLOG = '[listMeetmeConf]';
                                data.muted         &&
                                data.event === 'MeetmeList') {
 
+                        // filter extensions of remote sites. If the involved number is of remote site
+                        // it starts with phone prefix of remote site. So it checks the first character
+                        // number to be a remote site prefix. If it is, it will be removed
+                        // e.g. calleridnum = 4208 - 4 is the prefix and 208 is the remote extension
+                        var remoteSite, prefix;
+                        if (typeof remoteSitesPrefixes === 'object' &&
+                            remoteSitesPrefixes[data.calleridnum.substring(0, 1)] !== undefined) {
+
+                            prefix = data.calleridnum.substring(0, 1);
+                            remoteSite = remoteSitesPrefixes[prefix];
+                            data.calleridnum = data.calleridnum.substring(1, data.calleridnum.length);
+                        }
+
                         var extenOwner = data.conference.substring(MEETME_CONF_CODE.length, data.conference.length);
                         var userObj = {
                             id: data.usernumber,
-                            name: data.calleridname,
+                            name: data.calleridname === '<no name>' ? undefined : data.calleridname,
+                            site: remoteSite,
                             muted: data.muted.toLowerCase() === 'no' ? false : true,
+                            prefix: prefix,
                             extenId: data.calleridnum,
                             isOwner: extenOwner === data.calleridnum ? true : false,
                             channel: data.channel

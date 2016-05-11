@@ -57,7 +57,10 @@ exports.MeetmeConference = function (extOwner) {
     * @method addUser
     * @param {object} obj A _MeetmeConfUser_ object
     */
-    function addUser(obj) { users[obj.getExtenId()] = obj; }
+    function addUser(obj) {
+        var prefix = obj.getRemoteSitePrefix() ? obj.getRemoteSitePrefix() : '';
+        users[prefix + obj.getExtenId()] = obj;
+    }
 
     /**
     * Returns the user of the conference.

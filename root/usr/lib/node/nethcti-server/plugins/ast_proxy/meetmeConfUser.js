@@ -50,6 +50,24 @@ exports.MeetmeConfUser = function (userId, extId, ownerValue, ch) {
     var extenId = extId;
 
     /**
+    * The remote site name.
+    *
+    * @property site
+    * @type {string}
+    * @private
+    */
+    var site;
+
+    /**
+    * The remote site prefix.
+    *
+    * @property prefix
+    * @type {string}
+    * @private
+    */
+    var prefix;
+
+    /**
     * The asterisk channel of the extension.
     *
     * @property channel
@@ -133,6 +151,30 @@ exports.MeetmeConfUser = function (userId, extId, ownerValue, ch) {
     function setName(value) { name = value; }
 
     /**
+    * Sets the remote site name.
+    *
+    * @method setRemoteSiteName
+    * @param {string} value The name
+    */
+    function setRemoteSiteName(value) { site = value; }
+
+    /**
+    * Sets the remote site prefix.
+    *
+    * @method setRemoteSitePrefix
+    * @param {string} value The prefix
+    */
+    function setRemoteSitePrefix(value) { prefix = value; }
+
+    /**
+    * Gets the remote site prefix.
+    *
+    * @method getRemoteSitePrefix
+    * @return {string} The prefix.
+    */
+    function getRemoteSitePrefix() { return prefix; }
+
+    /**
     * Sets the muted status.
     *
     * @method setMuted
@@ -154,6 +196,8 @@ exports.MeetmeConfUser = function (userId, extId, ownerValue, ch) {
     *     {
     *         id: "1",
     *         name: "202",
+    *         site: "nethesis",
+    *         prefix: "4",
     *         owner: true,
     *         muted: false,
     *         extenId: "202"
@@ -166,8 +210,10 @@ exports.MeetmeConfUser = function (userId, extId, ownerValue, ch) {
         return {
             id: id,
             name: name,
+            site: site,
             owner: owner,
             muted: muted,
+            prefix: prefix,
             extenId: extenId
         };
     }
@@ -182,6 +228,9 @@ exports.MeetmeConfUser = function (userId, extId, ownerValue, ch) {
         isOwner: isOwner,
         setMuted: setMuted,
         getChannel: getChannel,
-        getExtenId: getExtenId
+        getExtenId: getExtenId,
+        setRemoteSiteName: setRemoteSiteName,
+        setRemoteSitePrefix: setRemoteSitePrefix,
+        getRemoteSitePrefix: getRemoteSitePrefix
     };
 };
