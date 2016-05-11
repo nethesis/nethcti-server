@@ -494,7 +494,7 @@ function getQueueRecall(data, cb) {
                   ' direction,',
                   ' queuename ',
             'FROM ', getQueueRecallQueryTable(data.type, data.val), ' ',
-            'LEFT JOIN phonebook.phonebook b ON queue_recall.cid=b.workphone ',
+            'LEFT JOIN phonebook.phonebook b ON (queue_recall.cid=b.workphone OR queue_recall.cid=b.cellphone) ',
             'WHERE queuename="' + data.qid + '" ',
             'GROUP BY cid ',
             'ORDER BY time DESC;'
