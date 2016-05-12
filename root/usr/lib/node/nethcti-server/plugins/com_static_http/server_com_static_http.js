@@ -44,9 +44,8 @@ var logger = console;
 * @property port
 * @type string
 * @private
-* @default "9013"
 */
-var port = '9013';
+var port;
 
 /**
 * Listening address of the REST server. It can be customized by the
@@ -252,7 +251,7 @@ function saveFile(dstpath, data) {
             if (err) {
                 throw err;
             }
-        }); 
+        });
     } catch (err) {
         logger.error(IDLOG, 'saving static file ' + req.url + ': ' + err.stack);
     }

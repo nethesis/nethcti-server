@@ -144,8 +144,6 @@ var streamingNotifTemplatePath;
 * @property port
 * @type string
 * @private
-* @final
-* @readOnly
 */
 var port;
 

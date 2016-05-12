@@ -43,9 +43,8 @@ var logger = console;
 * @property port
 * @type string
 * @private
-* @default "9011"
 */
-var port = '9011';
+var port;
 
 /**
 * Listening address of the REST server. It can be customized by the

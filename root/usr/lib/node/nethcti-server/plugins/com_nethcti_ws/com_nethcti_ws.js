@@ -236,9 +236,8 @@ var privacyStrReplace = 'xxx';
 * @property wssPort
 * @type string
 * @private
-* @default "8181"
 */
-var wssPort = '8181';
+var wssPort;
 
 /**
 * The websocket server port.
@@ -246,9 +245,8 @@ var wssPort = '8181';
 * @property wsPort
 * @type string
 * @private
-* @default "8183"
 */
-var wsPort = '8183';
+var wsPort;
 
 /**
 * The logger. It must have at least three methods: _info, warn and error._

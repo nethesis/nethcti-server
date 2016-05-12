@@ -1,5 +1,5 @@
         "static": \{
-            "port": "10013",
+            "port": "50101",
             "address": "localhost",
             "webroot": "/usr/lib/node/nethcti-server/plugins/com_static_http/static"
         \}

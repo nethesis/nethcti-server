@@ -1,5 +1,5 @@
         "upload": \{
-            "port":    "10016",
+            "port":    "50115",
             "address": "localhost",
             "upload_root": "/var/lib/nethserver/nethcti/upload"
         \},

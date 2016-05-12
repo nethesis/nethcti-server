@@ -44,9 +44,8 @@ var logger = console;
 * @property port
 * @type string
 * @private
-* @default "9000"
 */
-var port = '9000';
+var port;
 
 /**
 * Listening protocol of the REST server, can be 'http' or 'https'.

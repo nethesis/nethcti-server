@@ -43,9 +43,8 @@ var logger = console;
 * @property port
 * @type string
 * @private
-* @default "9002"
 */
-var port = '9002';
+var port;
 
 /**
 * Listening address of the REST server. It can be customized by the
@@ -265,10 +264,10 @@ function setCompUtil(comp) {
 */
 function setCompCel(comp) {
     try {
-        // check parameter 
+        // check parameter
         if (typeof comp !== 'object') { throw new Error('wrong parameter'); }
 
-        var p; 
+        var p;
         // set utility architect component to all REST plugins
         for (p in plugins) {
             if (typeof plugins[p].setCompCel === 'function') {
