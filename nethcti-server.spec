@@ -1,5 +1,5 @@
 Name: nethcti-server
-Version: 2.5.2
+Version: 2.6
 Release: 1%{?dist}
 Summary: Nodejs Asterisk proxy for NethCTI 2
 
@@ -56,6 +56,70 @@ rm -rf $RPM_BUILD_ROOT
 %doc
 
 %changelog
+* Mon May 23 2016 Alessandro Polidori <alessandro.polidori@gmail.com> - 2.6-1
+- changed default localhost ports. refs #4149
+- queue_recall: check also 'cellphone' to have name&company. 4018
+- readd fix #4119 lost by last merge
+- Merge branch 'task-212' of Nethesis/nethcti-server into master
+- list conference user by prefix+extenId. task #212
+- fix conference extension of remote sites. task #212
+- Merge branch 'task-218' of Nethesis/nethcti-server into master
+- Merge branch 'task-219' of Nethesis/nethcti-server into master
+- fix conference with external number. task #218
+- emit callWebrtc for the conference. task #219
+- fix custom context when call in callback mode. refs #4119
+- Merge branch 'master_198'
+- add "all" permission for proxycti asterisk user. refs #4135
+- Merge branch 'master' into master_198
+- websocket: send meetme events also via ws. refs #4132
+- rest ast proxy: new "call" func to be used multiple times. refs #4135
+- less imp syntax fix of a cb name. refs #4135
+- history calls: returns also "userfield" db field. refs #4001
+- ast_proxy: fix set ast codes by asterisk_codes.json file. refs #4135
+- new rest astproxy/join_myconf. refs #4135
+- new rest astproxy/end_conf. refs #4135
+- ast_proxy: add inConference to conversation. refs #4132
+- new rest astproxy/hangup_userconf. refs #4135
+- fix start_conf rest api. refs #4135
+- ast conf: new rest start_conf. refs #4135
+- update conf data on "mute/unmute" user. refs #4135
+- add rest to mute/unmute ast conf. refs #4135
+- ast conferences: use extenId as keys of users conf. refs #4132
+- rest astproxy/conference & dev events and cmd for ast conf. refs #4132 #4135
+- new ast events & commands to manage meetme conf. refs #4132
+- Merge branch 'master_4110'
+- spec: set config files of nethifier popups. refs #4110
+- fix custom context in transferToVoicemail & redirectChannel. refs #4119
+- mv 'dist' path for nethifier popup. refs #4093
+- remove unused store dir
+- spec: removed white spaces
+- inc requires version of nethvoice-module-nethcti
+- mv http static path. refs #4110
+- redirectChannel: use custom context. refs #4119
+- recordAudioFile: use custom context. refs #4119
+- inoutDynQueues: use custom context. refs #4119
+- transferToVoicemail: fix to use from exten custom context. refs #4119
+- callAndSendDTMF: use custom context. refs #4119
+- transferToVoicemail.js: use custom context. refs #4119
+- call.js: use custom context also in channel. refs #3620
+- use real context to make a call. refs #3620
+- Merge branch 'ha4086'. Refs #4086
+- Hide video button for webrtc, #153.
+- Fix open streaming for webrtc, #153.
+- Remove alert, #153.
+- Fix browser opening on button click, #153.
+- Fix answer url, #153.
+- com_nethcti_tcp: add webrtc param to streaming.html template. refs #4101
+- Fix answer nethifier popup buttons dist, #153.
+- Fix answer nethifier popup buttons, #153.
+- Fix hangup and answer nethifier popup buttons, #153.
+- Add two buttons to answer and hangup, some refactor, task #153. Refs #4093.
+- fix "astproxy/answer_webrtc". refs #4094
+- new rest: astproxy/hangup_channel. refs #4103
+- nethifier: call template with the right parameters .refs #4101
+- new reast "astproxy/answer_webrtc". refs #4094
+- authentication.json: remove NethServer::Directory dependency. Refs #4086
+
 * Fri Mar 11 2016 Alessandro Polidori <alessandro.polidori@gmail.com> - 2.5.2-1
 - fix LdapsSelfSigned. refs #4056
 - fix trunk sip label. refs #4082
