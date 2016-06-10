@@ -10,9 +10,5 @@
     "provides": [
       "staticHttp"
     ]
-  },
-  "devDependencies": {
-    "grunt": "^0.4.5",
-    "grunt-inline": "^0.3.6"
   }
 }
