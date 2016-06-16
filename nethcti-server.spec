@@ -29,6 +29,7 @@ mkdir -p root/var/spool/nethcti/sms
 mkdir -p root/var/lib/nethserver/nethcti/upload
 mkdir -p root/var/lib/nethserver/nethcti/templates/notification_manager
 mkdir -p root/var/lib/nethserver/nethcti/templates/customer_card
+mkdir -p root/var/lib/nethserver/nethcti/static
 
 # clean the nodejs npm modules
 find root/usr/lib/node/nethcti-server/node_modules -iname readme.\* -o -iname benchmark\* -o -iname sample\* -o -iname test\* -o -iname example\* -o -iname changelog\* -o -iname docs -o -iname component.json -o -iname \*.md -o -iname \*.bat -o -iname \*.tgz | xargs rm -rf
@@ -42,6 +43,7 @@ rm -rf $RPM_BUILD_ROOT
 --dir /var/spool/asterisk/monitor 'attr(0775,asterisk,asterisk)' \
 --dir /var/spool/nethcti/sms 'attr(0775,asterisk,asterisk)' \
 --dir /etc/nethcti 'attr(0775,asterisk,asterisk)' \
+--dir /var/lib/nethserver/nethcti/static 'attr(0775,asterisk,asterisk)' \
 --dir /var/lib/asterisk 'attr(0775,asterisk,asterisk)' \
 --dir /usr/lib/node/nethcti-server/plugins/com_static_http/static 'attr(0775,asterisk,asterisk)' \
 --dir /var/lib/nethserver/nethcti/upload 'attr(0775,asterisk,asterisk)' \

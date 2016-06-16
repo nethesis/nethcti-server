@@ -69,13 +69,31 @@ var address = 'localhost';
 var webroot = 'static';
 
 /**
-* The node-static server instance.
+* The root directory of the custom static files created by the user.
+*
+* @property customWebroot
+* @type string
+* @private
+*/
+var customWebroot;
+
+/**
+* The node-static server instance for default static files.
 *
 * @property fileStaticRoot
 * @type object
 * @private
 */
 var fileStaticRoot;
+
+/**
+* The node-static server instance for customized static files created by the user.
+*
+* @property customFileStaticRoot
+* @type object
+* @private
+*/
+var customFileStaticRoot;
 
 /**
 * The utility architect component.
@@ -167,7 +185,14 @@ function config(path) {
         webroot = json.static.webroot;
     } else {
         webroot = path.join(__dirname, webroot);
-        logger.warn(IDLOG, 'no webroot has been specified in JSON file ' + path);
+        logger.warn(IDLOG, 'no "webroot" has been specified in JSON file ' + path);
+    }
+
+    // initialize webroot for custom files created by the user
+    if (json.static.customWebroot) {
+        customWebroot = json.static.customWebroot;
+    } else {
+        logger.warn(IDLOG, 'no "customWebroot" has been specified in JSON file ' + path);
     }
     logger.info(IDLOG, 'configuration by file ' + path + ' ended');
 }
@@ -180,8 +205,9 @@ function config(path) {
 */
 function start() {
     try {
-        // initialize node-static server instance
+        // initialize node-static server instances
         fileStaticRoot = new (nodeStatic.Server)(webroot, { cache: 3600 });
+        customFileStaticRoot = new (nodeStatic.Server)(customWebroot, { cache: 3600 });
 
         // create http server
         var server = http.createServer(httpServerCb).listen(port, address);
@@ -194,6 +220,8 @@ function start() {
 
 /**
 * The callback function of the create http server invocation.
+* First it looks the static resource into the webroot and then into the
+* customWebroot.
 *
 * @method httpServerCb
 * @param {object} req The http request
@@ -203,18 +231,29 @@ function start() {
 function httpServerCb(req, res) {
     try {
         req.addListener('end', function () {
-
             try {
                 // remove 'static' from the request
                 // For example "/static/img/logo.png" becomes "//img/logo.png"
                 req.url = req.url.replace('static', '');
 
-                fileStaticRoot.serve(req, res, function(err1, result) {
-
-                    if (err1) { logger.error(IDLOG, 'serving temp file ' + req.url + ': ' + err1); }
-
+                fileStaticRoot.serve(req, res, function (err1, result) {
+                    if (err1) {
+                        customFileStaticRoot.serve(req, res, function (err3, result3) {
+                            if (err3 && err3.status && err3.message) {
+                                logger.error(IDLOG, 'serving "' + req.url + '": code ' + err3.status + ' "' + err3.message + '"');
+                            }
+                            else if (err3) {
+                                logger.error(IDLOG, 'serving "' + req.url + '": ' + err3);
+                            }
+                            if (err3) {
+                                res.writeHead(err3.status);
+                                res.end();
+                                return;
+                            }
+                        });
+                    }
                     // Handle temp files: delete after serving
-                    if (path.basename(req.url).indexOf('tmpaudio') >= 0) {
+                    else if (path.basename(req.url).indexOf('tmpaudio') >= 0) {
 
                         fs.unlink(path.join(webroot, req.url), function (err2) {
 
@@ -227,7 +266,6 @@ function httpServerCb(req, res) {
                 logger.error(IDLOG, 'serving static file ' + req.url + ': ' + err1.stack);
                 compUtil.net.sendHttp500(IDLOG, res, err1.toString());
             }
-
         }).resume();
 
     } catch (err) {

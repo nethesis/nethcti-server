@@ -60,9 +60,8 @@ var compUtil;
 * @property httpsPort
 * @type string
 * @private
-* @default "8180"
 */
-var httpsPort = '8180';
+var httpsPort;
 
 /**
 * Listening port of the HTTP proxy server. It can be
@@ -71,9 +70,8 @@ var httpsPort = '8180';
 * @property httpPort
 * @type string
 * @private
-* @default "8179"
 */
-var httpPort = '8179';
+var httpPort;
 
 /**
 * The routing of the HTTPS proxy. It's initialized by the _config_ method.
@@ -93,9 +91,8 @@ var router = {};
 * @property HTTPS_CERT
 * @type string
 * @private
-* @default "/etc/pki/tls/certs/localhost.crt"
 */
-var HTTPS_CERT = '/etc/pki/tls/certs/localhost.crt';
+var HTTPS_CERT;
 
 /**
 * The path of key to be used by HTTPS server. It can be
@@ -104,9 +101,8 @@ var HTTPS_CERT = '/etc/pki/tls/certs/localhost.crt';
 * @property HTTPS_KEY
 * @type string
 * @private
-* @default "/etc/pki/tls/private/localhost.key"
 */
-var HTTPS_KEY = '/etc/pki/tls/private/localhost.key';
+var HTTPS_KEY;
 
 /**
 * Set the logger to be used.
