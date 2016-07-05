@@ -1,5 +1,5 @@
 Name: nethcti-server
-Version: 2.6
+Version: 2.6.1
 Release: 1%{?dist}
 Summary: Nodejs Asterisk proxy for NethCTI 2
 
@@ -59,6 +59,11 @@ rm -rf $RPM_BUILD_ROOT
 %doc
 
 %changelog
+* Tue Jul 05 2016 Alessandro Polidori <alessandro.polidori@gmail.com> - 2.6.1-1
+- Fix serving custom static file for customer card. refs #4182
+- Fix nethfier popup removing grunt usage. refs #4169
+- Fix audio file download: change "static" dir owners. Refs #4168
+
 * Mon May 23 2016 Alessandro Polidori <alessandro.polidori@gmail.com> - 2.6-1
 - changed default localhost ports. refs #4149
 - queue_recall: check also 'cellphone' to have name&company. 4018
