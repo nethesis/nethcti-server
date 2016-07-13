@@ -12,6 +12,7 @@
 * @static
 */
 var fs           = require('fs');
+var pg           = require('pg');
 var mssql        = require('mssql');
 var moment       = require('moment');
 var iniparser    = require('iniparser');
@@ -312,9 +313,7 @@ function initConnections() {
         var k, sequelize;
         for (k in dbConfig) {
 
-            if (dbConfig[k].dbtype === 'mysql' ||
-                dbConfig[k].dbtype === 'postgres') {
-
+            if (dbConfig[k].dbtype === 'mysql') {
                 var config = {
                     port:    dbConfig[k].dbport,
                     host:    dbConfig[k].dbhost,
@@ -333,12 +332,45 @@ function initConnections() {
 
                 dbConn[k] = sequelize;
                 logger.info(IDLOG, 'initialized db connection with ' + dbConfig[k].dbtype + ' ' + dbConfig[k].dbname + ' ' + dbConfig[k].dbhost + ':' + dbConfig[k].dbport);
-
-            } else if (isMssqlType(dbConfig[k].dbtype)) {
-
+            }
+            else if (dbConfig[k].dbtype === 'postgres') {
+                initPostgresConn(k);
+            }
+            else if (isMssqlType(dbConfig[k].dbtype)) {
                 initMssqlConn(k, getMssqlTdsVersion(dbConfig[k].dbtype));
             }
         }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Initialize a Postgres connection.
+*
+* @method initPostgresConn
+* @param {string} name The customer card name
+* @private
+*/
+function initPostgresConn(name) {
+    try {
+        var config = {
+            user: dbConfig[name].dbuser,
+            password: dbConfig[name].dbpassword,
+            database: dbConfig[name].dbname,
+            host: dbConfig[name].dbhost,
+            port: dbConfig[name].dbport
+        };
+        var client = new pg.Client(config);
+        client.connect(function (err) {
+            if (err) {
+                logger.error(IDLOG, 'initializing ' + dbConfig[name].dbtype + ' db connection ' + dbConfig[name].dbname + ' ' + dbConfig[name].dbhost + ':' + dbConfig[name].dbport + ' - ' + err.stacname);
+            }
+            else {
+                dbConn[name] = client;
+                logger.info(IDLOG, 'initialized db connection with ' + dbConfig[name].dbtype + ' ' + dbConfig[name].dbname + ' ' + dbConfig[name].dbhost + ':' + dbConfig[name].dbport);
+            }
+        });
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }

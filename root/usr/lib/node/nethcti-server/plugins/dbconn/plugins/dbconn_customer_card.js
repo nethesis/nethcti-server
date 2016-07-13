@@ -117,10 +117,7 @@ function setLogger(log) {
 function getCustomerCardByNum(type, num, cb) {
     try {
         // check parameters
-        if (typeof type   !== 'string'
-            || typeof num !== 'string'
-            || typeof cb  !== 'function') {
-
+        if (typeof type !== 'string' || typeof num !== 'string' || typeof cb !== 'function') {
             throw new Error('wrong parameters');
         }
 
@@ -135,16 +132,14 @@ function getCustomerCardByNum(type, num, cb) {
             return;
         }
 
-        if (compDbconnMain.dbConfig[type].dbtype === 'mysql' ||
-            compDbconnMain.dbConfig[type].dbtype === 'postgres') {
+        if (compDbconnMain.dbConfig[type].dbtype === 'mysql') {
 
             // escape of the number
             num = compDbconnMain.dbConn[type].getQueryInterface().escape(num); // e.g. num = '123456'
-            num = num.substring(1, num.length - 1);             // remove external quote e.g. num = 123456
+            num = num.substring(1, num.length - 1); // remove external quote e.g. num = 123456
 
-            // replace the key of the query with paramter
+            // replace the key of the query with parameter
             var query = compDbconnMain.dbConfig[type].query.replace(/\$EXTEN/g, num);
-
             compDbconnMain.dbConn[type].query(query).success(function (results) {
 
                 logger.info(IDLOG, results.length + ' results by searching ' + type + ' by num ' + num);
@@ -155,12 +150,25 @@ function getCustomerCardByNum(type, num, cb) {
                 logger.error(IDLOG, 'searching ' + type + ' by num ' + num + ': ' + err1.toString());
                 cb(err1.toString());
             });
-
-        } else if (compDbconnMain.isMssqlType(compDbconnMain.dbConfig[type].dbtype)) {
+        }
+        else if (compDbconnMain.dbConfig[type].dbtype === 'postgres') {
 
             var query = compDbconnMain.dbConfig[type].query.replace(/\$EXTEN/g, num);
+            compDbconnMain.dbConn[type].query(query, function (err2, results) {
+                if (err2) {
+                    logger.error(IDLOG, 'searching ' + type + ' by num ' + num + ': ' + err2.toString());
+                    cb(err2.toString());
+                }
+                else {
+                    logger.info(IDLOG, results.rows.length + ' results by searching ' + type + ' by num ' + num);
+                    cb(null, results.rows);
+                }
+            });
+        }
+        else if (compDbconnMain.isMssqlType(compDbconnMain.dbConfig[type].dbtype)) {
 
             var request = new mssql.Request(compDbconnMain.dbConn[type]);
+            var query = compDbconnMain.dbConfig[type].query.replace(/\$EXTEN/g, num);
             request.query(query, function (err2, recordset) {
                 try {
                     if (err2) {
@@ -177,7 +185,6 @@ function getCustomerCardByNum(type, num, cb) {
                 }
             });
         }
-
         compDbconnMain.incNumExecQueries();
 
     } catch (error) {
