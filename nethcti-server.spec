@@ -1,5 +1,5 @@
 Name: nethcti-server
-Version: 2.6.1
+Version: 2.6.2
 Release: 1%{?dist}
 Summary: Nodejs Asterisk proxy for NethCTI 2
 
@@ -59,6 +59,9 @@ rm -rf $RPM_BUILD_ROOT
 %doc
 
 %changelog
+* Fri Jul 15 2016 Alessandro Polidori <alessandro.polidori@nethesis.it> - 2.6.2-1
+- Fix postgres db usage that caused phonebook contact creation broken. Refs #4188
+
 * Tue Jul 05 2016 Alessandro Polidori <alessandro.polidori@gmail.com> - 2.6.1-1
 - Fix serving custom static file for customer card. refs #4182
 - Fix nethfier popup removing grunt usage. refs #4169
