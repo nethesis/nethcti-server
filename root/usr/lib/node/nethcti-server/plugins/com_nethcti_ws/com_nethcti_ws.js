@@ -773,17 +773,24 @@ function extenChanged(exten) {
 
             username = wsid[sockid].username;
 
-            // checks if the user has the privacy enabled. In case the user has the "privacy" and
-            // "admin_queues" permission enabled, then the privacy is bypassed for all the calls
-            // that pass through a queue, otherwise all the calls are obfuscated
-            if (   compAuthorization.isPrivacyEnabled(username)           === true
-                && compAuthorization.authorizeOpAdminQueuesUser(username) === false) {
+            // checks if the user has the privacy enabled.
+            //
+            // Scenario 1: the user has the "privacy" and "admin_queues" permissions enabled
+            // the privacy is bypassed for all the calls that pass through a queue and for the calls
+            // that concern the user to send to
+            //
+            // Other cases
+            // all the calls are obfuscated except those concerning the user to send to
+            if (compAuthorization.isPrivacyEnabled(username)           === true  &&
+                compAuthorization.authorizeOpAdminQueuesUser(username) === false &&
+                compAuthorization.verifyUserEndpointExten(username, exten.getExten()) === false) {
 
                 if (wsServer.sockets.sockets[sockid])  { wsServer.sockets.sockets[sockid].emit(EVT_EXTEN_UPDATE, exten.toJSON(privacyStrReplace, privacyStrReplace));  }
                 if (wssServer.sockets.sockets[sockid]) { wssServer.sockets.sockets[sockid].emit(EVT_EXTEN_UPDATE, exten.toJSON(privacyStrReplace, privacyStrReplace)); }
 
-            } else if (   compAuthorization.isPrivacyEnabled(username)           === true
-                       && compAuthorization.authorizeOpAdminQueuesUser(username) === true) {
+            } else if (compAuthorization.isPrivacyEnabled(username)           === true &&
+                       compAuthorization.authorizeOpAdminQueuesUser(username) === true &&
+                       compAuthorization.verifyUserEndpointExten(username, exten.getExten()) === false) {
 
                 if (wsServer.sockets.sockets[sockid])  { wsServer.sockets.sockets[sockid].emit(EVT_EXTEN_UPDATE, exten.toJSON(privacyStrReplace));  }
                 if (wssServer.sockets.sockets[sockid]) { wssServer.sockets.sockets[sockid].emit(EVT_EXTEN_UPDATE, exten.toJSON(privacyStrReplace)); }
