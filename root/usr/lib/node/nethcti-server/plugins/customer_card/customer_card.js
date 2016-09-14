@@ -91,6 +91,15 @@ var dbconn;
 var compAuthorization;
 
 /**
+* The user architect component.
+*
+* @property compUser
+* @type object
+* @private
+*/
+var compUser;
+
+/**
 * All the ejs templates used for the customer cards. The keys are the name of the
 * customer card and the values are objects. These objects have two keys:
 *
@@ -102,6 +111,18 @@ var compAuthorization;
 * @private
 */
 var ejsTemplates = {};
+
+/**
+* The string used to hide phone numbers in privacy mode.
+*
+* @property privacyStrReplace
+* @type {string}
+* @private
+* @final
+* @readOnly
+* @default "xxx"
+*/
+var privacyStrReplace = 'xxx';
 
 /**
 * Set the logger to be used.
@@ -165,7 +186,6 @@ function getCustomerCardByNum(ccName, num, cb) {
         logger.info(IDLOG, 'search customer card ' + ccName + ' by number ' + num + ' by means dbconn module');
         dbconn.getCustomerCardByNum(ccName, num, function (err1, results) {
             try {
-
                 if (err1) {
                     logger.error(IDLOG, 'getting customer card "' + ccName + '" by num "' + num + '"');
                     cb(err1);
@@ -206,6 +226,21 @@ function setCompAuthorization(ca) {
 }
 
 /**
+* Set the user architect component.
+*
+* @method setCompUser
+* @param {object} comp The user architect component.
+*/
+function setCompUser(comp) {
+    try {
+        compUser = comp;
+        logger.info(IDLOG, 'set user architect component');
+    } catch (err) {
+       logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Return the customer card in HTML format.
 *
 * @method getCustomerCardHTML
@@ -228,7 +263,7 @@ function getCustomerCardHTML(name, data) {
 *
 * @method getAllCustomerCards
 * @param {string}   username The identifier of the user
-* @param {string}   num      The number used to search the customer cards.
+* @param {string}   num      The number used to search the customer cards
 * @param {string}   format   The format of the customer card data to be returned. It is contained in the data key of the returned object
 * @param {function} cb       The callback function
 */
@@ -258,6 +293,8 @@ function getAllCustomerCards(username, num, format, cb) {
                         logger.error(IDLOG, err);
 
                     } else { // add the result
+
+                        if (ccName === 'calls') { result.data = filterPrivacyCcCalls(username, num, result.data); }
 
                         var formattedData;
                         if      (format === 'html') { formattedData = getCustomerCardHTML(result.name, result.data); }
@@ -291,6 +328,41 @@ function getAllCustomerCards(username, num, format, cb) {
 
             cb(null, obj);
         });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err.toString());
+    }
+}
+/**
+* Filter customer card "calls" obscuring hiding  phone numbers that do not involve the user.
+*
+* @method filterPrivacyCcCalls
+* @param  {string} username The identifier of the user
+* @param  {string} num      The number used to search the customer cards
+* @param  {array}  calls    The list of the calls
+* @return {array}  The received call list with hides numbers.
+*/
+function filterPrivacyCcCalls(username, num, calls) {
+    try {
+        if (typeof username !== 'string' ||
+            typeof num      !== 'string' ||
+            (calls instanceof Array) !== true) {
+
+            throw new Error('wrong parameters');
+        }
+
+        var extens = compUser.getAllEndpointsExtension(username);
+
+        var i;
+        for (i = 0; i < calls.length; i++) {
+            if (!extens[calls[i].src] && !extens[calls[i].dst]) {
+                calls[i].src  = privacyStrReplace;
+                calls[i].dst  = privacyStrReplace;
+                calls[i].clid = privacyStrReplace;
+            }
+        }
+        return calls;
+
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err.toString());
@@ -458,11 +530,46 @@ function config(path) {
     }
 }
 
+/**
+* Customize the privacy used to hide phone numbers by a configuration file.
+* The file must use the JSON syntax.
+*
+* @method configPrivacy
+* @param {string} path The path of the configuration file
+*/
+function configPrivacy(path) {
+    try {
+        // check parameter
+        if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
+
+        // check file presence
+        if (!fs.existsSync(path)) { throw new Error(path + ' does not exist'); }
+
+        // read configuration file
+        var json = require(path);
+
+        // initialize the string used to hide last digits of phone numbers
+        if (json.privacy_numbers) {
+            privacyStrReplace = json.privacy_numbers;
+
+        } else {
+            logger.warn(IDLOG, 'no privacy string has been specified in JSON file ' + path);
+        }
+
+        logger.info(IDLOG, 'privacy configuration by file ' + path + ' ended');
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
 // public interface
 exports.start                = start;
 exports.config               = config;
 exports.setLogger            = setLogger;
 exports.setDbconn            = setDbconn;
+exports.setCompUser          = setCompUser;
+exports.configPrivacy        = configPrivacy;
 exports.getAllCustomerCards  = getAllCustomerCards;
 exports.getCustomerCardByNum = getCustomerCardByNum;
 exports.setCompAuthorization = setCompAuthorization;
