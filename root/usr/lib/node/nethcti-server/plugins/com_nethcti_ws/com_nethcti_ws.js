@@ -715,35 +715,45 @@ function endpointPresenceChangedListener(username, endpointType, endpoint) {
 }
 
 /**
-* It send an event to all the local websocket clients. It accepts also an optional
-* function to be verified before perform the sending.
+* It send an event to all the local websocket clients. It accepts also a
+* function to be verified before perform the sending and an optional function
+* to manipulate data before sending.
 *
 * @method sendEventToAllClients
-* @param {string}   evname The event name
-* @param {object}   data   The event data object
-* @param {function} fn     The function to be passed to perform the sending. It will be
-*                          called passing the "username" associated with websocket
+* @param {string}   evname   The event name
+* @param {object}   data     The event data object
+* @param {function} fn       The function to be passed to perform the sending. It will be
+*                            called passing the "username" associated with websocket
+* @param {function} [fnData] The function to be passed to perform the data manipulation. It
+*                            will be called passing the "username" associated with websocket
+*                            and the data event
 */
-function sendEventToAllClients(evname, data, fn) {
+function sendEventToAllClients(evname, data, fn, fnData) {
     try {
-        if (typeof evname !== 'string' ||
-            typeof data   !== 'object' ||
-            typeof fn     !== 'function') {
+        if (typeof evname            !== 'string'   ||
+            typeof data              !== 'object'   ||
+            typeof fn                !== 'function' ||
+            (fnData && typeof fnData !== 'function')) {
 
             throw new Error('wrong parameters');
         }
         logger.info(IDLOG, 'emit event "' + evname + '" to all local clients with permission enabled');
 
         // cycle in each websocket to send the event
-        var sockid, username;
+        var sockid, username, copyData;
         for (sockid in wsid) {
 
             username = wsid[sockid].username;
+            copyData = JSON.parse(JSON.stringify(data));
 
             // check the authorization
             if (fn(username) === true) {
-                if (wsServer.sockets.sockets[sockid])  { wsServer.sockets.sockets[sockid].emit(evname, data); }
-                if (wssServer.sockets.sockets[sockid]) { wssServer.sockets.sockets[sockid].emit(evname, data); }
+
+                // manipulate data based on username
+                if (fnData) { copyData.data = fnData(username, copyData.data); }
+
+                if (wsServer.sockets.sockets[sockid])  { wsServer.sockets.sockets[sockid].emit(evname, copyData); }
+                if (wssServer.sockets.sockets[sockid]) { wssServer.sockets.sockets[sockid].emit(evname, copyData); }
             }
         }
     } catch (err) {

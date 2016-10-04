@@ -1761,7 +1761,12 @@ var compConfigManager;
                         }
 
                         // get all extensions of all remote sites
-                        var allRemoteOpExtensions = compComNethctiRemotes.getAllRemoteSitesOperatorExtensions();
+                        var allRemoteOpExtensions;
+                        if (compAuthorization.isPrivacyEnabled(username) === true) {
+                            allRemoteOpExtensions = compComNethctiRemotes.getAllRemoteSitesOperatorExtensions(privacyStrReplace);
+                        } else {
+                            allRemoteOpExtensions = compComNethctiRemotes.getAllRemoteSitesOperatorExtensions();
+                        }
                         logger.info(IDLOG, 'sent all remote sites extensions "' + Object.keys(allRemoteOpExtensions) + '" ' +
                                            'to user "' + username + '" ' + res.connection.remoteAddress);
                         res.send(200, allRemoteOpExtensions);

@@ -199,6 +199,18 @@ var allSitesOpGroups = {};
 var wssClients = {};
 
 /**
+* The string used to hide phone numbers in privacy mode.
+*
+* @property privacyStrReplace
+* @type {string}
+* @private
+* @final
+* @readOnly
+* @default "xxx"
+*/
+var privacyStrReplace = 'xxx';
+
+/**
 * The logger. It must have at least three methods: _info, warn and error._
 *
 * @property logger
@@ -740,6 +752,39 @@ function getAllRemoteSites() {
 }
 
 /**
+* Customize the privacy used to hide phone numbers by a configuration file.
+* The file must use the JSON syntax.
+*
+* @method configPrivacy
+* @param {string} path The path of the configuration file
+*/
+function configPrivacy(path) {
+    try {
+        // check parameter
+        if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
+
+        // check file presence
+        if (!fs.existsSync(path)) { throw new Error(path + ' does not exist'); }
+
+        // read configuration file
+        var json = require(path);
+
+        // initialize the string used to hide last digits of phone numbers
+        if (json.privacy_numbers) {
+            privacyStrReplace = json.privacy_numbers;
+
+        } else {
+            logger.warn(IDLOG, 'no privacy string has been specified in JSON file ' + path);
+        }
+
+        logger.info(IDLOG, 'privacy configuration by file ' + path + ' ended');
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
 * Configures the properties used by the component by a configuration file.
 * The file must use the JSON syntax.
 *
@@ -1046,14 +1091,33 @@ function isClientRemote(username, token) {
 }
 
 /**
-* Returns the perator panel extensions of all remote sites.
+* Returns the perator panel extensions of all remote sites. If "prStrReplace"
+* is specified, caller numbers of conversations will be obfuscated.
 *
 * @method getAllRemoteSitesOperatorExtensions
+* @return {string} [prStrReplace] The string used to obfuscate the call numbers
 * @return {object} Operator panel extensions of all remote sites.
 */
-function getAllRemoteSitesOperatorExtensions() {
+function getAllRemoteSitesOperatorExtensions(prStrReplace) {
     try {
-        return allSitesOpExtensions;
+        if (!prStrReplace) { return allSitesOpExtensions; }
+        else {
+            var rsite, rexten, convid;
+            var obj = JSON.parse(JSON.stringify(allSitesOpExtensions));
+
+            // cycle all remote sites
+            for (rsite in obj) {
+                // cycle all extensions of a remote site
+                for (rexten in obj[rsite]) {
+                    // cycle all conversations of a remote extension
+                    for (convid in obj[rsite][rexten].conversations) {
+                        obj[rsite][rexten].conversations[convid].counterpartNum = obj[rsite][rexten].conversations[convid].counterpartNum.slice(0, -privacyStrReplace.length) + privacyStrReplace;
+                        obj[rsite][rexten].conversations[convid].counterpartName = privacyStrReplace;
+                    }
+                }
+            }
+            return obj;
+        }
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -1606,9 +1670,33 @@ function clientWssRemoteExtenUpdateHdlr(data, site) {
             allSitesOpExtensions[site][data.exten] = data;
             logger.info(IDLOG, 'updated exten "' + data.exten + '" data about remote site "' + site + '" "' + remoteSites[site].hostname + '"');
 
-            compComNethctiWs.sendEventToAllClients(EVT_REMOTE_EXTEN_UPDATE, { remoteSite: site, data: data }, function (username) {
-                return (compAuthorization.authorizeRemoteSiteUser(username) && compAuthorization.authorizeOpExtensionsUser(username));
-            });
+            compComNethctiWs.sendEventToAllClients(
+                EVT_REMOTE_EXTEN_UPDATE,
+                {
+                    remoteSite: site,
+                    data: data
+                },
+                function (username) {
+                    return (compAuthorization.authorizeRemoteSiteUser(username) && compAuthorization.authorizeOpExtensionsUser(username));
+                },
+                function (username, clearData) {
+                    if (compAuthorization.isPrivacyEnabled(username) === true &&
+                        compAuthorization.verifyUserEndpointExten(username, data.exten) === false) {
+
+                        var obfData = JSON.parse(JSON.stringify(clearData));
+
+                        var convid;
+                        for (convid in obfData.conversations) {
+                            obfData.conversations[convid].counterpartNum = obfData.conversations[convid].counterpartNum.slice(0, -privacyStrReplace.length) + privacyStrReplace;
+                            obfData.conversations[convid].counterpartName = privacyStrReplace;
+                        }
+                        return obfData;
+                    }
+                    else {
+                        return clearData;
+                    }
+                }
+            );
         }
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -2057,6 +2145,7 @@ exports.setLogger                       = setLogger;
 exports.setAstProxy                     = setAstProxy;
 exports.setCompUser                     = setCompUser;
 exports.getSiteName                     = getSiteName;
+exports.configPrivacy                   = configPrivacy;
 exports.setCompPostit                   = setCompPostit;
 exports.isClientRemote                  = isClientRemote;
 exports.newRemotePostit                 = newRemotePostit;
