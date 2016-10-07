@@ -1,12 +1,12 @@
 /**
-* Provides the HTTP and HTTPS proxy servers for all services.
+* Provides the HTTP server for all services.
 *
 * @module http_proxy
 * @main http_proxy
 */
 
 /**
-* Provides the HTTP and HTTPS proxy server.
+* Provides the HTTP proxy server.
 *
 * @class http_proxy
 */
@@ -54,16 +54,6 @@ var compAuthentication;
 var compUtil;
 
 /**
-* Listening port of the HTTPS proxy server. It can be
-* customized in the configuration file.
-*
-* @property httpsPort
-* @type string
-* @private
-*/
-var httpsPort;
-
-/**
 * Listening port of the HTTP proxy server. It can be
 * customized in the configuration file.
 *
@@ -74,7 +64,7 @@ var httpsPort;
 var httpPort;
 
 /**
-* The routing of the HTTPS proxy. It's initialized by the _config_ method.
+* The routing of the HTTP proxy. It's initialized by the _config_ method.
 * It must be customized in the configuration file.
 *
 * @property router
@@ -83,26 +73,6 @@ var httpPort;
 * @private
 */
 var router = {};
-
-/**
-* The path of the certificate to be used by HTTPS server. It can be
-* customized in the configuration file.
-*
-* @property HTTPS_CERT
-* @type string
-* @private
-*/
-var HTTPS_CERT;
-
-/**
-* The path of key to be used by HTTPS server. It can be
-* customized in the configuration file.
-*
-* @property HTTPS_KEY
-* @type string
-* @private
-*/
-var HTTPS_KEY;
 
 /**
 * Set the logger to be used.
@@ -131,7 +101,7 @@ function setLogger(log) {
 }
 
 /**
-* Configurates the HTTPS proxy properties and the router url mappings.
+* Configurates the HTTP proxy properties and the router url mappings.
 * The file must use the JSON syntax.
 *
 * **The method can throw an Exception.**
@@ -140,54 +110,17 @@ function setLogger(log) {
 * @param {string} path The path of the configuration file
 */
 function config(path) {
-    // check parameter
     if (typeof path !== 'string') { throw new TypeError('wrong parameter'); }
 
-    // check file presence
-    if (!fs.existsSync(path)) { throw new Error(path + ' doesn\'t exist'); }
+    if (!fs.existsSync(path)) { throw new Error(path + ' does not exist'); }
 
-    // read configuration file
     var json = require(path).http_proxy;
 
-    // initialize the routes of the proxy
-    if (json.router) {
-        router = json.router;
+    if (json.router) { router = json.router; }
+    else { logger.warn(IDLOG, 'no router specified in JSON file ' + path); }
 
-    } else {
-        logger.warn(IDLOG, 'no router specified in JSON file ' + path);
-    }
-
-    // initialize the HTTPS port of the proxy
-    if (json.https_port) {
-        httpsPort = json.https_port;
-
-    } else {
-        logger.warn(IDLOG, 'no HTTPS port specified in JSON file ' + path + ': use the default ' + httpsPort);
-    }
-
-    // initialize the HTTP port of the proxy
-    if (json.http_port) {
-        httpPort = json.http_port;
-
-    } else {
-        logger.warn(IDLOG, 'no HTTP port specified in JSON file ' + path + ': use the default ' + httpPort);
-    }
-
-    // initialize the key of the HTTPS proxy
-    if (json.https_key) {
-        HTTPS_KEY = json.https_key;
-
-    } else {
-        logger.warn(IDLOG, 'no HTTPS key specified in JSON file ' + path);
-    }
-
-    // initialize the certificate of the HTTPS proxy
-    if (json.https_cert) {
-        HTTPS_CERT = json.https_cert;
-
-    } else {
-        logger.warn(IDLOG, 'no HTTPS certificate specified in JSON file ' + path);
-    }
+    if (json.http_port) { httpPort = json.http_port; }
+    else { logger.warn(IDLOG, 'no HTTP port specified in JSON file ' + path + ': use the default ' + httpPort); }
 
     logger.info(IDLOG, 'configuration by file ' + path + ' ended');
 }
@@ -208,7 +141,7 @@ function setCompAuthentication(ca) {
 }
 
 /**
-* Starts the HTTP and HTTPS proxy servers.
+* Starts the HTTP proxy server.
 *
 * @method start
 * @static
@@ -216,48 +149,6 @@ function setCompAuthentication(ca) {
 function start() {
     try {
         startHttpProxy();
-        startHttpsProxy();
-    } catch (err) {
-        logger.error(IDLOG, err.stack);
-    }
-}
-
-/**
-* Starts the HTTPS proxy server.
-*
-* @method startHttpsProxy
-* @private
-*/
-function startHttpsProxy() {
-    try {
-        var options = {
-            pathnameOnly: true,
-            router:       router,
-            https: {
-                key:  fs.readFileSync(HTTPS_KEY,  'utf8'),
-                cert: fs.readFileSync(HTTPS_CERT, 'utf8')
-            }
-        };
-
-        var server = httpProxy.createServer(options, proxyRequest).listen(httpsPort);
-        logger.warn(IDLOG, 'HTTPS proxy listening on port ' + httpsPort);
-
-        // called when some error occurs in the proxy
-        server.proxy.on('proxyError', function (err, req, res) {
-            logger.error(IDLOG, 'https - ' + getProxyLog(req) + ': ' + err);
-            compUtil.net.sendHttp500(IDLOG, res, err.toString());
-        });
-
-        // called at the start of a request
-        server.proxy.on('start', function (req, res, three) {
-            logger.info(IDLOG, 'start https ' + getProxyLog(req));
-        });
-
-        // called at the end of a request
-        server.proxy.on('end', function (req, res, three) {
-            logger.info(IDLOG, 'end https ' + getProxyLog(req));
-        });
-
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }

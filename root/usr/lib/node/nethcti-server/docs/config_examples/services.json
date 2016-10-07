@@ -11,9 +11,6 @@
     },
     "http_proxy": {
         "port":       "8180",
-        "proto":      "https",
-        "https_key":  "KEY PATH",
-        "https_cert": "CRT PATH",
         "router": {
             "127.0.0.1/sms":                "http://127.0.0.1:10012/sms",
             "127.0.0.1/cel":                "http://127.0.0.1:10002/cel",

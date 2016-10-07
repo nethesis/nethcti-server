@@ -316,8 +316,7 @@ function getListeningNetPorts() {
                 https: json.websocket.https_port
             },
             http_proxy: {
-                http:  json.http_proxy.http_port,
-                https: json.http_proxy.https_port
+                http:  json.http_proxy.http_port
             }
         };
         return result;

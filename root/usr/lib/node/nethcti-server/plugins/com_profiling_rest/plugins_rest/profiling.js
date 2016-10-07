@@ -214,8 +214,7 @@ function setCompUtil(comp) {
              "https": "8181"
          },
          "http_proxy": {
-             "http": "8179",
-             "https": "8180"
+             "http": "8179"
          }
      }
         *
