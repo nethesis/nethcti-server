@@ -51,6 +51,10 @@ try {
                 console.log(err.stack);
             });
 
+            process.on('SIGTERM', function (err) {
+                process.exit(0);
+            });
+
         } catch (err) {
             console.log(err.stack);
         }
