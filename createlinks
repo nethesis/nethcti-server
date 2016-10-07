@@ -17,7 +17,7 @@ templates2events("/etc/nethcti/mailer.json",$event);
 templates2events("/etc/nethcti/phone_urls.json",$event);
 templates2events("/etc/nethcti/win_popup.json",$event);
 templates2events("/etc/nethcti/nethcti.json",$event);
-templates2events("/etc/httpd/conf/httpd.conf",$event);
+templates2events("/etc/httpd/conf.d/nethcti-server.conf",$event);
 templates2events("/etc/nethcti/sms_config.php",$event);
 templates2events("/etc/nethcti/nethcti.pem",$event);
 templates2events("/var/www/html/nethvoice/add_ons.php",$event);
