@@ -38,7 +38,8 @@ find root/usr/lib/node/nethcti-server/node_modules -iname readme.\* -o -iname be
 rm -rf %{buildroot}
 (cd root; find . -depth -print | cpio -dump %{buildroot})
 %{genfilelist} \
---file /usr/lib/node/nethcti-server/script/sendsms.php 'attr(0755,root,root)' \
+--file /usr/lib/node/nethcti-server/scripts/sendsms.php 'attr(0755,root,root)' \
+--file /usr/lib/node/nethcti-server/scripts/pam-authenticate.pl 'attr(0550,asterisk,asterisk)' \
 --file /usr/lib/node/nethcti-server/sql/update.sh 'attr(0755,root,root)' \
 --dir /var/spool/asterisk/monitor 'attr(0775,asterisk,asterisk)' \
 --dir /var/spool/nethcti/sms 'attr(0775,asterisk,asterisk)' \
