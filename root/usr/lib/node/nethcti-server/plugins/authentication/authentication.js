@@ -15,6 +15,7 @@ var fs           = require('fs');
 var ldap         = require('ldapjs');
 var crypto       = require('crypto');
 var EventEmitter = require('events').EventEmitter;
+var childProcess = require('child_process');
 
 /**
 * Fired when the component is ready.
@@ -70,13 +71,15 @@ var logger = console;
 * @default {
     "ldap":            "ldap",
     "file":            "file",
-    "activeDirectory": "activeDirectory"
+    "activeDirectory": "activeDirectory",
+    "pam":             "pam"
 };
 */
 var AUTH_TYPE = {
     'ldap':            'ldap',
     'file':            'file',
-    'activeDirectory': 'activeDirectory'
+    'activeDirectory': 'activeDirectory',
+    'pam':             'pam'
 };
 
 /**
@@ -352,6 +355,10 @@ function config(path) {
         // object, because the data are the same
         logger.info(IDLOG, 'configure authentication with active directory');
         configActiveDirectory(json[AUTH_TYPE.ldap]);
+
+    } else if (json.type === AUTH_TYPE.pam) {
+        // configure authentication with PAM
+        logger.info(IDLOG, 'configure authentication with pam');
     }
 
     if ( typeof json.unauthe_call !== 'string'   ||
@@ -732,20 +739,20 @@ function getNonce(accessKeyId, password, isRemoteSite) {
 * @param {string}   remoteIp    The remote ip address
 * @param {function} cb          The callback function
 */
-function authenticateRemoteSite(accessKeydId, password, remoteIp, cb) {
+function authenticateRemoteSite(accessKeyId, password, remoteIp, cb) {
     try {
         // check parameters
-        if (typeof cb           !== 'function' ||
-            typeof remoteIp     !== 'string'   ||
-            typeof password     !== 'string'   ||
-            typeof accessKeydId !== 'string') {
+        if (typeof cb          !== 'function' ||
+            typeof remoteIp    !== 'string'   ||
+            typeof password    !== 'string'   ||
+            typeof accessKeyId !== 'string') {
 
             throw new Error('wrong parameters');
         }
 
         // authenticate remote site by credentials read from the file
-        logger.info(IDLOG, 'authenticate remote site "' + accessKeydId + '" "' + remoteIp + '" by credentials file');
-        authRemoteSiteByFile(accessKeydId, password, remoteIp, cb);
+        logger.info(IDLOG, 'authenticate remote site "' + accessKeyId + '" "' + remoteIp + '" by credentials file');
+        authRemoteSiteByFile(accessKeyId, password, remoteIp, cb);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -762,30 +769,35 @@ function authenticateRemoteSite(accessKeydId, password, remoteIp, cb) {
 * @param {string}   password    The password of the account
 * @param {function} cb          The callback function
 */
-function authenticate(accessKeydId, password, cb) {
+function authenticate(accessKeyId, password, cb) {
     try {
         // check parameters
-        if (typeof cb           !== 'function' ||
-            typeof password     !== 'string'   ||
-            typeof accessKeydId !== 'string') {
+        if (typeof cb          !== 'function' ||
+            typeof password    !== 'string'   ||
+            typeof accessKeyId !== 'string') {
 
             throw new Error('wrong parameters');
         }
 
         if (authenticationType === AUTH_TYPE.ldap) {
             // authenticate the user by LDAP
-            logger.info(IDLOG, 'authenticate the user "' + accessKeydId + '" by LDAP');
-            authByLDAP(accessKeydId, password, cb);
+            logger.info(IDLOG, 'authenticate the user "' + accessKeyId + '" by LDAP');
+            authByLDAP(accessKeyId, password, cb);
 
         } else if (authenticationType === AUTH_TYPE.file) {
             // authenticate the user by credentials read from the file
-            logger.info(IDLOG, 'authenticate the user "' + accessKeydId + '" by credentials file');
-            authByFile(accessKeydId, password, cb);
+            logger.info(IDLOG, 'authenticate the user "' + accessKeyId + '" by credentials file');
+            authByFile(accessKeyId, password, cb);
 
         } else if (authenticationType === AUTH_TYPE.activeDirectory) {
             // authenticate the user by active directory
-            logger.info(IDLOG, 'authenticate the user "' + accessKeydId + '" by active directory');
-            authByActiveDirectory(accessKeydId, password, cb);
+            logger.info(IDLOG, 'authenticate the user "' + accessKeyId + '" by active directory');
+            authByActiveDirectory(accessKeyId, password, cb);
+
+	    } else if (authenticationType === AUTH_TYPE.pam) {
+            // authenticate the user by pam
+            logger.info(IDLOG, 'authenticate the user "' + accessKeyId + '" by pam');
+            authByPam(accessKeyId, password, cb);
 
         } else {
             logger.error(IDLOG, 'unknown authentication type "' + authenticationType + '"');
@@ -797,6 +809,43 @@ function authenticate(accessKeydId, password, cb) {
 }
 
 /**
+* Authenticate the user by the credentials read from pam.
+*
+* @method authByPam
+* @param {string} accessKeyId The access key used to authenticate, e.g. the username
+* @param {string} password The password of the account
+* @param {function} cb The callback function
+* @private
+*/
+function authByPam(accessKeyId, password, cb) {
+    try {
+        // check parameters
+        if (typeof cb          !== 'function' ||
+            typeof password    !== 'string'   ||
+            typeof accessKeyId !== 'string') {
+
+            throw new Error('wrong parameters');
+        }
+
+        var cmd = 'echo -e "' + accessKeyId + '\n' + password + '" | /usr/lib/node/nethcti-server/scripts/pam-authenticate.pl';
+        childProcess.exec(cmd, function (error, stdout, stderr) {
+            if (error) {
+                logger.warn('pam authentication failed for user "' + accessKeyId + '"');
+                cb(error);
+            } else {
+                logger.info(IDLOG, 'user "' + accessKeyId + '" has been authenticated successfully with pam');
+                cb(null);
+            }
+        });
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb('pam authentication failed for user "' + accessKeyId + '"');
+    }
+}
+
+
+/**
 * Authenticate the user by the credentials read from the file.
 *
 * @method authByFile
@@ -805,28 +854,28 @@ function authenticate(accessKeydId, password, cb) {
 * @param {function} cb The callback function
 * @private
 */
-function authByFile(accessKeydId, password, cb) {
+function authByFile(accessKeyId, password, cb) {
     try {
         // check parameters
-        if (typeof cb           !== 'function' ||
-            typeof password     !== 'string'   ||
-            typeof accessKeydId !== 'string') {
+        if (typeof cb          !== 'function' ||
+            typeof password    !== 'string'   ||
+            typeof accessKeyId !== 'string') {
 
             throw new Error('wrong parameters');
         }
 
-        if (authFileCredentials[accessKeydId] === password) {
-            logger.info(IDLOG, 'user "' + accessKeydId + '" has been authenticated successfully with file');
+        if (authFileCredentials[accessKeyId] === password) {
+            logger.info(IDLOG, 'user "' + accessKeyId + '" has been authenticated successfully with file');
             cb(null);
 
         } else {
-            var strerr = 'file authentication failed for user "' + accessKeydId + '"';
+            var strerr = 'file authentication failed for user "' + accessKeyId + '"';
             logger.warn(IDLOG, strerr);
             cb(strerr);
         }
     } catch (err) {
         logger.error(IDLOG, err.stack);
-        cb('file authentication failed for user "' + accessKeydId + '"');
+        cb('file authentication failed for user "' + accessKeyId + '"');
     }
 }
 
@@ -840,13 +889,13 @@ function authByFile(accessKeydId, password, cb) {
 * @param {function} cb          The callback function
 * @private
 */
-function authRemoteSiteByFile(accessKeydId, password, remoteIp, cb) {
+function authRemoteSiteByFile(accessKeyId, password, remoteIp, cb) {
     try {
         // check parameters
-        if (typeof cb           !== 'function' ||
-            typeof remoteIp     !== 'string'   ||
-            typeof password     !== 'string'   ||
-            typeof accessKeydId !== 'string') {
+        if (typeof cb          !== 'function' ||
+            typeof remoteIp    !== 'string'   ||
+            typeof password    !== 'string'   ||
+            typeof accessKeyId !== 'string') {
 
             throw new Error('wrong parameters');
         }
@@ -854,7 +903,7 @@ function authRemoteSiteByFile(accessKeydId, password, remoteIp, cb) {
         var site;
         var authenticated = false;
         for (site in authRemoteSites) {
-            if (authRemoteSites[site].username === accessKeydId &&
+            if (authRemoteSites[site].username === accessKeyId &&
                 authRemoteSites[site].password === password     &&
                 authRemoteSites[site].allowed_ip.indexOf(remoteIp) > -1) {
 
@@ -863,17 +912,17 @@ function authRemoteSiteByFile(accessKeydId, password, remoteIp, cb) {
             }
         }
         if (authenticated) {
-            logger.info(IDLOG, 'remote site "' + accessKeydId + '" ' + remoteIp + ' has been authenticated successfully with file');
+            logger.info(IDLOG, 'remote site "' + accessKeyId + '" ' + remoteIp + ' has been authenticated successfully with file');
             cb(null);
         }
         else {
-            var strerr = 'file authentication failed for remote site "' + accessKeydId + '"';
+            var strerr = 'file authentication failed for remote site "' + accessKeyId + '"';
             logger.warn(IDLOG, strerr);
             cb(strerr);
         }
     } catch (err) {
         logger.error(IDLOG, err.stack);
-        cb('file authentication failed for remote site "' + accessKeydId + '"');
+        cb('file authentication failed for remote site "' + accessKeyId + '"');
     }
 }
 
@@ -885,21 +934,21 @@ function authRemoteSiteByFile(accessKeydId, password, remoteIp, cb) {
 * @param {string}   password    The password of the account
 * @param {function} cb          The callback function
 */
-function authByLDAP(accessKeydId, password, cb) {
+function authByLDAP(accessKeyId, password, cb) {
     try {
         // check parameters
-        if (typeof cb           !== 'function' ||
-            typeof password     !== 'string'   ||
-            typeof accessKeydId !== 'string') {
+        if (typeof cb          !== 'function' ||
+            typeof password    !== 'string'   ||
+            typeof accessKeyId !== 'string') {
 
             throw new Error('wrong parameters');
         }
 
-        var dn = 'uid=' + accessKeydId + ',ou=' + ou + ',' + baseDn;
+        var dn = 'uid=' + accessKeyId + ',ou=' + ou + ',' + baseDn;
 
         // ldap authentication
         client.bind(dn, password, function (err, result) {
-            ldapBindCb(accessKeydId, err, result, cb);
+            ldapBindCb(accessKeyId, err, result, cb);
         });
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -914,21 +963,21 @@ function authByLDAP(accessKeydId, password, cb) {
 * @param {string}   password    The password of the account
 * @param {function} cb          The callback function
 */
-function authByActiveDirectory(accessKeydId, password, cb) {
+function authByActiveDirectory(accessKeyId, password, cb) {
     try {
         // check parameters
-        if (typeof cb           !== 'function' ||
-            typeof password     !== 'string'   ||
-            typeof accessKeydId !== 'string') {
+        if (typeof cb          !== 'function' ||
+            typeof password    !== 'string'   ||
+            typeof accessKeyId !== 'string') {
 
             throw new Error('wrong parameters');
         }
 
-        var dn = accessKeydId + '@' + adDomain;
+        var dn = accessKeyId + '@' + adDomain;
 
         // ldap authentication
         client.bind(dn, password, function (err, result) {
-            adBindCb(accessKeydId, err, result, cb);
+            adBindCb(accessKeyId, err, result, cb);
         });
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -939,30 +988,30 @@ function authByActiveDirectory(accessKeydId, password, cb) {
 * It's the callback of ldap bind operation.
 *
 * @method ldapBindCb
-* @param {string}   accessKeydId The access key used for authentication
+* @param {string}   accessKeyId The access key used for authentication
 * @param {object}   err          The error response. If the bind is successfull it is null
 * @param {object}   result       The result of the bind operation
 * @param {function} cb           The callback function
 * @private
 */
-function ldapBindCb(accessKeydId, err, result, cb) {
+function ldapBindCb(accessKeyId, err, result, cb) {
     try {
         // check parameters
-        if(typeof accessKeydId !== 'string' || typeof cb !== 'function') {
+        if(typeof accessKeyId !== 'string' || typeof cb !== 'function') {
             throw new Error('wrong parameters');
         }
 
         if (err) {
-            logger.warn(IDLOG, 'LDAP authentication failed for user "' + accessKeydId + '"');
+            logger.warn(IDLOG, 'LDAP authentication failed for user "' + accessKeyId + '"');
             cb(err);
 
         } else {
-            logger.info(IDLOG, 'user "' + accessKeydId + '" has been successfully authenticated with LDAP');
+            logger.info(IDLOG, 'user "' + accessKeyId + '" has been successfully authenticated with LDAP');
             cb(null);
         }
     } catch (err) {
         logger.error(IDLOG, err.stack);
-        cb('LDAP authentication failed for user "' + accessKeydId + '"');
+        cb('LDAP authentication failed for user "' + accessKeyId + '"');
     }
 }
 
@@ -970,30 +1019,30 @@ function ldapBindCb(accessKeydId, err, result, cb) {
 * It is the callback of ldap bind operation done on Active Directory.
 *
 * @method adBindCb
-* @param {string}   accessKeydId The access key used for authentication
+* @param {string}   accessKeyId The access key used for authentication
 * @param {object}   err          The error response. If the bind is successfull it is null
 * @param {object}   result       The result of the bind operation
 * @param {function} cb           The callback function
 * @private
 */
-function adBindCb(accessKeydId, err, result, cb) {
+function adBindCb(accessKeyId, err, result, cb) {
     try {
         // check parameters
-        if(typeof accessKeydId !== 'string' || typeof cb !== 'function') {
+        if(typeof accessKeyId !== 'string' || typeof cb !== 'function') {
             throw new Error('wrong parameters');
         }
 
         if (err) {
-            logger.warn(IDLOG, 'active directory authentication failed for user "' + accessKeydId + '"');
+            logger.warn(IDLOG, 'active directory authentication failed for user "' + accessKeyId + '"');
             cb(err);
 
         } else {
-            logger.info(IDLOG, 'user "' + accessKeydId + '" has been successfully authenticated with active directory');
+            logger.info(IDLOG, 'user "' + accessKeyId + '" has been successfully authenticated with active directory');
             cb(null);
         }
     } catch (err) {
         logger.error(IDLOG, err.stack);
-        cb('active directory authentication failed for user "' + accessKeydId + '"');
+        cb('active directory authentication failed for user "' + accessKeyId + '"');
     }
 }
 
