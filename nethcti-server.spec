@@ -35,9 +35,9 @@ mkdir -p root/var/lib/nethserver/nethcti/static/img
 find root/usr/lib/node/nethcti-server/node_modules -iname readme.\* -o -iname benchmark\* -o -iname sample\* -o -iname test\* -o -iname example\* -o -iname changelog\* -o -iname docs -o -iname component.json -o -iname \*.md -o -iname \*.bat -o -iname \*.tgz | xargs rm -rf
 
 %install
-rm -rf $RPM_BUILD_ROOT
-(cd root; find . -depth -print | cpio -dump $RPM_BUILD_ROOT)
-/sbin/e-smith/genfilelist \
+rm -rf %{buildroot}
+(cd root; find . -depth -print | cpio -dump %{buildroot})
+%{genfilelist} \
 --file /usr/lib/node/nethcti-server/script/sendsms.php 'attr(0755,root,root)' \
 --file /usr/lib/node/nethcti-server/sql/update.sh 'attr(0755,root,root)' \
 --dir /var/spool/asterisk/monitor 'attr(0775,asterisk,asterisk)' \
@@ -47,16 +47,17 @@ rm -rf $RPM_BUILD_ROOT
 --dir /var/lib/asterisk 'attr(0775,asterisk,asterisk)' \
 --dir /usr/lib/node/nethcti-server/plugins/com_static_http/static 'attr(0775,asterisk,asterisk)' \
 --dir /var/lib/nethserver/nethcti/upload 'attr(0775,asterisk,asterisk)' \
---dir /var/lib/asterisk/bin 'attr(0775,asterisk,asterisk)' $RPM_BUILD_ROOT > %{name}-%{version}-filelist
+--dir /var/lib/asterisk/bin 'attr(0775,asterisk,asterisk)' %{buildroot} > %{name}-%{version}-filelist
 
 %clean
-rm -rf $RPM_BUILD_ROOT
+rm -rf %{buildroot}
 
 %files -f %{name}-%{version}-filelist
 %defattr(-,root,root,-)
 %config(noreplace) /usr/lib/node/nethcti-server/plugins/com_static_http/static/templates/notification_popup/*
 
 %doc
+%dir %{_nseventsdir}/%{name}-update
 
 %changelog
 * Fri Jul 15 2016 Alessandro Polidori <alessandro.polidori@nethesis.it> - 2.6.2-1
