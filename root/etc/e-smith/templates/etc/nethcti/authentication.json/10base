@@ -4,7 +4,7 @@
     my $ldapPort = ${'nethcti-server'}{'LdapPort'} || "389";
     my $ldapServer = ${'nethcti-server'}{'LdapServer'} || "localhost";
     my $ldapsSelfSigned = ${'nethcti-server'}{'LdapsSelfSigned'} || "false";
-    my $authType = ${'nethcti-server'}{'AuthType'} || "ldap";
+    my $authType = ${'nethcti-server'}{'AuthType'} || "pam";
     my $unAutheCall = ${'nethcti-server'}{'UnAutheCall'} || "disabled";
     my $ldap = "";
 
