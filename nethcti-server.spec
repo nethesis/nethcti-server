@@ -23,8 +23,6 @@ Nodejs Asterisk proxy used for NethCTI 2
 perl -w createlinks
 
 mkdir -p root/etc/nethcti
-mkdir -p root/var/lib/asterisk/bin
-mkdir -p root/var/spool/asterisk/monitor
 mkdir -p root/var/spool/nethcti/sms
 mkdir -p root/var/lib/nethserver/nethcti/upload
 mkdir -p root/var/lib/nethserver/nethcti/templates/notification_manager
@@ -41,14 +39,11 @@ rm -rf %{buildroot}
 --file /usr/lib/node/nethcti-server/scripts/sendsms.php 'attr(0755,root,root)' \
 --file /usr/lib/node/nethcti-server/scripts/pam-authenticate.pl 'attr(0550,asterisk,asterisk)' \
 --file /usr/lib/node/nethcti-server/sql/update.sh 'attr(0755,root,root)' \
---dir /var/spool/asterisk/monitor 'attr(0775,asterisk,asterisk)' \
 --dir /var/spool/nethcti/sms 'attr(0775,asterisk,asterisk)' \
 --dir /etc/nethcti 'attr(0775,asterisk,asterisk)' \
 --dir /var/lib/nethserver/nethcti/static 'attr(0775,asterisk,asterisk)' \
---dir /var/lib/asterisk 'attr(0775,asterisk,asterisk)' \
 --dir /usr/lib/node/nethcti-server/plugins/com_static_http/static 'attr(0775,asterisk,asterisk)' \
---dir /var/lib/nethserver/nethcti/upload 'attr(0775,asterisk,asterisk)' \
---dir /var/lib/asterisk/bin 'attr(0775,asterisk,asterisk)' %{buildroot} > %{name}-%{version}-filelist
+--dir /var/lib/nethserver/nethcti/upload 'attr(0775,asterisk,asterisk)' %{buildroot} > %{name}-%{version}-filelist
 
 %clean
 rm -rf %{buildroot}
