@@ -877,7 +877,7 @@ function downCallRecording(id, username, data, res) {
                 else {
                     logger.info(IDLOG, 'download of the recording call with id "' + id + '" has been sent successfully to user "' + username + '"');
                     // get base path of the call recordings and then construct the filepath using the arguments
-                    var filename = 'recording' + id + username + 'tmpaudio.wav';
+                    var filename = (new Buffer(id + username).toString('base64')) + '.wav';
                     var basepath = compAstProxy.getBaseCallRecAudioPath();
                     var filepath = path.join(basepath, data.year, data.month, data.day, data.filename);
 
