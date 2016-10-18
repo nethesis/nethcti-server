@@ -1,5 +1,5 @@
 Name: nethcti-server
-Version: 2.6.2
+Version: 2.7.0
 Release: 1%{?dist}
 Summary: Nodejs Asterisk proxy for NethCTI 2
 
@@ -56,6 +56,9 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Tue Oct 18 2016 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> - 2.7.0-1
+- First NS 7 release
+
 * Fri Jul 15 2016 Alessandro Polidori <alessandro.polidori@nethesis.it> - 2.6.2-1
 - Fix postgres db usage that caused phonebook contact creation broken. Refs #4188
 
