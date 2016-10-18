@@ -525,7 +525,11 @@ function setCompAuthorization(comp) {
                                     }
 
                                     logger.info(IDLOG, 'download voice message with id "' + req.params.id + '" of the voicemail "' + vmid + '" successfully by the user "' + username + '"');
-                                    var filename = "voicemail" + req.params.id + username + "tmpaudio.wav";
+                                    var filename = [
+                                        'voicemail_',
+                                        (new Buffer(req.params.id + username)).toString('base64'),
+                                        '_tmpaudio.wav'
+                                    ].join('');
                                     compStaticHttp.saveFile(filename, result);
                                     res.send(200, filename);
 
