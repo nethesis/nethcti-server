@@ -1,5 +1,5 @@
 Name: nethcti-server
-Version: 2.6.2
+Version: 2.6.3
 Release: 1%{?dist}
 Summary: Nodejs Asterisk proxy for NethCTI 2
 
@@ -59,6 +59,11 @@ rm -rf $RPM_BUILD_ROOT
 %doc
 
 %changelog
+* Wed Oct 19 2016 Alessandro Polidori <alessandro.polidori@nethesis.it> - 2.6.3-1
+- add privacy for remote site. refs #4227
+- fix cust card privacy on last calls. refs #4218
+- ws: fix privacy for extenUpdate events. refs #4210
+
 * Fri Jul 15 2016 Alessandro Polidori <alessandro.polidori@nethesis.it> - 2.6.2-1
 - Fix postgres db usage that caused phonebook contact creation broken. Refs #4188
 
