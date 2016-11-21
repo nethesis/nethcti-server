@@ -1,5 +1,5 @@
 Name: nethcti-server
-Version: 2.6.3
+Version: 2.6.4
 Release: 1%{?dist}
 Summary: Nodejs Asterisk proxy for NethCTI 2
 
@@ -59,6 +59,9 @@ rm -rf $RPM_BUILD_ROOT
 %doc
 
 %changelog
+* Mon Nov 21 2016 Alessandro Polidori <alessandro.polidori@nethesis.it> - 2.6.4-1
+- add c2c auto support for sangoma phones. Nethesis/dev#5027
+
 * Wed Oct 19 2016 Alessandro Polidori <alessandro.polidori@nethesis.it> - 2.6.3-1
 - add privacy for remote site. refs #4227
 - fix cust card privacy on last calls. refs #4218
