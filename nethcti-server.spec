@@ -1,5 +1,5 @@
 Name: nethcti-server
-Version: 2.7.0
+Version: 2.7.2
 Release: 1%{?dist}
 Summary: Nodejs Asterisk proxy for NethCTI 2
 
@@ -56,6 +56,9 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Mon Nov 21 2016 Alessandro Polidori <alessandro.polidori@nethesis.it> - 2.7.2-1
+- add c2c auto support for sangoma phones. Nethesis/dev#5027
+
 * Tue Oct 18 2016 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> - 2.7.0-1
 - First NS 7 release
 
