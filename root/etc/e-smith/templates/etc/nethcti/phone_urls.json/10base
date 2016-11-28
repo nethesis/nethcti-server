@@ -26,7 +26,7 @@
             "command": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/command.htm?key=COMANDO"
         }
     },
-    "^sangoma\\s.*": {
+    "^sangoma\\\s.*": {
         "urls": {
             "call": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/Phone_ActionURL&Command=1&Number=$NUMBER&Account=1",
             "answer": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/Phone_ActionURL&key=OK",
