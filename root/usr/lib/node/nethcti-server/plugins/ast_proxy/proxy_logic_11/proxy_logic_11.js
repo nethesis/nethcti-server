@@ -25,6 +25,7 @@ var QueueMember             = require('../queueMember').QueueMember;
 var EventEmitter            = require('events').EventEmitter;
 var ParkedCaller            = require('../parkedCaller').ParkedCaller;
 var Conversation            = require('../conversation').Conversation;
+var utilChannel11           = require('./util_channel_11');
 var MeetmeConfUser          = require('../meetmeConfUser').MeetmeConfUser;
 var MeetmeConference        = require('../meetmeConference').MeetmeConference;
 var TrunkConversation       = require('../trunkConversation').TrunkConversation;
@@ -4045,7 +4046,7 @@ function call(endpointType, endpointId, to, extenForContext, cb) {
             cb(err);
             return;
         }
-	if (!extensions[extenForContext]) {
+        if (!extensions[extenForContext]) {
             var err = 'making new call: no extenForContext "' + extenForContext + '" to get the "context" for the call';
             logger.warn(IDLOG, err);
             cb(err);
@@ -4299,10 +4300,11 @@ function sendDtmfToConversation(endpointType, endpointId, convid, tone, cb) {
         // check the endpoint existence
         if (endpointType === 'extension' && extensions[endpointId]) {
 
-            var conv           = extensions[endpointId].getConversation(convid);
-            var srcChannel     = conv.getSourceChannel();
+            var conv = extensions[endpointId].getConversation(convid);
+            var chSource = conv.getSourceChannel();
+            var channel = chSource.getChannel();
             var counterpartNum = conv.getCounterpartNum();
-            var chToSend       = ( srcChannel.getCallerNum() === counterpartNum ? srcChannel.getChannel() : srcChannel.getBridgedChannel() );
+            var chToSend = utilChannel11.extractExtensionFromChannel(channel) === counterpartNum ? channel : chSource.getBridgedChannel();
 
             logger.info(IDLOG, 'send dtmf tone "' + tone + '" from exten "' + endpointId + '" to channel "' + chToSend + '" of convid "' + convid + '"');
             astProxy.doCmd({ command: 'playDTMF', channel: chToSend, digit: tone }, function (error) {
@@ -4529,6 +4531,7 @@ function startMeetmeConference(convid, ownerExtenId, addExtenId, cb) {
 
         // redirect the channel of the counterpart to the conference number of the owner extension
         var confnum = getMeetmeConfCode() + ownerExtenId;
+
         redirectConversation('extension', ownerExtenId, convid, confnum, ownerExtenId, function (err) {
             // newUser is true if the conversation "convid"
             // involves both "ownerExtenId" and "addExtenId"
@@ -4926,16 +4929,17 @@ function redirectConversation(endpointType, endpointId, convid, to, extForCtx, c
                 throw new Error('no extension to get context for redirect conversation (extForCtx="' + extForCtx + '")');
             }
 
-            var ctx        = extensions[extForCtx].getContext();
-            var convs      = extensions[endpointId].getAllConversations();
-            var conv       = convs[convid];
-            var chSource   = conv.getSourceChannel();
-            var callerNum  = chSource.getCallerNum();
-            var bridgedNum = chSource.getBridgedNum();
+            var ctx = extensions[extForCtx].getContext();
+            var convs = extensions[endpointId].getAllConversations();
+            var conv = convs[convid];
+            var chSource = conv.getSourceChannel();
+            var channel = chSource.getChannel();
+            var bridgedChannel = chSource.getBridgedChannel();
 
             // redirect is only possible on own calls. So when the endpointId is the caller, the
             // channel to redirect is the destination channel. It's the source channel otherwise
-            var chToRedirect = endpointId === chSource.getCallerNum() ? chSource.getBridgedChannel() : chSource.getChannel();
+            var chToRedirect = endpointId === utilChannel11.extractExtensionFromChannel(channel) ? bridgedChannel : channel;
+
             if (chToRedirect !== undefined) {
 
                 // redirect the channel
@@ -4944,13 +4948,11 @@ function redirectConversation(endpointType, endpointId, convid, to, extForCtx, c
                     cb(err);
                     redirectConvCb(err);
                 });
-
             } else {
                 msg = 'getting the channel to redirect ' + chToRedirect;
                 logger.error(IDLOG, msg);
                 cb(msg);
             }
-
         } else {
             msg = 'redirect conversation: unknown endpointType ' + endpointType + ' or extension ' + endpointId + ' not present';
             logger.warn(IDLOG, msg);
@@ -5175,13 +5177,13 @@ function attendedTransferConversation(endpointType, endpointId, convid, to, cb) 
                 return;
             }
 
-            var chSource   = conv.getSourceChannel();
-            var callerNum  = chSource.getCallerNum();
-            var bridgedNum = chSource.getBridgedNum();
+            var chSource = conv.getSourceChannel();
+            var channel = chSource.getChannel();
+            var bridgedChannel = chSource.getBridgedChannel();
 
             // attended transfer is only possible on own calls. So when the endpointId is the caller, the
             // channel to transfer is the source channel, otherwise it's the destination channel
-            var chToTransfer = endpointId === chSource.getCallerNum() ? chSource.getChannel() : chSource.getBridgedChannel();
+            var chToTransfer = utilChannel11.extractExtensionFromChannel(channel) === endpointId ? channel : bridgedChannel;
 
             if (chToTransfer !== undefined) {
 
@@ -5295,9 +5297,9 @@ function transferConversationToVoicemail(endpointType, endpointId, convid, voice
 function parkConversation(endpointType, endpointId, convid, applicantId, cb) {
     try {
         // check parameters
-        if (typeof convid       !== 'string'   ||
-            typeof cb           !== 'function' || typeof endpointId   !== 'string' ||
-            typeof applicantId  !== 'string'   || typeof endpointType !== 'string') {
+        if (typeof convid      !== 'string'   ||
+            typeof cb          !== 'function' || typeof endpointId   !== 'string' ||
+            typeof applicantId !== 'string'   || typeof endpointType !== 'string') {
 
             throw new Error('wrong parameters');
         }
@@ -5317,22 +5319,30 @@ function parkConversation(endpointType, endpointId, convid, applicantId, cb) {
                 return;
             }
 
-            var chSource   = conv.getSourceChannel();
-            var callerNum  = chSource.getCallerNum();
-            var bridgedNum = chSource.getBridgedNum();
+            var chSource = conv.getSourceChannel();
+            var channel = chSource.getChannel();
+            var bridgedChannel = chSource.getBridgedChannel();
 
             // check if the applicant of the request is an intermediary of the conversation.
             // This is because only caller or called can park the conversation
-            if (callerNum !== applicantId && bridgedNum !== applicantId) {
+            if (!utilChannel11.extractExtensionFromChannel(channel) === applicantId &&
+                !utilChannel11.extractExtensionFromChannel(bridgedChannel) === applicantId) {
+
                 err = 'applicant extension "' + applicantId + '" not allowed to park a conversation not owned by him ' + convid;
                 logger.warn(IDLOG, err);
                 cb(err);
                 return;
             }
 
-            var chToPark = callerNum === applicantId ? chSource.getBridgedChannel() : chSource.getChannel();
-            // channel to return once elapsed the parking timeout
-            var chToReturn = callerNum === applicantId ? chSource.getChannel() : chSource.getBridgedChannel();
+            var chToPark;
+            var chToReturn; // channel to return once elapsed the parking timeout
+            if (utilChannel11.extractExtensionFromChannel(channel) === applicantId) {
+                chToPark = bridgedChannel;
+                chToReturn = channel;
+            } else {
+                chToPark = channel;
+                chToReturn = bridgedChannel;
+            }
 
             if (chToPark !== undefined && chToReturn !== undefined) {
 
