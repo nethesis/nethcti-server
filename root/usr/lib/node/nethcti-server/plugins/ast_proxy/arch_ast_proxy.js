@@ -477,6 +477,13 @@ module.exports = function (options, imports, register) {
             EVT_EXTEN_CHANGED: astProxy.proxyLogic.EVT_EXTEN_CHANGED,
 
             /**
+            * It's the _EVT\_EXTEN\_HANGUP_ property provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method EVT_EXTEN_HANGUP
+            */
+            EVT_EXTEN_HANGUP: astProxy.proxyLogic.EVT_EXTEN_HANGUP,
+
+            /**
             * It's the _EVT\_NEW\_CDR_ property provided by _ast\_proxy.proxyLogic_.
             *
             * @method EVT_NEW_CDR

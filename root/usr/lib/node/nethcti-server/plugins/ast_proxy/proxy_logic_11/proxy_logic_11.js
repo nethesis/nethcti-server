@@ -60,6 +60,21 @@ var IDLOG = '[proxy_logic_11]';
 var EVT_EXTEN_CHANGED = 'extenChanged';
 
 /**
+* Fired when an hangup happened on extension.
+*
+* @event hangup
+* @param {object} msg The extension hangup data object
+*/
+/**
+* The name of the extension hangup event.
+*
+* @property EVT_EXTEN_HANGUP
+* @type string
+* @default "extenHangup"
+*/
+var EVT_EXTEN_HANGUP = 'extenHangup';
+
+/**
 * Fired when something changed in an queue member.
 *
 * @event queueMemberChanged
@@ -4472,6 +4487,11 @@ function evtHangupConversation(data) {
                 // update the conversations of the extension
                 updateExtenConversations(err, resp, data.channelExten);
             });
+
+            // emit the event
+            logger.info(IDLOG, 'emit event "' + EVT_EXTEN_HANGUP + '" for extension ' + data.channelExten);
+            delete data.channel;
+            astProxy.emit(EVT_EXTEN_HANGUP, data);
         }
 
         // check the trunk existence
@@ -6911,6 +6931,7 @@ exports.inoutDynQueues                  = inoutDynQueues;
 exports.getJSONParkings                 = getJSONParkings;
 exports.recordAudioFile                 = recordAudioFile;
 exports.redirectParking                 = redirectParking;
+exports.EVT_EXTEN_HANGUP                = EVT_EXTEN_HANGUP;
 exports.getJSONQueuesQOS                = getJSONQueuesQOS;
 exports.muteConversation                = muteConversation;
 exports.sendDTMFSequence                = sendDTMFSequence;

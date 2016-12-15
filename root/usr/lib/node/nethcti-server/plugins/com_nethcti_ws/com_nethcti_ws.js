@@ -487,6 +487,7 @@ function setAstProxyListeners() {
             throw new Error('wrong astProxy object');
         }
 
+        astProxy.on(astProxy.EVT_EXTEN_HANGUP,         extenHangup);        // an extension hangup
         astProxy.on(astProxy.EVT_EXTEN_CHANGED,        extenChanged);       // an extension has changed
         astProxy.on(astProxy.EVT_EXTEN_DIALING,        extenDialing);       // an extension ringing
         astProxy.on(astProxy.EVT_TRUNK_CHANGED,        trunkChanged);       // a trunk has changed
@@ -808,6 +809,42 @@ function extenChanged(exten) {
             } else {
                 if (wsServer.sockets.sockets[sockid])  { wsServer.sockets.sockets[sockid].emit(EVT_EXTEN_UPDATE, exten.toJSON()); }
                 if (wssServer.sockets.sockets[sockid]) { wssServer.sockets.sockets[sockid].emit(EVT_EXTEN_UPDATE, exten.toJSON()); }
+            }
+        }
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Handler for the _extenHangup_ event emitted by _ast\_proxy_ component.
+*
+* @method extenHangup
+* @param {object} data The extension hangup data object
+* @private
+*/
+function extenHangup(data) {
+    try {
+        logger.info(IDLOG, 'received event "' + astProxy.EVT_EXTEN_HANGUP + '" for extension ' + data.channelExten);
+
+        // get all users associated with the hangupped extension
+        var users = compUser.getUsersUsingEndpointExtension(data.channelExten);
+
+        // emit the "extenHangup" event for each logged in user associated with the hangupped extension
+        var socketId, username;
+
+        for (socketId in wsid) {
+
+            username = wsid[socketId].username;
+
+            // the user is associated with the hangupped extension and is logged in
+            if (users.indexOf(username) !== -1) {
+
+                // emits the event with the hangup data
+                logger.info(IDLOG, 'emit event "' + astProxy.EVT_EXTEN_HANGUP + '" for extension ' + data.channelExten + ' to user "' + username + '"');
+
+                if (wsServer.sockets.sockets[socketId]) { wsServer.sockets.sockets[socketId].emit(astProxy.EVT_EXTEN_HANGUP, data); }
+                if (wssServer.sockets.sockets[socketId]) { wssServer.sockets.sockets[socketId].emit(astProxy.EVT_EXTEN_HANGUP, data); }
             }
         }
     } catch (err) {
