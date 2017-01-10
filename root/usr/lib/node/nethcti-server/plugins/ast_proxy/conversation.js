@@ -427,3 +427,4 @@ var RECORDING_STATUS = {
     TRUE:  'true',
     FALSE: 'false'
 };
+exports.RECORDING_STATUS = RECORDING_STATUS;

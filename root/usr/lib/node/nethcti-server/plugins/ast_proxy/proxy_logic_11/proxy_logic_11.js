@@ -28,6 +28,7 @@ var Conversation            = require('../conversation').Conversation;
 var utilChannel11           = require('./util_channel_11');
 var MeetmeConfUser          = require('../meetmeConfUser').MeetmeConfUser;
 var MeetmeConference        = require('../meetmeConference').MeetmeConference;
+var RECORDING_STATUS        = require('../conversation').RECORDING_STATUS;
 var TrunkConversation       = require('../trunkConversation').TrunkConversation;
 var QueueWaitingCaller      = require('../queueWaitingCaller').QueueWaitingCaller;
 var QUEUE_MEMBER_TYPES_ENUM = require('../queueMember').QUEUE_MEMBER_TYPES_ENUM;
@@ -427,9 +428,9 @@ var struct;
 
 /**
 * Store the recording information about conversations. The key
-* is the conversation identifier and the value is an empty string.
+* is the conversation identifier and the value is the status.
 * The presence of the key means that the conversation is recording,
-* otherwise not. It's necessary because asterisk hasn't the recording
+* otherwise not. It's necessary because asterisk has not the recording
 * information. So, when conversation list is refreshed, it is used to
 * set recording status to a conversation.
 *
@@ -2670,8 +2671,13 @@ function addConversationToExten(exten, resp, chid) {
 
             // if the conversation is recording, sets its recording status
             if (recordingConv[convid] !== undefined) {
-                conv.setRecording(true);
                 logger.info(IDLOG, 'set recording status to conversation ' + convid);
+
+                if (recordingConv[convid] === RECORDING_STATUS.TRUE) {
+                    conv.setRecording(true);
+                } else if (recordingConv[convid] === RECORDING_STATUS.MUTE) {
+                    conv.setRecordingMute();
+                }
             }
 
             // add the created conversation to the extension
@@ -2748,8 +2754,13 @@ function addConversationToTrunk(trunk, resp, chid) {
 
             // if the conversation is recording, sets its recording status
             if (recordingConv[convid] !== undefined) {
-                conv.setRecording(true);
                 logger.info(IDLOG, 'set recording status to conversation ' + convid);
+
+                if (recordingConv[convid] === RECORDING_STATUS.TRUE) {
+                    conv.setRecording(true);
+                } else if (recordingConv[convid] === RECORDING_STATUS.MUTE) {
+                    conv.setRecordingMute();
+                }
             }
 
             // add the created conversation to the trunk
@@ -4477,6 +4488,13 @@ function evtHangupConversation(data) {
 
             throw new Error('wrong parameter');
         }
+        // check the presence of recording status to be removed
+        var convid;
+        for (convid in recordingConv) {
+            if (convid.indexOf(data.channel) !== -1) {
+                delete recordingConv[convid];
+            }
+        }
 
         // check the extension existence
         if (extensions[data.channelExten]) {
@@ -4671,7 +4689,6 @@ function hangupConversation(endpointType, endpointId, convid, cb) {
 
             throw new Error('wrong parameters');
         }
-
         var err;
         // check the endpoint existence
         if (endpointType === 'extension' && extensions[endpointId]) {
@@ -4686,19 +4703,16 @@ function hangupConversation(endpointType, endpointId, convid, cb) {
                     cb(err);
                     hangupConvCb(err);
                 });
-
             } else {
                 err = 'no channel to hangup of conversation ' + convid + ' of exten ' + endpointId;
                 logger.warn(IDLOG, err);
                 cb(err);
             }
-
         } else {
             err = 'try to hangup conversation for the non existent endpoint ' + endpointType + ' ' + endpointId;
             logger.warn(IDLOG, err);
             cb(err);
         }
-
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err);
@@ -5003,7 +5017,6 @@ function forceHangupConversation(endpointType, endpointId, convid, extForCtx, cb
 
             throw new Error('wrong parameters');
         }
-
         var msg;
         // check the endpoint existence
         if (endpointType === 'extension' && extensions[endpointId]) {
@@ -5993,7 +6006,7 @@ function stopRecordConversation(endpointType, endpointId, convid, cb) {
         // check the endpoint existence
         if (endpointType === 'extension' && extensions[endpointId]) {
 
-            // get the channel to hangup
+            // get the channel to stop record
             var chid = getExtenIdSourceChannelConversation(endpointId, convid);
 
             if (recordingConv[convid] === undefined) {
@@ -6190,19 +6203,16 @@ function muteRecordConversation(endpointType, endpointId, convid, cb) {
                        cb(e);
                     }
                 });
-
             } else {
                 str = 'no channel to mute record of conversation ' + convid + ' of exten ' + endpointId;
                 logger.warn(IDLOG, str);
                 cb(str);
             }
-
         } else {
             str = 'try to mute the record conversation for the non existent endpoint ' + endpointType;
             logger.warn(IDLOG, str);
             cb(str);
         }
-
     } catch (err) {
         cb(err);
         logger.error(IDLOG, err.stack);
@@ -6255,7 +6265,7 @@ function unmuteRecordConversation(endpointType, endpointId, convid, cb) {
                             return;
                         }
                         logger.info(IDLOG, 'unmuting the recording of convid "' + convid + '" of extension "' + endpointId + '" with channel ' + chid + ' has been successfully');
-
+                        recordingConv[convid] = RECORDING_STATUS.TRUE;
                         // set the recording status of all conversations with specified convid
                         setRecordStatusConversations(convid, true);
                         cb();
@@ -6265,19 +6275,16 @@ function unmuteRecordConversation(endpointType, endpointId, convid, cb) {
                        cb(e);
                     }
                 });
-
             } else {
                 str = 'no channel to unmute record of conversation ' + convid + ' of exten ' + endpointId;
                 logger.warn(IDLOG, str);
                 cb(str);
             }
-
         } else {
             str = 'try to unmute the record conversation for the non existent endpoint ' + endpointType;
             logger.warn(IDLOG, str);
             cb(str);
         }
-
     } catch (err) {
         cb(err);
         logger.error(IDLOG, err.stack);
@@ -6491,7 +6498,7 @@ function stopRecordCallCb(err, convid) {
 function startRecordCallCb(convid) {
     try {
         // set the recording status of the conversation to memory
-        recordingConv[convid] = '';
+        recordingConv[convid] = RECORDING_STATUS.TRUE;
         // set the recording status of all conversations with specified convid
         setRecordStatusConversations(convid, true);
 
@@ -6589,6 +6596,7 @@ function setRecordStatusMuteConversations(convid) {
                     // if the current conversation identifier is the
                     // same of that specified, set its recording status to mute
                     if (cid === convid) {
+                        recordingConv[convid] = RECORDING_STATUS.MUTE;
                         convs[convid].setRecordingMute();
                         logger.info(IDLOG, 'set recording status "mute" to conversation ' + convid);
 
@@ -6612,6 +6620,7 @@ function setRecordStatusMuteConversations(convid) {
                     // if the current conversation identifier is the
                     // same of that specified, set its recording status to mute
                     if (cid === convid) {
+                        recordingConv[convid] = RECORDING_STATUS.MUTE;
                         convs[convid].setRecordingMute();
                         logger.info(IDLOG, 'set recording status "mute" to conversation ' + convid);
 
