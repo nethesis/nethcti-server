@@ -108,7 +108,7 @@ var IDLOG = '[listIaxPeers]';
 
                         // status is so calculated because when the peer is online the status is
                         // composed by the string "OK" plus a time in milliseconds, e.g. "OK (5 ms)"
-                        var status = data.status.split(' ')[0];
+                        var status = (data.status.split(' ')[0]).toLowerCase();
 
                         list.push({
                             ip:    data.ipaddress === '(null)' ? '' : data.ipaddress,

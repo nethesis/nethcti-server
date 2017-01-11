@@ -15,11 +15,11 @@ var TRUNK_STATUS_ENUM = require('../trunk').TRUNK_STATUS_ENUM;
 * @readOnly
 */
 var AST_TRUNK_STATUS_2_STR_ADAPTER = {
-    'Lagged':      TRUNK_STATUS_ENUM.ONLINE,
-    'Unknown':     TRUNK_STATUS_ENUM.OFFLINE,
-    'Reachable':   TRUNK_STATUS_ENUM.ONLINE,
-    'Unreachable': TRUNK_STATUS_ENUM.OFFLINE,
-    'Unmonitored': TRUNK_STATUS_ENUM.OFFLINE
+    'lagged':      TRUNK_STATUS_ENUM.ONLINE,
+    'unknown':     TRUNK_STATUS_ENUM.OFFLINE,
+    'reachable':   TRUNK_STATUS_ENUM.ONLINE,
+    'unreachable': TRUNK_STATUS_ENUM.OFFLINE,
+    'unmonitored': TRUNK_STATUS_ENUM.OFFLINE
 };
 
 exports.AST_TRUNK_STATUS_2_STR_ADAPTER = AST_TRUNK_STATUS_2_STR_ADAPTER;
