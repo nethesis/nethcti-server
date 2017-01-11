@@ -101,7 +101,7 @@ var IDLOG = '[sipTrunkStatus]';
                         // execute callback
                         map[data.actionid](null, {
                             trunk:  data.peer.split('/')[1],
-                            status: AST_TRUNK_STATUS_2_STR_ADAPTER[data.peerstatus]
+                            status: AST_TRUNK_STATUS_2_STR_ADAPTER[data.peerstatus.toLowerCase()]
                         });
 
                     } else if (map[data.actionid] &&

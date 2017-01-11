@@ -19,12 +19,12 @@ var OFFLINE = 'offline';
 * @readOnly
 */
 var AST_PEER_STATUS_2_STR_ADAPTER = {
-    'OK':          ONLINE,
-    'Lagged':      ONLINE,
-    'Unknown':     OFFLINE,
-    'Reachable':   ONLINE,
-    'Unreachable': OFFLINE,
-    'Unmonitored': OFFLINE
+    'ok':          ONLINE,
+    'lagged':      ONLINE,
+    'unknown':     OFFLINE,
+    'reachable':   ONLINE,
+    'unreachable': OFFLINE,
+    'unmonitored': OFFLINE
 };
 
 exports.AST_PEER_STATUS_2_STR_ADAPTER = AST_PEER_STATUS_2_STR_ADAPTER;
