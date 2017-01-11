@@ -204,7 +204,9 @@ exports.Trunk = function (ext, chType, maxCh) {
     */
     function setStatus(trunkStatus) {
 
-        if (!trunkStatus) { throw new Error('wrong parameter trunkStatus'); }
+        if (!trunkStatus) {
+            throw new Error('wrong parameter trunkStatus "' + trunkStatus + '" for trunk ' + chanType + ' "' + name + '" ' + exten);
+        }
 
         if (STATUS_ENUM[trunkStatus.toUpperCase()]) {
             status = trunkStatus;
