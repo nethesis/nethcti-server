@@ -1,5 +1,5 @@
 Name: nethcti-server
-Version: 2.6.5
+Version: 2.6.6
 Release: 1%{?dist}
 Summary: Nodejs Asterisk proxy for NethCTI 2
 
@@ -59,6 +59,12 @@ rm -rf $RPM_BUILD_ROOT
 %doc
 
 %changelog
+* Wed Jan 18 2017 Alessandro Polidori <alessandro.polidori@nethesis.it> - 2.6.6-1
+- fix log "wrong parameter trunkStatus" for "UNREACHABLE" status
+- enhance recording status to fix client recording button. Nethesis/dev#5007
+- emit new event "extenHangup" to give "busy" info to clients. Nethesis/dev#5003
+- add support for custom cid in extensions and trunks. Nethesis/dev#5002
+
 * Mon Nov 28 2016 Alessandro Polidori <alessandro.polidori@nethesis.it> - 2.6.5-1
 - fix typo into phone_urls.json. Nethesis/dev#5027
 
