@@ -1,0 +1,42 @@
+{
+  "name": "nethcti-server",
+  "version": "3.0.0",
+  "description": "NethCti Server",
+  "main": "nethcti.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "dependencies": {
+    "architect": "^0.1.11",
+    "asterisk-ami": "^0.1.0",
+    "async": "^2.1.4",
+    "ejs": "^2.5.5",
+    "formidable": "^1.1.1",
+    "http-proxy": "^1.16.2",
+    "iniparser": "^1.0.5",
+    "jsplugs": "^0.1.0",
+    "ldapjs": "^1.0.1",
+    "moment": "^2.17.1",
+    "mssql": "^3.3.0",
+    "mysql": "^2.13.0",
+    "node-static": "^0.7.9",
+    "nodemailer": "^3.0.0",
+    "pg": "^6.1.2",
+    "request": "^2.79.0",
+    "restify": "^4.3.0",
+    "sequelize": "^3.30.1",
+    "socket.io": "^1.7.2",
+    "socket.io-client": "^1.7.2",
+    "winston": "^2.3.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "ssh://git@code.nethesis.it:22022/Nethesis/nethcti-server.git"
+  },
+  "author": "Nethesis srl",
+  "license": "GPL-2.0"
+}
