@@ -1,3 +1,0 @@
-[submodule "nethcti-server/root/usr/lib/node/nethcti-server"]
-	path = nethcti-server/root/usr/lib/node/nethcti-server
-	url = ssh://git.nethesis.it/var/git/nethcti-server

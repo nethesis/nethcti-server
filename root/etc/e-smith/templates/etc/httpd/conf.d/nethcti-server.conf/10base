@@ -1,7 +1,0 @@
-{
-    my $ports_str = ${'nethcti-server'}{TCPPorts} || "8179,8181,8182,8183";
-    my @ports = split(',', $ports_str);
-
-    $OUT.="ProxyPass /webrest http://127.0.0.1:$ports[0]\n";
-    $OUT.="ProxyPassReverse /webrest http://127.0.0.1:$ports[0]\n";
-}

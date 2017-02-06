@@ -1,6 +1,0 @@
-This file contains a description of NethCTI configuration files.
-
-    * authentication.json
-
-"type" can be "pam", ldap", "activeDirectory" or "file"
-"expiration_timeout" is expressed in seconds

@@ -1,8 +1,0 @@
-   "queue_log": \{
-        "dbhost":     "localhost",
-        "dbport":     "/var/lib/mysql/mysql.sock",
-        "dbtype":     "mysql",
-        "dbuser":     "asteriskuser",
-        "dbpassword": "{$cdrdb_pwd}",
-        "dbname":     "asteriskcdrdb" 
-    \}

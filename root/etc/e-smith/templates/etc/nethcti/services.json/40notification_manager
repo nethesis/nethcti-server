@@ -1,3 +1,0 @@
-    "notification_manager": \{
-        "custom_templates_notifications": "/var/lib/nethserver/nethcti/templates/notification_manager"
-    \},
