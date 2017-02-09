@@ -1,0 +1,13 @@
+{
+  "name": "authentication",
+  "main": "arch_authentication.js",
+  "private": true,
+  "plugin": {
+    "consumes": [
+      "logger"
+    ],
+    "provides": [
+      "authentication"
+    ]
+  }
+}

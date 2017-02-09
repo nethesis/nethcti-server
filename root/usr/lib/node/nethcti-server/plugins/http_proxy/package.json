@@ -1,0 +1,15 @@
+{
+  "name": "http_proxy",
+  "main": "arch_http_proxy.js",
+  "private": true,
+  "plugin": {
+    "consumes": [
+      "util",
+      "logger",
+      "authentication"
+    ],
+    "provides": [
+      "httpProxy"
+    ]
+  }
+}
