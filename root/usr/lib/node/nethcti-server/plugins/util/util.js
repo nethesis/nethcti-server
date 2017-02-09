@@ -149,7 +149,7 @@ function sendHttp401(parentIdLog, resp, err) {
     }
 
     logger.warn(parentIdLog, 'send HTTP 401 response to ' + getRemoteClientIp(resp) +
-      (err ? ' with message \'' + err + '\'' : ''));
+      ':' + getRemoteClientPort(resp) + (err ? ' with message "' + err + '"' : ''));
     resp.end();
   } catch (err) {
     logger.error(IDLOG, 'used by ' + parentIdLog + ': ' + err.stack);
@@ -225,8 +225,8 @@ function sendHttp500(parentIdLog, resp, err) {
  * @method getRemoteClientIp
  * @param  {object} resp The http response object
  * @return {string} The remote ip address of the client
- * @static
  * @private
+ * @static
  */
 function getRemoteClientIp(resp) {
   try {
@@ -235,13 +235,29 @@ function getRemoteClientIp(resp) {
     // http proxy, so takes the client IP from the header
     if (resp.req && resp.req.headers['x-forwarded-for']) {
       return resp.req.headers['x-forwarded-for'].split(',')[0];
-
     } else {
       return resp.connection.remoteAddress;
     }
   } catch (err) {
     logger.error(IDLOG, 'retrieving remote client IP: ' + err.stack);
     return resp.connection.remoteAddress;
+  }
+}
+
+/**
+ * Returns the remote port of the client from the http response object.
+ *
+ * @method getRemoteClientPort
+ * @param  {object} resp The http response object
+ * @return {string} The remote port of the client
+ * @private
+ * @static
+ */
+function getRemoteClientPort(resp) {
+  try {
+    return resp.connection.remotePort;
+  } catch (err) {
+    logger.error(IDLOG, 'retrieving remote client port: ' + err.stack);
   }
 }
 
