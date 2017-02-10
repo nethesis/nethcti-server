@@ -1,0 +1,13 @@
+{
+  my $ports_str = ${'nethcti-server'}{TCPPorts} || "8179,8181";
+  our @ports = split(',', $ports_str);
+  return "";
+}
+\{
+  "websocket": \{
+    "https_port": "{$ports[1]}",
+    "https_key":  "/etc/nethcti/nethcti.pem",
+    "https_cert": "/etc/nethcti/nethcti.pem"
+  \},
+  "http_proxy": \{
+    "http_port":  "{$ports[0]}",
