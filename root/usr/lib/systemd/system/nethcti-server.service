@@ -2,6 +2,7 @@
 Description=NethCTI server daemon
 Requires=asterisk.service
 After=asterisk.service
+ConditionPathExists=/etc/nethcti/nethcti.json
 
 [Service]
 Type=simple
