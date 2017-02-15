@@ -1,0 +1,15 @@
+[Unit]
+Description=NethCTI server daemon
+Requires=asterisk.service
+After=asterisk.service
+
+[Service]
+Type=simple
+WorkingDirectory=/usr/lib/node/nethcti-server
+User=asterisk
+Restart=always
+RestartSec=10
+ExecStart=/usr/bin/node /usr/lib/node/nethcti-server/nethcti.js
+
+[Install]
+WantedBy=multi-user.target
