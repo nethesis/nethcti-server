@@ -4,6 +4,11 @@ The nethcti-server is a daemon that provides a set of api to perform common swit
 
 Actually it supports only asterisk.
 
+
+## Documentation
+
+http://nethcti.docs.nethesis.it/it/latest/development.html
+
 ## Login
 
 To obtain the nonce you have to do:
