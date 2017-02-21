@@ -14,7 +14,7 @@
  */
 var fs = require('fs');
 var io = require('socket.io');
-var httpProxy = require('http-proxy');
+var httpServ = require('https');
 var EventEmitter = require('events').EventEmitter;
 
 /**
@@ -1288,19 +1288,17 @@ function startWssServer() {
   try {
     // websocket secure options
     var options = {
-      https: {
-        key: fs.readFileSync(HTTPS_KEY, 'utf8'),
-        cert: fs.readFileSync(HTTPS_CERT, 'utf8')
-      }
+      key: fs.readFileSync(HTTPS_KEY, 'utf8'),
+      cert: fs.readFileSync(HTTPS_CERT, 'utf8')
     };
-    var httpsServer = httpProxy.createServer(options, function(req, res) {});
 
+    var httpsServer = httpServ.createServer(options, function(req, res) {});
     // websocket server secure (https)
     wssServer = io.listen(httpsServer, {
       'log level': WS_LOG_LEVEL,
       'transports': ['websocket']
     });
-    httpsServer.listen(wssPort);
+    httpsServer.listen(wssPort, '127.0.0.1');
 
     // set the websocket server secure listener
     wssServer.on('connection', wssConnHdlr);
