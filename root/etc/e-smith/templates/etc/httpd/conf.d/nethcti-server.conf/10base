@@ -1,7 +1,14 @@
 {
-    my $ports_str = ${'nethcti-server'}{TCPPorts} || "8179,8181";
-    my @ports = split(',', $ports_str);
+    my $restPort = ${'nethcti-server'}{RestPort} || "8179";
+    my $wssPort = ${'nethcti-server'}{WssPort} || "8181";
 
-    $OUT.="ProxyPass /webrest http://127.0.0.1:$ports[0]\n";
-    $OUT.="ProxyPassReverse /webrest http://127.0.0.1:$ports[0]\n";
+    $OUT.="ProxyPass /webrest http://127.0.0.1:$restPort\n";
+    $OUT.="ProxyPassReverse /webrest http://127.0.0.1:$restPort\n";
+
+    $OUT.= "SSLProxyEngine On\n";
+    $OUT.= "SSLProxyCheckPeerCN off\n";
+    $OUT.= "SSLProxyCheckPeerName off\n";
+
+    $OUT.= "ProxyPass        /socket.io wss://127.0.0.1:$wssPort/socket.io\n";
+    $OUT.= "ProxyPassReverse /socket.io wss://127.0.0.1:$wssPort/socket.io\n";
 }
