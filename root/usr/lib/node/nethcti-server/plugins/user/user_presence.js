@@ -35,9 +35,6 @@ var STATUS = {
  * @return {boolean} Return true if the user presence status is valid, false otherwise.
  */
 function isValidUserPresence(status) {
-  if (typeof status !== 'string') {
-    throw new Error('wrong parameter');
-  }
   if (STATUS[status] !== undefined) {
     return true;
   }

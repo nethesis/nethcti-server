@@ -53,6 +53,15 @@ exports.User = function(uname, na) {
   var name = na;
 
   /**
+   * The presence of the user.
+   *
+   * @property presence
+   * @type {string}
+   * @private
+   */
+  var presence;
+
+  /**
    * The user authorizations.
    *
    * @property authorizations
@@ -93,6 +102,26 @@ exports.User = function(uname, na) {
    */
   function getName() {
     return name;
+  }
+
+  /**
+   * Get the presence status.
+   *
+   * @method getPresence
+   * @return {string} The presence status.
+   */
+  function getPresence() {
+    return presence;
+  }
+
+  /**
+   * Set the presence status.
+   *
+   * @method setPresence
+   * @param {string} status The presence status
+   */
+  function setPresence(status) {
+    presence = status;
   }
 
   /**
@@ -272,6 +301,7 @@ exports.User = function(uname, na) {
     }
 
     return {
+      presence: presence,
       username: username,
       endpoints: jsonEndpoints
     };
@@ -282,6 +312,8 @@ exports.User = function(uname, na) {
     toJSON: toJSON,
     getName: getName,
     toString: toString,
+    setPresence: setPresence,
+    getPresence: getPresence,
     getUsername: getUsername,
     addEndpoint: addEndpoint,
     getAllEndpoints: getAllEndpoints,
