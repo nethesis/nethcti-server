@@ -4,6 +4,7 @@
  * @class arch_controller_user
  * @module user
  */
+var userPresence = require('./user_presence');
 var endpointTypes = require('./endpoint_types');
 var controllerUser = require('./controller_user');
 
@@ -24,9 +25,9 @@ module.exports = function(options, imports, register) {
   var logger;
   var user = controllerUser;
   user.ENDPOINT_TYPES = endpointTypes.TYPES;
-  user.isValidNethctiPresence = endpointTypes.isValidEndpointNethctiStatus;
-  user.ENDPOINT_NETHCTI_STATUS = endpointTypes.ENDPOINT_NETHCTI_STATUS;
-  user.isValidEndpointNethctiDevice = endpointTypes.isValidEndpointNethctiDevice;
+  user.isValidUserPresence = userPresence.isValidUserPresence;
+  user.getPresenceListJSON = userPresence.getPresenceListJSON;
+  user.USER_PRESENCE_STATUS = userPresence.STATUS;
 
   // public interface for other architect components
   register(null, {

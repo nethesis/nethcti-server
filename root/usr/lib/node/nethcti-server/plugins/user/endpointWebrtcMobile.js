@@ -1,21 +1,21 @@
 /**
- * Abstraction of an email account.
+ * Abstraction of a mobile webrtc extension endpoint.
  *
  * **It can throw exceptions.**
  *
- * @class EndpointEmail
- * @param  {string} identifier The email account
- * @return {object} The email endpoint object.
+ * @class EndpointWebrtcMobile
+ * @param {string} identifier The mobile webrtc extension identifier
+ * @return {object} The mobile webrtc extension endpoint object.
  * @constructor
  */
-exports.EndpointEmail = function(identifier) {
+exports.EndpointWebrtcMobile = function(identifier) {
   // check the parameter
   if (typeof identifier !== 'string') {
-    throw new Error('wrong parameter');
+    throw new Error('wrong parameters');
   }
 
   /**
-   * The email account identifier.
+   * The extension identifier.
    *
    * @property id
    * @type {string}
@@ -25,30 +25,30 @@ exports.EndpointEmail = function(identifier) {
   var id = identifier;
 
   /**
-   * Returns the email account identifier.
+   * Return the extension identifier.
    *
    * @method getId
-   * @return {string} The email account identifier.
+   * @return {string} The extension identifier
    */
   function getId() {
     return id;
   }
 
   /**
-   * Returns the readable string of the email account endpoint.
+   * Return the readable string of the mobile webrct extension endpoint.
    *
    * @method toString
-   * @return {string} The readable description of the email account endpoint.
+   * @return {string} The readable description of the mobile webrct extension endpoint.
    */
   function toString() {
-    return 'Email account "' + getId() + '"';
+    return 'Mobile WebRTC Extension "' + getId() + '"';
   }
 
   /**
    * Returns the JSON representation of the object.
    *
    *     {
-   *         id: "some.user@nethcti.com"
+   *         id: "214"
    *     }
    *
    * @method toJSON

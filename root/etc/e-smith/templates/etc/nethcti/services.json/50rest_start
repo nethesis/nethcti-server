@@ -1,1 +1,5 @@
   "rest": \{
+    "user": \{
+      "port": "50000",
+      "address": "localhost"
+    \},
