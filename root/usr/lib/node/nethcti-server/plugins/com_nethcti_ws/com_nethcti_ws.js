@@ -1339,24 +1339,15 @@ function wssConnHdlr(socket) {
     // this event is emitted when a client websocket has been connected
     logger.info(IDLOG, 'emit event "' + EVT_WSS_CLIENT_CONNECTED + '"');
     emitter.emit(EVT_WSS_CLIENT_CONNECTED, socket);
-
-    // manage client wss connection only if it comes from a local site
-    if (socket.manager &&
-      socket.manager.handshaken &&
-      socket.manager.handshaken[socket.id] &&
-      socket.manager.handshaken[socket.id].query &&
-      (!socket.manager.handshaken[socket.id].query.type || socket.manager.handshaken[socket.id].query.type === 'local')) {
-
-      logger.info(IDLOG, 'new local websocket connection (https) from ' + getWebsocketEndpoint(socket));
-      // set the listeners for the new https socket connection
-      socket.on('login', function(data) {
-        loginHdlr(socket, data);
-      });
-      socket.on('disconnect', function(data) {
-        disconnHdlr(socket);
-      });
-      logger.info(IDLOG, 'listeners for new https websocket connection have been set');
-    }
+    logger.info(IDLOG, 'new local websocket connection (https) from ' + getWebsocketEndpoint(socket));
+    // set the listeners for the new https socket connection
+    socket.on('login', function(data) {
+      loginHdlr(socket, data);
+    });
+    socket.on('disconnect', function(data) {
+      disconnHdlr(socket);
+    });
+    logger.info(IDLOG, 'listeners for new https websocket connection have been set');
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
