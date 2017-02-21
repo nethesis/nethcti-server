@@ -179,9 +179,11 @@ function setCompUtil(comp) {
          * @property get
          * @type {array}
          *
-         *   @param {string} userconf To get the list of possible presence status
+         *   @param {string} presence To get the user presence status
+         *   @param {string} presencelist To get the list of possible presence status
          */
         'get': [
+          'presence',
           'presencelist'
         ],
 
@@ -194,7 +196,7 @@ function setCompUtil(comp) {
          *   @param {string} presence Set a presence status for the user
          */
         'post': [
-          // 'presence'
+          'presence'
         ],
         'head': [],
         'del': []
@@ -229,53 +231,93 @@ function setCompUtil(comp) {
       },
 
       /**
-       * Sets the specified status presence for the user with the following REST API:
+       * Manages GET and POST requests to get/set the status presence of
+       * the user with the following REST API:
        *
-       *     presence
+       *     GET  presence
+       *     POST presence
        *
        * @method presence
-       * @param {object} req The client request
-       * @param {object} res The client response
+       * @param {object}   req  The client request
+       * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      // presence: function(req, res, next) {
-      //   try {
-      //     var type = req.params.type;
-      //     var status = req.params.status;
-      //     var username = req.headers.authorization_user;
-      //     var deviceType = req.params.device_type;
-
-      //     // check parameters
-      //     if (typeof type !== 'string' || type !== 'nethcti' || !compUser.isValidNethctiPresence(status) || !compUser.isValidEndpointNethctiDevice(deviceType)) {
-
-      //       compUtil.net.sendHttp400(IDLOG, res);
-      //       return;
-      //     }
-
-      //     if (type === 'nethcti') { // sets the nethcti presence of the user
-
-      //       if (compUser.setNethctiPresence(username, deviceType, status) === true) {
-      //         compUtil.net.sendHttp200(IDLOG, res);
-
-      //       } else {
-      //         logger.warn(IDLOG, 'settings "' + type + '" presence of the user "' + username + '"');
-      //         compUtil.net.sendHttp500(IDLOG, res, 'some errors have occured');
-      //       }
-      //     }
-      //   } catch (err) {
-      //     logger.error(IDLOG, err.stack);
-      //     compUtil.net.sendHttp500(IDLOG, res, err.toString());
-      //   }
-      // }
+      presence: function(req, res, next) {
+        try {
+          if (req.method.toLowerCase() === 'get') {
+            presenceGet(req, res, next);
+          } else if (req.method.toLowerCase() === 'post') {
+            presenceSet(req, res, next);
+          } else {
+            logger.warn(IDLOG, 'unknown requested method ' + req.method);
+          }
+        } catch (err) {
+          logger.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
+      }
     };
     exports.api = user.api;
-    exports.presencelist = user.presencelist;
-    // exports.presence = user.presence;
+    exports.presence = user.presence;
     exports.setLogger = setLogger;
     exports.setCompUtil = setCompUtil;
     exports.setCompUser = setCompUser;
+    exports.presencelist = user.presencelist;
     exports.setCompAuthorization = setCompAuthorization;
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
 })();
+
+/**
+ * Get the user presence status.
+ *
+ * @method presenceGet
+ * @param {object} req The request object
+ * @param {object} res The response object
+ * @param {object} next
+ */
+function presenceGet(req, res, next) {
+  try {
+    var username = req.headers.authorization_user;
+    var status = compUser.getPresence(username);
+
+    logger.info(IDLOG, 'send presence status "' + status + '" to user "' + username + '"');
+    res.send(200, {
+      status: status ? status : ''
+    });
+  } catch (error) {
+    logger.error(IDLOG, error.stack);
+    compUtil.net.sendHttp500(IDLOG, res, error.toString());
+  }
+}
+
+/**
+ * Set the user presence status.
+ *
+ * @method presenceSet
+ * @param {object} req The request object
+ * @param {object} res The response object
+ * @param {object} next
+ */
+function presenceSet(req, res, next) {
+  try {
+    var status = req.params.status;
+    var username = req.headers.authorization_user;
+
+    if (!compUser.isValidUserPresence(status)) {
+      compUtil.net.sendHttp400(IDLOG, res);
+      return;
+    }
+    if (compUser.setPresence(username, status) === true) {
+      compUtil.net.sendHttp200(IDLOG, res);
+    } else {
+      var strerr = 'setting presence "' + status + '" to user "' + username + '"';
+      logger.warn(IDLOG, strerr);
+      compUtil.net.sendHttp500(IDLOG, res, strerr);
+    }
+  } catch (error) {
+    logger.error(IDLOG, error.stack);
+    compUtil.net.sendHttp500(IDLOG, res, error.toString());
+  }
+}

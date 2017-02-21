@@ -14,6 +14,7 @@
 var fs = require('fs');
 var User = require('./user').User;
 var EventEmitter = require('events').EventEmitter;
+var userPresence = require('./user_presence');
 var endpointTypes = require('./endpoint_types');
 
 /**
@@ -155,6 +156,51 @@ function config(path) {
     logger.info(IDLOG, 'emit event "' + EVT_USERS_READY + '"');
     emitter.emit(EVT_USERS_READY);
 
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Set the user presence status.
+ *
+ * @method setPresence
+ * @param {string} username The username of the user to be set
+ * @param {string} status The presence status
+ * @return {boolean} True if the status set has been set successfully.
+ */
+function setPresence(username, status) {
+  try {
+    if (typeof username !== 'string' || typeof status !== 'string') {
+      throw new Error('wrong parameters');
+    }
+    if (users[username] && userPresence.isValidUserPresence(status)) {
+      users[username].setPresence(status);
+      return true;
+    }
+    return false;
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+    return false;
+  }
+}
+
+/**
+ * Get the user presence status.
+ *
+ * @method getPresence
+ * @param {string} username The username
+ * @return {string} The presence status.
+ */
+function getPresence(username) {
+  try {
+    if (typeof username !== 'string') {
+      throw new Error('wrong parameters');
+    }
+    if (users[username]) {
+      return users[username].getPresence();
+    }
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
@@ -823,6 +869,8 @@ function getUsersUsingEndpointVoicemail(voicemail) {
 exports.on = on;
 exports.config = config;
 exports.setLogger = setLogger;
+exports.setPresence = setPresence;
+exports.getPresence = getPresence;
 exports.getUsernames = getUsernames;
 exports.isUserPresent = isUserPresent;
 exports.EVT_USERS_READY = EVT_USERS_READY;
