@@ -169,7 +169,6 @@ function config(path) {
  */
 function initializeEndpointsUsersByJSON(json) {
   try {
-    // check parameter
     if (typeof json !== 'object') {
       throw new Error('wrong parameter');
     }
@@ -182,7 +181,7 @@ function initializeEndpointsUsersByJSON(json) {
 
         // check the validity of the endpoint type
         if (endpointTypes.isValidEndpointType(endpoType) === false) {
-          logger.error(IDLOG, 'wrong ' + path + ': invalid endpoint type "' + endpoType + '" for user "' + userid + '"');
+          logger.error(IDLOG, 'wrong users config file: invalid endpoint type "' + endpoType + '" for user "' + userid + '"');
         } else {
           // add all endpoints of the current type to the user
           addEndpointsToUser(userid, endpoType, json[userid].endpoints[endpoType]);
@@ -211,7 +210,6 @@ function addEndpointsToUser(userid, endpoType, obj) {
     // adds all endpoints of the specified type to the user
     var id;
     for (id in obj) { // cycle endpoints
-      // actually the obj[id] is an empty object: it can be useful in the future
       users[userid].addEndpoint(endpoType, id, obj[id]);
       logger.info(IDLOG, 'added endpoint "' + endpoType + ' ' + id + '" to user "' + users[userid].getUsername() + '"');
     }
@@ -605,147 +603,6 @@ function getUsernamesWithData() {
 }
 
 /**
- * Sets the nethcti presence of the user.
- *
- * @method setNethctiPresence
- * @param {string}  username   The username
- * @param {string}  deviceType The device type used for nethcti
- * @param {string}  status     The status of the nethcti presence
- * @return {boolean} True if the NethCTI presence has been set successfully.
- */
-function setNethctiPresence(username, deviceType, status) {
-  try {
-    if (typeof username !== 'string' || typeof status !== 'string' ||
-      typeof deviceType !== 'string' || !endpointTypes.isValidEndpointNethctiStatus(status) ||
-      !endpointTypes.isValidEndpointNethctiDevice(deviceType)) {
-
-      throw new Error('wrong parameters');
-    }
-
-    // check the user existence
-    if (typeof users[username] !== 'object') {
-      logger.warn(IDLOG, 'try to set nethcti presence of non existent user "' + username +
-        '" for device "' + deviceType + '" to value ' + status);
-      return false;
-    }
-
-    logger.info(IDLOG, 'set nethcti "' + deviceType + '" presence to status "' + status + '" of user "' + username + '"');
-
-    // gets all endpoints, extracts the nethcti endpoint and then sets its status
-    var endpoints = users[username].getAllEndpoints();
-    endpoints[endpointTypes.TYPES.nethcti][deviceType].setStatus(status);
-
-    // get the updated user endpoint in JSON format
-    var allUsersEndpoints = getAllUsersEndpointsJSON();
-    var obj = {};
-    obj[username] = {};
-    obj[username][endpointTypes.TYPES.nethcti] = allUsersEndpoints[username][endpointTypes.TYPES.nethcti];
-
-    // emit the event to tell other modules that the nethcti endpoint presence of the user has changed
-    logger.info(IDLOG, 'emit event "' + EVT_ENDPOINT_PRESENCE_CHANGED + '"');
-    emitter.emit(EVT_ENDPOINT_PRESENCE_CHANGED, username, endpointTypes.TYPES.nethcti, obj);
-
-    return true;
-
-  } catch (err) {
-    logger.error(IDLOG, err.stack);
-    return false;
-  }
-}
-
-/**
- * Checks if the user is logged into the cti by the specified device.
- *
- * @method isLoggedInByDevice
- * @param {string}  username   The username
- * @param {string}  deviceType The device type used for nethcti
- * @param {boolean} True if the user is logged into the cti by the specified device.
- */
-function isLoggedInByDevice(username, deviceType) {
-  try {
-    if (typeof username !== 'string' || typeof deviceType !== 'string' || !endpointTypes.isValidEndpointNethctiDevice(deviceType)) {
-      throw new Error('wrong parameters');
-    }
-
-    // check the user existence
-    if (typeof users[username] !== 'object') {
-      logger.warn(IDLOG, 'try to check logged in status of non existent user "' + username + '" for device "' + deviceType + '"');
-      return false;
-    }
-
-    logger.info(IDLOG, 'check logged in status with "' + deviceType + '" of user "' + username + '"');
-
-    var endpoints = users[username].getAllEndpoints();
-    if (endpoints[endpointTypes.TYPES.nethcti][deviceType].getStatus() !== endpointTypes.ENDPOINT_NETHCTI_STATUS.offline) {
-      return true;
-    }
-    return false;
-
-  } catch (err) {
-    logger.error(IDLOG, err.stack);
-    return false;
-  }
-}
-
-/**
- * Checks if the user is logged into the cti by a desktop device.
- *
- * @method isDesktopLoggedIn
- * @param {string}  username   The username
- * @param {boolean} True if the user is logged into the cti by a desktop device.
- */
-function isDesktopLoggedIn(username) {
-  try {
-    // check parameter
-    if (typeof username !== 'string') {
-      throw new Error('wrong parameter username "' + username + '"');
-    }
-
-    // check the user existence
-    if (typeof users[username] !== 'object') {
-      logger.warn(IDLOG, 'try to check desktop logged in status of non existent user "' + username + '"');
-      return false;
-    }
-
-    logger.info(IDLOG, 'check desktop logged in status of user "' + username + '"');
-    return isLoggedInByDevice(username, endpointTypes.ENDPOINT_NETHCTI_DEVICE_TYPE.desktop);
-
-  } catch (err) {
-    logger.error(IDLOG, err.stack);
-    return false;
-  }
-}
-
-/**
- * Checks if the user is logged into the cti by a mobile device.
- *
- * @method isMobileLoggedIn
- * @param {string}  username   The username
- * @param {boolean} True if the user is logged into the cti by a mobile device.
- */
-function isMobileLoggedIn(username) {
-  try {
-    // check parameter
-    if (typeof username !== 'string') {
-      throw new Error('wrong parameter username "' + username + '"');
-    }
-
-    // check the user existence
-    if (typeof users[username] !== 'object') {
-      logger.warn(IDLOG, 'try to check mobile logged in status of non existent user "' + username + '"');
-      return false;
-    }
-
-    logger.info(IDLOG, 'check mobile logged in status of user "' + username + '"');
-    return isLoggedInByDevice(username, endpointTypes.ENDPOINT_NETHCTI_DEVICE_TYPE.mobile);
-
-  } catch (err) {
-    logger.error(IDLOG, err.stack);
-    return false;
-  }
-}
-
-/**
  * Returns all the nethcti endpoints of the user.
  *
  * @method getAllEndpointsNethcti
@@ -973,11 +830,8 @@ exports.getEndpointsJSON = getEndpointsJSON;
 exports.getVoicemailList = getVoicemailList;
 exports.setAuthorization = setAuthorization;
 exports.getAuthorization = getAuthorization;
-exports.isMobileLoggedIn = isMobileLoggedIn;
-exports.isDesktopLoggedIn = isDesktopLoggedIn;
 exports.getConfigurations = getConfigurations;
 exports.setConfigurations = setConfigurations;
-exports.setNethctiPresence = setNethctiPresence;
 exports.hasExtensionEndpoint = hasExtensionEndpoint;
 exports.hasCellphoneEndpoint = hasCellphoneEndpoint;
 exports.hasVoicemailEndpoint = hasVoicemailEndpoint;

@@ -1469,13 +1469,11 @@ function loginHdlr(socket, obj) {
         socket.nethcti = {};
       }
 
-      // set the nethcti endpoint presence of the user to online status. Not only cti use the websocket
-      // connection, so check the referrer url of the client to understand if the connection comes from
-      // the cti application and set the online status only in this case
-      if (socket.handshake && socket.handshake.headers && socket.handshake.headers.referer && socket.handshake.headers.referer.split('/')[3] && socket.handshake.headers.referer.split('/')[3].indexOf('cti') > -1) {
-
-        compUser.setNethctiPresence(obj.accessKeyId, 'desktop', compUser.ENDPOINT_NETHCTI_STATUS.online);
-        logger.info(IDLOG, '"' + compUser.ENDPOINT_NETHCTI_STATUS.online + '" cti desktop presence has been set for user "' + obj.accessKeyId + '"');
+      if (socket.handshake &&
+        socket.handshake.headers &&
+        socket.handshake.headers.referer &&
+        socket.handshake.headers.referer.split('/')[3] &&
+        socket.handshake.headers.referer.split('/')[3].indexOf('cti') > -1) {
 
         // sets the origin application (cti) property to the client socket
         socket.nethcti.userAgent = USER_AGENT;
@@ -1586,9 +1584,6 @@ function disconnHdlr(socket) {
         count === 1) { // only last socket connection is present
 
         username = wsid[socket.id].username;
-        compUser.setNethctiPresence(username, 'desktop', compUser.ENDPOINT_NETHCTI_STATUS.offline);
-        logger.info(IDLOG, '"' + compUser.ENDPOINT_NETHCTI_STATUS.offline + '" cti desktop presence has been set for user "' + username + '"');
-
         // emits the event for the disconnected client. This event is emitted when
         // all the websocket connections of the user has been closed.
         logger.info(IDLOG, 'emit event "' + EVT_ALL_WS_CLIENT_DISCONNECTION + '" for username ' + username);

@@ -161,11 +161,10 @@ function start() {
 
     // load plugins
     for (p in plugins) {
-      get = plugins[p].api['get'];
-      root = plugins[p].api['root'];
-      post = plugins[p].api['post'];
+      get = plugins[p].api.get;
+      root = plugins[p].api.root;
+      post = plugins[p].api.post;
 
-      var k;
       // add routing functions
       for (k in get) {
         logger.info(IDLOG, 'Binding GET: /' + root + '/' + get[k]);

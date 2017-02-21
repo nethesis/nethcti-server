@@ -7,11 +7,14 @@
 var endpointTypes = require('./endpoint_types');
 var EndpointEmail = require('./endpointEmail').EndpointEmail;
 var EndpointJabber = require('./endpointJabber').EndpointJabber;
+var EndpointWebrtc = require('./endpointWebrtc').EndpointWebrtc;
 var EndpointNethcti = require('./endpointNethcti').EndpointNethcti;
 var EndpointCalendar = require('./endpointCalendar').EndpointCalendar;
 var EndpointExtension = require('./endpointExtension').EndpointExtension;
 var EndpointCellphone = require('./endpointCellphone').EndpointCellphone;
 var EndpointVoicemail = require('./endpointVoicemail').EndpointVoicemail;
+var EndpointWebrtcMobile = require('./endpointWebrtcMobile').EndpointWebrtcMobile;
+var EndpointMainExtension = require('./endpointMainExtension').EndpointMainExtension;
 
 /**
  * Abstraction of a user.
@@ -165,18 +168,22 @@ exports.User = function(uname, na) {
     var newEndpoint;
     if (type === endpointTypes.TYPES.email) {
       newEndpoint = new EndpointEmail(id);
-    } else if (type === endpointTypes.TYPES.jabber) {
-      newEndpoint = new EndpointJabber(id);
-    } else if (type === endpointTypes.TYPES.nethcti) {
-      newEndpoint = new EndpointNethcti(id);
-    } else if (type === endpointTypes.TYPES.calendar) {
-      newEndpoint = new EndpointCalendar(id);
+      // } else if (type === endpointTypes.TYPES.jabber) {
+      //   newEndpoint = new EndpointJabber(id);
+      // } else if (type === endpointTypes.TYPES.calendar) {
+      //   newEndpoint = new EndpointCalendar(id);
     } else if (type === endpointTypes.TYPES.extension) {
       newEndpoint = new EndpointExtension(id);
     } else if (type === endpointTypes.TYPES.cellphone) {
       newEndpoint = new EndpointCellphone(id);
     } else if (type === endpointTypes.TYPES.voicemail) {
       newEndpoint = new EndpointVoicemail(id);
+    } else if (type === endpointTypes.TYPES.mainextension) {
+      newEndpoint = new EndpointMainExtension(id);
+    } else if (type === endpointTypes.TYPES.webrtc) {
+      newEndpoint = new EndpointWebrtc(id);
+    } else if (type === endpointTypes.TYPES.webrtc_mobile) {
+      newEndpoint = new EndpointWebrtcMobile(id);
     }
     // add endpoint by its type
     endpoints[type][id] = newEndpoint;
@@ -251,8 +258,22 @@ exports.User = function(uname, na) {
    * @return {object} The JSON representation of the object.
    */
   function toJSON() {
+    var ep, endpoType;
+    var jsonEndpoints = {};
+
+    // JSON representation of the endpoints
+    for (endpoType in endpoints) {
+      if (!jsonEndpoints[endpoType]) {
+        jsonEndpoints[endpoType] = [];
+      }
+      for (ep in endpoints[endpoType]) {
+        jsonEndpoints[endpoType].push(endpoints[endpoType][ep].toJSON());
+      }
+    }
+
     return {
-      username: username
+      username: username,
+      endpoints: jsonEndpoints
     };
   }
 

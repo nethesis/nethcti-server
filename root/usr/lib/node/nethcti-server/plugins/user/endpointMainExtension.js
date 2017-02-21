@@ -1,21 +1,21 @@
 /**
- * Abstraction of an email account.
+ * Abstraction of a main extension endpoint.
  *
  * **It can throw exceptions.**
  *
- * @class EndpointEmail
- * @param  {string} identifier The email account
- * @return {object} The email endpoint object.
+ * @class EndpointMainExtension
+ * @param {string} identifier The main extension identifier
+ * @return {object} The main extension endpoint object.
  * @constructor
  */
-exports.EndpointEmail = function(identifier) {
+exports.EndpointMainExtension = function(identifier) {
   // check the parameter
   if (typeof identifier !== 'string') {
-    throw new Error('wrong parameter');
+    throw new Error('wrong parameters');
   }
 
   /**
-   * The email account identifier.
+   * The main extension identifier.
    *
    * @property id
    * @type {string}
@@ -25,30 +25,30 @@ exports.EndpointEmail = function(identifier) {
   var id = identifier;
 
   /**
-   * Returns the email account identifier.
+   * Return the main extension identifier.
    *
    * @method getId
-   * @return {string} The email account identifier.
+   * @return {string} The main extension identifier
    */
   function getId() {
     return id;
   }
 
   /**
-   * Returns the readable string of the email account endpoint.
+   * Return the readable string of the main extension endpoint.
    *
    * @method toString
-   * @return {string} The readable description of the email account endpoint.
+   * @return {string} The readable description of the main extension endpoint.
    */
   function toString() {
-    return 'Email account "' + getId() + '"';
+    return 'MainExtension "' + getId() + '"';
   }
 
   /**
    * Returns the JSON representation of the object.
    *
    *     {
-   *         id: "some.user@nethcti.com"
+   *         id: "214"
    *     }
    *
    * @method toJSON

@@ -265,11 +265,11 @@ function config(path) {
     logger.info(IDLOG, 'configure authentication with pam');
   }
 
-  if (json.unauthe_call !== 'disabled' && json.unauthe_call !== 'enabled') {
-    logger.warn(IDLOG, 'wrong ' + path + ': bad "unauthe_call" key: use default "' + unauthenticatedCall + '"');
-  } else {
-    unauthenticatedCall = json.unauthe_call;
-  }
+  // if (json.unauthe_call !== 'disabled' && json.unauthe_call !== 'enabled') {
+  //   logger.warn(IDLOG, 'wrong ' + path + ': bad "unauthe_call" key: use default "' + unauthenticatedCall + '"');
+  // } else {
+  //   unauthenticatedCall = json.unauthe_call;
+  // }
 
   startIntervalRemoveExpiredTokens();
 
