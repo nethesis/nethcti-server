@@ -8,7 +8,6 @@ var endpointTypes = require('./endpoint_types');
 var EndpointEmail = require('./endpointEmail').EndpointEmail;
 var EndpointJabber = require('./endpointJabber').EndpointJabber;
 var EndpointWebrtc = require('./endpointWebrtc').EndpointWebrtc;
-var EndpointNethcti = require('./endpointNethcti').EndpointNethcti;
 var EndpointCalendar = require('./endpointCalendar').EndpointCalendar;
 var EndpointExtension = require('./endpointExtension').EndpointExtension;
 var EndpointCellphone = require('./endpointCellphone').EndpointCellphone;
