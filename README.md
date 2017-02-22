@@ -54,6 +54,10 @@ Each request must contain the authentication token retrieved as described above.
 Authorization: <username>:token
 ```
 
+## CORS
+
+CORS are allowed.
+
 ## Events
 
 ## Logging
