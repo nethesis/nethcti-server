@@ -187,6 +187,18 @@ function start() {
       try {
         logger.info(IDLOG, getProxyLog(req));
 
+        if (req.method === 'OPTIONS') {
+            var headers = {};
+            headers["Access-Control-Allow-Origin"] = "*";
+            headers["Access-Control-Allow-Methods"] = "POST, GET, PUT, DELETE, OPTIONS";
+            headers["Access-Control-Allow-Credentials"] = true;
+            headers["Access-Control-Max-Age"] = '86400'; // 24 hours
+            headers["Access-Control-Allow-Headers"] = "X-Requested-With, Access-Control-Allow-Origin, X-HTTP-Method-Override, Content-Type, Authorization, Accept";
+
+            res.writeHead(200, headers);
+            res.end();
+        }
+
         // bypass the token verification if the request is:
         // 1. an authentication nonce request
         // 2. a static file request
