@@ -1366,6 +1366,8 @@ var compConfigManager;
                 *   @param {string} queuemember_unpause   Unpause the specified extension to receive calls from the queue
                 *   @param {string} blindtransfer_queue   Transfer a waiting caller from a queue to the destination with blind type
                 *   @param {string} blindtransfer_parking Transfer the parked call to the destination with blind type
+                *   @param {string} start_intrude_music_for_hold Start music for hold function making an intrusion
+                *   @param {string} stop_intrude_music_for_hold Stop music for hold function making an hangup with regexp
                 */
                 'post': [
                     'cw',
@@ -1407,7 +1409,9 @@ var compConfigManager;
                     'queuemember_remove',
                     'queuemember_unpause',
                     'blindtransfer_queue',
-                    'blindtransfer_parking'
+                    'blindtransfer_parking',
+                    'start_intrude_music_for_hold',
+                    'stop_intrude_music_for_hold'
                 ],
                 'head': [],
                 'del' : []
@@ -3114,6 +3118,86 @@ var compConfigManager;
                         compUtil.net.sendHttp400(IDLOG, res);
                     }
 
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * Start on hold music on both side of a dialog making the intrusion.
+            *
+            *     POST start_intrude_music_for_hold
+            *
+            * @method start_intrude_music_for_hold
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            start_intrude_music_for_hold: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+                    if (typeof req.params !== 'object' ||
+                        typeof req.params.endpointId !== 'string' ||
+                        typeof req.params.endpointType !== 'string') {
+
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+                    compAstProxy.startIntrudeMusicForHold(req.params.endpointType, req.params.endpointId, function (err) {
+                        try {
+                            if (err) {
+                                logger.warn(IDLOG, 'doing startIntrudeMusicForHold for extension ' + req.params.endpointId);
+                                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                                return;
+                            }
+                            logger.info(IDLOG, 'done startIntrudeMusicForHold for extension ' + req.params.endpointId);
+                            compUtil.net.sendHttp200(IDLOG, res);
+                        } catch (err) {
+                            logger.error(IDLOG, err.stack);
+                            compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                        }
+                    });
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * Stop on hold music on both side of a dialog making the hangup with regexp.
+            *
+            *     POST stop_intrude_music_for_hold
+            *
+            * @method stop_intrude_music_for_hold
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            stop_intrude_music_for_hold: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+                    if (typeof req.params !== 'object' ||
+                        typeof req.params.endpointId !== 'string' ||
+                        typeof req.params.endpointType !== 'string') {
+
+                        compUtil.net.sendHttp400(IDLOG, res);
+                        return;
+                    }
+                    compAstProxy.stopIntrudeMusicForHold(req.params.endpointType, req.params.endpointId, function (err) {
+                        try {
+                            if (err) {
+                                logger.warn(IDLOG, 'doing stopIntrudeMusicForHold for extension ' + req.params.endpointId);
+                                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                                return;
+                            }
+                            logger.info(IDLOG, 'done stopIntrudeMusicForHold for extension ' + req.params.endpointId);
+                            compUtil.net.sendHttp200(IDLOG, res);
+                        } catch (err) {
+                            logger.error(IDLOG, err.stack);
+                            compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                        }
+                    });
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -5023,6 +5107,8 @@ var compConfigManager;
         exports.queuemember_remove       = astproxy.queuemember_remove;
         exports.queuemember_unpause      = astproxy.queuemember_unpause;
         exports.blindtransfer_queue      = astproxy.blindtransfer_queue;
+        exports.start_intrude_music_for_hold = astproxy.start_intrude_music_for_hold;
+        exports.stop_intrude_music_for_hold = astproxy.stop_intrude_music_for_hold;
         exports.setCompComNethctiWs      = setCompComNethctiWs;
         exports.is_autoc2c_supported     = astproxy.is_autoc2c_supported;
         exports.setCompAuthorization     = setCompAuthorization;

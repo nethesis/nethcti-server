@@ -274,6 +274,20 @@ module.exports = function (options, imports, register) {
             call: astProxy.proxyLogic.call,
 
             /**
+            * It's the _startIntrudeMusicForHold_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method startIntrudeMusicForHold
+            */
+            startIntrudeMusicForHold: astProxy.proxyLogic.startIntrudeMusicForHold,
+
+            /**
+            * It's the _stopIntrudeMusicForHold_ method provided by _ast\_proxy.proxyLogic_.
+            *
+            * @method stopIntrudeMusicForHold
+            */
+            stopIntrudeMusicForHold: astProxy.proxyLogic.stopIntrudeMusicForHold,
+
+            /**
             * It's the _muteConversation_ method provided by _ast\_proxy.proxyLogic_.
             *
             * @method mute

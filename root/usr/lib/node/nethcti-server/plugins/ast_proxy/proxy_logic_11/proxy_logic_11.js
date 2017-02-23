@@ -4045,6 +4045,67 @@ function addPrefix(num) {
 }
 
 /**
+* Intrude music on endpointId communication on both sides. It is used
+* to realize the onhold function. It is used to workaround the attended
+* transfer call.
+*
+* @method startIntrudeMusicForHold
+* @param {string} endpointType The type of the endpoint
+* @param {string} endpointId The endpoint identifier
+*/
+function startIntrudeMusicForHold(endpointType, endpointId, cb) {
+    try {
+        if (typeof cb !== 'function' || typeof endpointId !== 'string' || typeof endpointType !== 'string') {
+            throw new Error('wrong parameters');
+        }
+        if (endpointType === 'extension' && !extensions[endpointId]) {
+            var err = 'doing startIntrudeMusicForHold for non existent extension ' + endpointId;
+            logger.warn(IDLOG, err);
+            cb(err);
+            return;
+        }
+        logger.info(IDLOG, 'execute startIntrudeMusicForHold for extension ' + endpointId);
+        astProxy.doCmd({ command: 'startIntrudeMusicForHold', from: endpointId }, function (error) {
+            cb(error);
+            callCb(error);
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Stop the intrusion of music on hold on both sides of a dialog. It does
+* an hangup using regexp.
+*
+* @method stopIntrudeMusicForHold
+* @param {string} endpointType The type of the endpoint
+* @param {string} endpointId The endpoint identifier
+*/
+function stopIntrudeMusicForHold(endpointType, endpointId, cb) {
+    try {
+        if (typeof cb !== 'function' || typeof endpointId !== 'string' || typeof endpointType !== 'string') {
+            throw new Error('wrong parameters');
+        }
+        if (endpointType === 'extension' && !extensions[endpointId]) {
+            var err = 'doing stopIntrudeMusicForHold for non existent extension ' + endpointId;
+            logger.warn(IDLOG, err);
+            cb(err);
+            return;
+        }
+        logger.info(IDLOG, 'execute stopIntrudeMusicForHold for extension ' + endpointId);
+        astProxy.doCmd({ command: 'stopIntrudeMusicForHold', from: endpointId }, function (error) {
+            cb(error);
+            callCb(error);
+        });
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
 * Make a new call.
 *
 * @method call
@@ -6999,6 +7060,8 @@ exports.startRecordConversation         = startRecordConversation;
 exports.getBaseCallRecAudioPath         = getBaseCallRecAudioPath;
 exports.queueMemberPauseUnpause         = queueMemberPauseUnpause;
 exports.EVT_MEETME_CONF_CHANGED         = EVT_MEETME_CONF_CHANGED;
+exports.stopIntrudeMusicForHold         = stopIntrudeMusicForHold;
+exports.startIntrudeMusicForHold        = startIntrudeMusicForHold;
 exports.EVT_QUEUE_MEMBER_CHANGED        = EVT_QUEUE_MEMBER_CHANGED;
 exports.evtNewQueueWaitingCaller        = evtNewQueueWaitingCaller;
 exports.evtConversationConnected        = evtConversationConnected;

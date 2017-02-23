@@ -1,0 +1,20 @@
+
+; Workaround context to realize "hold" function for WebRTC sipml5
+
+[sendmusic]
+exten => _X.,1,noop(send music)
+exten => _X.,n,NoCDR()
+exten => _X.,n,answer()
+exten => _X.,n(music),Playback(custom/attesa)
+exten => _X.,n,goto(music)
+exten => h,1,hangup()
+
+
+[holdme]
+exten => _X.,1,noop(hold my call)
+exten => _X.,n,NoCDR()
+exten => _X.,n,ChanSpy(SIP/$\{EXTEN\},wBsqS)
+exten => _X.,n,hangup()
+exten => h,1,hangup()
+
+; end workaround for sipml5
