@@ -21,6 +21,7 @@ templates2events("/etc/httpd/conf.d/nethcti-server.conf",$event);
 templates2events("/etc/nethcti/sms_config.php",$event);
 templates2events("/etc/nethcti/nethcti.pem",$event);
 templates2events("/var/www/html/nethvoice/add_ons.php",$event);
+templates2events("/etc/asterisk/extensions_nethesis.conf",$event);
 safe_symlink("reload", "root/etc/e-smith/events/$event/services2adjust/httpd");
 event_link("initialize-default-databases", $event, '02');
 event_link("nethcti-server-conf", $event, 20);
