@@ -21,8 +21,8 @@
 }
  */
 var STATUS = {
-  dnd: 'dnd',
   online: 'online',
+  dnd: 'dnd',
   voicemail: 'voicemail',
   cellphone: 'cellphone'
 };
