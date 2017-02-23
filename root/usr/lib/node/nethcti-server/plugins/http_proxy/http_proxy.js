@@ -192,11 +192,18 @@ function start() {
             headers["Access-Control-Allow-Origin"] = "*";
             headers["Access-Control-Allow-Methods"] = "POST, GET, PUT, DELETE, OPTIONS";
             headers["Access-Control-Allow-Credentials"] = true;
-            headers["Access-Control-Max-Age"] = '86400'; // 24 hours
-            headers["Access-Control-Allow-Headers"] = "X-Requested-With, Access-Control-Allow-Origin, X-HTTP-Method-Override, Content-Type, Authorization, Accept";
+            headers["Access-Control-Max-Age"] = '86400';
+            headers["Access-Control-Allow-Headers"] = 'X-Requested-With,' +
+              ' Access-Control-Allow-Origin,' +
+              ' X-HTTP-Method-Override,' +
+              ' Content-Type,' +
+              ' Authorization,' +
+              ' Accept,' +
+              ' WWW-Authenticate';
 
             res.writeHead(200, headers);
             res.end();
+            return;
         }
 
         // bypass the token verification if the request is:
