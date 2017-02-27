@@ -1,5 +1,5 @@
 Name: nethcti-server
-Version: 2.7.4
+Version: 2.7.5
 Release: 1%{?dist}
 Summary: Nodejs Asterisk proxy for NethCTI 2
 
@@ -56,6 +56,9 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Mon Feb 27 2017 Alessandro Polidori <alessandro.polidori@nethesis.it> - 2.7.5-1
+- Remove useless and obsolete InterfacesDB from nethcti.json template
+
 * Wed Jan 18 2017 Alessandro Polidori <alessandro.polidori@nethesis.it> - 2.7.4-1
 - fix log "wrong parameter trunkStatus" for "UNREACHABLE" status
 - enhance recording status to fix client recording button. Nethesis/dev#5007
