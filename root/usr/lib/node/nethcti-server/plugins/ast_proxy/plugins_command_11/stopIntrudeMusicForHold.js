@@ -95,16 +95,18 @@ var IDLOG = '[stopIntrudeMusicForHold]';
             */
             data: function (data) {
                 try {
-                    if (map[data.actionid] && data.response === 'Success') {
-                        map[data.actionid](null);
+                    if (map[data.actionid] && data.event === 'ChannelsHungupListComplete') {
+                        map[data.actionid](null); // callback execution
+                        delete map[data.actionid]; // remove association ActionID-callback
                     }
                     else if (map[data.actionid] && data.message && data.response === 'Error') {
                         map[data.actionid](new Error(data.message));
+                        delete map[data.actionid];
                     }
-                    else {
+                    else if (map[data.actionid] && data.response === 'Error'){
                         map[data.actionid](new Error('error'));
+                        delete map[data.actionid];
                     }
-                    delete map[data.actionid]; // remove association ActionID-callback
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
                     if (map[data.actionid]) {
