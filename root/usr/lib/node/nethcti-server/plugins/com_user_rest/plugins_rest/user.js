@@ -135,6 +135,8 @@ function setCompUtil(comp) {
      * # GET requests
      *
      * 1. [`user/presencelist`](#presencelistget)
+     * 1. [`user/presence`](#presenceget)
+     * 1. [`user/me`](#meget)
      *
      * ---
      *
@@ -145,6 +147,87 @@ function setCompUtil(comp) {
      * Example JSON response:
      *
      *     ["online", "dnd", "voicemail", "cellphone"]
+     *
+     * ---
+     *
+     * ### <a id="presenceget">**`user/presence`**</a>
+     *
+     * Returns the user presence status.
+     *
+     * Example JSON response:
+     *
+     *     { "status": "online" }
+     *
+     * ---
+     *
+     * ### <a id="meget">**`user/me`**</a>
+     *
+     * Returns the information about the user.
+     *
+     * Example JSON response:
+     *
+     *      {
+        "presence": "online",
+        "name": "user admin",
+        "username": "user",
+        "endpoints": {
+          "email": [
+            {
+              "id": "user@nethesis.it"
+            }
+          ],
+          "webrtc": [
+            {
+              "id": "98301",
+              "secret": "xyz"
+            }
+          ],
+          "extension": [
+            {
+              "id": "91301"
+            },
+            {
+              "id": "92301"
+            },
+            {
+              "id": "93301"
+            },
+            {
+              "id": "94301"
+            },
+            {
+              "id": "95301"
+            },
+            {
+              "id": "96301"
+            },
+            {
+              "id": "97301"
+            }
+          ],
+          "cellphone": [
+            {
+              "id": "1234567890"
+            }
+          ],
+          "voicemail": [
+            {
+              "id": "301"
+            }
+          ],
+          "webrtc_mobile": [
+            {
+              "id": "99301",
+              "secret": "xyz"
+            }
+          ],
+          "mainextension": [
+            {
+              "id": "301"
+            }
+          ]
+        }
+      }
      *
      * <br>
      *
@@ -179,10 +262,12 @@ function setCompUtil(comp) {
          * @property get
          * @type {array}
          *
+         *   @param {string} me To get the user information
          *   @param {string} presence To get the user presence status
          *   @param {string} presencelist To get the list of possible presence status
          */
         'get': [
+          'me',
           'presence',
           'presencelist'
         ],
@@ -200,6 +285,34 @@ function setCompUtil(comp) {
         ],
         'head': [],
         'del': []
+      },
+
+      /**
+       * Get the information about the user by the following REST API:
+       *
+       *     me
+       *
+       * @method me
+       * @param {object}   req  The client request
+       * @param {object}   res  The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      me: function(req, res, next) {
+        try {
+          var username = req.headers.authorization_user;
+          var results = compUser.getUserInfo(username);
+          if (typeof results === 'object') {
+            logger.info(IDLOG, 'send user info to user "' + username + '"');
+            res.send(200, results);
+          } else {
+            var strerr = 'sending user info to user "' + username + '": wrong format';
+            logger.error(IDLOG, strerr);
+            compUtil.net.sendHttp500(IDLOG, res, strerr);
+          }
+        } catch (err) {
+          logger.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
       },
 
       /**
@@ -258,6 +371,7 @@ function setCompUtil(comp) {
       }
     };
     exports.api = user.api;
+    exports.me = user.me;
     exports.presence = user.presence;
     exports.setLogger = setLogger;
     exports.setCompUtil = setCompUtil;
@@ -284,7 +398,7 @@ function presenceGet(req, res, next) {
 
     logger.info(IDLOG, 'send presence status "' + status + '" to user "' + username + '"');
     res.send(200, {
-      status: status ? status : ''
+      status: status
     });
   } catch (error) {
     logger.error(IDLOG, error.stack);
