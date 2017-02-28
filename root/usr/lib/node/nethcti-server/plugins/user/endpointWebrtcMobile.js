@@ -5,12 +5,13 @@
  *
  * @class EndpointWebrtcMobile
  * @param {string} identifier The mobile webrtc extension identifier
+ * @param {string} pwd The secret of the extension
  * @return {object} The mobile webrtc extension endpoint object.
  * @constructor
  */
-exports.EndpointWebrtcMobile = function(identifier) {
+exports.EndpointWebrtcMobile = function(identifier, pwd) {
   // check the parameter
-  if (typeof identifier !== 'string') {
+  if (typeof identifier !== 'string' || typeof pwd !== 'string') {
     throw new Error('wrong parameters');
   }
 
@@ -23,6 +24,16 @@ exports.EndpointWebrtcMobile = function(identifier) {
    * @private
    */
   var id = identifier;
+
+  /**
+   * The extension secret.
+   *
+   * @property secret
+   * @type {string}
+   * @required
+   * @private
+   */
+  var secret = pwd;
 
   /**
    * Return the extension identifier.
@@ -48,7 +59,8 @@ exports.EndpointWebrtcMobile = function(identifier) {
    * Returns the JSON representation of the object.
    *
    *     {
-   *         id: "214"
+   *         "id": "214",
+   *         "secret": "xyz"
    *     }
    *
    * @method toJSON
@@ -56,7 +68,8 @@ exports.EndpointWebrtcMobile = function(identifier) {
    */
   function toJSON() {
     return {
-      id: id
+      id: id,
+      secret: secret
     };
   }
 

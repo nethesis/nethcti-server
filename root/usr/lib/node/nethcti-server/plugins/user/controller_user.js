@@ -207,6 +207,26 @@ function getPresence(username) {
 }
 
 /**
+ * Get the user information in JSON format.
+ *
+ * @method getUserInfo
+ * @param {string} username The username
+ * @return {string} The user information in JSON format.
+ */
+function getUserInfo(username) {
+  try {
+    if (typeof username !== 'string') {
+      throw new Error('wrong parameter');
+    }
+    if (users[username]) {
+      return users[username].toJSON();
+    }
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Adds the endpoint objects to the user by json configuration.
  *
  * @method initializeEndpointsUsersByJSON
@@ -649,36 +669,6 @@ function getUsernamesWithData() {
 }
 
 /**
- * Returns all the nethcti endpoints of the user.
- *
- * @method getAllEndpointsNethcti
- * @param  {string} username The username
- * @return {object} Returns all the nethcti endpoints of the user.
- */
-function getAllEndpointsNethcti(username) {
-  try {
-    // check parameter
-    if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
-    }
-
-    // check the user existence
-    if (typeof users[username] !== 'object') {
-      logger.warn(IDLOG, 'gettings all the nethcti endpoints: the user "' + username + '" does not exist');
-      return {};
-    }
-
-    // gets all endpoints, extracts the nethcti endpoint
-    var endpoints = users[username].getAllEndpoints();
-    return endpoints[endpointTypes.TYPES.nethcti];
-
-  } catch (err) {
-    logger.error(IDLOG, err.stack);
-    return {};
-  }
-}
-
-/**
  * Returns all the email endpoints of the user.
  *
  * @method getAllEndpointsEmail
@@ -871,6 +861,7 @@ exports.config = config;
 exports.setLogger = setLogger;
 exports.setPresence = setPresence;
 exports.getPresence = getPresence;
+exports.getUserInfo = getUserInfo;
 exports.getUsernames = getUsernames;
 exports.isUserPresent = isUserPresent;
 exports.EVT_USERS_READY = EVT_USERS_READY;
@@ -884,7 +875,6 @@ exports.hasExtensionEndpoint = hasExtensionEndpoint;
 exports.hasCellphoneEndpoint = hasCellphoneEndpoint;
 exports.hasVoicemailEndpoint = hasVoicemailEndpoint;
 exports.getUsernamesWithData = getUsernamesWithData;
-exports.getAllEndpointsNethcti = getAllEndpointsNethcti;
 exports.getAllEndpointsExtension = getAllEndpointsExtension;
 exports.getAllEndpointsCellphone = getAllEndpointsCellphone;
 exports.getAllEndpointsEmail = getAllEndpointsEmail;

@@ -110,7 +110,7 @@ exports.User = function(uname, na) {
    * @return {string} The presence status.
    */
   function getPresence() {
-    return presence;
+    return presence ? presence : '';
   }
 
   /**
@@ -209,9 +209,9 @@ exports.User = function(uname, na) {
     } else if (type === endpointTypes.TYPES.mainextension) {
       newEndpoint = new EndpointMainExtension(id);
     } else if (type === endpointTypes.TYPES.webrtc) {
-      newEndpoint = new EndpointWebrtc(id);
+      newEndpoint = new EndpointWebrtc(id, data.secret);
     } else if (type === endpointTypes.TYPES.webrtc_mobile) {
-      newEndpoint = new EndpointWebrtcMobile(id);
+      newEndpoint = new EndpointWebrtcMobile(id, data.secret);
     }
     // add endpoint by its type
     endpoints[type][id] = newEndpoint;
@@ -278,12 +278,8 @@ exports.User = function(uname, na) {
   /**
    * Returns the JSON representation of the user.
    *
-   *     {
-   *         username: "alessandro.polidori" // the username
-   *     }
-   *
    * @method toJSON
-   * @return {object} The JSON representation of the object.
+   * @return {object} The JSON representation of the user object.
    */
   function toJSON() {
     var ep, endpoType;
@@ -300,7 +296,8 @@ exports.User = function(uname, na) {
     }
 
     return {
-      presence: presence,
+      name: getName(),
+      presence: getPresence(),
       username: username,
       endpoints: jsonEndpoints
     };
