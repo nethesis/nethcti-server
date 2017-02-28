@@ -1,0 +1,13 @@
+{
+    "name": "com_phonebook_rest",
+    "main": "arch_com_phonebook_rest.js",
+    "private": true,
+    "plugin": {
+        "consumes": [
+            "util",
+            "logger",
+            "phonebook"
+        ],
+        "provides": []
+    }
+}
