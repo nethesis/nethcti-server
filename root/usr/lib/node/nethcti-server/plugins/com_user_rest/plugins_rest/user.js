@@ -135,6 +135,7 @@ function setCompUtil(comp) {
      * # GET requests
      *
      * 1. [`user/presencelist`](#presencelistget)
+     * 1. [`user/presence`](#presenceget)
      *
      * ---
      *
@@ -145,6 +146,16 @@ function setCompUtil(comp) {
      * Example JSON response:
      *
      *     ["online", "dnd", "voicemail", "cellphone"]
+     *
+     * ---
+     *
+     * ### <a id="presenceget">**`user/presence`**</a>
+     *
+     * Returns the user presence status.
+     *
+     * Example JSON response:
+     *
+     *     { "status": "online" }
      *
      * <br>
      *
