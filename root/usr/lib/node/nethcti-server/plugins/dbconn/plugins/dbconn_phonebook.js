@@ -127,19 +127,16 @@ function getCtiPbContactsByNum(number, cb) {
             ],
             order: 'name ASC, company ASC'
 
-        }).success(function (results) {
-
+        }).then(function (results) {
             // extract results to return in the callback function
             var i;
             for (i = 0; i < results.length; i++) {
-                results[i] = results[i].selectedValues;
+                results[i] = results[i].dataValues;
             }
 
             logger.info(IDLOG, results.length + ' results by searching cti phonebook contacts by number ' + number);
             cb(null, results);
-
-        }).error(function (err) { // manage the error
-
+        }, function (err) { // manage the error
             logger.error(IDLOG, 'searching cti phonebook contacts by number ' + number + ': ' + err.toString());
             cb(err.toString());
         });
@@ -203,17 +200,16 @@ function saveCtiPbContact(data, cb) {
 
         // save the model into the database
         contact.save()
-        .success(function () { // the save was successful
+        .then(function () { // the save was successful
             logger.info(IDLOG, 'cti phonebook contact saved successfully');
             cb();
 
-        }).error(function (err) { // manage the error
+        }, function (err) { // manage the error
             logger.error(IDLOG, 'saving cti phonebook contact: ' + err.toString());
             cb(err.toString());
         });
 
         compDbconnMain.incNumExecQueries();
-
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -249,25 +245,21 @@ function getPbContactsByNum(number, cb) {
             ],
             order: 'name ASC, company ASC'
 
-        }).success(function (results) {
-
+        }).then(function (results) {
             // extract results to return in the callback function
             var i;
             for (i = 0; i < results.length; i++) {
-                results[i] = results[i].selectedValues;
+                results[i] = results[i].dataValues;
             }
 
             logger.info(IDLOG, results.length + ' results by searching centralized phonebook contacts by number ' + number);
             cb(null, results);
-
-        }).error(function (err) { // manage the error
-
+        }, function (err) { // manage the error
             logger.error(IDLOG, 'searching centralized phonebook contacts by number ' + number + ': ' + err.toString());
             cb(err.toString());
         });
 
         compDbconnMain.incNumExecQueries();
-
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err);
@@ -291,22 +283,18 @@ function deleteCtiPbContact(id, cb) {
         compDbconnMain.models[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].find({
             where: [ 'id=?', id  ]
 
-        }).success(function (task) {
-
+        }).then(function (task) {
             if (task) {
-
                 task.destroy().success(function () {
                     logger.info(IDLOG, 'cti phonebook contact with db id "' + id + '" has been deleted successfully');
                     cb();
                 });
-
             } else {
                 var str = 'deleting cti phonebook contact with db id "' + id + '": entry not found';
                 logger.warn(IDLOG, str);
                 cb(str);
             }
-
-        }).error(function (err1) { // manage the error
+        }, function (err1) { // manage the error
 
             logger.error(IDLOG, 'searching cti phonebook contact with db id "' + id + '" to delete: ' + err1.toString());
             cb(err1.toString());
@@ -366,23 +354,18 @@ function modifyCtiPbContact(data, cb) {
         compDbconnMain.models[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].find({
             where: [ 'id=?', data.id  ]
 
-        }).success(function (task) {
-
+        }).then(function (task) {
             if (task) {
-
                 task.updateAttributes(data).success(function () {
                     logger.info(IDLOG, 'cti phonebook contact with db id "' + data.id + '" has been modified successfully');
                     cb();
                 });
-
             } else {
                 var str = 'modify cti phonebook contact with db id "' + data.id + '": entry not found';
                 logger.warn(IDLOG, str);
                 cb(str);
             }
-
-        }).error(function (err1) { // manage the error
-
+        }, function (err1) { // manage the error
             logger.error(IDLOG, 'searching cti phonebook contact with db id "' + data.id + '" to modify: ' + err1.toString());
             cb(err1.toString());
         });
@@ -433,19 +416,18 @@ function getPbContactsContains(term, cb) {
             ],
             order: 'company ASC, name ASC'
 
-        }).success(function (results) {
+        }).then(function (results) {
 
             // extract results to return in the callback function
             var i;
             for (i = 0; i < results.length; i++) {
-                results[i] = results[i].selectedValues;
+                results[i] = results[i].dataValues;
             }
 
             logger.info(IDLOG, results.length + ' results by searching centralized phonebook contacts that contains "' + term + '"');
             cb(null, results);
 
-        }).error(function (err) { // manage the error
-
+        }, function (err) { // manage the error
             logger.error(IDLOG, 'searching centralized phonebook contacts that contains "' + term + '": ' + err.toString());
             cb(err.toString());
         });
@@ -494,25 +476,21 @@ function getPbContactsStartsWith(term, cb) {
             ],
             order: 'company ASC, name ASC'
 
-        }).success(function (results) {
-
+        }).then(function (results) {
             // extract results to return in the callback function
             var i;
             for (i = 0; i < results.length; i++) {
-                results[i] = results[i].selectedValues;
+                results[i] = results[i].dataValues;
             }
 
             logger.info(IDLOG, results.length + ' results by searching centralized phonebook contacts with names starts with "' + term + '"');
             cb(null, results);
-
-        }).error(function (err) { // manage the error
-
+        }, function (err) { // manage the error
             logger.error(IDLOG, 'searching centralized phonebook contacts whose names starts with "' + term + '": ' + err.toString());
             cb(err.toString());
         });
 
         compDbconnMain.incNumExecQueries();
-
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -558,25 +536,21 @@ function getCtiPbContactsContains(term, username, cb) {
             ],
             order: 'company ASC, name ASC'
 
-        }).success(function (results) {
-
+        }).then(function (results) {
             // extract results to return in the callback function
             var i;
             for (i = 0; i < results.length; i++) {
-                results[i] = results[i].selectedValues;
+                results[i] = results[i].dataValues;
             }
 
             logger.info(IDLOG, results.length + ' results by searching cti phonebook contacts that contains "' + term + '"');
             cb(null, results);
-
-        }).error(function (err) { // manage the error
-
+        }, function (err) { // manage the error
             logger.error(IDLOG, 'searching cti phonebook contacts that contains "' + term + '": ' + err.toString());
             cb(err.toString());
         });
 
         compDbconnMain.incNumExecQueries();
-
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err);
@@ -609,18 +583,17 @@ function getCtiPbSpeeddialContacts(username, cb) {
             ],
             order: 'name ASC, company ASC'
 
-        }).success(function (results) {
-
+        }).then(function (results) {
             // extract results to return in the callback function
             var i;
             for (i = 0; i < results.length; i++) {
-                results[i] = results[i].selectedValues;
+                results[i] = results[i].dataValues;
             }
 
             logger.info(IDLOG, results.length + ' results by searching cti phonebook speeddial contacts of the user "' + username + '"');
             cb(null, results);
 
-        }).error(function (err) { // manage the error
+        }, function (err) { // manage the error
 
             logger.error(IDLOG, 'searching cti phonebook speeddial contacts of the user "' + username + '": ' + err.toString());
             cb(err.toString());
@@ -661,19 +634,16 @@ function getCtiPbContactsStartsWithDigit(username, cb) {
             ],
             order: 'company ASC, name ASC'
 
-        }).success(function (results) {
-
+        }).then(function (results) {
             // extract results to return in the callback function
             var i;
             for (i = 0; i < results.length; i++) {
-                results[i] = results[i].selectedValues;
+                results[i] = results[i].dataValues;
             }
 
             logger.info(IDLOG, results.length + ' results by searching cti phonebook contacts whose names starts with a digit');
             cb(null, results);
-
-        }).error(function (err) { // manage the error
-
+        }, function (err) { // manage the error
             logger.error(IDLOG, 'searching cti phonebook contacts whose names starts with a digit: ' + err.toString());
             cb(err.toString());
         });
@@ -710,19 +680,16 @@ function getPbContactsStartsWithDigit(cb) {
             ],
             order: 'company ASC, name ASC'
 
-        }).success(function (results) {
-
+        }).then(function (results) {
             // extract results to return in the callback function
             var i;
             for (i = 0; i < results.length; i++) {
-                results[i] = results[i].selectedValues;
+                results[i] = results[i].dataValues;
             }
 
             logger.info(IDLOG, results.length + ' results by searching centralized phonebook contacts with names starts with a digit');
             cb(null, results);
-
-        }).error(function (err) { // manage the error
-
+        }, function (err) { // manage the error
             logger.error(IDLOG, 'searching centralized phonebook contacts whose names starts with a digit: ' + err.toString());
             cb(err.toString());
         });
@@ -767,19 +734,16 @@ function getCtiPbContactsStartsWith(term, username, cb) {
             ],
             order: 'company ASC, name ASC'
 
-        }).success(function (results) {
-
+        }).then(function (results) {
             // extract results to return in the callback function
             var i;
             for (i = 0; i < results.length; i++) {
-                results[i] = results[i].selectedValues;
+                results[i] = results[i].dataValues;
             }
 
             logger.info(IDLOG, results.length + ' results by searching cti phonebook contacts whose names starts with "' + term + '"');
             cb(null, results);
-
-        }).error(function (err) { // manage the error
-
+        }, function (err) { // manage the error
             logger.error(IDLOG, 'searching cti phonebook contacts whose names starts with "' + term + '": ' + err.toString());
             cb(err.toString());
         });
@@ -809,19 +773,16 @@ function getCtiPbContact(id, cb) {
         compDbconnMain.models[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].find({
             where: [ 'id=?', id  ]
 
-        }).success(function (result) {
-
-            if (result && result.selectedValues) {
+        }).then(function (result) {
+            if (result && result.dataValues) {
                 logger.info(IDLOG, 'search cti phonebook contact with db id "' + id + '" has been successful');
-                cb(null, result.selectedValues);
+                cb(null, result.dataValues);
 
             } else {
                 logger.info(IDLOG, 'search cti phonebook contact with db id "' + id + '": not found');
                 cb(null, {});
             }
-
-        }).error(function (err1) { // manage the error
-
+        }, function (err1) { // manage the error
             logger.error(IDLOG, 'search cti phonebook contact with db id "' + id + '" failed: ' + err1.toString());
             cb(err1.toString());
         });
