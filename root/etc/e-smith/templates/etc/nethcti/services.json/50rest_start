@@ -3,3 +3,7 @@
       "port": "50000",
       "address": "localhost"
     \},
+    "phonebook": \{
+      "port":    "50001",
+      "address": "localhost"
+    \},

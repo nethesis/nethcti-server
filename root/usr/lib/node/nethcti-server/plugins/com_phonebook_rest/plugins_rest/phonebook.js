@@ -116,78 +116,14 @@ function setCompUtil(comp) {
         *
         * ---
         *
-        * ### <a id="searchget">**`phonebook/search/:term`**</a>
+        * ### <a id="searchget">**`phonebook/search/:term[?source=nethcti&limit=n&offset=n]`**</a>
         *
-        * The client receives all phonebook contacts found in the _centralized_ and _NethCTI_ phonebooks.
+        * The client receives all phonebook contacts found in the _centralized_ or _NethCTI_ phonebooks.
+        * It supports pagination with limit and offset.
+        * If the source parameter is equal to 'nethcti' the source will be nethcti phonebook, otherwise it
+        * will be the centralized phonebook.
         * It returns all database entries that contain the specified _term_ in the fields _name, company,
         * workphone, homephone_ and _cellphone_.
-        *
-        * Example JSON response:
-        *
-        *     {
-          "centralized": [
-              {
-                  "id": 1672,
-                  "owner_id": "",
-                  "type": "Cliente",
-                  "homeemail": null,
-                  "workemail": "user@company.com",
-                  "homephone": null,
-                  "workphone": "0512993322",
-                  "cellphone": "",
-                  "fax": "0512993322",
-                  "title": null,
-                  "company": "Ufficio sviluppatori",
-                  "notes": "",
-                  "name": "",
-                  "homestreet": null,
-                  "homepob": null,
-                  "homecity": null,
-                  "homeprovince": null,
-                  "homepostalcode": null,
-                  "homecountry": null,
-                  "workstreet": "S.S.PONTI, 1",
-                  "workpob": null,
-                  "workcity": "Pesaro",
-                  "workprovince": null,
-                  "workpostalcode": null,
-                  "workcountry": null,
-                  "url": "http://www.nethesis.it"
-              }
-          ],
-          "nethcti": [
-              {
-                  "id": 2,
-                  "owner_id": "alessandro",
-                  "type": "public",
-                  "homeemail": "",
-                  "workemail": "",
-                  "homephone": "",
-                  "workphone": "",
-                  "cellphone": "1233245",
-                  "fax": "",
-                  "title": "",
-                  "company": "",
-                  "notes": "",
-                  "name": "alessandro",
-                  "homestreet": "",
-                  "homepob": "",
-                  "homecity": "",
-                  "homeprovince": "",
-                  "homepostalcode": "",
-                  "homecountry": "",
-                  "workstreet": "",
-                  "workpob": "",
-                  "workcity": "",
-                  "workprovince": "",
-                  "workpostalcode": "",
-                  "workcountry": "",
-                  "url": "",
-                  "extension": "",
-                  "speeddial_num": "1233245"
-              }
-          ]
-      }
         *
         * ---
         *
@@ -273,77 +209,10 @@ function setCompUtil(comp) {
         *
         * ---
         *
-        * ### <a id="searchstartswithget">**`phonebook/searchstartswith/:term`**</a>
+        * ### <a id="searchstartswithget">**`phonebook/searchstartswith/:term[?source=nethcti&limit=n&offset=n]`**</a>
         *
-        * The client receives all phonebook contacts found in the _centralized_ and _NethCTI_ phonebooks.
+        * The client receives all phonebook contacts found in the _centralized_ or _NethCTI_ phonebooks.
         * It returns all database entries whose _name_ and _company_ fields starts with the specified term.
-        *
-        * Example JSON response:
-        *
-        *     {
-          "centralized": [
-              {
-                  "id": 488,
-                  "owner_id": "",
-                  "type": "Reseller",
-                  "homeemail": null,
-                  "workemail": "ale@nethesis.it",
-                  "homephone": null,
-                  "workphone": "",
-                  "cellphone": "",
-                  "fax": "",
-                  "title": null,
-                  "company": "Nethesis srl",
-                  "notes": "some notes",
-                  "name": "alert ",
-                  "homestreet": null,
-                  "homepob": null,
-                  "homecity": null,
-                  "homeprovince": null,
-                  "homepostalcode": null,
-                  "homecountry": null,
-                  "workstreet": "Strada degli Olmi",
-                  "workpob": null,
-                  "workcity": "Pesaro",
-                  "workprovince": null,
-                  "workpostalcode": null,
-                  "workcountry": null,
-                  "url": "http://www.nethesis.it"
-              }
-          ],
-          "nethcti": [
-              {
-                  "id": 1,
-                  "owner_id": "alessandro",
-                  "type": "speeddial",
-                  "homeemail": "",
-                  "workemail": "",
-                  "homephone": "",
-                  "workphone": "",
-                  "cellphone": "123456",
-                  "fax": "",
-                  "title": "",
-                  "company": "",
-                  "notes": "",
-                  "name": "ale",
-                  "homestreet": "",
-                  "homepob": "",
-                  "homecity": "",
-                  "homeprovince": "",
-                  "homepostalcode": "",
-                  "homecountry": "",
-                  "workstreet": "",
-                  "workpob": "",
-                  "workcity": "",
-                  "workprovince": "",
-                  "workpostalcode": "",
-                  "workcountry": "",
-                  "url": "",
-                  "extension": "",
-                  "speeddial_num": "123456"
-              }
-          ]
-      }
         *
         * ---
         *
@@ -625,7 +494,13 @@ function setCompUtil(comp) {
                     var username = req.headers.authorization_user;
 
                     // use phonebook component
-                    compPhonebook.getPbContactsContains(req.params.term, username, function (err, results) {
+                    compPhonebook.getPbContactsContains(
+                      req.params.term,
+                      username,
+                      req.params.source,
+                      req.params.offset,
+                      req.params.limit,
+                      function (err, results) {
                         try {
 
                             if (err) { throw err; }
@@ -724,7 +599,13 @@ function setCompUtil(comp) {
                     var username = req.headers.authorization_user;
 
                     // use phonebook component
-                    compPhonebook.getPbContactsStartsWith(req.params.term, username, function (err, results) {
+                    compPhonebook.getPbContactsStartsWith(
+                      req.params.term,
+                      username,
+                      req.params.source,
+                      req.params.offset,
+                      req.params.limit,
+                      function (err, results) {
                         try {
 
                             if (err) { throw err; }
@@ -772,11 +653,14 @@ function setCompUtil(comp) {
                     var username = req.headers.authorization_user;
 
                     // use phonebook component
-                    compPhonebook.getPbContactsStartsWithDigit(username, function (err1, results) {
+                    compPhonebook.getPbContactsStartsWithDigit(
+                      username,
+                      req.params.source,
+                      req.params.offset,
+                      req.params.limit,
+                      function (err1, results) {
                         try {
-
                             if (err1) { throw err1; }
-
                             else {
                                 // construct the output log
                                 var strlog = 'send to user "' + username + '" ';
@@ -791,13 +675,11 @@ function setCompUtil(comp) {
                                 logger.info(IDLOG, strlog);
                                 res.send(200, results);
                             }
-
                         } catch (err2) {
                             logger.error(IDLOG, err2.stack);
                             compUtil.net.sendHttp500(IDLOG, res, err2.toString());
                         }
                     });
-
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
