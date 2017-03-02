@@ -73,7 +73,7 @@ try {
             }
           });
           app.on('ready', function(uno, due) {
-            logger.warn(IDLOG, 'started ' + process.argv[1]);
+            logger.warn(IDLOG, 'STARTED ' + process.argv[1]);
           });
         } catch (err) {
           logger.error(IDLOG, err.stack);

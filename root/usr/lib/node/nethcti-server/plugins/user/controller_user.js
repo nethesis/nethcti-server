@@ -72,6 +72,15 @@ var EVT_USERS_READY = 'usersReady';
 var logger = console;
 
 /**
+ * The asterisk proxy architect component.
+ *
+ * @property compAstProxy
+ * @type object
+ * @private
+ */
+var compAstProxy;
+
+/**
  * The event emitter.
  *
  * @property emitter
@@ -115,6 +124,21 @@ function setLogger(log) {
 }
 
 /**
+ * Set the asterisk proxy architect component.
+ *
+ * @method setCompAstProxy
+ * @param {object} comp The asterisk proxy architect component.
+ */
+function setCompAstProxy(comp) {
+  try {
+    compAstProxy = comp;
+    logger.info(IDLOG, 'set asterisk proxy architect component');
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Initialize the users by file. The file must use the JSON syntax and
  * must report user/endpoint associations and authorization data.
  *
@@ -150,11 +174,14 @@ function config(path) {
 
     // set endpoints to the users
     initializeEndpointsUsersByJSON(json);
-    logger.info(IDLOG, 'configuration done by ' + path);
+    // set user presence
+    initializeUsersPresence();
 
     // emit the event for tell to other modules that the user objects are ready
     logger.info(IDLOG, 'emit event "' + EVT_USERS_READY + '"');
     emitter.emit(EVT_USERS_READY);
+
+    logger.info(IDLOG, 'configuration done by ' + path);
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
@@ -254,6 +281,82 @@ function initializeEndpointsUsersByJSON(json) {
         }
       }
     }
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Get the main extension endpoint of the user.
+ *
+ * @method getEndpointMainExtension
+ * @param {string} username The name of the user
+ * @return {object} The main extension endpoint.
+ */
+function getEndpointMainExtension(username) {
+  try {
+    if (typeof username !== 'string') {
+      throw new Error('wrong parameter');
+    }
+    // check the user existence
+    if (typeof users[username] !== 'object') {
+      logger.warn(IDLOG, 'getting main extension endpoint: user "' + username + '" does not exist');
+      return {};
+    }
+    // gets all endpoints, extracts the main extension endpoint
+    var endpoints = users[username].getAllEndpoints();
+    return endpoints[endpointTypes.TYPES.mainextension][
+      Object.keys(endpoints[endpointTypes.TYPES.mainextension])[0]
+    ];
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+    return {};
+  }
+}
+
+/**
+ * Initialize the user presence.
+ *
+ * @method initializeUsersPresence
+ * @private
+ */
+function initializeUsersPresence() {
+  try {
+    var username;
+    for (username in users) {
+      var mainExtId = getEndpointMainExtension(username).getId();
+      var cellphone = (getAllEndpointsCellphone(username))[
+        Object.keys(getAllEndpointsCellphone(username))[0]
+      ];
+      if (cellphone) {
+        cellphone = cellphone.getId();
+      }
+      var dnd = compAstProxy.proxyLogic.isExtenDnd(mainExtId);
+      var cf = compAstProxy.proxyLogic.isExtenCf(mainExtId);
+      var cfvm = compAstProxy.proxyLogic.isExtenCfVm(mainExtId);
+      var cfval;
+      if (cf) {
+        cfval = compAstProxy.proxyLogic.getExtenCfValue(mainExtId);
+      }
+      // set presence
+      if (!dnd && !cf && !cfvm) {
+        logger.info(IDLOG, 'set user presence of "' + username + '" to "' + userPresence.STATUS.online + '"');
+        users[username].setPresence(userPresence.STATUS.online);
+      } else if (dnd) {
+        logger.info(IDLOG, 'set user presence of "' + username + '" to "' + userPresence.STATUS.dnd + '"');
+        users[username].setPresence(userPresence.STATUS.dnd);
+      } else if (cf && cfval === cellphone) {
+        logger.info(IDLOG, 'set user presence of "' + username + '" to "' + userPresence.STATUS.cellphone + '"');
+        users[username].setPresence(userPresence.STATUS.cellphone);
+      } else if (cf && cfval !== cellphone) {
+        // ??? TODO ???
+        logger.warn('TODO - ' + username + ' has cf to ' + cfval);
+      } else if (cfvm) {
+        logger.info(IDLOG, 'set user presence of "' + username + '" to "' + userPresence.STATUS.voicemail + '"');
+        users[username].setPresence(userPresence.STATUS.voicemail);
+      }
+    }
+    logger.info(IDLOG, 'set all users presence done');
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
@@ -865,6 +968,7 @@ exports.getUserInfo = getUserInfo;
 exports.getUsernames = getUsernames;
 exports.isUserPresent = isUserPresent;
 exports.EVT_USERS_READY = EVT_USERS_READY;
+exports.setCompAstProxy = setCompAstProxy;
 exports.getEndpointsJSON = getEndpointsJSON;
 exports.getVoicemailList = getVoicemailList;
 exports.setAuthorization = setAuthorization;
@@ -877,6 +981,7 @@ exports.hasVoicemailEndpoint = hasVoicemailEndpoint;
 exports.getUsernamesWithData = getUsernamesWithData;
 exports.getAllEndpointsExtension = getAllEndpointsExtension;
 exports.getAllEndpointsCellphone = getAllEndpointsCellphone;
+exports.getEndpointMainExtension = getEndpointMainExtension;
 exports.getAllEndpointsEmail = getAllEndpointsEmail;
 exports.getAllUsersEndpointsJSON = getAllUsersEndpointsJSON;
 exports.getAllUsersEndpointsExtension = getAllUsersEndpointsExtension;

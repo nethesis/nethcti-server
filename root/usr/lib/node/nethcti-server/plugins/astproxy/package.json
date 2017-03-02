@@ -1,0 +1,13 @@
+{
+  "name": "astproxy",
+  "main": "arch_astproxy.js",
+  "private": true,
+  "plugin": {
+    "consumes": [
+      "logger"
+    ],
+    "provides": [
+      "astProxy"
+    ]
+  }
+}
