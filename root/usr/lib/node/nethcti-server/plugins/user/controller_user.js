@@ -13,6 +13,7 @@
  */
 var fs = require('fs');
 var User = require('./user').User;
+var async = require('async');
 var EventEmitter = require('events').EventEmitter;
 var userPresence = require('./user_presence');
 var endpointTypes = require('./endpoint_types');
@@ -176,6 +177,8 @@ function config(path) {
     initializeEndpointsUsersByJSON(json);
     // set user presence
     initializeUsersPresence();
+    // initialize asterisk proxy listeners
+    initializeAstProxyListeners();
 
     // emit the event for tell to other modules that the user objects are ready
     logger.info(IDLOG, 'emit event "' + EVT_USERS_READY + '"');
@@ -189,24 +192,223 @@ function config(path) {
 }
 
 /**
+ * Handler for the _extenDndChanged_ event emitted by _ast\_proxy_ component.
+ *
+ * @method evtExtenDndChanged
+ * @param {object} data The data received by the event
+ * @private
+ */
+function evtExtenDndChanged(data) {
+  try {
+    if (typeof data !== 'object' || typeof data.exten !== 'string' || typeof data.enabled !== 'boolean') {
+      throw new Error('wrong parameters');
+    }
+    logger.info(IDLOG, 'received "' + compAstProxy.proxyLogic.EVT_EXTEN_DND_CHANGED + '" event for exten "' + data.exten + '"');
+    var username = getUserFromMainExten(data.exten);
+    udpateUserPresence(username);
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Handler for the _extenCfChanged_ event emitted by _ast\_proxy_ component.
+ *
+ * @method evtExtenCfChanged
+ * @param {object} data The data received by the event
+ * @private
+ */
+function evtExtenCfChanged(data) {
+  try {
+    if (typeof data !== 'object' || typeof data.exten !== 'string' || typeof data.enabled !== 'boolean') {
+      throw new Error('wrong parameters');
+    }
+    logger.info(IDLOG, 'received "' + compAstProxy.proxyLogic.EVT_EXTEN_CF_CHANGED + '" event for exten "' + data.exten + '"');
+    var username = getUserFromMainExten(data.exten);
+    udpateUserPresence(username);
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Handler for the _extenCfVmChanged_ event emitted by _ast\_proxy_ component.
+ *
+ * @method evtExtenCfVmChanged
+ * @param {object} data The data received by the event
+ * @private
+ */
+function evtExtenCfVmChanged(data) {
+  try {
+    if (typeof data !== 'object' || typeof data.exten !== 'string' || typeof data.enabled !== 'boolean') {
+      throw new Error('wrong parameters');
+    }
+    logger.info(IDLOG, 'received "' + compAstProxy.proxyLogic.EVT_EXTEN_CFVM_CHANGED + '" event for exten "' + data.exten + '"');
+    var username = getUserFromMainExten(data.exten);
+    udpateUserPresence(username);
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Returns the username that has the main extension associated.
+ *
+ * @method getUserFromMainExten
+ * @param {string} extenId The identifier of the main extension
+ * @private
+ */
+function getUserFromMainExten(extenId) {
+  try {
+    var u, mainExtId;
+    for (u in users) {
+      mainExtId = getEndpointMainExtension(u).getId();
+      if (mainExtId === extenId) {
+        return u;
+      }
+    }
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Initialize the listeners for asterisk proxy component.
+ *
+ * @method initializeAstProxyListeners
+ * @private
+ */
+function initializeAstProxyListeners() {
+  try {
+    compAstProxy.on(compAstProxy.proxyLogic.EVT_EXTEN_CF_CHANGED, evtExtenCfChanged);
+    compAstProxy.on(compAstProxy.proxyLogic.EVT_EXTEN_CFVM_CHANGED, evtExtenCfVmChanged);
+    compAstProxy.on(compAstProxy.proxyLogic.EVT_EXTEN_DND_CHANGED, evtExtenDndChanged);
+    logger.info(IDLOG, 'set asterisk proxy listeners done');
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Set the user presence status.
  *
  * @method setPresence
  * @param {string} username The username of the user to be set
  * @param {string} status The presence status
- * @return {boolean} True if the status set has been set successfully.
+ * @param {function} cb The callback function
  */
-function setPresence(username, status) {
+function setPresence(username, status, cb) {
   try {
-    if (typeof username !== 'string' || typeof status !== 'string') {
+    if (typeof username !== 'string' || typeof status !== 'string' || typeof cb !== 'function') {
       throw new Error('wrong parameters');
     }
     if (users[username] && userPresence.isValidUserPresence(status)) {
-      users[username].setPresence(status);
-      return true;
-    }
-    return false;
 
+      var mainExtId = getEndpointMainExtension(username).getId();
+
+      if (status === userPresence.STATUS.online) {
+        // disable "dnd", "call forward" and "call forward to voicemail"
+        async.parallel([
+            // disable dnd
+            function(callback) {
+              compAstProxy.proxyLogic.setDnd(mainExtId, false, callback);
+            },
+            // disable call forward
+            function(callback) {
+              compAstProxy.proxyLogic.setUnconditionalCf(mainExtId, false, null, callback);
+            },
+            // disable call forward to voicemail
+            function(callback) {
+              compAstProxy.proxyLogic.setUnconditionalCfVm(mainExtId, false, null, callback);
+            }
+          ],
+          function(err) {
+            cb(err);
+            if (err) {
+              logger.error(IDLOG, 'setting presence of user "' + username + '" (mainExt: ' + mainExtId + ') to "' + userPresence.STATUS.online + '"');
+              logger.error(IDLOG, err);
+            } else {
+              logger.info(IDLOG, 'set presence "' + userPresence.STATUS.online + '" to user "' + username + '" (mainExt: ' + mainExtId + ')');
+            }
+          }
+        );
+      } else if (status === userPresence.STATUS.dnd) {
+        async.parallel([
+            // enable dnd
+            function(callback) {
+              compAstProxy.proxyLogic.setDnd(mainExtId, true, callback);
+            },
+            // disable call forward
+            function(callback) {
+              compAstProxy.proxyLogic.setUnconditionalCf(mainExtId, false, null, callback);
+            },
+            // disable call forward to voicemail
+            function(callback) {
+              compAstProxy.proxyLogic.setUnconditionalCfVm(mainExtId, false, null, callback);
+            }
+          ],
+          function(err) {
+            cb(err);
+            if (err) {
+              logger.error(IDLOG, 'setting presence of user "' + username + '" (mainExt: ' + mainExtId + ') to "' + userPresence.STATUS.dnd + '"');
+              logger.error(IDLOG, err);
+            } else {
+              logger.info(IDLOG, 'set presence "' + userPresence.STATUS.dnd + '" to user "' + username + '" (mainExt: ' + mainExtId + ')');
+            }
+          }
+        );
+      } else if (status === userPresence.STATUS.cellphone) {
+        async.parallel([
+            // disable dnd
+            function(callback) {
+              compAstProxy.proxyLogic.setDnd(mainExtId, false, callback);
+            },
+            // enable call forward to cellphone
+            function(callback) {
+              var cellphoneId = getAllEndpointsCellphone(username)[
+                Object.keys(getAllEndpointsCellphone(username))[0]
+              ];
+              cellphoneId = cellphoneId.getId();
+              compAstProxy.proxyLogic.setUnconditionalCf(mainExtId, true, cellphoneId, callback);
+            }
+          ],
+          function(err) {
+            cb(err);
+            if (err) {
+              logger.error(IDLOG, 'setting presence of user "' + username + '" (mainExt: ' + mainExtId + ') to "' + userPresence.STATUS.cellphone + '"');
+              logger.error(IDLOG, err);
+            } else {
+              logger.info(IDLOG, 'set presence "' + userPresence.STATUS.cellphone + '" to user "' + username + '" (mainExt: ' + mainExtId + ')');
+            }
+          }
+        );
+      } else if (status === userPresence.STATUS.voicemail) {
+        async.parallel([
+            // disable dnd
+            function(callback) {
+              compAstProxy.proxyLogic.setDnd(mainExtId, false, callback);
+            },
+            // enable call forward to voicemail
+            function(callback) {
+              var vmId = getAllEndpointsVoicemail(username)[
+                Object.keys(getAllEndpointsVoicemail(username))[0]
+              ];
+              vmId = vmId.getId();
+              compAstProxy.proxyLogic.setUnconditionalCfVm(mainExtId, true, vmId, callback);
+            }
+          ],
+          function(err) {
+            cb(err);
+            if (err) {
+              logger.error(IDLOG, 'setting presence of user "' + username + '" (mainExt: ' + mainExtId + ') to "' + userPresence.STATUS.voicemail + '"');
+              logger.error(IDLOG, err);
+            } else {
+              logger.info(IDLOG, 'set presence "' + userPresence.STATUS.voicemail + '" to user "' + username + '" (mainExt: ' + mainExtId + ')');
+            }
+          }
+        );
+      }
+    }
   } catch (err) {
     logger.error(IDLOG, err.stack);
     return false;
@@ -315,7 +517,52 @@ function getEndpointMainExtension(username) {
 }
 
 /**
- * Initialize the user presence.
+ * Update the user presence.
+ *
+ * @method udpateUserPresence
+ * @param {string} username The username to be updated
+ * @private
+ */
+function udpateUserPresence(username) {
+  try {
+    if (typeof username !== 'string') {
+      throw new Error('wrong parameter');
+    }
+    var mainExtId = getEndpointMainExtension(username).getId();
+    var cellphone = (getAllEndpointsCellphone(username))[
+      Object.keys(getAllEndpointsCellphone(username))[0]
+    ];
+    if (cellphone) {
+      cellphone = cellphone.getId();
+    }
+    var dnd = compAstProxy.proxyLogic.isExtenDnd(mainExtId);
+    var cf = compAstProxy.proxyLogic.isExtenCf(mainExtId);
+    var cfvm = compAstProxy.proxyLogic.isExtenCfVm(mainExtId);
+    var cfval;
+    if (cf) {
+      cfval = compAstProxy.proxyLogic.getExtenCfValue(mainExtId);
+    }
+    // set presence
+    if (dnd) {
+      logger.info(IDLOG, 'set user presence of "' + username + '" to "' + userPresence.STATUS.dnd + '"');
+      users[username].setPresence(userPresence.STATUS.dnd);
+    } else if (cf && cfval === cellphone) {
+      logger.info(IDLOG, 'set user presence of "' + username + '" to "' + userPresence.STATUS.cellphone + '"');
+      users[username].setPresence(userPresence.STATUS.cellphone);
+    } else if (cfvm) {
+      logger.info(IDLOG, 'set user presence of "' + username + '" to "' + userPresence.STATUS.voicemail + '"');
+      users[username].setPresence(userPresence.STATUS.voicemail);
+    } else {
+      logger.info(IDLOG, 'set user presence of "' + username + '" to "' + userPresence.STATUS.online + '"');
+      users[username].setPresence(userPresence.STATUS.online);
+    }
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Initialize the presence of all users.
  *
  * @method initializeUsersPresence
  * @private
@@ -324,37 +571,7 @@ function initializeUsersPresence() {
   try {
     var username;
     for (username in users) {
-      var mainExtId = getEndpointMainExtension(username).getId();
-      var cellphone = (getAllEndpointsCellphone(username))[
-        Object.keys(getAllEndpointsCellphone(username))[0]
-      ];
-      if (cellphone) {
-        cellphone = cellphone.getId();
-      }
-      var dnd = compAstProxy.proxyLogic.isExtenDnd(mainExtId);
-      var cf = compAstProxy.proxyLogic.isExtenCf(mainExtId);
-      var cfvm = compAstProxy.proxyLogic.isExtenCfVm(mainExtId);
-      var cfval;
-      if (cf) {
-        cfval = compAstProxy.proxyLogic.getExtenCfValue(mainExtId);
-      }
-      // set presence
-      if (!dnd && !cf && !cfvm) {
-        logger.info(IDLOG, 'set user presence of "' + username + '" to "' + userPresence.STATUS.online + '"');
-        users[username].setPresence(userPresence.STATUS.online);
-      } else if (dnd) {
-        logger.info(IDLOG, 'set user presence of "' + username + '" to "' + userPresence.STATUS.dnd + '"');
-        users[username].setPresence(userPresence.STATUS.dnd);
-      } else if (cf && cfval === cellphone) {
-        logger.info(IDLOG, 'set user presence of "' + username + '" to "' + userPresence.STATUS.cellphone + '"');
-        users[username].setPresence(userPresence.STATUS.cellphone);
-      } else if (cf && cfval !== cellphone) {
-        // ??? TODO ???
-        logger.warn('TODO - ' + username + ' has cf to ' + cfval);
-      } else if (cfvm) {
-        logger.info(IDLOG, 'set user presence of "' + username + '" to "' + userPresence.STATUS.voicemail + '"');
-        users[username].setPresence(userPresence.STATUS.voicemail);
-      }
+      udpateUserPresence(username);
     }
     logger.info(IDLOG, 'set all users presence done');
   } catch (err) {
@@ -817,13 +1034,42 @@ function getAllEndpointsCellphone(username) {
 
     // check the user existence
     if (typeof users[username] !== 'object') {
-      logger.warn(IDLOG, 'gettings all the cellphone endpoints: the user "' + username + '" doesn\'t exist');
+      logger.warn(IDLOG, 'gettings all the cellphone endpoints: the user "' + username + '" does not exist');
       return {};
     }
 
     // gets all endpoints, extracts the cellphone endpoints
     var endpoints = users[username].getAllEndpoints();
     return endpoints[endpointTypes.TYPES.cellphone];
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+    return {};
+  }
+}
+
+/**
+ * Returns all the voicemail endpoints of the user.
+ *
+ * @method getAllEndpointsVoicemail
+ * @param  {string} username The username
+ * @return {object} Returns all the voicemail endpoints of the user.
+ */
+function getAllEndpointsVoicemail(username) {
+  try {
+    // check parameter
+    if (typeof username !== 'string') {
+      throw new Error('wrong parameter');
+    }
+
+    // check the user existence
+    if (typeof users[username] !== 'object') {
+      logger.warn(IDLOG, 'gettings all the voicemail endpoints: the user "' + username + '" does not exist');
+      return {};
+    }
+    // gets all endpoints, extracts the voicemail endpoints
+    var endpoints = users[username].getAllEndpoints();
+    return endpoints[endpointTypes.TYPES.voicemail];
 
   } catch (err) {
     logger.error(IDLOG, err.stack);

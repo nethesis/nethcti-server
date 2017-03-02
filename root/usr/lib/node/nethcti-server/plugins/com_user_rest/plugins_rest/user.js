@@ -423,13 +423,22 @@ function presenceSet(req, res, next) {
       compUtil.net.sendHttp400(IDLOG, res);
       return;
     }
-    if (compUser.setPresence(username, status) === true) {
-      compUtil.net.sendHttp200(IDLOG, res);
-    } else {
-      var strerr = 'setting presence "' + status + '" to user "' + username + '"';
-      logger.warn(IDLOG, strerr);
-      compUtil.net.sendHttp500(IDLOG, res, strerr);
-    }
+
+    compUser.setPresence(username, status, function(err) {
+      try {
+        if (err) {
+          logger.error(IDLOG, 'setting presence "' + status + '" to user "' + username + '"');
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+          return;
+        }
+        logger.info(IDLOG, 'presence "' + status + '" has been set successfully to user "' + username + '" ');
+        compUtil.net.sendHttp200(IDLOG, res);
+
+      } catch (err1) {
+        logger.error(IDLOG, err1.stack);
+        compUtil.net.sendHttp500(IDLOG, res, err1.toString());
+      }
+    });
   } catch (error) {
     logger.error(IDLOG, error.stack);
     compUtil.net.sendHttp500(IDLOG, res, error.toString());

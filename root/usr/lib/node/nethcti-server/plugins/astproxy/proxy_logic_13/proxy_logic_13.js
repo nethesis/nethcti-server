@@ -74,6 +74,51 @@ var EVT_READY = 'ready';
 var EVT_EXTEN_CHANGED = 'extenChanged';
 
 /**
+ * Fired when dnd status of an extension has been changed.
+ *
+ * @event extenDndChanged
+ * @param {object} msg The event data
+ */
+/**
+ * The name of the extension dnd changed event.
+ *
+ * @property EVT_EXTEN_DND_CHANGED
+ * @type string
+ * @default "extenDndChanged"
+ */
+var EVT_EXTEN_DND_CHANGED = 'extenDndChanged';
+
+/**
+ * Fired when call forward status of an extension has been changed.
+ *
+ * @event extenCfChanged
+ * @param {object} msg The event data
+ */
+/**
+ * The name of the extension cf changed event.
+ *
+ * @property EVT_EXTEN_CF_CHANGED
+ * @type string
+ * @default "extenCfChanged"
+ */
+var EVT_EXTEN_CF_CHANGED = 'extenCfChanged';
+
+/**
+ * Fired when call forward to voicemail status of an extension has been changed.
+ *
+ * @event extenCfVmChanged
+ * @param {object} msg The event data
+ */
+/**
+ * The name of the extension cf to voicemail changed event.
+ *
+ * @property EVT_EXTEN_CFVM_CHANGED
+ * @type string
+ * @default "extenCfVmChanged"
+ */
+var EVT_EXTEN_CFVM_CHANGED = 'extenCfVmChanged';
+
+/**
  * Fired when an hangup happened on extension.
  *
  * @event hangup
@@ -3450,15 +3495,15 @@ function evtExtenDndChanged(exten, enabled) {
 
       extensions[exten].setDnd(enabled);
       logger.info(IDLOG, 'set dnd status to ' + enabled + ' for extension ' + exten);
-
-      // emit the event
+      // emit the events
       logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
       astProxy.emit(EVT_EXTEN_CHANGED, extensions[exten]);
+      logger.info(IDLOG, 'emit event ' + EVT_EXTEN_DND_CHANGED + ' for extension ' + exten);
+      astProxy.emit(EVT_EXTEN_DND_CHANGED, { exten:  exten, enabled: enabled });
 
     } else {
       logger.warn(IDLOG, 'try to set dnd status of non existent extension ' + exten);
     }
-
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
@@ -3497,11 +3542,11 @@ function evtExtenUnconditionalCfChanged(exten, enabled, to) {
       // emit the event
       logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
       astProxy.emit(EVT_EXTEN_CHANGED, extensions[exten]);
-
+      logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CF_CHANGED + ' for extension ' + exten);
+      astProxy.emit(EVT_EXTEN_CF_CHANGED, { exten:  exten, enabled: enabled, to: to });
     } else {
       logger.warn(IDLOG, 'try to set call forward status of non existent extension ' + exten);
     }
-
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
@@ -3537,14 +3582,15 @@ function evtExtenUnconditionalCfVmChanged(exten, enabled, vm) {
         extensions[exten].disableCfVm();
       }
 
-      // emit the event
+      // emit the events
       logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
       astProxy.emit(EVT_EXTEN_CHANGED, extensions[exten]);
+      logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CFVM_CHANGED + ' for extension ' + exten);
+      astProxy.emit(EVT_EXTEN_CFVM_CHANGED, { exten:  exten, enabled: enabled, vm: vm });
 
     } else {
       logger.warn(IDLOG, 'try to set call forward to voicemail status of non existent extension ' + exten);
     }
-
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
@@ -3556,9 +3602,9 @@ function evtExtenUnconditionalCfVmChanged(exten, enabled, vm) {
  * asterisk events, so simulates it.
  *
  * @method setDnd
- * @param {string}   exten    The extension number
- * @param {boolean}  activate True if the dnd must be enabled
- * @param {function} cb       The callback function
+ * @param {string} exten The extension number
+ * @param {boolean} activate True if the dnd must be enabled
+ * @param {function} cb The callback function
  */
 function setDnd(exten, activate, cb) {
   try {
@@ -3574,20 +3620,18 @@ function setDnd(exten, activate, cb) {
         command: 'dndSet',
         exten: exten,
         activate: activate
-      }, function(err) {
 
+      }, function(err) {
         cb(err);
         if (err === null) {
           evtExtenDndChanged(exten, activate);
         }
       });
-
     } else {
-      var str = 'try to set dnd status of non existent extension ' + exten;
+      var str = 'try to set dnd status of non existent extension "' + exten + '"';
       logger.warn(IDLOG, str);
       cb(str);
     }
-
   } catch (err) {
     logger.error(IDLOG, err.stack);
     cb(err);
@@ -3703,9 +3747,9 @@ function setUnconditionalCf(exten, activate, to, cb) {
         exten: exten,
         activate: activate,
         val: to
-      }, function(err, resp) {
+      }, function(err) {
 
-        cb(err, resp);
+        cb(err);
         if (err === null) {
           evtExtenUnconditionalCfChanged(exten, activate, to);
         }
@@ -7588,6 +7632,9 @@ exports.getJSONExtensions = getJSONExtensions;
 exports.setCompCallerNote = setCompCallerNote;
 exports.queueMemberRemove = queueMemberRemove;
 exports.EVT_EXTEN_CHANGED = EVT_EXTEN_CHANGED;
+exports.EVT_EXTEN_CF_CHANGED = EVT_EXTEN_CF_CHANGED;
+exports.EVT_EXTEN_CFVM_CHANGED = EVT_EXTEN_CFVM_CHANGED;
+exports.EVT_EXTEN_DND_CHANGED = EVT_EXTEN_DND_CHANGED;
 exports.EVT_TRUNK_CHANGED = EVT_TRUNK_CHANGED;
 exports.EVT_EXTEN_DIALING = EVT_EXTEN_DIALING;
 exports.EVT_QUEUE_CHANGED = EVT_QUEUE_CHANGED;
