@@ -39,7 +39,10 @@ module.exports = function(options, imports, register) {
       logger = imports.logger;
     }
     controllerUser.setLogger(logger);
-    controllerUser.config('/etc/nethcti/users.json');
+    controllerUser.setCompAstProxy(imports.astProxy);
+    imports.astProxy.on(imports.astProxy.proxyLogic.EVT_READY, function() {
+      controllerUser.config('/etc/nethcti/users.json');
+    });
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
