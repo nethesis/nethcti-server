@@ -54,6 +54,17 @@ Each request must contain the authentication token retrieved as described above.
 Authorization: <username>:token
 ```
 
+## Reconnections
+Websocket reconnections are fundamental to keep cti services up.
+
+A key concept is the reconnection delay to keep safe the server from possible connections flood.
+
+As you can see from the following url
+https://github.com/socketio/socket.io-client/blob/master/docs/API.md#managerurl-options
+socket io client is set to reconnect automatically for default up to infinity with a randomized initial delay. Each attempt increases the reconnection delay by 2x along with a randomization as above.
+
+
+
 ## CORS
 
 CORS are allowed.
