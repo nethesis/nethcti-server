@@ -6,6 +6,7 @@ use esmith::Build::CreateLinks qw(:all);
 # nethcti-server-update
 #
 my $event = "nethcti-server-update";
+templates2events("/etc/nethcti/asterisk.json",$event);
 templates2events("/etc/nethcti/services.json",$event);
 templates2events("/etc/nethcti/nethcti.json",$event);
 templates2events("/etc/httpd/conf.d/nethcti-server.conf",$event);

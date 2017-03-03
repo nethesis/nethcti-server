@@ -1,0 +1,18 @@
+{
+    my $prefix = ${'nethcti-server'}{'Prefix'} || "";
+
+    if (defined ${'nethcti-server'}{'Prefix'} && ${'nethcti-server'}{'Prefix'} eq "0") {
+        $prefix = "0";
+    }
+
+    use NethServer::Password;
+    my $nethcti_pwd = NethServer::Password::store('NethctiManagerPasswd') || die('Could not generate Nethcti manager password!');
+
+    $OUT = '{
+    "user": "proxycti",
+    "pass": "' . $nethcti_pwd . '",
+    "host": "localhost",
+    "port": "5038",
+    "prefix": "' . $prefix . '"
+}';
+}
