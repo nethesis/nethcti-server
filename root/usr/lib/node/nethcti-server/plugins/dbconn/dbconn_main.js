@@ -15,7 +15,6 @@ var fs           = require('fs');
 var pg           = require('pg');
 var mssql        = require('mssql');
 var moment       = require('moment');
-var iniparser    = require('iniparser');
 var Sequelize    = require("sequelize");
 var EventEmitter = require('events').EventEmitter;
 
