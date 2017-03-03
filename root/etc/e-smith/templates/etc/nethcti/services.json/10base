@@ -1,13 +1,11 @@
 {
   my $restPort = ${'nethcti-server'}{RestPort} || "8179";
-  my $wssPort = ${'nethcti-server'}{WssPort} || "8181";
+  my $wsPort = ${'nethcti-server'}{WsPort} || "8181";
   return "";
 }
 \{
   "websocket": \{
-    "https_port": "{${'nethcti-server'}{WssPort} || 8181}",
-    "https_key":  "/etc/nethcti/nethcti.pem",
-    "https_cert": "/etc/nethcti/nethcti.pem"
+    "http_port": "{${'nethcti-server'}{WsPort} || 8181}"
   \},
   "http_proxy": \{
     "http_port":  "{${'nethcti-server'}{RestPort} || 8179}",
