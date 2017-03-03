@@ -368,8 +368,15 @@ function setPresence(username, status, cb) {
               var cellphoneId = getAllEndpointsCellphone(username)[
                 Object.keys(getAllEndpointsCellphone(username))[0]
               ];
-              cellphoneId = cellphoneId.getId();
-              compAstProxy.proxyLogic.setUnconditionalCf(mainExtId, true, cellphoneId, callback);
+              if (cellphoneId) {
+                cellphoneId = cellphoneId.getId();
+                compAstProxy.proxyLogic.setUnconditionalCf(mainExtId, true, cellphoneId, callback);
+              } else {
+                var str = 'setting "' + userPresence.STATUS.cellphone + '" presence to user "' + username + '" ' +
+                  '(mainExt: ' + mainExtId + '): no cellphone associated';
+                logger.warn(IDLOG, str);
+                callback(str);
+              }
             }
           ],
           function(err) {
@@ -393,8 +400,15 @@ function setPresence(username, status, cb) {
               var vmId = getAllEndpointsVoicemail(username)[
                 Object.keys(getAllEndpointsVoicemail(username))[0]
               ];
-              vmId = vmId.getId();
-              compAstProxy.proxyLogic.setUnconditionalCfVm(mainExtId, true, vmId, callback);
+              if (vmId) {
+                vmId = vmId.getId();
+                compAstProxy.proxyLogic.setUnconditionalCfVm(mainExtId, true, vmId, callback);
+              } else {
+                var str = 'setting "' + userPresence.STATUS.voicemail + '" presence to user "' + username + '" ' +
+                  '(mainExt: ' + mainExtId + '): no voicemail associated';
+                logger.warn(IDLOG, str);
+                callback(str);
+              }
             }
           ],
           function(err) {
