@@ -405,11 +405,10 @@ function getRemoteSiteName(username, token) {
  */
 function newToken(username, password, nonce, isRemoteSite) {
   try {
+    isRemoteSite = false;
     // check parameters
-    if (typeof username !== 'string' ||
-      typeof nonce !== 'string' ||
-      typeof password !== 'string' ||
-      typeof isRemoteSite !== 'boolean') {
+    if (typeof username !== 'string' || typeof nonce !== 'string' ||
+      typeof password !== 'string' || typeof isRemoteSite !== 'boolean') {
 
       throw new Error('wrong parameters');
     }
@@ -497,11 +496,9 @@ function isRemoteSiteAlreadyLoggedIn(username) {
  */
 function getNonce(username, password, isRemoteSite) {
   try {
+    isRemoteSite = false;
     // check parameters
-    if (typeof username !== 'string' ||
-      typeof password !== 'string' ||
-      typeof isRemoteSite !== 'boolean') {
-
+    if (typeof username !== 'string' || typeof password !== 'string' || typeof isRemoteSite !== 'boolean') {
       throw new Error('wrong parameters');
     }
 
@@ -752,11 +749,9 @@ function isAutoUpdateTokenExpires() {
  */
 function verifyToken(username, token, isRemote) {
   try {
+    isRemote = false;
     // check parameters
-    if (typeof username !== 'string' ||
-      typeof token !== 'string' ||
-      typeof isRemote !== 'boolean') {
-
+    if (typeof username !== 'string' || typeof token !== 'string' || typeof isRemote !== 'boolean') {
       throw new Error('wrong parameters');
     }
     // check the grant presence
