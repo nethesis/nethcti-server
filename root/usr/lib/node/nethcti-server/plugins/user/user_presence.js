@@ -41,17 +41,6 @@ function isValidUserPresence(status) {
   return false;
 }
 
-/**
- * Returns the list of user presence status in JSON format.
- *
- * @method getPresenceListJSON
- * @return {boolean} Returns the list of user presence status in JSON format.
- */
-function getPresenceListJSON() {
-  return Object.keys(STATUS);
-}
-
 // public interface
 exports.STATUS = STATUS;
-exports.getPresenceListJSON = getPresenceListJSON;
 exports.isValidUserPresence = isValidUserPresence;

@@ -328,7 +328,7 @@ function setCompUtil(comp) {
       presencelist: function(req, res, next) {
         try {
           var username = req.headers.authorization_user;
-          var results = compUser.getPresenceListJSON();
+          var results = compUser.getPresenceList(username);
           if (results instanceof Array) {
             logger.info(IDLOG, 'send user presence list to user "' + username + '"');
             res.send(200, results);
