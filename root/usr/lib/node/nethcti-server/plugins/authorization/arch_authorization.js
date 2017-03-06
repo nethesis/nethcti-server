@@ -1,0 +1,44 @@
+/**
+ * The architect component that exposes _authorization_ module.
+ *
+ * @class arch_authorization
+ * @module authorization
+ */
+var authorization = require('./authorization');
+
+/**
+ * The module identifier used by the logger.
+ *
+ * @property IDLOG
+ * @type string
+ * @private
+ * @final
+ * @readOnly
+ * @default [arch_authorization]
+ */
+var IDLOG = '[arch_authorization]';
+
+module.exports = function(options, imports, register) {
+
+  var logger = console;
+  if (imports.logger) {
+    logger = imports.logger;
+  }
+
+  // public interface for other architect components
+  register(null, {
+    authorization: authorization
+  });
+
+  try {
+    authorization.setLogger(logger);
+    // authorization.setCompDbconn(imports.dbconn);
+    authorization.config({
+      users: '/etc/nethcti/users.json',
+      profiles: '/etc/nethcti/profiles.json'
+    });
+    // authorization.configRemoteOperators('/etc/nethcti/remote_operators.json');
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+};

@@ -82,6 +82,15 @@ var logger = console;
 var compAstProxy;
 
 /**
+ * The authorization architect component.
+ *
+ * @property compAuthorization
+ * @type object
+ * @private
+ */
+var compAuthorization;
+
+/**
  * The event emitter.
  *
  * @property emitter
@@ -140,6 +149,21 @@ function setCompAstProxy(comp) {
 }
 
 /**
+ * Set the authorization architect component.
+ *
+ * @method setCompAuthorization
+ * @param {object} comp The authorization architect component.
+ */
+function setCompAuthorization(comp) {
+  try {
+    compAuthorization = comp;
+    logger.info(IDLOG, 'set authorization architect component');
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Initialize the users by file. The file must use the JSON syntax and
  * must report user/endpoint associations and authorization data.
  *
@@ -161,7 +185,7 @@ function config(path) {
     }
 
     // read JSON file with the user/endpoint associations
-    var json = require(path);
+    var json = JSON.parse(fs.readFileSync(path, 'utf8'));
 
     // initialize user objects
     var userid, newuser;
@@ -482,18 +506,22 @@ function getPresenceList(username) {
 /**
  * Get the user information in JSON format.
  *
- * @method getUserInfo
+ * @method getUserInfoJSON
  * @param {string} username The username
  * @return {string} The user information in JSON format.
  */
-function getUserInfo(username) {
+function getUserInfoJSON(username) {
   try {
     if (typeof username !== 'string') {
       throw new Error('wrong parameter');
     }
+    var result;
     if (users[username]) {
-      return users[username].toJSON();
+      result = users[username].toJSON();
+      result.profile = compAuthorization.getUserProfileJSON(username);
     }
+    return result;
+
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
@@ -1254,9 +1282,9 @@ exports.config = config;
 exports.setLogger = setLogger;
 exports.setPresence = setPresence;
 exports.getPresence = getPresence;
-exports.getUserInfo = getUserInfo;
 exports.getUsernames = getUsernames;
 exports.isUserPresent = isUserPresent;
+exports.getUserInfoJSON = getUserInfoJSON;
 exports.EVT_USERS_READY = EVT_USERS_READY;
 exports.setCompAstProxy = setCompAstProxy;
 exports.getPresenceList = getPresenceList;
@@ -1266,6 +1294,7 @@ exports.setAuthorization = setAuthorization;
 exports.getAuthorization = getAuthorization;
 exports.getConfigurations = getConfigurations;
 exports.setConfigurations = setConfigurations;
+exports.setCompAuthorization = setCompAuthorization;
 exports.hasExtensionEndpoint = hasExtensionEndpoint;
 exports.hasCellphoneEndpoint = hasCellphoneEndpoint;
 exports.hasVoicemailEndpoint = hasVoicemailEndpoint;
