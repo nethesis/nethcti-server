@@ -39,6 +39,7 @@ module.exports = function(options, imports, register) {
     }
     controllerUser.setLogger(logger);
     controllerUser.setCompAstProxy(imports.astProxy);
+    controllerUser.setCompAuthorization(imports.authorization);
     imports.astProxy.on(imports.astProxy.proxyLogic.EVT_READY, function() {
       controllerUser.config('/etc/nethcti/users.json');
     });

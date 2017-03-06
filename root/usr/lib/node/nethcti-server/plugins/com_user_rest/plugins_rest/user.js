@@ -300,7 +300,7 @@ function setCompUtil(comp) {
       me: function(req, res, next) {
         try {
           var username = req.headers.authorization_user;
-          var results = compUser.getUserInfo(username);
+          var results = compUser.getUserInfoJSON(username);
           if (typeof results === 'object') {
             logger.info(IDLOG, 'send user info to user "' + username + '"');
             res.send(200, results);
