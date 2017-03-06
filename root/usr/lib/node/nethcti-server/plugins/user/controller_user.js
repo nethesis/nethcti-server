@@ -450,6 +450,36 @@ function getPresence(username) {
 }
 
 /**
+ * Return the list of all possible user presence.
+ *
+ * @method getPresenceList
+ * @param {string} username The username
+ * @return {array} All the possible presence of the user.
+ */
+function getPresenceList(username) {
+  try {
+    if (typeof username !== 'string') {
+      throw new Error('wrong parameter');
+    }
+    var result = [
+      userPresence.STATUS.online,
+      userPresence.STATUS.dnd
+    ];
+    var allendpoints = users[username].getAllEndpoints();
+    if (allendpoints && Object.keys(allendpoints[endpointTypes.TYPES.cellphone]).length > 0) {
+      result.push(endpointTypes.TYPES.cellphone);
+    }
+    if (allendpoints && Object.keys(allendpoints[endpointTypes.TYPES.voicemail]).length > 0) {
+      result.push(endpointTypes.TYPES.voicemail);
+    }
+    return result;
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Get the user information in JSON format.
  *
  * @method getUserInfo
@@ -1229,6 +1259,7 @@ exports.getUsernames = getUsernames;
 exports.isUserPresent = isUserPresent;
 exports.EVT_USERS_READY = EVT_USERS_READY;
 exports.setCompAstProxy = setCompAstProxy;
+exports.getPresenceList = getPresenceList;
 exports.getEndpointsJSON = getEndpointsJSON;
 exports.getVoicemailList = getVoicemailList;
 exports.setAuthorization = setAuthorization;
