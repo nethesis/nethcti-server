@@ -285,7 +285,7 @@ function deleteCtiPbContact(id, cb) {
 
         }).then(function (task) {
             if (task) {
-                task.destroy().success(function () {
+                task.destroy().then(function () {
                     logger.info(IDLOG, 'cti phonebook contact with db id "' + id + '" has been deleted successfully');
                     cb();
                 });
