@@ -356,7 +356,7 @@ function modifyCtiPbContact(data, cb) {
 
         }).then(function (task) {
             if (task) {
-                task.updateAttributes(data).success(function () {
+	        task.updateAttributes(data).then(function () {
                     logger.info(IDLOG, 'cti phonebook contact with db id "' + data.id + '" has been modified successfully');
                     cb();
                 });
