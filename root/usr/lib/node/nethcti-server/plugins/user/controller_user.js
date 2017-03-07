@@ -63,6 +63,20 @@ var EVT_ENDPOINT_PRESENCE_CHANGED = 'endpointPresenceChanged';
 var EVT_USERS_READY = 'usersReady';
 
 /**
+ * Fired when the user presence has changed.
+ *
+ * @event userPresenceChanged
+ */
+/**
+ * The name of the user presence changed event.
+ *
+ * @property EVT_USER_PRESENCE_CHANGED
+ * @type string
+ * @default "userPresenceChanged"
+ */
+var EVT_USER_PRESENCE_CHANGED = 'userPresenceChanged';
+
+/**
  * The logger. It must have at least three methods: _info, warn and error._
  *
  * @property logger
@@ -229,7 +243,7 @@ function evtExtenDndChanged(data) {
     }
     logger.info(IDLOG, 'received "' + compAstProxy.proxyLogic.EVT_EXTEN_DND_CHANGED + '" event for exten "' + data.exten + '"');
     var username = getUserFromMainExten(data.exten);
-    udpateUserPresence(username);
+    updateUserPresence(username);
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
@@ -249,7 +263,7 @@ function evtExtenCfChanged(data) {
     }
     logger.info(IDLOG, 'received "' + compAstProxy.proxyLogic.EVT_EXTEN_CF_CHANGED + '" event for exten "' + data.exten + '"');
     var username = getUserFromMainExten(data.exten);
-    udpateUserPresence(username);
+    updateUserPresence(username);
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
@@ -269,7 +283,7 @@ function evtExtenCfVmChanged(data) {
     }
     logger.info(IDLOG, 'received "' + compAstProxy.proxyLogic.EVT_EXTEN_CFVM_CHANGED + '" event for exten "' + data.exten + '"');
     var username = getUserFromMainExten(data.exten);
-    udpateUserPresence(username);
+    updateUserPresence(username);
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
@@ -591,11 +605,11 @@ function getEndpointMainExtension(username) {
 /**
  * Update the user presence.
  *
- * @method udpateUserPresence
+ * @method updateUserPresence
  * @param {string} username The username to be updated
  * @private
  */
-function udpateUserPresence(username) {
+function updateUserPresence(username) {
   try {
     if (typeof username !== 'string') {
       throw new Error('wrong parameter');
@@ -628,6 +642,11 @@ function udpateUserPresence(username) {
       logger.info(IDLOG, 'set user presence of "' + username + '" to "' + userPresence.STATUS.online + '"');
       users[username].setPresence(userPresence.STATUS.online);
     }
+
+    // emit the event for tell to other modules that the user presence has changed
+    logger.info(IDLOG, 'emit event "' + EVT_USER_PRESENCE_CHANGED + '"');
+    emitter.emit(EVT_USER_PRESENCE_CHANGED, { username: username, presence: users[username].getPresence() });
+
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
@@ -643,7 +662,7 @@ function initializeUsersPresence() {
   try {
     var username;
     for (username in users) {
-      udpateUserPresence(username);
+      updateUserPresence(username);
     }
     logger.info(IDLOG, 'set all users presence done');
   } catch (err) {
@@ -1294,6 +1313,7 @@ exports.setAuthorization = setAuthorization;
 exports.getAuthorization = getAuthorization;
 exports.getConfigurations = getConfigurations;
 exports.setConfigurations = setConfigurations;
+exports.getAllEndpointsEmail = getAllEndpointsEmail;
 exports.setCompAuthorization = setCompAuthorization;
 exports.hasExtensionEndpoint = hasExtensionEndpoint;
 exports.hasCellphoneEndpoint = hasCellphoneEndpoint;
@@ -1302,8 +1322,8 @@ exports.getUsernamesWithData = getUsernamesWithData;
 exports.getAllEndpointsExtension = getAllEndpointsExtension;
 exports.getAllEndpointsCellphone = getAllEndpointsCellphone;
 exports.getEndpointMainExtension = getEndpointMainExtension;
-exports.getAllEndpointsEmail = getAllEndpointsEmail;
 exports.getAllUsersEndpointsJSON = getAllUsersEndpointsJSON;
+exports.EVT_USER_PRESENCE_CHANGED = EVT_USER_PRESENCE_CHANGED;
 exports.getAllUsersEndpointsExtension = getAllUsersEndpointsExtension;
 exports.EVT_ENDPOINT_PRESENCE_CHANGED = EVT_ENDPOINT_PRESENCE_CHANGED;
 exports.getUsersUsingEndpointExtension = getUsersUsingEndpointExtension;
