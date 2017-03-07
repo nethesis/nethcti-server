@@ -4,12 +4,25 @@ The nethcti-server is a daemon that provides a set of api to perform common swit
 
 Actually it supports only asterisk.
 
+## Index
+
+* [Authentication](#authentication)
+ * [Login](#login)
+ * [Logout](#logout)
+* [REST API](#rest-api)
+* [Reconnections](#reconnections)
+* [CORS](#cors)
+* [WebSocket Events](#websocket-events)
+* [Logging](#logging)
+
 
 ## Documentation
 
 http://nethcti.docs.nethesis.it/it/latest/development.html
 
-## Login
+## Authentication
+
+### Login
 
 To obtain the nonce you have to do:
 ```
@@ -40,7 +53,7 @@ token  = HMAC-SHA1(tohash, password)
 
 The token expires after 30 minutes if not used.
 
-## Logout
+### Logout
 
 To logout you have to do:
 ```
@@ -69,7 +82,11 @@ socket io client is set to reconnect automatically for default up to infinity wi
 
 CORS are allowed.
 
-## Events
+## WebSocket Events
+
+```
+userPresenceUpdate
+```
 
 ## Logging
 

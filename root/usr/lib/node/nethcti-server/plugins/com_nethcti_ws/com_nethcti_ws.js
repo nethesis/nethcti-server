@@ -82,6 +82,22 @@ var EVT_CALL_WEBRTC = 'callWebrtc';
 var EVT_ENDPOINT_PRESENCE_UPDATE = 'endpointPresenceUpdate';
 
 /**
+ * Emitted to a websocket client connection on a user presence update.
+ *
+ * @event userPresenceUpdate
+ * @param {object} data The data about the user presence update
+ *
+ */
+/**
+ * The name of the user presence update event.
+ *
+ * @property EVT_USER_PRESENCE_UPDATE
+ * @type string
+ * @default "userPresenceUpdate"
+ */
+var EVT_USER_PRESENCE_UPDATE = 'userPresenceUpdate';
+
+/**
  * Fired when a websocket client connection has been closed.
  *
  * @event wsClientDisonnection
@@ -500,12 +516,11 @@ function setPostitListeners() {
  */
 function setUserListeners() {
   try {
-    // check user component object
     if (!compUser || typeof compUser.on !== 'function') {
       throw new Error('wrong user object');
     }
-    // the presence of an endpoint of a user is changed
-    compUser.on(compUser.EVT_ENDPOINT_PRESENCE_CHANGED, endpointPresenceChangedListener);
+    // compUser.on(compUser.EVT_ENDPOINT_PRESENCE_CHANGED, endpointPresenceChangedListener);
+    compUser.on(compUser.EVT_USER_PRESENCE_CHANGED, evtUserPresenceChanged);
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
@@ -644,6 +659,31 @@ function endpointPresenceChangedListener(username, endpointType, endpoint) {
     // emits the event to all users
     wsServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_CLEAR).emit(EVT_ENDPOINT_PRESENCE_UPDATE, endpoint);
     wsServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY).emit(EVT_ENDPOINT_PRESENCE_UPDATE, endpoint);
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Handler for the _userPresenceChanged_ event emitted by _user_
+ * component. The user presence has changed, so notifies all clients.
+ *
+ * @method evtUserPresenceChanged
+ * @param {object} evt
+ *  @param {string} evt.username The username
+ *  @param {string} evt.presence The presence status of the user
+ * @private
+ */
+function evtUserPresenceChanged(evt) {
+  try {
+    if (typeof evt !== 'object' || typeof evt.username !== 'string' || typeof evt.presence !== 'string') {
+      throw new Error('wrong parameters');
+    }
+    logger.info(IDLOG, 'received event "' + compUser.EVT_USER_PRESENCE_CHANGED + '" ' + JSON.stringify(evt));
+    logger.info(IDLOG, 'emit event "' + EVT_USER_PRESENCE_UPDATE + '" ' + JSON.stringify(evt) + ' to websockets');
+    // emits the event to all users
+    wsServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_CLEAR).emit(EVT_USER_PRESENCE_UPDATE, evt);
+    wsServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY).emit(EVT_USER_PRESENCE_UPDATE, evt);
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
