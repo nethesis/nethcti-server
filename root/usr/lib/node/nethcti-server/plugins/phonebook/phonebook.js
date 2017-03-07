@@ -77,7 +77,7 @@ function setLogger(log) {
 * @method getPbContactsContains
 * @param {string}   term     The term to search. It can be a name or a number
 * @param {string}   username The name of the user used to search contacts in the cti phonebook
-* @param {string}   source   The source of contacts (nethcti/empty)
+* @param {string}   [source]   The source of contacts (nethcti/centralized)
 * @param {integer}   offset   The results offset
 * @param {integer}   limit    The results limit
 * @param {function} cb       The callback function
@@ -86,15 +86,13 @@ function getPbContactsContains(term, username, source, offset, limit, cb) {
     try {
         // check parameters
         if (   typeof term     !== 'string'
-            || typeof username !== 'string' || typeof cb !== 'function'
-            || typeof source !== 'string' || typeof offset !== 'string' || typeof limit !== 'string') {
-
+            || typeof username !== 'string' || typeof cb !== 'function') {
             throw new Error('wrong parameters');
         }
 
         if (source === 'nethcti') {
           logger.info(IDLOG, 'search centralized phonebook contacts contains term "' + term + '" by means dbconn module');
-          dbconn.getPbContactsContains(term, offset, limit, function (err, results) {
+          dbconn.getCtiPbContactsContains(term, username, offset, limit, function (err, results) {
               try {
                   if (err) { // some error in the query
                       logger.error(IDLOG, err);
@@ -108,13 +106,29 @@ function getPbContactsContains(term, username, source, offset, limit, cb) {
 
               cb(err, results);
           });
-        } else {
-          dbconn.getCtiPbContactsContains(term, username, offset, limit, function (err, results) {
+        } else if (source === 'centralized') {
+          dbconn.getPbContactsContains(term, offset, limit, function (err, results) {
               try {
                   if (err) { // some error in the query
                       logger.error(IDLOG, err);
                   } else { // add the result
                     logger.info(IDLOG, 'found ' + results.length + ' contacts in centralized phonebook ' +
+                        ' that contains the term ' + term);
+                  }
+              } catch (err) {
+                  logger.error(IDLOG, err.stack);
+              }
+
+              cb(err, results);
+          });
+        }
+        else {
+          dbconn.getAllContactsContains(term, username, offset, limit, function (err, results) {
+              try {
+                  if (err) { // some error in the query
+                      logger.error(IDLOG, err);
+                  } else { // add the result
+                    logger.info(IDLOG, 'found ' + results.length + ' contacts in centralized and cti phonebooks ' +
                         ' that contains the term ' + term);
                   }
               } catch (err) {
@@ -369,7 +383,7 @@ function modifyCtiPbContact(data, cb) {
 * @method getPbContactsStartsWith
 * @param {string}   term     The term to search. It can be a name or a number
 * @param {string}   username The name of the user used to search contacts in the cti phonebook
-* @param {string}   source   The source of contacts (nethcti/empty)
+* @param {string}   [source]   The source of contacts (nethcti/centralized)
 * @param {integer}  offset   The results offset
 * @param {integer}  limit    The results limit
 * @param {function} cb       The callback function
@@ -378,9 +392,7 @@ function getPbContactsStartsWith(term, username, source, offset, limit, cb) {
     try {
         // check parameters
         if (   typeof term     !== 'string'
-            || typeof username !== 'string' || typeof cb !== 'function'
-            || typeof source !== 'string' || typeof offset !== 'string' || typeof limit !== 'string') {
-
+            || typeof username !== 'string' || typeof cb !== 'function') {
             throw new Error('wrong parameters');
         }
 
@@ -400,7 +412,7 @@ function getPbContactsStartsWith(term, username, source, offset, limit, cb) {
 
               cb(err, results);
           });
-        } else {
+        } else if (source === 'centralized') {
           logger.info(IDLOG, 'search centralized phonebook contacts "starts with" term "' + term + '" by means dbconn module');
           dbconn.getPbContactsStartsWith(term, offset, limit, function (err, results) {
               try {
@@ -408,6 +420,22 @@ function getPbContactsStartsWith(term, username, source, offset, limit, cb) {
                     logger.error(IDLOG, err);
                   } else { // add the result
                     logger.info(IDLOG, 'found ' + results.length + ' contacts centralized phonebook ' +
+                                       'searching contacts "starts with" ' + 'the term ' + term);
+                  }
+              } catch (err) {
+                  logger.error(IDLOG, err.stack);
+              }
+
+              cb(err, results);
+          });
+        }
+        else {
+          dbconn.getAllContactsStartsWith(term, username, offset, limit, function (err, results) {
+              try {
+                  if (err) { // some error in the query
+                      logger.error(IDLOG, err);
+                  } else { // add the result
+                    logger.info(IDLOG, 'found ' + results.length + ' contacts in centralized and cti phonebook ' +
                                        'searching contacts "starts with" ' + 'the term ' + term);
                   }
               } catch (err) {
@@ -429,7 +457,7 @@ function getPbContactsStartsWith(term, username, source, offset, limit, cb) {
 *
 * @method getPbContactsStartsWithDigit
 * @param {string}   username The name of the user used to search contacts in the cti phonebook
-* @param {string}   source   The source of contacts (nethcti/empty)
+* @param {string}   [source]   The source of contacts (nethcti/centralized)
 * @param {integer}  offset   The results offset
 * @param {integer}  limit    The results limit
 * @param {function} cb       The callback function
@@ -437,14 +465,13 @@ function getPbContactsStartsWith(term, username, source, offset, limit, cb) {
 function getPbContactsStartsWithDigit(username, source, offset, limit, cb) {
     try {
         // check parameters
-        if (typeof username !== 'string' || typeof cb !== 'function'
-          || typeof source !== 'string' || typeof offset !== 'string' || typeof limit !== 'string') {
+        if (typeof username !== 'string' || typeof cb !== 'function') {
             throw new Error('wrong parameters');
         }
 
         if (source === 'nethcti') {
           logger.info(IDLOG, 'search cti phonebook contacts "starts with digit" by means dbconn module');
-          dbconn.getPbContactsStartsWithDigit(username, offset, limit, function (err, results) {
+          dbconn.getCtiPbContactsStartsWithDigit(username, offset, limit, function (err, results) {
               try {
                   if (err) { // some error in the query
                     logger.error(IDLOG, err);
@@ -458,7 +485,7 @@ function getPbContactsStartsWithDigit(username, source, offset, limit, cb) {
 
               cb(err, results);
           });
-        } else {
+        } else if (source === 'centralized') {
           logger.info(IDLOG, 'search centralized phonebook contacts "starts with digit" by means dbconn module');
           dbconn.getPbContactsStartsWithDigit(offset, limit, function (err, results) {
               try {
@@ -466,6 +493,22 @@ function getPbContactsStartsWithDigit(username, source, offset, limit, cb) {
                     logger.error(IDLOG, err);
                   } else { // add the result
                     logger.info(IDLOG, 'found ' + results.length + ' contacts in centralized phonebook ' +
+                                       'searching contacts "starts with digit"');
+                  }
+              } catch (err) {
+                  logger.error(IDLOG, err.stack);
+              }
+
+              cb(err, results);
+          });
+        }
+        else {
+          dbconn.getAllContactsStartsWithDigit(username, offset, limit, function (err, results) {
+              try {
+                  if (err) { // some error in the query
+                      logger.error(IDLOG, err);
+                  } else { // add the result
+                    logger.info(IDLOG, 'found ' + results.length + ' contacts in centralized and cti phonebook ' +
                                        'searching contacts "starts with digit"');
                   }
               } catch (err) {

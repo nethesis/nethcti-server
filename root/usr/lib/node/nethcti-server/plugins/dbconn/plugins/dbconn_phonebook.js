@@ -395,9 +395,7 @@ function modifyCtiPbContact(data, cb) {
 function getPbContactsContains(term, offset, limit, cb) {
     try {
         // check parameters
-        if (typeof term !== 'string' || typeof cb !== 'function' ||
-          typeof offset !== 'string' || typeof limit !== 'string') {
-
+        if (typeof term !== 'string' || typeof cb !== 'function') {
             throw new Error('wrong parameters');
         }
 
@@ -418,14 +416,83 @@ function getPbContactsContains(term, offset, limit, cb) {
                 term, term, term, term, term
             ],
             order: 'company ASC, name ASC',
-            offset: parseInt(offset),
-            limit: parseInt(limit)
+            offset: (offset ? parseInt(offset) : 0),
+            limit: (limit ? parseInt(limit) : null)
         }).then(function (results) {
             logger.info(IDLOG, results.length + ' results by searching centralized phonebook contacts that contains "' + term + '"');
             cb(null, results);
         }, function (err) { // manage the error
             logger.error(IDLOG, 'searching centralized phonebook contacts that contains "' + term + '": ' + err.toString());
             cb(err.toString());
+        });
+
+        compDbconnMain.incNumExecQueries();
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
+* Gets the phonebook contacts searching in the NethCTI and centralized phonebook databases.
+* The specified term is wrapped with '%' characters, so it searches
+* any occurrences of the term in the following fields: _name, company, workphone,
+* homephone, cellphone and extension_. It orders the results by _name_ and _company_
+* ascending. The NethCTI phonebook is the mysql _cti\_phonebook_.
+*
+* @method getAllContactsContains
+* @param {string}   term     The term to search. It can be a name or a number
+* @param {string}   username The name of the user used to search contacts
+* @param {string}   offset  The offset results start from
+* @param {string}   limit   The results limit
+* @param {function} cb       The callback function
+*/
+function getAllContactsContains(term, username, offset, limit, cb) {
+    try {
+        // check parameters
+        if (   typeof term     !== 'string'
+            || typeof username !== 'string' || typeof cb !== 'function') {
+
+            throw new Error('wrong parameters');
+        }
+
+        // add '%' to search all terms with any number of characters, even zero characters
+        term = '%' + term + '%';
+
+        var ctiPbBounds = '(owner_id=? OR type="public") ' +
+        'AND ' +
+        '(' +
+            'name LIKE ? ' +
+            'OR company LIKE ? ' +
+            'OR workphone LIKE ? ' +
+            'OR homephone LIKE ? ' +
+            'OR cellphone LIKE ? ' +
+            'OR extension LIKE ?'  +
+        ')';
+
+        var pbBounds = '(' +
+            'name LIKE ? ' +
+            'OR company LIKE ? ' +
+            'OR workphone LIKE ? ' +
+            'OR homephone LIKE ? ' +
+            'OR cellphone LIKE ?' +
+          ') AND (' +
+            'type != "' + NETHCTI_CENTRAL_TYPE + '"' +
+          ')';
+
+        __getAllContacts(
+          ctiPbBounds,
+          pbBounds,
+          [username, term, term, term, term, term, term, term, term, term, term, term],
+          offset, limit,
+          function(err, res) {
+            if (err) {
+              logger.error(IDLOG, 'searching cti and centralized phonebooks contacts that contains "' + term + '": ' + err.toString());
+              cb(err.toString());
+            } else {
+              logger.info(IDLOG, res.count + ' results by searching cti and centralized phonebooks contacts that contains "' + term + '"');
+              cb(null, res);
+            }
         });
 
         compDbconnMain.incNumExecQueries();
@@ -453,9 +520,7 @@ function getPbContactsContains(term, offset, limit, cb) {
 function getPbContactsStartsWith(term, offset, limit, cb) {
     try {
         // check parameters
-        if (typeof term !== 'string' || typeof cb !== 'function' ||
-          typeof offset !== 'string' || typeof limit !== 'string') {
-
+        if (typeof term !== 'string' || typeof cb !== 'function') {
             throw new Error('wrong parameters');
         }
 
@@ -473,14 +538,67 @@ function getPbContactsStartsWith(term, offset, limit, cb) {
                 term, term
             ],
             order: 'company ASC, name ASC',
-            offset: parseInt(offset),
-            limit: parseInt(limit)
+            offset: (offset ? parseInt(offset) : 0),
+            limit: (limit ? parseInt(limit) : null)
         }).then(function (results) {
             logger.info(IDLOG, results.length + ' results by searching centralized phonebook contacts with names starts with "' + term + '"');
             cb(null, results);
         }, function (err) { // manage the error
             logger.error(IDLOG, 'searching centralized phonebook contacts whose names starts with "' + term + '": ' + err.toString());
             cb(err.toString());
+        });
+
+        compDbconnMain.incNumExecQueries();
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Gets the phonebook contacts from the centralized and nethcti address book.
+* At the end of the specified term is added the '%' character,
+* so it searches the entries whose fields _name_ and _company_
+* starts with the term. It orders the results by _name_ and _company_ ascending.
+* The centralized address book is the mysql _phonebook.phonebook_.
+*
+* @method getAllContactsStartsWith
+* @param {string} term The term to search. It can be a name or a number. It
+*   will ended with '%' character to search any contacts with names that starts
+*   with the term.
+* @param {string}   offset  The offset results start from
+* @param {string}   limit   The results limit
+* @param {function} cb The callback function
+*/
+function getAllContactsStartsWith(term, username, offset, limit, cb) {
+    try {
+        // check parameters
+        if (typeof term !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        // add '%' to search all terms with any number of characters, even zero characters
+        term = term + '%';
+
+        var ctiPbBounds = '(owner_id=? OR type="public") ' +
+        'AND ' +
+        '(name LIKE ? OR company LIKE ?)';
+
+        var pbBounds = '(name LIKE ? OR company LIKE ?)' +
+            ' AND (type != "' + NETHCTI_CENTRAL_TYPE + '")';
+
+        __getAllContacts(
+          ctiPbBounds,
+          pbBounds,
+          [term, term, username, term, term],
+          offset, limit,
+          function(err, res) {
+            if (err) {
+              logger.error(IDLOG, 'searching cti and centralized phonebook contacts whose names starts with "' + term + '": ' + err.toString());
+              cb(err.toString());
+            } else {
+              logger.info(IDLOG, res.count + ' results by searching cti and centralized phonebook contacts with names starts with "' + term + '"');
+              cb(null, res);
+            }
         });
 
         compDbconnMain.incNumExecQueries();
@@ -507,9 +625,7 @@ function getCtiPbContactsContains(term, username, offset, limit, cb) {
     try {
         // check parameters
         if (   typeof term     !== 'string'
-            || typeof username !== 'string' || typeof cb !== 'function'
-            || typeof offset !== 'string' || typeof limit !== 'string') {
-
+            || typeof username !== 'string' || typeof cb !== 'function') {
             throw new Error('wrong parameters');
         }
 
@@ -531,8 +647,8 @@ function getCtiPbContactsContains(term, username, offset, limit, cb) {
                 username, term, term, term, term, term, term
             ],
             order: 'company ASC, name ASC',
-            offset: parseInt(offset),
-            limit: parseInt(limit)
+            offset: (offset ? parseInt(offset) : 0),
+            limit: (limit ? parseInt(limit) : null)
         }).then(function (results) {
             logger.info(IDLOG, results.count + ' results by searching cti phonebook contacts that contains "' + term + '"');
             cb(null, results);
@@ -563,7 +679,6 @@ function getCtiPbSpeeddialContacts(username, cb) {
     try {
         // check parameters
         if (typeof username !== 'string' || typeof cb !== 'function') {
-
             throw new Error('wrong parameters');
         }
 
@@ -606,32 +721,28 @@ function getCtiPbSpeeddialContacts(username, cb) {
 *
 * @method getCtiPbContactsStartsWithDigit
 * @param {string}   username The name of the user used to search contacts
+* @param {string}   offset  The offset results start from
+* @param {string}   limit   The results limit
 * @param {function} cb       The callback function
 */
-function getCtiPbContactsStartsWithDigit(username, cb) {
+function getCtiPbContactsStartsWithDigit(username, offset, limit, cb) {
     try {
         // check parameters
         if (typeof username !== 'string' || typeof cb !== 'function') {
-
             throw new Error('wrong parameters');
         }
 
-        compDbconnMain.models[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].findAll({
+        compDbconnMain.models[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].findAndCountAll({
             where: [
                 '(owner_id=? OR type="public") ' +
                 'AND ' +
                 '(name REGEXP "^[0-9]" OR company REGEXP "^[0-9]")',
                 username
             ],
-            order: 'company ASC, name ASC'
-
+            order: 'company ASC, name ASC',
+            offset: (offset ? parseInt(offset) : 0),
+            limit: (limit ? parseInt(limit) : null)
         }).then(function (results) {
-            // extract results to return in the callback function
-            var i;
-            for (i = 0; i < results.length; i++) {
-                results[i] = results[i].dataValues;
-            }
-
             logger.info(IDLOG, results.length + ' results by searching cti phonebook contacts whose names starts with a digit');
             cb(null, results);
         }, function (err) { // manage the error
@@ -641,6 +752,57 @@ function getCtiPbContactsStartsWithDigit(username, cb) {
 
         compDbconnMain.incNumExecQueries();
 
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+    }
+}
+
+/**
+* Gets the phonebook and nethcti contacts searching in the NethCTI phonebook database.
+* Tt searches the entries whose fields _name_ and _company_ starts with a digit.
+* It orders the results by _name_ and _company_ ascending. The NethCTI
+* phonebook is the mysql _cti\_phonebook_.
+*
+* @method getAllContactsStartsWithDigit
+* @param {string}   username The name of the user used to search contacts
+* @param {string}   offset  The offset results start from
+* @param {string}   limit   The results limit
+* @param {function} cb       The callback function
+*/
+function getAllContactsStartsWithDigit(username, offset, limit, cb) {
+    try {
+        // check parameters
+        if (typeof username !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        var ctiPbBounds = '(owner_id=? OR type="public") ' +
+          'AND ' +
+          '(name REGEXP "^[0-9]" OR company REGEXP "^[0-9]")';
+
+        var pbBounds =   '(' +
+              'name REGEXP "^[0-9]" ' +
+              'OR company REGEXP "^[0-9]"' +
+            ') AND (' +
+              'type != "' + NETHCTI_CENTRAL_TYPE + '"' +
+            ')';
+
+        __getAllContacts(
+          ctiPbBounds,
+          pbBounds,
+          [username],
+          offset, limit,
+          function(err, res) {
+            if (err) {
+              logger.error(IDLOG, 'searching cti phonebook contacts whose names starts with a digit: ' + err.toString());
+              cb(err.toString());
+            } else {
+              logger.info(IDLOG, res.count + ' results by searching cti phonebook contacts whose names starts with a digit');
+              cb(null, res);
+            }
+        });
+
+        compDbconnMain.incNumExecQueries();
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -660,8 +822,7 @@ function getCtiPbContactsStartsWithDigit(username, cb) {
 function getPbContactsStartsWithDigit(offset, limit, cb) {
     try {
         // check parameters
-        if (typeof cb !== 'function'
-          || typeof offset !== 'string' || typeof limit !== 'string') {
+        if (typeof cb !== 'function') {
             throw new Error('wrong parameters');
           }
 
@@ -675,8 +836,8 @@ function getPbContactsStartsWithDigit(offset, limit, cb) {
                 ')'
             ],
             order: 'company ASC, name ASC',
-            offset: parseInt(offset),
-            limit: parseInt(limit)
+            offset: (offset ? parseInt(offset) : 0),
+            limit: (limit ? parseInt(limit) : null)
         }).then(function (results) {
             logger.info(IDLOG, results.length + ' results by searching centralized phonebook contacts with names starts with a digit');
             cb(null, results);
@@ -710,9 +871,7 @@ function getCtiPbContactsStartsWith(term, username, offset, limit, cb) {
     try {
         // check parameters
         if (   typeof term     !== 'string'
-            || typeof username !== 'string' || typeof cb !== 'function'
-            || typeof offset !== 'string' || typeof limit !== 'string') {
-
+            || typeof username !== 'string' || typeof cb !== 'function') {
             throw new Error('wrong parameters');
         }
 
@@ -727,8 +886,8 @@ function getCtiPbContactsStartsWith(term, username, offset, limit, cb) {
                 username, term, term
             ],
             order: 'company ASC, name ASC',
-            offset: parseInt(offset),
-            limit: parseInt(limit)
+            offset: (offset ? parseInt(offset) : 0),
+            limit: (limit ? parseInt(limit) : null)
         }).then(function (results) {
             logger.info(IDLOG, results.length + ' results by searching cti phonebook contacts whose names starts with "' + term + '"');
             cb(null, results);
@@ -784,6 +943,81 @@ function getCtiPbContact(id, cb) {
     }
 }
 
+/**
+ * Utility private function
+ * Execute a query (with count) on both cti and centralize phonebooks
+ * through a union.
+ *
+ * @method __getAllContacts
+ * @param {string}    bounds1 First query of union bounds
+ * @param {string}    bounds2 Second query of union bounds
+ * @param {array}     replacements Replacements for queries
+ * @param {string}    offset The offset of results
+ * @param {string}    limit The limit of results
+ * @param {function}  cb The callback function
+ */
+function __getAllContacts(ctiPbBounds, pbBounds, replacements, offset, limit, cb) {
+    var fields = 'id,' +
+        'owner_id,' +
+        'type,' +
+        'homeemail,' +
+        'workemail,' +
+        'homephone,' +
+        'workphone,' +
+        'cellphone,' +
+        'fax,' +
+        'title,' +
+        'company,' +
+        'notes,' +
+        'name,' +
+        'homestreet,' +
+        'homepob,' +
+        'homecity,' +
+        'homeprovince,' +
+        'homepostalcode,' +
+        'homecountry,' +
+        'workstreet,' +
+        'workpob,' +
+        'workcity,' +
+        'workprovince,' +
+        'workpostalcode,' +
+        'workcountry,' +
+        'url';
+
+    var query = '(SELECT ' + fields + ', extension, speeddial_num, \'cti\' AS source' +
+      ' FROM nethcti2.cti_phonebook' +
+        ' WHERE ' + ctiPbBounds + ')' +
+      ' UNION ' +
+      '(SELECT ' + fields + ', \'\' AS extension, \'\' AS speeddial_num, \'centralized\' AS source' +
+      ' FROM phonebook.phonebook' +
+        ' WHERE ' + pbBounds + ')' +
+      ' ORDER BY company ASC, name ASC' +
+      (offset && limit ? ' LIMIT ' + offset + ',' + limit : '');
+
+    var queryCount = 'SELECT COUNT(*) AS total FROM ' +
+      '(SELECT id FROM nethcti2.cti_phonebook WHERE ' + ctiPbBounds +
+      ' UNION ALL' +
+      ' SELECT id FROM phonebook.phonebook WHERE ' + pbBounds + ') s';
+
+    compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].query(
+      query, {
+        replacements: replacements
+      }).then(function (results) {
+        compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].query(
+          queryCount, {
+            replacements: replacements
+          }).then(function (resultsCount) {
+            cb(null, { count: resultsCount[0][0].total, rows : results[0] });
+          }, function (err) {
+            cb(err, null);
+          });
+    }, function (err) {
+      cb(err, null);
+    });
+
+    compDbconnMain.incNumExecQueries();
+}
+
 apiList.getCtiPbContact                 = getCtiPbContact;
 apiList.saveCtiPbContact                = saveCtiPbContact;
 apiList.getPbContactsByNum              = getPbContactsByNum;
@@ -791,12 +1025,15 @@ apiList.deleteCtiPbContact              = deleteCtiPbContact;
 apiList.modifyCtiPbContact              = modifyCtiPbContact;
 apiList.getPbContactsContains           = getPbContactsContains;
 apiList.getCtiPbContactsByNum           = getCtiPbContactsByNum;
+apiList.getAllContactsContains          = getAllContactsContains;
 apiList.getPbContactsStartsWith         = getPbContactsStartsWith;
 apiList.getCtiPbContactsContains        = getCtiPbContactsContains;
 apiList.getCtiPbSpeeddialContacts       = getCtiPbSpeeddialContacts;
 apiList.getCtiPbContactsStartsWith      = getCtiPbContactsStartsWith;
+apiList.getAllContactsStartsWith        = getAllContactsStartsWith;
 apiList.getPbContactsStartsWithDigit    = getPbContactsStartsWithDigit;
 apiList.getCtiPbContactsStartsWithDigit = getCtiPbContactsStartsWithDigit;
+apiList.getAllContactsStartsWithDigit   = getAllContactsStartsWithDigit;
 
 // public interface
 exports.apiList           = apiList;
