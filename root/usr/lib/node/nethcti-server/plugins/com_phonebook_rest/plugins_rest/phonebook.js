@@ -417,7 +417,7 @@ function setCompUtil(comp) {
                     'search/:term',
                     'cticontact/:id',
                     'searchstartswith/:term',
-                    'searchstartswith_digit'
+                    'searchstartswith_digit/:source'
                 ],
 
                 /**
