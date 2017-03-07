@@ -84,6 +84,10 @@ CORS are allowed.
 
 ## WebSocket Events
 
+```
+userPresenceUpdate
+```
+
 ## Logging
 
 The daemon logs on
