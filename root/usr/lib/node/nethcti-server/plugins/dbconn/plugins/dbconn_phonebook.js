@@ -388,8 +388,8 @@ function modifyCtiPbContact(data, cb) {
 * @method getPbContactsContains
 * @param {string}   term The term to search. It can be a name or a number. It will wrapped
 *                        with '%' characters to search any occurrences of the term in the database fields.
-* @param {string}   offset  The offset results start from
-* @param {string}   limit   The results limit
+* @param {integer}  [offset]  The offset results start from
+* @param {integer}  [limit]   The results limit
 * @param {function} cb   The callback function
 */
 function getPbContactsContains(term, offset, limit, cb) {
@@ -443,8 +443,8 @@ function getPbContactsContains(term, offset, limit, cb) {
 * @method getAllContactsContains
 * @param {string}   term     The term to search. It can be a name or a number
 * @param {string}   username The name of the user used to search contacts
-* @param {string}   offset  The offset results start from
-* @param {string}   limit   The results limit
+* @param {integer}  [offset]  The offset results start from
+* @param {integer}  [limit]   The results limit
 * @param {function} cb       The callback function
 */
 function getAllContactsContains(term, username, offset, limit, cb) {
@@ -494,8 +494,6 @@ function getAllContactsContains(term, username, offset, limit, cb) {
               cb(null, res);
             }
         });
-
-        compDbconnMain.incNumExecQueries();
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err);
@@ -513,8 +511,8 @@ function getAllContactsContains(term, username, offset, limit, cb) {
 * @param {string} term The term to search. It can be a name or a number. It
 *   will ended with '%' character to search any contacts with names that starts
 *   with the term.
-* @param {string}   offset  The offset results start from
-* @param {string}   limit   The results limit
+* @param {integer}  [offset]  The offset results start from
+* @param {integer}  [limit]   The results limit
 * @param {function} cb The callback function
 */
 function getPbContactsStartsWith(term, offset, limit, cb) {
@@ -565,8 +563,8 @@ function getPbContactsStartsWith(term, offset, limit, cb) {
 * @param {string} term The term to search. It can be a name or a number. It
 *   will ended with '%' character to search any contacts with names that starts
 *   with the term.
-* @param {string}   offset  The offset results start from
-* @param {string}   limit   The results limit
+* @param {integer}  [offset]  The offset results start from
+* @param {integer}  [limit]   The results limit
 * @param {function} cb The callback function
 */
 function getAllContactsStartsWith(term, username, offset, limit, cb) {
@@ -600,8 +598,6 @@ function getAllContactsStartsWith(term, username, offset, limit, cb) {
               cb(null, res);
             }
         });
-
-        compDbconnMain.incNumExecQueries();
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -617,8 +613,8 @@ function getAllContactsStartsWith(term, username, offset, limit, cb) {
 * @method getCtiPbContactsContains
 * @param {string}   term     The term to search. It can be a name or a number
 * @param {string}   username The name of the user used to search contacts
-* @param {string}   offset  The offset results start from
-* @param {string}   limit   The results limit
+* @param {integer}  [offset]  The offset results start from
+* @param {integer}  [limit]   The results limit
 * @param {function} cb       The callback function
 */
 function getCtiPbContactsContains(term, username, offset, limit, cb) {
@@ -721,8 +717,8 @@ function getCtiPbSpeeddialContacts(username, cb) {
 *
 * @method getCtiPbContactsStartsWithDigit
 * @param {string}   username The name of the user used to search contacts
-* @param {string}   offset  The offset results start from
-* @param {string}   limit   The results limit
+* @param {integer}  [offset]  The offset results start from
+* @param {integer}  [limit]   The results limit
 * @param {function} cb       The callback function
 */
 function getCtiPbContactsStartsWithDigit(username, offset, limit, cb) {
@@ -765,8 +761,8 @@ function getCtiPbContactsStartsWithDigit(username, offset, limit, cb) {
 *
 * @method getAllContactsStartsWithDigit
 * @param {string}   username The name of the user used to search contacts
-* @param {string}   offset  The offset results start from
-* @param {string}   limit   The results limit
+* @param {integer}  [offset]  The offset results start from
+* @param {integer}  [limit]   The results limit
 * @param {function} cb       The callback function
 */
 function getAllContactsStartsWithDigit(username, offset, limit, cb) {
@@ -801,8 +797,6 @@ function getAllContactsStartsWithDigit(username, offset, limit, cb) {
               cb(null, res);
             }
         });
-
-        compDbconnMain.incNumExecQueries();
     } catch (err) {
         logger.error(IDLOG, err.stack);
     }
@@ -815,8 +809,8 @@ function getAllContactsStartsWithDigit(username, offset, limit, cb) {
 * ascending. The centralized address book is the mysql _phonebook.phonebook_.
 *
 * @method getPbContactsStartsWithDigit
-* @param {string}   offset  The offset results start from
-* @param {string}   limit   The results limit
+* @param {integer}   [offset]  The offset results start from
+* @param {integer}   [limit]   The results limit
 * @param {function} cb The callback function
 */
 function getPbContactsStartsWithDigit(offset, limit, cb) {
@@ -863,8 +857,8 @@ function getPbContactsStartsWithDigit(offset, limit, cb) {
 * @method getCtiPbContactsStartsWith
 * @param {string}   term     The term to search. It can be a name or a number
 * @param {string}   username The name of the user used to search contacts
-* @param {string}   offset  The offset results start from
-* @param {string}   limit   The results limit
+* @param {integer}   [offset]  The offset results start from
+* @param {integer}   [limit]   The results limit
 * @param {function} cb       The callback function
 */
 function getCtiPbContactsStartsWith(term, username, offset, limit, cb) {
@@ -952,8 +946,8 @@ function getCtiPbContact(id, cb) {
  * @param {string}    bounds1 First query of union bounds
  * @param {string}    bounds2 Second query of union bounds
  * @param {array}     replacements Replacements for queries
- * @param {string}    offset The offset of results
- * @param {string}    limit The limit of results
+ * @param {integer}   [offset] The offset of results
+ * @param {integer}   [limit] The limit of results
  * @param {function}  cb The callback function
  */
 function __getAllContacts(ctiPbBounds, pbBounds, replacements, offset, limit, cb) {
@@ -1003,10 +997,12 @@ function __getAllContacts(ctiPbBounds, pbBounds, replacements, offset, limit, cb
       query, {
         replacements: replacements
       }).then(function (results) {
+        compDbconnMain.incNumExecQueries();
         compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].query(
           queryCount, {
             replacements: replacements
           }).then(function (resultsCount) {
+            compDbconnMain.incNumExecQueries();
             cb(null, { count: resultsCount[0][0].total, rows : results[0] });
           }, function (err) {
             cb(err, null);

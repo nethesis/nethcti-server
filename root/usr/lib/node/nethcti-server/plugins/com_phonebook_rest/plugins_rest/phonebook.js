@@ -112,7 +112,7 @@ function setCompUtil(comp) {
         * 1. [`phonebook/speeddials`](#speeddialsget)
         * 1. [`phonebook/cticontact/:id`](#cticontactget)
         * 1. [`phonebook/searchstartswith/:term`](#searchstartswithget)
-        * 1. [`phonebook/searchstartswith_digit`](#searchstartswith_digitget)
+        * 1. [`phonebook/searchstartswith_digit/:source`](#searchstartswith_digitget)
         *
         * ---
         *
@@ -216,77 +216,11 @@ function setCompUtil(comp) {
         *
         * ---
         *
-        * ### <a id="searchstartswith_digitget">**`phonebook/searchstartswith_digit`**</a>
+        * ### <a id="searchstartswith_digitget">**`phonebook/searchstartswith_digit/source[?limit=n&offset=n]`**</a>
         *
-        * The client receives all phonebook contacts found in the _centralized_ and _NethCTI_ phonebooks.
+        * The client receives all phonebook contacts found in the _centralized_ or _NethCTI_ phonebooks.
         * It returns all database entries whose _name_ and _company_ fields starts with a digit.
         *
-        * Example JSON response:
-        *
-        *     {
-          "centralized": [
-              {
-                  "id": 2223,
-                  "owner_id": "",
-                  "type": "Developer",
-                  "homeemail": null,
-                  "workemail": "ale@nethesis.it",
-                  "homephone": null,
-                  "workphone": "0721405516",
-                  "cellphone": "",
-                  "fax": "",
-                  "title": null,
-                  "company": "3 Nethesis",
-                  "notes": "",
-                  "name": "",
-                  "homestreet": null,
-                  "homepob": null,
-                  "homecity": null,
-                  "homeprovince": null,
-                  "homepostalcode": null,
-                  "homecountry": null,
-                  "workstreet": "Strada degli Olmi",
-                  "workpob": null,
-                  "workcity": "Pesaro",
-                  "workprovince": null,
-                  "workpostalcode": null,
-                  "workcountry": null,
-                  "url": "www.nethesis.it"
-              }
-          ],
-          "nethcti": [
-              {
-                  "id": 2,
-                  "owner_id": "alessandro",
-                  "type": "public",
-                  "homeemail": "",
-                  "workemail": "",
-                  "homephone": "",
-                  "workphone": "",
-                  "cellphone": "1233245",
-                  "fax": "",
-                  "title": "",
-                  "company": "",
-                  "notes": "",
-                  "name": "1alessandro",
-                  "homestreet": "",
-                  "homepob": "",
-                  "homecity": "",
-                  "homeprovince": "",
-                  "homepostalcode": "",
-                  "homecountry": "",
-                  "workstreet": "",
-                  "workpob": "",
-                  "workcity": "",
-                  "workprovince": "",
-                  "workpostalcode": "",
-                  "workcountry": "",
-                  "url": "",
-                  "extension": "",
-                  "speeddial_num": "1233245"
-              }
-          ]
-      }
         *
         * <br>
         *

@@ -78,8 +78,8 @@ function setLogger(log) {
 * @param {string}   term     The term to search. It can be a name or a number
 * @param {string}   username The name of the user used to search contacts in the cti phonebook
 * @param {string}   [source]   The source of contacts (nethcti/centralized)
-* @param {integer}   offset   The results offset
-* @param {integer}   limit    The results limit
+* @param {integer}   [offset]   The results offset
+* @param {integer}   [limit]    The results limit
 * @param {function} cb       The callback function
 */
 function getPbContactsContains(term, username, source, offset, limit, cb) {
@@ -384,8 +384,8 @@ function modifyCtiPbContact(data, cb) {
 * @param {string}   term     The term to search. It can be a name or a number
 * @param {string}   username The name of the user used to search contacts in the cti phonebook
 * @param {string}   [source]   The source of contacts (nethcti/centralized)
-* @param {integer}  offset   The results offset
-* @param {integer}  limit    The results limit
+* @param {integer}  [offset]   The results offset
+* @param {integer}  [limit]    The results limit
 * @param {function} cb       The callback function
 */
 function getPbContactsStartsWith(term, username, source, offset, limit, cb) {
@@ -458,8 +458,8 @@ function getPbContactsStartsWith(term, username, source, offset, limit, cb) {
 * @method getPbContactsStartsWithDigit
 * @param {string}   username The name of the user used to search contacts in the cti phonebook
 * @param {string}   [source]   The source of contacts (nethcti/centralized)
-* @param {integer}  offset   The results offset
-* @param {integer}  limit    The results limit
+* @param {integer}  [offset]   The results offset
+* @param {integer}  [limit]    The results limit
 * @param {function} cb       The callback function
 */
 function getPbContactsStartsWithDigit(username, source, offset, limit, cb) {
