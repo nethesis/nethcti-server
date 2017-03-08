@@ -110,6 +110,7 @@ function setCompUtil(comp) {
         *
         * 1. [`phonebook/search/:term`](#searchget)
         * 1. [`phonebook/speeddials`](#speeddialsget)
+        * 1. [`phonebook/contact/:id`](#contactget)
         * 1. [`phonebook/cticontact/:id`](#cticontactget)
         * 1. [`phonebook/searchstartswith/:term`](#searchstartswithget)
         * 1. [`phonebook/searchstartswith_digit/:view`](#searchstartswith_digitget)
@@ -166,6 +167,46 @@ function setCompUtil(comp) {
                   "speeddial_num": "123456"
             }
       ]
+        *
+        * ---
+        *
+        * ### <a id="contactget">**`phonebook/contact/:id`**</a>
+        *
+        * The client receives the details of the contact that is in the _phonebook_ phonebook. The parameter
+        * _id_ is the database identifier of the contact.
+        *
+        * Example JSON response:
+        *
+        *     {
+        "id": 1,
+        "owner_id": "alessandro",
+        "type": "source",
+        "homeemail": "",
+        "workemail": "",
+        "homephone": "",
+        "workphone": "",
+        "cellphone": "123456",
+        "fax": "",
+        "title": "",
+        "company": "",
+        "notes": "",
+        "name": "ale",
+        "homestreet": "",
+        "homepob": "",
+        "homecity": "",
+        "homeprovince": "",
+        "homepostalcode": "",
+        "homecountry": "",
+        "workstreet": "",
+        "workpob": "",
+        "workcity": "",
+        "workprovince": "",
+        "workpostalcode": "",
+        "workcountry": "",
+        "url": "",
+        "extension": "",
+        "speeddial_num": "123456"
+    }
         *
         * ---
         *
@@ -342,15 +383,17 @@ function setCompUtil(comp) {
                 * @property get
                 * @type {array}
                 *
-                *   @param {string} speeddials                    To get all the speeddial contacts of the user from the _NethCTI_ phonebook
-                *   @param {string} search/:term                  To get the centralized and cti phonebook contacts that contains the term
-                *   @param {string} cticontact/:id                To get the the details of the contact that is in the cti phonebook
-                *   @param {string} searchstartswith/:term        To get the centralized and cti phonebook contacts whose name starts with the specified term
-                *   @param {string} searchstartswith_digit/:view  To get the centralized and cti phonebook contacts whose name starts with a digit
+                *   @param {string} speeddials             To get all the speeddial contacts of the user from the _NethCTI_ phonebook
+                *   @param {string} search/:term           To get the centralized and cti phonebook contacts that contains the term
+                *   @param {string} contact/:id            To get the the details of the contact that is in the centralized phonebook
+                *   @param {string} cticontact/:id         To get the the details of the contact that is in the cti phonebook
+                *   @param {string} searchstartswith/:term To get the centralized and cti phonebook contacts whose name starts with the specified term
+                *   @param {string} searchstartswith_digit To get the centralized and cti phonebook contacts whose name starts with a digit
                 */
                 'get' : [
                     'speeddials',
                     'search/:term',
+                    'contact/:id',
                     'cticontact/:id',
                     'searchstartswith/:term',
                     'searchstartswith_digit/:view'
@@ -469,7 +512,6 @@ function setCompUtil(comp) {
             },
 
             /**
-            * Search the address book contacts in the centralized and NethCTI phonebooks for the following REST API:
             * Returns the details of the contact that is in the cti phonebook. The parameter "id" is the database
             * identifier of the contact.
             *
@@ -513,6 +555,41 @@ function setCompUtil(comp) {
                         }
                     });
 
+                } catch (err) {
+                    logger.error(IDLOG, err.stack);
+                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                }
+            },
+
+            /**
+            * Returns the details of the contact that is in the centralized phonebook. The parameter "id" is the database
+            * identifier of the contact.
+            *
+            *     contact/:id
+            *
+            * @method search
+            * @param {object}   req  The client request
+            * @param {object}   res  The client response
+            * @param {function} next Function to run the next handler in the chain
+            */
+            contact: function (req, res, next) {
+                try {
+                    var username = req.headers.authorization_user;
+
+                    // use phonebook component
+                    compPhonebook.getPbContact(req.params.id, function (err, result) {
+                        try {
+                            if (err) { throw err; }
+                            else {
+                                logger.info(IDLOG, 'send centralized phonebook contact details of contact id "' + req.params.id +
+                                  '" to user "' + username + '"');
+                                res.send(200, result);
+                            }
+                        } catch (err1) {
+                            logger.error(IDLOG, err1.stack);
+                            compUtil.net.sendHttp500(IDLOG, res, err1.toString());
+                        }
+                    });
                 } catch (err) {
                     logger.error(IDLOG, err.stack);
                     compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -807,6 +884,7 @@ function setCompUtil(comp) {
         exports.create                 = phonebook.create;
         exports.setLogger              = setLogger;
         exports.speeddials             = phonebook.speeddials;
+        exports.contact                = phonebook.contact;
         exports.cticontact             = phonebook.cticontact;
         exports.setCompUtil            = setCompUtil;
         exports.searchstartswith       = phonebook.searchstartswith;

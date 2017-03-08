@@ -19,7 +19,7 @@ var phonebook = require('./phonebook');
 var IDLOG = '[arch_phonebook]';
 
 module.exports = function (options, imports, register) {
-    
+
     var logger = console;
     if (imports.logger) { logger = imports.logger; }
 
@@ -60,6 +60,13 @@ module.exports = function (options, imports, register) {
             * @method getCtiPbContact
             */
             getCtiPbContact: phonebook.getCtiPbContact,
+
+            /**
+            * It's the _getPbContact_ method provided by _phonebook_ module.
+            *
+            * @method getPbContact
+            */
+            getPbContact: phonebook.getPbContact,
 
             /**
             * It's the _deleteCtiPbContact_ method provided by _phonebook_ module.

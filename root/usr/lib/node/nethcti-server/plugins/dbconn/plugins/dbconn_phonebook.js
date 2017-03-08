@@ -944,6 +944,46 @@ function getCtiPbContact(id, cb) {
 }
 
 /**
+* Returns the centralized phonebook contact. It searches the _id_ field in the
+* _phonebook_ database table.
+*
+* @method getPbContact
+* @param {string}   id The cti database contact identifier
+* @param {function} cb The callback function
+*/
+function getPbContact(id, cb) {
+    try {
+        // check parameters
+        if (typeof id !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        compDbconnMain.models[compDbconnMain.JSON_KEYS.PHONEBOOK].find({
+            where: [ 'id=?', id  ]
+
+        }).then(function (result) {
+            if (result && result.dataValues) {
+                logger.info(IDLOG, 'search centralized phonebook contact with id "' + id + '" has been successful');
+                cb(null, result.dataValues);
+            }
+            else {
+                logger.info(IDLOG, 'search centralized phonebook contact with id "' + id + '": not found');
+                cb(null, {});
+            }
+        }, function (err1) { // manage the error
+            logger.error(IDLOG, 'search centralized phonebook contact with db id "' + id + '" failed: ' + err1.toString());
+            cb(err1.toString());
+        });
+
+        compDbconnMain.incNumExecQueries();
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+    }
+}
+
+/**
  * Utility private function
  * Execute a query (with count) on both cti and centralize phonebooks
  * through a union.
@@ -1047,6 +1087,7 @@ function __getAllContacts(ctiPbBounds, pbBounds, replacements, view, offset, lim
     compDbconnMain.incNumExecQueries();
 }
 
+apiList.getPbContact                    = getPbContact;
 apiList.getCtiPbContact                 = getCtiPbContact;
 apiList.saveCtiPbContact                = saveCtiPbContact;
 apiList.getPbContactsByNum              = getPbContactsByNum;

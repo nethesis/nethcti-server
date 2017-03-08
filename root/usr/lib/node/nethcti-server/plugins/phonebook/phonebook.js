@@ -207,6 +207,29 @@ function getCtiPbContact(id, cb) {
 }
 
 /**
+* Returns the centralized phonebook contact.
+*
+* @method getPbContact
+* @param {string}   id The contact identifier in the centralized phonebook database
+* @param {function} cb The callback function
+*/
+function getPbContact(id, cb) {
+    try {
+        // check parameters
+        if (typeof id !== 'string' || typeof cb !== 'function') {
+            throw new Error('wrong parameters');
+        }
+
+        logger.info(IDLOG, 'search centralized phonebook contact using db contact id "' + id + '" by means dbconn module');
+        dbconn.getPbContact(id, cb);
+
+    } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err.toString());
+    }
+}
+
+/**
 * Returns all the speeddial contacts of the specified user.
 *
 * @method getPbSpeeddialContacts
@@ -499,6 +522,7 @@ function saveCtiPbContact(data, cb) {
 // public interface
 exports.setLogger                    = setLogger;
 exports.setDbconn                    = setDbconn;
+exports.getPbContact                 = getPbContact;
 exports.getCtiPbContact              = getCtiPbContact;
 exports.saveCtiPbContact             = saveCtiPbContact;
 exports.deleteCtiPbContact           = deleteCtiPbContact;
