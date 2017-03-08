@@ -918,8 +918,12 @@ function getCtiPbContact(id, cb) {
             throw new Error('wrong parameters');
         }
 
+        var attributes = Object.keys(compDbconnMain.models[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].attributes);
+        attributes.push([compDbconnMain.Sequelize.literal('"cti"'), 'source']);
+
         compDbconnMain.models[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].find({
-            where: [ 'id=?', id  ]
+            where: [ 'id=?', id  ],
+            attributes: attributes
 
         }).then(function (result) {
             if (result && result.dataValues) {
@@ -958,8 +962,12 @@ function getPbContact(id, cb) {
             throw new Error('wrong parameters');
         }
 
+        var attributes = Object.keys(compDbconnMain.models[compDbconnMain.JSON_KEYS.PHONEBOOK].attributes);
+        attributes.push([compDbconnMain.Sequelize.literal('"centralized"'), 'source']);
+
         compDbconnMain.models[compDbconnMain.JSON_KEYS.PHONEBOOK].find({
-            where: [ 'id=?', id  ]
+            where: [ 'id=?', id  ],
+            attributes: attributes
 
         }).then(function (result) {
             if (result && result.dataValues) {
