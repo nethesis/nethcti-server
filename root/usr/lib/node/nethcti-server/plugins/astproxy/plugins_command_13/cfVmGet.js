@@ -106,8 +106,8 @@ var IDLOG = '[cfVmGet]';
 
             // check if the destination of the call forward is a voicemail.
             // If it's a something other, the result is false. This is
-            // because the call forward to a number is checked with an
-            // other command plugin. The call forward and the call forward
+            // because the call forward to a number is checked with another
+            // command plugin. The call forward and the call forward
             // to voicemail use the same key database: CF, but the second adds
             // a prefix to it
             var vm;
