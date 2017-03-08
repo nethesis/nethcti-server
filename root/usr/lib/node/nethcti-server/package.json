@@ -5,7 +5,7 @@
   "main": "nethcti.js",
   "dependencies": {
     "architect": "0.1.11",
-    "asterisk-ami": "0.1.0",
+    "asterisk-ami": "0.2.0-beta1",
     "http-proxy": "1.16.2",
     "http-proxy-rules": "1.0.1",
     "jsplugs": "0.1.0",

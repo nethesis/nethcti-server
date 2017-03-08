@@ -284,21 +284,21 @@ function configSipWebrtc(path) {
 function start() {
   try {
     am = new ast(astConf);
-    logger.info(IDLOG, 'asterisk manager initialized');
-
     // add event listeners to asterisk manager
-    am.on('ami_data', onData);
-    am.on('ami_socket_end', amiSocketEnd);
-    am.on('ami_socket_error', amiSocketError);
-    am.on('ami_socket_close', amiSocketClose);
-    am.on('ami_socket_timeout', amiSocketTimeout);
-    am.on('ami_socket_unwritable', amiSocketUnwritable);
+    am.on('data', onData);
+    am.on('login', onLogin);
+    am.on('connection-end', amiSocketEnd);
+    am.on('connection-error', amiSocketError);
+    am.on('connection-close', amiSocketClose);
+    am.on('connection-connect', amiSocketConnected);
+    am.on('connection-timeout', amiSocketTimeout);
+    am.on('connection-unwritable', amiSocketUnwritable);
     logger.info(IDLOG, 'added event listeners to asterisk manager');
-
+    logger.info(IDLOG, 'asterisk manager initialized');
     // connect to asterisk
-    am.connect(function() {
-      logger.info(IDLOG, 'asterisk connected');
-    });
+    logger.info(IDLOG, 'connecting to asterisk...');
+    am.connect();
+
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
@@ -325,6 +325,17 @@ function amiSocketEnd() {
  */
 function amiSocketTimeout() {
   logger.warn(IDLOG, 'asterisk socket timeout');
+}
+
+/**
+ * Handler for the _ami\_socket\_connect_ event emitted once the socket
+ * is connected.
+ *
+ * @method amiSocketConnected
+ * @private
+ */
+function amiSocketConnected() {
+  logger.warn(IDLOG, 'asterisk connected');
 }
 
 /**
@@ -370,6 +381,32 @@ function amiSocketError(err) {
 }
 
 /**
+ * Handler for the received logged in event from asterisk.
+ *
+ * @method onLogin
+ * @param {object} err The error object
+ * @param {object} resp The event response data
+ * @private
+ */
+function onLogin(err, resp) {
+  try {
+    if (err && resp && resp.message) {
+      logger.error(IDLOG, 'logging-in into asterisk: ' + resp.message);
+      return;
+    }
+    else if (err) {
+      logger.error(IDLOG, 'logging-in into asterisk: ' + err.stack);
+      return;
+    }
+    logger.info(IDLOG, 'logged-in into asterisk');
+    proxyLogic.start(INI_PATH_STRUCT);
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Handler for the received data from asterisk. It calls the _execute_ method of the
  * command plugin with the name that corresponds to the ActionID value contained in
  * the _data_ object. Plugins must reside in the appropriate directory.
@@ -410,10 +447,6 @@ function onData(data) {
       // event handler to the appropriate event plugin.
       if (pluginsEvent[ev] && typeof pluginsEvent[ev].data === 'function') {
         pluginsEvent[ev].data(data);
-      } else if (ev === 'fullybooted') { // the asterisk connection is ready
-        logger.warn(IDLOG, 'connected to asterisk');
-        logger.info(IDLOG, 'ready');
-        proxyLogic.start(INI_PATH_STRUCT);
       }
     }
   } catch (err) {

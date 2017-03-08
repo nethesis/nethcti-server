@@ -7696,3 +7696,4 @@ exports.attendedTransferConversation = attendedTransferConversation;
 exports.getExtensionsFromConversation = getExtensionsFromConversation;
 exports.evtExtenUnconditionalCfChanged = evtExtenUnconditionalCfChanged;
 exports.transferConversationToVoicemail = transferConversationToVoicemail;
+exports.evtExtenUnconditionalCfVmChanged = evtExtenUnconditionalCfVmChanged;
