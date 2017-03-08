@@ -524,6 +524,7 @@ exports.dbConn            = dbConn;
 exports.dbConfig          = dbConfig;
 exports.getStats          = getStats;
 exports.EVT_READY         = EVT_READY;
+exports.Sequelize         = Sequelize;
 exports.JSON_KEYS         = JSON_KEYS;
 exports.setLogger         = setLogger;
 exports.isMssqlType       = isMssqlType;
