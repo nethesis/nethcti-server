@@ -13,6 +13,10 @@ event_templates('nethcti-server-update', qw(
                 /etc/httpd/conf.d/nethcti-server.conf
 ));
 
+event_actions('nethcti-server-update', qw(
+	            nethcti-server-conf 00
+));
+
 event_services('nethcti-server-update', qw(
                httpd reload
                nethcti-server restart
