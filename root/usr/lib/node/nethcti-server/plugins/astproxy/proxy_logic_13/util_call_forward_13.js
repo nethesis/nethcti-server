@@ -5,7 +5,7 @@
  * the call forward and the call forward to voicemail use the same database
  * key (CF), but the second adds a prefix to the destination number.
  *
- * @class util_call_forward_11
+ * @class util_call_forward_13
  * @static
  */
 

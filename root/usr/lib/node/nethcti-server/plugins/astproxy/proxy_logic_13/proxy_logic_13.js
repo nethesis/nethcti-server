@@ -24,7 +24,7 @@ var Extension = require('../extension').Extension;
 var EventEmitter = require('events').EventEmitter;
 // var ParkedCaller = require('../parkedCaller').ParkedCaller;
 // var Conversation = require('../conversation').Conversation;
-// var utilChannel11 = require('./util_channel_11');
+// var utilChannel11 = require('./util_channel_13');
 // var MeetmeConfUser = require('../meetmeConfUser').MeetmeConfUser;
 // var MeetmeConference = require('../meetmeConference').MeetmeConference;
 // var RECORDING_STATUS = require('../conversation').RECORDING_STATUS;
@@ -3422,7 +3422,7 @@ function evtQueueMemberRemoved(data) {
  * It gets the created caller notes for the specified number and the central and
  * cti phonebook contacts. Then add the data into the _callerIdentityData_ property
  * to use it when _Dialing_ events are received. This method is called by the
- * _plugins\_event\_11/userevent.js_.
+ * _plugins\_event\_13/userevent.js_.
  *
  * @method evtNewExternalCall
  * @param {string} number The caller number
