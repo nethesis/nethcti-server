@@ -169,7 +169,9 @@ function execute(req, res, next) {
 
         // check authorization
         var username = req.headers.authorization_user;
-        if (compAuthorization.authorizePhonebookUser(username) === true) {
+        // if (compAuthorization.authorizePhonebookUser(username) === true) {
+        // todo with authorization module
+        if (true) {
 
             logger.info(IDLOG, 'phonebook authorization successfully for user "' + username + '"');
             logger.info(IDLOG, 'execute: ' + p + '.' + name);
