@@ -5,19 +5,27 @@ use esmith::Build::CreateLinks qw(:all);
 #
 # nethcti-server-update
 #
-my $event = "nethcti-server-update";
-templates2events("/etc/nethcti/asterisk.json",$event);
-templates2events("/etc/nethcti/services.json",$event);
-templates2events("/etc/nethcti/nethcti.json",$event);
-templates2events("/etc/httpd/conf.d/nethcti-server.conf",$event);
-safe_symlink("reload", "root/etc/e-smith/events/$event/services2adjust/httpd");
-event_link("asterisk-reload", $event, "30");
-safe_symlink("restart", "root/etc/e-smith/events/$event/services2adjust/nethcti-server");
+
+event_templates('nethcti-server-update', qw(
+                /etc/nethcti/asterisk.json
+                /etc/nethcti/services.json
+                /etc/nethcti/nethcti.json
+                /etc/httpd/conf.d/nethcti-server.conf
+));
+
+event_services('nethcti-server-update', qw(
+               httpd reload
+               nethcti-server restart
+));
 
 #
 # hostname-modify
 #
-$event = "hostname-modify";
-templates2events("/etc/nethcti/nethcti.json",$event);
-templates2events("/etc/nethcti/services.json",$event);
-safe_symlink("restart", "root/etc/e-smith/events/$event/services2adjust/nethcti-server");
+event_templates('hostname-modify', qw(
+                /etc/nethcti/nethcti.json
+                /etc/nethcti/services.json
+));
+
+event_services('hostname-modify', qw(
+               nethcti-server restart
+));
