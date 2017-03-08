@@ -443,11 +443,12 @@ function getPbContactsContains(term, offset, limit, cb) {
 * @method getAllContactsContains
 * @param {string}   term     The term to search. It can be a name or a number
 * @param {string}   username The name of the user used to search contacts
+* @param {string}   [view]    The view by which serve results
 * @param {integer}  [offset]  The offset results start from
 * @param {integer}  [limit]   The results limit
 * @param {function} cb       The callback function
 */
-function getAllContactsContains(term, username, offset, limit, cb) {
+function getAllContactsContains(term, username, view, offset, limit, cb) {
     try {
         // check parameters
         if (   typeof term     !== 'string'
@@ -484,6 +485,7 @@ function getAllContactsContains(term, username, offset, limit, cb) {
           ctiPbBounds,
           pbBounds,
           [username, term, term, term, term, term, term, term, term, term, term, term],
+          view,
           offset, limit,
           function(err, res) {
             if (err) {
@@ -563,11 +565,12 @@ function getPbContactsStartsWith(term, offset, limit, cb) {
 * @param {string} term The term to search. It can be a name or a number. It
 *   will ended with '%' character to search any contacts with names that starts
 *   with the term.
+* @param {string}   [view]    The view by which serve results
 * @param {integer}  [offset]  The offset results start from
 * @param {integer}  [limit]   The results limit
 * @param {function} cb The callback function
 */
-function getAllContactsStartsWith(term, username, offset, limit, cb) {
+function getAllContactsStartsWith(term, username, view, offset, limit, cb) {
     try {
         // check parameters
         if (typeof term !== 'string' || typeof cb !== 'function') {
@@ -588,6 +591,7 @@ function getAllContactsStartsWith(term, username, offset, limit, cb) {
           ctiPbBounds,
           pbBounds,
           [term, term, username, term, term],
+          view,
           offset, limit,
           function(err, res) {
             if (err) {
@@ -761,11 +765,12 @@ function getCtiPbContactsStartsWithDigit(username, offset, limit, cb) {
 *
 * @method getAllContactsStartsWithDigit
 * @param {string}   username The name of the user used to search contacts
+* @param {string}  [view]     The view which by serve results
 * @param {integer}  [offset]  The offset results start from
 * @param {integer}  [limit]   The results limit
 * @param {function} cb       The callback function
 */
-function getAllContactsStartsWithDigit(username, offset, limit, cb) {
+function getAllContactsStartsWithDigit(username, view, offset, limit, cb) {
     try {
         // check parameters
         if (typeof username !== 'string' || typeof cb !== 'function') {
@@ -787,6 +792,7 @@ function getAllContactsStartsWithDigit(username, offset, limit, cb) {
           ctiPbBounds,
           pbBounds,
           [username],
+          view,
           offset, limit,
           function(err, res) {
             if (err) {
@@ -946,11 +952,12 @@ function getCtiPbContact(id, cb) {
  * @param {string}    bounds1 First query of union bounds
  * @param {string}    bounds2 Second query of union bounds
  * @param {array}     replacements Replacements for queries
+ * @param {string}   [view]    The view by which serve results
  * @param {integer}   [offset] The offset of results
  * @param {integer}   [limit] The limit of results
  * @param {function}  cb The callback function
  */
-function __getAllContacts(ctiPbBounds, pbBounds, replacements, offset, limit, cb) {
+function __getAllContacts(ctiPbBounds, pbBounds, replacements, view, offset, limit, cb) {
     var fields = 'id,' +
         'owner_id,' +
         'type,' +
@@ -988,18 +995,44 @@ function __getAllContacts(ctiPbBounds, pbBounds, replacements, offset, limit, cb
       ' ORDER BY company ASC, name ASC' +
       (offset && limit ? ' LIMIT ' + offset + ',' + limit : '');
 
+    var queryCompany = 'SELECT id, company, CONCAT(\'[\', ' +
+      'GROUP_CONCAT(\'{\', \'"id": \', id, \',\', \'"name": "\', name, \'", \', \'"source": "\', source, \'"}\'), \']\') AS contacts' +
+      ' FROM (' +
+        '(SELECT id, name, company, \'cti\' AS source' +
+          ' FROM nethcti2.cti_phonebook' +
+            ' WHERE ' + ctiPbBounds + ')' +
+            ' UNION ' +
+        '(SELECT id, name, company, \'centralized\' AS source' +
+          ' FROM phonebook.phonebook' +
+          ' WHERE ' + pbBounds + ')' +
+      ') t' +
+      ' GROUP BY company' +
+      ' ORDER BY company ASC, name ASC' +
+      (offset && limit ? ' LIMIT ' + offset + ',' + limit : '');
+
     var queryCount = 'SELECT COUNT(*) AS total FROM ' +
       '(SELECT id FROM nethcti2.cti_phonebook WHERE ' + ctiPbBounds +
       ' UNION ALL' +
       ' SELECT id FROM phonebook.phonebook WHERE ' + pbBounds + ') s';
 
+    var queryCompanyCount = 'SELECT COUNT(DISTINCT company) AS total' +
+      ' FROM (' +
+        '(SELECT id, name, company' +
+          ' FROM nethcti2.cti_phonebook' +
+            ' WHERE ' + ctiPbBounds + ')' +
+            ' UNION ' +
+        '(SELECT id, name, company' +
+          ' FROM phonebook.phonebook' +
+          ' WHERE ' + pbBounds + ')' +
+      ') t';
+
     compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].query(
-      query, {
+      view === 'company' ? queryCompany : query, {
         replacements: replacements
       }).then(function (results) {
         compDbconnMain.incNumExecQueries();
         compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].query(
-          queryCount, {
+          view === 'company' ? queryCompanyCount : queryCount, {
             replacements: replacements
           }).then(function (resultsCount) {
             compDbconnMain.incNumExecQueries();
