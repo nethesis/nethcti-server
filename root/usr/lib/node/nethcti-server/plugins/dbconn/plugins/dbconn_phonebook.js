@@ -1035,14 +1035,15 @@ function __getAllContacts(ctiPbBounds, pbBounds, replacements, view, offset, lim
       ' ORDER BY company ASC, name ASC' +
       (offset && limit ? ' LIMIT ' + offset + ',' + limit : '');
 
-    var queryCompany = 'SELECT id, company, CONCAT(\'[\', ' +
+    var companyXFields = 'workstreet, workcity, workprovince, workcountry, url ';
+    var queryCompany = 'SELECT id, company, ' + companyXFields +', CONCAT(\'[\', ' +
       'GROUP_CONCAT(\'{\', \'"id": \', id, \',\', \'"name": "\', name, \'", \', \'"source": "\', source, \'"}\'), \']\') AS contacts' +
       ' FROM (' +
-        '(SELECT id, name, company, \'cti\' AS source' +
+        '(SELECT id, name, company, ' + companyXFields + ', \'cti\' AS source' +
           ' FROM nethcti2.cti_phonebook' +
             ' WHERE ' + ctiPbBounds + ')' +
             ' UNION ' +
-        '(SELECT id, name, company, \'centralized\' AS source' +
+        '(SELECT id, name, company, ' + companyXFields + ', \'centralized\' AS source' +
           ' FROM phonebook.phonebook' +
           ' WHERE ' + pbBounds + ')' +
       ') t' +
