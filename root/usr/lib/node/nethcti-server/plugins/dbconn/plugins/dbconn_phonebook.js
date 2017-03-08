@@ -1067,19 +1067,24 @@ function __getAllContacts(ctiPbBounds, pbBounds, replacements, view, offset, lim
       ') t';
 
     compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].query(
-      view === 'company' ? queryCompany : query, {
-        replacements: replacements
-      }).then(function (results) {
-        compDbconnMain.incNumExecQueries();
-        compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].query(
-          view === 'company' ? queryCompanyCount : queryCount, {
-            replacements: replacements
-          }).then(function (resultsCount) {
-            compDbconnMain.incNumExecQueries();
-            cb(null, { count: resultsCount[0][0].total, rows : results[0] });
-          }, function (err) {
-            cb(err, null);
-          });
+      'SET @@group_concat_max_len = 65535').then(function () { //TODO TD: workaround
+      compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].query(
+        view === 'company' ? queryCompany : query, {
+          replacements: replacements
+        }).then(function (results) {
+          compDbconnMain.incNumExecQueries();
+          compDbconnMain.dbConn[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].query(
+            view === 'company' ? queryCompanyCount : queryCount, {
+              replacements: replacements
+            }).then(function (resultsCount) {
+              compDbconnMain.incNumExecQueries();
+              cb(null, { count: resultsCount[0][0].total, rows : results[0] });
+            }, function (err) {
+              cb(err, null);
+            });
+      }, function (err) {
+        cb(err, null);
+      });
     }, function (err) {
       cb(err, null);
     });
