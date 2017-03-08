@@ -112,16 +112,16 @@ function setCompUtil(comp) {
         * 1. [`phonebook/speeddials`](#speeddialsget)
         * 1. [`phonebook/cticontact/:id`](#cticontactget)
         * 1. [`phonebook/searchstartswith/:term`](#searchstartswithget)
-        * 1. [`phonebook/searchstartswith_digit/:source`](#searchstartswith_digitget)
+        * 1. [`phonebook/searchstartswith_digit/:view`](#searchstartswith_digitget)
         *
         * ---
         *
-        * ### <a id="searchget">**`phonebook/search/:term[?source=nethcti&limit=n&offset=n]`**</a>
+        * ### <a id="searchget">**`phonebook/search/:term[?view=company&limit=n&offset=n]`**</a>
         *
         * The client receives all phonebook contacts found in the _centralized_ or _NethCTI_ phonebooks.
         * It supports pagination with limit and offset.
-        * If the source parameter is equal to 'nethcti' the source will be nethcti phonebook, otherwise it
-        * will be the centralized phonebook.
+        * It offers a view where results are grouped by company.
+        *
         * It returns all database entries that contain the specified _term_ in the fields _name, company,
         * workphone, homephone_ and _cellphone_.
         *
@@ -209,17 +209,19 @@ function setCompUtil(comp) {
         *
         * ---
         *
-        * ### <a id="searchstartswithget">**`phonebook/searchstartswith/:term[?source=nethcti&limit=n&offset=n]`**</a>
+        * ### <a id="searchstartswithget">**`phonebook/searchstartswith/:term[?view=company&limit=n&offset=n]`**</a>
         *
         * The client receives all phonebook contacts found in the _centralized_ or _NethCTI_ phonebooks.
         * It returns all database entries whose _name_ and _company_ fields starts with the specified term.
+        * It offers a view where results are grouped by company.
         *
         * ---
         *
-        * ### <a id="searchstartswith_digitget">**`phonebook/searchstartswith_digit/source[?limit=n&offset=n]`**</a>
+        * ### <a id="searchstartswith_digitget">**`phonebook/searchstartswith_digit/:view[?limit=n&offset=n]`**</a>
         *
         * The client receives all phonebook contacts found in the _centralized_ or _NethCTI_ phonebooks.
         * It returns all database entries whose _name_ and _company_ fields starts with a digit.
+        * It offers a view where results are grouped by company.
         *
         *
         * <br>
@@ -340,18 +342,18 @@ function setCompUtil(comp) {
                 * @property get
                 * @type {array}
                 *
-                *   @param {string} speeddials             To get all the speeddial contacts of the user from the _NethCTI_ phonebook
-                *   @param {string} search/:term           To get the centralized and cti phonebook contacts that contains the term
-                *   @param {string} cticontact/:id         To get the the details of the contact that is in the cti phonebook
-                *   @param {string} searchstartswith/:term To get the centralized and cti phonebook contacts whose name starts with the specified term
-                *   @param {string} searchstartswith_digit To get the centralized and cti phonebook contacts whose name starts with a digit
+                *   @param {string} speeddials                    To get all the speeddial contacts of the user from the _NethCTI_ phonebook
+                *   @param {string} search/:term                  To get the centralized and cti phonebook contacts that contains the term
+                *   @param {string} cticontact/:id                To get the the details of the contact that is in the cti phonebook
+                *   @param {string} searchstartswith/:term        To get the centralized and cti phonebook contacts whose name starts with the specified term
+                *   @param {string} searchstartswith_digit/:view  To get the centralized and cti phonebook contacts whose name starts with a digit
                 */
                 'get' : [
                     'speeddials',
                     'search/:term',
                     'cticontact/:id',
                     'searchstartswith/:term',
-                    'searchstartswith_digit/:source'
+                    'searchstartswith_digit/:view'
                 ],
 
                 /**
@@ -431,7 +433,7 @@ function setCompUtil(comp) {
                     compPhonebook.getPbContactsContains(
                       req.params.term,
                       username,
-                      req.params.source,
+                      req.params.view,
                       req.params.offset,
                       req.params.limit,
                       function (err, results) {
@@ -536,7 +538,7 @@ function setCompUtil(comp) {
                     compPhonebook.getPbContactsStartsWith(
                       req.params.term,
                       username,
-                      req.params.source,
+                      req.params.view,
                       req.params.offset,
                       req.params.limit,
                       function (err, results) {
@@ -589,7 +591,7 @@ function setCompUtil(comp) {
                     // use phonebook component
                     compPhonebook.getPbContactsStartsWithDigit(
                       username,
-                      req.params.source,
+                      req.params.view,
                       req.params.offset,
                       req.params.limit,
                       function (err1, results) {
