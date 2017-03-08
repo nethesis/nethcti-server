@@ -125,75 +125,75 @@ function setCompUser(comp) {
 (function() {
   try {
     /**
-        * REST plugin that provides authentication functions through the following REST API:
-        *
-        * # POST requests
-        *
-        * 1. [`authentication/login`](#loginpost)
-        * 1. [`authentication/remotelogin`](#remoteloginpost)
-        * 1. [`authentication/logout`](#logoutpost)
-        *
-        * ---
-        *
-        * ### <a id="loginpost">**`authentication/login`**</a>
-        *
-        * Authenticates a local client. If the user is successfully authenticated, he receives
-        * an HTTP 401 response with an _nonce_ in the WWW-Authenticate header. The _nonce_ is a
-        * string and it is used by the client to construct the token for the next authentications.
-        * The request must contains the following parameters:
-        *
-        * * `username`
-        * * `password`
-        *
-        * Example JSON request parameters:
-        *
-        *     { "username": "alessandro", "password": "somepwd" }
-        *
-        * Example of a response of a successful login:
-        *
-        *     Connection:close
-     Content-Length:0
-     Content-Type:text/plain; charset=UTF-8
-     Date:Wed, 11 Jun 2014 14:14:18 GMT
-     www-authenticate:Digest a4b888b2d096249ce5b5ad63413842d5df335f17
-        *
-        * where the nonce is the string _a4b888b2d096249ce5b5ad63413842d5df335f17_.
-        *
-        * ---
-        *
-        * ### <a id="remoteloginpost">**`authentication/remotelogin`**</a>
-        *
-        * Authenticates a remote site. If the user is successfully authenticated, he receives
-        * an HTTP 401 response with an _nonce_ in the WWW-Authenticate header. The _nonce_ is a
-        * string and it is used by the client to construct the token for the next authentications.
-        * The request must contains the following parameters:
-        *
-        * * `username`
-        * * `password`
-        *
-        * Example JSON request parameters:
-        *
-        *     { "username": "alessandro", "password": "somepwd" }
-        *
-        * Example of a response of a successful login:
-        *
-        *     Connection:close
-     Content-Length:0
-     Content-Type:text/plain; charset=UTF-8
-     Date:Wed, 11 Jun 2014 14:14:18 GMT
-     www-authenticate:Digest a4b888b2d096249ce5b5ad63413842d5df335f17
-        *
-        * where the nonce is the string _a4b888b2d096249ce5b5ad63413842d5df335f17_.
-        *
-        * ---
-        *
-        * ### <a id="logoutpost">**`authentication/logout`**</a>
-        *
-        * Logout the user.
-        *
-        * @class plugin_rest_authentication
-        * @static
-        */
+     * REST plugin that provides authentication functions through the following REST API:
+     *
+     * # POST requests
+     *
+     * 1. [`authentication/login`](#loginpost)
+     * 1. [`authentication/remotelogin`](#remoteloginpost)
+     * 1. [`authentication/logout`](#logoutpost)
+     *
+     * ---
+     *
+     * ### <a id="loginpost">**`authentication/login`**</a>
+     *
+     * Authenticates a local client. If the user is successfully authenticated, he receives
+     * an HTTP 401 response with an _nonce_ in the WWW-Authenticate header. The _nonce_ is a
+     * string and it is used by the client to construct the token for the next authentications.
+     * The request must contains the following parameters:
+     *
+     * * `username`
+     * * `password`
+     *
+     * Example JSON request parameters:
+     *
+     *     { "username": "alessandro", "password": "somepwd" }
+     *
+     * Example of a response of a successful login:
+     *
+     *     Connection:close
+   Content-Length:0
+   Content-Type:text/plain; charset=UTF-8
+   Date:Wed, 11 Jun 2014 14:14:18 GMT
+   www-authenticate:Digest a4b888b2d096249ce5b5ad63413842d5df335f17
+     *
+     * where the nonce is the string _a4b888b2d096249ce5b5ad63413842d5df335f17_.
+     *
+     * ---
+     *
+     * ### <a id="remoteloginpost">**`authentication/remotelogin`**</a>
+     *
+     * Authenticates a remote site. If the user is successfully authenticated, he receives
+     * an HTTP 401 response with an _nonce_ in the WWW-Authenticate header. The _nonce_ is a
+     * string and it is used by the client to construct the token for the next authentications.
+     * The request must contains the following parameters:
+     *
+     * * `username`
+     * * `password`
+     *
+     * Example JSON request parameters:
+     *
+     *     { "username": "alessandro", "password": "somepwd" }
+     *
+     * Example of a response of a successful login:
+     *
+     *     Connection:close
+   Content-Length:0
+   Content-Type:text/plain; charset=UTF-8
+   Date:Wed, 11 Jun 2014 14:14:18 GMT
+   www-authenticate:Digest a4b888b2d096249ce5b5ad63413842d5df335f17
+     *
+     * where the nonce is the string _a4b888b2d096249ce5b5ad63413842d5df335f17_.
+     *
+     * ---
+     *
+     * ### <a id="logoutpost">**`authentication/logout`**</a>
+     *
+     * Logout the user.
+     *
+     * @class plugin_rest_authentication
+     * @static
+     */
     var authentication = {
 
       // the REST api
@@ -207,17 +207,17 @@ function setCompUser(comp) {
          * @property post
          * @type {array}
          *
-         * @param {string} login       Authenticate a local client with username and password and if it goes well
-         *                             the client receive an HTTP 401 response with _nonce_ in
-         *                             WWW-Authenticate header. The nonce is used to construct the
-         *                             token used in the next authentications.
+         * @param {string} login Authenticate a local client with username and password and if it goes well
+         *                       the client receive an HTTP 401 response with _nonce_ in
+         *                       WWW-Authenticate header. The nonce is used to construct the
+         *                       token used in the next authentications.
          *
          * @param {string} remotelogin Authenticate a remote site with username and password and if it goes well
          *                             the client receive an HTTP 401 response with _nonce_ in
          *                             WWW-Authenticate header. The nonce is used to construct the
          *                             token used in the next authentications.
          *
-         * @param {string} logout      Logout ...
+         * @param {string} logout Logout
          */
         'post': [
           'login',

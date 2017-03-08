@@ -1,4 +1,5 @@
 /**
+ * @module astproxy
  * @submodule plugins_command_13
  */
 var action = require('../action');
@@ -44,7 +45,7 @@ var IDLOG = '[cfVmSet]';
      *
      * Use it with _ast\_proxy_ module as follow:
      *
-     *     ast_proxy.doCmd({ command: 'cfVmSet', exten: '214', val: '214' }, function (res) {
+     *     astproxy.doCmd({ command: 'cfVmSet', exten: '214', val: '214' }, function (res) {
      *         // some code
      *     });
      *
@@ -101,7 +102,7 @@ var IDLOG = '[cfVmSet]';
       },
 
       /**
-       * It's called from _ast_proxy_ component for each data received
+       * It's called from _astproxy_ component for each data received
        * from asterisk and relative to this command
        *
        * @method data
