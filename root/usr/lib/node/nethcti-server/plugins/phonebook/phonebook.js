@@ -498,7 +498,10 @@ function setDbconn(dbconnMod) {
 function saveCtiPbContact(data, cb) {
   try {
     // check parameter
-    if (typeof data !== 'object' || typeof data.type !== 'string' || typeof cb !== 'function' || typeof data.creator !== 'string' || data.creator === '' || typeof data.name !== 'string' || (data.type !== 'private' && data.type !== 'public' && data.type !== 'speeddial')) {
+    if (typeof data  !== 'object'   || typeof data.type    !== 'string' ||
+        typeof cb    !== 'function' || typeof data.creator !== 'string' ||
+        data.creator === ''         || typeof data.name    !== 'string' ||
+        (data.type   !== 'private'  && data.type           !== 'public' && data.type !== 'speeddial')) {
 
       throw new Error('wrong parameter');
     }
