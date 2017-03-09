@@ -7585,12 +7585,45 @@ function getBaseCallRecAudioPath() {
   }
 }
 
+/**
+ * setAsteriskPresence
+ *
+ * @method setAsteriskPresence
+ * @param {string}   extension   The endpoint identifier (e.g. the extension number)
+ * @param {string}   presenceState   The state of presence [ AVAILABLE | DND | AWAY,CELLPHONE | XA,VOICEMAIL ]
+ * @param {function} cb              The callback function
+ */
+function setAsteriskPresence(extension, presenceState, cb) {
+  try {
+    // check parameters
+    if (typeof cb !== 'function' ||
+      typeof extension !== 'string' ||
+      typeof presenceState !== 'string' ) {
+      throw new Error('wrong parameters');
+    }
+
+    logger.info(IDLOG, 'Set Asterisk Presence state to ' + presenceState + ' for user ' + extension);
+    astProxy.doCmd({
+      command: 'setPresenceState',
+      exten: extension,
+      state: presenceState
+    }, function(error) {
+      cb(error);
+    });
+  } catch (e) {
+    logger.error(IDLOG, e.stack);
+    cb(e);
+  }
+}
+
+
 // public interface
 exports.on = on;
 exports.call = call;
 exports.start = start;
 exports.visit = visit;
 exports.setDnd = setDnd;
+exports.setAsteriskPresence = setAsteriskPresence;
 exports.EVT_READY = EVT_READY;
 exports.setLogger = setLogger;
 exports.setPrefix = setPrefix;
