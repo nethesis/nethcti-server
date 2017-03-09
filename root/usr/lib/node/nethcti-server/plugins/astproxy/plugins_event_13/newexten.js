@@ -1,5 +1,5 @@
 /**
- * @module ast_proxy
+ * @module astproxy
  * @submodule plugins_event_13
  */
 var CFVM_PREFIX_CODE = require('../proxy_logic_13/util_call_forward_13').CFVM_PREFIX_CODE;
