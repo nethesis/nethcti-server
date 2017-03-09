@@ -347,6 +347,10 @@ function setPresence(username, status, cb) {
       if (status === userPresence.STATUS.online) {
         // disable "dnd", "call forward" and "call forward to voicemail"
         async.parallel([
+	    //set presence in Asterisk
+            function(callback) {
+              compAstProxy.proxyLogic.setAsteriskPresence(mainExtId, "AVAILABLE", callback);
+            },
             // disable dnd
             function(callback) {
               compAstProxy.proxyLogic.setDnd(mainExtId, false, callback);
@@ -372,6 +376,10 @@ function setPresence(username, status, cb) {
         );
       } else if (status === userPresence.STATUS.dnd) {
         async.parallel([
+	    //set presence in Asterisk
+            function(callback) {
+              compAstProxy.proxyLogic.setAsteriskPresence(mainExtId, "DND", callback);
+            },
             // enable dnd
             function(callback) {
               compAstProxy.proxyLogic.setDnd(mainExtId, true, callback);
@@ -397,6 +405,10 @@ function setPresence(username, status, cb) {
         );
       } else if (status === userPresence.STATUS.cellphone) {
         async.parallel([
+            //set presence in Asterisk
+            function(callback) {
+              compAstProxy.proxyLogic.setAsteriskPresence(mainExtId, "AWAY,CELLPHONE", callback);
+            },
             // disable dnd
             function(callback) {
               compAstProxy.proxyLogic.setDnd(mainExtId, false, callback);
@@ -429,6 +441,10 @@ function setPresence(username, status, cb) {
         );
       } else if (status === userPresence.STATUS.voicemail) {
         async.parallel([
+            //set presence in Asterisk
+            function(callback) {
+              compAstProxy.proxyLogic.setAsteriskPresence(mainExtId, "XA,VOICEMAIL", callback);
+            },
             // disable dnd
             function(callback) {
               compAstProxy.proxyLogic.setDnd(mainExtId, false, callback);
