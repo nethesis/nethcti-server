@@ -1,5 +1,5 @@
 /**
- * @submodule plugins_command_11
+ * @submodule plugins_command_13
  */
 var action = require('../action');
 
