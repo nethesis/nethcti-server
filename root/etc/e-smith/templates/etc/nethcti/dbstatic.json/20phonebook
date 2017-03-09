@@ -5,4 +5,4 @@
         "dbuser":     "pbookuser",
         "dbpassword": "{$phonebookdb_pwd}",
         "dbname":     "phonebook"
-    \},
+    \}
