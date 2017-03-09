@@ -3,3 +3,4 @@ ln -s /usr/lib/node/nethcti-server/sql/db_tables/nethcti2.sql /etc/e-smith/sql/i
 /sbin/service mysql.init start
 PASS=$(perl -e 'use NethServer::Password; my $ctidb_pwd = NethServer::Password::store("CTIDBPasswd"); print ($ctidb_pwd);')
 /usr/bin/mysql --defaults-file=/root/.my.cnf -e "GRANT ALL ON nethcti2.* TO nethcti@localhost  IDENTIFIED BY '$PASS';FLUSH PRIVILEGES;"
+/usr/bin/mysql --defaults-file=/root/.my.cnf -e "GRANT ALL ON phonebook.* TO nethcti@localhost  IDENTIFIED BY '$PASS';FLUSH PRIVILEGES;"
