@@ -1659,7 +1659,7 @@ function sendAutheSuccess(socket) {
     socket.emit('authe_ok', {
       message: 'authorized successfully'
     });
-    logger.info(IDLOG, 'sent authorized successfully to "' + socket.nethcti.username + '" ' + getWebsocketEndpoint(socket) + ' with id ' + socket.id);
+    logger.info(IDLOG, 'sent authorized successfully ("authe_ok") to "' + socket.nethcti.username + '" ' + getWebsocketEndpoint(socket) + ' with id ' + socket.id);
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
