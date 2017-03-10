@@ -68,7 +68,7 @@ var IDLOG = '[setPresenceState]';
             // action for asterisk
             act = {
               Action: 'Command',
-              Command: 'presencestate chang CustomPresence:' + args.exten + ' ' + args.state
+              Command: 'presencestate change CustomPresence:' + args.exten + ' ' + args.state
             };
 
           // set the action identifier
