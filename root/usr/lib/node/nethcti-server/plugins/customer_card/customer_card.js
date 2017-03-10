@@ -251,7 +251,7 @@ function setCompUser(comp) {
 */
 function getCustomerCardHTML(name, data) {
     try {
-        return ejs.render(ejsTemplates[name].content, { results: data });
+        return ejs.render(ejsTemplates[name].content, { results: data, name: name });
     } catch (err) {
         logger.error(IDLOG, err.stack);
         return '';
