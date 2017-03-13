@@ -1,5 +1,5 @@
-Name: nethcti-server
-Version: 2.7.5
+Name: nethcti-server3
+Version: 3.0.0
 Release: 1%{?dist}
 Summary: Node.js server for NethCTI
 Group: Network
