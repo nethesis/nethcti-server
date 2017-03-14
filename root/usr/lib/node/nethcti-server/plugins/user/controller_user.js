@@ -250,9 +250,7 @@ function evtExtenDndChanged(data) {
 
     var i, e;
     var username = getUserFromExten(data.exten);
-    var endpoints = users[username].getAllEndpoints();
-    var allext = (Object.keys(endpoints[endpointTypes.TYPES.mainextension]))
-      .concat(Object.keys(endpoints[endpointTypes.TYPES.extension]));
+    var allext = getAllUserExtensions(username);
     var mainExtId = getEndpointMainExtension(username).getId();
 
     // dnd off
@@ -319,9 +317,7 @@ function evtExtenCfChanged(data) {
 
     var i, e;
     var username = getUserFromExten(data.exten);
-    var endpoints = users[username].getAllEndpoints();
-    var allext = (Object.keys(endpoints[endpointTypes.TYPES.mainextension]))
-      .concat(Object.keys(endpoints[endpointTypes.TYPES.extension]));
+    var allext = getAllUserExtensions(username);
     var mainExtId = getEndpointMainExtension(username).getId();
 
     // cf off
@@ -388,9 +384,7 @@ function evtExtenCfVmChanged(data) {
 
     var i, e;
     var username = getUserFromExten(data.exten);
-    var endpoints = users[username].getAllEndpoints();
-    var allext = (Object.keys(endpoints[endpointTypes.TYPES.mainextension]))
-      .concat(Object.keys(endpoints[endpointTypes.TYPES.extension]));
+    var allext = getAllUserExtensions(username);
     var mainExtId = getEndpointMainExtension(username).getId();
 
     // cfvm off
@@ -471,18 +465,11 @@ function isMainExtension(extenId) {
  */
 function getUserFromExten(extenId) {
   try {
-    var u, e, endpoints;
+    var u, i, allext;
     for (u in users) {
-
-      endpoints = users[u].getAllEndpoints();
-
-      for (e in endpoints[endpointTypes.TYPES.mainextension]) {
-        if (e === extenId) {
-          return u;
-        }
-      }
-      for (e in endpoints[endpointTypes.TYPES.extension]) {
-        if (e === extenId) {
+      allext = getAllUserExtensions(u);
+      for (i = 0; i < allext.length; i++) {
+        if (allext[i] === extenId) {
           return u;
         }
       }
@@ -610,6 +597,36 @@ function enableCfCellphoneExten(ext, username) {
 }
 
 /**
+ * Returns all extension of a user.
+ *
+ * @method getAllUserExtensions
+ * @param {string} username The username of the user to be set
+ * @return {array} All the extensions of a user.
+ */
+function getAllUserExtensions(username) {
+  try {
+    if (typeof username !== 'string') {
+      throw new Error('wrong parameter: username "' + username + '"');
+    }
+    if (users[username]) {
+      var endpoints = users[username].getAllEndpoints();
+      var result = (Object.keys(endpoints[endpointTypes.TYPES.mainextension]))
+        .concat(Object.keys(endpoints[endpointTypes.TYPES.extension]))
+        .concat(Object.keys(endpoints[endpointTypes.TYPES.webrtc]))
+        .concat(Object.keys(endpoints[endpointTypes.TYPES.webrtc_mobile]));
+      return result;
+
+    } else {
+      logger.warn(IDLOG, 'getting all user extensions: user "' + username + '" not exists');
+      return [];
+    }
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+    return [];
+  }
+}
+
+/**
  * Set the user presence status.
  *
  * @method setPresence
@@ -627,9 +644,7 @@ function setPresence(username, status, cb) {
       var i, e;
       var arr = [];
       var mainExtId = getEndpointMainExtension(username).getId();
-      var endpoints = users[username].getAllEndpoints();
-      var allext = (Object.keys(endpoints[endpointTypes.TYPES.mainextension]))
-        .concat(Object.keys(endpoints[endpointTypes.TYPES.extension]));
+      var allext = getAllUserExtensions(username);
 
       // set presence to online
       if (status === userPresence.STATUS.online) {
