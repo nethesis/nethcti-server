@@ -3,10 +3,10 @@
 use esmith::Build::CreateLinks qw(:all);
 
 #
-# nethcti-server-update
+# nethcti-server3-update
 #
 
-event_templates('nethcti-server-update', qw(
+event_templates('nethcti-server3-update', qw(
                 /etc/nethcti/asterisk.json
                 /etc/nethcti/dbstatic.json
                 /etc/nethcti/services.json
@@ -14,13 +14,13 @@ event_templates('nethcti-server-update', qw(
                 /etc/httpd/conf.d/nethcti-server.conf
 ));
 
-event_actions('nethcti-server-update', qw(
+event_actions('nethcti-server3-update', qw(
 	            nethcti-server-conf 00
 ));
 
-event_services('nethcti-server-update', qw(
+event_services('nethcti-server3-update', qw(
                httpd reload
-               nethcti-server restart
+               nethcti-server3 restart
 ));
 
 #
@@ -32,5 +32,5 @@ event_templates('hostname-modify', qw(
 ));
 
 event_services('hostname-modify', qw(
-               nethcti-server restart
+               nethcti-server3 restart
 ));
