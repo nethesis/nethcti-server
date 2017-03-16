@@ -116,8 +116,14 @@ var IDLOG = '[pjsipDetails]';
               };
             }
           } else if (data.event === 'ContactStatusDetail') {
-            list[data.actionid].ip = data.viaaddress.split(':')[0];
-            list[data.actionid].port = data.viaaddress.split(':')[1];
+
+            if (data.viaaddress) {
+              list[data.actionid].ip = data.viaaddress.split(':')[0];
+              list[data.actionid].port = data.viaaddress.split(':')[1];
+            } else if (data.uri) {
+              list[data.actionid].ip = (data.uri.split('@')[1]).split(':')[0];
+              list[data.actionid].port = (data.uri.split('@')[1]).split(':')[1];
+            }
             list[data.actionid].sipuseragent = data.useragent;
 
           } else if (data.event === 'IdentifyDetail') {
