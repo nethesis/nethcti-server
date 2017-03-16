@@ -28,7 +28,7 @@ exports.Channel = function(obj) {
     obj.bridgedName === undefined ||
     obj.bridgedChannel === undefined) {
 
-    throw new Error('wrong parameter');
+    throw new Error('wrong parameter: ' + JSON.stringify(obj));
   }
 
   /**
