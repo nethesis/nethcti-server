@@ -2235,9 +2235,6 @@ function getPjsipDetailExten(exten) {
  */
 function initializePjsipExten(err, results) {
   try {
-    // counter is used to emit EVT_READY event only when dnd, cf and cfvm
-    // status have been received for all pjsip extensions
-    var counter = 0;
     var arr = [];
     var e, exten;
     for (e in results) {
@@ -2263,14 +2260,12 @@ function initializePjsipExten(err, results) {
     }
     async.parallel(arr,
       function(err) {
-        counter += 1;
         if (err) {
           logger.error(IDLOG, err);
+          return;
         }
-        if (counter === results.length) {
-          logger.info(IDLOG, 'emit "' + EVT_READY + '" event');
-          astProxy.emit(EVT_READY);
-        }
+        logger.info(IDLOG, 'emit "' + EVT_READY + '" event');
+        astProxy.emit(EVT_READY);
       }
     );
 
