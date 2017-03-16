@@ -43,7 +43,7 @@ var IDLOG = '[cfVmSet]';
     /**
      * Command plugin to set the unconditional CF to voicemail status of an extension.
      *
-     * Use it with _ast\_proxy_ module as follow:
+     * Use it with _astproxy_ module as follow:
      *
      *     astproxy.doCmd({ command: 'cfVmSet', exten: '214', val: '214' }, function (res) {
      *         // some code
