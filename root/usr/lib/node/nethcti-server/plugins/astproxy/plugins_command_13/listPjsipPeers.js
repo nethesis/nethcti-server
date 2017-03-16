@@ -51,7 +51,7 @@ var IDLOG = '[listPjsipPeers]';
     /**
      * Command plugin to get the list of all PjSip peers.
      *
-     * Use it with _ast\_proxy_ module as follow:
+     * Use it with _astproxy_ module as follow:
      *
      *     astproxy.doCmd({ command: 'listPjsipPeers' }, function (res) {
      *         // some code

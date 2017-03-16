@@ -230,7 +230,7 @@ function config(path) {
 }
 
 /**
- * Handler for the _extenDndChanged_ event emitted by _ast\_proxy_ component.
+ * Handler for the _extenDndChanged_ event emitted by _astproxy_ component.
  * This event is generated from asterisk and so it could be generated from physical
  * phone dnd setting using freepbx features code (*78 to enable and *79 to disable).
  * If the event is dnd off, it check for all extensions of the user and disable dnd
@@ -246,7 +246,7 @@ function evtExtenDndChanged(data) {
     if (typeof data !== 'object' || typeof data.exten !== 'string' || typeof data.enabled !== 'boolean') {
       throw new Error('wrong parameters');
     }
-    logger.info(IDLOG, 'received "' + compAstProxy.proxyLogic.EVT_EXTEN_DND_CHANGED + '" event for exten "' + data.exten + '"');
+    logger.info(IDLOG, 'received "' + compAstProxy.EVT_EXTEN_DND_CHANGED + '" event for exten "' + data.exten + '"');
 
     var i, e;
     var username = getUserFromExten(data.exten);
@@ -260,9 +260,9 @@ function evtExtenDndChanged(data) {
       // If it is not, it disable dnd on all extensions of the user
       for (i = 0; i < allext.length; i++) {
 
-        if (compAstProxy.proxyLogic.isExtenDnd(allext[i])) {
+        if (compAstProxy.isExtenDnd(allext[i])) {
 
-          compAstProxy.proxyLogic.setDnd(allext[i], false, function(err) {
+          compAstProxy.setDnd(allext[i], false, function(err) {
             if (err) {
               logger.error(IDLOG, 'disabling dnd of extension "' + allext[i] + '"');
             } else {
@@ -276,9 +276,9 @@ function evtExtenDndChanged(data) {
     } else if (data.enabled === true && !isMainExtension(data.exten)) {
 
       // dnd has been activated in a seconday extension of a user, so enable it on main extension
-      if (!compAstProxy.proxyLogic.isExtenDnd(mainExtId)) {
+      if (!compAstProxy.isExtenDnd(mainExtId)) {
 
-        compAstProxy.proxyLogic.setDnd(mainExtId, true, function(err) {
+        compAstProxy.setDnd(mainExtId, true, function(err) {
           if (err) {
             logger.error(IDLOG, 'enabling dnd of main extension "' + e + '"');
           } else {
@@ -297,7 +297,7 @@ function evtExtenDndChanged(data) {
 }
 
 /**
- * Handler for the _extenCfChanged_ event emitted by _ast\_proxy_ component.
+ * Handler for the _extenCfChanged_ event emitted by _astproxy_ component.
  * This event is generated from asterisk and so it could be generated from physical
  * phone dnd setting using freepbx features code (*72<DEST> to enable and *73 to disable).
  * If the event is cf off, it check for all extensions of the user and disable cf
@@ -313,7 +313,7 @@ function evtExtenCfChanged(data) {
     if (typeof data !== 'object' || typeof data.exten !== 'string' || typeof data.enabled !== 'boolean') {
       throw new Error('wrong parameters');
     }
-    logger.info(IDLOG, 'received "' + compAstProxy.proxyLogic.EVT_EXTEN_CF_CHANGED + '" event for exten "' + data.exten + '"');
+    logger.info(IDLOG, 'received "' + compAstProxy.EVT_EXTEN_CF_CHANGED + '" event for exten "' + data.exten + '"');
 
     var i, e;
     var username = getUserFromExten(data.exten);
@@ -327,9 +327,9 @@ function evtExtenCfChanged(data) {
       // If it is not, it disable cf on all extensions of the user
       for (i = 0; i < allext.length; i++) {
 
-        if (compAstProxy.proxyLogic.isExtenCf(allext[i])) {
+        if (compAstProxy.isExtenCf(allext[i])) {
 
-          compAstProxy.proxyLogic.setUnconditionalCf(allext[i], false, null, function(err) {
+          compAstProxy.setUnconditionalCf(allext[i], false, null, function(err) {
             if (err) {
               logger.error(IDLOG, 'disabling cf of extension "' + allext[i] + '"');
             } else {
@@ -343,9 +343,9 @@ function evtExtenCfChanged(data) {
     } else if (data.enabled === true && !isMainExtension(data.exten)) {
 
       // cf has been activated in a seconday extension of a user, so enable it on main extension
-      if (!compAstProxy.proxyLogic.isExtenCf(mainExtId)) {
+      if (!compAstProxy.isExtenCf(mainExtId)) {
 
-        compAstProxy.proxyLogic.setUnconditionalCf(mainExtId, true, data.to, function(err) {
+        compAstProxy.setUnconditionalCf(mainExtId, true, data.to, function(err) {
           if (err) {
             logger.error(IDLOG, 'enabling cf of main extension "' + e + '" to "' + data.to + '"');
           } else {
@@ -364,7 +364,7 @@ function evtExtenCfChanged(data) {
 }
 
 /**
- * Handler for the _extenCfVmChanged_ event emitted by _ast\_proxy_ component.
+ * Handler for the _extenCfVmChanged_ event emitted by _astproxy_ component.
  * This event is generated from asterisk and so it could be generated from physical
  * phone dnd setting using freepbx features code (*72vmu<DEST> to enable and *73 to disable).
  * If the event is cfvm off, it check for all extensions of the user and disable cfvm
@@ -380,7 +380,7 @@ function evtExtenCfVmChanged(data) {
     if (typeof data !== 'object' || typeof data.exten !== 'string' || typeof data.enabled !== 'boolean') {
       throw new Error('wrong parameters');
     }
-    logger.info(IDLOG, 'received "' + compAstProxy.proxyLogic.EVT_EXTEN_CFVM_CHANGED + '" event for exten "' + data.exten + '"');
+    logger.info(IDLOG, 'received "' + compAstProxy.EVT_EXTEN_CFVM_CHANGED + '" event for exten "' + data.exten + '"');
 
     var i, e;
     var username = getUserFromExten(data.exten);
@@ -394,9 +394,9 @@ function evtExtenCfVmChanged(data) {
       // If it is not, it disable cfvm on all extensions of the user
       for (i = 0; i < allext.length; i++) {
 
-        if (compAstProxy.proxyLogic.isExtenCfVm(allext[i])) {
+        if (compAstProxy.isExtenCfVm(allext[i])) {
 
-          compAstProxy.proxyLogic.setUnconditionalCfVm(allext[i], false, null, function(err) {
+          compAstProxy.setUnconditionalCfVm(allext[i], false, null, function(err) {
             if (err) {
               logger.error(IDLOG, 'disabling cfvm of extension "' + allext[i] + '"');
             } else {
@@ -410,9 +410,9 @@ function evtExtenCfVmChanged(data) {
     } else if (data.enabled === true && !isMainExtension(data.exten)) {
 
       // cf has been activated in a seconday extension of a user, so enable it on main extension
-      if (!compAstProxy.proxyLogic.isExtenCfVm(mainExtId)) {
+      if (!compAstProxy.isExtenCfVm(mainExtId)) {
 
-        compAstProxy.proxyLogic.setUnconditionalCfVm(mainExtId, true, data.vm, function(err) {
+        compAstProxy.setUnconditionalCfVm(mainExtId, true, data.vm, function(err) {
           if (err) {
             logger.error(IDLOG, 'enabling cfvm of main extension "' + e + '" to "' + data.vm + '"');
           } else {
@@ -487,9 +487,9 @@ function getUserFromExten(extenId) {
  */
 function initializeAstProxyListeners() {
   try {
-    compAstProxy.on(compAstProxy.proxyLogic.EVT_EXTEN_CF_CHANGED, evtExtenCfChanged);
-    compAstProxy.on(compAstProxy.proxyLogic.EVT_EXTEN_CFVM_CHANGED, evtExtenCfVmChanged);
-    compAstProxy.on(compAstProxy.proxyLogic.EVT_EXTEN_DND_CHANGED, evtExtenDndChanged);
+    compAstProxy.on(compAstProxy.EVT_EXTEN_CF_CHANGED, evtExtenCfChanged);
+    compAstProxy.on(compAstProxy.EVT_EXTEN_CFVM_CHANGED, evtExtenCfVmChanged);
+    compAstProxy.on(compAstProxy.EVT_EXTEN_DND_CHANGED, evtExtenDndChanged);
     logger.info(IDLOG, 'set asterisk proxy listeners done');
   } catch (err) {
     logger.error(IDLOG, err.stack);
@@ -505,7 +505,7 @@ function initializeAstProxyListeners() {
  */
 function enableDndExten(ext) {
   return function(callback) {
-    compAstProxy.proxyLogic.setDnd(ext, true, callback);
+    compAstProxy.setDnd(ext, true, callback);
   };
 }
 
@@ -518,7 +518,7 @@ function enableDndExten(ext) {
  */
 function disableDndExten(ext) {
   return function(callback) {
-    compAstProxy.proxyLogic.setDnd(ext, false, callback);
+    compAstProxy.setDnd(ext, false, callback);
   };
 }
 
@@ -531,7 +531,7 @@ function disableDndExten(ext) {
  */
 function disableCfExten(ext) {
   return function(callback) {
-    compAstProxy.proxyLogic.setUnconditionalCf(ext, false, null, callback);
+    compAstProxy.setUnconditionalCf(ext, false, null, callback);
   };
 }
 
@@ -544,7 +544,7 @@ function disableCfExten(ext) {
  */
 function disableCfVmExten(ext) {
   return function(callback) {
-    compAstProxy.proxyLogic.setUnconditionalCfVm(ext, false, null, callback);
+    compAstProxy.setUnconditionalCfVm(ext, false, null, callback);
   };
 }
 
@@ -563,7 +563,7 @@ function enableCfVmExten(ext, username) {
     ];
     if (vmId) {
       vmId = vmId.getId();
-      compAstProxy.proxyLogic.setUnconditionalCfVm(ext, true, vmId, callback);
+      compAstProxy.setUnconditionalCfVm(ext, true, vmId, callback);
     } else {
       var str = 'setting "' + userPresence.STATUS.voicemail + '" presence to user "' + username + '": no voicemail associated';
       logger.warn(IDLOG, str);
@@ -587,7 +587,7 @@ function enableCfCellphoneExten(ext, username) {
     ];
     if (cellphoneId) {
       cellphoneId = cellphoneId.getId();
-      compAstProxy.proxyLogic.setUnconditionalCf(ext, true, cellphoneId, callback);
+      compAstProxy.setUnconditionalCf(ext, true, cellphoneId, callback);
     } else {
       var str = 'setting "' + userPresence.STATUS.cellphone + '" presence to user "' + username + '": no cellphone associated';
       logger.warn(IDLOG, str);
@@ -657,7 +657,7 @@ function setPresence(username, status, cb) {
         }
         arr.push( // set presence in Asterisk
           function(callback) {
-            compAstProxy.proxyLogic.setAsteriskPresence(mainExtId, 'AVAILABLE', callback);
+            compAstProxy.setAsteriskPresence(mainExtId, 'AVAILABLE', callback);
           }
         );
 
@@ -683,7 +683,7 @@ function setPresence(username, status, cb) {
         }
         arr.push( // set presence in Asterisk
           function(callback) {
-            compAstProxy.proxyLogic.setAsteriskPresence(mainExtId, 'DND', callback);
+            compAstProxy.setAsteriskPresence(mainExtId, 'DND', callback);
           }
         );
 
@@ -708,7 +708,7 @@ function setPresence(username, status, cb) {
         }
         arr.push( //set presence in Asterisk
           function(callback) {
-            compAstProxy.proxyLogic.setAsteriskPresence(mainExtId, 'AWAY,CELLPHONE', callback);
+            compAstProxy.setAsteriskPresence(mainExtId, 'AWAY,CELLPHONE', callback);
           }
         );
 
@@ -733,7 +733,7 @@ function setPresence(username, status, cb) {
         }
         arr.push( // set presence in Asterisk
           function(callback) {
-            compAstProxy.proxyLogic.setAsteriskPresence(mainExtId, 'XA,VOICEMAIL', callback);
+            compAstProxy.setAsteriskPresence(mainExtId, 'XA,VOICEMAIL', callback);
           }
         );
 
@@ -910,12 +910,12 @@ function updateUserPresence(username) {
     if (cellphone) {
       cellphone = cellphone.getId();
     }
-    var dnd = compAstProxy.proxyLogic.isExtenDnd(mainExtId);
-    var cf = compAstProxy.proxyLogic.isExtenCf(mainExtId);
-    var cfvm = compAstProxy.proxyLogic.isExtenCfVm(mainExtId);
+    var dnd = compAstProxy.isExtenDnd(mainExtId);
+    var cf = compAstProxy.isExtenCf(mainExtId);
+    var cfvm = compAstProxy.isExtenCfVm(mainExtId);
     var cfval;
     if (cf) {
-      cfval = compAstProxy.proxyLogic.getExtenCfValue(mainExtId);
+      cfval = compAstProxy.getExtenCfValue(mainExtId);
     }
     // set presence
     if (dnd) {

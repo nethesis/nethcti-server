@@ -44,7 +44,7 @@ var IDLOG = '[cfVmGet]';
     /**
      * Command plugin to get the unconditional call forward to voicemail status of an extension.
      *
-     * Use it with _ast\_proxy_ module as follow:
+     * Use it with _astproxy_ module as follow:
      *
      *     astproxy.doCmd({ command: 'cfVmGet', exten: '214' }, function (res) {
      *         // some code

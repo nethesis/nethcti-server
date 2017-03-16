@@ -16,15 +16,15 @@ var async = require('async');
 // var Queue = require('../queue').Queue;
 // var Trunk = require('../trunk').Trunk;
 // var moment = require('moment');
-// var Channel = require('../channel').Channel;
+var Channel = require('../channel').Channel;
 // var Parking = require('../parking').Parking;
 // var iniparser = require('iniparser');
 var Extension = require('../extension').Extension;
 // var QueueMember = require('../queueMember').QueueMember;
 var EventEmitter = require('events').EventEmitter;
 // var ParkedCaller = require('../parkedCaller').ParkedCaller;
-// var Conversation = require('../conversation').Conversation;
-// var utilChannel11 = require('./util_channel_13');
+var Conversation = require('../conversation').Conversation;
+var utilChannel13 = require('./util_channel_13');
 // var MeetmeConfUser = require('../meetmeConfUser').MeetmeConfUser;
 // var MeetmeConference = require('../meetmeConference').MeetmeConference;
 // var RECORDING_STATUS = require('../conversation').RECORDING_STATUS;
@@ -2902,11 +2902,21 @@ function updateTrunkConversations(err, resp, trunk) {
 function addConversationToExten(exten, resp, chid) {
   try {
     // check parameters
-    if (typeof exten !== 'string' ||
-      typeof resp !== 'object' ||
-      typeof chid !== 'string') {
+    if (typeof exten !== 'string' || typeof resp !== 'object' || typeof chid !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
 
-      throw new Error('wrong parameters');
+    // add "bridgedChannel" information to the response
+    var ch, ch2;
+    for (ch in resp) {
+      if (resp[ch].uniqueid !== resp[ch].linkedid) {
+        for (ch2 in resp) {
+          if (resp[ch].linkedid === resp[ch2].uniqueid) {
+            resp[ch].bridgedChannel = resp[ch2].channel;
+            resp[ch2].bridgedChannel = resp[ch].channel;
+          }
+        }
+      }
     }
 
     if (extensions[exten]) {
@@ -4171,17 +4181,9 @@ function evtConversationDialing(data) {
     // check if the destination is an extension
     if (extensions[data.chDestExten]) {
 
-      var obj;
       var callerNum = data.callerNum;
       var dialingExten = data.chDestExten;
-
-      if (callerIdentityData[callerNum]) {
-        obj = callerIdentityData[callerNum];
-
-      } else {
-        obj = {};
-      }
-
+      var obj = callerIdentityData[callerNum] ? callerIdentityData[callerNum] : {};
       // add data about the caller and the called
       obj.numCalled = data.chDestExten;
       obj.callerNum = data.callerNum;
@@ -4203,13 +4205,6 @@ function evtConversationDialing(data) {
       command: 'listChannels'
     }, function(err, resp) {
       try {
-        if (resp[data.chDest]) {
-          resp[data.chDest].bridgedChannel = data.chSource;
-        }
-        if (resp[data.chSource]) {
-          resp[data.chSource].bridgedChannel = data.chDest;
-        }
-
         // update the conversations of the extensions
         if (extensions[data.chSourceExten]) {
           updateExtenConversations(err, resp, data.chSourceExten);
@@ -5477,49 +5472,43 @@ function hangupConvCb(err) {
  * Redirect the conversation.
  *
  * @method redirectConversation
- * @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
- * @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
- * @param {string}   convid       The conversation identifier
- * @param {string}   to           The destination number to redirect the conversation
- * @param {string}   extForCtx    The extension identifier used to get the context
- * @param {function} cb           The callback function
+ * @param {string} extension The extension identifier
+ * @param {string} convid The conversation identifier
+ * @param {string} to The destination number to redirect the conversation
+ * @param {string} extForCtx The extension identifier used to get the context
+ * @param {function} cb The callback function
  */
-function redirectConversation(endpointType, endpointId, convid, to, extForCtx, cb) {
+function redirectConversation(extension, convid, to, extForCtx, cb) {
   try {
-    // check parameters
-    if (typeof convid !== 'string' ||
-      typeof cb !== 'function' ||
-      typeof to !== 'string' ||
-      typeof extForCtx !== 'string' ||
-      typeof endpointId !== 'string' ||
-      typeof endpointType !== 'string') {
+    if (typeof convid !== 'string' || typeof cb !== 'function' ||
+      typeof to !== 'string' || typeof extForCtx !== 'string' ||
+      typeof extension !== 'string') {
 
       throw new Error('wrong parameters');
     }
 
     var msg;
-    // check the endpoint existence
-    if (endpointType === 'extension' && extensions[endpointId]) {
+    if (extensions[extension]) {
 
       if (!extensions[extForCtx]) {
         throw new Error('no extension to get context for redirect conversation (extForCtx="' + extForCtx + '")');
       }
 
       var ctx = extensions[extForCtx].getContext();
-      var convs = extensions[endpointId].getAllConversations();
+      var convs = extensions[extension].getAllConversations();
       var conv = convs[convid];
       var chSource = conv.getSourceChannel();
       var channel = chSource.getChannel();
       var bridgedChannel = chSource.getBridgedChannel();
 
-      // redirect is only possible on own calls. So when the endpointId is the caller, the
-      // channel to redirect is the destination channel. It's the source channel otherwise
-      var chToRedirect = endpointId === utilChannel11.extractExtensionFromChannel(channel) ? bridgedChannel : channel;
+      // redirect is only possible on own calls. So when the extension is the caller, the
+      // channel to redirect is the destination channel. It is the source channel otherwise
+      var chToRedirect = endpointId === utilChannel13.extractExtensionFromChannel(channel) ? bridgedChannel : channel;
 
       if (chToRedirect !== undefined) {
 
         // redirect the channel
-        logger.info(IDLOG, 'redirect of the channel ' + chToRedirect + ' of exten ' + endpointId + ' to ' + to);
+        logger.info(IDLOG, 'redirect of the channel ' + chToRedirect + ' of exten ' + extension + ' to ' + to);
         astProxy.doCmd({
           command: 'redirectChannel',
           context: ctx,
@@ -5535,7 +5524,7 @@ function redirectConversation(endpointType, endpointId, convid, to, extForCtx, c
         cb(msg);
       }
     } else {
-      msg = 'redirect conversation: unknown endpointType ' + endpointType + ' or extension ' + endpointId + ' not present';
+      msg = 'redirecting conversation: extension "' + extension + '" not present';
       logger.warn(IDLOG, msg);
       cb(msg);
     }

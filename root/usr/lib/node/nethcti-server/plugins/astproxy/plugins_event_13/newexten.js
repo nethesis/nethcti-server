@@ -46,7 +46,7 @@ var astProxy;
      */
     var newExten = {
       /**
-       * It's called from _ast\_proxy_ component for each
+       * It's called from _astproxy_ component for each
        * Newexten event received from the asterisk.
        *
        * @method data

@@ -735,7 +735,7 @@ function sendEventToAllClients(evname, data, fn, fnData) {
 }
 
 /**
- * Handler for the _extenChanged_ event emitted by _ast\_proxy_
+ * Handler for the _extenChanged_ event emitted by _astproxy_
  * component. Something has changed in the extension, so notifies
  * all interested clients.
  *
@@ -786,7 +786,7 @@ function extenChanged(exten) {
 }
 
 /**
- * Handler for the _extenHangup_ event emitted by _ast\_proxy_ component.
+ * Handler for the _extenHangup_ event emitted by _astproxy_ component.
  *
  * @method extenHangup
  * @param {object} data The extension hangup data object
@@ -819,7 +819,7 @@ function extenHangup(data) {
 }
 
 /**
- * Handler for the _queueMemberChanged_ event emitted by _ast\_proxy_
+ * Handler for the _queueMemberChanged_ event emitted by _astproxy_
  * component. Something has changed in the queue member, so notifies
  * all interested clients.
  *
@@ -841,7 +841,7 @@ function queueMemberChanged(member) {
 }
 
 /**
- * Handler for the _astProxy.EVT\_MEETME\_CONF\_CHANGED_ event emitted by _ast\_proxy_
+ * Handler for the _astProxy.EVT\_MEETME\_CONF\_CHANGED_ event emitted by _astproxy_
  * component. Something has changed in the meetme conference, so notifies
  * all clients associated with the conference extension.
  *
@@ -860,7 +860,7 @@ function meetmeConfChanged(conf) {
 }
 
 /**
- * Handler for the _astProxy.EVT\_MEETME\_CONF\_END_ event emitted by _ast\_proxy_
+ * Handler for the _astProxy.EVT\_MEETME\_CONF\_END_ event emitted by _astproxy_
  * component. A meetme conference has been ended, so notifies
  * all clients associated with the conference extension.
  *
@@ -907,7 +907,7 @@ function sendEvtToUserWithExtenId(evtName, evtObj, extenId) {
 }
 
 /**
- * Handler for the _trunkChanged_ event emitted by _ast\_proxy_
+ * Handler for the _trunkChanged_ event emitted by _astproxy_
  * component. Something has changed in the trunk, so notifies
  * all interested clients.
  *
@@ -1084,7 +1084,7 @@ function sendCallWebrtcToClient(username, to) {
 }
 
 /**
- * Handler for the _extenDialing_ event emitted by _ast\_proxy_ component.
+ * Handler for the _extenDialing_ event emitted by _astproxy_ component.
  * The extension ringing, so notify all users associated with it, with the
  * identity data of the caller.
  *
@@ -1130,7 +1130,7 @@ function extenDialing(data) {
 }
 
 /**
- * Handler for the _queueChanged_ event emitted by _ast\_proxy_
+ * Handler for the _queueChanged_ event emitted by _astproxy_
  * component. Something has changed in the queue, so notifies
  * all interested clients.
  *
@@ -1152,7 +1152,7 @@ function queueChanged(queue) {
 }
 
 /**
- * Handler for the _parkingChanged_ event emitted by _ast\_proxy_
+ * Handler for the _parkingChanged_ event emitted by _astproxy_
  * component. Something has changed in the parking, so notifies
  * all interested clients.
  *
