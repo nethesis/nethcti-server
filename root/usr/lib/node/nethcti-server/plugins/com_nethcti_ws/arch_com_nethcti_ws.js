@@ -21,7 +21,8 @@ var IDLOG = '[arch_com_nethcti_ws]';
 module.exports = function(options, imports, register) {
 
   register(null, {
-    com_nethcti_ws: comNethctiWs
+    com_nethcti_ws: comNethctiWs,
+    onDestroy: comNethctiWs.stop
   });
 
   try {

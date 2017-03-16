@@ -1698,9 +1698,19 @@ function on(type, cb) {
   }
 }
 
+/**
+ * Handle the module destroy process.
+ *
+ * @method onDestroy
+ */
+function stop() {
+  wsServer.close();
+}
+
 // public interface
 exports.on = on;
 exports.start = start;
+exports.stop = stop;
 exports.config = config;
 exports.setAuthe = setAuthe;
 exports.setLogger = setLogger;
