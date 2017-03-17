@@ -1,5 +1,5 @@
 Name: nethcti-server
-Version: 2.7.5
+Version: 2.7.6
 Release: 1%{?dist}
 Summary: Nodejs Asterisk proxy for NethCTI 2
 
@@ -56,6 +56,13 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Fri Mar 17 2017 Alessandro Polidori <alessandro.polidori@nethesis.it> - 2.7.6-1
+- fix to use new cust card templates
+- fix stopIntrudeMusicForHold
+- add new customer card templates
+- new functions to make workaround for hold function
+- systemd unit: start only if /etc/nethcti/nethcti.json exists
+
 * Mon Feb 27 2017 Alessandro Polidori <alessandro.polidori@nethesis.it> - 2.7.5-1
 - Remove useless and obsolete InterfacesDB from nethcti.json template
 
