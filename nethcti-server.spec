@@ -1,5 +1,5 @@
 Name: nethcti-server
-Version: 2.6.6
+Version: 2.6.7
 Release: 1%{?dist}
 Summary: Nodejs Asterisk proxy for NethCTI 2
 
@@ -59,6 +59,12 @@ rm -rf $RPM_BUILD_ROOT
 %doc
 
 %changelog
+* Fri Mar 17 2017 Alessandro Polidori <alessandro.polidori@nethesis.it> - 2.6.7-1
+- fix to use new cust card templates
+- fix stopIntrudeMusicForHold
+- new functions to make workaround for hold function
+- add new customer card templates
+
 * Wed Jan 18 2017 Alessandro Polidori <alessandro.polidori@nethesis.it> - 2.6.6-1
 - fix log "wrong parameter trunkStatus" for "UNREACHABLE" status
 - enhance recording status to fix client recording button. Nethesis/dev#5007
