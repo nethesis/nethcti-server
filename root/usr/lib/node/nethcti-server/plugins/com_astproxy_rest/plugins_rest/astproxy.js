@@ -1154,12 +1154,11 @@ var compConfigManager;
         *
         * * `tone: the tone to send. Permitted values are: 0 1 2 3 4 5 6 7 8 9 * #`
         * * `convid: the conversation identifier`
-        * * `endpointId: the endpoint identifier`
-        * * `endpointType: the type of the endpoint`
+        * * `extension: the extension identifier`
         *
         * Example JSON request parameters:
         *
-        *     { "tone": "5", "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "214" }
+        *     { "tone": "5", "convid": "SIP/214-000003d5>SIP/221-000003d6", "extension": "214" }
         *
         * ---
         *
@@ -4744,59 +4743,55 @@ var compConfigManager;
           var username = req.headers.authorization_user;
 
           // check parameters
-          if (typeof req.params !== 'object' || typeof req.params.convid !== 'string' || typeof req.params.tone !== 'string' || typeof req.params.endpointId !== 'string' || typeof req.params.endpointType !== 'string' || dtmfTonesPermitted.indexOf(req.params.tone) === -1) {
+          if (typeof req.params !== 'object' || typeof req.params.convid !== 'string' ||
+            typeof req.params.tone !== 'string' || typeof req.params.extension !== 'string' ||
+            dtmfTonesPermitted.indexOf(req.params.tone) === -1) {
 
             compUtil.net.sendHttp400(IDLOG, res);
             return;
           }
 
-          if (req.params.endpointType === 'extension') {
 
-            // check if the endpoint of the request is owned by the user
-            if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+          // // check if the endpoint of the request is owned by the user
+          // if (compAuthorization.verifyUserEndpointExten(username, req.params.extension) === false) {
 
-              logger.warn(IDLOG, 'send dtmf tone "' + req.params.tone + '" to the convid "' + req.params.convid +
-                '" by user "' + username + '" has been failed: ' + ' the ' + req.params.endpointType +
-                ' ' + req.params.endpointId + ' is not owned by the user');
-              compUtil.net.sendHttp403(IDLOG, res);
-              return;
+          //   logger.warn(IDLOG, 'send dtmf tone "' + req.params.tone + '" to the convid "' + req.params.convid +
+          //     '" by user "' + username + '" has been failed: ' + ' the ' + req.params.endpointType +
+          //     ' ' + req.params.extension + ' is not owned by the user');
+          //   compUtil.net.sendHttp403(IDLOG, res);
+          //   return;
 
-            } else {
-              logger.info(IDLOG, 'send dtmf tone "' + req.params.tone + '" to the convid "' + req.params.convid +
-                '": the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId +
-                ' is owned by "' + username + '"');
-            }
+          // } else {
+          //   logger.info(IDLOG, 'send dtmf tone "' + req.params.tone + '" to the convid "' + req.params.convid +
+          //     '": the endpoint ' + req.params.endpointType + ' ' + req.params.extension +
+          //     ' is owned by "' + username + '"');
+          // }
 
-            compAstProxy.sendDtmfToConversation(
-              req.params.endpointType,
-              req.params.endpointId,
-              req.params.convid,
-              req.params.tone,
-              function(err) {
-                try {
-                  if (err) {
-                    logger.warn(IDLOG, 'send dtmf tone "' + req.params.tone + '" to the convid "' + req.params.convid +
-                      '" by user "' + username + '" with ' + req.params.endpointType + ' ' +
-                      req.params.endpointId + ' has been failed');
-                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
-                    return;
-                  }
-                  logger.info(IDLOG, 'dtmf tone "' + req.params.tone + '" has been sent successfully to the convid ' + req.params.convid +
-                    ' by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId);
-                  compUtil.net.sendHttp200(IDLOG, res);
+          logger.info(IDLOG, 'send dtmf tone "' + req.params.tone + '" to the convid "' + req.params.convid +
+            '" by user "' + username + '" with exten ' + req.params.extension);
 
-                } catch (error) {
-                  logger.error(IDLOG, error.stack);
-                  compUtil.net.sendHttp500(IDLOG, res, error.toString());
+          compAstProxy.sendDtmfToConversation(
+            req.params.extension,
+            req.params.convid,
+            req.params.tone,
+            function(err) {
+              try {
+                if (err) {
+                  logger.warn(IDLOG, 'sending dtmf tone "' + req.params.tone + '" to the convid "' + req.params.convid +
+                    '" by user "' + username + '" with exten ' + req.params.extension + ': failed');
+                  compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                  return;
                 }
+                logger.info(IDLOG, 'dtmf tone "' + req.params.tone + '" has been sent successfully to the convid ' + req.params.convid +
+                  ' by user "' + username + '" with exten ' + req.params.extension);
+                compUtil.net.sendHttp200(IDLOG, res);
+
+              } catch (error) {
+                logger.error(IDLOG, error.stack);
+                compUtil.net.sendHttp500(IDLOG, res, error.toString());
               }
-            );
-
-          } else {
-            logger.warn(IDLOG, 'sending dtmf tone the convid ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType);
-            compUtil.net.sendHttp400(IDLOG, res);
-          }
-
+            }
+          );
         } catch (err) {
           logger.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());

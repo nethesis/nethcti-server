@@ -4883,47 +4883,44 @@ function hangupUserMeetmeConf(confId, extenId, cb) {
  * Sends the dtmf tone to the conversation destination.
  *
  * @method sendDtmfToConversation
- * @param {string}   endpointType The type of the endpoint (e.g. extension)
- * @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
- * @param {string}   convid       The conversation identifier
- * @param {string}   tone         The dtmf tone to send
- * @param {function} cb           The callback function
+ * @param {string} extension The extension identifier (e.g. the extension number)
+ * @param {string} convid The conversation identifier
+ * @param {string} tone The dtmf tone to send
+ * @param {function} cb The callback function
  */
-function sendDtmfToConversation(endpointType, endpointId, convid, tone, cb) {
+function sendDtmfToConversation(extension, convid, tone, cb) {
   try {
     // check parameters
-    if (typeof cb !== 'function' ||
-      typeof tone !== 'string' || typeof convid !== 'string' ||
-      typeof endpointId !== 'string' || typeof endpointType !== 'string') {
+    if (typeof cb !== 'function' || typeof tone !== 'string' ||
+      typeof convid !== 'string' || typeof extension !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // check the endpoint existence
-    if (endpointType === 'extension' && extensions[endpointId]) {
+    if (extensions[extension]) {
 
-      var conv = extensions[endpointId].getConversation(convid);
+      var conv = extensions[extension].getConversation(convid);
       var chSource = conv.getSourceChannel();
       var channel = chSource.getChannel();
       var counterpartNum = conv.getCounterpartNum();
-      var chToSend = utilChannel11.extractExtensionFromChannel(channel) === counterpartNum ? channel : chSource.getBridgedChannel();
+      var chToSend = utilChannel13.extractExtensionFromChannel(channel) === counterpartNum ? channel : chSource.getBridgedChannel();
 
-      logger.info(IDLOG, 'send dtmf tone "' + tone + '" from exten "' + endpointId + '" to channel "' + chToSend + '" of convid "' + convid + '"');
+      logger.info(IDLOG, 'send dtmf tone "' + tone + '" from exten "' + extension + '" to channel "' + chToSend + '" of convid "' + convid + '"');
       astProxy.doCmd({
         command: 'playDTMF',
         channel: chToSend,
         digit: tone
       }, function(error) {
         if (error) {
-          logger.warn(IDLOG, 'play dtmf tone "' + tone + '" to channel "' + chToSend + '" has been failed: ' + error.message);
+          logger.warn(IDLOG, 'play dtmf tone "' + tone + '" to channel "' + chToSend + '": failed: ' + error.message);
         } else {
           logger.info(IDLOG, 'played dtmf tone "' + tone + '" to channel "' + chToSend + '" succesfully');
         }
         cb(error);
       });
-
     } else {
-      var err = 'sending dtmf tone "' + tone + '" from a non existent extension ' + endpointId;
+      var err = 'sending dtmf tone "' + tone + '" from a non existent extension ' + extension;
       logger.warn(IDLOG, err);
       cb(err);
     }
