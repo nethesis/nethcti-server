@@ -141,6 +141,7 @@ var compConfigManager;
         * 1. [`astproxy/conference/:endpoint`](#conferenceget)
         * 1. [`astproxy/remote_opgroups`](#remote_opgroupsget)
         * 1. [`astproxy/parkings`](#parkingsget)
+        * 1. [`astproxy/extension/:id`](#extensionget)
         * 1. [`astproxy/extensions`](#extensionsget)
         * 1. [`astproxy/remote_extensions`](#remote_extensionsget)
         * 1. [`astproxy/sip_webrtc`](#sip_webrtcget)
@@ -380,7 +381,7 @@ var compConfigManager;
         *
         * ### <a id="parkingsget">**`astproxy/parkings`**</a>
         *
-        * Gets all the parkings with all their status informations.
+        * Gets all the parkings with all their status information.
         *
         * Example JSON response:
         *
@@ -394,9 +395,9 @@ var compConfigManager;
         *
         * ---
         *
-        * ### <a id="extensionsget">**`astproxy/extensions`**</a>
+        * ### <a id="extensionget">**`astproxy/extension/:id`**</a>
         *
-        * Gets all the extensions with all their status informations.
+        * Get the extension with all its status information.
         *
         * Example JSON response:
         *
@@ -418,9 +419,34 @@ var compConfigManager;
         *
         * ---
         *
+        * ### <a id="extensionsget">**`astproxy/extensions`**</a>
+        *
+        * Gets all the extensions with all their status information.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "602": {
+              "ip": "",
+              "cf": "",
+              "dnd": false,
+              "cfVm": "",
+              "port": "",
+              "name": "cristian",
+              "exten": "602",
+              "status": "offline",
+              "chanType": "sip",
+              "sipuseragent": "",
+              "conversations": {}
+          },
+          ...
+     }
+        *
+        * ---
+        *
         * ### <a id="remote_extensionsget">**`astproxy/remote_extensions`**</a>
         *
-        * Gets all the extensions with all their status informations of all remote sites.
+        * Gets all the extensions with all their status information of all remote sites.
         *
         * Example JSON response:
         *
@@ -1277,10 +1303,11 @@ var compConfigManager;
          *   @param {string} opgroups                       Gets all the user groups of the operator panel
          *   @param {string} remote_opgroups                Gets all the user groups of all remote sites
          *   @param {string} conference/:endpoint           Gets data about the meetme conference of the extension
-         *   @param {string} parkings                       Gets all the parkings with all their status informations
-         *   @param {string} extensions                     Gets all the extensions with all their status informations
+         *   @param {string} parkings                       Gets all the parkings with all their status information
+         *   @param {string} extension/:id                  Gets the extension with all their status information
+         *   @param {string} extensions                     Gets all the extensions with all their status information
          *   @param {string} sip_webrtc                     Gets all the configuration about the sip WebRTC
-         *   @param {string} remote_extensions              Gets all the extensions with all their status informations of all remote sites
+         *   @param {string} remote_extensions              Gets all the extensions with all their status information of all remote sites
          *   @param {string} queues_stats/:day              Gets extended statistics about queues
          *   @param {string} queue_recall/:type/:val/:qid   Gets the recall data about the queue
          *   @param {string} qrecall_info/:type/:val/:cid   Gets the details about the queue recall
@@ -1300,6 +1327,7 @@ var compConfigManager;
           'prefix',
           'opgroups',
           'parkings',
+          'extension/:id',
           'extensions',
           'sip_webrtc',
           'remote_opgroups',
@@ -1569,7 +1597,7 @@ var compConfigManager;
       },
 
       /**
-       * Gets all the parkings with all their status informations with the following REST API:
+       * Gets all the parkings with all their status information with the following REST API:
        *
        *     GET  parkings
        *
@@ -1609,7 +1637,7 @@ var compConfigManager;
       },
 
       /**
-       * Gets all the queues with all their status informations with the following REST API:
+       * Gets all the queues with all their status information with the following REST API:
        *
        *     GET  queues
        *
@@ -1656,7 +1684,7 @@ var compConfigManager;
       },
 
       /**
-       * Gets all the trunks with all their status informations with the following REST API:
+       * Gets all the trunks with all their status information with the following REST API:
        *
        *     GET trunks
        *
@@ -1727,7 +1755,7 @@ var compConfigManager;
       },
 
       /**
-       * Gets all the extensions with all their status informations of all remote sites with the following REST API:
+       * Gets all the extensions with all their status information of all remote sites with the following REST API:
        *
        *     GET  remote_extensions
        *
@@ -1777,7 +1805,7 @@ var compConfigManager;
       },
 
       /**
-       * Gets all the extensions with all their status informations with the following REST API:
+       * Gets all the extensions with all their status information with the following REST API:
        *
        *     GET  extensions
        *
@@ -1800,52 +1828,80 @@ var compConfigManager;
           //     '" user "' + username + '" ' + res.connection.remoteAddress);
           //   res.send(200, extensions);
           // } else {
-            // // check if the user has the authorization to view the extensions
-            // if (compAuthorization.authorizeOpExtensionsUser(username) !== true) {
+          // // check if the user has the authorization to view the extensions
+          // if (compAuthorization.authorizeOpExtensionsUser(username) !== true) {
 
-            //   logger.warn(IDLOG, 'requesting extensions: authorization failed for user "' + username + '"');
-            //   compUtil.net.sendHttp403(IDLOG, res);
-            //   return;
-            // }
-
-            // // get all extensions associated with the user
-            // var userExtensions = compUser.getAllEndpointsExtension(username);
-            // var extensions;
-
-            // // checks if the user has the privacy enabled. In case the user has the "privacy" and
-            // // "admin_queues" permission enabled, then the privacy is bypassed for all the calls
-            // // that pass through a queue, otherwise all the calls are obfuscated
-            // if (compAuthorization.isPrivacyEnabled(username) === true && compAuthorization.authorizeOpAdminQueuesUser(username) === false) {
-
-            //   // all the calls are obfuscated, without regard of passing through a queue
-            //   extensions = compAstProxy.getJSONExtensions(privacyStrReplace, privacyStrReplace);
-
-            //   // replace the extensions associated with the user to have clear number for them
-            //   var e;
-            //   for (e in userExtensions) {
-            //     extensions[e] = compAstProxy.getJSONExtension(e);
-            //   }
-
-            // } else if (compAuthorization.isPrivacyEnabled(username) === true && compAuthorization.authorizeOpAdminQueuesUser(username) === true) { // the privacy is bypassed
-
-            //   // only the calls that does not pass through a queue are obfuscated
-            //   extensions = compAstProxy.getJSONExtensions(privacyStrReplace);
-
-            //   // replace the extensions associated with the user to have clear number for them
-            //   var e;
-            //   for (e in userExtensions) {
-            //     extensions[e] = compAstProxy.getJSONExtension(e);
-            //   }
-
-            // } else {
-            //   // no call is obfuscated
-            //   extensions = compAstProxy.getJSONExtensions();
-            // }
-
-            var extensions = compAstProxy.getJSONExtensions();
-            logger.info(IDLOG, 'sent all extensions in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
-            res.send(200, extensions);
+          //   logger.warn(IDLOG, 'requesting extensions: authorization failed for user "' + username + '"');
+          //   compUtil.net.sendHttp403(IDLOG, res);
+          //   return;
           // }
+
+          // // get all extensions associated with the user
+          // var userExtensions = compUser.getAllEndpointsExtension(username);
+          // var extensions;
+
+          // // checks if the user has the privacy enabled. In case the user has the "privacy" and
+          // // "admin_queues" permission enabled, then the privacy is bypassed for all the calls
+          // // that pass through a queue, otherwise all the calls are obfuscated
+          // if (compAuthorization.isPrivacyEnabled(username) === true && compAuthorization.authorizeOpAdminQueuesUser(username) === false) {
+
+          //   // all the calls are obfuscated, without regard of passing through a queue
+          //   extensions = compAstProxy.getJSONExtensions(privacyStrReplace, privacyStrReplace);
+
+          //   // replace the extensions associated with the user to have clear number for them
+          //   var e;
+          //   for (e in userExtensions) {
+          //     extensions[e] = compAstProxy.getJSONExtension(e);
+          //   }
+
+          // } else if (compAuthorization.isPrivacyEnabled(username) === true && compAuthorization.authorizeOpAdminQueuesUser(username) === true) { // the privacy is bypassed
+
+          //   // only the calls that does not pass through a queue are obfuscated
+          //   extensions = compAstProxy.getJSONExtensions(privacyStrReplace);
+
+          //   // replace the extensions associated with the user to have clear number for them
+          //   var e;
+          //   for (e in userExtensions) {
+          //     extensions[e] = compAstProxy.getJSONExtension(e);
+          //   }
+
+          // } else {
+          //   // no call is obfuscated
+          //   extensions = compAstProxy.getJSONExtensions();
+          // }
+
+          var extensions = compAstProxy.getJSONExtensions();
+          logger.info(IDLOG, 'sent all extensions in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
+          res.send(200, extensions);
+          // }
+        } catch (err) {
+          logger.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
+      },
+
+      /**
+       * Gets the extension with all its status information with the following REST API:
+       *
+       *     GET  extension/:id
+       *
+       * @method extension
+       * @param {object} req The client request
+       * @param {object} res The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      extension: function(req, res, next) {
+        try {
+          var username = req.headers.authorization_user;
+          if (typeof req.params.id !== 'string') {
+            compUtil.net.sendHttp400(IDLOG, res);
+            return;
+          }
+
+          var extension = compAstProxy.getJSONExtension(req.params.id);
+          logger.info(IDLOG, 'sent extension in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
+          res.send(200, extension);
+
         } catch (err) {
           logger.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -3079,7 +3135,7 @@ var compConfigManager;
           // }
 
           logger.info(IDLOG, 'user "' + username + '" blind transfer convid "' + req.params.convid + '" ' +
-              'of extension "' + req.params.extension + '"');
+            'of extension "' + req.params.extension + '"');
 
           // var extForCtx = compConfigManager.getDefaultUserExtensionConf(username);
           var extForCtx = req.params.extension;
@@ -4954,6 +5010,7 @@ var compConfigManager;
     exports.parkings = astproxy.parkings;
     exports.call_echo = astproxy.call_echo;
     exports.send_dtmf = astproxy.send_dtmf;
+    exports.extension = astproxy.extension;
     exports.start_spy = astproxy.start_spy;
     exports.setLogger = setLogger;
     exports.txfer_tovm = astproxy.txfer_tovm;
