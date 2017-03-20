@@ -2227,6 +2227,24 @@ function getPjsipDetailExten(exten) {
 }
 
 /**
+ * Get the list of channels.
+ *
+ * @method getListChannels
+ * @return {function} The function to be called by _initializePjsipExten_.
+ * @private
+ */
+function getListChannels() {
+  return function(callback) {
+    astProxy.doCmd({
+      command: 'listChannels'
+    }, function(err, resp) {
+      updateConversationsForAllExten(err, resp);
+      callback(err);
+    });
+  };
+}
+
+/**
  * Initialize all pjsip extensions as _Extension_ object into the
  * _extensions_ property.
  *
@@ -2257,6 +2275,7 @@ function initializePjsipExten(err, results) {
       arr.push(getCfExten(exten.getExten()));
       arr.push(getCfVmExten(exten.getExten()));
       arr.push(getPjsipDetailExten(exten.getExten()));
+      arr.push(getListChannels());
     }
     async.parallel(arr,
       function(err) {
@@ -2268,12 +2287,6 @@ function initializePjsipExten(err, results) {
         astProxy.emit(EVT_READY);
       }
     );
-
-    // request all channels
-    // logger.info(IDLOG, 'requests the channel list to initialize sip extensions');
-    // astProxy.doCmd({
-    //   command: 'listChannels'
-    // }, updateConversationsForAllExten);
   } catch (error) {
     logger.error(IDLOG, error.stack);
   }
@@ -2758,7 +2771,7 @@ function updateExtSipDetails(err, resp) {
  * Updates the conversations for all extensions.
  *
  * @method updateConversationsForAllExten
- * @param {object} err  The error object
+ * @param {object} err The error object
  * @param {object} resp The channel list as received by the _listChannels_ command plugin.
  * @private
  */
@@ -2768,10 +2781,8 @@ function updateConversationsForAllExten(err, resp) {
       logger.error(IDLOG, 'updating conversation for all extensions: ' + err.toString());
       return;
     }
-
-    // check parameter
     if (!resp) {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameter: ' + JSON.stringify(resp));
     }
 
     // removes all conversations of all extensions
