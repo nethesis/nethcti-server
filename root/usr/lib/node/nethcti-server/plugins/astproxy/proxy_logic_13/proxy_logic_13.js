@@ -5829,31 +5829,29 @@ function redirectParking(parking, to, extForCtx, cb) {
  * Attended transfer the conversation.
  *
  * @method attendedTransferConversation
- * @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
- * @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
- * @param {string}   convid       The conversation identifier
- * @param {string}   to           The destination number to redirect the conversation
- * @param {function} cb           The callback function
+ * @param {string} extension The endpoint identifier (e.g. the extension number)
+ * @param {string} convid The conversation identifier
+ * @param {string} to The destination number to redirect the conversation
+ * @param {function} cb The callback function
  */
-function attendedTransferConversation(endpointType, endpointId, convid, to, cb) {
+function attendedTransferConversation(extension, convid, to, cb) {
   try {
     // check parameters
-    if (typeof convid !== 'string' ||
-      typeof cb !== 'function' || typeof to !== 'string' ||
-      typeof endpointId !== 'string' || typeof endpointType !== 'string') {
+    if (typeof convid !== 'string' || typeof cb !== 'function' ||
+      typeof to !== 'string' || typeof extension !== 'string') {
 
       throw new Error('wrong parameters');
     }
 
     var msg;
     // check the endpoint existence
-    if (endpointType === 'extension' && extensions[endpointId]) {
+    if (extensions[extension]) {
 
-      var convs = extensions[endpointId].getAllConversations();
+      var convs = extensions[extension].getAllConversations();
       var conv = convs[convid];
 
       if (!conv) {
-        msg = 'attended transfer convid "' + convid + '": no conversation present in extension ' + endpointId;
+        msg = 'attended transfer convid "' + convid + '": no conversation present in extension ' + extension;
         logger.warn(IDLOG, msg);
         cb(msg);
         return;
@@ -5863,14 +5861,14 @@ function attendedTransferConversation(endpointType, endpointId, convid, to, cb) 
       var channel = chSource.getChannel();
       var bridgedChannel = chSource.getBridgedChannel();
 
-      // attended transfer is only possible on own calls. So when the endpointId is the caller, the
-      // channel to transfer is the source channel, otherwise it's the destination channel
-      var chToTransfer = utilChannel11.extractExtensionFromChannel(channel) === endpointId ? channel : bridgedChannel;
+      // attended transfer is only possible on own calls. So when the extension is the caller, the
+      // channel to transfer is the source channel, otherwise it is the destination channel
+      var chToTransfer = utilChannel13.extractExtensionFromChannel(channel) === extension ? channel : bridgedChannel;
 
       if (chToTransfer !== undefined) {
 
         // attended transfer the channel
-        logger.info(IDLOG, 'attended transfer of the channel ' + chToTransfer + ' of exten ' + endpointId + ' to ' + to);
+        logger.info(IDLOG, 'attended transfer of the channel ' + chToTransfer + ' of exten ' + extension + ' to ' + to);
         astProxy.doCmd({
           command: 'attendedTransfer',
           chToTransfer: chToTransfer,
@@ -5885,9 +5883,8 @@ function attendedTransferConversation(endpointType, endpointId, convid, to, cb) 
         logger.error(IDLOG, msg);
         cb(msg);
       }
-
     } else {
-      msg = 'attended transfer conversation: unknown endpointType ' + endpointType + ' or extension ' + endpointId + ' not present';
+      msg = 'attended transfer conversation: extension ' + extension + ' not present';
       logger.warn(IDLOG, msg);
       cb(msg);
     }

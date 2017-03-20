@@ -861,12 +861,11 @@ var compConfigManager;
         *
         * * `to: the destination number to transfer the conversation`
         * * `convid: the conversation identifier`
-        * * `endpointId: the endpoint identifier of the user who has the conversation to attended transfer`
-        * * `endpointType: the type of the endpoint of the user who has the conversation to attended transfer`
+        * * `extension: the extension identifier of the user who has the conversation to attended transfer`
         *
         * Example JSON request parameters:
         *
-        *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "214", "to": "221" }
+        *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "extension": "214", "to": "221" }
         *
         * ---
         *
@@ -2872,68 +2871,61 @@ var compConfigManager;
           var username = req.headers.authorization_user;
 
           // check parameters
-          if (typeof req.params !== 'object' || typeof req.params.convid !== 'string' || typeof req.params.to !== 'string' || typeof req.params.endpointId !== 'string' || typeof req.params.endpointType !== 'string') {
+          if (typeof req.params !== 'object' || typeof req.params.convid !== 'string' ||
+            typeof req.params.to !== 'string' || typeof req.params.extension !== 'string') {
 
             compUtil.net.sendHttp400(IDLOG, res);
             return;
           }
 
-          if (req.params.endpointType === 'extension') {
+          // // check if the user has the attended transfer authorization
+          // if (compAuthorization.authorizeAttendedTransferUser(username) !== true) {
 
-            // check if the user has the attended transfer authorization
-            if (compAuthorization.authorizeAttendedTransferUser(username) !== true) {
+          //   logger.warn(IDLOG, 'attended transfer convid "' + req.params.convid + '": authorization failed for user "' + username + '"');
+          //   compUtil.net.sendHttp403(IDLOG, res);
+          //   return;
+          // }
 
-              logger.warn(IDLOG, 'attended transfer convid "' + req.params.convid + '": authorization failed for user "' + username + '"');
-              compUtil.net.sendHttp403(IDLOG, res);
-              return;
-            }
+          // // check if the endpoint of the request is owned by the user. The user can
+          // // attended transfer only his own conversations
+          // if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
-            // check if the endpoint of the request is owned by the user. The user can
-            // attended transfer only his own conversations
-            if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+          //   logger.warn(IDLOG, 'attended transfer convid "' + req.params.convid + '" by user "' + username +
+          //     '" has been failed: ' + ' the ' + req.params.endpointType + ' ' + req.params.endpointId +
+          //     ' isn\'t owned by the user');
+          //   compUtil.net.sendHttp403(IDLOG, res);
+          //   return;
 
-              logger.warn(IDLOG, 'attended transfer convid "' + req.params.convid + '" by user "' + username +
-                '" has been failed: ' + ' the ' + req.params.endpointType + ' ' + req.params.endpointId +
-                ' isn\'t owned by the user');
-              compUtil.net.sendHttp403(IDLOG, res);
-              return;
+          // } else {
+          //   logger.info(IDLOG, 'attended transfer convid "' + req.params.convid + '": the endpoint ' + req.params.endpointType +
+          //     ' ' + req.params.endpointId + ' is owned by "' + username + '"');
+          // }
 
-            } else {
-              logger.info(IDLOG, 'attended transfer convid "' + req.params.convid + '": the endpoint ' + req.params.endpointType +
-                ' ' + req.params.endpointId + ' is owned by "' + username + '"');
-            }
+          logger.info(IDLOG, 'attended transfer convid "' + req.params.convid + '" of extension "' +
+              req.params.extension + '" by user "' + username + '"');
 
-            compAstProxy.attendedTransferConversation(
-              req.params.endpointType,
-              req.params.endpointId,
-              req.params.convid,
-              req.params.to,
-              function(err) {
-                try {
-                  if (err) {
-                    logger.warn(IDLOG, 'attended transfer convid "' + req.params.convid + '" by user "' + username +
-                      '" with ' + req.params.endpointType + ' ' + req.params.endpointId +
-                      ' has been failed');
-                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
-                    return;
-                  }
-                  logger.info(IDLOG, 'attended transfer convid ' + req.params.convid + ' has been attended transfered ' +
-                    'successfully by user "' + username + '" with ' + req.params.endpointType +
-                    ' ' + req.params.endpointId);
-                  compUtil.net.sendHttp200(IDLOG, res);
-
-                } catch (error) {
-                  logger.error(IDLOG, error.stack);
-                  compUtil.net.sendHttp500(IDLOG, res, error.toString());
+          compAstProxy.attendedTransferConversation(
+            req.params.extension,
+            req.params.convid,
+            req.params.to,
+            function(err) {
+              try {
+                if (err) {
+                  logger.warn(IDLOG, 'attended transfer convid "' + req.params.convid + '" by user "' + username +
+                    '" with exten "' + req.params.extension + '" has been failed');
+                  compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                  return;
                 }
+                logger.info(IDLOG, 'attended transfer convid "' + req.params.convid + '" has been attended transfered ' +
+                  'successfully by user "' + username + '" with exten "' + req.params.extension + '"');
+                compUtil.net.sendHttp200(IDLOG, res);
+
+              } catch (error) {
+                logger.error(IDLOG, error.stack);
+                compUtil.net.sendHttp500(IDLOG, res, error.toString());
               }
-            );
-
-          } else {
-            logger.warn(IDLOG, 'attended transfering convid ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType);
-            compUtil.net.sendHttp400(IDLOG, res);
-          }
-
+            }
+          );
         } catch (err) {
           logger.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
