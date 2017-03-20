@@ -791,13 +791,12 @@ var compConfigManager;
         * Park a conversation. The user can park only his own conversations. The request must contains the following parameters:
         *
         * * `convid: the conversation identifier`
-        * * `endpointId: the endpoint identifier that has the conversation to park`
-        * * `applicantId: the endpoint identifier who requested the parking. It is assumed that the applicant type is the same of the endpointType`
-        * * `endpointType: the type of the endpoint that has the conversation to park`
+        * * `extension: the extension identifier that has the conversation to park`
+        * * `applicantId: the extension identifier who requested the parking`
         *
         * Example JSON request parameters:
         *
-        *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "221", "applicantId": "216" }
+        *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "extension": "221", "applicantId": "216" }
         *
         * ---
         *
@@ -2602,51 +2601,46 @@ var compConfigManager;
           var username = req.headers.authorization_user;
 
           // check parameters
-          if (typeof req.params !== 'object' || typeof req.params.convid !== 'string' || typeof req.params.endpointId !== 'string' || typeof req.params.applicantId !== 'string' || typeof req.params.endpointType !== 'string') {
+          if (typeof req.params !== 'object' || typeof req.params.convid !== 'string' ||
+            typeof req.params.extension !== 'string' || typeof req.params.applicantId !== 'string') {
 
             compUtil.net.sendHttp400(IDLOG, res);
             return;
           }
 
-          if (req.params.endpointType === 'extension') {
+          // if (compAuthorization.authorizeAdminParkingsUser(username) === true) {
 
-            if (compAuthorization.authorizeAdminParkingsUser(username) === true) {
+          //   logger.info(IDLOG, 'park of the conversation "' + req.params.convid + '" from user "' + username + '": he has the admin_parkings permission');
+          // }
+          // // check if the applicant of the request is owned by the user: the user can only park a conversation
+          // // that belong to him. The belonging is verfied later by the asterisk proxy component
+          // else if (compAuthorization.verifyUserEndpointExten(username, req.params.applicantId) === false) {
 
-              logger.info(IDLOG, 'park of the conversation "' + req.params.convid + '" from user "' + username + '": he has the admin_parkings permission');
-            }
-            // check if the applicant of the request is owned by the user: the user can only park a conversation
-            // that belong to him. The belonging is verfied later by the asterisk proxy component
-            else if (compAuthorization.verifyUserEndpointExten(username, req.params.applicantId) === false) {
+          //   logger.warn(IDLOG, 'park of the conversation "' + req.params.convid + '" from user "' + username + '" has been failed: the applicant ' +
+          //     '"' + req.params.applicantId + '" isn\'t owned by him');
+          //   compUtil.net.sendHttp403(IDLOG, res);
+          //   return;
 
-              logger.warn(IDLOG, 'park of the conversation "' + req.params.convid + '" from user "' + username + '" has been failed: the applicant ' +
-                '"' + req.params.applicantId + '" isn\'t owned by him');
-              compUtil.net.sendHttp403(IDLOG, res);
-              return;
+          // }
+          // logger.info(IDLOG, 'the applicant extension "' + req.params.applicantId + '"" is owned by "' + username + '"');
 
-            }
-            logger.info(IDLOG, 'the applicant endpoint ' + req.params.applicantId + ' is owned by "' + username + '"');
-
-            compAstProxy.parkConversation(req.params.endpointType, req.params.endpointId, req.params.convid, req.params.applicantId, function(err, response) {
-              try {
-                if (err) {
-                  logger.warn(IDLOG, 'parking convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.applicantId + ' has been failed');
-                  compUtil.net.sendHttp500(IDLOG, res, err.toString());
-                  return;
-                }
-                logger.info(IDLOG, 'convid ' + req.params.convid + ' has been parked successfully by user "' + username + '" with ' + req.params.applicantId);
-                compUtil.net.sendHttp200(IDLOG, res);
-
-              } catch (error) {
-                logger.error(IDLOG, error.stack);
-                compUtil.net.sendHttp500(IDLOG, res, error.toString());
+          compAstProxy.parkConversation(req.params.extension, req.params.convid, req.params.applicantId, function(err, response) {
+            try {
+              if (err) {
+                logger.warn(IDLOG, 'parking convid ' + req.params.convid + ' by user "' + username + '" with ' +
+                  req.params.applicantId + ': failed');
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                return;
               }
-            });
+              logger.info(IDLOG, 'convid ' + req.params.convid + ' has been parked successfully by user "' + username + '" with ' +
+                req.params.applicantId);
+              compUtil.net.sendHttp200(IDLOG, res);
 
-          } else {
-            logger.warn(IDLOG, 'parking the conversation ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType);
-            compUtil.net.sendHttp400(IDLOG, res);
-          }
-
+            } catch (error) {
+              logger.error(IDLOG, error.stack);
+              compUtil.net.sendHttp500(IDLOG, res, error.toString());
+            }
+          });
         } catch (err) {
           logger.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
