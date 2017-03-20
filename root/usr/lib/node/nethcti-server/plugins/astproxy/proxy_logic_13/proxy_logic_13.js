@@ -5968,32 +5968,30 @@ function transferConversationToVoicemail(endpointType, endpointId, convid, voice
  * Park the conversation.
  *
  * @method parkConversation
- * @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
- * @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
- * @param {string}   convid       The conversation identifier
- * @param {string}   applicantId  The applicant identifier of the park operation (e.g. the extension number)
- * @param {function} cb           The callback function
+ * @param {string} extension The endpoint identifier (e.g. the extension number)
+ * @param {string} convid The conversation identifier
+ * @param {string} applicantId The applicant identifier of the park operation (e.g. the extension number)
+ * @param {function} cb The callback function
  */
-function parkConversation(endpointType, endpointId, convid, applicantId, cb) {
+function parkConversation(extension, convid, applicantId, cb) {
   try {
     // check parameters
-    if (typeof convid !== 'string' ||
-      typeof cb !== 'function' || typeof endpointId !== 'string' ||
-      typeof applicantId !== 'string' || typeof endpointType !== 'string') {
+    if (typeof convid !== 'string' || typeof cb !== 'function' ||
+      typeof extension !== 'string' || typeof applicantId !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // check the endpoint existence
-    if (endpointType === 'extension' && extensions[endpointId]) {
+    if (extensions[extension]) {
 
-      var convs = extensions[endpointId].getAllConversations();
+      var convs = extensions[extension].getAllConversations();
       var conv = convs[convid];
 
       var err;
       // check the presence of the conversation
       if (typeof conv !== 'object') {
-        err = 'parking the conversation ' + convid + ': no conversation present in the endpointId ' + endpointId;
+        err = 'parking the conversation ' + convid + ': no conversation present for exten "' + extension + '"';
         logger.warn(IDLOG, err);
         cb(err);
         return;
@@ -6005,8 +6003,8 @@ function parkConversation(endpointType, endpointId, convid, applicantId, cb) {
 
       // check if the applicant of the request is an intermediary of the conversation.
       // This is because only caller or called can park the conversation
-      if (utilChannel11.extractExtensionFromChannel(channel) !== applicantId &&
-        utilChannel11.extractExtensionFromChannel(bridgedChannel) !== applicantId) {
+      if (utilChannel13.extractExtensionFromChannel(channel) !== applicantId &&
+        utilChannel13.extractExtensionFromChannel(bridgedChannel) !== applicantId) {
 
         err = 'applicant extension "' + applicantId + '" not allowed to park a conversation not owned by him ' + convid;
         logger.warn(IDLOG, err);
@@ -6016,7 +6014,7 @@ function parkConversation(endpointType, endpointId, convid, applicantId, cb) {
 
       var chToPark;
       var chToReturn; // channel to return once elapsed the parking timeout
-      if (utilChannel11.extractExtensionFromChannel(channel) === applicantId) {
+      if (utilChannel13.extractExtensionFromChannel(channel) === applicantId) {
         chToPark = bridgedChannel;
         chToReturn = channel;
       } else {
@@ -6027,7 +6025,7 @@ function parkConversation(endpointType, endpointId, convid, applicantId, cb) {
       if (chToPark !== undefined && chToReturn !== undefined) {
 
         // park the channel
-        logger.info(IDLOG, 'execute the park of the channel ' + chToPark + ' of exten ' + endpointId);
+        logger.info(IDLOG, 'execute the park of the channel ' + chToPark + ' of exten ' + extension);
         astProxy.doCmd({
           command: 'parkChannel',
           chToPark: chToPark,
@@ -6047,9 +6045,8 @@ function parkConversation(endpointType, endpointId, convid, applicantId, cb) {
             cb(e);
           }
         });
-
       } else {
-        err = 'getting the channel to park ' + chToPark;
+        err = 'getting the channel to park: "' + chToPark + '"';
         logger.error(IDLOG, err);
         cb(err);
       }
