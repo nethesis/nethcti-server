@@ -40,7 +40,7 @@ module.exports = function(options, imports, register) {
       comNethctiWs.configPrivacy('/etc/nethcti/nethcti.json');
       comNethctiWs.setCompUser(imports.user);
       // comNethctiWs.setCompPostit(imports.postit);
-      // comNethctiWs.setAstProxy(imports.astProxy);
+      comNethctiWs.setAstProxy(imports.astProxy);
       // comNethctiWs.setCompVoicemail(imports.voicemail);
       // comNethctiWs.setCompAuthorization(imports.authorization);
       comNethctiWs.start();

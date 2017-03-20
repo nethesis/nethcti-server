@@ -2997,17 +2997,17 @@ function addConversationToExten(exten, resp, chid) {
 
     // add "bridgedChannel" information to the response
     for (ch in resp) {
-      if (resp[ch].uniqueid !== resp[ch].linkedid) {
-        for (ch2 in resp) {
-          if (resp[ch].linkedid === resp[ch2].uniqueid) {
-            resp[ch].bridgedChannel = resp[ch2].channel;
-            resp[ch2].bridgedChannel = resp[ch].channel;
-          }
+      for (ch2 in resp) {
+        if (resp[ch2].bridgeid === resp[ch].bridgeid &&
+          resp[ch2].channel !== resp[ch].channel) {
+
+          resp[ch].bridgedChannel = resp[ch2].channel;
+          resp[ch2].bridgedChannel = resp[ch].channel;
         }
       }
     }
 
-    if (extensions[exten]) {
+    if (extensions[exten] && resp[chid].bridgedChannel) {
       // creates the source and destination channels
       ch = new Channel(resp[chid]);
       if (ch.isSource()) {
@@ -3056,9 +3056,9 @@ function addConversationToExten(exten, resp, chid) {
       logger.info(IDLOG, 'the conversation ' + convid + ' has been added to exten ' + exten);
 
     } else {
-      logger.warn(IDLOG, 'try to add new conversation to a non existent extension ' + exten);
+      logger.warn(IDLOG, 'try to add new conversation to a non existent extension ' + exten +
+        ' or no bridgedChannel present');
     }
-
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
@@ -4334,7 +4334,7 @@ function evtConversationConnected(num1, num2) {
   try {
     // check parameters
     if (typeof num1 !== 'string' || typeof num2 !== 'string') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // check if num1 is an extension
