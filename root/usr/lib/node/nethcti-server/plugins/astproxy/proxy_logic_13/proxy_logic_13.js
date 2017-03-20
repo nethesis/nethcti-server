@@ -2227,6 +2227,24 @@ function getPjsipDetailExten(exten) {
 }
 
 /**
+ * Get the list of channels.
+ *
+ * @method getListChannels
+ * @return {function} The function to be called by _initializePjsipExten_.
+ * @private
+ */
+function getListChannels() {
+  return function(callback) {
+    astProxy.doCmd({
+      command: 'listChannels'
+    }, function(err, resp) {
+      updateConversationsForAllExten(err, resp);
+      callback(err);
+    });
+  };
+}
+
+/**
  * Initialize all pjsip extensions as _Extension_ object into the
  * _extensions_ property.
  *
@@ -2257,6 +2275,7 @@ function initializePjsipExten(err, results) {
       arr.push(getCfExten(exten.getExten()));
       arr.push(getCfVmExten(exten.getExten()));
       arr.push(getPjsipDetailExten(exten.getExten()));
+      arr.push(getListChannels());
     }
     async.parallel(arr,
       function(err) {
@@ -2268,12 +2287,6 @@ function initializePjsipExten(err, results) {
         astProxy.emit(EVT_READY);
       }
     );
-
-    // request all channels
-    // logger.info(IDLOG, 'requests the channel list to initialize sip extensions');
-    // astProxy.doCmd({
-    //   command: 'listChannels'
-    // }, updateConversationsForAllExten);
   } catch (error) {
     logger.error(IDLOG, error.stack);
   }
@@ -2758,7 +2771,7 @@ function updateExtSipDetails(err, resp) {
  * Updates the conversations for all extensions.
  *
  * @method updateConversationsForAllExten
- * @param {object} err  The error object
+ * @param {object} err The error object
  * @param {object} resp The channel list as received by the _listChannels_ command plugin.
  * @private
  */
@@ -2768,10 +2781,8 @@ function updateConversationsForAllExten(err, resp) {
       logger.error(IDLOG, 'updating conversation for all extensions: ' + err.toString());
       return;
     }
-
-    // check parameter
     if (!resp) {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameter: ' + JSON.stringify(resp));
     }
 
     // removes all conversations of all extensions
@@ -2986,17 +2997,17 @@ function addConversationToExten(exten, resp, chid) {
 
     // add "bridgedChannel" information to the response
     for (ch in resp) {
-      if (resp[ch].uniqueid !== resp[ch].linkedid) {
-        for (ch2 in resp) {
-          if (resp[ch].linkedid === resp[ch2].uniqueid) {
-            resp[ch].bridgedChannel = resp[ch2].channel;
-            resp[ch2].bridgedChannel = resp[ch].channel;
-          }
+      for (ch2 in resp) {
+        if (resp[ch2].bridgeid === resp[ch].bridgeid &&
+          resp[ch2].channel !== resp[ch].channel) {
+
+          resp[ch].bridgedChannel = resp[ch2].channel;
+          resp[ch2].bridgedChannel = resp[ch].channel;
         }
       }
     }
 
-    if (extensions[exten]) {
+    if (extensions[exten] && resp[chid].bridgedChannel) {
       // creates the source and destination channels
       ch = new Channel(resp[chid]);
       if (ch.isSource()) {
@@ -3045,9 +3056,9 @@ function addConversationToExten(exten, resp, chid) {
       logger.info(IDLOG, 'the conversation ' + convid + ' has been added to exten ' + exten);
 
     } else {
-      logger.warn(IDLOG, 'try to add new conversation to a non existent extension ' + exten);
+      logger.warn(IDLOG, 'try to add new conversation to a non existent extension ' + exten +
+        ' or no bridgedChannel present');
     }
-
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
@@ -4323,7 +4334,7 @@ function evtConversationConnected(num1, num2) {
   try {
     // check parameters
     if (typeof num1 !== 'string' || typeof num2 !== 'string') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // check if num1 is an extension
@@ -5818,31 +5829,29 @@ function redirectParking(parking, to, extForCtx, cb) {
  * Attended transfer the conversation.
  *
  * @method attendedTransferConversation
- * @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
- * @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
- * @param {string}   convid       The conversation identifier
- * @param {string}   to           The destination number to redirect the conversation
- * @param {function} cb           The callback function
+ * @param {string} extension The endpoint identifier (e.g. the extension number)
+ * @param {string} convid The conversation identifier
+ * @param {string} to The destination number to redirect the conversation
+ * @param {function} cb The callback function
  */
-function attendedTransferConversation(endpointType, endpointId, convid, to, cb) {
+function attendedTransferConversation(extension, convid, to, cb) {
   try {
     // check parameters
-    if (typeof convid !== 'string' ||
-      typeof cb !== 'function' || typeof to !== 'string' ||
-      typeof endpointId !== 'string' || typeof endpointType !== 'string') {
+    if (typeof convid !== 'string' || typeof cb !== 'function' ||
+      typeof to !== 'string' || typeof extension !== 'string') {
 
       throw new Error('wrong parameters');
     }
 
     var msg;
     // check the endpoint existence
-    if (endpointType === 'extension' && extensions[endpointId]) {
+    if (extensions[extension]) {
 
-      var convs = extensions[endpointId].getAllConversations();
+      var convs = extensions[extension].getAllConversations();
       var conv = convs[convid];
 
       if (!conv) {
-        msg = 'attended transfer convid "' + convid + '": no conversation present in extension ' + endpointId;
+        msg = 'attended transfer convid "' + convid + '": no conversation present in extension ' + extension;
         logger.warn(IDLOG, msg);
         cb(msg);
         return;
@@ -5852,14 +5861,14 @@ function attendedTransferConversation(endpointType, endpointId, convid, to, cb) 
       var channel = chSource.getChannel();
       var bridgedChannel = chSource.getBridgedChannel();
 
-      // attended transfer is only possible on own calls. So when the endpointId is the caller, the
-      // channel to transfer is the source channel, otherwise it's the destination channel
-      var chToTransfer = utilChannel11.extractExtensionFromChannel(channel) === endpointId ? channel : bridgedChannel;
+      // attended transfer is only possible on own calls. So when the extension is the caller, the
+      // channel to transfer is the source channel, otherwise it is the destination channel
+      var chToTransfer = utilChannel13.extractExtensionFromChannel(channel) === extension ? channel : bridgedChannel;
 
       if (chToTransfer !== undefined) {
 
         // attended transfer the channel
-        logger.info(IDLOG, 'attended transfer of the channel ' + chToTransfer + ' of exten ' + endpointId + ' to ' + to);
+        logger.info(IDLOG, 'attended transfer of the channel ' + chToTransfer + ' of exten ' + extension + ' to ' + to);
         astProxy.doCmd({
           command: 'attendedTransfer',
           chToTransfer: chToTransfer,
@@ -5874,9 +5883,8 @@ function attendedTransferConversation(endpointType, endpointId, convid, to, cb) 
         logger.error(IDLOG, msg);
         cb(msg);
       }
-
     } else {
-      msg = 'attended transfer conversation: unknown endpointType ' + endpointType + ' or extension ' + endpointId + ' not present';
+      msg = 'attended transfer conversation: extension ' + extension + ' not present';
       logger.warn(IDLOG, msg);
       cb(msg);
     }

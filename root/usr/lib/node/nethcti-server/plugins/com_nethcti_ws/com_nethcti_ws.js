@@ -432,15 +432,14 @@ function setCompPostit(comp) {
  * Set the asterisk proxy to be used by the module.
  *
  * @method setAstProxy
- * @param ap
- * @type object The asterisk proxy.
+ * @param {object} comp The asterisk proxy component
  */
-function setAstProxy(ap) {
+function setAstProxy(comp) {
   try {
-    if (typeof ap !== 'object') {
+    if (typeof comp !== 'object') {
       throw new Error('wrong asterisk proxy object');
     }
-    astProxy = ap;
+    astProxy = comp;
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
@@ -762,23 +761,24 @@ function extenChanged(exten) {
       //
       // Other cases
       // all the calls are obfuscated except those concerning the user to send to
-      if (compAuthorization.isPrivacyEnabled(username) === true &&
-        compAuthorization.authorizeOpAdminQueuesUser(username) === false &&
-        compAuthorization.verifyUserEndpointExten(username, exten.getExten()) === false &&
-        wsServer.sockets.sockets[sockid]) {
+      // if (compAuthorization.isPrivacyEnabled(username) === true &&
+      //   compAuthorization.authorizeOpAdminQueuesUser(username) === false &&
+      //   compAuthorization.verifyUserEndpointExten(username, exten.getExten()) === false &&
+      //   wsServer.sockets.sockets[sockid]) {
 
-        wsServer.sockets.sockets[sockid].emit(EVT_EXTEN_UPDATE, exten.toJSON(privacyStrReplace, privacyStrReplace));
+      //   wsServer.sockets.sockets[sockid].emit(EVT_EXTEN_UPDATE, exten.toJSON(privacyStrReplace, privacyStrReplace));
 
-      } else if (compAuthorization.isPrivacyEnabled(username) === true &&
-        compAuthorization.authorizeOpAdminQueuesUser(username) === true &&
-        compAuthorization.verifyUserEndpointExten(username, exten.getExten()) === false &&
-        wsServer.sockets.sockets[sockid]) {
+      // } else if (compAuthorization.isPrivacyEnabled(username) === true &&
+      //   compAuthorization.authorizeOpAdminQueuesUser(username) === true &&
+      //   compAuthorization.verifyUserEndpointExten(username, exten.getExten()) === false &&
+      //   wsServer.sockets.sockets[sockid]) {
 
-        wsServer.sockets.sockets[sockid].emit(EVT_EXTEN_UPDATE, exten.toJSON(privacyStrReplace));
+      //   wsServer.sockets.sockets[sockid].emit(EVT_EXTEN_UPDATE, exten.toJSON(privacyStrReplace));
 
-      } else if (wsServer.sockets.sockets[sockid]) {
-        wsServer.sockets.sockets[sockid].emit(EVT_EXTEN_UPDATE, exten.toJSON());
-      }
+      // } else if (wsServer.sockets.sockets[sockid]) {
+      //   wsServer.sockets.sockets[sockid].emit(EVT_EXTEN_UPDATE, exten.toJSON());
+      // }
+      wsServer.sockets.sockets[sockid].emit(EVT_EXTEN_UPDATE, exten.toJSON());
     }
   } catch (err) {
     logger.error(IDLOG, err.stack);
@@ -1258,7 +1258,7 @@ function configPrivacy(path) {
 function start() {
   try {
     // set the listener for the aterisk proxy module
-    // setAstProxyListeners();
+    setAstProxyListeners();
 
     // set the listener for the voicemail module
     // setVoicemailListeners();
@@ -1482,8 +1482,8 @@ function loginHdlr(socket, obj) {
       //     socket.join(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY);
 
       //   } else {
-          // join the user to the websocket room to receive the asterisk events that affects the extensions, using clear numbers
-          socket.join(WS_ROOM.EXTENSIONS_AST_EVT_CLEAR);
+      // join the user to the websocket room to receive the asterisk events that affects the extensions, using clear numbers
+      socket.join(WS_ROOM.EXTENSIONS_AST_EVT_CLEAR);
       //   }
       // }
 
