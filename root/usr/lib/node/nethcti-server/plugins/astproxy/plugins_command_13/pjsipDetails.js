@@ -1,9 +1,7 @@
 /**
- * @module astproxy
  * @submodule plugins_command_13
  */
 var action = require('../action');
-var CFVM_PREFIX_CODE = require('../proxy_logic_13/util_call_forward_13').CFVM_PREFIX_CODE;
 
 /**
  * The module identifier used by the logger.
@@ -13,9 +11,9 @@ var CFVM_PREFIX_CODE = require('../proxy_logic_13/util_call_forward_13').CFVM_PR
  * @private
  * @final
  * @readOnly
- * @default [cfVmSet]
+ * @default [pjsipDetails]
  */
-var IDLOG = '[cfVmSet]';
+var IDLOG = '[pjsipDetails]';
 
 (function() {
 
@@ -41,20 +39,30 @@ var IDLOG = '[cfVmSet]';
     var map = {};
 
     /**
-     * Command plugin to set the unconditional CF to voicemail status of an extension.
+     * List of all pjsip extensions.
      *
-     * Use it with _astproxy_ module as follow:
+     * @property list
+     * @type object
+     * @private
+     */
+    var list = {};
+
+    /**
+     * Command plugin to get the details of a SIP extension.
      *
-     *     astproxy.doCmd({ command: 'cfVmSet', exten: '214', val: '214' }, function (res) {
+     * Use it with _ast\_proxy_ module as follow:
+     *
+     *     ast_proxy.doCmd({ command: 'pjsipDetails', exten: '214' }, function (res) {
      *         // some code
      *     });
      *
-     * @class cfVmSet
+     * @class pjsipDetails
      * @static
      */
-    var cfVmSet = {
+    var pjsipDetails = {
+
       /**
-       * Execute asterisk action to set the unconditional CF to voicemail status.
+       * Execute asterisk action to get the details of a SIP extension.
        *
        * @method execute
        * @param {object} am Asterisk manager used to send the action
@@ -64,31 +72,14 @@ var IDLOG = '[cfVmSet]';
        */
       execute: function(am, args, cb) {
         try {
-          var act;
           // action for asterisk
-          if (args.activate) {
-
-            // unconditional call forward to voicemail sets the CF property of the asterisk database as
-            // well as the other type of call forward to a number. So, to distinguish them,
-            // the call forward to a voicemail adds a prefix code to the destination
-            // voicemail number
-            var to = CFVM_PREFIX_CODE.vmu + args.val;
-            act = {
-              Action: 'DBPut',
-              Family: 'CF',
-              Key: args.exten,
-              Val: to
-            };
-          } else {
-            act = {
-              Action: 'DBDel',
-              Family: 'CF',
-              Key: args.exten
-            };
-          }
+          var act = {
+            Action: 'PJSIPShowEndpoint',
+            Endpoint: args.exten
+          };
 
           // set the action identifier
-          act.ActionID = action.getActionId('cfVmSet');
+          act.ActionID = action.getActionId('pjsipDetails');
 
           // add association ActionID-callback
           map[act.ActionID] = cb;
@@ -102,7 +93,7 @@ var IDLOG = '[cfVmSet]';
       },
 
       /**
-       * It's called from _astproxy_ component for each data received
+       * It's called from _ast_proxy_ component for each data received
        * from asterisk and relative to this command
        *
        * @method data
@@ -111,27 +102,55 @@ var IDLOG = '[cfVmSet]';
        */
       data: function(data) {
         try {
-          // check callback and info presence and execute it
-          if (map[data.actionid] &&
-            (
-              data.message === 'Updated database successfully' ||
-              data.message === 'Key deleted successfully'
-            ) &&
-            data.response === 'Success') {
+          if (data.response === 'Success' && data.eventlist === 'start') {
+            // initialize result only in the first event received
+            if (!list[data.actionid]) {
+              list[data.actionid] = {
+                ip: '',
+                name: '',
+                port: '',
+                exten: '',
+                context: '',
+                chantype: 'pjsip',
+                sipuseragent: ''
+              };
+            }
+          } else if (data.event === 'ContactStatusDetail') {
 
-            map[data.actionid](null);
-            delete map[data.actionid]; // remove association ActionID-callback
+            if (data.viaaddress) {
+              list[data.actionid].ip = data.viaaddress.split(':')[0];
+              list[data.actionid].port = data.viaaddress.split(':')[1];
+            } else if (data.uri) {
+              list[data.actionid].ip = (data.uri.split('@')[1]).split(':')[0];
+              list[data.actionid].port = (data.uri.split('@')[1]).split(':')[1];
+            }
+            list[data.actionid].sipuseragent = data.useragent;
+
+          } else if (data.event === 'IdentifyDetail') {
+            list[data.actionid].exten = data.endpoint;
+            list[data.actionid].name = data.endpointname;
+
+          } else if (data.event === 'EndpointDetail') {
+            list[data.actionid].context = data.context;
+
+          } else if (map[data.actionid] && data.event === 'EndpointDetailComplete') {
+            map[data.actionid](null, list[data.actionid]); // callback execution
+
+          } else if (map[data.actionid] && data.message && data.response === 'Error') {
+            map[data.actionid](new Error(data.message));
 
           } else if (map[data.actionid] && data.response === 'Error') {
             map[data.actionid](new Error('error'));
+          }
+          if (data && data.event === 'EndpointDetailComplete') {
+            delete list[data.actionid]; // empties the list
             delete map[data.actionid]; // remove association ActionID-callback
           }
-
         } catch (err) {
           logger.error(IDLOG, err.stack);
           if (map[data.actionid]) {
             map[data.actionid](err);
-            delete map[data.actionid]; // remove association ActionID-callback
+            delete map[data.actionid];
           }
         }
       },
@@ -162,9 +181,9 @@ var IDLOG = '[cfVmSet]';
     };
 
     // public interface
-    exports.data = cfVmSet.data;
-    exports.execute = cfVmSet.execute;
-    exports.setLogger = cfVmSet.setLogger;
+    exports.data = pjsipDetails.data;
+    exports.execute = pjsipDetails.execute;
+    exports.setLogger = pjsipDetails.setLogger;
 
   } catch (err) {
     logger.error(IDLOG, err.stack);

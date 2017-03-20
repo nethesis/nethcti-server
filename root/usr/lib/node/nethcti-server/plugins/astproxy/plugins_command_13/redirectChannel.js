@@ -11,9 +11,9 @@ var action = require('../action');
  * @private
  * @final
  * @readOnly
- * @default [setPresenceState]
+ * @default [redirectChannel]
  */
-var IDLOG = '[setPresenceState]';
+var IDLOG = '[redirectChannel]';
 
 (function() {
 
@@ -39,22 +39,22 @@ var IDLOG = '[setPresenceState]';
     var map = {};
 
     /**
-     * Command plugin to set the presence state of an extension. 
+     * Command plugin to redirect a call.
      *
      * Use it with _astproxy_ module as follow:
      *
-     *     ast_proxy.doCmd({ command: 'setPresenceState', exten: '214', state: 'XA,VOICEMAIL' }, function (res) {
+     *     ast_proxy.doCmd({ command: 'redirectChannel', context: 'from-internal', chToRedirect: 'SIP/214-00000', to: '220' }, function (res) {
      *         // some code
      *     });
      *
      *
-     * @class setPresenceState
+     * @class redirectChannel
      * @static
      */
-    var setPresenceState = {
+    var redirectChannel = {
 
       /**
-       * Execute asterisk action to set the presence state.
+       * Execute asterisk action to redirect a call.
        *
        * @method execute
        * @param {object} am Asterisk manager used to send the action
@@ -64,19 +64,22 @@ var IDLOG = '[setPresenceState]';
        */
       execute: function(am, args, cb) {
         try {
-            var act;
-            // action for asterisk
-            act = {
-              Action: 'Command',
-              Command: 'presencestate change CustomPresence:' + args.exten + ' ' + args.state
-            };
+          // action for asterisk
+          var act = {
+            Action: 'Redirect',
+            Exten: args.to, // extension to transfer to
+            Context: args.context, // context to transfer to
+            Channel: args.chToRedirect, // channel to redirect
+            Priority: 1 // priority to transfer to
+          };
 
           // set the action identifier
-          act.ActionID = action.getActionId('setPresenceState');
+          act.ActionID = action.getActionId('redirectChannel');
 
           // add association ActionID-callback
           map[act.ActionID] = cb;
 
+          console.log(act);
           // send action to asterisk
           am.send(act);
 
@@ -86,7 +89,7 @@ var IDLOG = '[setPresenceState]';
       },
 
       /**
-       * It's called from _astproxy_ component for each data received
+       * It is called from _astproxy_ component for each data received
        * from asterisk and relative to this command.
        *
        * @method data
@@ -95,14 +98,17 @@ var IDLOG = '[setPresenceState]';
        */
       data: function(data) {
         try {
-          // check callback
-          if (map[data.actionid]) {
+          // check callback and info presence and execute it
+          if (map[data.actionid] && data.response === 'Success') {
             map[data.actionid](null);
-            delete map[data.actionid]; // remove association ActionID-callback
+
+          } else if (map[data.actionid] && data.message && data.response === 'Error') {
+            map[data.actionid](new Error(data.message));
+
           } else {
             map[data.actionid](new Error('error'));
-            delete map[data.actionid]; // remove association ActionID-callback
           }
+          delete map[data.actionid]; // remove association ActionID-callback
 
         } catch (err) {
           logger.error(IDLOG, err.stack);
@@ -139,9 +145,9 @@ var IDLOG = '[setPresenceState]';
     };
 
     // public interface
-    exports.data = setPresenceState.data;
-    exports.execute = setPresenceState.execute;
-    exports.setLogger = setPresenceState.setLogger;
+    exports.data = redirectChannel.data;
+    exports.execute = redirectChannel.execute;
+    exports.setLogger = redirectChannel.setLogger;
 
   } catch (err) {
     logger.error(IDLOG, err.stack);

@@ -42,7 +42,7 @@ var IDLOG = '[cfSet]';
     /**
      * Command plugin to set the CF status of an extension.
      *
-     * Use it with _ast\_proxy_ module as follow:
+     * Use it with _astproxy_ module as follow:
      *
      *     astproxy.doCmd({ command: 'cfSet', exten: '214', val: '12345' }, function (res) {
      *         // some code

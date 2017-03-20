@@ -41,10 +41,10 @@ var IDLOG = '[dndSet]';
 
     /**
      * Command plugin to set the DND status of an extension. This command doesn't generates any
-     * asterisk events, so it's better to use the _setDnd_ method of the _ast\_proxy_ component
+     * asterisk events, so it's better to use the _setDnd_ method of the _astproxy_ component
      * that simulate it.
      *
-     * Use it with _ast\_proxy_ module as follow:
+     * Use it with _astproxy_ module as follow:
      *
      *     astproxy.doCmd({ command: 'dndSet', exten: '214', activate: true }, function (res) {
      *         // some code

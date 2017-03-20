@@ -16,15 +16,15 @@ var async = require('async');
 // var Queue = require('../queue').Queue;
 // var Trunk = require('../trunk').Trunk;
 // var moment = require('moment');
-// var Channel = require('../channel').Channel;
+var Channel = require('../channel').Channel;
 // var Parking = require('../parking').Parking;
 // var iniparser = require('iniparser');
 var Extension = require('../extension').Extension;
 // var QueueMember = require('../queueMember').QueueMember;
 var EventEmitter = require('events').EventEmitter;
 // var ParkedCaller = require('../parkedCaller').ParkedCaller;
-// var Conversation = require('../conversation').Conversation;
-// var utilChannel11 = require('./util_channel_13');
+var Conversation = require('../conversation').Conversation;
+var utilChannel13 = require('./util_channel_13');
 // var MeetmeConfUser = require('../meetmeConfUser').MeetmeConfUser;
 // var MeetmeConference = require('../meetmeConference').MeetmeConference;
 // var RECORDING_STATUS = require('../conversation').RECORDING_STATUS;
@@ -2147,6 +2147,86 @@ function initializeSipExten() {
 }
 
 /**
+ * Get do not disturb (DND) status of the extension.
+ *
+ * @method getDndExten
+ * @param {string} ext The extension identifier
+ * @return {function} The function to be called by _initializePjsipExten_.
+ * @private
+ */
+function getDndExten(exten) {
+  return function(callback) {
+    astProxy.doCmd({
+      command: 'dndGet',
+      exten: exten
+    }, function(err, resp) {
+      setDndStatus(err, resp);
+      callback(err);
+    });
+  };
+}
+
+/**
+ * Get call forward (CF) status of the extension.
+ *
+ * @method getCfExten
+ * @param {string} ext The extension identifier
+ * @return {function} The function to be called by _initializePjsipExten_.
+ * @private
+ */
+function getCfExten(exten) {
+  return function(callback) {
+    astProxy.doCmd({
+      command: 'cfGet',
+      exten: exten
+    }, function(err, resp) {
+      setCfStatus(err, resp);
+      callback(err);
+    });
+  };
+}
+
+/**
+ * Get call forward to voicemail (CFVM) status of the extension.
+ *
+ * @method getCfVmExten
+ * @param {string} ext The extension identifier
+ * @return {function} The function to be called by _initializePjsipExten_.
+ * @private
+ */
+function getCfVmExten(exten) {
+  return function(callback) {
+    astProxy.doCmd({
+      command: 'cfVmGet',
+      exten: exten
+    }, function(err, resp) {
+      setCfVmStatus(err, resp);
+      callback(err);
+    });
+  };
+}
+
+/**
+ * Get pjsip extension details.
+ *
+ * @method getPjsipDetailExten
+ * @param {string} ext The extension identifier
+ * @return {function} The function to be called by _initializePjsipExten_.
+ * @private
+ */
+function getPjsipDetailExten(exten) {
+  return function(callback) {
+    astProxy.doCmd({
+      command: 'pjsipDetails',
+      exten: exten
+    }, function(err, resp) {
+      extPjsipDetails(err, resp);
+      callback(err);
+    });
+  };
+}
+
+/**
  * Initialize all pjsip extensions as _Extension_ object into the
  * _extensions_ property.
  *
@@ -2155,9 +2235,7 @@ function initializeSipExten() {
  */
 function initializePjsipExten(err, results) {
   try {
-    // counter is used to emit EVT_READY event only when dnd, cf and cfvm
-    // status have been received for all pjsip extensions
-    var counter = 0;
+    var arr = [];
     var e, exten;
     for (e in results) {
       exten = new Extension(results[e].ext, 'pjsip');
@@ -2170,60 +2248,27 @@ function initializePjsipExten(err, results) {
       //   exten.setUseWebsocket(false);
       // }
 
-      // // request sip details for current extension
-      // astProxy.doCmd({
-      //   command: 'sipDetails',
-      //   exten: exten.getExten()
-      // }, extSipDetails);
       // // request the extension status
       // astProxy.doCmd({
       //   command: 'extenStatus',
       //   exten: exten.getExten()
       // }, extenStatus);
-      async.parallel([
-          // get dnd status
-          function(callback) {
-            astProxy.doCmd({
-              command: 'dndGet',
-              exten: exten.getExten()
-            }, function(err, resp) {
-              setDndStatus(err, resp);
-              callback(err);
-            });
-          },
-          // get call forward status
-          function(callback) {
-            astProxy.doCmd({
-              command: 'cfGet',
-              exten: exten.getExten()
-            }, function(err, resp) {
-              setCfStatus(err, resp);
-              callback(err);
-            });
-          },
-          // get call forward to voicemail status
-          function(callback) {
-            astProxy.doCmd({
-              command: 'cfVmGet',
-              exten: exten.getExten()
-            }, function(err, resp) {
-              setCfVmStatus(err, resp);
-              callback(err);
-            });
-          }
-        ],
-        function(err) {
-          counter += 1;
-          if (err) {
-            logger.error(IDLOG, err);
-          }
-          if (counter === results.length) {
-            logger.info(IDLOG, 'emit "' + EVT_READY + '" event');
-            astProxy.emit(EVT_READY);
-          }
-        }
-      );
+      arr.push(getDndExten(exten.getExten()));
+      arr.push(getCfExten(exten.getExten()));
+      arr.push(getCfVmExten(exten.getExten()));
+      arr.push(getPjsipDetailExten(exten.getExten()));
     }
+    async.parallel(arr,
+      function(err) {
+        if (err) {
+          logger.error(IDLOG, err);
+          return;
+        }
+        logger.info(IDLOG, 'emit "' + EVT_READY + '" event');
+        astProxy.emit(EVT_READY);
+      }
+    );
+
     // request all channels
     // logger.info(IDLOG, 'requests the channel list to initialize sip extensions');
     // astProxy.doCmd({
@@ -2565,6 +2610,38 @@ function extSipDetails(err, resp) {
 }
 
 /**
+ * Sets the details for the pjsip extension object.
+ *
+ * @method extPjsipDetails
+ * @param {object} err The error object
+ * @param {object} resp The extension information object
+ * @private
+ */
+function extPjsipDetails(err, resp) {
+  try {
+    if (err) {
+      logger.error(IDLOG, 'setting pjsip extension details: ' + err.toString());
+      return;
+    }
+    // check parameter
+    if (!resp) {
+      throw new Error('wrong parameter: ' + JSON.stringify(arguments));
+    }
+    // set the extension information
+    extensions[resp.exten].setIp(resp.ip);
+    extensions[resp.exten].setPort(resp.port);
+    extensions[resp.exten].setName(resp.name);
+    extensions[resp.exten].setContext(resp.context);
+    extensions[resp.exten].setSipUserAgent(resp.sipuseragent);
+    logger.info(IDLOG, 'set pjsip details for ext "' + resp.exten + '"');
+
+  } catch (error) {
+    logger.error(IDLOG, error.stack);
+  }
+}
+
+
+/**
  * Sets the details for the sip trunk object.
  *
  * @method trunkSipDetails
@@ -2902,19 +2979,26 @@ function updateTrunkConversations(err, resp, trunk) {
 function addConversationToExten(exten, resp, chid) {
   try {
     // check parameters
-    if (typeof exten !== 'string' ||
-      typeof resp !== 'object' ||
-      typeof chid !== 'string') {
+    if (typeof exten !== 'string' || typeof resp !== 'object' || typeof chid !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    var ch, ch2, chDest, chSource, chBridged;
 
-      throw new Error('wrong parameters');
+    // add "bridgedChannel" information to the response
+    for (ch in resp) {
+      if (resp[ch].uniqueid !== resp[ch].linkedid) {
+        for (ch2 in resp) {
+          if (resp[ch].linkedid === resp[ch2].uniqueid) {
+            resp[ch].bridgedChannel = resp[ch2].channel;
+            resp[ch2].bridgedChannel = resp[ch].channel;
+          }
+        }
+      }
     }
 
     if (extensions[exten]) {
-
-      var chDest, chSource, chBridged;
-
       // creates the source and destination channels
-      var ch = new Channel(resp[chid]);
+      ch = new Channel(resp[chid]);
       if (ch.isSource()) {
 
         chSource = ch;
@@ -3499,7 +3583,10 @@ function evtExtenDndChanged(exten, enabled) {
       logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
       astProxy.emit(EVT_EXTEN_CHANGED, extensions[exten]);
       logger.info(IDLOG, 'emit event ' + EVT_EXTEN_DND_CHANGED + ' for extension ' + exten);
-      astProxy.emit(EVT_EXTEN_DND_CHANGED, { exten:  exten, enabled: enabled });
+      astProxy.emit(EVT_EXTEN_DND_CHANGED, {
+        exten: exten,
+        enabled: enabled
+      });
 
     } else {
       logger.warn(IDLOG, 'try to set dnd status of non existent extension ' + exten);
@@ -3543,7 +3630,11 @@ function evtExtenUnconditionalCfChanged(exten, enabled, to) {
       logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
       astProxy.emit(EVT_EXTEN_CHANGED, extensions[exten]);
       logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CF_CHANGED + ' for extension ' + exten);
-      astProxy.emit(EVT_EXTEN_CF_CHANGED, { exten:  exten, enabled: enabled, to: to });
+      astProxy.emit(EVT_EXTEN_CF_CHANGED, {
+        exten: exten,
+        enabled: enabled,
+        to: to
+      });
     } else {
       logger.warn(IDLOG, 'try to set call forward status of non existent extension ' + exten);
     }
@@ -3586,7 +3677,11 @@ function evtExtenUnconditionalCfVmChanged(exten, enabled, vm) {
       logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
       astProxy.emit(EVT_EXTEN_CHANGED, extensions[exten]);
       logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CFVM_CHANGED + ' for extension ' + exten);
-      astProxy.emit(EVT_EXTEN_CFVM_CHANGED, { exten:  exten, enabled: enabled, vm: vm });
+      astProxy.emit(EVT_EXTEN_CFVM_CHANGED, {
+        exten: exten,
+        enabled: enabled,
+        vm: vm
+      });
 
     } else {
       logger.warn(IDLOG, 'try to set call forward to voicemail status of non existent extension ' + exten);
@@ -4171,17 +4266,9 @@ function evtConversationDialing(data) {
     // check if the destination is an extension
     if (extensions[data.chDestExten]) {
 
-      var obj;
       var callerNum = data.callerNum;
       var dialingExten = data.chDestExten;
-
-      if (callerIdentityData[callerNum]) {
-        obj = callerIdentityData[callerNum];
-
-      } else {
-        obj = {};
-      }
-
+      var obj = callerIdentityData[callerNum] ? callerIdentityData[callerNum] : {};
       // add data about the caller and the called
       obj.numCalled = data.chDestExten;
       obj.callerNum = data.callerNum;
@@ -4203,13 +4290,6 @@ function evtConversationDialing(data) {
       command: 'listChannels'
     }, function(err, resp) {
       try {
-        if (resp[data.chDest]) {
-          resp[data.chDest].bridgedChannel = data.chSource;
-        }
-        if (resp[data.chSource]) {
-          resp[data.chSource].bridgedChannel = data.chDest;
-        }
-
         // update the conversations of the extensions
         if (extensions[data.chSourceExten]) {
           updateExtenConversations(err, resp, data.chSourceExten);
@@ -5477,49 +5557,42 @@ function hangupConvCb(err) {
  * Redirect the conversation.
  *
  * @method redirectConversation
- * @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
- * @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
- * @param {string}   convid       The conversation identifier
- * @param {string}   to           The destination number to redirect the conversation
- * @param {string}   extForCtx    The extension identifier used to get the context
- * @param {function} cb           The callback function
+ * @param {string} extension The extension identifier
+ * @param {string} convid The conversation identifier
+ * @param {string} to The destination number to redirect the conversation
+ * @param {string} extForCtx The extension identifier used to get the context
+ * @param {function} cb The callback function
  */
-function redirectConversation(endpointType, endpointId, convid, to, extForCtx, cb) {
+function redirectConversation(extension, convid, to, extForCtx, cb) {
   try {
-    // check parameters
-    if (typeof convid !== 'string' ||
-      typeof cb !== 'function' ||
-      typeof to !== 'string' ||
-      typeof extForCtx !== 'string' ||
-      typeof endpointId !== 'string' ||
-      typeof endpointType !== 'string') {
+    if (typeof convid !== 'string' || typeof cb !== 'function' ||
+      typeof to !== 'string' || typeof extForCtx !== 'string' ||
+      typeof extension !== 'string') {
 
       throw new Error('wrong parameters');
     }
 
     var msg;
-    // check the endpoint existence
-    if (endpointType === 'extension' && extensions[endpointId]) {
+    if (extensions[extension]) {
 
       if (!extensions[extForCtx]) {
         throw new Error('no extension to get context for redirect conversation (extForCtx="' + extForCtx + '")');
       }
 
       var ctx = extensions[extForCtx].getContext();
-      var convs = extensions[endpointId].getAllConversations();
+      var convs = extensions[extension].getAllConversations();
       var conv = convs[convid];
       var chSource = conv.getSourceChannel();
       var channel = chSource.getChannel();
       var bridgedChannel = chSource.getBridgedChannel();
 
-      // redirect is only possible on own calls. So when the endpointId is the caller, the
-      // channel to redirect is the destination channel. It's the source channel otherwise
-      var chToRedirect = endpointId === utilChannel11.extractExtensionFromChannel(channel) ? bridgedChannel : channel;
+      // redirect is only possible on own calls. So when the extension is the caller, the
+      // channel to redirect is the destination channel. It is the source channel otherwise
+      var chToRedirect = extension === utilChannel13.extractExtensionFromChannel(channel) ? bridgedChannel : channel;
 
       if (chToRedirect !== undefined) {
-
         // redirect the channel
-        logger.info(IDLOG, 'redirect of the channel ' + chToRedirect + ' of exten ' + endpointId + ' to ' + to);
+        logger.info(IDLOG, 'redirect of the channel ' + chToRedirect + ' of exten ' + extension + ' to ' + to);
         astProxy.doCmd({
           command: 'redirectChannel',
           context: ctx,
@@ -5535,7 +5608,7 @@ function redirectConversation(endpointType, endpointId, convid, to, extForCtx, c
         cb(msg);
       }
     } else {
-      msg = 'redirect conversation: unknown endpointType ' + endpointType + ' or extension ' + endpointId + ' not present';
+      msg = 'redirecting conversation: extension "' + extension + '" not present';
       logger.warn(IDLOG, msg);
       cb(msg);
     }
@@ -7598,7 +7671,7 @@ function setAsteriskPresence(extension, presenceState, cb) {
     // check parameters
     if (typeof cb !== 'function' ||
       typeof extension !== 'string' ||
-      typeof presenceState !== 'string' ) {
+      typeof presenceState !== 'string') {
       throw new Error('wrong parameters');
     }
 

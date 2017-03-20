@@ -24,15 +24,97 @@ module.exports = function(options, imports, register) {
   if (imports.logger) {
     logger = imports.logger;
   }
-  var astProxyObj = astProxy;
-  // astProxyObj.CF_TYPES = require('./proxy_logic_13/util_call_forward_13').CF_TYPES;
-  // astProxyObj.getQueueRecallData = queueRecallingManager.getQueueRecallData;
-  // astProxyObj.getQueueRecallInfo = queueRecallingManager.getQueueRecallInfo;
-  // astProxyObj.checkQueueRecallingStatus = queueRecallingManager.checkQueueRecallingStatus;
 
   // public interface for other architect components
   register(null, {
-    astProxy: astProxyObj
+    astProxy: {
+      on: astProxy.on,
+      doCmd: astProxy.doCmd,
+      getSipWebrtcConf: astProxy.getSipWebrtcConf,
+      getConference: astProxy.proxyLogic.getConference,
+      getEchoCallDestination: astProxy.proxyLogic.getEchoCallDestination,
+      getMeetmeConfCode: astProxy.proxyLogic.getMeetmeConfCode,
+      unmuteUserMeetmeConf: astProxy.proxyLogic.unmuteUserMeetmeConf,
+      hangupUserMeetmeConf: astProxy.proxyLogic.hangupUserMeetmeConf,
+      endMeetmeConf: astProxy.proxyLogic.endMeetmeConf,
+      muteUserMeetmeConf: astProxy.proxyLogic.muteUserMeetmeConf,
+      isExtenInMeetmeConf: astProxy.proxyLogic.isExtenInMeetmeConf,
+      setUnconditionalCfVm: astProxy.proxyLogic.setUnconditionalCfVm,
+      startMeetmeConference: astProxy.proxyLogic.startMeetmeConference,
+      setUnconditionalCf: astProxy.proxyLogic.setUnconditionalCf,
+      getExtensions: astProxy.proxyLogic.getExtensions,
+      getExtensionAgent: astProxy.proxyLogic.getExtensionAgent,
+      getExtensionIp: astProxy.proxyLogic.getExtensionIp,
+      getPrefix: astProxy.proxyLogic.getPrefix,
+      addPrefix: astProxy.proxyLogic.addPrefix,
+      hangupChannel: astProxy.proxyLogic.hangupChannel,
+      hangupConversation: astProxy.proxyLogic.hangupConversation,
+      forceHangupConversation: astProxy.proxyLogic.forceHangupConversation,
+      startRecordConversation: astProxy.proxyLogic.startRecordConversation,
+      stopRecordConversation: astProxy.proxyLogic.stopRecordConversation,
+      muteRecordConversation: astProxy.proxyLogic.muteRecordConversation,
+      unmuteRecordConversation: astProxy.proxyLogic.unmuteRecordConversation,
+      parkConversation: astProxy.proxyLogic.parkConversation,
+      redirectConversation: astProxy.proxyLogic.redirectConversation,
+      redirectWaitingCaller: astProxy.proxyLogic.redirectWaitingCaller,
+      redirectParking: astProxy.proxyLogic.redirectParking,
+      attendedTransferConversation: astProxy.proxyLogic.attendedTransferConversation,
+      transferConversationToVoicemail: astProxy.proxyLogic.transferConversationToVoicemail,
+      call: astProxy.proxyLogic.call,
+      muteConversation: astProxy.proxyLogic.muteConversation,
+      unmuteConversation: astProxy.proxyLogic.unmuteConversation,
+      sendDtmfToConversation: astProxy.proxyLogic.sendDtmfToConversation,
+      pickupConversation: astProxy.proxyLogic.pickupConversation,
+      pickupParking: astProxy.proxyLogic.pickupParking,
+      inoutDynQueues: astProxy.proxyLogic.inoutDynQueues,
+      queueMemberPauseUnpause: astProxy.proxyLogic.queueMemberPauseUnpause,
+      queueMemberAdd: astProxy.proxyLogic.queueMemberAdd,
+      queueMemberRemove: astProxy.proxyLogic.queueMemberRemove,
+      startSpyListenConversation: astProxy.proxyLogic.startSpyListenConversation,
+      startSpySpeakConversation: astProxy.proxyLogic.startSpySpeakConversation,
+      getJSONExtension: astProxy.proxyLogic.getJSONExtension,
+      getJSONExtensions: astProxy.proxyLogic.getJSONExtensions,
+      getJSONQueues: astProxy.proxyLogic.getJSONQueues,
+      getJSONQueuesStats: astProxy.proxyLogic.getJSONQueuesStats,
+      getJSONQueuesQOS: astProxy.proxyLogic.getJSONQueuesQOS,
+      getJSONAgentsStats: astProxy.proxyLogic.getJSONAgentsStats,
+      getJSONTrunks: astProxy.proxyLogic.getJSONTrunks,
+      getJSONParkings: astProxy.proxyLogic.getJSONParkings,
+      sendDTMFSequence: astProxy.proxyLogic.sendDTMFSequence,
+      getExtensionsFromConversation: astProxy.proxyLogic.getExtensionsFromConversation,
+      getBaseCallRecAudioPath: astProxy.proxyLogic.getBaseCallRecAudioPath,
+      getQueueIdsOfExten: astProxy.proxyLogic.getQueueIdsOfExten,
+      recordAudioFile: astProxy.proxyLogic.recordAudioFile,
+      isExtenDynMemberQueue: astProxy.proxyLogic.isExtenDynMemberQueue,
+      isExtenWebrtc: astProxy.proxyLogic.isExtenWebrtc,
+      isDynMemberLoggedInQueue: astProxy.proxyLogic.isDynMemberLoggedInQueue,
+      CF_TYPES: require('./proxy_logic_13/util_call_forward_13').CF_TYPES,
+      EVT_EXTEN_CHANGED: astProxy.proxyLogic.EVT_EXTEN_CHANGED,
+      EVT_EXTEN_HANGUP: astProxy.proxyLogic.EVT_EXTEN_HANGUP,
+      EVT_NEW_CDR: astProxy.proxyLogic.EVT_NEW_CDR,
+      EVT_READY: astProxy.proxyLogic.EVT_READY,
+      EVT_QUEUE_MEMBER_CHANGED: astProxy.proxyLogic.EVT_QUEUE_MEMBER_CHANGED,
+      EVT_MEETME_CONF_END: astProxy.proxyLogic.EVT_MEETME_CONF_END,
+      EVT_MEETME_CONF_CHANGED: astProxy.proxyLogic.EVT_MEETME_CONF_CHANGED,
+      EVT_TRUNK_CHANGED: astProxy.proxyLogic.EVT_TRUNK_CHANGED,
+      EVT_EXTEN_DIALING: astProxy.proxyLogic.EVT_EXTEN_DIALING,
+      EVT_QUEUE_CHANGED: astProxy.proxyLogic.EVT_QUEUE_CHANGED,
+      EVT_PARKING_CHANGED: astProxy.proxyLogic.EVT_PARKING_CHANGED,
+      EVT_NEW_VOICE_MESSAGE: astProxy.proxyLogic.EVT_NEW_VOICE_MESSAGE,
+      EVT_UPDATE_VOICE_MESSAGES: astProxy.proxyLogic.EVT_UPDATE_VOICE_MESSAGES,
+      EVT_EXTEN_DND_CHANGED: astProxy.proxyLogic.EVT_EXTEN_DND_CHANGED,
+      EVT_EXTEN_CF_CHANGED: astProxy.proxyLogic.EVT_EXTEN_CF_CHANGED,
+      EVT_EXTEN_CFVM_CHANGED: astProxy.proxyLogic.EVT_EXTEN_CFVM_CHANGED,
+      setAsteriskPresence: astProxy.proxyLogic.setAsteriskPresence,
+      getExtenCfValue: astProxy.proxyLogic.getExtenCfValue,
+      isExtenCf: astProxy.proxyLogic.isExtenCf,
+      isExtenCfVm: astProxy.proxyLogic.isExtenCfVm,
+      setDnd: astProxy.proxyLogic.setDnd,
+      isExtenDnd: astProxy.proxyLogic.isExtenDnd
+        // getQueueRecallData: queueRecallingManager.getQueueRecallData,
+        // getQueueRecallInfo: queueRecallingManager.getQueueRecallInfo,
+        // checkQueueRecallingStatus: queueRecallingManager.checkQueueRecallingStatus
+    }
   });
 
   try {

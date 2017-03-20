@@ -2,6 +2,8 @@
  * @submodule plugins_command_13
  */
 var action = require('../action');
+var utilChannel13 = require('../proxy_logic_13/util_channel_13');
+var AST_CHANNEL_STATE_2_STRING_ADAPTER = utilChannel13.AST_CHANNEL_STATE_2_STRING_ADAPTER;
 
 /**
  * The module identifier used by the logger.
@@ -11,9 +13,9 @@ var action = require('../action');
  * @private
  * @final
  * @readOnly
- * @default [setPresenceState]
+ * @default [listChannels]
  */
-var IDLOG = '[setPresenceState]';
+var IDLOG = '[listChannels]';
 
 (function() {
 
@@ -39,22 +41,31 @@ var IDLOG = '[setPresenceState]';
     var map = {};
 
     /**
-     * Command plugin to set the presence state of an extension. 
+     * List of all channels. The key is the channel identifier
+     * and the value is the _Channel_ object.
+     *
+     * @property list
+     * @type {object}
+     * @private
+     */
+    var list = {};
+
+    /**
+     * Command plugin to get the list of all channels.
      *
      * Use it with _astproxy_ module as follow:
      *
-     *     ast_proxy.doCmd({ command: 'setPresenceState', exten: '214', state: 'XA,VOICEMAIL' }, function (res) {
+     *     ast_proxy.doCmd({ command: 'listChannels' }, function (res) {
      *         // some code
      *     });
      *
-     *
-     * @class setPresenceState
+     * @class listChannels
      * @static
      */
-    var setPresenceState = {
+    var listChannels = {
 
       /**
-       * Execute asterisk action to set the presence state.
+       * Execute asterisk action to get the list of all channels.
        *
        * @method execute
        * @param {object} am Asterisk manager used to send the action
@@ -64,15 +75,13 @@ var IDLOG = '[setPresenceState]';
        */
       execute: function(am, args, cb) {
         try {
-            var act;
-            // action for asterisk
-            act = {
-              Action: 'Command',
-              Command: 'presencestate change CustomPresence:' + args.exten + ' ' + args.state
-            };
+          // action for asterisk
+          var act = {
+            Action: 'CoreShowChannels'
+          };
 
           // set the action identifier
-          act.ActionID = action.getActionId('setPresenceState');
+          act.ActionID = action.getActionId('listChannels');
 
           // add association ActionID-callback
           map[act.ActionID] = cb;
@@ -90,17 +99,44 @@ var IDLOG = '[setPresenceState]';
        * from asterisk and relative to this command.
        *
        * @method data
-       * @param {object} data The asterisk data for the current command
+       * @param {object} data The asterisk data for the current command.
        * @static
        */
       data: function(data) {
         try {
-          // check callback
-          if (map[data.actionid]) {
-            map[data.actionid](null);
-            delete map[data.actionid]; // remove association ActionID-callback
-          } else {
-            map[data.actionid](new Error('error'));
+          // store new channel object
+          if (data.event === 'CoreShowChannel') {
+
+            // extract the extension name from the channel
+            var channelExten = utilChannel13.extractExtensionFromChannel(data.channel);
+
+            var obj = {
+              status: AST_CHANNEL_STATE_2_STRING_ADAPTER[data.channelstate],
+              channel: data.channel,
+              uniqueid: data.uniqueid,
+              callerNum: data.calleridnum,
+              callerName: data.calleridname,
+              bridgedNum: data.connectedlinenum,
+              bridgedName: data.connectedlinename,
+              inConference: data.application === 'MeetMe' ? true : false,
+              channelExten: channelExten,
+              linkedid: data.linkedid,
+              bridgeid: data.bridgeid
+            };
+
+            // add queue information
+            if (data.context === 'from-queue') {
+              obj.queue = data.extension;
+            }
+
+            list[data.channel] = obj;
+
+          } else if (map[data.actionid] && data.event === 'CoreShowChannelsComplete') {
+            map[data.actionid](null, list); // callback execution
+          }
+
+          if (data.event === 'CoreShowChannelsComplete') {
+            list = {}; // empty list
             delete map[data.actionid]; // remove association ActionID-callback
           }
 
@@ -108,7 +144,7 @@ var IDLOG = '[setPresenceState]';
           logger.error(IDLOG, err.stack);
           if (map[data.actionid]) {
             map[data.actionid](err);
-            delete map[data.actionid];
+            delete map[data.actionid]; // remove association ActionID-callback
           }
         }
       },
@@ -139,9 +175,9 @@ var IDLOG = '[setPresenceState]';
     };
 
     // public interface
-    exports.data = setPresenceState.data;
-    exports.execute = setPresenceState.execute;
-    exports.setLogger = setPresenceState.setLogger;
+    exports.data = listChannels.data;
+    exports.execute = listChannels.execute;
+    exports.setLogger = listChannels.setLogger;
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
