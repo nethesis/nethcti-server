@@ -1035,7 +1035,7 @@ function getAllContacts(ctiPbBounds, pbBounds, replacements, view, offset, limit
       (offset && limit ? ' LIMIT ' + offset + ',' + limit : '')
     ].join('');
 
-    var companyXFields = 'workstreet, workcity, workprovince, workcountry, url ';
+    var companyXFields = 'workstreet, workcity, workprovince, workcountry, workphone, homephone, cellphone, url ';
     var queryCompany = [
       'SELECT id, company, ', companyXFields, ', CONCAT(\'[\', ',
       'GROUP_CONCAT(\'{\', \'"id": \', id, \',\', \'"name": "\', name, \'", \', \'"source": "\', source, \'"}\'), \']\') AS contacts',
