@@ -15,7 +15,7 @@ var path = require('path');
 var async = require('async');
 // var Queue = require('../queue').Queue;
 // var Trunk = require('../trunk').Trunk;
-// var moment = require('moment');
+var moment = require('moment');
 var Channel = require('../channel').Channel;
 // var Parking = require('../parking').Parking;
 // var iniparser = require('iniparser');
@@ -27,7 +27,7 @@ var Conversation = require('../conversation').Conversation;
 var utilChannel13 = require('./util_channel_13');
 // var MeetmeConfUser = require('../meetmeConfUser').MeetmeConfUser;
 // var MeetmeConference = require('../meetmeConference').MeetmeConference;
-// var RECORDING_STATUS = require('../conversation').RECORDING_STATUS;
+var RECORDING_STATUS = require('../conversation').RECORDING_STATUS;
 // var TrunkConversation = require('../trunkConversation').TrunkConversation;
 // var QueueWaitingCaller = require('../queueWaitingCaller').QueueWaitingCaller;
 // var QUEUE_MEMBER_TYPES_ENUM = require('../queueMember').QUEUE_MEMBER_TYPES_ENUM;
@@ -6664,28 +6664,26 @@ function isDynMemberLoggedInQueue(extenId, queueId) {
  * Stop the recording of the conversation.
  *
  * @method stopRecordConversation
- * @param {string} endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
- * @param {string} endpointId The endpoint identifier (e.g. the extension number)
+ * @param {string} extension The extension identifier (e.g. the extension number)
  * @param {string} convid The conversation identifier
  * @param {function} cb The callback function
  */
-function stopRecordConversation(endpointType, endpointId, convid, cb) {
+function stopRecordConversation(extension, convid, cb) {
   try {
     // check parameters
     if (typeof convid !== 'string' ||
       typeof cb !== 'function' ||
-      typeof endpointId !== 'string' ||
-      typeof endpointType !== 'string') {
+      typeof extension !== 'string') {
 
       throw new Error('wrong parameters');
     }
 
     var str;
     // check the endpoint existence
-    if (endpointType === 'extension' && extensions[endpointId]) {
+    if (extensions[extension]) {
 
       // get the channel to stop record
-      var chid = getExtenIdSourceChannelConversation(endpointId, convid);
+      var chid = getExtenIdSourceChannelConversation(extension, convid);
 
       if (recordingConv[convid] === undefined) {
         str = 'the conversation ' + convid + ' is not recording';
@@ -6694,7 +6692,7 @@ function stopRecordConversation(endpointType, endpointId, convid, cb) {
 
       } else if (chid) {
         // start the recording
-        logger.info(IDLOG, 'execute the stop record of the channel ' + chid + ' of exten ' + endpointId);
+        logger.info(IDLOG, 'execute the stop record of the channel ' + chid + ' of exten ' + extension);
         astProxy.doCmd({
           command: 'stopRecordCall',
           channel: chid
@@ -6704,13 +6702,13 @@ function stopRecordConversation(endpointType, endpointId, convid, cb) {
         });
 
       } else {
-        str = 'no channel to stop record of conversation ' + convid + ' of exten ' + endpointId;
+        str = 'no channel to stop record of conversation ' + convid + ' of exten ' + extension;
         logger.warn(IDLOG, str);
         cb(str);
       }
 
     } else {
-      str = 'try to stop record conversation for the non existent endpoint ' + endpointType;
+      str = 'try to stop record conversation for the non existent endpoint ' + extension;
       logger.warn(IDLOG, str);
       cb(str);
     }
@@ -6842,28 +6840,26 @@ function startSpyListenConversation(endpointType, endpointId, convid, destType, 
  * Mute the recording of the conversation.
  *
  * @method muteRecordConversation
- * @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
- * @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
+ * @param {string}   extension   The extension identifier (e.g. the extension number)
  * @param {string}   convid       The conversation identifier
  * @param {function} cb           The callback function
  */
-function muteRecordConversation(endpointType, endpointId, convid, cb) {
+function muteRecordConversation(extension, convid, cb) {
   try {
     // check parameters
     if (typeof convid !== 'string' ||
       typeof cb !== 'function' ||
-      typeof endpointId !== 'string' ||
-      typeof endpointType !== 'string') {
+      typeof extension !== 'string') {
 
       throw new Error('wrong parameters');
     }
 
     var str;
     // check the endpoint existence
-    if (endpointType === 'extension' && extensions[endpointId]) {
+    if (extensions[extension]) {
 
       // get the channel to record
-      var ch = getExtenSourceChannelConversation(endpointId, convid);
+      var ch = getExtenSourceChannelConversation(extension, convid);
 
       // check if the conversation is already recording
       if (recordingConv[convid] === undefined) {
@@ -6875,18 +6871,18 @@ function muteRecordConversation(endpointType, endpointId, convid, cb) {
         var chid = ch.getChannel(); // the channel identifier
 
         // start the recording
-        logger.info(IDLOG, 'mute the recording of convid "' + convid + '" of extension "' + endpointId + '" with channel ' + chid);
+        logger.info(IDLOG, 'mute the recording of convid "' + convid + '" of extension "' + extension + '" with channel ' + chid);
         astProxy.doCmd({
           command: 'muteRecordCall',
           channel: chid
         }, function(err) {
           try {
             if (err) {
-              logger.error(IDLOG, 'muting recording of convid "' + convid + '" of extension "' + endpointId + '" with channel ' + chid);
+              logger.error(IDLOG, 'muting recording of convid "' + convid + '" of extension "' + extension + '" with channel ' + chid);
               cb(err);
               return;
             }
-            logger.info(IDLOG, 'mute the recording of convid "' + convid + '" of extension "' + endpointId + '" with channel ' + chid + ' has been successfully');
+            logger.info(IDLOG, 'mute the recording of convid "' + convid + '" of extension "' + extension + '" with channel ' + chid + ' has been successfully');
 
             // set the recording status mute of all conversations with specified convid
             setRecordStatusMuteConversations(convid);
@@ -6898,12 +6894,12 @@ function muteRecordConversation(endpointType, endpointId, convid, cb) {
           }
         });
       } else {
-        str = 'no channel to mute record of conversation ' + convid + ' of exten ' + endpointId;
+        str = 'no channel to mute record of conversation ' + convid + ' of exten ' + extension;
         logger.warn(IDLOG, str);
         cb(str);
       }
     } else {
-      str = 'try to mute the record conversation for the non existent endpoint ' + endpointType;
+      str = 'try to mute the record conversation for the non existent endpoint ' + extension;
       logger.warn(IDLOG, str);
       cb(str);
     }
@@ -6917,28 +6913,26 @@ function muteRecordConversation(endpointType, endpointId, convid, cb) {
  * Unmute the recording of the conversation.
  *
  * @method unmuteRecordConversation
- * @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
- * @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
+ * @param {string}   extension   The extension identifier (e.g. the extension number)
  * @param {string}   convid       The conversation identifier
  * @param {function} cb           The callback function
  */
-function unmuteRecordConversation(endpointType, endpointId, convid, cb) {
+function unmuteRecordConversation(extension, convid, cb) {
   try {
     // check parameters
     if (typeof convid !== 'string' ||
       typeof cb !== 'function' ||
-      typeof endpointId !== 'string' ||
-      typeof endpointType !== 'string') {
+      typeof extension !== 'string') {
 
       throw new Error('wrong parameters');
     }
 
     var str;
     // check the endpoint existence
-    if (endpointType === 'extension' && extensions[endpointId]) {
+    if (extensions[extension]) {
 
       // get the channel to record
-      var ch = getExtenSourceChannelConversation(endpointId, convid);
+      var ch = getExtenSourceChannelConversation(extension, convid);
 
       // check if the conversation is already recording
       if (recordingConv[convid] === undefined) {
@@ -6950,18 +6944,18 @@ function unmuteRecordConversation(endpointType, endpointId, convid, cb) {
         var chid = ch.getChannel(); // the channel identifier
 
         // start the recording
-        logger.info(IDLOG, 'unmute the recording of convid "' + convid + '" of extension "' + endpointId + '" with channel ' + chid);
+        logger.info(IDLOG, 'unmute the recording of convid "' + convid + '" of extension "' + extension + '" with channel ' + chid);
         astProxy.doCmd({
           command: 'unmuteRecordCall',
           channel: chid
         }, function(err) {
           try {
             if (err) {
-              logger.error(IDLOG, 'unmuting recording of convid "' + convid + '" of extension "' + endpointId + '" with channel ' + chid);
+              logger.error(IDLOG, 'unmuting recording of convid "' + convid + '" of extension "' + extension + '" with channel ' + chid);
               cb(err);
               return;
             }
-            logger.info(IDLOG, 'unmuting the recording of convid "' + convid + '" of extension "' + endpointId + '" with channel ' + chid + ' has been successfully');
+            logger.info(IDLOG, 'unmuting the recording of convid "' + convid + '" of extension "' + extension + '" with channel ' + chid + ' has been successfully');
             recordingConv[convid] = RECORDING_STATUS.TRUE;
             // set the recording status of all conversations with specified convid
             setRecordStatusConversations(convid, true);
@@ -6973,12 +6967,12 @@ function unmuteRecordConversation(endpointType, endpointId, convid, cb) {
           }
         });
       } else {
-        str = 'no channel to unmute record of conversation ' + convid + ' of exten ' + endpointId;
+        str = 'no channel to unmute record of conversation ' + convid + ' of exten ' + extension;
         logger.warn(IDLOG, str);
         cb(str);
       }
     } else {
-      str = 'try to unmute the record conversation for the non existent endpoint ' + endpointType;
+      str = 'try to unmute the record conversation for the non existent endpoint ' + extension;
       logger.warn(IDLOG, str);
       cb(str);
     }
@@ -6992,32 +6986,30 @@ function unmuteRecordConversation(endpointType, endpointId, convid, cb) {
  * Starts the recording of the conversation.
  *
  * @method startRecordConversation
- * @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
- * @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
+ * @param {string}   extension    The extension identifier (e.g. the extension number)
  * @param {string}   convid       The conversation identifier
  * @param {function} cb           The callback function
  */
-function startRecordConversation(endpointType, endpointId, convid, cb) {
+function startRecordConversation(extension, convid, cb) {
   try {
     // check parameters
     if (typeof convid !== 'string' ||
       typeof cb !== 'function' ||
-      typeof endpointId !== 'string' ||
-      typeof endpointType !== 'string') {
+      typeof extension !== 'string') {
 
       throw new Error('wrong parameters');
     }
 
     var str;
     // check the endpoint existence
-    if (endpointType === 'extension' && extensions[endpointId]) {
+    if (extensions[extension]) {
 
       // get the channel to record
-      var ch = getExtenSourceChannelConversation(endpointId, convid);
+      var ch = getExtenSourceChannelConversation(extension, convid);
       // get the name of the audio file
       var now = new Date();
-      var filename = getRecordFilename(endpointId, convid, now);
-      var filepath = getRecordFilepath(endpointId, convid, now);
+      var filename = getRecordFilename(extension, convid, now);
+      var filepath = getRecordFilepath(extension, convid, now);
 
       // check if the conversation is already recording
       if (recordingConv[convid] !== undefined) {
@@ -7028,7 +7020,7 @@ function startRecordConversation(endpointType, endpointId, convid, cb) {
 
         var chid = ch.getChannel(); // the channel identifier
 
-        logger.info(IDLOG, 'set asterisk variables to record the convid "' + convid + '" of extension "' + endpointId + '"');
+        logger.info(IDLOG, 'set asterisk variables to record the convid "' + convid + '" of extension "' + extension + '"');
         // set some asterisk variables to fill the "recordingfile" field of the
         // asteriskcdrdb.cdr database table and then record the conversation
         async.series([
@@ -7152,14 +7144,14 @@ function startRecordConversation(endpointType, endpointId, convid, cb) {
         ], function(err) {
 
           if (err) {
-            logger.error(IDLOG, 'setting asterisk variables to record the convid "' + convid + '" of extension "' + endpointId + '"');
+            logger.error(IDLOG, 'setting asterisk variables to record the convid "' + convid + '" of extension "' + extension + '"');
             return;
           }
 
-          logger.info(IDLOG, 'asterisk variables to record the convid "' + convid + '" of extension "' + endpointId + '" has been set');
+          logger.info(IDLOG, 'asterisk variables to record the convid "' + convid + '" of extension "' + extension + '" has been set');
 
           // start the recording
-          logger.info(IDLOG, 'record the convid "' + convid + '" of extension "' + endpointId + '"');
+          logger.info(IDLOG, 'record the convid "' + convid + '" of extension "' + extension + '"');
           astProxy.doCmd({
             command: 'recordCall',
             channel: chid,
@@ -7167,11 +7159,11 @@ function startRecordConversation(endpointType, endpointId, convid, cb) {
           }, function(err) {
             try {
               if (err) {
-                logger.error(IDLOG, 'recording the convid "' + convid + '" of extension "' + endpointId + '"');
+                logger.error(IDLOG, 'recording the convid "' + convid + '" of extension "' + extension + '"');
                 cb(err);
                 return;
               }
-              logger.info(IDLOG, 'record the convid "' + convid + '" of extension "' + endpointId + '" has been successfully started in ' + filepath);
+              logger.info(IDLOG, 'record the convid "' + convid + '" of extension "' + extension + '" has been successfully started in ' + filepath);
 
               // set the recording status of the conversation
               startRecordCallCb(convid);
@@ -7185,13 +7177,13 @@ function startRecordConversation(endpointType, endpointId, convid, cb) {
         });
 
       } else {
-        str = 'no channel to record of conversation ' + convid + ' of exten ' + endpointId;
+        str = 'no channel to record of conversation ' + convid + ' of exten ' + extension;
         logger.warn(IDLOG, str);
         cb(str);
       }
 
     } else {
-      str = 'try to record conversation for the non existent endpoint ' + endpointType;
+      str = 'extension ' + extension + 'doesn\'t exist';
       logger.warn(IDLOG, str);
       cb(str);
     }
