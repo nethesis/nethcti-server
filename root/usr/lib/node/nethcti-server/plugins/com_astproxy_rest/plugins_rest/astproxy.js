@@ -993,8 +993,7 @@ var compConfigManager;
         * Stop the recording of the specified conversation. The request must contains the following parameters:
         *
         * * `convid: the conversation identifier`
-        * * `endpointId: the endpoint identifier that has the conversation to stop recording`
-        * * `endpointType: the type of the endpoint that has the conversation to stop recording`
+        * * `extension: the extension identifier that has the conversation to stop recording`
         *
         * Example JSON request parameters:
         *
@@ -1097,8 +1096,7 @@ var compConfigManager;
         * Mute the recording of the specified conversation. The request must contains the following parameters:
         *
         * * `convid: the conversation identifier`
-        * * `endpointId: the endpoint identifier that has the conversation to record`
-        * * `endpointType: the type of the endpoint that has the conversation to record`
+        * * `extension: the extension identifier that has the conversation to record`
         *
         * Example JSON request parameters:
         *
@@ -1125,8 +1123,7 @@ var compConfigManager;
         * Unmute the recording of the specified conversation. The request must contains the following parameters:
         *
         * * `convid: the conversation identifier`
-        * * `endpointId: the endpoint identifier that has the conversation to record`
-        * * `endpointType: the type of the endpoint that has the conversation to record`
+        * * `extension: the extension identifier that has the conversation to record`
         *
         * Example JSON request parameters:
         *
@@ -3719,46 +3716,46 @@ var compConfigManager;
           var username = req.headers.authorization_user;
 
           // check parameters
-          if (typeof req.params !== 'object' || typeof req.params.convid !== 'string' || typeof req.params.endpointType !== 'string' || typeof req.params.endpointId !== 'string') {
+          if (typeof req.params !== 'object' ||
+              typeof req.params.convid !== 'string' ||
+              typeof req.params.extension !== 'string') {
 
             compUtil.net.sendHttp400(IDLOG, res);
             return;
           }
 
-          if (req.params.endpointType === 'extension') {
+          //// check if the user has the authorization to stop record all the conversations
+          //if (compAuthorization.authorizeAdminRecordingUser(username) === true) {
 
-            // check if the user has the authorization to stop record all the conversations
-            if (compAuthorization.authorizeAdminRecordingUser(username) === true) {
-
-              logger.info(IDLOG, 'stop recording convid ' + req.params.convid + ': admin recording authorization successful for user "' + username + '"');
-            }
+          //  logger.info(IDLOG, 'stop recording convid ' + req.params.convid + ': admin recording authorization successful for user "' + username + '"');
+          //}
             // check if the user has the authorization to stop record his own conversations
-            else if (compAuthorization.authorizeRecordingUser(username) !== true) {
+          //else if (compAuthorization.authorizeRecordingUser(username) !== true) {
 
-              logger.warn(IDLOG, 'stop recording convid ' + req.params.convid + ': recording authorization failed for user "' + username + '"');
-              compUtil.net.sendHttp403(IDLOG, res);
-              return;
-            }
+          //  logger.warn(IDLOG, 'stop recording convid ' + req.params.convid + ': recording authorization failed for user "' + username + '"');
+          //  compUtil.net.sendHttp403(IDLOG, res);
+          //  return;
+          //}
             // check if the destination endpoint is owned by the user
-            else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+          //  if (compAuthorization.verifyUserEndpointExten(username, req.params.extension) === false) {
 
-              logger.warn(IDLOG, 'stopping record convid ' + req.params.convid + ' by user "' + username + '" has been failed: ' +
-                ' the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' isn\'t owned by the user');
-              compUtil.net.sendHttp403(IDLOG, res);
-              return;
+          //    logger.warn(IDLOG, 'stopping record convid ' + req.params.convid + ' by user "' + username + '" has been failed: ' +
+          //      ' the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' isn\'t owned by the user');
+          //    compUtil.net.sendHttp403(IDLOG, res);
+          //    return;
 
-            } else {
-              logger.info(IDLOG, 'stopping record convid ' + req.params.convid + ': the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' is owned by "' + username + '"');
-            }
+          //  } else {
+          //    logger.info(IDLOG, 'stopping record convid ' + req.params.convid + ': the endpoint ' + extension + ' is owned by "' + username + '"');
+          //  }
 
-            compAstProxy.stopRecordConversation(req.params.endpointType, req.params.endpointId, req.params.convid, function(err) {
+            compAstProxy.stopRecordConversation(req.params.extension, req.params.convid, function(err) {
               try {
                 if (err) {
-                  logger.warn(IDLOG, 'stopping record convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId + ' has been failed');
+                  logger.warn(IDLOG, 'stopping record convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.extension + ' has been failed');
                   compUtil.net.sendHttp500(IDLOG, res, err.toString());
                   return;
                 }
-                logger.info(IDLOG, 'stopped record convid ' + req.params.convid + ' has been successful by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId);
+                logger.info(IDLOG, 'stopped record convid ' + req.params.convid + ' has been successful by user "' + username + '" with ' + req.params.extension);
                 compUtil.net.sendHttp200(IDLOG, res);
 
               } catch (error) {
@@ -3766,11 +3763,6 @@ var compConfigManager;
                 compUtil.net.sendHttp500(IDLOG, res, error.toString());
               }
             });
-
-          } else {
-            logger.warn(IDLOG, 'stopping record of convid ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType);
-            compUtil.net.sendHttp400(IDLOG, res);
-          }
 
         } catch (err) {
           logger.error(IDLOG, err.stack);
@@ -3796,7 +3788,6 @@ var compConfigManager;
           if (typeof req.params !== 'object' ||
               typeof req.params.convid !== 'string' ||
               typeof req.params.extension !== 'string') {
-
             compUtil.net.sendHttp400(IDLOG, res);
             return;
           }
@@ -4230,46 +4221,45 @@ var compConfigManager;
           var username = req.headers.authorization_user;
 
           // check parameters
-          if (typeof req.params !== 'object' || typeof req.params.convid !== 'string' || typeof req.params.endpointType !== 'string' || typeof req.params.endpointId !== 'string') {
+          if (typeof req.params !== 'object' ||
+              typeof req.params.convid !== 'string' ||
+              typeof req.params.extension !== 'string') {
 
             compUtil.net.sendHttp400(IDLOG, res);
             return;
           }
 
-          if (req.params.endpointType === 'extension') {
+          //// check if the user has the authorization to record all the conversations
+          //if (compAuthorization.authorizeAdminRecordingUser(username) === true) {
 
-            // check if the user has the authorization to record all the conversations
-            if (compAuthorization.authorizeAdminRecordingUser(username) === true) {
+          //  logger.info(IDLOG, 'mute recording convid ' + req.params.convid + ': admin recording authorization successful for user "' + username + '"');
+          //}
+          //// check if the user has the authorization to record his own conversations
+          //else if (compAuthorization.authorizeRecordingUser(username) !== true) {
 
-              logger.info(IDLOG, 'mute recording convid ' + req.params.convid + ': admin recording authorization successful for user "' + username + '"');
-            }
-            // check if the user has the authorization to record his own conversations
-            else if (compAuthorization.authorizeRecordingUser(username) !== true) {
+          //  logger.warn(IDLOG, 'mute recording convid ' + req.params.convid + ': recording authorization failed for user "' + username + '"');
+          //  compUtil.net.sendHttp403(IDLOG, res);
+          //  return;
+          //}
+          // check if the destination endpoint is owned by the user
+          //if (compAuthorization.verifyUserEndpointExten(username, req.params.extension) === false) {
+          //  logger.warn(IDLOG, 'muting record convid ' + req.params.convid + ' by user "' + username + '" has been failed: ' +
+          //    ' the endpoint ' + req.params.extension + ' is not owned by the user');
+          //  compUtil.net.sendHttp403(IDLOG, res);
+          //  return;
 
-              logger.warn(IDLOG, 'mute recording convid ' + req.params.convid + ': recording authorization failed for user "' + username + '"');
-              compUtil.net.sendHttp403(IDLOG, res);
-              return;
-            }
-            // check if the destination endpoint is owned by the user
-            else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+          //} else {
+          //  logger.info(IDLOG, 'muting record convid ' + req.params.convid + ': the endpoint ' + req.params.extension + ' is owned by "' + username + '"');
+          //}
 
-              logger.warn(IDLOG, 'muting record convid ' + req.params.convid + ' by user "' + username + '" has been failed: ' +
-                ' the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' is not owned by the user');
-              compUtil.net.sendHttp403(IDLOG, res);
-              return;
-
-            } else {
-              logger.info(IDLOG, 'muting record convid ' + req.params.convid + ': the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' is owned by "' + username + '"');
-            }
-
-            compAstProxy.muteRecordConversation(req.params.endpointType, req.params.endpointId, req.params.convid, function(err) {
+            compAstProxy.muteRecordConversation(req.params.extension, req.params.convid, function(err) {
               try {
                 if (err) {
-                  logger.warn(IDLOG, 'muting record convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId + ' has been failed');
+                  logger.warn(IDLOG, 'muting record convid ' + req.params.convid + ' by user "' + username + '" ' + req.params.extension + ' has been failed');
                   compUtil.net.sendHttp500(IDLOG, res, err.toString());
                   return;
                 }
-                logger.info(IDLOG, 'mute record convid ' + req.params.convid + ' has been successful by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId);
+                logger.info(IDLOG, 'mute record convid ' + req.params.convid + ' has been successful by user "' + username + '" ' + req.params.extension);
                 compUtil.net.sendHttp200(IDLOG, res);
 
               } catch (error) {
@@ -4277,11 +4267,6 @@ var compConfigManager;
                 compUtil.net.sendHttp500(IDLOG, res, error.toString());
               }
             });
-
-          } else {
-            logger.warn(IDLOG, 'muting record of convid ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType);
-            compUtil.net.sendHttp400(IDLOG, res);
-          }
 
         } catch (err) {
           logger.error(IDLOG, err.stack);
@@ -4304,59 +4289,53 @@ var compConfigManager;
           var username = req.headers.authorization_user;
 
           // check parameters
-          if (typeof req.params !== 'object' || typeof req.params.convid !== 'string' || typeof req.params.endpointType !== 'string' || typeof req.params.endpointId !== 'string') {
+          if (typeof req.params !== 'object' ||
+              typeof req.params.convid !== 'string' ||
+              typeof req.params.extension !== 'string') {
 
             compUtil.net.sendHttp400(IDLOG, res);
             return;
           }
 
-          if (req.params.endpointType === 'extension') {
-
             // check if the user has the authorization to record all the conversations
-            if (compAuthorization.authorizeAdminRecordingUser(username) === true) {
+          //if (compAuthorization.authorizeAdminRecordingUser(username) === true) {
 
-              logger.info(IDLOG, 'unmute recording convid ' + req.params.convid + ': admin recording authorization successful for user "' + username + '"');
-            }
-            // check if the user has the authorization to record his own conversations
-            else if (compAuthorization.authorizeRecordingUser(username) !== true) {
+          //  logger.info(IDLOG, 'unmute recording convid ' + req.params.convid + ': admin recording authorization successful for user "' + username + '"');
+         // }
+         // // check if the user has the authorization to record his own conversations
+         // else if (compAuthorization.authorizeRecordingUser(username) !== true) {
 
-              logger.warn(IDLOG, 'unmute recording convid ' + req.params.convid + ': recording authorization failed for user "' + username + '"');
-              compUtil.net.sendHttp403(IDLOG, res);
-              return;
-            }
-            // check if the destination endpoint is owned by the user
-            else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+          //  logger.warn(IDLOG, 'unmute recording convid ' + req.params.convid + ': recording authorization failed for user "' + username + '"');
+          //  compUtil.net.sendHttp403(IDLOG, res);
+          //  return;
+          //}
+          // check if the destination endpoint is owned by the user
+          //if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
-              logger.warn(IDLOG, 'unmuting record convid ' + req.params.convid + ' by user "' + username + '" has been failed: ' +
-                ' the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' is not owned by the user');
-              compUtil.net.sendHttp403(IDLOG, res);
-              return;
+            //logger.warn(IDLOG, 'unmuting record convid ' + req.params.convid + ' by user "' + username + '" has been failed: ' +
+           //   ' the endpoint ' + req.params.extension + ' is not owned by the user');
+           // compUtil.net.sendHttp403(IDLOG, res);
+           // return;
 
-            } else {
-              logger.info(IDLOG, 'unmuting record convid ' + req.params.convid + ': the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' is owned by "' + username + '"');
-            }
+          //} else {
+          //  logger.info(IDLOG, 'unmuting record convid ' + req.params.convid + ': the endpoint ' + req.params.extension + ' is owned by "' + username + '"');
+         // }
 
-            compAstProxy.unmuteRecordConversation(req.params.endpointType, req.params.endpointId, req.params.convid, function(err) {
-              try {
-                if (err) {
-                  logger.warn(IDLOG, 'unmuting record convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId + ' has been failed');
-                  compUtil.net.sendHttp500(IDLOG, res, err.toString());
-                  return;
-                }
-                logger.info(IDLOG, 'unmuting record convid ' + req.params.convid + ' has been successful by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId);
-                compUtil.net.sendHttp200(IDLOG, res);
-
-              } catch (error) {
-                logger.error(IDLOG, error.stack);
-                compUtil.net.sendHttp500(IDLOG, res, error.toString());
+          compAstProxy.unmuteRecordConversation(req.params.extension, req.params.convid, function(err) {
+            try {
+              if (err) {
+                logger.warn(IDLOG, 'unmuting record convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.extension + ' has been failed');
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                return;
               }
-            });
+              logger.info(IDLOG, 'unmuting record convid ' + req.params.convid + ' has been successful by user "' + username + '" with ' + req.params.extension);
+              compUtil.net.sendHttp200(IDLOG, res);
 
-          } else {
-            logger.warn(IDLOG, 'unmuting record of convid ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType);
-            compUtil.net.sendHttp400(IDLOG, res);
-          }
-
+            } catch (error) {
+              logger.error(IDLOG, error.stack);
+              compUtil.net.sendHttp500(IDLOG, res, error.toString());
+            }
+          });
         } catch (err) {
           logger.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
