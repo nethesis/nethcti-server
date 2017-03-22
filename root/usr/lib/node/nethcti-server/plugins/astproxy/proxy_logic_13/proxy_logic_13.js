@@ -2075,7 +2075,10 @@ function getExtensionAgent(exten) {
       throw new Error('wrong parameter');
     }
 
-    return extensions[exten].getUserAgent();
+    if (extensions[exten]) {
+      return extensions[exten].getUserAgent();
+    }
+    return '';
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
