@@ -4663,29 +4663,27 @@ function call(endpointType, endpointId, to, extenForContext, cb) {
  * Mute a call.
  *
  * @method muteConversation
- * @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
- * @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
- * @param {string}   convid       The conversation identifier to be muted
- * @param {function} cb           The callback function
+ * @param {string} extension The extension identifier (e.g. the extension number)
+ * @param {string} convid The conversation identifier to be muted
+ * @param {function} cb The callback function
  */
-function muteConversation(endpointType, endpointId, convid, cb) {
+function muteConversation(extension, convid, cb) {
   try {
     // check parameters
     if (typeof cb !== 'function' ||
       typeof convid !== 'string' ||
-      typeof endpointId !== 'string' ||
-      typeof endpointType !== 'string') {
+      typeof extension !== 'string') {
 
       throw new Error('wrong parameters');
     }
 
     // check the endpoint existence
-    if (endpointType === 'extension' && extensions[endpointId]) {
+    if (extensions[extension]) {
 
       // get the channel to mute
-      var ch = getExtenIdChannelConversation(endpointId, convid);
+      var ch = getExtenIdChannelConversation(extension, convid);
 
-      logger.info(IDLOG, 'execute mute of convid "' + convid + '" by "' + endpointType + '" "' + endpointId + '"');
+      logger.info(IDLOG, 'execute mute of convid "' + convid + '" by exten "' + extension + '"');
       astProxy.doCmd({
         command: 'mute',
         channel: ch
@@ -4695,11 +4693,10 @@ function muteConversation(endpointType, endpointId, convid, cb) {
       });
 
     } else {
-      var err = 'muting conversation "' + convid + '" by a non existent extension ' + endpointId;
+      var err = 'muting conversation "' + convid + '" by a non existent extension ' + extension;
       logger.warn(IDLOG, err);
       cb(err);
     }
-
   } catch (e) {
     logger.error(IDLOG, e.stack);
     cb(e);
@@ -4711,28 +4708,28 @@ function muteConversation(endpointType, endpointId, convid, cb) {
  *
  * @method unmuteConversation
  * @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
- * @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
+ * @param {string}   extension   The endpoint identifier (e.g. the extension number)
  * @param {string}   convid       The conversation identifier to be unmuted
  * @param {function} cb           The callback function
  */
-function unmuteConversation(endpointType, endpointId, convid, cb) {
+function unmuteConversation(endpointType, extension, convid, cb) {
   try {
     // check parameters
     if (typeof cb !== 'function' ||
       typeof convid !== 'string' ||
-      typeof endpointId !== 'string' ||
+      typeof extension !== 'string' ||
       typeof endpointType !== 'string') {
 
       throw new Error('wrong parameters');
     }
 
     // check the endpoint existence
-    if (endpointType === 'extension' && extensions[endpointId]) {
+    if (endpointType === 'extension' && extensions[extension]) {
 
       // get the channel to mute
-      var ch = getExtenIdChannelConversation(endpointId, convid);
+      var ch = getExtenIdChannelConversation(extension, convid);
 
-      logger.info(IDLOG, 'execute unmute of convid "' + convid + '" by "' + endpointType + '" "' + endpointId + '"');
+      logger.info(IDLOG, 'execute unmute of convid "' + convid + '" by "' + endpointType + '" "' + extension + '"');
       astProxy.doCmd({
         command: 'unmute',
         channel: ch
@@ -4742,7 +4739,7 @@ function unmuteConversation(endpointType, endpointId, convid, cb) {
       });
 
     } else {
-      var err = 'unmuting conversation "' + convid + '" by a non existent extension ' + endpointId;
+      var err = 'unmuting conversation "' + convid + '" by a non existent extension ' + extension;
       logger.warn(IDLOG, err);
       cb(err);
     }
