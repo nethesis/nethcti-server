@@ -2357,7 +2357,13 @@ var compConfigManager;
           var username = req.headers.authorization_user;
 
           // check parameters
-          if (typeof req.params !== 'object' || typeof req.params.number !== 'string' || (req.params.endpointId && !req.params.endpointType) || (!req.params.endpointId && req.params.endpointType) || (req.params.endpointId && typeof req.params.endpointId !== 'string') || (req.params.endpointType && typeof req.params.endpointType !== 'string')) {
+          if (typeof req.params !== 'object' ||
+            typeof req.params.number !== 'string' ||
+            (req.params.endpointId && !req.params.endpointType) ||
+            (!req.params.endpointId && req.params.endpointType) ||
+            (req.params.endpointId && typeof req.params.endpointId !== 'string') ||
+            (req.params.endpointType && typeof req.params.endpointType !== 'string')) {
+
             compUtil.net.sendHttp400(IDLOG, res);
             return;
           }
@@ -2369,42 +2375,43 @@ var compConfigManager;
 
           if (req.params.endpointType === 'extension') {
 
-            if (compAuthorization.authorizeAdminCallUser(username) === true) {
+            // if (compAuthorization.authorizeAdminCallUser(username) === true) {
 
-              logger.info(IDLOG, 'make new call to "' + req.params.number + '" from ' + req.params.endpointType +
-                ' "' + req.params.endpointId + '" by user "' + username + '": he has the "admin_call" permission');
-            }
-            // check if the endpoint is owned by the user
-            else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+            //   logger.info(IDLOG, 'make new call to "' + req.params.number + '" from ' + req.params.endpointType +
+            //     ' "' + req.params.endpointId + '" by user "' + username + '": he has the "admin_call" permission');
+            // }
+            // // check if the endpoint is owned by the user
+            // else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
-              logger.warn(IDLOG, 'make new call to ' + req.params.number + ' failed: ' + req.params.endpointType +
-                ' "' + req.params.endpointId + '" is not owned by user "' + username + '"');
-              compUtil.net.sendHttp403(IDLOG, res);
-              return;
-            }
+            //   logger.warn(IDLOG, 'make new call to ' + req.params.number + ' failed: ' + req.params.endpointType +
+            //     ' "' + req.params.endpointId + '" is not owned by user "' + username + '"');
+            //   compUtil.net.sendHttp403(IDLOG, res);
+            //   return;
+            // }
             call(username, req, res);
 
           } else if (req.params.endpointType === 'cellphone') {
 
-            if (compAuthorization.authorizeAdminCallUser(username) === true) {
+            // if (compAuthorization.authorizeAdminCallUser(username) === true) {
 
-              logger.info(IDLOG, 'make new call to "' + req.params.number + '" from ' + req.params.endpointType +
-                ' "' + req.params.endpointId + '" by user "' + username + '": he has the "admin_call" permission');
-            }
-            // check if the endpoint is owned by the user
-            else if (compAuthorization.verifyUserEndpointCellphone(username, req.params.endpointId) === false) {
+            //   logger.info(IDLOG, 'make new call to "' + req.params.number + '" from ' + req.params.endpointType +
+            //     ' "' + req.params.endpointId + '" by user "' + username + '": he has the "admin_call" permission');
+            // }
+            // // check if the endpoint is owned by the user
+            // else if (compAuthorization.verifyUserEndpointCellphone(username, req.params.endpointId) === false) {
 
-              logger.warn(IDLOG, 'make new call to ' + req.params.number + ' failed: ' + req.params.endpointType +
-                ' "' + req.params.endpointId + '" is not owned by user "' + username + '"');
-              compUtil.net.sendHttp403(IDLOG, res);
-              return;
-            }
+            //   logger.warn(IDLOG, 'make new call to ' + req.params.number + ' failed: ' + req.params.endpointType +
+            //     ' "' + req.params.endpointId + '" is not owned by user "' + username + '"');
+            //   compUtil.net.sendHttp403(IDLOG, res);
+            //   return;
+            // }
 
             // make a new call by asterisk
             asteriskCall(username, req, res);
 
           } else {
-            logger.warn(IDLOG, 'making new call from user "' + username + '" to ' + req.params.number + ': unknown endpointType ' + req.params.endpointType);
+            logger.warn(IDLOG, 'making new call from user "' + username + '" to ' + req.params.number +
+              ': unknown endpointType ' + req.params.endpointType);
             compUtil.net.sendHttp400(IDLOG, res);
           }
 
@@ -5021,19 +5028,19 @@ function call(username, req, res) {
       throw new Error('wrong parameters');
     }
 
-
     // if source extension is of webrtc type it sends a websocket event to make
     // the client to originate the call: this is used with conference.
     // If the user has enabled the automatic click2call then make an HTTP
     // request directly to the phone, otherwise make a new call by asterisk
-    if (compAstProxy.isExtenWebrtc(req.params.endpointId)) {
-      compComNethctiWs.sendCallWebrtcToClient(username, req.params.number);
-      compUtil.net.sendHttp200(IDLOG, res);
-    } else if (!compConfigManager.isAutomaticClick2callEnabled(username)) {
+    // if (compAstProxy.isExtenWebrtc(req.params.endpointId)) {
+    //   compComNethctiWs.sendCallWebrtcToClient(username, req.params.number);
+    //   compUtil.net.sendHttp200(IDLOG, res);
+
+    // } else if (!compConfigManager.isAutomaticClick2callEnabled(username)) {
       asteriskCall(username, req, res);
-    } else {
-      ajaxPhoneCall(username, req, res);
-    }
+    // } else {
+    //   ajaxPhoneCall(username, req, res);
+    // }
 
   } catch (error) {
     logger.error(IDLOG, error.stack);
