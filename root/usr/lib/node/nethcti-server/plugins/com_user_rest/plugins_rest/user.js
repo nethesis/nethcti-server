@@ -37,6 +37,15 @@ var logger = console;
 var compAuthorization;
 
 /**
+ * The configuration manager architect component.
+ *
+ * @property compConfigManager
+ * @type object
+ * @private
+ */
+var compConfigManager;
+
+/**
  * The architect component to be used for user functions.
  *
  * @property compUser
@@ -234,6 +243,7 @@ function setCompUtil(comp) {
      * # POST requests
      *
      * 1. [`user/presence`](#presencepost)
+     * 1. [`user/default_device`](#default_devicepost)
      *
      * ---
      *
@@ -246,6 +256,19 @@ function setCompUtil(comp) {
      * Example JSON request parameters:
      *
      *     { "status": "online" }
+     *
+     * ---
+     *
+     * ### <a id="#default_devicepost">**`user/default_device`**</a>
+     *
+     * Set the user default device to be used for call operations. The request must contain the following parameters:
+     *
+     * * `id: the extension identifier`
+     * * `type: ("extension" | "webrtc") the extension type`
+     *
+     * Example JSON request parameters:
+     *
+     *     { "type": "extension", "id": "214" }
      *
      * @class plugin_rest_user
      * @static
@@ -279,9 +302,11 @@ function setCompUtil(comp) {
          * @type {array}
          *
          *   @param {string} presence Set a presence status for the user
+         *   @param {string} default_device Set a default extension for the user
          */
         'post': [
-          'presence'
+          'presence',
+          'default_device'
         ],
         'head': [],
         'del': []
@@ -368,6 +393,46 @@ function setCompUtil(comp) {
           logger.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
+      },
+
+      /**
+       * Set the default extension for the user by the following REST API:
+       *
+       *     default_device
+       *
+       * @method default_device
+       * @param {object}   req  The client request
+       * @param {object}   res  The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      default_device: function(req, res, next) {
+        try {
+          var username = req.headers.authorization_user;
+
+          if (typeof req.params.id !== 'string' ||
+            (req.params.type !== 'extension' && req.params.type !== 'webrtc')) {
+
+            compUtil.net.sendHttp400(IDLOG, res);
+            return;
+          }
+
+          compConfigManager.setDefaultUserExtensionConf(username, req.params.id, function(err) {
+            try {
+              if (err) {
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+              } else {
+                compUtil.net.sendHttp200(IDLOG, res);
+              }
+
+            } catch (err) {
+              logger.error(IDLOG, err.stack);
+              compUtil.net.sendHttp500(IDLOG, res, err.toString());
+            }
+          });
+        } catch (err) {
+          logger.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
       }
     };
     exports.api = user.api;
@@ -377,11 +442,28 @@ function setCompUtil(comp) {
     exports.setCompUtil = setCompUtil;
     exports.setCompUser = setCompUser;
     exports.presencelist = user.presencelist;
+    exports.default_device = user.default_device;
     exports.setCompAuthorization = setCompAuthorization;
+    exports.setCompConfigManager = setCompConfigManager;
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
 })();
+
+/**
+ * Set configuration manager architect component.
+ *
+ * @method setCompConfigManager
+ * @param {object} comp The configuration manager architect component.
+ */
+function setCompConfigManager(comp) {
+  try {
+    compConfigManager = comp;
+    logger.info(IDLOG, 'set configuration manager architect component');
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
 
 /**
  * Get the user presence status.

@@ -32,6 +32,7 @@ module.exports = function(options, imports, register) {
     serverRest.config('/etc/nethcti/services.json');
     serverRest.setCompUtil(imports.util);
     // serverRest.setCompAuthorization(imports.authorization);
+    serverRest.setCompConfigManager(imports.configManager);
     serverRest.setCompUser(imports.user);
     serverRest.start();
   } catch (err) {

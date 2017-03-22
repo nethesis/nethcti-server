@@ -315,10 +315,38 @@ function start() {
   }
 }
 
+/**
+ * Set the config manager architect component to be used by REST plugins.
+ *
+ * @method setCompConfigManager
+ * @param {object} comp The architect configuration manager component
+ * @static
+ */
+function setCompConfigManager(comp) {
+  try {
+    // check parameter
+    if (typeof comp !== 'object') {
+      throw new Error('wrong parameter');
+    }
+
+    var p;
+    // set configuratino manager architect component to all REST plugins
+    for (p in plugins) {
+
+      if (typeof plugins[p].setCompConfigManager === 'function') {
+        plugins[p].setCompConfigManager(comp);
+      }
+    }
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
 // public interface
 exports.start = start;
 exports.config = config;
 exports.setLogger = setLogger;
 exports.setCompUtil = setCompUtil;
 exports.setCompUser = setCompUser;
+exports.setCompConfigManager = setCompConfigManager;
 // exports.setCompAuthorization = setCompAuthorization;
