@@ -6,7 +6,8 @@
     "consumes": [
       "user",
       "util",
-      "logger"
+      "logger",
+      "configManager"
     ],
     "provides": []
   }
