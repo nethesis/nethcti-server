@@ -9,7 +9,8 @@
       "logger",
       "astProxy",
       "authorization",
-      "com_nethcti_ws"
+      "com_nethcti_ws",
+      "configManager"
     ],
     "provides": []
   }

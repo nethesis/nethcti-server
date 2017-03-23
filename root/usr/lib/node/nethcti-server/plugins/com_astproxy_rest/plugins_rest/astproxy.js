@@ -896,12 +896,11 @@ var compConfigManager;
         * The request must contains the following parameters:
         *
         * * `[endpointId]: the endpoint identifier of the user who has the conversation to answer. It requires "endpointType".`
-        * * `[endpointType]: the type of the endpoint of the user who has the conversation to answer. It requires "endpointId".`
         *
         * Example JSON request parameters:
         *
         *     {}
-        *     { "endpointType": "extension", "endpointId": "214" }
+        *     { "endpointId": "214" }
         *
         * ---
         *
@@ -2980,38 +2979,25 @@ var compConfigManager;
           var username = req.headers.authorization_user;
 
           // check parameters
-          if (typeof req.params !== 'object' || (req.params.endpointId && !req.params.endpointType) || (!req.params.endpointId && req.params.endpointType) || (req.params.endpointId && typeof req.params.endpointId !== 'string') || (req.params.endpointType && typeof req.params.endpointType !== 'string')) {
-
+          if (typeof req.params !== 'object' || !req.params.endpointId || typeof req.params.endpointId !== 'string') {
             compUtil.net.sendHttp400(IDLOG, res);
             return;
           }
 
-          if (!req.params.endpointId && !req.params.endpointType) {
-            req.params.endpointType = 'extension';
+          if (!req.params.endpointId) {
             req.params.endpointId = compConfigManager.getDefaultUserExtensionConf(username);
           }
 
-          if (req.params.endpointType === 'extension') {
-
-            if (compAuthorization.authorizeAdminAnswerUser(username) === true) {
-
-              logger.info(IDLOG, 'answer to call from ' + req.params.endpointType + ' "' + req.params.endpointId + '" by user "' + username + '": he has the admin_answer permission');
-            }
-            // check if the endpoint is owned by the user
-            else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
-
-              logger.warn(IDLOG, 'answer to call from ' + req.params.endpointType + ' "' + req.params.endpointId + '" failed: extension is not owned by user "' + username + '"');
-              compUtil.net.sendHttp403(IDLOG, res);
-              return;
-            }
-
-            ajaxPhoneAnswer(username, req, res);
-
-          } else {
-            logger.warn(IDLOG, 'answer to call from ' + req.params.endpointId + ': unknown endpointType ' + req.params.endpointType);
-            compUtil.net.sendHttp400(IDLOG, res);
-          }
-
+          // else if (compAuthorization.authorizeAdminAnswerUser(username) === true) {
+          //   logger.info(IDLOG, 'answer to call from ' + req.params.endpointId + '" by user "' + username + '": he has the admin_answer permission');
+          // }
+          // check if the endpoint is owned by the user
+          // else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+          //   logger.warn(IDLOG, 'answer to call from ' + ' "' + req.params.endpointId + '" failed: extension is not owned by user "' + username + '"');
+          //   compUtil.net.sendHttp403(IDLOG, res);
+          //   return;
+          // }
+          ajaxPhoneAnswer(username, req, res);
         } catch (err) {
           logger.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -3019,7 +3005,8 @@ var compConfigManager;
       },
 
       /**
-       * Answers a call directed to a webrtc extension sending the relative command to the client with the following REST API:
+       * Answers a call directed to a webrtc extension sending the relative
+       * command to the client with the following REST API:
        *
        *     POST answer_webrtc
        *
@@ -3040,17 +3027,15 @@ var compConfigManager;
             return;
           }
 
-          if (compAuthorization.authorizeAdminAnswerUser(username) === true) {
-
-            logger.info(IDLOG, 'answer call from webrtc extension "' + req.params.endpointId + '" by user "' + username + '": he has the admin_answer permission');
-          }
+          // if (compAuthorization.authorizeAdminAnswerUser(username) === true) {
+          //   logger.info(IDLOG, 'answer call from webrtc extension "' + req.params.endpointId + '" by user "' + username + '": he has the admin_answer permission');
+          // }
           // check if the endpoint is owned by the user
-          else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
-
-            logger.warn(IDLOG, 'answer call from webrtc extension "' + req.params.endpointId + '" failed: extension is not owned by user "' + username + '"');
-            compUtil.net.sendHttp403(IDLOG, res);
-            return;
-          }
+          // if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+          //   logger.warn(IDLOG, 'answer call from webrtc extension "' + req.params.endpointId + '" failed: extension is not owned by user "' + username + '"');
+          //   compUtil.net.sendHttp403(IDLOG, res);
+          //   return;
+          // }
 
           if (compAstProxy.isExtenWebrtc(req.params.endpointId)) {
             compComNethctiWs.sendAnswerWebrtcToClient(username, req.params.endpointId);
