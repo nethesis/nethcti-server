@@ -818,10 +818,24 @@ function getUserInfoJSON(username) {
     if (typeof username !== 'string') {
       throw new Error('wrong parameter');
     }
-    var result;
+    var i, result;
     if (users[username]) {
       result = users[username].toJSON();
       result.profile = compAuthorization.getUserProfileJSON(username);
+    }
+    // add model for extension endpoints
+    // allendpoints[endpointTypes.TYPES.cellphone]
+    for (i = 0; i < result.endpoints[endpointTypes.TYPES.mainextension].length; i++) {
+      result.endpoints[endpointTypes.TYPES.mainextension][i].description = compAstProxy.getExtensionAgent(result.endpoints[endpointTypes.TYPES.extension][i].id);
+    }
+    for (i = 0; i < result.endpoints[endpointTypes.TYPES.extension].length; i++) {
+      result.endpoints[endpointTypes.TYPES.extension][i].description = compAstProxy.getExtensionAgent(result.endpoints[endpointTypes.TYPES.extension][i].id);
+    }
+    for (i = 0; i < result.endpoints[endpointTypes.TYPES.webrtc].length; i++) {
+      result.endpoints[endpointTypes.TYPES.webrtc][i].description = compAstProxy.getExtensionAgent(result.endpoints[endpointTypes.TYPES.extension][i].id);
+    }
+    for (i = 0; i < result.endpoints[endpointTypes.TYPES.webrtc_mobile].length; i++) {
+      result.endpoints[endpointTypes.TYPES.webrtc_mobile][i].description = compAstProxy.getExtensionAgent(result.endpoints[endpointTypes.TYPES.extension][i].id);
     }
     return result;
 

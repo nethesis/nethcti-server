@@ -326,7 +326,22 @@ function setCompUtil(comp) {
         try {
           var username = req.headers.authorization_user;
           var results = compUser.getUserInfoJSON(username);
+
           if (typeof results === 'object') {
+
+            var defExt = compConfigManager.getDefaultUserExtensionConf(username);
+            var i, e, defextObj;
+
+            // create default_device key to return with results
+            for (e in results.endpoints) {
+              for (i = 0; i < results.endpoints[e].length; i++) {
+                if (results.endpoints[e][i].id === defExt) {
+                  defextObj = results.endpoints[e][i];
+                  defextObj.type = e;
+                }
+              }
+            }
+            results.default_device = defextObj;
             logger.info(IDLOG, 'send user info to user "' + username + '"');
             res.send(200, results);
           } else {
