@@ -744,15 +744,15 @@ var compConfigManager;
         *
         * ### <a id="mutepost">**`astproxy/mute`**</a>
         *
-        * Mute audio of the conversation in one direction only. The specified extension is able to listen.
+        * Mute audio of the conversation in one direction only. The specified endpointId is able to listen.
         * The request must contains the following parameters:
         *
         * * `convid: the conversation identifier`
-        * * `extension: the extension identifier that has the conversation to mute. The user must be the owner of the extension.`
+        * * `endpointId: the extension identifier that has the conversation to mute. The user must be the owner of the extension.`
         *
         * Example JSON request parameters:
         *
-        *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", extension": "214" }
+        *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", endpointId": "214" }
         *
         * ---
         *
@@ -761,11 +761,11 @@ var compConfigManager;
         * Unmute audio of the conversation on both sides. The request must contains the following parameters:
         *
         * * `convid: the conversation identifier`
-        * * `extension: the extension identifier that has the conversation to unmute. The user must be the owner of the extension.`
+        * * `endpointId: the extension identifier that has the conversation to unmute. The user must be the owner of the extension.`
         *
         * Example JSON request parameters:
         *
-        *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "extension": "214" }
+        *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointId": "214" }
         *
         * ---
         *
@@ -788,12 +788,12 @@ var compConfigManager;
         * Park a conversation. The user can park only his own conversations. The request must contains the following parameters:
         *
         * * `convid: the conversation identifier`
-        * * `extension: the extension identifier that has the conversation to park`
+        * * `endpointId: the extension identifier that has the conversation to park`
         * * `applicantId: the extension identifier who requested the parking`
         *
         * Example JSON request parameters:
         *
-        *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "extension": "221", "applicantId": "216" }
+        *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointId": "221", "applicantId": "216" }
         *
         * ---
         *
@@ -868,11 +868,11 @@ var compConfigManager;
         *
         * * `to: the destination number to blind transfer the conversation`
         * * `convid: the conversation identifier`
-        * * `extension: the extension identifier of the user who has the conversation to blind transfer`
+        * * `endpointId: the extension identifier of the user who has the conversation to blind transfer`
         *
         * Example JSON request parameters:
         *
-        *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "extension": "214", "to": "0123456789" }
+        *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointId": "214", "to": "0123456789" }
         *
         * ---
         *
@@ -883,11 +883,11 @@ var compConfigManager;
         *
         * * `to: the destination number to transfer the conversation`
         * * `convid: the conversation identifier`
-        * * `extension: the extension identifier of the user who has the conversation to attended transfer`
+        * * `endpointId: the extension identifier of the user who has the conversation to attended transfer`
         *
         * Example JSON request parameters:
         *
-        *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "extension": "214", "to": "221" }
+        *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointId": "214", "to": "221" }
         *
         * ---
         *
@@ -990,7 +990,7 @@ var compConfigManager;
         * Stop the recording of the specified conversation. The request must contains the following parameters:
         *
         * * `convid: the conversation identifier`
-        * * `extension: the extension identifier that has the conversation to stop recording`
+        * * `endpointId: the extension identifier that has the conversation to stop recording`
         *
         * Example JSON request parameters:
         *
@@ -1003,11 +1003,11 @@ var compConfigManager;
         * Starts the recording of the specified conversation. The request must contains the following parameters:
         *
         * * `convid: the conversation identifier`
-        * * `extension: the extension identifier that has the conversation to record`
+        * * `endpointId: the extension identifier that has the conversation to record`
         *
         * Example JSON request parameters:
         *
-        *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "extension": "214" }
+        *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointId": "214" }
         *
         * ---
         *
@@ -1093,7 +1093,7 @@ var compConfigManager;
         * Mute the recording of the specified conversation. The request must contains the following parameters:
         *
         * * `convid: the conversation identifier`
-        * * `extension: the extension identifier that has the conversation to record`
+        * * `endpointId: the extension identifier that has the conversation to record`
         *
         * Example JSON request parameters:
         *
@@ -1120,7 +1120,7 @@ var compConfigManager;
         * Unmute the recording of the specified conversation. The request must contains the following parameters:
         *
         * * `convid: the conversation identifier`
-        * * `extension: the extension identifier that has the conversation to record`
+        * * `endpointId: the extension identifier that has the conversation to record`
         *
         * Example JSON request parameters:
         *
@@ -1151,11 +1151,11 @@ var compConfigManager;
         *
         * * `tone: the tone to send. Permitted values are: 0 1 2 3 4 5 6 7 8 9 * #`
         * * `convid: the conversation identifier`
-        * * `extension: the extension identifier`
+        * * `endpointId: the extension identifier`
         *
         * Example JSON request parameters:
         *
-        *     { "tone": "5", "convid": "SIP/214-000003d5>SIP/221-000003d6", "extension": "214" }
+        *     { "tone": "5", "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointId": "214" }
         *
         * ---
         *
@@ -2594,7 +2594,7 @@ var compConfigManager;
 
           // check parameters
           if (typeof req.params !== 'object' || typeof req.params.convid !== 'string' ||
-            typeof req.params.extension !== 'string' || typeof req.params.applicantId !== 'string') {
+            typeof req.params.endpointId !== 'string' || typeof req.params.applicantId !== 'string') {
 
             compUtil.net.sendHttp400(IDLOG, res);
             return;
@@ -2616,7 +2616,7 @@ var compConfigManager;
           // }
           // logger.info(IDLOG, 'the applicant extension "' + req.params.applicantId + '"" is owned by "' + username + '"');
 
-          compAstProxy.parkConversation(req.params.extension, req.params.convid, req.params.applicantId, function(err, response) {
+          compAstProxy.parkConversation(req.params.endpointId, req.params.convid, req.params.applicantId, function(err, response) {
             try {
               if (err) {
                 logger.warn(IDLOG, 'parking convid ' + req.params.convid + ' by user "' + username + '" with ' +
@@ -2789,33 +2789,33 @@ var compConfigManager;
           // check parameters
           if (typeof req.params !== 'object' ||
             typeof req.params.convid !== 'string' ||
-            typeof req.params.extension !== 'string') {
+            typeof req.params.endpointId !== 'string') {
 
             compUtil.net.sendHttp400(IDLOG, res);
             return;
           }
 
           // // check if the endpoint of the request is owned by the user
-          // if (compAuthorization.verifyUserEndpointExten(username, req.params.extension) !== true) {
+          // if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) !== true) {
 
           //   logger.warn(IDLOG, 'mute convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
-          //     ' the ' + req.params.endpointType + ' ' + req.params.extension + ' is not owned by the user');
+          //     ' the ' + req.params.endpointType + ' ' + req.params.endpointId + ' is not owned by the user');
           //   compUtil.net.sendHttp403(IDLOG, res);
           //   return;
 
           // } else {
           //   logger.info(IDLOG, 'mute convid "' + req.params.convid + '": the endpoint ' + req.params.endpointType +
-          //     ' ' + req.params.extension + ' is owned by "' + username + '"');
+          //     ' ' + req.params.endpointId + ' is owned by "' + username + '"');
           // }
 
-          compAstProxy.muteConversation(req.params.extension, req.params.convid, function(err, response) {
+          compAstProxy.muteConversation(req.params.endpointId, req.params.convid, function(err, response) {
             try {
               if (err) {
-                logger.warn(IDLOG, 'mute convid ' + req.params.convid + ' by user "' + username + '" with exten ' + req.params.extension + ': failed');
+                logger.warn(IDLOG, 'mute convid ' + req.params.convid + ' by user "' + username + '" with exten ' + req.params.endpointId + ': failed');
                 compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 return;
               }
-              logger.info(IDLOG, 'convid ' + req.params.convid + ' has been muted successfully by user "' + username + '" with exten ' + req.params.extension);
+              logger.info(IDLOG, 'convid ' + req.params.convid + ' has been muted successfully by user "' + username + '" with exten ' + req.params.endpointId);
               compUtil.net.sendHttp200(IDLOG, res);
 
             } catch (error) {
@@ -2846,7 +2846,7 @@ var compConfigManager;
           // check parameters
           if (typeof req.params !== 'object' ||
             typeof req.params.convid !== 'string' ||
-            typeof req.params.extension !== 'string') {
+            typeof req.params.endpointId !== 'string') {
 
             compUtil.net.sendHttp400(IDLOG, res);
             return;
@@ -2854,26 +2854,26 @@ var compConfigManager;
 
 
           // // check if the endpoint of the request is owned by the user
-          // if (compAuthorization.verifyUserEndpointExten(username, req.params.extension) !== true) {
+          // if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) !== true) {
 
           //   logger.warn(IDLOG, 'unmute convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
-          //     ' the ' + req.params.endpointType + ' ' + req.params.extension + ' is not owned by the user');
+          //     ' the ' + req.params.endpointType + ' ' + req.params.endpointId + ' is not owned by the user');
           //   compUtil.net.sendHttp403(IDLOG, res);
           //   return;
 
           // } else {
           //   logger.info(IDLOG, 'unmute convid "' + req.params.convid + '": the endpoint ' + req.params.endpointType +
-          //     ' ' + req.params.extension + ' is owned by "' + username + '"');
+          //     ' ' + req.params.endpointId + ' is owned by "' + username + '"');
           // }
 
-          compAstProxy.unmuteConversation(req.params.extension, req.params.convid, function(err, response) {
+          compAstProxy.unmuteConversation(req.params.endpointId, req.params.convid, function(err, response) {
             try {
               if (err) {
-                logger.warn(IDLOG, 'unmute convid ' + req.params.convid + ' by user "' + username + '" with exten ' + req.params.extension + ': failed');
+                logger.warn(IDLOG, 'unmute convid ' + req.params.convid + ' by user "' + username + '" with exten ' + req.params.endpointId + ': failed');
                 compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 return;
               }
-              logger.info(IDLOG, 'convid ' + req.params.convid + ' has been unmuted successfully by user "' + username + '" with exten ' + req.params.extension);
+              logger.info(IDLOG, 'convid ' + req.params.convid + ' has been unmuted successfully by user "' + username + '" with exten ' + req.params.endpointId);
               compUtil.net.sendHttp200(IDLOG, res);
 
             } catch (error) {
@@ -2903,7 +2903,7 @@ var compConfigManager;
 
           // check parameters
           if (typeof req.params !== 'object' || typeof req.params.convid !== 'string' ||
-            typeof req.params.to !== 'string' || typeof req.params.extension !== 'string') {
+            typeof req.params.to !== 'string' || typeof req.params.endpointId !== 'string') {
 
             compUtil.net.sendHttp400(IDLOG, res);
             return;
@@ -2933,22 +2933,22 @@ var compConfigManager;
           // }
 
           logger.info(IDLOG, 'attended transfer convid "' + req.params.convid + '" of extension "' +
-            req.params.extension + '" by user "' + username + '"');
+            req.params.endpointId + '" by user "' + username + '"');
 
           compAstProxy.attendedTransferConversation(
-            req.params.extension,
+            req.params.endpointId,
             req.params.convid,
             req.params.to,
             function(err) {
               try {
                 if (err) {
                   logger.warn(IDLOG, 'attended transfer convid "' + req.params.convid + '" by user "' + username +
-                    '" with exten "' + req.params.extension + '" has been failed');
+                    '" with exten "' + req.params.endpointId + '" has been failed');
                   compUtil.net.sendHttp500(IDLOG, res, err.toString());
                   return;
                 }
                 logger.info(IDLOG, 'attended transfer convid "' + req.params.convid + '" has been attended transfered ' +
-                  'successfully by user "' + username + '" with exten "' + req.params.extension + '"');
+                  'successfully by user "' + username + '" with exten "' + req.params.endpointId + '"');
                 compUtil.net.sendHttp200(IDLOG, res);
 
               } catch (error) {
@@ -3078,7 +3078,7 @@ var compConfigManager;
           var username = req.headers.authorization_user;
 
           if (typeof req.params !== 'object' || typeof req.params.convid !== 'string' ||
-            typeof req.params.to !== 'string' || typeof req.params.extension !== 'string') {
+            typeof req.params.to !== 'string' || typeof req.params.endpointId !== 'string') {
 
             compUtil.net.sendHttp400(IDLOG, res);
             return;
@@ -3102,13 +3102,13 @@ var compConfigManager;
           // }
 
           logger.info(IDLOG, 'user "' + username + '" blind transfer convid "' + req.params.convid + '" ' +
-            'of extension "' + req.params.extension + '"');
+            'of extension "' + req.params.endpointId + '"');
 
           // var extForCtx = compConfigManager.getDefaultUserExtensionConf(username);
-          var extForCtx = req.params.extension;
+          var extForCtx = req.params.endpointId;
 
           compAstProxy.redirectConversation(
-            req.params.extension,
+            req.params.endpointId,
             req.params.convid,
             req.params.to,
             extForCtx,
@@ -3116,12 +3116,12 @@ var compConfigManager;
               try {
                 if (err) {
                   logger.warn(IDLOG, 'blind transfer convid "' + req.params.convid + '" by user "' + username + '" with ' +
-                    req.params.extension + ' has been failed');
+                    req.params.endpointId + ' has been failed');
                   compUtil.net.sendHttp500(IDLOG, res, err.toString());
                   return;
                 }
                 logger.info(IDLOG, 'convid ' + req.params.convid + ' has been blind transfered successfully by user "' +
-                  username + '" with ' + req.params.extension);
+                  username + '" with ' + req.params.endpointId);
                 compUtil.net.sendHttp200(IDLOG, res);
 
               } catch (error) {
@@ -3703,7 +3703,7 @@ var compConfigManager;
           // check parameters
           if (typeof req.params !== 'object' ||
             typeof req.params.convid !== 'string' ||
-            typeof req.params.extension !== 'string') {
+            typeof req.params.endpointId !== 'string') {
 
             compUtil.net.sendHttp400(IDLOG, res);
             return;
@@ -3722,7 +3722,7 @@ var compConfigManager;
           //  return;
           //}
           // check if the destination endpoint is owned by the user
-          //  if (compAuthorization.verifyUserEndpointExten(username, req.params.extension) === false) {
+          //  if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
           //    logger.warn(IDLOG, 'stopping record convid ' + req.params.convid + ' by user "' + username + '" has been failed: ' +
           //      ' the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' isn\'t owned by the user');
@@ -3730,17 +3730,17 @@ var compConfigManager;
           //    return;
 
           //  } else {
-          //    logger.info(IDLOG, 'stopping record convid ' + req.params.convid + ': the endpoint ' + extension + ' is owned by "' + username + '"');
+          //    logger.info(IDLOG, 'stopping record convid ' + req.params.convid + ': the endpoint ' + endpointId + ' is owned by "' + username + '"');
           //  }
 
-          compAstProxy.stopRecordConversation(req.params.extension, req.params.convid, function(err) {
+          compAstProxy.stopRecordConversation(req.params.endpointId, req.params.convid, function(err) {
             try {
               if (err) {
-                logger.warn(IDLOG, 'stopping record convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.extension + ' has been failed');
+                logger.warn(IDLOG, 'stopping record convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.endpointId + ' has been failed');
                 compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 return;
               }
-              logger.info(IDLOG, 'stopped record convid ' + req.params.convid + ' has been successful by user "' + username + '" with ' + req.params.extension);
+              logger.info(IDLOG, 'stopped record convid ' + req.params.convid + ' has been successful by user "' + username + '" with ' + req.params.endpointId);
               compUtil.net.sendHttp200(IDLOG, res);
 
             } catch (error) {
@@ -3772,7 +3772,7 @@ var compConfigManager;
           // check parameters
           if (typeof req.params !== 'object' ||
             typeof req.params.convid !== 'string' ||
-            typeof req.params.extension !== 'string') {
+            typeof req.params.endpointId !== 'string') {
             compUtil.net.sendHttp400(IDLOG, res);
             return;
           }
@@ -3801,14 +3801,14 @@ var compConfigManager;
           //  logger.info(IDLOG, 'starting record convid ' + req.params.convid + ': the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' is owned by "' + username + '"');
           //}
 
-          compAstProxy.startRecordConversation(req.params.extension, req.params.convid, function(err) {
+          compAstProxy.startRecordConversation(req.params.endpointId, req.params.convid, function(err) {
             try {
               if (err) {
-                logger.warn(IDLOG, 'starting record convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.extension + ' has been failed');
+                logger.warn(IDLOG, 'starting record convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.endpointId + ' has been failed');
                 compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 return;
               }
-              logger.info(IDLOG, 'started record convid ' + req.params.convid + ' has been successful by user "' + username + '" with ' + req.params.extension);
+              logger.info(IDLOG, 'started record convid ' + req.params.convid + ' has been successful by user "' + username + '" with ' + req.params.endpointId);
               compUtil.net.sendHttp200(IDLOG, res);
 
             } catch (error) {
@@ -4208,7 +4208,7 @@ var compConfigManager;
           // check parameters
           if (typeof req.params !== 'object' ||
             typeof req.params.convid !== 'string' ||
-            typeof req.params.extension !== 'string') {
+            typeof req.params.endpointId !== 'string') {
 
             compUtil.net.sendHttp400(IDLOG, res);
             return;
@@ -4227,24 +4227,24 @@ var compConfigManager;
           //  return;
           //}
           // check if the destination endpoint is owned by the user
-          //if (compAuthorization.verifyUserEndpointExten(username, req.params.extension) === false) {
+          //if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
           //  logger.warn(IDLOG, 'muting record convid ' + req.params.convid + ' by user "' + username + '" has been failed: ' +
-          //    ' the endpoint ' + req.params.extension + ' is not owned by the user');
+          //    ' the endpoint ' + req.params.endpointId + ' is not owned by the user');
           //  compUtil.net.sendHttp403(IDLOG, res);
           //  return;
 
           //} else {
-          //  logger.info(IDLOG, 'muting record convid ' + req.params.convid + ': the endpoint ' + req.params.extension + ' is owned by "' + username + '"');
+          //  logger.info(IDLOG, 'muting record convid ' + req.params.convid + ': the endpoint ' + req.params.endpointId + ' is owned by "' + username + '"');
           //}
 
-          compAstProxy.muteRecordConversation(req.params.extension, req.params.convid, function(err) {
+          compAstProxy.muteRecordConversation(req.params.endpointId, req.params.convid, function(err) {
             try {
               if (err) {
-                logger.warn(IDLOG, 'muting record convid ' + req.params.convid + ' by user "' + username + '" ' + req.params.extension + ' has been failed');
+                logger.warn(IDLOG, 'muting record convid ' + req.params.convid + ' by user "' + username + '" ' + req.params.endpointId + ' has been failed');
                 compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 return;
               }
-              logger.info(IDLOG, 'mute record convid ' + req.params.convid + ' has been successful by user "' + username + '" ' + req.params.extension);
+              logger.info(IDLOG, 'mute record convid ' + req.params.convid + ' has been successful by user "' + username + '" ' + req.params.endpointId);
               compUtil.net.sendHttp200(IDLOG, res);
 
             } catch (error) {
@@ -4276,7 +4276,7 @@ var compConfigManager;
           // check parameters
           if (typeof req.params !== 'object' ||
             typeof req.params.convid !== 'string' ||
-            typeof req.params.extension !== 'string') {
+            typeof req.params.endpointId !== 'string') {
 
             compUtil.net.sendHttp400(IDLOG, res);
             return;
@@ -4298,22 +4298,22 @@ var compConfigManager;
           //if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
           //logger.warn(IDLOG, 'unmuting record convid ' + req.params.convid + ' by user "' + username + '" has been failed: ' +
-          //   ' the endpoint ' + req.params.extension + ' is not owned by the user');
+          //   ' the endpoint ' + req.params.endpointId + ' is not owned by the user');
           // compUtil.net.sendHttp403(IDLOG, res);
           // return;
 
           //} else {
-          //  logger.info(IDLOG, 'unmuting record convid ' + req.params.convid + ': the endpoint ' + req.params.extension + ' is owned by "' + username + '"');
+          //  logger.info(IDLOG, 'unmuting record convid ' + req.params.convid + ': the endpoint ' + req.params.endpointId + ' is owned by "' + username + '"');
           // }
 
-          compAstProxy.unmuteRecordConversation(req.params.extension, req.params.convid, function(err) {
+          compAstProxy.unmuteRecordConversation(req.params.endpointId, req.params.convid, function(err) {
             try {
               if (err) {
-                logger.warn(IDLOG, 'unmuting record convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.extension + ' has been failed');
+                logger.warn(IDLOG, 'unmuting record convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.endpointId + ' has been failed');
                 compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 return;
               }
-              logger.info(IDLOG, 'unmuting record convid ' + req.params.convid + ' has been successful by user "' + username + '" with ' + req.params.extension);
+              logger.info(IDLOG, 'unmuting record convid ' + req.params.convid + ' has been successful by user "' + username + '" with ' + req.params.endpointId);
               compUtil.net.sendHttp200(IDLOG, res);
 
             } catch (error) {
@@ -4730,7 +4730,7 @@ var compConfigManager;
 
           // check parameters
           if (typeof req.params !== 'object' || typeof req.params.convid !== 'string' ||
-            typeof req.params.tone !== 'string' || typeof req.params.extension !== 'string' ||
+            typeof req.params.tone !== 'string' || typeof req.params.endpointId !== 'string' ||
             dtmfTonesPermitted.indexOf(req.params.tone) === -1) {
 
             compUtil.net.sendHttp400(IDLOG, res);
@@ -4739,37 +4739,37 @@ var compConfigManager;
 
 
           // // check if the endpoint of the request is owned by the user
-          // if (compAuthorization.verifyUserEndpointExten(username, req.params.extension) === false) {
+          // if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
           //   logger.warn(IDLOG, 'send dtmf tone "' + req.params.tone + '" to the convid "' + req.params.convid +
           //     '" by user "' + username + '" has been failed: ' + ' the ' + req.params.endpointType +
-          //     ' ' + req.params.extension + ' is not owned by the user');
+          //     ' ' + req.params.endpointId + ' is not owned by the user');
           //   compUtil.net.sendHttp403(IDLOG, res);
           //   return;
 
           // } else {
           //   logger.info(IDLOG, 'send dtmf tone "' + req.params.tone + '" to the convid "' + req.params.convid +
-          //     '": the endpoint ' + req.params.endpointType + ' ' + req.params.extension +
+          //     '": the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId +
           //     ' is owned by "' + username + '"');
           // }
 
           logger.info(IDLOG, 'send dtmf tone "' + req.params.tone + '" to the convid "' + req.params.convid +
-            '" by user "' + username + '" with exten ' + req.params.extension);
+            '" by user "' + username + '" with exten ' + req.params.endpointId);
 
           compAstProxy.sendDtmfToConversation(
-            req.params.extension,
+            req.params.endpointId,
             req.params.convid,
             req.params.tone,
             function(err) {
               try {
                 if (err) {
                   logger.warn(IDLOG, 'sending dtmf tone "' + req.params.tone + '" to the convid "' + req.params.convid +
-                    '" by user "' + username + '" with exten ' + req.params.extension + ': failed');
+                    '" by user "' + username + '" with exten ' + req.params.endpointId + ': failed');
                   compUtil.net.sendHttp500(IDLOG, res, err.toString());
                   return;
                 }
                 logger.info(IDLOG, 'dtmf tone "' + req.params.tone + '" has been sent successfully to the convid ' + req.params.convid +
-                  ' by user "' + username + '" with exten ' + req.params.extension);
+                  ' by user "' + username + '" with exten ' + req.params.endpointId);
                 compUtil.net.sendHttp200(IDLOG, res);
 
               } catch (error) {
