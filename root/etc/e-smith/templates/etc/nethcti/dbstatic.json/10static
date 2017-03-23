@@ -12,5 +12,5 @@
         "dbtype":     "mysql",
         "dbuser":     "nethcti",
         "dbpassword": "{$ctidb_pwd}",
-        "dbname":     "nethcti2"
+        "dbname":     "nethcti3"
     \},
