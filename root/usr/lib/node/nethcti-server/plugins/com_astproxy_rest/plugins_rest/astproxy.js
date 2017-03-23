@@ -840,7 +840,6 @@ var compConfigManager;
         * * `convid: the conversation identifier`
         * * `endpointId: the endpoint identifier that has the conversation to hangup. If the user hasn't the permission of the advanced
         *                operator the endpointId must to be its endpoint identifier.`
-        * * `endpointType: the type of the endpoint that has the conversation to hangup`
         *
         * Example JSON request parameters:
         *
