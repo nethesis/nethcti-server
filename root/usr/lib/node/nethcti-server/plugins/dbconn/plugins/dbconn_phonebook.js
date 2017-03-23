@@ -1025,7 +1025,7 @@ function getAllContacts(ctiPbBounds, pbBounds, replacements, view, offset, limit
 
     var query = [
       '(SELECT ', fields, ', extension, speeddial_num, \'cti\' AS source',
-      ' FROM nethcti2.', compDbconnMain.JSON_KEYS.CTI_PHONEBOOK,
+      ' FROM nethcti3.', compDbconnMain.JSON_KEYS.CTI_PHONEBOOK,
       ' WHERE ', ctiPbBounds, ')',
       ' UNION ',
       '(SELECT ', fields, ', \'\' AS extension, \'\' AS speeddial_num, \'centralized\' AS source',
@@ -1041,7 +1041,7 @@ function getAllContacts(ctiPbBounds, pbBounds, replacements, view, offset, limit
       'GROUP_CONCAT(\'{\', \'"id": \', id, \',\', \'"name": "\', name, \'", \', \'"source": "\', source, \'"}\'), \']\') AS contacts',
       ' FROM (',
       '(SELECT id, name, company, ', companyXFields, ', \'cti\' AS source',
-      ' FROM nethcti2.', compDbconnMain.JSON_KEYS.CTI_PHONEBOOK,
+      ' FROM nethcti3.', compDbconnMain.JSON_KEYS.CTI_PHONEBOOK,
       ' WHERE ', ctiPbBounds, ')',
       ' UNION ',
       '(SELECT id, name, company, ', companyXFields, ', \'centralized\' AS source',
@@ -1055,7 +1055,7 @@ function getAllContacts(ctiPbBounds, pbBounds, replacements, view, offset, limit
 
     var queryCount = [
       'SELECT COUNT(*) AS total FROM ',
-      '(SELECT id FROM nethcti2.', compDbconnMain.JSON_KEYS.CTI_PHONEBOOK, ' WHERE ', ctiPbBounds,
+      '(SELECT id FROM nethcti3.', compDbconnMain.JSON_KEYS.CTI_PHONEBOOK, ' WHERE ', ctiPbBounds,
       ' UNION ALL',
       ' SELECT id FROM phonebook.', compDbconnMain.JSON_KEYS.PHONEBOOK, ' WHERE ', pbBounds, ') s'
     ].join('');
@@ -1064,7 +1064,7 @@ function getAllContacts(ctiPbBounds, pbBounds, replacements, view, offset, limit
       'SELECT COUNT(DISTINCT company) AS total',
       ' FROM (',
       '(SELECT id, name, company',
-      ' FROM nethcti2.', compDbconnMain.JSON_KEYS.CTI_PHONEBOOK,
+      ' FROM nethcti3.', compDbconnMain.JSON_KEYS.CTI_PHONEBOOK,
       ' WHERE ', ctiPbBounds, ')',
       ' UNION ',
       '(SELECT id, name, company',

@@ -1,6 +1,6 @@
-CREATE DATABASE IF NOT EXISTS nethcti2 DEFAULT CHARACTER SET = 'utf8';
+CREATE DATABASE IF NOT EXISTS nethcti3 DEFAULT CHARACTER SET = 'utf8';
 
-USE nethcti2;
+USE nethcti3;
 
 CREATE TABLE IF NOT EXISTS `caller_note` (
   `id` int(11) NOT NULL auto_increment,
