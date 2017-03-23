@@ -17,6 +17,7 @@ var EXTEN_STATUS_ENUM = require('../extension').EXTEN_STATUS_ENUM;
  * @readOnly
  */
 var AST_EXTEN_STATUS_2_STR_ADAPTER = {
+  '-1': EXTEN_STATUS_ENUM.OFFLINE, // Unknown
   '0': EXTEN_STATUS_ENUM.ONLINE, // Idle
   '1': EXTEN_STATUS_ENUM.BUSY, // In Use
   //'2':  EXTEN_STATUS_ENUM.DND,          // Busy
