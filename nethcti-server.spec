@@ -45,6 +45,8 @@ rm -rf $RPM_BUILD_ROOT
 --dir /etc/nethcti 'attr(0775,asterisk,asterisk)' \
 --dir /var/lib/nethserver/nethcti/static 'attr(0775,asterisk,asterisk)' \
 --dir /var/lib/asterisk 'attr(0775,asterisk,asterisk)' \
+--dir /var/lib/asterisk/sounds 'attr(0775,asterisk,asterisk)' \
+--dir /var/lib/asterisk/sounds/custom 'attr(0775,asterisk,asterisk)' \
 --dir /usr/lib/node/nethcti-server/plugins/com_static_http/static 'attr(0775,asterisk,asterisk)' \
 --dir /var/lib/nethserver/nethcti/upload 'attr(0775,asterisk,asterisk)' \
 --dir /var/lib/asterisk/bin 'attr(0775,asterisk,asterisk)' $RPM_BUILD_ROOT > %{name}-%{version}-filelist
