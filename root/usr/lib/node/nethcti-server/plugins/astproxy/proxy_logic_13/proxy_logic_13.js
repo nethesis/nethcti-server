@@ -2153,7 +2153,7 @@ function initializeSipExten() {
  * Get do not disturb (DND) status of the extension.
  *
  * @method getDndExten
- * @param {string} ext The extension identifier
+ * @param {string} exten The extension identifier
  * @return {function} The function to be called by _initializePjsipExten_.
  * @private
  */
@@ -2173,7 +2173,7 @@ function getDndExten(exten) {
  * Get call forward (CF) status of the extension.
  *
  * @method getCfExten
- * @param {string} ext The extension identifier
+ * @param {string} exten The extension identifier
  * @return {function} The function to be called by _initializePjsipExten_.
  * @private
  */
@@ -2193,7 +2193,7 @@ function getCfExten(exten) {
  * Get call forward to voicemail (CFVM) status of the extension.
  *
  * @method getCfVmExten
- * @param {string} ext The extension identifier
+ * @param {string} exten The extension identifier
  * @return {function} The function to be called by _initializePjsipExten_.
  * @private
  */
@@ -2213,7 +2213,7 @@ function getCfVmExten(exten) {
  * Get pjsip extension details.
  *
  * @method getPjsipDetailExten
- * @param {string} ext The extension identifier
+ * @param {string} exten The extension identifier
  * @return {function} The function to be called by _initializePjsipExten_.
  * @private
  */
@@ -2248,6 +2248,26 @@ function getListChannels() {
 }
 
 /**
+ * Get extension status.
+ *
+ * @method getExtenStatus
+ * @param {string} exten The extension identifier
+ * @return {function} The function to be called by _initializePjsipExten_.
+ * @private
+ */
+function getExtenStatus(exten) {
+  return function(callback) {
+    astProxy.doCmd({
+      command: 'extenStatus',
+      exten: exten
+    }, function(err, resp) {
+      extenStatus(err, resp);
+      callback(err);
+    });
+  };
+}
+
+/**
  * Initialize all pjsip extensions as _Extension_ object into the
  * _extensions_ property.
  *
@@ -2258,22 +2278,19 @@ function initializePjsipExten(err, results) {
   try {
     var arr = [];
     var e, exten;
+
     for (e in results) {
       exten = new Extension(results[e].ext, 'pjsip');
       extensions[exten.getExten()] = exten;
 
       // set extension websocket transport usage
-      // if (e.ext.substring(0, 2) === '99' || e.ext.substring(0, 2) === '98') {
-      //   exten.setUseWebsocket(true);
-      // } else {
-      //   exten.setUseWebsocket(false);
-      // }
+      if (results[e].ext.substring(0, 2) === '99' || results[e].ext.substring(0, 2) === '98') {
+        exten.setUseWebsocket(true);
+      } else {
+        exten.setUseWebsocket(false);
+      }
 
-      // // request the extension status
-      // astProxy.doCmd({
-      //   command: 'extenStatus',
-      //   exten: exten.getExten()
-      // }, extenStatus);
+      arr.push(getExtenStatus(exten.getExten()));
       arr.push(getDndExten(exten.getExten()));
       arr.push(getCfExten(exten.getExten()));
       arr.push(getCfVmExten(exten.getExten()));
