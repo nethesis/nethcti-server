@@ -837,11 +837,10 @@ var compConfigManager;
         * * `convid: the conversation identifier`
         * * `endpointId: the endpoint identifier that has the conversation to hangup. If the user hasn't the permission of the advanced
         *                operator the endpointId must to be its endpoint identifier.`
-        * * `endpointType: the type of the endpoint that has the conversation to hangup`
         *
         * Example JSON request parameters:
         *
-        *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "214" }
+        *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointId": "214" }
         *
         * ---
         *
@@ -2661,51 +2660,47 @@ var compConfigManager;
           var username = req.headers.authorization_user;
 
           // check parameters
-          if (typeof req.params !== 'object' || typeof req.params.convid !== 'string' || typeof req.params.endpointId !== 'string' || typeof req.params.endpointType !== 'string') {
+          if (typeof req.params !== 'object' || typeof req.params.convid !== 'string' || typeof req.params.endpointId !== 'string') {
 
             compUtil.net.sendHttp400(IDLOG, res);
             return;
           }
 
-          if (req.params.endpointType === 'extension') {
+          // check if the user has the authorization to hangup every calls
+          // if (compAuthorization.authorizeAdminHangupUser(username) === true) {
+          //
+          //   logger.log(IDLOG, 'hangup convid "' + req.params.convid + '": authorization admin hangup successful for user "' + username + '"');
+          // }
+          // // check if the endpoint of the request is owned by the user
+          // else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) !== true) {
+          //
+          //   logger.warn(IDLOG, 'hangup convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
+          //     ' the ' + req.params.endpointType + ' ' + req.params.endpointId + ' isn\'t owned by the user');
+          //   compUtil.net.sendHttp403(IDLOG, res);
+          //   return;
+          //
+          // } else {
+          //   logger.info(IDLOG, 'hangup convid "' + req.params.convid + '": the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' is owned by "' + username + '"');
+          // }
 
-            // check if the user has the authorization to hangup every calls
-            if (compAuthorization.authorizeAdminHangupUser(username) === true) {
-
-              logger.log(IDLOG, 'hangup convid "' + req.params.convid + '": authorization admin hangup successful for user "' + username + '"');
-            }
-            // check if the endpoint of the request is owned by the user
-            else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) !== true) {
-
-              logger.warn(IDLOG, 'hangup convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
-                ' the ' + req.params.endpointType + ' ' + req.params.endpointId + ' isn\'t owned by the user');
-              compUtil.net.sendHttp403(IDLOG, res);
-              return;
-
-            } else {
-              logger.info(IDLOG, 'hangup convid "' + req.params.convid + '": the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' is owned by "' + username + '"');
-            }
-
-            compAstProxy.hangupConversation(req.params.endpointType, req.params.endpointId, req.params.convid, function(err, response) {
-              try {
-                if (err) {
-                  logger.warn(IDLOG, 'hangup convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId + ' has been failed');
-                  compUtil.net.sendHttp500(IDLOG, res, err.toString());
-                  return;
-                }
-                logger.info(IDLOG, 'convid ' + req.params.convid + ' has been hangup successfully by user "' + username + '" with ' + req.params.endpointType + ' ' + req.params.endpointId);
-                compUtil.net.sendHttp200(IDLOG, res);
-
-              } catch (error) {
-                logger.error(IDLOG, error.stack);
-                compUtil.net.sendHttp500(IDLOG, res, error.toString());
+          compAstProxy.hangupConversation(req.params.endpointId, req.params.convid, function(err, response) {
+            try {
+              if (err) {
+                logger.warn(IDLOG, 'hangup convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.endpointId + ' has been failed');
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                return;
               }
-            });
+              logger.info(IDLOG, 'convid ' + req.params.convid + ' has been hangup successfully by user "' + username + '" with ' + req.params.endpointId);
+              compUtil.net.sendHttp200(IDLOG, res);
 
-          } else {
-            logger.warn(IDLOG, 'hanging up the conversation ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType);
-            compUtil.net.sendHttp400(IDLOG, res);
-          }
+            } catch (error) {
+              logger.error(IDLOG, error.stack);
+              compUtil.net.sendHttp500(IDLOG, res, error.toString());
+            }
+          });
+
+          logger.warn(IDLOG, 'hanging up the conversation ' + req.params.convid + ': unknown endpointType');
+          compUtil.net.sendHttp400(IDLOG, res);
 
         } catch (err) {
           logger.error(IDLOG, err.stack);
@@ -3855,20 +3850,20 @@ var compConfigManager;
           if (req.params.endpointType === 'extension') {
 
             // check if the user has the authorization to hangup every calls
-            if (compAuthorization.authorizeAdminHangupUser(username) === true) {
-
-              logger.log(IDLOG, 'force hangup convid "' + req.params.convid + '": authorization admin hangup successful for user "' + username + '"');
-            }
-            // check if the endpoint of the request is owned by the user
-            else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) !== true) {
-
-              logger.warn(IDLOG, 'force hangup convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
-                ' the ' + req.params.endpointType + ' ' + req.params.endpointId + ' isn\'t owned by the user');
-              compUtil.net.sendHttp403(IDLOG, res);
-              return;
-            } else {
-              logger.info(IDLOG, 'force hangup convid "' + req.params.convid + '": the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' is owned by "' + username + '"');
-            }
+            // if (compAuthorization.authorizeAdminHangupUser(username) === true) {
+            //
+            //   logger.log(IDLOG, 'force hangup convid "' + req.params.convid + '": authorization admin hangup successful for user "' + username + '"');
+            // }
+            // // check if the endpoint of the request is owned by the user
+            // else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) !== true) {
+            //
+            //   logger.warn(IDLOG, 'force hangup convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
+            //     ' the ' + req.params.endpointType + ' ' + req.params.endpointId + ' isn\'t owned by the user');
+            //   compUtil.net.sendHttp403(IDLOG, res);
+            //   return;
+            // } else {
+            //   logger.info(IDLOG, 'force hangup convid "' + req.params.convid + '": the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' is owned by "' + username + '"');
+            // }
 
             var extForCtx = compConfigManager.getDefaultUserExtensionConf(username);
 

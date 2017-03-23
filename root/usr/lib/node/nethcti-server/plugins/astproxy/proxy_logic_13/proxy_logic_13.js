@@ -5287,22 +5287,21 @@ function isExtenInMeetmeConf(ownerExtenId) {
  * Hangup the conversation of the endpoint.
  *
  * @method hangupConversation
- * @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
  * @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
  * @param {string}   convid       The conversation identifier
  * @param {function} cb           The callback function
  */
-function hangupConversation(endpointType, endpointId, convid, cb) {
+function hangupConversation(endpointId, convid, cb) {
   try {
     // check parameters
     if (typeof convid !== 'string' || typeof cb !== 'function' ||
-      typeof endpointId !== 'string' || typeof endpointType !== 'string') {
+      typeof endpointId !== 'string') {
 
       throw new Error('wrong parameters');
     }
     var err;
     // check the endpoint existence
-    if (endpointType === 'extension' && extensions[endpointId]) {
+    if (extensions[endpointId]) {
 
       // get the channel to hangup
       var ch = getExtenIdChannelConversation(endpointId, convid);
@@ -5323,7 +5322,7 @@ function hangupConversation(endpointType, endpointId, convid, cb) {
         cb(err);
       }
     } else {
-      err = 'try to hangup conversation for the non existent endpoint ' + endpointType + ' ' + endpointId;
+      err = 'try to hangup conversation for the non existent endpoint ' + endpointId;
       logger.warn(IDLOG, err);
       cb(err);
     }
