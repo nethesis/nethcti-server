@@ -222,6 +222,19 @@ function setCompUser(comp) {
             return;
           }
 
+	  //Check if user tryed to login using main extension instead of username
+          regexp = new RegExp('^[0-9]+$');
+          extension = false;
+          if (!compUser.isUserPresent(username) && regexp.test(username)) {
+	      logger.info(IDLOG, 'user supplied an extension number: "' + username + '". Checking for an associated username');
+	      extension = username;
+              userUsingEndpointExtension = compUser.getUsersUsingEndpointExtension(username);
+	      if (userUsingEndpointExtension != []) {
+	        username = userUsingEndpointExtension[0];
+	        logger.info(IDLOG, 'username associated: "' + username);
+	      }
+          }
+
           if (!compUser.isUserPresent(username)) {
             var errmsg = 'user "' + username + '" is not configured';
             compUtil.net.sendHttp401(IDLOG, res, errmsg);
@@ -236,7 +249,7 @@ function setCompUser(comp) {
                 return;
               } else {
                 logger.info(IDLOG, 'user "' + username + '" successfully authenticated');
-                var nonce = compAuthe.getNonce(username, password, false);
+                var nonce = compAuthe.getNonce(username, password, false, extension);
                 compUtil.net.sendHttp401Nonce(IDLOG, res, nonce);
               }
             } catch (err) {

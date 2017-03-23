@@ -1474,20 +1474,18 @@ function getUsersUsingEndpointExtension(exten) {
 
     var result = [];
 
-    var extenKey, userExtens, username;
+    var userExtens, username, endpoints;
     for (username in users) {
 
-      userExtens = getAllEndpointsExtension(username);
-
-      for (extenKey in userExtens) {
-
-        if (extenKey === exten) {
-          // the user have the specified extension endpoint
-          result.push(username);
-        }
+      // get all the extension endpoints of the user
+      endpoints = users[username].getAllEndpoints();
+      userExtens = Object.keys(endpoints[endpointTypes.TYPES.extension])
+        .concat(Object.keys(endpoints[endpointTypes.TYPES.mainextension]));
+      if (userExtens.indexOf(exten) > -1) {
+        return [username];
       }
     }
-    return result;
+    return [];
 
   } catch (err) {
     logger.error(IDLOG, err.stack);

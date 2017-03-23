@@ -494,7 +494,7 @@ function isRemoteSiteAlreadyLoggedIn(username) {
  * @param  {boolean} isRemoteSite True if the request is for a remote site
  * @return {string}  The SHA1 nonce.
  */
-function getNonce(username, password, isRemoteSite) {
+function getNonce(username, password, isRemoteSite, extension) {
   try {
     isRemoteSite = false;
     // check parameters
@@ -510,6 +510,10 @@ function getNonce(username, password, isRemoteSite) {
     // create new token
     newToken(username, password, nonce, isRemoteSite);
 
+    if (extension != false) {
+      //generate a token also for the extension user supplied for login
+      newToken(extension, password, nonce, isRemoteSite);
+    }
     logger.info(IDLOG, 'nonce has been generated for username ' + username);
     return nonce;
 
