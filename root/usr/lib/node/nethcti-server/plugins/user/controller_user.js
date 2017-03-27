@@ -1154,11 +1154,15 @@ function hasExtensionEndpoint(username, exten) {
       logger.warn(IDLOG, 'checking the user-extension endpoint association: no user "' + username + '" is present');
       return false;
     }
-    var ext;
+    var i;
     var obj = users[username].getAllEndpoints();
-    obj = obj[endpointTypes.TYPES.extension];
-    for (ext in obj) {
-      if (ext === exten) {
+    obj = Object.keys(obj[endpointTypes.TYPES.extension]).concat(
+      Object.keys(obj[endpointTypes.TYPES.mainextension]),
+      Object.keys(obj[endpointTypes.TYPES.webrtc]),
+      Object.keys(obj[endpointTypes.TYPES.webrtc_mobile])
+    );
+    for (i = 0; i < obj.length; i++) {
+      if (obj[i] === exten) {
         return true;
       }
     }
