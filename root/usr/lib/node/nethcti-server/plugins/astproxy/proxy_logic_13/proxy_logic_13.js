@@ -4727,29 +4727,23 @@ function muteConversation(extension, convid, cb) {
  * Unmute a call.
  *
  * @method unmuteConversation
- * @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
- * @param {string}   extension   The endpoint identifier (e.g. the extension number)
- * @param {string}   convid       The conversation identifier to be unmuted
- * @param {function} cb           The callback function
+ * @param {string} extension The endpoint identifier (e.g. the extension number)
+ * @param {string} convid The conversation identifier to be unmuted
+ * @param {function} cb The callback function
  */
-function unmuteConversation(endpointType, extension, convid, cb) {
+function unmuteConversation(extension, convid, cb) {
   try {
     // check parameters
-    if (typeof cb !== 'function' ||
-      typeof convid !== 'string' ||
-      typeof extension !== 'string' ||
-      typeof endpointType !== 'string') {
-
-      throw new Error('wrong parameters');
+    if (typeof cb !== 'function' || typeof convid !== 'string' || typeof extension !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
-    // check the endpoint existence
-    if (endpointType === 'extension' && extensions[extension]) {
+    if (extensions[extension]) {
 
       // get the channel to mute
       var ch = getExtenIdChannelConversation(extension, convid);
 
-      logger.info(IDLOG, 'execute unmute of convid "' + convid + '" by "' + endpointType + '" "' + extension + '"');
+      logger.info(IDLOG, 'execute unmute of convid "' + convid + '" by exten "' + extension + '"');
       astProxy.doCmd({
         command: 'unmute',
         channel: ch
@@ -4763,7 +4757,6 @@ function unmuteConversation(endpointType, extension, convid, cb) {
       logger.warn(IDLOG, err);
       cb(err);
     }
-
   } catch (e) {
     logger.error(IDLOG, e.stack);
     cb(e);
