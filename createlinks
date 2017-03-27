@@ -11,6 +11,7 @@ event_templates('nethcti-server3-update', qw(
                 /etc/nethcti/dbstatic.json
                 /etc/nethcti/services.json
                 /etc/nethcti/nethcti.json
+                /etc/nethcti/phone_urls.json
                 /etc/httpd/conf.d/nethcti-server.conf
 ));
 
