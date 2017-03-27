@@ -2661,7 +2661,6 @@ var compConfigManager;
 
           // check parameters
           if (typeof req.params !== 'object' || typeof req.params.convid !== 'string' || typeof req.params.endpointId !== 'string') {
-
             compUtil.net.sendHttp400(IDLOG, res);
             return;
           }
@@ -2698,10 +2697,6 @@ var compConfigManager;
               compUtil.net.sendHttp500(IDLOG, res, error.toString());
             }
           });
-
-          logger.warn(IDLOG, 'hanging up the conversation ' + req.params.convid + ': unknown endpointType');
-          compUtil.net.sendHttp400(IDLOG, res);
-
         } catch (err) {
           logger.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
