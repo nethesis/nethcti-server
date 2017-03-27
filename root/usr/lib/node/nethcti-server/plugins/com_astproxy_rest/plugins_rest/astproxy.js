@@ -1163,11 +1163,10 @@ var compConfigManager;
         * Originates a new echo call.
         *
         * * `endpointId: the endpoint identifier`
-        * * `endpointType: the type of the endpoint`
         *
         * Example JSON request parameters:
         *
-        *     { "endpointType": "extension", "endpointId": "209" }
+        *     { "endpointId": "209" }
         *
         * ---
         *
@@ -4796,8 +4795,7 @@ var compConfigManager;
           var username = req.headers.authorization_user;
 
           // check parameters
-          if (typeof req.params !== 'object' || typeof req.params.endpointId !== 'string' || typeof req.params.endpointType !== 'string') {
-
+          if (typeof req.params !== 'object' || typeof req.params.endpointId !== 'string') {
             compUtil.net.sendHttp400(IDLOG, res);
             return;
           }
@@ -4805,21 +4803,14 @@ var compConfigManager;
           // add the destination number used to originate a new echo call
           req.params.number = compAstProxy.getEchoCallDestination();
 
-          if (req.params.endpointType === 'extension') {
+          // check if the endpoint is owned by the user
+          // if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
-            // check if the endpoint is owned by the user
-            if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
-
-              logger.warn(IDLOG, 'make new echo call failed: ' + req.params.endpointId + ' is not owned by user "' + username + '"');
-              compUtil.net.sendHttp403(IDLOG, res);
-              return;
-            }
-            call(username, req, res);
-
-          } else {
-            logger.warn(IDLOG, 'making new echo call from user "' + username + '": unknown endpointType ' + req.params.endpointType);
-            compUtil.net.sendHttp400(IDLOG, res);
-          }
+          //   logger.warn(IDLOG, 'make new echo call failed: ' + req.params.endpointId + ' is not owned by user "' + username + '"');
+          //   compUtil.net.sendHttp403(IDLOG, res);
+          //   return;
+          // }
+          call(username, req, res);
 
         } catch (err) {
           logger.error(IDLOG, err.stack);
@@ -5027,7 +5018,7 @@ function call(username, req, res) {
     //   compUtil.net.sendHttp200(IDLOG, res);
 
     // } else if (!compConfigManager.isAutomaticClick2callEnabled(username)) {
-      asteriskCall(username, req, res);
+    asteriskCall(username, req, res);
     // } else {
     //   ajaxPhoneCall(username, req, res);
     // }
