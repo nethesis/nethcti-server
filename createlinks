@@ -21,7 +21,7 @@ event_actions('nethcti-server3-update', qw(
 
 event_services('nethcti-server3-update', qw(
                httpd reload
-               nethcti-server3 restart
+               nethcti-server restart
 ));
 
 #
@@ -33,5 +33,5 @@ event_templates('hostname-modify', qw(
 ));
 
 event_services('hostname-modify', qw(
-               nethcti-server3 restart
+               nethcti-server restart
 ));
