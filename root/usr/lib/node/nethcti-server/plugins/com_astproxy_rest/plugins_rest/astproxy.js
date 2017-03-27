@@ -5003,10 +5003,11 @@ function call(username, req, res) {
     //   compUtil.net.sendHttp200(IDLOG, res);
 
     // } else if (!compConfigManager.isAutomaticClick2callEnabled(username)) {
-    asteriskCall(username, req, res);
-    // } else {
-    //   ajaxPhoneCall(username, req, res);
-    // }
+    if (!compConfigManager.isAutomaticClick2callEnabled(username)) {
+      asteriskCall(username, req, res);
+    } else {
+      ajaxPhoneCall(username, req, res);
+    }
 
   } catch (error) {
     logger.error(IDLOG, error.stack);
@@ -5159,8 +5160,8 @@ function ajaxPhoneAnswer(username, req, res) {
  *
  * @method asteriskCall
  * @param {string} username The username that originate the call
- * @param {object} req      The client request
- * @param {object} res      The client response
+ * @param {object} req The client request
+ * @param {object} res The client response
  */
 function asteriskCall(username, req, res) {
   try {
