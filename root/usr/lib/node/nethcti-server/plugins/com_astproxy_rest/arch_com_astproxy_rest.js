@@ -36,7 +36,7 @@ module.exports = function(options, imports, register) {
     // serverRest.setCompOperator(imports.operator);
     serverRest.setCompAstProxy(imports.astProxy);
     serverRest.setCompAuthorization(imports.authorization);
-    // serverRest.setCompConfigManager(imports.configManager);
+    serverRest.setCompConfigManager(imports.configManager);
     // serverRest.setCompComNethctiRemotes(imports.comNethctiRemotes);
     serverRest.setCompComNethctiWs(imports.com_nethcti_ws);
     serverRest.start();
