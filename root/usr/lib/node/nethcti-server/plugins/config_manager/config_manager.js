@@ -773,15 +773,15 @@ function getCallUrlFromAgent(agent) {
 }
 
 /**
- * Returns true if the specified phone is supported by the automatic click2call.
+ * Returns true if the specified phone is supported by HTTP api.
  * It sequentially test a match of specified agent with the keys of _phoneUrls_
  * object. If the match exists than returns a true value, false otherwise.
  *
- * @method phoneAgentSupportAutoC2C
+ * @method phoneSupportHttpApi
  * @param  {string}  agent The phone user agent
- * @return {boolean} True is the phone support automatic click2call
+ * @return {boolean} True is the phone supports HTTP api.
  */
-function phoneAgentSupportAutoC2C(agent) {
+function phoneSupportHttpApi(agent) {
   try {
     // check parameter
     if (typeof agent !== 'string') {
@@ -939,13 +939,6 @@ function fromDbUserSettingsToJSON(arr, username) {
     // initialize default values. They are used if the user has never set
     // any values from the client, so no data are present into the database
     var json = {
-      click2call: {
-        type: 'manual',
-        automatic: {
-          user: 'admin',
-          password: 'admin'
-        }
-      },
       notifications: {
         postit: {
           sms: {
@@ -1006,15 +999,6 @@ function fromDbUserSettingsToJSON(arr, username) {
 
       } else if (arr[i].key_name === 'notify_voicemail_sms_when') {
         json.notifications.voicemail.sms.when = arr[i].value;
-
-      } else if (arr[i].key_name === 'click2call_auto_pwd') {
-        json.click2call.automatic.password = arr[i].value;
-
-      } else if (arr[i].key_name === 'click2call_auto_user') {
-        json.click2call.automatic.user = arr[i].value;
-
-      } else if (arr[i].key_name === 'click2call_type') {
-        json.click2call.type = arr[i].value;
       }
     }
     return json;
@@ -1391,118 +1375,6 @@ function getQueueAutoLoginConf(username) {
 }
 
 /**
- * Saves the specified notification setting for the user.
- *
- * @method setUserClick2CallConf
- * @param {object} data
- *   @param {string} data.username   The user identifier
- *   @param {string} data.type       The click to call type
- *   @param {string} [data.user]     The username of the device
- *   @param {string} [data.password] The password of the device
- * @param {function} cb              The callback function
- */
-function setUserClick2CallConf(data, cb) {
-  try {
-    // check parameters
-    if (typeof data !== 'object' || typeof data.username !== 'string' || typeof cb !== 'function' || typeof data.type !== 'string' || (data.type !== 'automatic' && data.type !== 'manual') || (data.type === 'automatic' && typeof data.user !== 'string') || (data.type === 'automatic' && typeof data.password !== 'string')) {
-
-      throw new Error('wrong parameters');
-    }
-
-    // save the setting into the database
-    compDbconn.saveUserClick2CallSetting(data, function(err) {
-      try {
-        if (err) {
-          logger.error(IDLOG, 'saving click2call setting for user "' + data.username + '"');
-          cb(err);
-
-        } else {
-          // update the configuration in mem
-          userSettings[data.username][USER_CONFIG_KEYS.click2call].type = data.type;
-          if (data.type === 'automatic') {
-            userSettings[data.username][USER_CONFIG_KEYS.click2call].automatic.user = data.user;
-            userSettings[data.username][USER_CONFIG_KEYS.click2call].automatic.password = data.password;
-          }
-          cb(null);
-        }
-      } catch (error) {
-        logger.error(IDLOG, error.stack);
-        cb(error);
-      }
-    });
-  } catch (err) {
-    logger.error(IDLOG, err.stack);
-    cb(err.stack);
-  }
-}
-
-/**
- * Returns true if the user has enabled the automatic click2call.
- *
- * @method isAutomaticClick2callEnabled
- * @param  {string}  username The username to check
- * @return {boolean} True if the user has enabled the automatic click2call
- */
-function isAutomaticClick2callEnabled(username) {
-  try {
-    // check parameter
-    if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
-    }
-
-    if (userSettings[username][USER_CONFIG_KEYS.click2call].type === 'automatic') {
-      return true;
-    }
-    return false;
-
-  } catch (err) {
-    logger.error(IDLOG, err.stack);
-  }
-}
-
-/**
- * Returns the phone username.
- *
- * @method getC2CAutoPhoneUser
- * @param  {string} username The name of the user
- * @return {string} The phone username used to acces to phone of the user.
- */
-function getC2CAutoPhoneUser(username) {
-  try {
-    // check parameter
-    if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
-    }
-
-    return userSettings[username][USER_CONFIG_KEYS.click2call].automatic.user;
-
-  } catch (err) {
-    logger.error(IDLOG, err.stack);
-  }
-}
-
-/**
- * Returns the phone password.
- *
- * @method getC2CAutoPhonePass
- * @param  {string} username The name of the user
- * @return {string} The phone password used to acces to phone of the user.
- */
-function getC2CAutoPhonePass(username) {
-  try {
-    // check parameter
-    if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
-    }
-
-    return userSettings[username][USER_CONFIG_KEYS.click2call].automatic.password;
-
-  } catch (err) {
-    logger.error(IDLOG, err.stack);
-  }
-}
-
-/**
  * Checks the user voicemail notification configurations and returns true if he
  * wants to receives the voicemail notification by the specified delivery method.
  *
@@ -1815,13 +1687,11 @@ exports.setCompAstProxy = setCompAstProxy;
 exports.configPhoneUrls = configPhoneUrls;
 exports.getServerHostname = getServerHostname;
 exports.setCompComNethctiWs = setCompComNethctiWs;
-exports.getC2CAutoPhoneUser = getC2CAutoPhoneUser;
-exports.getC2CAutoPhonePass = getC2CAutoPhonePass;
 exports.getCallUrlFromAgent = getCallUrlFromAgent;
+exports.phoneSupportHttpApi = phoneSupportHttpApi;
 exports.getUserEndpointsJSON = getUserEndpointsJSON;
 exports.setUserNotifySetting = setUserNotifySetting;
 exports.getAnswerUrlFromAgent = getAnswerUrlFromAgent;
-exports.setUserClick2CallConf = setUserClick2CallConf;
 exports.getQueueAutoLoginConf = getQueueAutoLoginConf;
 exports.setQueueAutoLoginConf = setQueueAutoLoginConf;
 exports.setAutoDndOffLoginConf = setAutoDndOffLoginConf;
@@ -1831,11 +1701,9 @@ exports.setQueueAutoLogoutConf = setQueueAutoLogoutConf;
 exports.getAutoDndOffLoginConf = getAutoDndOffLoginConf;
 exports.getAutoDndOnLogoutConf = getAutoDndOnLogoutConf;
 exports.getAllUserEndpointsJSON = getAllUserEndpointsJSON;
-exports.phoneAgentSupportAutoC2C = phoneAgentSupportAutoC2C;
 exports.getPostitNotificationSmsTo = getPostitNotificationSmsTo;
 exports.setDefaultUserExtensionConf = setDefaultUserExtensionConf;
 exports.getDefaultUserExtensionConf = getDefaultUserExtensionConf;
-exports.isAutomaticClick2callEnabled = isAutomaticClick2callEnabled;
 exports.getPostitNotificationEmailTo = getPostitNotificationEmailTo;
 exports.getVoicemailNotificationSmsTo = getVoicemailNotificationSmsTo;
 exports.getVoicemailNotificationEmailTo = getVoicemailNotificationEmailTo;

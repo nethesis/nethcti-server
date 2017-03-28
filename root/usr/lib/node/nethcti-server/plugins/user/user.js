@@ -189,7 +189,11 @@ exports.User = function(uname, na) {
    *   on endpoint to add
    */
   function addEndpoint(type, id, data) {
-    if (typeof type !== 'string' || typeof data !== 'object' || typeof id !== 'string' || !endpointTypes.isValidEndpointType(type)) {
+    if (typeof type !== 'string' ||
+      typeof data !== 'object' ||
+      typeof id !== 'string' ||
+      !endpointTypes.isValidEndpointType(type)) {
+
       throw new Error('wrong parameters');
     }
     // create new endpoint object
@@ -201,7 +205,7 @@ exports.User = function(uname, na) {
       // } else if (type === endpointTypes.TYPES.calendar) {
       //   newEndpoint = new EndpointCalendar(id);
     } else if (type === endpointTypes.TYPES.extension) {
-      newEndpoint = new EndpointExtension(id);
+      newEndpoint = new EndpointExtension(id, data);
     } else if (type === endpointTypes.TYPES.cellphone) {
       newEndpoint = new EndpointCellphone(id);
     } else if (type === endpointTypes.TYPES.voicemail) {

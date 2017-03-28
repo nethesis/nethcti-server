@@ -6,13 +6,12 @@
  */
 
 /**
- * The list of the user configurations keys.
+ * The list of the user configuration keys.
  *
  * @property USER_CONFIG_KEYS
  * @type {object}
  * @readOnly
  * @default {
-    "click2call":        "click2call",
     "notifications":     "notifications",
     "queue_auto_login":  "queue_auto_login",
     "queue_auto_logout": "queue_auto_logout",
@@ -22,7 +21,6 @@
  }
 */
 var USER_CONFIG_KEYS = {
-  'click2call': 'click2call',
   'notifications': 'notifications',
   'queue_auto_login': 'queue_auto_login',
   'queue_auto_logout': 'queue_auto_logout',

@@ -335,93 +335,6 @@ function saveUserDefaultExtension(data, cb) {
 }
 
 /**
- * Save the user click 2 call setting into mysql table _user\_settings_.
- *
- * @method saveUserClick2CallSetting
- * @param {object} data
- *   @param {string} data.username   The user identifier
- *   @param {string} data.type       The click to call type
- *   @param {string} [data.user]     The username of the device
- *   @param {string} [data.password] The password of the device
- * @param {function} cb              The callback function
- */
-function saveUserClick2CallSetting(data, cb) {
-  try {
-    // check parameters
-    if (typeof data !== 'object' || typeof data.username !== 'string' || typeof cb !== 'function' || typeof data.type !== 'string' || (data.type !== 'automatic' && data.type !== 'manual') || (data.type === 'automatic' && typeof data.user !== 'string') || (data.type === 'automatic' && typeof data.password !== 'string')) {
-
-      throw new Error('wrong parameters');
-    }
-
-    if (data.type === 'manual') {
-      saveUserSetting(data.username, 'click2call_type', data.type, cb);
-
-    } else if (data.type === 'automatic') {
-
-      async.parallel([
-        function(callback) {
-          saveUserSetting(data.username, 'click2call_type', data.type, function(err) {
-            try {
-              if (err) {
-                logger.error(IDLOG, err);
-                callback(err);
-              } else {
-                callback();
-              }
-
-            } catch (error) {
-              logger.error(IDLOG, error.stack);
-              callback(error);
-            }
-          });
-        },
-        function(callback) {
-          saveUserSetting(data.username, 'click2call_auto_user', data.user, function(err) {
-            try {
-              if (err) {
-                logger.error(IDLOG, err);
-                callback(err);
-              } else {
-                callback();
-              }
-
-            } catch (error) {
-              logger.error(IDLOG, error.stack);
-              callback(error);
-            }
-          });
-        },
-        function(callback) {
-          saveUserSetting(data.username, 'click2call_auto_pwd', data.password, function(err) {
-            try {
-              if (err) {
-                logger.error(IDLOG, err);
-                callback(err);
-              } else {
-                callback();
-              }
-
-            } catch (error) {
-              logger.error(IDLOG, error.stack);
-              callback(error);
-            }
-          });
-        }
-
-      ], function(err) {
-        if (err) {
-          logger.error(IDLOG, err);
-        }
-        cb(err);
-      });
-    }
-  } catch (err) {
-    logger.error(IDLOG, err.stack);
-    cb(err);
-  }
-}
-
-/**
  * Saves a key-value pair representing a user setting. The setting are
  * stored in mysql table _user\_settings_.
  *
@@ -503,7 +416,6 @@ apiList.saveUserAutoQueueLogout = saveUserAutoQueueLogout;
 apiList.saveUserAutoDndOnLogout = saveUserAutoDndOnLogout;
 apiList.saveUserAutoDndOffLogin = saveUserAutoDndOffLogin;
 apiList.saveUserDefaultExtension = saveUserDefaultExtension;
-apiList.saveUserClick2CallSetting = saveUserClick2CallSetting;
 apiList.getAllUsersDefaultExtension = getAllUsersDefaultExtension;
 
 // public interface

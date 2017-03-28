@@ -1605,6 +1605,72 @@ function getUsersUsingEndpointVoicemail(voicemail) {
   }
 }
 
+/**
+ * Returns the phone password to be used to invoce HTTP apis.
+ *
+ * @method getPhoneWebPass
+ * @param  {string} username The username
+ * @param  {string} exten The extension identifier
+ * @return {object} The phone web password used to invoke HTTP apis.
+ */
+function getPhoneWebPass(username, exten) {
+  try {
+    if (typeof username !== 'string' || typeof exten !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+
+    // check the user existence
+    if (typeof users[username] !== 'object') {
+      logger.warn(IDLOG, 'getting the phone web username: the user "' + username + '" does not exist');
+      return {};
+    }
+
+    // gets all endpoints, extracts the extension endpoints
+    var extens = (users[username].getAllEndpoints())[endpointTypes.TYPES.extension];
+    var e;
+    for (e in extens) {
+      if (e === exten) {
+        return extens[e].getWebApiPassword();
+      }
+    }
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Returns the phone username to be used to invoce HTTP apis.
+ *
+ * @method getPhoneWebUser
+ * @param  {string} username The username
+ * @param  {string} exten The extension identifier
+ * @return {object} The phone web username used to invoke HTTP apis.
+ */
+function getPhoneWebUser(username, exten) {
+  try {
+    if (typeof username !== 'string' || typeof exten !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+
+    // check the user existence
+    if (typeof users[username] !== 'object') {
+      logger.warn(IDLOG, 'getting the phone web username: the user "' + username + '" does not exist');
+      return {};
+    }
+
+    // gets all endpoints, extracts the extension endpoints
+    var extens = (users[username].getAllEndpoints())[endpointTypes.TYPES.extension];
+    var e;
+    for (e in extens) {
+      if (e === exten) {
+        return extens[e].getWebApiUser();
+      }
+    }
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
 // public interface
 exports.on = on;
 exports.config = config;
@@ -1615,8 +1681,10 @@ exports.getUsernames = getUsernames;
 exports.isUserPresent = isUserPresent;
 exports.getUserInfoJSON = getUserInfoJSON;
 exports.EVT_USERS_READY = EVT_USERS_READY;
+exports.getPhoneWebUser = getPhoneWebUser;
 exports.setCompAstProxy = setCompAstProxy;
 exports.getPresenceList = getPresenceList;
+exports.getPhoneWebPass = getPhoneWebPass;
 exports.getEndpointsJSON = getEndpointsJSON;
 exports.getVoicemailList = getVoicemailList;
 exports.setAuthorization = setAuthorization;
