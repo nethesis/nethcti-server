@@ -185,33 +185,25 @@ function setCompUtil(comp) {
               "id": "user@nethesis.it"
             }
           ],
-          "webrtc": [
-            {
-              "id": "98301",
-              "secret": "xyz"
-            }
-          ],
           "extension": [
             {
-              "id": "91301"
+              "id": "91301",
+              "description": "Yealink SIP-T22P 7.73.0.50",
+              "type": "physical",
+              "web_user": "admin",
+              "web_password": "admin"
             },
             {
-              "id": "92301"
+              "id": "92301",
+              "description": "janus",
+              "type": "webrtc",
+              "secret": "password"
             },
             {
-              "id": "93301"
-            },
-            {
-              "id": "94301"
-            },
-            {
-              "id": "95301"
-            },
-            {
-              "id": "96301"
-            },
-            {
-              "id": "97301"
+              "id": "92304",
+              "description": "janus",
+              "type": "webrtc_mobile",
+              "secret": "password"
             }
           ],
           "cellphone": [
@@ -224,15 +216,10 @@ function setCompUtil(comp) {
               "id": "301"
             }
           ],
-          "webrtc_mobile": [
-            {
-              "id": "99301",
-              "secret": "xyz"
-            }
-          ],
           "mainextension": [
             {
-              "id": "301"
+              "id": "301",
+              "description": "Yealink SIP-T22P 7.73.0.50"
             }
           ]
         }
@@ -264,11 +251,10 @@ function setCompUtil(comp) {
      * Set the user default device to be used for call operations. The request must contain the following parameters:
      *
      * * `id: the extension identifier`
-     * * `type: ("extension" | "webrtc") the extension type`
      *
      * Example JSON request parameters:
      *
-     *     { "type": "extension", "id": "214" }
+     *     { "id": "214" }
      *
      * @class plugin_rest_user
      * @static
@@ -337,7 +323,6 @@ function setCompUtil(comp) {
               for (i = 0; i < results.endpoints[e].length; i++) {
                 if (results.endpoints[e][i].id === defExt) {
                   defextObj = results.endpoints[e][i];
-                  defextObj.type = e;
                 }
               }
             }
@@ -424,9 +409,7 @@ function setCompUtil(comp) {
         try {
           var username = req.headers.authorization_user;
 
-          if (typeof req.params.id !== 'string' ||
-            (req.params.type !== 'extension' && req.params.type !== 'webrtc')) {
-
+          if (typeof req.params.id !== 'string') {
             compUtil.net.sendHttp400(IDLOG, res);
             return;
           }

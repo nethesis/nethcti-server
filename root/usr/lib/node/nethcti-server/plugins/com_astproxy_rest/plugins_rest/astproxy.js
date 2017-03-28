@@ -3031,7 +3031,7 @@ var compConfigManager;
           //   return;
           // }
 
-          if (compAstProxy.isExtenWebrtc(req.params.endpointId)) {
+          if (compUser.isExtenWebrtc(req.params.endpointId)) {
             compComNethctiWs.sendAnswerWebrtcToClient(username, req.params.endpointId);
             compUtil.net.sendHttp200(IDLOG, res);
           } else {
@@ -4998,7 +4998,7 @@ function call(username, req, res) {
     // the client to originate the call: this is used with conference.
     // If the user has enabled the automatic click2call then make an HTTP
     // request directly to the phone, otherwise make a new call by asterisk
-    // if (compAstProxy.isExtenWebrtc(req.params.endpointId)) {
+    // if (compUser.isExtenWebrtc(req.params.endpointId)) {
     //   compComNethctiWs.sendCallWebrtcToClient(username, req.params.number);
     //   compUtil.net.sendHttp200(IDLOG, res);
     // } else if (!compConfigManager.isAutomaticClick2callEnabled(username)) {
