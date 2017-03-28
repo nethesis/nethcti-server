@@ -5120,8 +5120,8 @@ function ajaxPhoneAnswer(username, req, res) {
     if (typeof url === 'string' && url !== '') {
 
       // the credential to access the phone via url
-      var phoneUser = compConfigManager.getC2CAutoPhoneUser(username);
-      var phonePass = compConfigManager.getC2CAutoPhonePass(username);
+      var phoneUser = compUser.getPhoneWebUser(username, exten);
+      var phonePass = compUser.getPhoneWebPass(username, exten);
 
       // replace the parameters of the url template
       url = url.replace(/\$PHONE_IP/g, extenIp);
