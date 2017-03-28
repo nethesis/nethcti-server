@@ -15,23 +15,19 @@
  * @readOnly
  * @default {
     email:     "email",
-    webrtc:    "webrtc",
     extension: "extension",
     cellphone: "cellphone",
     voicemail: "voicemail",
-    webrtc_mobile: "webrtc_mobile",
     mainextension: "mainextension"
 }
  */
 var TYPES = {
   email: 'email',
-  webrtc: 'webrtc',
   // jabber: 'jabber',
   // calendar: 'calendar',
   extension: 'extension',
   cellphone: 'cellphone',
   voicemail: 'voicemail',
-  webrtc_mobile: 'webrtc_mobile',
   mainextension: 'mainextension'
 };
 

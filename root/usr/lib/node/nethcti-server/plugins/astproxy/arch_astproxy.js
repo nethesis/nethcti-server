@@ -86,7 +86,6 @@ module.exports = function(options, imports, register) {
       getQueueIdsOfExten: astProxy.proxyLogic.getQueueIdsOfExten,
       recordAudioFile: astProxy.proxyLogic.recordAudioFile,
       isExtenDynMemberQueue: astProxy.proxyLogic.isExtenDynMemberQueue,
-      isExtenWebrtc: astProxy.proxyLogic.isExtenWebrtc,
       isDynMemberLoggedInQueue: astProxy.proxyLogic.isDynMemberLoggedInQueue,
       CF_TYPES: require('./proxy_logic_13/util_call_forward_13').CF_TYPES,
       EVT_EXTEN_CHANGED: astProxy.proxyLogic.EVT_EXTEN_CHANGED,

@@ -2283,13 +2283,6 @@ function initializePjsipExten(err, results) {
       exten = new Extension(results[e].ext, 'pjsip');
       extensions[exten.getExten()] = exten;
 
-      // set extension websocket transport usage
-      if (results[e].ext.substring(0, 2) === '99' || results[e].ext.substring(0, 2) === '98') {
-        exten.setUseWebsocket(true);
-      } else {
-        exten.setUseWebsocket(false);
-      }
-
       arr.push(getExtenStatus(exten.getExten()));
       arr.push(getDndExten(exten.getExten()));
       arr.push(getCfExten(exten.getExten()));
@@ -6606,32 +6599,6 @@ function isExtenDynMemberQueue(extenId, queueId) {
 }
 
 /**
- * Checks if the specified extension is a WebRTC using websocket.
- *
- * @method isExtenWebrtc
- * @param  {string}  extenId The extension identifier
- * @return {boolean} True if the specified extension is a WebRTC.
- */
-function isExtenWebrtc(extenId) {
-  try {
-    // check parameter
-    if (typeof extenId !== 'string') {
-      throw new Error('wrong parameter extenId "' + extenId + '"');
-    }
-    if (extensions[extenId]) {
-      return extensions[extenId].usingWebsocket();
-    } else {
-      logger.warn(IDLOG, 'checking if the exten "' + extenId + '" is webrtc: it does not exist');
-    }
-    return false;
-
-  } catch (err) {
-    logger.error(IDLOG, err.stack);
-    return false;
-  }
-}
-
-/**
  * Checks if the specified queue dynamic member is logged into the specified queue.
  *
  * @method isDynMemberLoggedInQueue
@@ -7717,7 +7684,6 @@ exports.getExtensions = getExtensions;
 exports.getConference = getConference;
 exports.hangupChannel = hangupChannel;
 exports.pickupParking = pickupParking;
-exports.isExtenWebrtc = isExtenWebrtc;
 exports.getJSONQueues = getJSONQueues;
 exports.endMeetmeConf = endMeetmeConf;
 exports.getJSONTrunks = getJSONTrunks;

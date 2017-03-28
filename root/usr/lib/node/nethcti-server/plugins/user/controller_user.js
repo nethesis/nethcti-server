@@ -610,11 +610,7 @@ function getAllUserExtensions(username) {
     }
     if (users[username]) {
       var endpoints = users[username].getAllEndpoints();
-      var result = (Object.keys(endpoints[endpointTypes.TYPES.mainextension]))
-        .concat(Object.keys(endpoints[endpointTypes.TYPES.extension]))
-        .concat(Object.keys(endpoints[endpointTypes.TYPES.webrtc]))
-        .concat(Object.keys(endpoints[endpointTypes.TYPES.webrtc_mobile]));
-      return result;
+      return Object.keys(endpoints[endpointTypes.TYPES.extension]);
 
     } else {
       logger.warn(IDLOG, 'getting all user extensions: user "' + username + '" not exists');
@@ -823,19 +819,12 @@ function getUserInfoJSON(username) {
       result = users[username].toJSON();
       result.profile = compAuthorization.getUserProfileJSON(username);
     }
-    // add model for extension endpoints
-    // allendpoints[endpointTypes.TYPES.cellphone]
+    // add model and type for extension endpoints
     for (i = 0; i < result.endpoints[endpointTypes.TYPES.mainextension].length; i++) {
       result.endpoints[endpointTypes.TYPES.mainextension][i].description = compAstProxy.getExtensionAgent(result.endpoints[endpointTypes.TYPES.extension][i].id);
     }
     for (i = 0; i < result.endpoints[endpointTypes.TYPES.extension].length; i++) {
       result.endpoints[endpointTypes.TYPES.extension][i].description = compAstProxy.getExtensionAgent(result.endpoints[endpointTypes.TYPES.extension][i].id);
-    }
-    for (i = 0; i < result.endpoints[endpointTypes.TYPES.webrtc].length; i++) {
-      result.endpoints[endpointTypes.TYPES.webrtc][i].description = compAstProxy.getExtensionAgent(result.endpoints[endpointTypes.TYPES.extension][i].id);
-    }
-    for (i = 0; i < result.endpoints[endpointTypes.TYPES.webrtc_mobile].length; i++) {
-      result.endpoints[endpointTypes.TYPES.webrtc_mobile][i].description = compAstProxy.getExtensionAgent(result.endpoints[endpointTypes.TYPES.extension][i].id);
     }
     return result;
 
@@ -1156,11 +1145,7 @@ function hasExtensionEndpoint(username, exten) {
     }
     var i;
     var obj = users[username].getAllEndpoints();
-    obj = Object.keys(obj[endpointTypes.TYPES.extension]).concat(
-      Object.keys(obj[endpointTypes.TYPES.mainextension]),
-      Object.keys(obj[endpointTypes.TYPES.webrtc]),
-      Object.keys(obj[endpointTypes.TYPES.webrtc_mobile])
-    );
+    obj = Object.keys(obj[endpointTypes.TYPES.extension]);
     for (i = 0; i < obj.length; i++) {
       if (obj[i] === exten) {
         return true;
@@ -1360,6 +1345,34 @@ function isUserPresent(username) {
     }
     return false;
 
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+    return false;
+  }
+}
+
+/**
+ * Checks if the extension is of webrtc type.
+ *
+ * @method isExtenWebrtc
+ * @param {string} exten The extension identifier
+ * @return {boolean} True if the extension is of webrtc type.
+ */
+function isExtenWebrtc(exten) {
+  try {
+    if (typeof exten !== 'string') {
+      throw new Error('wrong parameter: ' + exten);
+    }
+    var u, e, extensions;
+    for (u in users) {
+      extensions = (users[u].getAllEndpoints())[endpointTypes.TYPES.extension];
+      for (e in extensions) {
+        if (e === exten && extensions[e].isWebrtc()) {
+          return true;
+        }
+      }
+    }
+    return false;
   } catch (err) {
     logger.error(IDLOG, err.stack);
     return false;
@@ -1679,6 +1692,7 @@ exports.setPresence = setPresence;
 exports.getPresence = getPresence;
 exports.getUsernames = getUsernames;
 exports.isUserPresent = isUserPresent;
+exports.isExtenWebrtc = isExtenWebrtc;
 exports.getUserInfoJSON = getUserInfoJSON;
 exports.EVT_USERS_READY = EVT_USERS_READY;
 exports.getPhoneWebUser = getPhoneWebUser;

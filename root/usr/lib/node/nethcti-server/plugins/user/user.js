@@ -7,12 +7,10 @@
 var endpointTypes = require('./endpoint_types');
 var EndpointEmail = require('./endpointEmail').EndpointEmail;
 var EndpointJabber = require('./endpointJabber').EndpointJabber;
-var EndpointWebrtc = require('./endpointWebrtc').EndpointWebrtc;
 var EndpointCalendar = require('./endpointCalendar').EndpointCalendar;
 var EndpointExtension = require('./endpointExtension').EndpointExtension;
 var EndpointCellphone = require('./endpointCellphone').EndpointCellphone;
 var EndpointVoicemail = require('./endpointVoicemail').EndpointVoicemail;
-var EndpointWebrtcMobile = require('./endpointWebrtcMobile').EndpointWebrtcMobile;
 var EndpointMainExtension = require('./endpointMainExtension').EndpointMainExtension;
 
 /**
@@ -212,10 +210,6 @@ exports.User = function(uname, na) {
       newEndpoint = new EndpointVoicemail(id);
     } else if (type === endpointTypes.TYPES.mainextension) {
       newEndpoint = new EndpointMainExtension(id);
-    } else if (type === endpointTypes.TYPES.webrtc) {
-      newEndpoint = new EndpointWebrtc(id, data.secret);
-    } else if (type === endpointTypes.TYPES.webrtc_mobile) {
-      newEndpoint = new EndpointWebrtcMobile(id, data.secret);
     }
     // add endpoint by its type
     endpoints[type][id] = newEndpoint;

@@ -5,18 +5,20 @@
  *
  * @class EndpointExtension
  * @param {string} identifier The extension identifier
- * @param {object} [data]
+ * @param {object} data
+ *  @param {string} data.type The type of the extension ("physical" | "webrtc" | "webrtc_mobile")
  *  @param {string} [data.web_user] The username of the physical phone to be used to invoke HTTP apis
  *  @param {string} [data.web_password] The password of the physical phone to be used to invoke HTTP apis
+ *  @param {string} [data.sip_password] The password of the sip extension. It is present with "webrtc" type
  * @return {object} The extension endpoint object.
  * @constructor
  */
 exports.EndpointExtension = function(identifier, data) {
   // check the parameter
-  if (typeof identifier !== 'string' ||
-    (data && typeof data !== 'object')) {
+  if (typeof identifier !== 'string' || typeof data !== 'object' ||
+    (data.type !== 'physical' && data.type !== 'webrtc' && data.type !== 'webrtc_mobile')) {
 
-    throw new Error('wrong parameters');
+    throw new Error('wrong parameters: ' + JSON.stringify(arguments));
   }
 
   /**
@@ -30,13 +32,32 @@ exports.EndpointExtension = function(identifier, data) {
   var id = identifier;
 
   /**
+   * The extension type.
+   *
+   * @property type
+   * @type {string}
+   * @required
+   * @private
+   */
+  var type = data.type;
+
+  /**
    * The username of the physical phone to be used to invoke HTTP apis.
    *
    * @property webApiUser
    * @type {string}
    * @private
    */
-  var webApiUser = (data && data.web_user) ? data.web_user : '';
+  var sipPassword = data.sip_password ? data.sip_password : '';
+
+  /**
+   * The username of the physical phone to be used to invoke HTTP apis.
+   *
+   * @property webApiUser
+   * @type {string}
+   * @private
+   */
+  var webApiUser = data.web_user ? data.web_user : '';
 
   /**
    * The password of the physical phone to be used to invoke HTTP apis.
@@ -45,7 +66,17 @@ exports.EndpointExtension = function(identifier, data) {
    * @type {string}
    * @private
    */
-  var webApiPassword = (data && data.web_password) ? data.web_password : '';
+  var webApiPassword = data.web_password ? data.web_password : '';
+
+  /**
+   * Check if the extension is of webrtc or webrtc_mobile type.
+   *
+   * @method isWebrtc
+   * @return {string} True if the phone is of webrtc or webrtc_mobile type.
+   */
+  function isWebrtc() {
+    return (type === 'webrtc' || type === 'webrtc_mobile');
+  }
 
   /**
    * Return the phone username to be used to invoke HTTP apis.
@@ -65,6 +96,16 @@ exports.EndpointExtension = function(identifier, data) {
    */
   function getWebApiPassword() {
     return webApiPassword;
+  }
+
+  /**
+   * Return the sip phone password.
+   *
+   * @method getSipPassword
+   * @return {string} The sip phone password.
+   */
+  function getSipPassword() {
+    return sipPassword;
   }
 
   /**
@@ -91,7 +132,8 @@ exports.EndpointExtension = function(identifier, data) {
    * Returns the JSON representation of the object.
    *
    *     {
-   *         id: "214"
+   *         "id": "214",
+   *         "type": "physical"
    *     }
    *
    * @method toJSON
@@ -99,7 +141,8 @@ exports.EndpointExtension = function(identifier, data) {
    */
   function toJSON() {
     return {
-      id: id
+      id: id,
+      type: type
     };
   }
 
@@ -107,8 +150,10 @@ exports.EndpointExtension = function(identifier, data) {
   return {
     getId: getId,
     toJSON: toJSON,
+    isWebrtc: isWebrtc,
     toString: toString,
     getWebApiUser: getWebApiUser,
+    getSipPassword: getSipPassword,
     getWebApiPassword: getWebApiPassword
   };
 };
