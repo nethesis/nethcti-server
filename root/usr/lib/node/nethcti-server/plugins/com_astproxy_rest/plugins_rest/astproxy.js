@@ -1726,7 +1726,7 @@ var compConfigManager;
 
           // gets the user agent of the phone
           var extenAgent = compAstProxy.getExtensionAgent(req.params.endpoint);
-          var isSupported = compConfigManager.phoneAgentSupportAutoC2C(extenAgent);
+          var isSupported = compConfigManager.phoneSupportHttpApi(extenAgent);
 
           logger.info(IDLOG, 'send "' + isSupported + '" for extension phone (' + req.params.endpoint + ') agent (' + extenAgent + ') support auto click2call to user "' + username + '" ' + res.connection.remoteAddress);
           res.send(200, {
@@ -4984,8 +4984,8 @@ var compConfigManager;
  *
  * @method call
  * @param {string} username The username that originate the call
- * @param {object} req      The client request
- * @param {object} res      The client response
+ * @param {object} req The client request
+ * @param {object} res The client response
  */
 function call(username, req, res) {
   try {
@@ -5001,14 +5001,16 @@ function call(username, req, res) {
     // if (compAstProxy.isExtenWebrtc(req.params.endpointId)) {
     //   compComNethctiWs.sendCallWebrtcToClient(username, req.params.number);
     //   compUtil.net.sendHttp200(IDLOG, res);
-
     // } else if (!compConfigManager.isAutomaticClick2callEnabled(username)) {
-    if (!compConfigManager.isAutomaticClick2callEnabled(username)) {
+
+    var extenAgent = compAstProxy.getExtensionAgent(req.params.endpointId);
+    var isSupported = compConfigManager.phoneSupportHttpApi(extenAgent);
+
+    if (!isSupported) {
       asteriskCall(username, req, res);
     } else {
       ajaxPhoneCall(username, req, res);
     }
-
   } catch (error) {
     logger.error(IDLOG, error.stack);
     compUtil.net.sendHttp500(IDLOG, res, error.toString());
@@ -5020,8 +5022,8 @@ function call(username, req, res) {
  *
  * @method ajaxPhoneCall
  * @param {string} username The username that originate the call
- * @param {object} req      The client request
- * @param {object} res      The client response
+ * @param {object} req The client request
+ * @param {object} res The client response
  */
 function ajaxPhoneCall(username, req, res) {
   try {
@@ -5043,8 +5045,8 @@ function ajaxPhoneCall(username, req, res) {
     if (typeof url === 'string' && url !== '') {
 
       // the credential to access the phone via url
-      var phoneUser = compConfigManager.getC2CAutoPhoneUser(username);
-      var phonePass = compConfigManager.getC2CAutoPhonePass(username);
+      var phoneUser = compUser.getPhoneWebUser(username, exten);
+      var phonePass = compUser.getPhoneWebPass(username, exten);
 
       // replace the parameters of the url template
       url = url.replace(/\$SERVER/g, serverHostname);
@@ -5056,6 +5058,7 @@ function ajaxPhoneCall(username, req, res) {
 
       httpReq.get(url, function(httpResp) {
         try {
+
           if (httpResp.statusCode === 200) {
             logger.info(IDLOG, 'new call to ' + to + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp + ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
             logger.info(IDLOG, url);
