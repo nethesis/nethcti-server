@@ -316,14 +316,13 @@ function setCompUtil(comp) {
           if (typeof results === 'object') {
 
             var defExt = compConfigManager.getDefaultUserExtensionConf(username);
-            var i, e, defextObj;
+            var i, defextObj;
 
             // create default_device key to return with results
-            for (e in results.endpoints) {
-              for (i = 0; i < results.endpoints[e].length; i++) {
-                if (results.endpoints[e][i].id === defExt) {
-                  defextObj = results.endpoints[e][i];
-                }
+            for (i = 0; i < results.endpoints[compUser.ENDPOINT_TYPES.extension].length; i++) {
+              if (results.endpoints[compUser.ENDPOINT_TYPES.extension][i].id === defExt) {
+                defextObj = results.endpoints[compUser.ENDPOINT_TYPES.extension][i];
+                break;
               }
             }
             results.default_device = defextObj;
@@ -422,9 +421,9 @@ function setCompUtil(comp) {
                 compUtil.net.sendHttp200(IDLOG, res);
               }
 
-            } catch (err) {
-              logger.error(IDLOG, err.stack);
-              compUtil.net.sendHttp500(IDLOG, res, err.toString());
+            } catch (error) {
+              logger.error(IDLOG, error.stack);
+              compUtil.net.sendHttp500(IDLOG, res, error.toString());
             }
           });
         } catch (err) {
