@@ -773,6 +773,38 @@ function getCallUrlFromAgent(agent) {
 }
 
 /**
+ * It sequentially test a match of specified agent with the keys of _phoneUrls_
+ * object. If the match exists than returns the url phone to hold/unhold the conversation,
+ * otherwise it returns an empty string. The keys of _phoneUrls_ are sequentially
+ * checked, so they must be present from the more restrictive to the least.
+ *
+ * @method getHoldUnholdUrlFromAgent
+ * @param  {string} agent The phone user agent
+ * @return {string} The phone url used to hold/unhold the conversation
+ */
+function getHoldUnholdUrlFromAgent(agent) {
+  try {
+    // check parameter
+    if (typeof agent !== 'string') {
+      throw new TypeError('wrong parameter: ' + agent);
+    }
+
+    var re;
+    for (re in phoneUrls) {
+      // case insensitive 'i'
+      if (agent.search(new RegExp(re, 'i')) >= 0) {
+        return phoneUrls[re].urls.hold_unhold;
+      }
+    }
+    return '';
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+    return '';
+  }
+}
+
+/**
  * Returns true if the specified phone is supported by HTTP api.
  * It sequentially test a match of specified agent with the keys of _phoneUrls_
  * object. If the match exists than returns a true value, false otherwise.
@@ -1701,6 +1733,7 @@ exports.setQueueAutoLogoutConf = setQueueAutoLogoutConf;
 exports.getAutoDndOffLoginConf = getAutoDndOffLoginConf;
 exports.getAutoDndOnLogoutConf = getAutoDndOnLogoutConf;
 exports.getAllUserEndpointsJSON = getAllUserEndpointsJSON;
+exports.getHoldUnholdUrlFromAgent = getHoldUnholdUrlFromAgent;
 exports.getPostitNotificationSmsTo = getPostitNotificationSmsTo;
 exports.setDefaultUserExtensionConf = setDefaultUserExtensionConf;
 exports.getDefaultUserExtensionConf = getDefaultUserExtensionConf;
