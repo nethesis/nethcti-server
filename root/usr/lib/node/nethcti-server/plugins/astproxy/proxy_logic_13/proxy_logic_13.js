@@ -2756,6 +2756,33 @@ function extIaxDetails(resp) {
 /**
  * Update extension information and emit _EVT\_EXTEN\_CHANGED_ event.
  *
+ * @method updateExtPjsipDetails
+ * @param {object} err The error object
+ * @param {object} resp The extension information object
+ * @private
+ */
+function updateExtPjsipDetails(err, resp) {
+  try {
+    if (err) {
+      logger.error(IDLOG, 'updating pjsip extension details: ' + err.toString());
+      return;
+    }
+
+    // set extension information
+    extPjsipDetails(null, resp);
+
+    // emit the event
+    logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for pjsip extension ' + resp.exten);
+    astProxy.emit(EVT_EXTEN_CHANGED, extensions[resp.exten]);
+
+  } catch (error) {
+    logger.error(IDLOG, error.stack);
+  }
+}
+
+/**
+ * Update extension information and emit _EVT\_EXTEN\_CHANGED_ event.
+ *
  * @method updateExtSipDetails
  * @param {object} err  The error object
  * @param {object} resp The extension information object
@@ -3269,7 +3296,7 @@ function evtExtenStatusChanged(exten, status) {
   try {
     // check parameters
     if (typeof exten !== 'string' || typeof status !== 'string') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     if (extensions[exten]) { // the exten is an extension
@@ -3280,12 +3307,12 @@ function evtExtenStatusChanged(exten, status) {
 
       // update extension information. This is because when the extension becomes
       // offline/online ip, port and other information needs to be updated
-      if (extensions[exten].getChanType() === 'sip') {
+      if (extensions[exten].getChanType() === 'pjsip') {
 
         astProxy.doCmd({
-          command: 'sipDetails',
+          command: 'pjsipDetails',
           exten: exten
-        }, updateExtSipDetails);
+        }, updateExtPjsipDetails);
 
       } else if (extensions[exten].getChanType() === 'iax') {
 
