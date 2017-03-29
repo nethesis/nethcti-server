@@ -9,7 +9,8 @@
  *  @param {string} data.type The type of the extension ("physical" | "webrtc" | "webrtc_mobile")
  *  @param {string} [data.web_user] The username of the physical phone to be used to invoke HTTP apis
  *  @param {string} [data.web_password] The password of the physical phone to be used to invoke HTTP apis
- *  @param {string} [data.sip_password] The password of the sip extension. It is present with "webrtc" type
+ *  @param {string} [data.username] The username of the sip extension. It is present with webrtc type
+ *  @param {string} [data.password] The password of the sip extension. It is present with webrtc type
  * @return {object} The extension endpoint object.
  * @constructor
  */
@@ -41,14 +42,25 @@ exports.EndpointExtension = function(identifier, data) {
    */
   var type = data.type;
 
-  /**
-   * The username of the physical phone to be used to invoke HTTP apis.
+   /**
+   * The username of the sip phone used to register extension into asterisk.
+   * Usually used by clients to register WebRTC phone.
    *
-   * @property webApiUser
+   * @property sipUser
    * @type {string}
    * @private
    */
-  var sipPassword = data.sip_password ? data.sip_password : '';
+  var sipUser = data.user ? data.user : '';
+
+  /**
+   * The password of the sip phone used to register extension into asterisk.
+   * Usually used by clients to register WebRTC phone.
+   *
+   * @property sipPassword
+   * @type {string}
+   * @private
+   */
+  var sipPassword = data.password ? data.password : '';
 
   /**
    * The username of the physical phone to be used to invoke HTTP apis.
@@ -109,6 +121,16 @@ exports.EndpointExtension = function(identifier, data) {
   }
 
   /**
+   * Return the sip phone username.
+   *
+   * @method getSipUser
+   * @return {string} The sip phone username.
+   */
+  function getSipUser() {
+    return sipUser;
+  }
+
+  /**
    * Return the extension identifier.
    *
    * @method getId
@@ -129,21 +151,43 @@ exports.EndpointExtension = function(identifier, data) {
   }
 
   /**
-   * Returns the JSON representation of the object.
+   * Returns the JSON representation of the object. If the extension type
+   * is of WebRTC type, it returns also the sip extension secret.
    *
    *     {
    *         "id": "214",
    *         "type": "physical"
    *     }
    *
+   *     {
+   *         "id": "214",
+   *         "type": "webrtc",
+   *         "secret": "sip password",
+   *         "username": "sip username"
+   *     }
+   *
+   *     {
+   *         "id": "214",
+   *         "type": "webrtc_mobile",
+   *         "secret": "sip password",
+   *         "username": "sip username"
+   *     }
+   *
    * @method toJSON
    * @return {object} The JSON representation of the object.
    */
   function toJSON() {
-    return {
+    var obj= {
       id: id,
       type: type
     };
+
+    if (type === 'webrtc' || type === 'webrtc_mobile') {
+      obj.secret = sipPassword;
+      obj.username = sipUser;
+    }
+
+    return obj;
   }
 
   // public interface
@@ -152,6 +196,7 @@ exports.EndpointExtension = function(identifier, data) {
     toJSON: toJSON,
     isWebrtc: isWebrtc,
     toString: toString,
+    getSipUser: getSipUser,
     getWebApiUser: getWebApiUser,
     getSipPassword: getSipPassword,
     getWebApiPassword: getWebApiPassword
