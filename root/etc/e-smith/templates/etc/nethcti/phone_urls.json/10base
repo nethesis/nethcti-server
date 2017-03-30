@@ -3,34 +3,36 @@
     "^yealink\\\s.*T3.*\\\s.+\\\.70(\\\..+|$)": {
         "urls": {
             "call": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/cgi-bin/cgiServer.exx?number=$NUMBER&outgoing_uri=$ACCOUNT@$SERVER",
-            "answer": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/cgi-bin/cgiServer.exx?key=OK"
+            "answer": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/cgi-bin/cgiServer.exx?key=OK",
+            "hold_unhold": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/cgi-bin/cgiServer.exx?key=F_HOLD"
         }
     },
     "^yealink\\\s.*\\\s.+\\\.70(\\\..+|$)": {
         "urls": {
             "call": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/cgi-bin/ConfigManApp.com?number=$NUMBER&outgoing_uri=$ACCOUNT@$SERVER",
-            "answer": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/cgi-bin/ConfigManApp.com?key=OK"
+            "answer": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/cgi-bin/ConfigManApp.com?key=OK",
+            "hold_unhold": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/cgi-bin/ConfigManApp.com?key=F_HOLD"
         }
     },
     "^yealink\\\s.+\\\s.+": {
         "urls": {
             "call": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/servlet?number=$NUMBER&outgoing_uri=$ACCOUNT@$SERVER",
             "answer": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/servlet?key=OK",
-            "command": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/servlet?key=$COMMAND"
+            "hold_unhold": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/servlet?key=F_HOLD"
         }
     },
     "^snom.*": {
         "urls": {
             "call": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/command.htm?number=$NUMBER",
             "answer": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/command.htm?key=ENTER",
-            "command": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/command.htm?key=COMANDO"
+            "hold_unhold": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/command.htm?key=F_HOLD"
         }
     },
     "^sangoma\\\s.*": {
         "urls": {
             "call": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/Phone_ActionURL&Command=1&Number=$NUMBER&Account=1",
             "answer": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/Phone_ActionURL&key=OK",
-            "command": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/Phone_ActionURL&key=COMANDO"
+            "hold_unhold": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/Phone_ActionURL&key=F_HOLD"
         }
     }
 }';

@@ -642,6 +642,7 @@ var compConfigManager;
         * 1. [`astproxy/cw`](#cwpost)
         * 1. [`astproxy/dnd`](#dndpost)
         * 1. [`astproxy/park`](#parkpost)
+        * 1. [`astproxy/toggle_hold`](#toggle_holdpost)
         * 1. [`astproxy/call`](#callpost)
         * 1. [`astproxy/remote_call`](#remote_callpost)
         * 1. [`astproxy/cfvm`](#cfvmpost)
@@ -794,6 +795,19 @@ var compConfigManager;
         * Example JSON request parameters:
         *
         *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointId": "221", "applicantId": "216" }
+        *
+        * ---
+        *
+        * ### <a id="toggle_holdpost">**`astproxy/toggle_hold`**</a>
+        *
+        * Hold/Unhold a conversation of the specified extension. It uses HTTP api of the physical phones, so it works
+        * only if the extension is registered with a supported phone. The request must contains the following parameters:
+        *
+        * * `endpointId: the extension identifier registered with physical supported phones.
+        *
+        * Example JSON request parameters:
+        *
+        *     { "endpointId": "214" }
         *
         * ---
         *
@@ -1359,6 +1373,7 @@ var compConfigManager;
          *   @param {string} start_spy             Spy a conversation with only listening
          *   @param {string} txfer_tovm            Transfer the conversation to the voicemail
          *   @param {string} start_conf            Starts a meetme conference
+         *   @param {string} toggle_hold           Hold/Unhold a conversation of the user. It works only with supported physical phones
          *   @param {string} join_myconf           Joins the extension owner to his meetme conference
          *   @param {string} pickup_conv           Pickup a conversation
          *   @param {string} stop_record           Stop the recording of a conversation
@@ -1400,6 +1415,7 @@ var compConfigManager;
           'start_spy',
           'txfer_tovm',
           'start_conf',
+          'toggle_hold',
           'remote_call',
           'pickup_conv',
           'stop_record',
@@ -2333,6 +2349,43 @@ var compConfigManager;
             logger.warn(IDLOG, 'unknown requested method ' + req.method);
           }
 
+        } catch (err) {
+          logger.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
+      },
+
+      /**
+       * Hold/Unhold a conversation of the extension registered with a supported
+       * physical phone with the following REST API:
+       *
+       *     POST toggle_hold
+       *
+       * @method call
+       * @param {object} req The client request
+       * @param {object} res The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      toggle_hold: function(req, res, next) {
+        try {
+          var username = req.headers.authorization_user;
+
+          // check parameters
+          if (typeof req.params !== 'object' || typeof req.params.endpointId !== 'string') {
+            compUtil.net.sendHttp400(IDLOG, res);
+            return;
+          }
+
+          var extenAgent = compAstProxy.getExtensionAgent(req.params.endpointId);
+          var isSupported = compConfigManager.phoneSupportHttpApi(extenAgent);
+
+          if (!isSupported) {
+            var str = 'holding conversation with unsupported phone (exten: ' + req.params.endpointId + '/' + extenAgent + ')';
+            logger.warn(IDLOG, str);
+            compUtil.net.sendHttp500(IDLOG, res, str);
+          } else {
+            ajaxPhoneHoldUnhold(username, req, res);
+          }
         } catch (err) {
           logger.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -4936,6 +4989,7 @@ var compConfigManager;
     exports.setPrivacy = setPrivacy;
     exports.setCompUtil = setCompUtil;
     exports.join_myconf = astproxy.join_myconf;
+    exports.toggle_hold = astproxy.toggle_hold;
     exports.pickup_conv = astproxy.pickup_conv;
     exports.remote_call = astproxy.remote_call;
     exports.stop_record = astproxy.stop_record;
@@ -5018,6 +5072,82 @@ function call(username, req, res) {
 }
 
 /**
+ * Hold/Unhold current conversation sending an HTTP GET request to the phone device.
+ *
+ * @method ajaxPhoneHoldUnhold
+ * @param {string} username The username that originate the call
+ * @param {object} req The client request
+ * @param {object} res The client response
+ */
+function ajaxPhoneHoldUnhold(username, req, res) {
+  try {
+    // check parameters
+    if (typeof username !== 'string' || typeof req !== 'object' || typeof res !== 'object') {
+      throw new Error('wrong parameters');
+    }
+
+    var exten = req.params.endpointId;
+    var extenIp = compAstProxy.getExtensionIp(exten);
+    var extenAgent = compAstProxy.getExtensionAgent(exten);
+    var serverHostname = compConfigManager.getServerHostname();
+
+    // get the url to call to originate the new call. If the url is an empty
+    // string, the phone is not supported, so the call fails
+    var url = compConfigManager.getHoldUnholdUrlFromAgent(extenAgent);
+
+    if (typeof url === 'string' && url !== '') {
+
+      // the credential to access the phone via url
+      var phoneUser = compUser.getPhoneWebUser(username, exten);
+      var phonePass = compUser.getPhoneWebPass(username, exten);
+
+      // replace the parameters of the url template
+      url = url.replace(/\$SERVER/g, serverHostname);
+      url = url.replace(/\$PHONE_IP/g, extenIp);
+      url = url.replace(/\$PHONE_USER/g, phoneUser);
+      url = url.replace(/\$PHONE_PASS/g, phonePass);
+
+      httpReq.get(url, function(httpResp) {
+        try {
+          if (httpResp.statusCode === 200) {
+            logger.info(IDLOG, 'hold: sent HTTP GET to the phone (' + extenAgent + ') ' + exten + ' ' + extenIp +
+              ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
+            logger.info(IDLOG, url);
+            res.send(200, {
+              phoneRespStatusCode: httpResp.statusCode
+            });
+
+          } else {
+            logger.warn(IDLOG, 'hold: sent HTTP GET to the phone (' + extenAgent + ') ' + exten + ' ' + extenIp +
+              ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
+            logger.warn(IDLOG, url);
+            res.send(httpResp.statusCode, {
+              phoneRespStatusCode: httpResp.statusCode
+            });
+          }
+        } catch (err) {
+          logger.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
+
+      }).on('error', function(err1) {
+        logger.error(IDLOG, err1.message);
+        compUtil.net.sendHttp500(IDLOG, res, err1.message);
+      });
+
+    } else {
+      logger.warn(IDLOG, 'failed hold via HTTP GET request sent to the phone ' + exten + ' ' + extenIp +
+        ' by the user "' + username + '": ' + extenAgent + ' is not supported');
+      compUtil.net.sendHttp500(IDLOG, res, 'the phone "' + extenAgent + '" is not supported');
+    }
+
+  } catch (error) {
+    logger.error(IDLOG, error.stack);
+    compUtil.net.sendHttp500(IDLOG, res, error.toString());
+  }
+}
+
+/**
  * Originates a new call sending an HTTP GET request to the phone device.
  *
  * @method ajaxPhoneCall
@@ -5060,14 +5190,16 @@ function ajaxPhoneCall(username, req, res) {
         try {
 
           if (httpResp.statusCode === 200) {
-            logger.info(IDLOG, 'new call to ' + to + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp + ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
+            logger.info(IDLOG, 'new call to ' + to + ': sent HTTP GET to the phone (' + extenAgent + ') ' + exten + ' ' + extenIp +
+              ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
             logger.info(IDLOG, url);
             res.send(200, {
               phoneRespStatusCode: httpResp.statusCode
             });
 
           } else {
-            logger.warn(IDLOG, 'new call to ' + to + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp + ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
+            logger.warn(IDLOG, 'new call to ' + to + ': sent HTTP GET to the phone (' + extenAgent + ') ' + exten + ' ' + extenIp +
+              ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
             logger.warn(IDLOG, url);
             res.send(httpResp.statusCode, {
               phoneRespStatusCode: httpResp.statusCode
@@ -5084,7 +5216,8 @@ function ajaxPhoneCall(username, req, res) {
       });
 
     } else {
-      logger.warn(IDLOG, 'failed call to ' + to + ' via HTTP GET request sent to the phone ' + exten + ' ' + extenIp + ' by the user "' + username + '": ' + extenAgent + ' is not supported');
+      logger.warn(IDLOG, 'failed call to ' + to + ' via HTTP GET request sent to the phone ' + exten + ' ' + extenIp +
+        ' by the user "' + username + '": ' + extenAgent + ' is not supported');
       compUtil.net.sendHttp500(IDLOG, res, 'the phone "' + extenAgent + '" is not supported');
     }
 
@@ -5130,7 +5263,8 @@ function ajaxPhoneAnswer(username, req, res) {
 
       httpReq.get(url, function(httpResp) {
         try {
-          logger.info(IDLOG, 'answer to ' + exten + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp + ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
+          logger.info(IDLOG, 'answer to ' + exten + ': sent HTTP GET to the phone (' + extenAgent + ') ' + exten + ' ' + extenIp +
+            ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
           logger.info(IDLOG, url);
           res.send(200, {
             phoneRespStatusCode: httpResp.statusCode
@@ -5148,7 +5282,8 @@ function ajaxPhoneAnswer(username, req, res) {
       });
 
     } else {
-      logger.warn(IDLOG, 'failed answer to ' + exten + ' via HTTP GET request sent to the phone ' + exten + ' ' + extenIp + ' by the user "' + username + '": ' + extenAgent + ' is not supported');
+      logger.warn(IDLOG, 'failed answer to ' + exten + ' via HTTP GET request sent to the phone ' + exten + ' ' + extenIp +
+        ' by the user "' + username + '": ' + extenAgent + ' is not supported');
       compUtil.net.sendHttp500(IDLOG, res, 'the phone "' + extenAgent + '" is not supported');
     }
 
