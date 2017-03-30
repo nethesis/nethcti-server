@@ -138,9 +138,13 @@ var IDLOG = '[pjsipDetails]';
 
           } else if (map[data.actionid] && data.message && data.response === 'Error') {
             map[data.actionid](new Error(data.message));
+            delete list[data.actionid]; // empties the list
+            delete map[data.actionid]; // remove association ActionID-callback
 
           } else if (map[data.actionid] && data.response === 'Error') {
             map[data.actionid](new Error('error'));
+            delete list[data.actionid]; // empties the list
+            delete map[data.actionid]; // remove association ActionID-callback
           }
           if (data && data.event === 'EndpointDetailComplete') {
             delete list[data.actionid]; // empties the list
