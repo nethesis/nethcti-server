@@ -2164,7 +2164,7 @@ function getDndExten(exten) {
       exten: exten
     }, function(err, resp) {
       setDndStatus(err, resp);
-      callback(err);
+      callback(null);
     });
   };
 }
@@ -2184,7 +2184,7 @@ function getCfExten(exten) {
       exten: exten
     }, function(err, resp) {
       setCfStatus(err, resp);
-      callback(err);
+      callback(null);
     });
   };
 }
@@ -2204,7 +2204,7 @@ function getCfVmExten(exten) {
       exten: exten
     }, function(err, resp) {
       setCfVmStatus(err, resp);
-      callback(err);
+      callback(null);
     });
   };
 }
@@ -2224,7 +2224,7 @@ function getPjsipDetailExten(exten) {
       exten: exten
     }, function(err, resp) {
       extPjsipDetails(err, resp);
-      callback(err);
+      callback(null);
     });
   };
 }
@@ -2242,7 +2242,7 @@ function getListChannels() {
       command: 'listChannels'
     }, function(err, resp) {
       updateConversationsForAllExten(err, resp);
-      callback(err);
+      callback(null);
     });
   };
 }
@@ -2262,7 +2262,7 @@ function getExtenStatus(exten) {
       exten: exten
     }, function(err, resp) {
       extenStatus(err, resp);
-      callback(err);
+      callback(null);
     });
   };
 }
@@ -2294,7 +2294,6 @@ function initializePjsipExten(err, results) {
       function(err) {
         if (err) {
           logger.error(IDLOG, err);
-          return;
         }
         logger.info(IDLOG, 'emit "' + EVT_READY + '" event');
         astProxy.emit(EVT_READY);
