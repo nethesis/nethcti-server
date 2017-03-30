@@ -654,7 +654,7 @@ var compConfigManager;
         * 1. [`astproxy/hangup`](#hanguppost)
         * 1. [`astproxy/intrude`](#intrudepost)
         * 1. [`astproxy/end_conf`](#end_confpost)
-        * 1. [`astproxy/send_dtmf`](#send_dtmfpost)
+        * 1. [`astproxy/dtmf`](#dtmfpost)
         * 1. [`astproxy/call_echo`](#call_echopost)
         * 1. [`astproxy/start_spy`](#start_spypost)
         * 1. [`astproxy/txfer_tovm`](#txfer_tovmpost)
@@ -1157,17 +1157,17 @@ var compConfigManager;
         *
         * ---
         *
-        * ### <a id="send_dtmfpost">**`astproxy/send_dtmf`**</a>
+        * ### <a id="dtmfpost">**`astproxy/dtmf`**</a>
         *
-        * Sends the dtmf tone to the destination. The request must contains the following parameters:
+        * Sends the dtmf tone using HTTP api of the physical phone. It works only with supported physical phones.
+        * The request must contains the following parameters:
         *
         * * `tone: the tone to send. Permitted values are: 0 1 2 3 4 5 6 7 8 9 * #`
-        * * `convid: the conversation identifier`
         * * `endpointId: the extension identifier`
         *
         * Example JSON request parameters:
         *
-        *     { "tone": "5", "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointId": "214" }
+        *     { "tone": "5", "endpointId": "214" }
         *
         * ---
         *
@@ -1360,6 +1360,7 @@ var compConfigManager;
          *   @param {string} park                  Park a conversation of the user
          *   @param {string} call                  Make a new call
          *   @param {string} mute                  Mute a call in one direction only. The specified extension is able to listen
+         *   @param {string} dtmf                  Sends the dtmf by physical supported phone
          *   @param {string} cfvm                  Sets the call forward status of the endpoint of the user to a destination voicemail
          *   @param {string} unmute                Unmute a call
          *   @param {string} cfcall                Sets the call forward status of the endpoint of the user to a destination number
@@ -1369,7 +1370,6 @@ var compConfigManager;
          *   @param {string} intrude               Spy and speak in a conversation
          *   @param {string} end_conf              Ends the entire meetme conference
          *   @param {string} call_echo             Originates a new echo call
-         *   @param {string} send_dtmf             Sends the dtmf tone to the destination
          *   @param {string} start_spy             Spy a conversation with only listening
          *   @param {string} txfer_tovm            Transfer the conversation to the voicemail
          *   @param {string} start_conf            Starts a meetme conference
@@ -1402,6 +1402,7 @@ var compConfigManager;
           'park',
           'call',
           'mute',
+          'dtmf',
           'cfvm',
           'unmute',
           'cfcall',
@@ -1411,7 +1412,6 @@ var compConfigManager;
           'intrude',
           'end_conf',
           'call_echo',
-          'send_dtmf',
           'start_spy',
           'txfer_tovm',
           'start_conf',
@@ -4749,28 +4749,28 @@ var compConfigManager;
       },
 
       /**
-       * Sends the dtmf code to the destination with the following REST API:
+       * Sends the dtmf code using HTTP api of supported physical phone with the following REST API:
        *
-       *     POST send_dtmf
+       *     POST dtmf
        *
-       * @method send_dtmf
-       * @param {object}   req  The client request
-       * @param {object}   res  The client response
+       * @method dtmf
+       * @param {object} req The client request
+       * @param {object} res The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      send_dtmf: function(req, res, next) {
+      dtmf: function(req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
           // check parameters
-          if (typeof req.params !== 'object' || typeof req.params.convid !== 'string' ||
-            typeof req.params.tone !== 'string' || typeof req.params.endpointId !== 'string' ||
-            dtmfTonesPermitted.indexOf(req.params.tone) === -1) {
+          if (typeof req.params !== 'object' ||
+            typeof req.params.tone !== 'string' ||
+            dtmfTonesPermitted.indexOf(req.params.tone) === -1 ||
+            typeof req.params.endpointId !== 'string') {
 
             compUtil.net.sendHttp400(IDLOG, res);
             return;
           }
-
 
           // // check if the endpoint of the request is owned by the user
           // if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
@@ -4787,31 +4787,16 @@ var compConfigManager;
           //     ' is owned by "' + username + '"');
           // }
 
-          logger.info(IDLOG, 'send dtmf tone "' + req.params.tone + '" to the convid "' + req.params.convid +
-            '" by user "' + username + '" with exten ' + req.params.endpointId);
+          var extenAgent = compAstProxy.getExtensionAgent(req.params.endpointId);
+          var isSupported = compConfigManager.phoneSupportDtmfHttpApi(extenAgent);
 
-          compAstProxy.sendDtmfToConversation(
-            req.params.endpointId,
-            req.params.convid,
-            req.params.tone,
-            function(err) {
-              try {
-                if (err) {
-                  logger.warn(IDLOG, 'sending dtmf tone "' + req.params.tone + '" to the convid "' + req.params.convid +
-                    '" by user "' + username + '" with exten ' + req.params.endpointId + ': failed');
-                  compUtil.net.sendHttp500(IDLOG, res, err.toString());
-                  return;
-                }
-                logger.info(IDLOG, 'dtmf tone "' + req.params.tone + '" has been sent successfully to the convid ' + req.params.convid +
-                  ' by user "' + username + '" with exten ' + req.params.endpointId);
-                compUtil.net.sendHttp200(IDLOG, res);
-
-              } catch (error) {
-                logger.error(IDLOG, error.stack);
-                compUtil.net.sendHttp500(IDLOG, res, error.toString());
-              }
-            }
-          );
+          if (!isSupported) {
+            var str = 'sending dtmf with unsupported phone (exten: ' + req.params.endpointId + '/' + extenAgent + ')';
+            logger.warn(IDLOG, str);
+            compUtil.net.sendHttp500(IDLOG, res, str);
+          } else {
+            ajaxPhoneDtmf(username, req, res);
+          }
         } catch (err) {
           logger.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -4960,6 +4945,7 @@ var compConfigManager;
     exports.dnd = astproxy.dnd;
     exports.park = astproxy.park;
     exports.call = astproxy.call;
+    exports.dtmf = astproxy.dtmf;
     exports.mute = astproxy.mute;
     exports.cfvm = astproxy.cfvm;
     exports.unmute = astproxy.unmute;
@@ -4975,7 +4961,6 @@ var compConfigManager;
     exports.opgroups = astproxy.opgroups;
     exports.parkings = astproxy.parkings;
     exports.call_echo = astproxy.call_echo;
-    exports.send_dtmf = astproxy.send_dtmf;
     exports.extension = astproxy.extension;
     exports.start_spy = astproxy.start_spy;
     exports.setLogger = setLogger;
@@ -5072,10 +5057,97 @@ function call(username, req, res) {
 }
 
 /**
+ * Send dtmf tone to current conversation sending an HTTP GET request to the phone device.
+ *
+ * @method ajaxPhoneDtmf
+ * @param {string} username The username that send dtmf tone
+ * @param {object} req The client request
+ * @param {object} res The client response
+ */
+function ajaxPhoneDtmf(username, req, res) {
+  try {
+    // check parameters
+    if (typeof username !== 'string' || typeof req !== 'object' || typeof res !== 'object') {
+      throw new Error('wrong parameters');
+    }
+
+    var tone = req.params.tone;
+    var exten = req.params.endpointId;
+    var extenIp = compAstProxy.getExtensionIp(exten);
+    var extenAgent = compAstProxy.getExtensionAgent(exten);
+    var serverHostname = compConfigManager.getServerHostname();
+
+    // adapt "#" tone based on phone user agent
+    if (tone === '#' &&
+      (extenAgent.toLowerCase().indexOf('yealink') > -1 || extenAgent.toLowerCase().indexOf('sangoma') > -1)) {
+
+      tone = 'POUND';
+    } else if (tone === '#' && extenAgent.toLowerCase().indexOf('snom') > -1) {
+      tone = '%23';
+    }
+
+    // get the url to call to originate the new call. If the url is an empty
+    // string, the phone is not supported, so the call fails
+    var url = compConfigManager.getDtmfUrlFromAgent(extenAgent);
+
+    if (typeof url === 'string' && url !== '') {
+
+      // the credential to access the phone via url
+      var phoneUser = compUser.getPhoneWebUser(username, exten);
+      var phonePass = compUser.getPhoneWebPass(username, exten);
+
+      // replace the parameters of the url template
+      url = url.replace(/\$SERVER/g, serverHostname);
+      url = url.replace(/\$PHONE_IP/g, extenIp);
+      url = url.replace(/\$PHONE_USER/g, phoneUser);
+      url = url.replace(/\$PHONE_PASS/g, phonePass);
+      url = url.replace(/\$TONE/g, tone);
+
+      httpReq.get(url, function(httpResp) {
+        try {
+          if (httpResp.statusCode === 200) {
+            logger.info(IDLOG, 'dtmf: sent HTTP GET to the phone (' + extenAgent + ') ' + exten + ' ' + extenIp +
+              ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
+            logger.info(IDLOG, url);
+            res.send(200, {
+              phoneRespStatusCode: httpResp.statusCode
+            });
+
+          } else {
+            logger.warn(IDLOG, 'dtmf: sent HTTP GET to the phone (' + extenAgent + ') ' + exten + ' ' + extenIp +
+              ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
+            logger.warn(IDLOG, url);
+            res.send(httpResp.statusCode, {
+              phoneRespStatusCode: httpResp.statusCode
+            });
+          }
+        } catch (err) {
+          logger.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
+
+      }).on('error', function(err1) {
+        logger.error(IDLOG, err1.message);
+        compUtil.net.sendHttp500(IDLOG, res, err1.message);
+      });
+
+    } else {
+      logger.warn(IDLOG, 'failed send dtmf via HTTP GET request sent to the phone ' + exten + ' ' + extenIp +
+        ' by the user "' + username + '": ' + extenAgent + ' is not supported');
+      compUtil.net.sendHttp500(IDLOG, res, 'the phone "' + extenAgent + '" is not supported');
+    }
+
+  } catch (error) {
+    logger.error(IDLOG, error.stack);
+    compUtil.net.sendHttp500(IDLOG, res, error.toString());
+  }
+}
+
+/**
  * Hold/Unhold current conversation sending an HTTP GET request to the phone device.
  *
  * @method ajaxPhoneHoldUnhold
- * @param {string} username The username that originate the call
+ * @param {string} username The username that hold the conversation
  * @param {object} req The client request
  * @param {object} res The client response
  */

@@ -774,6 +774,38 @@ function getCallUrlFromAgent(agent) {
 
 /**
  * It sequentially test a match of specified agent with the keys of _phoneUrls_
+ * object. If the match exists than returns the url phone to sedn dtmf tone to the conversation,
+ * otherwise it returns an empty string. The keys of _phoneUrls_ are sequentially
+ * checked, so they must be present from the more restrictive to the least.
+ *
+ * @method getDtmfUrlFromAgent
+ * @param  {string} agent The phone user agent
+ * @return {string} The phone url used to send dtmf tone to the conversation
+ */
+function getDtmfUrlFromAgent(agent) {
+  try {
+    // check parameter
+    if (typeof agent !== 'string') {
+      throw new TypeError('wrong parameter: ' + agent);
+    }
+
+    var re;
+    for (re in phoneUrls) {
+      // case insensitive 'i'
+      if (agent.search(new RegExp(re, 'i')) >= 0) {
+        return phoneUrls[re].urls.dtmf;
+      }
+    }
+    return '';
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+    return '';
+  }
+}
+
+/**
+ * It sequentially test a match of specified agent with the keys of _phoneUrls_
  * object. If the match exists than returns the url phone to hold/unhold the conversation,
  * otherwise it returns an empty string. The keys of _phoneUrls_ are sequentially
  * checked, so they must be present from the more restrictive to the least.
@@ -801,6 +833,37 @@ function getHoldUnholdUrlFromAgent(agent) {
   } catch (err) {
     logger.error(IDLOG, err.stack);
     return '';
+  }
+}
+
+/**
+ * Returns true if the specified phone supports dtmf by HTTP api.
+ * It sequentially test a match of specified agent with the keys of _phoneUrls_
+ * object. If the match exists than returns a true value, false otherwise.
+ *
+ * @method phoneSupportDtmfHttpApi
+ * @param  {string}  agent The phone user agent
+ * @return {boolean} True is the phone supports HTTP api.
+ */
+function phoneSupportDtmfHttpApi(agent) {
+  try {
+    // check parameter
+    if (typeof agent !== 'string') {
+      throw new TypeError('wrong parameter');
+    }
+
+    var re;
+    for (re in phoneUrls) {
+      // case insensitive 'i'
+      if (agent.search(new RegExp(re, 'i')) >= 0 && phoneUrls[re].urls.dtmf) {
+        return true;
+      }
+    }
+    return false;
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+    return false;
   }
 }
 
@@ -1718,6 +1781,7 @@ exports.getUserSettings = getUserSettings;
 exports.setCompAstProxy = setCompAstProxy;
 exports.configPhoneUrls = configPhoneUrls;
 exports.getServerHostname = getServerHostname;
+exports.getDtmfUrlFromAgent = getDtmfUrlFromAgent;
 exports.setCompComNethctiWs = setCompComNethctiWs;
 exports.getCallUrlFromAgent = getCallUrlFromAgent;
 exports.phoneSupportHttpApi = phoneSupportHttpApi;
@@ -1732,6 +1796,7 @@ exports.getQueueAutoLogoutConf = getQueueAutoLogoutConf;
 exports.setQueueAutoLogoutConf = setQueueAutoLogoutConf;
 exports.getAutoDndOffLoginConf = getAutoDndOffLoginConf;
 exports.getAutoDndOnLogoutConf = getAutoDndOnLogoutConf;
+exports.phoneSupportDtmfHttpApi = phoneSupportDtmfHttpApi;
 exports.getAllUserEndpointsJSON = getAllUserEndpointsJSON;
 exports.getHoldUnholdUrlFromAgent = getHoldUnholdUrlFromAgent;
 exports.getPostitNotificationSmsTo = getPostitNotificationSmsTo;
