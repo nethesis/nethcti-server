@@ -9,6 +9,7 @@ BuildRequires: nethserver-devtools
 BuildRequires: nodejs >= 6.9.1
 Requires: nodejs >= 6.9.1
 Requires: nethserver-nethvoice13
+Requires: nethserver-janus
 Conflicts: nethcti-server
 AutoReq: no
 
