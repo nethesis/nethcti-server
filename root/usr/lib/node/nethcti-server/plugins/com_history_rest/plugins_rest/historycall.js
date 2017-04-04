@@ -209,10 +209,10 @@ function setCompAuthorization(ca) {
         *
         * 1. [`historycall/down_callrec/:id`](#down_callrecget)
         * 1. [`historycall/listen_callrec/:id`](#listen_callrecget)
-        * 1. [`historycall/day/:endpoint/:day`](#dayget)
-        * 1. [`historycall/day/:endpoint/:day/:filter`](#day_filterget)
-        * 1. [`historycall/interval/:endpoint/:from/:to`](#intervalget)
-        * 1. [`historycall/interval/:endpoint/:from/:to/:filter`](#interval_filterget)
+        * 1. [`historycall/day/:endpoint/:day[?limit=n&offset=n]`](#dayget)
+        * 1. [`historycall/day/:endpoint/:day/:filter[?limit=n&offset=n]`](#day_filterget)
+        * 1. [`historycall/interval/:endpoint/:from/:to[?limit=n&offset=n]`](#intervalget)
+        * 1. [`historycall/interval/:endpoint/:from/:to/:filter[?limit=n&offset=n]`](#interval_filterget)
         *
         * ---
         *
@@ -234,11 +234,11 @@ function setCompAuthorization(ca) {
         *
         * ---
         *
-        * ### <a id="dayget">**`historycall/day/:endpoint/:day`**</a>
+        * ### <a id="dayget">**`historycall/day/:endpoint/:day[?limit=n&offset=n]`**</a>
         *
         * Returns the history call of the day _"day"_ and endpoint _"endpoint"_. E.g. the endpoint can be
         * the extension number. Date must be expressed in YYYYMMDD format. If an error occurs an HTTP 500
-        * response is returned.
+        * response is returned. Support the pagination with the limit and offset parameters.
         *
         * Example JSON response:
         *
@@ -262,11 +262,12 @@ function setCompAuthorization(ca) {
         *
         * ---
         *
-        * ### <a id="day_filterget">**`historycall/day/:endpoint/:day/:filter`**</a>
+        * ### <a id="day_filterget">**`historycall/day/:endpoint/:day/:filter[?limit=n&offset=n]`**</a>
         *
         * Returns the history call of the day _"day"_ and endpoint _"endpoint"_ filtering by _"filter"_.
         * E.g. the endpoint can be the extension number. Date must be expressed in YYYYMMDD format. If an
-        * error occurs an HTTP 500 response is returned.
+        * error occurs an HTTP 500 response is returned. Support the pagination with the limit and offset
+        * parameters.
         *
         * Example JSON response:
         *
@@ -290,11 +291,12 @@ function setCompAuthorization(ca) {
         *
         * ---
         *
-        * ### <a id="intervalget">**`historycall/interval/:endpoint/:from/:to`**</a>
+        * ### <a id="intervalget">**`historycall/interval/:endpoint/:from/:to[?limit=n&offset=n]`**</a>
         *
         * Returns the history call between _"from"_ date to _"to"_ date for the endpoint _"endpoint"_.
         * E.g. the endpoint can be the extension number. Dates must be expressed in YYYYMMDD format.
-        * If an error occurs an HTTP 500 response is returned.
+        * If an error occurs an HTTP 500 response is returned. Support the pagination with the limit and
+        * offset parameters.
         *
         * Example JSON response:
         *
@@ -318,11 +320,12 @@ function setCompAuthorization(ca) {
         *
         * ---
         *
-        * ### <a id="interval_filterget">**`historycall/interval/:endpoint/:from/:to/:filter`**</a>
+        * ### <a id="interval_filterget">**`historycall/interval/:endpoint/:from/:to/:filter[?limit=n&offset=n]`**</a>
         *
         * Returns the history call between _"from"_ date to _"to"_ date for the endpoint _"endpoint"_
         * filtering by _"filter"_. E.g. the endpoint can be the extension number. Date must be expressed
         * in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
+        * Support the pagination with the limit and offset parameters.
         *
         * Example JSON response:
         *
@@ -381,16 +384,16 @@ function setCompAuthorization(ca) {
                 *
                 *   @param {string} listen_callrec/:id To listen the record audio file of a call
                 *
-                *   @param {string} day/:endpoint/:day To get the history call of the day and endpoint. The date must be expressed
+                *   @param {string} day/:endpoint/:day[?limit=n&offset=n] To get the history call of the day and endpoint. The date must be expressed
                 *                                      in YYYYMMDD format
                 *
-                *   @param {string} day/:endpoint/:day/:filter To get the history call of the day and endpoint filtering by filter.
+                *   @param {string} day/:endpoint/:day/:filter[?limit=n&offset=n] To get the history call of the day and endpoint filtering by filter.
                 *                                              The date must be expressed in YYYYMMDD format
                 *
-                *   @param {string} interval/:endpoint/:from/:to To get the history call between _"from"_ date to _"to"_ date.
+                *   @param {string} interval/:endpoint/:from/:to[?limit=n&offset=n] To get the history call between _"from"_ date to _"to"_ date.
                 *                                                The date must be expressed in YYYYMMDD format
                 *
-                *   @param {string} interval/:endpoint/:from/:to/:filter To get the history call between _"from"_ date to _"to"_
+                *   @param {string} interval/:endpoint/:from/:to/:filter[?limit=n&offset=n] To get the history call between _"from"_ date to _"to"_
                 *                                                        date filtering by filter. The date must be expressed in YYYYMMDD format
                 */
                 'get' : [
@@ -686,8 +689,8 @@ function setCompAuthorization(ca) {
             /**
             * Search the history call for the specified day, endpoint and optional filter by the following REST api:
             *
-            *     day/:endpoint/:day
-            *     day/:endpoint/:day/:filter
+            *     day/:endpoint/:day[?limit=n&offset=n]
+            *     day/:endpoint/:day/:filter[?limit=n&offset=n]
             *
             * @method day
             * @param {object} req The client request.
@@ -710,8 +713,8 @@ function setCompAuthorization(ca) {
             /**
             * Search the history call for the specified interval, endpoint and optional filter by the following REST api:
             *
-            *     interval/:endpoint/:from/:to
-            *     interval/:endpoint/:from/:to/:filter
+            *     interval/:endpoint/:from/:to[?limit=n&offset=n]
+            *     interval/:endpoint/:from/:to/:filter[?limit=n&offset=n]
             *
             * @method interval
             * @param {object}   req  The client request.
@@ -770,7 +773,7 @@ function setCompAuthorization(ca) {
                     if (req.params.filter) { obj.filter = req.params.filter; }
 
                     // use the history component
-                    compHistory.getHistoryCallInterval(obj, function (err1, results) {
+                    compHistory.getHistoryCallInterval(obj, req.params.offset, req.params.limit, function (err1, results) {
                         try {
                             if (err1) { throw err1; }
                             else {

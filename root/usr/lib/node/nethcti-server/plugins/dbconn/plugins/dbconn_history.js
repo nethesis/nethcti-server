@@ -132,9 +132,11 @@ function getAllUserHistorySmsInterval(data, cb) {
 *   @param {string}  [data.filter]     The filter to be used in the _src, clid_ and _dst_ fields. If it is
 *                                      omitted the function treats it as '%' string
 *   @param {string}  [data.privacyStr] The sequence to be used to hide the numbers to respect the privacy
+*   @param {integer} [offset]          The results offset
+*   @param {integer} [limit]           The results limit
 * @param {function} cb The callback function
 */
-function getHistoryCallInterval(data, cb) {
+function getHistoryCallInterval(data, offset, limit, cb) {
     try {
         // check parameters
         if (typeof data !== 'object'
@@ -177,7 +179,7 @@ function getHistoryCallInterval(data, cb) {
         }
 
         // search
-        compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].findAll({
+        compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].findAndCountAll({
             where: [
                 '(channel LIKE ? OR dstchannel LIKE ?) AND ' +
                 '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
@@ -186,7 +188,9 @@ function getHistoryCallInterval(data, cb) {
                 data.from,     data.to,
                 data.filter,   data.filter,   data.filter
             ],
-            attributes: attributes
+            attributes: attributes,
+            offset: (offset ? parseInt(offset) : 0),
+            limit: (limit ? parseInt(limit) : null)
 
         }).then(function (results) {
             logger.info(IDLOG, results.length + ' results searching history call interval between ' +

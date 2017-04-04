@@ -123,23 +123,25 @@ function setCompAstProxy(comp) {
 *   @param {string}  data.to        The ending date of the interval in the YYYYMMDD format (e.g. 20130528)
 *   @param {boolean} data.recording True if the data about recording audio file must be returned
 *   @param {string}  [data.filter]  The filter to be used
+*   @param {integer}  [offset]   The results offset
+*   @param {integer}  [limit]    The results limit
 * @param {function}  cb The callback function
 */
-function getHistoryCallInterval(data, cb) {
+function getHistoryCallInterval(data, offset, limit, cb) {
     try {
         // check parameters
         if (    typeof data        !== 'object'   || typeof data.recording !== 'boolean'
             ||  typeof cb          !== 'function' || typeof data.to        !== 'string'
             ||  typeof data.from   !== 'string'   || typeof data.endpoint  !== 'string'
             || (typeof data.filter !== 'string'   && data.filter           !== undefined)) {
-console.log(data);
+
             throw new Error('wrong parameters');
         }
 
         logger.info(IDLOG, 'search history call between ' + data.from + ' to ' + data.to + ' for ' +
                            'endpoint ' + data.endpoint + ' and filter ' + (data.filter ? data.filter : '""') +
                            (data.recording ? ' with recording data' : '') );
-        dbconn.getHistoryCallInterval(data, cb);
+        dbconn.getHistoryCallInterval(data, offset, limit, cb);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
