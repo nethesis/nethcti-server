@@ -1,0 +1,16 @@
+    "history_call": \{
+        "dbhost":     "localhost",
+        "dbport":     "/var/lib/mysql/mysql.sock",
+        "dbtype":     "mysql",
+        "dbuser":     "freepbxuser",
+        "dbpassword": "{$cdrdb_pwd}",
+        "dbname":     "asteriskcdrdb"
+    \},
+    "cel": \{
+        "dbhost":     "localhost",
+        "dbport":     "/var/lib/mysql/mysql.sock",
+        "dbtype":     "mysql",
+        "dbuser":     "freepbxuser",
+        "dbpassword": "{$cdrdb_pwd}",
+        "dbname":     "asteriskcdrdb"
+    \},

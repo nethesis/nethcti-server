@@ -12,6 +12,7 @@
     "moment": "2.17.1",
     "mssql": "3.3.0",
     "mysql": "2.13.0",
+    "node-static": "0.7.9",
     "pg": "6.1.2",
     "restify": "4.3.0",
     "sequelize": "3.30.2",
