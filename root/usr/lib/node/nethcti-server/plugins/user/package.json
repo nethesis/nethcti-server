@@ -5,8 +5,7 @@
   "plugin": {
     "consumes": [
       "logger",
-      "astProxy",
-      "authorization"
+      "astProxy"
     ],
     "provides": [
       "user"

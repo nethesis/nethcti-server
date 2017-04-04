@@ -480,26 +480,24 @@ function configPrivacy(path) {
   try {
     // check parameter
     if (typeof path !== 'string') {
-      throw new TypeError('wrong parameter');
+      throw new TypeError('wrong parameter: ' + path);
     }
 
     // check file presence
     if (!fs.existsSync(path)) {
-      throw new Error(path + ' doesn\'t exist');
+      throw new Error(path + ' does not exist');
     }
 
     // read configuration file
     var json = require(path);
 
     if (json.privacy_numbers) {
-      // set the privacy for all REST plugins
       setAllRestPluginsPrivacy(json.privacy_numbers);
-
     } else {
-      logger.warn(IDLOG, 'no privacy string has been specified in JSON file ' + path);
+      logger.warn(IDLOG, 'wrong ' + path + ': no "privacy_numbers" key');
     }
 
-    logger.info(IDLOG, 'privacy configuration by file ' + path + ' ended');
+    logger.info(IDLOG, 'configuration privacy done by ' + path);
 
   } catch (err) {
     logger.error(IDLOG, err.stack);

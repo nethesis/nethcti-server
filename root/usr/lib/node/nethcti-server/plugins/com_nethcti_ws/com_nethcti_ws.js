@@ -762,14 +762,14 @@ function extenChanged(exten) {
       // Other cases
       // all the calls are obfuscated except those concerning the user to send to
       // if (compAuthorization.isPrivacyEnabled(username) === true &&
-      //   compAuthorization.authorizeOpAdminQueuesUser(username) === false &&
+      //   compAuthorization.authorizeAdminQueuesUser(username) === false &&
       //   compAuthorization.verifyUserEndpointExten(username, exten.getExten()) === false &&
       //   wsServer.sockets.sockets[sockid]) {
 
       //   wsServer.sockets.sockets[sockid].emit(EVT_EXTEN_UPDATE, exten.toJSON(privacyStrReplace, privacyStrReplace));
 
       // } else if (compAuthorization.isPrivacyEnabled(username) === true &&
-      //   compAuthorization.authorizeOpAdminQueuesUser(username) === true &&
+      //   compAuthorization.authorizeAdminQueuesUser(username) === true &&
       //   compAuthorization.verifyUserEndpointExten(username, exten.getExten()) === false &&
       //   wsServer.sockets.sockets[sockid]) {
 
@@ -1488,9 +1488,9 @@ function loginHdlr(socket, obj) {
       // }
 
       // // if the user has the queues permission, than he will receive the asterisk events that affects the queues
-      // if (compAuthorization.authorizeOpQueuesUser(obj.accessKeyId) === true || compAuthorization.authorizeOpAdminQueuesUser(obj.accessKeyId) === true) {
+      // if (compAuthorization.authorizeOpQueuesUser(obj.accessKeyId) === true || compAuthorization.authorizeAdminQueuesUser(obj.accessKeyId) === true) {
 
-      //   if (compAuthorization.isPrivacyEnabled(obj.accessKeyId) === true && compAuthorization.authorizeOpAdminQueuesUser(obj.accessKeyId) === false) {
+      //   if (compAuthorization.isPrivacyEnabled(obj.accessKeyId) === true && compAuthorization.authorizeAdminQueuesUser(obj.accessKeyId) === false) {
       //     // join the user to the websocket room to receive the asterisk events that affects the queues, using hide numbers
       //     socket.join(WS_ROOM.QUEUES_AST_EVT_PRIVACY);
 
