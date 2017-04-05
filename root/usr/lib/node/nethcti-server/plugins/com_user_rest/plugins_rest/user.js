@@ -311,23 +311,24 @@ function setCompUtil(comp) {
       me: function(req, res, next) {
         try {
           var username = req.headers.authorization_user;
-          var results = compUser.getUserInfoJSON(username);
+          var result = compUser.getUserInfoJSON(username);
+          result.profile = compAuthorization.getUserProfileJSON(username);
 
-          if (typeof results === 'object') {
+          if (typeof result === 'object') {
 
             var defExt = compConfigManager.getDefaultUserExtensionConf(username);
             var i, defextObj;
 
-            // create default_device key to return with results
-            for (i = 0; i < results.endpoints[compUser.ENDPOINT_TYPES.extension].length; i++) {
-              if (results.endpoints[compUser.ENDPOINT_TYPES.extension][i].id === defExt) {
-                defextObj = results.endpoints[compUser.ENDPOINT_TYPES.extension][i];
+            // create default_device key to return with result
+            for (i = 0; i < result.endpoints[compUser.ENDPOINT_TYPES.extension].length; i++) {
+              if (result.endpoints[compUser.ENDPOINT_TYPES.extension][i].id === defExt) {
+                defextObj = result.endpoints[compUser.ENDPOINT_TYPES.extension][i];
                 break;
               }
             }
-            results.default_device = defextObj;
+            result.default_device = defextObj;
             logger.info(IDLOG, 'send user info to user "' + username + '"');
-            res.send(200, results);
+            res.send(200, result);
           } else {
             var strerr = 'sending user info to user "' + username + '": wrong format';
             logger.error(IDLOG, strerr);

@@ -96,15 +96,6 @@ var logger = console;
 var compAstProxy;
 
 /**
- * The authorization architect component.
- *
- * @property compAuthorization
- * @type object
- * @private
- */
-var compAuthorization;
-
-/**
  * The event emitter.
  *
  * @property emitter
@@ -157,21 +148,6 @@ function setCompAstProxy(comp) {
   try {
     compAstProxy = comp;
     logger.info(IDLOG, 'set asterisk proxy architect component');
-  } catch (err) {
-    logger.error(IDLOG, err.stack);
-  }
-}
-
-/**
- * Set the authorization architect component.
- *
- * @method setCompAuthorization
- * @param {object} comp The authorization architect component.
- */
-function setCompAuthorization(comp) {
-  try {
-    compAuthorization = comp;
-    logger.info(IDLOG, 'set authorization architect component');
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
@@ -610,7 +586,8 @@ function getAllUserExtensions(username) {
     }
     if (users[username]) {
       var endpoints = users[username].getAllEndpoints();
-      return Object.keys(endpoints[endpointTypes.TYPES.extension]);
+      return Object.keys(endpoints[endpointTypes.TYPES.extension])
+        .concat(Object.keys(endpoints[endpointTypes.TYPES.mainextension]));
 
     } else {
       logger.warn(IDLOG, 'getting all user extensions: user "' + username + '" not exists');
@@ -817,7 +794,6 @@ function getUserInfoJSON(username) {
     var i, result;
     if (users[username]) {
       result = users[username].toJSON();
-      result.profile = compAuthorization.getUserProfileJSON(username);
     }
     // add model and type for extension endpoints
     for (i = 0; i < result.endpoints[endpointTypes.TYPES.mainextension].length; i++) {
@@ -1043,56 +1019,6 @@ function getConfigurations(userid) {
 }
 
 /**
- * Sets an authorization to the specified user.
- *
- * @method setAuthorization
- * @param {string} userid The user identifier
- * @param {string} typeAutho The type of the authorization
- * @param {string|array} value The value of the autorization. It can be "true" or "false"
- *                              or an array of value as in the case of customer card or
- *                              streaming authorizations.
- */
-function setAuthorization(userid, typeAutho, value) {
-  try {
-    if (typeof userid !== 'string' || typeof typeAutho !== 'string' || value === undefined) {
-      throw new Error('wrong parameters');
-    }
-
-    if (users[userid] !== undefined) { // the user exists
-      users[userid].setAuthorization(typeAutho, value);
-      logger.info(IDLOG, 'authorization ' + typeAutho + ' has been set for user ' + userid);
-    } else {
-      logger.error(IDLOG, 'setting authorization of unknown user "' + userid + '"');
-    }
-  } catch (err) {
-    logger.error(IDLOG, err.stack);
-  }
-}
-
-/**
- * Gets an authorization of the specified user.
- *
- * @method getAuthorization
- * @param {string} userid The user identifier
- * @return {object} The authorization of the user or undefined value if the user doesn\'t exist.
- */
-function getAuthorization(userid, type) {
-  try {
-    if (typeof userid !== 'string' || typeof type !== 'string') {
-      throw new Error('wrong parameters');
-    }
-
-    if (users[userid] !== undefined) { // the user exits
-      return users[userid].getAuthorization(type);
-    } else {
-      logger.warn(IDLOG, 'getting authorization "' + type + '" of unknown user "' + userid + '"');
-    }
-  } catch (err) {
-    logger.error(IDLOG, err.stack);
-  }
-}
-
-/**
  * Emit an event. It's the same of nodejs _events.EventEmitter.emit_ method.
  *
  * @method emit
@@ -1128,8 +1054,8 @@ function on(type, cb) {
  * Check if the user has an extension endpoint.
  *
  * @method hasExtensionEndpoint
- * @param  {string}  username The name of the user to check
- * @param  {string}  exten    The extension identifier
+ * @param {string} username The name of the user to check
+ * @param {string} exten The extension identifier
  * @return True if the user has the extension endpoint, false otherwise.
  */
 function hasExtensionEndpoint(username, exten) {
@@ -1144,12 +1070,11 @@ function hasExtensionEndpoint(username, exten) {
       return false;
     }
     var i;
-    var obj = users[username].getAllEndpoints();
-    obj = Object.keys(obj[endpointTypes.TYPES.extension]);
-    for (i = 0; i < obj.length; i++) {
-      if (obj[i] === exten) {
-        return true;
-      }
+    var endpoints = users[username].getAllEndpoints();
+    if (endpoints[endpointTypes.TYPES.extension][exten] ||
+      endpoints[endpointTypes.TYPES.mainextension][exten]) {
+
+      return true;
     }
     return false;
 
@@ -1163,8 +1088,8 @@ function hasExtensionEndpoint(username, exten) {
  * Check if the user has the cellphone endpoint.
  *
  * @method hasCellphoneEndpoint
- * @param  {string}  username The name of the user to check
- * @param  {string}  exten    The cellphone identifier
+ * @param {string} username The name of the user to check
+ * @param {string} exten The cellphone identifier
  * @return True if the user has the cellphone endpoint, false otherwise.
  */
 function hasCellphoneEndpoint(username, cellphone) {
@@ -1179,9 +1104,8 @@ function hasCellphoneEndpoint(username, cellphone) {
       return false;
     }
     var cel;
-    var obj = users[username].getAllEndpoints();
-    obj = obj[endpointTypes.TYPES.cellphone];
-    for (cel in obj) {
+    var endpoints = getAllEndpointsCellphone(username);
+    for (cel in endpoints) {
       if (cel === cellphone) {
         return true;
       }
@@ -1507,13 +1431,21 @@ function getAllEndpointsExtension(username) {
 
     // check the user existence
     if (typeof users[username] !== 'object') {
-      logger.warn(IDLOG, 'gettings all the extension endpoints: the user "' + username + '" doesn\'t exist');
+      logger.warn(IDLOG, 'gettings all the extension endpoints: the user "' + username + '" does not exist');
       return {};
     }
 
     // gets all endpoints, extracts the extension endpoints
     var endpoints = users[username].getAllEndpoints();
-    return endpoints[endpointTypes.TYPES.extension];
+    var result = {};
+    var e;
+    for (e in endpoints[endpointTypes.TYPES.mainextension]) {
+      result[e] = endpoints[endpointTypes.TYPES.mainextension][e];
+    }
+    for (e in endpoints[endpointTypes.TYPES.extension]) {
+      result[e] = endpoints[endpointTypes.TYPES.extension][e];
+    }
+    return result;
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
@@ -1533,8 +1465,7 @@ function getAllUsersEndpointsExtension() {
     var username, endpoints;
 
     for (username in users) {
-      endpoints = users[username].getAllEndpoints();
-      res[username] = endpoints[endpointTypes.TYPES.extension];
+      res[username] = getAllEndpointsExtension(username);
     }
     return res;
 
@@ -1560,12 +1491,10 @@ function getUsersUsingEndpointExtension(exten) {
 
     var result = [];
 
-    var extenKey, userExtens, username, endpoints;
+    var extenKey, userExtens, username;
     for (username in users) {
 
-      // get all the extension endpoints of the user
-      endpoints = users[username].getAllEndpoints();
-      userExtens = endpoints[endpointTypes.TYPES.extension];
+      userExtens = getAllEndpointsExtension(username);
 
       for (extenKey in userExtens) {
 
@@ -1701,12 +1630,9 @@ exports.getPresenceList = getPresenceList;
 exports.getPhoneWebPass = getPhoneWebPass;
 exports.getEndpointsJSON = getEndpointsJSON;
 exports.getVoicemailList = getVoicemailList;
-exports.setAuthorization = setAuthorization;
-exports.getAuthorization = getAuthorization;
 exports.getConfigurations = getConfigurations;
 exports.setConfigurations = setConfigurations;
 exports.getAllEndpointsEmail = getAllEndpointsEmail;
-exports.setCompAuthorization = setCompAuthorization;
 exports.hasExtensionEndpoint = hasExtensionEndpoint;
 exports.hasCellphoneEndpoint = hasCellphoneEndpoint;
 exports.hasVoicemailEndpoint = hasVoicemailEndpoint;

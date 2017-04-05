@@ -135,10 +135,17 @@ function config(obj) {
       delete mapUserProfile[u].endpoints;
     }
     // initialize profiles. The keys are the profile "id" and the value the profile object itself
-    var json = JSON.parse(fs.readFileSync(obj.profiles, 'utf8'));
-    var i;
-    for (i = 0; i < json.length; i++) {
-      profiles[json[i].id] = json[i];
+    profiles = JSON.parse(fs.readFileSync(obj.profiles, 'utf8'));
+    // fix the permission keys to be an object instead of an array
+    var i, mp, id, temp;
+    for (id in profiles) {
+      for (mp in profiles[id].macro_permissions) {
+        temp = {};
+        for (i = 0; i < profiles[id].macro_permissions[mp].permissions.length; i++) {
+          temp[profiles[id].macro_permissions[mp].permissions[i].name] = profiles[id].macro_permissions[mp].permissions[i];
+        }
+        profiles[id].macro_permissions[mp].permissions = temp;
+      }
     }
     logger.info(IDLOG, 'configuration done by ' + obj.users + ' ' + obj.profiles);
 
@@ -192,16 +199,16 @@ function setCompDbconn(comp) {
  * Set user module to be used.
  *
  * @method setCompUser
- * @param {object} module The user module
+ * @param {object} comp The user module
  * @private
  */
-function setCompUser(module) {
+function setCompUser(comp) {
   try {
     // check parameter
-    if (typeof module !== 'object') {
+    if (typeof comp !== 'object') {
       throw new TypeError('wrong parameter');
     }
-    compUser = module;
+    compUser = comp;
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
@@ -281,7 +288,12 @@ function authorizeRecordingUser(username) {
       throw new Error('wrong parameter');
     }
 
-    // return authorizeUser(authorizationTypes.TYPES.recording, username);
+    var profid = getUserProfileId(username);
+
+    return (
+      profiles[profid].macro_permissions.settings.value === true &&
+      profiles[profid].macro_permissions.settings.permissions.recording.value === true
+    );
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
@@ -327,7 +339,12 @@ function authorizeAdminRecordingUser(username) {
       throw new Error('wrong parameter');
     }
 
-    // return authorizeUser(authorizationTypes.TYPES.admin_recording, username);
+    var profid = getUserProfileId(username);
+
+    return (
+      profiles[profid].macro_permissions.presence_panel.value === true &&
+      profiles[profid].macro_permissions.presence_panel.permissions.ad_recording.value === true
+    );
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
@@ -385,19 +402,23 @@ function authorizeAdminPostitUser(username) {
 /**
  * Returns true if the specified user has the administration queues authorization.
  *
- * @method authorizeOpAdminQueuesUser
+ * @method authorizeAdminQueuesUser
  * @param  {string}  username The username
  * @return {boolean} True if the user has the administration queues authorization.
  */
-function authorizeOpAdminQueuesUser(username) {
+function authorizeAdminQueuesUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
       throw new Error('wrong parameter');
     }
 
-    // return authorizeUser(authorizationTypes.TYPES.admin_queues, username);
+    var profid = getUserProfileId(username);
 
+    return (
+      profiles[profid].macro_permissions.queue_agent.value === true &&
+      profiles[profid].macro_permissions.queue_agent.permissions.ad_queue_agent.value === true
+    );
   } catch (err) {
     logger.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
@@ -455,7 +476,7 @@ function authorizeAdminOffhourUser(username) {
  * Returns true if the specified user has the administration hangup authorization.
  *
  * @method authorizeAdminHangupUser
- * @param  {string}  username The username
+ * @param {string} username The username
  * @return {boolean} True if the user has the administration hangup authorization.
  */
 function authorizeAdminHangupUser(username) {
@@ -465,7 +486,12 @@ function authorizeAdminHangupUser(username) {
       throw new Error('wrong parameter');
     }
 
-    // return authorizeUser(authorizationTypes.TYPES.admin_hangup, username);
+    var profid = getUserProfileId(username);
+
+    return (
+      profiles[profid].macro_permissions.presence_panel.value === true &&
+      profiles[profid].macro_permissions.presence_panel.permissions.hangup.value === true
+    );
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
@@ -545,21 +571,45 @@ function authorizeSmsUser(username) {
 }
 
 /**
+ * Returns the profile number identifier.
+ *
+ * @method getUserProfileId
+ * @param {string} username The username
+ * @return {string} The profile number identifier.
+ * @private
+ */
+function getUserProfileId(username) {
+  try {
+    // check parameter
+    if (typeof username !== 'string') {
+      throw new Error('wrong parameter: ' + username);
+    }
+    return mapUserProfile[username].profile_id;
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Returns true if the specified user has the privacy enabled.
  *
  * @method isPrivacyEnabled
- * @param  {string}  username The username
+ * @param {string} username The username
  * @return {boolean} True if the user has the privacy enabled.
  */
 function isPrivacyEnabled(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameter: ' + username);
     }
+    var profid = getUserProfileId(username);
 
-    // return authorizeUser(authorizationTypes.TYPES.privacy, username);
-
+    return (
+      profiles[profid].macro_permissions.settings.value === true &&
+      profiles[profid].macro_permissions.settings.permissions.privacy.value === true
+    );
   } catch (err) {
     logger.error(IDLOG, err.stack);
     // in the case of exception it returns true for security reasons
@@ -733,29 +783,6 @@ function authorizePhoneRedirectUser(username) {
 }
 
 /**
- * Returns true if the specified user has the authorization to the attended transfer calls.
- *
- * @method authorizeAttendedTransferUser
- * @param  {string}  username The username
- * @return {boolean} True if the user has the attended transfer calls authorization.
- */
-function authorizeAttendedTransferUser(username) {
-  try {
-    // check parameter
-    if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
-    }
-
-    // return authorizeUser(authorizationTypes.TYPES.attended_transfer, username);
-
-  } catch (err) {
-    logger.error(IDLOG, err.stack);
-    // in the case of exception it returns false for security reasons
-    return false;
-  }
-}
-
-/**
  * Returns true if the specified user has the administration transfer authorization.
  *
  * @method authorizeAdminTransferUser
@@ -769,7 +796,12 @@ function authorizeAdminTransferUser(username) {
       throw new Error('wrong parameter');
     }
 
-    // return authorizeUser(authorizationTypes.TYPES.admin_transfer, username);
+    var profid = getUserProfileId(username);
+
+    return (
+      profiles[profid].macro_permissions.presence_panel.value === true &&
+      profiles[profid].macro_permissions.presence_panel.permissions.transfer.value === true
+    );
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
@@ -949,31 +981,12 @@ function authorizeAdminParkingsUser(username) {
       throw new Error('wrong parameter');
     }
 
-    // return authorizeUser(authorizationTypes.TYPES.admin_parkings, username);
+    var profid = getUserProfileId(username);
 
-  } catch (err) {
-    logger.error(IDLOG, err.stack);
-    // in the case of exception it returns false for security reasons
-    return false;
-  }
-}
-
-/**
- * Returns true if the specified user has the authorization to answer
- * a call from any extension.
- *
- * @method authorizeAdminAnswerUser
- * @param  {string}  username The username
- * @return {boolean} True if the user has the admin_answer authorization.
- */
-function authorizeAdminAnswerUser(username) {
-  try {
-    // check parameter
-    if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
-    }
-
-    // return authorizeUser(authorizationTypes.TYPES.admin_answer, username);
+    return (
+      profiles[profid].macro_permissions.presence_panel.value === true &&
+      profiles[profid].macro_permissions.presence_panel.permissions.ad_parking.value === true
+    );
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
@@ -986,18 +999,23 @@ function authorizeAdminAnswerUser(username) {
  * Returns true if the specified user has the authorization to originate
  * a call from any extension.
  *
- * @method authorizeAdminCallUser
- * @param  {string}  username The username
+ * @method authorizeAdminPhoneUser
+ * @param {string} username The username
  * @return {boolean} True if the user has the admin_call authorization.
  */
-function authorizeAdminCallUser(username) {
+function authorizeAdminPhoneUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
       throw new Error('wrong parameter');
     }
 
-    // return authorizeUser(authorizationTypes.TYPES.admin_call, username);
+    var profid = getUserProfileId(username);
+
+    return (
+      profiles[profid].macro_permissions.presence_panel.value === true &&
+      profiles[profid].macro_permissions.presence_panel.permissions.ad_phone.value === true
+    );
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
@@ -1411,8 +1429,8 @@ function authorizedCustomerCards(username) {
  * Checks if the extension endpoint is owned by the specified user.
  *
  * @method verifyUserEndpointExten
- * @param  {string}  username The username
- * @param  {string}  endpoint The identifier of the extension endpoint
+ * @param {string} username The username
+ * @param {string} endpoint The identifier of the extension endpoint
  * @return {boolean} True if the extension endpoint is owned by the user, false otherwise.
  */
 function verifyUserEndpointExten(username, endpoint) {
@@ -1435,8 +1453,8 @@ function verifyUserEndpointExten(username, endpoint) {
  * Checks if the cellphone endpoint is owned by the specified user.
  *
  * @method verifyUserEndpointCellphone
- * @param  {string}  username The username
- * @param  {string}  endpoint The identifier of the cellphone endpoint
+ * @param {string} username The username
+ * @param {string} endpoint The identifier of the cellphone endpoint
  * @return {boolean} True if the cellphone endpoint is owned by the user, false otherwise.
  */
 function verifyUserEndpointCellphone(username, endpoint) {
@@ -1671,7 +1689,7 @@ exports.authorizeAdminSmsUser = authorizeAdminSmsUser;
 exports.authorizeOpQueuesUser = authorizeOpQueuesUser;
 exports.authorizeAdminCdrUser = authorizeAdminCdrUser;
 exports.getUserAuthorizations = getUserAuthorizations;
-exports.authorizeAdminCallUser = authorizeAdminCallUser;
+exports.authorizeAdminPhoneUser = authorizeAdminPhoneUser;
 exports.authorizeRecordingUser = authorizeRecordingUser;
 exports.authorizePhonebookUser = authorizePhonebookUser;
 exports.authorizeStreamingUser = authorizeStreamingUser;
@@ -1683,14 +1701,13 @@ exports.authorizeOpParkingsUser = authorizeOpParkingsUser;
 exports.authorizeAdminPostitUser = authorizeAdminPostitUser;
 exports.authorizeAdminHangupUser = authorizeAdminHangupUser;
 exports.authorizeAdminPickupUser = authorizeAdminPickupUser;
-exports.authorizeAdminAnswerUser = authorizeAdminAnswerUser;
 exports.getAllUsersAuthorizations = getAllUsersAuthorizations;
 exports.authorizeCustomerCardUser = authorizeCustomerCardUser;
 exports.authorizeOpExtensionsUser = authorizeOpExtensionsUser;
 exports.authorizeAdminOffhourUser = authorizeAdminOffhourUser;
 exports.authorizeAdminParkingsUser = authorizeAdminParkingsUser;
 exports.authorizeAdminTransferUser = authorizeAdminTransferUser;
-exports.authorizeOpAdminQueuesUser = authorizeOpAdminQueuesUser;
+exports.authorizeAdminQueuesUser = authorizeAdminQueuesUser;
 exports.authorizePhoneRedirectUser = authorizePhoneRedirectUser;
 exports.verifyUserEndpointVoicemail = verifyUserEndpointVoicemail;
 exports.authorizeLostQueueCallsUser = authorizeLostQueueCallsUser;
@@ -1702,6 +1719,5 @@ exports.authorizeAdminCallerNoteUser = authorizeAdminCallerNoteUser;
 exports.authorizeStreamingSourceUser = authorizeStreamingSourceUser;
 exports.getAuthorizedStreamingSources = getAuthorizedStreamingSources;
 exports.verifyOffhourUserAnnouncement = verifyOffhourUserAnnouncement;
-exports.authorizeAttendedTransferUser = authorizeAttendedTransferUser;
 exports.verifyOffhourListenAnnouncement = verifyOffhourListenAnnouncement;
 exports.getAuthorizedRemoteOperatorGroups = getAuthorizedRemoteOperatorGroups;

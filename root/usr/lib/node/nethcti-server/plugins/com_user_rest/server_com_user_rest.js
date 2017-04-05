@@ -132,50 +132,50 @@ function setCompUtil(comp) {
   }
 }
 
-// /**
-//  * Set the authorization architect component for all REST plugins.
-//  *
-//  * @method setCompAuthorization
-//  * @param {object} ca The architect authorization component
-//  * @static
-//  */
-// function setCompAuthorization(ca) {
-//   try {
-//     // check parameter
-//     if (typeof ca !== 'object') {
-//       throw new Error('wrong parameter');
-//     }
+/**
+ * Set the authorization architect component for all REST plugins.
+ *
+ * @method setCompAuthorization
+ * @param {object} comp The architect authorization component
+ * @static
+ */
+function setCompAuthorization(comp) {
+  try {
+    // check parameter
+    if (typeof comp !== 'object') {
+      throw new Error('wrong parameter');
+    }
 
-//     // set the authorization for all REST plugins
-//     setAllRestPluginsAuthorization(ca);
+    // set the authorization for all REST plugins
+    setAllRestPluginsAuthorization(comp);
 
-//   } catch (err) {
-//     logger.error(IDLOG, err.stack);
-//   }
-// }
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
 
-// /**
-//  * Called by _setCompAuthorization_ function for all REST plugins.
-//  *
-//  * @method setAllRestPluginsAuthorization
-//  * @private
-//  * @param ca The architect authorization component
-//  * @type {object}
-//  */
-// function setAllRestPluginsAuthorization(ca) {
-//   try {
-//     var key;
-//     for (key in plugins) {
+/**
+ * Called by _setCompAuthorization_ function for all REST plugins.
+ *
+ * @method setAllRestPluginsAuthorization
+ * @private
+ * @param comp The architect authorization component
+ * @type {object}
+ */
+function setAllRestPluginsAuthorization(comp) {
+  try {
+    var key;
+    for (key in plugins) {
 
-//       if (typeof plugins[key].setCompAuthorization === 'function') {
-//         plugins[key].setCompAuthorization(ca);
-//         logger.info(IDLOG, 'authorization component has been set for rest plugin ' + key);
-//       }
-//     }
-//   } catch (err) {
-//     logger.error(IDLOG, err.stack);
-//   }
-// }
+      if (typeof plugins[key].setCompAuthorization === 'function') {
+        plugins[key].setCompAuthorization(comp);
+        logger.info(IDLOG, 'authorization component has been set for rest plugin ' + key);
+      }
+    }
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
 
 /**
  * Executed by all REST request. It calls the appropriate REST plugin function.
@@ -349,4 +349,4 @@ exports.setLogger = setLogger;
 exports.setCompUtil = setCompUtil;
 exports.setCompUser = setCompUser;
 exports.setCompConfigManager = setCompConfigManager;
-// exports.setCompAuthorization = setCompAuthorization;
+exports.setCompAuthorization = setCompAuthorization;

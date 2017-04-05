@@ -59,15 +59,6 @@ exports.User = function(uname, na) {
   var presence;
 
   /**
-   * The user authorizations.
-   *
-   * @property authorizations
-   * @private
-   * @default {}
-   */
-  var authorizations = {};
-
-  /**
    * The endpoints of the user. The keys are the endpoint types
    * and the values are objects that contains endpoint identifiers
    * as keys and Endpoint objects as values.
@@ -119,16 +110,6 @@ exports.User = function(uname, na) {
    */
   function setPresence(status) {
     presence = status;
-  }
-
-  /**
-   * Returns all the user authorizations.
-   *
-   * @method getAllAuthorizations
-   * @return {object} All the user authorizations.
-   */
-  function getAllAuthorizations() {
-    return authorizations;
   }
 
   /**
@@ -216,54 +197,6 @@ exports.User = function(uname, na) {
   }
 
   /**
-   * Sets an authorization.
-   *
-   * @method setAuthorization
-   * @param {string} type The type of the authorization
-   * @param {string|array} value The value of the autorization. It can be "true" or "false"
-   *                              or an array of value as in the case of customer card or
-   *                              streaming authorizations.
-   */
-  function setAuthorization(type, value) {
-    // check parameters
-    if (typeof type !== 'string' || value === undefined) {
-      throw new Error('wrong parameters');
-    }
-
-    if (value === 'true') {
-      authorizations[type] = true;
-    } else if (value === 'false') {
-      authorizations[type] = false;
-    } else {
-      authorizations[type] = {};
-      var i;
-      for (i = 0; i < value.length; i++) {
-        authorizations[type][value[i]] = true;
-      }
-    }
-  }
-
-  /**
-   * Gets an authorization.
-   *
-   * @method getAuthorization
-   * @param {string} type The type of the authorization
-   * @return {object} The authorization requested. The key is the passed type
-   *                  and the value is the authorization or an undefined if it
-   *                  doesn't exist.
-   */
-  function getAuthorization(type) {
-    // check parameter
-    if (typeof type !== 'string') {
-      throw new Error('wrong parameter');
-    }
-
-    var obj = {};
-    obj[type] = authorizations[type];
-    return obj;
-  }
-
-  /**
    * Returns the readable string of the user.
    *
    * @method toString
@@ -311,9 +244,6 @@ exports.User = function(uname, na) {
     getUsername: getUsername,
     addEndpoint: addEndpoint,
     getAllEndpoints: getAllEndpoints,
-    setAuthorization: setAuthorization,
-    getAuthorization: getAuthorization,
-    getAllEndpointsJSON: getAllEndpointsJSON,
-    getAllAuthorizations: getAllAuthorizations
+    getAllEndpointsJSON: getAllEndpointsJSON
   };
 };

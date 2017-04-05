@@ -1654,7 +1654,7 @@ var compConfigManager;
           var username = req.headers.authorization_user;
 
           // check if the user has the administration operator panel queues authorization
-          if (compAuthorization.authorizeOpAdminQueuesUser(username) === true) {
+          if (compAuthorization.authorizeAdminQueuesUser(username) === true) {
 
             logger.info(IDLOG, 'requesting queues: user "' + username + '" has the "admin_queues" authorization');
           }
@@ -1670,7 +1670,7 @@ var compConfigManager;
 
           // check if the user has the privacy enabled
           if (compAuthorization.isPrivacyEnabled(username) === true &&
-            compAuthorization.authorizeOpAdminQueuesUser(username) === false) {
+            compAuthorization.authorizeAdminQueuesUser(username) === false) {
 
             queues = compAstProxy.getJSONQueues(privacyStrReplace);
           } else {
@@ -1839,44 +1839,43 @@ var compConfigManager;
           //   return;
           // }
 
-          // // get all extensions associated with the user
-          // var userExtensions = compUser.getAllEndpointsExtension(username);
-          // var extensions;
+          // get all extensions associated with the user
+          var userExtensions = compUser.getAllEndpointsExtension(username);
+          var e, extensions;
 
-          // // checks if the user has the privacy enabled. In case the user has the "privacy" and
-          // // "admin_queues" permission enabled, then the privacy is bypassed for all the calls
-          // // that pass through a queue, otherwise all the calls are obfuscated
-          // if (compAuthorization.isPrivacyEnabled(username) === true && compAuthorization.authorizeOpAdminQueuesUser(username) === false) {
+          // checks if the user has the privacy enabled. In case the user has the "privacy" and
+          // "admin queues" permission enabled, then the privacy is bypassed for all the calls
+          // that pass through a queue, otherwise all the calls are obfuscated
+          if (compAuthorization.isPrivacyEnabled(username) === true &&
+            compAuthorization.authorizeAdminQueuesUser(username) === false) {
 
-          //   // all the calls are obfuscated, without regard of passing through a queue
-          //   extensions = compAstProxy.getJSONExtensions(privacyStrReplace, privacyStrReplace);
+            // all the calls are obfuscated, without regard of passing through a queue
+            extensions = compAstProxy.getJSONExtensions(privacyStrReplace, privacyStrReplace);
 
-          //   // replace the extensions associated with the user to have clear number for them
-          //   var e;
-          //   for (e in userExtensions) {
-          //     extensions[e] = compAstProxy.getJSONExtension(e);
-          //   }
+            // replace the extensions associated with the user to have clear number for them
+            for (e in userExtensions) {
+              extensions[e] = compAstProxy.getJSONExtension(e);
+            }
 
-          // } else if (compAuthorization.isPrivacyEnabled(username) === true && compAuthorization.authorizeOpAdminQueuesUser(username) === true) { // the privacy is bypassed
+          } else if (compAuthorization.isPrivacyEnabled(username) === true &&
+            compAuthorization.authorizeAdminQueuesUser(username) === true) { // the privacy is bypassed
 
-          //   // only the calls that does not pass through a queue are obfuscated
-          //   extensions = compAstProxy.getJSONExtensions(privacyStrReplace);
+            // only the calls that does not pass through a queue are obfuscated
+            extensions = compAstProxy.getJSONExtensions(privacyStrReplace);
 
-          //   // replace the extensions associated with the user to have clear number for them
-          //   var e;
-          //   for (e in userExtensions) {
-          //     extensions[e] = compAstProxy.getJSONExtension(e);
-          //   }
+            // replace the extensions associated with the user to have clear number for them
+            for (e in userExtensions) {
+              extensions[e] = compAstProxy.getJSONExtension(e);
+            }
 
-          // } else {
-          //   // no call is obfuscated
-          //   extensions = compAstProxy.getJSONExtensions();
-          // }
+          } else {
+            // no call is obfuscated
+            extensions = compAstProxy.getJSONExtensions();
+          }
 
-          var extensions = compAstProxy.getJSONExtensions();
           logger.info(IDLOG, 'sent all extensions in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
           res.send(200, extensions);
-          // }
+
         } catch (err) {
           logger.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -1901,7 +1900,30 @@ var compConfigManager;
             return;
           }
 
-          var extension = compAstProxy.getJSONExtension(req.params.id);
+          // get all extensions associated with the user
+          var userExtensions = compUser.getAllEndpointsExtension(username);
+          var extension;
+
+          // check if the requested extension is owned by the user
+          if (userExtensions[req.params.id]) {
+            extension = compAstProxy.getJSONExtension(req.params.id);
+          }
+          // checks if the user has the privacy enabled. In case the user has the "privacy" and
+          // "admin queues" permission enabled, then the privacy is bypassed for all the calls
+          // that pass through a queue, otherwise all the calls are obfuscated
+          else if (compAuthorization.isPrivacyEnabled(username) === true &&
+            compAuthorization.authorizeAdminQueuesUser(username) === false) {
+
+            // all the calls are obfuscated, without regard of passing through a queue
+            extension = compAstProxy.getJSONExtension(req.params.id, privacyStrReplace, privacyStrReplace);
+
+          } else if (compAuthorization.isPrivacyEnabled(username) === true &&
+            compAuthorization.authorizeAdminQueuesUser(username) === true) { // the privacy is bypassed
+
+            // only the calls that does not pass through a queue are obfuscated
+            extension = compAstProxy.getJSONExtension(req.params.id, privacyStrReplace);
+          }
+
           logger.info(IDLOG, 'sent extension in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
           res.send(200, extension);
 
@@ -2007,7 +2029,7 @@ var compConfigManager;
           var day = req.params.day;
 
           // check if the user has the administration operator panel queues authorization
-          if (compAuthorization.authorizeOpAdminQueuesUser(username) === true) {
+          if (compAuthorization.authorizeAdminQueuesUser(username) === true) {
 
             logger.info(IDLOG, 'requesting queues statistics: user "' + username + '" has the "admin_queues" authorization');
           }
@@ -2213,7 +2235,7 @@ var compConfigManager;
           var day = req.params.day;
 
           // check if the user has the administration operator panel queues authorization
-          if (compAuthorization.authorizeOpAdminQueuesUser(username) === true) {
+          if (compAuthorization.authorizeAdminQueuesUser(username) === true) {
 
             logger.info(IDLOG, 'requesting queues QOS info: user "' + username + '" has the "admin_queues" authorization');
           }
@@ -2264,7 +2286,7 @@ var compConfigManager;
           var day = req.params.day;
 
           // check if the user has the administration operator panel queues authorization
-          if (compAuthorization.authorizeOpAdminQueuesUser(username) === true) {
+          if (compAuthorization.authorizeAdminQueuesUser(username) === true) {
 
             logger.info(IDLOG, 'requesting queues QOS info: user "' + username + '" has the "admin_queues" authorization');
           }
@@ -2425,36 +2447,36 @@ var compConfigManager;
 
           if (req.params.endpointType === 'extension') {
 
-            // if (compAuthorization.authorizeAdminCallUser(username) === true) {
+            if (compAuthorization.authorizeAdminPhoneUser(username) === true) {
 
-            //   logger.info(IDLOG, 'make new call to "' + req.params.number + '" from ' + req.params.endpointType +
-            //     ' "' + req.params.endpointId + '" by user "' + username + '": he has the "admin_call" permission');
-            // }
-            // // check if the endpoint is owned by the user
-            // else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+              logger.info(IDLOG, 'make new call to "' + req.params.number + '" from ' + req.params.endpointType +
+                ' "' + req.params.endpointId + '" by user "' + username + '": he has the "admin phone" permission');
+            }
+            // check if the endpoint is owned by the user
+            else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
-            //   logger.warn(IDLOG, 'make new call to ' + req.params.number + ' failed: ' + req.params.endpointType +
-            //     ' "' + req.params.endpointId + '" is not owned by user "' + username + '"');
-            //   compUtil.net.sendHttp403(IDLOG, res);
-            //   return;
-            // }
+              logger.warn(IDLOG, 'make new call to ' + req.params.number + ' failed: ' + req.params.endpointType +
+                ' "' + req.params.endpointId + '" is not owned by user "' + username + '"');
+              compUtil.net.sendHttp403(IDLOG, res);
+              return;
+            }
             call(username, req, res);
 
           } else if (req.params.endpointType === 'cellphone') {
 
-            // if (compAuthorization.authorizeAdminCallUser(username) === true) {
+            if (compAuthorization.authorizeAdminPhoneUser(username) === true) {
 
-            //   logger.info(IDLOG, 'make new call to "' + req.params.number + '" from ' + req.params.endpointType +
-            //     ' "' + req.params.endpointId + '" by user "' + username + '": he has the "admin_call" permission');
-            // }
-            // // check if the endpoint is owned by the user
-            // else if (compAuthorization.verifyUserEndpointCellphone(username, req.params.endpointId) === false) {
+              logger.info(IDLOG, 'make new call to "' + req.params.number + '" from ' + req.params.endpointType +
+                ' "' + req.params.endpointId + '" by user "' + username + '": he has the "admin phone" permission');
+            }
+            // check if the endpoint is owned by the user
+            else if (compAuthorization.verifyUserEndpointCellphone(username, req.params.endpointId) === false) {
 
-            //   logger.warn(IDLOG, 'make new call to ' + req.params.number + ' failed: ' + req.params.endpointType +
-            //     ' "' + req.params.endpointId + '" is not owned by user "' + username + '"');
-            //   compUtil.net.sendHttp403(IDLOG, res);
-            //   return;
-            // }
+              logger.warn(IDLOG, 'make new call to ' + req.params.number + ' failed: ' + req.params.endpointType +
+                ' "' + req.params.endpointId + '" is not owned by user "' + username + '"');
+              compUtil.net.sendHttp403(IDLOG, res);
+              return;
+            }
 
             // make a new call by asterisk
             asteriskCall(username, req, res);
@@ -2510,7 +2532,7 @@ var compConfigManager;
             }
 
             // checks permissions and endpoint ownership
-            if (compAuthorization.authorizeAdminCallUser(username) === true &&
+            if (compAuthorization.authorizeAdminPhoneUser(username) === true &&
               compAuthorization.authorizeRemoteSiteUser(username) === true) {
 
               logger.info(IDLOG, 'make new call to remote exten "' + req.params.remoteExtenId + '" ' +
@@ -2657,21 +2679,21 @@ var compConfigManager;
             return;
           }
 
-          // if (compAuthorization.authorizeAdminParkingsUser(username) === true) {
+          if (compAuthorization.authorizeAdminParkingsUser(username) === true) {
 
-          //   logger.info(IDLOG, 'park of the conversation "' + req.params.convid + '" from user "' + username + '": he has the admin_parkings permission');
-          // }
-          // // check if the applicant of the request is owned by the user: the user can only park a conversation
-          // // that belong to him. The belonging is verfied later by the asterisk proxy component
-          // else if (compAuthorization.verifyUserEndpointExten(username, req.params.applicantId) === false) {
+            logger.info(IDLOG, 'park of the conversation "' + req.params.convid + '" from user "' + username +
+              '": he has the admin parkings permission');
+          }
+          // check if the applicant of the request is owned by the user: the user can only park a conversation
+          // that belong to him. The belonging is verfied later by the asterisk proxy component
+          else if (compAuthorization.verifyUserEndpointExten(username, req.params.applicantId) === false) {
 
-          //   logger.warn(IDLOG, 'park of the conversation "' + req.params.convid + '" from user "' + username + '" has been failed: the applicant ' +
-          //     '"' + req.params.applicantId + '" isn\'t owned by him');
-          //   compUtil.net.sendHttp403(IDLOG, res);
-          //   return;
-
-          // }
-          // logger.info(IDLOG, 'the applicant extension "' + req.params.applicantId + '"" is owned by "' + username + '"');
+            logger.warn(IDLOG, 'park of the conversation "' + req.params.convid + '" from user "' + username +
+              '" has been failed: the applicant "' + req.params.applicantId + '" is not owned by him');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+          }
+          logger.info(IDLOG, 'the applicant extension "' + req.params.applicantId + '"" is owned by "' + username + '"');
 
           compAstProxy.parkConversation(req.params.endpointId, req.params.convid, req.params.applicantId, function(err, response) {
             try {
@@ -2717,21 +2739,21 @@ var compConfigManager;
           }
 
           // check if the user has the authorization to hangup every calls
-          // if (compAuthorization.authorizeAdminHangupUser(username) === true) {
-          //
-          //   logger.log(IDLOG, 'hangup convid "' + req.params.convid + '": authorization admin hangup successful for user "' + username + '"');
-          // }
-          // // check if the endpoint of the request is owned by the user
-          // else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) !== true) {
-          //
-          //   logger.warn(IDLOG, 'hangup convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
-          //     ' the ' + req.params.endpointType + ' ' + req.params.endpointId + ' isn\'t owned by the user');
-          //   compUtil.net.sendHttp403(IDLOG, res);
-          //   return;
-          //
-          // } else {
-          //   logger.info(IDLOG, 'hangup convid "' + req.params.convid + '": the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' is owned by "' + username + '"');
-          // }
+          if (compAuthorization.authorizeAdminHangupUser(username) === true) {
+
+            logger.log(IDLOG, 'hangup convid "' + req.params.convid + '": authorization admin hangup successful for user "' + username + '"');
+          }
+          // check if the endpoint of the request is owned by the user
+          else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) !== true) {
+
+            logger.warn(IDLOG, 'hangup convid "' + req.params.convid + '" by user "' + username +
+              '" has been failed: the ' + req.params.endpointId + ' is not owned by the user');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+
+          } else {
+            logger.info(IDLOG, 'hangup convid "' + req.params.convid + '": the endpoint ' + req.params.endpointId + ' is owned by "' + username + '"');
+          }
 
           compAstProxy.hangupConversation(req.params.endpointId, req.params.convid, function(err, response) {
             try {
@@ -2790,6 +2812,7 @@ var compConfigManager;
                 ' the ' + req.params.endpointType + ' ' + req.params.endpointId + ' is not owned by the user');
               compUtil.net.sendHttp403(IDLOG, res);
               return;
+
             } else {
               logger.info(IDLOG, 'hangup asterisk channel "' + req.params.channel + '": the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' is owned by "' + username + '"');
             }
@@ -2843,18 +2866,17 @@ var compConfigManager;
             return;
           }
 
-          // // check if the endpoint of the request is owned by the user
-          // if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) !== true) {
+          // check if the endpoint of the request is owned by the user
+          if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) !== true) {
 
-          //   logger.warn(IDLOG, 'mute convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
-          //     ' the ' + req.params.endpointType + ' ' + req.params.endpointId + ' is not owned by the user');
-          //   compUtil.net.sendHttp403(IDLOG, res);
-          //   return;
+            logger.warn(IDLOG, 'mute convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
+              ' the ' + req.params.endpointId + ' is not owned by the user');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
 
-          // } else {
-          //   logger.info(IDLOG, 'mute convid "' + req.params.convid + '": the endpoint ' + req.params.endpointType +
-          //     ' ' + req.params.endpointId + ' is owned by "' + username + '"');
-          // }
+          } else {
+            logger.info(IDLOG, 'mute convid "' + req.params.convid + '": the endpoint ' + req.params.endpointId + ' is owned by "' + username + '"');
+          }
 
           compAstProxy.muteConversation(req.params.endpointId, req.params.convid, function(err, response) {
             try {
@@ -2900,19 +2922,17 @@ var compConfigManager;
             return;
           }
 
+          // check if the endpoint of the request is owned by the user
+          if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) !== true) {
 
-          // // check if the endpoint of the request is owned by the user
-          // if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) !== true) {
+            logger.warn(IDLOG, 'unmute convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
+              ' the ' + req.params.endpointId + ' is not owned by the user');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
 
-          //   logger.warn(IDLOG, 'unmute convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
-          //     ' the ' + req.params.endpointType + ' ' + req.params.endpointId + ' is not owned by the user');
-          //   compUtil.net.sendHttp403(IDLOG, res);
-          //   return;
-
-          // } else {
-          //   logger.info(IDLOG, 'unmute convid "' + req.params.convid + '": the endpoint ' + req.params.endpointType +
-          //     ' ' + req.params.endpointId + ' is owned by "' + username + '"');
-          // }
+          } else {
+            logger.info(IDLOG, 'unmute convid "' + req.params.convid + '": the endpoint ' + req.params.endpointId + ' is owned by "' + username + '"');
+          }
 
           compAstProxy.unmuteConversation(req.params.endpointId, req.params.convid, function(err, response) {
             try {
@@ -2957,31 +2977,27 @@ var compConfigManager;
             return;
           }
 
-          // // check if the user has the attended transfer authorization
-          // if (compAuthorization.authorizeAttendedTransferUser(username) !== true) {
+          // check if the user has the attended transfer authorization
+          if (compAuthorization.authorizeAdminTransferUser(username) !== true) {
 
-          //   logger.warn(IDLOG, 'attended transfer convid "' + req.params.convid + '": authorization failed for user "' + username + '"');
-          //   compUtil.net.sendHttp403(IDLOG, res);
-          //   return;
-          // }
+            logger.warn(IDLOG, 'attended transfer convid "' + req.params.convid + '": authorization failed for user "' + username + '"');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+          }
 
-          // // check if the endpoint of the request is owned by the user. The user can
-          // // attended transfer only his own conversations
-          // if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+          // check if the endpoint of the request is owned by the user. The user can
+          // attended transfer only his own conversations
+          if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
-          //   logger.warn(IDLOG, 'attended transfer convid "' + req.params.convid + '" by user "' + username +
-          //     '" has been failed: ' + ' the ' + req.params.endpointType + ' ' + req.params.endpointId +
-          //     ' isn\'t owned by the user');
-          //   compUtil.net.sendHttp403(IDLOG, res);
-          //   return;
+            logger.warn(IDLOG, 'attended transfer convid "' + req.params.convid + '" by user "' + username +
+              '" has been failed: ' + ' the ' + req.params.endpointId + ' is not owned by the user');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
 
-          // } else {
-          //   logger.info(IDLOG, 'attended transfer convid "' + req.params.convid + '": the endpoint ' + req.params.endpointType +
-          //     ' ' + req.params.endpointId + ' is owned by "' + username + '"');
-          // }
-
-          logger.info(IDLOG, 'attended transfer convid "' + req.params.convid + '" of extension "' +
-            req.params.endpointId + '" by user "' + username + '"');
+          } else {
+            logger.info(IDLOG, 'attended transfer convid "' + req.params.convid + '": the endpoint ' + req.params.endpointId + ' is owned by "' + username + '"');
+          }
+          logger.info(IDLOG, 'attended transfer convid "' + req.params.convid + '" of extension "' + req.params.endpointId + '" by user "' + username + '"');
 
           compAstProxy.attendedTransferConversation(
             req.params.endpointId,
@@ -3033,18 +3049,17 @@ var compConfigManager;
 
           if (!req.params.endpointId) {
             req.params.endpointId = compConfigManager.getDefaultUserExtensionConf(username);
+          } else if (compAuthorization.authorizeAdminPhoneUser(username) === true) {
+            logger.info(IDLOG, 'answer to call from ' + req.params.endpointId + '" by user "' + username + '": he has the admin phone permission');
           }
-
-          // else if (compAuthorization.authorizeAdminAnswerUser(username) === true) {
-          //   logger.info(IDLOG, 'answer to call from ' + req.params.endpointId + '" by user "' + username + '": he has the admin_answer permission');
-          // }
           // check if the endpoint is owned by the user
-          // else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
-          //   logger.warn(IDLOG, 'answer to call from ' + ' "' + req.params.endpointId + '" failed: extension is not owned by user "' + username + '"');
-          //   compUtil.net.sendHttp403(IDLOG, res);
-          //   return;
-          // }
+          else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+            logger.warn(IDLOG, 'answer to call from ' + ' "' + req.params.endpointId + '" failed: extension is not owned by user "' + username + '"');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+          }
           ajaxPhoneAnswer(username, req, res);
+
         } catch (err) {
           logger.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -3067,22 +3082,20 @@ var compConfigManager;
           var username = req.headers.authorization_user;
 
           // check parameters
-          if (typeof req.params !== 'object' ||
-            typeof req.params.endpointId !== 'string') {
-
+          if (typeof req.params !== 'object' || typeof req.params.endpointId !== 'string') {
             compUtil.net.sendHttp400(IDLOG, res);
             return;
           }
 
-          // if (compAuthorization.authorizeAdminAnswerUser(username) === true) {
-          //   logger.info(IDLOG, 'answer call from webrtc extension "' + req.params.endpointId + '" by user "' + username + '": he has the admin_answer permission');
-          // }
+          if (compAuthorization.authorizeAdminPhoneUser(username) === true) {
+            logger.info(IDLOG, 'answer call from webrtc extension "' + req.params.endpointId + '" by user "' + username + '": he has the admin phone permission');
+          }
           // check if the endpoint is owned by the user
-          // if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
-          //   logger.warn(IDLOG, 'answer call from webrtc extension "' + req.params.endpointId + '" failed: extension is not owned by user "' + username + '"');
-          //   compUtil.net.sendHttp403(IDLOG, res);
-          //   return;
-          // }
+          if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+            logger.warn(IDLOG, 'answer call from webrtc extension "' + req.params.endpointId + '" failed: extension is not owned by user "' + username + '"');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+          }
 
           if (compUser.isExtenWebrtc(req.params.endpointId)) {
             compComNethctiWs.sendAnswerWebrtcToClient(username, req.params.endpointId);
@@ -3118,25 +3131,23 @@ var compConfigManager;
             return;
           }
 
-          // // check if the user has the authorization to blind transfer the call of all extensions
-          // if (compAuthorization.authorizeAdminTransferUser(username) === true) {
+          // check if the user has the authorization to blind transfer the call of all extensions
+          if (compAuthorization.authorizeAdminTransferUser(username) === true) {
+            logger.info(IDLOG, 'blind transfer convid ' + req.params.convid + ': admin transfer authorization successful for user "' + username + '"');
+          }
+          // check if the endpoint of the request is owned by the user
+          else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
-          //   logger.info(IDLOG, 'blind transfer convid ' + req.params.convid + ': admin transfer authorization successful for user "' + username + '"');
-          // }
-          // // check if the endpoint of the request is owned by the user
-          // else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+            logger.warn(IDLOG, 'blind transfer convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
+              ' the ' + req.params.endpointId + ' is not owned by the user');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
 
-          //   logger.warn(IDLOG, 'blind transfer convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
-          //     ' the ' + req.params.endpointType + ' ' + req.params.endpointId + ' isn\'t owned by the user');
-          //   compUtil.net.sendHttp403(IDLOG, res);
-          //   return;
-          // } else {
-          //   logger.info(IDLOG, 'blind transfer convid "' + req.params.convid + '": the endpoint ' + req.params.endpointType +
-          //     ' ' + req.params.endpointId + ' is owned by "' + username + '"');
-          // }
+          } else {
+            logger.info(IDLOG, 'blind transfer convid "' + req.params.convid + '": the endpoint ' + req.params.endpointId + ' is owned by "' + username + '"');
+          }
 
-          logger.info(IDLOG, 'user "' + username + '" blind transfer convid "' + req.params.convid + '" ' +
-            'of extension "' + req.params.endpointId + '"');
+          logger.info(IDLOG, 'user "' + username + '" blind transfer convid "' + req.params.convid + '" of extension "' + req.params.endpointId + '"');
 
           // var extForCtx = compConfigManager.getDefaultUserExtensionConf(username);
           var extForCtx = req.params.endpointId;
@@ -3812,28 +3823,28 @@ var compConfigManager;
           }
 
           // check if the user has the authorization to record all the conversations
-          //if (compAuthorization.authorizeAdminRecordingUser(username) === true) {
+          if (compAuthorization.authorizeAdminRecordingUser(username) === true) {
 
-          //  logger.info(IDLOG, 'start recording convid ' + req.params.convid + ': admin recording authorization successful for user "' + username + '"');
-          //}
+            logger.info(IDLOG, 'start recording convid ' + req.params.convid + ': admin recording authorization successful for user "' + username + '"');
+          }
           // check if the user has the authorization to record his own conversations
-          //else if (compAuthorization.authorizeRecordingUser(username) !== true) {
+          else if (compAuthorization.authorizeRecordingUser(username) !== true) {
 
-          //  logger.warn(IDLOG, 'start recording convid ' + req.params.convid + ': recording authorization failed for user "' + username + '"');
-          //  compUtil.net.sendHttp403(IDLOG, res);
-          // return;
-          //}
+            logger.warn(IDLOG, 'start recording convid ' + req.params.convid + ': recording authorization failed for user "' + username + '"');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+          }
           // check if the destination endpoint is owned by the user
-          //else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+          else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
-          //  logger.warn(IDLOG, 'starting record convid ' + req.params.convid + ' by user "' + username + '" has been failed: ' +
-          //    ' the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' isn\'t owned by the user');
-          //  compUtil.net.sendHttp403(IDLOG, res);
-          //  return;
+            logger.warn(IDLOG, 'starting record convid ' + req.params.convid + ' by user "' + username + '" has been failed: ' +
+              ' the endpoint ' + req.params.endpointId + ' is not owned by the user');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
 
-          //} else {
-          //  logger.info(IDLOG, 'starting record convid ' + req.params.convid + ': the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' is owned by "' + username + '"');
-          //}
+          } else {
+            logger.info(IDLOG, 'starting record convid ' + req.params.convid + ': the endpoint ' + req.params.endpointId + ' is owned by "' + username + '"');
+          }
 
           compAstProxy.startRecordConversation(req.params.endpointId, req.params.convid, function(err) {
             try {
@@ -4248,28 +4259,29 @@ var compConfigManager;
             return;
           }
 
-          //// check if the user has the authorization to record all the conversations
-          //if (compAuthorization.authorizeAdminRecordingUser(username) === true) {
+          // check if the user has the authorization to record all the conversations
+          if (compAuthorization.authorizeAdminRecordingUser(username) === true) {
 
-          //  logger.info(IDLOG, 'mute recording convid ' + req.params.convid + ': admin recording authorization successful for user "' + username + '"');
-          //}
-          //// check if the user has the authorization to record his own conversations
-          //else if (compAuthorization.authorizeRecordingUser(username) !== true) {
+            logger.info(IDLOG, 'mute recording convid ' + req.params.convid + ': admin recording authorization successful for user "' + username + '"');
+          }
+          // check if the user has the authorization to record his own conversations
+          else if (compAuthorization.authorizeRecordingUser(username) !== true) {
 
-          //  logger.warn(IDLOG, 'mute recording convid ' + req.params.convid + ': recording authorization failed for user "' + username + '"');
-          //  compUtil.net.sendHttp403(IDLOG, res);
-          //  return;
-          //}
+            logger.warn(IDLOG, 'mute recording convid ' + req.params.convid + ': recording authorization failed for user "' + username + '"');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+          }
           // check if the destination endpoint is owned by the user
-          //if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
-          //  logger.warn(IDLOG, 'muting record convid ' + req.params.convid + ' by user "' + username + '" has been failed: ' +
-          //    ' the endpoint ' + req.params.endpointId + ' is not owned by the user');
-          //  compUtil.net.sendHttp403(IDLOG, res);
-          //  return;
+          if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
-          //} else {
-          //  logger.info(IDLOG, 'muting record convid ' + req.params.convid + ': the endpoint ' + req.params.endpointId + ' is owned by "' + username + '"');
-          //}
+            logger.warn(IDLOG, 'muting record convid ' + req.params.convid + ' by user "' + username + '" has been failed: ' +
+              ' the endpoint ' + req.params.endpointId + ' is not owned by the user');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+
+          } else {
+            logger.info(IDLOG, 'muting record convid ' + req.params.convid + ': the endpoint ' + req.params.endpointId + ' is owned by "' + username + '"');
+          }
 
           compAstProxy.muteRecordConversation(req.params.endpointId, req.params.convid, function(err) {
             try {
@@ -4317,28 +4329,28 @@ var compConfigManager;
           }
 
           // check if the user has the authorization to record all the conversations
-          //if (compAuthorization.authorizeAdminRecordingUser(username) === true) {
+          if (compAuthorization.authorizeAdminRecordingUser(username) === true) {
 
-          //  logger.info(IDLOG, 'unmute recording convid ' + req.params.convid + ': admin recording authorization successful for user "' + username + '"');
-          // }
-          // // check if the user has the authorization to record his own conversations
-          // else if (compAuthorization.authorizeRecordingUser(username) !== true) {
+           logger.info(IDLOG, 'unmute recording convid ' + req.params.convid + ': admin recording authorization successful for user "' + username + '"');
+          }
+          // check if the user has the authorization to record his own conversations
+          else if (compAuthorization.authorizeRecordingUser(username) !== true) {
 
-          //  logger.warn(IDLOG, 'unmute recording convid ' + req.params.convid + ': recording authorization failed for user "' + username + '"');
-          //  compUtil.net.sendHttp403(IDLOG, res);
-          //  return;
-          //}
+            logger.warn(IDLOG, 'unmute recording convid ' + req.params.convid + ': recording authorization failed for user "' + username + '"');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+          }
           // check if the destination endpoint is owned by the user
-          //if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+          if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
-          //logger.warn(IDLOG, 'unmuting record convid ' + req.params.convid + ' by user "' + username + '" has been failed: ' +
-          //   ' the endpoint ' + req.params.endpointId + ' is not owned by the user');
-          // compUtil.net.sendHttp403(IDLOG, res);
-          // return;
+            logger.warn(IDLOG, 'unmuting record convid ' + req.params.convid + ' by user "' + username + '" has been failed: ' +
+              ' the endpoint ' + req.params.endpointId + ' is not owned by the user');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
 
-          //} else {
-          //  logger.info(IDLOG, 'unmuting record convid ' + req.params.convid + ': the endpoint ' + req.params.endpointId + ' is owned by "' + username + '"');
-          // }
+          } else {
+            logger.info(IDLOG, 'unmuting record convid ' + req.params.convid + ': the endpoint ' + req.params.endpointId + ' is owned by "' + username + '"');
+          }
 
           compAstProxy.unmuteRecordConversation(req.params.endpointId, req.params.convid, function(err) {
             try {
@@ -4463,7 +4475,7 @@ var compConfigManager;
           }
 
           // check if the user has the administration operator panel queues authorization
-          if (compAuthorization.authorizeOpAdminQueuesUser(username) === true) {
+          if (compAuthorization.authorizeAdminQueuesUser(username) === true) {
 
             logger.info(IDLOG, 'logging in "' + req.params.endpointType + '" "' +
               req.params.endpointId + '" in the queue "' + req.params.queueId + '": user "' + username + '" has the "admin_queues" authorization');
@@ -4553,7 +4565,7 @@ var compConfigManager;
           }
 
           // check if the user has the administration operator panel queues authorization
-          if (compAuthorization.authorizeOpAdminQueuesUser(username) === true) {
+          if (compAuthorization.authorizeAdminQueuesUser(username) === true) {
 
             logger.info(IDLOG, 'logging out "' + req.params.endpointType + '" "' +
               req.params.endpointId + '" from the queue "' + req.params.queueId + '": user "' + username + '" has the "admin_queues" authorization');
@@ -4644,7 +4656,7 @@ var compConfigManager;
           }
 
           // check if the user has the administration operator panel queues authorization
-          if (compAuthorization.authorizeOpAdminQueuesUser(username) === true) {
+          if (compAuthorization.authorizeAdminQueuesUser(username) === true) {
 
             logger.info(IDLOG, 'inout dynamic all queues for "' + req.params.endpointType + '" "' +
               req.params.endpointId + '": user "' + username + '" has the "admin_queues" authorization');
@@ -4772,20 +4784,18 @@ var compConfigManager;
             return;
           }
 
-          // // check if the endpoint of the request is owned by the user
-          // if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+          // check if the endpoint of the request is owned by the user
+          if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
-          //   logger.warn(IDLOG, 'send dtmf tone "' + req.params.tone + '" to the convid "' + req.params.convid +
-          //     '" by user "' + username + '" has been failed: ' + ' the ' + req.params.endpointType +
-          //     ' ' + req.params.endpointId + ' is not owned by the user');
-          //   compUtil.net.sendHttp403(IDLOG, res);
-          //   return;
+            logger.warn(IDLOG, 'send dtmf tone "' + req.params.tone + '" to the convid "' + req.params.convid +
+              '" by user "' + username + '" has been failed: ' + ' the ' + req.params.endpointId + ' is not owned by the user');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
 
-          // } else {
-          //   logger.info(IDLOG, 'send dtmf tone "' + req.params.tone + '" to the convid "' + req.params.convid +
-          //     '": the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId +
-          //     ' is owned by "' + username + '"');
-          // }
+          } else {
+            logger.info(IDLOG, 'send dtmf tone "' + req.params.tone + '" to the convid "' + req.params.convid +
+              '": the endpoint ' + req.params.endpointId + ' is owned by "' + username + '"');
+          }
 
           var extenAgent = compAstProxy.getExtensionAgent(req.params.endpointId);
           var isSupported = compConfigManager.phoneSupportDtmfHttpApi(extenAgent);
@@ -4827,12 +4837,12 @@ var compConfigManager;
           req.params.number = compAstProxy.getEchoCallDestination();
 
           // check if the endpoint is owned by the user
-          // if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+          if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
-          //   logger.warn(IDLOG, 'make new echo call failed: ' + req.params.endpointId + ' is not owned by user "' + username + '"');
-          //   compUtil.net.sendHttp403(IDLOG, res);
-          //   return;
-          // }
+            logger.warn(IDLOG, 'make new echo call failed: ' + req.params.endpointId + ' is not owned by user "' + username + '"');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+          }
           call(username, req, res);
 
         } catch (err) {
@@ -5422,7 +5432,7 @@ function asteriskCall(username, req, res) {
 function setPrivacy(str) {
   try {
     privacyStrReplace = str;
-    logger.info(IDLOG, 'set privacy with string ' + privacyStrReplace);
+    logger.info(IDLOG, 'use privacy string "' + privacyStrReplace + '"');
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
@@ -6592,7 +6602,7 @@ function queueMemberPauseUnpause(req, res, paused) {
     var logQueue = (req.params.queueId ? 'queue "' + req.params.queueId + '"' : 'all queues');
 
     // check if the user has the administration queues operator panel authorization
-    if (compAuthorization.authorizeOpAdminQueuesUser(username) === true) {
+    if (compAuthorization.authorizeAdminQueuesUser(username) === true) {
 
       logger.info(IDLOG, logWord + ' "' + req.params.endpointType + '" "' +
         req.params.endpointId + '" from ' + logQueue + ': user "' +
