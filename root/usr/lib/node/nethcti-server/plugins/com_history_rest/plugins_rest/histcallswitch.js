@@ -160,8 +160,7 @@ function setCompAuthorization(ca) {
         *
         *     [
          {
-            date: "02/01/2014"
-            time: "08:32:57"
+            time: 1491300647
             channel: "SIP/2001-00000000"
             dstchannel: "SIP/303-0000000b"
             uniqueid: "1388647977.5182"
@@ -188,8 +187,7 @@ function setCompAuthorization(ca) {
         *
         *     [
          {
-            date: "02/01/2014"
-            time: "08:32:57"
+            time: 1491300647
             channel: "SIP/2001-00000000"
             dstchannel: "SIP/303-0000000b"
             uniqueid: "1388647977.5182"
@@ -216,8 +214,7 @@ function setCompAuthorization(ca) {
         *
         *     [
          {
-            date: "02/01/2014"
-            time: "08:32:57"
+            time: 1491300647
             channel: "SIP/2001-00000000"
             dstchannel: "SIP/303-0000000b"
             uniqueid: "1388647977.5182"
@@ -245,8 +242,7 @@ function setCompAuthorization(ca) {
         *
         *     [
          {
-            date: "02/01/2014"
-            time: "08:32:57"
+            time: 1491300647
             channel: "SIP/2001-00000000"
             dstchannel: "SIP/303-0000000b"
             uniqueid: "1388647977.5182"

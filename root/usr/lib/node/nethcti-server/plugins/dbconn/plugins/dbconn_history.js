@@ -158,8 +158,7 @@ function getHistoryCallInterval(data, offset, limit, sort, cb) {
         // define the mysql field to be returned. The "recordingfile" field
         // is returned only if the "data.recording" argument is true
         var attributes = [
-            [ 'DATE_FORMAT(calldate, "%d/%m/%Y")', 'date'],
-            [ 'DATE_FORMAT(calldate, "%H:%i:%S")', 'time'],
+            [ 'UNIX_TIMESTAMP(calldate)', 'time'],
             'channel', 'dstchannel', 'uniqueid', 'userfield',
             'duration', 'billsec', 'disposition', 'dcontext'
         ];
@@ -194,7 +193,7 @@ function getHistoryCallInterval(data, offset, limit, sort, cb) {
             attributes: attributes,
             offset: (offset ? parseInt(offset) : 0),
             limit: (limit ? parseInt(limit) : null),
-            order: (sort ? sort : 'date asc')
+            order: (sort ? sort : 'time desc')
 
         }).then(function (results) {
             logger.info(IDLOG, results.length + ' results searching history call interval between ' +
