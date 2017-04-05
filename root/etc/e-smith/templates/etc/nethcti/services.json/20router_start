@@ -2,3 +2,5 @@
       "/user": "http://127.0.0.1:50000/user",
       "/phonebook": "http://127.0.0.1:50001/phonebook",
       "/astproxy": "http://127.0.0.1:50002/astproxy",
+      "/historycall": "http://127.0.0.1:50003/historycall",
+      "/histcallswitch": "http://127.0.0.1:50003/histcallswitch",

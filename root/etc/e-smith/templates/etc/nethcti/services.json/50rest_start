@@ -11,3 +11,7 @@
       "port": "50002",
       "address": "localhost"
     \},
+    "history": \{
+      "port": "50003",
+      "address": "localhost"
+    \},
