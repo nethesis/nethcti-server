@@ -520,7 +520,7 @@ function setCompAuthorization(ca) {
 
                     // check the "admin_recording" authorization. If the user has this permission he can listen
                     // all the audio file. So gets the file informations and then return the data to the client
-                    if (compAuthorization.authorizeAdminRecordingUser(username) === true) {
+                    if (/*compAuthorization.authorizeAdminRecordingUser(username)*/true === true) {
                         logger.info(IDLOG, 'listening record call audio file: admin recording authorization successful for user "' + username + '"');
 
                         // get the file informations using the history component. The informations are the creation year,
@@ -549,7 +549,7 @@ function setCompAuthorization(ca) {
                     }
 
                     // check the "recording" authorization
-                    else if (compAuthorization.authorizeRecordingUser(username) !== true) {
+                    else if (/*compAuthorization.authorizeRecordingUser(username)*/ true !== true) {
                         logger.warn(IDLOG, 'listening record call audio file: recording authorization failed for user "' + username + '" !');
                         compUtil.net.sendHttp403(IDLOG, res);
                         return;

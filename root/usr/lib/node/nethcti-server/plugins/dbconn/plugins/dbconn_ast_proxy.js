@@ -898,26 +898,22 @@ function getCallRecordingFileData(uniqueid, cb) {
                 [ 'recordingfile', 'filename'            ]
             ]
 
-        }).success(function (result) {
-
+        }).then(function (result) {
             // extract result to return in the callback function
-            if (result &&  result.selectedValues) {
+            if (result) {
                 logger.info(IDLOG, 'found data informations about recording call with uniqueid ' + uniqueid);
-                cb(null, result.selectedValues);
+                cb(null, result.dataValues);
 
             } else {
                 logger.info(IDLOG, 'no data informations about recording call with uniqueid ' + uniqueid);
                 cb(null, false);
             }
-
-        }).error(function (err) { // manage the error
-
+        }, function (err) { // manage the error
             logger.error(IDLOG, 'getting data informations about recording call with uniqueid ' + uniqueid);
             cb(err.toString());
         });
 
         compDbconnMain.incNumExecQueries();
-
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err.toString());

@@ -2,6 +2,12 @@
       "port": "50113",
       "proto": "http",
       "address": "localhost"
+    \},
+    "static": \{
+      "port": "50101",
+      "address": "localhost",
+      "webroot": "/usr/lib/node/nethcti-server/plugins/com_static_http/static",
+      "customWebroot": "/var/lib/nethserver/nethcti/static"
     \}
   \}
 \}
