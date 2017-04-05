@@ -125,9 +125,10 @@ function setCompAstProxy(comp) {
 *   @param {string}  [data.filter]  The filter to be used
 *   @param {integer}  [offset]   The results offset
 *   @param {integer}  [limit]    The results limit
+*   @param {string}   [sort]     The sort parameter
 * @param {function}  cb The callback function
 */
-function getHistoryCallInterval(data, offset, limit, cb) {
+function getHistoryCallInterval(data, offset, limit, sort, cb) {
     try {
         // check parameters
         if (    typeof data        !== 'object'   || typeof data.recording !== 'boolean'
@@ -141,7 +142,7 @@ function getHistoryCallInterval(data, offset, limit, cb) {
         logger.info(IDLOG, 'search history call between ' + data.from + ' to ' + data.to + ' for ' +
                            'endpoint ' + data.endpoint + ' and filter ' + (data.filter ? data.filter : '""') +
                            (data.recording ? ' with recording data' : '') );
-        dbconn.getHistoryCallInterval(data, offset, limit, cb);
+        dbconn.getHistoryCallInterval(data, offset, limit, sort, cb);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);
@@ -161,9 +162,10 @@ function getHistoryCallInterval(data, offset, limit, cb) {
 *   @param {string}  [data.privacyStr] The sequence to be used to hide the numbers to respect the privacy
 *   @param {integer} [offset]          The results offset
 *   @param {integer} [limit]           The results limit
+*   @param {integer} [sort]            The sort parameter
 * @param {function} cb                 The callback function
 */
-function getHistorySwitchCallInterval(data, offset, limit, cb) {
+function getHistorySwitchCallInterval(data, offset, limit, sort, cb) {
     try {
         // check parameters
         if (    typeof data            !== 'object'
@@ -187,7 +189,7 @@ function getHistorySwitchCallInterval(data, offset, limit, cb) {
         // remove trunk details
         for (k in trunkNames) { trunkNames[k] = ''; }
 
-        dbconn.getHistoryCallInterval(data, offset, limit, function (err, results) {
+        dbconn.getHistoryCallInterval(data, offset, limit, sort, function (err, results) {
             cb(err, { results: results, trunkNames: trunkNames });
         });
 

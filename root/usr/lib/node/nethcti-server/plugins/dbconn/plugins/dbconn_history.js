@@ -134,9 +134,10 @@ function getAllUserHistorySmsInterval(data, cb) {
 *   @param {string}  [data.privacyStr] The sequence to be used to hide the numbers to respect the privacy
 *   @param {integer} [offset]          The results offset
 *   @param {integer} [limit]           The results limit
+*   @param {string}  [sort]            The sort field
 * @param {function} cb The callback function
 */
-function getHistoryCallInterval(data, offset, limit, cb) {
+function getHistoryCallInterval(data, offset, limit, sort, cb) {
     try {
         // check parameters
         if (typeof data !== 'object'
@@ -162,7 +163,9 @@ function getHistoryCallInterval(data, offset, limit, cb) {
             'channel', 'dstchannel', 'uniqueid', 'userfield',
             'duration', 'billsec', 'disposition', 'dcontext'
         ];
-        if (data.recording === true) { attributes.push('recordingfile'); }
+        if (data.recording === true) {
+          attributes.push('recordingfile');
+        }
 
         // if the privacy string is present, than hide the numbers
         if (data.privacyStr) {
@@ -190,7 +193,8 @@ function getHistoryCallInterval(data, offset, limit, cb) {
             ],
             attributes: attributes,
             offset: (offset ? parseInt(offset) : 0),
-            limit: (limit ? parseInt(limit) : null)
+            limit: (limit ? parseInt(limit) : null),
+            order: (sort ? sort : 'date asc')
 
         }).then(function (results) {
             logger.info(IDLOG, results.length + ' results searching history call interval between ' +

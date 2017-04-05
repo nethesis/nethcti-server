@@ -143,18 +143,18 @@ function setCompAuthorization(ca) {
         *
         * # GET requests
         *
-        * 1. [`histcallswitch/day/:day[?limit=n&offset=n]`](#dayget)
-        * 1. [`histcallswitch/day/:day/:filter[?limit=n&offset=n]`](#day_filterget)
-        * 1. [`histcallswitch/interval/:from/:to[?limit=n&offset=n]`](#intervalget)
-        * 1. [`histcallswitch/interval/:from/:to/:filter[?limit=n&offset=n]`](#interval_filterget)
+        * 1. [`histcallswitch/day/:day[?limit=n&offset=n&sort=field]`](#dayget)
+        * 1. [`histcallswitch/day/:day/:filter[?limit=n&offset=n&sort=field]`](#day_filterget)
+        * 1. [`histcallswitch/interval/:from/:to[?limit=n&offset=n&sort=field]`](#intervalget)
+        * 1. [`histcallswitch/interval/:from/:to/:filter[?limit=n&offset=n&sort=field]`](#interval_filterget)
         *
         * ---
         *
-        * ### <a id="dayget">**`histcallswitch/day/:day[?limit=n&offset=n]`**</a>
+        * ### <a id="dayget">**`histcallswitch/day/:day[?limit=n&offset=n&sort=field]`**</a>
         *
         * Returns the switchboard history call of the day _"day"_ of all endpoints. Date must be expressed
         * in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
-        * It supports pagination with limit and offset parameters.
+        * It supports pagination with limit and offset parameters and sorting.
         *
         * Example JSON response:
         *
@@ -178,11 +178,11 @@ function setCompAuthorization(ca) {
         *
         * ---
         *
-        * ### <a id="day_filterget">**`histcallswitch/day/:day/:filter[?limit=n&offset=n]`**</a>
+        * ### <a id="day_filterget">**`histcallswitch/day/:day/:filter[?limit=n&offset=n&sort=field]`**</a>
         *
         * Returns the switchboard history call of the day _"day"_ of all endpoints filtering by _"filter"_.
         * Date must be expressed in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
-        * It supports pagination with limit and offset parameters.
+        * It supports pagination with limit and offset parameters and sorting.
         *
         * Example JSON response:
         *
@@ -206,11 +206,11 @@ function setCompAuthorization(ca) {
         *
         * ---
         *
-        * ### <a id="intervalget">**`histcallswitch/interval/:from/:to[?limit=n&offset=n]`**</a>
+        * ### <a id="intervalget">**`histcallswitch/interval/:from/:to[?limit=n&offset=n&sort=field]`**</a>
         *
         * Returns the switchboard history call between _"from"_ date to _"to"_ date of all endpoints.
         * Dates must be expressed in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
-        * It supports pagination with limit and offset parameters.
+        * It supports pagination with limit and offset parameters and sorting.
         *
         * Example JSON response:
         *
@@ -234,12 +234,12 @@ function setCompAuthorization(ca) {
         *
         * ---
         *
-        * ### <a id="interval_filterget">**`histcallswitch/interval/:from/:to/:filter[?limit=n&offset=n]`**</a>
+        * ### <a id="interval_filterget">**`histcallswitch/interval/:from/:to/:filter[?limit=n&offset=n&sort=field]`**</a>
         *
         * Returns the switchboard history call between _"from"_ date to _"to"_ date of all endpoints
         * filtering by _"filter"_. Date must be expressed in YYYYMMDD format. If an error occurs an HTTP 500
         * response is returned.
-        * It supports pagination with limit and offset parameters.
+        * It supports pagination with limit and offset parameters and sorting.
         *
         * Example JSON response:
         *
@@ -276,16 +276,16 @@ function setCompAuthorization(ca) {
                 * @property get
                 * @type {array}
                 *
-                *   @param {string} day/:day[?limit=n&offset=n] To get the history call of the day. The date must be expressed
+                *   @param {string} day/:day[?limit=n&offset=n&sort=field] To get the history call of the day. The date must be expressed
                 *       in YYYYMMDD format
                 *
-                *   @param {string} day/:day/:filter[?limit=n&offset=n][?limit=n&offset=n] To get the history call of the day filtering by filter.
+                *   @param {string} day/:day/:filter[?limit=n&offset=n&sort=field] To get the history call of the day filtering by filter.
                 *       The date must be expressed in YYYYMMDD format
                 *
-                *   @param {string} interval/:from/:to[?limit=n&offset=n] To get the history call between _"from"_ date to _"to"_ date.
+                *   @param {string} interval/:from/:to[?limit=n&offset=n&sort=field] To get the history call between _"from"_ date to _"to"_ date.
                 *       The date must be expressed in YYYYMMDD format
                 *
-                *   @param {string} interval/:from/:to/:filter[?limit=n&offset=n] To get the history call between _"from"_ date to _"to"_
+                *   @param {string} interval/:from/:to/:filter[?limit=n&offset=n&sort=field] To get the history call between _"from"_ date to _"to"_
                 *       date filtering by filter. The date must be expressed in YYYYMMDD format
                 */
                 'get' : [
@@ -302,8 +302,8 @@ function setCompAuthorization(ca) {
             /**
             * Search the history call of all endpoints for the specified interval and optional filter by the following REST api:
             *
-            *     interval/:from/:to[?limit=n&offset=n]
-            *     interval/:from/:to/:filter[?limit=n&offset=n]
+            *     interval/:from/:to[?limit=n&offset=n&sort=field]
+            *     interval/:from/:to/:filter[?limit=n&offset=n&sort=field]
             *
             * @method interval
             * @param {object}   req  The client request.
@@ -347,7 +347,7 @@ function setCompAuthorization(ca) {
                     // if (compAuthorization.isPrivacyEnabled(username)) { obj.privacyStr = privacyStrReplace; }
 
                     // use the history component
-                    var data = compHistory.getHistorySwitchCallInterval(obj, req.params.offset, req.params.limit, function (err, results) {
+                    var data = compHistory.getHistorySwitchCallInterval(obj, req.params.offset, req.params.limit, req.params.sort, function (err, results) {
                         try {
                             if (err) { compUtil.net.sendHttp500(IDLOG, res, err.toString()); }
                             else {
@@ -372,8 +372,8 @@ function setCompAuthorization(ca) {
             /**
             * Search the switchboard history call for the specified day and optional filter by the following REST api:
             *
-            *     day/:day[?limit=n&offset=n]
-            *     day/:day/:filter[?limit=n&offset=n]
+            *     day/:day[?limit=n&offset=n&sort=field]
+            *     day/:day/:filter[?limit=n&offset=n&sort=field]
             *
             * @method day
             * @param {object} req The client request.
