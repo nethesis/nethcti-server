@@ -181,17 +181,7 @@ function getHistorySwitchCallInterval(data, offset, limit, sort, cb) {
                            'all endpoints and filter ' + (data.filter ? data.filter : '""') +
                            (data.recording ? ' with recording data' : '') );
 
-        // add trunks name to the results as explained in #3621
-        // It will be removed when #3622 will be done: when calls direction
-        // will be calculated by the server
-        var k;
-        var trunkNames = compAstProxy.getJSONTrunks();
-        // remove trunk details
-        for (k in trunkNames) { trunkNames[k] = ''; }
-
-        dbconn.getHistoryCallInterval(data, offset, limit, sort, function (err, results) {
-            cb(err, { results: results, trunkNames: trunkNames });
-        });
+        dbconn.getHistoryCallInterval(data, offset, limit, sort, cb);
 
     } catch (err) {
         logger.error(IDLOG, err.stack);

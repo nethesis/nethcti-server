@@ -13,4 +13,4 @@
         "dbuser":     "freepbxuser",
         "dbpassword": "{$cdrdb_pwd}",
         "dbname":     "asteriskcdrdb"
-    \},
+    \}
