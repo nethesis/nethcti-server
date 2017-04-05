@@ -15,3 +15,9 @@
       "port": "50003",
       "address": "localhost"
     \},
+    "static": \{
+      "port": "50004",
+      "address": "localhost",
+      "webroot": "/usr/lib/node/nethcti-server/plugins/com_static_http/static",
+      "customWebroot": "/var/lib/nethserver/nethcti/static"
+    \},
