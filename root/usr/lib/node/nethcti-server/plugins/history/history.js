@@ -159,9 +159,11 @@ function getHistoryCallInterval(data, offset, limit, cb) {
 *   @param {boolean} data.recording    True if the data about recording audio file must be returned
 *   @param {string}  [data.filter]     The filter to be used
 *   @param {string}  [data.privacyStr] The sequence to be used to hide the numbers to respect the privacy
+*   @param {integer} [offset]          The results offset
+*   @param {integer} [limit]           The results limit
 * @param {function} cb                 The callback function
 */
-function getHistorySwitchCallInterval(data, cb) {
+function getHistorySwitchCallInterval(data, offset, limit, cb) {
     try {
         // check parameters
         if (    typeof data            !== 'object'
@@ -185,7 +187,7 @@ function getHistorySwitchCallInterval(data, cb) {
         // remove trunk details
         for (k in trunkNames) { trunkNames[k] = ''; }
 
-        dbconn.getHistoryCallInterval(data, function (err, results) {
+        dbconn.getHistoryCallInterval(data, offset, limit, function (err, results) {
             cb(err, { results: results, trunkNames: trunkNames });
         });
 
