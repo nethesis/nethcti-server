@@ -2977,27 +2977,24 @@ var compConfigManager;
             return;
           }
 
-          // check if the user has the attended transfer authorization
-          if (compAuthorization.authorizeAdminTransferUser(username) !== true) {
+          // check if the endpoint of the request is owned by the user. The user can attended transfer
+          // only his own conversations, otherwise he must have the transfer permission
+          if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === true) {
 
-            logger.warn(IDLOG, 'attended transfer convid "' + req.params.convid + '": authorization failed for user "' + username + '"');
-            compUtil.net.sendHttp403(IDLOG, res);
-            return;
-          }
+            logger.info(IDLOG, 'attended transfer convid "' + req.params.convid + '" to "' + req.params.to + '": the endpoint ' +
+              req.params.endpointId + ' is owned by "' + username + '"');
 
-          // check if the endpoint of the request is owned by the user. The user can
-          // attended transfer only his own conversations
-          if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+          } else if (compAuthorization.authorizeAdminTransferUser(username) === true) {
 
-            logger.warn(IDLOG, 'attended transfer convid "' + req.params.convid + '" by user "' + username +
-              '" has been failed: ' + ' the ' + req.params.endpointId + ' is not owned by the user');
-            compUtil.net.sendHttp403(IDLOG, res);
-            return;
+            logger.info(IDLOG, 'attended transfer convid "' + req.params.convid + '" to "' + req.params.to + '": user "' + username +
+              '" has admin transfer permission');
 
           } else {
-            logger.info(IDLOG, 'attended transfer convid "' + req.params.convid + '": the endpoint ' + req.params.endpointId + ' is owned by "' + username + '"');
+            logger.warn(IDLOG, 'attended transfer convid "' + req.params.convid + '" of extension "' + req.params.endpointId + '" to "' +
+              req.params.to + '": authorization failed or convid not owned by the user "' + username + '"');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
           }
-          logger.info(IDLOG, 'attended transfer convid "' + req.params.convid + '" of extension "' + req.params.endpointId + '" by user "' + username + '"');
 
           compAstProxy.attendedTransferConversation(
             req.params.endpointId,
@@ -4331,7 +4328,7 @@ var compConfigManager;
           // check if the user has the authorization to record all the conversations
           if (compAuthorization.authorizeAdminRecordingUser(username) === true) {
 
-           logger.info(IDLOG, 'unmute recording convid ' + req.params.convid + ': admin recording authorization successful for user "' + username + '"');
+            logger.info(IDLOG, 'unmute recording convid ' + req.params.convid + ': admin recording authorization successful for user "' + username + '"');
           }
           // check if the user has the authorization to record his own conversations
           else if (compAuthorization.authorizeRecordingUser(username) !== true) {
