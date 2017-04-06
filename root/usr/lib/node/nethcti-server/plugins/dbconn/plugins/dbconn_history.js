@@ -112,8 +112,8 @@ function getAllUserHistorySmsInterval(data, cb) {
 }
 
 /**
- * Get the history call of the specified endpoint into the interval time.
- * If the endpoint information is omitted, the results contains the
+ * Get the history call of the specified endpoints into the interval time.
+ * If the endpoints information is omitted, the results contains the
  * history call of all endpoints. Moreover, it can be possible to filter
  * the results specifying the filter and hide the phone numbers specifying
  * the privacy sequence to be used. It search the results into the
@@ -121,10 +121,10 @@ function getAllUserHistorySmsInterval(data, cb) {
  *
  * @method getHistoryCallInterval
  * @param {object} data
- *   @param {string}  [data.endpoint]   The endpoint involved in the research, e.g. the extesion
- *                                      identifier. It is used to filter out the _channel_ and _dstchannel_.
- *                                      It is wrapped with '%' characters. If it is omitted the function treats
- *                                      it as '%' string. The '%' matches any number of characters, even zero character
+ *   @param {array}  [data.endpoints]   The endpoints involved in the research, e.g. the extesion
+ *                                      identifiers. It is used to filter out the _src_ and _dst_ fields.
+ *                                      If it is omitted the function treats it as ['%'] string. The '%'
+ *                                      matches any number of characters, even zero character
  *   @param {string}  data.from         The starting date of the interval in the YYYYMMDD format (e.g. 20130521)
  *   @param {string}  data.to           The ending date of the interval in the YYYYMMDD format (e.g. 20130528)
  *   @param {boolean} data.recording    True if the data about recording audio file must be returned
@@ -139,19 +139,24 @@ function getAllUserHistorySmsInterval(data, cb) {
 function getHistoryCallInterval(data, offset, limit, sort, cb) {
   try {
     // check parameters
-    if (typeof data !== 'object' || typeof cb !== 'function' || typeof data.recording !== 'boolean' || typeof data.to !== 'string' || typeof data.from !== 'string' || (typeof data.endpoint !== 'string' && data.endpoint !== undefined) || (typeof data.filter !== 'string' && data.filter !== undefined) || (typeof data.privacyStr !== 'string' && data.privacyStr !== undefined)) {
+    if (typeof data !== 'object' ||
+      typeof cb !== 'function' ||
+      typeof data.recording !== 'boolean' ||
+      typeof data.to !== 'string' ||
+      typeof data.from !== 'string' ||
+      (data.endpoints && !(data.endpoints instanceof Array)) ||
+      (typeof data.filter !== 'string' && data.filter !== undefined) ||
+      (typeof data.privacyStr !== 'string' && data.privacyStr !== undefined)) {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // check optional parameters
     if (data.filter === undefined) {
       data.filter = '%';
     }
-    if (data.endpoint === undefined) {
-      data.endpoint = '%';
-    } else {
-      data.endpoint = '%' + data.endpoint + '%';
+    if (data.endpoints === undefined) {
+      data.endpoints = ['%'];
     }
 
     // define the mysql field to be returned. The "recordingfile" field
@@ -182,10 +187,10 @@ function getHistoryCallInterval(data, offset, limit, sort, cb) {
     // search
     compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].findAndCountAll({
       where: [
-        '(channel LIKE ? OR dstchannel LIKE ?) AND ' +
+        '(src IN (?) OR dst IN (?)) AND ' +
         '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
         '(src LIKE ? OR clid LIKE ? OR dst LIKE ?)',
-        data.endpoint, data.endpoint,
+        data.endpoints, data.endpoints,
         data.from, data.to,
         data.filter, data.filter, data.filter
       ],
@@ -196,14 +201,14 @@ function getHistoryCallInterval(data, offset, limit, sort, cb) {
 
     }).then(function(results) {
       logger.info(IDLOG, results.length + ' results searching history call interval between ' +
-        data.from + ' to ' + data.to + ' for endpoint ' + data.endpoint +
+        data.from + ' to ' + data.to + ' for endpoints ' + data.endpoints +
         ' and filter ' + data.filter);
       cb(null, results);
 
     }, function(err) { // manage the error
 
       logger.error(IDLOG, 'searching history call interval between ' + data.from + ' to ' + data.to +
-        ' for endpoint ' + data.endpoint + ' and filter ' + data.filter + ': ' + err.toString());
+        ' for endpoints ' + data.endpoints + ' and filter ' + data.filter + ': ' + err.toString());
       cb(err.toString());
     });
 

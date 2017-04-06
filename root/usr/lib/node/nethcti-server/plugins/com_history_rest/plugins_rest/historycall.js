@@ -206,10 +206,8 @@ function setCompAuthorization(ca) {
         *
         * 1. [`historycall/down_callrec/:id`](#down_callrecget)
         * 1. [`historycall/listen_callrec/:id`](#listen_callrecget)
-        * 1. [`historycall/day/:endpoint/:day[?limit=n&offset=n&sort=field]`](#dayget)
-        * 1. [`historycall/day/:endpoint/:day/:filter[?limit=n&offset=n&sort=field]`](#day_filterget)
-        * 1. [`historycall/interval/:endpoint/:from/:to[?limit=n&offset=n&sort=field]`](#intervalget)
-        * 1. [`historycall/interval/:endpoint/:from/:to/:filter[?limit=n&offset=n&sort=field]`](#interval_filterget)
+        * 1. [`historycall/interval/:type/:target/:from/:to[?limit=n&offset=n&sort=field]`](#intervalget)
+        * 1. [`historycall/interval/:type/:target/:from/:to/:filter[?limit=n&offset=n&sort=field]`](#interval_filterget)
         *
         * ---
         *
@@ -231,113 +229,70 @@ function setCompAuthorization(ca) {
         *
         * ---
         *
-        * ### <a id="dayget">**`historycall/day/:endpoint/:day[?limit=n&offset=n&sort=field]`**</a>
+        * ### <a id="intervalget">**`historycall/interval/:type/:target/:from/:to[?limit=n&offset=n&sort=field]`**</a>
         *
-        * Returns the history call of the day _"day"_ and endpoint _"endpoint"_. E.g. the endpoint can be
-        * the extension number. Date must be expressed in YYYYMMDD format. If an error occurs an HTTP 500
-        * response is returned. Support the pagination with the limit and offset parameters and sorting.
+        * Returns the history call between _"from"_ date to _"to"_ date of the extension or of the user.
+        *
+        * * `type: ("extension" | "user")`
+        * * `target: the extension identifier or the username`
+        *
+        * The results will be the history calls of the single extension or the history calls of all the extensions of the user.
+        * Dates must be expressed in YYYYMMDD format. If an error occurs an HTTP 500 response is returned. Supports the
+        * pagination with the limit and offset parameters and sorting.
         *
         * Example JSON response:
         *
         *     [
          {
-            time: 1491300647
-            channel: "SIP/2001-00000000"
-            dstchannel: "SIP/303-0000000b"
-            uniqueid: "1388647977.5182"
-            duration: 29
-            billsec: 21
-            disposition: "ANSWERED"
-            dcontext: "ext-local"
-            recordingfile: ""
-            src: "0721123432"
-            dst: "vms201"
-            clid: ""CHIU: USER" <1233312>"
-         }
+            "time": 1491480471,
+            "channel": "PJSIP/204-00000006",
+            "dstchannel": "PJSIP/91223-00000007",
+            "uniqueid": "1491473271.12",
+            "userfield": "",
+            "duration": 2,
+            "billsec": 1,
+            "disposition": "ANSWERED",
+            "dcontext": "ext-local",
+            "recordingfile": "",
+            "src": "204",
+            "dst": "91223",
+            "clid": "\"andrea marchio\" <204>"
+         },
+         ...
      ]
         *
         * ---
         *
-        * ### <a id="day_filterget">**`historycall/day/:endpoint/:day/:filter[?limit=n&offset=n&sort=field]`**</a>
+        * ### <a id="interval_filterget">**`historycall/interval/:type/:target/:from/:to/:filter[?limit=n&offset=n&sort=field]`**</a>
         *
-        * Returns the history call of the day _"day"_ and endpoint _"endpoint"_ filtering by _"filter"_.
-        * E.g. the endpoint can be the extension number. Date must be expressed in YYYYMMDD format. If an
-        * error occurs an HTTP 500 response is returned. Support the pagination with the limit and offset
-        * parameters and sorting.
+        * Returns the history call between _"from"_ date to _"to"_ date of the extension or of the user filtering by _"filter"_.
         *
-        * Example JSON response:
+        * * `type: ("extension" | "user")`
+        * * `target: the extension identifier or the username`
         *
-        *     [
-         {
-            time: 1491300647
-            channel: "SIP/2001-00000000"
-            dstchannel: "SIP/303-0000000b"
-            uniqueid: "1388647977.5182"
-            duration: 29
-            billsec: 21
-            disposition: "ANSWERED"
-            dcontext: "ext-local"
-            recordingfile: ""
-            src: "0721123432"
-            dst: "vms201"
-            clid: ""CHIU: USER" <1233312>"
-         }
-     ]
-        *
-        * ---
-        *
-        * ### <a id="intervalget">**`historycall/interval/:endpoint/:from/:to[?limit=n&offset=n&sort=field]`**</a>
-        *
-        * Returns the history call between _"from"_ date to _"to"_ date for the endpoint _"endpoint"_.
-        * E.g. the endpoint can be the extension number. Dates must be expressed in YYYYMMDD format.
-        * If an error occurs an HTTP 500 response is returned. Support the pagination with the limit and
-        * offset parameters and sorting.
+        * The results will be the history calls of the single extension or the history calls of all the extensions of the user.
+        * Dates must be expressed in YYYYMMDD format. If an error occurs an HTTP 500 response is returned. Supports the
+        * pagination with the limit and offset parameters and sorting.
         *
         * Example JSON response:
         *
         *     [
          {
-            time: 1491300647
-            channel: "SIP/2001-00000000"
-            dstchannel: "SIP/303-0000000b"
-            uniqueid: "1388647977.5182"
-            duration: 29
-            billsec: 21
-            disposition: "ANSWERED"
-            dcontext: "ext-local"
-            recordingfile: ""
-            src: "0721123432"
-            dst: "vms201"
-            clid: ""CHIU: USER" <1233312>"
-         }
-     ]
-        *
-        * ---
-        *
-        * ### <a id="interval_filterget">**`historycall/interval/:endpoint/:from/:to/:filter[?limit=n&offset=n&sort=field]`**</a>
-        *
-        * Returns the history call between _"from"_ date to _"to"_ date for the endpoint _"endpoint"_
-        * filtering by _"filter"_. E.g. the endpoint can be the extension number. Date must be expressed
-        * in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
-        * Support the pagination with the limit and offset parameters and sorting.
-        *
-        * Example JSON response:
-        *
-        *     [
-         {
-            time: 1491300647
-            channel: "SIP/2001-00000000"
-            dstchannel: "SIP/303-0000000b"
-            uniqueid: "1388647977.5182"
-            duration: 29
-            billsec: 21
-            disposition: "ANSWERED"
-            dcontext: "ext-local"
-            recordingfile: ""
-            src: "0721123432"
-            dst: "vms201"
-            clid: ""CHIU: USER" <1233312>"
-         }
+            "time": 1491480471,
+            "channel": "PJSIP/204-00000006",
+            "dstchannel": "PJSIP/91223-00000007",
+            "uniqueid": "1491473271.12",
+            "userfield": "",
+            "duration": 2,
+            "billsec": 1,
+            "disposition": "ANSWERED",
+            "dcontext": "ext-local",
+            "recordingfile": "",
+            "src": "204",
+            "dst": "91223",
+            "clid": "\"andrea marchio\" <204>"
+         },
+         ...
      ]
         *
         * <br>
@@ -377,25 +332,17 @@ function setCompAuthorization(ca) {
          *
          *   @param {string} listen_callrec/:id To listen the record audio file of a call
          *
-         *   @param {string} day/:endpoint/:day[?limit=n&offset=n&sort=field] To get the history call of the day and endpoint. The date must be expressed
-         *                                      in YYYYMMDD format
+         *   @param {string} interval/:type/:target/:from/:to[?limit=n&offset=n&sort=field] To get the history call between _"from"_ date to _"to"_ date.
+         *     The date must be expressed in YYYYMMDD format
          *
-         *   @param {string} day/:endpoint/:day/:filter[?limit=n&offset=n&sort=field] To get the history call of the day and endpoint filtering by filter.
-         *                                              The date must be expressed in YYYYMMDD format
-         *
-         *   @param {string} interval/:endpoint/:from/:to[?limit=n&offset=n&sort=field] To get the history call between _"from"_ date to _"to"_ date.
-         *                                                The date must be expressed in YYYYMMDD format
-         *
-         *   @param {string} interval/:endpoint/:from/:to/:filter[?limit=n&offset=n&sort=field] To get the history call between _"from"_ date to _"to"_
-         *                                                        date filtering by filter. The date must be expressed in YYYYMMDD format
+         *   @param {string} interval/:type/:target/:from/:to/:filter[?limit=n&offset=n&sort=field] To get the history call between _"from"_ date to _"to"_
+         *     date filtering by filter. The date must be expressed in YYYYMMDD format
          */
         'get': [
           'down_callrec/:id',
           'listen_callrec/:id',
-          'day/:endpoint/:day',
-          'day/:endpoint/:day/:filter',
-          'interval/:endpoint/:from/:to',
-          'interval/:endpoint/:from/:to/:filter'
+          'interval/:type/:target/:from/:to',
+          'interval/:type/:target/:from/:to/:filter'
         ],
 
         /**
@@ -692,38 +639,14 @@ function setCompAuthorization(ca) {
       },
 
       /**
-       * Search the history call for the specified day, endpoint and optional filter by the following REST api:
-       *
-       *     day/:endpoint/:day[?limit=n&offset=n&sort=field]
-       *     day/:endpoint/:day/:filter[?limit=n&offset=n&sort=field]
-       *
-       * @method day
-       * @param {object} req The client request.
-       * @param {object} res The client response.
-       * @param {function} next Function to run the next handler in the chain.
-       *
-       * It uses _interval_ function.
-       */
-      day: function(req, res, next) {
-        try {
-          req.params.to = req.params.day;
-          req.params.from = req.params.day;
-          this.interval(req, res, next);
-        } catch (err) {
-          logger.error(IDLOG, err.stack);
-          compUtil.net.sendHttp500(IDLOG, res, err.toString());
-        }
-      },
-
-      /**
        * Search the history call for the specified interval, endpoint and optional filter by the following REST api:
        *
-       *     interval/:endpoint/:from/:to[?limit=n&offset=n&sort=field]
-       *     interval/:endpoint/:from/:to/:filter[?limit=n&offset=n&sort=field]
+       *     interval/:type/:target/:from/:to[?limit=n&offset=n&sort=field]
+       *     interval/:type/:target/:from/:to/:filter[?limit=n&offset=n&sort=field]
        *
        * @method interval
-       * @param {object}   req  The client request.
-       * @param {object}   res  The client response.
+       * @param {object} req The client request
+       * @param {object} res The client response
        * @param {function} next Function to run the next handler in the chain.
        */
       interval: function(req, res, next) {
@@ -752,7 +675,7 @@ function setCompAuthorization(ca) {
           //     return;
           // }
 
-          logger.info(IDLOG, 'cdr authorization successfully for user "' + username + '" and endpoint ' + req.params.endpoint);
+          logger.info(IDLOG, 'cdr authorization successfully for user "' + username + '" and target ' + req.params.target);
 
           // check the "administration recording" and "recording" authorization. If it's enabled the user can view also all the data
           // about his recording audio files
@@ -767,10 +690,17 @@ function setCompAuthorization(ca) {
           //     logger.info(IDLOG, 'user "' + username + '" has neither the "admin_recording" nor the "recording" authorization');
           // }
 
+          var extens;
+          if (req.params.type === 'user') {
+            extens = Object.keys(compUser.getAllEndpointsExtension(username));
+          } else {
+            extens = [req.params.target];
+          }
+
           var obj = {
             to: req.params.to,
             from: req.params.from,
-            endpoint: req.params.endpoint,
+            endpoints: extens,
             recording: recording
           };
 
@@ -785,9 +715,10 @@ function setCompAuthorization(ca) {
               if (err1) {
                 throw err1;
               } else {
-                logger.info(IDLOG, 'send ' + results.length + ' results searching history call ' +
+                logger.info(IDLOG, 'send #' + results.count + ' results searching history call ' +
                   'interval between ' + obj.from + ' to ' + obj.to + ' for ' +
-                  'endpoint ' + obj.endpoint + ' and filter ' + (obj.filter ? obj.filter : '""') +
+                  req.params.type + ' "' + req.params.target + '" [' + obj.endpoints + '] ' +
+                  ' and filter ' + (obj.filter ? obj.filter : '""') +
                   (obj.recording ? ' with recording data' : '') +
                   ' to user "' + username + '"');
                 res.send(200, results);
@@ -805,7 +736,6 @@ function setCompAuthorization(ca) {
       }
     };
     exports.api = historycall.api;
-    exports.day = historycall.day;
     exports.interval = historycall.interval;
     exports.setLogger = setLogger;
     exports.setCompUtil = setCompUtil;

@@ -120,7 +120,7 @@ function setCompAstProxy(comp) {
  *
  * @method getHistoryCallInterval
  * @param {object} data
- *   @param {string}  data.endpoint  The endpoint involved in the research, e.g. the extension identifier
+ *   @param {string}  data.endpoints The endpoints involved in the research, e.g. the extension identifiers
  *   @param {string}  data.from      The starting date of the interval in the YYYYMMDD format (e.g. 20130521)
  *   @param {string}  data.to        The ending date of the interval in the YYYYMMDD format (e.g. 20130528)
  *   @param {boolean} data.recording True if the data about recording audio file must be returned
@@ -133,13 +133,19 @@ function setCompAstProxy(comp) {
 function getHistoryCallInterval(data, offset, limit, sort, cb) {
   try {
     // check parameters
-    if (typeof data !== 'object' || typeof data.recording !== 'boolean' || typeof cb !== 'function' || typeof data.to !== 'string' || typeof data.from !== 'string' || typeof data.endpoint !== 'string' || (typeof data.filter !== 'string' && data.filter !== undefined)) {
+    if (typeof data !== 'object' ||
+      typeof data.recording !== 'boolean' ||
+      typeof cb !== 'function' ||
+      typeof data.to !== 'string' ||
+      typeof data.from !== 'string' ||
+      !(data.endpoints instanceof Array) ||
+      (typeof data.filter !== 'string' && data.filter !== undefined)) {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     logger.info(IDLOG, 'search history call between ' + data.from + ' to ' + data.to + ' for ' +
-      'endpoint ' + data.endpoint + ' and filter ' + (data.filter ? data.filter : '""') +
+      'endpoints ' + data.endpoints + ' and filter ' + (data.filter ? data.filter : '""') +
       (data.recording ? ' with recording data' : ''));
     dbconn.getHistoryCallInterval(data, offset, limit, sort, cb);
 
