@@ -326,6 +326,12 @@ function setCompUtil(comp) {
                 break;
               }
             }
+            for (i = 0; i < result.endpoints[compUser.ENDPOINT_TYPES.mainextension].length; i++) {
+              if (result.endpoints[compUser.ENDPOINT_TYPES.mainextension][i].id === defExt) {
+                defextObj = result.endpoints[compUser.ENDPOINT_TYPES.extension][i];
+                break;
+              }
+            }
             result.default_device = defextObj;
             logger.info(IDLOG, 'send user info to user "' + username + '"');
             res.send(200, result);
