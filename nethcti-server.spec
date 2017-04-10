@@ -24,6 +24,7 @@ perl -w createlinks
 cd root/usr/lib/node/nethcti-server && npm install && cd -
 # nethcti configuration directory
 mkdir -p root/etc/nethcti
+mkdir -p root/var/lib/nethserver/nethcti/static
 
 # clean nodejs npm modules
 find root/usr/lib/node/nethcti-server/node_modules -iname readme.\* -o \
@@ -46,6 +47,8 @@ rm -rf %{buildroot}
 (cd root; find . -depth -print | cpio -dump %{buildroot})
 %{genfilelist} %{buildroot} \
 --file /usr/lib/node/nethcti-server/scripts/pam-authenticate.pl 'attr(0550,asterisk,asterisk)' \
+--dir /var/lib/nethserver/nethcti/static 'attr(0775,asterisk,asterisk)' \
+--dir /usr/lib/node/nethcti-server/plugins/com_static_http/static 'attr(0775,asterisk,asterisk)' \
 --dir /etc/nethcti 'attr(0775,asterisk,asterisk)' > %{name}-%{version}-filelist
 
 %clean

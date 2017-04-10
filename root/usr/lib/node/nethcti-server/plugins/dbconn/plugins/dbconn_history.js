@@ -291,7 +291,7 @@ function getHistorySmsInterval(data, cb) {
       ],
       attributes: attributes
 
-    }).success(function(results) {
+    }).then(function(results) {
 
       // extract results to return in the callback function
       var i;
@@ -303,7 +303,7 @@ function getHistorySmsInterval(data, cb) {
         data.from + ' to ' + data.to + ' sent by username "' + data.username + '" and filter ' + data.filter);
       cb(null, results);
 
-    }).error(function(err) { // manage the error
+    }, function(err) { // manage the error
 
       logger.error(IDLOG, 'searching history sms interval between ' + data.from + ' to ' + data.to +
         ' sent by username "' + data.username + '" and filter ' + data.filter + ': ' + err.toString());
@@ -351,7 +351,7 @@ function isAtLeastExtenInCall(uniqueid, extensions, cb) {
         ['recordingfile', 'filename']
       ]
 
-    }).success(function(result) {
+    }).then(function(result) {
 
       // extract result to return in the callback function
       if (result && result.selectedValues) {
@@ -363,7 +363,7 @@ function isAtLeastExtenInCall(uniqueid, extensions, cb) {
         cb(null, false);
       }
 
-    }).error(function(err) { // manage the error
+    }, function(err) { // manage the error
 
       logger.error(IDLOG, 'checking if at least one extension of ' + extensions.toString() + ' is involved in the call with uniqueid ' + uniqueid);
       cb(err.toString());
