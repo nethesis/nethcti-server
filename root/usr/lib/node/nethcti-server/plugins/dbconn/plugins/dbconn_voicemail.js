@@ -142,7 +142,7 @@ function getVoicemailMsg(vmId, type, offset, limit, cb) {
         compDbconnMain.models[compDbconnMain.JSON_KEYS.VOICEMAIL].findAndCountAll({
             where: [
                 'mailboxuser = ?' +
-                (type ? ' AND LOWER(SUBSTRING_INDEX(dir, "/", -1)) = "' + type+ '"' : '') +
+                (type !== 'all' ? ' AND LOWER(SUBSTRING_INDEX(dir, "/", -1)) = "' + type+ '"' : '') +
                 ' ORDER BY origtime DESC',
                 vmId
             ],
