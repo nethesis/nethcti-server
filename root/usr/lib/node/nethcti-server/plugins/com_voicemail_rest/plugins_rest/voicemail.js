@@ -192,7 +192,6 @@ function setCompAuthorization(comp) {
         *
         * 1. [`voicemail/list/:type[?offset=n&limit=n]`](#listget)
         * 1. [`voicemail/listen/:id`](#listenget)
-        * 1. [`voicemail/new_counters`](#new_countersget)
         * 1. [`voicemail/download/:id`](#downloadget)
         *
         * ---
@@ -223,35 +222,6 @@ function setCompAuthorization(comp) {
         * ### <a id="listenget">**`voicemail/listen/:id`**</a>
         *
         * The user can listen the voice message of the user. The _id_ must be the identifier of the voice message in the database.
-        *
-        * ---
-        *
-        * ### <a id="new_countersget">**`voicemail/new_counters`**</a>
-        *
-        * Returns the number of the new voice messages of all voicemails.
-        *
-        * Example JSON response:
-        *
-        *     {
-         "602": {
-              "newMessageCount": "0"
-         },
-         "605": {
-              "newMessageCount": "0"
-         },
-         "608": {
-              "newMessageCount": "0"
-         },
-         "609": {
-              "newMessageCount": "1"
-         },
-         "614": {
-              "newMessageCount": "0"
-         },
-         "615": {
-              "newMessageCount": "0"
-         }
-     }
         *
         * ---
         *
