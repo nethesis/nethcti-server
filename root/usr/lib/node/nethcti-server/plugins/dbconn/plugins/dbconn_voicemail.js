@@ -187,13 +187,11 @@ function deleteVoiceMessage(dbid, cb) {
         // search
         compDbconnMain.models[compDbconnMain.JSON_KEYS.VOICEMAIL].find({
             where: [ 'id=?', dbid  ]
-
-        }).success(function (task) {
+        }).then(function (task) {
             try {
                 if (task) {
 
-                    task.destroy().success(function () {
-
+                    task.destroy().then(function () {
                         logger.info(IDLOG, 'voice message with db id "' + dbid + '" has been deleted successfully');
                         cb();
 
@@ -213,8 +211,7 @@ function deleteVoiceMessage(dbid, cb) {
                 cb(error);
             }
 
-        }).error(function (err) { // manage the error
-
+        }, function (err) { // manage the error
             logger.error(IDLOG, 'searching voice message with db id "' + dbid + '" to delete not found: ' + err.toString());
             cb(err.toString());
         });
@@ -248,7 +245,6 @@ function listenVoiceMessage(dbid, cb) {
             if (result && result.dataValues && result.dataValues.recording) {
                 logger.info(IDLOG, 'obtained voicemail audio file from voicemail db id "' + dbid + '"');
                 cb(null, result.dataValues.recording);
-
                 // if the voice message has never been read, it updates its status as "read".
                 // If the message has never been read the "dir" field contains the "INBOX" string.
                 // So if it's present it updates the field replacing the "INBOX" string with the "Old" one
@@ -257,9 +253,7 @@ function listenVoiceMessage(dbid, cb) {
 
                     result.updateAttributes({
                         dir: dir.substring(0, dir.length - 5) + 'Old'
-
-                    }, [ 'dir' ]).success(function () {
-
+                    }, [ 'dir' ]).then(function () {
                         logger.info(IDLOG, 'read status of the voice message with db id "' + dbid + '" has been updated successfully');
 
                         // emits the event for a listened voice message

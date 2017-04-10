@@ -548,7 +548,6 @@ function setCompAuthorization(comp) {
                     // This is for authorization check
                     compVoicemail.getVmIdFromDbId(req.params.id, function (err1, vmid) {
                         try {
-
                             if (err1) {
                                 logger.error(IDLOG, 'deleting voice message: getting voicemail id (mailbox) from db voice message id "' + req.params.id + '"');
                                 compUtil.net.sendHttp500(IDLOG, res, err1.toString());
