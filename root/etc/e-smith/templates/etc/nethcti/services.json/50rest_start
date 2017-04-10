@@ -21,3 +21,7 @@
       "webroot": "/usr/lib/node/nethcti-server/plugins/com_static_http/static",
       "customWebroot": "/var/lib/nethserver/nethcti/static"
     \},
+    "voicemail": \{
+      "port": "50005",
+      "address": "localhost"
+    \},
