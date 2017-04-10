@@ -291,7 +291,7 @@ function getHistorySmsInterval(data, cb) {
       ],
       attributes: attributes
 
-    }).success(function(results) {
+    }).then(function(results) {
 
       // extract results to return in the callback function
       var i;
@@ -303,7 +303,7 @@ function getHistorySmsInterval(data, cb) {
         data.from + ' to ' + data.to + ' sent by username "' + data.username + '" and filter ' + data.filter);
       cb(null, results);
 
-    }).error(function(err) { // manage the error
+    }, function(err) { // manage the error
 
       logger.error(IDLOG, 'searching history sms interval between ' + data.from + ' to ' + data.to +
         ' sent by username "' + data.username + '" and filter ' + data.filter + ': ' + err.toString());
