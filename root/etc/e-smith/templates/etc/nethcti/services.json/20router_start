@@ -4,3 +4,4 @@
       "/astproxy": "http://127.0.0.1:50002/astproxy",
       "/historycall": "http://127.0.0.1:50003/historycall",
       "/histcallswitch": "http://127.0.0.1:50003/histcallswitch",
+      "/static": "http://127.0.0.1:50004",

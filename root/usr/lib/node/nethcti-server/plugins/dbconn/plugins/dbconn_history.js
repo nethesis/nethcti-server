@@ -351,7 +351,7 @@ function isAtLeastExtenInCall(uniqueid, extensions, cb) {
         ['recordingfile', 'filename']
       ]
 
-    }).success(function(result) {
+    }).then(function(result) {
 
       // extract result to return in the callback function
       if (result && result.selectedValues) {
@@ -363,7 +363,7 @@ function isAtLeastExtenInCall(uniqueid, extensions, cb) {
         cb(null, false);
       }
 
-    }).error(function(err) { // manage the error
+    }, function(err) { // manage the error
 
       logger.error(IDLOG, 'checking if at least one extension of ' + extensions.toString() + ' is involved in the call with uniqueid ' + uniqueid);
       cb(err.toString());

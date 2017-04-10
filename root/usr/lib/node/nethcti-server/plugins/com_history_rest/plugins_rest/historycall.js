@@ -423,14 +423,13 @@ function setCompAuthorization(ca) {
             // test is successful
             compHistory.isAtLeastExtenInCallRecording(id, extens, function(err, result) {
               try {
-
                 if (err) {
                   throw err;
                 }
-
                 // the user isn't involved in the recorded call, so he can't delete it
                 else if (typeof result === 'boolean' && !result) {
-                  logger.warn(IDLOG, 'user "' + username + '" try to delete the recording call id "' + id + '", but he isn\'t involved in the call');
+                  logger.warn(IDLOG, 'user "' + username + '" try to delete the recording call id "' + id +
+                    '", but he is not involved in the call');
                   compUtil.net.sendHttp403(IDLOG, res);
 
                 } else {

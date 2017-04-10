@@ -157,12 +157,12 @@ function setCompUtil(comp) {
 function config(path) {
   // check parameter
   if (typeof path !== 'string') {
-    throw new TypeError('wrong parameter');
+    throw new TypeError('wrong parameter: ' + path);
   }
 
   // check file presence
   if (!fs.existsSync(path)) {
-    throw new Error(path + ' doesn\'t exist');
+    throw new Error(path + ' does not exist');
   }
 
   // read configuration file
@@ -173,7 +173,7 @@ function config(path) {
     port = json.static.port;
 
   } else {
-    logger.warn(IDLOG, 'no port has been specified in JSON file ' + path);
+    logger.warn(IDLOG, 'wrong ' + path + ': no "port" key in rest static');
   }
 
   // initialize the address of the REST server
@@ -181,7 +181,7 @@ function config(path) {
     address = json.static.address;
 
   } else {
-    logger.warn(IDLOG, 'no address has been specified in JSON file ' + path);
+    logger.warn(IDLOG, 'wrong ' + path + ': no "address" key in rest static');
   }
 
   // initialize webroot
@@ -189,16 +189,16 @@ function config(path) {
     webroot = json.static.webroot;
   } else {
     webroot = path.join(__dirname, webroot);
-    logger.warn(IDLOG, 'no "webroot" has been specified in JSON file ' + path);
+    logger.warn(IDLOG, 'wrong ' + path + ': no "webroot" key in rest static');
   }
 
   // initialize webroot for custom files created by the user
   if (json.static.customWebroot) {
     customWebroot = json.static.customWebroot;
   } else {
-    logger.warn(IDLOG, 'no "customWebroot" has been specified in JSON file ' + path);
+    logger.warn(IDLOG, 'wrong ' + path + ': no "customWebroot" key in rest static');
   }
-  logger.info(IDLOG, 'configuration by file ' + path + ' ended');
+  logger.info(IDLOG, 'configuration done by ' + path);
 }
 
 /**
