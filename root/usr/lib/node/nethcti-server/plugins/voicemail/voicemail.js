@@ -196,7 +196,7 @@ function getVoiceMessagesByUser(username, type, offset, limit, cb) {
             }
           });
         } else {
-          throw new Error('user ' + username + ' does not have any voicemail associated');
+          cb(null, []);
         }
     } catch (err) {
         logger.error(IDLOG, err.stack);
