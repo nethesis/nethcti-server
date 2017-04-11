@@ -120,7 +120,8 @@ var IDLOG = '[pjsipDetails]';
             if (data.viaaddress) {
               list[data.actionid].ip = data.viaaddress.split(':')[0];
               list[data.actionid].port = data.viaaddress.split(':')[1];
-            } else if (data.uri) {
+
+            } else if (data.uri && data.uri.indexOf('@') !== -1) {
               list[data.actionid].ip = (data.uri.split('@')[1]).split(':')[0];
               list[data.actionid].port = (data.uri.split('@')[1]).split(':')[1];
             }

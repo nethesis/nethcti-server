@@ -151,14 +151,6 @@ function getHistoryCallInterval(data, offset, limit, sort, cb) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
-    // check optional parameters
-    if (data.filter === undefined) {
-      data.filter = '%';
-    }
-    if (data.endpoints === undefined) {
-      data.endpoints = ['%'];
-    }
-
     // define the mysql field to be returned. The "recordingfile" field
     // is returned only if the "data.recording" argument is true
     var attributes = [
@@ -184,25 +176,45 @@ function getHistoryCallInterval(data, offset, limit, sort, cb) {
       attributes.push('clid');
     }
 
-    // search
-    compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].findAndCountAll({
-      where: [
+    // check optional parameters
+    if (data.filter === undefined) {
+      data.filter = '%';
+    }
+
+    var whereClause;
+    if (data.endpoints !== undefined) {
+
+      whereClause = [
         '(src IN (?) OR dst IN (?)) AND ' +
         '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
         '(src LIKE ? OR clid LIKE ? OR dst LIKE ?)',
         data.endpoints, data.endpoints,
         data.from, data.to,
         data.filter, data.filter, data.filter
-      ],
+      ];
+
+    } else {
+
+      whereClause = [
+        '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
+        '(src LIKE ? OR clid LIKE ? OR dst LIKE ?)',
+        data.from, data.to,
+        data.filter, data.filter, data.filter
+      ];
+    }
+
+    // search
+    compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].findAndCountAll({
+      where: whereClause,
       attributes: attributes,
       offset: (offset ? parseInt(offset) : 0),
       limit: (limit ? parseInt(limit) : null),
       order: (sort ? sort : 'time desc')
 
     }).then(function(results) {
-      logger.info(IDLOG, results.length + ' results searching history call interval between ' +
-        data.from + ' to ' + data.to + ' for endpoints ' + data.endpoints +
-        ' and filter ' + data.filter);
+      logger.info(IDLOG, results.count + ' results searching history call interval between ' +
+        data.from + ' to ' + data.to + ' and filter ' + data.filter +
+        (data.endpoints ? (' for endpoints ' + data.endpoints) : ''));
       cb(null, results);
 
     }, function(err) { // manage the error

@@ -140,64 +140,8 @@ function setCompAuthorization(ca) {
         *
         * # GET requests
         *
-        * 1. [`histcallswitch/day/:day[?limit=n&offset=n&sort=field]`](#dayget)
-        * 1. [`histcallswitch/day/:day/:filter[?limit=n&offset=n&sort=field]`](#day_filterget)
         * 1. [`histcallswitch/interval/:from/:to[?limit=n&offset=n&sort=field]`](#intervalget)
         * 1. [`histcallswitch/interval/:from/:to/:filter[?limit=n&offset=n&sort=field]`](#interval_filterget)
-        *
-        * ---
-        *
-        * ### <a id="dayget">**`histcallswitch/day/:day[?limit=n&offset=n&sort=field]`**</a>
-        *
-        * Returns the switchboard history call of the day _"day"_ of all endpoints. Date must be expressed
-        * in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
-        * It supports pagination with limit and offset parameters and sorting.
-        *
-        * Example JSON response:
-        *
-        *     [
-         {
-            time: 1491300647
-            channel: "SIP/2001-00000000"
-            dstchannel: "SIP/303-0000000b"
-            uniqueid: "1388647977.5182"
-            duration: 29
-            billsec: 21
-            disposition: "ANSWERED"
-            dcontext: "ext-local"
-            recordingfile: ""
-            src: "0721123432"
-            dst: "vms201"
-            clid: ""CHIU: USER" <1233312>"
-         }
-     ]
-        *
-        * ---
-        *
-        * ### <a id="day_filterget">**`histcallswitch/day/:day/:filter[?limit=n&offset=n&sort=field]`**</a>
-        *
-        * Returns the switchboard history call of the day _"day"_ of all endpoints filtering by _"filter"_.
-        * Date must be expressed in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
-        * It supports pagination with limit and offset parameters and sorting.
-        *
-        * Example JSON response:
-        *
-        *     [
-         {
-            time: 1491300647
-            channel: "SIP/2001-00000000"
-            dstchannel: "SIP/303-0000000b"
-            uniqueid: "1388647977.5182"
-            duration: 29
-            billsec: 21
-            disposition: "ANSWERED"
-            dcontext: "ext-local"
-            recordingfile: ""
-            src: "0721123432"
-            dst: "vms201"
-            clid: ""CHIU: USER" <1233312>"
-         }
-     ]
         *
         * ---
         *
@@ -211,19 +155,22 @@ function setCompAuthorization(ca) {
         *
         *     [
          {
-            time: 1491300647
-            channel: "SIP/2001-00000000"
-            dstchannel: "SIP/303-0000000b"
-            uniqueid: "1388647977.5182"
-            duration: 29
-            billsec: 21
-            disposition: "ANSWERED"
-            dcontext: "ext-local"
-            recordingfile: ""
-            src: "0721123432"
-            dst: "vms201"
-            clid: ""CHIU: USER" <1233312>"
-         }
+            "time": 1491480471,
+            "channel": "PJSIP/204-00000006",
+            "dstchannel": "PJSIP/91223-00000007",
+            "uniqueid": "1491473271.12",
+            "userfield": "",
+            "duration": 2,
+            "billsec": 1,
+            "disposition": "ANSWERED",
+            "dcontext": "ext-local",
+            "recordingfile": "",
+            "src": "204",
+            "dst": "91223",
+            "clid": "\"andrea marchio\" <204>",
+            "type": "out" // can be ("in" | "out" | "") if it is through a trunk or not
+         },
+         ...
      ]
         *
         * ---
@@ -239,19 +186,22 @@ function setCompAuthorization(ca) {
         *
         *     [
          {
-            time: 1491300647
-            channel: "SIP/2001-00000000"
-            dstchannel: "SIP/303-0000000b"
-            uniqueid: "1388647977.5182"
-            duration: 29
-            billsec: 21
-            disposition: "ANSWERED"
-            dcontext: "ext-local"
-            recordingfile: ""
-            src: "0721123432"
-            dst: "vms201"
-            clid: ""CHIU: USER" <1233312>"
-         }
+            "time": 1491480471,
+            "channel": "PJSIP/204-00000006",
+            "dstchannel": "PJSIP/91223-00000007",
+            "uniqueid": "1491473271.12",
+            "userfield": "",
+            "duration": 2,
+            "billsec": 1,
+            "disposition": "ANSWERED",
+            "dcontext": "ext-local",
+            "recordingfile": "",
+            "src": "204",
+            "dst": "91223",
+            "clid": "\"andrea marchio\" <204>",
+            "type": "out" // can be ("in" | "out" | "") if it is through a trunk or not
+         },
+         ...
      ]
         *
         * @class plugin_rest_histcallswitch
@@ -269,21 +219,13 @@ function setCompAuthorization(ca) {
          * @property get
          * @type {array}
          *
-         *   @param {string} day/:day[?limit=n&offset=n&sort=field] To get the history call of the day. The date must be expressed
-         *       in YYYYMMDD format
-         *
-         *   @param {string} day/:day/:filter[?limit=n&offset=n&sort=field] To get the history call of the day filtering by filter.
-         *       The date must be expressed in YYYYMMDD format
-         *
          *   @param {string} interval/:from/:to[?limit=n&offset=n&sort=field] To get the history call between _"from"_ date to _"to"_ date.
-         *       The date must be expressed in YYYYMMDD format
+         *     The date must be expressed in YYYYMMDD format
          *
          *   @param {string} interval/:from/:to/:filter[?limit=n&offset=n&sort=field] To get the history call between _"from"_ date to _"to"_
-         *       date filtering by filter. The date must be expressed in YYYYMMDD format
+         *     date filtering by filter. The date must be expressed in YYYYMMDD format
          */
         'get': [
-          'day/:day',
-          'day/:day/:filter',
           'interval/:from/:to',
           'interval/:from/:to/:filter'
         ],
@@ -363,34 +305,9 @@ function setCompAuthorization(ca) {
           logger.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
-      },
-
-      /**
-       * Search the switchboard history call for the specified day and optional filter by the following REST api:
-       *
-       *     day/:day[?limit=n&offset=n&sort=field]
-       *     day/:day/:filter[?limit=n&offset=n&sort=field]
-       *
-       * @method day
-       * @param {object} req The client request.
-       * @param {object} res The client response.
-       * @param {function} next Function to run the next handler in the chain.
-       *
-       * It uses _interval_ function.
-       */
-      day: function(req, res, next) {
-        try {
-          req.params.to = req.params.day;
-          req.params.from = req.params.day;
-          this.interval(req, res, next);
-        } catch (err) {
-          logger.error(IDLOG, err.stack);
-          compUtil.net.sendHttp500(IDLOG, res, err.toString());
-        }
       }
     };
     exports.api = histcallswitch.api;
-    exports.day = histcallswitch.day;
     exports.interval = histcallswitch.interval;
     exports.setLogger = setLogger;
     exports.setPrivacy = setPrivacy;

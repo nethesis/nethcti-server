@@ -47,6 +47,8 @@ module.exports = function(options, imports, register) {
       getExtensionIp: astProxy.proxyLogic.getExtensionIp,
       getPrefix: astProxy.proxyLogic.getPrefix,
       addPrefix: astProxy.proxyLogic.addPrefix,
+      isTrunk: astProxy.proxyLogic.isTrunk,
+      isExten: astProxy.proxyLogic.isExten,
       hangupChannel: astProxy.proxyLogic.hangupChannel,
       hangupConversation: astProxy.proxyLogic.hangupConversation,
       forceHangupConversation: astProxy.proxyLogic.forceHangupConversation,

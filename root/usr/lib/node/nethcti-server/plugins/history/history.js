@@ -147,7 +147,100 @@ function getHistoryCallInterval(data, offset, limit, sort, cb) {
     logger.info(IDLOG, 'search history call between ' + data.from + ' to ' + data.to + ' for ' +
       'endpoints ' + data.endpoints + ' and filter ' + (data.filter ? data.filter : '""') +
       (data.recording ? ' with recording data' : ''));
-    dbconn.getHistoryCallInterval(data, offset, limit, sort, cb);
+
+    dbconn.getHistoryCallInterval(data, offset, limit, sort, function(err, results) {
+      try {
+        results = addExtensCallDirection(results, data.endpoints);
+        cb(err, results);
+
+      } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+      }
+    });
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+/**
+ * It adds call type information to the data passed as argument. It involves
+ * only if the call is outgoing or incoming through a trunk.
+ *
+ * @method addCallTypeInOut
+ * @param {array} data Calls retrieved from the database
+ * @return {array} The same data received as parameter plus type information.
+ */
+function addCallTypeInOut(data) {
+  try {
+    var i, chExten, destchExten;
+    for (i = 0; i < data.rows.length; i++) {
+
+      // get exten identifier from channel and dstchannel
+      chExten = data.rows[i].dataValues.channel.substring(
+        data.rows[i].dataValues.channel.indexOf('/') + 1,
+        data.rows[i].dataValues.channel.lastIndexOf('-')
+      );
+      // dstchannel can be an empty string
+      if (data.rows[i].dataValues.dstchannel !== '') {
+        destchExten = data.rows[i].dataValues.dstchannel.substring(
+          data.rows[i].dataValues.dstchannel.indexOf('/') + 1,
+          data.rows[i].dataValues.dstchannel.lastIndexOf('-')
+        );
+      } else {
+        destchExten = '';
+      }
+
+      if (compAstProxy.isTrunk(chExten) && compAstProxy.isExten(destchExten)) {
+        data.rows[i].dataValues.type = 'in';
+
+      } else if (compAstProxy.isExten(chExten) && compAstProxy.isTrunk(destchExten)) {
+        data.rows[i].dataValues.type = 'out';
+
+      } else {
+        data.rows[i].dataValues.type = '';
+      }
+    }
+    return data;
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * It adds call direction information to the data passed as argument. This is
+ * possible only for the requests that involves the history call of a user. In
+ * this case is possible to calculate the direction call using the list of
+ * extensions of the user.
+ *
+ * @method addExtensCallDirection
+ * @param {array} data Calls retrieved from the database
+ * @param {array} endpoints The extensions of the user
+ * @return {array} The same data received as parameter plus direction information.
+ */
+function addExtensCallDirection(data, endpoints) {
+  try {
+    var i;
+    for (i = 0; i < data.rows.length; i++) {
+
+      if (endpoints.indexOf(data.rows[i].dataValues.src) !== -1 &&
+        endpoints[endpoints.indexOf(data.rows[i].dataValues.src)] === data.rows[i].dataValues.src) {
+
+        data.rows[i].dataValues.direction = 'out';
+
+      } else if (endpoints.indexOf(data.rows[i].dataValues.dst) !== -1 &&
+        endpoints[endpoints.indexOf(data.rows[i].dataValues.dst)] === data.rows[i].dataValues.dst) {
+
+        data.rows[i].dataValues.direction = 'in';
+
+      } else {
+        data.rows[i].dataValues.direction = '';
+      }
+    }
+    return data;
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
@@ -173,7 +266,13 @@ function getHistoryCallInterval(data, offset, limit, sort, cb) {
 function getHistorySwitchCallInterval(data, offset, limit, sort, cb) {
   try {
     // check parameters
-    if (typeof data !== 'object' || typeof cb !== 'function' || typeof data.recording !== 'boolean' || typeof data.to !== 'string' || typeof data.from !== 'string' || (typeof data.filter !== 'string' && data.filter !== undefined) || (typeof data.privacyStr !== 'string' && data.privacyStr !== undefined)) {
+    if (typeof data !== 'object' ||
+      typeof cb !== 'function' ||
+      typeof data.recording !== 'boolean' ||
+      typeof data.to !== 'string' ||
+      typeof data.from !== 'string' ||
+      (typeof data.filter !== 'string' && data.filter !== undefined) ||
+      (typeof data.privacyStr !== 'string' && data.privacyStr !== undefined)) {
 
       throw new Error('wrong parameters');
     }
@@ -182,7 +281,16 @@ function getHistorySwitchCallInterval(data, offset, limit, sort, cb) {
       'all endpoints and filter ' + (data.filter ? data.filter : '""') +
       (data.recording ? ' with recording data' : ''));
 
-    dbconn.getHistoryCallInterval(data, offset, limit, sort, cb);
+    dbconn.getHistoryCallInterval(data, offset, limit, sort, function(err, results) {
+      try {
+        results = addCallTypeInOut(results);
+        cb(err, results);
+
+      } catch (err) {
+        logger.error(IDLOG, err.stack);
+        cb(err);
+      }
+    });
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
