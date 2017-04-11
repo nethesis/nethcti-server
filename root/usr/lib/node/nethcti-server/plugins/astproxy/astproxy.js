@@ -33,18 +33,13 @@ var EventEmitter = require('events').EventEmitter;
 var IDLOG = '[astproxy]';
 
 /**
- * It's the path of the ini file created by perl script.
- * It contains the categorization of all peers: extensions,
- * groups, trunks, parks and queues.
+ * It is the path of the JSON file that contains the trunks list.
  *
- * @property INI_PATH_AST_STRUCT
+ * @property TRUNKS_FILEPATH
  * @type string
  * @private
- * @final
- * @readOnly
- * @default "/etc/nethcti/structure.ini"
  */
-var INI_PATH_STRUCT = '/etc/nethcti/structure.ini';
+var TRUNKS_FILEPATH;
 
 /**
  * The logger. It must have at least three methods: _info, warn and error._
@@ -127,25 +122,35 @@ var sipWebrtcConf;
 
 /**
  * Sets the configuration to be use to establish the telnet asterisk connection.
+ * It also reads the filepath to be used to obtain the trunks list.
  *
  * @method config
- * @param {string} path The file path of the JSON configuration file
+ * @param {object} obj
+ *  @param {string} obj.ast_path The file path of the asterisk JSON configuration file
+ *  @param {string} obj.ast_trunks_path The file path of the JSON file with trunks list
  */
-function config(path) {
+function config(obj) {
   try {
-    if (typeof path !== 'string') {
-      throw new TypeError('wrong parameter');
+    if (typeof obj !== 'object' ||
+      typeof obj.ast_path !== 'string' ||
+      typeof obj.ast_trunks_path !== 'string') {
+
+      throw new TypeError('wrong parameter: ' + JSON.stringify(obj));
     }
-    if (!fs.existsSync(path)) {
-      throw new Error(path + ' does not exist');
+    if (!fs.existsSync(obj.ast_path)) {
+      throw new Error(obj.ast_path + ' does not exist');
+    }
+    if (!fs.existsSync(obj.ast_trunks_path)) {
+      throw new Error(obj.ast_trunks_path + ' does not exist');
     }
 
-    var json = require(path);
+    // initialize asterisk configuration
+    var json = require(obj.ast_path);
     if (typeof json.user !== 'string' ||
       typeof json.pass !== 'string' || typeof json.prefix !== 'string' ||
       typeof json.host !== 'string' || typeof json.port !== 'string') {
 
-      throw new Error('wrong ' + path);
+      throw new Error(path + ' wrong file format');
     }
     astConf = {
       port: json.port,
@@ -156,7 +161,12 @@ function config(path) {
       reconnect_after: 3000 // how long to wait to reconnect, in miliseconds, default: 3000
     };
     proxyLogic.setPrefix(json.prefix);
-    logger.info(IDLOG, 'configuration done by ' + path);
+
+    // initialize trunks list
+    TRUNKS_FILEPATH = obj.ast_trunks_path;
+
+    logger.info(IDLOG, 'configuration done by ' + JSON.stringify(obj));
+
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
@@ -399,7 +409,7 @@ function onLogin(err, resp) {
       return;
     }
     logger.info(IDLOG, 'logged-in into asterisk');
-    proxyLogic.start(INI_PATH_STRUCT);
+    proxyLogic.start(TRUNKS_FILEPATH);
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
@@ -439,6 +449,7 @@ function onData(data) {
       typeof pluginsCmd.listParkings.data === 'function') {
 
       pluginsCmd.listParkings.data(data);
+
     } else if (data.event) { // check if data is an event
 
       var ev = data.event.toLowerCase();

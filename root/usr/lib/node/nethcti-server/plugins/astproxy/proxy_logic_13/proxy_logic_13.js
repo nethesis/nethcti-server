@@ -11,6 +11,7 @@
  * @class proxy_logic_13
  * @static
  */
+var fs = require('fs');
 var path = require('path');
 var async = require('async');
 // var Queue = require('../queue').Queue;
@@ -18,7 +19,6 @@ var async = require('async');
 var moment = require('moment');
 var Channel = require('../channel').Channel;
 // var Parking = require('../parking').Parking;
-// var iniparser = require('iniparser');
 var Extension = require('../extension').Extension;
 // var QueueMember = require('../queueMember').QueueMember;
 var EventEmitter = require('events').EventEmitter;
@@ -1006,18 +1006,31 @@ function parkStructValidation(err, resp) {
 }
 
 /**
- * Validates the asterisk structure of ini file created by the perl script.
- * Ini file items that aren't present in the asterisk, will be removed from
- * _struct_ property.
+ * It is called when the asterisk connection is fully booted.
  *
- * @method structValidation
- * @private
+ * @method start
+ * @param {string} trunksPath The JSON file path of the trunks list
+ * @static
  */
-function structValidation() {
+function start(trunksPath) {
   try {
+    // check paramter
+    if (typeof trunksPath !== 'string') {
+      throw new Error('wrong parameter: ' + trunksPath);
+    }
+
+    if (!fs.existsSync(trunksPath)) {
+      throw new Error(trunksPath + ' does not exist');
+    }
+
+    // initialize trunks list
+    trunks = require(trunksPath);
+    logger.info(IDLOG, 'trunks list initialization from ' + trunksPath + ' done');
+
     astProxy.doCmd({
       command: 'listPjsipPeers'
     }, initializePjsipExten);
+
     // logger.info(IDLOG, 'start asterisk structure ini file validation');
     // // validates all sip extensions
     // astProxy.doCmd({
@@ -1044,28 +1057,7 @@ function structValidation() {
     //   command: 'listIaxPeers'
     // }, iaxTrunkStructValidation);
 
-  } catch (err) {
-    logger.error(IDLOG, err.stack);
-  }
-}
 
-/**
- * It's called when the asterisk connection is fully booted.
- *
- * @method start
- * @static
- */
-function start(inipath) {
-  try {
-    // check paramter
-    if (typeof inipath !== 'string') {
-      throw new Error('wrong parameter');
-    }
-
-    // parse the ini file
-    // struct = iniparser.parseSync(inipath);
-    // validates the content of the ini file
-    structValidation();
     // initializes meetme conferences
     // initMeetmeConf();
   } catch (err) {
@@ -2280,6 +2272,12 @@ function initializePjsipExten(err, results) {
     var e, exten;
 
     for (e in results) {
+
+      // skip if the current extension is a trunk
+      if (trunks[results[e].ext]) {
+        continue;
+      }
+
       exten = new Extension(results[e].ext, 'pjsip');
       extensions[exten.getExten()] = exten;
 
