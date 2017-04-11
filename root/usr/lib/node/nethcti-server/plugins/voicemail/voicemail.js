@@ -346,8 +346,15 @@ function newVoiceMessage(ev) {
         }
 
         // get all the new voice messages of the voicemail to send the events through the callback
-        dbconn.getVoicemailNewMsg(ev.voicemail, newVoiceMessageCb);
+        // emits the event for a new voice message with all the new messages of the voicemail. This event
+        // is emitted only when a new voice message has been left in a voicemail
+        logger.info(IDLOG, 'emit event "' + EVT_NEW_VOICE_MESSAGE + '" for voicemail ' + ev.voicemail);
+        emitter.emit(EVT_NEW_VOICE_MESSAGE, ev);
 
+        // emits the event with the update list of new voice messages of a voicemail. This event is emitted
+        // each time a new voice message has been left, when the user listen a message or delete it
+        logger.info(IDLOG, 'emit event "' + EVT_UPDATE_NEW_VOICE_MESSAGES + '" for voicemail ' + ev.voicemail);
+        emitter.emit(EVT_UPDATE_NEW_VOICE_MESSAGES, ev);
     } catch (err) {
        logger.error(IDLOG, err.stack);
     }
@@ -443,48 +450,6 @@ function getVmIdFromDbId(dbid, cb) {
     } catch (err) {
        logger.error(IDLOG, err.stack);
        cb(err);
-    }
-}
-
-/**
-* It's the callback function called when get new voicemail
-* messages from the database component after a new voice message
-* has been left in a voicemail.
-*
-* @method newVoiceMessageCb
-* @param {object} err       The error
-* @param {string} voicemail The voicemail identifier
-* @param {object} results   The results
-* @private
-*/
-function newVoiceMessageCb(err, voicemail, results) {
-    try {
-        if (err) {
-            var str = 'getting new voicemail messages: ';
-            if (typeof err === 'string') { str += err; }
-            else { str += err.stack; }
-
-            logger.error(IDLOG, str);
-            return;
-        }
-
-        // check the parameters
-        if (typeof voicemail !== 'string' || results instanceof Array === false) {
-            throw new Error('wrong parameters');
-        }
-
-        // emits the event for a new voice message with all the new messages of the voicemail. This event
-        // is emitted only when a new voice message has been left in a voicemail
-        logger.info(IDLOG, 'emit event "' + EVT_NEW_VOICE_MESSAGE + '" for voicemail ' + voicemail);
-        emitter.emit(EVT_NEW_VOICE_MESSAGE, voicemail, results);
-
-        // emits the event with the update list of new voice messages of a voicemail. This event is emitted
-        // each time a new voice message has been left, when the user listen a message or delete it
-        logger.info(IDLOG, 'emit event "' + EVT_UPDATE_NEW_VOICE_MESSAGES + '" for voicemail ' + voicemail);
-        emitter.emit(EVT_UPDATE_NEW_VOICE_MESSAGES, voicemail, results);
-
-    } catch (err) {
-       logger.error(IDLOG, err.stack);
     }
 }
 
