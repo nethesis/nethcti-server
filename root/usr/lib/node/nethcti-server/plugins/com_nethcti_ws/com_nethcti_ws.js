@@ -535,17 +535,13 @@ function setUserListeners() {
  * @param {array}  list      The list of all new voicemail messages
  * @private
  */
-function updateNewVoiceMessagesListener(voicemail, list) {
+function updateNewVoiceMessagesListener(data) {
   try {
-    // check the event data
-    if (typeof voicemail !== 'string' || list === undefined || list instanceof Array === false) {
-      throw new Error('wrong voicemails array list');
-    }
-    logger.info(IDLOG, 'received "new voicemail" event for voicemail ' + voicemail);
+    logger.info(IDLOG, 'received "new voicemail" event for voicemail ' + data.voicemail);
 
     // get all users associated with the voicemail. Only the user with the associated voicemail
     // receives the list of all new voice messages
-    var users = compUser.getUsersUsingEndpointVoicemail(voicemail);
+    var users = compUser.getUsersUsingEndpointVoicemail(data.voicemail);
 
     // emit the "newVoiceMessage" event for each logged in user associated with the voicemail.
     // The event contains the voicemail details
@@ -556,10 +552,13 @@ function updateNewVoiceMessagesListener(voicemail, list) {
       // the user is associated with the voicemail is logged in
       if (users.indexOf(username) !== -1) {
         // emits the event with the list of all new voice messages of the voicemail
-        logger.info(IDLOG, 'emit event "updateNewVoiceMessages" for voicemail ' + voicemail + ' to user "' + username + '"');
+        logger.info(IDLOG, 'emit event "updateNewVoiceMessages" for voicemail ' + data.voicemail + ' to user "' + username + '"');
         // object to return with the event
         var obj = {};
-        obj[voicemail] = list;
+        obj[data.voicemail] = {
+          inbox: data.countNew,
+          old: data.countOld
+        };
 
         if (wsServer.sockets.sockets[socketId]) {
           wsServer.sockets.sockets[socketId].emit('updateNewVoiceMessages', obj);
@@ -573,12 +572,12 @@ function updateNewVoiceMessagesListener(voicemail, list) {
     for (socketId in wsid) {
       username = wsid[socketId].username;
       // emits the event "newVoiceMessageCounter" with the number of new voice messages of the user
-      logger.info(IDLOG, 'emit event "newVoiceMessageCounter" ' + list.length + ' to user "' + username + '"');
+      logger.info(IDLOG, 'emit event "newVoiceMessageCounter" ' + data.countNew+ ' to user "' + username + '"');
 
       if (wsServer.sockets.sockets[socketId]) {
         wsServer.sockets.sockets[socketId].emit('newVoiceMessageCounter', {
-          voicemail: voicemail,
-          counter: list.length
+          voicemail: data.voicemail,
+          counter: data.countNew
         });
       }
     }
@@ -1261,7 +1260,7 @@ function start() {
     setAstProxyListeners();
 
     // set the listener for the voicemail module
-    // setVoicemailListeners();
+    setVoicemailListeners();
 
     // set the listener for the post-it module
     // setPostitListeners();

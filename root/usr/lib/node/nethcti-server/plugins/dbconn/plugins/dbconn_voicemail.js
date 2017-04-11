@@ -142,7 +142,7 @@ function getVoicemailMsg(vmId, type, offset, limit, cb) {
         compDbconnMain.models[compDbconnMain.JSON_KEYS.VOICEMAIL].findAndCountAll({
             where: [
                 'mailboxuser = ?' +
-                (type !== 'all' ? ' AND LOWER(SUBSTRING_INDEX(dir, "/", -1)) = "' + type+ '"' : '') +
+                ((type != null && type !== 'all') ? ' AND LOWER(SUBSTRING_INDEX(dir, "/", -1)) = "' + type+ '"' : '') +
                 ' ORDER BY origtime DESC',
                 vmId
             ],
@@ -154,16 +154,14 @@ function getVoicemailMsg(vmId, type, offset, limit, cb) {
             limit: (limit ? parseInt(limit) : null)
         }).then(function (results) {
             // extract results to return in the callback function
-            logger.info(IDLOG, results.length + ' results searching voice messages of voicemail "' + vmId + '"');
+            logger.info(IDLOG, results.count + ' results searching voice messages of voicemail "' + vmId + '"');
             cb(null, results);
-
         }, function (err) { // manage the error
             logger.error(IDLOG, 'searching voice messages of voicemail "' + vmId + '"');
             cb(err.toString());
         });
 
         compDbconnMain.incNumExecQueries();
-
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb(err);
