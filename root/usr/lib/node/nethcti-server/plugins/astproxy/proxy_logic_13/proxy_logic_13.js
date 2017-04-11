@@ -3740,6 +3740,55 @@ function evtExtenUnconditionalCfVmChanged(exten, enabled, vm) {
 }
 
 /**
+ * Check if the identifier is an extension.
+ *
+ * @method isExten
+ * @param {string} id The number identifier
+ * @return {boolean} True if the id is an extension
+ */
+function isExten(id) {
+  try {
+    // check parameters
+    if (typeof id !== 'string') {
+      throw new Error('wrong parameter: ' + id);
+    }
+
+    if (extensions[id]) {
+      return true;
+    }
+    return false;
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+setTimeout(function() {isExten('303')}, 1000);
+
+/**
+ * Check if the identifier is a trunk.
+ *
+ * @method isTrunk
+ * @param {string} id The number identifier
+ * @return {boolean} True if the id is a trunk
+ */
+function isTrunk(id) {
+  try {
+    // check parameters
+    if (typeof id !== 'string') {
+      throw new Error('wrong parameter: ' + id);
+    }
+
+    if (trunks[id]) {
+      return true;
+    }
+    return false;
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Enable/disable the do not disturb status of the endpoint.
  * The used plugin command _dndSet_ does not generate any
  * asterisk events, so simulates it.
@@ -7690,6 +7739,8 @@ exports.call = call;
 exports.start = start;
 exports.visit = visit;
 exports.setDnd = setDnd;
+exports.isTrunk = isTrunk;
+exports.isExten = isExten;
 exports.setAsteriskPresence = setAsteriskPresence;
 exports.EVT_READY = EVT_READY;
 exports.setLogger = setLogger;

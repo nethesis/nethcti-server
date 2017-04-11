@@ -256,7 +256,8 @@ function setCompAuthorization(ca) {
             "recordingfile": "",
             "src": "204",
             "dst": "91223",
-            "clid": "\"andrea marchio\" <204>"
+            "clid": "\"andrea marchio\" <204>",
+            "direction": "in" // can be ("in" | "out" | "") if it involves one of extension of the user
          },
          ...
      ]
@@ -290,7 +291,8 @@ function setCompAuthorization(ca) {
             "recordingfile": "",
             "src": "204",
             "dst": "91223",
-            "clid": "\"andrea marchio\" <204>"
+            "clid": "\"andrea marchio\" <204>",
+            "direction": "in" // can be ("in" | "out" | "") if it involves one of extension of the user
          },
          ...
      ]
@@ -714,9 +716,9 @@ function setCompAuthorization(ca) {
               if (err1) {
                 throw err1;
               } else {
-                logger.info(IDLOG, 'send #' + results.count + ' results searching history call ' +
-                  'interval between ' + obj.from + ' to ' + obj.to + ' for ' +
-                  req.params.type + ' "' + req.params.target + '" [' + obj.endpoints + '] ' +
+                logger.info(IDLOG, 'send #' + results.count + ' results searching history call' +
+                  ' interval between ' + obj.from + ' to ' + obj.to + ' for ' +
+                  req.params.type + ' "' + req.params.target + '" [' + obj.endpoints + ']' +
                   ' and filter ' + (obj.filter ? obj.filter : '""') +
                   (obj.recording ? ' with recording data' : '') +
                   ' to user "' + username + '"');
