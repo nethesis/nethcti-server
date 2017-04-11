@@ -147,10 +147,53 @@ function getHistoryCallInterval(data, offset, limit, sort, cb) {
     logger.info(IDLOG, 'search history call between ' + data.from + ' to ' + data.to + ' for ' +
       'endpoints ' + data.endpoints + ' and filter ' + (data.filter ? data.filter : '""') +
       (data.recording ? ' with recording data' : ''));
-    dbconn.getHistoryCallInterval(data, offset, limit, sort, cb);
+
+    dbconn.getHistoryCallInterval(data, offset, limit, sort, function(err, results) {
+
+      results = addCallDirection(results, data.endpoints);
+      cb(err, results);
+    });
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * It adds call direction information to the data passed as argument. This is
+ * possible only for the requests that involves the history call of a user. In
+ * this case is possible to calculate the direction call using the list of
+ * extensions of the user.
+ *
+ * @method addCallDirection
+ * @param {array} data Calls retrieved from the database
+ * @param {array} endpoints The extensions of the user
+ * @return {array} The same data received as parameter plus direction information.
+ */
+function addCallDirection(data, endpoints) {
+  try {
+    var i;
+    for (i = 0; i < data.rows.length; i++) {
+
+      if (endpoints.indexOf(data.rows[i].dataValues.src) !== -1 &&
+        endpoints[endpoints.indexOf(data.rows[i].dataValues.src)] === data.rows[i].dataValues.src) {
+
+        data.rows[i].dataValues.direction = 'out';
+
+      } else if (endpoints.indexOf(data.rows[i].dataValues.dst) !== -1 &&
+        endpoints[endpoints.indexOf(data.rows[i].dataValues.dst)] === data.rows[i].dataValues.dst) {
+
+        data.rows[i].dataValues.direction = 'in';
+
+      } else {
+        data.rows[i].dataValues.direction = 'unknown';
+      }
+    }
+    return data;
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+    cb(err);
   }
 }
 
