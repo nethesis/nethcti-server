@@ -146,6 +146,7 @@ function setCompUtil(comp) {
      * 1. [`user/presencelist`](#presencelistget)
      * 1. [`user/presence`](#presenceget)
      * 1. [`user/me`](#meget)
+     * 1. [`user/all/endpoints`](#userallendpointsget)
      *
      * ---
      *
@@ -225,6 +226,12 @@ function setCompUtil(comp) {
         }
       }
      *
+     * ---
+     *
+     * ### <a id="userallendpointsget">**`user/all/endpoints`**</a>
+     *
+     * Returns the information about all users endpoints.
+     *
      * <br>
      *
      * # POST requests
@@ -278,7 +285,8 @@ function setCompUtil(comp) {
         'get': [
           'me',
           'presence',
-          'presencelist'
+          'presencelist',
+          'endpoints/all'
         ],
 
         /**
@@ -340,6 +348,29 @@ function setCompUtil(comp) {
             logger.error(IDLOG, strerr);
             compUtil.net.sendHttp500(IDLOG, res, strerr);
           }
+        } catch (err) {
+          logger.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
+      },
+
+      /**
+       * Get all endpoints by the following REST API:
+       *
+       *     endpoints
+       *
+       * @method endpoints
+       * @param {object}   req  The client request
+       * @param {object}   res  The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      endpoints: function(req, res, next) {
+        try {
+          var username = req.headers.authorization_user;
+          var results = compUser.getAllUsersEndpointsJSON();
+
+          logger.info(IDLOG, 'send endpoints to user "' + username + '"');
+          res.send(200, results);
         } catch (err) {
           logger.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -441,6 +472,7 @@ function setCompUtil(comp) {
     };
     exports.api = user.api;
     exports.me = user.me;
+    exports.endpoints = user.endpoints;
     exports.presence = user.presence;
     exports.setLogger = setLogger;
     exports.setCompUtil = setCompUtil;
