@@ -110,7 +110,7 @@ exports.Group = function(groupName) {
     return {
       name: name,
       users: Object.keys(users)
-    }
+    };
   }
 
   // public interface
@@ -122,4 +122,4 @@ exports.Group = function(groupName) {
     userCount: userCount,
     getUserList: getUserList
   };
-}
+};

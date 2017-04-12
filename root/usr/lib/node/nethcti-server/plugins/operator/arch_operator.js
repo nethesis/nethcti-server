@@ -26,15 +26,7 @@ module.exports = function(options, imports, register) {
 
   // public interface for other architect components
   register(null, {
-    operator: {
-      /**
-       * It's the _getJSONGroups_ method provided by _operator_ module.
-       *
-       * @method getJSONGroups
-       * @return {object} The list of groups of extensions.
-       */
-      getJSONGroups: operator.getJSONGroups
-    }
+    operator: operator
   });
 
   try {
@@ -43,4 +35,4 @@ module.exports = function(options, imports, register) {
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
-}
+};
