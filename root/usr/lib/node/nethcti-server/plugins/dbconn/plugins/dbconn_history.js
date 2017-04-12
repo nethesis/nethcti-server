@@ -131,12 +131,13 @@ function getAllUserHistorySmsInterval(data, cb) {
  *   @param {string}  [data.filter]     The filter to be used in the _src, clid_ and _dst_ fields. If it is
  *                                      omitted the function treats it as '%' string
  *   @param {string}  [data.privacyStr] The sequence to be used to hide the numbers to respect the privacy
- *   @param {integer} [offset]          The results offset
- *   @param {integer} [limit]           The results limit
- *   @param {string}  [sort]            The sort field
+ * @param {integer} [offset] The results offset
+ * @param {integer} [limit] The results limit
+ * @param {string} [sort] The sort field
+ * @param {string} [direction] The call direction
  * @param {function} cb The callback function
  */
-function getHistoryCallInterval(data, offset, limit, sort, cb) {
+function getHistoryCallInterval(data, offset, limit, sort, direction, cb) {
   try {
     // check parameters
     if (typeof data !== 'object' ||
@@ -146,7 +147,8 @@ function getHistoryCallInterval(data, offset, limit, sort, cb) {
       typeof data.from !== 'string' ||
       (data.endpoints && !(data.endpoints instanceof Array)) ||
       (typeof data.filter !== 'string' && data.filter !== undefined) ||
-      (typeof data.privacyStr !== 'string' && data.privacyStr !== undefined)) {
+      (typeof data.privacyStr !== 'string' && data.privacyStr !== undefined) ||
+      (direction && direction !== 'in' && direction !== 'out')) {
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
@@ -184,14 +186,39 @@ function getHistoryCallInterval(data, offset, limit, sort, cb) {
     var whereClause;
     if (data.endpoints !== undefined) {
 
-      whereClause = [
-        '(src IN (?) OR dst IN (?)) AND ' +
-        '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
-        '(src LIKE ? OR clid LIKE ? OR dst LIKE ?)',
-        data.endpoints, data.endpoints,
-        data.from, data.to,
-        data.filter, data.filter, data.filter
-      ];
+      if (direction && direction === 'in') {
+
+        whereClause = [
+          '(src NOT IN (?) AND dst IN (?)) AND ' +
+          '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
+          '(src LIKE ? OR clid LIKE ? OR dst LIKE ?)',
+          data.endpoints, data.endpoints,
+          data.from, data.to,
+          data.filter, data.filter, data.filter
+        ];
+
+      } else if (direction && direction === 'out') {
+
+        whereClause = [
+          '(src IN (?) AND dst NOT IN (?)) AND ' +
+          '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
+          '(src LIKE ? OR clid LIKE ? OR dst LIKE ?)',
+          data.endpoints, data.endpoints,
+          data.from, data.to,
+          data.filter, data.filter, data.filter
+        ];
+
+      } else {
+
+        whereClause = [
+          '(src IN (?) OR dst IN (?)) AND ' +
+          '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
+          '(src LIKE ? OR clid LIKE ? OR dst LIKE ?)',
+          data.endpoints, data.endpoints,
+          data.from, data.to,
+          data.filter, data.filter, data.filter
+        ];
+      }
 
     } else {
 

@@ -206,15 +206,15 @@ function setCompAuthorization(ca) {
         *
         * 1. [`historycall/down_callrec/:id`](#down_callrecget)
         * 1. [`historycall/listen_callrec/:id`](#listen_callrecget)
-        * 1. [`historycall/interval/:type/:target/:from/:to[?limit=n&offset=n&sort=field]`](#intervalget)
-        * 1. [`historycall/interval/:type/:target/:from/:to/:filter[?limit=n&offset=n&sort=field]`](#interval_filterget)
+        * 1. [`historycall/interval/:type/:target/:from/:to[?direction=dir&limit=n&offset=n&sort=field]`](#intervalget)
+        * 1. [`historycall/interval/:type/:target/:from/:to/:filter[?direction=dir&limit=n&offset=n&sort=field]`](#interval_filterget)
         *
         * ---
         *
         * ### <a id="down_callrecget">**`historycall/down_callrec/:id`**</a>
         *
         * The user can downlaod the record audio file of a call. The _id_ is the call indentifier in the database
-        * (_uniqueid_ field of the _asteriskcdrdb.cdr_ database table). The user with _admin\_recording_
+        * (_uniqueid_ field of the _asteriskcdrdb.cdr_ database table). The user with _admin recording_
         * authorization can download all audio files, while the user with the _recording_ permission can download only the
         * audio file of his own calls.
         *
@@ -223,22 +223,24 @@ function setCompAuthorization(ca) {
         * ### <a id="listen_callrecget">**`historycall/listen_callrec/:id`**</a>
         *
         * The user can listen the record audio file of a call. The _id_ is the call indentifier in the database
-        * (_uniqueid_ field of the _asteriskcdrdb.cdr_ database table). The user with _admin\_recording_
+        * (_uniqueid_ field of the _asteriskcdrdb.cdr_ database table). The user with _admin recording_
         * authorization can listen all audio files, while the user with the _recording_ permission can listen only the
         * audio file of his own calls.
         *
         * ---
         *
-        * ### <a id="intervalget">**`historycall/interval/:type/:target/:from/:to[?limit=n&offset=n&sort=field]`**</a>
+        * ### <a id="intervalget">**`historycall/interval/:type/:target/:from/:to[?direction=dir&limit=n&offset=n&sort=field]`**</a>
         *
         * Returns the history call between _"from"_ date to _"to"_ date of the extension or of the user.
         *
         * * `type: ("extension" | "user")`
         * * `target: the extension identifier or the username`
+        * * `from: the start date in YYYYMMDD format`
+        * * `to: the end date in YYYYMMDD format`
+        * * `[direction]: ("in" | "out") the direction of the calls`
         *
         * The results will be the history calls of the single extension or the history calls of all the extensions of the user.
-        * Dates must be expressed in YYYYMMDD format. If an error occurs an HTTP 500 response is returned. Supports the
-        * pagination with the limit and offset parameters and sorting.
+        * If an error occurs an HTTP 500 response is returned. Supports the pagination with the limit and offset parameters and sorting.
         *
         * Example JSON response:
         *
@@ -264,16 +266,19 @@ function setCompAuthorization(ca) {
         *
         * ---
         *
-        * ### <a id="interval_filterget">**`historycall/interval/:type/:target/:from/:to/:filter[?limit=n&offset=n&sort=field]`**</a>
+        * ### <a id="interval_filterget">**`historycall/interval/:type/:target/:from/:to/:filter[?direction=dir&limit=n&offset=n&sort=field]`**</a>
         *
         * Returns the history call between _"from"_ date to _"to"_ date of the extension or of the user filtering by _"filter"_.
         *
         * * `type: ("extension" | "user")`
         * * `target: the extension identifier or the username`
+        * * `from: the start date in YYYYMMDD format`
+        * * `to: the end date in YYYYMMDD format`
+        * * `filter: filter results on "src", "clid" and "dst" fields of the database`
+        * * `[direction]: ("in" | "out") the direction of the calls`
         *
         * The results will be the history calls of the single extension or the history calls of all the extensions of the user.
-        * Dates must be expressed in YYYYMMDD format. If an error occurs an HTTP 500 response is returned. Supports the
-        * pagination with the limit and offset parameters and sorting.
+        * If an error occurs an HTTP 500 response is returned. Supports the pagination with the limit and offset parameters and sorting.
         *
         * Example JSON response:
         *
@@ -334,10 +339,10 @@ function setCompAuthorization(ca) {
          *
          *   @param {string} listen_callrec/:id To listen the record audio file of a call
          *
-         *   @param {string} interval/:type/:target/:from/:to[?limit=n&offset=n&sort=field] To get the history call between _"from"_ date to _"to"_ date.
+         *   @param {string} interval/:type/:target/:from/:to[?direction=dir&limit=n&offset=n&sort=field] To get the history call between _"from"_ date to _"to"_ date.
          *     The date must be expressed in YYYYMMDD format
          *
-         *   @param {string} interval/:type/:target/:from/:to/:filter[?limit=n&offset=n&sort=field] To get the history call between _"from"_ date to _"to"_
+         *   @param {string} interval/:type/:target/:from/:to/:filter[?direction=dir&limit=n&offset=n&sort=field] To get the history call between _"from"_ date to _"to"_
          *     date filtering by filter. The date must be expressed in YYYYMMDD format
          */
         'get': [
@@ -642,8 +647,8 @@ function setCompAuthorization(ca) {
       /**
        * Search the history call for the specified interval, endpoint and optional filter by the following REST api:
        *
-       *     interval/:type/:target/:from/:to[?limit=n&offset=n&sort=field]
-       *     interval/:type/:target/:from/:to/:filter[?limit=n&offset=n&sort=field]
+       *     interval/:type/:target/:from/:to[?direction=dir&limit=n&offset=n&sort=field]
+       *     interval/:type/:target/:from/:to/:filter[?direction=dir&limit=n&offset=n&sort=field]
        *
        * @method interval
        * @param {object} req The client request
@@ -711,25 +716,31 @@ function setCompAuthorization(ca) {
           }
 
           // use the history component
-          compHistory.getHistoryCallInterval(obj, req.params.offset, req.params.limit, req.params.sort, function(err1, results) {
-            try {
-              if (err1) {
-                throw err1;
-              } else {
-                logger.info(IDLOG, 'send #' + results.count + ' results searching history call' +
-                  ' interval between ' + obj.from + ' to ' + obj.to + ' for ' +
-                  req.params.type + ' "' + req.params.target + '" [' + obj.endpoints + ']' +
-                  ' and filter ' + (obj.filter ? obj.filter : '""') +
-                  (obj.recording ? ' with recording data' : '') +
-                  ' to user "' + username + '"');
-                res.send(200, results);
-              }
+          compHistory.getHistoryCallInterval(obj,
+            req.params.offset,
+            req.params.limit,
+            req.params.sort,
+            req.params.direction,
+            function(err1, results) {
+              try {
+                if (err1) {
+                  throw err1;
+                } else {
+                  logger.info(IDLOG, 'send #' + results.count + ' results searching history call' +
+                    ' interval between ' + obj.from + ' to ' + obj.to + ' for ' +
+                    req.params.type + ' "' + req.params.target + '" [' + obj.endpoints + ']' +
+                    ' and filter ' + (obj.filter ? obj.filter : '""') +
+                    (obj.recording ? ' with recording data' : '') +
+                    ' to user "' + username + '"');
+                  res.send(200, results);
+                }
 
-            } catch (err2) {
-              logger.error(IDLOG, err2.stack);
-              compUtil.net.sendHttp500(IDLOG, res, err2.toString());
+              } catch (err2) {
+                logger.error(IDLOG, err2.stack);
+                compUtil.net.sendHttp500(IDLOG, res, err2.toString());
+              }
             }
-          });
+          );
         } catch (error) {
           logger.error(IDLOG, error.stack);
           compUtil.net.sendHttp500(IDLOG, res, error.toString());
