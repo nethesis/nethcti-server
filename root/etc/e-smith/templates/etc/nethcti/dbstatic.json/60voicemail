@@ -1,8 +1,0 @@
-    "voicemail": \{
-        "dbhost":     "localhost",
-        "dbport":     "/var/lib/mysql/mysql.sock",
-        "dbtype":     "mysql",
-        "dbuser":     "freepbxuser",
-        "dbpassword": "{$cdrdb_pwd}",
-        "dbname":     "asteriskcdrdb"
-    \}
