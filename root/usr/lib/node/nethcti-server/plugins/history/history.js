@@ -125,12 +125,13 @@ function setCompAstProxy(comp) {
  *   @param {string}  data.to        The ending date of the interval in the YYYYMMDD format (e.g. 20130528)
  *   @param {boolean} data.recording True if the data about recording audio file must be returned
  *   @param {string}  [data.filter]  The filter to be used
- *   @param {integer}  [offset]   The results offset
- *   @param {integer}  [limit]    The results limit
- *   @param {string}   [sort]     The sort parameter
+ * @param {integer} [offset] The results offset
+ * @param {integer} [limit] The results limit
+ * @param {string} [sort] The sort parameter
+ * @param {string} [direction] The call direction ("in" | "out")
  * @param {function}  cb The callback function
  */
-function getHistoryCallInterval(data, offset, limit, sort, cb) {
+function getHistoryCallInterval(data, offset, limit, sort, direction, cb) {
   try {
     // check parameters
     if (typeof data !== 'object' ||
@@ -139,7 +140,8 @@ function getHistoryCallInterval(data, offset, limit, sort, cb) {
       typeof data.to !== 'string' ||
       typeof data.from !== 'string' ||
       !(data.endpoints instanceof Array) ||
-      (typeof data.filter !== 'string' && data.filter !== undefined)) {
+      (typeof data.filter !== 'string' && data.filter !== undefined) ||
+      (direction && direction !== 'in' && direction !== 'out')) {
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
@@ -148,14 +150,14 @@ function getHistoryCallInterval(data, offset, limit, sort, cb) {
       'endpoints ' + data.endpoints + ' and filter ' + (data.filter ? data.filter : '""') +
       (data.recording ? ' with recording data' : ''));
 
-    dbconn.getHistoryCallInterval(data, offset, limit, sort, function(err, results) {
+    dbconn.getHistoryCallInterval(data, offset, limit, sort, direction, function(err, results) {
       try {
-        results = addExtensCallDirection(results, data.endpoints);
+        results.rows = addExtensCallDirection(results.rows, data.endpoints);
         cb(err, results);
 
-      } catch (err) {
-        logger.error(IDLOG, err.stack);
-        cb(err);
+      } catch (error) {
+        logger.error(IDLOG, error.stack);
+        cb(error);
       }
     });
 
@@ -171,39 +173,49 @@ function getHistoryCallInterval(data, offset, limit, sort, cb) {
  *
  * @method addCallTypeInOut
  * @param {array} data Calls retrieved from the database
+ * @param {string} [type] The calls type ("in" | "out"). If it is through a trunk`
  * @return {array} The same data received as parameter plus type information.
  */
-function addCallTypeInOut(data) {
+function addCallTypeInOut(data, type) {
   try {
     var i, chExten, destchExten;
-    for (i = 0; i < data.rows.length; i++) {
+    var results = [];
+
+    for (i = 0; i < data.length; i++) {
 
       // get exten identifier from channel and dstchannel
-      chExten = data.rows[i].dataValues.channel.substring(
-        data.rows[i].dataValues.channel.indexOf('/') + 1,
-        data.rows[i].dataValues.channel.lastIndexOf('-')
+      chExten = data[i].dataValues.channel.substring(
+        data[i].dataValues.channel.indexOf('/') + 1,
+        data[i].dataValues.channel.lastIndexOf('-')
       );
       // dstchannel can be an empty string
-      if (data.rows[i].dataValues.dstchannel !== '') {
-        destchExten = data.rows[i].dataValues.dstchannel.substring(
-          data.rows[i].dataValues.dstchannel.indexOf('/') + 1,
-          data.rows[i].dataValues.dstchannel.lastIndexOf('-')
+      if (data[i].dataValues.dstchannel !== '') {
+        destchExten = data[i].dataValues.dstchannel.substring(
+          data[i].dataValues.dstchannel.indexOf('/') + 1,
+          data[i].dataValues.dstchannel.lastIndexOf('-')
         );
       } else {
         destchExten = '';
       }
 
+      // calculate direction through a trunk
       if (compAstProxy.isTrunk(chExten) && compAstProxy.isExten(destchExten)) {
-        data.rows[i].dataValues.type = 'in';
+        data[i].dataValues.type = 'in';
 
       } else if (compAstProxy.isExten(chExten) && compAstProxy.isTrunk(destchExten)) {
-        data.rows[i].dataValues.type = 'out';
+        data[i].dataValues.type = 'out';
 
       } else {
-        data.rows[i].dataValues.type = '';
+        data[i].dataValues.type = '';
       }
+
+      // add as a result based on "type" parameter
+      if (type && type !== data[i].dataValues.type) {
+        continue;
+      }
+      results.push(data[i]);
     }
-    return data;
+    return results;
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
@@ -224,20 +236,20 @@ function addCallTypeInOut(data) {
 function addExtensCallDirection(data, endpoints) {
   try {
     var i;
-    for (i = 0; i < data.rows.length; i++) {
+    for (i = 0; i < data.length; i++) {
 
-      if (endpoints.indexOf(data.rows[i].dataValues.src) !== -1 &&
-        endpoints[endpoints.indexOf(data.rows[i].dataValues.src)] === data.rows[i].dataValues.src) {
+      if (endpoints.indexOf(data[i].dataValues.src) !== -1 &&
+        endpoints[endpoints.indexOf(data[i].dataValues.src)] === data[i].dataValues.src) {
 
-        data.rows[i].dataValues.direction = 'out';
+        data[i].dataValues.direction = 'out';
 
-      } else if (endpoints.indexOf(data.rows[i].dataValues.dst) !== -1 &&
-        endpoints[endpoints.indexOf(data.rows[i].dataValues.dst)] === data.rows[i].dataValues.dst) {
+      } else if (endpoints.indexOf(data[i].dataValues.dst) !== -1 &&
+        endpoints[endpoints.indexOf(data[i].dataValues.dst)] === data[i].dataValues.dst) {
 
-        data.rows[i].dataValues.direction = 'in';
+        data[i].dataValues.direction = 'in';
 
       } else {
-        data.rows[i].dataValues.direction = '';
+        data[i].dataValues.direction = '';
       }
     }
     return data;
@@ -258,12 +270,13 @@ function addExtensCallDirection(data, endpoints) {
  *   @param {boolean} data.recording    True if the data about recording audio file must be returned
  *   @param {string}  [data.filter]     The filter to be used
  *   @param {string}  [data.privacyStr] The sequence to be used to hide the numbers to respect the privacy
- *   @param {integer} [offset]          The results offset
- *   @param {integer} [limit]           The results limit
- *   @param {integer} [sort]            The sort parameter
- * @param {function} cb                 The callback function
+ * @param {integer} [offset] The results offset
+ * @param {integer} [limit] The results limit
+ * @param {integer} [sort] The sort parameter
+ * @param {string} [type] The calls type ("in" | "out"). If it is through a trunk`
+ * @param {function} cb The callback function
  */
-function getHistorySwitchCallInterval(data, offset, limit, sort, cb) {
+function getHistorySwitchCallInterval(data, offset, limit, sort, type, cb) {
   try {
     // check parameters
     if (typeof data !== 'object' ||
@@ -272,23 +285,30 @@ function getHistorySwitchCallInterval(data, offset, limit, sort, cb) {
       typeof data.to !== 'string' ||
       typeof data.from !== 'string' ||
       (typeof data.filter !== 'string' && data.filter !== undefined) ||
-      (typeof data.privacyStr !== 'string' && data.privacyStr !== undefined)) {
+      (typeof data.privacyStr !== 'string' && data.privacyStr !== undefined) ||
+      (type && type !== 'in' && type !== 'out')) {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     logger.info(IDLOG, 'search switchboard history call between ' + data.from + ' to ' + data.to + ' for ' +
       'all endpoints and filter ' + (data.filter ? data.filter : '""') +
       (data.recording ? ' with recording data' : ''));
 
-    dbconn.getHistoryCallInterval(data, offset, limit, sort, function(err, results) {
+    // type is not passed to dbconn query because it is not possible to filter by trunk
+    // to understand the "in" and "out" information with the query. So "type" is used
+    // by filter results by javascript
+    dbconn.getHistoryCallInterval(data, offset, limit, sort, null, function(err, results) {
       try {
-        results = addCallTypeInOut(results);
+        results.rows = addCallTypeInOut(results.rows, type);
+        // update the results.count data, because if "type" parameter has been specified
+        // the results are filtered by "addCallTypeInOut" function
+        results.count = results.rows.length;
         cb(err, results);
 
-      } catch (err) {
-        logger.error(IDLOG, err.stack);
-        cb(err);
+      } catch (error) {
+        logger.error(IDLOG, error.stack);
+        cb(error);
       }
     });
 

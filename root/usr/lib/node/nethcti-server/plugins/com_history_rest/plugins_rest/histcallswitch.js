@@ -140,17 +140,18 @@ function setCompAuthorization(ca) {
         *
         * # GET requests
         *
-        * 1. [`histcallswitch/interval/:from/:to[?limit=n&offset=n&sort=field]`](#intervalget)
-        * 1. [`histcallswitch/interval/:from/:to/:filter[?limit=n&offset=n&sort=field]`](#interval_filterget)
+        * 1. [`histcallswitch/interval/:from/:to[?type=type&limit=n&offset=n&sort=field]`](#intervalget)
+        * 1. [`histcallswitch/interval/:from/:to/:filter[?type=type&limit=n&offset=n&sort=field]`](#interval_filterget)
         *
         * ---
         *
-        * ### <a id="intervalget">**`histcallswitch/interval/:from/:to[?limit=n&offset=n&sort=field]`**</a>
+        * ### <a id="intervalget">**`histcallswitch/interval/:from/:to[?type=type&limit=n&offset=n&sort=field]`**</a>
         *
         * Returns the switchboard history call between _"from"_ date to _"to"_ date of all endpoints.
         *
         * * `from: the start date in YYYYMMDD format`
         * * `to: the end date in YYYYMMDD format`
+        * * `[type]: ("in" | "out") the type of the calls. If it is through a trunk`
         *
         * If an error occurs an HTTP 500 response is returned. It supports pagination with limit and offset parameters and sorting.
         *
@@ -178,7 +179,7 @@ function setCompAuthorization(ca) {
         *
         * ---
         *
-        * ### <a id="interval_filterget">**`histcallswitch/interval/:from/:to/:filter[?limit=n&offset=n&sort=field]`**</a>
+        * ### <a id="interval_filterget">**`histcallswitch/interval/:from/:to/:filter[?type=type&limit=n&offset=n&sort=field]`**</a>
         *
         * Returns the switchboard history call between _"from"_ date to _"to"_ date of all endpoints
         * filtering by _"filter"_.
@@ -186,6 +187,7 @@ function setCompAuthorization(ca) {
         * * `from: the start date in YYYYMMDD format`
         * * `to: the end date in YYYYMMDD format`
         * * `filter: filter results on "src", "clid" and "dst" fields of the database`
+        * * `[type]: ("in" | "out") the type of the calls. If it is through a trunk`
         *
         * If an error occurs an HTTP 500 response is returned. It supports pagination with limit and offset parameters and sorting.
         *
@@ -226,10 +228,10 @@ function setCompAuthorization(ca) {
          * @property get
          * @type {array}
          *
-         *   @param {string} interval/:from/:to[?limit=n&offset=n&sort=field] To get the history call between _"from"_ date to _"to"_ date.
+         *   @param {string} interval/:from/:to[?type=type&limit=n&offset=n&sort=field] To get the history call between _"from"_ date to _"to"_ date.
          *     The date must be expressed in YYYYMMDD format
          *
-         *   @param {string} interval/:from/:to/:filter[?limit=n&offset=n&sort=field] To get the history call between _"from"_ date to _"to"_
+         *   @param {string} interval/:from/:to/:filter[?type=type&limit=n&offset=n&sort=field] To get the history call between _"from"_ date to _"to"_
          *     date filtering by filter. The date must be expressed in YYYYMMDD format
          */
         'get': [
@@ -244,8 +246,8 @@ function setCompAuthorization(ca) {
       /**
        * Search the history call of all endpoints for the specified interval and optional filter by the following REST api:
        *
-       *     interval/:from/:to[?limit=n&offset=n&sort=field]
-       *     interval/:from/:to/:filter[?limit=n&offset=n&sort=field]
+       *     interval/:from/:to[?type=type&limit=n&offset=n&sort=field]
+       *     interval/:from/:to/:filter[?type=type&limit=n&offset=n&sort=field]
        *
        * @method interval
        * @param {object}   req  The client request.
@@ -291,23 +293,29 @@ function setCompAuthorization(ca) {
           // if (compAuthorization.isPrivacyEnabled(username)) { obj.privacyStr = privacyStrReplace; }
 
           // use the history component
-          var data = compHistory.getHistorySwitchCallInterval(obj, req.params.offset, req.params.limit, req.params.sort, function(err, results) {
-            try {
-              if (err) {
-                compUtil.net.sendHttp500(IDLOG, res, err.toString());
-              } else {
-                logger.info(IDLOG, 'send ' + results.length + ' results searching switchboard history call ' +
-                  'interval between ' + obj.from + ' to ' + obj.to + ' for all endpoints ' +
-                  'and filter ' + (obj.filter ? obj.filter : '""') +
-                  (obj.recording ? ' with recording data' : '') +
-                  ' to user "' + username + '"');
-                res.send(200, results);
+          var data = compHistory.getHistorySwitchCallInterval(obj,
+            req.params.offset,
+            req.params.limit,
+            req.params.sort,
+            req.params.type,
+            function(err, results) {
+              try {
+                if (err) {
+                  compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                } else {
+                  logger.info(IDLOG, 'send ' + results.length + ' results searching switchboard history call ' +
+                    'interval between ' + obj.from + ' to ' + obj.to + ' for all endpoints ' +
+                    'and filter ' + (obj.filter ? obj.filter : '""') +
+                    (obj.recording ? ' with recording data' : '') +
+                    ' to user "' + username + '"');
+                  res.send(200, results);
+                }
+              } catch (error) {
+                logger.error(IDLOG, error.stack);
+                compUtil.net.sendHttp500(IDLOG, res, error.toString());
               }
-            } catch (error) {
-              logger.error(IDLOG, error.stack);
-              compUtil.net.sendHttp500(IDLOG, res, error.toString());
             }
-          });
+          );
         } catch (err) {
           logger.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
