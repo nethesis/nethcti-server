@@ -8,7 +8,8 @@ use esmith::Build::CreateLinks qw(:all);
 
 event_templates('nethcti-server3-update', qw(
                 /etc/nethcti/asterisk.json
-                /etc/nethcti/dbstatic.json
+                /etc/nethcti/dbstatic.d/phonebook.json
+                /etc/nethcti/dbstatic.d/nethcti3.json
                 /etc/nethcti/services.json
                 /etc/nethcti/nethcti.json
                 /etc/nethcti/phone_urls.json
