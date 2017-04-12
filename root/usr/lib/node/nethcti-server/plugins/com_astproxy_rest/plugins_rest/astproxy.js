@@ -556,28 +556,26 @@ var compConfigManager;
         try {
           var username = req.headers.authorization_user;
           var token = req.headers.authorization_token;
-          var isRemote = compComNethctiRemotes.isClientRemote(username, token);
+          var isRemote = false;//compComNethctiRemotes.isClientRemote(username, token);
           var opGroups, remoteSiteName;
 
           // check if the request coming from a remote site
-          if (isRemote) {
-
-            remoteSiteName = compComNethctiRemotes.getSiteName(username, token);
-            // get all operator groups enabled for remote site
-            opGroups = compAuthorization.getAuthorizedRemoteOperatorGroups(remoteSiteName);
-            logger.info(IDLOG, 'op groups enabled for remote site "' + remoteSiteName + '" is "' + Object.keys(opGroups) + '"');
-          } else {
-            // check if the user has the operator panel authorization
-            if (compAuthorization.authorizeOperatorGroupsUser(username) !== true) {
-
-              logger.warn(IDLOG, 'requesting operator groups: authorization failed for user "' + username + '"');
-              compUtil.net.sendHttp403(IDLOG, res);
-              return;
-            }
-            // get all authorized operator groups of the user
-            opGroups = compAuthorization.getAuthorizedOperatorGroups(username);
-            logger.info(IDLOG, 'op groups enabled for user "' + username + '" is "' + Object.keys(opGroups) + '"');
-          }
+          // if (isRemote) {
+          //   remoteSiteName = compComNethctiRemotes.getSiteName(username, token);
+          //   // get all operator groups enabled for remote site
+          //   opGroups = compAuthorization.getAuthorizedRemoteOperatorGroups(remoteSiteName);
+          //   logger.info(IDLOG, 'op groups enabled for remote site "' + remoteSiteName + '" is "' + Object.keys(opGroups) + '"');
+          // } else {
+          //   // check if the user has the operator panel authorization
+          //   if (compAuthorization.authorizeOperatorGroupsUser(username) !== true) {
+          //     logger.warn(IDLOG, 'requesting operator groups: authorization failed for user "' + username + '"');
+          //     compUtil.net.sendHttp403(IDLOG, res);
+          //     return;
+          //   }
+          //   // get all authorized operator groups of the user
+          //   opGroups = compAuthorization.getAuthorizedOperatorGroups(username);
+          //   logger.info(IDLOG, 'op groups enabled for user "' + username + '" is "' + Object.keys(opGroups) + '"');
+          // }
 
           // get all operator groups
           var allOpGroups = compOperator.getJSONGroups();
@@ -586,10 +584,9 @@ var compConfigManager;
           var list = {}; // object to return
           var group;
           for (group in allOpGroups) {
-
-            if (opGroups[group] === true) {
+            // if (opGroups[group] === true) {
               list[group] = allOpGroups[group];
-            }
+            // }
           }
           logger.info(IDLOG, 'sent authorized operator groups "' + Object.keys(list) + '" to ' +
             (isRemote ? ('remote site "' + remoteSiteName + '"') : '') + ' user "' +
