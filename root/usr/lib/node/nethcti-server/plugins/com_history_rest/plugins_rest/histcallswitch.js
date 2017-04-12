@@ -148,8 +148,11 @@ function setCompAuthorization(ca) {
         * ### <a id="intervalget">**`histcallswitch/interval/:from/:to[?limit=n&offset=n&sort=field]`**</a>
         *
         * Returns the switchboard history call between _"from"_ date to _"to"_ date of all endpoints.
-        * Dates must be expressed in YYYYMMDD format. If an error occurs an HTTP 500 response is returned.
-        * It supports pagination with limit and offset parameters and sorting.
+        *
+        * * `from: the start date in YYYYMMDD format`
+        * * `to: the end date in YYYYMMDD format`
+        *
+        * If an error occurs an HTTP 500 response is returned. It supports pagination with limit and offset parameters and sorting.
         *
         * Example JSON response:
         *
@@ -178,9 +181,13 @@ function setCompAuthorization(ca) {
         * ### <a id="interval_filterget">**`histcallswitch/interval/:from/:to/:filter[?limit=n&offset=n&sort=field]`**</a>
         *
         * Returns the switchboard history call between _"from"_ date to _"to"_ date of all endpoints
-        * filtering by _"filter"_. Date must be expressed in YYYYMMDD format. If an error occurs an HTTP 500
-        * response is returned.
-        * It supports pagination with limit and offset parameters and sorting.
+        * filtering by _"filter"_.
+        *
+        * * `from: the start date in YYYYMMDD format`
+        * * `to: the end date in YYYYMMDD format`
+        * * `filter: filter results on "src", "clid" and "dst" fields of the database`
+        *
+        * If an error occurs an HTTP 500 response is returned. It supports pagination with limit and offset parameters and sorting.
         *
         * Example JSON response:
         *

@@ -214,7 +214,7 @@ function setCompAuthorization(ca) {
         * ### <a id="down_callrecget">**`historycall/down_callrec/:id`**</a>
         *
         * The user can downlaod the record audio file of a call. The _id_ is the call indentifier in the database
-        * (_uniqueid_ field of the _asteriskcdrdb.cdr_ database table). The user with _admin\_recording_
+        * (_uniqueid_ field of the _asteriskcdrdb.cdr_ database table). The user with _admin recording_
         * authorization can download all audio files, while the user with the _recording_ permission can download only the
         * audio file of his own calls.
         *
@@ -223,7 +223,7 @@ function setCompAuthorization(ca) {
         * ### <a id="listen_callrecget">**`historycall/listen_callrec/:id`**</a>
         *
         * The user can listen the record audio file of a call. The _id_ is the call indentifier in the database
-        * (_uniqueid_ field of the _asteriskcdrdb.cdr_ database table). The user with _admin\_recording_
+        * (_uniqueid_ field of the _asteriskcdrdb.cdr_ database table). The user with _admin recording_
         * authorization can listen all audio files, while the user with the _recording_ permission can listen only the
         * audio file of his own calls.
         *
@@ -235,10 +235,11 @@ function setCompAuthorization(ca) {
         *
         * * `type: ("extension" | "user")`
         * * `target: the extension identifier or the username`
+        * * `from: the start date in YYYYMMDD format`
+        * * `to: the end date in YYYYMMDD format`
         *
         * The results will be the history calls of the single extension or the history calls of all the extensions of the user.
-        * Dates must be expressed in YYYYMMDD format. If an error occurs an HTTP 500 response is returned. Supports the
-        * pagination with the limit and offset parameters and sorting.
+        * If an error occurs an HTTP 500 response is returned. Supports the pagination with the limit and offset parameters and sorting.
         *
         * Example JSON response:
         *
@@ -270,10 +271,12 @@ function setCompAuthorization(ca) {
         *
         * * `type: ("extension" | "user")`
         * * `target: the extension identifier or the username`
+        * * `from: the start date in YYYYMMDD format`
+        * * `to: the end date in YYYYMMDD format`
+        * * `filter: filter results on "src", "clid" and "dst" fields of the database`
         *
         * The results will be the history calls of the single extension or the history calls of all the extensions of the user.
-        * Dates must be expressed in YYYYMMDD format. If an error occurs an HTTP 500 response is returned. Supports the
-        * pagination with the limit and offset parameters and sorting.
+        * If an error occurs an HTTP 500 response is returned. Supports the pagination with the limit and offset parameters and sorting.
         *
         * Example JSON response:
         *
