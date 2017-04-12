@@ -151,7 +151,8 @@ var compConfigManager;
               "status": "offline",
               "chanType": "sip",
               "sipuseragent": "",
-              "conversations": {}
+              "conversations": {},
+              "user": "giovanni"
           }
      }
         *
@@ -967,6 +968,15 @@ var compConfigManager;
           } else {
             // no call is obfuscated
             extensions = compAstProxy.getJSONExtensions();
+          }
+
+          // associate extensions to its own user
+          var exten = null;
+          for (e in extensions) {
+            exten = compAstProxy.getJSONExtension(e);
+            users = compUser.getUsersUsingEndpointExtension(e);
+            exten.user = (users.length == 1) ? users[0] : null;
+            extensions[e] = exten;
           }
 
           logger.info(IDLOG, 'sent all extensions in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
