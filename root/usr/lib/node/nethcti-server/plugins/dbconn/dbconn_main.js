@@ -13,6 +13,7 @@
  */
 var fs = require('fs');
 var pg = require('pg');
+var path = require('path');
 var mssql = require('mssql');
 var moment = require('moment');
 var Sequelize = require("sequelize");
@@ -208,29 +209,33 @@ function config(path) {
  * Sets the static configurations to be use by database connections.
  *
  * @method configDbStatic
- * @param {string} path The file path of the static JSON configuration file.
+ * @param {string} dirPath The directory path of the static JSON configuration files.
  */
-function configDbStatic(path) {
+function configDbStatic(dirPath) {
   try {
     // check parameter
-    if (typeof path !== 'string') {
-      throw new Error('wrong parameter');
+    if (typeof dirPath !== 'string') {
+      throw new Error('wrong parameter: ' + dirPath);
     }
 
     // check the file existence
-    if (!fs.existsSync(path)) {
-      throw new Error(path + ' does not exist');
+    if (!fs.existsSync(dirPath)) {
+      throw new Error(dirPath + ' does not exist');
     }
 
-    var json = require(path); // read the file
-    logger.info(IDLOG, 'file ' + path + ' has been read');
+    var files = fs.readdirSync(dirPath);
+    var i, k, json;
+    for (i = 0; i < files.length; i++) {
 
-    // transfer the file content into the memory
-    var k;
-    for (k in json) {
-      dbConfig[k] = json[k];
+      json = require(path.join(dirPath, files[i]));
+      logger.info(IDLOG, 'file ' + files[i] + ' has been read');
+
+      // transfer the file content into the memory
+      for (k in json) {
+        dbConfig[k] = json[k];
+      }
     }
-    logger.info(IDLOG, 'configuration done by ' + path);
+    logger.info(IDLOG, 'configuration done by ' + dirPath);
 
   } catch (err) {
     logger.error(IDLOG, err.stack);

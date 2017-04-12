@@ -39,7 +39,7 @@ module.exports = function(options, imports, register) {
   try {
     dbconnMain.setLogger(logger);
     dbconnMain.config('/etc/nethcti/nethcti.json');
-    dbconnMain.configDbStatic('/etc/nethcti/dbstatic.json');
+    dbconnMain.configDbStatic('/etc/nethcti/dbstatic.d');
     dbconnMain.configDbDynamic('/etc/nethcti/dbdynamic.json');
     dbconnMain.start();
     dbconnPluginsManager.setLogger(logger);
