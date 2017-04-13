@@ -121,7 +121,7 @@ function getAllUserHistorySmsInterval(data, cb) {
  *
  * @method getHistoryCallInterval
  * @param {object} data
- *   @param {array}  [data.endpoints]   The endpoints involved in the research, e.g. the extesion
+ *   @param {array}   data.endpoints    The endpoints involved in the research, e.g. the extesion
  *                                      identifiers. It is used to filter out the _src_ and _dst_ fields.
  *                                      If it is omitted the function treats it as ['%'] string. The '%'
  *                                      matches any number of characters, even zero character
@@ -145,7 +145,7 @@ function getHistoryCallInterval(data, cb) {
       typeof data.recording !== 'boolean' ||
       typeof data.to !== 'string' ||
       typeof data.from !== 'string' ||
-      (data.endpoints && !(data.endpoints instanceof Array)) ||
+      !(data.endpoints instanceof Array) ||
       (typeof data.filter !== 'string' && data.filter !== undefined) ||
       (typeof data.privacyStr !== 'string' && data.privacyStr !== undefined) ||
       (data.direction && data.direction !== 'in' && data.direction !== 'out')) {
@@ -178,53 +178,54 @@ function getHistoryCallInterval(data, cb) {
       attributes.push('clid');
     }
 
+    // add "direction" ("in" | "out" | "") based on data.endpoints presence on "src" and "dst"
+    // attributes.push([compDbconnMain.Sequelize.literal('IF (src in ("91303"), "111111", "222222")'), 'type']);
+    var extens = data.endpoints.map(function(el) {
+      return '"' + el + '"';
+    });
+    attributes.push([compDbconnMain.Sequelize.literal(
+        'IF ( (src IN (' + extens + ') AND dst NOT IN (' + extens + ')), "out", ' +
+        '(IF ( (src NOT IN (' + extens + ') AND dst IN (' + extens + ')), "in", ""))' +
+        ')'),
+      'type'
+    ]);
+
     // check optional parameters
     if (data.filter === undefined) {
       data.filter = '%';
     }
 
     var whereClause;
-    if (data.endpoints !== undefined) {
 
-      if (data.direction && data.direction === 'in') {
+    if (data.direction && data.direction === 'in') {
 
-        whereClause = [
-          '(src NOT IN (?) AND dst IN (?)) AND ' +
-          '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
-          '(src LIKE ? OR clid LIKE ? OR dst LIKE ?)',
-          data.endpoints, data.endpoints,
-          data.from, data.to,
-          data.filter, data.filter, data.filter
-        ];
+      whereClause = [
+        '(src NOT IN (?) AND dst IN (?)) AND ' +
+        '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
+        '(src LIKE ? OR clid LIKE ? OR dst LIKE ?)',
+        data.endpoints, data.endpoints,
+        data.from, data.to,
+        data.filter, data.filter, data.filter
+      ];
 
-      } else if (data.direction && data.direction === 'out') {
+    } else if (data.direction && data.direction === 'out') {
 
-        whereClause = [
-          '(src IN (?) AND dst NOT IN (?)) AND ' +
-          '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
-          '(src LIKE ? OR clid LIKE ? OR dst LIKE ?)',
-          data.endpoints, data.endpoints,
-          data.from, data.to,
-          data.filter, data.filter, data.filter
-        ];
-
-      } else {
-
-        whereClause = [
-          '(src IN (?) OR dst IN (?)) AND ' +
-          '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
-          '(src LIKE ? OR clid LIKE ? OR dst LIKE ?)',
-          data.endpoints, data.endpoints,
-          data.from, data.to,
-          data.filter, data.filter, data.filter
-        ];
-      }
+      whereClause = [
+        '(src IN (?) AND dst NOT IN (?)) AND ' +
+        '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
+        '(src LIKE ? OR clid LIKE ? OR dst LIKE ?)',
+        data.endpoints, data.endpoints,
+        data.from, data.to,
+        data.filter, data.filter, data.filter
+      ];
 
     } else {
 
       whereClause = [
+        '(src IN (?) OR dst IN (?)) AND ' +
         '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
         '(src LIKE ? OR clid LIKE ? OR dst LIKE ?)',
+        data.endpoints, data.endpoints,
         data.from, data.to,
         data.filter, data.filter, data.filter
       ];
@@ -315,10 +316,11 @@ function getHistorySwitchCallInterval(data, cb) {
     // add "type" ("in" | "out" | "") based on trunks channel presence
     data.trunks = data.trunks.join('|');
     attributes.push([compDbconnMain.Sequelize.literal(
-      'IF (dstchannel REGEXP "' + data.trunks + '", "out", ' +
+        'IF (dstchannel REGEXP "' + data.trunks + '", "out", ' +
         '(IF (channel REGEXP "' + data.trunks + '", "in", ""))' +
-      ')'),
-    'type']);
+        ')'),
+      'type'
+    ]);
 
     // if the privacy string is present, than hide the numbers
     if (data.privacyStr) {

@@ -150,57 +150,11 @@ function getHistoryCallInterval(data, cb) {
       'endpoints ' + data.endpoints + ' and filter ' + (data.filter ? data.filter : '""') +
       (data.recording ? ' with recording data' : ''));
 
-    dbconn.getHistoryCallInterval(data, function(err, results) {
-      try {
-        results.rows = addExtensCallDirection(results.rows, data.endpoints);
-        cb(err, results);
-
-      } catch (error) {
-        logger.error(IDLOG, error.stack);
-        cb(error);
-      }
-    });
+    dbconn.getHistoryCallInterval(data, cb);
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
     cb(err);
-  }
-}
-
-/**
- * It adds call direction information to the data passed as argument. This is
- * possible only for the requests that involves the history call of a user. In
- * this case is possible to calculate the direction call using the list of
- * extensions of the user.
- *
- * @method addExtensCallDirection
- * @param {array} data Calls retrieved from the database
- * @param {array} endpoints The extensions of the user
- * @return {array} The same data received as parameter plus direction information.
- */
-function addExtensCallDirection(data, endpoints) {
-  try {
-    var i;
-    for (i = 0; i < data.length; i++) {
-
-      if (endpoints.indexOf(data[i].dataValues.src) !== -1 &&
-        endpoints[endpoints.indexOf(data[i].dataValues.src)] === data[i].dataValues.src) {
-
-        data[i].dataValues.direction = 'out';
-
-      } else if (endpoints.indexOf(data[i].dataValues.dst) !== -1 &&
-        endpoints[endpoints.indexOf(data[i].dataValues.dst)] === data[i].dataValues.dst) {
-
-        data[i].dataValues.direction = 'in';
-
-      } else {
-        data[i].dataValues.direction = '';
-      }
-    }
-    return data;
-
-  } catch (err) {
-    logger.error(IDLOG, err.stack);
   }
 }
 
@@ -236,24 +190,12 @@ function getHistorySwitchCallInterval(data, cb) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
-    data.trunks = compAstProxy.getTrunksList();
-
     logger.info(IDLOG, 'search switchboard history call between ' + data.from + ' to ' + data.to + ' for ' +
       'all endpoints and filter ' + (data.filter ? data.filter : '""') +
       (data.recording ? ' with recording data' : ''));
 
-    // type is not passed to dbconn query because it is not possible to filter by trunk
-    // to understand the "in" and "out" information with the query. So "type" is used
-    // by filter results by javascript
-    dbconn.getHistorySwitchCallInterval(data, function(err, results) {
-      try {
-        cb(err, results);
-
-      } catch (error) {
-        logger.error(IDLOG, error.stack);
-        cb(error);
-      }
-    });
+    data.trunks = compAstProxy.getTrunksList();
+    dbconn.getHistorySwitchCallInterval(data, cb);
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
