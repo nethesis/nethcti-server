@@ -538,7 +538,8 @@ function authorizeCdrUser(username) {
       throw new Error('wrong parameter');
     }
 
-    // return authorizeUser(authorizationTypes.TYPES.cdr, username);
+    var profid = getUserProfileId(username);
+    return profiles[profid].macro_permissions.cdr.value === true;
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
@@ -957,7 +958,12 @@ function authorizeAdminCdrUser(username) {
       throw new Error('wrong parameter');
     }
 
-    // return authorizeUser(authorizationTypes.TYPES.admin_cdr, username);
+    var profid = getUserProfileId(username);
+
+    return (
+      profiles[profid].macro_permissions.cdr.value === true &&
+      profiles[profid].macro_permissions.cdr.permissions.ad_cdr.value === true
+    );
 
   } catch (err) {
     logger.error(IDLOG, err.stack);

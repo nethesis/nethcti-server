@@ -381,12 +381,12 @@ function setCompAuthorization(ca) {
           var username = req.headers.authorization_user;
           var id = req.params.id;
 
-          // check the "admin_recording" authorization. If the user has this permission he can delete
-          // all the audio files. So gets the file informations and then delete the file
+          // check the "admin recording" authorization. If the user has this permission he can delete
+          // all the audio files. So gets the file information and delete it
           if (compAuthorization.authorizeAdminRecordingUser(username) === true) {
-            logger.info(IDLOG, 'deleting record call audio file: "admin_recording" authorization successful for user "' + username + '"');
+            logger.info(IDLOG, 'deleting record call audio file: "admin recording" authorization successful for user "' + username + '"');
 
-            // get the file informations using the history component. The informations are the creation year,
+            // get the file information using the history component. The information are the creation year,
             // month, day and the filename. This data is need to delete the file using history component
             compHistory.getCallRecordingFileData(id, function(err, result) {
               try {
@@ -397,7 +397,7 @@ function setCompAuthorization(ca) {
 
                 // the user isn't involved in the recorded call, so he can't delete it
                 else if (typeof result === 'boolean' && !result) {
-                  var str = 'no data informations about recording call with id "' + id + '" to delete by the user "' + username + '"';
+                  var str = 'no data information about recording call with id "' + id + '" to delete by the user "' + username + '"';
                   logger.warn(IDLOG, str);
                   compUtil.net.sendHttp500(IDLOG, res, str);
 
@@ -411,14 +411,12 @@ function setCompAuthorization(ca) {
               }
             });
           }
-
           // check the "recording" authorization
           else if (compAuthorization.authorizeRecordingUser(username) !== true) {
             logger.warn(IDLOG, 'deleting record call audio file: "recording" authorization failed for user "' + username + '" !');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
-
           // the user has the "recording" authorization, so check if the recorded call relates to himself
           else {
             // get all the extension endpoints of the user
@@ -426,7 +424,7 @@ function setCompAuthorization(ca) {
 
             // here the user only has the "recording" authorization so he can delete only the recording call in which he
             // is involved. So checks if at least one extension of the user is involved in the recorded call. As a result
-            // of this test is returned a "false" value if the test is failed, an object with the file informations if the
+            // of this test is returned a "false" value if the test is failed, an object with the file information if the
             // test is successful
             compHistory.isAtLeastExtenInCallRecording(id, extens, function(err, result) {
               try {
@@ -435,6 +433,7 @@ function setCompAuthorization(ca) {
                 }
                 // the user isn't involved in the recorded call, so he can't delete it
                 else if (typeof result === 'boolean' && !result) {
+
                   logger.warn(IDLOG, 'user "' + username + '" try to delete the recording call id "' + id +
                     '", but he is not involved in the call');
                   compUtil.net.sendHttp403(IDLOG, res);
@@ -472,12 +471,12 @@ function setCompAuthorization(ca) {
           var username = req.headers.authorization_user;
           var id = req.params.id;
 
-          // check the "admin_recording" authorization. If the user has this permission he can listen
-          // all the audio file. So gets the file informations and then return the data to the client
-          if ( /*compAuthorization.authorizeAdminRecordingUser(username)*/ true === true) {
+          // check the "admin recording" authorization. If the user has this permission he can listen
+          // all the audio file. So gets the file information and then return the data to the client
+          if (compAuthorization.authorizeAdminRecordingUser(username) === true) {
             logger.info(IDLOG, 'listening record call audio file: admin recording authorization successful for user "' + username + '"');
 
-            // get the file informations using the history component. The informations are the creation year,
+            // get the file information using the history component. The information are the creation year,
             // month, day and the filename. This data is need to listen the file using history component
             compHistory.getCallRecordingFileData(id, function(err, result) {
               try {
@@ -488,7 +487,7 @@ function setCompAuthorization(ca) {
 
                 // the user isn't involved in the recorded call, so he can't listen it
                 else if (typeof result === 'boolean' && !result) {
-                  var str = 'no data informations about recording call with id "' + id + '" to listen by the user "' + username + '"';
+                  var str = 'no data information about recording call with id "' + id + '" to listen by the user "' + username + '"';
                   logger.warn(IDLOG, str);
                   compUtil.net.sendHttp500(IDLOG, res, str);
 
@@ -505,7 +504,7 @@ function setCompAuthorization(ca) {
           }
 
           // check the "recording" authorization
-          else if ( /*compAuthorization.authorizeRecordingUser(username)*/ true !== true) {
+          else if (compAuthorization.authorizeRecordingUser(username) !== true) {
             logger.warn(IDLOG, 'listening record call audio file: recording authorization failed for user "' + username + '" !');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
@@ -516,9 +515,9 @@ function setCompAuthorization(ca) {
             // get all the extension endpoints of the user
             var extens = Object.keys(compUser.getAllEndpointsExtension(username));
 
-            // here the user only has the "recording" authorization so he can listen only the recording call in which he
+            // here the user has only the "recording" authorization so he can listen only the recording call in which he
             // is involved. So checks if at least one extension of the user is involved in the recorded call. As a result
-            // of this test is returned a "false" value if the test is failed, an object with the file informations if the
+            // of this test is returned a "false" value if the test is failed, an object with the file information if the
             // test is successful
             compHistory.isAtLeastExtenInCallRecording(id, extens, function(err, result) {
               try {
@@ -566,12 +565,12 @@ function setCompAuthorization(ca) {
           var username = req.headers.authorization_user;
           var id = req.params.id;
 
-          // check the "admin_recording" authorization. If the user has this permission he can download
-          // all the audio files. So gets the file informations and then return the data to the client
-          if ( /*compAuthorization.authorizeAdminRecordingUser(username)*/ true === true) {
-            logger.info(IDLOG, 'downloading record call audio file: "admin_recording" authorization successful for user "' + username + '"');
+          // check the "admin recording" authorization. If the user has this permission he can download
+          // all the audio files. So gets the file information and then return the data to the client
+          if (compAuthorization.authorizeAdminRecordingUser(username) === true) {
+            logger.info(IDLOG, 'downloading record call audio file: "admin recording" authorization successful for user "' + username + '"');
 
-            // get the file informations using the history component. The informations are the creation year,
+            // get the file information using the history component. The information are the creation year,
             // month, day and the filename. This data is need to download the file using the history component
             compHistory.getCallRecordingFileData(id, function(err, result) {
               try {
@@ -582,7 +581,7 @@ function setCompAuthorization(ca) {
 
                 // the user isn't involved in the recorded call, so he can't download it
                 else if (typeof result === 'boolean' && !result) {
-                  var str = 'no data informations about recording call with id "' + id + '" to download it by the user "' + username + '"';
+                  var str = 'no data information about recording call with id "' + id + '" to download it by the user "' + username + '"';
                   logger.warn(IDLOG, str);
                   compUtil.net.sendHttp500(IDLOG, res, str);
 
@@ -612,7 +611,7 @@ function setCompAuthorization(ca) {
 
             // here the user only has the "recording" authorization so he can download only the recording call in which he
             // is involved. So checks if at least one extension of the user is involved in the recorded call. As a result
-            // of this test is returned a "false" value if the test is failed, an object with the file informations if the
+            // of this test is returned a "false" value if the test is failed, an object with the file information if the
             // test is successful
             compHistory.isAtLeastExtenInCallRecording(id, extens, function(err, result) {
               try {
@@ -661,40 +660,39 @@ function setCompAuthorization(ca) {
           var username = req.headers.authorization_user;
 
           // check the administration cdr authorization
-          // if (compAuthorization.authorizeAdminCdrUser(username) === true) {
-          //     logger.info(IDLOG, 'getting history interval call: admin cdr authorization successful for user "' + username + '"');
-          //
-          // }
+          if (compAuthorization.authorizeAdminCdrUser(username) === true) {
+            logger.info(IDLOG, 'getting history interval call: admin cdr authorization successful for user "' + username + '"');
+          }
           // check the cdr authorization
-          // else if (/*compAuthorization.authorizeCdrUser(username)*/ true !== true) {
-          //     logger.warn(IDLOG, 'getting history interval call: cdr authorization failed for user "' + username + '" !');
-          //     compUtil.net.sendHttp403(IDLOG, res);
-          //     return;
-          // }
+          else if (compAuthorization.authorizeCdrUser(username) !== true) {
+            logger.warn(IDLOG, 'getting history interval call: cdr authorization failed for user "' + username + '" !');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+          }
 
-          // check if the endpoint in the request is an endpoint of the applicant user. The user
-          // can only see the cdr of his endpoints
-          // if (compAuthorization.verifyUserEndpointExten(username, req.params.endpoint) === false) {
-          //     logger.warn(IDLOG, 'authorization cdr call failed for user "' + username + '": requested endpoint ' +
-          //                        req.params.endpoint + ' not owned by him');
-          //     compUtil.net.sendHttp403(IDLOG, res);
-          //     return;
-          // }
+          // check if the endpoint in the request is an endpoint of the applicant user.
+          // The user can only see the cdr of his endpoints
+          if (compAuthorization.verifyUserEndpointExten(username, req.params.endpoint) === false) {
+            logger.warn(IDLOG, 'authorization cdr call failed for user "' + username + '": requested endpoint ' +
+              req.params.endpoint + ' not owned by him');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+          }
 
           logger.info(IDLOG, 'cdr authorization successfully for user "' + username + '" and target ' + req.params.target);
 
-          // check the "administration recording" and "recording" authorization. If it's enabled the user can view also all the data
-          // about his recording audio files
-          var recording = true; //compAuthorization.authorizeRecordingUser(username) || compAuthorization.authorizeAdminRecordingUser(username);
-          // if (compAuthorization.authorizeAdminRecordingUser(username) === true) {
-          //     logger.info(IDLOG, 'user "' + username + '" has the "admin_recording" authorization');
-          //
-          // } else if (compAuthorization.authorizeRecordingUser(username) === true) {
-          //     logger.info(IDLOG, 'user "' + username + '" has the "recording" authorization');
-          //
-          // } else {
-          //     logger.info(IDLOG, 'user "' + username + '" has neither the "admin_recording" nor the "recording" authorization');
-          // }
+          // check the "administration recording" and "recording" authorizations. If it's enabled
+          // the user can view also all the data about his recording audio files
+          var recording = (compAuthorization.authorizeRecordingUser(username) || compAuthorization.authorizeAdminRecordingUser(username));
+          if (compAuthorization.authorizeAdminRecordingUser(username) === true) {
+            logger.info(IDLOG, 'user "' + username + '" has the "admin recording" authorization');
+
+          } else if (compAuthorization.authorizeRecordingUser(username) === true) {
+            logger.info(IDLOG, 'user "' + username + '" has the "recording" authorization');
+
+          } else {
+            logger.info(IDLOG, 'user "' + username + '" has neither the "admin recording" nor the "recording" authorization');
+          }
 
           var extens;
           if (req.params.type === 'user') {
@@ -729,25 +727,24 @@ function setCompAuthorization(ca) {
 
           // use the history component
           compHistory.getHistoryCallInterval(obj, function(err1, results) {
-              try {
-                if (err1) {
-                  throw err1;
-                } else {
-                  logger.info(IDLOG, 'send #' + results.count + ' results searching history call' +
-                    ' interval between ' + obj.from + ' to ' + obj.to + ' for ' +
-                    req.params.type + ' "' + req.params.target + '" [' + obj.endpoints + ']' +
-                    ' and filter ' + (obj.filter ? obj.filter : '""') +
-                    (obj.recording ? ' with recording data' : '') +
-                    ' to user "' + username + '"');
-                  res.send(200, results);
-                }
-
-              } catch (err2) {
-                logger.error(IDLOG, err2.stack);
-                compUtil.net.sendHttp500(IDLOG, res, err2.toString());
+            try {
+              if (err1) {
+                throw err1;
+              } else {
+                logger.info(IDLOG, 'send #' + results.count + ' results searching history call' +
+                  ' interval between ' + obj.from + ' to ' + obj.to + ' for ' +
+                  req.params.type + ' "' + req.params.target + '" [' + obj.endpoints + ']' +
+                  ' and filter ' + (obj.filter ? obj.filter : '""') +
+                  (obj.recording ? ' with recording data' : '') +
+                  ' to user "' + username + '"');
+                res.send(200, results);
               }
+
+            } catch (err2) {
+              logger.error(IDLOG, err2.stack);
+              compUtil.net.sendHttp500(IDLOG, res, err2.toString());
             }
-          );
+          });
         } catch (error) {
           logger.error(IDLOG, error.stack);
           compUtil.net.sendHttp500(IDLOG, res, error.toString());

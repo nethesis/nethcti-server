@@ -215,7 +215,6 @@ function isAtLeastExtenInCallRecording(id, extensions, cb) {
   try {
     // check parameters
     if (typeof cb !== 'function' || typeof id !== 'string' || !(extensions instanceof Array)) {
-
       throw new Error('wrong parameters');
     }
 

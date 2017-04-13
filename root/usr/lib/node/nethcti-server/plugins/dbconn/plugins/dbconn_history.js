@@ -513,29 +513,25 @@ function getHistorySmsInterval(data, cb) {
 }
 
 /**
- * Checks if at least one of the specified list of extensions is implied in the recorded call.
+ * Checks if at least one of the specified extension of the list is involved in the recorded call.
  *
  * @method isAtLeastExtenInCall
  * @param {string}   uniqueid   The call identifier: is the _uniqueid_ field of the _asteriskcdrdb.cdr_ database table
  * @param {array}    extensions The list of the extensions to check
  * @param {function} cb         The callback function. If none of the extensions is involved in the call, the callback
- *                              is called with a false boolean value. Otherwise it's called with the entry of the database
+ *                              is called with a false boolean value. Otherwise it is called with the entry of the database
  */
 function isAtLeastExtenInCall(uniqueid, extensions, cb) {
   try {
     // check parameters
     if (typeof cb !== 'function' || typeof uniqueid !== 'string' || !(extensions instanceof Array)) {
-
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
-    extensions = extensions.join('|');
-
-    // search
     compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].find({
       where: [
         'uniqueid=? AND ' +
-        '(channel REGEXP ? OR dstchannel REGEXP ?)',
+        '(src IN (?) OR dst IN (?))',
         uniqueid, extensions, extensions
       ],
       attributes: [
@@ -548,9 +544,9 @@ function isAtLeastExtenInCall(uniqueid, extensions, cb) {
     }).then(function(result) {
 
       // extract result to return in the callback function
-      if (result && result.selectedValues) {
+      if (result && result.dataValues) {
         logger.info(IDLOG, 'at least one extensions ' + extensions.toString() + ' is involved in the call with uniqueid ' + uniqueid);
-        cb(null, result.selectedValues);
+        cb(null, result.dataValues);
 
       } else {
         logger.info(IDLOG, 'none of the extensions ' + extensions.toString() + ' is involved in the call with uniqueid ' + uniqueid);
