@@ -971,12 +971,9 @@ var compConfigManager;
           }
 
           // associate extensions to its own user
-          var exten = null;
           for (e in extensions) {
-            exten = compAstProxy.getJSONExtension(e);
             users = compUser.getUsersUsingEndpointExtension(e);
-            exten.user = (users.length == 1) ? users[0] : null;
-            extensions[e] = exten;
+            extensions[e].user = (users.length == 1) ? users[0] : null;
           }
 
           logger.info(IDLOG, 'sent all extensions in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
