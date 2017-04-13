@@ -179,7 +179,6 @@ function getHistoryCallInterval(data, cb) {
     }
 
     // add "direction" ("in" | "out" | "") based on data.endpoints presence on "src" and "dst"
-    // attributes.push([compDbconnMain.Sequelize.literal('IF (src in ("91303"), "111111", "222222")'), 'type']);
     var extens = data.endpoints.map(function(el) {
       return '"' + el + '"';
     });
@@ -187,7 +186,7 @@ function getHistoryCallInterval(data, cb) {
         'IF ( (src IN (' + extens + ') AND dst NOT IN (' + extens + ')), "out", ' +
         '(IF ( (src NOT IN (' + extens + ') AND dst IN (' + extens + ')), "in", ""))' +
         ')'),
-      'type'
+      'direction'
     ]);
 
     // check optional parameters
