@@ -1,0 +1,22 @@
+#!/usr/bin/php
+<?php
+include_once('/etc/freepbx.conf');
+global $amp_conf;
+$asteriskcdrdb = array();
+foreach (array('history_call','cel','voicemail') as $dbobj) {
+    $asteriskcdrdb[$dbobj] = array();
+    $asteriskcdrdb[$dbobj]['dbhost'] = 'localhost';
+    $asteriskcdrdb[$dbobj]['dbport'] = '/var/lib/mysql/mysql.sock';
+    $asteriskcdrdb[$dbobj]['dbtype'] = 'mysql';
+    $asteriskcdrdb[$dbobj]['dbuser'] = ($amp_conf['CDRDBUSER'] ? $amp_conf['CDRDBUSER'] : $amp_conf['AMPDBUSER']);
+    $asteriskcdrdb[$dbobj]['dbpassword'] = ($amp_conf['CDRDBPASS'] ? $amp_conf['CDRDBPASS'] : $amp_conf['AMPDBPASS']);
+    $asteriskcdrdb[$dbobj]['dbname'] = $amp_conf['CDRDBNAME'];
+}
+
+$res = file_put_contents('/etc/nethcti/dbstatic.d/asteriskcdrdb.json',json_encode($asteriskcdrdb, JSON_PRETTY_PRINT));
+
+if ($res === FALSE) {
+    throw new Exception('fail to write asteriskcdrdb config');
+}
+
+exit(0);
