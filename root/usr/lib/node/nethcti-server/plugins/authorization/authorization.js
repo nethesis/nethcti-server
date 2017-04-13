@@ -654,7 +654,12 @@ function authorizeSpyUser(username) {
       throw new Error('wrong parameter');
     }
 
-    // return authorizeUser(authorizationTypes.TYPES.spy, username);
+    var profid = getUserProfileId(username);
+
+    return (
+      profiles[profid].macro_permissions.presence_panel.value === true &&
+      profiles[profid].macro_permissions.presence_panel.permissions.spy.value === true
+    );
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
