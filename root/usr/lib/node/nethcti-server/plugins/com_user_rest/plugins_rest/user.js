@@ -146,7 +146,7 @@ function setCompUtil(comp) {
      * 1. [`user/presencelist`](#presencelistget)
      * 1. [`user/presence`](#presenceget)
      * 1. [`user/me`](#meget)
-     * 1. [`user/all/endpoints`](#userallendpointsget)
+     * 1. [`user/endpoints/all`](#userendpointsallget)
      *
      * ---
      *
@@ -228,7 +228,7 @@ function setCompUtil(comp) {
      *
      * ---
      *
-     * ### <a id="userallendpointsget">**`user/all/endpoints`**</a>
+     * ### <a id="userendpointsallget">**`user/endpoints/all`**</a>
      *
      * Returns the information about all users endpoints.
      *
@@ -367,7 +367,13 @@ function setCompUtil(comp) {
       endpoints: function(req, res, next) {
         try {
           var username = req.headers.authorization_user;
-          var results = compUser.getAllUsersEndpointsJSON();
+
+          var endpoints = compUser.getAllUsersEndpointsJSON();
+
+          var results = {};
+          for (var i in endpoints) {
+            results[i] = compUser.getUserInfoJSON(i);
+          }
 
           logger.info(IDLOG, 'send endpoints to user "' + username + '"');
           res.send(200, results);
