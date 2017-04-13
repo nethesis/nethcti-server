@@ -777,7 +777,9 @@ function extenChanged(exten) {
       // } else if (wsServer.sockets.sockets[sockid]) {
       //   wsServer.sockets.sockets[sockid].emit(EVT_EXTEN_UPDATE, exten.toJSON());
       // }
-      wsServer.sockets.sockets[sockid].emit(EVT_EXTEN_UPDATE, exten.toJSON());
+      var extJson = exten.toJSON();
+      extJson.username = compUser.getUserUsingEndpointExtension(exten.getExten());
+      wsServer.sockets.sockets[sockid].emit(EVT_EXTEN_UPDATE, extJson);
     }
   } catch (err) {
     logger.error(IDLOG, err.stack);
