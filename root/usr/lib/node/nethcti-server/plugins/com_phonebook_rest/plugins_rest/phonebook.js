@@ -37,6 +37,15 @@ var logger = console;
 var compPhonebook;
 
 /**
+ * The architect component to be used for authorization.
+ *
+ * @property compAuthorization
+ * @type object
+ * @private
+ */
+var compAuthorization;
+
+/**
  * The utility architect component.
  *
  * @property compUtil
@@ -78,6 +87,28 @@ function setCompPhonebook(cp) {
   try {
     compPhonebook = cp;
     logger.info(IDLOG, 'set phonebook architect component');
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Set the authorization architect component.
+ *
+ * @method setCompAuthorization
+ * @param {object} comp The architect authorization component
+ * @static
+ */
+function setCompAuthorization(comp) {
+  try {
+    // check parameter
+    if (typeof comp !== 'object') {
+      throw new Error('wrong parameter');
+    }
+
+    compAuthorization = comp;
+    logger.log(IDLOG, 'authorization component has been set');
+
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
@@ -930,12 +961,33 @@ function setCompUtil(comp) {
                 throw err1;
               }
 
-              // check the authorization for the user. He's authorized to delete only his
+              // check the authorization for the user. He can delete all contacts if he has the
+              // _admin phonebook_ authorization, otherwise only his contacts. If no contact has
+              // been found the "result" property is an empty object
+              if (Object.keys(result).length > 0 &&
+                result.owner_id !== username &&
+                compAuthorization.authorizeAdminPhonebookUser(username) === false) {
+
+                logger.warn(IDLOG, 'deleting cti contact with db id "' + data.id + '" by the user "' + username +
+                  '": the contact is not owned by the user');
+                compUtil.net.sendHttp403(IDLOG, res);
+                return;
+
+              } else if (Object.keys(result).length === 0) {
+
+                logger.warn(IDLOG, 'deleting cti contact with db id "' + data.id + '" by the user "' + username +
+                  '": the contact is not present');
+                compUtil.net.sendHttp403(IDLOG, res);
+                return;
+              }
+
+              // check the authorization for the user. He is authorized to delete only his
               // contacts. If no contact has been found the "result" property is an empty object
               if (Object.keys(result).length === 0 || // the object is empty: no pb contact has been found
-                result.owner_id !== username) { // the contact isn't owned by the user
+                (result.owner_id !== username && compAuthorization.authorizeAdminPhonebookUser(username) === false)) { // the contact is not owned by the user
 
-                logger.warn(IDLOG, 'deleting cti contact with db id "' + data.id + '" by the user "' + username + '": the contact is not owned by the user or isn\'t present');
+                logger.warn(IDLOG, 'deleting cti contact with db id "' + data.id + '" by the user "' + username +
+                  '": the contact is not owned by the user or is not present');
                 compUtil.net.sendHttp403(IDLOG, res);
                 return;
               }
@@ -947,7 +999,8 @@ function setCompUtil(comp) {
                   if (err3) {
                     throw err3;
                   } else {
-                    logger.info(IDLOG, 'cti phonebook contact with db id "' + data.id + '" has been successfully deleted by the user "' + username + '"');
+                    logger.info(IDLOG, 'cti phonebook contact with db id "' + data.id +
+                      '" has been successfully deleted by the user "' + username + '"');
                     compUtil.net.sendHttp200(IDLOG, res);
                   }
 
@@ -997,12 +1050,22 @@ function setCompUtil(comp) {
                 throw err1;
               }
 
-              // check the authorization for the user. He's authorized to modify only his
-              // contacts. If no contact has been found the "result" property is an empty object
-              if (Object.keys(result).length === 0 || // the object is empty: no pb contact has been found
-                result.owner_id !== username) { // the contact isn't owned by the user
+              // check the authorization for the user. He can modify all contacts if he has the
+              // _admin phonebook_ authorization, otherwise only his contacts. If no contact has
+              // been found the "result" property is an empty object
+              if (Object.keys(result).length > 0 &&
+                result.owner_id !== username &&
+                compAuthorization.authorizeAdminPhonebookUser(username) === false) {
 
-                logger.warn(IDLOG, 'modify cti contact with db id "' + data.id + '" by the user "' + username + '": the contact is not owned by the user or it isn\'t present');
+                logger.warn(IDLOG, 'modifying cti contact with db id "' + data.id + '" by the user "' + username +
+                  '": the contact is not owned by the user');
+                compUtil.net.sendHttp403(IDLOG, res);
+                return;
+
+              } else if (Object.keys(result).length === 0) {
+
+                logger.warn(IDLOG, 'modifying cti contact with db id "' + data.id + '" by the user "' + username +
+                  '": the contact is not present');
                 compUtil.net.sendHttp403(IDLOG, res);
                 return;
               }
@@ -1013,7 +1076,8 @@ function setCompUtil(comp) {
                   if (err3) {
                     throw err3;
                   } else {
-                    logger.info(IDLOG, 'cti phonebook contact with db id "' + data.id + '" has been successfully modified by the user "' + username + '"');
+                    logger.info(IDLOG, 'cti phonebook contact with db id "' + data.id +
+                      '" has been successfully modified by the user "' + username + '"');
                     compUtil.net.sendHttp200(IDLOG, res);
                   }
 
@@ -1047,6 +1111,7 @@ function setCompUtil(comp) {
     exports.setCompPhonebook = setCompPhonebook;
     exports.delete_cticontact = phonebook.delete_cticontact;
     exports.modify_cticontact = phonebook.modify_cticontact;
+    exports.setCompAuthorization = setCompAuthorization;
     exports.searchstartswith_digit = phonebook.searchstartswith_digit;
 
   } catch (err) {

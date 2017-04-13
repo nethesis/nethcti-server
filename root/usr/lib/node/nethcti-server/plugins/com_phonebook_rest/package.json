@@ -6,7 +6,8 @@
     "consumes": [
       "util",
       "logger",
-      "phonebook"
+      "phonebook",
+      "authorization"
     ],
     "provides": []
   }
