@@ -284,26 +284,33 @@ function setCompAuthorization(ca) {
             recording: recording
           };
 
-          // add filter parameter if it has been specified
+          // add optional parameters if present
           if (req.params.filter) {
             obj.filter = req.params.filter;
+          }
+          if (req.params.offset) {
+            obj.offset = req.params.offset;
+          }
+          if (req.params.limit) {
+            obj.limit = req.params.limit;
+          }
+          if (req.params.sort) {
+            obj.sort = req.params.sort;
+          }
+          if (req.params.type) {
+            obj.type = req.params.type;
           }
 
           // if the user has the privacy enabled, it adds the privacy string to be used to hide the phone numbers
           // if (compAuthorization.isPrivacyEnabled(username)) { obj.privacyStr = privacyStrReplace; }
 
           // use the history component
-          var data = compHistory.getHistorySwitchCallInterval(obj,
-            req.params.offset,
-            req.params.limit,
-            req.params.sort,
-            req.params.type,
-            function(err, results) {
+          var data = compHistory.getHistorySwitchCallInterval(obj, function(err, results) {
               try {
                 if (err) {
                   compUtil.net.sendHttp500(IDLOG, res, err.toString());
                 } else {
-                  logger.info(IDLOG, 'send ' + results.length + ' results searching switchboard history call ' +
+                  logger.info(IDLOG, 'send ' + results.count + ' results searching switchboard history call ' +
                     'interval between ' + obj.from + ' to ' + obj.to + ' for all endpoints ' +
                     'and filter ' + (obj.filter ? obj.filter : '""') +
                     (obj.recording ? ' with recording data' : '') +

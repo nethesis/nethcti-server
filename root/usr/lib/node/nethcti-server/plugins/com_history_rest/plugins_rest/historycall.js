@@ -710,18 +710,25 @@ function setCompAuthorization(ca) {
             recording: recording
           };
 
-          // add filter parameter if it has been specified
+          // add optional parameters if present
           if (req.params.filter) {
             obj.filter = req.params.filter;
           }
+          if (req.params.offset) {
+            obj.offset = req.params.offset;
+          }
+          if (req.params.limit) {
+            obj.limit = req.params.limit;
+          }
+          if (req.params.sort) {
+            obj.sort = req.params.sort;
+          }
+          if (req.params.direction) {
+            obj.direction = req.params.direction;
+          }
 
           // use the history component
-          compHistory.getHistoryCallInterval(obj,
-            req.params.offset,
-            req.params.limit,
-            req.params.sort,
-            req.params.direction,
-            function(err1, results) {
+          compHistory.getHistoryCallInterval(obj, function(err1, results) {
               try {
                 if (err1) {
                   throw err1;

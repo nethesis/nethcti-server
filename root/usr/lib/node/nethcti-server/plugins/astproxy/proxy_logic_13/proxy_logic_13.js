@@ -1942,6 +1942,22 @@ function getJSONQueues(privacyStr) {
 }
 
 /**
+ * Returns the list of the trunks.
+ *
+ * @method getTrunksList
+ * @return {array} The trunks list.
+ */
+function getTrunksList() {
+  try {
+    return Object.keys(trunks);
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+    return [];
+  }
+}
+
+/**
  * Returns the JSON representation of all trunks.
  *
  * @method getJSONTrunks
@@ -7762,6 +7778,7 @@ exports.pickupParking = pickupParking;
 exports.getJSONQueues = getJSONQueues;
 exports.endMeetmeConf = endMeetmeConf;
 exports.getJSONTrunks = getJSONTrunks;
+exports.getTrunksList = getTrunksList;
 exports.getExtensionIp = getExtensionIp;
 exports.queueMemberAdd = queueMemberAdd;
 exports.inoutDynQueues = inoutDynQueues;

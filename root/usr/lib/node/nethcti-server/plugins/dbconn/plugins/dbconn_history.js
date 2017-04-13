@@ -131,13 +131,13 @@ function getAllUserHistorySmsInterval(data, cb) {
  *   @param {string}  [data.filter]     The filter to be used in the _src, clid_ and _dst_ fields. If it is
  *                                      omitted the function treats it as '%' string
  *   @param {string}  [data.privacyStr] The sequence to be used to hide the numbers to respect the privacy
- * @param {integer} [offset] The results offset
- * @param {integer} [limit] The results limit
- * @param {string} [sort] The sort field
- * @param {string} [direction] The call direction
+ *   @param {integer} [data.offset]     The results offset
+ *   @param {integer} [data.limit]      The results limit
+ *   @param {string}  [data.sort]       The sort field
+ *   @param {string}  [data.direction]  The call direction
  * @param {function} cb The callback function
  */
-function getHistoryCallInterval(data, offset, limit, sort, direction, cb) {
+function getHistoryCallInterval(data, cb) {
   try {
     // check parameters
     if (typeof data !== 'object' ||
@@ -148,7 +148,7 @@ function getHistoryCallInterval(data, offset, limit, sort, direction, cb) {
       (data.endpoints && !(data.endpoints instanceof Array)) ||
       (typeof data.filter !== 'string' && data.filter !== undefined) ||
       (typeof data.privacyStr !== 'string' && data.privacyStr !== undefined) ||
-      (direction && direction !== 'in' && direction !== 'out')) {
+      (data.direction && data.direction !== 'in' && data.direction !== 'out')) {
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
@@ -186,7 +186,7 @@ function getHistoryCallInterval(data, offset, limit, sort, direction, cb) {
     var whereClause;
     if (data.endpoints !== undefined) {
 
-      if (direction && direction === 'in') {
+      if (data.direction && data.direction === 'in') {
 
         whereClause = [
           '(src NOT IN (?) AND dst IN (?)) AND ' +
@@ -197,7 +197,7 @@ function getHistoryCallInterval(data, offset, limit, sort, direction, cb) {
           data.filter, data.filter, data.filter
         ];
 
-      } else if (direction && direction === 'out') {
+      } else if (data.direction && data.direction === 'out') {
 
         whereClause = [
           '(src IN (?) AND dst NOT IN (?)) AND ' +
@@ -234,9 +234,9 @@ function getHistoryCallInterval(data, offset, limit, sort, direction, cb) {
     compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].findAndCountAll({
       where: whereClause,
       attributes: attributes,
-      offset: (offset ? parseInt(offset) : 0),
-      limit: (limit ? parseInt(limit) : null),
-      order: (sort ? sort : 'time desc')
+      offset: (data.offset ? parseInt(data.offset) : 0),
+      limit: (data.limit ? parseInt(data.limit) : null),
+      order: (data.sort ? data.sort : 'time desc')
 
     }).then(function(results) {
       logger.info(IDLOG, results.count + ' results searching history call interval between ' +
@@ -258,6 +258,149 @@ function getHistoryCallInterval(data, offset, limit, sort, direction, cb) {
     cb(err.toString());
   }
 }
+
+/**
+ * Get the all history calls into the interval time. It can be possible
+ * to filter the results specifying the filter and hide the phone numbers
+ * specifying the privacy sequence to be used. It search the results into
+ * the _asteriskcdrdb.cdr_ database.
+ *
+ * @method getHistorySwitchCallInterval
+ * @param {object} data
+ *   @param {array}  [data.trunks]      The trunk identifiers list. It is used to filter out the _channel_
+ *                                      and _dstchannel_ fields to get out the type "in" and "out".
+ *                                      If it is omitted the function treats it as ['%'] string. The '%'
+ *                                      matches any number of characters, even zero character
+ *   @param {string}  data.from         The starting date of the interval in the YYYYMMDD format (e.g. 20130521)
+ *   @param {string}  data.to           The ending date of the interval in the YYYYMMDD format (e.g. 20130528)
+ *   @param {boolean} data.recording    True if the data about recording audio file must be returned
+ *   @param {string}  [data.filter]     The filter to be used in the _src, clid_ and _dst_ fields. If it is
+ *                                      omitted the function treats it as '%' string
+ *   @param {string}  [data.privacyStr] The sequence to be used to hide the numbers to respect the privacy
+ *   @param {integer} [data.offset]     The results offset
+ *   @param {integer} [data.limit]      The results limit
+ *   @param {string}  [data.sort]       The sort field
+ *   @param {string}  [data.type]       The call type ("in" | "out")
+ * @param {function} cb The callback function
+ */
+function getHistorySwitchCallInterval(data, cb) {
+  try {
+    // check parameters
+    if (typeof data !== 'object' ||
+      typeof cb !== 'function' ||
+      typeof data.recording !== 'boolean' ||
+      typeof data.to !== 'string' ||
+      typeof data.from !== 'string' ||
+      (data.trunks && !(data.trunks instanceof Array)) ||
+      (typeof data.filter !== 'string' && data.filter !== undefined) ||
+      (typeof data.privacyStr !== 'string' && data.privacyStr !== undefined) ||
+      (data.type && data.type !== 'in' && data.type !== 'out')) {
+
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+
+    // define the mysql field to be returned. The "recordingfile" field
+    // is returned only if the "data.recording" argument is true
+    var attributes = [
+      ['UNIX_TIMESTAMP(calldate)', 'time'],
+      'channel', 'dstchannel', 'uniqueid', 'userfield',
+      'duration', 'billsec', 'disposition', 'dcontext'
+    ];
+    if (data.recording === true) {
+      attributes.push('recordingfile');
+    }
+
+    attributes.push([compDbconnMain.Sequelize.literal('"cti"'), 'source']);
+
+    // add "type" ("in" | "out" | "") based on trunks channel presence
+    data.trunks = data.trunks.join('|');
+    attributes.push([compDbconnMain.Sequelize.literal(
+      'IF (dstchannel REGEXP "' + data.trunks + '", "out", ' +
+        '(IF (channel REGEXP "' + data.trunks + '", "in", ""))' +
+      ')'),
+    'type']);
+
+    // if the privacy string is present, than hide the numbers
+    if (data.privacyStr) {
+      // the numbers are hidden
+      attributes.push(['CONCAT( SUBSTRING(src, 1, LENGTH(src) - ' + data.privacyStr.length + '), "' + data.privacyStr + '")', 'src']);
+      attributes.push(['CONCAT( SUBSTRING(dst, 1, LENGTH(dst) - ' + data.privacyStr.length + '), "' + data.privacyStr + '")', 'dst']);
+      attributes.push(['CONCAT( "", "\\"' + data.privacyStr + '\\"")', 'clid']);
+
+    } else {
+      // the numbers are clear
+      attributes.push('src');
+      attributes.push('dst');
+      attributes.push('clid');
+    }
+
+    // check optional parameters
+    if (data.filter === undefined) {
+      data.filter = '%';
+    }
+
+    var whereClause;
+    if (data.type === 'in') {
+
+      whereClause = [
+        'channel REGEXP ? AND ' +
+        '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
+        '(src LIKE ? OR clid LIKE ? OR dst LIKE ?)',
+        data.trunks,
+        data.from, data.to,
+        data.filter, data.filter, data.filter
+      ];
+
+    } else if (data.type === 'out') {
+
+      whereClause = [
+        'dstchannel REGEXP ? AND ' +
+        '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
+        '(src LIKE ? OR clid LIKE ? OR dst LIKE ?)',
+        data.trunks,
+        data.from, data.to,
+        data.filter, data.filter, data.filter
+      ];
+
+    } else {
+
+      whereClause = [
+        '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
+        '(src LIKE ? OR clid LIKE ? OR dst LIKE ?)',
+        data.from, data.to,
+        data.filter, data.filter, data.filter
+      ];
+    }
+
+    // search
+    compDbconnMain.models[compDbconnMain.JSON_KEYS.HISTORY_CALL].findAndCountAll({
+      where: whereClause,
+      attributes: attributes,
+      offset: (data.offset ? parseInt(data.offset) : 0),
+      limit: (data.limit ? parseInt(data.limit) : null),
+      order: (data.sort ? data.sort : 'time desc')
+
+    }).then(function(results) {
+
+      logger.info(IDLOG, results.count + ' results searching switchboard history call interval between ' +
+        data.from + ' to ' + data.to + ' and filter ' + data.filter);
+      cb(null, results);
+
+    }, function(err) { // manage the error
+
+      logger.error(IDLOG, 'searching switchboard history call interval between ' + data.from + ' to ' + data.to +
+        ' with filter ' + data.filter + ': ' + err.toString());
+      cb(err.toString());
+    });
+
+    compDbconnMain.incNumExecQueries();
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+    cb(err.toString());
+  }
+}
+
 
 /**
  * Get the history sms sent by the specified user into the interval time.
@@ -419,6 +562,7 @@ function isAtLeastExtenInCall(uniqueid, extensions, cb) {
 apiList.isAtLeastExtenInCall = isAtLeastExtenInCall;
 apiList.getHistorySmsInterval = getHistorySmsInterval;
 apiList.getHistoryCallInterval = getHistoryCallInterval;
+apiList.getHistorySwitchCallInterval = getHistorySwitchCallInterval;
 apiList.getAllUserHistorySmsInterval = getAllUserHistorySmsInterval;
 
 // public interface
