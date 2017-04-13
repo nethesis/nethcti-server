@@ -739,18 +739,17 @@ function authorizeDndUser(username) {
  * Returns true if the specified user has the authorization to view all extensions
  * with their complete status informations.
  *
- * @method authorizeOpExtensionsUser
+ * @method authorizePresencePanelUser
  * @param  {string}  username The username
  * @return {boolean} True if the user has the operator panel authorization.
  */
-function authorizeOpExtensionsUser(username) {
+function authorizePresencePanelUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
       throw new Error('wrong parameter');
     }
-
-    // return authorizeUser(authorizationTypes.TYPES.extensions, username);
+    return profiles[getUserProfileId(username)].macro_permissions.presence_panel.value === true;
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
@@ -1703,7 +1702,7 @@ exports.authorizeAdminHangupUser = authorizeAdminHangupUser;
 exports.authorizeAdminPickupUser = authorizeAdminPickupUser;
 exports.getAllUsersAuthorizations = getAllUsersAuthorizations;
 exports.authorizeCustomerCardUser = authorizeCustomerCardUser;
-exports.authorizeOpExtensionsUser = authorizeOpExtensionsUser;
+exports.authorizePresencePanelUser = authorizePresencePanelUser;
 exports.authorizeAdminOffhourUser = authorizeAdminOffhourUser;
 exports.authorizeAdminParkingsUser = authorizeAdminParkingsUser;
 exports.authorizeAdminTransferUser = authorizeAdminTransferUser;

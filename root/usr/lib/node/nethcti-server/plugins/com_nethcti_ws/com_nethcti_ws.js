@@ -1476,7 +1476,7 @@ function loginHdlr(socket, obj) {
       sendAutheSuccess(socket);
 
       // if the user has the extensions permission, than he will receive the asterisk events that affects the extensions
-      // if (compAuthorization.authorizeOpExtensionsUser(obj.accessKeyId) === true) {
+      // if (compAuthorization.authorizePresencePanelUser(obj.accessKeyId) === true) {
 
       //   if (compAuthorization.isPrivacyEnabled(obj.accessKeyId) === true) {
       //     // join the user to the websocket room to receive the asterisk events that affects the extensions, using hide numbers
