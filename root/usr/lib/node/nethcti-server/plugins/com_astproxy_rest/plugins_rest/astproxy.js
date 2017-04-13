@@ -896,7 +896,7 @@ var compConfigManager;
           } else {
             // check if the user has the operator panel and remote site authorizations
             if (compAuthorization.authorizeRemoteSiteUser(username) !== true ||
-              compAuthorization.authorizeOpExtensionsUser(username) !== true) {
+              compAuthorization.authorizePresencePanelUser(username) !== true) {
 
               logger.warn(IDLOG, 'requesting all remote sites extensions: authorization failed for user "' + username + '"');
               compUtil.net.sendHttp403(IDLOG, res);
@@ -945,7 +945,7 @@ var compConfigManager;
           //   res.send(200, extensions);
           // } else {
           // // check if the user has the authorization to view the extensions
-          // if (compAuthorization.authorizeOpExtensionsUser(username) !== true) {
+          // if (compAuthorization.authorizePresencePanelUser(username) !== true) {
 
           //   logger.warn(IDLOG, 'requesting extensions: authorization failed for user "' + username + '"');
           //   compUtil.net.sendHttp403(IDLOG, res);
