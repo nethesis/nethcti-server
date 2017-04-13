@@ -281,7 +281,7 @@ function getHistoryCallInterval(data, cb) {
  *   @param {integer} [data.offset]     The results offset
  *   @param {integer} [data.limit]      The results limit
  *   @param {string}  [data.sort]       The sort field
- *   @param {string}  [data.type]       The call type ("in" | "out")
+ *   @param {string}  [data.type]       The call type ("in" | "out" | "interval")
  * @param {function} cb The callback function
  */
 function getHistorySwitchCallInterval(data, cb) {
@@ -295,7 +295,7 @@ function getHistorySwitchCallInterval(data, cb) {
       (data.trunks && !(data.trunks instanceof Array)) ||
       (typeof data.filter !== 'string' && data.filter !== undefined) ||
       (typeof data.privacyStr !== 'string' && data.privacyStr !== undefined) ||
-      (data.type && data.type !== 'in' && data.type !== 'out')) {
+      (data.type && data.type !== 'in' && data.type !== 'out' && data.type !== 'interval')) {
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
@@ -313,11 +313,11 @@ function getHistorySwitchCallInterval(data, cb) {
 
     attributes.push([compDbconnMain.Sequelize.literal('"cti"'), 'source']);
 
-    // add "type" ("in" | "out" | "") based on trunks channel presence
+    // add "type" ("in" | "out" | "internal") based on trunks channel presence
     data.trunks = data.trunks.join('|');
     attributes.push([compDbconnMain.Sequelize.literal(
         'IF (dstchannel REGEXP "' + data.trunks + '", "out", ' +
-        '(IF (channel REGEXP "' + data.trunks + '", "in", ""))' +
+        '(IF (channel REGEXP "' + data.trunks + '", "in", "internal"))' +
         ')'),
       'type'
     ]);
@@ -360,6 +360,17 @@ function getHistorySwitchCallInterval(data, cb) {
         '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
         '(src LIKE ? OR clid LIKE ? OR dst LIKE ?)',
         data.trunks,
+        data.from, data.to,
+        data.filter, data.filter, data.filter
+      ];
+
+    } else if (data.type === 'internal') {
+
+      whereClause = [
+        'channel NOT REGEXP ? AND dstchannel NOT REGEXP ? AND ' +
+        '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
+        '(src LIKE ? OR clid LIKE ? OR dst LIKE ?)',
+        data.trunks, data.trunks,
         data.from, data.to,
         data.filter, data.filter, data.filter
       ];

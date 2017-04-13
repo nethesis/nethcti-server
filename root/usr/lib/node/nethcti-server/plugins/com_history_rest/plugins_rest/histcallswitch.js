@@ -151,7 +151,7 @@ function setCompAuthorization(ca) {
         *
         * * `from: the start date in YYYYMMDD format`
         * * `to: the end date in YYYYMMDD format`
-        * * `[type]: ("in" | "out") the type of the calls. If it is through a trunk`
+        * * `[type]: ("in" | "out" | "internal") the type of the calls. If it is through a trunk`
         *
         * If an error occurs an HTTP 500 response is returned. It supports pagination with limit and offset parameters and sorting.
         *
@@ -172,7 +172,7 @@ function setCompAuthorization(ca) {
             "src": "204",
             "dst": "91223",
             "clid": "\"andrea marchio\" <204>",
-            "type": "out" // can be ("in" | "out" | "") if it is through a trunk or not
+            "type": "out" // can be ("in" | "out" | "internal") if it is through a trunk or not
          },
          ...
      ]
@@ -187,7 +187,7 @@ function setCompAuthorization(ca) {
         * * `from: the start date in YYYYMMDD format`
         * * `to: the end date in YYYYMMDD format`
         * * `filter: filter results on "src", "clid" and "dst" fields of the database`
-        * * `[type]: ("in" | "out") the type of the calls. If it is through a trunk`
+        * * `[type]: ("in" | "out" | "internal") the type of the calls. If it is through a trunk`
         *
         * If an error occurs an HTTP 500 response is returned. It supports pagination with limit and offset parameters and sorting.
         *
@@ -208,7 +208,7 @@ function setCompAuthorization(ca) {
             "src": "204",
             "dst": "91223",
             "clid": "\"andrea marchio\" <204>",
-            "type": "out" // can be ("in" | "out" | "") if it is through a trunk or not
+            "type": "out" // can be ("in" | "out" | "internal") if it is through a trunk or not
          },
          ...
      ]
