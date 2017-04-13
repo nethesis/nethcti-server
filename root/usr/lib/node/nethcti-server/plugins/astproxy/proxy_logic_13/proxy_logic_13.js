@@ -6829,28 +6829,21 @@ function startSpySpeakConversation(endpointType, endpointId, convid, destType, d
  * @method startSpyListenConversation
  * @param {string} convid The conversation identifier
  * @param {string} endpointId The endpoint identifier that has the conversation to spy
- * @param {string} endpointType The type of the endpoint that has the conversation to spy
- * @param {string} destType The endpoint type that spy the conversation
  * @param {string} destId The endpoint identifier that spy the conversation
  * @param {function} cb The callback function
  */
-function startSpyListenConversation(endpointType, endpointId, convid, destType, destId, cb) {
+function startSpyListenConversation(endpointId, convid, destId, cb) {
   try {
     // check parameters
     if (typeof convid !== 'string' ||
       typeof cb !== 'function' ||
       typeof destId !== 'string' ||
-      typeof destType !== 'string' ||
-      typeof endpointId !== 'string' ||
-      typeof endpointType !== 'string') {
-
+      typeof endpointId !== 'string') {
       throw new Error('wrong parameters');
     }
 
     // check the endpoint and dest
-    if (endpointType === 'extension' && extensions[endpointId] && // the extension to spy exists
-      destType === 'extension' && extensions[destId]) { // the extension that want to spy exists
-
+    if (extensions[endpointId] && extensions[destId]) { // the extension to spy exists
       var convs = extensions[endpointId].getAllConversations();
       var conv = convs[convid];
       var chSource = conv.getSourceChannel();
@@ -6870,9 +6863,8 @@ function startSpyListenConversation(endpointType, endpointId, convid, destType, 
         cb(err);
         startSpyListenConvCb(err, convid);
       });
-
     } else {
-      var str = 'spy listen conversation of ' + endpointType + ' ' + endpointId + ' from ' + destType + ' ' + destId;
+      var str = 'spy listen conversation of ' + endpointId + ' from ' + destId;
       logger.warn(IDLOG, str);
       cb(str);
     }
