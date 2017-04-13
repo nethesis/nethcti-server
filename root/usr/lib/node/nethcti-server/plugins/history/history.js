@@ -185,7 +185,7 @@ function getHistorySwitchCallInterval(data, cb) {
       typeof data.from !== 'string' ||
       (typeof data.filter !== 'string' && data.filter !== undefined) ||
       (typeof data.privacyStr !== 'string' && data.privacyStr !== undefined) ||
-      (data.type && data.type !== 'in' && data.type !== 'out' && data.type !== 'interval')) {
+      (data.type && data.type !== 'in' && data.type !== 'out' && data.type !== 'internal')) {
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }

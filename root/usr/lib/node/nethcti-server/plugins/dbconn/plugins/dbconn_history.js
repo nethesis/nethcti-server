@@ -281,7 +281,7 @@ function getHistoryCallInterval(data, cb) {
  *   @param {integer} [data.offset]     The results offset
  *   @param {integer} [data.limit]      The results limit
  *   @param {string}  [data.sort]       The sort field
- *   @param {string}  [data.type]       The call type ("in" | "out" | "interval")
+ *   @param {string}  [data.type]       The call type ("in" | "out" | "internal")
  * @param {function} cb The callback function
  */
 function getHistorySwitchCallInterval(data, cb) {
@@ -295,7 +295,7 @@ function getHistorySwitchCallInterval(data, cb) {
       (data.trunks && !(data.trunks instanceof Array)) ||
       (typeof data.filter !== 'string' && data.filter !== undefined) ||
       (typeof data.privacyStr !== 'string' && data.privacyStr !== undefined) ||
-      (data.type && data.type !== 'in' && data.type !== 'out' && data.type !== 'interval')) {
+      (data.type && data.type !== 'in' && data.type !== 'out' && data.type !== 'internal')) {
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
