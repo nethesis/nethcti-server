@@ -32,6 +32,12 @@
             "answer": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/Phone_ActionURL&key=OK",
             "command": "http://$PHONE_USER:$PHONE_PASS@$PHONE_IP/Phone_ActionURL&key=COMANDO"
         }
+    },
+    "^alcatel\\\s.*1G": {
+        "urls": {
+            "call": "http://user:nethvoice@$PHONE_IP/activeuri.kl1?number=$NUMBER&account=$ACCOUNT",
+            "answer": "http://user:nethvoice@$PHONE_IP/activeuri.kl1?command=OK"
+        }
     }
 }';
 }
