@@ -389,9 +389,9 @@ var compConfigManager;
         * Spy with only listening the specified conversation. The request
         * must contains the following parameters:
         *
-        * `convid: the conversation identifier`
-        * `endpointId: the endpoint identifier of the user who has the conversation to spy`
-        * `destId: the endpoint identifier that spy the conversation`
+        * * `convid: the conversation identifier`
+        * * `endpointId: the endpoint identifier of the user who has the conversation to spy`
+        * * `destId: the endpoint identifier that spy the conversation`
         *
         * Example JSON request parameters:
         *
