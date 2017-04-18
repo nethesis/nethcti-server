@@ -25,8 +25,9 @@ module.exports = function(options, imports, register) {
     onDestroy: comNethctiWs.stop
   });
 
+  var logger = console;
+
   try {
-    var logger = console;
 
     if (imports.logger) {
       logger = imports.logger;
@@ -42,10 +43,10 @@ module.exports = function(options, imports, register) {
       // comNethctiWs.setCompPostit(imports.postit);
       comNethctiWs.setAstProxy(imports.astProxy);
       comNethctiWs.setCompVoicemail(imports.voicemail);
-      // comNethctiWs.setCompAuthorization(imports.authorization);
+      comNethctiWs.setCompAuthorization(imports.authorization);
       comNethctiWs.start();
     });
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
-}
+};

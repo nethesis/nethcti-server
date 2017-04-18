@@ -572,7 +572,7 @@ function updateNewVoiceMessagesListener(data) {
     for (socketId in wsid) {
       username = wsid[socketId].username;
       // emits the event "newVoiceMessageCounter" with the number of new voice messages of the user
-      logger.info(IDLOG, 'emit event "newVoiceMessageCounter" ' + data.countNew+ ' to user "' + username + '"');
+      logger.info(IDLOG, 'emit event "newVoiceMessageCounter" ' + data.countNew + ' to user "' + username + '"');
 
       if (wsServer.sockets.sockets[socketId]) {
         wsServer.sockets.sockets[socketId].emit('newVoiceMessageCounter', {
@@ -750,33 +750,35 @@ function extenChanged(exten) {
     // is associated with the extension or the user has the privacy permission disabled, then it
     // sends the update with clear number, otherwise the number is obfuscated to respect the privacy authorization
     var sockid, username;
+
     for (sockid in wsid) {
       username = wsid[sockid].username;
-      // checks if the user has the privacy enabled.
+
+      // checks if the user has the privacy enabled
       //
-      // Scenario 1: the user has the "privacy" and "admin_queues" permissions enabled
+      // Scenario 1: the user has the "privacy" and "admin queues" permissions enabled
       // the privacy is bypassed for all the calls that pass through a queue and for the calls
       // that concern the user to send to
       //
-      // Other cases
-      // all the calls are obfuscated except those concerning the user to send to
-      // if (compAuthorization.isPrivacyEnabled(username) === true &&
-      //   compAuthorization.authorizeAdminQueuesUser(username) === false &&
-      //   compAuthorization.verifyUserEndpointExten(username, exten.getExten()) === false &&
-      //   wsServer.sockets.sockets[sockid]) {
+      // Other cases: all the calls are obfuscated except those concerning the user to send to
+      if (compAuthorization.isPrivacyEnabled(username) === true &&
+        compAuthorization.authorizeAdminQueuesUser(username) === false &&
+        compAuthorization.verifyUserEndpointExten(username, exten.getExten()) === false &&
+        wsServer.sockets.sockets[sockid]) {
 
-      //   wsServer.sockets.sockets[sockid].emit(EVT_EXTEN_UPDATE, exten.toJSON(privacyStrReplace, privacyStrReplace));
+        wsServer.sockets.sockets[sockid].emit(EVT_EXTEN_UPDATE, exten.toJSON(privacyStrReplace, privacyStrReplace));
 
-      // } else if (compAuthorization.isPrivacyEnabled(username) === true &&
-      //   compAuthorization.authorizeAdminQueuesUser(username) === true &&
-      //   compAuthorization.verifyUserEndpointExten(username, exten.getExten()) === false &&
-      //   wsServer.sockets.sockets[sockid]) {
+      } else if (compAuthorization.isPrivacyEnabled(username) === true &&
+        compAuthorization.authorizeAdminQueuesUser(username) === true &&
+        compAuthorization.verifyUserEndpointExten(username, exten.getExten()) === false &&
+        wsServer.sockets.sockets[sockid]) {
 
-      //   wsServer.sockets.sockets[sockid].emit(EVT_EXTEN_UPDATE, exten.toJSON(privacyStrReplace));
+        wsServer.sockets.sockets[sockid].emit(EVT_EXTEN_UPDATE, exten.toJSON(privacyStrReplace));
 
-      // } else if (wsServer.sockets.sockets[sockid]) {
-      //   wsServer.sockets.sockets[sockid].emit(EVT_EXTEN_UPDATE, exten.toJSON());
-      // }
+      } else if (wsServer.sockets.sockets[sockid]) {
+        wsServer.sockets.sockets[sockid].emit(EVT_EXTEN_UPDATE, exten.toJSON());
+      }
+
       var extJson = exten.toJSON();
       extJson.username = compUser.getUserUsingEndpointExtension(exten.getExten());
       wsServer.sockets.sockets[sockid].emit(EVT_EXTEN_UPDATE, extJson);
@@ -1475,18 +1477,21 @@ function loginHdlr(socket, obj) {
       // send authenticated successfully response
       sendAutheSuccess(socket);
 
-      // if the user has the extensions permission, than he will receive the asterisk events that affects the extensions
-      // if (compAuthorization.authorizePresencePanelUser(obj.accessKeyId) === true) {
+      // if the user has the "presence panel" permission, than he will receive
+      // the asterisk events that involve the extensions
+      if (compAuthorization.authorizePresencePanelUser(obj.accessKeyId) === true) {
 
-      //   if (compAuthorization.isPrivacyEnabled(obj.accessKeyId) === true) {
-      //     // join the user to the websocket room to receive the asterisk events that affects the extensions, using hide numbers
-      //     socket.join(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY);
+        if (compAuthorization.isPrivacyEnabled(obj.accessKeyId) === true) {
+          // join the user to the websocket room to receive the asterisk events that
+          // involve the extensions, using hide numbers
+          socket.join(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY);
 
-      //   } else {
-      // join the user to the websocket room to receive the asterisk events that affects the extensions, using clear numbers
-      socket.join(WS_ROOM.EXTENSIONS_AST_EVT_CLEAR);
-      //   }
-      // }
+        } else {
+          // join the user to the websocket room to receive the asterisk events that
+          // affects the extensions, using clear numbers
+          socket.join(WS_ROOM.EXTENSIONS_AST_EVT_CLEAR);
+        }
+      }
 
       // // if the user has the queues permission, than he will receive the asterisk events that affects the queues
       // if (compAuthorization.authorizeOpQueuesUser(obj.accessKeyId) === true || compAuthorization.authorizeAdminQueuesUser(obj.accessKeyId) === true) {
