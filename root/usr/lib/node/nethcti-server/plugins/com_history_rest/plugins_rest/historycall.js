@@ -659,22 +659,40 @@ function setCompAuthorization(ca) {
           // get the username from the authorization header added by authentication step
           var username = req.headers.authorization_user;
 
+          // check parameters
+          if (req.params.type !== 'extension' && req.params.type !== 'user') {
+            compUtil.net.sendHttp400(IDLOG, res);
+            return;
+          }
+
           // check the administration cdr authorization
           if (compAuthorization.authorizeAdminCdrUser(username) === true) {
             logger.info(IDLOG, 'getting history interval call: admin cdr authorization successful for user "' + username + '"');
           }
-          // check the cdr authorization
-          else if (compAuthorization.authorizeCdrUser(username) !== true) {
-            logger.warn(IDLOG, 'getting history interval call: cdr authorization failed for user "' + username + '" !');
+          // check if the endpoint in the request is an endpoint of the
+          // applicant user. The user can only see the cdr of his endpoints
+          else if (compAuthorization.authorizeCdrUser(username) === true &&
+            req.params.type === 'extension' &&
+            compAuthorization.verifyUserEndpointExten(username, req.params.target) === false) {
+
+            logger.warn(IDLOG, 'authorization cdr call failed for user "' + username + '": requested extension "' +
+              req.params.target + '" not owned by him');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
+          // check if the request is about the user. The user can only see his cdr
+          else if (compAuthorization.authorizeCdrUser(username) === true &&
+            req.params.type === 'user' &&
+            req.params.target !== username) {
 
-          // check if the endpoint in the request is an endpoint of the applicant user.
-          // The user can only see the cdr of his endpoints
-          if (compAuthorization.verifyUserEndpointExten(username, req.params.endpoint) === false) {
-            logger.warn(IDLOG, 'authorization cdr call failed for user "' + username + '": requested endpoint ' +
-              req.params.endpoint + ' not owned by him');
+            logger.warn(IDLOG, 'authorization cdr call failed for user "' + username + '": requested user "' +
+              req.params.target + '" not himself');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+          }
+          // check the cdr authorization
+          else if (compAuthorization.authorizeCdrUser(username) !== true) {
+            logger.warn(IDLOG, 'getting history interval call: cdr authorization failed for user "' + username + '" !');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
