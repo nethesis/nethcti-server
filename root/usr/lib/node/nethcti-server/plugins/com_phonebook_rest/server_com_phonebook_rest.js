@@ -167,9 +167,7 @@ function execute(req, res, next) {
 
     // check authorization
     var username = req.headers.authorization_user;
-    // if (compAuthorization.authorizePhonebookUser(username) === true) {
-    // todo with authorization module
-    if (true) {
+    if (compAuthorization.authorizePhonebookUser(username) === true) {
 
       logger.info(IDLOG, 'phonebook authorization successfully for user "' + username + '"');
       logger.info(IDLOG, 'execute: ' + p + '.' + name);
@@ -215,19 +213,45 @@ function setCompPhonebook(compPhonebook) {
  * Set the authorization architect component.
  *
  * @method setCompAuthorization
- * @param {object} ca The architect authorization component
+ * @param {object} comp The architect authorization component
  * @static
  */
-function setCompAuthorization(ca) {
+function setCompAuthorization(comp) {
   try {
     // check parameter
-    if (typeof ca !== 'object') {
+    if (typeof comp !== 'object') {
       throw new Error('wrong parameter');
     }
 
-    compAuthorization = ca;
+    compAuthorization = comp;
     logger.log(IDLOG, 'authorization component has been set');
 
+    // set the authorization for all REST plugins
+    setAllRestPluginsAuthorization(comp);
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Called by _setCompAuthorization_ function for all REST plugins.
+ *
+ * @method setAllRestPluginsAuthorization
+ * @private
+ * @param comp The architect authorization component
+ * @type {object}
+ */
+function setAllRestPluginsAuthorization(comp) {
+  try {
+    var key;
+    for (key in plugins) {
+
+      if (typeof plugins[key].setCompAuthorization === 'function') {
+        plugins[key].setCompAuthorization(comp);
+        logger.info(IDLOG, 'authorization component has been set for rest plugin ' + key);
+      }
+    }
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }

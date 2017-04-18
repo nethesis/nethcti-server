@@ -265,7 +265,35 @@ function authorizePhonebookUser(username) {
       throw new Error('wrong parameter');
     }
 
-    // return authorizeUser(authorizationTypes.TYPES.phonebook, username);
+    return profiles[getUserProfileId(username)].macro_permissions.phonebook.value === true;
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+    // in the case of exception it returns false for security reasons
+    return false;
+  }
+}
+
+/**
+ * Return true if the specified user has the admin phonebook authorization.
+ *
+ * @method authorizeAdminPhonebookUser
+ * @param {string} username The username
+ * @return {boolean} True if the user has the admin phonebook authorization.
+ */
+function authorizeAdminPhonebookUser(username) {
+  try {
+    // check parameter
+    if (typeof username !== 'string') {
+      throw new Error('wrong parameter');
+    }
+
+    var profid = getUserProfileId(username);
+
+    return (
+      profiles[profid].macro_permissions.phonebook.value === true &&
+      profiles[profid].macro_permissions.phonebook.permissions.ad_phonebook.value === true
+    );
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
@@ -1719,6 +1747,7 @@ exports.authorizeAdminParkingsUser = authorizeAdminParkingsUser;
 exports.authorizeAdminTransferUser = authorizeAdminTransferUser;
 exports.authorizeAdminQueuesUser = authorizeAdminQueuesUser;
 exports.authorizePhoneRedirectUser = authorizePhoneRedirectUser;
+exports.authorizeAdminPhonebookUser = authorizeAdminPhonebookUser;
 exports.verifyUserEndpointVoicemail = verifyUserEndpointVoicemail;
 exports.authorizeLostQueueCallsUser = authorizeLostQueueCallsUser;
 exports.authorizeAdminRecordingUser = authorizeAdminRecordingUser;
