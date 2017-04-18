@@ -260,20 +260,19 @@ function setCompAuthorization(ca) {
           var username = req.headers.authorization_user;
 
           // check the switchboard cdr authorization
-          // if (compAuthorization.authorizeAdminCdrUser(username) === false) {
-          //     logger.warn(IDLOG, 'switchboard cdr authorization failed for user "' + username + '"!');
-          //     compUtil.net.sendHttp403(IDLOG, res);
-          //     return;
-          // }
+          if (compAuthorization.authorizeAdminCdrUser(username) === false) {
+            logger.warn(IDLOG, 'switchboard cdr authorization failed for user "' + username + '"!');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+          }
 
           logger.info(IDLOG, 'switchboard cdr authorization successfully for user "' + username + '"');
 
           // check the administration recording authorization. If it's enabled the user
           // can view also all data about recording audio files
-          var recording = true; /* compAuthorization.authorizeAdminRecordingUser(username); */
+          var recording = compAuthorization.authorizeAdminRecordingUser(username);
           if (recording !== true) {
             logger.info(IDLOG, 'user "' + username + '" does not have the "admin recording" authorization');
-
           } else {
             logger.info(IDLOG, 'user "' + username + '" has the "admin recording" authorization');
           }
@@ -302,27 +301,28 @@ function setCompAuthorization(ca) {
           }
 
           // if the user has the privacy enabled, it adds the privacy string to be used to hide the phone numbers
-          // if (compAuthorization.isPrivacyEnabled(username)) { obj.privacyStr = privacyStrReplace; }
+          if (compAuthorization.isPrivacyEnabled(username)) {
+            obj.privacyStr = privacyStrReplace;
+          }
 
           // use the history component
           var data = compHistory.getHistorySwitchCallInterval(obj, function(err, results) {
-              try {
-                if (err) {
-                  compUtil.net.sendHttp500(IDLOG, res, err.toString());
-                } else {
-                  logger.info(IDLOG, 'send ' + results.count + ' results searching switchboard history call ' +
-                    'interval between ' + obj.from + ' to ' + obj.to + ' for all endpoints ' +
-                    'and filter ' + (obj.filter ? obj.filter : '""') +
-                    (obj.recording ? ' with recording data' : '') +
-                    ' to user "' + username + '"');
-                  res.send(200, results);
-                }
-              } catch (error) {
-                logger.error(IDLOG, error.stack);
-                compUtil.net.sendHttp500(IDLOG, res, error.toString());
+            try {
+              if (err) {
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+              } else {
+                logger.info(IDLOG, 'send ' + results.count + ' results searching switchboard history call ' +
+                  'interval between ' + obj.from + ' to ' + obj.to + ' for all endpoints ' +
+                  'and filter ' + (obj.filter ? obj.filter : '""') +
+                  (obj.recording ? ' with recording data' : '') +
+                  ' to user "' + username + '"');
+                res.send(200, results);
               }
+            } catch (error) {
+              logger.error(IDLOG, error.stack);
+              compUtil.net.sendHttp500(IDLOG, res, error.toString());
             }
-          );
+          });
         } catch (err) {
           logger.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
