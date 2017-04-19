@@ -3360,12 +3360,12 @@ var compConfigManager;
             return;
           }
 
-          // check if the user has the authorization to record all the conversations
+          // check if the user has the authorization to mute all the conversations
           if (compAuthorization.authorizeAdminRecordingUser(username) === true) {
 
             logger.info(IDLOG, 'mute recording convid ' + req.params.convid + ': admin recording authorization successful for user "' + username + '"');
           }
-          // check if the user has the authorization to record his own conversations
+          // check if the user has the authorization to mute his own conversations
           else if (compAuthorization.authorizeRecordingUser(username) !== true) {
 
             logger.warn(IDLOG, 'mute recording convid ' + req.params.convid + ': recording authorization failed for user "' + username + '"');
@@ -3373,7 +3373,7 @@ var compConfigManager;
             return;
           }
           // check if the destination endpoint is owned by the user
-          if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+          else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
             logger.warn(IDLOG, 'muting record convid ' + req.params.convid + ' by user "' + username + '" has been failed: ' +
               ' the endpoint ' + req.params.endpointId + ' is not owned by the user');
@@ -3429,12 +3429,12 @@ var compConfigManager;
             return;
           }
 
-          // check if the user has the authorization to record all the conversations
+          // check if the user has the authorization to unmute all the conversations
           if (compAuthorization.authorizeAdminRecordingUser(username) === true) {
 
             logger.info(IDLOG, 'unmute recording convid ' + req.params.convid + ': admin recording authorization successful for user "' + username + '"');
           }
-          // check if the user has the authorization to record his own conversations
+          // check if the user has the authorization to unmute his own conversations
           else if (compAuthorization.authorizeRecordingUser(username) !== true) {
 
             logger.warn(IDLOG, 'unmute recording convid ' + req.params.convid + ': recording authorization failed for user "' + username + '"');
@@ -3442,7 +3442,7 @@ var compConfigManager;
             return;
           }
           // check if the destination endpoint is owned by the user
-          if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+          else if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
             logger.warn(IDLOG, 'unmuting record convid ' + req.params.convid + ' by user "' + username + '" has been failed: ' +
               ' the endpoint ' + req.params.endpointId + ' is not owned by the user');
