@@ -128,8 +128,21 @@ var compConfigManager;
         *
         * # GET requests
         *
+        * 1. [`astproxy/prefix`](#prefixget)
         * 1. [`astproxy/extension/:id`](#extensionget)
         * 1. [`astproxy/extensions`](#extensionsget)
+        *
+        * ---
+        *
+        * ### <a id="prefixget">**`astproxy/prefix`**</a>
+        *
+        * Returns the prefix number used with outgoing external calls.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "prefix": "0039"
+     }
         *
         * ---
         *
