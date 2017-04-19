@@ -122,14 +122,11 @@ module.exports = function(options, imports, register) {
   try {
     // imports.dbconn.on(imports.dbconn.EVT_READY, function () {
     astProxy.setLogger(logger);
-    astProxy.config({
-      ast_path: '/etc/nethcti/asterisk.json',
-      ast_trunks_path: '/etc/nethcti/ast_trunks.json'
-    });
+    astProxy.config('/etc/nethcti/asterisk.json');
     // astProxy.configAstCodes('/etc/nethcti/asterisk_codes.json');
     // astProxy.configRemoteSitesPrefixes('/etc/nethcti/remote_sites.json');
     // astProxy.configSipWebrtc('/etc/nethcti/sip_webrtc.json');
-    // astProxy.proxyLogic.setCompDbconn(imports.dbconn);
+    astProxy.proxyLogic.setCompDbconn(imports.dbconn);
     // astProxy.proxyLogic.setCompPhonebook(imports.phonebook);
     // astProxy.proxyLogic.setCompCallerNote(imports.callerNote);
     astProxy.start();

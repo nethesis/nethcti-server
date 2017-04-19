@@ -906,9 +906,10 @@ function getCallRecordingFileData(uniqueid, cb) {
 function getQueueMemberLastPausedInData(memberName, queueId, memberId, cb) {
   try {
     // check parameters
-    if (typeof cb !== 'function' || typeof memberId !== 'string' || typeof memberName !== 'string' || typeof queueId !== 'string') {
+    if (typeof cb !== 'function' || typeof memberId !== 'string' ||
+      typeof memberName !== 'string' || typeof queueId !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     compDbconnMain.models[compDbconnMain.JSON_KEYS.QUEUE_LOG].find({
@@ -924,7 +925,7 @@ function getQueueMemberLastPausedInData(memberName, queueId, memberId, cb) {
         ['data1', 'reason']
       ]
 
-    }).success(function(result) {
+    }).then(function(result) {
 
       if (result && result.selectedValues) {
 
@@ -946,7 +947,7 @@ function getQueueMemberLastPausedInData(memberName, queueId, memberId, cb) {
         cb(null, {});
       }
 
-    }).error(function(err1) { // manage the error
+    }, function(err1) { // manage the error
 
       logger.error(IDLOG, 'get last "paused in" data of member "' + memberName + '" of the queue "' + queueId + '" failed: ' + err1.toString());
       cb(err1);
@@ -992,7 +993,7 @@ function getQueueMemberLastPausedOutData(memberName, queueId, memberId, cb) {
         ['time', 'timestamp']
       ]
 
-    }).success(function(result) {
+    }).then(function(result) {
 
       if (result && result.selectedValues) {
 
@@ -1014,7 +1015,7 @@ function getQueueMemberLastPausedOutData(memberName, queueId, memberId, cb) {
         cb(null, {});
       }
 
-    }).error(function(err1) { // manage the error
+    }, function(err1) { // manage the error
 
       logger.error(IDLOG, 'get last "paused out" data of member "' + memberName + '" of the queue "' + queueId + '" failed: ' + err1.toString());
       cb(err1);

@@ -33,15 +33,6 @@ var EventEmitter = require('events').EventEmitter;
 var IDLOG = '[astproxy]';
 
 /**
- * It is the path of the JSON file that contains the trunks list.
- *
- * @property TRUNKS_FILEPATH
- * @type string
- * @private
- */
-var TRUNKS_FILEPATH;
-
-/**
  * The logger. It must have at least three methods: _info, warn and error._
  *
  * @property logger
@@ -121,34 +112,27 @@ var sipWebrtcConf;
 }());
 
 /**
- * Sets the configuration to be use to establish the telnet asterisk connection.
- * It also reads the filepath to be used to obtain the trunks list.
+ * Set the configuration to be use to establish the telnet asterisk connection.
+ * It also reads the queues and trunks list.
  *
  * @method config
- * @param {object} obj
- *  @param {string} obj.ast_path The file path of the asterisk JSON configuration file
- *  @param {string} obj.ast_trunks_path The file path of the JSON file with trunks list
+ * @param {string} path The file path of the asterisk JSON configuration file
  */
-function config(obj) {
+function config(path) {
   try {
-    if (typeof obj !== 'object' ||
-      typeof obj.ast_path !== 'string' ||
-      typeof obj.ast_trunks_path !== 'string') {
-
-      throw new TypeError('wrong parameter: ' + JSON.stringify(obj));
+    if (typeof path !== 'string') {
+      throw new TypeError('wrong parameter: ' + path);
     }
-    if (!fs.existsSync(obj.ast_path)) {
-      throw new Error(obj.ast_path + ' does not exist');
-    }
-    if (!fs.existsSync(obj.ast_trunks_path)) {
-      throw new Error(obj.ast_trunks_path + ' does not exist');
+    if (!fs.existsSync(path)) {
+      throw new Error(path + ' does not exist');
     }
 
     // initialize asterisk configuration
-    var json = require(obj.ast_path);
+    var json = require(path);
     if (typeof json.user !== 'string' ||
       typeof json.pass !== 'string' || typeof json.prefix !== 'string' ||
-      typeof json.host !== 'string' || typeof json.port !== 'string') {
+      typeof json.host !== 'string' || typeof json.port !== 'string' ||
+      typeof json.trunks !== 'object' || typeof json.queues !== 'object') {
 
       throw new Error(path + ' wrong file format');
     }
@@ -163,9 +147,10 @@ function config(obj) {
     proxyLogic.setPrefix(json.prefix);
 
     // initialize trunks list
-    TRUNKS_FILEPATH = obj.ast_trunks_path;
+    proxyLogic.setStaticDataTrunks(json.trunks);
+    proxyLogic.setStaticDataQueues(json.queues);
 
-    logger.info(IDLOG, 'configuration done by ' + JSON.stringify(obj));
+    logger.info(IDLOG, 'configuration done by ' + path);
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
@@ -409,7 +394,7 @@ function onLogin(err, resp) {
       return;
     }
     logger.info(IDLOG, 'logged-in into asterisk');
-    proxyLogic.start(TRUNKS_FILEPATH);
+    proxyLogic.start();
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
