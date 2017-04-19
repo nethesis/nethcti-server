@@ -11,9 +11,9 @@ var action = require('../action');
  * @private
  * @final
  * @readOnly
- * @default [spyListen]
+ * @default [spySpeak]
  */
-var IDLOG = '[spyListen]';
+var IDLOG = '[spySpeak]';
 
 (function() {
 
@@ -54,15 +54,15 @@ var IDLOG = '[spyListen]';
      *
      * Use it with _astproxy_ module as follow:
      *
-     *     astproxy.doCmd({ command: 'spyListen', spierId: 'SIP/214', spiedId: '220', chToSpy: 'SIP/220-0000003f',  }, function (res) {
+     *     astproxy.doCmd({ command: 'spySpeak', spierId: 'SIP/214', spiedId: '220', chToSpy: 'SIP/220-0000003f',  }, function (res) {
      *         // some code
      *     });
      *
      *
-     * @class spyListen
+     * @class spySpeak
      * @static
      */
-    var spyListen = {
+    var spySpeak = {
 
       /**
        * Execute asterisk action to spy a call with only listening.
@@ -77,7 +77,7 @@ var IDLOG = '[spyListen]';
         try {
           // action for asterisk
           var act = {
-            Data: args.chToSpy,
+            Data: args.chToSpy + ',w',
             Action: 'Originate',
             Channel: args.spierId,
             Callerid: PREFIX + args.spiedId,
@@ -85,7 +85,7 @@ var IDLOG = '[spyListen]';
           };
 
           // set the action identifier
-          act.ActionID = action.getActionId('spyListen');
+          act.ActionID = action.getActionId('spySpeak');
 
           // add association ActionID-callback
           map[act.ActionID] = cb;
@@ -160,9 +160,9 @@ var IDLOG = '[spyListen]';
     };
 
     // public interface
-    exports.data = spyListen.data;
-    exports.execute = spyListen.execute;
-    exports.setLogger = spyListen.setLogger;
+    exports.data = spySpeak.data;
+    exports.execute = spySpeak.execute;
+    exports.setLogger = spySpeak.setLogger;
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
