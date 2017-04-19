@@ -712,31 +712,12 @@ function authorizeIntrudeUser(username) {
       throw new Error('wrong parameter');
     }
 
-    // return authorizeUser(authorizationTypes.TYPES.intrude, username);
+    var profid = getUserProfileId(username);
 
-  } catch (err) {
-    logger.error(IDLOG, err.stack);
-    // in the case of exception it returns false for security reasons
-    return false;
-  }
-}
-
-/**
- * Returns true if the specified user has the no spy permission enabled.
- * In this case no user can spy the conversation of the specified user.
- *
- * @method hasNoSpyEnabled
- * @param  {string}  username The username
- * @return {boolean} True if the user has the no spy permission enabled.
- */
-function hasNoSpyEnabled(username) {
-  try {
-    // check parameter
-    if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
-    }
-
-    // return authorizeUser(authorizationTypes.TYPES.no_spy, username);
+    return (
+      profiles[profid].macro_permissions.presence_panel.value === true &&
+      profiles[profid].macro_permissions.presence_panel.permissions.intrude.value === true
+    );
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
@@ -1709,7 +1690,6 @@ exports.config = config;
 exports.setLogger = setLogger;
 exports.setCompUser = setCompUser;
 exports.setCompDbconn = setCompDbconn;
-exports.hasNoSpyEnabled = hasNoSpyEnabled;
 exports.authorizeSpyUser = authorizeSpyUser;
 exports.authorizeDndUser = authorizeDndUser;
 exports.authorizeCdrUser = authorizeCdrUser;

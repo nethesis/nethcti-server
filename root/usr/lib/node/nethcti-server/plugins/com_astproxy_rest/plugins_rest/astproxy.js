@@ -194,6 +194,7 @@ var compConfigManager;
         * 1. [`astproxy/answer`](#answerpost)
         * 1. [`astproxy/hangup`](#hanguppost)
         * 1. [`astproxy/dtmf`](#dtmfpost)
+        * 1. [`astproxy/intrude`](#intrudepost)
         * 1. [`astproxy/mute_record`](#mute_recordpost)
         * 1. [`astproxy/start_record`](#start_recordpost)
         * 1. [`astproxy/blindtransfer`](#blindtransferpost)
@@ -381,6 +382,21 @@ var compConfigManager;
         * Example JSON request parameters:
         *
         *     { "tone": "5", "endpointId": "214" }
+        *
+        * ---
+        *
+        * ### <a id="intrudepost">**`astproxy/intrude`**</a>
+        *
+        * Intrudes into the specified conversation. Only the endpointId can listen and speak with
+        * the spier, its counterpart can not do that. The request must contains the following parameters:
+        *
+        * * `convid: the conversation identifier`
+        * * `endpointId: the endpoint identifier that has the conversation to spy and speak`
+        * * `destId: the endpoint identifier that spy the conversation`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "convid": "SIP/209-00000060>SIP/211-00000061", "endpointId": "209", destId": "214" }
         *
         * ---
         *
@@ -573,7 +589,7 @@ var compConfigManager;
         try {
           var username = req.headers.authorization_user;
           var token = req.headers.authorization_token;
-          var isRemote = false;//compComNethctiRemotes.isClientRemote(username, token);
+          var isRemote = false; //compComNethctiRemotes.isClientRemote(username, token);
           var opGroups, remoteSiteName;
 
           // check if the request coming from a remote site
@@ -602,7 +618,7 @@ var compConfigManager;
           var group;
           for (group in allOpGroups) {
             // if (opGroups[group] === true) {
-              list[group] = allOpGroups[group];
+            list[group] = allOpGroups[group];
             // }
           }
           logger.info(IDLOG, 'sent authorized operator groups "' + Object.keys(list) + '" to ' +
@@ -2456,29 +2472,10 @@ var compConfigManager;
             return;
           }
 
-          // check whether the conversation endpoints belong to a user with
-          // no spy permission enabled. In this case it's not possible to spy
-          var extens = compAstProxy.getExtensionsFromConversation(req.params.convid, req.params.endpointId);
-
-          var i, k, users;
-          for (i = 0; i < extens.length; i++) {
-            // get the users who have the current extension endpoint associated
-            users = compUser.getUsersUsingEndpointExtension(extens[i]);
-
-            for (k = 0; k < users.length; k++) {
-              if (compAuthorization.hasNoSpyEnabled(users[k]) === true) {
-                logger.warn(IDLOG, 'spy convid ' + req.params.convid + ' failed: the user "' + users[k] + '"' +
-                  ' with extension endpoint ' + extens[i] + ' can\'t be spied');
-                compUtil.net.sendHttp403(IDLOG, res);
-                return;
-              }
-            }
-          }
-
           // check if the destination endpoint is owned by the user
           if (compAuthorization.verifyUserEndpointExten(username, req.params.destId) === false) {
             logger.warn(IDLOG, 'spy listen convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
-              ' the destination ' + req.params.destId + ' isn\'t owned by the user');
+              ' the destination ' + req.params.destId + ' is not owned by the user');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
 
@@ -3967,7 +3964,8 @@ var compConfigManager;
           var username = req.headers.authorization_user;
 
           // check parameters
-          if (typeof req.params !== 'object' || typeof req.params.convid !== 'string' || typeof req.params.endpointType !== 'string' || typeof req.params.endpointId !== 'string' || typeof req.params.destType !== 'string' || typeof req.params.destId !== 'string') {
+          if (typeof req.params !== 'object' || typeof req.params.convid !== 'string' ||
+            typeof req.params.endpointId !== 'string' || typeof req.params.destId !== 'string') {
 
             compUtil.net.sendHttp400(IDLOG, res);
             return;
@@ -3981,70 +3979,35 @@ var compConfigManager;
             return;
           }
 
-          if (req.params.endpointType === 'extension' && req.params.destType === 'extension') {
+          // check if the destination endpoint is owned by the user
+          if (compAuthorization.verifyUserEndpointExten(username, req.params.destId) === false) {
 
-            // check whether the conversation endpoints belong to a user with
-            // no spy permission enabled. In this case it's not possible to spy
-            var extens = compAstProxy.getExtensionsFromConversation(req.params.convid, req.params.endpointId);
-
-            var i, k, users;
-            for (i = 0; i < extens.length; i++) {
-
-              // get the users who have the current extension endpoint associated
-              users = compUser.getUsersUsingEndpointExtension(extens[i]);
-
-              for (k = 0; k < users.length; k++) {
-
-                if (compAuthorization.hasNoSpyEnabled(users[k]) === true) {
-
-                  logger.warn(IDLOG, 'spy & speak convid ' + req.params.convid + ' failed: the user "' + users[k] + '"' +
-                    ' with extension endpoint ' + extens[i] + ' can\'t be spied');
-                  compUtil.net.sendHttp403(IDLOG, res);
-                  return;
-                }
-              }
-            }
-
-            // check if the destination endpoint is owned by the user
-            if (compAuthorization.verifyUserEndpointExten(username, req.params.destId) === false) {
-
-              logger.warn(IDLOG, 'start spy & speak convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
-                ' the destination ' + req.params.destType + ' ' + req.params.destId + ' isn\'t owned by the user');
-              compUtil.net.sendHttp403(IDLOG, res);
-              return;
-
-            } else {
-              logger.info(IDLOG, 'start spy & speak the destination endpoint ' + req.params.destType + ' ' + req.params.destId + ' is owned by "' + username + '"');
-            }
-
-            compAstProxy.startSpySpeakConversation(req.params.endpointType,
-              req.params.endpointId,
-              req.params.convid,
-              req.params.destType,
-              req.params.destId,
-              function(err) {
-
-                try {
-                  if (err) {
-                    logger.warn(IDLOG, 'start spy & speak convid ' + req.params.convid + ' by user "' + username + '" with ' + req.params.destType + ' ' + req.params.destId + ' has been failed');
-                    compUtil.net.sendHttp500(IDLOG, res, err.toString());
-                    return;
-                  }
-                  logger.info(IDLOG, 'start spy & speak convid ' + req.params.convid + ' has been successful by user "' + username + '" with ' + req.params.destType + ' ' + req.params.destId);
-                  compUtil.net.sendHttp200(IDLOG, res);
-
-                } catch (error) {
-                  logger.error(IDLOG, error.stack);
-                  compUtil.net.sendHttp500(IDLOG, res, error.toString());
-                }
-              }
-            );
+            logger.warn(IDLOG, 'start spy & speak convid "' + req.params.convid + '" by user "' + username + '" has been failed: ' +
+              ' the destination "' + req.params.destId + '" is not owned by the user');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
 
           } else {
-            logger.warn(IDLOG, 'starting spy and speak convid ' + req.params.convid + ': unknown endpointType ' + req.params.endpointType + ' or destType ' + req.params.destType);
-            compUtil.net.sendHttp400(IDLOG, res);
+            logger.info(IDLOG, 'start spy & speak the destination extension ' + req.params.destId + ' is owned by "' + username + '"');
           }
 
+          compAstProxy.startSpySpeakConversation(req.params.endpointId, req.params.convid, req.params.destId, function(err) {
+            try {
+              if (err) {
+                logger.warn(IDLOG, 'start spy & speak convid ' + req.params.convid + ' by user "' + username + '" with ' +
+                  req.params.destId + ' has been failed');
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                return;
+              }
+              logger.info(IDLOG, 'start spy & speak convid ' + req.params.convid + ' has been successful by user "' + username +
+                '" with ' + req.params.destId);
+              compUtil.net.sendHttp200(IDLOG, res);
+
+            } catch (error) {
+              logger.error(IDLOG, error.stack);
+              compUtil.net.sendHttp500(IDLOG, res, error.toString());
+            }
+          });
         } catch (err) {
           logger.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
