@@ -3474,7 +3474,7 @@ function evtQueueMemberStatus(data) {
     }
 
     if (!queues[data.queueId]) {
-      logger.warn(IDLOG, 'received event queue member status (' + data.member + ') for not existent queue "' + queueId + '"');
+      logger.warn(IDLOG, 'received event queue member status (' + data.member + ') for not existent queue "' + data.queueId + '"');
       return;
     }
 
