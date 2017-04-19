@@ -749,7 +749,7 @@ function extenChanged(exten) {
     // cycle in each websocket to send the event about an extension update. If the websocket user
     // is associated with the extension or the user has the privacy permission disabled, then it
     // sends the update with clear number, otherwise the number is obfuscated to respect the privacy authorization
-    var sockid, username;
+    var sockid, username, extJson;
 
     for (sockid in wsid) {
       username = wsid[sockid].username;
@@ -766,20 +766,19 @@ function extenChanged(exten) {
         compAuthorization.verifyUserEndpointExten(username, exten.getExten()) === false &&
         wsServer.sockets.sockets[sockid]) {
 
-        wsServer.sockets.sockets[sockid].emit(EVT_EXTEN_UPDATE, exten.toJSON(privacyStrReplace, privacyStrReplace));
+        extJson = exten.toJSON(privacyStrReplace, privacyStrReplace);
 
       } else if (compAuthorization.isPrivacyEnabled(username) === true &&
         compAuthorization.authorizeAdminQueuesUser(username) === true &&
         compAuthorization.verifyUserEndpointExten(username, exten.getExten()) === false &&
         wsServer.sockets.sockets[sockid]) {
 
-        wsServer.sockets.sockets[sockid].emit(EVT_EXTEN_UPDATE, exten.toJSON(privacyStrReplace));
+        extJson = exten.toJSON(privacyStrReplace)
 
       } else if (wsServer.sockets.sockets[sockid]) {
-        wsServer.sockets.sockets[sockid].emit(EVT_EXTEN_UPDATE, exten.toJSON());
+        extJson = exten.toJSON();
       }
 
-      var extJson = exten.toJSON();
       extJson.username = compUser.getUserUsingEndpointExtension(exten.getExten());
       wsServer.sockets.sockets[sockid].emit(EVT_EXTEN_UPDATE, extJson);
     }
