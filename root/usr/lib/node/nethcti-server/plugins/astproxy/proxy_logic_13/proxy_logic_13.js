@@ -14,13 +14,13 @@
 var fs = require('fs');
 var path = require('path');
 var async = require('async');
-// var Queue = require('../queue').Queue;
-// var Trunk = require('../trunk').Trunk;
+var Queue = require('../queue').Queue;
+var Trunk = require('../trunk').Trunk;
 var moment = require('moment');
 var Channel = require('../channel').Channel;
 // var Parking = require('../parking').Parking;
 var Extension = require('../extension').Extension;
-// var QueueMember = require('../queueMember').QueueMember;
+var QueueMember = require('../queueMember').QueueMember;
 var EventEmitter = require('events').EventEmitter;
 // var ParkedCaller = require('../parkedCaller').ParkedCaller;
 var Conversation = require('../conversation').Conversation;
@@ -29,7 +29,7 @@ var utilChannel13 = require('./util_channel_13');
 // var MeetmeConference = require('../meetmeConference').MeetmeConference;
 var RECORDING_STATUS = require('../conversation').RECORDING_STATUS;
 // var TrunkConversation = require('../trunkConversation').TrunkConversation;
-// var QueueWaitingCaller = require('../queueWaitingCaller').QueueWaitingCaller;
+var QueueWaitingCaller = require('../queueWaitingCaller').QueueWaitingCaller;
 // var QUEUE_MEMBER_TYPES_ENUM = require('../queueMember').QUEUE_MEMBER_TYPES_ENUM;
 
 /**
@@ -432,6 +432,24 @@ var extensions = {};
 var conferences = {};
 
 /**
+ * Trunks data read from JSON configuration file.
+ *
+ * @property staticDataTrunks
+ * @type object
+ * @private
+ */
+var staticDataTrunks = {};
+
+/**
+ * Queues data read from JSON configuration file.
+ *
+ * @property staticDataQueues
+ * @type object
+ * @private
+ */
+var staticDataQueues = {};
+
+/**
  * All trunks. The key is the trunk number and the value
  * is the _Trunk_ object.
  *
@@ -711,56 +729,56 @@ function visit(ap) {
   }
 }
 
-/**
- * Validates all sip extensions of the structure ini file and
- * initialize sip _Extension_ objects.
- *
- * @method sipExtenStructValidation
- * @param {object} err  The error received from the command
- * @param {array}  resp The response received from the command
- * @private
- */
-function sipExtenStructValidation(err, resp) {
-  try {
-    if (err) {
-      logger.error(IDLOG, 'validating sip extension structure: ' + err.toString());
-      return;
-    }
+// /**
+//  * Validates all sip extensions of the structure ini file and
+//  * initialize sip _Extension_ objects.
+//  *
+//  * @method sipExtenStructValidation
+//  * @param {object} err  The error received from the command
+//  * @param {array}  resp The response received from the command
+//  * @private
+//  */
+// function sipExtenStructValidation(err, resp) {
+//   try {
+//     if (err) {
+//       logger.error(IDLOG, 'validating sip extension structure: ' + err.toString());
+//       return;
+//     }
 
-    // creates temporary object used to rapid check the
-    // existence of an extension into the asterisk
-    var siplist = {};
-    var i;
-    for (i = 0; i < resp.length; i++) {
-      siplist[resp[i].ext] = '';
-    }
+//     // creates temporary object used to rapid check the
+//     // existence of an extension into the asterisk
+//     var siplist = {};
+//     var i;
+//     for (i = 0; i < resp.length; i++) {
+//       siplist[resp[i].ext] = '';
+//     }
 
-    // cycles in all elements of the structure ini file to validate
-    var k;
-    for (k in struct) {
+//     // cycles in all elements of the structure ini file to validate
+//     var k;
+//     for (k in struct) {
 
-      // validates all sip extensions
-      if (struct[k].tech === INI_STRUCT.TECH.SIP &&
-        struct[k].type === INI_STRUCT.TYPE.EXTEN) {
+//       // validates all sip extensions
+//       if (struct[k].tech === INI_STRUCT.TECH.SIP &&
+//         struct[k].type === INI_STRUCT.TYPE.EXTEN) {
 
-        // current extension of the structure ini file isn't present
-        // into the asterisk. So remove it from the structure ini file
-        if (siplist[struct[k].extension] === undefined) {
+//         // current extension of the structure ini file isn't present
+//         // into the asterisk. So remove it from the structure ini file
+//         if (siplist[struct[k].extension] === undefined) {
 
-          delete struct[k];
-          logger.warn(IDLOG, 'inconsistency between ini structure file and asterisk for ' + k);
-        }
-      }
-    }
-    logger.info(IDLOG, 'all sip extensions have been validated');
+//           delete struct[k];
+//           logger.warn(IDLOG, 'inconsistency between ini structure file and asterisk for ' + k);
+//         }
+//       }
+//     }
+//     logger.info(IDLOG, 'all sip extensions have been validated');
 
-    // initialize all sip extensions as 'Extension' objects into the 'extensions' object
-    initializeSipExten();
+//     // initialize all sip extensions as 'Extension' objects into the 'extensions' object
+//     initializeSipExten();
 
-  } catch (error) {
-    logger.error(IDLOG, error.stack);
-  }
-}
+//   } catch (error) {
+//     logger.error(IDLOG, error.stack);
+//   }
+// }
 
 /**
  * Validates all sip trunks of the structure ini file and
@@ -915,54 +933,54 @@ function iaxExtenStructValidation(err, resp) {
   }
 }
 
-/**
- * Validates all queues of the structure ini file.
- *
- * @method queueStructValidation
- * @param {object} err  The error received from the command.
- * @param {array}  resp The response received from the command.
- * @private
- */
-function queueStructValidation(err, resp) {
-  try {
-    if (err) {
-      logger.error(IDLOG, 'validating queue structure: ' + err.toString());
-      return;
-    }
+// /**
+//  * Validates all queues of the structure ini file.
+//  *
+//  * @method queueStructValidation
+//  * @param {object} err  The error received from the command.
+//  * @param {array}  resp The response received from the command.
+//  * @private
+//  */
+// function queueStructValidation(err, resp) {
+//   try {
+//     if (err) {
+//       logger.error(IDLOG, 'validating queue structure: ' + err.toString());
+//       return;
+//     }
 
-    // creates temporary object used to rapid check the
-    // existence of a queue into the asterisk
-    var qlist = {};
-    var i;
-    for (i = 0; i < resp.length; i++) {
-      qlist[resp[i].queue] = '';
-    }
+//     // creates temporary object used to rapid check the
+//     // existence of a queue into the asterisk
+//     var qlist = {};
+//     var i;
+//     for (i = 0; i < resp.length; i++) {
+//       qlist[resp[i].queue] = '';
+//     }
 
-    // cycles in all elements of the structure ini file to validate
-    var k;
-    for (k in struct) {
+//     // cycles in all elements of the structure ini file to validate
+//     var k;
+//     for (k in struct) {
 
-      // validates all queues
-      if (struct[k].type === INI_STRUCT.TYPE.QUEUE) {
+//       // validates all queues
+//       if (struct[k].type === INI_STRUCT.TYPE.QUEUE) {
 
-        // current queue of the structure ini file isn't present
-        // into the asterisk. So remove it from the structure ini file
-        if (qlist[struct[k].queue] === undefined) {
+//         // current queue of the structure ini file isn't present
+//         // into the asterisk. So remove it from the structure ini file
+//         if (qlist[struct[k].queue] === undefined) {
 
-          delete struct[k];
-          logger.warn(IDLOG, 'inconsistency between ini structure file and asterisk for ' + k);
-        }
-      }
-    }
-    logger.info(IDLOG, 'all queues have been validated');
+//           delete struct[k];
+//           logger.warn(IDLOG, 'inconsistency between ini structure file and asterisk for ' + k);
+//         }
+//       }
+//     }
+//     logger.info(IDLOG, 'all queues have been validated');
 
-    // initialize all queus as 'Queue' objects into the 'queues' object
-    initializeQueues();
+//     // initialize all queus as 'Queue' objects into the 'queues' object
+//     initializeQueues();
 
-  } catch (error) {
-    logger.error(IDLOG, error.stack);
-  }
-}
+//   } catch (error) {
+//     logger.error(IDLOG, error.stack);
+//   }
+// }
 
 /**
  * Validates all parkings of the structure ini file.
@@ -1006,30 +1024,52 @@ function parkStructValidation(err, resp) {
 }
 
 /**
+ * Set the initial trunks list read from JSON configuration file.
+ *
+ * @method setStaticDataQueues
+ * @param {object} obj The queues object read from JSON config file
+ * @static
+ */
+function setStaticDataQueues(obj) {
+  try {
+    staticDataQueues = obj;
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Set the initial trunks list read from JSON configuration file.
+ *
+ * @method setStaticDataTrunks
+ * @param {object} obj The trunks object read from JSON config file
+ * @static
+ */
+function setStaticDataTrunks(obj) {
+  try {
+    staticDataTrunks = obj;
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * It is called when the asterisk connection is fully booted.
  *
  * @method start
- * @param {string} trunksPath The JSON file path of the trunks list
  * @static
  */
-function start(trunksPath) {
+function start() {
   try {
-    // check paramter
-    if (typeof trunksPath !== 'string') {
-      throw new Error('wrong parameter: ' + trunksPath);
-    }
-
-    if (!fs.existsSync(trunksPath)) {
-      throw new Error(trunksPath + ' does not exist');
-    }
-
-    // initialize trunks list
-    trunks = require(trunksPath);
-    logger.info(IDLOG, 'trunks list initialization from ' + trunksPath + ' done');
-
+    // initialize pjsip extensions
     astProxy.doCmd({
       command: 'listPjsipPeers'
     }, initializePjsipExten);
+
+    // initialize queues
+    astProxy.doCmd({
+      command: 'listQueues'
+    }, initializeQueues);
 
     // logger.info(IDLOG, 'start asterisk structure ini file validation');
     // // validates all sip extensions
@@ -1378,27 +1418,31 @@ function updateParkedCallerForAllParkings(err, resp) {
  * Initialize all queues as _Queue_ object into the _queues_ property.
  *
  * @method initializeQueues
+ * @param {object} err The error
+ * @param {array} results The queues list
  * @private
  */
-function initializeQueues() {
+function initializeQueues(err, results) {
   try {
+    if (err) {
+      logger.error(IDLOG, err);
+      return;
+    }
+
     var k, q;
-    for (k in struct) {
+    for (k in results) {
 
-      if (struct[k].type === INI_STRUCT.TYPE.QUEUE) { // cycle in all queues
+      q = new Queue(results[k].queue);
+      q.setName(staticDataQueues[results[k].queue].name);
 
-        q = new Queue(struct[k].queue);
-        q.setName(struct[k].label);
+      // store the new queue object
+      queues[q.getQueue()] = q;
 
-        // store the new queue object
-        queues[q.getQueue()] = q;
-
-        // request details for the current queue
-        astProxy.doCmd({
-          command: 'queueDetails',
-          queue: q.getQueue()
-        }, queueDetails);
-      }
+      // request details for the current queue
+      astProxy.doCmd({
+        command: 'queueDetails',
+        queue: q.getQueue()
+      }, queueDetails);
     }
 
     logger.info(IDLOG, 'start the interval period to update the details of all the queues each ' + INTERVAL_UPDATE_QUEUE_DETAILS + ' msec');
@@ -1612,7 +1656,6 @@ function queueDetails(err, resp) {
     for (m in resp.members) {
       addQueueMemberLoggedIn(resp.members[m], q);
     }
-
     // adds all static and dynamic members that are logged out. To do so it cycle
     // in all elements of the structure ini file getting the dynamic member list from each queue
     // and checking if each member has already been added to the queue. If it's not present means
@@ -2280,17 +2323,23 @@ function getExtenStatus(exten) {
  * _extensions_ property.
  *
  * @method initializePjsipExten
+ * @param {object} err The error
+ * @param {array} results The extensions list
  * @private
  */
 function initializePjsipExten(err, results) {
   try {
+    if (err) {
+      logger.error(IDLOG, err);
+      return;
+    }
     var arr = [];
     var e, exten;
 
     for (e in results) {
 
       // skip if the current extension is a trunk
-      if (trunks[results[e].ext]) {
+      if (staticDataTrunks[results[e].ext]) {
         continue;
       }
 
@@ -3778,7 +3827,6 @@ function isExten(id) {
     logger.error(IDLOG, err.stack);
   }
 }
-setTimeout(function() {isExten('303')}, 1000);
 
 /**
  * Check if the identifier is a trunk.
@@ -6855,7 +6903,8 @@ function startSpyListenConversation(endpointId, convid, destId, cb) {
       typeof cb !== 'function' ||
       typeof destId !== 'string' ||
       typeof endpointId !== 'string') {
-      throw new Error('wrong parameters');
+
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // check the endpoint and dest
@@ -7749,7 +7798,6 @@ exports.visit = visit;
 exports.setDnd = setDnd;
 exports.isTrunk = isTrunk;
 exports.isExten = isExten;
-exports.setAsteriskPresence = setAsteriskPresence;
 exports.EVT_READY = EVT_READY;
 exports.setLogger = setLogger;
 exports.setPrefix = setPrefix;
@@ -7812,6 +7860,9 @@ exports.evtRemoveMeetmeConf = evtRemoveMeetmeConf;
 exports.evtQueueMemberAdded = evtQueueMemberAdded;
 exports.EVT_MEETME_CONF_END = EVT_MEETME_CONF_END;
 exports.EVT_PARKING_CHANGED = EVT_PARKING_CHANGED;
+exports.setAsteriskPresence = setAsteriskPresence;
+exports.setStaticDataTrunks = setStaticDataTrunks;
+exports.setStaticDataQueues = setStaticDataQueues;
 exports.unmuteUserMeetmeConf = unmuteUserMeetmeConf;
 exports.hangupUserMeetmeConf = hangupUserMeetmeConf;
 exports.evtAddMeetmeUserConf = evtAddMeetmeUserConf;
