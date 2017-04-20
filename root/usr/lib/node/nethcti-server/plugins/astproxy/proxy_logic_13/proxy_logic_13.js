@@ -6252,23 +6252,20 @@ function recordAudioFile(data, cb) {
  * for which it's a dynamic member.
  *
  * @method inoutDynQueues
- * @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
- * @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
- * @param {function} cb           The callback function
+ * @param {string} endpointId The endpoint identifier (e.g. the extension number)
+ * @param {function} cb The callback function
  */
-function inoutDynQueues(endpointType, endpointId, cb) {
+function inoutDynQueues(endpointId, cb) {
   try {
     // check parameters
-    if (typeof cb !== 'function' ||
-      typeof endpointType !== 'string' || typeof endpointId !== 'string') {
-
+    if (typeof cb !== 'function' || typeof endpointId !== 'string') {
       throw new Error('wrong parameters');
     }
 
     // check the endpoint existence
-    if (endpointType === 'extension' && extensions[endpointId]) {
+    if (extensions[endpointId]) {
 
-      logger.info(IDLOG, 'execute inout to all queues in which the ' + endpointType + ' ' + endpointId + ' is dynamic');
+      logger.info(IDLOG, 'execute inout to all queues in which the ' + endpointId + ' is dynamic');
       astProxy.doCmd({
         command: 'inoutDynQueues',
         context: extensions[endpointId].getContext(),
@@ -6289,7 +6286,7 @@ function inoutDynQueues(endpointType, endpointId, cb) {
         }
       });
     } else {
-      var err = 'inout to all queues in which the endpoint is dynamic: unknown endpointType ' + endpointType + ' or extension not present';
+      var err = 'inout to all queues in which the endpoint is dynamic: extension not present';
       logger.warn(IDLOG, err);
       cb(err);
     }
@@ -6303,22 +6300,22 @@ function inoutDynQueues(endpointType, endpointId, cb) {
  * Pause or unpause an extension from a specific queue or from all queues omitting the _queueId_ parameter.
  *
  * @method queueMemberPauseUnpause
- * @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
- * @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
- * @param {string}   queueId      The queue identifier
- * @param {string}   reason       The textual description of the reason. In the unpause case, simply it's ignored
- * @param {boolean}  paused       If the extension must be paused or unpaused. If it's true the extension will be paused from the queue
- * @param {function} cb           The callback function
+ * @param {string} endpointId The endpoint identifier (e.g. the extension number)
+ * @param {string} queueId The queue identifier
+ * @param {string} reason The textual description of the reason. In the unpause case, simply it's ignored
+ * @param {boolean} paused If the extension must be paused or unpaused. If it's true the extension will be paused from the queue
+ * @param {function} cb The callback function
  */
-function queueMemberPauseUnpause(endpointType, endpointId, queueId, reason, paused, cb) {
+function queueMemberPauseUnpause(endpointId, queueId, reason, paused, cb) {
   try {
     // check parameters
-    if (typeof cb !== 'function' || typeof paused !== 'boolean' ||
-      typeof endpointType !== 'string' || typeof endpointId !== 'string' ||
+    if (typeof cb !== 'function' ||
+      typeof paused !== 'boolean' ||
+      typeof endpointId !== 'string' ||
       (typeof queueId !== 'string' && queueId) ||
       typeof reason !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // used to discriminate the output log between the two operation: pause or unpause
@@ -6328,7 +6325,7 @@ function queueMemberPauseUnpause(endpointType, endpointId, queueId, reason, paus
     var logQueue = (queueId ? 'queue "' + queueId + '"' : 'all queues');
 
     // check the endpoint existence
-    if (endpointType === 'extension' && extensions[endpointId]) {
+    if (extensions[endpointId]) {
 
       var obj = {};
 
@@ -6354,7 +6351,7 @@ function queueMemberPauseUnpause(endpointType, endpointId, queueId, reason, paus
             obj.queue = queueId;
           }
 
-          logger.info(IDLOG, 'execute ' + logWord + ' ' + endpointType + ' ' + endpointId + ' of ' + logQueue);
+          logger.info(IDLOG, 'execute ' + logWord + ' ' + endpointId + ' of ' + logQueue);
           astProxy.doCmd(obj, function(err1) {
             try {
               if (err1) {
@@ -6386,15 +6383,19 @@ function queueMemberPauseUnpause(endpointType, endpointId, queueId, reason, paus
             interface: name
           };
 
-          logger.info(IDLOG, 'add new entry in queue_log asterisk db: interface "' + name + '", queue "' + queueId + '", event "' + queueLogEvent + '" and reason "' + reason + '"');
+          logger.info(IDLOG, 'add new entry in queue_log asterisk db: interface "' + name + '", queue "' +
+            queueId + '", event "' + queueLogEvent + '" and reason "' + reason + '"');
+
           astProxy.doCmd(obj, function(err3) {
             try {
               if (err3) {
-                var str = 'add new entry in "queue_log" asterisk db has been failed: interface "' + name + '", queue "' + queueId + '", event "' + queueLogEvent + '" and reason "' + reason + '": ' + err3.toString();
+                var str = 'add new entry in "queue_log" asterisk db has been failed: interface "' + name + '", queue "' +
+                  queueId + '", event "' + queueLogEvent + '" and reason "' + reason + '": ' + err3.toString();
                 callback(str);
 
               } else {
-                logger.info(IDLOG, 'add new entry in "queue_log" asterisk db has been successful: interface "' + name + '", queue "' + queueId + '", event "' + queueLogEvent + '" and reason "' + reason + '"');
+                logger.info(IDLOG, 'add new entry in "queue_log" asterisk db has been successful: interface "' + name + '", queue "' +
+                  queueId + '", event "' + queueLogEvent + '" and reason "' + reason + '"');
                 callback();
               }
 
@@ -6415,7 +6416,7 @@ function queueMemberPauseUnpause(endpointType, endpointId, queueId, reason, paus
       });
 
     } else {
-      var err = logWord + ' queue member: unknown endpointType ' + endpointType + ' or extension not present';
+      var err = logWord + ' queue member: extension not present';
       logger.warn(IDLOG, err);
       cb(err);
     }
@@ -6429,26 +6430,25 @@ function queueMemberPauseUnpause(endpointType, endpointId, queueId, reason, paus
  * Adds the member to the queue.
  *
  * @method queueMemberAdd
- * @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
- * @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
- * @param {string}   queueId      The queue identifier
- * @param {string}   [paused]     To pause or not the member initially
- * @param {boolean}  [penalty]    A penalty (number) to apply to this member. Asterisk will distribute calls to members
- *                                with higher penalties only after attempting to distribute calls to those with lower penalty
- * @param {function} cb           The callback function
+ * @param {string} endpointId The endpoint identifier (e.g. the extension number)
+ * @param {string} queueId The queue identifier
+ * @param {string} [paused] To pause or not the member initially
+ * @param {boolean} [penalty] A penalty (number) to apply to this member. Asterisk will distribute calls to members
+ *                             with higher penalties only after attempting to distribute calls to those with lower penalty
+ * @param {function} cb The callback function
  */
-function queueMemberAdd(endpointType, endpointId, queueId, paused, penalty, cb) {
+function queueMemberAdd(endpointId, queueId, paused, penalty, cb) {
   try {
     // check parameters
     if (typeof cb !== 'function' ||
-      typeof endpointType !== 'string' || typeof endpointId !== 'string' ||
+      typeof endpointId !== 'string' ||
       typeof queueId !== 'string') {
 
       throw new Error('wrong parameters');
     }
 
     // check the endpoint existence
-    if (endpointType === 'extension' && extensions[endpointId]) {
+    if (extensions[endpointId]) {
 
       var obj = {};
 
@@ -6477,15 +6477,15 @@ function queueMemberAdd(endpointType, endpointId, queueId, paused, penalty, cb) 
             obj.penalty = penalty;
           }
 
-          logger.info(IDLOG, 'execute queue member add of ' + endpointType + ' ' + endpointId + ' to queue ' + queueId);
+          logger.info(IDLOG, 'execute queue member add of ' + endpointId + ' to queue ' + queueId);
           astProxy.doCmd(obj, function(err1) {
             try {
               if (err1) {
-                var str = 'queue member add of ' + endpointType + ' ' + endpointId + ' to queue ' + queueId + ' has been failed: ' + err1.toString();
+                var str = 'queue member add of ' + endpointId + ' to queue ' + queueId + ' has been failed: ' + err1.toString();
                 callback(str);
 
               } else {
-                logger.info(IDLOG, 'queue member add of ' + endpointType + ' ' + endpointId + ' to queue ' + queueId + ' has been successful');
+                logger.info(IDLOG, 'queue member add of ' + endpointId + ' to queue ' + queueId + ' has been successful');
                 callback();
               }
 
@@ -6537,7 +6537,7 @@ function queueMemberAdd(endpointType, endpointId, queueId, paused, penalty, cb) 
       });
 
     } else {
-      var str = 'queue member add of ' + endpointType + ' ' + endpointId + ' to queue ' + queueId + ': unknown "' + endpointType + '" or extension not present';
+      var str = 'queue member add of ' + endpointId + ' to queue ' + queueId + ': extension not present';
       logger.warn(IDLOG, str);
       cb(str);
     }
@@ -6551,23 +6551,22 @@ function queueMemberAdd(endpointType, endpointId, queueId, paused, penalty, cb) 
  * Removes the extension from a specific queue.
  *
  * @method queueMemberRemove
- * @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
- * @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
- * @param {string}   queueId      The queue identifier
- * @param {function} cb           The callback function
+ * @param {string} endpointId The endpoint identifier (e.g. the extension number)
+ * @param {string} queueId The queue identifier
+ * @param {function} cb The callback function
  */
-function queueMemberRemove(endpointType, endpointId, queueId, cb) {
+function queueMemberRemove(endpointId, queueId, cb) {
   try {
     // check parameters
     if (typeof cb !== 'function' ||
-      typeof endpointType !== 'string' || typeof endpointId !== 'string' ||
+      typeof endpointId !== 'string' ||
       typeof queueId !== 'string') {
 
       throw new Error('wrong parameters');
     }
 
     // check the endpoint existence
-    if (endpointType === 'extension' && extensions[endpointId]) {
+    if (extensions[endpointId]) {
 
       var obj = {};
 
@@ -6587,15 +6586,15 @@ function queueMemberRemove(endpointType, endpointId, queueId, cb) {
             exten: endpointId
           };
 
-          logger.info(IDLOG, 'execute queue member remove of ' + endpointType + ' ' + endpointId + ' from queue ' + queueId);
+          logger.info(IDLOG, 'execute queue member remove of ' + endpointId + ' from queue ' + queueId);
           astProxy.doCmd(obj, function(err1) {
             try {
               if (err1) {
-                var str = 'queue member remove of ' + endpointType + ' ' + endpointId + ' from queue ' + queueId + ' has been failed: ' + err1.toString();
+                var str = 'queue member remove of ' + endpointId + ' from queue ' + queueId + ' has been failed: ' + err1.toString();
                 callback(str);
 
               } else {
-                logger.info(IDLOG, 'queue member remove of ' + endpointType + ' ' + endpointId + ' from queue ' + queueId + ' has been successful');
+                logger.info(IDLOG, 'queue member remove of ' + endpointId + ' from queue ' + queueId + ' has been successful');
                 callback();
               }
 
@@ -6647,7 +6646,7 @@ function queueMemberRemove(endpointType, endpointId, queueId, cb) {
       });
 
     } else {
-      var err = 'queue member remove of ' + endpointType + ' ' + endpointId + ' from queue ' + queueId + ': unknown "' + endpointType + '" or extension not present';
+      var err = 'queue member remove of ' + endpointId + ' from queue ' + queueId + ': extension not present';
       logger.warn(IDLOG, err);
       cb(err);
     }

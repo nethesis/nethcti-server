@@ -213,6 +213,11 @@ var compConfigManager;
         * 1. [`astproxy/blindtransfer`](#blindtransferpost)
         * 1. [`astproxy/unmute_record`](#unmute_recordpost)
         * 1. [`astproxy/start_spy`](#start_spypost)
+        * 1. [`astproxy/queuemember_add`](#queuemember_addpost)
+        * 1. [`astproxy/inout_dyn_queues`](#inout_dyn_queuespost)
+        * 1. [`astproxy/queuemember_pause`](#queuemember_pausepost)
+        * 1. [`astproxy/queuemember_remove`](#queuemember_removepost)
+        * 1. [`astproxy/queuemember_unpause`](#queuemember_unpausepost)
         *
         * ---
         *
@@ -425,6 +430,76 @@ var compConfigManager;
         * Example JSON request parameters:
         *
         *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointId": "221", "destId": "205" }
+        *
+        * ---
+        *
+        * ### <a id="queuemember_addpost">**`astproxy/queuemember_add`**</a>
+        *
+        * Adds the specified extension to the queue. The request must contains the following parameters:
+        *
+        * * `endpointId: the endpoint identifier`
+        * * `queueId: the queue identifier`
+        * * `[paused]: the paused status`
+        * * `[penalty]: a penalty (number) to apply to the member. Asterisk will distribute calls to
+        *               members with higher penalties only after attempting to distribute calls to those with lower penalty`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "endpointId": "209", "queueId": "401" }
+        *     { "endpointId": "209", "queueId": "401", "paused": true, "penalty": 1 }
+        *
+        * ---
+        *
+        * ### <a id="inout_dyn_queuespost">**`astproxy/inout_dyn_queues`**</a>
+        *
+        * Alternates the logon and logout of the specified extension in all the queues for which it is a dynamic member.
+        * The request must contains the following parameters:
+        *
+        * * `endpointId: the endpoint identifier`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "endpointId": "209" }
+        *
+        * ---
+        *
+        * ### <a id="queuemember_pausepost">**`astproxy/queuemember_pause`**</a>
+        *
+        * Pause the specified extension from receiving calls from the queue. The request must contains the following parameters:
+        *
+        * * `endpointId: the endpoint identifier`
+        * * `[queueId]: the queue identifier. If omitted the pause is done in all queues`
+        * * `[reason]: the textual description of the reason`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "endpointId": "209", "queueId": "401", "reason": "some reason" }
+        *
+        * ---
+        *
+        * ### <a id="queuemember_removepost">**`astproxy/queuemember_remove`**</a>
+        *
+        * Removes the specified extension from the queue. The request must contains the following parameters:
+        *
+        * * `endpointId: the endpoint identifier`
+        * * `queueId: the queue identifier`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "endpointId": "209", "queueId": "401" }
+        *
+        * ---
+        *
+        * ### <a id="queuemember_unpausepost">**`astproxy/queuemember_unpause`**</a>
+        *
+        * Unpause the specified extension to receiving calls from the queue. The request must contains the following parameters:
+        *
+        * * `endpointId:   the endpoint identifier`
+        * * `[queueId]:    the queue identifier. If omitted the unpause is done in all queues`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "endpointId": "209", "queueId": "401" }
         *
         *
         * @class plugin_rest_astproxy
@@ -801,7 +876,7 @@ var compConfigManager;
             logger.info(IDLOG, 'requesting queues: user "' + username + '" has the "admin_queues" authorization');
           }
           // otherwise check if the user has the operator panel queues authorization
-          else if (compAuthorization.authorizeOpQueuesUser(username) !== true) {
+          else if (compAuthorization.authorizeQueuesUser(username) !== true) {
 
             logger.warn(IDLOG, 'requesting queues: authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
@@ -1182,7 +1257,7 @@ var compConfigManager;
             logger.info(IDLOG, 'requesting queues statistics: user "' + username + '" has the "admin_queues" authorization');
           }
           // otherwise check if the user has the operator panel queues authorization
-          else if (compAuthorization.authorizeOpQueuesUser(username) !== true) {
+          else if (compAuthorization.authorizeQueuesUser(username) !== true) {
 
             logger.warn(IDLOG, 'requesting queues statistics: authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
@@ -1388,7 +1463,7 @@ var compConfigManager;
             logger.info(IDLOG, 'requesting queues QOS info: user "' + username + '" has the "admin_queues" authorization');
           }
           // otherwise check if the user has the operator panel queues authorization
-          else if (compAuthorization.authorizeOpQueuesUser(username) !== true) {
+          else if (compAuthorization.authorizeQueuesUser(username) !== true) {
 
             logger.warn(IDLOG, 'requesting queues QOS info: authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
@@ -1439,7 +1514,7 @@ var compConfigManager;
             logger.info(IDLOG, 'requesting queues QOS info: user "' + username + '" has the "admin_queues" authorization');
           }
           // otherwise check if the user has the operator panel queues authorization
-          else if (compAuthorization.authorizeOpQueuesUser(username) !== true) {
+          else if (compAuthorization.authorizeQueuesUser(username) !== true) {
 
             logger.warn(IDLOG, 'requesting queues QOS info: authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
@@ -3579,7 +3654,9 @@ var compConfigManager;
 
           // check parameters
           // the "paused" and "penalty" parameters are optional
-          if (typeof req.params !== 'object' || typeof req.params.queueId !== 'string' || typeof req.params.endpointType !== 'string' || typeof req.params.endpointId !== 'string') {
+          if (typeof req.params !== 'object' ||
+            typeof req.params.queueId !== 'string' ||
+            typeof req.params.endpointId !== 'string') {
 
             compUtil.net.sendHttp400(IDLOG, res);
             return;
@@ -3588,65 +3665,54 @@ var compConfigManager;
           // check if the user has the administration operator panel queues authorization
           if (compAuthorization.authorizeAdminQueuesUser(username) === true) {
 
-            logger.info(IDLOG, 'logging in "' + req.params.endpointType + '" "' +
-              req.params.endpointId + '" in the queue "' + req.params.queueId + '": user "' + username + '" has the "admin_queues" authorization');
+            logger.info(IDLOG, 'logging in "' + req.params.endpointId + '" in the queue "' + req.params.queueId +
+              '": user "' + username + '" has the "admin queues" authorization');
           }
           // otherwise check if the user has the queues operator panel authorization
-          else if (compAuthorization.authorizeOpQueuesUser(username) !== true) {
+          else if (compAuthorization.authorizeQueuesUser(username) !== true) {
 
-            logger.warn(IDLOG, 'logging in "' + req.params.endpointType + '" "' +
-              req.params.endpointId + '" in the queue "' + req.params.queueId + '": authorization failed for user "' + username + '"');
+            logger.warn(IDLOG, 'logging in "' + req.params.endpointId + '" in the queue "' + req.params.queueId +
+              '": authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
           // the user has the "queues" authorization. So check if the endpoint is owned by the user
           else {
 
-            logger.info(IDLOG, 'logging in "' + req.params.endpointType + '" "' +
-              req.params.endpointId + '" in the queue "' + req.params.queueId + '": user "' + username + '" has the "queues" authorization');
+            logger.info(IDLOG, 'logging in "' + req.params.endpointId + '" in the queue "' + req.params.queueId +
+              '": user "' + username + '" has the "queues" authorization');
 
             if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
-              logger.warn(IDLOG, 'logging in "' + req.params.endpointType + '" "' +
-                req.params.endpointId + '" in the queue "' + req.params.queueId + '" by user "' + username + '" has been failed: ' +
-                '"' + req.params.endpointId + '" is not owned by the user');
+              logger.warn(IDLOG, 'logging in "' + req.params.endpointId + '" in the queue "' + req.params.queueId +
+                '" by user "' + username + '" has been failed: "' + req.params.endpointId + '" is not owned by the user');
               compUtil.net.sendHttp403(IDLOG, res);
               return;
 
             } else {
-              logger.info(IDLOG, 'logging in "' + req.params.endpointType + '" "' +
-                req.params.endpointId + '" in the queue "' + req.params.queueId + '": "' + req.params.endpointId + '" is owned by user "' + username + '"');
+              logger.info(IDLOG, 'logging in "' + req.params.endpointId + '" in the queue "' + req.params.queueId +
+                '": "' + req.params.endpointId + '" is owned by user "' + username + '"');
             }
           }
 
-          if (req.params.endpointType === 'extension') {
-
-            compAstProxy.queueMemberAdd(req.params.endpointType, req.params.endpointId, req.params.queueId, req.params.paused, req.params.penalty, function(err) {
-              try {
-                if (err) {
-                  logger.warn(IDLOG, 'logging in "' + req.params.endpointType + '" "' +
-                    req.params.endpointId + '" in the queue "' + req.params.queueId + '" by user "' + username +
-                    '" has been failed');
-                  compUtil.net.sendHttp500(IDLOG, res, err.toString());
-                  return;
-                }
-
-                logger.info(IDLOG, 'logging in "' + req.params.endpointType + '" "' +
-                  req.params.endpointId + '" in the queue "' + req.params.queueId + '" by user "' + username +
-                  '" has been successf');
-                compUtil.net.sendHttp200(IDLOG, res);
-
-              } catch (error) {
-                logger.error(IDLOG, error.stack);
-                compUtil.net.sendHttp500(IDLOG, res, error.toString());
+          compAstProxy.queueMemberAdd(req.params.endpointId, req.params.queueId, req.params.paused, req.params.penalty, function(err) {
+            try {
+              if (err) {
+                logger.warn(IDLOG, 'logging in "' + req.params.endpointId + '" in the queue "' + req.params.queueId +
+                  '" by user "' + username + '" has been failed');
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                return;
               }
-            });
 
-          } else {
-            logger.warn(IDLOG, 'logging in "' + req.params.endpointType + '" "' +
-              req.params.endpointId + '" in the queue "' + req.params.queueId + '": unknown endpointType ' + req.params.endpointType);
-            compUtil.net.sendHttp400(IDLOG, res);
-          }
+              logger.info(IDLOG, 'logging in "' + req.params.endpointId + '" in the queue "' + req.params.queueId +
+                '" by user "' + username + '" has been successf');
+              compUtil.net.sendHttp200(IDLOG, res);
+
+            } catch (error) {
+              logger.error(IDLOG, error.stack);
+              compUtil.net.sendHttp500(IDLOG, res, error.toString());
+            }
+          });
 
         } catch (err) {
           logger.error(IDLOG, err.stack);
@@ -3669,7 +3735,9 @@ var compConfigManager;
           var username = req.headers.authorization_user;
 
           // check parameters
-          if (typeof req.params !== 'object' || typeof req.params.queueId !== 'string' || typeof req.params.endpointType !== 'string' || typeof req.params.endpointId !== 'string') {
+          if (typeof req.params !== 'object' ||
+            typeof req.params.queueId !== 'string' ||
+            typeof req.params.endpointId !== 'string') {
 
             compUtil.net.sendHttp400(IDLOG, res);
             return;
@@ -3678,65 +3746,54 @@ var compConfigManager;
           // check if the user has the administration operator panel queues authorization
           if (compAuthorization.authorizeAdminQueuesUser(username) === true) {
 
-            logger.info(IDLOG, 'logging out "' + req.params.endpointType + '" "' +
-              req.params.endpointId + '" from the queue "' + req.params.queueId + '": user "' + username + '" has the "admin_queues" authorization');
+            logger.info(IDLOG, 'logging out "' + req.params.endpointId + '" from the queue "' + req.params.queueId +
+              '": user "' + username + '" has the "admin_queues" authorization');
           }
           // otherwise check if the user has the queues operator panel authorization
-          else if (compAuthorization.authorizeOpQueuesUser(username) !== true) {
+          else if (compAuthorization.authorizeQueuesUser(username) !== true) {
 
-            logger.warn(IDLOG, 'logging out "' + req.params.endpointType + '" "' +
-              req.params.endpointId + '" from the queue "' + req.params.queueId + '": authorization failed for user "' + username + '"');
+            logger.warn(IDLOG, 'logging out "' + req.params.endpointId + '" from the queue "' + req.params.queueId +
+              '": authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
           // the user has the "queues" authorization. So check if the endpoint is owned by the user
           else {
 
-            logger.info(IDLOG, 'logging out "' + req.params.endpointType + '" "' +
-              req.params.endpointId + '" from the queue "' + req.params.queueId + '": user "' + username + '" has the "queues" authorization');
+            logger.info(IDLOG, 'logging out "' + req.params.endpointId + '" from the queue "' + req.params.queueId +
+              '": user "' + username + '" has the "queues" authorization');
 
             if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
-              logger.warn(IDLOG, 'logging out "' + req.params.endpointType + '" "' +
-                req.params.endpointId + '" from the queue "' + req.params.queueId + '" by user "' + username + '" has been failed: ' +
-                '"' + req.params.endpointId + '" is not owned by the user');
+              logger.warn(IDLOG, 'logging out "' + req.params.endpointId + '" from the queue "' + req.params.queueId +
+                '" by user "' + username + '" has been failed: ' + '"' + req.params.endpointId + '" is not owned by the user');
               compUtil.net.sendHttp403(IDLOG, res);
               return;
 
             } else {
-              logger.info(IDLOG, 'logging out "' + req.params.endpointType + '" "' +
-                req.params.endpointId + '" from the queue "' + req.params.queueId + '": "' + req.params.endpointId + '" is owned by user "' + username + '"');
+              logger.info(IDLOG, 'logging out "' + req.params.endpointId + '" from the queue "' + req.params.queueId +
+                '": "' + req.params.endpointId + '" is owned by user "' + username + '"');
             }
           }
 
-          if (req.params.endpointType === 'extension') {
-
-            compAstProxy.queueMemberRemove(req.params.endpointType, req.params.endpointId, req.params.queueId, function(err) {
-              try {
-                if (err) {
-                  logger.warn(IDLOG, 'logging out "' + req.params.endpointType + '" "' +
-                    req.params.endpointId + '" from the queue "' + req.params.queueId + '" by user "' + username +
-                    '" has been failed');
-                  compUtil.net.sendHttp500(IDLOG, res, err.toString());
-                  return;
-                }
-
-                logger.info(IDLOG, 'logging out "' + req.params.endpointType + '" "' +
-                  req.params.endpointId + '" from the queue "' + req.params.queueId + '" by user "' + username +
-                  '" has been successf');
-                compUtil.net.sendHttp200(IDLOG, res);
-
-              } catch (error) {
-                logger.error(IDLOG, error.stack);
-                compUtil.net.sendHttp500(IDLOG, res, error.toString());
+          compAstProxy.queueMemberRemove(req.params.endpointId, req.params.queueId, function(err) {
+            try {
+              if (err) {
+                logger.warn(IDLOG, 'logging out "' + req.params.endpointId + '" from the queue "' + req.params.queueId +
+                  '" by user "' + username + '" has been failed');
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                return;
               }
-            });
 
-          } else {
-            logger.warn(IDLOG, 'logging out "' + req.params.endpointType + '" "' +
-              req.params.endpointId + '" from the queue "' + req.params.queueId + '": unknown endpointType ' + req.params.endpointType);
-            compUtil.net.sendHttp400(IDLOG, res);
-          }
+              logger.info(IDLOG, 'logging out "' + req.params.endpointId + '" from the queue "' + req.params.queueId +
+                '" by user "' + username + '" has been successf');
+              compUtil.net.sendHttp200(IDLOG, res);
+
+            } catch (error) {
+              logger.error(IDLOG, error.stack);
+              compUtil.net.sendHttp500(IDLOG, res, error.toString());
+            }
+          });
 
         } catch (err) {
           logger.error(IDLOG, err.stack);
@@ -3760,7 +3817,7 @@ var compConfigManager;
 
           // check parameters
           if (typeof req.params !== 'object' ||
-            typeof req.params.endpointType !== 'string' || typeof req.params.endpointId !== 'string') {
+            typeof req.params.endpointId !== 'string') {
 
             compUtil.net.sendHttp400(IDLOG, res);
             return;
@@ -3769,61 +3826,51 @@ var compConfigManager;
           // check if the user has the administration operator panel queues authorization
           if (compAuthorization.authorizeAdminQueuesUser(username) === true) {
 
-            logger.info(IDLOG, 'inout dynamic all queues for "' + req.params.endpointType + '" "' +
-              req.params.endpointId + '": user "' + username + '" has the "admin_queues" authorization');
+            logger.info(IDLOG, 'inout dynamic all queues for "' + req.params.endpointId + '": user "' + username +
+              '" has the "admin_queues" authorization');
           }
           // otherwise check if the user has the queues operator panel authorization
-          else if (compAuthorization.authorizeOpQueuesUser(username) !== true) {
+          else if (compAuthorization.authorizeQueuesUser(username) !== true) {
 
-            logger.warn(IDLOG, 'inout dynamic all queues for "' + req.params.endpointType + '" "' +
-              req.params.endpointId + '": authorization failed for user "' + username + '"');
+            logger.warn(IDLOG, 'inout dynamic all queues for "' + req.params.endpointId + '": authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
           // the user has the "queues" authorization. So check if the endpoint is owned by the user
           else {
 
-            logger.info(IDLOG, 'inout dynamic all queues for "' + req.params.endpointType + '" "' +
-              req.params.endpointId + '": user "' + username + '" has the "queues" authorization');
+            logger.info(IDLOG, 'inout dynamic all queues for "' + req.params.endpointId + '": user "' + username +
+              '" has the "queues" authorization');
 
             if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
               logger.warn(IDLOG, 'inout dynamic all queues by user "' + username + '" has been failed: ' +
-                ' the endpoint ' + req.params.endpointType + ' ' + req.params.endpointId + ' isn\'t owned by the user');
+                ' the endpoint ' + req.params.endpointId + ' is not owned by the user');
               compUtil.net.sendHttp403(IDLOG, res);
               return;
 
             } else {
-              logger.info(IDLOG, 'inout dynamic all queues: endpoint ' + req.params.endpointType + ' ' +
-                req.params.endpointId + ' is owned by user "' + username + '"');
+              logger.info(IDLOG, 'inout dynamic all queues: endpoint ' + req.params.endpointId + ' is owned by user "' + username + '"');
             }
           }
 
-          if (req.params.endpointType === 'extension') {
-
-            compAstProxy.inoutDynQueues(req.params.endpointType, req.params.endpointId, function(err) {
-              try {
-                if (err) {
-                  logger.warn(IDLOG, 'inout dynamic all queues by user "' + username + '" with ' +
-                    req.params.endpointType + ' ' + req.params.endpointId + ' has been failed');
-                  compUtil.net.sendHttp500(IDLOG, res, err.toString());
-                  return;
-                }
-
-                logger.info(IDLOG, 'inout dynamic all queues has been successful by user "' + username + '" ' +
-                  'with ' + req.params.endpointType + ' ' + req.params.endpointId);
-                compUtil.net.sendHttp200(IDLOG, res);
-
-              } catch (error) {
-                logger.error(IDLOG, error.stack);
-                compUtil.net.sendHttp500(IDLOG, res, error.toString());
+          compAstProxy.inoutDynQueues(req.params.endpointId, function(err) {
+            try {
+              if (err) {
+                logger.warn(IDLOG, 'inout dynamic all queues by user "' + username + '" with ' +
+                  req.params.endpointId + ' has been failed');
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                return;
               }
-            });
 
-          } else {
-            logger.warn(IDLOG, 'inout dynamic all queues: unknown endpointType ' + req.params.endpointType);
-            compUtil.net.sendHttp400(IDLOG, res);
-          }
+              logger.info(IDLOG, 'inout dynamic all queues has been successful by user "' + username + '" with ' + req.params.endpointId);
+              compUtil.net.sendHttp200(IDLOG, res);
+
+            } catch (error) {
+              logger.error(IDLOG, error.stack);
+              compUtil.net.sendHttp500(IDLOG, res, error.toString());
+            }
+          });
 
         } catch (err) {
           logger.error(IDLOG, err.stack);
@@ -5653,21 +5700,24 @@ function cfcallSetUnavailable(endpoint, username, activate, to, res) {
  * @method queueMemberPauseUnpause
  * @param {object}  req    The client request
  * @param {object}  res    The client response
- * @param {boolean} paused If the extension must be paused or unpaused. If it's true the extension will be paused from the queue.
+ * @param {boolean} paused If the extension must be paused or unpaused. If it is true the extension will be paused from the queue.
  */
 function queueMemberPauseUnpause(req, res, paused) {
   try {
     var username = req.headers.authorization_user;
 
     // check parameters
-    if (typeof req.params !== 'object' || typeof paused !== 'boolean' || typeof req.params.endpointType !== 'string' || typeof req.params.endpointId !== 'string' || (typeof req.params.queueId !== 'string' && req.params.queueId)) {
+    if (typeof req.params !== 'object' ||
+      typeof paused !== 'boolean' ||
+      typeof req.params.endpointId !== 'string' ||
+      (typeof req.params.queueId !== 'string' && req.params.queueId)) {
 
       compUtil.net.sendHttp400(IDLOG, res);
       return;
     }
 
-    // the reason is an optional parameter, and it's used only to pause the extension. So if it's not
-    // present, it's initialized to an empty string. In the unpause case, simply it's ignored
+    // the reason is an optional parameter, and it is used only to pause the extension. So if it is not
+    // present, it is initialized to an empty string. In the unpause case, it is simply ignored
     if (!req.params.reason) {
       req.params.reason = '';
     }
@@ -5681,68 +5731,55 @@ function queueMemberPauseUnpause(req, res, paused) {
     // check if the user has the administration queues operator panel authorization
     if (compAuthorization.authorizeAdminQueuesUser(username) === true) {
 
-      logger.info(IDLOG, logWord + ' "' + req.params.endpointType + '" "' +
-        req.params.endpointId + '" from ' + logQueue + ': user "' +
+      logger.info(IDLOG, logWord + ' "' + req.params.endpointId + '" from ' + logQueue + ': user "' +
         username + '" has "admin_queues" authorization');
     }
     // otherwise check if the user has the queues operator panel authorization
-    else if (compAuthorization.authorizeOpQueuesUser(username) !== true) {
+    else if (compAuthorization.authorizeQueuesUser(username) !== true) {
 
-      logger.warn(IDLOG, logWord + ' "' + req.params.endpointType + '" "' +
-        req.params.endpointId + '" from ' + logQueue + ': authorization failed for user "' + username + '"');
+      logger.warn(IDLOG, logWord + ' "' + req.params.endpointId + '" from ' + logQueue + ': authorization failed for user "' + username + '"');
       compUtil.net.sendHttp403(IDLOG, res);
       return;
     }
     // the user has the "queues" authorization. So check if the endpoint is owned by the user
     else {
 
-      logger.info(IDLOG, logWord + ' "' + req.params.endpointType + '" "' + req.params.endpointId +
-        '" from ' + logQueue + ': user "' + username + '" has "queues" authorization');
+      logger.info(IDLOG, logWord + ' "' + req.params.endpointId + '" from ' + logQueue + ': user "' + username + '" has "queues" authorization');
 
       if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
 
-        logger.warn(IDLOG, logWord + ' "' + req.params.endpointType + '" "' + req.params.endpointId + '" from ' + logQueue +
-          ' by user "' + username + '" has been failed: the endpoint isn\'t owned by the user');
+        logger.warn(IDLOG, logWord + ' "' + req.params.endpointId + '" from ' + logQueue + ' by user "' + username +
+          '" has been failed: the endpoint is not owned by the user');
         compUtil.net.sendHttp403(IDLOG, res);
         return;
 
       } else {
-        logger.info(IDLOG, logWord + ' "' + req.params.endpointType + '" "' + req.params.endpointId +
-          '" from ' + logQueue + ': the endpoint is owned by user "' + username + '"');
+        logger.info(IDLOG, logWord + ' "' + req.params.endpointId + '" from ' + logQueue + ': the endpoint is owned by user "' + username + '"');
       }
     }
 
-    if (req.params.endpointType === 'extension') {
-
-      compAstProxy.queueMemberPauseUnpause(
-        req.params.endpointType,
-        req.params.endpointId,
-        req.params.queueId,
-        req.params.reason,
-        paused,
-        function(err) {
-          try {
-            if (err) {
-              logger.warn(IDLOG, logWord + ' "' + req.params.endpointType + '" "' + req.params.endpointId +
-                '" from ' + logQueue + ' by user "' + username + '": has been failed');
-              compUtil.net.sendHttp500(IDLOG, res, err.toString());
-              return;
-            }
-
-            logger.info(IDLOG, logWord + ' "' + req.params.endpointType + '" "' + req.params.endpointId +
-              '" from ' + logQueue + ' has been successful by user "' + username + '"');
-            compUtil.net.sendHttp200(IDLOG, res);
-
-          } catch (error) {
-            logger.error(IDLOG, error.stack);
-            compUtil.net.sendHttp500(IDLOG, res, error.toString());
+    compAstProxy.queueMemberPauseUnpause(
+      req.params.endpointId,
+      req.params.queueId,
+      req.params.reason,
+      paused,
+      function(err) {
+        try {
+          if (err) {
+            logger.warn(IDLOG, logWord + ' "' + req.params.endpointId + '" from ' + logQueue + ' by user "' + username + '": has been failed');
+            compUtil.net.sendHttp500(IDLOG, res, err.toString());
+            return;
           }
+
+          logger.info(IDLOG, logWord + ' "' + req.params.endpointId + '" from ' + logQueue + ' has been successful by user "' + username + '"');
+          compUtil.net.sendHttp200(IDLOG, res);
+
+        } catch (error) {
+          logger.error(IDLOG, error.stack);
+          compUtil.net.sendHttp500(IDLOG, res, error.toString());
         }
-      );
-    } else {
-      logger.warn(IDLOG, logWord + ' endpoint from a queue: unknown endpointType ' + req.params.endpointType);
-      compUtil.net.sendHttp400(IDLOG, res);
-    }
+      }
+    );
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
