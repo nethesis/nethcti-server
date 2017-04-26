@@ -797,7 +797,7 @@ function getUserInfoJSON(username) {
     }
     // add model and type for extension endpoints
     for (i = 0; i < result.endpoints[endpointTypes.TYPES.mainextension].length; i++) {
-      result.endpoints[endpointTypes.TYPES.mainextension][i].description = compAstProxy.getExtensionAgent(result.endpoints[endpointTypes.TYPES.extension][i].id);
+      result.endpoints[endpointTypes.TYPES.mainextension][i].description = compAstProxy.getExtensionAgent(result.endpoints[endpointTypes.TYPES.mainextension][i].id);
     }
     for (i = 0; i < result.endpoints[endpointTypes.TYPES.extension].length; i++) {
       result.endpoints[endpointTypes.TYPES.extension][i].description = compAstProxy.getExtensionAgent(result.endpoints[endpointTypes.TYPES.extension][i].id);
