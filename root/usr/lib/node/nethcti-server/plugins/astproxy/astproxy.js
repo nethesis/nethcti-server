@@ -131,8 +131,7 @@ function config(path) {
     var json = require(path);
     if (typeof json.user !== 'string' ||
       typeof json.pass !== 'string' || typeof json.prefix !== 'string' ||
-      typeof json.host !== 'string' || typeof json.port !== 'string' ||
-      typeof json.trunks !== 'object' || typeof json.queues !== 'object') {
+      typeof json.host !== 'string' || typeof json.port !== 'string') {
 
       throw new Error(path + ' wrong file format');
     }
@@ -146,11 +145,36 @@ function config(path) {
     };
     proxyLogic.setPrefix(json.prefix);
 
-    // initialize trunks list
+    logger.info(IDLOG, 'configuration done by ' + path);
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Reads the asterisk objects.
+ *
+ * @method configAstObjects
+ * @param {string} path The file path of the asterisk JSON file
+ */
+function configAstObjects(path) {
+  try {
+    if (typeof path !== 'string') {
+      throw new TypeError('wrong parameter: ' + path);
+    }
+    if (!fs.existsSync(path)) {
+      throw new Error(path + ' does not exist');
+    }
+
+    var json = require(path);
+    if (typeof json.trunks !== 'object' || typeof json.queues !== 'object') {
+      throw new Error(path + ' wrong file format');
+    }
     proxyLogic.setStaticDataTrunks(json.trunks);
     proxyLogic.setStaticDataQueues(json.queues);
 
-    logger.info(IDLOG, 'configuration done by ' + path);
+    logger.info(IDLOG, 'asterisk objects configuration done by ' + path);
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
@@ -621,4 +645,5 @@ exports.proxyLogic = proxyLogic;
 exports.configAstCodes = configAstCodes;
 exports.configSipWebrtc = configSipWebrtc;
 exports.getSipWebrtcConf = getSipWebrtcConf;
+exports.configAstObjects = configAstObjects;
 exports.configRemoteSitesPrefixes = configRemoteSitesPrefixes;
