@@ -773,7 +773,7 @@ function extenChanged(exten) {
         compAuthorization.verifyUserEndpointExten(username, exten.getExten()) === false &&
         wsServer.sockets.sockets[sockid]) {
 
-        extJson = exten.toJSON(privacyStrReplace)
+        extJson = exten.toJSON(privacyStrReplace);
 
       } else if (wsServer.sockets.sockets[sockid]) {
         extJson = exten.toJSON();
@@ -1492,18 +1492,18 @@ function loginHdlr(socket, obj) {
         }
       }
 
-      // // if the user has the queues permission, than he will receive the asterisk events that affects the queues
-      // if (compAuthorization.authorizeQueuesUser(obj.accessKeyId) === true || compAuthorization.authorizeAdminQueuesUser(obj.accessKeyId) === true) {
+      // if the user has the queues permission, than he will receive the asterisk events that affect the queues
+      if (compAuthorization.authorizeQueuesUser(obj.accessKeyId) === true || compAuthorization.authorizeAdminQueuesUser(obj.accessKeyId) === true) {
 
-      //   if (compAuthorization.isPrivacyEnabled(obj.accessKeyId) === true && compAuthorization.authorizeAdminQueuesUser(obj.accessKeyId) === false) {
-      //     // join the user to the websocket room to receive the asterisk events that affects the queues, using hide numbers
-      //     socket.join(WS_ROOM.QUEUES_AST_EVT_PRIVACY);
+        if (compAuthorization.isPrivacyEnabled(obj.accessKeyId) === true && compAuthorization.authorizeAdminQueuesUser(obj.accessKeyId) === false) {
+          // join the user to the websocket room to receive the asterisk events that affects the queues, using hide numbers
+          socket.join(WS_ROOM.QUEUES_AST_EVT_PRIVACY);
 
-      //   } else {
-      //     // join the user to the websocket room to receive the asterisk events that affects the queues, using hide numbers
-      //     socket.join(WS_ROOM.QUEUES_AST_EVT_CLEAR);
-      //   }
-      // }
+        } else {
+          // join the user to the websocket room to receive the asterisk events that affects the queues, using hide numbers
+          socket.join(WS_ROOM.QUEUES_AST_EVT_CLEAR);
+        }
+      }
 
       // // if the user has the trunks permission, than he will receive the asterisk events that affects the trunks
       // if (compAuthorization.authorizeOpTrunksUser(obj.accessKeyId) === true) {
