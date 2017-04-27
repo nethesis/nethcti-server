@@ -1047,13 +1047,6 @@ var compConfigManager;
           //   logger.info(IDLOG, 'sent all extensions in JSON format to remote site "' + remoteSiteName +
           //     '" user "' + username + '" ' + res.connection.remoteAddress);
           //   res.send(200, extensions);
-          // } else {
-          // // check if the user has the authorization to view the extensions
-          // if (compAuthorization.authorizePresencePanelUser(username) !== true) {
-
-          //   logger.warn(IDLOG, 'requesting extensions: authorization failed for user "' + username + '"');
-          //   compUtil.net.sendHttp403(IDLOG, res);
-          //   return;
           // }
 
           // get all extensions associated with the user
@@ -1093,7 +1086,7 @@ var compConfigManager;
           // associate extensions to its own user
           for (e in extensions) {
             users = compUser.getUsersUsingEndpointExtension(e);
-            extensions[e].user = (users.length == 1) ? users[0] : null;
+            extensions[e].username = (users.length == 1) ? users[0] : null;
           }
 
           logger.info(IDLOG, 'sent all extensions in JSON format to user "' + username + '" ' + res.connection.remoteAddress);
