@@ -3,7 +3,7 @@
 include_once('/etc/freepbx.conf');
 global $amp_conf;
 $asteriskcdrdb = array();
-foreach (array('history_call','cel','voicemail') as $dbobj) {
+foreach (array('history_call','cel','voicemail','queue_log') as $dbobj) {
     $asteriskcdrdb[$dbobj] = array();
     $asteriskcdrdb[$dbobj]['dbhost'] = 'localhost';
     $asteriskcdrdb[$dbobj]['dbport'] = '/var/lib/mysql/mysql.sock';
