@@ -188,8 +188,7 @@ function saveCtiPbContact(data, cb) {
     // check parameters
     if (typeof data !== 'object' || typeof cb !== 'function' ||
       typeof data.type !== 'string' || data.type === '' ||
-      typeof data.owner_id !== 'string' || data.owner_id === '' ||
-      typeof data.name !== 'string' || data.name === '') {
+      typeof data.owner_id !== 'string' || data.owner_id === '') {
 
       throw new Error('wrong parameter');
     }
