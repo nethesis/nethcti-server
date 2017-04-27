@@ -3130,7 +3130,7 @@ function addConversationToExten(exten, resp, chid) {
       }
 
       var queue;
-      if (resp[chid].bridgedChannel.slice(-2) === ';2' &&
+      if ((resp[chid].bridgedChannel.slice(-2) === ';2' || resp[chid].bridgedChannel.slice(-2) === ';1') &&
         resp[chid].bridgedChannel.indexOf('Local/') !== -1 &&
         resp[chid].bridgedChannel.indexOf('@from-queue') !== -1) {
 

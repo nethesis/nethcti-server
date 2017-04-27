@@ -126,7 +126,7 @@ var IDLOG = '[listChannels]';
 
             // add queue information
             if (data.context === 'from-queue') {
-              obj.queue = data.extension;
+              obj.queue = data.exten;
             }
 
             list[data.channel] = obj;
