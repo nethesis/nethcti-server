@@ -22,11 +22,13 @@ templates2events("/etc/nethcti/sms_config.php",$event);
 templates2events("/etc/nethcti/nethcti.pem",$event);
 templates2events("/var/www/html/nethvoice/add_ons.php",$event);
 templates2events("/etc/asterisk/extensions_nethesis.conf",$event);
-safe_symlink("reload", "root/etc/e-smith/events/$event/services2adjust/httpd");
 event_link("initialize-default-databases", $event, '02');
 event_link("nethcti-server-conf", $event, 20);
 event_link("asterisk-reload", $event, "30");
-safe_symlink("restart", "root/etc/e-smith/events/$event/services2adjust/nethcti-server");
+event_services($event,qw(
+        nethcti-server restart
+        httpd reload
+));
 
 #
 # hostname-modify
@@ -36,14 +38,18 @@ templates2events("/etc/nethcti/chat.json",$event);
 templates2events("/etc/nethcti/nethcti.json",$event);
 templates2events("/etc/nethcti/mailer.json",$event);
 templates2events("/etc/nethcti/services.json",$event);
-safe_symlink("restart", "root/etc/e-smith/events/$event/services2adjust/nethcti-server");
+event_services($event,qw(
+        nethcti-server restart
+));
 
 #
 # certificate-update
 #
 $event = "certificate-update";
 templates2events("/etc/nethcti/nethcti.pem",$event);
-safe_symlink("restart", "root/etc/e-smith/events/$event/services2adjust/nethcti-server");
+event_services($event,qw(
+        nethcti-server restart
+));
 
 #
 # actions for migration-import event
