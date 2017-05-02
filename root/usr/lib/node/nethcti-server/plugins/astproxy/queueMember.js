@@ -418,18 +418,18 @@ exports.QueueMember = function(memberNum, queueId, pausedValue, loggedInValue) {
 };
 
 /**
-* The queue member types enumeration.
-*
-* @property TYPES_ENUM
-* @type {object}
-* @private
-* @final
-* @default {
+ * The queue member types enumeration.
+ *
+ * @property TYPES_ENUM
+ * @type {object}
+ * @private
+ * @final
+ * @default {
     STATIC:   "static",
     DYNAMIC:  "dynamic",
     REALTIME: "realtime"
-}
-*/
+ }
+ */
 var TYPES_ENUM = {
   STATIC: 'static',
   DYNAMIC: 'dynamic',
@@ -445,21 +445,20 @@ var TYPES_ENUM = {
  * @final
  * @default Equal to the private property TYPES_ENUM
  */
-
 exports.QUEUE_MEMBER_TYPES_ENUM = TYPES_ENUM;
 
 /**
-* The QueueMember status enumeration.
-*
-* @property STATUS_ENUM
-* @type {object}
-* @private
-* @final
-* @default {
+ * The QueueMember status enumeration.
+ *
+ * @property STATUS_ENUM
+ * @type {object}
+ * @private
+ * @final
+ * @default {
     "FREE": "free",
     "BUSY": "busy"
-}
-*/
+ }
+ */
 var STATUS_ENUM = {
   'FREE': 'free',
   'BUSY': 'busy'
