@@ -30,7 +30,7 @@ var utilChannel13 = require('./util_channel_13');
 var RECORDING_STATUS = require('../conversation').RECORDING_STATUS;
 // var TrunkConversation = require('../trunkConversation').TrunkConversation;
 var QueueWaitingCaller = require('../queueWaitingCaller').QueueWaitingCaller;
-// var QUEUE_MEMBER_TYPES_ENUM = require('../queueMember').QUEUE_MEMBER_TYPES_ENUM;
+var QUEUE_MEMBER_TYPES_ENUM = require('../queueMember').QUEUE_MEMBER_TYPES_ENUM;
 
 /**
  * The module identifier used by the logger.
@@ -492,17 +492,6 @@ var parkings = {};
 var parkedChannels = {};
 
 /**
- * It's the validated content of the asterisk structure ini
- * file created by the perl script.
- *
- * @property struct
- * @type {object}
- * @readOnly
- * @private
- */
-var struct;
-
-/**
  * Store the recording information about conversations. The key
  * is the conversation identifier and the value is the status.
  * The presence of the key means that the conversation is recording,
@@ -729,57 +718,6 @@ function visit(ap) {
   }
 }
 
-// /**
-//  * Validates all sip extensions of the structure ini file and
-//  * initialize sip _Extension_ objects.
-//  *
-//  * @method sipExtenStructValidation
-//  * @param {object} err  The error received from the command
-//  * @param {array}  resp The response received from the command
-//  * @private
-//  */
-// function sipExtenStructValidation(err, resp) {
-//   try {
-//     if (err) {
-//       logger.error(IDLOG, 'validating sip extension structure: ' + err.toString());
-//       return;
-//     }
-
-//     // creates temporary object used to rapid check the
-//     // existence of an extension into the asterisk
-//     var siplist = {};
-//     var i;
-//     for (i = 0; i < resp.length; i++) {
-//       siplist[resp[i].ext] = '';
-//     }
-
-//     // cycles in all elements of the structure ini file to validate
-//     var k;
-//     for (k in struct) {
-
-//       // validates all sip extensions
-//       if (struct[k].tech === INI_STRUCT.TECH.SIP &&
-//         struct[k].type === INI_STRUCT.TYPE.EXTEN) {
-
-//         // current extension of the structure ini file isn't present
-//         // into the asterisk. So remove it from the structure ini file
-//         if (siplist[struct[k].extension] === undefined) {
-
-//           delete struct[k];
-//           logger.warn(IDLOG, 'inconsistency between ini structure file and asterisk for ' + k);
-//         }
-//       }
-//     }
-//     logger.info(IDLOG, 'all sip extensions have been validated');
-
-//     // initialize all sip extensions as 'Extension' objects into the 'extensions' object
-//     initializeSipExten();
-
-//   } catch (error) {
-//     logger.error(IDLOG, error.stack);
-//   }
-// }
-
 /**
  * Validates all sip trunks of the structure ini file and
  * initialize sip _Trunk_ objects.
@@ -932,55 +870,6 @@ function iaxExtenStructValidation(err, resp) {
     logger.error(IDLOG, error.stack);
   }
 }
-
-// /**
-//  * Validates all queues of the structure ini file.
-//  *
-//  * @method queueStructValidation
-//  * @param {object} err  The error received from the command.
-//  * @param {array}  resp The response received from the command.
-//  * @private
-//  */
-// function queueStructValidation(err, resp) {
-//   try {
-//     if (err) {
-//       logger.error(IDLOG, 'validating queue structure: ' + err.toString());
-//       return;
-//     }
-
-//     // creates temporary object used to rapid check the
-//     // existence of a queue into the asterisk
-//     var qlist = {};
-//     var i;
-//     for (i = 0; i < resp.length; i++) {
-//       qlist[resp[i].queue] = '';
-//     }
-
-//     // cycles in all elements of the structure ini file to validate
-//     var k;
-//     for (k in struct) {
-
-//       // validates all queues
-//       if (struct[k].type === INI_STRUCT.TYPE.QUEUE) {
-
-//         // current queue of the structure ini file isn't present
-//         // into the asterisk. So remove it from the structure ini file
-//         if (qlist[struct[k].queue] === undefined) {
-
-//           delete struct[k];
-//           logger.warn(IDLOG, 'inconsistency between ini structure file and asterisk for ' + k);
-//         }
-//       }
-//     }
-//     logger.info(IDLOG, 'all queues have been validated');
-
-//     // initialize all queus as 'Queue' objects into the 'queues' object
-//     initializeQueues();
-
-//   } catch (error) {
-//     logger.error(IDLOG, error.stack);
-//   }
-// }
 
 /**
  * Validates all parkings of the structure ini file.
@@ -1656,46 +1545,21 @@ function queueDetails(err, resp) {
     for (m in resp.members) {
       addQueueMemberLoggedIn(resp.members[m], q);
     }
+
     // adds all static and dynamic members that are logged out. To do so it cycle
-    // in all elements of the structure ini file getting the dynamic member list from each queue
-    // and checking if each member has already been added to the queue. If it's not present means
-    // that it's not logged in, becuase asterisk didn't generate the event for the member
-    var structKey, structDynMembers, structQueueId;
-    for (structKey in struct) {
+    // the dynamic members of the queue and checks if each member has already been
+    // added to the queue. If it is not present, means that it is not logged in,
+    // becuase asterisk did not generate the event for the member
+    var i;
+    var allMembersQueue = queues[q].getAllMembers();
 
-      // get the "queue" value of the structure json content. If the content isn't of a queue the value is undefined
-      structQueueId = struct[structKey].queue;
+    for (i = 0; i < staticDataQueues[q].dynmembers.length; i++) {
 
-      if (struct[structKey].type === INI_STRUCT.TYPE.QUEUE && q === structQueueId) {
-
-        // check if the "dynmembers" key exist in the configuration file
-        if (struct[structKey].dynmembers === undefined) {
-          logger.warn(IDLOG, 'no "dynmembers" key for "' + structKey + '" in configuration file');
-          continue;
-        }
-
-        // check if there is at least one dynamic member. If not exist, the key "dynmembers" is en empty string
-        if (struct[structKey].dynmembers === '') {
-          logger.info(IDLOG, 'queue "' + structQueueId + '" does not have dynamic members');
-          continue;
-        }
-
-        structDynMembers = struct[structKey].dynmembers.split(',');
-
-        var i, structDynMemberId;
-        var allMembersQueue = queues[q].getAllMembers();
-
-        for (i = 0; i < structDynMembers.length; i++) {
-
-          structDynMemberId = structDynMembers[i];
-
-          // all the logged in member as already been added to the queue in the above code using
-          // the asterisk events. So if it's not present means that the member isn't logged in and
-          // adds the member to the queue as logged off
-          if (!allMembersQueue[structDynMemberId]) {
-            addQueueMemberLoggedOut(structDynMemberId, q);
-          }
-        }
+      // all the logged in member has already been added to the queue in the above code using
+      // the asterisk events. So if it is not present means that the member is not logged in and
+      // adds the member to the queue as logged off
+      if (!allMembersQueue[staticDataQueues[q].dynmembers[i]]) {
+        addQueueMemberLoggedOut(staticDataQueues[q].dynmembers[i], q);
       }
     }
 
@@ -1724,7 +1588,7 @@ function addQueueMemberLoggedOut(memberId, queueId) {
   try {
     // check parameters
     if (typeof memberId !== 'string' || typeof queueId !== 'string') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // check the existence of the queue
@@ -1734,7 +1598,7 @@ function addQueueMemberLoggedOut(memberId, queueId) {
     }
 
     // create new queue member object
-    // false value of the third parameter is used as "paused" parameter because asterisk doesn't
+    // false value of the third parameter is used as "paused" parameter because asterisk does not
     // provides this information. When the queue member logged in the queue a new "QueueMemberAdded"
     // event is generated from the asterisk and so the member is updated with all the updated values
     var member = new QueueMember(memberId, queueId, false, false);
