@@ -333,6 +333,11 @@ function start() {
     server.use(restify.acceptParser(server.acceptable));
     server.use(restify.queryParser());
     server.use(restify.bodyParser());
+    server.use(restify.CORS({
+      origins: ['*'],
+      credentials: true,
+      headers: ['WWW-Authenticate', 'Authorization']
+    }));
 
     // load plugins
     for (p in plugins) {
