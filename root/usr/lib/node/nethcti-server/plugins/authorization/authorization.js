@@ -762,7 +762,7 @@ function authorizePresencePanelUser(username) {
   try {
     // check parameter
     if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameter: ' + username);
     }
     return profiles[getUserProfileId(username)].macro_permissions.presence_panel.value === true;
 

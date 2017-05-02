@@ -55,6 +55,15 @@ var compUtil;
 var compUser;
 
 /**
+ * The asterisk proxy component used for asterisk functions.
+ *
+ * @property compAstProxy
+ * @type object
+ * @private
+ */
+var compAstProxy;
+
+/**
  * Set the logger to be used.
  *
  * @method setLogger
@@ -87,6 +96,21 @@ function setCompAuthentication(ca) {
   try {
     compAuthe = ca;
     logger.info(IDLOG, 'set authentication architect component');
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Sets the asterisk proxy component used for asterisk functions.
+ *
+ * @method setCompAstProxy
+ * @param {object} comp The asterisk proxy component.
+ */
+function setCompAstProxy(comp) {
+  try {
+    compAstProxy = comp;
+    logger.info(IDLOG, 'set asterisk proxy architect component');
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
@@ -213,6 +237,8 @@ function setCompUser(comp) {
        */
       login: function(req, res, next) {
         try {
+          // username can be a real username or an extension number. This is because
+          // the user can do the login with his username or with the main extension number
           var username = req.params.username;
           var password = req.params.password;
 
@@ -222,17 +248,13 @@ function setCompUser(comp) {
             return;
           }
 
-	  //Check if user tryed to login using main extension instead of username
-          regexp = new RegExp('^[0-9]+$');
-          extension = false;
-          if (!compUser.isUserPresent(username) && regexp.test(username)) {
-	      logger.info(IDLOG, 'user supplied an extension number: "' + username + '". Checking for an associated username');
-	      extension = username;
-              userUsingEndpointExtension = compUser.getUsersUsingEndpointExtension(username);
-	      if (userUsingEndpointExtension != []) {
-	        username = userUsingEndpointExtension[0];
-	        logger.info(IDLOG, 'username associated: "' + username);
-	      }
+          // check if user tryed to login using main extension instead of username
+          var extension;
+          if (!compUser.isUserPresent(username) && compAstProxy.isExten(username)) {
+
+            extension = username;
+            username = compUser.getUserUsingEndpointExtension(username);
+            logger.info(IDLOG, 'user supplied an extension number to login: "' + extension + '". Corresponding username is "' + username + '"');
           }
 
           if (!compUser.isUserPresent(username)) {
@@ -247,13 +269,14 @@ function setCompUser(comp) {
                 logger.warn(IDLOG, 'authentication failed for user "' + username + '"');
                 compUtil.net.sendHttp401(IDLOG, res);
                 return;
+
               } else {
                 logger.info(IDLOG, 'user "' + username + '" successfully authenticated');
                 var nonce = compAuthe.getNonce(username, password, false, extension);
                 compUtil.net.sendHttp401Nonce(IDLOG, res, nonce);
               }
-            } catch (err) {
-              logger.error(IDLOG, err.stack);
+            } catch (error) {
+              logger.error(IDLOG, error.stack);
               compUtil.net.sendHttp401(IDLOG, res);
             }
           });
@@ -291,7 +314,7 @@ function setCompUser(comp) {
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
       }
-    }
+    };
 
     exports.api = authentication.api;
     exports.login = authentication.login;
@@ -299,6 +322,7 @@ function setCompUser(comp) {
     exports.setLogger = setLogger;
     exports.setCompUtil = setCompUtil;
     exports.setCompUser = setCompUser;
+    exports.setCompAstProxy = setCompAstProxy;
     exports.setCompAuthentication = setCompAuthentication;
 
   } catch (err) {

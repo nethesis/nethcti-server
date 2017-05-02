@@ -35,6 +35,8 @@ module.exports = function(options, imports, register) {
     httpProxy.config('/etc/nethcti/services.json');
     httpProxy.setCompUtil(imports.util);
     httpProxy.setCompAuthentication(imports.authentication);
+    httpProxy.setCompAstProxy(imports.astProxy);
+    httpProxy.setCompUser(imports.user);
     httpProxy.start();
   } catch (err) {
     logger.error(IDLOG, err.stack);
