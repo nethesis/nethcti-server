@@ -211,10 +211,20 @@ function start() {
   try {
     // initialize node-static server instances
     fileStaticRoot = new(nodeStatic.Server)(webroot, {
-      cache: 3600
+      cache: 3600,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET',
+        'Access-Control-Allow-Headers': 'Content-Type'
+      }
     });
     customFileStaticRoot = new(nodeStatic.Server)(customWebroot, {
-      cache: 3600
+      cache: 3600,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET',
+        'Access-Control-Allow-Headers': 'Content-Type'
+      }
     });
 
     // create http server
