@@ -267,7 +267,7 @@ var compConfigManager;
         * Hold/Unhold a conversation of the specified extension. It uses HTTP api of the physical phones, so it works
         * only if the extension is registered with a supported phone. The request must contains the following parameters:
         *
-        * * `endpointId: the extension identifier registered with physical supported phones.
+        * * `endpointId: the extension identifier registered with physical supported phones.`
         *
         * Example JSON request parameters:
         *
@@ -1611,6 +1611,16 @@ var compConfigManager;
           // check parameters
           if (typeof req.params !== 'object' || typeof req.params.endpointId !== 'string') {
             compUtil.net.sendHttp400(IDLOG, res);
+            return;
+          }
+
+          // check if the extension of the request is owned by the user: the user
+          // can only toggle hold a conversation that belong to him
+          if (compAuthorization.verifyUserEndpointExten(username, req.params.endpointId) === false) {
+
+            logger.warn(IDLOG, 'toggle hold from user "' + username + '" has been failed: the extension "' +
+              req.params.endpointId + '" is not owned by him');
+            compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
 
