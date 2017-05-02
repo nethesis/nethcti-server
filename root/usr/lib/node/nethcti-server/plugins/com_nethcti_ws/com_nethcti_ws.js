@@ -518,7 +518,6 @@ function setUserListeners() {
     if (!compUser || typeof compUser.on !== 'function') {
       throw new Error('wrong user object');
     }
-    // compUser.on(compUser.EVT_ENDPOINT_PRESENCE_CHANGED, endpointPresenceChangedListener);
     compUser.on(compUser.EVT_USER_PRESENCE_CHANGED, evtUserPresenceChanged);
 
   } catch (err) {
@@ -637,32 +636,6 @@ function updateNewPostitListener(recipient, list) {
 }
 
 /**
- * Handler for the _endpointPresenceChanged_ event emitted by _user_
- * component. The endpoint presence has changed, so notifies all clients.
- *
- * @method endpointPresenceChangedListener
- * @param {string} username     The username of the endpoint owner
- * @param {string} endpointType The type of the updated endpoint
- * @param {object} endpoint     The updated endpoint of the user
- * @private
- */
-function endpointPresenceChangedListener(username, endpointType, endpoint) {
-  try {
-    if (typeof username !== 'string' || typeof endpointType !== 'string' || typeof endpoint !== 'object') {
-      throw new Error('wrong parameters');
-    }
-    logger.info(IDLOG, 'received event "' + compUser.EVT_ENDPOINT_PRESENCE_CHANGED + '" for endpoint "' + endpointType + '" of the user "' + username + '"');
-    logger.info(IDLOG, 'emit event "' + EVT_ENDPOINT_PRESENCE_UPDATE + '" for endpoint "' +
-      endpointType + '" of the user "' + username + '" to websockets');
-    // emits the event to all users
-    wsServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_CLEAR).emit(EVT_ENDPOINT_PRESENCE_UPDATE, endpoint);
-    wsServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY).emit(EVT_ENDPOINT_PRESENCE_UPDATE, endpoint);
-  } catch (err) {
-    logger.error(IDLOG, err.stack);
-  }
-}
-
-/**
  * Handler for the _userPresenceChanged_ event emitted by _user_
  * component. The user presence has changed, so notifies all clients.
  *
@@ -674,22 +647,28 @@ function endpointPresenceChangedListener(username, endpointType, endpoint) {
  */
 function evtUserPresenceChanged(evt) {
   try {
-    if (typeof evt !== 'object' || typeof evt.username !== 'string' || typeof evt.presence !== 'string') {
-      throw new Error('wrong parameters');
+    if (typeof evt !== 'object' ||
+      typeof evt.username !== 'string' ||
+      typeof evt.presence !== 'string') {
+
+      throw new Error('wrong parameter: ' + JSON.stringify(arguments));
     }
     logger.info(IDLOG, 'received event "' + compUser.EVT_USER_PRESENCE_CHANGED + '" ' + JSON.stringify(evt));
     logger.info(IDLOG, 'emit event "' + EVT_USER_PRESENCE_UPDATE + '" ' + JSON.stringify(evt) + ' to websockets');
+
     // emits the event to all users
-    wsServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_CLEAR).emit(EVT_USER_PRESENCE_UPDATE, evt);
-    wsServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY).emit(EVT_USER_PRESENCE_UPDATE, evt);
+    var sockid;
+    for (sockid in wsid) {
+      wsServer.sockets.sockets[sockid].emit(EVT_USER_PRESENCE_UPDATE, evt);
+    }
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
 }
 
 /**
- * It send an event to all the local websocket clients. It accepts also a
- * function to be verified before perform the sending and an optional function
+ * It sends an event to all the local websocket clients. It accepts also a
+ * function to be verified before performing the send and an optional function
  * to manipulate data before sending.
  *
  * @method sendEventToAllClients
@@ -834,9 +813,9 @@ function queueMemberChanged(member) {
     logger.info(IDLOG, 'received event queueMemberChanged for member ' + member.getMember() + ' of queue ' + member.getQueue());
     logger.info(IDLOG, 'emit event queueMemberUpdate for member ' + member.getMember() + ' of queue ' + member.getQueue() + ' to websockets');
     // emits the event with clear numbers to all users with privacy disabled
-    wsServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_CLEAR).emit('queueMemberUpdate', member.toJSON());
+    wsServer.sockets.in(WS_ROOM.QUEUES_AST_EVT_CLEAR).emit('queueMemberUpdate', member.toJSON());
     // emits the event with hide numbers to all users with privacy enabled
-    wsServer.sockets.in(WS_ROOM.EXTENSIONS_AST_EVT_PRIVACY).emit('queueMemberUpdate', member.toJSON(privacyStrReplace));
+    wsServer.sockets.in(WS_ROOM.QUEUES_AST_EVT_PRIVACY).emit('queueMemberUpdate', member.toJSON(privacyStrReplace));
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }

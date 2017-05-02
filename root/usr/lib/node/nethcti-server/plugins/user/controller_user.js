@@ -31,24 +31,6 @@ var endpointTypes = require('./endpoint_types');
 var IDLOG = '[controller_user]';
 
 /**
-* Fired when the presence of an endpoint of the user changes.
-*
-* @event endpointPresenceChanged
-* @param {string} username     The username of the endpoint owner
-* @param {string} endpointType The type of the updated endpoint
-* @param {object} endpoint     The updated endpoint object of the user
-..
-*/
-/**
- * The name of the user endpoint presence changed event.
- *
- * @property EVT_ENDPOINT_PRESENCE_CHANGED
- * @type string
- * @default "endpointPresenceChanged"
- */
-var EVT_ENDPOINT_PRESENCE_CHANGED = 'endpointPresenceChanged';
-
-/**
  * Fired when the creation of the _User_ objects is completed.
  *
  * @event usersReady
@@ -1680,7 +1662,6 @@ exports.getEndpointMainExtension = getEndpointMainExtension;
 exports.getAllUsersEndpointsJSON = getAllUsersEndpointsJSON;
 exports.EVT_USER_PRESENCE_CHANGED = EVT_USER_PRESENCE_CHANGED;
 exports.getAllUsersEndpointsExtension = getAllUsersEndpointsExtension;
-exports.EVT_ENDPOINT_PRESENCE_CHANGED = EVT_ENDPOINT_PRESENCE_CHANGED;
 exports.getUsersUsingEndpointExtension = getUsersUsingEndpointExtension;
 exports.getUserUsingEndpointExtension = getUserUsingEndpointExtension;
 exports.getUsersUsingEndpointVoicemail = getUsersUsingEndpointVoicemail;
