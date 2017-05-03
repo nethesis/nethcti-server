@@ -1458,49 +1458,11 @@ function getAllUsersEndpointsExtension() {
 }
 
 /**
- * Returns all users associated with the specified extension endpoint.
- *
- * @method getUsersUsingEndpointExtension
- * @deprecated use getUserUsingEndpointExtension instead
- * @param  {string} exten The extension endpoint identifier
- * @return {array}  Returns all the users associated with the specified extension endpoint.
- */
-function getUsersUsingEndpointExtension(exten) {
-  try {
-    // check parameter
-    if (typeof exten !== 'string') {
-      throw new Error('wrong parameter');
-    }
-
-    var result = [];
-
-    var extenKey, userExtens, username;
-    for (username in users) {
-
-      userExtens = getAllEndpointsExtension(username);
-
-      for (extenKey in userExtens) {
-
-        if (extenKey === exten) {
-          // the user have the specified extension endpoint
-          result.push(username);
-        }
-      }
-    }
-    return result;
-
-  } catch (err) {
-    logger.error(IDLOG, err.stack);
-    return [];
-  }
-}
-
-/**
  * Returns the user associated with the specified extension endpoint.
  *
  * @method getUserUsingEndpointExtension
- * @param  {string} exten The extension endpoint identifier
- * @return {object}  Returns the user associated with the specified extension endpoint.
+ * @param {string} exten The extension endpoint identifier
+ * @return {string} The username associated with the specified extension endpoint.
  */
 function getUserUsingEndpointExtension(exten) {
   try {
@@ -1509,25 +1471,20 @@ function getUserUsingEndpointExtension(exten) {
       throw new Error('wrong parameter');
     }
 
-    var result = null;
-
     var extenKey, userExtens, username;
     for (username in users) {
+
       userExtens = getAllEndpointsExtension(username);
 
       for (extenKey in userExtens) {
         if (extenKey === exten) {
           // the user have the specified extension endpoint
-          result = username;
-          break;
+          return username;
         }
       }
     }
-
-    return result;
   } catch (err) {
     logger.error(IDLOG, err.stack);
-    return [];
   }
 }
 
@@ -1662,6 +1619,5 @@ exports.getEndpointMainExtension = getEndpointMainExtension;
 exports.getAllUsersEndpointsJSON = getAllUsersEndpointsJSON;
 exports.EVT_USER_PRESENCE_CHANGED = EVT_USER_PRESENCE_CHANGED;
 exports.getAllUsersEndpointsExtension = getAllUsersEndpointsExtension;
-exports.getUsersUsingEndpointExtension = getUsersUsingEndpointExtension;
 exports.getUserUsingEndpointExtension = getUserUsingEndpointExtension;
 exports.getUsersUsingEndpointVoicemail = getUsersUsingEndpointVoicemail;

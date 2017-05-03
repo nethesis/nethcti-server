@@ -777,15 +777,16 @@ function extenHangup(data) {
   try {
     logger.info(IDLOG, 'received event "' + astProxy.EVT_EXTEN_HANGUP + '" for extension ' + data.channelExten);
 
-    // get all users associated with the hangupped extension
-    var users = compUser.getUsersUsingEndpointExtension(data.channelExten);
+    // get the user associated with the hangupped extension
+    var user = compUser.getUserUsingEndpointExtension(data.channelExten);
     // emit the "extenHangup" event for each logged in user associated with the hangupped extension
     var socketId, username;
 
     for (socketId in wsid) {
+
       username = wsid[socketId].username;
-      // the user is associated with the hangupped extension and is logged in
-      if (users.indexOf(username) !== -1) {
+      // the user is associated with the hangupped extension and it is logged in
+      if (user === username) {
         // emits the event with the hangup data
         logger.info(IDLOG, 'emit event "' + astProxy.EVT_EXTEN_HANGUP + '" for extension ' + data.channelExten + ' to user "' + username + '"');
 
@@ -1083,8 +1084,8 @@ function extenDialing(data) {
     }
     logger.info(IDLOG, 'received event extenDialing for extension ' + data.dialingExten + ' with the caller identity');
 
-    // get all users associated with the ringing extension
-    var users = compUser.getUsersUsingEndpointExtension(data.dialingExten);
+    // get the user associated with the ringing extension
+    var user = compUser.getUserUsingEndpointExtension(data.dialingExten);
 
     // emit the "extenRinging" event for each logged in user associated with the ringing extension
     var socketId, username, filteredCallerIdentity;
@@ -1093,7 +1094,7 @@ function extenDialing(data) {
       username = wsid[socketId].username;
 
       // the user is associated with the ringing extension and is logged in
-      if (users.indexOf(username) !== -1) {
+      if (user === username) {
 
         filteredCallerIdentity = getFilteredCallerIndentity(username, data.callerIdentity);
 
@@ -1411,9 +1412,9 @@ function unauthorized(socket) {
  *
  * @method loginHdlr
  * @param {object} socket The client websocket
- * @param {object} data   The data passed by the client
- *   @param {string} data.accessKeyId The username of the account
- *   @param {string} data.token       The token received by the authentication REST request
+ * @param {object} obj The data passed by the client
+ *   @param {string} obj.accessKeyId The username of the account
+ *   @param {string} obj.token The token received by the authentication REST request
  * @private
  */
 function loginHdlr(socket, obj) {
@@ -1426,6 +1427,11 @@ function loginHdlr(socket, obj) {
     }
 
     if (compAuthe.verifyToken(obj.accessKeyId, obj.token, false) === true) { // user successfully authenticated
+
+      // this is to support login with extension number
+      if (astProxy.isExten(obj.accessKeyId)) {
+        obj.accessKeyId = compUser.getUserUsingEndpointExtension(obj.accessKeyId);
+      }
 
       logger.info(IDLOG, 'user "' + obj.accessKeyId + '" successfully authenticated from ' + getWebsocketEndpoint(socket) +
         ' with socket id ' + socket.id);

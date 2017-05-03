@@ -47,6 +47,24 @@ var logger = console;
 var compAuthentication;
 
 /**
+ * The asterisk proxy architect component.
+ *
+ * @property compAstProxy
+ * @type object
+ * @private
+ */
+var compAstProxy;
+
+/**
+ * The user module.
+ *
+ * @property compUser
+ * @type object
+ * @private
+ */
+var compUser;
+
+/**
  * The utility architect component.
  *
  * @property compUtil
@@ -188,22 +206,22 @@ function start() {
         logger.info(IDLOG, getProxyLog(req));
 
         if (req.method === 'OPTIONS') {
-            var headers = {};
-            headers["Access-Control-Allow-Origin"] = "*";
-            headers["Access-Control-Allow-Methods"] = "POST, GET, PUT, DELETE, OPTIONS";
-            headers["Access-Control-Allow-Credentials"] = true;
-            headers["Access-Control-Max-Age"] = '86400';
-            headers["Access-Control-Allow-Headers"] = 'X-Requested-With,' +
-              ' Access-Control-Allow-Origin,' +
-              ' X-HTTP-Method-Override,' +
-              ' Content-Type,' +
-              ' Authorization,' +
-              ' Accept,' +
-              ' WWW-Authenticate';
+          var headers = {};
+          headers["Access-Control-Allow-Origin"] = "*";
+          headers["Access-Control-Allow-Methods"] = "POST, GET, PUT, DELETE, OPTIONS";
+          headers["Access-Control-Allow-Credentials"] = true;
+          headers["Access-Control-Max-Age"] = '86400';
+          headers["Access-Control-Allow-Headers"] = 'X-Requested-With,' +
+            ' Access-Control-Allow-Origin,' +
+            ' X-HTTP-Method-Override,' +
+            ' Content-Type,' +
+            ' Authorization,' +
+            ' Accept,' +
+            ' WWW-Authenticate';
 
-            res.writeHead(200, headers);
-            res.end();
-            return;
+          res.writeHead(200, headers);
+          res.end();
+          return;
         }
 
         // bypass the token verification if the request is:
@@ -222,14 +240,19 @@ function start() {
         }
 
         // check authentication
-        // arr[0] is the username
+        // arr[0] is the username or the extension number
         // arr[1] is the token
         if (req.headers.authorization) {
           var arr = req.headers.authorization.split(':');
           if (compAuthentication.verifyToken(arr[0], arr[1]) === true) {
 
             // add header used by the authorization module
-            req.headers.authorization_user = arr[0];
+            if (compAstProxy.isExten(arr[0])) {
+              // this is to support login with extension number
+              req.headers.authorization_user = compUser.getUserUsingEndpointExtension(arr[0]);
+            } else {
+              req.headers.authorization_user = arr[0];
+            }
             req.headers.authorization_token = arr[1];
 
           } else { // authentication failed
@@ -260,6 +283,26 @@ function start() {
     httpServer.on('close', function() {
       logger.warn(IDLOG, 'stop listening');
     });
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Set user module to be used.
+ *
+ * @method setCompUser
+ * @param {object} comp The user module
+ * @private
+ */
+function setCompUser(comp) {
+  try {
+    // check parameter
+    if (typeof comp !== 'object') {
+      throw new TypeError('wrong parameter');
+    }
+    compUser = comp;
+
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
@@ -302,9 +345,27 @@ function setCompUtil(comp) {
   }
 }
 
+/**
+ * Set the asterisk proxy architect component.
+ *
+ * @method setCompAstProxy
+ * @param {object} comp The asterisk proxy architect component.
+ */
+function setCompAstProxy(comp) {
+  try {
+    compAstProxy = comp;
+    logger.info(IDLOG, 'set asterisk proxy architect component');
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
 // public interface
 exports.start = start;
 exports.config = config;
 exports.setLogger = setLogger;
 exports.setCompUtil = setCompUtil;
+exports.setCompUser = setCompUser;
+exports.setCompAstProxy = setCompAstProxy;
 exports.setCompAuthentication = setCompAuthentication;

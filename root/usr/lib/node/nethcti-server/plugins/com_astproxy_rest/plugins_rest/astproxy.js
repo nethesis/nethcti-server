@@ -1085,8 +1085,7 @@ var compConfigManager;
 
           // associate extensions to its own user
           for (e in extensions) {
-            users = compUser.getUsersUsingEndpointExtension(e);
-            extensions[e].username = (users.length == 1) ? users[0] : null;
+            extensions[e].username = compUser.getUserUsingEndpointExtension(e);
           }
 
           logger.info(IDLOG, 'sent all extensions in JSON format to user "' + username + '" ' + res.connection.remoteAddress);

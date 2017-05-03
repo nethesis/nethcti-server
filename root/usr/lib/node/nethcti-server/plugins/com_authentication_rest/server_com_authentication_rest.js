@@ -114,6 +114,50 @@ function setAllRestPluginsLogger(log) {
 }
 
 /**
+ * Set the asterisk proxy architect component to be used by REST plugins.
+ *
+ * @method setCompAstProxy
+ * @param {object} comp The architect asterisk proxy component
+ * @static
+ */
+function setCompAstProxy(comp) {
+  try {
+    // check parameter
+    if (typeof comp !== 'object') {
+      throw new Error('wrong parameter');
+    }
+
+    // set the asterisk proxy for all the REST plugins
+    setAllRestPluginsAstProxy(comp);
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Sets the asterisk proxy component for all the REST plugins.
+ *
+ * @method setAllRestPluginsAstProxy
+ * @param {object} comp The asterisk proxy object
+ * @private
+ */
+function setAllRestPluginsAstProxy(comp) {
+  try {
+    var key;
+    for (key in plugins) {
+
+      if (typeof plugins[key].setCompAstProxy === 'function') {
+        plugins[key].setCompAstProxy(comp);
+        logger.info(IDLOG, 'asterisk proxy component has been set for rest plugin ' + key);
+      }
+    }
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Executed by all REST request. It calls the appropriate REST plugin function.
  *
  * @method execute
@@ -316,4 +360,5 @@ exports.config = config;
 exports.setLogger = setLogger;
 exports.setCompUtil = setCompUtil;
 exports.setCompUser = setCompUser;
+exports.setCompAstProxy = setCompAstProxy;
 exports.setCompAuthentication = setCompAuthentication;
