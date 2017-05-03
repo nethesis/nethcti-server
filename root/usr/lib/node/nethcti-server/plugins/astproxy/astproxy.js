@@ -153,6 +153,45 @@ function config(path) {
 }
 
 /**
+ * Reads the extension names.
+ *
+ * @method configExtenNames
+ * @param {string} path The file path of the users JSON file
+ */
+function configExtenNames(path) {
+  try {
+    if (typeof path !== 'string') {
+      throw new TypeError('wrong parameter: ' + path);
+    }
+    if (!fs.existsSync(path)) {
+      throw new Error(path + ' does not exist');
+    }
+
+    var json = require(path);
+    if (typeof json !== 'object') {
+      throw new Error(path + ' wrong file format');
+    }
+
+    var u, e;
+    var obj = {};
+    for (u in json) {
+      for (e in json[u].endpoints.mainextension) {
+        obj[e] = json[u].name;
+      }
+      for (e in json[u].endpoints.extension) {
+        obj[e] = json[u].name;
+      }
+    }
+    proxyLogic.setStaticDataExtens(obj);
+
+    logger.info(IDLOG, 'extension names configuration done by ' + path);
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Reads the asterisk objects.
  *
  * @method configAstObjects
@@ -646,4 +685,5 @@ exports.configAstCodes = configAstCodes;
 exports.configSipWebrtc = configSipWebrtc;
 exports.getSipWebrtcConf = getSipWebrtcConf;
 exports.configAstObjects = configAstObjects;
+exports.configExtenNames = configExtenNames;
 exports.configRemoteSitesPrefixes = configRemoteSitesPrefixes;
