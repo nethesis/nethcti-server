@@ -582,7 +582,7 @@ function getAllContactsStartsWith(term, username, view, offset, limit, cb) {
 
     getAllContacts(
       ctiPbBounds,
-      pbBounds, [term, term, username, term, term],
+      pbBounds, [username, term, term, term, term],
       view,
       offset, limit,
       function(err, res) {
