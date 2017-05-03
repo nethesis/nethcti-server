@@ -48,6 +48,9 @@ rm -rf %{buildroot}
 (cd root; find . -depth -print | cpio -dump %{buildroot})
 %{genfilelist} %{buildroot} \
 --file /usr/lib/node/nethcti-server/scripts/pam-authenticate.pl 'attr(0550,asterisk,asterisk)' \
+--file /etc/nethcti/ast_objects.json 'attr(0600,asterisk,asterisk)' \
+--file /etc/nethcti/users.json 'attr(0600,asterisk,asterisk)' \
+--file /etc/nethcti/profiles.json 'attr(0600,asterisk,asterisk)' \
 --dir /var/lib/nethserver/nethcti/static 'attr(0775,asterisk,asterisk)' \
 --dir /usr/lib/node/nethcti-server/plugins/com_static_http/static 'attr(0775,asterisk,asterisk)' \
 --dir /etc/nethcti/dbstatic.d 'attr(0775,asterisk,asterisk)' \
@@ -58,6 +61,10 @@ rm -rf %{buildroot}
 
 %files -f %{name}-%{version}-filelist
 %defattr(-,root,root,-)
+%config(noreplace) /etc/nethcti/ast_objects.json
+%config(noreplace) /etc/nethcti/users.json
+%config(noreplace) /etc/nethcti/profiles.json
+
 
 %doc
 %dir %{_nseventsdir}/%{name}-update
