@@ -432,6 +432,15 @@ var extensions = {};
 var conferences = {};
 
 /**
+ * Extensions data read from JSON configuration file.
+ *
+ * @property staticDataExtens
+ * @type object
+ * @private
+ */
+var staticDataExtens = {};
+
+/**
  * Trunks data read from JSON configuration file.
  *
  * @property staticDataTrunks
@@ -937,6 +946,21 @@ function setStaticDataQueues(obj) {
 function setStaticDataTrunks(obj) {
   try {
     staticDataTrunks = obj;
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Set the extension names read from JSON configuration file.
+ *
+ * @method setStaticDataExtens
+ * @param {object} obj The extension names associations
+ * @static
+ */
+function setStaticDataExtens(obj) {
+  try {
+    staticDataExtens = obj;
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
@@ -1649,7 +1673,7 @@ function addQueueMemberLoggedIn(data, queueId) {
 
     // create new queue member object
     var member = new QueueMember(data.member, queueId, data.paused, true);
-    member.setName(data.name);
+    member.setName(extensions[data.member].getName());
     member.setType(data.type);
     member.setCallsTakenCount(data.callsTakenCount);
     member.setLastCallTimestamp(data.lastCallTimestamp);
@@ -2582,7 +2606,7 @@ function extPjsipDetails(err, resp) {
     // set the extension information
     extensions[resp.exten].setIp(resp.ip);
     extensions[resp.exten].setPort(resp.port);
-    extensions[resp.exten].setName(resp.name);
+    extensions[resp.exten].setName(staticDataExtens[resp.exten]);
     extensions[resp.exten].setContext(resp.context);
     extensions[resp.exten].setSipUserAgent(resp.sipuseragent);
     logger.info(IDLOG, 'set pjsip details for ext "' + resp.exten + '"');
@@ -7720,6 +7744,7 @@ exports.EVT_PARKING_CHANGED = EVT_PARKING_CHANGED;
 exports.setAsteriskPresence = setAsteriskPresence;
 exports.setStaticDataTrunks = setStaticDataTrunks;
 exports.setStaticDataQueues = setStaticDataQueues;
+exports.setStaticDataExtens = setStaticDataExtens;
 exports.unmuteUserMeetmeConf = unmuteUserMeetmeConf;
 exports.hangupUserMeetmeConf = hangupUserMeetmeConf;
 exports.evtAddMeetmeUserConf = evtAddMeetmeUserConf;
