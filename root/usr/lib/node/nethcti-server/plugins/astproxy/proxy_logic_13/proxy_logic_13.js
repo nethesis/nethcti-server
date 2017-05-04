@@ -1642,7 +1642,8 @@ function addQueueMemberLoggedOut(memberId, queueId) {
 }
 
 /**
- * Add a member to the queue with logged status set to in.
+ * Add a member to the queue with logged status set to "in". It adds the
+ * member only if it has been declared as dynamic member of the queue.
  *
  * @method addQueueMemberLoggedIn
  * @param {object} data
@@ -1671,20 +1672,25 @@ function addQueueMemberLoggedIn(data, queueId) {
       return;
     }
 
-    // create new queue member object
-    var member = new QueueMember(data.member, queueId, data.paused, true);
-    member.setName(extensions[data.member].getName());
-    member.setType(data.type);
-    member.setCallsTakenCount(data.callsTakenCount);
-    member.setLastCallTimestamp(data.lastCallTimestamp);
+    // add member only if it has been specified as dynamic member of the queue
+    if (staticDataQueues[queueId] &&
+      staticDataQueues[queueId].dynmembers &&
+      staticDataQueues[queueId].dynmembers.indexOf(data.member) !== -1) {
 
-    // add the member to the queue
-    queues[queueId].addMember(member);
-    logger.info(IDLOG, 'added member ' + member.getMember() + ' to the queue ' + queueId);
+      // create new queue member object
+      var member = new QueueMember(data.member, queueId, data.paused, true);
+      member.setName(extensions[data.member].getName());
+      member.setType(data.type);
+      member.setCallsTakenCount(data.callsTakenCount);
+      member.setLastCallTimestamp(data.lastCallTimestamp);
 
-    // set the last pause data to the member
-    updateQueueMemberLastPauseData(member.getName(), data.member, queueId);
+      // add the member to the queue
+      queues[queueId].addMember(member);
+      logger.info(IDLOG, 'added member ' + member.getMember() + ' to the queue ' + queueId);
 
+      // set the last pause data to the member
+      updateQueueMemberLastPauseData(member.getName(), data.member, queueId);
+    }
   } catch (error) {
     logger.error(IDLOG, error.stack);
   }
