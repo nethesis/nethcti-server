@@ -5017,31 +5017,26 @@ function pickupParking(parking, destType, destId, extForCtx, cb) {
  * Pickup a conversation.
  *
  * @method pickupConversation
- * @param {string}   endpointType The type of the endpoint (e.g. extension, queue, parking, trunk...)
- * @param {string}   endpointId   The endpoint identifier (e.g. the extension number)
- * @param {string}   convid       The conversation identifier
- * @param {string}   destType     The endpoint type that pickup the conversation
- * @param {string}   destId       The endpoint identifier that pickup the conversation
- * @param {string}   extForCtx    The extension identifier used to get the context
- * @param {function} cb           The callback function
+ * @param {string}   endpointId The endpoint identifier (e.g. the extension number)
+ * @param {string}   convid     The conversation identifier
+ * @param {string}   destId     The endpoint identifier that pickup the conversation
+ * @param {string}   extForCtx  The extension identifier used to get the context
+ * @param {function} cb         The callback function
  */
-function pickupConversation(endpointType, endpointId, convid, destType, destId, extForCtx, cb) {
+function pickupConversation(endpointId, convid, destId, extForCtx, cb) {
   try {
     // check parameters
     if (typeof convid !== 'string' ||
       typeof cb !== 'function' ||
       typeof destId !== 'string' ||
-      typeof destType !== 'string' ||
       typeof extForCtx !== 'string' ||
-      typeof endpointId !== 'string' ||
-      typeof endpointType !== 'string') {
+      typeof endpointId !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // check the endpoint existence
-    if (endpointType === 'extension' && extensions[endpointId] &&
-      destType === 'extension' && extensions[destId]) {
+    if (extensions[endpointId] && extensions[destId]) {
 
       var chToRedirect;
       var convs = extensions[endpointId].getAllConversations();
@@ -5066,7 +5061,7 @@ function pickupConversation(endpointType, endpointId, convid, destType, destId, 
       if (chToRedirect !== undefined) {
 
         // the pickup operation is made by redirect operation
-        logger.info(IDLOG, 'pickup from ' + destType + ' ' + destId + ' of the channel ' + chToRedirect + ' of ' + endpointType + ' ' + endpointId);
+        logger.info(IDLOG, 'pickup from "' + destId + '" of the channel ' + chToRedirect + ' of "' + endpointId + '"');
         astProxy.doCmd({
           command: 'redirectChannel',
           context: ctx,
@@ -5078,7 +5073,7 @@ function pickupConversation(endpointType, endpointId, convid, destType, destId, 
         });
 
       } else {
-        var str = 'pickup conversation of ' + endpointType + ' ' + endpointId + ' from ' + destType + ' ' + destId;
+        var str = 'pickup conversation of "' + endpointId + '" from "' + destId + '"';
         logger.error(IDLOG, str);
         cb(str);
       }
