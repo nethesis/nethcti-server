@@ -1642,8 +1642,9 @@ function addQueueMemberLoggedOut(memberId, queueId) {
 }
 
 /**
- * Add a member to the queue with logged status set to "in". It adds the
- * member only if it has been declared as dynamic member of the queue.
+ * Add a member to the queue with logged status set to "in". If the member
+ * is of dynamic type, it will be added only if it has been declared as
+ * dynamic member of the queue.
  *
  * @method addQueueMemberLoggedIn
  * @param {object} data
@@ -1672,10 +1673,14 @@ function addQueueMemberLoggedIn(data, queueId) {
       return;
     }
 
-    // add member only if it has been specified as dynamic member of the queue
-    if (staticDataQueues[queueId] &&
-      staticDataQueues[queueId].dynmembers &&
-      staticDataQueues[queueId].dynmembers.indexOf(data.member) !== -1) {
+    // add member only if it has been specified as dynamic member of the queue or it is static
+    if (data.type === QUEUE_MEMBER_TYPES_ENUM.STATIC ||
+      (
+        staticDataQueues[queueId] &&
+        staticDataQueues[queueId].dynmembers &&
+        staticDataQueues[queueId].dynmembers.indexOf(data.member) !== -1
+      )
+    ) {
 
       // create new queue member object
       var member = new QueueMember(data.member, queueId, data.paused, true);
