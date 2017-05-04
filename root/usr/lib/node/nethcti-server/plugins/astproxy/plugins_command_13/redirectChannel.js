@@ -79,7 +79,6 @@ var IDLOG = '[redirectChannel]';
           // add association ActionID-callback
           map[act.ActionID] = cb;
 
-          console.log(act);
           // send action to asterisk
           am.send(act);
 
