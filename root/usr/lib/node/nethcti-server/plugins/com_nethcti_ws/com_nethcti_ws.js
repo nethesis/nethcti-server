@@ -20,6 +20,23 @@ var EventEmitter = require('events').EventEmitter;
 /**
  * Emitted to a websocket client connection on extension update.
  *
+ * Example:
+ *
+ *                         {
+        "ip": "",
+        "cf": "",
+        "dnd": false,
+        "cfVm": "",
+        "port": "",
+        "name": "user",
+        "exten": "602",
+        "status": "offline",
+        "chanType": "sip",
+        "sipuseragent": "",
+        "conversations": {}
+        "conversations": { Conversation.{{#crossLink "Conversation/toJSON"}}{{/crossLink}}() }
+     }
+ *
  * @event extenUpdate
  * @param {object} exten The data about the extension
  *
@@ -34,55 +51,119 @@ var EventEmitter = require('events').EventEmitter;
 var EVT_EXTEN_UPDATE = 'extenUpdate';
 
 /**
- * Emitted to a websocket client connection to answer an incoming call to webrtc extension.
+ * Emitted to a websocket client connection on queue update.
  *
- * @event answerWebrtc
- * @param {string} exten The WebRTC extension identifier
+ * Example:
+ *
+ *                         {
+        "name":                   "Coda401",
+        "queue":                  "401",
+        "members":                { QueueMember.{{#crossLink "QueueMember/toJSON"}}{{/crossLink}}() } // the keys is the extension numbers
+        "avgHoldTime":            "37"
+        "avgTalkTime":            "590",
+        "waitingCallers":         { QueueWaitingCaller.{{#crossLink "QueueWaitingCaller/toJSON"}}{{/crossLink}}() } // the keys is the channel identifier
+        "abandonedCallsCount":    "26",
+        "completedCallsCount":    "11"
+        "serviceLevelTimePeriod": "60"
+        "serviceLevelPercentage": "100.0"
+     }
+ *
+ * @event queueUpdate
+ * @param {object} queue The data about the queue
  *
  */
 /**
- * The name of the event for answer webrtc extension
+ * The name of the queue update event.
  *
- * @property EVT_ANSWER_WEBRTC
+ * @property EVT_QUEUE_UPDATE
  * @type string
- * @default "answerWebrtc"
+ * @default "queueUpdate"
  */
+var EVT_QUEUE_UPDATE = 'queueUpdate';
+
+/**
+ * Emitted to a websocket client connection on queue member update.
+ *
+ * Example:
+ *
+ *                         {
+        "type":                   "static",
+        "name":                   "Name",
+        "queue":                  "401",
+        "member":                 "214",
+        "paused":                 true,          // the paused status
+        "loggedIn":               true,          // if the member is logged in or not
+        "callsTakenCount":        0,             // the number of taken calls
+        "lastCallTimestamp":      1365590191     // the timestamp of the last taken call
+        "lastPausedInReason":     "some reason"  // the reason description of the last started pause
+        "lastPausedInTimestamp":  1365591191     // the timestamp of the last started pause
+        "lastPausedOutTimestamp": 1365594191     // the timestamp of the last ended pause
+     }
+ *
+ * @event queueMemberUpdate
+ * @param {object} queueMember The data about the queue member
+ *
+ */
+/**
+ * The name of the queue member update event.
+ *
+ * @property EVT_QUEUE_MEMBER_UPDATE
+ * @type string
+ * @default "queueMemberUpdate"
+ */
+var EVT_QUEUE_MEMBER_UPDATE = 'queueMemberUpdate';
+
+//  /**
+//   * Emitted to a websocket client connection to answer an incoming call to webrtc extension.
+//   *
+//   * @event answerWebrtc
+//   * @param {string} exten The WebRTC extension identifier
+//   *
+//   */
+//  /**
+//   * The name of the event for answer webrtc extension
+//   *
+//   * @property EVT_ANSWER_WEBRTC
+//   * @type string
+//   * @default "answerWebrtc"
+//   */
 var EVT_ANSWER_WEBRTC = 'answerWebrtc';
 
-/**
- * Emitted to a websocket client connection to call a number using webrtc extension.
- *
- * @event callWebrtc
- * @param {string} to The destination number to be called using WebRTC extension
- *
- */
-/**
- * The name of the event to call number using WebRTC extension
- *
- * @property EVT_CALL_WEBRTC
- * @type string
- * @default "callWebrtc"
- */
+//  /**
+//   * Emitted to a websocket client connection to call a number using webrtc extension.
+//   *
+//   * @event callWebrtc
+//   * @param {string} to The destination number to be called using WebRTC extension
+//   *
+//   */
+//  /**
+//   * The name of the event to call number using WebRTC extension
+//   *
+//   * @property EVT_CALL_WEBRTC
+//   * @type string
+//   */
 var EVT_CALL_WEBRTC = 'callWebrtc';
 
-/**
- * Emitted to a websocket client connection on user endpoint presence update.
- *
- * @event endpointPresenceUpdate
- * @param {object} data The data about the user endpoint presence
- *
- */
-/**
- * The name of the endpoint presence update event.
- *
- * @property EVT_ENDPOINT_PRESENCE_UPDATE
- * @type string
- * @default "endpointPresenceUpdate"
- */
+//  /**
+//   * Emitted to a websocket client connection on user endpoint presence update.
+//   *
+//   * @event endpointPresenceUpdate
+//   * @param {object} data The data about the user endpoint presence
+//   *
+//   */
+//  /**
+//   * The name of the endpoint presence update event.
+//   *
+//   * @property EVT_ENDPOINT_PRESENCE_UPDATE
+//   * @type string
+//   * @default "endpointPresenceUpdate"
+//   */
 var EVT_ENDPOINT_PRESENCE_UPDATE = 'endpointPresenceUpdate';
 
 /**
  * Emitted to a websocket client connection on a user presence update.
+ *
+ *     { "username": "ale", "presence": "dnd" }
  *
  * @event userPresenceUpdate
  * @param {object} data The data about the user presence update
@@ -812,11 +893,11 @@ function extenHangup(data) {
 function queueMemberChanged(member) {
   try {
     logger.info(IDLOG, 'received event queueMemberChanged for member ' + member.getMember() + ' of queue ' + member.getQueue());
-    logger.info(IDLOG, 'emit event queueMemberUpdate for member ' + member.getMember() + ' of queue ' + member.getQueue() + ' to websockets');
+    logger.info(IDLOG, 'emit event ' + EVT_QUEUE_MEMBER_UPDATE + ' for member ' + member.getMember() + ' of queue ' + member.getQueue() + ' to websockets');
     // emits the event with clear numbers to all users with privacy disabled
-    wsServer.sockets.in(WS_ROOM.QUEUES_AST_EVT_CLEAR).emit('queueMemberUpdate', member.toJSON());
+    wsServer.sockets.in(WS_ROOM.QUEUES_AST_EVT_CLEAR).emit(EVT_QUEUE_MEMBER_UPDATE, member.toJSON());
     // emits the event with hide numbers to all users with privacy enabled
-    wsServer.sockets.in(WS_ROOM.QUEUES_AST_EVT_PRIVACY).emit('queueMemberUpdate', member.toJSON(privacyStrReplace));
+    wsServer.sockets.in(WS_ROOM.QUEUES_AST_EVT_PRIVACY).emit(EVT_QUEUE_MEMBER_UPDATE, member.toJSON(privacyStrReplace));
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
@@ -1123,11 +1204,11 @@ function extenDialing(data) {
 function queueChanged(queue) {
   try {
     logger.info(IDLOG, 'received event queueChanged for queue ' + queue.getQueue());
-    logger.info(IDLOG, 'emit event queueUpdate for queue ' + queue.getQueue() + ' to websockets');
+    logger.info(IDLOG, 'emit event ' + EVT_QUEUE_UPDATE + ' for queue ' + queue.getQueue() + ' to websockets');
     // emits the event with clear numbers to all users with privacy disabled
-    wsServer.sockets.in(WS_ROOM.QUEUES_AST_EVT_CLEAR).emit('queueUpdate', queue.toJSON());
+    wsServer.sockets.in(WS_ROOM.QUEUES_AST_EVT_CLEAR).emit(EVT_QUEUE_UPDATE, queue.toJSON());
     // emits the event with hide numbers to all users with privacy enabled
-    wsServer.sockets.in(WS_ROOM.QUEUES_AST_EVT_PRIVACY).emit('queueUpdate', queue.toJSON(privacyStrReplace));
+    wsServer.sockets.in(WS_ROOM.QUEUES_AST_EVT_PRIVACY).emit(EVT_QUEUE_UPDATE, queue.toJSON(privacyStrReplace));
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
