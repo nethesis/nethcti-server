@@ -33,7 +33,6 @@ var EventEmitter = require('events').EventEmitter;
         "status": "offline",
         "chanType": "sip",
         "sipuseragent": "",
-        "conversations": {}
         "conversations": { Conversation.{{#crossLink "Conversation/toJSON"}}{{/crossLink}}() }
      }
  *

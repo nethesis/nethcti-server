@@ -355,14 +355,14 @@ exports.Conversation = function(ownerId, sourceChan, destChan, queue) {
    *     {
    *         id:              "SIP/214-000002f4>SIP/209-000002f5",
    *         owner:           "214",
-   *         chDest:          Channel.toJSON(),                    // the source channel of the call
-   *         queueId:         "401",                               // the queue identifier if the conversation has gone through a queue
-   *         chSource:        Channel.toJSON(),                    // the destination channel of the call
+   *         chDest:          { Channel.{{#crossLink "Channel/toJSON"}}{{/crossLink}}() }, // the source channel of the call
+   *         queueId:         "401",                // the queue identifier if the conversation has gone through a queue
+   *         chSource:        { Channel.{{#crossLink "Channel/toJSON"}}{{/crossLink}}() }, // the destination channel of the call
    *         duration:        26,
-   *         recording:       "false",                             // it's "true" or "mute" if the conversation is recording, "false" otherwise
+   *         recording:       "false",              // it's "true" or "mute" if the conversation is recording, "false" otherwise
    *         direction:       "in",
-   *         inConference:    true,                               // if the conversation involves a meetme conference
-   *         throughQueue:    true,                               // if the call has gone through a queue
+   *         inConference:    true,                 // if the conversation involves a meetme conference
+   *         throughQueue:    true,                 // if the call has gone through a queue
    *         counterpartNum:  "209",
    *         counterpartName: "user"
    *     }

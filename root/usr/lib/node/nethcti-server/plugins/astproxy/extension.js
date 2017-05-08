@@ -488,7 +488,7 @@ exports.Extension = function(ext, chType) {
    *         context:      "from-internal",                // the context
    *         useWebsocket: false,                          // if the extension use websocket
    *         sipuseragent: "Twinkle/1.4.2",
-   *         conversations: { Conversation.toJSON(), ... } // the keys is the conversation identifiers
+   *         conversations: { Conversation.{{#crossLink "Conversation/toJSON"}}{{/crossLink}}() } // the keys is the conversation identifiers
    *     }
    *
    * @method toJSON
