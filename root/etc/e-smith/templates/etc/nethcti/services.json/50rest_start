@@ -25,3 +25,7 @@
       "port": "50005",
       "address": "localhost"
     \},
+    "dbconn": \{
+      "port": "50006",
+      "address": "localhost"
+    \},

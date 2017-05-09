@@ -299,6 +299,76 @@ function start() {
 }
 
 /**
+ * Test a connection with a database.
+ *
+ * @method testConnection
+ * @param {string} host The host to connect to.
+ * @param {string} port The port of the database service.
+ * @param {string} type The DBMS type (sql, postgres, mssql, ...).
+ * @param {string} user The username for the db connection.
+ * @param {string} pass The password for the db connection.
+ * @param {string} name The name of the database.
+ * @param {function} cb The callback function.
+ */
+function testConnection(host, port, type, user, pass, name, cb) {
+  try {
+    if (type === 'mysql') {
+      sequelize = new Sequelize(name, user, pass, { host: host, dialect: 'mysql' });
+
+      sequelize.authenticate().then(function(err) {
+        cb(err);
+      })
+      .catch(function (err) {
+        cb(err);
+      });
+    }
+    else if (isMssqlType(type)) {
+      var connection = new mssql.Connection({
+        user: user,
+        password: pass,
+        server: host,
+        port: port,
+        database: name,
+        options: {
+          encrypt: false,
+          tdsVersion: getMssqlTdsVersion(type)
+        }
+      }, function(err) {
+        var request = new mssql.Request(connection);
+        request.query('select 1 as number', function(err, recordset) {
+          connection.close();
+          cb(err);
+        });
+      });
+    }
+    else if (type === 'postgres') {
+      var client = new pg.Client({
+        user: user,
+        password: pass,
+        database: name,
+        host: host,
+        port: port
+      });
+
+      client.connect(function(err) {
+        if (!err) {
+          client.query('SELECT $1::int AS number', ['1'], function (err) {
+            cb(err);
+          });
+        } else {
+          cb(err);
+        }
+      });
+    }
+    else {
+      cb('dbms not supported');
+    }
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Load all sequelize models that are present in the default
  * directory as a file, one for each model. This method must
  * be called after _initConnections_ method.
@@ -552,6 +622,7 @@ exports.Sequelize = Sequelize;
 exports.JSON_KEYS = JSON_KEYS;
 exports.setLogger = setLogger;
 exports.isMssqlType = isMssqlType;
+exports.testConnection = testConnection;
 exports.configDbStatic = configDbStatic;
 exports.configDbDynamic = configDbDynamic;
 exports.incNumExecQueries = incNumExecQueries;
