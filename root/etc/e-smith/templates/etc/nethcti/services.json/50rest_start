@@ -29,3 +29,8 @@
       "port": "50006",
       "address": "localhost"
     \},
+    "customer_card": \{
+      "port": "50007",
+      "address": "localhost",
+      "custom_templates_customercards": "/var/lib/nethserver/nethcti/templates/customer_card"
+    \},

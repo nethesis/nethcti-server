@@ -90,7 +90,7 @@ function config(path) {
 
     // check file presence
     if (!fs.existsSync(path)) {
-      logger.warn(IDLOG, path + ' doesn\'t exist');
+      logger.warn(IDLOG, path + ' does not exist');
       return;
     }
 
