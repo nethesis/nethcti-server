@@ -827,7 +827,7 @@ function authByPam(accessKeyId, password, cb) {
             throw new Error('wrong parameters');
         }
 
-        var cmd = 'echo -e "' + accessKeyId + '\n' + password + '" | /usr/lib/node/nethcti-server/scripts/pam-authenticate.pl';
+        var cmd = 'echo -e \'' + accessKeyId + '\n' + password + '\' | /usr/lib/node/nethcti-server/scripts/pam-authenticate.pl';
         childProcess.exec(cmd, function (error, stdout, stderr) {
             if (error) {
                 logger.warn('pam authentication failed for user "' + accessKeyId + '"');
