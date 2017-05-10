@@ -90,3 +90,25 @@ CREATE TABLE IF NOT EXISTS `user_settings` (
   UNIQUE KEY `username_key_name` (`username`,`key_name`),
   KEY `index_username` (`username`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `user_dbconn` (
+  `id` int(11) NOT NULL auto_increment,
+  `host` varchar(128) NOT NULL,
+  `port` int(11) NOT NULL,
+  `type` varchar(32) NOT NULL,
+  `user` varchar(64) NOT NULL,
+  `pass` varchar(64) NOT NULL,
+  `name` varchar(64) NOT NULL,
+  `enabled` tinyint(1) NOT NULL DEFAULT '1',
+  `creation` datetime NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+CREATE TABLE IF NOT EXISTS `customer_card` (
+  `id` int(11) NOT NULL auto_increment,
+  `creation` datetime NOT NULL,
+  `query` text,
+  `template` varchar(128) DEFAULT NULL,
+  `dbconn_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
