@@ -826,18 +826,16 @@ function authByPam(accessKeyId, password, cb) {
 
             throw new Error('wrong parameters');
         }
-
-        var cmd = 'echo -e \'' + accessKeyId + '\n' + password + '\' | /usr/lib/node/nethcti-server/scripts/pam-authenticate.pl';
-        childProcess.exec(cmd, function (error, stdout, stderr) {
-            if (error) {
-                logger.warn('pam authentication failed for user "' + accessKeyId + '"');
-                cb(error);
+        var child = childProcess.spawn('/usr/lib/node/nethcti-server/scripts/pam-authenticate.pl');
+        child.stdin.write(accessKeyId + '\n' + password);
+        child.stdin.end();
+        child.on('close', function(code, signal) {
+            if (code !== 0) {
+                cb({ exitCode: code });
             } else {
-                logger.info(IDLOG, 'user "' + accessKeyId + '" has been authenticated successfully with pam');
-                cb(null);
+                cb();
             }
         });
-
     } catch (err) {
         logger.error(IDLOG, err.stack);
         cb('pam authentication failed for user "' + accessKeyId + '"');
