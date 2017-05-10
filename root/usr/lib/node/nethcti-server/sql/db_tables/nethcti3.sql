@@ -101,7 +101,8 @@ CREATE TABLE IF NOT EXISTS `user_dbconn` (
   `name` varchar(64) NOT NULL,
   `enabled` tinyint(1) NOT NULL DEFAULT '1',
   `creation` datetime NOT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `same_resource` (`host`,`port`,`user`,`name`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS `customer_card` (
