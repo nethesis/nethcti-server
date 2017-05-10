@@ -602,7 +602,7 @@ function authByPam(username, password, cb) {
       throw new Error('wrong parameters');
     }
     var child = childProcess.spawn(PAM_SCRIPT_PATH);
-    child.stdin.write(accessKeyId + '\n' + password);
+    child.stdin.write(username + '\n' + password);
     child.stdin.end();
     child.on('close', function(code, signal) {
       if (code !== 0) {
