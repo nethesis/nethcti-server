@@ -601,14 +601,16 @@ function authByPam(username, password, cb) {
 
       throw new Error('wrong parameters');
     }
-    var cmd = ['echo -e "', username, '\n', password, '" | ', PAM_SCRIPT_PATH].join('');
-    childProcess.exec(cmd, function(error, stdout, stderr) {
-      if (error) {
-        logger.warn('pam authentication failed for user "' + username + '"');
-        cb(error);
+    var child = childProcess.spawn(PAM_SCRIPT_PATH);
+    child.stdin.write(accessKeyId + '\n' + password);
+    child.stdin.end();
+    child.on('close', function(code, signal) {
+      if (code !== 0) {
+        cb({
+          exitCode: code
+        });
       } else {
-        logger.info(IDLOG, 'user "' + username + '" successfully authenticated with pam');
-        cb(null);
+        cb();
       }
     });
   } catch (err) {
