@@ -319,7 +319,7 @@ function config(path) {
  */
 function initFreepbxAdminAuthentication() {
   try {
-    var SECRET_FILE_PATH = '/var/lib/nethserver/secrets/nethvoice';
+    var SECRET_FILE_PATH = '/var/www/html/freepbx/wizard/scripts/custom.js';
 
     // get sha1 password of freepbx admin user from db
     compDbconn.getFpbxAdminSha1Pwd(function(err, resp) {
@@ -334,21 +334,31 @@ function initFreepbxAdminAuthentication() {
         }
 
         var sha1pwd = resp;
+        var secret = '';
 
         // get admin secret from file
         if (!fs.existsSync(SECRET_FILE_PATH)) {
           logger.warn(IDLOG, 'getting admin secret for authentication: ' + SECRET_FILE_PATH + ' does not exist');
           return;
         }
-        var secret = fs.readFileSync(SECRET_FILE_PATH, 'utf8');
-        secret = secret.replace(/\n$/, '');
+        var data = fs.readFileSync(SECRET_FILE_PATH, 'utf8');
+        data = data.split('\n');
+        var i;
+        for (i = 0; i < data.length; i++) {
+          if (data[i].indexOf('SECRET_KEY:') !== -1) {
+            data = data[i].trim();
+            data = data.replace(/\s/g, '');
+            data = data.split(':')[1];
+            secret = data.substring(1, data.length - 1);
+          }
+        }
 
         // calculate the secret key
         fpbxAdminSecretKey = calculateAdminSecretKey('admin', sha1pwd, secret);
         logger.info(IDLOG, 'initialization of freepbx admin user authentication done');
 
-      } catch (err) {
-        logger.error(IDLOG, err.stack);
+      } catch (error) {
+        logger.error(IDLOG, error.stack);
         return false;
       }
     });
@@ -436,7 +446,7 @@ function calculateAdminSecretKey(username, sha1Pwd, secret) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     var tohash = username + sha1Pwd + secret;
-    return crypto.createHash('sha1').update(tohash).digest('hex')
+    return crypto.createHash('sha1').update(tohash).digest('hex');
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
