@@ -13,10 +13,27 @@ foreach (array('history_call','cel','voicemail','queue_log') as $dbobj) {
     $asteriskcdrdb[$dbobj]['dbname'] = $amp_conf['CDRDBNAME'];
 }
 
-$res = file_put_contents('/etc/nethcti/dbstatic.d/asteriskcdrdb.json',json_encode($asteriskcdrdb, JSON_PRETTY_PRINT));
+$res1 = file_put_contents('/etc/nethcti/dbstatic.d/'.$amp_conf['CDRDBNAME'].'.json',json_encode($asteriskcdrdb, JSON_PRETTY_PRINT));
 
-if ($res === FALSE) {
+$asterisk = array();
+foreach (array('ampusers') as $dbobj) {
+    $asterisk[$dbobj] = array();
+    $asterisk[$dbobj]['dbhost'] = 'localhost';
+    $asterisk[$dbobj]['dbport'] = '/var/lib/mysql/mysql.sock';
+    $asterisk[$dbobj]['dbtype'] = $amp_conf['AMPDBENGINE'];
+    $asterisk[$dbobj]['dbuser'] = $amp_conf['AMPDBUSER'];
+    $asterisk[$dbobj]['dbpassword'] = $amp_conf['AMPDBPASS'];
+    $asterisk[$dbobj]['dbname'] = $amp_conf['AMPDBNAME'];
+}
+
+$res2 = file_put_contents('/etc/nethcti/dbstatic.d/'.$amp_conf['AMPDBNAME'].'.json',json_encode($asterisk, JSON_PRETTY_PRINT));
+
+
+if ($res1 === FALSE ) {
     throw new Exception('fail to write asteriskcdrdb config');
 }
 
+if ($res2 === FALSE ) {
+    throw new Exception('fail to write asterisk config');
+}
 exit(0);

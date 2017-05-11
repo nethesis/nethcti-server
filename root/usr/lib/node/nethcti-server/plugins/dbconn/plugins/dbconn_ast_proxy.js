@@ -94,6 +94,47 @@ function setLogger(log) {
 }
 
 /**
+ * Return the sha1 password of the FreePBX admin user or
+ * boolean false if it is not found.
+ *
+ * @method getFpbxAdminSha1Pwd
+ * @param {function} cb The callback function
+ */
+function getFpbxAdminSha1Pwd(cb) {
+  try {
+    if (typeof cb !== 'function') {
+      throw new Error('wrong parameter');
+    }
+    var user = 'admin';
+    compDbconnMain.models[compDbconnMain.JSON_KEYS.AMPUSERS].find({
+      where: ['username=?', user ],
+      attributes: ['password_sha1']
+
+    }).then(function(result) {
+      // extract result to return in the callback function
+      if (result) {
+        logger.info(IDLOG, 'found sha1 password of freepbx admin user');
+        cb(null, result.password_sha1);
+
+      } else {
+        logger.info(IDLOG, 'no sha1 password of freepbx admin user has been found');
+        cb(null, false);
+      }
+
+    }, function(error) { // manage the error
+      logger.error(IDLOG, 'getting sha1 password of freepbx admin user');
+      cb(error.toString());
+    });
+
+    compDbconnMain.incNumExecQueries();
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+/**
  * Get call info of speciefied uniqueid. It searches the results into the
  * database specified into the key names of one of the _/etc/nethcti/dbstatic.json_
  * or _/etc/nethcti/dbdynamic.json_ files.
@@ -1035,6 +1076,7 @@ apiList.getCallTrace = getCallTrace;
 apiList.getQueuesStats = getQueuesStats;
 apiList.getAgentsStats = getAgentsStats;
 apiList.getQueueRecall = getQueueRecall;
+apiList.getFpbxAdminSha1Pwd = getFpbxAdminSha1Pwd;
 apiList.getQueueRecallInfo = getQueueRecallInfo;
 apiList.deleteCallRecording = deleteCallRecording;
 apiList.getCallRecordingFileData = getCallRecordingFileData;
