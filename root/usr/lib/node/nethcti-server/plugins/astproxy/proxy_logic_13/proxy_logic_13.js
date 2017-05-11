@@ -1621,21 +1621,22 @@ function addQueueMemberLoggedOut(memberId, queueId) {
       return;
     }
 
-    // create new queue member object
-    // false value of the third parameter is used as "paused" parameter because asterisk does not
-    // provides this information. When the queue member logged in the queue a new "QueueMemberAdded"
-    // event is generated from the asterisk and so the member is updated with all the updated values
-    var member = new QueueMember(memberId, queueId, false, false);
-    member.setType(QUEUE_MEMBER_TYPES_ENUM.DYNAMIC);
-    // set the member name
     if (extensions[memberId]) {
-      member.setName(extensions[memberId].getName());
+      // create new queue member object
+      // false value of the third parameter is used as "paused" parameter because asterisk does not
+      // provides this information. When the queue member logged in the queue a new "QueueMemberAdded"
+      // event is generated from the asterisk and so the member is updated with all the updated values
+      var member = new QueueMember(memberId, queueId, false, false);
+      member.setType(QUEUE_MEMBER_TYPES_ENUM.DYNAMIC);
+      // set the member name
+      if (extensions[memberId]) {
+        member.setName(extensions[memberId].getName());
+      }
+
+      // add the member to the queue
+      queues[queueId].addMember(member);
+      logger.info(IDLOG, 'added logged off member ' + member.getMember() + ' to the queue ' + queueId);
     }
-
-    // add the member to the queue
-    queues[queueId].addMember(member);
-    logger.info(IDLOG, 'added logged off member ' + member.getMember() + ' to the queue ' + queueId);
-
   } catch (error) {
     logger.error(IDLOG, error.stack);
   }
@@ -1674,13 +1675,16 @@ function addQueueMemberLoggedIn(data, queueId) {
     }
 
     // add member only if it has been specified as dynamic member of the queue or it is static
-    if (data.type === QUEUE_MEMBER_TYPES_ENUM.STATIC ||
-      (
-        staticDataQueues[queueId] &&
-        staticDataQueues[queueId].dynmembers &&
-        staticDataQueues[queueId].dynmembers.indexOf(data.member) !== -1
-      )
-    ) {
+    if (extensions[data.member] &&
+          (
+            data.type === QUEUE_MEMBER_TYPES_ENUM.STATIC ||
+            (
+              staticDataQueues[queueId] &&
+              staticDataQueues[queueId].dynmembers &&
+              staticDataQueues[queueId].dynmembers.indexOf(data.member) !== -1
+            )
+          )
+       ) {
 
       // create new queue member object
       var member = new QueueMember(data.member, queueId, data.paused, true);
