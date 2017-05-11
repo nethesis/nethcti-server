@@ -99,7 +99,6 @@ CREATE TABLE IF NOT EXISTS `user_dbconn` (
   `user` varchar(64) NOT NULL,
   `pass` varchar(64) NOT NULL,
   `name` varchar(64) NOT NULL,
-  `enabled` tinyint(1) NOT NULL DEFAULT '1',
   `creation` datetime NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `same_resource` (`host`,`port`,`user`,`name`)
