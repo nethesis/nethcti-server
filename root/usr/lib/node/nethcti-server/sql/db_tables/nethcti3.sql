@@ -107,6 +107,7 @@ CREATE TABLE IF NOT EXISTS `user_dbconn` (
 
 CREATE TABLE IF NOT EXISTS `customer_card` (
   `id` int(11) NOT NULL auto_increment,
+  `name` varchar(128) NOT NULL,
   `creation` datetime NOT NULL,
   `query` text,
   `template` varchar(128) DEFAULT NULL,
