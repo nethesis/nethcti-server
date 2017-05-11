@@ -103,34 +103,34 @@ function setCompUtil(comp) {
 (function() {
   try {
     /**
-    * REST plugin that provides database connection functions through the following REST API:
-    *
-    * # POST requests
-    *
-    * 1. [`dbconn/test`](#testpost)
-    *
-    * ---
-    *
-    * ### <a id="testpost">**`dbconn/test`**</a>
-    *
-    * Test a connection to a database.
-    *
-    * Example of the body of the request:
-    *
-    *  {
-    *    "host":"localhost",
-    *    "port": "1433",
-    *    "type": "mssql:7_3_A",
-    *    "user": "testuser",
-    *    "pass": "testpass",
-    *    "name": "test"
-    *  }
-    *
-    * ---
-    *
-    * @class plugin_rest_dbconn
-    * @static
-    */
+     * REST plugin that provides database connection functions through the following REST API:
+     *
+     * # POST requests
+     *
+     * 1. [`dbconn/test`](#testpost)
+     *
+     * ---
+     *
+     * ### <a id="testpost">**`dbconn/test`**</a>
+     *
+     * Test a connection to a database.
+     *
+     * Example of the body of the request:
+     *
+     *  {
+     *    "host": "localhost",
+     *    "port": "1433",
+     *    "type": "mssql:7_3_A",
+     *    "user": "testuser",
+     *    "pass": "testpass",
+     *    "name": "test"
+     *  }
+     *
+     * ---
+     *
+     * @class plugin_rest_dbconn
+     * @static
+     */
     var dbconn = {
       // the REST api
       api: {
@@ -161,16 +161,28 @@ function setCompUtil(comp) {
        */
       test: function(req, res, next) {
         try {
-          var params = req.body;
+          if (typeof req.params.host !== 'string' ||
+            typeof req.params.port !== 'string' ||
+            typeof req.params.type !== 'string' ||
+            typeof req.params.user !== 'string' ||
+            typeof req.params.pass !== 'string' ||
+            typeof req.params.name !== 'string') {
 
-          compDbConn.testConnection(params.host, params.port, params.type,
-            params.user, params.pass, params.name, function(err) {
+            compUtil.net.sendHttp400(IDLOG, res);
+            return;
+          }
+
+          compDbConn.testConnection(req.params.host, req.params.port, req.params.type,
+            req.params.user, req.params.pass, req.params.name,
+            function(err) {
               if (err) {
+                logger.info(IDLOG, 'test db connection failed: ' + JSON.stringify(req.params));
                 res.send(503);
               } else {
+                logger.info(IDLOG, 'test db connection success: ' + JSON.stringify(req.params));
                 res.send(200);
               }
-          });
+            });
         } catch (err) {
           logger.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());

@@ -31,9 +31,13 @@ module.exports = function(options, imports, register) {
   });
 
   try {
-    authentication.setLogger(logger);
-    // authentication.configRemoteAuthentications('/etc/nethcti/remote_authentications.json');
-    authentication.config('/etc/nethcti/authentication.json');
+    imports.dbconn.on(imports.dbconn.EVT_READY, function() {
+      authentication.setLogger(logger);
+      authentication.setCompDbconn(imports.dbconn);
+      // authentication.configRemoteAuthentications('/etc/nethcti/remote_authentications.json');
+      authentication.config('/etc/nethcti/authentication.json');
+      authentication.initFreepbxAdminAuthentication();
+    });
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }

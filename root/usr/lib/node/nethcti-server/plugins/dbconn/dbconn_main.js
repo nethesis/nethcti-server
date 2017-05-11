@@ -96,6 +96,7 @@ var logSequelize = false;
 * @default {
     CEL:           "cel",
     POSTIT:        "postit",
+    AMPUSERS:      "ampusers",
     VOICEMAIL:     "voicemail",
     PHONEBOOK:     "phonebook",
     QUEUE_LOG:     "queue_log",
@@ -110,6 +111,7 @@ var logSequelize = false;
 var JSON_KEYS = {
   CEL: 'cel',
   POSTIT: 'postit',
+  AMPUSERS: 'ampusers',
   VOICEMAIL: 'voicemail',
   PHONEBOOK: 'phonebook',
   QUEUE_LOG: 'queue_log',
@@ -313,16 +315,20 @@ function start() {
 function testConnection(host, port, type, user, pass, name, cb) {
   try {
     if (type === 'mysql') {
-      sequelize = new Sequelize(name, user, pass, { host: host, dialect: 'mysql' });
+      var sequelize = new Sequelize(name, user, pass, {
+        host: host,
+        port: port,
+        dialect: 'mysql'
+      });
 
       sequelize.authenticate().then(function(err) {
-        cb(err);
-      })
-      .catch(function (err) {
-        cb(err);
-      });
-    }
-    else if (isMssqlType(type)) {
+          cb(err);
+        })
+        .catch(function(err) {
+          cb(err);
+        });
+
+    } else if (isMssqlType(type)) {
       var connection = new mssql.Connection({
         user: user,
         password: pass,
@@ -340,8 +346,8 @@ function testConnection(host, port, type, user, pass, name, cb) {
           cb(err);
         });
       });
-    }
-    else if (type === 'postgres') {
+
+    } else if (type === 'postgres') {
       var client = new pg.Client({
         user: user,
         password: pass,
@@ -352,15 +358,14 @@ function testConnection(host, port, type, user, pass, name, cb) {
 
       client.connect(function(err) {
         if (!err) {
-          client.query('SELECT $1::int AS number', ['1'], function (err) {
+          client.query('SELECT $1::int AS number', ['1'], function(err) {
             cb(err);
           });
         } else {
           cb(err);
         }
       });
-    }
-    else {
+    } else {
       cb('dbms not supported');
     }
   } catch (err) {

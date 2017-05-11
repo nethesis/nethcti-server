@@ -53,6 +53,15 @@ var IDLOG = '[authentication]';
 var emitter = new EventEmitter();
 
 /**
+ * The database component.
+ *
+ * @property compDbconn
+ * @type object
+ * @private
+ */
+var compDbconn;
+
+/**
  * The logger. It must have at least three methods: _info, warn and error._
  *
  * @property logger
@@ -84,6 +93,15 @@ var AUTH_TYPE = {
  * @private
  */
 var PAM_SCRIPT_PATH = path.join(process.cwd(), 'scripts/pam-authenticate.pl');
+
+/**
+ * The secret key of FreePBX admin user.
+ *
+ * @property fpbxAdminSecretKey
+ * @type string
+ * @private
+ */
+var fpbxAdminSecretKey;
 
 /**
  * Asterisk call without user authentication and permissions. It is disabled by default
@@ -173,6 +191,21 @@ function setLogger(log) {
     } else {
       throw new Error('wrong logger object');
     }
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Sets the database architect component.
+ *
+ * @method setCompDbconn
+ * @param {object} comp The database architect component.
+ */
+function setCompDbconn(comp) {
+  try {
+    compDbconn = comp;
+    logger.info(IDLOG, 'set database architect component');
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
@@ -280,6 +313,52 @@ function config(path) {
 }
 
 /**
+ * Initialize data used for freepbx admin authentication.
+ *
+ * @method initFreepbxAdminAuthentication
+ */
+function initFreepbxAdminAuthentication() {
+  try {
+    var SECRET_FILE_PATH = '/var/lib/nethserver/secrets/nethvoice';
+
+    // get sha1 password of freepbx admin user from db
+    compDbconn.getFpbxAdminSha1Pwd(function(err, resp) {
+      try {
+        if (err) {
+          logger.warn(IDLOG, 'getting sha1 password of freepbx admin user for authentication');
+          return;
+        }
+        if (resp === false) {
+          logger.warn(IDLOG, 'sha1 password of freepbx admin user for authentication not found');
+          return;
+        }
+
+        var sha1pwd = resp;
+
+        // get admin secret from file
+        if (!fs.existsSync(SECRET_FILE_PATH)) {
+          logger.warn(IDLOG, 'getting admin secret for authentication: ' + SECRET_FILE_PATH + ' does not exist');
+          return;
+        }
+        var secret = fs.readFileSync(SECRET_FILE_PATH, 'utf8');
+        secret = secret.replace(/\n$/, '');
+
+        // calculate the secret key
+        fpbxAdminSecretKey = calculateAdminSecretKey('admin', sha1pwd, secret);
+        logger.info(IDLOG, 'initialization of freepbx admin user authentication done');
+
+      } catch (err) {
+        logger.error(IDLOG, err.stack);
+        return false;
+      }
+    });
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+    return false;
+  }
+}
+
+/**
  * Checks if the unauthenticated asterisk call has been enabled by the JSON configuration file.
  *
  * @method isUnautheCallEnabled
@@ -334,6 +413,30 @@ function startIntervalRemoveExpiredTokens() {
         logger.error(IDLOG, err1.stack);
       }
     }, expires);
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Calculates the SHA1 secret key for freepbx admin user authentication.
+ *
+ * @method calculateAdminSecretKey
+ * @param {string} username The username
+ * @param {string} sha1Pwd The sha1 admin password
+ * @param {string} secret The admin secret
+ */
+function calculateAdminSecretKey(username, sha1Pwd, secret) {
+  try {
+    if (typeof username !== 'string' ||
+      typeof secret !== 'string' ||
+      typeof sha1Pwd !== 'string') {
+
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    var tohash = username + sha1Pwd + secret;
+    return crypto.createHash('sha1').update(tohash).digest('hex')
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
@@ -549,6 +652,30 @@ function authenticateRemoteSite(username, password, remoteIp, cb) {
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Authenticate the "admin" user of FreePBX.
+ *
+ * @method authenticateFreepbxAdmin
+ * @param {string} secretkey The secret key to be authenticated
+ * @return {boolean} True if the authentication was successful
+ */
+function authenticateFreepbxAdmin(secretkey) {
+  try {
+    if (typeof secretkey !== 'string') {
+      throw new Error('wrong parameter');
+    }
+
+    if (secretkey === fpbxAdminSecretKey) {
+      return true;
+    }
+    return false;
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+    return false;
   }
 }
 
@@ -837,6 +964,7 @@ exports.setLogger = setLogger;
 exports.verifyToken = verifyToken;
 exports.removeToken = removeToken;
 exports.authenticate = authenticate;
+exports.setCompDbconn = setCompDbconn;
 exports.EVT_COMP_READY = EVT_COMP_READY;
 exports.calculateToken = calculateToken;
 exports.getRemoteSiteName = getRemoteSiteName;
@@ -844,6 +972,8 @@ exports.updateTokenExpires = updateTokenExpires;
 exports.isUnautheCallEnabled = isUnautheCallEnabled;
 exports.authenticateRemoteSite = authenticateRemoteSite;
 exports.isAutoUpdateTokenExpires = isAutoUpdateTokenExpires;
+exports.authenticateFreepbxAdmin = authenticateFreepbxAdmin;
 exports.getTokenExpirationTimeout = getTokenExpirationTimeout;
 exports.configRemoteAuthentications = configRemoteAuthentications;
 exports.isRemoteSiteAlreadyLoggedIn = isRemoteSiteAlreadyLoggedIn;
+exports.initFreepbxAdminAuthentication = initFreepbxAdminAuthentication;

@@ -224,6 +224,43 @@ function start() {
           return;
         }
 
+        // #1 Check FreePBX "admin" user
+        //
+        // freepbx admin user is managed in a special way. If the user supply the headers "User: admin" and
+        // "Secretkey: 12345", the authentication is verified each time and he can use some rest api.
+        // "admin" user is FreePBX admin user
+        if (req.headers.user === 'admin' && req.headers.secretkey) {
+
+          if (compAuthentication.authenticateFreepbxAdmin(req.headers.secretkey) === true) {
+
+            // check if the url is one of the permitted urls for freepbx admin user
+            if (req.url === '/dbconn/test') {
+
+              // add header used by the authorization module
+              req.headers.authorization_user = 'admin';
+
+              var target = proxyRules.match(req);
+              if (target) {
+                return proxy.web(req, res, {
+                  target: target
+                });
+              }
+              compUtil.net.sendHttp404(IDLOG, res);
+              return;
+
+            } else {
+              compUtil.net.sendHttp403(IDLOG, res);
+              return;
+            }
+
+          } else { // authentication failed
+            compUtil.net.sendHttp401(IDLOG, res);
+            return;
+          }
+        }
+
+        // #2. Check CTI user
+        //
         // bypass the token verification if the request is:
         // 1. an authentication nonce request
         // 2. a static file request
