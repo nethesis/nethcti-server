@@ -217,6 +217,8 @@ function start() {
             ' Content-Type,' +
             ' Authorization,' +
             ' Accept,' +
+            ' User,' +
+            ' Secretkey,' +
             ' WWW-Authenticate';
 
           res.writeHead(200, headers);
