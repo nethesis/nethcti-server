@@ -373,10 +373,10 @@ exports.Queue = function(queueNum) {
    *     {
    *         name:                   "Coda401",
    *         queue:                  "401",
-   *         members:                { QueueMember.toJSON(), ... }        // the keys is the extension numbers
+   *         members:                { QueueMember.{{#crossLink "QueueMember/toJSON"}}{{/crossLink}}() } // the keys is the extension numbers
    *         avgHoldTime:            "37"
    *         avgTalkTime:            "590",
-   *         waitingCallers:         { QueueWaitingCaller.toJSON(), ... } // the keys is the channel identifier
+   *         waitingCallers:         { QueueWaitingCaller.{{#crossLink "QueueWaitingCaller/toJSON"}}{{/crossLink}}() } // the keys is the channel identifier
    *         abandonedCallsCount:    "26",
    *         completedCallsCount:    "11"
    *         serviceLevelTimePeriod: "60"

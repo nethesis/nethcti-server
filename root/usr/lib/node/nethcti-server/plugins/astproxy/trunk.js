@@ -325,7 +325,7 @@ exports.Trunk = function(ext, chType, maxCh) {
    *         "status":       "online",                       // the status can be: "busy", "online", "offline"
    *         "maxChannels":  4,                              // maximum number of channels supported by the trunk
    *         "sipuseragent": "Patton SN4638 5BIS",
-   *         "conversations": { Conversation.toJSON(), ... } // the keys is the conversation identifiers
+   *         "conversations": { Conversation.{{#crossLink "Conversation/toJSON"}}{{/crossLink}}() } // the keys is the conversation identifiers
    *     }
    *
    * @method toJSON

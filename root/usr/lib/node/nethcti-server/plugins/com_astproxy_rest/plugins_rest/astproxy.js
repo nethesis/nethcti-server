@@ -164,7 +164,7 @@ var compConfigManager;
               "status": "offline",
               "chanType": "sip",
               "sipuseragent": "",
-              "conversations": {},
+              "conversations": { Conversation.{{#crossLink "Conversation/toJSON"}}{{/crossLink}}() },
               "user": "giovanni"
           }
      }
@@ -189,7 +189,7 @@ var compConfigManager;
               "status": "offline",
               "chanType": "sip",
               "sipuseragent": "",
-              "conversations": {}
+              "conversations": { Conversation.{{#crossLink "Conversation/toJSON"}}{{/crossLink}}() }
           },
           ...
      }
