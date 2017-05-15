@@ -180,21 +180,25 @@ function setCompUtil(comp) {
             compUtil.net.sendHttp400(IDLOG, res);
           }
 
-          logger.info(IDLOG, 'get all customer cards of the user "' + username + '" for number ' + num + ' in "' + format + '" format');
+          logger.info(IDLOG, 'get all customer cards of the user "' + username +
+            '" for number "' + num + '" in "' + format + '" format');
 
           compCustomerCard.getAllCustomerCards(username, num, req.params.format, function(err, results) {
             try {
               if (err) {
                 compUtil.net.sendHttp500(IDLOG, res, err.toString());
+
               } else {
                 var ccreturned = '';
                 var key;
                 for (key in results) {
-                  ccreturned += results[key].name + ',';
+                  ccreturned += key + ',';
                 }
                 ccreturned = ccreturned.substring(0, ccreturned.length - 1);
 
-                logger.info(IDLOG, 'send ' + Object.keys(results).length + ' customer cards "' + ccreturned + '" in "' + format + '" for user "' + username + '" searching the number ' + num + ' to ' + res.connection.remoteAddress);
+                logger.info(IDLOG, 'send ' + Object.keys(results).length + ' customer cards "' + ccreturned +
+                  '" in "' + format + '" for user "' + username + '" searching the number ' + num +
+                  ' to ' + res.connection.remoteAddress);
                 res.send(200, results);
               }
 

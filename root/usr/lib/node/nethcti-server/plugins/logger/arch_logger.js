@@ -114,11 +114,16 @@ try {
     throw new Error('wrong ' + PATH + ': no "loglevel" key');
   }
 
+  var level = json.loglevel;
+  if (process.env.NODE_ENV === 'development') {
+    level = 'info';
+  }
+
   log = new(winston.Logger)({
     transports: [
       new(winston.transports.File)({
         json: false,
-        level: json.loglevel,
+        level: level,
         filename: json.logfile,
         timestamp: getTimestamp
       })

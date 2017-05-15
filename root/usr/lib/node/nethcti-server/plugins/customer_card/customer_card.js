@@ -29,18 +29,6 @@ var async = require('async');
 var IDLOG = '[customer_card]';
 
 /**
- * The default directory of the customer cards templates.
- *
- * @property DEFAULT_TEMPLATES_DIR
- * @type string
- * @private
- * @final
- * @readOnly
- * @default "templates/locales/it"
- */
-var DEFAULT_TEMPLATES_DIR = 'templates/locales/it';
-
-/**
  * The default file extension of the customer cards templates.
  *
  * @property TEMPLATE_EXTENSION
@@ -53,14 +41,13 @@ var DEFAULT_TEMPLATES_DIR = 'templates/locales/it';
 var TEMPLATE_EXTENSION = '.ejs';
 
 /**
- * The directory path of the custom templates used by the customer card component. All
- * templates in this path are more priority than the default ones.
+ * The directory path of the templates used by the customer card component.
  *
- * @property customTemplatesPath
+ * @property templatesPath
  * @type string
  * @private
  */
-var customTemplatesPath;
+var templatesPath;
 
 /**
  * The logger. It must have at least three methods: _info, warn and error._
@@ -167,22 +154,21 @@ function setDbconn(dbconnMod) {
 }
 
 /**
- * Gets a customer card.
+ * Get a customer card.
  *
  * @method getCustomerCardByNum
  * @param {string} ccName The name of the customer card to search
- * @param {string} num The number used to search the customer card.
+ * @param {string} num The number used to search the customer card
  * @param {function} cb The callback function
  */
 function getCustomerCardByNum(ccName, num, cb) {
   try {
     // check parameters
-    if (typeof num !== 'string' || typeof cb !== 'function') {
-
-      throw new Error('wrong parameters');
+    if (typeof ccName !== 'string' || typeof num !== 'string' || typeof cb !== 'function') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
-    logger.info(IDLOG, 'search customer card ' + ccName + ' by number ' + num + ' by means dbconn module');
+    logger.info(IDLOG, 'search customer card "' + ccName + '" by number ' + num + ' by means dbconn module');
     dbconn.getCustomerCardByNum(ccName, num, function(err1, results) {
       try {
         if (err1) {
@@ -191,13 +177,10 @@ function getCustomerCardByNum(ccName, num, cb) {
           return;
         }
 
-        var obj = {
+        cb(null, {
           data: results,
-          name: ccName,
-          index: ejsTemplates[ccName].index
-        };
-
-        cb(null, obj);
+          name: ccName
+        });
 
       } catch (error) {
         logger.error(IDLOG, error.stack);
@@ -206,6 +189,7 @@ function getCustomerCardByNum(ccName, num, cb) {
     });
   } catch (err) {
     logger.error(IDLOG, err.stack);
+    cb(err);
   }
 }
 
@@ -251,6 +235,7 @@ function setCompUser(comp) {
 function getCustomerCardHTML(name, data) {
   try {
     return ejs.render(ejsTemplates[name].content, {
+      name: name,
       results: data
     });
   } catch (err) {
@@ -263,60 +248,74 @@ function getCustomerCardHTML(name, data) {
  * Gets all authorized customer cards of the user and returns them in the specified format.
  *
  * @method getAllCustomerCards
- * @param {string}   username The identifier of the user
- * @param {string}   num      The number used to search the customer cards
- * @param {string}   format   The format of the customer card data to be returned. It is contained in the data key of the returned object
- * @param {function} cb       The callback function
+ * @param {string} username The identifier of the user
+ * @param {string} num The number used to search the customer cards
+ * @param {string} format The format of the customer card data to be returned. It is contained in the data key of the returned object
+ * @param {function} cb The callback function
  */
 function getAllCustomerCards(username, num, format, cb) {
   try {
     // check parameters
-    if (typeof username !== 'string' || typeof num !== 'string' || typeof cb !== 'function' || (format !== 'json' && format !== 'html')) {
+    if (typeof username !== 'string' ||
+      typeof num !== 'string' ||
+      typeof cb !== 'function' ||
+      (format !== 'json' && format !== 'html')) {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
-    // get the list of the authorized customer card. It's an array with
-    // the name of customer cards as strings
+    // get the list of the authorized customer cards. It is an array with
+    // the identifiers of customer cards as strings
     var allowedCC = compAuthorization.authorizedCustomerCards(username);
-    logger.info(IDLOG, 'user "' + username + '" is authorized to view "' + allowedCC.toString() + '" customer cards');
+    logger.info(IDLOG, 'user "' + username + '" is authorized to view customer cards: "' + allowedCC.toString() + '"');
 
     var obj = {}; // object with all results
 
     // parallel execution
     async.each(allowedCC, function(ccName, callback) {
 
-      getCustomerCardByNum(ccName, num, function(err, result) { // get one customer card
-        try {
-          if (err) { // some error in the query
-            logger.error(IDLOG, err);
+      if (!dbconn.checkDbconnCustCard(ccName)) {
+        logger.warn(IDLOG, 'no db connection for customer card "' + ccName + '"');
+        callback();
 
-          } else { // add the result
+      } if (!ejsTemplates[ccName]) {
+        logger.warn(IDLOG, 'no template ejs for customer card "' + ccName + '"');
+        callback();
 
-            if (ccName === 'calls') {
-              result.data = filterPrivacyCcCalls(username, num, result.data);
+      } else {
+
+        getCustomerCardByNum(ccName, num, function(err, result) { // get one customer card
+          try {
+            if (err) { // some error in the query
+              logger.error(IDLOG, err);
+
+            } else { // add the result
+
+              if (ccName === 'calls') {
+                result.data = filterPrivacyCcCalls(username, num, result.data);
+              }
+
+              var formattedData;
+              if (format === 'html') {
+                formattedData = getCustomerCardHTML(result.name, result.data);
+
+              } else if (format === 'json') {
+                formattedData = result.data;
+              }
+
+              obj[ccName] = {
+                data: formattedData,
+                number: num
+              };
             }
+            callback();
 
-            var formattedData;
-            if (format === 'html') {
-              formattedData = getCustomerCardHTML(result.name, result.data);
-            } else if (format === 'json') {
-              formattedData = result.data;
-            }
-
-            obj[result.index] = {
-              name: result.name,
-              data: formattedData,
-              number: num
-            };
+          } catch (error) {
+            logger.error(IDLOG, error.stack);
+            callback();
           }
-          callback();
-
-        } catch (error) {
-          logger.error(IDLOG, error.stack);
-          callback();
-        }
-      });
+        });
+      }
 
     }, function(err) {
       if (err) {
@@ -327,7 +326,7 @@ function getAllCustomerCards(username, num, format, cb) {
       var str = '';
       var k;
       for (k in obj) {
-        str += obj[k].name + ',';
+        str += k + ',';
       }
       str = str.substring(0, str.length - 1);
       logger.info(IDLOG, objKeys.length + ' customer cards "' + str + '" obtained for user "' + username + '" searching num ' + num);
@@ -339,8 +338,9 @@ function getAllCustomerCards(username, num, format, cb) {
     cb(err.toString());
   }
 }
+
 /**
- * Filter customer card "calls" obscuring hiding  phone numbers that do not involve the user.
+ * Filter customer card "calls" obscuring phone numbers that do not involve the user.
  *
  * @method filterPrivacyCcCalls
  * @param  {string} username The identifier of the user
@@ -390,40 +390,24 @@ function start() {
 }
 
 /**
- * Initializes the ejs templates used to render the customer cards. The default templates
- * are in the _DEFAULT\_TEMPLATES\_DIR_ but the templates present in _customTemplatesPath_
- * are more priority.
+ * Initializes the ejs templates used to render the customer cards.
  *
  * @method initEjsTemplates
  * @private
  */
 function initEjsTemplates() {
   try {
-    // get all file names of the custom and default templates
-    var customFilenames = fs.readdirSync(customTemplatesPath);
-    var defaultFilenames = fs.readdirSync(path.join(__dirname, DEFAULT_TEMPLATES_DIR));
+    var i, ccname, content, filename, filepath;
+    var customFilenames = fs.readdirSync(templatesPath);
 
     // template files to read. The keys are the name of the files
     // and the values are the path of the files
     var filesToRead = {};
-
-    // load all default template files in the filesToRead
-    var i;
-    var filename;
-    var filepath;
-    for (i = 0; i < defaultFilenames.length; i++) {
-
-      filename = defaultFilenames[i];
-      filepath = path.join(__dirname, DEFAULT_TEMPLATES_DIR, filename);
-      filesToRead[filename] = filepath;
-    }
-
-    // load all the custom template files in the filesToRead. So this custom files
-    // are more priority than the default templates
+    // load all the template files into the filesToRead
     for (i = 0; i < customFilenames.length; i++) {
 
       filename = customFilenames[i];
-      filepath = path.join(customTemplatesPath, filename);
+      filepath = path.join(templatesPath, filename);
 
       // add file to read only if the file extension is correct
       if (path.extname(filepath) === TEMPLATE_EXTENSION) {
@@ -432,18 +416,13 @@ function initEjsTemplates() {
     }
 
     // read the content of all the ejs templates
-    var index;
-    var ccname;
-    var content;
     for (filename in filesToRead) {
 
-      index = getCcIndexFromFilename(filename);
-      ccname = getCcNameFromFilename(filename);
       filepath = filesToRead[filename];
       content = fs.readFileSync(filepath, 'utf8');
+      ccname = filename.slice(0, -4);
 
       ejsTemplates[ccname] = {
-        index: index,
         content: content
       };
       logger.info(IDLOG, 'ejs template ' + filepath + ' has been read');
@@ -452,55 +431,6 @@ function initEjsTemplates() {
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
-  }
-}
-
-/**
- * Returns the customer card index from the customer card filename.
- *
- * @method getCcIndexFromFilename
- * @param  {string} filename The name of the file of the customer card template.
- * @return {string} The customer card index.
- */
-function getCcIndexFromFilename(filename) {
-  try {
-    // check parameter
-    if (typeof filename !== 'string') {
-      throw new Error('wrong parameter');
-    }
-    return filename.split('_')[2];
-
-  } catch (err) {
-    logger.error(IDLOG, err.stack);
-    return '';
-  }
-}
-
-/**
- * Returns the customer card name from the customer card filename.
- *
- * @method getCcNameFromFilename
- * @param  {string} filename The name of the file of the customer card template.
- * @return {string} The customer card name.
- */
-function getCcNameFromFilename(filename) {
-  try {
-    // check parameter
-    if (typeof filename !== 'string') {
-      throw new Error('wrong parameter');
-    }
-
-    var ccname = ''; // the customer card name to return
-
-    var temp = filename.split('_')[3]; // get the name field from the filename
-    if (temp) {
-      ccname = temp.slice(0, -4); // remove .ejs extension from the filename
-    }
-    return ccname;
-
-  } catch (err) {
-    logger.error(IDLOG, err.stack);
-    return '';
   }
 }
 
@@ -529,13 +459,13 @@ function config(path) {
     if (typeof json !== 'object' ||
       typeof json.rest !== 'object' ||
       typeof json.rest.customer_card !== 'object' ||
-      typeof json.rest.customer_card.custom_templates_customercards !== 'string') {
+      typeof json.rest.customer_card.templates_customercards !== 'string') {
 
       logger.warn(IDLOG, path + ': wrong "customer_card" key in rest section');
       return;
     }
 
-    customTemplatesPath = json.rest.customer_card.custom_templates_customercards;
+    templatesPath = json.rest.customer_card.templates_customercards;
     logger.info(IDLOG, 'configuration done by ' + path);
 
   } catch (err) {
