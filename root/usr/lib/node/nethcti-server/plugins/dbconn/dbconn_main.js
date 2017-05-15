@@ -14,6 +14,7 @@
 var fs = require('fs');
 var pg = require('pg');
 var path = require('path');
+var async = require('async');
 var mssql = require('mssql');
 var moment = require('moment');
 var Sequelize = require("sequelize");
@@ -77,7 +78,7 @@ var EVT_READY = 'ready';
 
 /**
  * True if the sequelize library will be logged.
- * It's customized by the _config_ method.
+ * It is customized by the _config_ method.
  *
  * @property logSequelize
  * @type {boolean}
@@ -116,11 +117,13 @@ var JSON_KEYS = {
   PHONEBOOK: 'phonebook',
   QUEUE_LOG: 'queue_log',
   SMS_HISTORY: 'sms_history',
+  USER_DBCONN: 'user_dbconn',
   QUEUE_RECALL: 'queue_recall',
   CALLER_NOTE: 'caller_note',
   HISTORY_CALL: 'history_call',
   CTI_PHONEBOOK: 'cti_phonebook',
-  USER_SETTINGS: 'user_settings'
+  USER_SETTINGS: 'user_settings',
+  CUSTOMER_CARD: 'customer_card'
 };
 
 /**
@@ -132,6 +135,36 @@ var JSON_KEYS = {
  * @default {}
  */
 var dbConfig = {};
+
+/**
+ * The configurations to be used by database connections for customer cards.
+ *
+ * @property dbConfigCustCardData
+ * @type object
+ * @private
+ * @default {}
+ */
+var dbConfigCustCardData = {};
+
+/**
+ * The customer card templates data.
+ *
+ * @property custCardTemplatesData
+ * @type object
+ * @private
+ * @default {}
+ */
+var custCardTemplatesData = {};
+
+/**
+ * The database connections for customer cards.
+ *
+ * @property dbConnCustCard
+ * @type object
+ * @private
+ * @default {}
+ */
+var dbConnCustCard = {};
 
 /**
  * The database connections.
@@ -208,7 +241,7 @@ function config(path) {
 }
 
 /**
- * Sets the static configurations to be use by database connections.
+ * Sets the static configurations to be use by database connections.f
  *
  * @method configDbStatic
  * @param {string} dirPath The directory path of the static JSON configuration files.
@@ -244,44 +277,6 @@ function configDbStatic(dirPath) {
   }
 }
 
-/**
- * Sets the dynamic configurations to be use by database connections.
- *
- * @method configDbDynamic
- * @param {string} path The file path of the dynamic JSON configuration file.
- */
-function configDbDynamic(path) {
-  try {
-    // check parameter
-    if (typeof path !== 'string') {
-      throw new Error('wrong parameter');
-    }
-
-    // check the file existence
-    if (!fs.existsSync(path)) {
-      logger.info(IDLOG, path + ' does not exist');
-
-    } else {
-
-      var json = require(path); // read the file
-      logger.info(IDLOG, 'file ' + path + ' has been read');
-
-      // transfer the file content into the memory. If the "k" key has
-      // already been added by the _configDbStatic_ method, it is not overwritten
-      var k;
-      for (k in json) {
-        if (!dbConfig[k]) {
-          dbConfig[k] = json[k];
-        }
-      }
-    }
-    logger.info(IDLOG, 'configuration done by ' + path);
-
-  } catch (err) {
-    logger.error(IDLOG, err.stack);
-  }
-}
-
 /*
  * Start the execution of the module.
  *
@@ -294,6 +289,17 @@ function start() {
 
     importModels();
     logger.info(IDLOG, 'sequelize models imported');
+
+    initCustCardData(function(err) {
+      if (err) {
+        logger.error(IDLOG, 'initializing customer card configurations: ' + err);
+      } else {
+        logger.info(IDLOG, 'initialized database configuration for customer cards');
+
+        initCustCardConnections();
+        logger.info(IDLOG, 'initialized database connections for customer card');
+      }
+    });
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
@@ -398,6 +404,172 @@ function importModels() {
 }
 
 /**
+ * Initialize all database connections for customer cards.
+ *
+ * @method initCustCardConnections
+ * @private
+ */
+function initCustCardConnections() {
+  try {
+    logger.info(IDLOG, 'initializing db connections for customer cards');
+
+    var ccName;
+    for (ccName in dbConfigCustCardData) {
+
+      if (dbConfigCustCardData[ccName].type === 'mysql') {
+
+        var config = {
+          port: dbConfigCustCardData[ccName].port,
+          host: dbConfigCustCardData[ccName].host,
+          define: {
+            charset: 'utf8',
+            timestamps: false,
+            freezeTableName: true
+          },
+          dialect: dbConfigCustCardData[ccName].type
+        };
+
+        // default sequelize log is console.log
+        if (!logSequelize) {
+          config.logging = false;
+        }
+
+        sequelize = new Sequelize(dbConfigCustCardData[ccName].name, dbConfigCustCardData[ccName].user, dbConfigCustCardData[ccName].pass, config);
+
+        dbConnCustCard[dbConfigCustCardData[ccName].id] = sequelize;
+        logger.info(IDLOG, 'initialized db connection for customer card (id: ' + dbConfigCustCardData[ccName].id + ', ' +
+          dbConfigCustCardData[ccName].type + ', ' + dbConfigCustCardData[ccName].name + ', ' + dbConfigCustCardData[ccName].host + ':' + dbConfigCustCardData[ccName].port + ')');
+
+      } else if (dbConfigCustCardData[ccName].type === 'postgres') {
+        initPostgresConnCustCard(dbConfigCustCardData[ccName]);
+
+      } else if (isMssqlType(dbConfigCustCardData[ccName].type)) {
+        initMssqlConnCustCard(dbConfigCustCardData[ccName].id, getMssqlTdsVersion(dbConfigCustCardData[ccName].type));
+      }
+    }
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Read database connection data for customer cards.
+ *
+ * @method initCustCardData
+ * @param {function} cb The callback function
+ * @private
+ */
+function initCustCardData(cb) {
+  try {
+    if (typeof cb !== 'function') {
+      throw new Error('wrong parameter');
+    }
+
+    async.parallel({
+
+      dbConnection: function(callback) {
+
+        // read "user_dbconn" table with all information about the
+        // database source connections used for customer card
+        models[JSON_KEYS.USER_DBCONN].findAll().then(function(results) {
+          try {
+            incNumExecQueries();
+
+            // extract results
+            var i;
+            for (i = 0; i < results.length; i++) {
+              results[i] = results[i].dataValues;
+            }
+            logger.info(IDLOG, '#' + results.length + ' db connections for customer cards have been found');
+            callback(null, results);
+
+          } catch (error) {
+            logger.error(IDLOG, error.stack);
+            callback(error, {});
+          }
+
+        }, function(err) { // manage the error
+          logger.error(IDLOG, 'searching db connections for customer cards: ' + err.toString());
+          callback(err, {});
+        });
+      },
+
+      customerCard: function(callback) {
+        readCustomerCard(callback);
+      }
+
+    }, function(err, results) {
+
+      if (err) {
+        logger.warn(IDLOG, 'initializing db configuration for customer cards: ' + err);
+        cb(err);
+        return;
+      }
+
+      var i;
+      if (results.dbConnection) {
+        for (i = 0; i < results.dbConnection.length; i++) {
+          dbConfigCustCardData[results.dbConnection[i].id] = results.dbConnection[i];
+        }
+      }
+
+      if (results.customerCard) {
+        for (i = 0; i < results.customerCard.length; i++) {
+          custCardTemplatesData[results.customerCard[i].template] = results.customerCard[i];
+        }
+      }
+      cb();
+    });
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+/**
+ * Read "customer_card" table with all information about the customer cards:
+ * the name, the source db connection identifier, the query...
+ *
+ * @method readCustomerCard
+ * @param {function} cb The callback function
+ * @private
+ */
+function readCustomerCard(cb) {
+  try {
+    if (typeof cb !== 'function') {
+      throw new Error('wrong parameter');
+    }
+
+    models[JSON_KEYS.CUSTOMER_CARD].findAll().then(function(results) {
+      try {
+        incNumExecQueries();
+
+        // extract results
+        var i;
+        for (i = 0; i < results.length; i++) {
+          results[i] = results[i].dataValues;
+        }
+        logger.info(IDLOG, '#' + results.length + ' db customer card templates have been found');
+        cb(null, results);
+
+      } catch (error) {
+        logger.error(IDLOG, error.stack);
+        cb(error, {});
+      }
+
+    }, function(err) { // manage the error
+      logger.error(IDLOG, 'searching db customer card templates: ' + err.toString());
+      cb(err, {});
+    });
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+/**
  * Initialize all database connections.
  *
  * @method initConnections
@@ -429,12 +601,51 @@ function initConnections() {
 
         dbConn[k] = sequelize;
         logger.info(IDLOG, 'initialized db connection with ' + dbConfig[k].dbtype + ' ' + dbConfig[k].dbname + ' ' + dbConfig[k].dbhost + ':' + dbConfig[k].dbport);
+
       } else if (dbConfig[k].dbtype === 'postgres') {
         initPostgresConn(k);
+
       } else if (isMssqlType(dbConfig[k].dbtype)) {
         initMssqlConn(k, getMssqlTdsVersion(dbConfig[k].dbtype));
       }
     }
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Initialize a Postgres connection for customer card.
+ *
+ * @method initPostgresConnCustCard
+ * @param {object} data The db connection data
+ *  @param {number} data.id The db connection identifier
+ *  @param {string} data.host The db host
+ *  @param {number} data.port The db port
+ *  @param {string} data.type The db type
+ *  @param {string} data.user The db username
+ *  @param {string} data.pass The db password
+ *  @param {string} data.name The db name
+ * @private
+ */
+function initPostgresConnCustCard(data) {
+  try {
+    var config = {
+      user: data.user,
+      password: data.pass,
+      database: data.name,
+      host: data.host,
+      port: data.port
+    };
+    var client = new pg.Client(config);
+    client.connect(function(err) {
+      if (err) {
+        logger.error(IDLOG, 'initializing ' + data.type + ' db connection ' + data.name + ' ' + data.host + ':' + data.port + ' - ' + err.stacname);
+      } else {
+        dbConnCustCard[data.id] = client;
+        logger.info(IDLOG, 'initialized db connection with ' + data.type + ' ' + data.name + ' ' + data.host + ':' + data.port + ' (id: ' + data.id + ')');
+      }
+    });
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
@@ -508,6 +719,53 @@ function isMssqlType(type) {
   } catch (err) {
     logger.error(IDLOG, err.stack);
     return false;
+  }
+}
+
+/**
+ * Initialize an MSSQL connection.
+ *
+ * @method initMssqlConnCustCard
+ * @param {object} data The db connection data
+ *  @param {number} data.id The db connection identifier
+ *  @param {string} data.host The db host
+ *  @param {number} data.port The db port
+ *  @param {string} data.type The db type
+ *  @param {string} data.user The db username
+ *  @param {string} data.pass The db password
+ *  @param {string} data.name The db name
+ * @param {string} tdsVersion The TDS version to be used in connection
+ * @private
+ */
+function initMssqlConnCustCard(data, tdsVersion) {
+  try {
+    var config = {
+      server: data.host,
+      port: data.port,
+      user: data.user,
+      password: data.pass,
+      database: data.name,
+      options: {
+        encrypt: false,
+        tdsVersion: tdsVersion
+      }
+    };
+
+    var connection = new mssql.Connection(config, function(err1) {
+      try {
+        if (err1) {
+          logger.error(IDLOG, 'initializing db connection with ' + data.type + ' ' + data.name + ' ' + data.host + ':' + data.port + ' - ' + err1.stack);
+
+        } else {
+          dbConnCustCard[data.id] = connection;
+          logger.info(IDLOG, 'initialized db connection with ' + data.type + ' ' + data.name + ' ' + data.host + ':' + data.port + ' (id: ' + data.id + ')');
+        }
+      } catch (err2) {
+        logger.error(IDLOG, err2.stack);
+      }
+    });
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
   }
 }
 
@@ -627,7 +885,10 @@ exports.Sequelize = Sequelize;
 exports.JSON_KEYS = JSON_KEYS;
 exports.setLogger = setLogger;
 exports.isMssqlType = isMssqlType;
+exports.dbConnCustCard = dbConnCustCard;
 exports.testConnection = testConnection;
 exports.configDbStatic = configDbStatic;
-exports.configDbDynamic = configDbDynamic;
+exports.readCustomerCard = readCustomerCard;
 exports.incNumExecQueries = incNumExecQueries;
+exports.dbConfigCustCardData = dbConfigCustCardData
+exports.custCardTemplatesData = custCardTemplatesData;

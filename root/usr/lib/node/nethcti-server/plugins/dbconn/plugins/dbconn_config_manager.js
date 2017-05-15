@@ -4,7 +4,6 @@
  * @module dbconn
  * @submodule plugins
  */
-var async = require('async');
 
 /**
  * The module identifier used by the logger.

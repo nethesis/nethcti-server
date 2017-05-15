@@ -142,7 +142,12 @@ function config(obj) {
       for (mp in profiles[id].macro_permissions) {
         temp = {};
         for (i = 0; i < profiles[id].macro_permissions[mp].permissions.length; i++) {
-          temp[profiles[id].macro_permissions[mp].permissions[i].name] = profiles[id].macro_permissions[mp].permissions[i];
+
+          if (profiles[id].macro_permissions[mp].permissions[i].name) {
+            temp[profiles[id].macro_permissions[mp].permissions[i].name] = profiles[id].macro_permissions[mp].permissions[i];
+          } else {
+            temp[profiles[id].macro_permissions[mp].permissions[i].id] = profiles[id].macro_permissions[mp].permissions[i];
+          }
         }
         profiles[id].macro_permissions[mp].permissions = temp;
       }
@@ -1172,22 +1177,7 @@ function authorizeCustomerCardUser(username) {
     if (typeof username !== 'string') {
       throw new Error('wrong parameter');
     }
-
-    // get cusomter card authorization from the user
-    // var autho = compUser.getAuthorization(username, authorizationTypes.TYPES.customer_card);
-
-    // analize the result
-    // var objResult = autho[authorizationTypes.TYPES.customer_card];
-    // var cc;
-    // for (cc in objResult) {
-
-    //   // check the type of the authorization. It must be a boolean value
-    //   if (objResult[cc] === true) {
-    //     return true;
-    //   }
-
-    // }
-    // return false;
+    return profiles[getUserProfileId(username)].macro_permissions.customerd_card.value === true;
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
@@ -1412,11 +1402,11 @@ function getAuthorizedOperatorGroups(username) {
 }
 
 /**
- * Gets the name of the authorized customer cards of the user.
+ * Get the list of the authorized customer cards of the user.
  *
  * @method authorizedCustomerCards
  * @param {string} username The username
- * @return {array} The list of the authorized customer cards of the user.
+ * @return {array} The list of the authorized customer card of the user.
  */
 function authorizedCustomerCards(username) {
   try {
@@ -1424,22 +1414,14 @@ function authorizedCustomerCards(username) {
     if (typeof username !== 'string') {
       throw new Error('wrong parameter');
     }
+
     var arr = [];
+    var profid = getUserProfileId(username);
 
-    // get cusomter card authorization from the user
-    // var autho = compUser.getAuthorization(username, authorizationTypes.TYPES.customer_card);
-
-    // // analize the result
-    // var objResult = autho[authorizationTypes.TYPES.customer_card];
-    // var cc;
-    // for (cc in objResult) {
-
-    //   // check the authorization
-    //   if (objResult[cc] === true) {
-    //     arr.push(cc);
-    //   }
-    // }
-    // return arr;
+    if (profiles[profid].macro_permissions.presence_panel.value === true) {
+      arr = Object.keys(profiles[profid].macro_permissions.customerd_card.permissions);
+    }
+    return arr;
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
