@@ -1,0 +1,156 @@
+<!-- color: red -->
+<style type="text/css">
+  .block {
+    overflow: auto;
+    -webkit-transition: height 300ms linear;
+    -moz-transition: height 300ms linear;
+    -o-transition: height 300ms linear;
+    transition: height 300ms linear;
+  }
+
+  .block {
+    border: 2px solid #cc0000;
+  }
+
+  #img-1 {
+    margin-left: -15px;
+  }
+
+  .tableName {
+    cursor: pointer;
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    padding-top: 11px;
+    text-align: center;
+  }
+
+  .tableRule {
+    width: 100%;
+    border-collapse: collapse;
+    padding: 0px !important;
+    height: auto !important;
+  }
+
+  .tableElement {
+    font-size: 14px;
+    text-align: left;
+  }
+
+  .customTh {
+    word-break: normal;
+    min-width: 70px;
+    text-align: center;
+    padding: 13px 11px;
+    font-weight: 700;
+    background-color: #cbe1df;
+    color: black;
+    border: 1px solid #a39f9f;
+  }
+
+  .customTd {
+    word-break: normal;
+    min-width: 70px;
+    text-align: center;
+    padding: 11px 20px 11px 20px;
+    border: 1px solid #a39f9f;
+  }
+
+  tr:nth-child(even) {
+    background-color: #f2f2f2;
+  }
+
+  tr:nth-child(odd) {
+    background-color: white;
+  }
+
+  .nameCard {
+    margin-top: 10px;
+    width: 10%;
+    color: black;
+    background-color: #cbe1df;
+    border-top: 2px solid #cc0000;
+    border-left: 2px solid #cc0000;
+    border-right: 2px solid #cc0000;
+    min-width: 137px;
+    min-height: 20px;
+    font-weight: 700;
+    position: relative;
+    padding: 11px;
+    padding-left: 30px !important;
+  }
+
+  .nameCard:hover {
+    margin-top: 10px;
+    width: 10%;
+    color: white;
+    background-color: #cc0000;
+    border-top: 2px solid #cc0000;
+    border-left: 2px solid #cc0000;
+    border-right: 2px solid #cc0000;
+    min-width: 137px;
+    min-height: 20px;
+    font-weight: 700;
+    position: relative;
+    padding: 11px;
+    padding-left: 30px !important;
+  }
+
+  .breakText {
+    display: inline-block;
+    word-break: break-all;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+</style>
+
+<% if(results.length==0){ %>
+  <table width="50%" cellpadding="5">
+    <tr>
+      <td>
+        <h3></h3>
+      </td>
+    </tr>
+    <tr>
+      <td>Spiacente, nessun dato presente.</td>
+    </tr>
+  </table>
+  <% } else { %>
+
+    <div class="nameCard nameCard">
+      <img id="img-1" src="images/sort-down.png" height="10" width="10" />
+      <label for="showBlock" class="tableName breakText"><%= name %>: <%= results.length %></label>
+    </div>
+    <div class="block block">
+      <table class="tableRule">
+        <tr>
+          <% for (prop in results[0]) {
+       			if (prop === "server_address") continue;
+		    %>
+            <th class="tableElement customTh">
+              <%= prop %>
+            </th>
+            <%  }%>
+        </tr>
+
+        <% for(var i=0; i<results.length; i++){ %>
+          <tr>
+            <% for (prop in results[i]) {
+            if (prop === "server_address") continue;
+
+      %>
+              <td class="customTd">
+                <%= results[i][prop] %>
+              </td>
+              <%  } %>
+          </tr>
+          <% } %>
+      </table>
+    </div>
+
+
+    <% } %>
