@@ -248,6 +248,29 @@ function checkDbconnCustCard(permissionId) {
 }
 
 /**
+ * Test if the database connection to specified customer card exists.
+ *
+ * @method checkDbconnCustCard
+ * @param {string} connid The pdatabase connection identifier
+ * @return {boolean} True if the connection exists.
+ */
+function checkDbconnCustCardByConnId(connid) {
+  try {
+    if (typeof connid !== 'string') {
+      throw new Error('wrong parameter: ' + JSON.stringify(arguments));
+    }
+    if (compDbconnMain.dbConnCustCard[connid]) {
+      return true;
+    }
+    return false;
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+    return false;
+  }
+}
+
+/**
  * Return the name of the template file.
  *
  * @method getCustCardTemplateName
@@ -287,11 +310,93 @@ function getCustCardNameDescr(permissionId) {
   }
 }
 
+/**
+ * Return the customer card preview.
+ *
+ * @method getCustomerCardPreview
+ * @param {string} query The query
+ * @param {string} dbConnId The db connection identifier
+ * @param {string} templateName The template name
+ * @param {function} cb The callback function
+ */
+function getCustomerCardPreview(query, dbConnId, templateName, cb) {
+  try {
+    // check parameters
+    if (typeof query !== 'string' ||
+      typeof dbConnId !== 'string' ||
+      typeof templateName !== 'string' ||
+      typeof cb !== 'function') {
+
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+
+    // check the connection presence
+    if (compDbconnMain.dbConnCustCard[dbConnId] === undefined) {
+      var strError = 'no db connection for customer card preview';
+      logger.warn(IDLOG, strError);
+      cb(strError);
+      return;
+    }
+
+    if (compDbconnMain.dbConfigCustCardData[dbConnId].type === 'mysql') {
+
+      compDbconnMain.dbConnCustCard[dbConnId].query(query).then(function(results) {
+
+        logger.info(IDLOG, results[0].length + ' results for cust card preview');
+        cb(null, results[0]);
+
+      }, function(err1) { // manage the error
+
+        logger.error(IDLOG, 'searching cust card preview: ' + err1.toString());
+        cb(err1.toString());
+      });
+
+    } else if (compDbconnMain.dbConfigCustCardData[dbConnId].type === 'postgres') {
+
+      compDbconnMain.dbConnCustCard[dbConnId].query(query, function(err2, results) {
+        if (err2) {
+          logger.error(IDLOG, 'searching cust card preview: ' + err2.toString());
+          cb(err2.toString());
+
+        } else {
+          logger.info(IDLOG, results.rows.length + ' results by searching cust card preview');
+          cb(null, results.rows);
+        }
+      });
+
+    } else if (compDbconnMain.isMssqlType(compDbconnMain.dbConfigCustCardData[dbConnId].type)) {
+
+      var request = new mssql.Request(compDbconnMain.dbConnCustCard[dbConnId]);
+      request.query(query, function(err2, recordset) {
+        try {
+          if (err2) {
+            logger.error(IDLOG, 'searching cust card preview: ' + err2.toString());
+            cb(err2.toString());
+
+          } else {
+            logger.info(IDLOG, recordset.length + ' results by searching cust card preview');
+            cb(null, recordset);
+          }
+        } catch (err3) {
+          logger.error(IDLOG, err3.stack);
+          cb(err3.toString());
+        }
+      });
+    }
+    compDbconnMain.incNumExecQueries();
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
 apiList.getCustCardNames = getCustCardNames;
 apiList.checkDbconnCustCard = checkDbconnCustCard;
 apiList.getCustCardNameDescr = getCustCardNameDescr;
 apiList.getCustomerCardByNum = getCustomerCardByNum;
+apiList.getCustomerCardPreview = getCustomerCardPreview;
 apiList.getCustCardTemplateName = getCustCardTemplateName;
+apiList.checkDbconnCustCardByConnId = checkDbconnCustCardByConnId;
 
 // public interface
 exports.apiList = apiList;

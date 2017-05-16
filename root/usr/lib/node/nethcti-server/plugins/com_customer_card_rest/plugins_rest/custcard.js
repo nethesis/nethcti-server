@@ -115,7 +115,8 @@ function setCompUtil(comp) {
         * ### <a id="getbynum_formatget">**`custcard/getbynum/:number/:format`**</a>
         *
         * The client receive all customer cards by number for which he has the permission. The _data_ key
-        * contains the customer card in the specified format. The parameters are:
+        * contains the customer card in the specified format: if the format is html the data will be
+        * base64 encoded. The parameters are:
         *
         * * `number: the number to use to search the customer cards data`
         * * `format: ("json" | "html") the format of the received data`
@@ -123,17 +124,39 @@ function setCompUtil(comp) {
         * Example JSON response:
         *
         *     {
-         "20": {
-              "name": "calls",
-              "data": "\n\t<div id='cdr' class='...",
-              "number": "0721405516"
-         },
-         "00": {
-              "name": "identity",
-              "data": "\n\n\t<div class=\"contactsVCard\">\n\t<div class='contactsVCardHeader'>...",
+         "cc_identity": {
+              "descr": "Customer Identity",
+              "data": "PCEtLSBjb2xvcjogcmVk...",
               "number": "0721405516"
          }
      }
+        *
+        * <br>
+        *
+        * # POST requests
+        *
+        * 1. [`custcard/preview`](#previewpost)
+        *
+        * ---
+        *
+        * ### <a id="previewpost">**`custcard/preview`**</a>
+        *
+        * Returns the customer card as base64 encoded html data.
+        *
+        * * `dbconn_id: the identifier of the database source`
+        * * `template: the name of the template file.`
+        * * `query: the query to be executed to get the data to be rendered with template. Must be base64 encoded`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "dbconn_id": "1", "template": "template_name", "query": base64("select * from db") }
+        *
+        * Example JSON response:
+        *
+        *     {
+         "html": "PCEtLSBjb..."
+     }
+        *
         *
         * @class plugin_rest_custcard
         * @static
@@ -150,10 +173,19 @@ function setCompUtil(comp) {
          * @property get
          * @type {array}
          *
-         *   @param {string} getbynum/:number/:format To get the customer card by specified number and format
+         *   @param {string} getbynum/:number/:format To get a customer card as base64 encoded html format.
          */
         'get': ['getbynum/:number/:format'],
-        'post': [],
+
+        /**
+         * REST API to be requested using HTTP POST request.
+         *
+         * @property post
+         * @type {array}
+         *
+         *   @param {string} preview To get the customer card by specified number and data.
+         */
+        'post': ['preview'],
         'head': [],
         'del': []
       },
@@ -212,9 +244,57 @@ function setCompUtil(comp) {
           logger.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
+      },
+
+      /**
+       * Returns the customer card as base64 encoded html data.
+       *
+       *     preview
+       *
+       * @method preview
+       * @param {object}   req  The client request.
+       * @param {object}   res  The client response.
+       * @param {function} next Function to run the next handler in the chain.
+       */
+      preview: function(req, res, next) {
+        try {
+          if (typeof req.params.dbconn_id !== 'string' ||
+            typeof req.params.query !== 'string' ||
+            typeof req.params.template !== 'string') {
+
+            compUtil.net.sendHttp400(IDLOG, res);
+          }
+
+          // authorization_user header field was added in the authentication step
+          var username = req.headers.authorization_user;
+          var query = Buffer.from(req.params.query, 'base64').toString('ascii').trim();
+          var dbconnId = req.params.dbconn_id;
+          var templateName = req.params.template;
+
+          logger.info(IDLOG, 'get customer card preview for user "' + username + '"');
+          compCustomerCard.getCustomerCardPreview(query, dbconnId, templateName, function(err, results) {
+            try {
+              if (err) {
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+
+              } else {
+                logger.info(IDLOG, 'send customer card preview to user "' + username + '" to ' + res.connection.remoteAddress);
+                res.send(200, results);
+              }
+            } catch (error) {
+              logger.error(IDLOG, error.stack);
+              compUtil.net.sendHttp500(IDLOG, res, error.toString());
+            }
+          });
+
+        } catch (err) {
+          logger.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
       }
     };
     exports.api = custcard.api;
+    exports.preview = custcard.preview;
     exports.getbynum = custcard.getbynum;
     exports.setLogger = setLogger;
     exports.setCompUtil = setCompUtil;
