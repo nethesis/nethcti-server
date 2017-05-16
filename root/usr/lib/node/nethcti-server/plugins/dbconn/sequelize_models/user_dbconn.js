@@ -10,7 +10,6 @@ module.exports = function(sequelize, DataTypes) {
     type: DataTypes.STRING,
     user: DataTypes.STRING,
     pass: DataTypes.STRING,
-    name: DataTypes.STRING,
-    enabled: DataTypes.BOOLEAN
+    name: DataTypes.STRING
   });
 };
