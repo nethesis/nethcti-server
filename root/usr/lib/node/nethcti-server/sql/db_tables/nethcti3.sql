@@ -111,5 +111,6 @@ CREATE TABLE IF NOT EXISTS `customer_card` (
   `query` text,
   `template` varchar(128) DEFAULT NULL,
   `dbconn_id` int(11) DEFAULT NULL,
+  `permission_id` int(10) unsigned NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
