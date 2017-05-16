@@ -11,6 +11,6 @@ module.exports = function(sequelize, DataTypes) {
     user: DataTypes.STRING,
     pass: DataTypes.STRING,
     name: DataTypes.STRING,
-    enabled: DataTypes.BOOLEAN
+    creation: DataTypes.DATE
   });
 };
