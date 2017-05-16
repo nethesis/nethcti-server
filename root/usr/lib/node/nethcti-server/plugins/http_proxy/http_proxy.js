@@ -236,7 +236,8 @@ function start() {
           if (compAuthentication.authenticateFreepbxAdmin(req.headers.secretkey) === true) {
 
             // check if the url is one of the permitted urls for freepbx admin user
-            if (req.url === '/dbconn/test') {
+            if (req.url === '/dbconn/test' ||
+              req.url === '/custcard/preview') {
 
               // add header used by the authorization module
               req.headers.authorization_user = 'admin';

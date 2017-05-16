@@ -232,7 +232,7 @@ var compConfigManager;
         *
         * Example JSON request parameters:
         *
-        *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", endpointId": "214" }
+        *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointId": "214" }
         *
         * ---
         *

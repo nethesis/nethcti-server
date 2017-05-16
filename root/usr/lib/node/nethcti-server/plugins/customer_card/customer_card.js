@@ -156,6 +156,64 @@ function setDbconn(dbconnMod) {
 /**
  * Get a customer card.
  *
+ * @method getCustomerCardPreview
+ * @param {string} query The query
+ * @param {string} dbconnId The db connection identifier
+ * @param {string} templateName The template name
+ * @param {function} cb The callback function
+ */
+function getCustomerCardPreview(query, dbconnId, templateName, cb) {
+  try {
+    // check parameters
+    if (typeof query !== 'string' ||
+      typeof dbconnId !== 'string' ||
+      typeof templateName !== 'string' ||
+      typeof cb !== 'function') {
+
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+
+    logger.info(IDLOG, 'get customer card preview with template name "' + templateName + '"');
+
+    if (!dbconn.checkDbconnCustCardByConnId(dbconnId)) {
+      logger.warn(IDLOG, 'no db connection for customer card preview (dbconnId: "' + dbconnId + '")');
+      cb('no db connection for customer card preview (dbconnId: "' + dbconnId + '")');
+
+    } else if (!ejsTemplates[templateName]) {
+      logger.warn(IDLOG, 'no template ejs ("' + templateName + '") for customer card preview');
+      cb('no template ejs ("' + templateName + '") for customer card preview');
+
+    } else {
+
+      dbconn.getCustomerCardPreview(query, dbconnId, templateName, function(err, results) {
+        try {
+          if (err) { // some error in the query
+            logger.error(IDLOG, err);
+            cb(err);
+
+          } else { // add the result
+
+            var html = getCustomerCardHTML(templateName, '', results);
+            var obj = {
+              html: new Buffer(html).toString('base64')
+            };
+            cb(null, obj);
+          }
+        } catch (error) {
+          logger.error(IDLOG, error.stack);
+          cb(error);
+        }
+      });
+    }
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+/**
+ * Get a customer card.
+ *
  * @method getCustomerCardByNum
  * @param {string} permissionId The permission identifier of the customer card in asterisk.rest_cti_permissions
  * @param {string} ccName The customer card name
@@ -292,7 +350,7 @@ function getAllCustomerCards(username, num, format, cb) {
 
       } else if (!ejsTemplates[templateName]) {
         logger.warn(IDLOG, 'no template ejs for customer card "' + cc.name + '"');
-        callback();
+        callback('no template ejs for customer card "' + cc.name + '"');
 
       } else {
 
@@ -312,7 +370,7 @@ function getAllCustomerCards(username, num, format, cb) {
               }
 
               obj[cc.name] = {
-                data: formattedData,
+                data: new Buffer(formattedData).toString('base64'),
                 number: num,
                 descr: ccNameDescr
               };
@@ -531,3 +589,4 @@ exports.configPrivacy = configPrivacy;
 exports.getAllCustomerCards = getAllCustomerCards;
 exports.getCustomerCardByNum = getCustomerCardByNum;
 exports.setCompAuthorization = setCompAuthorization;
+exports.getCustomerCardPreview = getCustomerCardPreview;
