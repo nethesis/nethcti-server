@@ -12,9 +12,10 @@
           </a>
         </div>
         <div class="description">
-          <p>Homephone: <b><%= results[i].homephone %></b></p>
-          <p>Workphone: <b><%= results[i].workphone %></b></p>
-          <p>Cellphone: <b><%= results[i].cellphone %></b></p>
+          <p>Extension: <b><%= results[i].extension || '-' %></b></p>
+          <p>Homephone: <b><%= results[i].homephone || '-' %></b></p>
+          <p>Workphone: <b><%= results[i].workphone || '-' %></b></p>
+          <p>Cellphone: <b><%= results[i].cellphone || '-' %></b></p>
         </div>
       </div>
       <div class="extra content">
