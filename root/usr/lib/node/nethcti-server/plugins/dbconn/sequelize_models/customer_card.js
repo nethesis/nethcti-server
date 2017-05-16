@@ -5,9 +5,11 @@ module.exports = function(sequelize, DataTypes) {
       autoIncrement: true,
       primaryKey: true
     },
+    name: DataTypes.STRING,
     creation: DataTypes.DATE,
     query: DataTypes.STRING,
     template: DataTypes.STRING,
-    dbconn_id: DataTypes.INTEGER
+    dbconn_id: DataTypes.INTEGER,
+    permission_id: DataTypes.INTEGER
   });
 };
