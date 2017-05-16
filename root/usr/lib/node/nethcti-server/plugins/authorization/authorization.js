@@ -142,7 +142,13 @@ function config(obj) {
       for (mp in profiles[id].macro_permissions) {
         temp = {};
         for (i = 0; i < profiles[id].macro_permissions[mp].permissions.length; i++) {
-          temp[profiles[id].macro_permissions[mp].permissions[i].id] = profiles[id].macro_permissions[mp].permissions[i];
+          if (profiles[id].macro_permissions[mp].permissions[i].name &&
+            mp !== 'customer_card') {
+
+            temp[profiles[id].macro_permissions[mp].permissions[i].name] = profiles[id].macro_permissions[mp].permissions[i];
+          } else {
+            temp[profiles[id].macro_permissions[mp].permissions[i].id] = profiles[id].macro_permissions[mp].permissions[i];
+          }
         }
         profiles[id].macro_permissions[mp].permissions = temp;
       }
