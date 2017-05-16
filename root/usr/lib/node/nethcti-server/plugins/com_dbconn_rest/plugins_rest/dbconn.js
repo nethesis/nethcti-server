@@ -172,6 +172,9 @@ function setCompUtil(comp) {
             return;
           }
 
+          var username = req.headers.authorization_user;
+          logger.info(IDLOG, 'user "' + username + '" requested db connection test');
+
           compDbConn.testConnection(req.params.host, req.params.port, req.params.type,
             req.params.user, req.params.pass, req.params.name,
             function(err) {

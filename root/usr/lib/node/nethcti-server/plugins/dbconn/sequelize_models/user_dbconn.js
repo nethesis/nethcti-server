@@ -10,6 +10,7 @@ module.exports = function(sequelize, DataTypes) {
     type: DataTypes.STRING,
     user: DataTypes.STRING,
     pass: DataTypes.STRING,
-    name: DataTypes.STRING
+    name: DataTypes.STRING,
+    creation: DataTypes.DATE
   });
 };

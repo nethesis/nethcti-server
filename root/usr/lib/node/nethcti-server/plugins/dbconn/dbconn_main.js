@@ -515,7 +515,7 @@ function initCustCardData(cb) {
 
       if (results.customerCard) {
         for (i = 0; i < results.customerCard.length; i++) {
-          custCardTemplatesData[results.customerCard[i].template] = results.customerCard[i];
+          custCardTemplatesData[results.customerCard[i].permission_id] = results.customerCard[i];
         }
       }
       cb();

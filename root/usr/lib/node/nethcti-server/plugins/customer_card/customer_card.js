@@ -157,30 +157,33 @@ function setDbconn(dbconnMod) {
  * Get a customer card.
  *
  * @method getCustomerCardByNum
- * @param {string} ccName The name of the customer card to search
+ * @param {string} permissionId The permission identifier of the customer card in asterisk.rest_cti_permissions
+ * @param {string} ccName The customer card name
  * @param {string} num The number used to search the customer card
  * @param {function} cb The callback function
  */
-function getCustomerCardByNum(ccName, num, cb) {
+function getCustomerCardByNum(permissionId, ccName, num, cb) {
   try {
     // check parameters
-    if (typeof ccName !== 'string' || typeof num !== 'string' || typeof cb !== 'function') {
+    if (typeof permissionId !== 'string' ||
+      typeof ccName !== 'string' ||
+      typeof num !== 'string' ||
+      typeof cb !== 'function') {
+
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
-    logger.info(IDLOG, 'search customer card "' + ccName + '" by number ' + num + ' by means dbconn module');
-    dbconn.getCustomerCardByNum(ccName, num, function(err1, results) {
+    logger.info(IDLOG, 'search customer card "' + ccName + '" (permission_id: ' + permissionId +
+      ') by number ' + num + ' by means dbconn module');
+
+    dbconn.getCustomerCardByNum(permissionId, ccName, num, function(err1, results) {
       try {
         if (err1) {
-          logger.error(IDLOG, 'getting customer card "' + ccName + '" by num "' + num + '"');
+          logger.error(IDLOG, 'getting customer card "' + ccName + '" (permission_id: ' + permissionId + ') by num "' + num + '"');
           cb(err1);
           return;
         }
-
-        cb(null, {
-          data: results,
-          name: ccName
-        });
+        cb(null, results);
 
       } catch (error) {
         logger.error(IDLOG, error.stack);
@@ -227,15 +230,20 @@ function setCompUser(comp) {
  * Return the customer card in HTML format.
  *
  * @method getCustomerCardHTML
- * @param  {string} name The customer card name
+ * @param  {string} templateName The name of the template file
+ * @param  {string} nameDescr The customer card description name
  * @param  {array}  data The customer card data
  * @return {string} The customer card in HTML format or an empty string in error case.
  * @private
  */
-function getCustomerCardHTML(name, data) {
+function getCustomerCardHTML(templateName, nameDescr, data) {
   try {
-    return ejs.render(ejsTemplates[name].content, {
-      name: name,
+    // check parameters
+    if (typeof templateName !== 'string' || typeof nameDescr !== 'string' || !(data instanceof Array)) {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    return ejs.render(ejsTemplates[templateName].content, {
+      name: nameDescr,
       results: data
     });
   } catch (err) {
@@ -267,45 +275,46 @@ function getAllCustomerCards(username, num, format, cb) {
     // get the list of the authorized customer cards. It is an array with
     // the identifiers of customer cards as strings
     var allowedCC = compAuthorization.authorizedCustomerCards(username);
-    logger.info(IDLOG, 'user "' + username + '" is authorized to view customer cards: "' + allowedCC.toString() + '"');
+    logger.info(IDLOG, 'user "' + username + '" is authorized to view customer cards: "' + JSON.stringify(allowedCC) + '"');
 
+    var templateName, ccNameDescr;
     var obj = {}; // object with all results
 
     // parallel execution
-    async.each(allowedCC, function(ccName, callback) {
+    async.each(allowedCC, function(cc, callback) {
 
-      if (!dbconn.checkDbconnCustCard(ccName)) {
-        logger.warn(IDLOG, 'no db connection for customer card "' + ccName + '"');
-        callback();
+      templateName = dbconn.getCustCardTemplateName(cc.permissionId);
+      ccNameDescr = dbconn.getCustCardNameDescr(cc.permissionId);
 
-      } if (!ejsTemplates[ccName]) {
-        logger.warn(IDLOG, 'no template ejs for customer card "' + ccName + '"');
+      if (!dbconn.checkDbconnCustCard(cc.permissionId)) {
+        logger.warn(IDLOG, 'no db connection for customer card "' + cc.name + '"');
+        callback('no db connection for customer card "' + cc.name + '"');
+
+      } else if (!ejsTemplates[templateName]) {
+        logger.warn(IDLOG, 'no template ejs for customer card "' + cc.name + '"');
         callback();
 
       } else {
 
-        getCustomerCardByNum(ccName, num, function(err, result) { // get one customer card
+        getCustomerCardByNum(cc.permissionId, cc.name, num, function(err, result) { // get one customer card
           try {
             if (err) { // some error in the query
               logger.error(IDLOG, err);
 
             } else { // add the result
 
-              if (ccName === 'calls') {
-                result.data = filterPrivacyCcCalls(username, num, result.data);
-              }
-
               var formattedData;
               if (format === 'html') {
-                formattedData = getCustomerCardHTML(result.name, result.data);
+                formattedData = getCustomerCardHTML(templateName, ccNameDescr, result);
 
               } else if (format === 'json') {
                 formattedData = result.data;
               }
 
-              obj[ccName] = {
+              obj[cc.name] = {
                 data: formattedData,
-                number: num
+                number: num,
+                descr: ccNameDescr
               };
             }
             callback();
@@ -317,9 +326,11 @@ function getAllCustomerCards(username, num, format, cb) {
         });
       }
 
-    }, function(err) {
+    }, function(err, uno) {
       if (err) {
         logger.error(IDLOG, err);
+        cb(err);
+        return;
       }
 
       var objKeys = Object.keys(obj);

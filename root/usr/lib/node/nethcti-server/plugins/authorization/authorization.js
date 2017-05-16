@@ -142,12 +142,7 @@ function config(obj) {
       for (mp in profiles[id].macro_permissions) {
         temp = {};
         for (i = 0; i < profiles[id].macro_permissions[mp].permissions.length; i++) {
-
-          if (profiles[id].macro_permissions[mp].permissions[i].name) {
-            temp[profiles[id].macro_permissions[mp].permissions[i].name] = profiles[id].macro_permissions[mp].permissions[i];
-          } else {
-            temp[profiles[id].macro_permissions[mp].permissions[i].id] = profiles[id].macro_permissions[mp].permissions[i];
-          }
+          temp[profiles[id].macro_permissions[mp].permissions[i].id] = profiles[id].macro_permissions[mp].permissions[i];
         }
         profiles[id].macro_permissions[mp].permissions = temp;
       }
@@ -1414,12 +1409,20 @@ function authorizedCustomerCards(username) {
     if (typeof username !== 'string') {
       throw new Error('wrong parameter');
     }
-
+    var permissionId;
     var arr = [];
     var profid = getUserProfileId(username);
 
     if (profiles[profid].macro_permissions.presence_panel.value === true) {
-      arr = Object.keys(profiles[profid].macro_permissions.customerd_card.permissions);
+      for (permissionId in profiles[profid].macro_permissions.customerd_card.permissions) {
+        if (profiles[profid].macro_permissions.customerd_card.permissions[permissionId].value === true) {
+
+          arr.push({
+            permissionId: permissionId,
+            name: profiles[profid].macro_permissions.customerd_card.permissions[permissionId].name
+          });
+        }
+      }
     }
     return arr;
 

@@ -97,25 +97,31 @@ function setLogger(log) {
  * Get the customer card of the specified type.
  *
  * @method getCustomerCardByNum
- * @param {string} name The name of the customer card to retrieve
+ * @param {string} permissionId The permission identifier of the customer card in asterisk.rest_cti_permissions
+ * @param {string} ccName The customer card name
  * @param {string} num The phone number used to search in _channel_ and _dstchannel_ mysql
  *                     fields. It is used to filter out. It is preceded by '%' character
  * @param {function} cb The callback function
  */
-function getCustomerCardByNum(name, num, cb) {
+function getCustomerCardByNum(permissionId, ccName, num, cb) {
   try {
     // check parameters
-    if (typeof name !== 'string' || typeof num !== 'string' || typeof cb !== 'function') {
+    if (typeof permissionId !== 'string' ||
+      typeof ccName !== 'string' ||
+      typeof num !== 'string' ||
+      typeof cb !== 'function') {
+
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var query;
     // get the db connection relative to customer card specified
-    var dbConnId = compDbconnMain.custCardTemplatesData[name].dbconn_id;
+    var dbConnId = compDbconnMain.custCardTemplatesData[permissionId].dbconn_id;
 
     // check the connection presence
     if (compDbconnMain.dbConnCustCard[dbConnId] === undefined) {
-      var strError = 'no db connection for customer card ' + name + ' for num ' + num + ' (dbConnId: ' + dbConnId + ')';
+      var strError = 'no db connection for customer card ' + ccName + ' (permission_id: ' + permissionId +
+        ') for num ' + num + ' (dbConnId: ' + dbConnId + ')';
       logger.warn(IDLOG, strError);
       cb(strError);
       return;
@@ -128,28 +134,33 @@ function getCustomerCardByNum(name, num, cb) {
       num = num.substring(1, num.length - 1); // remove external quote e.g. num = 123456
 
       // replace the key of the query with parameter
-      query = compDbconnMain.custCardTemplatesData[name].query.replace(/\$EXTEN/g, num);
+      query = compDbconnMain.custCardTemplatesData[permissionId].query.replace(/\$EXTEN/g, num);
+
       compDbconnMain.dbConnCustCard[dbConnId].query(query).then(function(results) {
 
-        logger.info(IDLOG, results[0].length + ' results by searching cust card "' + name + '" by num ' + num);
+        logger.info(IDLOG, results[0].length + ' results by searching cust card "' + ccName +
+          '" (permission_id: ' + permissionId + ') by num ' + num);
         cb(null, results[0]);
 
       }, function(err1) { // manage the error
 
-        logger.error(IDLOG, 'searching cust card "' + name + '" by num ' + num + ': ' + err1.toString());
+        logger.error(IDLOG, 'searching cust card "' + ccName + '" (permission_id: ' + permissionId + ') by num ' +
+          num + ': ' + err1.toString());
         cb(err1.toString());
       });
 
     } else if (compDbconnMain.dbConfigCustCardData[dbConnId].type === 'postgres') {
 
-      query = compDbconnMain.custCardTemplatesData[name].query.replace(/\$EXTEN/g, num);
+      query = compDbconnMain.custCardTemplatesData[permissionId].query.replace(/\$EXTEN/g, num);
       compDbconnMain.dbConnCustCard[dbConnId].query(query, function(err2, results) {
         if (err2) {
-          logger.error(IDLOG, 'searching cust card "' + name + '" by num ' + num + ': ' + err2.toString());
+          logger.error(IDLOG, 'searching cust card "' + ccName + '" (permission_id: ' + permissionId + ') by num ' +
+            num + ': ' + err2.toString());
           cb(err2.toString());
 
         } else {
-          logger.info(IDLOG, results.rows.length + ' results by searching cust card "' + name + '" by num ' + num);
+          logger.info(IDLOG, results.rows.length + ' results by searching cust card "' + ccName +
+            '" (permission_id: ' + permissionId + ') by num ' + num);
           cb(null, results.rows);
         }
       });
@@ -157,15 +168,17 @@ function getCustomerCardByNum(name, num, cb) {
     } else if (compDbconnMain.isMssqlType(compDbconnMain.dbConfigCustCardData[dbConnId].type)) {
 
       var request = new mssql.Request(compDbconnMain.dbConnCustCard[dbConnId]);
-      query = compDbconnMain.custCardTemplatesData[name].query.replace(/\$EXTEN/g, num);
+      query = compDbconnMain.custCardTemplatesData[permissionId].query.replace(/\$EXTEN/g, num);
       request.query(query, function(err2, recordset) {
         try {
           if (err2) {
-            logger.error(IDLOG, 'searching cust card "' + name + '" by num ' + num + ': ' + err2.toString());
+            logger.error(IDLOG, 'searching cust card "' + ccName + '" (permission_id: ' + permissionId +
+              ') by num ' + num + ': ' + err2.toString());
             cb(err2.toString());
 
           } else {
-            logger.info(IDLOG, recordset.length + ' results by searching cust card "' + name + '" by num ' + num);
+            logger.info(IDLOG, recordset.length + ' results by searching cust card "' + ccName +
+              '" (permission_id: ' + permissionId + ') by num ' + num);
             cb(null, recordset);
           }
         } catch (err3) {
@@ -213,12 +226,16 @@ function getCustCardNames(cb) {
  * Test if the database connection to specified customer card exists.
  *
  * @method checkDbconnCustCard
- * @param {string} name The customer card name
+ * @param {string} permissionId The permission identifier of the customer card in asterisk.rest_cti_permissions
  * @return {boolean} True if the connection exists.
  */
-function checkDbconnCustCard(name) {
+function checkDbconnCustCard(permissionId) {
   try {
-    var connid = compDbconnMain.custCardTemplatesData[name] ? compDbconnMain.custCardTemplatesData[name].dbconn_id : null;
+    if (typeof permissionId !== 'string') {
+      throw new Error('wrong parameter: ' + JSON.stringify(arguments));
+    }
+
+    var connid = compDbconnMain.custCardTemplatesData[permissionId] ? compDbconnMain.custCardTemplatesData[permissionId].dbconn_id : null;
     if (compDbconnMain.dbConnCustCard[connid]) {
       return true;
     }
@@ -230,10 +247,51 @@ function checkDbconnCustCard(name) {
   }
 }
 
+/**
+ * Return the name of the template file.
+ *
+ * @method getCustCardTemplateName
+ * @param {string} permissionId The permission identifier of the customer card in asterisk.rest_cti_permissions
+ * @return {string} The name of the template file or undefined.
+ */
+function getCustCardTemplateName(permissionId) {
+  try {
+    if (typeof permissionId !== 'string') {
+      throw new Error('wrong parameter: ' + JSON.stringify(arguments));
+    }
+    if (compDbconnMain.custCardTemplatesData[permissionId]) {
+      return compDbconnMain.custCardTemplatesData[permissionId].template;
+    }
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Return the name of the customer card.
+ *
+ * @method getCustCardNameDescr
+ * @param {string} permissionId The permission identifier of the customer card in asterisk.rest_cti_permissions
+ * @return {string} The name of the customer card with the specified permission id.
+ */
+function getCustCardNameDescr(permissionId) {
+  try {
+    if (typeof permissionId !== 'string') {
+      throw new Error('wrong parameter: ' + JSON.stringify(arguments));
+    }
+    if (compDbconnMain.custCardTemplatesData[permissionId]) {
+      return compDbconnMain.custCardTemplatesData[permissionId].name;
+    }
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
 
 apiList.getCustCardNames = getCustCardNames;
 apiList.checkDbconnCustCard = checkDbconnCustCard;
+apiList.getCustCardNameDescr = getCustCardNameDescr;
 apiList.getCustomerCardByNum = getCustomerCardByNum;
+apiList.getCustCardTemplateName = getCustCardTemplateName;
 
 // public interface
 exports.apiList = apiList;
