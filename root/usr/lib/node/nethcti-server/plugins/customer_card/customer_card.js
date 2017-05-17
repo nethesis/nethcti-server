@@ -335,14 +335,13 @@ function getAllCustomerCards(username, num, format, cb) {
     var allowedCC = compAuthorization.authorizedCustomerCards(username);
     logger.info(IDLOG, 'user "' + username + '" is authorized to view customer cards: "' + JSON.stringify(allowedCC) + '"');
 
-    var templateName, ccNameDescr;
     var obj = {}; // object with all results
 
     // parallel execution
     async.each(allowedCC, function(cc, callback) {
 
-      templateName = dbconn.getCustCardTemplateName(cc.permissionId);
-      ccNameDescr = dbconn.getCustCardNameDescr(cc.permissionId);
+      var templateName = dbconn.getCustCardTemplateName(cc.permissionId);
+      var ccNameDescr = dbconn.getCustCardNameDescr(cc.permissionId);
 
       if (!dbconn.checkDbconnCustCard(cc.permissionId)) {
         logger.warn(IDLOG, 'no db connection for customer card "' + cc.name + '"');
