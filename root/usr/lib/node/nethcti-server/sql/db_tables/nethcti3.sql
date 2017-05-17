@@ -94,7 +94,7 @@ CREATE TABLE IF NOT EXISTS `user_settings` (
 CREATE TABLE IF NOT EXISTS `user_dbconn` (
   `id` int(11) NOT NULL auto_increment,
   `host` varchar(128) NOT NULL,
-  `port` int(11) NOT NULL,
+  `port` varchar(64) NOT NULL,
   `type` varchar(32) NOT NULL,
   `user` varchar(64) NOT NULL,
   `pass` varchar(64) NOT NULL,
@@ -111,6 +111,6 @@ CREATE TABLE IF NOT EXISTS `customer_card` (
   `query` text,
   `template` varchar(128) DEFAULT NULL,
   `dbconn_id` int(11) DEFAULT NULL,
-  `permission_id` int(10) unsigned NOT NULL,
+  `permission_id` int(10) unsigned DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
