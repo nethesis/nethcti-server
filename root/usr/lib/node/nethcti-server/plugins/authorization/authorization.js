@@ -1178,7 +1178,7 @@ function authorizeCustomerCardUser(username) {
     if (typeof username !== 'string') {
       throw new Error('wrong parameter');
     }
-    return profiles[getUserProfileId(username)].macro_permissions.customerd_card.value === true;
+    return profiles[getUserProfileId(username)].macro_permissions.customer_card.value === true;
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
@@ -1420,12 +1420,12 @@ function authorizedCustomerCards(username) {
     var profid = getUserProfileId(username);
 
     if (profiles[profid].macro_permissions.presence_panel.value === true) {
-      for (permissionId in profiles[profid].macro_permissions.customerd_card.permissions) {
-        if (profiles[profid].macro_permissions.customerd_card.permissions[permissionId].value === true) {
+      for (permissionId in profiles[profid].macro_permissions.customer_card.permissions) {
+        if (profiles[profid].macro_permissions.customer_card.permissions[permissionId].value === true) {
 
           arr.push({
             permissionId: permissionId,
-            name: profiles[profid].macro_permissions.customerd_card.permissions[permissionId].name
+            name: profiles[profid].macro_permissions.customer_card.permissions[permissionId].name
           });
         }
       }
