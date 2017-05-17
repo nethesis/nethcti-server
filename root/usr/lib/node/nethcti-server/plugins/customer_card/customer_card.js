@@ -370,7 +370,7 @@ function getAllCustomerCards(username, num, format, cb) {
               }
 
               obj[cc.name] = {
-                data: new Buffer(formattedData).toString('base64'),
+                data: (format === 'html' ? (new Buffer(formattedData).toString('base64')) : formattedData),
                 number: num,
                 descr: ccNameDescr
               };

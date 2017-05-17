@@ -119,7 +119,7 @@ function setCompUtil(comp) {
         * base64 encoded. The parameters are:
         *
         * * `number: the number to use to search the customer cards data`
-        * * `format: ("json" | "html") the format of the received data`
+        * * `format: ("json" | "html") the format of the received "data" key`
         *
         * Example JSON response:
         *
