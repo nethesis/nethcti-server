@@ -39,6 +39,7 @@ module.exports = function(options, imports, register) {
     }
     controllerUser.setLogger(logger);
     controllerUser.setCompAstProxy(imports.astProxy);
+    controllerUser.setCompDbconn(imports.dbconn);
     imports.astProxy.on(imports.astProxy.EVT_READY, function() {
       controllerUser.config('/etc/nethcti/users.json');
     });

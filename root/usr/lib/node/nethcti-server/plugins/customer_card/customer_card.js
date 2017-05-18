@@ -383,7 +383,7 @@ function getAllCustomerCards(username, num, format, cb) {
         });
       }
 
-    }, function(err, uno) {
+    }, function(err) {
       if (err) {
         logger.error(IDLOG, err);
         cb(err);

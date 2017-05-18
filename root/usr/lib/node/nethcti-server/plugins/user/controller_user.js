@@ -69,6 +69,15 @@ var EVT_USER_PRESENCE_CHANGED = 'userPresenceChanged';
 var logger = console;
 
 /**
+ * The dbconn architect component.
+ *
+ * @property compDbconn
+ * @type object
+ * @private
+ */
+var compDbconn;
+
+/**
  * The asterisk proxy architect component.
  *
  * @property compAstProxy
@@ -115,6 +124,21 @@ function setLogger(log) {
     } else {
       throw new Error('wrong logger object');
     }
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Set the dbconn architect component.
+ *
+ * @method setCompDbconn
+ * @param {object} comp The dbconn architect component.
+ */
+function setCompDbconn(comp) {
+  try {
+    compDbconn = comp;
+    logger.info(IDLOG, 'set dbconn architect component');
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
@@ -1589,15 +1613,48 @@ function getPhoneWebUser(username, exten) {
   }
 }
 
+/**
+ * Save the user settings into the database.
+ *
+ * @method saveSettings
+ * @param {string} username The username
+ * @param {object} data The JSON data object
+ * @param {function} cb The callback function
+ */
+function saveSettings(username, data, cb) {
+  try {
+    if (typeof username !== 'string' ||
+      typeof data !== 'object' ||
+      typeof cb !== 'function') {
+
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+
+    // check the user existence
+    if (typeof users[username] !== 'object') {
+      var msg = 'saving user settings: user "' + username + '" does not exist';
+      logger.warn(IDLOG, msg);
+      cb(msg);
+      return;
+    }
+    compDbconn.saveUserSettings(username, data, cb);
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
 // public interface
 exports.on = on;
 exports.config = config;
 exports.setLogger = setLogger;
 exports.setPresence = setPresence;
 exports.getPresence = getPresence;
+exports.saveSettings = saveSettings;
 exports.getUsernames = getUsernames;
 exports.isUserPresent = isUserPresent;
 exports.isExtenWebrtc = isExtenWebrtc;
+exports.setCompDbconn = setCompDbconn;
 exports.getUserInfoJSON = getUserInfoJSON;
 exports.EVT_USERS_READY = EVT_USERS_READY;
 exports.getPhoneWebUser = getPhoneWebUser;
