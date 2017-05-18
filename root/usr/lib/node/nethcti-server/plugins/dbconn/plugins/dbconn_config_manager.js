@@ -4,6 +4,7 @@
  * @module dbconn
  * @submodule plugins
  */
+var async = require('async');
 
 /**
  * The module identifier used by the logger.
@@ -334,7 +335,7 @@ function saveUserDefaultExtension(data, cb) {
 }
 
 /**
- * Saves a key-value pair representing a user setting. The setting are
+ * Saves a key-value pair representing a single user setting. The setting are
  * stored in mysql table _user\_settings_.
  *
  * @method saveUserSetting
@@ -346,9 +347,12 @@ function saveUserDefaultExtension(data, cb) {
 function saveUserSetting(username, keyName, value, cb) {
   try {
     // check parameters
-    if (typeof username !== 'string' || typeof keyName !== 'string' || typeof value !== 'string' || typeof cb !== 'function') {
+    if (typeof username !== 'string' ||
+      typeof keyName !== 'string' ||
+      typeof value !== 'string' ||
+      typeof cb !== 'function') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // sequelize does not support mysql "INSERT ... ON DUPLICATE KEY UPDATE" statement
@@ -408,7 +412,63 @@ function saveUserSetting(username, keyName, value, cb) {
   }
 }
 
+/**
+ * Save the user settings. The settings are saved in mysql table _user\_settings_.
+ * If the settings are already present, they will be updated.
+ *
+ * @method saveUserSettings
+ * @param {string} username The username
+ * @param {object} data The JSON object containing key values to be stored
+ * @param {function} cb The callback function
+ */
+function saveUserSettings(username, data, cb) {
+  try {
+    if (typeof username !== 'string' ||
+      typeof data !== 'object' ||
+      typeof cb !== 'function') {
+
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+
+    // parallel execution
+    async.each(Object.keys(data), function(key, callback) {
+
+      compDbconnMain.models[compDbconnMain.JSON_KEYS.USER_SETTINGS].upsert({
+
+        username: username,
+        key_name: key,
+        value: data[key]
+
+      }).then(function(result) {
+        logger.info(IDLOG, 'user setting "' + key + '" has been saved successfully for user "' + username + '"');
+        callback();
+
+      }, function(err1) { // manage the error
+        logger.error(IDLOG, 'saving user setting "' + key + '" for user "' + username + '": ' + err1.toString());
+        callback();
+      });
+      compDbconnMain.incNumExecQueries();
+
+    }, function(err) {
+
+      if (err) {
+        logger.error(IDLOG, err);
+        cb(err);
+        return;
+      }
+
+      logger.info(IDLOG, 'end saving user settings for user "' + username + '"');
+      cb();
+    });
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
 apiList.getUserSettings = getUserSettings;
+apiList.saveUserSettings = saveUserSettings;
 apiList.saveUserNotifySetting = saveUserNotifySetting;
 apiList.saveUserAutoQueueLogin = saveUserAutoQueueLogin;
 apiList.saveUserAutoQueueLogout = saveUserAutoQueueLogout;

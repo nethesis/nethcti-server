@@ -262,6 +262,7 @@ function setCompUtil(comp) {
      * # POST requests
      *
      * 1. [`user/presence`](#presencepost)
+     * 1. [`user/settings`](#settingspost)
      * 1. [`user/default_device`](#default_devicepost)
      *
      * ---
@@ -275,6 +276,19 @@ function setCompUtil(comp) {
      * Example JSON request parameters:
      *
      *     { "status": "online" }
+     *
+     * ---
+     *
+     * ### <a id="#settingspost">**`user/settings`**</a>
+     *
+     * Save the user settings. The request must contain the following parameters:
+     *
+     * * `data: a valid JSON object. Keys must to be strings of maximum length of 50 characters.
+                Maximum allowed value length is 512 characters.`
+     *
+     * Example JSON request parameters:
+     *
+     *     { "key1": "value1", "key": { "sub-key1": "sub-value1" } } }
      *
      * ---
      *
@@ -321,10 +335,12 @@ function setCompUtil(comp) {
          * @type {array}
          *
          *   @param {string} presence Set a presence status for the user
+         *   @param {string} settings Save the user settings
          *   @param {string} default_device Set a default extension for the user
          */
         'post': [
           'presence',
+          'settings',
           'default_device'
         ],
         'head': [],
@@ -392,16 +408,16 @@ function setCompUtil(comp) {
       endpoints: function(req, res, next) {
         try {
           var username = req.headers.authorization_user;
-
           var endpoints = compUser.getAllUsersEndpointsJSON();
-
           var results = {};
-          for (var i in endpoints) {
+          var i;
+
+          for (i in endpoints) {
             results[i] = compUser.getUserInfoJSON(i);
           }
-
           logger.info(IDLOG, 'send endpoints to user "' + username + '"');
           res.send(200, results);
+
         } catch (err) {
           logger.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -464,6 +480,45 @@ function setCompUtil(comp) {
       },
 
       /**
+       * Save the user settings by the following REST API:
+       *
+       *     settings
+       *
+       * @method settings
+       * @param {object}   req  The client request
+       * @param {object}   res  The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      settings: function(req, res, next) {
+        try {
+          var username = req.headers.authorization_user;
+
+          if (typeof req.params !== 'object' || Object.keys(req.params).length === 0) {
+            compUtil.net.sendHttp400(IDLOG, res);
+            return;
+          }
+
+          compUser.saveSettings(username, req.params, function(err) {
+            try {
+              if (err) {
+                logger.error(IDLOG, 'saving settings for user "' + username + '"');
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+              } else {
+                logger.info(IDLOG, 'saved settings for user "' + username + '"');
+                compUtil.net.sendHttp200(IDLOG, res);
+              }
+            } catch (error) {
+              logger.error(IDLOG, error.stack);
+              compUtil.net.sendHttp500(IDLOG, res, error.toString());
+            }
+          });
+        } catch (err) {
+          logger.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
+      },
+
+      /**
        * Set the default extension for the user by the following REST API:
        *
        *     default_device
@@ -473,7 +528,7 @@ function setCompUtil(comp) {
        * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain
        */
-      default_device: function(req, res, next) {
+        default_device: function(req, res, next) {
         try {
           var username = req.headers.authorization_user;
 
@@ -485,11 +540,12 @@ function setCompUtil(comp) {
           compConfigManager.setDefaultUserExtensionConf(username, req.params.id, function(err) {
             try {
               if (err) {
+                logger.error(IDLOG, 'setting default extension "' + req.params.id + '" to user "' + username + '"');
                 compUtil.net.sendHttp500(IDLOG, res, err.toString());
               } else {
+                logger.info(IDLOG, 'set default extension "' + req.params.id + '" to user "' + username + '"');
                 compUtil.net.sendHttp200(IDLOG, res);
               }
-
             } catch (error) {
               logger.error(IDLOG, error.stack);
               compUtil.net.sendHttp500(IDLOG, res, error.toString());
@@ -505,6 +561,7 @@ function setCompUtil(comp) {
     exports.me = user.me;
     exports.endpoints = user.endpoints;
     exports.presence = user.presence;
+    exports.settings = user.settings;
     exports.setLogger = setLogger;
     exports.setCompUtil = setCompUtil;
     exports.setCompUser = setCompUser;

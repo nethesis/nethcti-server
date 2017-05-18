@@ -230,7 +230,9 @@ function config(path) {
     var json = require(path); // read the file
     logger.info(IDLOG, 'file ' + path + ' has been read');
 
-    if (typeof json === 'object' && json.loglevel.toLowerCase() === 'info') {
+    if ((typeof json === 'object' && json.loglevel.toLowerCase() === 'info') ||
+      process.env.NODE_ENV === 'development') {
+
       logSequelize = true;
     }
     logger.info(IDLOG, 'configuration done by ' + path);
