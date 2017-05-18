@@ -179,7 +179,7 @@ function setCompUtil(comp) {
             req.params.user, req.params.pass, req.params.name,
             function(err) {
               if (err) {
-                logger.info(IDLOG, 'test db connection failed: ' + JSON.stringify(req.params));
+                logger.warn(IDLOG, 'test db connection failed: ' + JSON.stringify(req.params));
                 res.send(503);
               } else {
                 logger.info(IDLOG, 'test db connection success: ' + JSON.stringify(req.params));
