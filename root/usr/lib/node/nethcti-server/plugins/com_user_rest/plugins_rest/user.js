@@ -248,6 +248,20 @@ function setCompUtil(comp) {
           "secret": "12345",
           "username": "200",
           "description": "Yealink"
+        },
+        "settings": {
+          "prop1": "value1",
+          "prop2": {
+            "sub-key2": "sub-value2"
+          },
+          "prop3": [
+            "sub-key3",
+            {
+              "sub-key3a": "sub-value3a"
+            }
+          ],
+          "default_extension": "200",
+          ...
         }
       }
      *
