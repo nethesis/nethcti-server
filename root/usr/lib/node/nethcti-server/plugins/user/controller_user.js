@@ -1644,6 +1644,32 @@ function saveSettings(username, data, cb) {
   }
 }
 
+/**
+ * Returns the user settings from the database.
+ *
+ * @method getUserSettings
+ * @param {string} username The username
+ * @param {function} cb The callback function
+ */
+function getUserSettings(username, cb) {
+  try {
+    if (typeof username !== 'string' || typeof cb !== 'function') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    // check the user existence
+    if (typeof users[username] !== 'object') {
+      var msg = 'gettings user settings: user "' + username + '" does not exist';
+      logger.warn(IDLOG, msg);
+      cb(msg);
+      return;
+    }
+    compDbconn.getUserSettings(username, cb);
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
 // public interface
 exports.on = on;
 exports.config = config;
@@ -1655,6 +1681,7 @@ exports.getUsernames = getUsernames;
 exports.isUserPresent = isUserPresent;
 exports.isExtenWebrtc = isExtenWebrtc;
 exports.setCompDbconn = setCompDbconn;
+exports.getUserSettings = getUserSettings;
 exports.getUserInfoJSON = getUserInfoJSON;
 exports.EVT_USERS_READY = EVT_USERS_READY;
 exports.getPhoneWebUser = getPhoneWebUser;
