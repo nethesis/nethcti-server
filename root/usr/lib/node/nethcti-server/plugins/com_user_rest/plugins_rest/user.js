@@ -223,6 +223,31 @@ function setCompUtil(comp) {
               "description": "Yealink SIP-T22P 7.73.0.50"
             }
           ]
+        },
+        "profile": {
+          "id": "3",
+          "name": "Advanced",
+          "macro_permissions": {
+            "settings": {
+              "value": true,
+              "permissions": {
+                "call_waiting": {
+                  "id": "1",
+                  "name": "call_waiting",
+                  "value": true
+                },
+                ...
+              }
+            },
+            ...
+          }
+        },
+        "default_device": {
+          "id": "200",
+          "type": "webrtc",
+          "secret": "12345",
+          "username": "200",
+          "description": "Yealink"
         }
       }
      *
