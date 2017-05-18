@@ -134,7 +134,7 @@ function getCustomerCardByNum(permissionId, ccName, num, cb) {
       num = num.substring(1, num.length - 1); // remove external quote e.g. num = 123456
 
       // replace the key of the query with parameter
-      query = compDbconnMain.custCardTemplatesData[permissionId].query.replace(/\$EXTEN/g, num);
+      query = compDbconnMain.custCardTemplatesData[permissionId].query.replace(/\$NUMBER/g, num);
 
       compDbconnMain.dbConnCustCard[dbConnId].query(query).then(function(results) {
 
@@ -151,7 +151,7 @@ function getCustomerCardByNum(permissionId, ccName, num, cb) {
 
     } else if (compDbconnMain.dbConfigCustCardData[dbConnId].type === 'postgres') {
 
-      query = compDbconnMain.custCardTemplatesData[permissionId].query.replace(/\$EXTEN/g, num);
+      query = compDbconnMain.custCardTemplatesData[permissionId].query.replace(/\$NUMBER/g, num);
       compDbconnMain.dbConnCustCard[dbConnId].query(query, function(err2, results) {
         if (err2) {
           logger.error(IDLOG, 'searching cust card "' + ccName + '" (permission_id: ' + permissionId + ') by num ' +
@@ -168,7 +168,7 @@ function getCustomerCardByNum(permissionId, ccName, num, cb) {
     } else if (compDbconnMain.isMssqlType(compDbconnMain.dbConfigCustCardData[dbConnId].type)) {
 
       var request = new mssql.Request(compDbconnMain.dbConnCustCard[dbConnId]);
-      query = compDbconnMain.custCardTemplatesData[permissionId].query.replace(/\$EXTEN/g, num);
+      query = compDbconnMain.custCardTemplatesData[permissionId].query.replace(/\$NUMBER/g, num);
       request.query(query, function(err2, recordset) {
         try {
           if (err2) {
