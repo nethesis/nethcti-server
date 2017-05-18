@@ -9,36 +9,34 @@
   <% } else { %>
     <div class="ui cards">
       <% for(var i=0; i<results.length; i++){ %>
-        <% if(results[i].homephone || results[i].workphone || results[i].cellphone){ %>
-          <div class="red card">
-            <div class="content">
-              <div class="header">
-                <%= results[i].name %>
-              </div>
-              <div class="meta">
-                <a>
-                  <%= results[i].type %>
-                </a>
-              </div>
-              <div class="description">
-                <p>Homephone: <b><%= results[i].homephone || '-' %></b></p>
-                <p>Workphone: <b><%= results[i].workphone || '-' %></b></p>
-                <p>Cellphone: <b><%= results[i].cellphone || '-' %></b></p>
-              </div>
+        <div class="red card">
+          <div class="content">
+            <div class="header">
+              <%= results[i].name %>
             </div>
-            <div class="extra content">
-              <% if(results[i].url.length==0){ %>
-                <span class="right floated">
+            <div class="meta">
+              <a>
+                <%= results[i].type %>
+              </a>
+            </div>
+            <div class="description">
+              <p>Homephone: <b><%= results[i].homephone || '-' %></b></p>
+              <p>Workphone: <b><%= results[i].workphone || '-' %></b></p>
+              <p>Cellphone: <b><%= results[i].cellphone || '-' %></b></p>
+            </div>
+          </div>
+          <div class="extra content">
+            <% if(results[i].url){ %>
+              <span class="right floated">
                   <a target="blank" href="<%= results[i].url %>">Site</a>
                 </span>
-                <% } %>
-                  <span>
+              <% } %>
+                <span>
                 <i class="building icon"></i>
                 <%= results[i].company || '-' %>
               </span>
-            </div>
           </div>
-        <% } %>
+        </div>
       <% } %>
     </div>
   <% } %>
