@@ -382,8 +382,17 @@ function setCompUtil(comp) {
               }
             }
             result.default_device = defextObj;
-            logger.info(IDLOG, 'send user info to user "' + username + '"');
-            res.send(200, result);
+
+            // get user settings
+            compUser.getUserSettings(username, function(err, settings) {
+              if (err) {
+                logger.error(IDLOG, 'getting user settings for user "' + username + '"');
+              } else {
+                result.settings = settings;
+              }
+              logger.info(IDLOG, 'send user info to user "' + username + '"');
+              res.send(200, result);
+            });
           } else {
             var strerr = 'sending user info to user "' + username + '": wrong format';
             logger.error(IDLOG, strerr);
@@ -528,7 +537,7 @@ function setCompUtil(comp) {
        * @param {object}   res  The client response
        * @param {function} next Function to run the next handler in the chain
        */
-        default_device: function(req, res, next) {
+      default_device: function(req, res, next) {
         try {
           var username = req.headers.authorization_user;
 

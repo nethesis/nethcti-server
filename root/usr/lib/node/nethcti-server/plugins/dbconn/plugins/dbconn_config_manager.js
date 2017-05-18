@@ -467,6 +467,51 @@ function saveUserSettings(username, data, cb) {
   }
 }
 
+/**
+ * Return the user settings. The settings are stored in mysql table _user\_settings_.
+ *
+ * @method getUserSettings
+ * @param {string} username The username
+ * @param {function} cb The callback function
+ */
+function getUserSettings(username, cb) {
+  try {
+    if (typeof username !== 'string' ||
+      typeof cb !== 'function') {
+
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+
+    compDbconnMain.models[compDbconnMain.JSON_KEYS.USER_SETTINGS].findAll({
+      where: ['username=?', username],
+      attributes: ['id', 'key_name', 'value']
+
+    }).then(function(results) {
+
+      var i;
+      var obj = {};
+      for (i = 0; i < results.length; i++) {
+        if (results[i].value.indexOf('{') === 0 || results[i].value.indexOf('[') === 0) {
+          results[i].value = JSON.parse(results[i].value);
+        }
+        obj[results[i].key_name] = results[i].value;
+      }
+
+      logger.info(IDLOG, results.length + ' user settings results for user "' + username + '"');
+      cb(null, obj);
+
+    }, function(err) { // manage the error
+      logger.error(IDLOG, 'getting user settings for user "' + username + '"');
+      cb(err.toString());
+    });
+    compDbconnMain.incNumExecQueries();
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
 apiList.getUserSettings = getUserSettings;
 apiList.saveUserSettings = saveUserSettings;
 apiList.saveUserNotifySetting = saveUserNotifySetting;
