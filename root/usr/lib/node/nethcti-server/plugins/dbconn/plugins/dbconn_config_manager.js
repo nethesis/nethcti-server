@@ -433,6 +433,11 @@ function saveUserSettings(username, data, cb) {
     // parallel execution
     async.each(Object.keys(data), function(key, callback) {
 
+      // convert object and array into string
+      if (typeof data[key] === 'object') {
+        data[key] = JSON.stringify(data[key]);
+      }
+
       compDbconnMain.models[compDbconnMain.JSON_KEYS.USER_SETTINGS].upsert({
 
         username: username,
@@ -491,7 +496,11 @@ function getUserSettings(username, cb) {
       var i;
       var obj = {};
       for (i = 0; i < results.length; i++) {
-        if (results[i].value.indexOf('{') === 0 || results[i].value.indexOf('[') === 0) {
+        // parse object, array and null
+        if (results[i].value.indexOf('{') === 0 ||
+          results[i].value.indexOf('[') === 0 ||
+          results[i].value === 'null') {
+
           results[i].value = JSON.parse(results[i].value);
         }
         obj[results[i].key_name] = results[i].value;
