@@ -434,7 +434,7 @@ function saveUserSettings(username, data, cb) {
     async.each(Object.keys(data), function(key, callback) {
 
       // convert object and array into string
-      if (typeof data[key] === 'object') {
+      if (typeof data[key] === 'object' || typeof data[key] === 'boolean') {
         data[key] = JSON.stringify(data[key]);
       }
 
@@ -499,7 +499,9 @@ function getUserSettings(username, cb) {
         // parse object, array and null
         if (results[i].value.indexOf('{') === 0 ||
           results[i].value.indexOf('[') === 0 ||
-          results[i].value === 'null') {
+          results[i].value === 'null' ||
+          results[i].value === 'true' ||
+          results[i].value === 'false') {
 
           results[i].value = JSON.parse(results[i].value);
         }
