@@ -1,5 +1,5 @@
 Name: nethcti-server
-Version: 2.6.8
+Version: 2.6.9
 Release: 1%{?dist}
 Summary: Nodejs Asterisk proxy for NethCTI 2
 
@@ -61,6 +61,9 @@ rm -rf $RPM_BUILD_ROOT
 %doc
 
 %changelog
+* Fri May 19 2017 Alessandro Polidori <alessandro.polidori@nethesis.it> - 2.6.9-1
+- Fix customer card default templates visualization
+
 * Thu Mar 23 2017 Alessandro Polidori <alessandro.polidori@nethesis.it> - 2.6.8-1
 - fix permission of /var/lib/asterisk/sounds
 
