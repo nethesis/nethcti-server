@@ -1150,6 +1150,7 @@ function listParkedCalls(err, resp) {
  */
 function updateParkedChannelOfOneParking(err, resp, parking) {
   try {
+    console.log('updateParkedChannelOfOneParking: ', err, resp, parking);
     if (err) {
       logger.error(IDLOG, 'updating parked channels of one parking ' + parking + ': ' + err.toString());
       return;
@@ -4941,22 +4942,20 @@ function sendDtmfToConversation(extension, convid, tone, cb) {
  * Pickup a parked caller.
  *
  * @method pickupParking
- * @param {string}   parking   The number of the parking
- * @param {string}   destType  The endpoint type that pickup the conversation
- * @param {string}   destId    The endpoint identifier that pickup the conversation
- * @param {string}   extForCtx The extension identifier used to get the context
- * @param {function} cb        The callback function
+ * @param {string} parking The number of the parking
+ * @param {string} destId The endpoint identifier that pickup the conversation
+ * @param {string} extForCtx The extension identifier used to get the context
+ * @param {function} cb The callback function
  */
-function pickupParking(parking, destType, destId, extForCtx, cb) {
+function pickupParking(parking, destId, extForCtx, cb) {
   try {
     // check parameters
     if (typeof cb !== 'function' ||
       typeof destId !== 'string' ||
       typeof parking !== 'string' ||
-      typeof extForCtx !== 'string' ||
-      typeof destType !== 'string') {
+      typeof extForCtx !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     if (!extensions[extForCtx]) {
@@ -4966,10 +4965,10 @@ function pickupParking(parking, destType, destId, extForCtx, cb) {
     var ctx = extensions[extForCtx].getContext();
     var ch = parkings[parking].getParkedCaller().getChannel();
 
-    if (destType === 'extension' && extensions[destId] && ch !== undefined) {
+    if (extensions[destId] && ch !== undefined) {
 
       // the pickup operation is made by redirect operation
-      logger.info(IDLOG, 'pickup from ' + destType + ' ' + destId + ' of the channel ' + ch + ' of parking ' + parking + ' ' +
+      logger.info(IDLOG, 'pickup from ' + destId + ' of the channel ' + ch + ' of parking ' + parking + ' ' +
         'using context "' + ctx + '"');
       astProxy.doCmd({
         command: 'redirectChannel',
@@ -4982,7 +4981,7 @@ function pickupParking(parking, destType, destId, extForCtx, cb) {
       });
 
     } else {
-      var str = 'pickup parking from ' + destType + ' ' + destId + ' of parking ' + parking;
+      var str = 'pickup parking from ' + destId + ' of parking ' + parking;
       logger.error(IDLOG, str);
       cb(str);
     }

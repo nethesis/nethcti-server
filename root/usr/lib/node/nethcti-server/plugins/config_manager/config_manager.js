@@ -362,7 +362,8 @@ function loadAllUsersSettings() {
             if (err) {
               logger.error(IDLOG, 'getting settings of user "' + username + '" from db: ' + err);
             } else {
-              userSettings[username] = fromDbUserSettingsToJSON(results, username);
+              // userSettings[username] = fromDbUserSettingsToJSON(results, username);
+              userSettings[username] = results;
             }
           } catch (error) {
             logger.error(IDLOG, error.stack);
@@ -1008,101 +1009,101 @@ function getUserSettings(user) {
   }
 }
 
-/**
- * Adapts user settings taken from db to JSON format.
- *
- * @method fromDbUserSettingsToJSON
- * @param  {array}  arr      The user settings received from the database
- * @param  {string} username The name of the user
- * @return {object} The user settings in JSON format.
- */
-function fromDbUserSettingsToJSON(arr, username) {
-  try {
-    // check parameter
-    if (!(arr instanceof Array) || typeof username !== 'string') {
-      throw new Error('wrong parameter');
-    }
+// /**
+//  * Adapts user settings taken from db to JSON format.
+//  *
+//  * @method fromDbUserSettingsToJSON
+//  * @param  {array}  arr      The user settings received from the database
+//  * @param  {string} username The name of the user
+//  * @return {object} The user settings in JSON format.
+//  */
+// function fromDbUserSettingsToJSON(arr, username) {
+//   try {
+//     // check parameter
+//     if (!(arr instanceof Array) || typeof username !== 'string') {
+//       throw new Error('wrong parameter');
+//     }
 
-    // get the first extension, cellphone and email endpoint of the user
-    var firstExten = Object.keys(compUser.getAllEndpointsExtension(username))[0];
-    var firstEmail = Object.keys(compUser.getAllEndpointsEmail(username))[0];
-    var firstCellphone = Object.keys(compUser.getAllEndpointsCellphone(username))[0];
-    firstExten = (firstExten ? firstExten : '');
-    firstEmail = (firstEmail ? firstEmail : '');
-    firstCellphone = (firstCellphone ? firstCellphone : '');
+//     // get the first extension, cellphone and email endpoint of the user
+//     var firstExten = Object.keys(compUser.getAllEndpointsExtension(username))[0];
+//     var firstEmail = Object.keys(compUser.getAllEndpointsEmail(username))[0];
+//     var firstCellphone = Object.keys(compUser.getAllEndpointsCellphone(username))[0];
+//     firstExten = (firstExten ? firstExten : '');
+//     firstEmail = (firstEmail ? firstEmail : '');
+//     firstCellphone = (firstCellphone ? firstCellphone : '');
 
-    // initialize default values. They are used if the user has never set
-    // any values from the client, so no data are present into the database
-    var json = {
-      notifications: {
-        postit: {
-          sms: {
-            when: 'never',
-            to: firstCellphone
-          },
-          email: {
-            when: 'never',
-            to: firstEmail
-          }
-        },
-        voicemail: {
-          sms: {
-            when: 'never',
-            to: firstCellphone
-          },
-          email: {
-            when: 'never',
-            to: firstEmail
-          }
-        }
-      },
-      queue_auto_login: false,
-      queue_auto_logout: false,
-      auto_dndon_logout: false,
-      auto_dndoff_login: false,
-      default_extension: firstExten
-    };
+//     // initialize default values. They are used if the user has never set
+//     // any values from the client, so no data are present into the database
+//     var json = {
+//       notifications: {
+//         postit: {
+//           sms: {
+//             when: 'never',
+//             to: firstCellphone
+//           },
+//           email: {
+//             when: 'never',
+//             to: firstEmail
+//           }
+//         },
+//         voicemail: {
+//           sms: {
+//             when: 'never',
+//             to: firstCellphone
+//           },
+//           email: {
+//             when: 'never',
+//             to: firstEmail
+//           }
+//         }
+//       },
+//       queue_auto_login: false,
+//       queue_auto_logout: false,
+//       auto_dndon_logout: false,
+//       auto_dndoff_login: false,
+//       default_extension: firstExten
+//     };
 
-    // overwrite default values with those taken from the database
-    // if they are present
-    var i;
-    for (i = 0; i < arr.length; i++) {
+//     // overwrite default values with those taken from the database
+//     // if they are present
+//     var i;
+//     for (i = 0; i < arr.length; i++) {
 
-      if (arr[i].key_name === 'auto_queue_login') {
-        json.queue_auto_login = (arr[i].value === 'true');
+//       if (arr[i].key_name === 'auto_queue_login') {
+//         json.queue_auto_login = (arr[i].value === 'true');
 
-      } else if (arr[i].key_name === 'auto_queue_logout') {
-        json.queue_auto_logout = (arr[i].value === 'true');
+//       } else if (arr[i].key_name === 'auto_queue_logout') {
+//         json.queue_auto_logout = (arr[i].value === 'true');
 
-      } else if (arr[i].key_name === 'auto_dndon_logout') {
-        json.auto_dndon_logout = (arr[i].value === 'true');
+//       } else if (arr[i].key_name === 'auto_dndon_logout') {
+//         json.auto_dndon_logout = (arr[i].value === 'true');
 
-      } else if (arr[i].key_name === 'auto_dndoff_login') {
-        json.auto_dndoff_login = (arr[i].value === 'true');
+//       } else if (arr[i].key_name === 'auto_dndoff_login') {
+//         json.auto_dndoff_login = (arr[i].value === 'true');
 
-      } else if (arr[i].key_name === 'default_extension') {
-        json.default_extension = arr[i].value;
+//       } else if (arr[i].key_name === 'default_extension') {
+//         json.default_extension = arr[i].value;
 
-      } else if (arr[i].key_name === 'notify_postit_email_when') {
-        json.notifications.postit.email.when = arr[i].value;
+//       } else if (arr[i].key_name === 'notify_postit_email_when') {
+//         json.notifications.postit.email.when = arr[i].value;
 
-      } else if (arr[i].key_name === 'notify_postit_sms_when') {
-        json.notifications.postit.sms.when = arr[i].value;
+//       } else if (arr[i].key_name === 'notify_postit_sms_when') {
+//         json.notifications.postit.sms.when = arr[i].value;
 
-      } else if (arr[i].key_name === 'notify_voicemail_email_when') {
-        json.notifications.voicemail.email.when = arr[i].value;
+//       } else if (arr[i].key_name === 'notify_voicemail_email_when') {
+//         json.notifications.voicemail.email.when = arr[i].value;
 
-      } else if (arr[i].key_name === 'notify_voicemail_sms_when') {
-        json.notifications.voicemail.sms.when = arr[i].value;
-      }
-    }
-    return json;
+//       } else if (arr[i].key_name === 'notify_voicemail_sms_when') {
+//         json.notifications.voicemail.sms.when = arr[i].value;
+//       }
+//     }
+//     return json;
 
-  } catch (err) {
-    logger.error(IDLOG, err.stack);
-    return {};
-  }
-}
+//   } catch (err) {
+//     logger.error(IDLOG, err.stack);
+//     return {};
+//   }
+// }
 
 /**
  * Return the user endpoints.
@@ -1207,7 +1208,6 @@ function getDefaultUserExtensionConf(username) {
     if (typeof username !== 'string') {
       throw new Error('wrong parameter');
     }
-
     return userSettings[username][USER_CONFIG_KEYS.default_extension];
 
   } catch (err) {

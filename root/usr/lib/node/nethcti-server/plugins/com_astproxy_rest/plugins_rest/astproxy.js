@@ -232,6 +232,7 @@ var compConfigManager;
         * 1. [`astproxy/blindtransfer`](#blindtransferpost)
         * 1. [`astproxy/unmute_record`](#unmute_recordpost)
         * 1. [`astproxy/start_spy`](#start_spypost)
+        * 1. [`astproxy/pickup_parking`](#pickup_parkingpost)
         * 1. [`astproxy/queuemember_add`](#queuemember_addpost)
         * 1. [`astproxy/inout_dyn_queues`](#inout_dyn_queuespost)
         * 1. [`astproxy/queuemember_pause`](#queuemember_pausepost)
@@ -450,6 +451,19 @@ var compConfigManager;
         * Example JSON request parameters:
         *
         *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointId": "221", "destId": "205" }
+        *
+        * ---
+        *
+        * ### <a id="pickup_parkingpost">**`astproxy/pickup_parking`**</a>
+        *
+        * Pickup the specified parking. The request must contains the following parameters:
+        *
+        * * `destId: the extension identifier that pickup the conversation`
+        * * `parking: the parking identifier`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "parking": "70", "destId": "214" }
         *
         * ---
         *
@@ -3608,8 +3622,9 @@ var compConfigManager;
           var username = req.headers.authorization_user;
 
           // check parameters
-          if (typeof req.params !== 'object' || typeof req.params.parking !== 'string' ||
-            typeof req.params.destType !== 'string' || typeof req.params.destId !== 'string') {
+          if (typeof req.params !== 'object' ||
+            typeof req.params.parking !== 'string' ||
+            typeof req.params.destId !== 'string') {
 
             compUtil.net.sendHttp400(IDLOG, res);
             return;
@@ -3619,52 +3634,43 @@ var compConfigManager;
           if (compAuthorization.authorizeOpParkingsUser(username) !== true &&
             compAuthorization.authorizeAdminParkingsUser(username) !== true) {
 
-            logger.warn(IDLOG, 'pickup parking "' + req.params.parking + '": authorization failed for user "' + username + '"');
+            logger.warn(IDLOG, 'picking-up parking "' + req.params.parking + '": authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
 
-          if (req.params.destType === 'extension') {
-
-            if (compAuthorization.authorizeAdminParkingsUser(username) === true) {
-
-              logger.info(IDLOG, 'pickup parking "' + req.params.parking + '" by user "' + username + '": he has the admin_parkings permission');
-            }
-            // check if the destination endpoint is owned by the user
-            else if (compAuthorization.verifyUserEndpointExten(username, req.params.destId) === false) {
-
-              logger.warn(IDLOG, 'pickup parking "' + req.params.parking + '" by user "' + username + '" has been failed: ' +
-                ' the destination ' + req.params.destType + ' ' + req.params.destId + ' isn\'t owned by the user');
-              compUtil.net.sendHttp403(IDLOG, res);
-              return;
-            } else {
-              logger.info(IDLOG, 'pickup parking "' + req.params.parking + '": the destination endpoint ' + req.params.destType +
-                ' ' + req.params.destId + ' is owned by "' + username + '"');
-            }
-
-            var extForCtx = compConfigManager.getDefaultUserExtensionConf(username);
-
-            compAstProxy.pickupParking(req.params.parking, req.params.destType, req.params.destId, extForCtx, function(err) {
-              try {
-                if (err) {
-                  logger.warn(IDLOG, 'pickup parking ' + req.params.parking + ' by user "' + username + '" with ' +
-                    req.params.destType + ' ' + req.params.destId + ' has been failed');
-                  compUtil.net.sendHttp500(IDLOG, res, err.toString());
-                  return;
-                }
-                logger.info(IDLOG, 'pickup parking ' + req.params.parking + ' has been successful by user "' + username + '" ' +
-                  'with ' + req.params.destType + ' ' + req.params.destId);
-                compUtil.net.sendHttp200(IDLOG, res);
-
-              } catch (error) {
-                logger.error(IDLOG, error.stack);
-                compUtil.net.sendHttp500(IDLOG, res, error.toString());
-              }
-            });
-          } else {
-            logger.warn(IDLOG, 'picking up parking ' + req.params.parking + ': unknown destType ' + req.params.destType);
-            compUtil.net.sendHttp400(IDLOG, res);
+          if (compAuthorization.authorizeAdminParkingsUser(username) === true) {
+            logger.info(IDLOG, 'picking-up parking "' + req.params.parking + '" by user "' + username + '": he has the "admin parkings" permission');
           }
+          // check if the destination endpoint is owned by the user
+          else if (compAuthorization.verifyUserEndpointExten(username, req.params.destId) === false) {
+
+            logger.warn(IDLOG, 'picking-up parking "' + req.params.parking + '" by user "' + username + '" has been failed: ' +
+              ' the destination ' + req.params.destId + ' is not owned by the user');
+            compUtil.net.sendHttp403(IDLOG, res);
+            return;
+
+          } else {
+            logger.info(IDLOG, 'pickup parking "' + req.params.parking + '": the destination "' + req.params.destId + '" is owned by "' + username + '"');
+          }
+
+          var extForCtx = compConfigManager.getDefaultUserExtensionConf(username);
+
+          compAstProxy.pickupParking(req.params.parking, req.params.destId, extForCtx, function(err) {
+            try {
+              if (err) {
+                logger.warn(IDLOG, 'picking-up parking ' + req.params.parking + ' by user "' + username + '" with ' + req.params.destId + ' has been failed');
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                return;
+              }
+              logger.info(IDLOG, 'pickup parking ' + req.params.parking + ' has been successful by user "' + username + '" with ' + req.params.destId);
+              compUtil.net.sendHttp200(IDLOG, res);
+
+            } catch (error) {
+              logger.error(IDLOG, error.stack);
+              compUtil.net.sendHttp500(IDLOG, res, error.toString());
+            }
+          });
 
         } catch (err) {
           logger.error(IDLOG, err.stack);

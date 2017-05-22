@@ -48,7 +48,7 @@ var IDLOG = '[listParkedCalls]';
     var list = {};
 
     /**
-     * Command plugin to get the list of all channels.
+     * Command plugin to get the list of all calls.
      *
      * Use it with _astproxy_ module as follow:
      *
@@ -63,7 +63,7 @@ var IDLOG = '[listParkedCalls]';
     var listParkedCalls = {
 
       /**
-       * Execute asterisk action to get the list of all channels.
+       * Execute asterisk action to get the list of all calls.
        *
        * @method execute
        * @param {object} am Asterisk manager used to send the action
