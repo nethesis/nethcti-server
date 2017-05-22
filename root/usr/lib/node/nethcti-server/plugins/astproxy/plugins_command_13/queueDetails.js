@@ -108,7 +108,7 @@ var IDLOG = '[queueDetails]';
       data: function(data) {
         try {
           // store new queue information object. This
-          // is the event about queue informations
+          // is the event about queue information
           if (data && data.queue && data.actionid &&
             data.holdtime && data.talktime &&
             data.completed && data.abandoned &&
@@ -153,7 +153,7 @@ var IDLOG = '[queueDetails]';
             data.position && data.calleridnum &&
             data.calleridname && data.event === 'QueueEntry') { // the event for each waiting call
 
-            // add the informations about a waiting caller
+            // add the information about a waiting caller
             list[data.actionid].waitingCallers[data.channel] = {
               wait: parseInt(data.wait),
               queue: data.queue,

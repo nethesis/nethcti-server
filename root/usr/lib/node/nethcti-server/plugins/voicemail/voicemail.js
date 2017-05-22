@@ -217,7 +217,7 @@ function getAllNewVoiceMessageCount(cb) {
     }
 
     // get the number of new voice messages of all voicemails using the listVoicemail plugin
-    // command of the asterisk proxy component. Then clean the results to return only the necessary informations
+    // command of the asterisk proxy component. Then clean the results to return only the necessary information
     logger.info(IDLOG, 'get the number of new voice messages of all voicemails using astProxy module');
     astProxy.doCmd({
       command: 'listVoicemail'

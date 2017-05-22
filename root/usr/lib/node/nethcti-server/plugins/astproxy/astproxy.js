@@ -1,7 +1,7 @@
 /**
  * The asterisk proxy module provides a standard interface to use with
  * different version of asterisk server. It provides functions to execute
- * actions and to receive events informations.
+ * actions and to receive events information.
  *
  * @module astproxy
  */

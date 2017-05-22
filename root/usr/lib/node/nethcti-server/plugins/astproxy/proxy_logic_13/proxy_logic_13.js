@@ -18,11 +18,11 @@ var Queue = require('../queue').Queue;
 var Trunk = require('../trunk').Trunk;
 var moment = require('moment');
 var Channel = require('../channel').Channel;
-// var Parking = require('../parking').Parking;
+var Parking = require('../parking').Parking;
 var Extension = require('../extension').Extension;
 var QueueMember = require('../queueMember').QueueMember;
 var EventEmitter = require('events').EventEmitter;
-// var ParkedCaller = require('../parkedCaller').ParkedCaller;
+var ParkedCaller = require('../parkedCaller').ParkedCaller;
 var Conversation = require('../conversation').Conversation;
 var utilChannel13 = require('./util_channel_13');
 // var MeetmeConfUser = require('../meetmeConfUser').MeetmeConfUser;
@@ -881,47 +881,6 @@ function iaxExtenStructValidation(err, resp) {
 }
 
 /**
- * Validates all parkings of the structure ini file.
- *
- * @method parkStructValidation
- * @param {object} err  The error received from the command.
- * @param {array}  resp The response received from the command.
- * @private
- */
-function parkStructValidation(err, resp) {
-  try {
-    if (err) {
-      logger.error(IDLOG, 'validating park structure: ' + err.toString());
-      return;
-    }
-
-    // cycles in all elements of the structure ini file to validate
-    var k;
-    for (k in struct) {
-
-      // validates all parkings
-      if (struct[k].type === INI_STRUCT.TYPE.PARK) {
-
-        // current parking of the structure ini file isn't present
-        // into the asterisk. So remove it from the structure ini file
-        if (resp[struct[k].extension] === undefined) {
-
-          delete struct[k];
-          logger.warn(IDLOG, 'inconsistency between ini structure file and asterisk for ' + k + ' or parkings is disabled');
-        }
-      }
-    }
-    logger.info(IDLOG, 'all parkings have been validated');
-
-    // initialize all parkings as 'Parking' objects into the 'parkings' object
-    initializeParkings();
-
-  } catch (error) {
-    logger.error(IDLOG, error.stack);
-  }
-}
-
-/**
  * Set the initial trunks list read from JSON configuration file.
  *
  * @method setStaticDataQueues
@@ -983,6 +942,11 @@ function start() {
     astProxy.doCmd({
       command: 'listQueues'
     }, initializeQueues);
+
+    // initialize parkings
+    astProxy.doCmd({
+      command: 'listParkings'
+    }, initializeParkings);
 
     // logger.info(IDLOG, 'start asterisk structure ini file validation');
     // // validates all sip extensions
@@ -1112,26 +1076,28 @@ function listIaxPeers(resp) {
  * Initialize all parkings as _Parking_ object into the _parkings_ property.
  *
  * @method initializeParkings
+ * @param {object} err The error received from the command
+ * @param {object} resp The response received from the command
  * @private
  */
-function initializeParkings() {
+function initializeParkings(err, resp) {
   try {
-    var k, p;
-    for (k in struct) {
-
-      if (struct[k].type === INI_STRUCT.TYPE.PARK) { // cycle in all parkings
-        // new parking object
-        p = new Parking(struct[k].extension);
-        p.setName(struct[k].label);
-        // store it
-        parkings[p.getParking()] = p;
-      }
+    if (err) {
+      logger.error(IDLOG, 'initialing parkings: ' + err);
+      return;
     }
-
+    var pid, p;
+    for (pid in resp) {
+      // new parking object
+      p = new Parking(pid);
+      p.setName(pid);
+      // store it
+      parkings[p.getParking()] = p;
+    }
     // request all parked channels
     astProxy.doCmd({
-      command: 'listParkedChannels'
-    }, listParkedChannels);
+      command: 'listParkedCalls'
+    }, listParkedCalls);
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
@@ -1142,15 +1108,15 @@ function initializeParkings() {
  * Store parked channels in memory and launch "listChannel" command plugin
  * to get the number and the name of each parked channels.
  *
- * @method listParkedChannels
- * @param {object} err  The error object received from the "listParkedChannels" command plugin
- * @param {object} resp The reponse object received from the "listParkedChannels" command plugin
+ * @method listParkedCalls
+ * @param {object} err  The error object received from the "listParkedCalls" command plugin
+ * @param {object} resp The reponse object received from the "listParkedCalls" command plugin
  * @private
  */
-function listParkedChannels(err, resp) {
+function listParkedCalls(err, resp) {
   try {
     if (err) {
-      logger.error(IDLOG, 'listing parked channels: ' + err.toString());
+      logger.error(IDLOG, 'listing parked calls: ' + err.toString());
       return;
     }
 
@@ -1174,11 +1140,11 @@ function listParkedChannels(err, resp) {
 
 /**
  * Updates specified parking key of the _parkedChannels_ property with the
- * object received from _listParkedChannels_ command plugin.
+ * object received from _listParkedCalls_ command plugin.
  *
  * @method updateParkedChannelOfOneParking
- * @param {object} err     The error object received from _listParkedChannels_ command plugin
- * @param {object} resp    The response object received from _listParkedChannels_ command plugin
+ * @param {object} err     The error object received from _listParkedCalls_ command plugin
+ * @param {object} resp    The response object received from _listParkedCalls_ command plugin
  * @param {string} parking The parking identifier
  * @private
  */
@@ -1260,7 +1226,7 @@ function updateParkedCallerOfOneParking(err, resp, parking) {
       if (resp[ch]) { // the channel exists
 
         // add the caller number information to the response
-        // received from the "listParkedChannels" command plugin
+        // received from the "listParkedCalls" command plugin
         parkedChannels[parking].callerNum = resp[ch].callerNum;
         // add the caller name information for the same reason
         parkedChannels[parking].callerName = resp[ch].callerName;
@@ -1285,7 +1251,7 @@ function updateParkedCallerOfOneParking(err, resp, parking) {
 }
 
 /**
- * Updates all parking lost with their relative parked calls,
+ * Updates all parking lots with their relative parked calls,
  * if they are present.
  *
  * @method updateParkedCallerForAllParkings
@@ -1303,19 +1269,17 @@ function updateParkedCallerForAllParkings(err, resp) {
     // cycle in all channels received from "listChannel" command plugin.
     // If a channel is present in "parkedChannels", then it is a parked
     // channel and so add it to relative parking
-    var p, ch, pNum;
+    var p, ch, pCall;
     for (p in parkedChannels) {
 
       ch = parkedChannels[p].channel;
 
       if (resp[ch]) { // the channel exists
-
         // add the caller number information to the response
-        // received from the "listParkedChannels" command plugin
+        // received from the "listParkedCalls" command plugin
         parkedChannels[p].callerNum = resp[ch].callerNum;
         // add the caller name information for the same reason
         parkedChannels[p].callerName = resp[ch].callerName;
-
         // create and store a new parked call object
         pCall = new ParkedCaller(parkedChannels[p]);
         parkings[p].addParkedCaller(pCall);
@@ -1676,15 +1640,15 @@ function addQueueMemberLoggedIn(data, queueId) {
 
     // add member only if it has been specified as dynamic member of the queue or it is static
     if (extensions[data.member] &&
-          (
-            data.type === QUEUE_MEMBER_TYPES_ENUM.STATIC ||
-            (
-              staticDataQueues[queueId] &&
-              staticDataQueues[queueId].dynmembers &&
-              staticDataQueues[queueId].dynmembers.indexOf(data.member) !== -1
-            )
-          )
-       ) {
+      (
+        data.type === QUEUE_MEMBER_TYPES_ENUM.STATIC ||
+        (
+          staticDataQueues[queueId] &&
+          staticDataQueues[queueId].dynmembers &&
+          staticDataQueues[queueId].dynmembers.indexOf(data.member) !== -1
+        )
+      )
+    ) {
 
       // create new queue member object
       var member = new QueueMember(data.member, queueId, data.paused, true);
@@ -3294,7 +3258,7 @@ function evtExtenStatusChanged(exten, status) {
       // request all parked channels
       logger.info(IDLOG, 'requests all parked channels to update the parking ' + parking);
       astProxy.doCmd({
-        command: 'listParkedChannels'
+        command: 'listParkedCalls'
       }, function(err, resp) {
         // update the parked channel of one parking in "parkedChannels"
         updateParkedChannelOfOneParking(err, resp, parking);

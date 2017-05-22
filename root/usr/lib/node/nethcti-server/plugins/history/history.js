@@ -240,7 +240,7 @@ function getCallRecordingFileData(id, cb) {
       throw new Error('wrong parameters');
     }
 
-    logger.info(IDLOG, 'get the data informations about call recording audio file of the call with id "' + id + '"');
+    logger.info(IDLOG, 'get the data information about call recording audio file of the call with id "' + id + '"');
     dbconn.getCallRecordingFileData(id, cb);
 
   } catch (err) {

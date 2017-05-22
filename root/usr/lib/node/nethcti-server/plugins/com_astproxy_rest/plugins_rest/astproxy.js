@@ -129,8 +129,9 @@ var compConfigManager;
         * # GET requests
         *
         * 1. [`astproxy/prefix`](#prefixget)
-        * 1. [`astproxy/extension/:id`](#extensionget)
+        * 1. [`astproxy/parkings`](#parkingsget)
         * 1. [`astproxy/extensions`](#extensionsget)
+        * 1. [`astproxy/extension/:id`](#extensionget)
         *
         * ---
         *
@@ -142,6 +143,48 @@ var compConfigManager;
         *
         *     {
          "prefix": "0039"
+     }
+        *
+        * ---
+        *
+        * ### <a id="parkingsget">**`astproxy/parkings`**</a>
+        *
+        * Returns all the parkings with all their status information.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "71": {
+           "name": "71",
+           "parking": "71",
+           "parkedCaller": { ParkedCaller.{{#crossLink "ParkedCaller/toJSON"}}{{/crossLink}}() }
+         },
+         ...
+     }
+        *
+        * ---
+        *
+        * ### <a id="extensionsget">**`astproxy/extensions`**</a>
+        *
+        * Gets all the extensions with all their status information.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "602": {
+              "ip": "",
+              "cf": "",
+              "dnd": false,
+              "cfVm": "",
+              "port": "",
+              "name": "cristian",
+              "exten": "602",
+              "status": "offline",
+              "chanType": "sip",
+              "sipuseragent": "",
+              "conversations": { Conversation.{{#crossLink "Conversation/toJSON"}}{{/crossLink}}() }
+          },
+          ...
      }
         *
         * ---
@@ -169,30 +212,6 @@ var compConfigManager;
           }
      }
         *
-        * ---
-        *
-        * ### <a id="extensionsget">**`astproxy/extensions`**</a>
-        *
-        * Gets all the extensions with all their status information.
-        *
-        * Example JSON response:
-        *
-        *     {
-         "602": {
-              "ip": "",
-              "cf": "",
-              "dnd": false,
-              "cfVm": "",
-              "port": "",
-              "name": "cristian",
-              "exten": "602",
-              "status": "offline",
-              "chanType": "sip",
-              "sipuseragent": "",
-              "conversations": { Conversation.{{#crossLink "Conversation/toJSON"}}{{/crossLink}}() }
-          },
-          ...
-     }
         *
         * <br>
         *
@@ -852,7 +871,6 @@ var compConfigManager;
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
-
           var parkings;
 
           // check if the user has the privacy enabled

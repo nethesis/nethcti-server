@@ -164,7 +164,7 @@ exports.User = function(uname, na) {
    * @method addEndpoint
    * @param {string} type The endpoint type
    * @param {string} id The endpoint identifier
-   * @param {object} data The object containing some informations
+   * @param {object} data The object containing some information
    *   on endpoint to add
    */
   function addEndpoint(type, id, data) {

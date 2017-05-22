@@ -89,7 +89,7 @@ var logSequelize = false;
 
 /**
 * The key names of the JSON files that contains database
-* connection informations.
+* connection information.
 *
 * @property JSON_KEYS
 * @type {object}
