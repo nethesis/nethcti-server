@@ -763,7 +763,7 @@ function authorizeDndUser(username) {
 
 /**
  * Returns true if the specified user has the authorization to view all extensions
- * with their complete status informations.
+ * with their complete status information.
  *
  * @method authorizePresencePanelUser
  * @param  {string}  username The username
@@ -837,7 +837,7 @@ function authorizeAdminTransferUser(username) {
 
 /**
  * Returns true if the specified user has the authorization to view all parkings
- * with their complete status informations.
+ * with their complete status information.
  *
  * @method authorizeOpParkingsUser
  * @param  {string}  username The username
@@ -850,7 +850,12 @@ function authorizeOpParkingsUser(username) {
       throw new Error('wrong parameter');
     }
 
-    // return authorizeUser(authorizationTypes.TYPES.parkings, username);
+    var profid = getUserProfileId(username);
+
+    return (
+      profiles[profid].macro_permissions.settings.value === true &&
+      profiles[profid].macro_permissions.settings.permissions.parkings.value === true
+    );
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
@@ -861,7 +866,7 @@ function authorizeOpParkingsUser(username) {
 
 /**
  * Returns true if the specified user has the authorization to view all trunks
- * with their complete status informations.
+ * with their complete status information.
  *
  * @method authorizeOpTrunksUser
  * @param  {string}  username The username
@@ -909,7 +914,7 @@ function authorizeRemoteSiteUser(username) {
 
 /**
  * Returns true if the specified user has the authorization to view all queues
- * with their complete status informations.
+ * with their complete status information.
  *
  * @method authorizeQueuesUser
  * @param  {string}  username The username

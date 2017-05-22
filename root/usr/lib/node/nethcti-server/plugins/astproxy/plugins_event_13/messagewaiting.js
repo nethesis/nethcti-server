@@ -1,6 +1,6 @@
 /**
 * Manage the asterisk events.
-* 
+*
 * @module ast_proxy
 * @submodule plugins_event_11
 */
@@ -62,7 +62,7 @@ var astProxy;
 
                         logger.info(IDLOG, 'received event ' + data.event);
 
-                        // extract the informations
+                        // extract the information
                         context   = data.mailbox.split('@')[1];
                         voicemail = data.mailbox.split('@')[0];
 
@@ -81,7 +81,7 @@ var astProxy;
 
                         logger.info(IDLOG, 'received event ' + data.event);
 
-                        // extract the informations
+                        // extract the information
                         context   = data.mailbox.split('@')[1];
                         voicemail = data.mailbox.split('@')[0];
 

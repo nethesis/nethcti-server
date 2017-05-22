@@ -11,9 +11,9 @@ var action = require('../action');
  * @private
  * @final
  * @readOnly
- * @default [listVoicemail]
+ * @default [listParkings]
  */
-var IDLOG = '[listVoicemail]';
+var IDLOG = '[listParkings]';
 
 (function() {
 
@@ -39,31 +39,31 @@ var IDLOG = '[listVoicemail]';
     var map = {};
 
     /**
-     * List of all voicemail.
+     * List of all parkings.
      *
      * @property list
-     * @type object
+     * @type {object}
      * @private
      */
     var list = {};
 
     /**
-     * Command plugin to get the list of all voicemail.
+     * Command plugin to get the list of all parkings.
      *
      * Use it with _astproxy_ module as follow:
      *
-     *     astproxy.doCmd({ command: 'listVoicemail' }, function (res) {
+     *     astproxy.doCmd({ command: 'listParkings' }, function (res) {
      *         // some code
      *     });
      *
      *
-     * @class listVoicemail
+     * @class listParkings
      * @static
      */
-    var listVoicemail = {
+    var listParkings = {
 
       /**
-       * Execute asterisk action to get the list of all voicemail.
+       * Execute asterisk action to get the list of all parkings.
        *
        * @method execute
        * @param {object} am Asterisk manager used to send the action
@@ -75,17 +75,18 @@ var IDLOG = '[listVoicemail]';
         try {
           // action for asterisk
           var act = {
-            Action: 'VoicemailUsersList'
+            Action: 'Parkinglots'
           };
 
           // set the action identifier
-          act.ActionID = action.getActionId('listVoicemail');
+          act.ActionID = action.getActionId('listParkings');
 
           // add association ActionID-callback
           map[act.ActionID] = cb;
 
           // send action to asterisk
           am.send(act);
+
         } catch (err) {
           logger.error(IDLOG, err.stack);
         }
@@ -101,47 +102,29 @@ var IDLOG = '[listVoicemail]';
        */
       data: function(data) {
         try {
-          // store new voicemail information object
-          // data.objectname is the extension number, e.g., 214
-          // data.email can be an empty string, so check that it is not undefined
-          if (data && data.event === 'VoicemailUserEntry' &&
-            data.fullname && data.email !== undefined &&
-            data.vmcontext && data.voicemailbox &&
-            data.maxmessagecount && data.maxmessagelength && data.newmessagecount) {
-
-            // initialize result only in the first event received
-            if (!list[data.actionid]) {
-              list[data.actionid] = {};
+          if (data.event === 'Parkinglot' && data.startspace && data.stopspace && data.timeout) {
+            var i;
+            // create the parking list
+            for (i = parseInt(data.startspace); i <= parseInt(data.stopspace); i++) {
+              list[i] = '' + i + '';
             }
 
-            var obj = {
-              id: data.voicemailbox,
-              owner: data.fullname,
-              email: data.email,
-              context: data.vmcontext,
-              newMessageCount: data.newmessagecount,
-              maxMessageCount: data.maxmessagecount,
-              maxMessageLength: data.maxmessagelength
-            };
-            list[data.actionid][data.voicemailbox] = obj;
+          } else if (data.event === 'ParkinglotsComplete') {
+            // invoke all callback in the 'map' object, because the current
+            // event 'Parkinglot' does not have the 'ActionID' key. So, it is not
+            // possible to associate the event with the correct callback that
+            // has executed the command
+            var k;
+            for (k in map) {
+              map[k](null, list);
+            }
 
-          } else if ((map[data.actionid] && data && data.event === 'VoicemailUserEntryComplete') ||
-            (data.response === 'Success' && data.message === 'There are no voicemail users currently defined.')) {
-
-            map[data.actionid](null, list[data.actionid]); // callback execution
-          }
-
-          if (data && data.event === 'VoicemailUserEntryComplete') {
-            delete list[data.actionid]; // empties the list
-            delete map[data.actionid]; // remove association ActionID-callback
+            map = {}; // delete all callback functions
+            list = {}; // empty the list
           }
 
         } catch (err) {
           logger.error(IDLOG, err.stack);
-          if (map[data.actionid]) {
-            map[data.actionid](err);
-            delete map[data.actionid];
-          }
         }
       },
 
@@ -171,9 +154,9 @@ var IDLOG = '[listVoicemail]';
     };
 
     // public interface
-    exports.data = listVoicemail.data;
-    exports.execute = listVoicemail.execute;
-    exports.setLogger = listVoicemail.setLogger;
+    exports.data = listParkings.data;
+    exports.execute = listParkings.execute;
+    exports.setLogger = listParkings.setLogger;
 
   } catch (err) {
     logger.error(IDLOG, err.stack);

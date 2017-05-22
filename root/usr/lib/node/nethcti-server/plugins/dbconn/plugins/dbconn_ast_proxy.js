@@ -913,15 +913,15 @@ function getCallRecordingFileData(uniqueid, cb) {
     }).then(function(result) {
       // extract result to return in the callback function
       if (result) {
-        logger.info(IDLOG, 'found data informations about recording call with uniqueid ' + uniqueid);
+        logger.info(IDLOG, 'found data information about recording call with uniqueid ' + uniqueid);
         cb(null, result.dataValues);
 
       } else {
-        logger.info(IDLOG, 'no data informations about recording call with uniqueid ' + uniqueid);
+        logger.info(IDLOG, 'no data information about recording call with uniqueid ' + uniqueid);
         cb(null, false);
       }
     }, function(err) { // manage the error
-      logger.error(IDLOG, 'getting data informations about recording call with uniqueid ' + uniqueid);
+      logger.error(IDLOG, 'getting data information about recording call with uniqueid ' + uniqueid);
       cb(err.toString());
     });
 
