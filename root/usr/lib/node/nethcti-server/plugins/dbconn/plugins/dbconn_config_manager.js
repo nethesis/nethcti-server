@@ -413,6 +413,38 @@ function saveUserSetting(username, keyName, value, cb) {
 }
 
 /**
+ * Delete all the user settings.
+ *
+ * @method deleteUserSettings
+ * @param {string} username The username
+ * @param {function} cb The callback function
+ */
+function deleteUserSettings(username, cb) {
+  try {
+    if (typeof username !== 'string' || typeof cb !== 'function') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+
+    compDbconnMain.models[compDbconnMain.JSON_KEYS.USER_SETTINGS].destroy({
+      where: ['username=?', username]
+
+    }).then(function(numdel) {
+      logger.info(IDLOG, 'all settings (#' + numdel + ') of user "' + username + '" has been deleted successfully');
+      cb();
+
+    }, function(err1) { // manage the error
+      logger.error(IDLOG, 'deleting all settings of user "' + username + '" : ' + err1.toString());
+      cb(err1.toString());
+    });
+    compDbconnMain.incNumExecQueries();
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+/**
  * Save the user settings. The settings are saved in mysql table _user\_settings_.
  * If the settings are already present, they will be updated.
  *
@@ -525,6 +557,7 @@ function getUserSettings(username, cb) {
 
 apiList.getUserSettings = getUserSettings;
 apiList.saveUserSettings = saveUserSettings;
+apiList.deleteUserSettings = deleteUserSettings;
 apiList.saveUserNotifySetting = saveUserNotifySetting;
 apiList.saveUserAutoQueueLogin = saveUserAutoQueueLogin;
 apiList.saveUserAutoQueueLogout = saveUserAutoQueueLogout;

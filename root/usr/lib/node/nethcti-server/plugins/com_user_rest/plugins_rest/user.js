@@ -316,6 +316,20 @@ function setCompUtil(comp) {
      *
      *     { "id": "214" }
      *
+     *
+     * <br>
+     *
+     * # DELETE requests
+     *
+     * 1. [`user/settings`](#settingspost)
+     *
+     * ---
+     *
+     * ### <a id="#settingspost">**`user/settings`**</a>
+     *
+     * Delete all the user settings.
+     *
+     *
      * @class plugin_rest_user
      * @static
      */
@@ -358,7 +372,16 @@ function setCompUtil(comp) {
           'default_device'
         ],
         'head': [],
-        'del': []
+
+        /**
+         * REST API to be requested using HTTP DELETE request.
+         *
+         * @property del
+         * @type {array}
+         *
+         *   @param {string} settings Delete all user settings
+         */
+        'del': ['settings']
       },
 
       /**
@@ -514,27 +537,13 @@ function setCompUtil(comp) {
        */
       settings: function(req, res, next) {
         try {
-          var username = req.headers.authorization_user;
-
-          if (typeof req.params !== 'object' || Object.keys(req.params).length === 0) {
-            compUtil.net.sendHttp400(IDLOG, res);
-            return;
+          if (req.method.toLowerCase() === 'post') {
+            settingsPost(req, res, next);
+          } else if (req.method.toLowerCase() === 'delete') {
+            settingsDelete(req, res, next);
+          } else {
+            logger.warn(IDLOG, 'unknown requested method ' + req.method);
           }
-
-          compUser.saveSettings(username, req.params, function(err) {
-            try {
-              if (err) {
-                logger.error(IDLOG, 'saving settings for user "' + username + '"');
-                compUtil.net.sendHttp500(IDLOG, res, err.toString());
-              } else {
-                logger.info(IDLOG, 'saved settings for user "' + username + '"');
-                compUtil.net.sendHttp200(IDLOG, res);
-              }
-            } catch (error) {
-              logger.error(IDLOG, error.stack);
-              compUtil.net.sendHttp500(IDLOG, res, error.toString());
-            }
-          });
         } catch (err) {
           logger.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -596,6 +605,75 @@ function setCompUtil(comp) {
     logger.error(IDLOG, err.stack);
   }
 })();
+
+/**
+ * Delete all the user settings.
+ *
+ * @method settingsDelete
+ * @param {object} req The request object
+ * @param {object} res The response object
+ * @param {object} next
+ */
+function settingsDelete(req, res, next) {
+  try {
+    var username = req.headers.authorization_user;
+
+    compUser.deleteSettings(username, function(err) {
+      try {
+        if (err) {
+          logger.error(IDLOG, 'deleting settings for user "' + username + '"');
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        } else {
+          logger.info(IDLOG, 'deleted settings for user "' + username + '"');
+          compUtil.net.sendHttp200(IDLOG, res);
+        }
+      } catch (error) {
+        logger.error(IDLOG, error.stack);
+        compUtil.net.sendHttp500(IDLOG, res, error.toString());
+      }
+    });
+  } catch (error) {
+    logger.error(IDLOG, error.stack);
+    compUtil.net.sendHttp500(IDLOG, res, error.toString());
+  }
+}
+
+/**
+ * Save the user settings.
+ *
+ * @method settingsPost
+ * @param {object} req The request object
+ * @param {object} res The response object
+ * @param {object} next
+ */
+function settingsPost(req, res, next) {
+  try {
+    var username = req.headers.authorization_user;
+
+    if (typeof req.params !== 'object' || Object.keys(req.params).length === 0) {
+      compUtil.net.sendHttp400(IDLOG, res);
+      return;
+    }
+
+    compUser.saveSettings(username, req.params, function(err) {
+      try {
+        if (err) {
+          logger.error(IDLOG, 'saving settings for user "' + username + '"');
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        } else {
+          logger.info(IDLOG, 'saved settings for user "' + username + '"');
+          compUtil.net.sendHttp200(IDLOG, res);
+        }
+      } catch (error) {
+        logger.error(IDLOG, error.stack);
+        compUtil.net.sendHttp500(IDLOG, res, error.toString());
+      }
+    });
+  } catch (error) {
+    logger.error(IDLOG, error.stack);
+    compUtil.net.sendHttp500(IDLOG, res, error.toString());
+  }
+}
 
 /**
  * Set configuration manager architect component.

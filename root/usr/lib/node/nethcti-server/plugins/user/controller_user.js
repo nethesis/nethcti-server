@@ -1614,6 +1614,33 @@ function getPhoneWebUser(username, exten) {
 }
 
 /**
+ * Delete all the user settings from the database.
+ *
+ * @method deleteSettings
+ * @param {string} username The username
+ * @param {function} cb The callback function
+ */
+function deleteSettings(username, cb) {
+  try {
+    if (typeof username !== 'string' || typeof cb !== 'function') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+
+    // check the user existence
+    if (typeof users[username] !== 'object') {
+      var msg = 'deleting user settings: user "' + username + '" does not exist';
+      logger.warn(IDLOG, msg);
+      cb(msg);
+      return;
+    }
+    compDbconn.deleteUserSettings(username, cb);
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Save the user settings into the database.
  *
  * @method saveSettings
@@ -1681,6 +1708,7 @@ exports.getUsernames = getUsernames;
 exports.isUserPresent = isUserPresent;
 exports.isExtenWebrtc = isExtenWebrtc;
 exports.setCompDbconn = setCompDbconn;
+exports.deleteSettings = deleteSettings;
 exports.getUserSettings = getUserSettings;
 exports.getUserInfoJSON = getUserInfoJSON;
 exports.EVT_USERS_READY = EVT_USERS_READY;
