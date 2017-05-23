@@ -112,6 +112,31 @@ var EVT_QUEUE_UPDATE = 'queueUpdate';
  */
 var EVT_QUEUE_MEMBER_UPDATE = 'queueMemberUpdate';
 
+/**
+ * Emitted to a websocket client connection on parking update.
+ *
+ * Example:
+ *
+ *                         {
+        "name": "71",
+        "parking": "71"
+        "timeout": 45
+        "parkedCaller": { ParkedCaller.{{#crossLink "ParkedCaller/toJSON"}}{{/crossLink}}() }
+     }
+ *
+ * @event parkingUpdate
+ * @param {object} parking The data about the parking
+ *
+ */
+/**
+ * The name of the parking update event.
+ *
+ * @property EVT_PARKING_UPDATE
+ * @type string
+ * @default "parkingUpdate"
+ */
+var EVT_PARKING_UPDATE = 'parkingUpdate';
+
 //  /**
 //   * Emitted to a websocket client connection to answer an incoming call to webrtc extension.
 //   *
@@ -1225,12 +1250,12 @@ function queueChanged(queue) {
 function parkingChanged(parking) {
   try {
     logger.info(IDLOG, 'received event parkingChanged for parking ' + parking.getParking());
-    logger.info(IDLOG, 'emit event parkingUpdate for parking ' + parking.getParking() + ' to websockets');
+    logger.info(IDLOG, 'emit event ' + EVT_PARKING_UPDATE + ' for parking ' + parking.getParking() + ' to websockets');
 
     // emits the event with clear numbers to all users with privacy disabled
-    wsServer.sockets.in(WS_ROOM.PARKINGS_AST_EVT_CLEAR).emit('parkingUpdate', parking.toJSON());
+    wsServer.sockets.in(WS_ROOM.PARKINGS_AST_EVT_CLEAR).emit(EVT_PARKING_UPDATE, parking.toJSON());
     // emits the event with hide numbers to all users with privacy enabled
-    wsServer.sockets.in(WS_ROOM.PARKINGS_AST_EVT_PRIVACY).emit('parkingUpdate', parking.toJSON(privacyStrReplace));
+    wsServer.sockets.in(WS_ROOM.PARKINGS_AST_EVT_PRIVACY).emit(EVT_PARKING_UPDATE, parking.toJSON(privacyStrReplace));
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
