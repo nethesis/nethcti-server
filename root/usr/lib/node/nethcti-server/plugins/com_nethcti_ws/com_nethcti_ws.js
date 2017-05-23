@@ -1608,18 +1608,18 @@ function loginHdlr(socket, obj) {
       //   }
       // }
 
-      // // if the user has the parkings permission, than he will receive the asterisk events that affects the parkings
-      // if (compAuthorization.authorizeOpParkingsUser(obj.accessKeyId) === true) {
+      // if the user has the parkings permission, than he will receive the asterisk events that affects the parkings
+      if (compAuthorization.authorizeOpParkingsUser(obj.accessKeyId) === true) {
 
-      //   if (compAuthorization.isPrivacyEnabled(obj.accessKeyId) === true) {
-      //     // join the user to the websocket room to receive the asterisk events that affects the parkings, using hide numbers
-      //     socket.join(WS_ROOM.PARKINGS_AST_EVT_PRIVACY);
+        if (compAuthorization.isPrivacyEnabled(obj.accessKeyId) === true) {
+          // join the user to the websocket room to receive the asterisk events that affects the parkings, using hide numbers
+          socket.join(WS_ROOM.PARKINGS_AST_EVT_PRIVACY);
 
-      //   } else {
-      //     // join the user to the websocket room to receive the asterisk events that affects the parkings, using clear numbers
-      //     socket.join(WS_ROOM.PARKINGS_AST_EVT_CLEAR);
-      //   }
-      // }
+        } else {
+          // join the user to the websocket room to receive the asterisk events that affects the parkings, using clear numbers
+          socket.join(WS_ROOM.PARKINGS_AST_EVT_CLEAR);
+        }
+      }
 
       // emits the event for a logged in client. This event is emitted when a user has been logged in by a websocket connection
       logger.info(IDLOG, 'emit event "' + EVT_WS_CLIENT_LOGGEDIN + '" for username "' + obj.accessKeyId + '"');
