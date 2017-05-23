@@ -157,6 +157,7 @@ var compConfigManager;
          "71": {
            "name": "71",
            "parking": "71",
+           "timeout": 45,
            "parkedCaller": { ParkedCaller.{{#crossLink "ParkedCaller/toJSON"}}{{/crossLink}}() }
          },
          ...

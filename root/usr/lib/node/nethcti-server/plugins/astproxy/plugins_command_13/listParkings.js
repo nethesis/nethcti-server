@@ -106,7 +106,7 @@ var IDLOG = '[listParkings]';
             var i;
             // create the parking list
             for (i = parseInt(data.startspace); i <= parseInt(data.stopspace); i++) {
-              list[i] = '' + i + '';
+              list[i] = { timeout: parseInt(data.timeout) };
             }
 
           } else if (data.event === 'ParkinglotsComplete') {
