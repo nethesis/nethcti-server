@@ -1091,6 +1091,7 @@ function initializeParkings(err, resp) {
       // new parking object
       p = new Parking(pid);
       p.setName(pid);
+      p.setTimeout(resp[pid].timeout);
       // store it
       parkings[p.getParking()] = p;
     }

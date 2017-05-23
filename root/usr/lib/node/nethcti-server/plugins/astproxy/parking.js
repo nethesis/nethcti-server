@@ -5,13 +5,13 @@
  *
  * @class Parking
  * @param {string} parkingNum The parking number
- * @constructor
  * @return {object} The parking object.
+ * @constructor
  */
 exports.Parking = function(parkingNum) {
   // check the parameter
   if (typeof parkingNum !== 'string') {
-    throw new Error('wrong parameter');
+    throw new Error('wrong parameter: ' + JSON.stringify(arguments));
   }
 
   /**
@@ -23,6 +23,16 @@ exports.Parking = function(parkingNum) {
    * @private
    */
   var parking = parkingNum;
+
+  /**
+   * The timeout of the parking
+   *
+   * @property timeout
+   * @type {number}
+   * @required
+   * @private
+   */
+  var timeout;
 
   /**
    * The parking name.
@@ -60,6 +70,26 @@ exports.Parking = function(parkingNum) {
    */
   function getParkedCaller() {
     return parkedCaller;
+  }
+
+  /**
+   * Returns the parking timeout.
+   *
+   * @method getTimeout
+   * @return {object} The timeout of the parking.
+   */
+  function getTimeout() {
+    return timeout;
+  }
+
+  /**
+   * Set the parking timeout.
+   *
+   * @method setTimeout
+   * @param {number} time The timeout of the parking
+   */
+  function setTimeout(time) {
+    timeout = time;
   }
 
   /**
@@ -114,14 +144,22 @@ exports.Parking = function(parkingNum) {
   /**
    * Returns the JSON representation of the object.
    *
+   *     {
+   *         "name": "71",
+   *         "parking": "71"
+   *         "timeout": 45
+   *         "parkedCaller": { ParkedCaller.{{#crossLink "ParkedCaller/toJSON"}}{{/crossLink}}() }
+   *     }
+   *
    * @method toJSON
-   * @param  {string} [privacyStr] If it's specified, it hides the last digits of the phone number
+   * @param  {string} [privacyStr] If it is specified, it hides the last digits of the phone number
    * @return {object} The JSON representation of the object.
    */
   function toJSON(privacyStr) {
     return {
       name: name,
       parking: parking,
+      timeout: timeout,
       parkedCaller: parkedCaller ? parkedCaller.toJSON(privacyStr) : {}
     };
   }
@@ -133,6 +171,8 @@ exports.Parking = function(parkingNum) {
     getName: getName,
     toString: toString,
     getParking: getParking,
+    getTimeout: getTimeout,
+    setTimeout: setTimeout,
     addParkedCaller: addParkedCaller,
     getParkedCaller: getParkedCaller,
     removeParkedCaller: removeParkedCaller
