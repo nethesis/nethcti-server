@@ -1150,19 +1150,17 @@ function listParkedCalls(err, resp) {
  */
 function updateParkedChannelOfOneParking(err, resp, parking) {
   try {
-    console.log('updateParkedChannelOfOneParking: ', err, resp, parking);
     if (err) {
       logger.error(IDLOG, 'updating parked channels of one parking ' + parking + ': ' + err.toString());
       return;
     }
-
     // check the parameters
     if (typeof resp !== 'object' || typeof parking !== 'string') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // check if the response contains a parked channel for the specified parking
-    // It it's not present, the parking is free
+    // If it is not present, the parking is free
     if (typeof resp[parking] === 'object') {
 
       // update the parked channel of the parking
@@ -1178,8 +1176,8 @@ function updateParkedChannelOfOneParking(err, resp, parking) {
         updateParkedCallerOfOneParking(err, resp, parking);
       });
 
-      // there isn't a parked caller for the parking
     } else {
+      // there is not a parked caller for the parking, so
       // remove the parked channel from the memory
       delete parkedChannels[parking];
       logger.info(IDLOG, 'removed parked channel from parkedChannels for parking ' + parking);
@@ -1212,10 +1210,9 @@ function updateParkedCallerOfOneParking(err, resp, parking) {
       logger.error(IDLOG, 'updating parked caller of one parking ' + parking + ': ' + err.toString());
       return;
     }
-
     // check parameters
     if (typeof parking !== 'string' || typeof resp !== 'object') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // check if the parking exists, otherwise there is some error
@@ -1241,11 +1238,9 @@ function updateParkedCallerOfOneParking(err, resp, parking) {
         logger.info(IDLOG, 'emit event ' + EVT_PARKING_CHANGED + ' for parking ' + parking);
         astProxy.emit(EVT_PARKING_CHANGED, parkings[parking]);
       }
-
     } else {
       logger.warn(IDLOG, 'try to update parked caller of the non existent parking ' + parking);
     }
-
   } catch (error) {
     logger.error(IDLOG, error.stack);
   }
