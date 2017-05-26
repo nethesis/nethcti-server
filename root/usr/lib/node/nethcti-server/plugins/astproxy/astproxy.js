@@ -166,24 +166,38 @@ function configExtenNames(path) {
     if (!fs.existsSync(path)) {
       throw new Error(path + ' does not exist');
     }
-
     var json = require(path);
     if (typeof json !== 'object') {
       throw new Error(path + ' wrong file format');
     }
 
-    var u, e;
-    var obj = {};
+    var u, e, i, allextens;
+    var obj = {
+      names: {},
+      mainExtens: {}, // keys are main extensions and the values are array containing list of secondary associated extensions
+      secondExtens: {} // keys are the secondary extensions and the value are the corresponding main extensions
+    };
     for (u in json) {
       for (e in json[u].endpoints.mainextension) {
-        obj[e] = json[u].name;
+        obj.names[e] = json[u].name;
+
+        // construct array of secondary extensions
+        obj.mainExtens[e] = [];
+        allextens = Object.keys(json[u].endpoints.extension);
+        for (i = 0; i < allextens.length; i++) {
+          if (allextens[i] !== e) {
+            obj.mainExtens[e].push(allextens[i]);
+          }
+        }
       }
       for (e in json[u].endpoints.extension) {
-        obj[e] = json[u].name;
+        obj.names[e] = json[u].name;
+        if (obj.mainExtens[e] === undefined) {
+          obj.secondExtens[e] = Object.keys(json[u].endpoints.mainextension)[0];
+        }
       }
     }
     proxyLogic.setStaticDataExtens(obj);
-
     logger.info(IDLOG, 'extension names configuration done by ' + path);
 
   } catch (err) {
@@ -451,8 +465,7 @@ function onLogin(err, resp) {
     if (err && resp && resp.message) {
       logger.error(IDLOG, 'logging-in into asterisk: ' + resp.message);
       return;
-    }
-    else if (err) {
+    } else if (err) {
       logger.error(IDLOG, 'logging-in into asterisk: ' + err.stack);
       return;
     }
