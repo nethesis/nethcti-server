@@ -306,6 +306,17 @@ var BASE_CALL_REC_AUDIO_PATH = '/var/spool/asterisk/monitor';
 var INTERVAL_UPDATE_QUEUE_DETAILS = 60000;
 
 /**
+ * The default asterisk directory path of the alarms.
+ *
+ * @property AST_ALARMS_DIRPATH
+ * @type string
+ * @private
+ * @final
+ * @default "/var/spool/asterisk/outgoing/"
+ */
+var AST_ALARMS_DIRPATH = '/var/spool/asterisk/outgoing/';
+
+/**
  * The logger. It must have at least three methods: _info, warn and error._
  *
  * @property logger
@@ -7795,6 +7806,124 @@ function setAsteriskPresence(extension, presenceState, cb) {
   }
 }
 
+/**
+ * Create an alarm for a specified date, time and extension.
+ *
+ * @method createAlarm
+ * @param {string} extension The endpoint identifier (e.g. the extension number)
+ * @param {string} time The time of the alarm. Use hh:mm in 24 format
+ * @param {string} date The date of the alarm. Use YYYYMMDD format
+ * @param {function} cb The callback function
+ */
+function createAlarm(extension, time, date, cb) {
+  try {
+    // check parameters
+    if (typeof cb !== 'function' ||
+      typeof extension !== 'string' ||
+      typeof date !== 'string' ||
+      typeof time !== 'string') {
+
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    var timestamp = moment(date + time, 'YYYYMMDDhh:mm').unix();
+    var filename = extension + '-' + timestamp + '.call';
+    var filepath = path.join(AST_ALARMS_DIRPATH, filename);
+    var content = [
+      'Channel: Local/', extension, '@from-internal\n',
+      'MaxRetries: 2\n',
+      'RetryTime: 60\n',
+      'WaitTime: 30\n',
+      'CallerID: \'Sveglia\' <Sveglia>\n',
+      // 'Set: CAMERA=', extension, '\n',
+      // 'Set: RECEPTION=\n',
+      'Set: ALARM=', timestamp, '\n',
+      'Set: CALLERID(name)=SVEGLIA\n',
+      'Context: sveglia\n',
+      'Priority: 1\n',
+      'Extension: s\n'
+    ].join('');
+
+    // create temporary file into the current directory
+    fs.writeFile(filename, content, function(err) {
+      if (err) {
+        logger.error(IDLOG, 'creating alarm for "' + extension + '" on ' + date + ' - ' + time + ' (' + timestamp + ')');
+        cb(err);
+        return;
+      }
+      // set the file timestamp
+      fs.utimes(filename, timestamp, timestamp, function(err2) {
+        if (err2) {
+          logger.error(IDLOG, 'creating alarm for "' + extension + '" on ' + date + ' - ' + time + ' (' + timestamp + ')');
+          cb(err);
+          return;
+        }
+        // move the file to the correct asterisk destination
+        fs.rename(filename, filepath, function() {
+          logger.info(IDLOG, 'created alarm for "' + extension + '" on ' + date + ' - ' + time + ' (' + timestamp + ')');
+          cb();
+        })
+      });
+    });
+  } catch (e) {
+    logger.error(IDLOG, e.stack);
+    cb(e);
+  }
+}
+
+/**
+ * Get the list of all alarms wakeup.
+ *
+ * @method getAlarms
+ * @param {function} cb The callback function
+ */
+function getAlarms(cb) {
+  try {
+    // check parameters
+    if (typeof cb !== 'function') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    fs.readdir(AST_ALARMS_DIRPATH, function(err, files) {
+      if (err) {
+        logger.error(IDLOG, 'getting the list of all alarms');
+        cb(err);
+        return;
+      }
+      cb(null, files);
+    });
+  } catch (e) {
+    logger.error(IDLOG, e.stack);
+    cb(e);
+  }
+}
+
+/**
+ * Delete an alarm wakeup.
+ *
+ * @method deleteAlarm
+ * @param {string} filename The alarm filename
+ * @param {function} cb The callback function
+ */
+function deleteAlarm(filename, cb) {
+  try {
+    // check parameters
+    if (typeof filename !== 'string' || typeof cb !== 'function') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    var filepath = path.join(AST_ALARMS_DIRPATH, filename);
+    fs.unlink(filepath, function(err) {
+      if (err) {
+        logger.error(IDLOG, 'deleting alarm wakeup ' + filepath);
+        cb(err);
+        return;
+      }
+      logger.info(IDLOG, 'deleted alarm wakeup ' + filepath);
+      cb();
+    });
+  } catch (e) {
+    logger.error(IDLOG, e.stack);
+    cb(e);
+  }
+}
 
 // public interface
 exports.on = on;
@@ -7812,10 +7941,13 @@ exports.addPrefix = addPrefix;
 exports.evtRename = evtRename;
 exports.evtNewCdr = evtNewCdr;
 exports.isExtenCf = isExtenCf;
+exports.getAlarms = getAlarms;
 exports.isExtenDnd = isExtenDnd;
 exports.isExtenCfVm = isExtenCfVm;
 exports.setAstCodes = setAstCodes;
 exports.EVT_NEW_CDR = EVT_NEW_CDR;
+exports.createAlarm = createAlarm;
+exports.deleteAlarm = deleteAlarm;
 exports.setCompDbconn = setCompDbconn;
 exports.getExtensions = getExtensions;
 exports.getConference = getConference;
