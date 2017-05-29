@@ -4600,6 +4600,30 @@ function ajaxPhoneHoldUnhold(username, req, res) {
 }
 
 /**
+ * This is the fallback of a failed ajax phone call. It uses
+ * the asterisk call.
+ *
+ * @method fallbackAjaxPhoneCall
+ * @param {string} username The username that originate the call
+ * @param {object} req The client request
+ * @param {object} res The client response
+ */
+function fallbackAjaxPhoneCall(username, req, res) {
+  try {
+    // check parameters
+    if (typeof username !== 'string' || typeof req !== 'object' || typeof res !== 'object') {
+      throw new Error('wrong parameters');
+    }
+    logger.info(IDLOG, 'fallback ajax phone call: doing asterisk call');
+    asteriskCall(username, req, res);
+
+  } catch (error) {
+    logger.error(IDLOG, error.stack);
+    compUtil.net.sendHttp500(IDLOG, res, error.toString());
+  }
+}
+
+/**
  * Originates a new call sending an HTTP GET request to the phone device.
  *
  * @method ajaxPhoneCall
@@ -4672,36 +4696,32 @@ function ajaxPhoneCall(username, req, res) {
                     logger.warn(IDLOG, 'new call to ' + to + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp +
                       ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
                     logger.warn(IDLOG, url);
-                    res.send(httpResp.statusCode, {
-                      phoneRespStatusCode: httpResp.statusCode
-                    });
+                    fallbackAjaxPhoneCall(username, req, res);
                   }
                 } catch (err) {
                   logger.error(IDLOG, err.stack);
-                  compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                  fallbackAjaxPhoneCall(username, req, res);
                 }
 
               }).on('error', function(err1) {
                 logger.error(IDLOG, err1.message);
-                compUtil.net.sendHttp500(IDLOG, res, err1.message);
+                fallbackAjaxPhoneCall(username, req, res);
               });
 
             } else {
-              logger.warn(IDLOG, 'new call to ' + to + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp +
+              logger.info(IDLOG, 'failed new call to ' + to + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp +
                 ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
-              logger.warn(IDLOG, url);
-              res.send(httpResp.statusCode, {
-                phoneRespStatusCode: httpResp.statusCode
-              });
+              logger.info(IDLOG, 'failed url: ' + url);
+              fallbackAjaxPhoneCall(username, req, res);
             }
           } catch (err) {
             logger.error(IDLOG, err.stack);
-            compUtil.net.sendHttp500(IDLOG, res, err.toString());
+            fallbackAjaxPhoneCall(username, req, res);
           }
 
         }).on('error', function(err1) {
           logger.error(IDLOG, err1.message);
-          compUtil.net.sendHttp500(IDLOG, res, err1.message);
+          fallbackAjaxPhoneCall(username, req, res);
         });
 
       } else {
@@ -4718,33 +4738,31 @@ function ajaxPhoneCall(username, req, res) {
               });
 
             } else {
-              logger.warn(IDLOG, 'new call to ' + to + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp +
+              logger.info(IDLOG, 'failed call to ' + to + ': sent HTTP GET to the phone ' + exten + ' ' + extenIp +
                 ' by the user "' + username + '" (resp status code: ' + httpResp.statusCode + ')');
-              logger.warn(IDLOG, url);
-              res.send(httpResp.statusCode, {
-                phoneRespStatusCode: httpResp.statusCode
-              });
+              logger.info(IDLOG, 'failed url: ' + url);
+              fallbackAjaxPhoneCall(username, req, res);
             }
           } catch (err) {
             logger.error(IDLOG, err.stack);
-            compUtil.net.sendHttp500(IDLOG, res, err.toString());
+            fallbackAjaxPhoneCall(username, req, res);
           }
 
         }).on('error', function(err1) {
           logger.error(IDLOG, err1.message);
-          compUtil.net.sendHttp500(IDLOG, res, err1.message);
+          fallbackAjaxPhoneCall(username, req, res);
         });
       }
 
     } else {
       logger.warn(IDLOG, 'failed call to ' + to + ' via HTTP GET request sent to the phone ' + exten + ' ' + extenIp +
         ' by the user "' + username + '": ' + extenAgent + ' is not supported');
-      compUtil.net.sendHttp500(IDLOG, res, 'the phone "' + extenAgent + '" is not supported');
+      fallbackAjaxPhoneCall(username, req, res);
     }
 
   } catch (error) {
     logger.error(IDLOG, error.stack);
-    compUtil.net.sendHttp500(IDLOG, res, error.toString());
+    fallbackAjaxPhoneCall(username, req, res);
   }
 }
 
