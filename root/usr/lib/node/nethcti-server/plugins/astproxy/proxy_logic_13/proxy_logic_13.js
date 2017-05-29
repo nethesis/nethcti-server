@@ -12,6 +12,7 @@
  * @static
  */
 var fs = require('fs');
+var os = require('os');
 var path = require('path');
 var async = require('async');
 var Queue = require('../queue').Queue;
@@ -1111,8 +1112,8 @@ function initializeParkings(err, resp) {
       command: 'listParkedCalls'
     }, listParkedCalls);
 
-  } catch (err) {
-    logger.error(IDLOG, err.stack);
+  } catch (error) {
+    logger.error(IDLOG, error.stack);
   }
 }
 
@@ -1333,8 +1334,8 @@ function initializeQueues(err, results) {
     logger.info(IDLOG, 'start the interval period to update the details of all the queues each ' + INTERVAL_UPDATE_QUEUE_DETAILS + ' msec');
     startIntervalUpdateQueuesDetails(INTERVAL_UPDATE_QUEUE_DETAILS);
 
-  } catch (err) {
-    logger.error(IDLOG, err.stack);
+  } catch (error) {
+    logger.error(IDLOG, error.stack);
   }
 }
 
@@ -7844,24 +7845,25 @@ function createAlarm(extension, time, date, cb) {
     ].join('');
 
     // create temporary file into the current directory
-    fs.writeFile(filename, content, function(err) {
+    var tmpfilepath = path.join(os.tmpdir(), filename);
+    fs.writeFile(tmpfilepath, content, function(err) {
       if (err) {
         logger.error(IDLOG, 'creating alarm for "' + extension + '" on ' + date + ' - ' + time + ' (' + timestamp + ')');
         cb(err);
         return;
       }
       // set the file timestamp
-      fs.utimes(filename, timestamp, timestamp, function(err2) {
+      fs.utimes(tmpfilepath, timestamp, timestamp, function(err2) {
         if (err2) {
           logger.error(IDLOG, 'creating alarm for "' + extension + '" on ' + date + ' - ' + time + ' (' + timestamp + ')');
           cb(err);
           return;
         }
         // move the file to the correct asterisk destination
-        fs.rename(filename, filepath, function() {
+        fs.rename(tmpfilepath, filepath, function() {
           logger.info(IDLOG, 'created alarm for "' + extension + '" on ' + date + ' - ' + time + ' (' + timestamp + ')');
           cb();
-        })
+        });
       });
     });
   } catch (e) {

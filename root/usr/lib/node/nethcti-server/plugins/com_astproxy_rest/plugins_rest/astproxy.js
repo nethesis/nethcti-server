@@ -4379,7 +4379,7 @@ function wakeupPost(req, res, next) {
       try {
         if (err) {
           logger.warn(IDLOG, 'creating alarm in ' + req.params.date + ' - ' + req.params.time + ' for exten "' +
-            req.params.extension + '" by user "' + username + '" has been failed');
+            req.params.extension + '" by user "' + username + '" has been failed: ' + err);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
           return;
         }
