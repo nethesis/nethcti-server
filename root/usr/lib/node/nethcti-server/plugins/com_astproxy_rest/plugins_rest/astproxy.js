@@ -581,6 +581,28 @@ var compConfigManager;
         *     { "convid": ">SIP/221-000000", "endpointId": "221", "destId": "220"}
         *
         *
+        * <br>
+        *
+        * # DELETE requests
+        *
+        * 1. [`astproxy/wakeup`](#wakeupdelete)
+        *
+        * ---
+        *
+        * ### <a id="wakeupdelete">**`astproxy/wakeup`**</a>
+        *
+        * Delete an alarm wakeup.
+        * The request must contains the following parameters:
+        *
+        * * `filename: the name of the alarm file`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "filename": "202-1496073180.call" }
+        *
+        * ---
+        *
+        *
         * @class plugin_rest_astproxy
         * @static
         */
@@ -743,7 +765,16 @@ var compConfigManager;
           'blindtransfer_parking'
         ],
         'head': [],
-        'del': []
+
+        /**
+         * REST API to be requested using HTTP DELETE request.
+         *
+         * @property delete
+         * @type {array}
+         *
+         *   @param {string} wakeup Delete a specific alarm wakeup
+         */
+        'del': ['wakeup']
       },
 
       /**
@@ -4062,6 +4093,8 @@ var compConfigManager;
             wakeupGet(req, res, next);
           } else if (req.method.toLowerCase() === 'post') {
             wakeupPost(req, res, next);
+          } else if (req.method.toLowerCase() === 'delete') {
+            wakeupDelete(req, res, next);
           } else {
             logger.warn(IDLOG, 'unknown requested method ' + req.method);
           }
@@ -4252,6 +4285,43 @@ var compConfigManager;
     logger.error(IDLOG, err.stack);
   }
 })();
+
+/**
+ * Delete an alarm wakeup.
+ *
+ * @method wakeupDelete
+ * @param {object} req The request object
+ * @param {object} res The response object
+ * @param {object} next
+ */
+function wakeupDelete(req, res, next) {
+  try {
+    var username = req.headers.authorization_user;
+    // check parameters
+    if (typeof req.params !== 'object' || typeof req.params.filename !== 'string') {
+      compUtil.net.sendHttp400(IDLOG, res);
+      return;
+    }
+    compAstProxy.deleteAlarm(req.params.filename, function(err) {
+      try {
+        if (err) {
+          logger.warn(IDLOG, 'deleting alarm ' + req.params.filename + ' by user "' + username + '" has been failed: ' + err);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+          return;
+        }
+        logger.info(IDLOG, 'deleted alarm ' + req.params.filename + ' by user "' + username + '"');
+        compUtil.net.sendHttp200(IDLOG, res);
+
+      } catch (error) {
+        logger.error(IDLOG, error.stack);
+        compUtil.net.sendHttp500(IDLOG, res, error.toString());
+      }
+    });
+  } catch (error) {
+    logger.error(IDLOG, error.stack);
+    compUtil.net.sendHttp500(IDLOG, res, error.toString());
+  }
+}
 
 /**
  * Return the list of all alarms wakeup.

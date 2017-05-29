@@ -7740,6 +7740,35 @@ function getAlarms(cb) {
   }
 }
 
+/**
+ * Delete an alarm wakeup.
+ *
+ * @method deleteAlarm
+ * @param {string} filename The alarm filename
+ * @param {function} cb The callback function
+ */
+function deleteAlarm(filename, cb) {
+  try {
+    // check parameters
+    if (typeof filename !== 'string' || typeof cb !== 'function') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    var filepath = path.join(AST_ALARMS_DIRPATH, filename);
+    fs.unlink(filepath, function(err) {
+      if (err) {
+        logger.error(IDLOG, 'deleting alarm wakeup ' + filepath);
+        cb(err);
+        return;
+      }
+      logger.info(IDLOG, 'deleted alarm wakeup ' + filepath);
+      cb();
+    });
+  } catch (e) {
+    logger.error(IDLOG, e.stack);
+    cb(e);
+  }
+}
+
 // public interface
 exports.on = on;
 exports.call = call;
@@ -7762,6 +7791,7 @@ exports.isExtenCfVm = isExtenCfVm;
 exports.setAstCodes = setAstCodes;
 exports.EVT_NEW_CDR = EVT_NEW_CDR;
 exports.createAlarm = createAlarm;
+exports.deleteAlarm = deleteAlarm;
 exports.setCompDbconn = setCompDbconn;
 exports.getExtensions = getExtensions;
 exports.getConference = getConference;

@@ -33,6 +33,7 @@ module.exports = function(options, imports, register) {
       getAlarms: astProxy.proxyLogic.getAlarms,
       getSipWebrtcConf: astProxy.getSipWebrtcConf,
       createAlarm: astProxy.proxyLogic.createAlarm,
+      deleteAlarm: astProxy.proxyLogic.deleteAlarm,
       getConference: astProxy.proxyLogic.getConference,
       getEchoCallDestination: astProxy.proxyLogic.getEchoCallDestination,
       getMeetmeConfCode: astProxy.proxyLogic.getMeetmeConfCode,
