@@ -129,6 +129,7 @@ var compConfigManager;
         * # GET requests
         *
         * 1. [`astproxy/prefix`](#prefixget)
+        * 1. [`astproxy/wakeup`](#wakeupget)
         * 1. [`astproxy/parkings`](#parkingsget)
         * 1. [`astproxy/extensions`](#extensionsget)
         * 1. [`astproxy/extension/:id`](#extensionget)
@@ -144,6 +145,19 @@ var compConfigManager;
         *     {
          "prefix": "0039"
      }
+        *
+        * ---
+        *
+        * ### <a id="wakeupget">**`astproxy/wakeup`**</a>
+        *
+        * Returns the list of all alarms wakeup.
+        *
+        * Example JSON response:
+        *
+        *     [
+         "202-1496073180.call",
+         ...
+     ]
         *
         * ---
         *
@@ -585,6 +599,7 @@ var compConfigManager;
          *   @param {string} queues                         Gets all the queues of the operator panel of the user
          *   @param {string} trunks                         Gets all the trunks of the operator panel of the user
          *   @param {string} prefix                         Gets the prefix number used with outgoing external calls
+         *   @param {string} wakeup                         Gets the list of all alarms wakeup
          *   @param {string} remote_prefixes                Gets prefix number of all remote sites used with outgoing external calls
          *   @param {string} opgroups                       Gets all the user groups of the operator panel
          *   @param {string} remote_opgroups                Gets all the user groups of all remote sites
@@ -611,6 +626,7 @@ var compConfigManager;
           'queues',
           'trunks',
           'prefix',
+          'wakeup',
           'opgroups',
           'parkings',
           'extension/:id',
@@ -4042,34 +4058,13 @@ var compConfigManager;
        */
       wakeup: function(req, res, next) {
         try {
-          var username = req.headers.authorization_user;
-
-          // check parameters
-          if (typeof req.params !== 'object' ||
-            typeof req.params.time !== 'string' ||
-            typeof req.params.extension !== 'string' ||
-            typeof req.params.date !== 'string') {
-
-            compUtil.net.sendHttp400(IDLOG, res);
-            return;
+          if (req.method.toLowerCase() === 'get') {
+            wakeupGet(req, res, next);
+          } else if (req.method.toLowerCase() === 'post') {
+            wakeupPost(req, res, next);
+          } else {
+            logger.warn(IDLOG, 'unknown requested method ' + req.method);
           }
-          compAstProxy.createAlarm(req.params.extension, req.params.time, req.params.date, function(err) {
-            try {
-              if (err) {
-                logger.warn(IDLOG, 'creating alarm in ' + req.params.date + ' - ' + req.params.time + ' for exten "' +
-                  req.params.extension + '" by user "' + username + '" has been failed');
-                compUtil.net.sendHttp500(IDLOG, res, err.toString());
-                return;
-              }
-              logger.info(IDLOG, 'created alarm in ' + req.params.date + ' - ' + req.params.time + ' for exten "' +
-                  req.params.extension + '" by user "' + username + '"');
-              compUtil.net.sendHttp200(IDLOG, res);
-
-            } catch (error) {
-              logger.error(IDLOG, error.stack);
-              compUtil.net.sendHttp500(IDLOG, res, error.toString());
-            }
-          });
         } catch (err) {
           logger.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -4257,6 +4252,81 @@ var compConfigManager;
     logger.error(IDLOG, err.stack);
   }
 })();
+
+/**
+ * Return the list of all alarms wakeup.
+ *
+ * @method wakeupGet
+ * @param {object} req The request object
+ * @param {object} res The response object
+ * @param {object} next
+ */
+function wakeupGet(req, res, next) {
+  try {
+    var username = req.headers.authorization_user;
+    compAstProxy.getAlarms(function(err, resp) {
+      try {
+        if (err) {
+          logger.warn(IDLOG, 'getting the list of all alarms by user "' + username + '" has been failed');
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+          return;
+        }
+        logger.info(IDLOG, 'sent the list of all #' + resp.length + ' alarms by user "' + username + '"');
+        res.send(200, resp);
+
+      } catch (error) {
+        logger.error(IDLOG, error.stack);
+        compUtil.net.sendHttp500(IDLOG, res, error.toString());
+      }
+    });
+  } catch (error) {
+    logger.error(IDLOG, error.stack);
+    compUtil.net.sendHttp500(IDLOG, res, error.toString());
+  }
+}
+
+/**
+ * Create a new alarm wakeup.
+ *
+ * @method wakeupPost
+ * @param {object} req The request object
+ * @param {object} res The response object
+ * @param {object} next
+ */
+function wakeupPost(req, res, next) {
+  try {
+    var username = req.headers.authorization_user;
+    // check parameters
+    if (typeof req.params !== 'object' ||
+      typeof req.params.time !== 'string' ||
+      typeof req.params.extension !== 'string' ||
+      typeof req.params.date !== 'string') {
+
+      compUtil.net.sendHttp400(IDLOG, res);
+      return;
+    }
+    compAstProxy.createAlarm(req.params.extension, req.params.time, req.params.date, function(err) {
+      try {
+        if (err) {
+          logger.warn(IDLOG, 'creating alarm in ' + req.params.date + ' - ' + req.params.time + ' for exten "' +
+            req.params.extension + '" by user "' + username + '" has been failed');
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+          return;
+        }
+        logger.info(IDLOG, 'created alarm in ' + req.params.date + ' - ' + req.params.time + ' for exten "' +
+          req.params.extension + '" by user "' + username + '"');
+        compUtil.net.sendHttp200(IDLOG, res);
+
+      } catch (error) {
+        logger.error(IDLOG, error.stack);
+        compUtil.net.sendHttp500(IDLOG, res, error.toString());
+      }
+    });
+  } catch (error) {
+    logger.error(IDLOG, error.stack);
+    compUtil.net.sendHttp500(IDLOG, res, error.toString());
+  }
+}
 
 /**
  * Originates a new call.

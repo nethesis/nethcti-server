@@ -306,6 +306,17 @@ var BASE_CALL_REC_AUDIO_PATH = '/var/spool/asterisk/monitor';
 var INTERVAL_UPDATE_QUEUE_DETAILS = 60000;
 
 /**
+ * The default asterisk directory path of the alarms.
+ *
+ * @property AST_ALARMS_DIRPATH
+ * @type string
+ * @private
+ * @final
+ * @default "/var/spool/asterisk/outgoing/"
+ */
+var AST_ALARMS_DIRPATH = '/var/spool/asterisk/outgoing/';
+
+/**
  * The logger. It must have at least three methods: _info, warn and error._
  *
  * @property logger
@@ -7660,7 +7671,7 @@ function createAlarm(extension, time, date, cb) {
     }
     var timestamp = moment(date + time, 'YYYYMMDDhh:mm').unix();
     var filename = extension + '-' + timestamp + '.call';
-    var filepath = path.join('/var/spool/asterisk/outgoing/', filename);
+    var filepath = path.join(AST_ALARMS_DIRPATH, filename);
     var content = [
       'Channel: Local/', extension, '@from-internal\n',
       'MaxRetries: 2\n',
@@ -7703,6 +7714,32 @@ function createAlarm(extension, time, date, cb) {
   }
 }
 
+/**
+ * Get the list of all alarms wakeup.
+ *
+ * @method getAlarms
+ * @param {function} cb The callback function
+ */
+function getAlarms(cb) {
+  try {
+    // check parameters
+    if (typeof cb !== 'function') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    fs.readdir(AST_ALARMS_DIRPATH, function(err, files) {
+      if (err) {
+        logger.error(IDLOG, 'getting the list of all alarms');
+        cb(err);
+        return;
+      }
+      cb(null, files);
+    });
+  } catch (e) {
+    logger.error(IDLOG, e.stack);
+    cb(e);
+  }
+}
+
 // public interface
 exports.on = on;
 exports.call = call;
@@ -7719,6 +7756,7 @@ exports.addPrefix = addPrefix;
 exports.evtRename = evtRename;
 exports.evtNewCdr = evtNewCdr;
 exports.isExtenCf = isExtenCf;
+exports.getAlarms = getAlarms;
 exports.isExtenDnd = isExtenDnd;
 exports.isExtenCfVm = isExtenCfVm;
 exports.setAstCodes = setAstCodes;
