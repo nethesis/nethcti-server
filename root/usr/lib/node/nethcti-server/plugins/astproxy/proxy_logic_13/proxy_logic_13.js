@@ -7639,6 +7639,69 @@ function setAsteriskPresence(extension, presenceState, cb) {
   }
 }
 
+/**
+ * Create an alarm for a specified date, time and extension.
+ *
+ * @method createAlarm
+ * @param {string} extension The endpoint identifier (e.g. the extension number)
+ * @param {string} time The time of the alarm. Use hh:mm in 24 format
+ * @param {string} date The date of the alarm. Use YYYYMMDD format
+ * @param {function} cb The callback function
+ */
+function createAlarm(extension, time, date, cb) {
+  try {
+    // check parameters
+    if (typeof cb !== 'function' ||
+      typeof extension !== 'string' ||
+      typeof date !== 'string' ||
+      typeof time !== 'string') {
+
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    var timestamp = moment(date + time, 'YYYYMMDDhh:mm').unix();
+    var filename = extension + '-' + timestamp + '.call';
+    var filepath = path.join('/var/spool/asterisk/outgoing/', filename);
+    var content = [
+      'Channel: Local/', extension, '@from-internal\n',
+      'MaxRetries: 2\n',
+      'RetryTime: 60\n',
+      'WaitTime: 30\n',
+      'CallerID: \'Sveglia\' <Sveglia>\n',
+      // 'Set: CAMERA=', extension, '\n',
+      // 'Set: RECEPTION=\n',
+      'Set: ALARM=', timestamp, '\n',
+      'Set: CALLERID(name)=SVEGLIA\n',
+      'Context: sveglia\n',
+      'Priority: 1\n',
+      'Extension: s\n'
+    ].join('');
+
+    // create temporary file into the current directory
+    fs.writeFile(filename, content, function(err) {
+      if (err) {
+        logger.error(IDLOG, 'creating alarm for "' + extension + '" on ' + date + ' - ' + time + ' (' + timestamp + ')');
+        cb(err);
+        return;
+      }
+      // set the file timestamp
+      fs.utimes(filename, timestamp, timestamp, function(err2) {
+        if (err2) {
+          logger.error(IDLOG, 'creating alarm for "' + extension + '" on ' + date + ' - ' + time + ' (' + timestamp + ')');
+          cb(err);
+          return;
+        }
+        // move the file to the correct asterisk destination
+        fs.rename(filename, filepath, function() {
+          logger.info(IDLOG, 'created alarm for "' + extension + '" on ' + date + ' - ' + time + ' (' + timestamp + ')');
+          cb();
+        })
+      });
+    });
+  } catch (e) {
+    logger.error(IDLOG, e.stack);
+    cb(e);
+  }
+}
 
 // public interface
 exports.on = on;
@@ -7660,6 +7723,7 @@ exports.isExtenDnd = isExtenDnd;
 exports.isExtenCfVm = isExtenCfVm;
 exports.setAstCodes = setAstCodes;
 exports.EVT_NEW_CDR = EVT_NEW_CDR;
+exports.createAlarm = createAlarm;
 exports.setCompDbconn = setCompDbconn;
 exports.getExtensions = getExtensions;
 exports.getConference = getConference;

@@ -227,6 +227,7 @@ var compConfigManager;
         * 1. [`astproxy/answer`](#answerpost)
         * 1. [`astproxy/hangup`](#hanguppost)
         * 1. [`astproxy/dtmf`](#dtmfpost)
+        * 1. [`astproxy/wakeup`](#wakeuppost)
         * 1. [`astproxy/intrude`](#intrudepost)
         * 1. [`astproxy/mute_record`](#mute_recordpost)
         * 1. [`astproxy/start_record`](#start_recordpost)
@@ -408,6 +409,21 @@ var compConfigManager;
         * Example JSON request parameters:
         *
         *     { "convid": "SIP/214-000003d5>SIP/221-000003d6", "endpointType": "extension", "endpointId": "214" }
+        *
+        * ---
+        *
+        * ### <a id="wakeuppost">**`astproxy/wakeup`**</a>
+        *
+        * Create an alarm for a specified date, time and extension.
+        * The request must contains the following parameters:
+        *
+        * * `time: (hh:mm 24 hours format) the alarm clock `
+        * * `date: (YYYYMMDD format) the alarm day`
+        * * `extension: the extension for the alarm`
+        *
+        * Example JSON request parameters:
+        *
+        *     { "time": "14:42", "date": "20170528", "extension": "221" }
         *
         * ---
         *
@@ -631,6 +647,7 @@ var compConfigManager;
          *   @param {string} mute                  Mute a call in one direction only. The specified extension is able to listen
          *   @param {string} dtmf                  Sends the dtmf by physical supported phone
          *   @param {string} cfvm                  Sets the call forward status of the endpoint of the user to a destination voicemail
+         *   @param {string} wakeup                Create an alarm for a specified date, time and extension
          *   @param {string} unmute                Unmute a call
          *   @param {string} cfcall                Sets the call forward status of the endpoint of the user to a destination number
          *   @param {string} atxfer                Transfer a conversation with attended type
@@ -673,6 +690,7 @@ var compConfigManager;
           'mute',
           'dtmf',
           'cfvm',
+          'wakeup',
           'unmute',
           'cfcall',
           'atxfer',
@@ -4013,6 +4031,52 @@ var compConfigManager;
       },
 
       /**
+       * Create an alarm for a specified date, time and extension with the following REST API:
+       *
+       *     POST wakeup
+       *
+       * @method wakeup
+       * @param {object} req The client request
+       * @param {object} res The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      wakeup: function(req, res, next) {
+        try {
+          var username = req.headers.authorization_user;
+
+          // check parameters
+          if (typeof req.params !== 'object' ||
+            typeof req.params.time !== 'string' ||
+            typeof req.params.extension !== 'string' ||
+            typeof req.params.date !== 'string') {
+
+            compUtil.net.sendHttp400(IDLOG, res);
+            return;
+          }
+          compAstProxy.createAlarm(req.params.extension, req.params.time, req.params.date, function(err) {
+            try {
+              if (err) {
+                logger.warn(IDLOG, 'creating alarm in ' + req.params.date + ' - ' + req.params.time + ' for exten "' +
+                  req.params.extension + '" by user "' + username + '" has been failed');
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                return;
+              }
+              logger.info(IDLOG, 'created alarm in ' + req.params.date + ' - ' + req.params.time + ' for exten "' +
+                  req.params.extension + '" by user "' + username + '"');
+              compUtil.net.sendHttp200(IDLOG, res);
+
+            } catch (error) {
+              logger.error(IDLOG, error.stack);
+              compUtil.net.sendHttp500(IDLOG, res, error.toString());
+            }
+          });
+        } catch (err) {
+          logger.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
+      },
+
+      /**
        * Originates a new echo call with the following REST API:
        *
        *     POST call_echo
@@ -4123,6 +4187,7 @@ var compConfigManager;
     exports.dtmf = astproxy.dtmf;
     exports.mute = astproxy.mute;
     exports.cfvm = astproxy.cfvm;
+    exports.wakeup = astproxy.wakeup;
     exports.unmute = astproxy.unmute;
     exports.cfcall = astproxy.cfcall;
     exports.queues = astproxy.queues;
