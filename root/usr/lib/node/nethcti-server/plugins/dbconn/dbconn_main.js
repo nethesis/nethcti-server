@@ -446,7 +446,7 @@ function initCustCardConnections() {
         initPostgresConnCustCard(dbConfigCustCardData[ccName]);
 
       } else if (isMssqlType(dbConfigCustCardData[ccName].type)) {
-        initMssqlConnCustCard(dbConfigCustCardData[ccName].id, getMssqlTdsVersion(dbConfigCustCardData[ccName].type));
+        initMssqlConnCustCard(dbConfigCustCardData[ccName], getMssqlTdsVersion(dbConfigCustCardData[ccName].type));
       }
     }
   } catch (err) {
