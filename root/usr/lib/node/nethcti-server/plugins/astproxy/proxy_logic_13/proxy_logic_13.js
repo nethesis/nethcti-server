@@ -3551,7 +3551,7 @@ function evtQueueMemberAdded(data) {
     }
 
     if (!queues[data.queueId]) {
-      logger.warn(IDLOG, 'received event queue member added for not existent queue "' + queueId + '"');
+      logger.warn(IDLOG, 'received event queue member added for not existent queue "' + data.queueId + '"');
       return;
     }
 
@@ -3619,7 +3619,7 @@ function evtQueueMemberRemoved(data) {
     }
 
     if (!queues[data.queueId]) {
-      logger.warn(IDLOG, 'received event queue member removed for not existent queue "' + queueId + '"');
+      logger.warn(IDLOG, 'received event queue member removed for not existent queue "' + data.queueId + '"');
       return;
     }
 
