@@ -258,7 +258,7 @@ function setCompUser(comp) {
           }
 
           if (!compUser.isUserPresent(username)) {
-            var errmsg = 'user "' + username + '" is not configured';
+            var errmsg = 'user ' + username + ' is not configured';
             compUtil.net.sendHttp401(IDLOG, res, errmsg);
             return;
           }

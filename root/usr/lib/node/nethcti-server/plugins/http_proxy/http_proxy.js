@@ -279,10 +279,18 @@ function start() {
           return;
         }
 
+        if ((req.headers.authorization !== undefined && typeof req.headers.authorization !== 'string') ||
+            (req.headers.authorization !== undefined && (req.headers.authorization.split(':')).length !== 2)) {
+
+          compUtil.net.sendHttp401(IDLOG, res);
+          return;
+        }
+
         // check authentication
         // arr[0] is the username or the extension number
         // arr[1] is the token
         if (req.headers.authorization) {
+
           var arr = req.headers.authorization.split(':');
           if (compAuthentication.verifyToken(arr[0], arr[1]) === true) {
 

@@ -1166,8 +1166,11 @@ function getTotNumUsers() {
 function setDefaultUserExtensionConf(username, exten, cb) {
   try {
     // check parameters
-    if (typeof username !== 'string' || typeof exten !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters');
+    if (typeof username !== 'string' ||
+      typeof exten !== 'string' ||
+      typeof cb !== 'function') {
+
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // save the setting into the database
