@@ -84,7 +84,7 @@ function getCallTrace(linkedid, privacyStr, cb) {
         if (    typeof linkedid   !== 'string' || typeof cb  !== 'function'
             || (typeof privacyStr !== 'string' && privacyStr !== undefined) ) {
 
-            throw new Error('wrong parameters');
+            throw new Error('wrong parameters: ' + JSON.stringify(arguments));
         }
 
         logger.info(IDLOG, 'search cel for linkedid "' + linkedid + '"');
@@ -110,7 +110,7 @@ function getCallInfo(uniqueid, privacyStr, cb) {
         if (    typeof uniqueid   !== 'string' || typeof cb  !== 'function'
             || (typeof privacyStr !== 'string' && privacyStr !== undefined) ) {
 
-            throw new Error('wrong parameters');
+            throw new Error('wrong parameters: ' + JSON.stringify(arguments));
         }
 
         logger.info(IDLOG, 'search cel for uniqueid "' + uniqueid + '"');

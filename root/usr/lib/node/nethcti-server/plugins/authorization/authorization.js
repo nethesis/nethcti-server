@@ -1205,7 +1205,7 @@ function authorizePickupUser(username, endpointId) {
   try {
     // check parameters
     if (typeof username !== 'string' || typeof endpointId !== 'string') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // get pickup authorization from the user
@@ -1456,7 +1456,7 @@ function verifyUserEndpointExten(username, endpoint) {
   try {
     // check parameters
     if (typeof username !== 'string' || typeof endpoint !== 'string') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     return compUser.hasExtensionEndpoint(username, endpoint);
@@ -1480,7 +1480,7 @@ function verifyUserEndpointCellphone(username, endpoint) {
   try {
     // check parameters
     if (typeof username !== 'string' || typeof endpoint !== 'string') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     return compUser.hasCellphoneEndpoint(username, endpoint);
@@ -1504,7 +1504,7 @@ function verifyUserEndpointVoicemail(username, endpoint) {
   try {
     // check parameters
     if (typeof username !== 'string' || typeof endpoint !== 'string') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     return compUser.hasVoicemailEndpoint(username, endpoint);
@@ -1614,7 +1614,7 @@ function verifyOffhourListenAnnouncement(username, announcementId, cb) {
     if (typeof username !== 'string' ||
       typeof announcementId !== 'string' || typeof cb !== 'function') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     compDbconn.getAnnouncement(announcementId, function(err, result) {
@@ -1657,7 +1657,7 @@ function verifyOffhourUserAnnouncement(username, announcementId, cb) {
     if (typeof username !== 'string' ||
       typeof announcementId !== 'string' || typeof cb !== 'function') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     compDbconn.getAnnouncement(announcementId, function(err, result) {

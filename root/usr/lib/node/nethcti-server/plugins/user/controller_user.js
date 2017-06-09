@@ -226,7 +226,7 @@ function config(path) {
 function evtExtenDndChanged(data) {
   try {
     if (typeof data !== 'object' || typeof data.exten !== 'string' || typeof data.enabled !== 'boolean') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     logger.info(IDLOG, 'received "' + compAstProxy.EVT_EXTEN_DND_CHANGED + '" event for exten "' + data.exten + '"');
 
@@ -293,7 +293,7 @@ function evtExtenDndChanged(data) {
 function evtExtenCfChanged(data) {
   try {
     if (typeof data !== 'object' || typeof data.exten !== 'string' || typeof data.enabled !== 'boolean') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     logger.info(IDLOG, 'received "' + compAstProxy.EVT_EXTEN_CF_CHANGED + '" event for exten "' + data.exten + '"');
 
@@ -360,7 +360,7 @@ function evtExtenCfChanged(data) {
 function evtExtenCfVmChanged(data) {
   try {
     if (typeof data !== 'object' || typeof data.exten !== 'string' || typeof data.enabled !== 'boolean') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     logger.info(IDLOG, 'received "' + compAstProxy.EVT_EXTEN_CFVM_CHANGED + '" event for exten "' + data.exten + '"');
 
@@ -616,7 +616,7 @@ function getAllUserExtensions(username) {
 function setPresence(username, status, cb) {
   try {
     if (typeof username !== 'string' || typeof status !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     if (users[username] && userPresence.isValidUserPresence(status)) {
 
@@ -745,7 +745,7 @@ function setPresence(username, status, cb) {
 function getPresence(username) {
   try {
     if (typeof username !== 'string') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     if (users[username]) {
       return users[username].getPresence();
@@ -959,7 +959,7 @@ function initializeUsersPresence() {
 function addEndpointsToUser(userid, endpoType, obj) {
   try {
     if (typeof userid !== 'string' || typeof endpoType !== 'string' || typeof obj !== 'object') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     // adds all endpoints of the specified type to the user
     var id;
@@ -984,7 +984,7 @@ function addEndpointsToUser(userid, endpoType, obj) {
 function setConfigurations(userid, config) {
   try {
     if (typeof userid !== 'string' || typeof config !== 'object') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     if (users[userid] !== undefined) { // the user exists
@@ -1068,7 +1068,7 @@ function hasExtensionEndpoint(username, exten) {
   try {
     // check parameters
     if (typeof username !== 'string' || typeof exten !== 'string') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     if (users[username] === undefined) { // the user is not present
@@ -1102,7 +1102,7 @@ function hasCellphoneEndpoint(username, cellphone) {
   try {
     // check parameters
     if (typeof username !== 'string' || typeof cellphone !== 'string') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     if (users[username] === undefined) { // the user is not present
@@ -1136,7 +1136,7 @@ function hasVoicemailEndpoint(username, voicemail) {
   try {
     // check parameters
     if (typeof username !== 'string' || typeof voicemail !== 'string') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     if (users[username] === undefined) { // the user is not present

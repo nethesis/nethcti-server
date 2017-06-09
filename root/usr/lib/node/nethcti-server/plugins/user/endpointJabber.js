@@ -11,7 +11,7 @@
 // exports.EndpointJabber = function(identifier) {
 //   // check the parameter
 //   if (typeof identifier !== 'string') {
-//     throw new Error('wrong parameters');
+//     throw new Error('wrong parameters: ' + JSON.stringify(arguments));
 //   }
 
 //   /**

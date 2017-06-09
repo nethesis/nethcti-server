@@ -149,7 +149,7 @@ function getCallInfo(uniqueid, privacyStr, cb) {
     // check parameters
     if (typeof uniqueid !== 'string' || typeof cb !== 'function' || (typeof privacyStr !== 'string' && privacyStr !== undefined)) {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var attributes = ['eventtype', 'eventtime', 'context', 'channame'];
@@ -213,7 +213,7 @@ function getQueuesQOS(day, cb) {
     // check parameters
     if (typeof cb !== 'function' || typeof day !== 'string' || (typeof day === 'string' && day.match(/\d{8}/) === null)) {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     async.parallel({
@@ -365,7 +365,7 @@ function getQueueRecallInfo(data, cb) {
       typeof data.cid !== 'string' ||
       (data.type !== 'hours' && data.type !== 'day')) {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var query = [
@@ -414,7 +414,7 @@ function getQueueRecallQueryTable(type, val) {
     if (typeof val !== 'string' ||
       (type !== 'hours' && type !== 'day')) {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var timeConditionQl, // time condition on queue_log
@@ -518,7 +518,7 @@ function getQueueRecall(data, cb) {
       typeof data.qid !== 'string' ||
       (data.type !== 'hours' && data.type !== 'day')) {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var query = [
@@ -569,7 +569,7 @@ function getCallTrace(linkedid, privacyStr, cb) {
     // check parameters
     if (typeof linkedid !== 'string' || typeof cb !== 'function' || (typeof privacyStr !== 'string' && privacyStr !== undefined)) {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var attributes = ['eventtype', 'eventtime', 'context', 'channame'];
@@ -633,7 +633,7 @@ function getQueuesStats(day, cb) {
     // check parameters
     if (typeof cb !== 'function' || typeof day !== 'string' || (typeof day === 'string' && day.match(/\d{8}/) === null)) {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     async.parallel({
@@ -743,7 +743,7 @@ function getAgentsStats(day, cb) {
   try {
     // check parameters
     if (typeof cb !== 'function' || typeof day !== 'string' || (typeof day === 'string' && day.match(/\d{8}/) === null))
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
 
     var query = 'SELECT' + ' a.agent AS agent' + ', a.queuename AS queue' + ', DATE_FORMAT(a.time, "%k:%i:%s") AS time_in' + ', DATE_FORMAT(MIN(b.time), "%k:%i:%s") AS time_out' + ', UNIX_TIMESTAMP(MIN(b.time))-UNIX_TIMESTAMP(a.time) AS secs' + ', a.data1 AS reason' + ' FROM asteriskcdrdb.queue_log a' + ' LEFT JOIN asteriskcdrdb.queue_log b' + ' ON b.agent = a.agent' + ' AND b.queuename = a.queuename' + ' AND b.time > a.time' + ' AND $JOINS' + ' WHERE $BINDS' + ' AND DATE_FORMAT(a.time,"%Y%m%d") = \'' + day + '\'' + ' GROUP BY agent, queue, a.time';
 
@@ -837,7 +837,7 @@ function deleteCallRecording(uniqueid, cb) {
   try {
     // check parameters
     if (typeof uniqueid !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // search
@@ -895,7 +895,7 @@ function getCallRecordingFileData(uniqueid, cb) {
   try {
     // check parameters
     if (typeof cb !== 'function' || typeof uniqueid !== 'string') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // search
@@ -1019,7 +1019,7 @@ function getQueueMemberLastPausedOutData(memberName, queueId, memberId, cb) {
     // check parameters
     if (typeof cb !== 'function' || typeof memberId !== 'string' || typeof memberName !== 'string' || typeof queueId !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     compDbconnMain.models[compDbconnMain.JSON_KEYS.QUEUE_LOG].find({

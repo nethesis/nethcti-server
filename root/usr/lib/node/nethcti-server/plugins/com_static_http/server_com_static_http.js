@@ -330,7 +330,7 @@ function copyFile(srcpath, dstpath, cb) {
   try {
     // check parameters
     if (typeof srcpath !== 'string' || typeof dstpath !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     destPath = path.join(webroot, dstpath);

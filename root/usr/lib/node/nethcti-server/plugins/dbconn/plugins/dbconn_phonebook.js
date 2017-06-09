@@ -113,7 +113,7 @@ function getCtiPbContactsByNum(number, cb) {
   try {
     // check parameters
     if (typeof number !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     compDbconnMain.models[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].findAll({
@@ -228,7 +228,7 @@ function getPbContactsByNum(number, cb) {
   try {
     // check parameters
     if (typeof number !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     compDbconnMain.models[compDbconnMain.JSON_KEYS.PHONEBOOK].findAll({
@@ -276,7 +276,7 @@ function deleteCtiPbContact(id, cb) {
   try {
     // check parameters
     if (typeof id !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     compDbconnMain.models[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].find({
@@ -346,7 +346,7 @@ function modifyCtiPbContact(data, cb) {
     // check parameters
     if (typeof data !== 'object' || typeof data.id !== 'string' || typeof cb !== 'function') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     compDbconnMain.models[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].find({
@@ -394,7 +394,7 @@ function getPbContactsContains(term, offset, limit, cb) {
   try {
     // check parameters
     if (typeof term !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // add '%' to search all terms with any number of characters, even zero characters
@@ -451,7 +451,7 @@ function getAllContactsContains(term, username, view, offset, limit, cb) {
     // check parameters
     if (typeof term !== 'string' || typeof username !== 'string' || typeof cb !== 'function') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // add '%' to search all terms with any number of characters, even zero characters
@@ -517,7 +517,7 @@ function getPbContactsStartsWith(term, offset, limit, cb) {
   try {
     // check parameters
     if (typeof term !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // add '%' to search all terms with any number of characters, even zero characters
@@ -571,7 +571,7 @@ function getAllContactsStartsWith(term, username, view, offset, limit, cb) {
   try {
     // check parameters
     if (typeof term !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // add '%' to search all terms with any number of characters, even zero characters
@@ -618,7 +618,7 @@ function getCtiPbContactsContains(term, username, offset, limit, cb) {
   try {
     // check parameters
     if (typeof term !== 'string' || typeof username !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // add '%' to search all terms with any number of characters, even zero characters
@@ -671,7 +671,7 @@ function getCtiPbSpeeddialContacts(username, cb) {
   try {
     // check parameters
     if (typeof username !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     compDbconnMain.models[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].findAll({
@@ -721,7 +721,7 @@ function getCtiPbContactsStartsWithDigit(username, offset, limit, cb) {
   try {
     // check parameters
     if (typeof username !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     compDbconnMain.models[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].findAndCountAll({
@@ -767,7 +767,7 @@ function getAllContactsStartsWithDigit(username, view, offset, limit, cb) {
   try {
     // check parameters
     if (typeof username !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var ctiPbBounds = '(owner_id=? OR type="public") AND (name REGEXP "^[0-9]" OR company REGEXP "^[0-9]")';
@@ -808,7 +808,7 @@ function getPbContactsStartsWithDigit(offset, limit, cb) {
   try {
     // check parameters
     if (typeof cb !== 'function') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     compDbconnMain.models[compDbconnMain.JSON_KEYS.PHONEBOOK].findAndCountAll({
@@ -857,7 +857,7 @@ function getCtiPbContactsStartsWith(term, username, offset, limit, cb) {
   try {
     // check parameters
     if (typeof term !== 'string' || typeof username !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // add '%' to search all contacts whose names starts with the term
@@ -901,7 +901,7 @@ function getCtiPbContact(id, cb) {
   try {
     // check parameters
     if (typeof id !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var attributes = Object.keys(compDbconnMain.models[compDbconnMain.JSON_KEYS.CTI_PHONEBOOK].attributes);
@@ -945,7 +945,7 @@ function getPbContact(id, cb) {
   try {
     // check parameters
     if (typeof id !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var attributes = Object.keys(compDbconnMain.models[compDbconnMain.JSON_KEYS.PHONEBOOK].attributes);

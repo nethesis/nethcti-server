@@ -102,7 +102,7 @@ function getUserSettings(username, cb) {
   try {
     // check parameters
     if (typeof username !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     compDbconnMain.models[compDbconnMain.JSON_KEYS.USER_SETTINGS].findAll({

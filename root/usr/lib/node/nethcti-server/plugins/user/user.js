@@ -173,7 +173,7 @@ exports.User = function(uname, na) {
       typeof id !== 'string' ||
       !endpointTypes.isValidEndpointType(type)) {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     // create new endpoint object
     var newEndpoint;

@@ -4410,7 +4410,7 @@ function call(username, req, res) {
   try {
     // check parameters
     if (typeof username !== 'string' || typeof req !== 'object' || typeof res !== 'object') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // if source extension is of webrtc type it sends a websocket event to make
@@ -4448,7 +4448,7 @@ function ajaxPhoneDtmf(username, req, res) {
   try {
     // check parameters
     if (typeof username !== 'string' || typeof req !== 'object' || typeof res !== 'object') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var tone = req.params.tone;
@@ -4535,7 +4535,7 @@ function ajaxPhoneHoldUnhold(username, req, res) {
   try {
     // check parameters
     if (typeof username !== 'string' || typeof req !== 'object' || typeof res !== 'object') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var exten = req.params.endpointId;
@@ -4612,7 +4612,7 @@ function fallbackAjaxPhoneCall(username, req, res) {
   try {
     // check parameters
     if (typeof username !== 'string' || typeof req !== 'object' || typeof res !== 'object') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     logger.info(IDLOG, 'fallback ajax phone call: doing asterisk call');
     asteriskCall(username, req, res);
@@ -4635,7 +4635,7 @@ function ajaxPhoneCall(username, req, res) {
   try {
     // check parameters
     if (typeof username !== 'string' || typeof req !== 'object' || typeof res !== 'object') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var to = compAstProxy.addPrefix(req.params.number);
@@ -4778,7 +4778,7 @@ function ajaxPhoneAnswer(username, req, res) {
   try {
     // check parameters
     if (typeof username !== 'string' || typeof req !== 'object' || typeof res !== 'object') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var exten = req.params.endpointId;
@@ -4923,7 +4923,7 @@ function asteriskCall(username, req, res) {
   try {
     // check parameters
     if (typeof username !== 'string' || typeof req !== 'object' || typeof res !== 'object') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // extension to be used to get the "context" to make the new call.
@@ -5438,7 +5438,7 @@ function cfvmGetUnconditional(endpoint, username, res) {
     // check parameters
     if (typeof endpoint !== 'string' || typeof username !== 'string' || typeof res !== 'object') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     compAstProxy.doCmd({
@@ -5475,7 +5475,7 @@ function cfvmGetBusy(endpoint, username, res) {
     // check parameters
     if (typeof endpoint !== 'string' || typeof username !== 'string' || typeof res !== 'object') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     compAstProxy.doCmd({
@@ -5512,7 +5512,7 @@ function cfvmGetUnavailable(endpoint, username, res) {
     // check parameters
     if (typeof endpoint !== 'string' || typeof username !== 'string' || typeof res !== 'object') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     compAstProxy.doCmd({
@@ -5608,7 +5608,7 @@ function cfcallGetUnconditional(endpoint, username, res) {
     // check parameters
     if (typeof endpoint !== 'string' || typeof username !== 'string' || typeof res !== 'object') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     compAstProxy.doCmd({
@@ -5645,7 +5645,7 @@ function cfcallGetBusy(endpoint, username, res) {
     // check parameters
     if (typeof endpoint !== 'string' || typeof username !== 'string' || typeof res !== 'object') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     compAstProxy.doCmd({
@@ -5682,7 +5682,7 @@ function cfcallGetUnavailable(endpoint, username, res) {
     // check parameters
     if (typeof endpoint !== 'string' || typeof username !== 'string' || typeof res !== 'object') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     compAstProxy.doCmd({
@@ -5784,7 +5784,7 @@ function cfvmSetUnconditional(endpoint, username, activate, to, res) {
     // check parameters
     if (typeof endpoint !== 'string' || typeof activate !== 'boolean' || typeof username !== 'string' || typeof res !== 'object') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // when "activate" is false, "to" can be undefined if the client hasn't specified it.
@@ -5825,7 +5825,7 @@ function cfvmSetBusy(endpoint, username, activate, to, res) {
     // check parameters
     if (typeof endpoint !== 'string' || typeof activate !== 'boolean' || typeof username !== 'string' || typeof res !== 'object') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // when "activate" is false, "to" can be undefined if the client hasn't specified it.
@@ -5871,7 +5871,7 @@ function cfvmSetUnavailable(endpoint, username, activate, to, res) {
     // check parameters
     if (typeof endpoint !== 'string' || typeof activate !== 'boolean' || typeof username !== 'string' || typeof res !== 'object') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // when "activate" is false, "to" can be undefined if the client hasn't specified it.
@@ -5980,7 +5980,7 @@ function cfcallSetUnconditional(endpoint, username, activate, to, res) {
     // check parameters
     if (typeof endpoint !== 'string' || typeof activate !== 'boolean' || typeof username !== 'string' || typeof res !== 'object') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // when "activate" is false, "to" can be undefined if the client hasn't specified it.
@@ -6027,7 +6027,7 @@ function cfcallSetBusy(endpoint, username, activate, to, res) {
     // check parameters
     if (typeof endpoint !== 'string' || typeof activate !== 'boolean' || typeof username !== 'string' || typeof res !== 'object') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // when "activate" is false, "to" can be undefined if the client hasn't specified it.
@@ -6073,7 +6073,7 @@ function cfcallSetUnavailable(endpoint, username, activate, to, res) {
     // check parameters
     if (typeof endpoint !== 'string' || typeof activate !== 'boolean' || typeof username !== 'string' || typeof res !== 'object') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // when "activate" is false, "to" can be undefined if the client hasn't specified it.

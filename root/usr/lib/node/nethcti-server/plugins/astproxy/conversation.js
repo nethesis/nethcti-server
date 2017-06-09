@@ -12,7 +12,7 @@ exports.Conversation = function(ownerId, sourceChan, destChan, queue) {
   if (typeof ownerId !== 'string' ||
     (typeof destChan !== 'object' && typeof sourceChan !== 'object')) {
 
-    throw new Error('wrong parameters');
+    throw new Error('wrong parameters: ' + JSON.stringify(arguments));
   }
 
   /**

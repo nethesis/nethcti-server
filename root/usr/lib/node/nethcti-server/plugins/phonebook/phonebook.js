@@ -83,7 +83,7 @@ function getPbContactsContains(term, username, view, offset, limit, cb) {
   try {
     // check parameters
     if (typeof term !== 'string' || typeof username !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     dbconn.getAllContactsContains(term, username, view, offset, limit, function(err, results) {
@@ -119,7 +119,7 @@ function getPbContactsByNum(number, cb) { //TODO: add source param and paging
   try {
     // check parameters
     if (typeof number !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // object with all results
@@ -193,7 +193,7 @@ function getCtiPbContact(id, cb) {
   try {
     // check parameters
     if (typeof id !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     logger.info(IDLOG, 'search cti phonebook contact using db contact id "' + id + '" by means dbconn module');
@@ -216,7 +216,7 @@ function getPbContact(id, cb) {
   try {
     // check parameters
     if (typeof id !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     logger.info(IDLOG, 'search centralized phonebook contact using db contact id "' + id + '" by means dbconn module');
@@ -239,7 +239,7 @@ function getPbSpeeddialContacts(username, cb) {
   try {
     // check parameters
     if (typeof username !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     logger.info(IDLOG, 'search all speeddial contacts of the user "' + username + '" in the cti phonebook by means dbconn module');
@@ -275,7 +275,7 @@ function deleteCtiPbContact(id, cb) {
   try {
     // check parameters
     if (typeof id !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     logger.info(IDLOG, 'delete cti phonebook contact using db contact id "' + id + '" by means dbconn module');
@@ -339,7 +339,7 @@ function modifyCtiPbContact(data, cb) {
     // check parameters
     if (typeof data !== 'object' || typeof data.id !== 'string' || typeof cb !== 'function') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     logger.info(IDLOG, 'modify cti phonebook contact using db contact id "' + data.id + '" by means dbconn module');
@@ -379,7 +379,7 @@ function getPbContactsStartsWith(term, username, view, offset, limit, cb) {
   try {
     // check parameters
     if (typeof term !== 'string' || typeof username !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     dbconn.getAllContactsStartsWith(term, username, view, offset, limit, function(err, results) {
@@ -418,7 +418,7 @@ function getPbContactsStartsWithDigit(username, view, offset, limit, cb) {
   try {
     // check parameters
     if (typeof username !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     dbconn.getAllContactsStartsWithDigit(username, view, offset, limit, function(err, results) {

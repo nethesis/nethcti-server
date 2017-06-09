@@ -215,7 +215,7 @@ function isAtLeastExtenInCallRecording(id, extensions, cb) {
   try {
     // check parameters
     if (typeof cb !== 'function' || typeof id !== 'string' || !(extensions instanceof Array)) {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     logger.info(IDLOG, 'check if at least one extension ' + extensions.toString() + ' is involved in the call recording with id "' + id + '"');
@@ -237,7 +237,7 @@ function getCallRecordingFileData(id, cb) {
   try {
     // check parameters
     if (typeof cb !== 'function' || typeof id !== 'string') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     logger.info(IDLOG, 'get the data information about call recording audio file of the call with id "' + id + '"');
@@ -265,7 +265,7 @@ function getCallRecordingContent(data, cb) {
     // check parameters
     if (typeof cb !== 'function' || typeof data.filename !== 'string' || typeof data !== 'object' || typeof data.month !== 'string' || typeof data.year !== 'string' || typeof data.day !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // get base path of the call recordings and then construct the filepath using the arguments
@@ -302,7 +302,7 @@ function deleteCallRecording(id, data, cb) {
     // check parameters
     if (typeof cb !== 'function' || typeof data.filename !== 'string' || typeof id !== 'string' || typeof data !== 'object' || typeof data.month !== 'string' || typeof data.year !== 'string' || typeof data.day !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // get base path of the call recordings and then construct the filepath using the arguments

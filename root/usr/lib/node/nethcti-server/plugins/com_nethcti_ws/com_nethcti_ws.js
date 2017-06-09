@@ -790,7 +790,7 @@ function sendEventToAllClients(evname, data, fn, fnData) {
     if (typeof evname !== 'string' || typeof data !== 'object' ||
       typeof fn !== 'function' || (fnData && typeof fnData !== 'function')) {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     logger.info(IDLOG, 'emit event "' + evname + '" to all local clients with permission enabled');
 
@@ -1032,7 +1032,7 @@ function getFilteredCallerIndentity(username, callerIdentity) {
   try {
     // check parameters
     if (typeof username !== 'string' || typeof callerIdentity !== 'object') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     var i;
     // filter the caller notes, if there are
@@ -1122,7 +1122,7 @@ function sendAnswerWebrtcToClient(username, extenId) {
   try {
     // check parameters
     if (typeof username !== 'string' || typeof extenId !== 'string') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     // emit the EVT_ANSWER_WEBRTC event for each logged in user associated with the ringing extension
     var socketId;
@@ -1151,7 +1151,7 @@ function sendAnswerWebrtcToClient(username, extenId) {
 function sendCallWebrtcToClient(username, to) {
   try {
     if (typeof username !== 'string' || typeof to !== 'string') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     // emit the EVT_CALL_WEBRTC event for each logged in user
     var socketId;
@@ -1185,7 +1185,7 @@ function extenDialing(data) {
   try {
     // check parameters
     if (typeof data !== 'object' || typeof data.dialingExten !== 'string' || typeof data.callerIdentity !== 'object') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     logger.info(IDLOG, 'received event extenDialing for extension ' + data.dialingExten + ' with the caller identity');
 

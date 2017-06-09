@@ -135,7 +135,7 @@ function getVoicemailMsg(vmId, type, offset, limit, cb) {
     try {
         // check parameters
         if (typeof vmId !== 'string' || (type && typeof type !== 'string') || typeof cb !== 'function') {
-            throw new Error('wrong parameters');
+            throw new Error('wrong parameters: ' + JSON.stringify(arguments));
         }
 
         // search
@@ -179,7 +179,7 @@ function deleteVoiceMessage(dbid, cb) {
     try {
         // check parameters
         if (typeof dbid !== 'string' || typeof cb !== 'function') {
-            throw new Error('wrong parameters');
+            throw new Error('wrong parameters: ' + JSON.stringify(arguments));
         }
 
         // search
@@ -233,7 +233,7 @@ function listenVoiceMessage(dbid, cb) {
     try {
         // check parameters
         if (typeof dbid !== 'string' || typeof cb !== 'function') {
-            throw new Error('wrong parameters');
+            throw new Error('wrong parameters: ' + JSON.stringify(arguments));
         }
 
         // search
@@ -288,7 +288,7 @@ function getVmMailboxFromDbId(dbid, cb) {
     try {
         // check parameters
         if (typeof dbid !== 'string' || typeof cb !== 'function') {
-            throw new Error('wrong parameters');
+            throw new Error('wrong parameters: ' + JSON.stringify(arguments));
         }
 
         // search

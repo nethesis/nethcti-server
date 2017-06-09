@@ -16,7 +16,7 @@ exports.QueueMember = function(memberNum, queueId, pausedValue, loggedInValue) {
   if (typeof queueId !== 'string' || typeof loggedInValue !== 'boolean' ||
     typeof memberNum !== 'string' || typeof pausedValue !== 'boolean') {
 
-    throw new Error('wrong parameters');
+    throw new Error('wrong parameters: ' + JSON.stringify(arguments));
   }
 
   /**
@@ -194,7 +194,7 @@ exports.QueueMember = function(memberNum, queueId, pausedValue, loggedInValue) {
     if (typeof timestamp !== 'number' ||
       typeof reason !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     lastPausedInReason = reason;
@@ -271,7 +271,7 @@ exports.QueueMember = function(memberNum, queueId, pausedValue, loggedInValue) {
     if (typeof value !== 'boolean' ||
       (typeof reason !== 'string' && value === true)) {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     paused = value;

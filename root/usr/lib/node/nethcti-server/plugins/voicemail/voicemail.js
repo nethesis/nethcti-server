@@ -180,7 +180,7 @@ function getVoiceMessagesByUser(username, type, offset, limit, cb) {
   try {
     // check parameters
     if (typeof username !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var vm = compUser.getVoicemailList(username);
@@ -403,7 +403,7 @@ function deleteVoiceMessage(id, cb) {
   try {
     // check parameters
     if (typeof id !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     dbconn.deleteVoiceMessage(id, cb);
@@ -426,7 +426,7 @@ function listenVoiceMessage(id, cb) {
   try {
     // check parameters
     if (typeof id !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     dbconn.listenVoiceMessage(id, cb);
 
@@ -448,7 +448,7 @@ function getVmIdFromDbId(dbid, cb) {
   try {
     // check parameters
     if (typeof dbid !== 'string' || typeof cb !== 'function') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     dbconn.getVmMailboxFromDbId(dbid, cb);
@@ -504,7 +504,7 @@ function updateVoiceMessagesCb(err, voicemail, results) {
 
     // check the parameters
     if (typeof voicemail !== 'string' || results instanceof Array === false) {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // emits the event with the update list of new voice messages of a voicemail. This event is emitted

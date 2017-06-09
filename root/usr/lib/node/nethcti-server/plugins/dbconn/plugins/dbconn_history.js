@@ -437,7 +437,7 @@ function getHistorySmsInterval(data, cb) {
     // check parameters
     if (typeof data !== 'object' || typeof cb !== 'function' || typeof data.to !== 'string' || typeof data.from !== 'string' || (typeof data.username !== 'string' && data.username !== undefined) || (typeof data.filter !== 'string' && data.filter !== undefined)) {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // the mysql operator for the sender field

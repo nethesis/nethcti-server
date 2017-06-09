@@ -12,7 +12,7 @@
 exports.Extension = function(ext, chType) {
   // check the parameters
   if (!ext || !chType || typeof ext !== 'string' || typeof chType !== 'string') {
-    throw new Error('wrong parameters');
+    throw new Error('wrong parameters: ' + JSON.stringify(arguments));
   }
 
   /**

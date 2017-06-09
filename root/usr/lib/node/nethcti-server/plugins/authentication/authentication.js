@@ -468,7 +468,7 @@ function calculateToken(username, password, nonce) {
       typeof nonce !== 'string' ||
       typeof password !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     // generate token HMAC-SHA1
     var tohash = username + ':' + password + ':' + nonce;
@@ -491,7 +491,7 @@ function getRemoteSiteName(username, token) {
   try {
     // check parameters
     if (typeof username !== 'string' || typeof token !== 'string') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     if (grants[username] &&
       grants[username][token] &&
@@ -523,7 +523,7 @@ function newToken(username, password, nonce, isRemoteSite) {
     if (typeof username !== 'string' || typeof nonce !== 'string' ||
       typeof password !== 'string' || typeof isRemoteSite !== 'boolean') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // generate token HMAC-SHA1
@@ -653,7 +653,7 @@ function authenticateRemoteSite(username, password, remoteIp, cb) {
       typeof password !== 'string' ||
       typeof username !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // authenticate remote site by credentials read from the file
@@ -706,7 +706,7 @@ function authenticate(username, password, cb) {
       typeof password !== 'string' ||
       typeof username !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     if (authenticationType === AUTH_TYPE.pam) {
       logger.info(IDLOG, 'authenticating user "' + username + '" by pam');
@@ -736,7 +736,7 @@ function authByPam(username, password, cb) {
       typeof password !== 'string' ||
       typeof username !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     var child = childProcess.spawn(PAM_SCRIPT_PATH);
     child.stdin.write(username + '\n' + password);
@@ -774,7 +774,7 @@ function authRemoteSiteByFile(username, password, remoteIp, cb) {
       typeof password !== 'string' ||
       typeof username !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     var site;
     var authenticated = false;
@@ -813,7 +813,7 @@ function removeToken(username, token) {
   try {
     // check the parameters
     if (typeof username !== 'string' || typeof token !== 'string') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     // check the grant presence
     if (grants[username]) {
@@ -842,7 +842,7 @@ function updateTokenExpires(username, token) {
   try {
     // check parameters
     if (typeof username !== 'string' || typeof token !== 'string') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // check grants presence
@@ -896,7 +896,7 @@ function verifyToken(username, token, isRemote) {
     isRemote = false;
     // check parameters
     if (typeof username !== 'string' || typeof token !== 'string' || typeof isRemote !== 'boolean') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     // check the grant presence
     if (!grants[username]) {

@@ -1639,7 +1639,7 @@ function addQueueMemberLoggedIn(data, queueId) {
       typeof data.name !== 'string' || typeof data.type !== 'string' ||
       typeof data.callsTakenCount !== 'number' || typeof data.lastCallTimestamp !== 'number') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     if (!queues[queueId]) {
@@ -1693,7 +1693,7 @@ function updateQueueMemberLastPauseData(memberName, memberId, queueId) {
     if (typeof memberName !== 'string' ||
       typeof memberId !== 'string' || typeof queueId !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     if (!queues[queueId]) {
@@ -1776,7 +1776,7 @@ function getJSONQueuesStats(day, callback) {
   try {
     // check parameters
     if (typeof day !== 'string' || typeof callback !== 'function') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     compDbconn.getQueuesStats(day, function(err1, result) {
@@ -1801,7 +1801,7 @@ function getJSONQueuesQOS(day, callback) {
   try {
     // check parameters
     if (typeof day !== 'string' || typeof callback !== 'function') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     compDbconn.getQueuesQOS(day, function(err1, result) {
@@ -1826,7 +1826,7 @@ function getJSONAgentsStats(day, callback) {
   try {
     // check parameters
     if (typeof day !== 'string' || typeof callback !== 'function') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     compDbconn.getAgentsStats(day, function(err1, result) {
@@ -2860,7 +2860,7 @@ function updateExtenConversations(err, resp, exten) {
 
     // check parameters
     if (typeof exten !== 'string' || !resp) {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // check if the extension exists, otherwise there is some error
@@ -2913,7 +2913,7 @@ function updateTrunkConversations(err, resp, trunk) {
 
     // check parameters
     if (typeof trunk !== 'string' || !resp) {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // check if the extension exists, otherwise there is some error
@@ -3109,7 +3109,7 @@ function condRemoveAllExtenConversations(exten) {
       // check if at least one secondy extension have a conversation
       for (i = 0; i < secondExtens.length; i++) {
 
-        if (extensions[secondExtens[i]].hasAtLeastOneConversation()) {
+        if (extensions[secondExtens[i]] && extensions[secondExtens[i]].hasAtLeastOneConversation()) {
           rem = false;
           break;
         }
@@ -3214,7 +3214,7 @@ function addConversationToTrunk(trunk, resp, chid) {
       typeof resp !== 'object' ||
       typeof chid !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     if (trunks[trunk]) {
@@ -3451,7 +3451,7 @@ function evtQueueMemberPausedChanged(queueId, memberId, paused, reason) {
     if (typeof queueId !== 'string' || typeof reason !== 'string' ||
       typeof memberId !== 'string' || typeof paused !== 'boolean') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     if (!queues[queueId]) {
@@ -3502,7 +3502,7 @@ function evtQueueMemberStatus(data) {
       typeof data.member !== 'string' || typeof data.callsTakenCount !== 'number' ||
       typeof data.paused !== 'boolean' || typeof data.name !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     if (!queues[data.queueId]) {
@@ -3547,7 +3547,7 @@ function evtQueueMemberAdded(data) {
       typeof data.member !== 'string' || typeof data.callsTakenCount !== 'number' ||
       typeof data.paused !== 'boolean' || typeof data.name !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     if (!queues[data.queueId]) {
@@ -3615,7 +3615,7 @@ function evtQueueMemberRemoved(data) {
     if (typeof data !== 'object' ||
       typeof data.queueId !== 'string' || typeof data.member !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     if (!queues[data.queueId]) {
@@ -3717,7 +3717,7 @@ function evtExtenDndChanged(exten, enabled) {
   try {
     // check parameters
     if (typeof exten !== 'string' && typeof enabled !== 'boolean') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     if (extensions[exten]) { // the exten is an extension
@@ -3754,7 +3754,7 @@ function evtExtenUnconditionalCfChanged(exten, enabled, to) {
   try {
     // check parameters
     if (typeof exten !== 'string' && typeof enabled !== 'boolean') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     if (extensions[exten]) { // the exten is an extension
@@ -3801,7 +3801,7 @@ function evtExtenUnconditionalCfVmChanged(exten, enabled, vm) {
   try {
     // check parameters
     if (typeof exten !== 'string' && typeof enabled !== 'boolean') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     if (extensions[exten]) { // the exten is an extension
@@ -3898,7 +3898,7 @@ function setDnd(exten, activate, cb) {
   try {
     // check parameters
     if (typeof exten !== 'string' && typeof activate !== 'boolean') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     if (extensions[exten]) { // the exten is an extension
@@ -4024,7 +4024,7 @@ function setUnconditionalCf(exten, activate, to, cb) {
   try {
     // check parameters
     if (typeof exten !== 'string' && typeof activate !== 'boolean') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     if (extensions[exten]) { // the exten is an extension
@@ -4069,7 +4069,7 @@ function setUnconditionalCfVm(exten, activate, to, cb) {
   try {
     // check parameters
     if (typeof exten !== 'string' && typeof activate !== 'boolean') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     if (extensions[exten]) { // the exten is an extension
@@ -4807,7 +4807,7 @@ function call(endpointType, endpointId, to, extenForContext, cb) {
       typeof endpointType !== 'string' ||
       typeof extenForContext !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     var err;
     if (endpointType === 'extension' && !extensions[endpointId]) {
@@ -4856,7 +4856,7 @@ function muteConversation(extension, convid, cb) {
       typeof convid !== 'string' ||
       typeof extension !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // check the endpoint existence
@@ -4940,7 +4940,7 @@ function muteUserMeetmeConf(confId, userId, cb) {
       typeof confId !== 'string' ||
       typeof userId !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     logger.info(IDLOG, 'execute mute of user "' + userId + '" of meetme conf "' + confId + '"');
@@ -4976,7 +4976,7 @@ function unmuteUserMeetmeConf(confId, userId, cb) {
       typeof confId !== 'string' ||
       typeof userId !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     logger.info(IDLOG, 'execute unmute of user "' + userId + '" of meetme conf "' + confId + '"');
@@ -5012,7 +5012,7 @@ function hangupUserMeetmeConf(confId, extenId, cb) {
       typeof confId !== 'string' ||
       typeof extenId !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     logger.info(IDLOG, 'execute hangup of user "' + extenId + '" of meetme conf "' + confId + '"');
     var warn;
@@ -5304,7 +5304,7 @@ function startMeetmeConference(convid, ownerExtenId, addExtenId, cb) {
       typeof addExtenId !== 'string' ||
       typeof cb !== 'function') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     var warn;
 
@@ -5353,7 +5353,7 @@ function endMeetmeConf(confId, cb) {
     if (typeof confId !== 'string' ||
       typeof cb !== 'function') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // check the conference existence
@@ -5419,7 +5419,7 @@ function isExtenInMeetmeConf(ownerExtenId) {
   try {
     // check parameters
     if (typeof ownerExtenId !== 'string') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     if (conferences[ownerExtenId]) {
       return conferences[ownerExtenId].hasExten(ownerExtenId);
@@ -5445,7 +5445,7 @@ function hangupConversation(endpointId, convid, cb) {
     if (typeof convid !== 'string' || typeof cb !== 'function' ||
       typeof endpointId !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     var err;
     // check the endpoint existence
@@ -5467,6 +5467,8 @@ function hangupConversation(endpointId, convid, cb) {
       } else {
         err = 'no channel to hangup of conversation ' + convid + ' of exten ' + endpointId;
         logger.warn(IDLOG, err);
+        var allConvs = extensions[endpointId].getAllConversations();
+        logger.warn(IDLOG, 'conversations of ' + endpointId + ' are: ' + JSON.stringify(allConvs));
         cb(err);
       }
     } else {
@@ -5495,7 +5497,7 @@ function hangupChannel(endpointType, endpointId, ch, cb) {
     if (typeof ch !== 'string' || typeof cb !== 'function' ||
       typeof endpointId !== 'string' || typeof endpointType !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var err;
@@ -5741,7 +5743,7 @@ function redirectConversation(extension, convid, to, extForCtx, cb) {
       typeof to !== 'string' || typeof extForCtx !== 'string' ||
       typeof extension !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var msg;
@@ -5807,7 +5809,7 @@ function forceHangupConversation(endpointType, endpointId, convid, extForCtx, cb
       typeof cb !== 'function' || typeof extForCtx !== 'string' ||
       typeof endpointId !== 'string' || typeof endpointType !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     var msg;
     // check the endpoint existence
@@ -5885,7 +5887,7 @@ function redirectWaitingCaller(waitingCallerId, queue, to, extForCtx, cb) {
       typeof waitingCallerId !== 'string' || typeof queue !== 'string' ||
       typeof extForCtx !== 'string' || typeof to !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // check the queue existence
@@ -5943,7 +5945,7 @@ function redirectParking(parking, to, extForCtx, cb) {
     if (typeof cb !== 'function' || typeof extForCtx !== 'string' ||
       typeof parking !== 'string' || typeof to !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // check the parking existence
@@ -6001,7 +6003,7 @@ function attendedTransferConversation(extension, convid, to, cb) {
     if (typeof convid !== 'string' || typeof cb !== 'function' ||
       typeof to !== 'string' || typeof extension !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var msg;
@@ -6073,7 +6075,7 @@ function transferConversationToVoicemail(endpointType, endpointId, convid, voice
       typeof cb !== 'function' || typeof voicemail !== 'string' ||
       typeof endpointId !== 'string' || typeof endpointType !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var msg;
@@ -6241,7 +6243,7 @@ function recordAudioFile(data, cb) {
     if (typeof data !== 'object' || typeof cb !== 'function' ||
       typeof data.exten !== 'string' || typeof data.filepath !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     logger.info(IDLOG, 'execute record audio file "' + data.filepath + '" with exten "' + data.exten + '"');
@@ -6284,7 +6286,7 @@ function inoutDynQueues(endpointId, cb) {
   try {
     // check parameters
     if (typeof cb !== 'function' || typeof endpointId !== 'string') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // check the endpoint existence
@@ -6469,7 +6471,7 @@ function queueMemberAdd(endpointId, queueId, paused, penalty, cb) {
       typeof endpointId !== 'string' ||
       typeof queueId !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // check the endpoint existence
@@ -6587,7 +6589,7 @@ function queueMemberRemove(endpointId, queueId, cb) {
       typeof endpointId !== 'string' ||
       typeof queueId !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // check the endpoint existence
@@ -6809,7 +6811,7 @@ function stopRecordConversation(extension, convid, cb) {
       typeof cb !== 'function' ||
       typeof extension !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var str;
@@ -6972,7 +6974,7 @@ function muteRecordConversation(extension, convid, cb) {
       typeof cb !== 'function' ||
       typeof extension !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var str;
@@ -7045,7 +7047,7 @@ function unmuteRecordConversation(extension, convid, cb) {
       typeof cb !== 'function' ||
       typeof extension !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var str;
@@ -7118,7 +7120,7 @@ function startRecordConversation(extension, convid, cb) {
       typeof cb !== 'function' ||
       typeof extension !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var str;
@@ -7373,7 +7375,7 @@ function setRecordStatusConversations(convid, value) {
   try {
     // check parameters
     if (typeof convid !== 'string' || typeof value !== 'boolean') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // set the recording status of all the conversations with the specified convid
@@ -7515,7 +7517,7 @@ function sendDTMFSequence(extension, sequence, callerid, fromExten, cb) {
       typeof sequence !== 'string' || typeof cb !== 'function' ||
       typeof callerid !== 'string' || typeof fromExten !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // check if the extension exists
@@ -7587,7 +7589,7 @@ function sendDTMFSequenceToChannel(channel, sequence, cb) {
     if (typeof channel !== 'string' ||
       typeof sequence !== 'string' || typeof cb !== 'function') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // get the array from string
@@ -7656,7 +7658,7 @@ function callAndSendDTMFSequence(chanType, extension, sequence, callerid, fromEx
       typeof cb !== 'function' || typeof callerid !== 'string' ||
       typeof extension !== 'string' || typeof sequence !== 'string') {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // call the extension and send DTMF sequence
@@ -7716,7 +7718,7 @@ function getExtensionsFromConversation(convid, exten) {
   try {
     // check parameters
     if (typeof convid !== 'string' || typeof exten !== 'string') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var result = [];
@@ -7790,7 +7792,7 @@ function setAsteriskPresence(extension, presenceState, cb) {
     if (typeof cb !== 'function' ||
       typeof extension !== 'string' ||
       typeof presenceState !== 'string') {
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     logger.info(IDLOG, 'Set Asterisk Presence state to ' + presenceState + ' for user ' + extension);

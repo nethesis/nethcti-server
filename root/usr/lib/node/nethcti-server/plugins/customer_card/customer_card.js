@@ -422,7 +422,7 @@ function filterPrivacyCcCalls(username, num, calls) {
       typeof num !== 'string' ||
       (calls instanceof Array) !== true) {
 
-      throw new Error('wrong parameters');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var extens = compUser.getAllEndpointsExtension(username);
