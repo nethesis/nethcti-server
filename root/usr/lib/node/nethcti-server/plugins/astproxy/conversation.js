@@ -151,9 +151,6 @@ exports.Conversation = function(ownerId, sourceChan, destChan, queue) {
   if (chSource && chSource.isExtension(owner) === true) {
     counterpartNum = chSource.getBridgedNum();
 
-  } else if (chSource) {
-    counterpartNum = chSource.getCallerNum();
-
   } else if (chDest && chDest.isExtension(owner) === true) {
     counterpartNum = chDest.getBridgedNum();
 
@@ -173,9 +170,6 @@ exports.Conversation = function(ownerId, sourceChan, destChan, queue) {
   var counterpartName;
   if (chSource && chSource.isExtension(owner) === true) {
     counterpartName = chSource.getBridgedName();
-
-  } else if (chSource) {
-    counterpartName = chSource.getCallerName();
 
   } else if (chDest && chDest.isExtension(owner) === true) {
     counterpartName = chDest.getBridgedName();
