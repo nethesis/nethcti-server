@@ -28,13 +28,15 @@ module.exports = function(options, imports, register) {
   }
 
   try {
-    serverRest.setLogger(logger);
-    serverRest.config('/etc/nethcti/services.json');
-    serverRest.setCompUtil(imports.util);
-    serverRest.setCompUser(imports.user);
-    serverRest.setCompAstProxy(imports.astProxy);
-    serverRest.setCompAuthentication(imports.authentication);
-    serverRest.start();
+    imports.user.on(imports.user.EVT_USERS_READY, function() {
+      serverRest.setLogger(logger);
+      serverRest.config('/etc/nethcti/services.json');
+      serverRest.setCompUtil(imports.util);
+      serverRest.setCompUser(imports.user);
+      serverRest.setCompAstProxy(imports.astProxy);
+      serverRest.setCompAuthentication(imports.authentication);
+      serverRest.start();
+    });
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
