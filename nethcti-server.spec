@@ -1,5 +1,5 @@
 Name: nethcti-server
-Version: 2.7.6
+Version: 2.7.7
 Release: 1%{?dist}
 Summary: Nodejs Asterisk proxy for NethCTI 2
 
@@ -56,6 +56,13 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Mon Jun 12 2017 Alessandro Polidori <alessandro.polidori@nethesis.it> - 2.7.7-1
+- migration: fix TCPPorts value
+- second fix authentication with pam
+- fix authentication with pwd contain "$"
+- fix customer card default templates
+- Createlinks: don't use unsupported safe_symlink for restarting services. Nethesis/dev#5122
+
 * Fri Mar 17 2017 Alessandro Polidori <alessandro.polidori@nethesis.it> - 2.7.6-1
 - fix to use new cust card templates
 - fix stopIntrudeMusicForHold
