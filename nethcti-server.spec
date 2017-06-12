@@ -1,5 +1,5 @@
 Name: nethcti-server
-Version: 2.7.7
+Version: 2.7.8
 Release: 1%{?dist}
 Summary: Nodejs Asterisk proxy for NethCTI 2
 
@@ -57,6 +57,9 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Mon Jun 12 2017 Alessandro Polidori <alessandro.polidori@nethesis.it> - 2.7.8-1
+- spec: requires nodejs010-http-parser. Nethesis/dev#5153
+
 * Mon Jun 12 2017 Alessandro Polidori <alessandro.polidori@nethesis.it> - 2.7.7-1
 - migration: fix TCPPorts value
 - second fix authentication with pam
