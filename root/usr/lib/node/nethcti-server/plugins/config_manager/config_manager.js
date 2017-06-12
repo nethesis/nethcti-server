@@ -447,7 +447,7 @@ function config(path) {
     serverHostname = json.hostname;
 
     // set the listener for the websocket communication module
-    setComNethctiWsListeners();
+    // setComNethctiWsListeners();
 
     logger.info(IDLOG, 'configuration done by ' + path);
 
