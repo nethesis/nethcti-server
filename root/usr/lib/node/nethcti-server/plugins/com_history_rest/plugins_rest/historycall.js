@@ -256,8 +256,13 @@ function setCompAuthorization(ca) {
             "disposition": "ANSWERED",
             "dcontext": "ext-local",
             "recordingfile": "",
+            "cnum": "204",
+            "cnam": "andrea marchio",
+            "ccompany": "",
             "src": "204",
             "dst": "91223",
+            "dst_cnam": "",
+            "dst_ccompany": "",
             "clid": "\"andrea marchio\" <204>",
             "direction": "in" // can be ("in" | "out" | "") if it involves one of extension of the user
          },
@@ -274,7 +279,7 @@ function setCompAuthorization(ca) {
         * * `target: the extension identifier or the username`
         * * `from: the start date in YYYYMMDD format`
         * * `to: the end date in YYYYMMDD format`
-        * * `filter: filter results on "src", "clid" and "dst" fields of the database`
+        * * `filter: filter results on "cnum", "clid" and "dst" fields of the database`
         * * `[direction]: ("in" | "out") the direction of the calls`
         *
         * The results will be the history calls of the single extension or the history calls of all the extensions of the user.
@@ -294,8 +299,13 @@ function setCompAuthorization(ca) {
             "disposition": "ANSWERED",
             "dcontext": "ext-local",
             "recordingfile": "",
+            "cnum": "204",
+            "cnam": "andrea marchio",
+            "ccompany": "",
             "src": "204",
             "dst": "91223",
+            "dst_cnam": "",
+            "dst_ccompany": "",
             "clid": "\"andrea marchio\" <204>",
             "direction": "in" // can be ("in" | "out" | "") if it involves one of extension of the user
          },

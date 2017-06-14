@@ -122,13 +122,13 @@ function getAllUserHistorySmsInterval(data, cb) {
  * @method getHistoryCallInterval
  * @param {object} data
  *   @param {array}   data.endpoints    The endpoints involved in the research, e.g. the extesion
- *                                      identifiers. It is used to filter out the _src_ and _dst_ fields.
+ *                                      identifiers. It is used to filter out the _cnum_ and _dst_ fields.
  *                                      If it is omitted the function treats it as ['%'] string. The '%'
  *                                      matches any number of characters, even zero character
  *   @param {string}  data.from         The starting date of the interval in the YYYYMMDD format (e.g. 20130521)
  *   @param {string}  data.to           The ending date of the interval in the YYYYMMDD format (e.g. 20130528)
  *   @param {boolean} data.recording    True if the data about recording audio file must be returned
- *   @param {string}  [data.filter]     The filter to be used in the _src, clid_ and _dst_ fields. If it is
+ *   @param {string}  [data.filter]     The filter to be used in the _cnum, clid_ and _dst_ fields. If it is
  *                                      omitted the function treats it as '%' string
  *   @param {string}  [data.privacyStr] The sequence to be used to hide the numbers to respect the privacy
  *   @param {integer} [data.offset]     The results offset
@@ -167,14 +167,24 @@ function getHistoryCallInterval(data, cb) {
     // if the privacy string is present, than hide the numbers
     if (data.privacyStr) {
       // the numbers are hidden
+      attributes.push(['CONCAT( SUBSTRING(cnum, 1, LENGTH(cnum) - ' + data.privacyStr.length + '), "' + data.privacyStr + '")', 'cnum']);
       attributes.push(['CONCAT( SUBSTRING(src, 1, LENGTH(src) - ' + data.privacyStr.length + '), "' + data.privacyStr + '")', 'src']);
       attributes.push(['CONCAT( SUBSTRING(dst, 1, LENGTH(dst) - ' + data.privacyStr.length + '), "' + data.privacyStr + '")', 'dst']);
+      attributes.push(['CONCAT( "", "\\"' + data.privacyStr + '\\"")', 'cnam']);
       attributes.push(['CONCAT( "", "\\"' + data.privacyStr + '\\"")', 'clid']);
+      attributes.push(['CONCAT( "", "\\"' + data.privacyStr + '\\"")', 'ccompany']);
+      attributes.push(['CONCAT( "", "\\"' + data.privacyStr + '\\"")', 'dst_cnam']);
+      attributes.push(['CONCAT( "", "\\"' + data.privacyStr + '\\"")', 'dst_ccompany']);
 
     } else {
       // the numbers are clear
+      attributes.push('cnum');
+      attributes.push('cnam');
+      attributes.push('ccompany');
       attributes.push('src');
       attributes.push('dst');
+      attributes.push('dst_cnam');
+      attributes.push('dst_ccompany');
       attributes.push('clid');
     }
 
@@ -183,8 +193,8 @@ function getHistoryCallInterval(data, cb) {
       return '"' + el + '"';
     });
     attributes.push([compDbconnMain.Sequelize.literal(
-        'IF ( (src IN (' + extens + ') AND dst NOT IN (' + extens + ')), "out", ' +
-        '(IF ( (src NOT IN (' + extens + ') AND dst IN (' + extens + ')), "in", ""))' +
+        'IF ( (cnum IN (' + extens + ') AND dst NOT IN (' + extens + ')), "out", ' +
+        '(IF ( (cnum NOT IN (' + extens + ') AND dst IN (' + extens + ')), "in", ""))' +
         ')'),
       'direction'
     ]);
@@ -199,9 +209,9 @@ function getHistoryCallInterval(data, cb) {
     if (data.direction && data.direction === 'in') {
 
       whereClause = [
-        '(src NOT IN (?) AND dst IN (?)) AND ' +
+        '(cnum NOT IN (?) AND dst IN (?)) AND ' +
         '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
-        '(src LIKE ? OR clid LIKE ? OR dst LIKE ?)',
+        '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ?)',
         data.endpoints, data.endpoints,
         data.from, data.to,
         data.filter, data.filter, data.filter
@@ -210,9 +220,9 @@ function getHistoryCallInterval(data, cb) {
     } else if (data.direction && data.direction === 'out') {
 
       whereClause = [
-        '(src IN (?) AND dst NOT IN (?)) AND ' +
+        '(cnum IN (?) AND dst NOT IN (?)) AND ' +
         '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
-        '(src LIKE ? OR clid LIKE ? OR dst LIKE ?)',
+        '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ?)',
         data.endpoints, data.endpoints,
         data.from, data.to,
         data.filter, data.filter, data.filter
@@ -221,9 +231,9 @@ function getHistoryCallInterval(data, cb) {
     } else {
 
       whereClause = [
-        '(src IN (?) OR dst IN (?)) AND ' +
+        '(cnum IN (?) OR dst IN (?)) AND ' +
         '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
-        '(src LIKE ? OR clid LIKE ? OR dst LIKE ?)',
+        '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ?)',
         data.endpoints, data.endpoints,
         data.from, data.to,
         data.filter, data.filter, data.filter
@@ -274,7 +284,7 @@ function getHistoryCallInterval(data, cb) {
  *   @param {string}  data.from         The starting date of the interval in the YYYYMMDD format (e.g. 20130521)
  *   @param {string}  data.to           The ending date of the interval in the YYYYMMDD format (e.g. 20130528)
  *   @param {boolean} data.recording    True if the data about recording audio file must be returned
- *   @param {string}  [data.filter]     The filter to be used in the _src, clid_ and _dst_ fields. If it is
+ *   @param {string}  [data.filter]     The filter to be used in the _cnum, clid_ and _dst_ fields. If it is
  *                                      omitted the function treats it as '%' string
  *   @param {string}  [data.privacyStr] The sequence to be used to hide the numbers to respect the privacy
  *   @param {integer} [data.offset]     The results offset
@@ -327,12 +337,22 @@ function getHistorySwitchCallInterval(data, cb) {
     // if the privacy string is present, than hide the numbers
     if (data.privacyStr) {
       // the numbers are hidden
+      attributes.push(['CONCAT( SUBSTRING(cnum, 1, LENGTH(cnum) - ' + data.privacyStr.length + '), "' + data.privacyStr + '")', 'cnum']);
       attributes.push(['CONCAT( SUBSTRING(src, 1, LENGTH(src) - ' + data.privacyStr.length + '), "' + data.privacyStr + '")', 'src']);
       attributes.push(['CONCAT( SUBSTRING(dst, 1, LENGTH(dst) - ' + data.privacyStr.length + '), "' + data.privacyStr + '")', 'dst']);
       attributes.push(['CONCAT( "", "\\"' + data.privacyStr + '\\"")', 'clid']);
+      attributes.push(['CONCAT( "", "\\"' + data.privacyStr + '\\"")', 'cnam']);
+      attributes.push(['CONCAT( "", "\\"' + data.privacyStr + '\\"")', 'ccompany']);
+      attributes.push(['CONCAT( "", "\\"' + data.privacyStr + '\\"")', 'dst_cnam']);
+      attributes.push(['CONCAT( "", "\\"' + data.privacyStr + '\\"")', 'dst_ccompany']);
 
     } else {
       // the numbers are clear
+      attributes.push('cnum');
+      attributes.push('cnam');
+      attributes.push('ccompany');
+      attributes.push('dst_cnam');
+      attributes.push('dst_ccompany');
       attributes.push('src');
       attributes.push('dst');
       attributes.push('clid');
@@ -349,7 +369,7 @@ function getHistorySwitchCallInterval(data, cb) {
       whereClause = [
         'channel REGEXP ? AND ' +
         '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
-        '(src LIKE ? OR clid LIKE ? OR dst LIKE ?)',
+        '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ?)',
         data.trunks,
         data.from, data.to,
         data.filter, data.filter, data.filter
@@ -360,7 +380,7 @@ function getHistorySwitchCallInterval(data, cb) {
       whereClause = [
         'dstchannel REGEXP ? AND ' +
         '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
-        '(src LIKE ? OR clid LIKE ? OR dst LIKE ?)',
+        '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ?)',
         data.trunks,
         data.from, data.to,
         data.filter, data.filter, data.filter
@@ -371,7 +391,7 @@ function getHistorySwitchCallInterval(data, cb) {
       whereClause = [
         'channel NOT REGEXP ? AND dstchannel NOT REGEXP ? AND ' +
         '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
-        '(src LIKE ? OR clid LIKE ? OR dst LIKE ?)',
+        '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ?)',
         data.trunks, data.trunks,
         data.from, data.to,
         data.filter, data.filter, data.filter
@@ -381,7 +401,7 @@ function getHistorySwitchCallInterval(data, cb) {
 
       whereClause = [
         '(DATE(calldate)>=? AND DATE(calldate)<=?) AND ' +
-        '(src LIKE ? OR clid LIKE ? OR dst LIKE ?)',
+        '(cnum LIKE ? OR clid LIKE ? OR dst LIKE ?)',
         data.from, data.to,
         data.filter, data.filter, data.filter
       ];

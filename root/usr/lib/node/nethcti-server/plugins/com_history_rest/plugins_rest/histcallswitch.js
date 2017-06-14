@@ -169,8 +169,13 @@ function setCompAuthorization(ca) {
             "disposition": "ANSWERED",
             "dcontext": "ext-local",
             "recordingfile": "",
+            "cnum": "204",
+            "cnam": "andrea marchio",
+            "ccompany": "",
             "src": "204",
             "dst": "91223",
+            "dst_cnam": "",
+            "dst_ccompany": "",
             "clid": "\"andrea marchio\" <204>",
             "type": "out" // can be ("in" | "out" | "internal") if it is through a trunk or not
          },
@@ -186,7 +191,7 @@ function setCompAuthorization(ca) {
         *
         * * `from: the start date in YYYYMMDD format`
         * * `to: the end date in YYYYMMDD format`
-        * * `filter: filter results on "src", "clid" and "dst" fields of the database`
+        * * `filter: filter results on "cnum", "clid" and "dst" fields of the database`
         * * `[type]: ("in" | "out" | "internal") the type of the calls. If it is through a trunk`
         *
         * If an error occurs an HTTP 500 response is returned. It supports pagination with limit and offset parameters and sorting.
@@ -206,7 +211,12 @@ function setCompAuthorization(ca) {
             "dcontext": "ext-local",
             "recordingfile": "",
             "src": "204",
+            "cnum": "204",
+            "cnam": "andrea marchio",
+            "ccompany": "",
             "dst": "91223",
+            "dst_cnam": "",
+            "dst_ccompany": "",
             "clid": "\"andrea marchio\" <204>",
             "type": "out" // can be ("in" | "out" | "internal") if it is through a trunk or not
          },
@@ -306,7 +316,7 @@ function setCompAuthorization(ca) {
           }
 
           // use the history component
-          var data = compHistory.getHistorySwitchCallInterval(obj, function(err, results) {
+          compHistory.getHistorySwitchCallInterval(obj, function(err, results) {
             try {
               if (err) {
                 compUtil.net.sendHttp500(IDLOG, res, err.toString());
