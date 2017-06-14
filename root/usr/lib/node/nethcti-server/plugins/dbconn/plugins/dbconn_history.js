@@ -314,6 +314,9 @@ function getHistorySwitchCallInterval(data, cb) {
 
     // add "type" ("in" | "out" | "internal") based on trunks channel presence
     data.trunks = data.trunks.join('|');
+    if (data.trunks.length === 0) {
+      data.trunks = '%';
+    }
     attributes.push([compDbconnMain.Sequelize.literal(
         'IF (dstchannel REGEXP "' + data.trunks + '", "out", ' +
         '(IF (channel REGEXP "' + data.trunks + '", "in", "internal"))' +
