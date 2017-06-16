@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS `user_settings` (
   `id` int(11) NOT NULL auto_increment,
   `username` varchar(50) NOT NULL,
   `key_name` varchar(50) NOT NULL,
-  `value` varchar(512) default NULL,
+  `value` text default NULL,
   PRIMARY KEY  (`id`),
   UNIQUE KEY `username_key_name` (`username`,`key_name`),
   KEY `index_username` (`username`)
