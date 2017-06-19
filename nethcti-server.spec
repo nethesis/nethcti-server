@@ -1,5 +1,5 @@
 Name: nethcti-server
-Version: 2.7.8
+Version: 2.7.9
 Release: 1%{?dist}
 Summary: Nodejs Asterisk proxy for NethCTI 2
 
@@ -57,6 +57,9 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Mon Jun 19 2017 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> - 2.7.9-1
+- Add support for alcatel phones (models: *1G) -  Nethesis/dev#5115
+
 * Mon Jun 12 2017 Alessandro Polidori <alessandro.polidori@nethesis.it> - 2.7.8-1
 - spec: requires nodejs010-http-parser. Nethesis/dev#5153
 
