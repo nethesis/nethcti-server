@@ -271,6 +271,51 @@ function setCompUtil(comp) {
      *
      * Returns the information about all users endpoints.
      *
+     * Example JSON response:
+     *
+     *      {
+        "alessandro": {
+            "name": "Alessandro Polidori",
+            "presence": "online",
+            "username": "alessandro",
+            "endpoints": {
+                "email": [],
+                "extension": [
+                    {
+                        "id": "223",
+                        "type": "physical",
+                        "description": "Yealink SIP-T22P 7.73.0.50"
+                    },
+                    {
+                        "id": "91223",
+                        "type": "webrtc",
+                        "secret": "9793a942680ac41f29296d1cae8bdfb6",
+                        "username": "91223",
+                        "description": "Janus WebRTC Gateway SIP Plugin 0.0.6"
+                    }
+                ],
+                "cellphone": [
+                    {
+                        "id": "3405512345"
+                    }
+                ],
+                "voicemail": [
+                    {
+                        "id": "223"
+                    }
+                ],
+                "mainextension": [
+                    {
+                        "id": "223",
+                        "description": "Yealink SIP-T22P 7.73.0.50"
+                    }
+                ]
+            }
+        },
+        ...
+      }
+     *
+     *
      * <br>
      *
      * # POST requests
