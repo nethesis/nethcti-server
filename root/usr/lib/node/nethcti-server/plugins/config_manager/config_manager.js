@@ -377,6 +377,32 @@ function loadAllUsersSettings() {
 }
 
 /**
+ * Get settings of all the users in memory. See documentation about the
+ * _userSettings_ property.
+ *
+ * @method retrieveUsersSettings
+ * @param {function} cb The callback function
+ */
+function retrieveUsersSettings(cb) {
+  try {
+    compDbconn.getAllUsersSettings(function(err, results) {
+      try {
+        if (err) {
+          logger.error(IDLOG, 'getting settings of all users from db: ' + err);
+        } else {
+          cb(results);
+        }
+      } catch (error) {
+        logger.error(IDLOG, error.stack);
+        cb(error);
+      }
+    });
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * It reads the configuration file and set the chat options. The
  * file must use the JSON syntax.
  *
@@ -1684,6 +1710,7 @@ exports.setCompUser = setCompUser;
 exports.setCompDbconn = setCompDbconn;
 exports.getTotNumUsers = getTotNumUsers;
 exports.getUserSettings = getUserSettings;
+exports.retrieveUsersSettings = retrieveUsersSettings;
 exports.setCompAstProxy = setCompAstProxy;
 exports.configPhoneUrls = configPhoneUrls;
 exports.getServerHostname = getServerHostname;

@@ -555,7 +555,37 @@ function getUserSettings(username, cb) {
   }
 }
 
+/**
+ * Return all users settings. The settings are stored in mysql table _user\_settings_.
+ *
+ * @method getAllUsersSettings
+ * @param {function} cb The callback function
+ */
+function getAllUsersSettings(cb) {
+  try {
+    compDbconnMain.models[compDbconnMain.JSON_KEYS.USER_SETTINGS].findAll({
+      where: [],
+      attributes: ['id', 'username', 'key_name', 'value']
+    }).then(function(res) {
+      compDbconnMain.incNumExecQueries();
+      var obj = {};
+      for (var i in res) {
+        if (!obj.hasOwnProperty(res[i].username)) {
+          obj[res[i].username] = {};
+        }
+
+        obj[res[i].username][res[i].key_name] = res[i].value;
+      }
+      cb(null, obj);
+    });
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
 apiList.getUserSettings = getUserSettings;
+apiList.getAllUsersSettings = getAllUsersSettings;
 apiList.saveUserSettings = saveUserSettings;
 apiList.deleteUserSettings = deleteUserSettings;
 apiList.saveUserNotifySetting = saveUserNotifySetting;
