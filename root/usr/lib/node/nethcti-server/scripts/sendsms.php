@@ -23,6 +23,12 @@ if (!file_exists("/etc/nethcti/sms.json")) {
 }
 
 $smsdata = json_decode ( file_get_contents("/etc/nethcti/sms.json"), true);
+
+if (!array_key_exists('type', $smsdata)){
+    debug("no SMS type");
+    exit(0);
+}
+
 if ($smsdata['type'] != 'portech'){
     debug("SMS type: " . $smsdata['type']);
     exit(0);
