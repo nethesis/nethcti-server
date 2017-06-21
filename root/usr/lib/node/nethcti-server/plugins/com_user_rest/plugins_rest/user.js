@@ -267,6 +267,20 @@ function setCompUtil(comp) {
      *
      * ---
      *
+     * ### <a id="all_avatarsget">**`user/all_avatars`**</a>
+     *
+     * Returns all user settings.
+     *
+     * Example JSON response:
+     *
+     *
+     {
+      "giovanni": "data:image/jpeg;base64,/9j/QCF69485Hjj=//gADKv/iC/hJQ0Nf..",
+      "alessandro": "data:image/jpeg;base64,/9j/QCF69485Hjj=//5AFKE/iC/hJQ0Nf.."
+     }
+     *
+     * ---
+     *
      * ### <a id="userendpointsallget">**`user/endpoints/all`**</a>
      *
      * Returns the information about all users endpoints.
@@ -348,12 +362,14 @@ function setCompUtil(comp) {
          *   @param {string} me To get the user information
          *   @param {string} presence To get the user presence status
          *   @param {string} presencelist To get the list of possible presence status
+         *   @param {string} all_avatars To get the all user settings
          */
         'get': [
           'me',
           'presence',
           'presencelist',
-          'endpoints/all'
+          'endpoints/all',
+          'all_avatars'
         ],
 
         /**
@@ -587,8 +603,38 @@ function setCompUtil(comp) {
           logger.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
+      },
+
+      /**
+       * Get all users settings by the following REST API:
+       *
+       *     all_avatars
+       *
+       * @method all_avatars
+       * @param {object}   req  The client request
+       * @param {object}   res  The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      all_avatars: function(req, res, next) {
+        try {
+          var username = req.headers.authorization_user;
+
+          compConfigManager.retrieveUsersSettings(function(results) {
+            logger.info(IDLOG, 'send all settings to user "' + username + '"');
+            var obj = {};
+            for (var i in results) {
+              obj[i] = results[i].avatar;
+            }
+
+            res.send(200, obj);
+          });
+        } catch (err) {
+          logger.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
       }
     };
+
     exports.api = user.api;
     exports.me = user.me;
     exports.endpoints = user.endpoints;
@@ -599,6 +645,7 @@ function setCompUtil(comp) {
     exports.setCompUser = setCompUser;
     exports.presencelist = user.presencelist;
     exports.default_device = user.default_device;
+    exports.all_avatars = user.all_avatars;
     exports.setCompAuthorization = setCompAuthorization;
     exports.setCompConfigManager = setCompConfigManager;
   } catch (err) {
