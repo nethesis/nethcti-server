@@ -2845,7 +2845,9 @@ function updateExtenConversations(err, resp, exten) {
     // check if the extension exists, otherwise there is some error
     if (extensions[exten]) {
 
-      condRemoveAllExtenConversations(exten);
+      // reset all conversations of the extension
+      extensions[exten].removeAllConversations();
+      logger.info(IDLOG, 'reset all conversations of the extension ' + exten);
 
       // cycle in all received channels
       var ext, chid;
@@ -3009,120 +3011,10 @@ function addConversationToExten(exten, resp, chid) {
       extensions[exten].addConversation(conv);
       logger.info(IDLOG, 'the conversation ' + convid + ' has been added to exten ' + exten);
 
-      checkAddSecondaryToMainExtenConv(exten, conv);
-
     } else {
       logger.warn(IDLOG, 'try to add new conversation to a non existent extension ' + exten +
         ' or no bridgedChannel present');
     }
-  } catch (err) {
-    logger.error(IDLOG, err.stack);
-  }
-}
-
-/**
- * This is a particular scenario to support main extension on the client:
- * if the speicified extension is not a main extension, it adds the
- * conversation also to the main extension associated and emit the event.
- *
- * @method checkAddSecondaryToMainExtenConv
- * @param {string} exten The extension identifier
- * @param {object} conv The conversation to be aligned
- * @private
- */
-function checkAddSecondaryToMainExtenConv(exten, conv) {
-  try {
-    // check parameters
-    if (typeof exten !== 'string' || typeof conv !== 'object') {
-      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
-    }
-    if (!isMainExtension(exten)) {
-
-      var mainExt = getMainExtension(exten);
-      if (extensions[mainExt] && !extensions[mainExt].hasConversation(conv.getId())) {
-
-        extensions[mainExt].addConversation(conv);
-        // emit the event
-        logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + mainExt);
-        astProxy.emit(EVT_EXTEN_CHANGED, extensions[mainExt]);
-      }
-    }
-  } catch (err) {
-    logger.error(IDLOG, err.stack);
-  }
-}
-
-/**
- * Conditional remove all conversation of an extension. If the
- * extension is a secondary extension, it will remove all its
- * conversations. If it is a main extension, it will remove all
- * conversations only if all the secondary extensions associated
- * do not have any conversations.
- *
- * @method condRemoveAllExtenConversations
- * @param {string} exten The extension identifier
- * @private
- */
-function condRemoveAllExtenConversations(exten) {
-  try {
-    // check parameters
-    if (typeof exten !== 'string') {
-      throw new Error('wrong parameter: ' + JSON.stringify(arguments));
-    }
-    if (!isMainExtension(exten)) {
-      extensions[exten].removeAllConversations();
-      logger.info(IDLOG, 'reset all conversations of the extension ' + exten);
-      // reset all conversations from the associated main extension
-      var mainExt = getMainExtension(exten);
-      if (extensions[mainExt]) {
-
-        extensions[mainExt].removeAllConversations();
-        // emit the event
-        logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + mainExt);
-        astProxy.emit(EVT_EXTEN_CHANGED, extensions[mainExt]);
-      }
-    } else {
-      var i;
-      var rem = true;
-      var secondExtens = getSecondaryExtensions(exten);
-      // check if at least one secondy extension have a conversation
-      for (i = 0; i < secondExtens.length; i++) {
-
-        if (extensions[secondExtens[i]] && extensions[secondExtens[i]].hasAtLeastOneConversation()) {
-          rem = false;
-          break;
-        }
-      }
-      if (rem) {
-        // all secondary extensions do not have any conversations
-        extensions[exten].removeAllConversations();
-        logger.info(IDLOG, 'reset all conversations of the extension ' + exten);
-      }
-    }
-  } catch (err) {
-    logger.error(IDLOG, err.stack);
-  }
-}
-
-/**
- * Returns the list of secondary extensions associated to the main one.
- *
- * @method getSecondaryExtensions
- * @param {string} exten The main extension identifier
- * @return {array} The list of the seconday extensions.
- * @private
- */
-function getSecondaryExtensions(exten) {
-  try {
-    // check parameters
-    if (typeof exten !== 'string') {
-      throw new Error('wrong parameter: ' + JSON.stringify(arguments));
-    }
-    if (staticDataExtens.mainExtens[exten]) {
-      return staticDataExtens.mainExtens[exten];
-    }
-    return [];
-
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
@@ -3150,30 +3042,6 @@ function isMainExtension(exten) {
   } catch (err) {
     logger.error(IDLOG, err.stack);
     return false;
-  }
-}
-
-/**
- * Return the main extension associated with the specified one.
- *
- * @method getMainExtension
- * @param {string} exten The extension identifier
- * @return {string} The associated main extension.
- * @private
- */
-function getMainExtension(exten) {
-  try {
-    // check parameters
-    if (typeof exten !== 'string') {
-      throw new Error('wrong parameter: ' + JSON.stringify(arguments));
-    }
-    if (staticDataExtens.secondExtens[exten] !== undefined) {
-      return staticDataExtens.secondExtens[exten]; // the value is the relative main extension
-    } else if (staticDataExtens.mainExtens[exten] !== undefined) {
-      return exten;
-    }
-  } catch (err) {
-    logger.error(IDLOG, err.stack);
   }
 }
 

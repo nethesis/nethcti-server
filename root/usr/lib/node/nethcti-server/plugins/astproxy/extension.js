@@ -366,16 +366,6 @@ exports.Extension = function(ext, chType) {
   }
 
   /**
-   * check if the extension has at least one conversation.
-   *
-   * @method hasAtLeastOneConversation
-   * @return {boolean} True if the extension has at least one conversation.
-   */
-  function hasAtLeastOneConversation() {
-    return Object.keys(conversations).length > 0;
-  }
-
-  /**
    * Return the specified conversation.
    *
    * @method getConversation
@@ -384,20 +374,6 @@ exports.Extension = function(ext, chType) {
    */
   function getConversation(convid) {
     return conversations[convid];
-  }
-
-  /**
-   * Check if the conversation is present.
-   *
-   * @method hasConversation
-   * @param {string} convid The conversation identifier
-   * @return {boolean} True if the conversation is present.
-   */
-  function hasConversation(convid) {
-    if (conversations[convid]) {
-      return true;
-    }
-    return false;
   }
 
   /**
@@ -578,12 +554,10 @@ exports.Extension = function(ext, chType) {
     addConversation: addConversation,
     setSipUserAgent: setSipUserAgent,
     getConversation: getConversation,
-    hasConversation: hasConversation,
     conversationCount: conversationCount,
     removeConversation: removeConversation,
     getAllConversations: getAllConversations,
-    removeAllConversations: removeAllConversations,
-    hasAtLeastOneConversation: hasAtLeastOneConversation
+    removeAllConversations: removeAllConversations
   };
 };
 
