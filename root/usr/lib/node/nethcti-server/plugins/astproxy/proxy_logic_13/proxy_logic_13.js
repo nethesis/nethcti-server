@@ -2175,26 +2175,6 @@ function getListChannels() {
 }
 
 /**
- * Get extension status.
- *
- * @method getExtenStatus
- * @param {string} exten The extension identifier
- * @return {function} The function to be called by _initializePjsipExten_.
- * @private
- */
-function getExtenStatus(exten) {
-  return function(callback) {
-    astProxy.doCmd({
-      command: 'extenStatus',
-      exten: exten
-    }, function(err, resp) {
-      extenStatus(err, resp);
-      callback(null);
-    });
-  };
-}
-
-/**
  * Initialize all pjsip extensions as _Extension_ object into the
  * _extensions_ property.
  *
@@ -2218,11 +2198,9 @@ function initializePjsipExten(err, results) {
       if (staticDataTrunks[results[e].ext]) {
         continue;
       }
-
       exten = new Extension(results[e].ext, 'pjsip');
       extensions[exten.getExten()] = exten;
 
-      arr.push(getExtenStatus(exten.getExten()));
       arr.push(getDndExten(exten.getExten()));
       arr.push(getCfExten(exten.getExten()));
       arr.push(getCfVmExten(exten.getExten()));
@@ -2597,6 +2575,7 @@ function extPjsipDetails(err, resp) {
     extensions[resp.exten].setName(staticDataExtens.names[resp.exten]);
     extensions[resp.exten].setContext(resp.context);
     extensions[resp.exten].setSipUserAgent(resp.sipuseragent);
+    extensions[resp.exten].setStatus(resp.status);
     logger.info(IDLOG, 'set pjsip details for ext "' + resp.exten + '"');
 
   } catch (error) {
@@ -3394,11 +3373,6 @@ function evtExtenStatusChanged(exten, status) {
     }
 
     if (extensions[exten]) { // the exten is an extension
-
-      // request sip details for current extension
-      extensions[exten].setStatus(status);
-      logger.info(IDLOG, 'set status ' + status + ' for extension ' + exten);
-
       // update extension information. This is because when the extension becomes
       // offline/online ip, port and other information needs to be updated
       if (extensions[exten].getChanType() === 'pjsip') {
@@ -3409,6 +3383,10 @@ function evtExtenStatusChanged(exten, status) {
         }, updateExtPjsipDetails);
 
       } else if (extensions[exten].getChanType() === 'iax') {
+
+        // request sip details for current extension
+        extensions[exten].setStatus(status);
+        logger.info(IDLOG, 'set status ' + status + ' for extension ' + exten);
 
         astProxy.doCmd({
           command: 'iaxDetails',

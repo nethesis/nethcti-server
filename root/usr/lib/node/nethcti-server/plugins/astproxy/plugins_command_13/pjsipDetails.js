@@ -2,6 +2,7 @@
  * @submodule plugins_command_13
  */
 var action = require('../action');
+var AST_EXTEN_PJSIP_STATUS_2_STR_ADAPTER = require('../proxy_logic_13/exten_pjsip_status_adapter_13.js').AST_EXTEN_PJSIP_STATUS_2_STR_ADAPTER;
 
 /**
  * The module identifier used by the logger.
@@ -133,6 +134,7 @@ var IDLOG = '[pjsipDetails]';
 
           } else if (data.event === 'EndpointDetail') {
             list[data.actionid].context = data.context;
+            list[data.actionid].status = AST_EXTEN_PJSIP_STATUS_2_STR_ADAPTER[data.devicestate];
 
           } else if (map[data.actionid] && data.event === 'EndpointDetailComplete') {
             map[data.actionid](null, list[data.actionid]); // callback execution
