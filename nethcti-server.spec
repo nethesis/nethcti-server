@@ -1,5 +1,5 @@
 Name: nethcti-server
-Version: 2.7.9
+Version: 2.7.10
 Release: 1%{?dist}
 Summary: Nodejs Asterisk proxy for NethCTI 2
 
@@ -57,6 +57,9 @@ rm -rf %{buildroot}
 %dir %{_nseventsdir}/%{name}-update
 
 %changelog
+* Thu Jun 22 2017 Alessandro Polidori <alessandro.polidori@nethesis.it> - 2.7.10-1
+- fix sendsms.php to resolve the sending of error email notifications on empty config. Nethesis/dev#5160
+
 * Mon Jun 19 2017 Giacomo Sanchietti <giacomo.sanchietti@nethesis.it> - 2.7.9-1
 - Add support for alcatel phones (models: *1G) -  Nethesis/dev#5115
 
