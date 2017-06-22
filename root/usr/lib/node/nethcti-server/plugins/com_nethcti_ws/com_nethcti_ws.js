@@ -203,6 +203,24 @@ var EVT_ENDPOINT_PRESENCE_UPDATE = 'endpointPresenceUpdate';
 var EVT_USER_PRESENCE_UPDATE = 'userPresenceUpdate';
 
 /**
+ * Emitted to a websocket client connection on a user profile avatar update.
+ *
+ *     { "username": "ale", "avatar": "1234abcdef..." }
+ *
+ * @event userProfileAvatarUpdate
+ * @param {object} data The data about the user profile avatar update
+ *
+ */
+/**
+ * The name of the user profile avatar update event.
+ *
+ * @property EVT_USER_PROFILE_AVATAR_UPDATE
+ * @type string
+ * @default "userProfileAvatarUpdate"
+ */
+var EVT_USER_PROFILE_AVATAR_UPDATE = 'userProfileAvatarUpdate';
+
+/**
  * Fired when a websocket client connection has been closed.
  *
  * @event wsClientDisonnection
@@ -624,6 +642,7 @@ function setUserListeners() {
       throw new Error('wrong user object');
     }
     compUser.on(compUser.EVT_USER_PRESENCE_CHANGED, evtUserPresenceChanged);
+    compUser.on(compUser.EVT_USER_PROFILE_AVATAR_CHANGED, evtUserProfileAvatarChanged);
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
@@ -765,6 +784,37 @@ function evtUserPresenceChanged(evt) {
     var sockid;
     for (sockid in wsid) {
       wsServer.sockets.sockets[sockid].emit(EVT_USER_PRESENCE_UPDATE, evt);
+    }
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Handler for the _evtUserProfileAvatarChanged_ event emitted by _user_
+ * component. The user avatar picture has been changed, so notifies all clients.
+ *
+ * @method evtUserProfileAvatarChanged
+ * @param {object} evt
+ *  @param {string} evt.username The username
+ *  @param {string} evt.avatar The avatar picture in base64 format
+ * @private
+ */
+function evtUserProfileAvatarChanged(evt) {
+  try {
+    if (typeof evt !== 'object' ||
+      typeof evt.username !== 'string' ||
+      typeof evt.avatar !== 'string') {
+
+      throw new Error('wrong parameter: ' + JSON.stringify(arguments));
+    }
+    logger.info(IDLOG, 'received event "' + compUser.EVT_USER_PROFILE_AVATAR_CHANGED + '" for user ' + evt.username);
+    logger.info(IDLOG, 'emit event "' + EVT_USER_PROFILE_AVATAR_UPDATE + '" for user ' + evt.username + ' to websockets');
+
+    // emits the event to all users
+    var sockid;
+    for (sockid in wsid) {
+      wsServer.sockets.sockets[sockid].emit(EVT_USER_PROFILE_AVATAR_UPDATE, evt);
     }
   } catch (err) {
     logger.error(IDLOG, err.stack);

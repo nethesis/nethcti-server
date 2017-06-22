@@ -45,6 +45,20 @@ var IDLOG = '[controller_user]';
 var EVT_USERS_READY = 'usersReady';
 
 /**
+ * Fired when the client user has changed his own avatar picture.
+ *
+ * @event userProfileAvatarChanged
+ */
+/**
+ * The name of the user profile avatar update event.
+ *
+ * @property EVT_USER_PROFILE_AVATAR_CHANGED
+ * @type string
+ * @default "userProfileAvatarUpdate"
+ */
+var EVT_USER_PROFILE_AVATAR_CHANGED = 'userProfileAvatarChanged';
+
+/**
  * Fired when the user presence has changed.
  *
  * @event userPresenceChanged
@@ -1664,8 +1678,18 @@ function saveSettings(username, data, cb) {
       cb(msg);
       return;
     }
-    compDbconn.saveUserSettings(username, data, cb);
-
+    compDbconn.saveUserSettings(username, data, function(err) {
+      cb(err);
+      // if the key saved is "avatar" it launches an event
+      if (!err && (Object.keys(data)).indexOf('avatar') !== -1) {
+        // emit the event for tell to other modules that the user profile avatar has changed
+        logger.info(IDLOG, 'emit event "' + EVT_USER_PROFILE_AVATAR_CHANGED + '"');
+        emitter.emit(EVT_USER_PROFILE_AVATAR_CHANGED, {
+          username: username,
+          avatar: data.avatar
+        });
+      }
+    });
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
@@ -1733,3 +1757,4 @@ exports.EVT_USER_PRESENCE_CHANGED = EVT_USER_PRESENCE_CHANGED;
 exports.getAllUsersEndpointsExtension = getAllUsersEndpointsExtension;
 exports.getUserUsingEndpointExtension = getUserUsingEndpointExtension;
 exports.getUsersUsingEndpointVoicemail = getUsersUsingEndpointVoicemail;
+exports.EVT_USER_PROFILE_AVATAR_CHANGED = EVT_USER_PROFILE_AVATAR_CHANGED;
