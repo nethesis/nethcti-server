@@ -356,8 +356,7 @@ function setCompUtil(comp) {
      *
      * Save the user settings. The request must contain the following parameters:
      *
-     * * `data: a valid JSON object. Keys must to be strings of maximum length of 50 characters.
-                Maximum allowed value length is 512 characters.`
+     * * `data: a valid JSON object. Keys must to be strings of maximum length of 50 characters.`
      *
      * Example JSON request parameters:
      *
@@ -746,7 +745,6 @@ function settingsPost(req, res, next) {
       compUtil.net.sendHttp400(IDLOG, res);
       return;
     }
-
     compUser.saveSettings(username, req.params, function(err) {
       try {
         if (err) {
