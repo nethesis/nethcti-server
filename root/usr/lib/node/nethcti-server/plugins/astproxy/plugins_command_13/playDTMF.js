@@ -41,7 +41,7 @@ var IDLOG = '[playDTMF]';
     /**
      * Command plugin to send a sequence of DMTF digits.
      *
-     * Use it with _ast\_proxy_ module as follow:
+     * Use it with _astproxy_ module as follow:
      *
      *     ast_proxy.doCmd({ command: 'playDTMF', channel: 'SIP/301-0000000a', digit: '0' }, function (err) {
      *         // some code
@@ -85,7 +85,7 @@ var IDLOG = '[playDTMF]';
       },
 
       /**
-       * It is called from _ast_proxy_ component for each data received
+       * It is called from _astproxy_ component for each data received
        * from asterisk and relative to this command.
        *
        * @method data

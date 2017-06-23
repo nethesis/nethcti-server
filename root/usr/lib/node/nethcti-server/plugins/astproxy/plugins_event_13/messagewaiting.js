@@ -46,7 +46,7 @@ var astProxy;
         */
         var messagewaiting = {
             /**
-            * It's called from _ast\_proxy_ component for each MessageWaiting event
+            * It's called from _astproxy_ component for each MessageWaiting event
             * received from the asterisk.
             *
             * @method data

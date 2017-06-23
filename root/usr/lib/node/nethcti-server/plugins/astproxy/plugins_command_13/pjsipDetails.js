@@ -51,7 +51,7 @@ var IDLOG = '[pjsipDetails]';
     /**
      * Command plugin to get the details of a SIP extension.
      *
-     * Use it with _ast\_proxy_ module as follow:
+     * Use it with _astproxy_ module as follow:
      *
      *     ast_proxy.doCmd({ command: 'pjsipDetails', exten: '214' }, function (res) {
      *         // some code
@@ -94,7 +94,7 @@ var IDLOG = '[pjsipDetails]';
       },
 
       /**
-       * It's called from _ast_proxy_ component for each data received
+       * It's called from _astproxy_ component for each data received
        * from asterisk and relative to this command
        *
        * @method data

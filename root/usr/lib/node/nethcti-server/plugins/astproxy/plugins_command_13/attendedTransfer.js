@@ -41,7 +41,7 @@ var IDLOG = '[attendedTransfer]';
     /**
      * Command plugin to make an attended transfer call.
      *
-     * Use it with _ast\_proxy_ module as follow:
+     * Use it with _astproxy_ module as follow:
      *
      *     ast_proxy.doCmd({ command: 'attendedTransfer', chToTransfer: 'SIP/214-0000012', to: '220' }, function (res) {
      *         // some code
@@ -88,7 +88,7 @@ var IDLOG = '[attendedTransfer]';
       },
 
       /**
-       * It's called from _ast_proxy_ component for each data received
+       * It's called from _astproxy_ component for each data received
        * from asterisk and relative to this command.
        *
        * @method data

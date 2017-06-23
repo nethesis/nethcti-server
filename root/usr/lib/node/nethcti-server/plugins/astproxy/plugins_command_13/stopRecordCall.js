@@ -53,7 +53,7 @@ var FILE_EXT = 'wav';
     /**
      * Command plugin to stop the recording of a call.
      *
-     * Use it with _ast\_proxy_ module as follow:
+     * Use it with _astproxy_ module as follow:
      *
      *     ast_proxy.doCmd({ command: 'stopRecordCall', channel: 'SIP/214-00000' }, function (res) {
      *         // some code
@@ -99,7 +99,7 @@ var FILE_EXT = 'wav';
       },
 
       /**
-       * It's called from _ast_proxy_ component for each data received
+       * It's called from _astproxy_ component for each data received
        * from asterisk and relative to this command.
        *
        * @method data

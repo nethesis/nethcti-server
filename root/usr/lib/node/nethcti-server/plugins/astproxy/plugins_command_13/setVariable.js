@@ -42,7 +42,7 @@ var IDLOG = '[setVariable]';
     /**
      * Command plugin to set an asterisk variable.
      *
-     * Use it with _ast\_proxy_ module as follow:
+     * Use it with _astproxy_ module as follow:
      *
      *     ast_proxy.doCmd({ command: 'setVariable', name: 'MASTER_CHANNEL(CDR(recordingfile))', value: 'audio_file.wav' }, function (res) {
      *         // some code
@@ -89,7 +89,7 @@ var IDLOG = '[setVariable]';
       },
 
       /**
-       * It's called from _ast_proxy_ component for each data received
+       * It's called from _astproxy_ component for each data received
        * from asterisk and relative to this command.
        *
        * @method data

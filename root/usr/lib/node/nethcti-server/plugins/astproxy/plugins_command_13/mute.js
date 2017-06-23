@@ -41,7 +41,7 @@ var IDLOG = '[mute]';
     /**
      * Command plugin to mute a call in one direction only. The specified channel is able to listen.
      *
-     * Use it with _ast\_proxy_ module as follow:
+     * Use it with _astproxy_ module as follow:
      *
      *     ast_proxy.doCmd({ command: 'mute', channel: 'SIP/214-00000' }, function (res) {
      *         // some code
@@ -86,7 +86,7 @@ var IDLOG = '[mute]';
       },
 
       /**
-       * It is called from _ast_proxy_ component for each data received
+       * It is called from _astproxy_ component for each data received
        * from asterisk and relative to this command.
        *
        * @method data

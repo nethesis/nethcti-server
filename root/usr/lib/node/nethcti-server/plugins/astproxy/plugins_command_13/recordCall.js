@@ -43,7 +43,7 @@ var IDLOG = '[recordCall]';
      * it will not be overwritten but appended. The default directory of the
      * recordings is /var/spool/asterisk/monitor.
      *
-     * Use it with _ast\_proxy_ module as follow:
+     * Use it with _astproxy_ module as follow:
      *
      *     ast_proxy.doCmd({ command: 'recordCall', channel: 'SIP/214-00000', filepath: '2013/04/06/exten-214-209-20130406-120406-1365062949.146.wav' }, function (res) {
      *         // some code
@@ -92,7 +92,7 @@ var IDLOG = '[recordCall]';
       },
 
       /**
-       * It's called from _ast_proxy_ component for each data received
+       * It's called from _astproxy_ component for each data received
        * from asterisk and relative to this command.
        *
        * @method data

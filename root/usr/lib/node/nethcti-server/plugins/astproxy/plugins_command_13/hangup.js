@@ -40,7 +40,7 @@ var IDLOG = '[hangup]';
         /**
         * Command plugin to hangup a call.
         *
-        * Use it with _ast\_proxy_ module as follow:
+        * Use it with _astproxy_ module as follow:
         *
         *     ast_proxy.doCmd({ command: 'hangup', channel: 'SIP/214-00000' }, function (res) {
         *         // some code
@@ -54,7 +54,7 @@ var IDLOG = '[hangup]';
 
             /**
             * Execute asterisk action to hangup a call.
-            * 
+            *
             * @method execute
             * @param {object} am Asterisk manager to send the action
             * @param {object} args The object contains optional parameters
@@ -70,7 +70,7 @@ var IDLOG = '[hangup]';
                         Action: 'Hangup',
                         Channel: args.channel
                     };
-                    
+
                     // set the action identifier
                     act.ActionID = action.getActionId('hangup');
 
@@ -86,7 +86,7 @@ var IDLOG = '[hangup]';
             },
 
             /**
-            * It's called from _ast_proxy_ component for each data received
+            * It's called from _astproxy_ component for each data received
             * from asterisk and relative to this command.
             *
             * @method data

@@ -95,7 +95,7 @@ var FAIL_REASON = {
     /**
      * Command plugin to originate a new call.
      *
-     * Use it with _ast\_proxy_ module as follow:
+     * Use it with _astproxy_ module as follow:
      *
      *     ast_proxy.doCmd({ command: 'call', context: 'from-internal', from: '214', to: '12345' }, function (res) {
      *         // some code
@@ -146,7 +146,7 @@ var FAIL_REASON = {
       },
 
       /**
-       * It's called from _ast_proxy_ component for each data received
+       * It's called from _astproxy_ component for each data received
        * from asterisk and relative to this command.
        *
        * @method data
