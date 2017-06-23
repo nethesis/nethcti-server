@@ -1,9 +1,13 @@
 {
-  my $restPort = ${'nethcti-server'}{RestPort} || "8179";
-  my $wsPort = ${'nethcti-server'}{WsPort} || "8181";
+  my $ports_str = ${'nethcti-server'}{TCPPorts};
+  our @ports = split(',', $ports_str);
   return "";
 }
 \{
+  "tcp": \{
+    "port": "{$ports[0] || 8182}",
+    "base_templates": "http://{$SystemName}.{$DomainName}/webrest/static/templates/notification_popup"
+  \},
   "websocket": \{
     "http_port": "{${'nethcti-server'}{WsPort} || 8181}"
   \},
