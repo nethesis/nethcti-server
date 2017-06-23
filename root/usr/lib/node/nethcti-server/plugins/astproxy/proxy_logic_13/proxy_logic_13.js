@@ -1289,6 +1289,8 @@ function updateParkedCallerForAllParkings(err, resp) {
         parkedChannels[p].callerNum = resp[ch].callerNum;
         // add the caller name information for the same reason
         parkedChannels[p].callerName = resp[ch].callerName;
+        parkedChannels[p].parkeeNum = resp[ch].parkeeNum;
+        parkedChannels[p].parkeeName = resp[ch].parkeeName;
         // create and store a new parked call object
         pCall = new ParkedCaller(parkedChannels[p]);
         parkings[p].addParkedCaller(pCall);

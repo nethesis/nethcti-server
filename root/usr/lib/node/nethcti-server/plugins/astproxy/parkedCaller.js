@@ -19,6 +19,8 @@ exports.ParkedCaller = function(data) {
     typeof data.parking !== 'string' ||
     typeof data.channel !== 'string' ||
     typeof data.timeout !== 'number' ||
+    typeof data.parkeeNum !== 'string' ||
+    typeof data.parkeeName !== 'string' ||
     typeof data.callerNum !== 'string' ||
     typeof data.callerName !== 'string') {
 
@@ -52,6 +54,24 @@ exports.ParkedCaller = function(data) {
    * @private
    */
   var channel = data.channel;
+
+  /**
+   * The number of the parker.
+   *
+   * @property parkeeNum
+   * @type {string}
+   * @private
+   */
+  var parkeeNum = data.parkeeNum;
+
+  /**
+   * The name of the parker.
+   *
+   * @property parkeeName
+   * @type {string}
+   * @private
+   */
+  var parkeeName = data.parkeeName;
 
   /**
    * The number of the parking.
@@ -160,11 +180,13 @@ exports.ParkedCaller = function(data) {
    * Returns the JSON representation of the object.
    *
    *     {
-   *         num:     "221",              // the number of the parked channel
-   *         name:    "Alessandro",       // the name of the parked channel
-   *         parking: "71",               // the parking identifier
-   *         channel: "SIP/214-00000573", // the asterisk channel
-   *         timeout: "40"                // seconds to exit from parking
+   *         num:        "221",              // the number of the parked channel
+   *         name:       "Alessandro",       // the name of the parked channel
+   *         parkeeNum:  "205",              // the number of the parker
+   *         parkeeName: "Andrea",           // the name of the parker
+   *         parking:    "71",               // the parking identifier
+   *         channel:    "SIP/214-00000573", // the asterisk channel
+   *         timeout:    "40"                // seconds to exit from parking
    *     }
    *
    * @method toJSON
@@ -180,7 +202,9 @@ exports.ParkedCaller = function(data) {
       name: privacyStr ? privacyStr : name,
       parking: parking,
       channel: channel,
-      timeout: timeout
+      timeout: timeout,
+      parkeeNum: privacyStr ? (parkeeNum.slice(0, -privacyStr.length) + privacyStr) : parkeeNum,
+      parkeeName: privacyStr ? privacyStr : parkeeName
     };
   }
 

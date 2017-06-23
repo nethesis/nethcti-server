@@ -106,11 +106,15 @@ var IDLOG = '[listParkedCalls]';
             data.parkingspace &&
             data.parkeechannel &&
             data.parkingtimeout &&
-            data.parkingduration) {
+            data.parkingduration &&
+            data.parkeeconnectedlinenum &&
+            data.parkeeconnectedlinename) {
 
             list[data.parkingspace] = {};
             list[data.parkingspace].channel = data.parkeechannel;
             list[data.parkingspace].parking = data.parkingspace;
+            list[data.parkingspace].parkeeNum = data.parkeeconnectedlinenum;
+            list[data.parkingspace].parkeeName = data.parkeeconnectedlinename;
             list[data.parkingspace].timeout = parseInt(data.parkingtimeout);
             list[data.parkingspace].duration = parseInt(data.parkingduration);
 
