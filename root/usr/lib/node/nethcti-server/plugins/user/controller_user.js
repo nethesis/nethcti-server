@@ -593,6 +593,27 @@ function enableCfCellphoneExten(ext, username) {
 }
 
 /**
+ * Enable CF to cellphone for the extension.
+ *
+ * @method enableCfCellphoneExten
+ * @param {string} ext The extension identifier
+ * @param {string} username The username
+ * @param {string} destination The destination number of call forward
+ * @return {function} The function to be called by _setPresence_.
+ */
+function enableCfNumberExten(ext, destination, username) {
+  return function(callback) {
+    if (destination) {
+      compAstProxy.setUnconditionalCf(ext, true, destination, callback);
+    } else {
+      var str = 'setting "' + userPresence.STATUS.callforward + '" presence to user "' + username + '": no destination passed "' + destination + '"';
+      logger.warn(IDLOG, str);
+      callback(str);
+    }
+  };
+}
+
+/**
  * Returns all extension of a user.
  *
  * @method getAllUserExtensions
@@ -623,24 +644,31 @@ function getAllUserExtensions(username) {
  * Set the user presence status.
  *
  * @method setPresence
- * @param {string} username The username of the user to be set
- * @param {string} status The presence status
+ * @param {object} param
+ *  @param {string} param.username The username of the user to be set
+ *  @param {string} param.status The presence status
+ *  @param {string} [param.destination] The destination of "callforward" status
  * @param {function} cb The callback function
  */
-function setPresence(username, status, cb) {
+function setPresence(param, cb) {
   try {
-    if (typeof username !== 'string' || typeof status !== 'string' || typeof cb !== 'function') {
+    if (typeof param !== 'object' ||
+      typeof param.username !== 'string' ||
+      typeof param.status !== 'string' ||
+      (param.status === userPresence.STATUS.callforward && !param.destination) ||
+      typeof cb !== 'function') {
+
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    if (users[username] && userPresence.isValidUserPresence(status)) {
+    if (users[param.username] && userPresence.isValidUserPresence(param.status)) {
 
       var i, e;
       var arr = [];
-      var mainExtId = getEndpointMainExtension(username).getId();
-      var allext = getAllUserExtensions(username);
+      var mainExtId = getEndpointMainExtension(param.username).getId();
+      var allext = getAllUserExtensions(param.username);
 
       // set presence to online
-      if (status === userPresence.STATUS.online) {
+      if (param.status === userPresence.STATUS.online) {
 
         // disable "dnd", "call forward" and "call forward to voicemail" for all extensions of the user
         for (i = 0; i < allext.length; i++) {
@@ -658,16 +686,16 @@ function setPresence(username, status, cb) {
           function(err) {
             cb(err);
             if (err) {
-              logger.error(IDLOG, 'setting presence of user "' + username + '" to "' + userPresence.STATUS.online + '"');
+              logger.error(IDLOG, 'setting presence of user "' + param.username + '" to "' + userPresence.STATUS.online + '"');
               logger.error(IDLOG, err);
             } else {
-              logger.info(IDLOG, 'set presence "' + userPresence.STATUS.online + '" to user "' + username + '"');
+              logger.info(IDLOG, 'set presence "' + userPresence.STATUS.online + '" to user "' + param.username + '"');
             }
           }
         );
       }
       // set presence to dnd
-      else if (status === userPresence.STATUS.dnd) {
+      else if (param.status === userPresence.STATUS.dnd) {
 
         for (i = 0; i < allext.length; i++) {
           arr.push(enableDndExten(allext[i]));
@@ -684,22 +712,22 @@ function setPresence(username, status, cb) {
           function(err) {
             cb(err);
             if (err) {
-              logger.error(IDLOG, 'setting presence of user "' + username + '" to "' + userPresence.STATUS.dnd + '"');
+              logger.error(IDLOG, 'setting presence of user "' + param.username + '" to "' + userPresence.STATUS.dnd + '"');
               logger.error(IDLOG, err);
             } else {
-              logger.info(IDLOG, 'set presence "' + userPresence.STATUS.dnd + '" to user "' + username + '"');
+              logger.info(IDLOG, 'set presence "' + userPresence.STATUS.dnd + '" to user "' + param.username + '"');
             }
           }
         );
       }
       // set presence to cellphone
-      else if (status === userPresence.STATUS.cellphone) {
+      else if (param.status === userPresence.STATUS.cellphone) {
 
         for (i = 0; i < allext.length; i++) {
           arr.push(disableDndExten(allext[i]));
-          arr.push(enableCfCellphoneExten(allext[i], username));
+          arr.push(enableCfCellphoneExten(allext[i], param.username));
         }
-        arr.push( //set presence in Asterisk
+        arr.push( // set presence in Asterisk
           function(callback) {
             compAstProxy.setAsteriskPresence(mainExtId, 'AWAY,CELLPHONE', callback);
           }
@@ -709,20 +737,20 @@ function setPresence(username, status, cb) {
           function(err) {
             cb(err);
             if (err) {
-              logger.error(IDLOG, 'setting presence of user "' + username + '" to "' + userPresence.STATUS.cellphone + '"');
+              logger.error(IDLOG, 'setting presence of user "' + param.username + '" to "' + userPresence.STATUS.cellphone + '"');
               logger.error(IDLOG, err);
             } else {
-              logger.info(IDLOG, 'set presence "' + userPresence.STATUS.cellphone + '" to user "' + username + '"');
+              logger.info(IDLOG, 'set presence "' + userPresence.STATUS.cellphone + '" to user "' + param.username + '"');
             }
           }
         );
       }
       // set presence to voicemail
-      else if (status === userPresence.STATUS.voicemail) {
+      else if (param.status === userPresence.STATUS.voicemail) {
 
         for (i = 0; i < allext.length; i++) {
           arr.push(disableDndExten(allext[i]));
-          arr.push(enableCfVmExten(allext[i], username));
+          arr.push(enableCfVmExten(allext[i], param.username));
         }
         arr.push( // set presence in Asterisk
           function(callback) {
@@ -734,13 +762,42 @@ function setPresence(username, status, cb) {
           function(err) {
             cb(err);
             if (err) {
-              logger.error(IDLOG, 'setting presence of user "' + username + '" to "' + userPresence.STATUS.voicemail + '"');
+              logger.error(IDLOG, 'setting presence of user "' + param.username + '" to "' + userPresence.STATUS.voicemail + '"');
               logger.error(IDLOG, err);
             } else {
-              logger.info(IDLOG, 'set presence "' + userPresence.STATUS.voicemail + '" to user "' + username + '"');
+              logger.info(IDLOG, 'set presence "' + userPresence.STATUS.voicemail + '" to user "' + param.username + '"');
             }
           }
         );
+      }
+      // set presence to callforward to a specific number
+      else if (param.status === userPresence.STATUS.callforward) {
+
+        for (i = 0; i < allext.length; i++) {
+          arr.push(disableDndExten(allext[i]));
+          arr.push(enableCfNumberExten(allext[i], param.destination, param.username));
+        }
+        arr.push( // set presence in Asterisk
+          function(callback) {
+            compAstProxy.setAsteriskPresence(mainExtId, 'AWAY,NUMBER', callback);
+          }
+        );
+
+        async.parallel(arr,
+          function(err) {
+            cb(err);
+            if (err) {
+              logger.error(IDLOG, 'setting presence of user "' + param.username + '" to "' + userPresence.STATUS.callforward + '" to "' + param.destination + '"');
+              logger.error(IDLOG, err);
+            } else {
+              logger.info(IDLOG, 'set presence "' + userPresence.STATUS.callforward + '" to "' + param.destination + '" to user "' + param.username + '"');
+            }
+          }
+        );
+      } else {
+        var str = 'unknown status presence "' + param.status + '"';
+        logger.warn(IDLOG, str);
+        cb(str);
       }
     }
   } catch (err) {
@@ -782,8 +839,9 @@ function getPresenceList(username) {
       throw new Error('wrong parameter');
     }
     var result = [
+      userPresence.STATUS.dnd,
       userPresence.STATUS.online,
-      userPresence.STATUS.dnd
+      userPresence.STATUS.callforward
     ];
     var allendpoints = users[username].getAllEndpoints();
     if (allendpoints && Object.keys(allendpoints[endpointTypes.TYPES.cellphone]).length > 0) {

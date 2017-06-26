@@ -17,14 +17,16 @@
     dnd: "dnd",
     online: "online",
     voicemail: "voicemail",
-    cellphone: "cellphone"
+    cellphone: "cellphone",
+    callforward: "callforward"
 }
  */
 var STATUS = {
   online: 'online',
   dnd: 'dnd',
   voicemail: 'voicemail',
-  cellphone: 'cellphone'
+  cellphone: 'cellphone',
+  callforward: 'callforward'
 };
 
 /**
