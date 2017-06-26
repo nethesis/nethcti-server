@@ -8,7 +8,7 @@ Source0: %{name}-%{version}.tar.gz
 BuildRequires: nethserver-devtools
 BuildRequires: nodejs >= 6.9.1
 Requires: nodejs >= 6.9.1
-Requires: nethserver-nethvoice13
+Requires: nethserver-nethvoice14
 Requires: nethserver-janus
 Conflicts: nethcti-server
 AutoReq: no
