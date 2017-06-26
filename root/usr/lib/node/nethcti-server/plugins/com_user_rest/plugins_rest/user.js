@@ -156,7 +156,7 @@ function setCompUtil(comp) {
      *
      * Example JSON response:
      *
-     *     ["online", "dnd", "voicemail", "cellphone"]
+     *     ["online", "dnd", "voicemail", "cellphone", "callforward"]
      *
      * ---
      *
@@ -345,10 +345,12 @@ function setCompUtil(comp) {
      * Set the user presence status. The request must contain the following parameters:
      *
      * * `status: valid status obtained by GET user/presencelist`
+     * * `[destination]: valid destination number to be specified with "callforward" status`
      *
      * Example JSON request parameters:
      *
      *     { "status": "online" }
+     *     { "status": "callforward", "destination": "0123456789" }
      *
      * ---
      *
@@ -816,26 +818,34 @@ function presenceSet(req, res, next) {
     var status = req.params.status;
     var username = req.headers.authorization_user;
 
-    if (!compUser.isValidUserPresence(status)) {
+    if (!compUser.isValidUserPresence(status) ||
+      (status === compUser.USER_PRESENCE_STATUS.callforward && !req.params.destination)) {
+
       compUtil.net.sendHttp400(IDLOG, res);
       return;
     }
 
-    compUser.setPresence(username, status, function(err) {
-      try {
-        if (err) {
-          logger.error(IDLOG, 'setting presence "' + status + '" to user "' + username + '"');
-          compUtil.net.sendHttp500(IDLOG, res, err.toString());
-          return;
-        }
-        logger.info(IDLOG, 'presence "' + status + '" has been set successfully to user "' + username + '" ');
-        compUtil.net.sendHttp200(IDLOG, res);
+    compUser.setPresence({
+        username: username,
+        status: status,
+        destination: req.params.destination,
+      },
+      function(err) {
+        try {
+          if (err) {
+            logger.error(IDLOG, 'setting presence "' + status + '" to user "' + username + '"');
+            compUtil.net.sendHttp500(IDLOG, res, err.toString());
+            return;
+          }
+          logger.info(IDLOG, 'presence "' + status + '" has been set successfully to user "' + username + '" ');
+          compUtil.net.sendHttp200(IDLOG, res);
 
-      } catch (err1) {
-        logger.error(IDLOG, err1.stack);
-        compUtil.net.sendHttp500(IDLOG, res, err1.toString());
+        } catch (err1) {
+          logger.error(IDLOG, err1.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err1.toString());
+        }
       }
-    });
+    );
   } catch (error) {
     logger.error(IDLOG, error.stack);
     compUtil.net.sendHttp500(IDLOG, res, error.toString());
