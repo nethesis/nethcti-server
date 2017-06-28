@@ -26,7 +26,11 @@ module.exports = function(options, imports, register) {
   var user = controllerUser;
   user.ENDPOINT_TYPES = endpointTypes.TYPES;
   user.isValidUserPresence = userPresence.isValidUserPresence;
+  user.isValidUserPresenceOnBusy = userPresence.isValidUserPresenceOnBusy;
+  user.isValidUserPresenceOnUnavailable = userPresence.isValidUserPresenceOnUnavailable;
   user.USER_PRESENCE_STATUS = userPresence.STATUS;
+  user.USER_PRESENCE_ONBUSY_STATUS = userPresence.STATUS_ONBUSY;
+  user.USER_PRESENCE_ONUNAVAILABLE_STATUS = userPresence.STATUS_ONUNAVAILABLE;
 
   // public interface for other architect components
   register(null, {

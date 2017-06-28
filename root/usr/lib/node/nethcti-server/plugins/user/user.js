@@ -59,6 +59,44 @@ exports.User = function(uname, na) {
   var presence;
 
   /**
+   * The conditinoal presence of the user on busy.
+   *
+   * @property presenceOnBusy
+   * @type {string}
+   * @private
+   */
+  var presenceOnBusy;
+
+  /**
+   * The conditinoal presence of the user on unavailable.
+   *
+   * @property presenceOnUnavailable
+   * @type {string}
+   * @private
+   */
+  var presenceOnUnavailable;
+
+  /**
+   * The destination number of the "callforward" presence status on busy.
+   *
+   * @property presenceOnBusyCallforwardTo
+   * @type {string}
+   * @private
+   * @default ""
+   */
+  var presenceOnBusyCallforwardTo = '';
+
+  /**
+   * The destination number of the "callforward" presence status on unavailable.
+   *
+   * @property presenceOnUnavailableCallforwardTo
+   * @type {string}
+   * @private
+   * @default ""
+   */
+  var presenceOnUnavailableCallforwardTo = '';
+
+  /**
    * The endpoints of the user. The keys are the endpoint types
    * and the values are objects that contains endpoint identifiers
    * as keys and Endpoint objects as values.
@@ -103,6 +141,26 @@ exports.User = function(uname, na) {
   }
 
   /**
+   * Get the conditional presence status on busy.
+   *
+   * @method getPresenceOnBusy
+   * @return {object} The conditional presence status on busy.
+   */
+  function getPresenceOnBusy() {
+    return presenceOnBusy ? presenceOnBusy : '';
+  }
+
+  /**
+   * Get the conditional presence status on unavailable.
+   *
+   * @method getPresenceOnUnavailable
+   * @return {object} The conditional presence status on unavailable.
+   */
+  function getPresenceOnUnavailable() {
+    return presenceOnUnavailable ? presenceOnUnavailable : '';
+  }
+
+  /**
    * Set the presence status.
    *
    * @method setPresence
@@ -110,6 +168,96 @@ exports.User = function(uname, na) {
    */
   function setPresence(status) {
     presence = status;
+  }
+
+  /**
+   * Set the presence status on busy.
+   *
+   * @method setPresenceOnBusy
+   * @param {string} status The presence status on busy
+   */
+  function setPresenceOnBusy(status) {
+    presenceOnBusy = status;
+  }
+
+  /**
+   * Set the presence status on unavailable.
+   *
+   * @method setPresenceOnUnavailable
+   * @param {string} status The presence status on unavailable
+   */
+  function setPresenceOnUnavailable(status) {
+    presenceOnUnavailable = status;
+  }
+
+  /**
+   * Set the destination of the "callforward" presence status.
+   *
+   * @method setPresenceCallforwardTo
+   * @param {string} destination The destination number
+   */
+  function setPresenceCallforwardTo(destination) {
+    presenceCallforwardTo = destination;
+  }
+
+  /**
+   * Get the destination of the "callforward" presence status.
+   *
+   * @method getPresenceCallforwardTo
+   * @param {string} destination The destination number
+   */
+  function getPresenceCallforwardTo(destination) {
+    return presenceCallforwardTo;
+  }
+
+  /**
+   * Set the destination of the "callforward" presence status on busy.
+   *
+   * @method setPresenceOnBusyCallforwardTo
+   * @param {string} dest The destination number of call forward on "busy"
+   */
+  function setPresenceOnBusyCallforwardTo(dest) {
+    presenceOnBusyCallforwardTo = dest;
+  }
+
+  /**
+   * Return the destination of the "callforward" presence status on busy.
+   *
+   * @method getPresenceOnBusyCallforwardTo
+   * @param {string} dest The destination number of call forward on "busy"
+   */
+  function getPresenceOnBusyCallforwardTo(dest) {
+    return presenceOnBusyCallforwardTo;
+  }
+
+  /**
+   * Set the destination of the "callforward" presence status on unavailable.
+   *
+   * @method setPresenceOnUnavailableCallforwardTo
+   * @param {string} dest The destination number of call forward on "unavailable"
+   */
+  function setPresenceOnUnavailableCallforwardTo(dest) {
+    presenceOnUnavailableCallforwardTo = dest;
+  }
+
+  /**
+   * Return the destination of the "callforward" presence status on unavailable.
+   *
+   * @method getPresenceOnUnavailableCallforwardTo
+   * @param {string} dest The destination number of call forward on "unavailable"
+   */
+  function getPresenceOnUnavailableCallforwardTo(dest) {
+    return presenceOnUnavailableCallforwardTo;
+  }
+
+  /**
+   * Set the conditional presence status for call forward on "unavailable".
+   *
+   * @method setCondPresenceCfUnavailable
+   * @param {string} dest The destination number of call forward on "unavailable"
+   */
+  function setCondPresenceCfUnavailable(dest) {
+    condPresence.cf_unavailable = dest;
   }
 
   /**
@@ -228,9 +376,11 @@ exports.User = function(uname, na) {
 
     return {
       name: getName(),
-      presence: getPresence(),
       username: username,
-      endpoints: jsonEndpoints
+      presence: getPresence(),
+      endpoints: jsonEndpoints,
+      presenceOnBusy: getPresenceOnBusy(),
+      presenceOnUnavailable: getPresenceOnUnavailable()
     };
   }
 
@@ -244,6 +394,16 @@ exports.User = function(uname, na) {
     getUsername: getUsername,
     addEndpoint: addEndpoint,
     getAllEndpoints: getAllEndpoints,
-    getAllEndpointsJSON: getAllEndpointsJSON
+    getPresenceOnBusy: getPresenceOnBusy,
+    setPresenceOnBusy: setPresenceOnBusy,
+    getAllEndpointsJSON: getAllEndpointsJSON,
+    getPresenceOnUnavailable: getPresenceOnUnavailable,
+    setPresenceOnUnavailable: setPresenceOnUnavailable,
+    setPresenceCallforwardTo: setPresenceCallforwardTo,
+    getPresenceCallforwardTo: getPresenceCallforwardTo,
+    getPresenceOnBusyCallforwardTo: getPresenceOnBusyCallforwardTo,
+    setPresenceOnBusyCallforwardTo: setPresenceOnBusyCallforwardTo,
+    setPresenceOnUnavailableCallforwardTo: setPresenceOnUnavailableCallforwardTo,
+    getPresenceOnUnavailableCallforwardTo: getPresenceOnUnavailableCallforwardTo
   };
 };

@@ -186,8 +186,38 @@ var EVT_ENDPOINT_PRESENCE_UPDATE = 'endpointPresenceUpdate';
 
 /**
  * Emitted to a websocket client connection on a user presence update.
+ * The event can contains three different keys: "presence",
+ * "presence_onbusy" or "presence_onunavailable".
  *
- *     { "username": "ale", "presence": "dnd" }
+ * The "presence" is the presence status of the user.
+ *
+ * The "presence_onbusy" is the presence status of the user when he is busy in a conversation.
+ *
+ * The "presence_onunavailable" is the presence status of the user when he does not answer
+ * to an incoming call.
+ *
+ *                         {
+       "presence": {
+         "username": "ale",
+         "status": "dnd"
+       }
+     }
+
+     {
+       "presence_onbusy": {
+         "username": "ale",
+         "status": "callforward",
+         "to": "190"
+       }
+     }
+
+     {
+       "presence_onunavailable": {
+         "username": "ale",
+         "status": "callforward",
+         "to": "190"
+       }
+     }
  *
  * @event userPresenceUpdate
  * @param {object} data The data about the user presence update
@@ -772,10 +802,14 @@ function updateNewPostitListener(recipient, list) {
 function evtUserPresenceChanged(evt) {
   try {
     if (typeof evt !== 'object' ||
-      typeof evt.username !== 'string' ||
-      typeof evt.presence !== 'string') {
+        (
+          typeof evt.presence !== 'object' &&
+          typeof evt.presence_onbusy !== 'object' &&
+          typeof evt.presence_onunavailable !== 'object'
+        )
+      ) {
 
-      throw new Error('wrong parameter: ' + JSON.stringify(arguments));
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     logger.info(IDLOG, 'received event "' + compUser.EVT_USER_PRESENCE_CHANGED + '" ' + JSON.stringify(evt));
     logger.info(IDLOG, 'emit event "' + EVT_USER_PRESENCE_UPDATE + '" ' + JSON.stringify(evt) + ' to websockets');

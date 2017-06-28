@@ -144,7 +144,10 @@ function setCompUtil(comp) {
      * # GET requests
      *
      * 1. [`user/presencelist`](#presencelistget)
-     * 1. [`user/presence`](#presenceget)
+     * 1. [`user/presencelist_onbusy`](#presencelist_onbusyget)
+     * 1. [`user/presencelist_onunavailable`](#presencelist_onunavailableget)
+     * 1. [`user/presence_onbusy`](#presence_onbusyget)
+     * 1. [`user/presence_onunavailable`](#presence_onunavailableget)
      * 1. [`user/me`](#meget)
      * 1. [`user/endpoints/all`](#userendpointsallget)
      *
@@ -160,6 +163,26 @@ function setCompUtil(comp) {
      *
      * ---
      *
+     * ### <a id="presencelist_onbusyget">**`user/presencelist_onbusy`**</a>
+     *
+     * Returns the list of the possible conditional user presence on busy status.
+     *
+     * Example JSON response:
+     *
+     *     ["callforward", "voicemail", "online", "cellphone"]
+     *
+     * ---
+     *
+     * ### <a id="presencelist_onunavailableget">**`user/presencelist_onunavailable`**</a>
+     *
+     * Returns the list of the possible conditional user presence on unavailable status.
+     *
+     * Example JSON response:
+     *
+     *     ["callforward", "voicemail", "online", "cellphone"]
+     *
+     * ---
+     *
      * ### <a id="presenceget">**`user/presence`**</a>
      *
      * Returns the user presence status.
@@ -167,6 +190,35 @@ function setCompUtil(comp) {
      * Example JSON response:
      *
      *     { "status": "online" }
+     *     { "status": "voicemail" }
+     *     { "status": "cellphone" }
+     *     { "status": "callforward", "to": "12345" }
+     *
+     * ---
+     *
+     * ### <a id="presence_onbusyget">**`user/presence_onbusy`**</a>
+     *
+     * Returns the conditional user presence status on busy.
+     *
+     * Example JSON response:
+     *
+     *     { "status": "online" }
+     *     { "status": "cellphone" }
+     *     { "status": "voicemail" }
+     *     { "status": "callforward", "to": "12345" }
+     *
+     * ---
+     *
+     * ### <a id="presence_onunavailableget">**`user/presence_onunavailable`**</a>
+     *
+     * Returns the conditional user presence status on unavailable.
+     *
+     * Example JSON response:
+     *
+     *     { "status": "online" }
+     *     { "status": "cellphone" }
+     *     { "status": "voicemail" }
+     *     { "status": "callforward", "to": "12345" }
      *
      * ---
      *
@@ -335,6 +387,8 @@ function setCompUtil(comp) {
      * # POST requests
      *
      * 1. [`user/presence`](#presencepost)
+     * 1. [`user/presence_onbusy`](#presence_onbusypost)
+     * 1. [`user/presence_onunavailable`](#presence_onunavailablepost)
      * 1. [`user/settings`](#settingspost)
      * 1. [`user/default_device`](#default_devicepost)
      *
@@ -345,12 +399,46 @@ function setCompUtil(comp) {
      * Set the user presence status. The request must contain the following parameters:
      *
      * * `status: valid status obtained by GET user/presencelist`
-     * * `[destination]: valid destination number to be specified with "callforward" status`
+     * * `[to]: valid destination number to be specified with "callforward" status`
      *
      * Example JSON request parameters:
      *
      *     { "status": "online" }
-     *     { "status": "callforward", "destination": "0123456789" }
+     *     { "status": "voicemail" }
+     *     { "status": "cellphone" }
+     *     { "status": "callforward", "to": "0123456789" }
+     *
+     * ---
+     *
+     * ### <a id="presence_onbusypost">**`user/presence_onbusy`**</a>
+     *
+     * Set the conditional user presence on busy status. The request must contain the following parameters:
+     *
+     * * `status: valid status obtained by GET user/presencelist_onbusy`
+     * * `[to]: valid destination number to be specified with "callforward" status`
+     *
+     * Example JSON request parameters:
+     *
+     *     { "status": "online" }
+     *     { "status": "voicemail" }
+     *     { "status": "cellphone" }
+     *     { "status": "callforward", "to": "0123456789" }
+     *
+     * ---
+     *
+     * ### <a id="presence_onunavailablepost">**`user/presence_onunavailable`**</a>
+     *
+     * Set the conditional user presence on unavailable status. The request must contain the following parameters:
+     *
+     * * `status: valid status obtained by GET user/presencelist_onunavailable`
+     * * `[to]: valid destination number to be specified with "callforward" status`
+     *
+     * Example JSON request parameters:
+     *
+     *     { "status": "online" }
+     *     { "status": "voicemail" }
+     *     { "status": "cellphone" }
+     *     { "status": "callforward", "to": "0123456789" }
      *
      * ---
      *
@@ -407,15 +495,23 @@ function setCompUtil(comp) {
          *
          *   @param {string} me To get the user information
          *   @param {string} presence To get the user presence status
+         *   @param {string} presence_onbusy To get the conditional user presence status on busy
+         *   @param {string} presence_onunavailable To get the conditional user presence status on unavailable
          *   @param {string} presencelist To get the list of possible presence status
+         *   @param {string} presencelist_onbusy To get the list of possible conditional presence on busy status
+         *   @param {string} presencelist_onunavailable To get the list of possible conditional presence on unavailable status
          *   @param {string} all_avatars To get the all user settings
          */
         'get': [
           'me',
           'presence',
+          'all_avatars',
           'presencelist',
           'endpoints/all',
-          'all_avatars'
+          'presence_onbusy',
+          'presencelist_onbusy',
+          'presence_onunavailable',
+          'presencelist_onunavailable'
         ],
 
         /**
@@ -427,11 +523,15 @@ function setCompUtil(comp) {
          *   @param {string} presence Set a presence status for the user
          *   @param {string} settings Save the user settings
          *   @param {string} default_device Set a default extension for the user
+         *   @param {string} presence_onbusy Set a conditional presence status on busy for the user
+         *   @param {string} presence_onunavailable Set a conditional presence status on unavailable for the user
          */
         'post': [
           'presence',
           'settings',
-          'default_device'
+          'default_device',
+          'presence_onbusy',
+          'presence_onunavailable'
         ],
         'head': [],
 
@@ -533,6 +633,62 @@ function setCompUtil(comp) {
       },
 
       /**
+       * Get the list of possible conditional presence on busy status by the following REST API:
+       *
+       *     presencelist_onbusy
+       *
+       * @method presencelist_onbusy
+       * @param {object}   req  The client request
+       * @param {object}   res  The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      presencelist_onbusy: function(req, res, next) {
+        try {
+          var username = req.headers.authorization_user;
+          var results = compUser.getPresenceListOnBusy(username);
+          if (results instanceof Array) {
+            logger.info(IDLOG, 'send conditional user presence on busy list to user "' + username + '"');
+            res.send(200, results);
+          } else {
+            var strerr = 'sending conditional user presence on busy list to user "' + username + '": wrong format';
+            logger.error(IDLOG, strerr);
+            compUtil.net.sendHttp500(IDLOG, res, strerr);
+          }
+        } catch (err) {
+          logger.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
+      },
+
+      /**
+       * Get the list of possible conditional presence on unavailable status by the following REST API:
+       *
+       *     presencelist_onunavailable
+       *
+       * @method presencelist_onunavailable
+       * @param {object}   req  The client request
+       * @param {object}   res  The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      presencelist_onunavailable: function(req, res, next) {
+        try {
+          var username = req.headers.authorization_user;
+          var results = compUser.getPresenceListOnUnavailable(username);
+          if (results instanceof Array) {
+            logger.info(IDLOG, 'send conditional user presence on unavailable list to user "' + username + '"');
+            res.send(200, results);
+          } else {
+            var strerr = 'sending conditional user presence on unavailable list to user "' + username + '": wrong format';
+            logger.error(IDLOG, strerr);
+            compUtil.net.sendHttp500(IDLOG, res, strerr);
+          }
+        } catch (err) {
+          logger.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
+      },
+
+      /**
        * Get the list of possible presence status by the following REST API:
        *
        *     presencelist
@@ -578,6 +734,60 @@ function setCompUtil(comp) {
             presenceGet(req, res, next);
           } else if (req.method.toLowerCase() === 'post') {
             presenceSet(req, res, next);
+          } else {
+            logger.warn(IDLOG, 'unknown requested method ' + req.method);
+          }
+        } catch (err) {
+          logger.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
+      },
+
+      /**
+       * Manages GET and POST requests to get/set the conditional status presence
+       * on busy of the user with the following REST API:
+       *
+       *     GET presence_onbusy
+       *     POST presence_onbusy
+       *
+       * @method presence_onbusy
+       * @param {object} req The client request
+       * @param {object} res The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      presence_onbusy: function(req, res, next) {
+        try {
+          if (req.method.toLowerCase() === 'get') {
+            presenceOnBusyGet(req, res, next);
+          } else if (req.method.toLowerCase() === 'post') {
+            presenceOnBusySet(req, res, next);
+          } else {
+            logger.warn(IDLOG, 'unknown requested method ' + req.method);
+          }
+        } catch (err) {
+          logger.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
+      },
+
+      /**
+       * Manages GET and POST requests to get/set the conditional status presence
+       * on unavailable of the user with the following REST API:
+       *
+       *     GET presence_onunavailable
+       *     POST presence_onunavailable
+       *
+       * @method presence_onunavailable
+       * @param {object} req The client request
+       * @param {object} res The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      presence_onunavailable: function(req, res, next) {
+        try {
+          if (req.method.toLowerCase() === 'get') {
+            presenceOnUnavailableGet(req, res, next);
+          } else if (req.method.toLowerCase() === 'post') {
+            presenceOnUnavailableSet(req, res, next);
           } else {
             logger.warn(IDLOG, 'unknown requested method ' + req.method);
           }
@@ -681,19 +891,23 @@ function setCompUtil(comp) {
       }
     };
 
-    exports.api = user.api;
     exports.me = user.me;
-    exports.endpoints = user.endpoints;
+    exports.api = user.api;
     exports.presence = user.presence;
     exports.settings = user.settings;
     exports.setLogger = setLogger;
+    exports.endpoints = user.endpoints;
     exports.setCompUtil = setCompUtil;
     exports.setCompUser = setCompUser;
+    exports.all_avatars = user.all_avatars;
     exports.presencelist = user.presencelist;
     exports.default_device = user.default_device;
-    exports.all_avatars = user.all_avatars;
+    exports.presence_onbusy = user.presence_onbusy;
+    exports.presencelist_onbusy = user.presencelist_onbusy;
     exports.setCompAuthorization = setCompAuthorization;
     exports.setCompConfigManager = setCompConfigManager;
+    exports.presence_onunavailable = user.presence_onunavailable;
+    exports.presencelist_onunavailable = user.presencelist_onunavailable;
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
@@ -783,6 +997,144 @@ function setCompConfigManager(comp) {
 }
 
 /**
+ * Get the conditional user presence status on busy.
+ *
+ * @method presenceOnBusyGet
+ * @param {object} req The request object
+ * @param {object} res The response object
+ * @param {object} next
+ */
+function presenceOnBusyGet(req, res, next) {
+  try {
+    var username = req.headers.authorization_user;
+    var status = compUser.getPresenceOnBusy(username);
+    logger.info(IDLOG, 'send conditional presence status on busy "' + status + '" to user "' + username + '"');
+    res.send(200, {
+      status: status,
+      to: status === compUser.USER_PRESENCE_ONBUSY_STATUS.callforward ? compUser.getPresenceOnBusyCallforwardTo(username) : undefined
+    });
+  } catch (error) {
+    logger.error(IDLOG, error.stack);
+    compUtil.net.sendHttp500(IDLOG, res, error.toString());
+  }
+}
+
+/**
+ * Get the conditional user presence status on unavailable.
+ *
+ * @method presenceOnUnavailableGet
+ * @param {object} req The request object
+ * @param {object} res The response object
+ * @param {object} next
+ */
+function presenceOnUnavailableGet(req, res, next) {
+  try {
+    var username = req.headers.authorization_user;
+    var status = compUser.getPresenceOnUnavailable(username);
+    logger.info(IDLOG, 'send conditional presence status on unavailable "' + status + '" to user "' + username + '"');
+    res.send(200, {
+      status: status,
+      to: status === compUser.USER_PRESENCE_ONUNAVAILABLE_STATUS.callforward ? compUser.getPresenceOnUnavailableCallforwardTo(username) : undefined
+    });
+  } catch (error) {
+    logger.error(IDLOG, error.stack);
+    compUtil.net.sendHttp500(IDLOG, res, error.toString());
+  }
+}
+
+/**
+ * Set the conditional user presence status on busy.
+ *
+ * @method presenceOnBusySet
+ * @param {object} req The request object
+ * @param {object} res The response object
+ * @param {object} next
+ */
+function presenceOnBusySet(req, res, next) {
+  try {
+    var status = req.params.status;
+    var username = req.headers.authorization_user;
+    var destination = req.params.destination;
+
+    if (!compUser.isValidUserPresenceOnBusy(status) || typeof destination !== 'string') {
+      compUtil.net.sendHttp400(IDLOG, res);
+      return;
+    }
+
+    compUser.setPresenceOnBusy({
+        username: username,
+        status: status,
+        destination: req.params.destination,
+      },
+      function(err) {
+        try {
+          if (err) {
+            logger.error(IDLOG, 'setting conditional presence on busy "' + status + '" to "' + destination + '" to user "' + username + '"');
+            compUtil.net.sendHttp500(IDLOG, res, err.toString());
+            return;
+          }
+          logger.info(IDLOG, 'presence conditional on busy "' + status + '" to "' + destination + '" has been set successfully to user "' + username + '" ');
+          compUtil.net.sendHttp200(IDLOG, res);
+
+        } catch (err1) {
+          logger.error(IDLOG, err1.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err1.toString());
+        }
+      }
+    );
+  } catch (error) {
+    logger.error(IDLOG, error.stack);
+    compUtil.net.sendHttp500(IDLOG, res, error.toString());
+  }
+}
+
+/**
+ * Set the conditional user presence status on unavailable.
+ *
+ * @method presenceOnUnavailableSet
+ * @param {object} req The request object
+ * @param {object} res The response object
+ * @param {object} next
+ */
+function presenceOnUnavailableSet(req, res, next) {
+  try {
+    var status = req.params.status;
+    var username = req.headers.authorization_user;
+    var destination = req.params.destination;
+
+    if (!compUser.isValidUserPresenceOnUnavailable(status) || typeof destination !== 'string') {
+      compUtil.net.sendHttp400(IDLOG, res);
+      return;
+    }
+
+    compUser.setPresenceOnUnavailable({
+        username: username,
+        status: status,
+        destination: req.params.destination,
+      },
+      function(err) {
+        try {
+          if (err) {
+            logger.error(IDLOG, 'setting conditional presence on unavailable "' + status + '" to "' + destination + '" to user "' + username + '"');
+            compUtil.net.sendHttp500(IDLOG, res, err.toString());
+            return;
+          }
+          logger.info(IDLOG, 'presence conditional on unavailable "' + status + '" to "' + destination + '" has been set successfully to user "' + username + '" ');
+          compUtil.net.sendHttp200(IDLOG, res);
+
+        } catch (err1) {
+          logger.error(IDLOG, err1.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err1.toString());
+        }
+      }
+    );
+  } catch (error) {
+    logger.error(IDLOG, error.stack);
+    compUtil.net.sendHttp500(IDLOG, res, error.toString());
+  }
+}
+
+/**
  * Get the user presence status.
  *
  * @method presenceGet
@@ -797,7 +1149,8 @@ function presenceGet(req, res, next) {
 
     logger.info(IDLOG, 'send presence status "' + status + '" to user "' + username + '"');
     res.send(200, {
-      status: status
+      status: status,
+      to: status === compUser.USER_PRESENCE_STATUS.callforward ? compUser.getPresenceCallforwardTo(username) : undefined
     });
   } catch (error) {
     logger.error(IDLOG, error.stack);

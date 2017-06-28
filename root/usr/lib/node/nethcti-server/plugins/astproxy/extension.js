@@ -72,6 +72,24 @@ exports.Extension = function(ext, chType) {
   var cf;
 
   /**
+   * The call forward busy status.
+   *
+   * @property cfb
+   * @type {string}
+   * @private
+   */
+  var cfb;
+
+  /**
+   * The call forward unavailable status.
+   *
+   * @property cfu
+   * @type {string}
+   * @private
+   */
+  var cfu;
+
+  /**
    * The call forward to voicemail status.
    *
    * @property cfVm
@@ -79,6 +97,24 @@ exports.Extension = function(ext, chType) {
    * @private
    */
   var cfVm;
+
+  /**
+   * The call forward on busy to voicemail status.
+   *
+   * @property cfbVm
+   * @type {string}
+   * @private
+   */
+  var cfbVm;
+
+  /**
+   * The call forward on unavailable to voicemail status.
+   *
+   * @property cfuVm
+   * @type {string}
+   * @private
+   */
+  var cfuVm;
 
   /**
    * The port of the device.
@@ -419,10 +455,30 @@ exports.Extension = function(ext, chType) {
    * Set the call forward number.
    *
    * @method setCf
-   * @param {string} value The number to set the call forward.
+   * @param {string} value The number to set the call forward
    */
   function setCf(value) {
     cf = value;
+  }
+
+  /**
+   * Set the call forward busy number.
+   *
+   * @method setCfb
+   * @param {string} value The number to set the call forward busy
+   */
+  function setCfb(value) {
+    cfb = value;
+  }
+
+  /**
+   * Set the call forward on unavailable number.
+   *
+   * @method setCfu
+   * @param {string} value The number to set the call forward on unavailable
+   */
+  function setCfu(value) {
+    cfu = value;
   }
 
   /**
@@ -436,6 +492,26 @@ exports.Extension = function(ext, chType) {
   }
 
   /**
+   * Set the call forward on busy to voicemail.
+   *
+   * @method setCfbVm
+   * @param {string} value The destination voicemail number to set the call forward on busy to voicemail.
+   */
+  function setCfbVm(value) {
+    cfbVm = value;
+  }
+
+  /**
+   * Set the call forward on unavailable to voicemail.
+   *
+   * @method setCfuVm
+   * @param {string} value The destination voicemail number to set the call forward on unavailable to voicemail.
+   */
+  function setCfuVm(value) {
+    cfuVm = value;
+  }
+
+  /**
    * Get the call forward status.
    *
    * @method getCf
@@ -443,6 +519,46 @@ exports.Extension = function(ext, chType) {
    */
   function getCf() {
     return cf;
+  }
+
+  /**
+   * Get the call forward busy status.
+   *
+   * @method getCfb
+   * @return {string} The number of the call forward busy. Returns an empty string if it is disabled.
+   */
+  function getCfb() {
+    return cfb;
+  }
+
+  /**
+   * Get the call forward on unavailable status.
+   *
+   * @method getCfu
+   * @return {string} The number of the call forward on unavailable. Returns an empty string if it is disabled.
+   */
+  function getCfu() {
+    return cfu;
+  }
+
+  /**
+   * Get the call forward on busy to voicemail status.
+   *
+   * @method getCfbVm
+   * @return {string} The voicemail number of the call forward on busy to voicemail. Returns an empty string if it is disabled.
+   */
+  function getCfbVm() {
+    return cfbVm;
+  }
+
+  /**
+   * Get the call forward on unavailable to voicemail status.
+   *
+   * @method getCfuVm
+   * @return {string} The voicemail number of the call forward on unavailable to voicemail. Returns an empty string if it is disabled.
+   */
+  function getCfuVm() {
+    return cfuVm;
   }
 
   /**
@@ -465,6 +581,24 @@ exports.Extension = function(ext, chType) {
   }
 
   /**
+   * Disable the call forward busy status.
+   *
+   * @method disableCfb
+   */
+  function disableCfb() {
+    cfb = '';
+  }
+
+  /**
+   * Disable the call forward on unavailble status.
+   *
+   * @method disableCfu
+   */
+  function disableCfu() {
+    cfu = '';
+  }
+
+  /**
    * Disable the call forward to voicemail status.
    *
    * @method disableCfVm
@@ -474,13 +608,35 @@ exports.Extension = function(ext, chType) {
   }
 
   /**
+   * Disable the call forward on busy to voicemail status.
+   *
+   * @method disableCfbVm
+   */
+  function disableCfbVm() {
+    cfbVm = '';
+  }
+
+  /**
+   * Disable the call forward on unavailable to voicemail status.
+   *
+   * @method disableCfuVm
+   */
+  function disableCfuVm() {
+    cfuVm = '';
+  }
+
+  /**
    * Returns the JSON representation of the object.
    *
    *     {
    *         ip:           "192.168.5.163",
    *         cf:           "221",                          // the call forward status. If it's disabled, it is an empty string
+   *         cfb:          "221",                          // the call forward on busy status. If it's disabled, it is an empty string
+   *         cfu:          "221",                          // the call forward on unavailable status. If it's disabled, it is an empty string
    *         dnd:          false,                          // it's true if the don't disturb is active
    *         cfVm:         "",                             // the call forward to voicemail status. If it's disabled, it is an empty string
+   *         cfbVm:        "",                             // the call forward on busy to voicemail status. If it's disabled, it is an empty string
+   *         cfuVm:        "",                             // the call forward on unavailable to voicemail status. If it's disabled, it is an empty string
    *         port:         "5062",
    *         name:         "Alessandro",
    *         exten:        "214",
@@ -509,10 +665,14 @@ exports.Extension = function(ext, chType) {
     return {
       ip: ip,
       cf: cf,
+      cfb: cfb,
+      cfu: cfu,
       dnd: dnd,
       cfVm: cfVm,
       port: port,
       name: name,
+      cfbVm: cfbVm,
+      cfuVm: cfuVm,
       exten: exten,
       status: status,
       context: context,
@@ -529,11 +689,20 @@ exports.Extension = function(ext, chType) {
     getCf: getCf,
     setIp: setIp,
     getIp: getIp,
+    setCfb: setCfb,
+    getCfb: getCfb,
+    setCfu: setCfu,
+    getCfu: getCfu,
     toJSON: toJSON,
     setDnd: setDnd,
     getDnd: getDnd,
-    getCfVm: getCfVm,
     setCfVm: setCfVm,
+    getCfVm: getCfVm,
+    getCfVm: getCfVm,
+    setCfbVm: setCfbVm,
+    getCfbVm: getCfbVm,
+    setCfuVm: setCfuVm,
+    getCfuVm: getCfuVm,
     getName: getName,
     setName: setName,
     setPort: setPort,
@@ -544,11 +713,15 @@ exports.Extension = function(ext, chType) {
     disableCf: disableCf,
     setStatus: setStatus,
     getStatus: getStatus,
+    disableCfb: disableCfb,
+    disableCfu: disableCfu,
     setContext: setContext,
     getContext: getContext,
     disableCfVm: disableCfVm,
     getChanType: getChanType,
     getUserAgent: getUserAgent,
+    disableCfbVm: disableCfbVm,
+    disableCfuVm: disableCfuVm,
     usingWebsocket: usingWebsocket,
     setUseWebsocket: setUseWebsocket,
     addConversation: addConversation,
