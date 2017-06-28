@@ -90,6 +90,66 @@ var EVT_EXTEN_CHANGED = 'extenChanged';
 var EVT_EXTEN_DND_CHANGED = 'extenDndChanged';
 
 /**
+ * Fired when call forward busy status of an extension has been changed.
+ *
+ * @event extenCfbChanged
+ * @param {object} msg The event data
+ */
+/**
+ * The name of the extension cfb changed event.
+ *
+ * @property EVT_EXTEN_CFB_CHANGED
+ * @type string
+ * @default "extenCfbChanged"
+ */
+var EVT_EXTEN_CFB_CHANGED = 'extenCfbChanged';
+
+/**
+ * Fired when call forward on unavailable to voicemail status of an extension has been changed.
+ *
+ * @event extenCfuVmChanged
+ * @param {object} msg The event data
+ */
+/**
+ * The name of the extension cfuVm changed event.
+ *
+ * @property EVT_EXTEN_CFUVM_CHANGED
+ * @type string
+ * @default "extenCfuVmChanged"
+ */
+var EVT_EXTEN_CFUVM_CHANGED = 'extenCfuVmChanged';
+
+/**
+ * Fired when call forward busy to voicemail status of an extension has been changed.
+ *
+ * @event extenCfbVmChanged
+ * @param {object} msg The event data
+ */
+/**
+ * The name of the extension cfbVm changed event.
+ *
+ * @property EVT_EXTEN_CFBVM_CHANGED
+ * @type string
+ * @default "extenCfbVmChanged"
+ */
+var EVT_EXTEN_CFBVM_CHANGED = 'extenCfbVmChanged';
+
+/**
+ * Fired when call forward on unavailable status of an extension has been changed.
+ *
+ * @event extenCfuChanged
+ * @param {object} msg The event data
+ */
+/**
+ * The name of the extension cfu changed event.
+ *
+ * @property EVT_EXTEN_CFU_CHANGED
+ * @type string
+ * @default "extenCfuChanged"
+ */
+var EVT_EXTEN_CFU_CHANGED = 'extenCfuChanged';
+
+/**
  * Fired when call forward status of an extension has been changed.
  *
  * @event extenCfChanged
@@ -731,7 +791,7 @@ function visit(ap) {
   try {
     // check parameter
     if (!ap || typeof ap !== 'object') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     astProxy = ap;
   } catch (err) {
@@ -1056,7 +1116,7 @@ function listIaxPeers(resp) {
   try {
     // check parameter
     if (!resp) {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var i;
@@ -1135,7 +1195,7 @@ function listParkedCalls(err, resp) {
 
     // check the parameter
     if (typeof resp !== 'object') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // store parked channels in global variable "parkedChannels"
@@ -1352,7 +1412,7 @@ function startIntervalUpdateQueuesDetails(interval) {
   try {
     // check the parameter
     if (typeof interval !== 'number') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     setInterval(function() {
@@ -1397,7 +1457,7 @@ function queueDetailsUpdate(err, resp) {
       resp.completedCallsCount === undefined || resp.abandonedCallsCount === undefined ||
       resp.serviceLevelTimePeriod === undefined || resp.serviceLevelPercentage === undefined) {
 
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var q = resp.queue; // the queue number
@@ -1436,7 +1496,7 @@ function setQueueData(q, resp) {
       resp.completedCallsCount === undefined || resp.abandonedCallsCount === undefined ||
       resp.serviceLevelTimePeriod === undefined || resp.serviceLevelPercentage === undefined) {
 
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     queues[q].setAvgHoldTime(resp.holdtime);
@@ -1468,7 +1528,7 @@ function updateQueueWaitingCallers(err, resp) {
 
     // check the parameter
     if (typeof resp !== 'object' || resp.queue === undefined) {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var q = resp.queue; // the queue number
@@ -1525,7 +1585,7 @@ function queueDetails(err, resp) {
       resp.completedCallsCount === undefined || resp.abandonedCallsCount === undefined ||
       resp.serviceLevelTimePeriod === undefined) {
 
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     var q = resp.queue; // the queue number
@@ -1957,7 +2017,7 @@ function getJSONExtension(exten, privacyStrOutQueue, privacyStrInQueue) {
   try {
     // check the parameter
     if (typeof exten !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     return extensions[exten].toJSON(privacyStrOutQueue, privacyStrInQueue);
@@ -1979,7 +2039,7 @@ function getExtensionIp(exten) {
   try {
     // check the parameter
     if (typeof exten !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     return extensions[exten].getIp();
@@ -2001,7 +2061,7 @@ function getExtensionAgent(exten) {
   try {
     // check the parameter
     if (typeof exten !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     if (extensions[exten]) {
@@ -2119,6 +2179,46 @@ function getCfExten(exten) {
 }
 
 /**
+ * Get call forward on busy (CFB) status of the extension.
+ *
+ * @method getCfbExten
+ * @param {string} exten The extension identifier
+ * @return {function} The function to be called by _initializePjsipExten_.
+ * @private
+ */
+function getCfbExten(exten) {
+  return function(callback) {
+    astProxy.doCmd({
+      command: 'cfbGet',
+      exten: exten
+    }, function(err, resp) {
+      setCfbStatus(err, resp);
+      callback(null);
+    });
+  };
+}
+
+/**
+ * Get call forward on unavailable (CFU) status of the extension.
+ *
+ * @method getCfuExten
+ * @param {string} exten The extension identifier
+ * @return {function} The function to be called by _initializePjsipExten_.
+ * @private
+ */
+function getCfuExten(exten) {
+  return function(callback) {
+    astProxy.doCmd({
+      command: 'cfuGet',
+      exten: exten
+    }, function(err, resp) {
+      setCfuStatus(err, resp);
+      callback(null);
+    });
+  };
+}
+
+/**
  * Get call forward to voicemail (CFVM) status of the extension.
  *
  * @method getCfVmExten
@@ -2133,6 +2233,46 @@ function getCfVmExten(exten) {
       exten: exten
     }, function(err, resp) {
       setCfVmStatus(err, resp);
+      callback(null);
+    });
+  };
+}
+
+/**
+ * Get call forward on busy to voicemail (CFB) status of the extension.
+ *
+ * @method getCfbVmExten
+ * @param {string} exten The extension identifier
+ * @return {function} The function to be called by _initializePjsipExten_.
+ * @private
+ */
+function getCfbVmExten(exten) {
+  return function(callback) {
+    astProxy.doCmd({
+      command: 'cfbVmGet',
+      exten: exten
+    }, function(err, resp) {
+      setCfbVmStatus(err, resp);
+      callback(null);
+    });
+  };
+}
+
+/**
+ * Get call forward on unavailable to voicemail (CFU) status of the extension.
+ *
+ * @method getCfuVmExten
+ * @param {string} exten The extension identifier
+ * @return {function} The function to be called by _initializePjsipExten_.
+ * @private
+ */
+function getCfuVmExten(exten) {
+  return function(callback) {
+    astProxy.doCmd({
+      command: 'cfuVmGet',
+      exten: exten
+    }, function(err, resp) {
+      setCfuVmStatus(err, resp);
       callback(null);
     });
   };
@@ -2205,7 +2345,11 @@ function initializePjsipExten(err, results) {
 
       arr.push(getDndExten(exten.getExten()));
       arr.push(getCfExten(exten.getExten()));
+      arr.push(getCfuExten(exten.getExten()));
+      arr.push(getCfbExten(exten.getExten()));
       arr.push(getCfVmExten(exten.getExten()));
+      arr.push(getCfbVmExten(exten.getExten()));
+      arr.push(getCfuVmExten(exten.getExten()));
       arr.push(getPjsipDetailExten(exten.getExten()));
       arr.push(getListChannels());
     }
@@ -2420,7 +2564,7 @@ function setCfStatus(err, resp) {
     }
     // check parameter
     if (typeof resp !== 'object' || typeof resp.exten !== 'string' || typeof resp.status !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     if (extensions[resp.exten]) { // the extension exists
@@ -2433,6 +2577,76 @@ function setCfStatus(err, resp) {
       }
     } else {
       logger.warn(IDLOG, 'request cf for not existing extension ' + resp.exten);
+    }
+  } catch (error) {
+    logger.error(IDLOG, error.stack);
+  }
+}
+
+/**
+ * Set the call forward on busy status of the extension.
+ *
+ * @method setCfbStatus
+ * @param {object} err The error object of the _cfbGet_ command plugin
+ * @param {object} resp The response object of the _cfbGet_ command plugin
+ * @private
+ */
+function setCfbStatus(err, resp) {
+  try {
+    // check the error
+    if (err) {
+      throw err;
+    }
+    // check parameter
+    if (typeof resp !== 'object' || typeof resp.exten !== 'string' || typeof resp.status !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+
+    if (extensions[resp.exten]) { // the extension exists
+      if (resp.status === 'on') {
+        extensions[resp.exten].setCfb(resp.to);
+        logger.info(IDLOG, 'set extension ' + resp.exten + ' cfb enable to ' + resp.to);
+      } else {
+        extensions[resp.exten].disableCfb();
+        logger.info(IDLOG, 'set extension ' + resp.exten + ' cfb disable');
+      }
+    } else {
+      logger.warn(IDLOG, 'request cfb for not existing extension ' + resp.exten);
+    }
+  } catch (error) {
+    logger.error(IDLOG, error.stack);
+  }
+}
+
+/**
+ * Set the call forward on unavailable status of the extension.
+ *
+ * @method setCfuStatus
+ * @param {object} err The error object of the _cfuGet_ command plugin
+ * @param {object} resp The response object of the _cfuGet_ command plugin
+ * @private
+ */
+function setCfuStatus(err, resp) {
+  try {
+    // check the error
+    if (err) {
+      throw err;
+    }
+    // check parameter
+    if (typeof resp !== 'object' || typeof resp.exten !== 'string' || typeof resp.status !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+
+    if (extensions[resp.exten]) { // the extension exists
+      if (resp.status === 'on') {
+        extensions[resp.exten].setCfu(resp.to);
+        logger.info(IDLOG, 'set extension ' + resp.exten + ' cfu enable to ' + resp.to);
+      } else {
+        extensions[resp.exten].disableCfu();
+        logger.info(IDLOG, 'set extension ' + resp.exten + ' cfu disable');
+      }
+    } else {
+      logger.warn(IDLOG, 'request cfu for not existing extension ' + resp.exten);
     }
   } catch (error) {
     logger.error(IDLOG, error.stack);
@@ -2458,7 +2672,7 @@ function setCfVmStatus(err, resp) {
     if (typeof resp !== 'object' ||
       typeof resp.exten !== 'string' || typeof resp.status !== 'string') {
 
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     if (extensions[resp.exten]) { // the extension exists
@@ -2482,6 +2696,90 @@ function setCfVmStatus(err, resp) {
 }
 
 /**
+ * Sets the call forward on busy to voicemail status of the extension.
+ *
+ * @method setCfbVmStatus
+ * @param {object} err The error object of the _cfbVmGet_ command plugin.
+ * @param {object} resp The response object of the _cfbVmGet_ command plugin.
+ * @private
+ */
+function setCfbVmStatus(err, resp) {
+  try {
+    // check the error
+    if (err) {
+      throw err;
+    }
+
+    // check parameter
+    if (typeof resp !== 'object' ||
+      typeof resp.exten !== 'string' || typeof resp.status !== 'string') {
+
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+
+    if (extensions[resp.exten]) { // the extension exists
+
+      if (resp.status === 'on') {
+        extensions[resp.exten].setCfbVm(resp.to);
+        logger.info(IDLOG, 'set extension ' + resp.exten + ' cfbvm enable to ' + resp.to);
+
+      } else {
+        extensions[resp.exten].disableCfbVm();
+        logger.info(IDLOG, 'set extension ' + resp.exten + ' cfbvm disabled');
+      }
+
+    } else {
+      logger.warn(IDLOG, 'request cfbvm for not existing extension ' + resp.exten);
+    }
+
+  } catch (error) {
+    logger.error(IDLOG, error.stack);
+  }
+}
+
+/**
+ * Sets the call forward on unavailable to voicemail status of the extension.
+ *
+ * @method setCfuVmStatus
+ * @param {object} err The error object of the _cfuVmGet_ command plugin.
+ * @param {object} resp The response object of the _cfuVmGet_ command plugin.
+ * @private
+ */
+function setCfuVmStatus(err, resp) {
+  try {
+    // check the error
+    if (err) {
+      throw err;
+    }
+
+    // check parameter
+    if (typeof resp !== 'object' ||
+      typeof resp.exten !== 'string' || typeof resp.status !== 'string') {
+
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+
+    if (extensions[resp.exten]) { // the extension exists
+
+      if (resp.status === 'on') {
+        extensions[resp.exten].setCfuVm(resp.to);
+        logger.info(IDLOG, 'set extension ' + resp.exten + ' cfuvm enable to ' + resp.to);
+
+      } else {
+        extensions[resp.exten].disableCfuVm();
+        logger.info(IDLOG, 'set extension ' + resp.exten + ' cfuvm disabled');
+      }
+
+    } else {
+      logger.warn(IDLOG, 'request cfuvm for not existing extension ' + resp.exten);
+    }
+
+  } catch (error) {
+    logger.error(IDLOG, error.stack);
+  }
+}
+
+/**
  * Set the don't disturb status of the extension.
  *
  * @method setDndStatus
@@ -2497,7 +2795,7 @@ function setDndStatus(err, resp) {
     }
     // check parameter
     if (typeof resp !== 'object' || typeof resp.exten !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     if (extensions[resp.exten]) { // the extension exists
@@ -2534,7 +2832,7 @@ function extSipDetails(err, resp) {
 
     // check parameter
     if (!resp) {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // extract extension object from the response
@@ -2603,7 +2901,7 @@ function trunkSipDetails(err, resp) {
 
     // check parameter
     if (!resp) {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // extract extension object from the response
@@ -2658,7 +2956,7 @@ function extIaxDetails(resp) {
   try {
     // check parameter
     if (typeof resp !== 'object') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // set the extension information
@@ -2792,7 +3090,7 @@ function updateConversationsForAllTrunk(err, resp) {
 
     // check parameter
     if (!resp) {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // removes all conversations of all trunks
@@ -3508,7 +3806,7 @@ function evtNewExternalCall(number) {
   try {
     // check parameter
     if (typeof number !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     logger.info(IDLOG, 'new external call from number ' + number + ': get data about the caller');
@@ -3637,6 +3935,98 @@ function evtExtenUnconditionalCfChanged(exten, enabled, to) {
 }
 
 /**
+ * Updates the extension call forward busy status.
+ *
+ * @method evtExtenCfbChanged
+ * @param {string} exten The extension number
+ * @param {boolean} enabled True if the call forward busy is enabled
+ * @param {string} [to] The destination number of the call forward busy
+ * @private
+ */
+function evtExtenCfbChanged(exten, enabled, to) {
+  try {
+    if (typeof exten !== 'string' && typeof enabled !== 'boolean') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+
+    if (extensions[exten]) { // the exten is an extension
+
+      if (enabled) {
+        logger.info(IDLOG, 'set cfb status to ' + enabled + ' for extension ' + exten + ' to ' + to);
+        extensions[exten].setCfb(to);
+
+        // disable the call forward to voicemail because the call forward set the same property in the database
+        evtExtenCfbVmChanged(exten, false);
+
+      } else {
+        logger.info(IDLOG, 'set cfb status to ' + enabled + ' for extension ' + exten);
+        extensions[exten].disableCfb();
+      }
+
+      // emit the event
+      logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
+      astProxy.emit(EVT_EXTEN_CHANGED, extensions[exten]);
+      logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CFB_CHANGED + ' for extension ' + exten);
+      astProxy.emit(EVT_EXTEN_CFB_CHANGED, {
+        exten: exten,
+        enabled: enabled,
+        to: to
+      });
+    } else {
+      logger.warn(IDLOG, 'try to set call forward busy status of non existent extension ' + exten);
+    }
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Updates the extension call forward on unavailable status.
+ *
+ * @method evtExtenCfuChanged
+ * @param {string} exten The extension number
+ * @param {boolean} enabled True if the call forward on unavailable is enabled
+ * @param {string} [to] The destination number of the call forward on unavailable
+ * @private
+ */
+function evtExtenCfuChanged(exten, enabled, to) {
+  try {
+    if (typeof exten !== 'string' && typeof enabled !== 'boolean') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+
+    if (extensions[exten]) { // the exten is an extension
+
+      if (enabled) {
+        logger.info(IDLOG, 'set cfu status to ' + enabled + ' for extension ' + exten + ' to ' + to);
+        extensions[exten].setCfu(to);
+
+        // disable the call forward to voicemail because the call forward set the same property in the database
+        evtExtenCfuVmChanged(exten, false);
+
+      } else {
+        logger.info(IDLOG, 'set cfu status to ' + enabled + ' for extension ' + exten);
+        extensions[exten].disableCfu();
+      }
+
+      // emit the event
+      logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
+      astProxy.emit(EVT_EXTEN_CHANGED, extensions[exten]);
+      logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CFU_CHANGED + ' for extension ' + exten);
+      astProxy.emit(EVT_EXTEN_CFU_CHANGED, {
+        exten: exten,
+        enabled: enabled,
+        to: to
+      });
+    } else {
+      logger.warn(IDLOG, 'try to set call forward on unavailable status of non existent extension ' + exten);
+    }
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Updates the extension unconditional call forward to voicemail status.
  *
  * @method evtExtenUnconditionalCfVmChanged
@@ -3678,6 +4068,102 @@ function evtExtenUnconditionalCfVmChanged(exten, enabled, vm) {
 
     } else {
       logger.warn(IDLOG, 'try to set call forward to voicemail status of non existent extension ' + exten);
+    }
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Updates the extension call forward busy to voicemail status.
+ *
+ * @method evtExtenCfbVmChanged
+ * @param {string} exten The extension number
+ * @param {boolean} enabled True if the call forward busy to voicemail is enabled
+ * @param {string} [vm] The destination voicemail number of the call forward busy
+ * @private
+ */
+function evtExtenCfbVmChanged(exten, enabled, vm) {
+  try {
+    // check parameters
+    if (typeof exten !== 'string' && typeof enabled !== 'boolean') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+
+    if (extensions[exten]) {
+
+      if (enabled) {
+        logger.info(IDLOG, 'set cfbvm status to ' + enabled + ' for extension ' + exten + ' to voicemail ' + vm);
+        extensions[exten].setCfbVm(vm);
+
+        // disable the call forward busy because the call forward to voicemail set the same property in the database
+        evtExtenCfbChanged(exten, false);
+
+      } else {
+        logger.info(IDLOG, 'set cfbvm status to ' + enabled + ' for extension ' + exten);
+        extensions[exten].disableCfbVm();
+      }
+
+      // emit the events
+      logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
+      astProxy.emit(EVT_EXTEN_CHANGED, extensions[exten]);
+      logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CFVM_CHANGED + ' for extension ' + exten);
+      astProxy.emit(EVT_EXTEN_CFBVM_CHANGED, {
+        exten: exten,
+        enabled: enabled,
+        vm: vm
+      });
+
+    } else {
+      logger.warn(IDLOG, 'try to set call forward busy to voicemail status of non existent extension ' + exten);
+    }
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Updates the extension call forward unavailable to voicemail status.
+ *
+ * @method evtExtenCfuVmChanged
+ * @param {string} exten The extension number
+ * @param {boolean} enabled True if the call forward unavailable to voicemail is enabled
+ * @param {string} [vm] The destination voicemail number of the call forward unavailable
+ * @private
+ */
+function evtExtenCfuVmChanged(exten, enabled, vm) {
+  try {
+    // check parameters
+    if (typeof exten !== 'string' && typeof enabled !== 'boolean') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+
+    if (extensions[exten]) {
+
+      if (enabled) {
+        logger.info(IDLOG, 'set cfuvm status to ' + enabled + ' for extension ' + exten + ' to voicemail ' + vm);
+        extensions[exten].setCfuVm(vm);
+
+        // disable the call forward unavailable because the call forward to voicemail set the same property in the database
+        evtExtenCfuChanged(exten, false);
+
+      } else {
+        logger.info(IDLOG, 'set cfuvm status to ' + enabled + ' for extension ' + exten);
+        extensions[exten].disableCfuVm();
+      }
+
+      // emit the events
+      logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CHANGED + ' for extension ' + exten);
+      astProxy.emit(EVT_EXTEN_CHANGED, extensions[exten]);
+      logger.info(IDLOG, 'emit event ' + EVT_EXTEN_CFUVM_CHANGED + ' for extension ' + exten);
+      astProxy.emit(EVT_EXTEN_CFUVM_CHANGED, {
+        exten: exten,
+        enabled: enabled,
+        vm: vm
+      });
+
+    } else {
+      logger.warn(IDLOG, 'try to set call forward unavailable to voicemail status of non existent extension ' + exten);
     }
   } catch (err) {
     logger.error(IDLOG, err.stack);
@@ -3784,7 +4270,7 @@ function setDnd(exten, activate, cb) {
 function isExtenDnd(exten) {
   try {
     if (typeof exten !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     if (extensions[exten]) {
       return extensions[exten].getDnd();
@@ -3805,12 +4291,96 @@ function isExtenDnd(exten) {
 function isExtenCf(exten) {
   try {
     if (typeof exten !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     if (extensions[exten]) {
       return !(extensions[exten].getCf() === '');
     }
     logger.warn(IDLOG, 'checking cf status of non existent extension "' + exten + '"');
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Check if the extension has call forward busy enabled.
+ *
+ * @method isExtenCfb
+ * @param {string} exten The extension identifier
+ * @return {boolean} True if the extension has call forward busy enabled.
+ */
+function isExtenCfb(exten) {
+  try {
+    if (typeof exten !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    if (extensions[exten]) {
+      return !(extensions[exten].getCfb() === '');
+    }
+    logger.warn(IDLOG, 'checking cfb status of non existent extension "' + exten + '"');
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Check if the extension has call forward on unavailable enabled.
+ *
+ * @method isExtenCfu
+ * @param {string} exten The extension identifier
+ * @return {boolean} True if the extension has call forward on unavailable enabled.
+ */
+function isExtenCfu(exten) {
+  try {
+    if (typeof exten !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    if (extensions[exten]) {
+      return !(extensions[exten].getCfu() === '');
+    }
+    logger.warn(IDLOG, 'checking cfu status of non existent extension "' + exten + '"');
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Check if the extension has call forward on busy to voicemail enabled.
+ *
+ * @method isExtenCfbVm
+ * @param {string} exten The extension identifier
+ * @return {boolean} True if the extension has call forward on busy to voicemail enabled.
+ */
+function isExtenCfbVm(exten) {
+  try {
+    if (typeof exten !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    if (extensions[exten]) {
+      return !(extensions[exten].getCfbVm() === '');
+    }
+    logger.warn(IDLOG, 'checking cfbVm status of non existent extension "' + exten + '"');
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Check if the extension has call forward on unavailable to voicemail enabled.
+ *
+ * @method isExtenCfuVm
+ * @param {string} exten The extension identifier
+ * @return {boolean} True if the extension has call forward on unavailable to voicemail enabled.
+ */
+function isExtenCfuVm(exten) {
+  try {
+    if (typeof exten !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    if (extensions[exten]) {
+      return !(extensions[exten].getCfuVm() === '');
+    }
+    logger.warn(IDLOG, 'checking cfbVm status of non existent extension "' + exten + '"');
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
@@ -3826,12 +4396,54 @@ function isExtenCf(exten) {
 function getExtenCfValue(exten) {
   try {
     if (typeof exten !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     if (extensions[exten]) {
       return extensions[exten].getCf();
     }
     logger.warn(IDLOG, 'returning cf value of non existent extension "' + exten + '"');
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Returns the call forward busy value.
+ *
+ * @method getExtenCfbValue
+ * @param {string} exten The extension identifier
+ * @return {srting} The call forward busy value.
+ */
+function getExtenCfbValue(exten) {
+  try {
+    if (typeof exten !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    if (extensions[exten]) {
+      return extensions[exten].getCfb();
+    }
+    logger.warn(IDLOG, 'returning cfb value of non existent extension "' + exten + '"');
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Returns the call forward on unavailable value.
+ *
+ * @method getExtenCfuValue
+ * @param {string} exten The extension identifier
+ * @return {srting} The call forward on unavailable value.
+ */
+function getExtenCfuValue(exten) {
+  try {
+    if (typeof exten !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    if (extensions[exten]) {
+      return extensions[exten].getCfu();
+    }
+    logger.warn(IDLOG, 'returning cfu value of non existent extension "' + exten + '"');
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
@@ -3847,7 +4459,7 @@ function getExtenCfValue(exten) {
 function isExtenCfVm(exten) {
   try {
     if (typeof exten !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     if (extensions[exten]) {
       return !(extensions[exten].getCfVm() === '');
@@ -3893,6 +4505,184 @@ function setUnconditionalCf(exten, activate, to, cb) {
 
     } else {
       var str = 'try to set unconditional call forward status of non existent extension ' + exten;
+      logger.warn(IDLOG, str);
+      cb(str);
+    }
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+/**
+ * Enable/disable the call forward busy status of the endpoint. The used plugin command _cfbSet_
+ * does not generate any asterisk events, so simulates it.
+ *
+ * @method setCfb
+ * @param {string} exten The extension number
+ * @param {boolean} activate True if the call forward busy must be enabled
+ * @param {string} [to] The destination number of the call forward busy to be set
+ * @param {function} cb The callback function
+ */
+function setCfb(exten, activate, to, cb) {
+  try {
+    if (typeof exten !== 'string' && typeof activate !== 'boolean') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+
+    if (extensions[exten]) {
+
+      // this command does not generate any asterisk event, so if it's successful, it simulate the event
+      astProxy.doCmd({
+        command: 'cfbSet',
+        exten: exten,
+        activate: activate,
+        val: to
+      }, function(err) {
+
+        cb(err);
+        if (err === null) {
+          evtExtenCfbChanged(exten, activate, to);
+        }
+      });
+
+    } else {
+      var str = 'try to set call forward busy status of non existent extension ' + exten;
+      logger.warn(IDLOG, str);
+      cb(str);
+    }
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+/**
+ * Enable/disable the call forward busy to voicemail status of the endpoint. The used plugin command _cfbVmSet_
+ * does not generate any asterisk events, so simulates it.
+ *
+ * @method setCfbVm
+ * @param {string} exten The extension number
+ * @param {boolean} activate True if the call forward busy to voicemail must be enabled
+ * @param {string} [to] The destination voicemail identifier of the call forward busy to be set
+ * @param {function} cb The callback function
+ */
+function setCfbVm(exten, activate, to, cb) {
+  try {
+    // check parameters
+    if (typeof exten !== 'string' && typeof activate !== 'boolean') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+
+    if (extensions[exten]) {
+
+      // this command does not generate any asterisk event, so if it's successful, it simulate the event
+      astProxy.doCmd({
+        command: 'cfbVmSet',
+        exten: exten,
+        activate: activate,
+        val: to
+      }, function(err, resp) {
+
+        cb(err, resp);
+        if (err === null) {
+          evtExtenCfbVmChanged(exten, activate, to);
+        }
+      });
+
+    } else {
+      var str = 'try to set call forward busy to voicemail of non existent extension ' + exten;
+      logger.warn(IDLOG, str);
+      cb(str);
+    }
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+/**
+ * Enable/disable the call forward unavailable to voicemail status of the endpoint. The used plugin command _cfuVmSet_
+ * does not generate any asterisk events, so simulates it.
+ *
+ * @method setCfuVm
+ * @param {string} exten The extension number
+ * @param {boolean} activate True if the call forward unavailable to voicemail must be enabled
+ * @param {string} [to] The destination voicemail identifier of the call forward unavailable to be set
+ * @param {function} cb The callback function
+ */
+function setCfuVm(exten, activate, to, cb) {
+  try {
+    // check parameters
+    if (typeof exten !== 'string' && typeof activate !== 'boolean') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+
+    if (extensions[exten]) {
+
+      // this command does not generate any asterisk event, so if it's successful, it simulate the event
+      astProxy.doCmd({
+        command: 'cfuVmSet',
+        exten: exten,
+        activate: activate,
+        val: to
+      }, function(err, resp) {
+
+        cb(err, resp);
+        if (err === null) {
+          evtExtenCfuVmChanged(exten, activate, to);
+        }
+      });
+
+    } else {
+      var str = 'try to set call forward unavailable to voicemail of non existent extension ' + exten;
+      logger.warn(IDLOG, str);
+      cb(str);
+    }
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+/**
+ * Enable/disable the call forward unavailable status of the endpoint. The used plugin command _cfuSet_
+ * does not generate any asterisk events, so simulates it.
+ *
+ * @method setCfu
+ * @param {string} exten The extension number
+ * @param {boolean} activate True if the call forward unavailable must be enabled
+ * @param {string} [to] The destination number of the call forward unavailable to be set
+ * @param {function} cb The callback function
+ */
+function setCfu(exten, activate, to, cb) {
+  try {
+    if (typeof exten !== 'string' && typeof activate !== 'boolean') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+
+    if (extensions[exten]) {
+
+      // this command does not generate any asterisk event, so if it's successful, it simulate the event
+      astProxy.doCmd({
+        command: 'cfuSet',
+        exten: exten,
+        activate: activate,
+        val: to
+      }, function(err) {
+
+        cb(err);
+        if (err === null) {
+          evtExtenCfuChanged(exten, activate, to);
+        }
+      });
+
+    } else {
+      var str = 'try to set call forward unavailable status of non existent extension ' + exten;
       logger.warn(IDLOG, str);
       cb(str);
     }
@@ -3966,7 +4756,7 @@ function evtNewVoicemailMessage(data) {
       typeof data.voicemail !== 'string' && typeof data.context !== 'string' &&
       typeof data.countOld !== 'string' && typeof data.countNew !== 'string') {
 
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // emit the event
@@ -4013,7 +4803,7 @@ function evtNewCdr(data) {
       typeof data.billableseconds !== 'string' && typeof data.destinationcontext !== 'string' &&
       typeof data.destinationchannel !== 'string') {
 
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // emit the event
@@ -4041,7 +4831,7 @@ function evtUpdateVoicemailMessages(data) {
     if (typeof data !== 'object' &&
       typeof data.voicemail !== 'string' && typeof data.context !== 'string') {
 
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // emit the event
@@ -4063,7 +4853,7 @@ function evtRemoveQueueWaitingCaller(data) {
   try {
     // check parameter
     if (typeof data !== 'object' || typeof data.queue !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     logger.info(IDLOG, 'queue waiting caller ' + data.channel + ' has left the queue ' + data.queue);
@@ -4094,7 +4884,7 @@ function evtRemoveMeetmeUserConf(data) {
       typeof data.extenId !== 'string' ||
       typeof data.confId !== 'string') {
 
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     logger.info(IDLOG, 'user id "' + data.userId + '" with exten id "' + data.extenId + '" has left the meetme conf ' + data.confId);
     astProxy.doCmd({
@@ -4123,7 +4913,7 @@ function evtRemoveMeetmeConf(data) {
     if (typeof data !== 'object' ||
       typeof data.confId !== 'string') {
 
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     logger.info(IDLOG, 'meetme conf "' + data.confId + '" has been ended');
     delete conferences[data.confId];
@@ -4156,7 +4946,7 @@ function evtAddMeetmeUserConf(data) {
       typeof data.extenId !== 'string' ||
       typeof data.confId !== 'string') {
 
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     logger.info(IDLOG, 'user id "' + data.userId + '" with exten id "' + data.extenId + '" has joined the meetme conf ' + data.confId);
     astProxy.doCmd({
@@ -4198,7 +4988,7 @@ function evtMeetmeUserConfMute(data) {
       typeof data.userId !== 'string' ||
       typeof data.confId !== 'string') {
 
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     logger.info(IDLOG, 'mute status of user id "' + data.userId + '" of meetme conf "' + data.confId + '" has been changed to ' + data.mute);
     astProxy.doCmd({
@@ -4225,7 +5015,7 @@ function evtNewQueueWaitingCaller(data) {
   try {
     // check parameter
     if (typeof data !== 'object') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // create new waiting caller and add it to relative queue
@@ -4259,7 +5049,7 @@ function evtSpyStartConversation(data) {
   try {
     // check parameter
     if (typeof data !== 'object' && typeof data.spierId !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     astProxy.doCmd({
@@ -4294,7 +5084,7 @@ function evtConversationDialing(data) {
       typeof data.chDestExten !== 'string' &&
       typeof data.chSourceExten !== 'string') {
 
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // if the destination is an extension, it emits the dialing event with caller
@@ -4612,7 +5402,7 @@ function addPrefix(num) {
   try {
     // check parameter
     if (typeof num !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // replace plus sign used in prefix with the '00' sequence
@@ -5088,7 +5878,7 @@ function evtHangupConversation(data) {
       typeof data.channel !== 'string' ||
       typeof data.channelExten !== 'string') {
 
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     // check the presence of recording status to be removed
     var convid;
@@ -7288,7 +8078,7 @@ function setRecordStatusMuteConversations(convid) {
   try {
     // check parameter
     if (typeof convid !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // set the recording status mute of all the conversations with the specified convid
@@ -7782,9 +8572,13 @@ exports.on = on;
 exports.call = call;
 exports.start = start;
 exports.visit = visit;
+exports.setCfb = setCfb;
+exports.setCfu = setCfu;
 exports.setDnd = setDnd;
 exports.isTrunk = isTrunk;
 exports.isExten = isExten;
+exports.setCfbVm = setCfbVm;
+exports.setCfuVm = setCfuVm;
 exports.EVT_READY = EVT_READY;
 exports.setLogger = setLogger;
 exports.setPrefix = setPrefix;
@@ -7794,12 +8588,16 @@ exports.evtRename = evtRename;
 exports.evtNewCdr = evtNewCdr;
 exports.isExtenCf = isExtenCf;
 exports.getAlarms = getAlarms;
+exports.isExtenCfb = isExtenCfb;
+exports.isExtenCfu = isExtenCfu;
 exports.isExtenDnd = isExtenDnd;
 exports.isExtenCfVm = isExtenCfVm;
 exports.setAstCodes = setAstCodes;
 exports.EVT_NEW_CDR = EVT_NEW_CDR;
 exports.createAlarm = createAlarm;
 exports.deleteAlarm = deleteAlarm;
+exports.isExtenCfbVm = isExtenCfbVm;
+exports.isExtenCfuVm = isExtenCfuVm;
 exports.setCompDbconn = setCompDbconn;
 exports.getExtensions = getExtensions;
 exports.getConference = getConference;
@@ -7816,6 +8614,8 @@ exports.getJSONParkings = getJSONParkings;
 exports.recordAudioFile = recordAudioFile;
 exports.redirectParking = redirectParking;
 exports.getExtenCfValue = getExtenCfValue;
+exports.getExtenCfbValue = getExtenCfbValue;
+exports.getExtenCfuValue = getExtenCfuValue;
 exports.EVT_EXTEN_HANGUP = EVT_EXTEN_HANGUP;
 exports.getJSONQueuesQOS = getJSONQueuesQOS;
 exports.muteConversation = muteConversation;
@@ -7830,7 +8630,11 @@ exports.setCompCallerNote = setCompCallerNote;
 exports.queueMemberRemove = queueMemberRemove;
 exports.EVT_EXTEN_CHANGED = EVT_EXTEN_CHANGED;
 exports.EVT_EXTEN_CF_CHANGED = EVT_EXTEN_CF_CHANGED;
+exports.EVT_EXTEN_CFB_CHANGED = EVT_EXTEN_CFB_CHANGED;
+exports.EVT_EXTEN_CFU_CHANGED = EVT_EXTEN_CFU_CHANGED;
 exports.EVT_EXTEN_CFVM_CHANGED = EVT_EXTEN_CFVM_CHANGED;
+exports.EVT_EXTEN_CFBVM_CHANGED = EVT_EXTEN_CFBVM_CHANGED;
+exports.EVT_EXTEN_CFUVM_CHANGED = EVT_EXTEN_CFUVM_CHANGED;
 exports.EVT_EXTEN_DND_CHANGED = EVT_EXTEN_DND_CHANGED;
 exports.EVT_TRUNK_CHANGED = EVT_TRUNK_CHANGED;
 exports.EVT_EXTEN_DIALING = EVT_EXTEN_DIALING;
