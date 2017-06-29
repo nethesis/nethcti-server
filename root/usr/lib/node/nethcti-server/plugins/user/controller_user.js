@@ -1527,8 +1527,8 @@ function getPresenceList(username) {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     var result = [
-      userPresence.STATUS.dnd,
       userPresence.STATUS.online,
+      userPresence.STATUS.dnd,
       userPresence.STATUS.callforward
     ];
     var allendpoints = users[username].getAllEndpoints();
