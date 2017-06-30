@@ -195,6 +195,7 @@ function setCompAuthorization(comp) {
     * 1. [`voicemail/listen/:id`](#listenget)
     * 1. [`voicemail/download/:id`](#downloadget)
     * 1. [`voicemail/listen_custom_msg/:type`](#listenget)
+    * 1. [`voicemail/download_custom_msg/:type`](#listenget)
     *
     * ---
     *
@@ -226,13 +227,16 @@ function setCompAuthorization(comp) {
     *
     * ### <a id="listenget">**`voicemail/listen/:id`**</a>
     *
-    * The user can listen the voice message of the user. The _id_ must be the identifier of the voice message in the database.
+    * The user can listen the voice message of the user. The _id_ must be the identifier of the
+    * voice message in the database.
     *
     * ---
     *
     * ### <a id="downloadget">**`voicemail/download/:id`**</a>
     *
-    * The user can download the voice message of the user. The _id_ must be the identifier of the voice message in the database..
+    * The user can download the voice message of the user. The _id_ must be the identifier of the
+    * voice message in the database. It returns the filename that can be downloaded getting it from
+    * <SERVER>/webrest/static/<FILENAME>.
     *
     * ---
     *
@@ -246,6 +250,22 @@ function setCompAuthorization(comp) {
     * Example JSON response:
     *
     *     "UklgRa..."
+    *
+    * ---
+    *
+    * ### <a id="download_custom_msgget">**`voicemail/download_custom_msg/:type`**</a>
+    *
+    * The user can download the custom voice message for the specified type. It returns the filename
+    * that can be downloaded getting it from <SERVER>/webrest/static/<FILENAME>. The request must
+    * contains the following parameters:
+    *
+    * * `type: ("unavail"|"busy"|"greet") the type of the custom message`
+    *
+    * Example JSON response:
+    *
+    *     { "filename": "custom_msg_vm_201alessandro_busy.wav" }
+    *     { "filename": "custom_msg_vm_201alessandro_unavail.wav" }
+    *     { "filename": "custom_msg_vm_201alessandro_greet.wav" }
     *
     * ---
     * <br>
@@ -304,13 +324,15 @@ function setCompAuthorization(comp) {
          *   @param {string} download/:id To download the voicemail message of the user
          *   @param {string} new_counters To get the number of new voice messages of all voicemails
          *   @param {string} listen_custom_msg/:type To listen the custom message for the voicemail
+         *   @param {string} download_custom_msg/:type To download the custom message for the voicemail
          */
         'get': [
           'list/:type',
           'listen/:id',
           'download/:id',
           'new_counters',
-          'listen_custom_msg/:type'
+          'listen_custom_msg/:type',
+          'download_custom_msg/:type'
         ],
 
         /**
@@ -490,6 +512,13 @@ function setCompAuthorization(comp) {
         try {
           // extract the username added in the authentication step
           var username = req.headers.authorization_user;
+          if (typeof req.params !== 'object' ||
+            typeof req.params.type !== 'string' ||
+            (req.params.type !== 'unavail' && req.params.type !== 'busy' && req.params.type !== 'greet')) {
+
+            compUtil.net.sendHttp400(IDLOG, res);
+            return;
+          }
           var vm = compUser.getEndpointVoicemail(username);
           if (typeof vm !== 'object' || typeof vm.getId !== 'function') {
             var str = 'customizing voicemail message: no voicemail for user "' + username + '": "' + JSON.stringify(vm) + '"';
@@ -565,7 +594,7 @@ function setCompAuthorization(comp) {
                   }
 
                   logger.info(IDLOG, 'download voice message with id "' + req.params.id + '" of the voicemail "' + vmid + '" successfully by the user "' + username + '"');
-                  var filename = "voicemail" + req.params.id + username + "tmpaudio.wav";
+                  var filename = 'voicemail' + req.params.id + username + 'tmpaudio.wav';
                   compStaticHttp.saveFile(filename, result);
                   res.send(200, filename);
 
@@ -587,6 +616,58 @@ function setCompAuthorization(comp) {
         }
       },
 
+      /**
+       * Download the custom voice message for the specified type of the user with the following REST API:
+       *
+       *     download_custom_msg
+       *
+       * @method download_custom_msg
+       * @param {object} req The client request
+       * @param {object} res The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      download_custom_msg: function(req, res, next) {
+        try {
+          console.log('REPLACE: ', JSON.stringify("VAR", null,  2));
+          // extract the username added in the authentication step
+          var username = req.headers.authorization_user;
+          if (typeof req.params !== 'object' ||
+            typeof req.params.type !== 'string' ||
+            (req.params.type !== 'unavail' && req.params.type !== 'busy' && req.params.type !== 'greet')) {
+
+            compUtil.net.sendHttp400(IDLOG, res);
+            return;
+          }
+          var vm = compUser.getEndpointVoicemail(username);
+          if (typeof vm !== 'object' || typeof vm.getId !== 'function') {
+            var str = 'customizing voicemail message: no voicemail for user "' + username + '": "' + JSON.stringify(vm) + '"';
+            logger.warn(IDLOG, str);
+            compUtil.net.sendHttp500(IDLOG, res, str);
+            return;
+          }
+          vm = vm.getId();
+          compVoicemail.listenCustomMessage(vm, req.params.type, function(err, result) {
+            try {
+              if (err) {
+                logger.error(IDLOG, 'downloading custom message "' + req.params.type + '" of vm "' + vm + '" by the user "' + username + '"');
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                return;
+              }
+              logger.info(IDLOG, 'download custom message "' + req.params.type + '" of vm "' + vm + '" successfully by the user "' + username + '"');
+              var filename = 'custom_msg_vm_' + vm + '' + username + '_' + req.params.type + '.wav';
+              compStaticHttp.saveFile(filename, result);
+              res.send(200, filename);
+
+            } catch (err3) {
+              logger.error(IDLOG, err3.stack);
+              compUtil.net.sendHttp500(IDLOG, res, err3.toString());
+            }
+          });
+        } catch (err) {
+          logger.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
+      },
 
       /**
        * Gets the list of all voicemail messages of the user with the following REST API:
@@ -706,14 +787,15 @@ function setCompAuthorization(comp) {
     exports.delete = voicemail.delete;
     exports.download = voicemail.download;
     exports.setLogger = setLogger;
+    exports.custom_msg = voicemail.custom_msg;
     exports.setCompUser = setCompUser;
     exports.setCompUtil = setCompUtil;
-    exports.custom_msg = voicemail.custom_msg;
     exports.new_counters = voicemail.new_counters;
     exports.setCompVoicemail = setCompVoicemail;
     exports.setCompStaticHttp = setCompStaticHttp;
-    exports.setCompAuthorization = setCompAuthorization;
     exports.listen_custom_msg = voicemail.listen_custom_msg;
+    exports.setCompAuthorization = setCompAuthorization;
+    exports.download_custom_msg = voicemail.download_custom_msg;
 
   } catch (err) {
     logger.error(IDLOG, err.stack);

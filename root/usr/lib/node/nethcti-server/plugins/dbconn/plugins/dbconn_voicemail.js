@@ -361,7 +361,7 @@ function getVmMailboxFromDbId(dbid, cb) {
 /**
  * Add an entry into the asteriskcdrdb.voicemessages with the audio message content.
  *
- * @method setCustomVmAudioMsg
+ * @method getCustomAudioMsgPath
  * @param {string} vm The voicemail identifier
  * @param {string} type The type of the audio message ("unavail"|"busy"|"greet")
  * @return {string} The path

@@ -270,10 +270,10 @@ function httpServerCb(req, res) {
             });
           }
           // Handle temp files: delete after serving
-          else if (path.basename(req.url).indexOf('tmpaudio') >= 0) {
+          else if (path.basename(req.url).indexOf('tmpaudio') !== -1 ||
+            path.basename(req.url).indexOf('custom_msg_vm_') === 0) {
 
             fs.unlink(path.join(webroot, req.url), function(err2) {
-
               if (err2) {
                 logger.error(IDLOG, 'deleting temp file ' + path.join(webroot, req.url) + ': ' + err2);
               } else {
@@ -296,6 +296,7 @@ function httpServerCb(req, res) {
 
 /**
  * Save given data to a file inside the webroot directory.
+ * If the file exists it will be overwritten.
  *
  * @method saveFile
  * @param {string} dstpath The path of destination file
