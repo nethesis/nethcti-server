@@ -392,6 +392,26 @@ function updateVoiceMessages(ev) {
 }
 
 /**
+ * Delete custom message for the specified voicemail.
+ *
+ * @method deleteCustomMessage
+ * @param {string} vm The voicemail id
+ * @param {string} type The type of the custom message
+ * @param {function} cb The callback function
+ * @private
+ */
+function deleteCustomMessage(vm, type, cb) {
+  try {
+    if (typeof vm !== 'string' || typeof type !== 'string' || typeof cb !== 'function') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    dbconn.deleteCustomMessage(vm, type, cb);
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Delete the specified voice message.
  *
  * @method deleteVoiceMessage
@@ -405,7 +425,6 @@ function deleteVoiceMessage(id, cb) {
     if (typeof id !== 'string' || typeof cb !== 'function') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
     dbconn.deleteVoiceMessage(id, cb);
 
   } catch (err) {
@@ -659,6 +678,7 @@ exports.setCompUser = setCompUser;
 exports.getVmIdFromDbId = getVmIdFromDbId;
 exports.deleteVoiceMessage = deleteVoiceMessage;
 exports.listenVoiceMessage = listenVoiceMessage;
+exports.deleteCustomMessage = deleteCustomMessage;
 exports.listenCustomMessage = listenCustomMessage;
 exports.setCustomVmAudioMsg = setCustomVmAudioMsg;
 exports.EVT_NEW_VOICE_MESSAGE = EVT_NEW_VOICE_MESSAGE;

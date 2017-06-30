@@ -224,6 +224,50 @@ function deleteVoiceMessage(dbid, cb) {
 }
 
 /**
+ * Delete a custom voice message from the database table _asteriskcdrdb.voicemessages_.
+ *
+ * @method deleteCustomMessage
+ * @param {string} vm The voicemail id
+ * @param {string} type The type of the custom message
+ * @param {function} cb The callback function
+ */
+function deleteCustomMessage(vm, type, cb) {
+  try {
+    if (typeof vm !== 'string' || typeof type !== 'string' || typeof cb !== 'function') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    var path = getCustomAudioMsgPath(vm, type);
+    compDbconnMain.models[compDbconnMain.JSON_KEYS.VOICEMAIL].find({
+      where: ['dir=? AND mailboxuser=?', path, vm]
+    }).then(function(task) {
+      try {
+        if (task) {
+          task.destroy().then(function() {
+            logger.info(IDLOG, 'deleted custom message "' + type + '" for vm "' + vm + '"');
+            cb();
+          });
+        } else {
+          var str = 'deleting custom message "' + type + '" for vm "' + vm + '": entry not found';
+          logger.warn(IDLOG, str);
+          cb(null, null);
+        }
+      } catch (error) {
+        logger.error(IDLOG, error.stack);
+        cb(error);
+      }
+    }, function(err) { // manage the error
+      logger.error(IDLOG, 'custom message "' + type + '" for vm "' + vm + '" with db id "' + dbid + '" to delete not found: ' + err.toString());
+      cb(err.toString());
+    });
+    compDbconnMain.incNumExecQueries();
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+/**
  * Returns audio file from the id mailbox.
  *
  * @method listenVoiceMessage
@@ -449,6 +493,7 @@ function setCustomVmAudioMsg(vm, type, audio, cb) {
 apiList.getVoicemailMsg = getVoicemailMsg;
 apiList.deleteVoiceMessage = deleteVoiceMessage;
 apiList.listenVoiceMessage = listenVoiceMessage;
+apiList.deleteCustomMessage = deleteCustomMessage;
 apiList.listenCustomMessage = listenCustomMessage;
 apiList.setCustomVmAudioMsg = setCustomVmAudioMsg;
 apiList.getVmMailboxFromDbId = getVmMailboxFromDbId;

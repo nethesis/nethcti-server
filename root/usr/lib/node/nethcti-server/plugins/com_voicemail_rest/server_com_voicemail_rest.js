@@ -286,7 +286,7 @@ function config(path) {
 
   // check file presence
   if (!fs.existsSync(path)) {
-    throw new Error(path + ' doesn\'t exist');
+    throw new Error(path + ' does not exist');
   }
 
   // read configuration file
@@ -318,7 +318,7 @@ function config(path) {
  */
 function start() {
   try {
-    var p, root, get, post, k;
+    var p, root, get, post, del, k;
 
     /**
      * The REST server.
@@ -344,6 +344,7 @@ function start() {
       get = plugins[p].api.get;
       root = plugins[p].api.root;
       post = plugins[p].api.post;
+      del = plugins[p].api.del;
 
       // add routing functions
       for (k in get) {
@@ -353,6 +354,10 @@ function start() {
       for (k in post) {
         logger.info(IDLOG, 'Binding POST: /' + root + '/' + post[k]);
         server.post('/' + root + '/' + post[k], execute);
+      }
+      for (k in del) {
+        logger.info(IDLOG, 'Binding DEL: /' + root + '/' + del[k]);
+        server.del('/' + root + '/' + del[k], execute);
       }
     }
 

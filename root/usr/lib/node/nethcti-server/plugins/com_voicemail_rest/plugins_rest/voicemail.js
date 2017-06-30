@@ -304,6 +304,26 @@ function setCompAuthorization(comp) {
     *
     *     { "audio": "data:audio/wav;base64,1234..." }
     *
+    *
+    * <br>
+    *
+    * # DELETE requests
+    *
+    * 1. [`voicemail/custom_msg`](#custom_msgdel)
+    *
+    * ---
+    *
+    * ### <a id="custom_msgdel">**`voicemail/custom_msg/:type`**</a>
+    *
+    * Delete the specified custom voicemail message. The request must contains the following parameters:
+    *
+    * * `type: ("unavail"|"busy"|"greet") the type of the custom message`
+    *
+    * Example JSON request parameters:
+    *
+    *     { "type": "unavail" }
+    *
+    *
     * @class plugin_rest_voicemail
     * @static
     */
@@ -349,7 +369,18 @@ function setCompAuthorization(comp) {
           'custom_msg'
         ],
         'head': [],
-        'del': []
+
+        /**
+         * REST API to be requested using HTTP DEL request.
+         *
+         * @property post
+         * @type {array}
+         *
+         *   @param {string} custom_msg To delete a custom voicemail messages of the user
+         */
+        'del': [
+          'custom_msg/:type'
+        ]
       },
 
       /**
@@ -628,7 +659,7 @@ function setCompAuthorization(comp) {
        */
       download_custom_msg: function(req, res, next) {
         try {
-          console.log('REPLACE: ', JSON.stringify("VAR", null,  2));
+          console.log(req.params);
           // extract the username added in the authentication step
           var username = req.headers.authorization_user;
           if (typeof req.params !== 'object' ||
@@ -670,14 +701,14 @@ function setCompAuthorization(comp) {
       },
 
       /**
-       * Gets the list of all voicemail messages of the user with the following REST API:
+       * Delte the specified voicemail message of the user with the following REST API:
        *
        *     delete
        *
        * @method delete
-       * @param {object}   req  The client request.
-       * @param {object}   res  The client response.
-       * @param {function} next Function to run the next handler in the chain.
+       * @param {object} req The client request
+       * @param {object} res The client response
+       * @param {function} next Function to run the next handler in the chain
        */
       delete: function(req, res, next) {
         try {
@@ -733,9 +764,10 @@ function setCompAuthorization(comp) {
       },
 
       /**
-       * Customize the audio message for the voicemail of the user with the following REST API:
+       * Customize/delete the audio message for the voicemail of the user with the following REST API:
        *
-       *     custom_msg
+       *     POST custom_msg
+       *     DELETE custom_msg/:type
        *
        * @method delete
        * @param {object} req The client request
@@ -744,37 +776,13 @@ function setCompAuthorization(comp) {
        */
       custom_msg: function(req, res, next) {
         try {
-          var username = req.headers.authorization_user;
-          if (typeof req.params !== 'object' ||
-            typeof req.params.type !== 'string' ||
-            (req.params.type !== 'unavail' && req.params.type !== 'busy' && req.params.type !== 'greet') ||
-            typeof req.params.audio !== 'string') {
-
-            compUtil.net.sendHttp400(IDLOG, res);
-            return;
+          if (req.method.toLowerCase() === 'delete') {
+            customMsgDelete(req, res, next);
+          } else if (req.method.toLowerCase() === 'post') {
+            customMsgPost(req, res, next);
+          } else {
+            logger.warn(IDLOG, 'unknown requested method ' + req.method);
           }
-          var vm = compUser.getEndpointVoicemail(username);
-          if (typeof vm !== 'object' || typeof vm.getId !== 'function') {
-            var str = 'customizing voicemail message: no voicemail for user "' + username + '": "' + JSON.stringify(vm) + '"';
-            logger.warn(IDLOG, str);
-            compUtil.net.sendHttp500(IDLOG, res, str);
-            return;
-          }
-          vm = vm.getId();
-          compVoicemail.setCustomVmAudioMsg(vm, req.params.type, req.params.audio, function(err) {
-            try {
-              if (err) {
-                logger.error(IDLOG, 'setting customized vm "' + req.params.type + '" message for user "' + username + '" for vm "' + vm + '"');
-                compUtil.net.sendHttp500(IDLOG, res, err.toString());
-                return;
-              }
-              logger.info(IDLOG, 'customized vm "' + req.params.type + '" message for user "' + username + '" for vm "' + vm + '" has been set successfully');
-              res.send(200);
-            } catch (error) {
-              logger.error(IDLOG, error.stack);
-              compUtil.net.sendHttp500(IDLOG, res, error.toString());
-            }
-          });
         } catch (err) {
           logger.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -801,3 +809,102 @@ function setCompAuthorization(comp) {
     logger.error(IDLOG, err.stack);
   }
 })();
+
+/**
+ * Upload customized audio message to be listen when the user leave a message.
+ *
+ * @method customMsgPost
+ * @param {object} req The request object
+ * @param {object} res The response object
+ * @param {object} next
+ */
+function customMsgPost(req, res, next) {
+  try {
+    var username = req.headers.authorization_user;
+    if (typeof req.params !== 'object' ||
+      typeof req.params.type !== 'string' ||
+      (req.params.type !== 'unavail' && req.params.type !== 'busy' && req.params.type !== 'greet') ||
+      typeof req.params.audio !== 'string') {
+
+      compUtil.net.sendHttp400(IDLOG, res);
+      return;
+    }
+    var vm = compUser.getEndpointVoicemail(username);
+    if (typeof vm !== 'object' || typeof vm.getId !== 'function') {
+      var str = 'customizing voicemail message: no voicemail for user "' + username + '": "' + JSON.stringify(vm) + '"';
+      logger.warn(IDLOG, str);
+      compUtil.net.sendHttp500(IDLOG, res, str);
+      return;
+    }
+    vm = vm.getId();
+    compVoicemail.setCustomVmAudioMsg(vm, req.params.type, req.params.audio, function(err) {
+      try {
+        if (err) {
+          logger.error(IDLOG, 'setting customized vm "' + req.params.type + '" message for user "' + username + '" for vm "' + vm + '"');
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+          return;
+        }
+        logger.info(IDLOG, 'customized vm "' + req.params.type + '" message for user "' + username + '" for vm "' + vm + '" has been set successfully');
+        res.send(200);
+      } catch (error) {
+        logger.error(IDLOG, error.stack);
+        compUtil.net.sendHttp500(IDLOG, res, error.toString());
+      }
+    });
+  } catch (error) {
+    logger.error(IDLOG, error.stack);
+    compUtil.net.sendHttp500(IDLOG, res, error.toString());
+  }
+}
+
+/**
+ * Delete customized audio message of voicemail.
+ *
+ * @method customMsgDelete
+ * @param {object} req The request object
+ * @param {object} res The response object
+ * @param {object} next
+ */
+function customMsgDelete(req, res, next) {
+  try {
+    // extract the username added in the authentication step
+    var username = req.headers.authorization_user;
+    if (typeof req.params !== 'object' ||
+      typeof req.params.type !== 'string' ||
+      (req.params.type !== 'unavail' && req.params.type !== 'busy' && req.params.type !== 'greet')) {
+
+      compUtil.net.sendHttp400(IDLOG, res);
+      return;
+    }
+    var vm = compUser.getEndpointVoicemail(username);
+    if (typeof vm !== 'object' || typeof vm.getId !== 'function') {
+      var str = 'deleting voicemail message: no voicemail for user "' + username + '": "' + JSON.stringify(vm) + '"';
+      logger.warn(IDLOG, str);
+      compUtil.net.sendHttp500(IDLOG, res, str);
+      return;
+    }
+    vm = vm.getId();
+    compVoicemail.deleteCustomMessage(vm, req.params.type, function(err, result) {
+      try {
+        if (err) {
+          logger.error(IDLOG, 'deleting custom message "' + req.params.type + '" of vm "' + vm + '" by the user "' + username + '"');
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+          return;
+        }
+        if (err === null && result === null) {
+          logger.warn(IDLOG, 'deleting custom message "' + req.params.type + '" of vm "' + vm + '" by user "' + username + '": entry not found');
+          compUtil.net.sendHttp404(IDLOG, res);
+        } else {
+          logger.info(IDLOG, 'deleted custom message "' + req.params.type + '" of vm "' + vm + '" successfully by the user "' + username + '"');
+          res.send(200);
+        }
+      } catch (err) {
+        logger.error(IDLOG, err.stack);
+        compUtil.net.sendHttp500(IDLOG, res, err.toString());
+      }
+    });
+  } catch (error) {
+    logger.error(IDLOG, error.stack);
+    compUtil.net.sendHttp500(IDLOG, res, error.toString());
+  }
+}
