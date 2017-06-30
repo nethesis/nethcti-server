@@ -130,6 +130,7 @@ var compConfigManager;
         *
         * 1. [`astproxy/prefix`](#prefixget)
         * 1. [`astproxy/wakeup`](#wakeupget)
+        * 1. [`astproxy/queues`](#queuesget)
         * 1. [`astproxy/parkings`](#parkingsget)
         * 1. [`astproxy/extensions`](#extensionsget)
         * 1. [`astproxy/extension/:id`](#extensionget)
@@ -158,6 +159,43 @@ var compConfigManager;
          "202-1496073180.call",
          ...
      ]
+        *
+        * ---
+        *
+        * ### <a id="queuesget">**`astproxy/queues`**</a>
+        *
+        * Gets the queues of the operator panel of the user.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "501": {
+               "name": "hold501",
+               "queue": "501",
+               "members": {
+                  "609": {
+                      "type": "dynamic",
+                      "name": "",
+                      "queue": "501",
+                      "member": "609",
+                      "paused": false,
+                      "loggedIn": false,
+                      "callsTakenCount": 0,
+                      "lastCallTimestamp": 0,
+                      "lastPausedInReason": "",
+                      "lastPausedInTimestamp": 0,
+                      "lastPausedOutTimestamp": 0
+                  }
+               },
+               "avgHoldTime": "0",
+               "avgTalkTime": "0",
+               "waitingCallers": {},
+               "completedCallsCount": "0",
+               "abandonedCallsCount": "0",
+               "serviceLevelTimePeriod": "60",
+               "serviceLevelPercentage": "0.0"
+           }
+     }
         *
         * ---
         *
