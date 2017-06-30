@@ -194,6 +194,7 @@ function setCompAuthorization(comp) {
     * 1. [`voicemail/list/:type[?offset=n&limit=n]`](#listget)
     * 1. [`voicemail/listen/:id`](#listenget)
     * 1. [`voicemail/download/:id`](#downloadget)
+    * 1. [`voicemail/listen_custom_msg/:type`](#listenget)
     *
     * ---
     *
@@ -233,6 +234,20 @@ function setCompAuthorization(comp) {
     *
     * The user can download the voice message of the user. The _id_ must be the identifier of the voice message in the database..
     *
+    * ---
+    *
+    * ### <a id="listen_custom_msgget">**`voicemail/listen_custom_msg/:type`**</a>
+    *
+    * The user can listen the custom voice message for the specified type. Returns a string with
+    * audio file content in base64 format or a 404 response status. The request must contains the following parameters:
+    *
+    * * `type: ("unavail"|"busy"|"greet") the type of the custom message`
+    *
+    * Example JSON response:
+    *
+    *     "UklgRa..."
+    *
+    * ---
     * <br>
     *
     * # POST requests
@@ -288,12 +303,14 @@ function setCompAuthorization(comp) {
          *   @param {string} listen/:id To listen the voicemail message of the user
          *   @param {string} download/:id To download the voicemail message of the user
          *   @param {string} new_counters To get the number of new voice messages of all voicemails
+         *   @param {string} listen_custom_msg/:type To listen the custom message for the voicemail
          */
         'get': [
           'list/:type',
           'listen/:id',
           'download/:id',
-          'new_counters'
+          'new_counters',
+          'listen_custom_msg/:type'
         ],
 
         /**
@@ -453,6 +470,53 @@ function setCompAuthorization(comp) {
             }
           });
 
+        } catch (err) {
+          logger.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
+      },
+
+      /**
+       * Listen the custom message of the voicemail of the user with the following REST API:
+       *
+       *     listen_custom_msg
+       *
+       * @method listen
+       * @param {object} req The client request
+       * @param {object} res The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      listen_custom_msg: function(req, res, next) {
+        try {
+          // extract the username added in the authentication step
+          var username = req.headers.authorization_user;
+          var vm = compUser.getEndpointVoicemail(username);
+          if (typeof vm !== 'object' || typeof vm.getId !== 'function') {
+            var str = 'customizing voicemail message: no voicemail for user "' + username + '": "' + JSON.stringify(vm) + '"';
+            logger.warn(IDLOG, str);
+            compUtil.net.sendHttp500(IDLOG, res, str);
+            return;
+          }
+          vm = vm.getId();
+          compVoicemail.listenCustomMessage(vm, req.params.type, function(err, result) {
+            try {
+              if (err) {
+                logger.error(IDLOG, 'listening customized vm "' + req.params.type + '" message for user "' + username + '" for vm "' + vm + '"');
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                return;
+              }
+              if (err === null && result === null) {
+                logger.warn(IDLOG, 'listen custom message "' + req.params.type + '" for user "' + username + '" for vm "' + vm + '": not found');
+                compUtil.net.sendHttp404(IDLOG, res);
+              } else {
+                logger.info(IDLOG, 'sent listen custom message "' + req.params.type + '" for user "' + username + '" for vm "' + vm + '"');
+                res.send(200, result);
+              }
+            } catch (error) {
+              logger.error(IDLOG, error.stack);
+              compUtil.net.sendHttp500(IDLOG, res, error.toString());
+            }
+          });
         } catch (err) {
           logger.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
@@ -649,6 +713,7 @@ function setCompAuthorization(comp) {
     exports.setCompVoicemail = setCompVoicemail;
     exports.setCompStaticHttp = setCompStaticHttp;
     exports.setCompAuthorization = setCompAuthorization;
+    exports.listen_custom_msg = voicemail.listen_custom_msg;
 
   } catch (err) {
     logger.error(IDLOG, err.stack);

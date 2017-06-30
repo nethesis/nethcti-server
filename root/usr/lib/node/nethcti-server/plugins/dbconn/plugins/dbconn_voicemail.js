@@ -279,6 +279,43 @@ function listenVoiceMessage(dbid, cb) {
 }
 
 /**
+ * Returns audio file of the custom audio message of the voicemail.
+ *
+ * @method listenCustomMessage
+ * @param {string} vm The voicemail identifier
+ * @param {string} type The type of the custom message ("unavail"|"busy"|"greet")
+ * @param {function} cb The callback function
+ */
+function listenCustomMessage(vm, type, cb) {
+  try {
+    if (typeof vm !== 'string' || typeof type !== 'string' || typeof cb !== 'function') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    var path = getCustomAudioMsgPath(vm, type);
+    compDbconnMain.models[compDbconnMain.JSON_KEYS.VOICEMAIL].find({
+      where: ['dir=? AND mailboxuser=?', path, vm]
+    }).then(function(result) {
+      if (result && result.dataValues && result.dataValues.recording) {
+        logger.info(IDLOG, 'obtained listen custom message "' + type + '" for vm "' + vm + '"');
+        cb(null, result.dataValues.recording);
+      } else {
+        var str = 'getting listen custom message "' + type + '" for vm "' + vm + '": not found';
+        logger.warn(IDLOG, str);
+        cb(null, null);
+      }
+    }, function(err) { // manage the error
+      logger.error(IDLOG, 'getting listen custom message "' + type + '" for vm "' + vm + '"');
+      cb(err.toString());
+    });
+    compDbconnMain.incNumExecQueries();
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
+/**
  * Returns the voicemail mailbox from the identifier of the voicemail in the database.
  *
  * @method getVmMailboxFromDbId
@@ -327,6 +364,26 @@ function getVmMailboxFromDbId(dbid, cb) {
  * @method setCustomVmAudioMsg
  * @param {string} vm The voicemail identifier
  * @param {string} type The type of the audio message ("unavail"|"busy"|"greet")
+ * @return {string} The path
+ * @private
+ */
+function getCustomAudioMsgPath(vm, type) {
+  try {
+    if (typeof vm !== 'string' || typeof type !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    return '/var/spool/asterisk/voicemail/default/' + vm + '/' + type;
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Add an entry into the asteriskcdrdb.voicemessages with the audio message content.
+ *
+ * @method setCustomVmAudioMsg
+ * @param {string} vm The voicemail identifier
+ * @param {string} type The type of the audio message ("unavail"|"busy"|"greet")
  * @param {string} audio The audio message content in binary format
  * @param {function} cb The callback function
  */
@@ -340,7 +397,7 @@ function setCustomVmAudioMsg(vm, type, audio, cb) {
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-    var path = '/var/spool/asterisk/voicemail/default/' + vm + '/' + type;
+    var path = getCustomAudioMsgPath(vm, type);
     // sequelize does not support mysql "INSERT ... ON DUPLICATE KEY UPDATE" statement
     // so if the entry is already present update it, otherwise create a new one
     compDbconnMain.models[compDbconnMain.JSON_KEYS.VOICEMAIL].find({
@@ -392,6 +449,7 @@ function setCustomVmAudioMsg(vm, type, audio, cb) {
 apiList.getVoicemailMsg = getVoicemailMsg;
 apiList.deleteVoiceMessage = deleteVoiceMessage;
 apiList.listenVoiceMessage = listenVoiceMessage;
+apiList.listenCustomMessage = listenCustomMessage;
 apiList.setCustomVmAudioMsg = setCustomVmAudioMsg;
 apiList.getVmMailboxFromDbId = getVmMailboxFromDbId;
 apiList.EVT_DELETED_VOICE_MESSAGE = EVT_DELETED_VOICE_MESSAGE;

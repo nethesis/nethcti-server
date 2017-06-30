@@ -435,6 +435,31 @@ function listenVoiceMessage(id, cb) {
   }
 }
 
+/**
+ * Listen the specified custom message for voicemail.
+ *
+ * @method listenCustomMessage
+ * @param {string} vm The voicemail identifier
+ * @param {string} type The type of the custom message ("unavail"|"busy"|"greet")
+ * @param {function} cb The callback function
+ * @private
+ */
+function listenCustomMessage(vm, type, cb) {
+  try {
+    if (typeof vm !== 'string' ||
+      typeof type !== 'string' ||
+      typeof cb !== 'function') {
+
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    dbconn.listenCustomMessage(vm, type, cb);
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
 
 /**
  * Returns the voicemail identifier from the voice message identifier of the database.
@@ -634,6 +659,7 @@ exports.setCompUser = setCompUser;
 exports.getVmIdFromDbId = getVmIdFromDbId;
 exports.deleteVoiceMessage = deleteVoiceMessage;
 exports.listenVoiceMessage = listenVoiceMessage;
+exports.listenCustomMessage = listenCustomMessage;
 exports.setCustomVmAudioMsg = setCustomVmAudioMsg;
 exports.EVT_NEW_VOICE_MESSAGE = EVT_NEW_VOICE_MESSAGE;
 exports.getVoiceMessagesByUser = getVoiceMessagesByUser;
