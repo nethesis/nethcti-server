@@ -404,6 +404,7 @@ function setCompUtil(comp) {
      * Example JSON request parameters:
      *
      *     { "status": "online" }
+     *     { "status": "dnd" }
      *     { "status": "voicemail" }
      *     { "status": "cellphone" }
      *     { "status": "callforward", "to": "0123456789" }
