@@ -1676,6 +1676,34 @@ function getEndpointMainExtension(username) {
 }
 
 /**
+ * Get the voicemail endpoint of the user.
+ *
+ * @method getEndpointVoicemail
+ * @param {string} username The name of the user
+ * @return {object} The voicemail endpoint.
+ */
+function getEndpointVoicemail(username) {
+  try {
+    if (typeof username !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    // check the user existence
+    if (typeof users[username] !== 'object') {
+      logger.warn(IDLOG, 'getting voicemail endpoint: user "' + username + '" does not exist');
+      return {};
+    }
+    // gets all endpoints, extracts the voicemail endpoint
+    var endpoints = users[username].getAllEndpoints();
+    return endpoints[endpointTypes.TYPES.voicemail][
+      Object.keys(endpoints[endpointTypes.TYPES.voicemail])[0]
+    ];
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+    return {};
+  }
+}
+
+/**
  * Update the user presence.
  *
  * @method updateUserPresence
@@ -2138,8 +2166,7 @@ function getVoicemailList(username) {
  * @return {object} The endpoints of the user in JSON format.
  */
 function getEndpointsJSON(userid) {
-  try {
-    // check parameter
+  try {    // check parameter
     if (typeof userid !== 'string') {
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
@@ -2673,6 +2700,7 @@ exports.setConfigurations = setConfigurations;
 exports.getAllEndpointsEmail = getAllEndpointsEmail;
 exports.hasExtensionEndpoint = hasExtensionEndpoint;
 exports.hasCellphoneEndpoint = hasCellphoneEndpoint;
+exports.getEndpointVoicemail = getEndpointVoicemail;
 exports.hasVoicemailEndpoint = hasVoicemailEndpoint;
 exports.getUsernamesWithData = getUsernamesWithData;
 exports.getPresenceListOnBusy = getPresenceListOnBusy;

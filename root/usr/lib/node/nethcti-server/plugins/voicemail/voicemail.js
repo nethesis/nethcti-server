@@ -137,7 +137,7 @@ function setCompUser(cu) {
   try {
     // check parameter
     if (typeof cu !== 'object') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
     compUser = cu;
     logger.log(IDLOG, 'user component has been set');
@@ -213,7 +213,7 @@ function getAllNewVoiceMessageCount(cb) {
   try {
     // check parameter
     if (typeof cb !== 'function') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // get the number of new voice messages of all voicemails using the listVoicemail plugin
@@ -349,7 +349,7 @@ function newVoiceMessage(ev) {
     // check parameter
     if (typeof ev !== 'object' && typeof ev.voicemail !== 'string' && typeof ev.context !== 'string' && typeof ev.countOld !== 'string' && typeof ev.countNew !== 'string') {
 
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // get all the new voice messages of the voicemail to send the events through the callback
@@ -380,7 +380,7 @@ function updateVoiceMessages(ev) {
     // check parameter
     if (typeof ev !== 'object' && typeof ev.voicemail !== 'string' && typeof ev.context !== 'string') {
 
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // get all the new voice messages of the voicemail to send the events through the callback
@@ -528,7 +528,7 @@ function listenedVoiceMessage(voicemail) {
   try {
     // check the parameter
     if (typeof voicemail !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // get all the new voice messages of the voicemail to send the events through the callback
@@ -569,7 +569,7 @@ function deletedVoiceMessage(voicemail) {
   try {
     // check the parameter
     if (typeof voicemail !== 'string') {
-      throw new Error('wrong parameter');
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
 
     // get all the new voice messages of the voicemail to send the events through the callback
@@ -597,6 +597,33 @@ function on(type, cb) {
   }
 }
 
+/**
+ * Set the custom audio message for the voicemail.
+ *
+ * @method setCustomVmAudioMsg
+ * @param {string} vm The voicemail identifier
+ * @param {string} type The type of the audio message ("unavail"|"busy"|"greet")
+ * @param {string} audio The audio message content in base64 format
+ * @param {function} cb The callback function
+ * @private
+ */
+function setCustomVmAudioMsg(vm, type, audio, cb) {
+  try {
+    if (typeof vm !== 'string' ||
+      typeof audio !== 'string' ||
+      typeof type !== 'string' ||
+      (type !== 'unavail' && type !== 'busy' && type !== 'greet') ||
+      typeof cb !== 'function') {
+
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    dbconn.setCustomVmAudioMsg(vm, type, Buffer.from(audio, 'base64'), cb);
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+    cb(err);
+  }
+}
+
 // public interface
 exports.on = on;
 exports.start = start;
@@ -607,6 +634,7 @@ exports.setCompUser = setCompUser;
 exports.getVmIdFromDbId = getVmIdFromDbId;
 exports.deleteVoiceMessage = deleteVoiceMessage;
 exports.listenVoiceMessage = listenVoiceMessage;
+exports.setCustomVmAudioMsg = setCustomVmAudioMsg;
 exports.EVT_NEW_VOICE_MESSAGE = EVT_NEW_VOICE_MESSAGE;
 exports.getVoiceMessagesByUser = getVoiceMessagesByUser;
 exports.getAllNewVoiceMessageCount = getAllNewVoiceMessageCount;

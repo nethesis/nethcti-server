@@ -238,6 +238,7 @@ function setCompAuthorization(comp) {
     * # POST requests
     *
     * 1. [`voicemail/delete`](#deletepost)
+    * 1. [`voicemail/custom_msg`](#custom_msgpost)
     *
     * ---
     *
@@ -250,6 +251,23 @@ function setCompAuthorization(comp) {
     * Example JSON request parameters:
     *
     *     { "id": "74" }
+    *
+    * ---
+    *
+    * ### <a id="custom_msgpost">**`voicemail/custom_msg`**</a>
+    *
+    * Upload customized audio message to be listen when the user leave a message.
+    * The request must contains the following parameters:
+    *
+    * * `type: ("unavail"|"busy"|"greet") when the customized audio message has to be listen. "unavail" is to customize
+    *                                     message when the user is unavailable, "busy" is when he is busy in a conversation
+    *                                     and "greet" type is to customize only the name of the person of the voicemail and
+    *                                     then the default message will be listen`
+    * * `audio: the audio message in base64 format. The original audio file must be wav, 8000Hz and 16 bit format mono`
+    *
+    * Example JSON request parameters:
+    *
+    *     { "audio": "data:audio/wav;base64,1234..." }
     *
     * @class plugin_rest_voicemail
     * @static
@@ -285,8 +303,12 @@ function setCompAuthorization(comp) {
          * @type {array}
          *
          *   @param {string} delete To delete a voicemail messages of the user
+         *   @param {string} custom_msg To customize the audio message for the voicemail
          */
-        'post': ['delete'],
+        'post': [
+          'delete',
+          'custom_msg'
+        ],
         'head': [],
         'del': []
       },
@@ -563,6 +585,55 @@ function setCompAuthorization(comp) {
           logger.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
         }
+      },
+
+      /**
+       * Customize the audio message for the voicemail of the user with the following REST API:
+       *
+       *     custom_msg
+       *
+       * @method delete
+       * @param {object} req The client request
+       * @param {object} res The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      custom_msg: function(req, res, next) {
+        try {
+          var username = req.headers.authorization_user;
+          if (typeof req.params !== 'object' ||
+            typeof req.params.type !== 'string' ||
+            (req.params.type !== 'unavail' && req.params.type !== 'busy' && req.params.type !== 'greet') ||
+            typeof req.params.audio !== 'string') {
+
+            compUtil.net.sendHttp400(IDLOG, res);
+            return;
+          }
+          var vm = compUser.getEndpointVoicemail(username);
+          if (typeof vm !== 'object' || typeof vm.getId !== 'function') {
+            var str = 'customizing voicemail message: no voicemail for user "' + username + '": "' + JSON.stringify(vm) + '"';
+            logger.warn(IDLOG, str);
+            compUtil.net.sendHttp500(IDLOG, res, str);
+            return;
+          }
+          vm = vm.getId();
+          compVoicemail.setCustomVmAudioMsg(vm, req.params.type, req.params.audio, function(err) {
+            try {
+              if (err) {
+                logger.error(IDLOG, 'setting customized vm "' + req.params.type + '" message for user "' + username + '" for vm "' + vm + '"');
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+                return;
+              }
+              logger.info(IDLOG, 'customized vm "' + req.params.type + '" message for user "' + username + '" for vm "' + vm + '" has been set successfully');
+              res.send(200);
+            } catch (error) {
+              logger.error(IDLOG, error.stack);
+              compUtil.net.sendHttp500(IDLOG, res, error.toString());
+            }
+          });
+        } catch (err) {
+          logger.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
       }
     };
     exports.api = voicemail.api;
@@ -573,6 +644,7 @@ function setCompAuthorization(comp) {
     exports.setLogger = setLogger;
     exports.setCompUser = setCompUser;
     exports.setCompUtil = setCompUtil;
+    exports.custom_msg = voicemail.custom_msg;
     exports.new_counters = voicemail.new_counters;
     exports.setCompVoicemail = setCompVoicemail;
     exports.setCompStaticHttp = setCompStaticHttp;
