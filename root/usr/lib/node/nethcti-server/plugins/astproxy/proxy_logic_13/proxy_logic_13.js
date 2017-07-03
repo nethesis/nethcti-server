@@ -5297,6 +5297,22 @@ function evtConversationConnected(num1, num2) {
 }
 
 /**
+ * Some information of a conversation has been changed, for example
+ * during an attended transfer call. So update info.
+ *
+ * @method evtConversationInfoChanged
+ * @param {string} num1 One of the two connected numbers
+ * @param {string} num2 The other of the two connected numbers
+ */
+function evtConversationInfoChanged(num1, num2) {
+  try {
+    evtConversationConnected(num1, num2);
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
  * Returns the name of the audio file to record the conversation of the specified extension.
  *
  * @method getRecordFilename
@@ -8771,6 +8787,7 @@ exports.unmuteRecordConversation = unmuteRecordConversation;
 exports.isDynMemberLoggedInQueue = isDynMemberLoggedInQueue;
 exports.EVT_UPDATE_VOICE_MESSAGES = EVT_UPDATE_VOICE_MESSAGES;
 exports.startSpySpeakConversation = startSpySpeakConversation;
+exports.evtConversationInfoChanged = evtConversationInfoChanged;
 exports.startSpyListenConversation = startSpyListenConversation;
 exports.evtUpdateVoicemailMessages = evtUpdateVoicemailMessages;
 exports.evtQueueMemberPausedChanged = evtQueueMemberPausedChanged;
