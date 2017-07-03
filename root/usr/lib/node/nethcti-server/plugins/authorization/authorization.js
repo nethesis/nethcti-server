@@ -1242,21 +1242,7 @@ function authorizeStreamingUser(username) {
     if (typeof username !== 'string') {
       throw new Error('wrong parameter');
     }
-
-    // get streaming authorization from the user
-    // var autho = compUser.getAuthorization(username, authorizationTypes.TYPES.streaming);
-
-    // analize the result
-    // var objResult = autho[authorizationTypes.TYPES.streaming];
-    // var stream;
-    // for (stream in objResult) {
-
-    //   // check the type of the authorization. It must be a boolean value
-    //   if (objResult[stream] === true) {
-    //     return true;
-    //   }
-    // }
-    // return false;
+    return profiles[getUserProfileId(username)].macro_permissions.streaming.value === true;
 
   } catch (err) {
     logger.error(IDLOG, err.stack);
@@ -1271,15 +1257,30 @@ function authorizeStreamingUser(username) {
  *
  * @method authorizeStreamingSourceUser
  * @param  {string} username    The username
- * @param  {string} streamingId The streaming source identifier
  * @return {boolean} True if the user has the authorization for the specified streaming source.
  */
-function authorizeStreamingSourceUser(username, streamingId) {
+function authorizeStreamingSourceUser(username) {
   try {
     // check parameter
-    if (typeof username !== 'string' || typeof streamingId !== 'string') {
+    if (typeof username !== 'string') {
       throw new Error('wrong parameter');
     }
+    var permissionId;
+    var arr = [];
+    var profid = getUserProfileId(username);
+
+    if (profiles[profid].macro_permissions.streaming.value === true) {
+      for (permissionId in profiles[profid].macro_permissions.streaming.permissions) {
+        if (profiles[profid].macro_permissions.streaming.permissions[permissionId].value === true) {
+
+          arr.push({
+            permissionId: permissionId,
+            name: profiles[profid].macro_permissions.streaming.permissions[permissionId].name
+          });
+        }
+      }
+    }
+    return arr;
 
     // get streaming authorization from the user
     // var autho = compUser.getAuthorization(username, authorizationTypes.TYPES.streaming);
@@ -1300,43 +1301,6 @@ function authorizeStreamingSourceUser(username, streamingId) {
     logger.error(IDLOG, err.stack);
     // in the case of exception it returns false for security reasons
     return false;
-  }
-}
-
-/**
- * Returns all the authorized streaming sources of the user.
- *
- * @method getAuthorizedStreamingSources
- * @param  {string} username The username
- * @return {object} All the authorized streaming sources.
- */
-function getAuthorizedStreamingSources(username) {
-  try {
-    // check parameter
-    if (typeof username !== 'string') {
-      throw new Error('wrong parameter');
-    }
-
-    // get streaming authorization from the user
-    // var autho = compUser.getAuthorization(username, authorizationTypes.TYPES.streaming);
-
-    // analize the result
-    // var objResult = autho[authorizationTypes.TYPES.streaming];
-    // var stream;
-    // var result = {}; // object to return
-    // for (stream in objResult) {
-
-    //   // check the type of the authorization. It must be a boolean value
-    //   if (objResult[stream] === true) {
-    //     result[stream] = true;
-    //   }
-    // }
-    // return result;
-
-  } catch (err) {
-    logger.error(IDLOG, err.stack);
-    // in the case of exception it returns and empty object
-    return {};
   }
 }
 
@@ -1424,7 +1388,7 @@ function authorizedCustomerCards(username) {
     var arr = [];
     var profid = getUserProfileId(username);
 
-    if (profiles[profid].macro_permissions.presence_panel.value === true) {
+    if (profiles[profid].macro_permissions.customer_card.value === true) {
       for (permissionId in profiles[profid].macro_permissions.customer_card.permissions) {
         if (profiles[profid].macro_permissions.customer_card.permissions[permissionId].value === true) {
 
@@ -1736,7 +1700,6 @@ exports.authorizeOperatorGroupsUser = authorizeOperatorGroupsUser;
 exports.verifyUserEndpointCellphone = verifyUserEndpointCellphone;
 exports.authorizeAdminCallerNoteUser = authorizeAdminCallerNoteUser;
 exports.authorizeStreamingSourceUser = authorizeStreamingSourceUser;
-exports.getAuthorizedStreamingSources = getAuthorizedStreamingSources;
 exports.verifyOffhourUserAnnouncement = verifyOffhourUserAnnouncement;
 exports.verifyOffhourListenAnnouncement = verifyOffhourListenAnnouncement;
 exports.getAuthorizedRemoteOperatorGroups = getAuthorizedRemoteOperatorGroups;
