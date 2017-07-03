@@ -4446,14 +4446,12 @@ function call(username, req, res) {
     //   compComNethctiWs.sendCallWebrtcToClient(username, req.params.number);
     //   compUtil.net.sendHttp200(IDLOG, res);
     // } else if (!compConfigManager.isAutomaticClick2callEnabled(username)) {
-
     var extenAgent = compAstProxy.getExtensionAgent(req.params.endpointId);
     var isSupported = compConfigManager.phoneSupportHttpApi(extenAgent);
-
-    if (!isSupported) {
-      asteriskCall(username, req, res);
-    } else {
+    if (isSupported && compAstProxy.isAutoC2CEnabled()) {
       ajaxPhoneCall(username, req, res);
+    } else {
+      asteriskCall(username, req, res);
     }
   } catch (error) {
     logger.error(IDLOG, error.stack);

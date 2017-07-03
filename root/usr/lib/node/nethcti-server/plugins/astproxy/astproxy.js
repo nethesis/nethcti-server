@@ -130,6 +130,7 @@ function config(path) {
     // initialize asterisk configuration
     var json = require(path);
     if (typeof json.user !== 'string' ||
+      typeof json.auto_c2c !== 'string' ||
       typeof json.pass !== 'string' || typeof json.prefix !== 'string' ||
       typeof json.host !== 'string' || typeof json.port !== 'string') {
 
@@ -144,6 +145,7 @@ function config(path) {
       reconnect_after: 3000 // how long to wait to reconnect, in miliseconds, default: 3000
     };
     proxyLogic.setPrefix(json.prefix);
+    proxyLogic.setAutoC2CStatus(json.auto_c2c);
 
     logger.info(IDLOG, 'configuration done by ' + path);
 

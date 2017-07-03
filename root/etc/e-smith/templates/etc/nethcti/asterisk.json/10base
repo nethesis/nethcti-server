@@ -1,5 +1,6 @@
 {
     my $prefix = ${'nethcti-server'}{'Prefix'} || "";
+    my $autoc2c = ${'nethcti-server'}{'AutoC2C'} || "enabled";
 
     if (defined ${'nethcti-server'}{'Prefix'} && ${'nethcti-server'}{'Prefix'} eq "0") {
         $prefix = "0";
@@ -13,6 +14,7 @@
     "pass": "' . $nethcti_pwd . '",
     "host": "localhost",
     "port": "5038",
-    "prefix": "' . $prefix . '"
+    "prefix": "' . $prefix . '",
+    "auto_c2c": "' . $autoc2c . '"
 }';
 }

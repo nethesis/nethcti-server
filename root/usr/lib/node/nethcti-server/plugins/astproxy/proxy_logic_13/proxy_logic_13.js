@@ -444,6 +444,16 @@ var astProxy;
 var prefix = '';
 
 /**
+ * If the automatica click 2 call has to be used or not.
+ *
+ * @property autoC2CEnabled
+ * @type boolean
+ * @default true
+ * @private
+ */
+var autoC2CEnabled = true;
+
+/**
  * The remote sites phone prefixes.
  *
  * @property remoteSitesPrefixes
@@ -663,6 +673,40 @@ function setPrefix(code) {
 
     logger.info(IDLOG, 'prefix number has been set to "' + prefix + '"');
 
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Enable/disable if automatica click 2 call has to be used.
+ *
+ * @method setAutoC2CStatus
+ * @param {string} status The status ("enabled"|"disabled").
+ * @static
+ */
+function setAutoC2CStatus(status) {
+  try {
+    if (typeof status !== 'string') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    autoC2CEnabled = status === 'enabled' ? true : false;
+    logger.info(IDLOG, 'auto c2c has been set to "' + status + '"');
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Return true if the automatic click 2 call has to be used.
+ *
+ * @method isAutoC2CEnabled
+ * @return {boolean} True if the automatic click 2 call has to be used.
+ * @static
+ */
+function isAutoC2CEnabled() {
+  try {
+    return autoC2CEnabled;
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
@@ -8653,6 +8697,8 @@ exports.getJSONQueuesQOS = getJSONQueuesQOS;
 exports.muteConversation = muteConversation;
 exports.sendDTMFSequence = sendDTMFSequence;
 exports.parkConversation = parkConversation;
+exports.setAutoC2CStatus = setAutoC2CStatus;
+exports.isAutoC2CEnabled = isAutoC2CEnabled;
 exports.setCompPhonebook = setCompPhonebook;
 exports.getJSONExtension = getJSONExtension;
 exports.getExtensionAgent = getExtensionAgent;
