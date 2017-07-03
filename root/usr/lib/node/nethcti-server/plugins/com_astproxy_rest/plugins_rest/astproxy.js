@@ -608,15 +608,14 @@ var compConfigManager;
         *
         * ### <a id="pickup_convpost">**`astproxy/pickup_conv`**</a>
         *
-        * Pickup the specified conversation. The request must contains the following parameters:
+        * Pickup the ringing conversation from the specified endpoint. The request must contains the following parameters:
         *
-        * * `convid: the conversation identifier`
         * * `destId: the extension identifier that pickup the conversation`
         * * `endpointId: the extension identifier that has the conversation to pickup`
         *
         * Example JSON request parameters:
         *
-        *     { "convid": ">SIP/221-000000", "endpointId": "221", "destId": "220"}
+        *     { "endpointId": "221", "destId": "220"}
         *
         *
         * <br>
@@ -3000,7 +2999,6 @@ var compConfigManager;
 
           // check parameters
           if (typeof req.params !== 'object' ||
-            typeof req.params.convid !== 'string' ||
             typeof req.params.endpointId !== 'string' ||
             typeof req.params.destId !== 'string') {
 
@@ -3011,20 +3009,11 @@ var compConfigManager;
           // check if the user has the authorization to pickup the specified conversation
           if (compAuthorization.authorizeAdminPickupUser(username) === true) {
             logger.log(IDLOG, 'picking up convid "' + req.params.convid + '": admin pickup authorization successful for user "' + username + '"');
-
           } else {
             logger.warn(IDLOG, 'picking up convid ' + req.params.convid + ': admin pickup authorization failed for user "' + username + '"');
             compUtil.net.sendHttp403(IDLOG, res);
             return;
           }
-          // // check if the user has the authorization to pickup conversation of specified extension
-          // else if (compAuthorization.authorizePickupUser(username, req.params.endpointId) !== true) {
-
-          //   logger.warn(IDLOG, 'pickup convid "' + req.params.convid + '" failed: user "' + username + '" ' +
-          //     ' is not authorized to pickup conversation of extension ' + req.params.endpointId);
-          //   compUtil.net.sendHttp403(IDLOG, res);
-          //   return;
-          // }
           // check if the destination endpoint is owned by the user
           if (compAuthorization.verifyUserEndpointExten(username, req.params.destId) === false) {
 
@@ -3042,18 +3031,17 @@ var compConfigManager;
 
           compAstProxy.pickupConversation(
             req.params.endpointId,
-            req.params.convid,
             req.params.destId,
             extForCtx,
             function(err) {
               try {
                 if (err) {
-                  logger.warn(IDLOG, 'pickup convid ' + req.params.convid + ' by user "' + username + '" with ' +
+                  logger.warn(IDLOG, 'pickup exten "' + req.params.endpointId + '" by user "' + username + '" with ' +
                     ' extension "' + req.params.destId + '" has been failed');
                   compUtil.net.sendHttp500(IDLOG, res, err.toString());
                   return;
                 }
-                logger.info(IDLOG, 'pickup convid ' + req.params.convid + ' has been successful by user "' + username +
+                logger.info(IDLOG, 'pickup exten "' + req.params.endpointId + '" has been successful by user "' + username +
                   '" with extension "' + req.params.destId + '"');
                 compUtil.net.sendHttp200(IDLOG, res);
 
@@ -3062,7 +3050,6 @@ var compConfigManager;
                 compUtil.net.sendHttp500(IDLOG, res, error.toString());
               }
             });
-
         } catch (err) {
           logger.error(IDLOG, err.stack);
           compUtil.net.sendHttp500(IDLOG, res, err.toString());
