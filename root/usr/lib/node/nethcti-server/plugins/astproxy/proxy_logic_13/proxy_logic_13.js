@@ -531,6 +531,15 @@ var staticDataTrunks = {};
 var staticDataQueues = {};
 
 /**
+ * Feature codes of asterisk, e.g. the pickup code.
+ *
+ * @property featureCodes
+ * @type object
+ * @private
+ */
+var featureCodes = {};
+
+/**
  * All trunks. The key is the trunk number and the value
  * is the _Trunk_ object.
  *
@@ -962,6 +971,36 @@ function iaxExtenStructValidation(err, resp) {
 function setStaticDataQueues(obj) {
   try {
     staticDataQueues = obj;
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Set the asterisk feature codes read from JSON configuration file.
+ *
+ * @method setFeatureCodes
+ * @param {object} obj The feature codes object read from JSON config file
+ * @static
+ */
+function setFeatureCodes(obj) {
+  try {
+    featureCodes = obj;
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
+ * Return the asterisk code of pickup operation.
+ *
+ * @method getPickupCode
+ * @return {string} The asterisk code of pickup operation.
+ * @static
+ */
+function getPickupCode() {
+  try {
+    return featureCodes.pickup;
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }
@@ -5797,66 +5836,39 @@ function pickupParking(parking, destId, extForCtx, cb) {
  * Pickup a conversation.
  *
  * @method pickupConversation
- * @param {string}   endpointId The endpoint identifier (e.g. the extension number)
- * @param {string}   convid     The conversation identifier
- * @param {string}   destId     The endpoint identifier that pickup the conversation
- * @param {string}   extForCtx  The extension identifier used to get the context
- * @param {function} cb         The callback function
+ * @param {string} endpointId The endpoint identifier (e.g. the extension number)
+ * @param {string} destId The endpoint identifier that pickup the conversation
+ * @param {string} extForCtx The extension identifier used to get the context
+ * @param {function} cb The callback function
  */
-function pickupConversation(endpointId, convid, destId, extForCtx, cb) {
+function pickupConversation(endpointId, destId, extForCtx, cb) {
   try {
     // check parameters
-    if (typeof convid !== 'string' ||
-      typeof cb !== 'function' ||
+    if (typeof cb !== 'function' ||
       typeof destId !== 'string' ||
       typeof extForCtx !== 'string' ||
       typeof endpointId !== 'string') {
 
       throw new Error('wrong parameters: ' + JSON.stringify(arguments));
     }
-
     // check the endpoint existence
     if (extensions[endpointId] && extensions[destId]) {
-
-      var chToRedirect;
-      var convs = extensions[endpointId].getAllConversations();
-      var conv = convs[convid];
-      var ch = conv.getDestinationChannel();
-      var callerNum = ch.getCallerNum();
-      var bridgedNum = ch.getBridgedNum();
 
       if (!extensions[extForCtx]) {
         throw new Error('no extension to get context for pickup conversation (extForCtx="' + extForCtx + '")');
       }
-
       var ctx = extensions[extForCtx].getContext();
-
-      // get the channel to redirect
-      if (callerNum === endpointId) {
-        chToRedirect = ch.getBridgedChannel();
-      } else if (bridgedNum === endpointId) {
-        chToRedirect = ch.getChannel();
-      }
-
-      if (chToRedirect !== undefined) {
-
-        // the pickup operation is made by redirect operation
-        logger.info(IDLOG, 'pickup from "' + destId + '" of the channel ' + chToRedirect + ' of "' + endpointId + '"');
-        astProxy.doCmd({
-          command: 'redirectChannel',
-          context: ctx,
-          chToRedirect: chToRedirect,
-          to: destId
-        }, function(err) {
-          cb(err);
-          redirectConvCb(err);
-        });
-
-      } else {
-        var str = 'pickup conversation of "' + endpointId + '" from "' + destId + '"';
-        logger.error(IDLOG, str);
-        cb(str);
-      }
+      // the pickup operation is made by call operation
+      logger.info(IDLOG, 'pickup from "' + destId + '" of exten "' + endpointId + '"');
+      astProxy.doCmd({
+        command: 'call',
+        context: ctx,
+        from: destId,
+        to: getPickupCode() + endpointId
+      }, function(err) {
+        cb(err);
+        pickupConvCb(err);
+      });
     }
   } catch (err) {
     logger.error(IDLOG, err.stack);
@@ -6160,6 +6172,25 @@ function hangupChannel(endpointType, endpointId, ch, cb) {
   } catch (e) {
     logger.error(IDLOG, e.stack);
     cb(e);
+  }
+}
+
+/**
+ * This is the callback of the pickup operation.
+ *
+ * @method pickupConvCb
+ * @param {object} err The error object of the operation
+ * @private
+ */
+function pickupConvCb(err) {
+  try {
+    if (err) {
+      logger.error(IDLOG, 'pickup call failed: ' + err.toString());
+    } else {
+      logger.info(IDLOG, 'pickup call succesfully');
+    }
+  } catch (error) {
+    logger.error(IDLOG, error.stack);
   }
 }
 
@@ -8614,6 +8645,7 @@ exports.getJSONParkings = getJSONParkings;
 exports.recordAudioFile = recordAudioFile;
 exports.redirectParking = redirectParking;
 exports.getExtenCfValue = getExtenCfValue;
+exports.setFeatureCodes = setFeatureCodes;
 exports.getExtenCfbValue = getExtenCfbValue;
 exports.getExtenCfuValue = getExtenCfuValue;
 exports.EVT_EXTEN_HANGUP = EVT_EXTEN_HANGUP;

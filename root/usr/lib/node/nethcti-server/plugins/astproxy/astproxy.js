@@ -226,6 +226,7 @@ function configAstObjects(path) {
     }
     proxyLogic.setStaticDataTrunks(json.trunks);
     proxyLogic.setStaticDataQueues(json.queues);
+    proxyLogic.setFeatureCodes(json.feature_codes);
 
     logger.info(IDLOG, 'asterisk objects configuration done by ' + path);
 

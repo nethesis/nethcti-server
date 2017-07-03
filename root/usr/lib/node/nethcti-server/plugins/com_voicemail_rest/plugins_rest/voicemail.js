@@ -194,8 +194,8 @@ function setCompAuthorization(comp) {
     * 1. [`voicemail/list/:type[?offset=n&limit=n]`](#listget)
     * 1. [`voicemail/listen/:id`](#listenget)
     * 1. [`voicemail/download/:id`](#downloadget)
-    * 1. [`voicemail/listen_custom_msg/:type`](#listenget)
-    * 1. [`voicemail/download_custom_msg/:type`](#listenget)
+    * 1. [`voicemail/listen_custom_msg/:type`](#listen_custom_msgget)
+    * 1. [`voicemail/download_custom_msg/:type`](#download_custom_msgget)
     *
     * ---
     *
