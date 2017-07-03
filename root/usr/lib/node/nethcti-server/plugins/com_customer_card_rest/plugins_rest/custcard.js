@@ -109,6 +109,7 @@ function setCompUtil(comp) {
         * # GET requests
         *
         * 1. [`custcard/getbynum/:number/:format`](#getbynum_formatget)
+        * 1. [`custcard/list`](#listget)
         *
         * ---
         *
@@ -129,6 +130,21 @@ function setCompUtil(comp) {
               "data": "PCEtLSBjb2xvcjogcmVk...",
               "number": "0721405516"
          }
+     }
+        *
+        * ---
+        *
+        * ### <a id="listget">**`list`**</a>
+        *
+        * Return the list of the customer cards with their descriptions.
+        *
+        * Example JSON response:
+        *
+        *     {
+         "cc_identity": {
+              "descr": "Customer Identity",
+         },
+         ...
      }
         *
         * <br>
@@ -173,9 +189,13 @@ function setCompUtil(comp) {
          * @property get
          * @type {array}
          *
+         *   @param {string} list Return the list of the customer cards.
          *   @param {string} getbynum/:number/:format To get a customer card as base64 encoded html format.
          */
-        'get': ['getbynum/:number/:format'],
+        'get': [
+          'list',
+          'getbynum/:number/:format'
+        ],
 
         /**
          * REST API to be requested using HTTP POST request.
@@ -247,6 +267,41 @@ function setCompUtil(comp) {
       },
 
       /**
+       * Return the list of the customer cards with the following REST API:
+       *
+       *     list
+       *
+       * @method list
+       * @param {object} req The client request
+       * @param {object} res The client response
+       * @param {function} next Function to run the next handler in the chain
+       */
+      list: function(req, res, next) {
+        try {
+          var username = req.headers.authorization_user;
+          logger.info(IDLOG, 'get customer cards list for user "' + username + '"');
+
+          compCustomerCard.getCustomerCardsList(username, function(err, results) {
+            try {
+              if (err) {
+                compUtil.net.sendHttp500(IDLOG, res, err.toString());
+              } else {
+                logger.info(IDLOG, 'send cust card list ' + Object.keys(results).length + ' to user "' +
+                  username + '" to ' + res.connection.remoteAddress);
+                res.send(200, results);
+              }
+            } catch (error) {
+              logger.error(IDLOG, error.stack);
+              compUtil.net.sendHttp500(IDLOG, res, error.toString());
+            }
+          });
+        } catch (err) {
+          logger.error(IDLOG, err.stack);
+          compUtil.net.sendHttp500(IDLOG, res, err.toString());
+        }
+      },
+
+      /**
        * Returns the customer card as base64 encoded html data.
        *
        *     preview
@@ -294,6 +349,7 @@ function setCompUtil(comp) {
       }
     };
     exports.api = custcard.api;
+    exports.list = custcard.list;
     exports.preview = custcard.preview;
     exports.getbynum = custcard.getbynum;
     exports.setLogger = setLogger;

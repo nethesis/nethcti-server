@@ -255,6 +255,38 @@ function getCustomerCardByNum(permissionId, ccName, num, cb) {
 }
 
 /**
+ * Return the list of the customer cards.
+ *
+ * @method getCustomerCardsList
+ * @param {string} username The identifier of the user
+ * @param {function} cb The callback function
+ */
+function getCustomerCardsList(username, cb) {
+  try {
+    if (typeof username !== 'string' || typeof cb !== 'function') {
+      throw new Error('wrong parameters: ' + JSON.stringify(arguments));
+    }
+    // get the list of the authorized customer cards. It is an array with
+    // the identifiers of customer cards as strings
+    var allowedCC = compAuthorization.authorizedCustomerCards(username);
+    logger.info(IDLOG, 'user "' + username + '" is authorized to view customer cards: "' + JSON.stringify(allowedCC) + '"');
+    var obj = {}; // object with all results
+    var i;
+    for (i = 0; i < allowedCC.length; i++) {
+      obj[allowedCC[i].name] = {
+        descr: dbconn.getCustCardNameDescr(allowedCC[i].permissionId)
+      };
+    }
+    logger.info(IDLOG, Object.keys(obj).length + ' customer cards obtained for user "' + username + '"');
+    cb(null, obj);
+
+  } catch (err) {
+    logger.error(IDLOG, err.stack);
+    cb(err.toString());
+  }
+}
+
+/**
  * Set the authorization architect component used by customer card functions.
  *
  * @method setCompAuthorization
@@ -587,5 +619,6 @@ exports.setCompUser = setCompUser;
 exports.configPrivacy = configPrivacy;
 exports.getAllCustomerCards = getAllCustomerCards;
 exports.getCustomerCardByNum = getCustomerCardByNum;
+exports.getCustomerCardsList = getCustomerCardsList;
 exports.setCompAuthorization = setCompAuthorization;
 exports.getCustomerCardPreview = getCustomerCardPreview;
