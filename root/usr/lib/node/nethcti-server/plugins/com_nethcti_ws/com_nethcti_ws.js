@@ -153,19 +153,23 @@ var EVT_PARKING_UPDATE = 'parkingUpdate';
 //   */
 var EVT_ANSWER_WEBRTC = 'answerWebrtc';
 
-//  /**
-//   * Emitted to a websocket client connection to call a number using webrtc extension.
-//   *
-//   * @event callWebrtc
-//   * @param {string} to The destination number to be called using WebRTC extension
-//   *
-//   */
-//  /**
-//   * The name of the event to call number using WebRTC extension
-//   *
-//   * @property EVT_CALL_WEBRTC
-//   * @type string
-//   */
+ /**
+  * Emitted to a websocket client connection to call a number using webrtc extension.
+  *
+  * Example:
+  *
+      "0721405516"
+  *
+  * @event callWebrtc
+  * @param {string} to The destination number to be called using WebRTC extension
+  *
+  */
+ /**
+  * The name of the event to call number using WebRTC extension
+  *
+  * @property EVT_CALL_WEBRTC
+  * @type string
+  */
 var EVT_CALL_WEBRTC = 'callWebrtc';
 
 //  /**
@@ -195,6 +199,8 @@ var EVT_ENDPOINT_PRESENCE_UPDATE = 'endpointPresenceUpdate';
  *
  * The "presence_onunavailable" is the presence status of the user when he does not answer
  * to an incoming call.
+ *
+ * Example:
  *
  *                         {
        "presence": {
