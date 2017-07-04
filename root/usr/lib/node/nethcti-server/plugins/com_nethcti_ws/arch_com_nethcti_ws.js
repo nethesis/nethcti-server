@@ -44,6 +44,7 @@ module.exports = function(options, imports, register) {
       comNethctiWs.setAstProxy(imports.astProxy);
       comNethctiWs.setCompVoicemail(imports.voicemail);
       comNethctiWs.setCompAuthorization(imports.authorization);
+      comNethctiWs.setCompStreaming(imports.streaming);
       comNethctiWs.start();
     });
   } catch (err) {

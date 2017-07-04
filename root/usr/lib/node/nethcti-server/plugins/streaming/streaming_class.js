@@ -1,7 +1,6 @@
 
-const http  = require('http');
-const https = require('https');
-const URL   = require('url');
+var request = require("request");
+var fs      = require('fs');
 
 /**
 * Abstraction of a streaming source.
@@ -112,6 +111,14 @@ exports.Streaming = function (data) {
     function getUrl() { return url; }
 
     /**
+    * Returns the streaming source frame rate.
+    *
+    * @method getFramerate
+    * @return {string} The streaming source frame-rate.
+    */
+    function getFramerate() { return frameRate; }
+
+    /**
     * Returns the command to open the streaming device.
     *
     * @method getOpenCommand
@@ -173,17 +180,16 @@ exports.Streaming = function (data) {
     */
     function acquireSample(cb) {
       if (url) {
-        const sourceURL = URL.parse(url);
-        var req = (sourceURL.protocol == 'https:' ? https : http);
-
-        req.request({
-          host: sourceURL.host,
-          port: sourceURL.port ? sourceURL.port : 80,
-          path: sourceURL.path,
-        }, function(res) {
-          if (res.statusCode == 200) {
-            console.log('OK');
-          }
+        request({
+          uri: url,
+          timeout: 2000
+        }, function(error, response, body) {
+          fs.writeFile('/tmp/' + id + '.vs', body, function(err) {
+            if (err) {
+              console.log(err);
+              return err;
+            }
+          });
         });
       }
     }
@@ -192,10 +198,19 @@ exports.Streaming = function (data) {
     * Get the sample.
     *
     * @method getSample
+    * @param {function} cb The callback function
     * @return {object} The sample from video source.
     */
-    function getSample() {
-      return sample;
+    function getSample(cb) {
+      fs.readFile('/tmp/' + id + '.vs', (err, res) => {
+        if (err) {
+          throw err;
+        }
+
+        data.sample = res;
+
+        cb(err, new Buffer(res).toString('base64'));
+      });
     }
 
     // public interface
@@ -204,6 +219,7 @@ exports.Streaming = function (data) {
         toJSON:         toJSON,
         toString:       toString,
         getExtension:   getExtension,
+        getFramerate:   getFramerate,
         getOpenCommand: getOpenCommand,
         acquireSample:  acquireSample,
         getSample:      getSample

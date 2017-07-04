@@ -9,7 +9,8 @@
       "astProxy",
       "authorization",
       "authentication",
-      "voicemail"
+      "voicemail",
+      "streaming"
     ],
     "provides": [
       "com_nethcti_ws"
