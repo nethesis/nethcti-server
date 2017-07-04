@@ -34,6 +34,7 @@ module.exports = function(options, imports, register) {
     streaming.config('/etc/nethcti/streaming.json');
     streaming.setCompAstProxy(imports.astProxy);
     streaming.setCompAuthorization(imports.authorization);
+    streaming.start();
   } catch (err) {
     logger.error(IDLOG, err.stack);
   }

@@ -177,6 +177,22 @@ function config(path) {
 }
 
 /**
+ * Start to sample video streaming resources each framerate.
+ *
+ * @method start
+ */
+function start() {
+  try {
+    for (var i in streamings) {
+      streamings[i].acquireSample();
+    }
+  } catch (err) {
+    console.error(err);
+    logger.error(IDLOG, err.stack);
+  }
+}
+
+/**
 * Returns all streaming sources for the user
 * object in error case.
 *
@@ -266,6 +282,7 @@ function open(streamId, callerid, cb) {
 }
 
 // public interface
+exports.start                  = start;
 exports.open                   = open;
 exports.config                 = config;
 exports.setLogger              = setLogger;

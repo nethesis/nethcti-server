@@ -1,3 +1,8 @@
+
+const http  = require('http');
+const https = require('https');
+const URL   = require('url');
+
 /**
 * Abstraction of a streaming source.
 *
@@ -13,6 +18,7 @@
 *   @param {object} data.user       The streaming username
 *   @param {object} data.secret     The streaming password
 *   @param {object} data.frame-rate The frame rate of the streaming images
+*   @param {object} data.sample     The streaming sample
 * @constructor
 * @return {object} The streaming object.
 */
@@ -159,12 +165,47 @@ exports.Streaming = function (data) {
         }
     }
 
+    /**
+    * Sample the video source.
+    *
+    * @method sample
+    * @param {function} cb The callback function
+    */
+    function acquireSample(cb) {
+      if (url) {
+        const sourceURL = URL.parse(url);
+        var req = (sourceURL.protocol == 'https:' ? https : http);
+
+        req.request({
+          host: sourceURL.host,
+          port: sourceURL.port ? sourceURL.port : 80,
+          path: sourceURL.path,
+        }, function(res) {
+          if (res.statusCode == 200) {
+            console.log('OK');
+          }
+        });
+      }
+    }
+
+    /**
+    * Get the sample.
+    *
+    * @method getSample
+    * @return {object} The sample from video source.
+    */
+    function getSample() {
+      return sample;
+    }
+
     // public interface
     return {
         getUrl:         getUrl,
         toJSON:         toJSON,
         toString:       toString,
         getExtension:   getExtension,
-        getOpenCommand: getOpenCommand
+        getOpenCommand: getOpenCommand,
+        acquireSample:  acquireSample,
+        getSample:      getSample
     };
 }
